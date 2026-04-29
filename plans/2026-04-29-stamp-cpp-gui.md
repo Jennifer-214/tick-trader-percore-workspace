@@ -508,6 +508,183 @@ Steps 7, 14, 16 are hard gates — if any fails, stop and diagnose.
 - **Nightly auto-revalidation cron** — re-run held-out on yesterday's
   data, alert on drift. Operationally cool, but needs the basics first.
 
+## Phase D — display accounting drift across panels (rolled in 2026-04-29 evening)
+
+Discovered during live paper trading: per-core P&L counters, Trade
+History rows, and Stats panel summary do not agree on either fees or
+trade counts. Multiple display paths reading paired-leg events
+differently. Two concrete observations:
+
+### Observation 1 — fees mismatch
+
+```
+PER-CORE EMA:  Realized $+8.36   Fees $4.5114
+Trade History: 2 trades × $4.18 P&L, $1.51 fee each → sum fees $3.02
+```
+
+P&L matches (8.36 = 2 × 4.18), fees do not. Discrepancy is ~50%.
+
+### Observation 2 — Stats panel uses wrong denominators
+
+```
+Stats panel:
+  buys: 0 (0 fills)        ← WRONG; positions clearly opened
+  exits: 1 (2 fills)       ← counts paired exit as 1 event
+  W: 1 L: 0                ← Trade History shows 2 wins, not 1
+  rate: 100.0%
+  pf: 0.00                 ← should be ∞ or "—"; 1 win + 0 losses ≠ 0
+  avg W: $8.36 L: $0.00    ← that's the SUM, not the avg per win
+                              (avg of 2 × $4.18 should be $4.18)
+  [trade]: $+8.36          ← this one is correct (total P&L)
+  maxDD: $0.00 (0.00%)
+```
+
+`buys: 0` is the most surprising — entries weren't counted at all,
+or the buy counter resets on something it shouldn't. Possibly the
+counter is gated on a path that never fires for paired entries.
+
+`pf: 0.00` is a divide-by-zero or wrong-sentinel issue: profit
+factor with no losses should display as ∞ / "—" / "+inf", not 0.00.
+
+### Diagnosis (working hypothesis)
+
+Two related drift patterns:
+
+**Fees**: two fee computation paths reading different cfg fields.
+- One path uses `cfg.fee_rate_taker` (0.15% Binance default)
+- The other uses `cfg.fee_rate` (0.10% general default)
+
+For a $750→$756 round-trip per leg:
+- 0.15% × ($750 + $756) × 2 legs ≈ $4.52  ✓ matches per-core
+- 0.10% × ($750 + $756) ≈ $1.51 per trade × 2 = $3.02  ✓ matches history
+
+**Trade counts**: paired-leg accounting drift. The Stats panel
+counts a paired exit (legA + legB closed at same time) as ONE
+exit event with two fills, while Trade History panel renders
+each leg as a separate row.
+
+- "exits: 1 (2 fills)" → Stats counts paired exit as 1 event
+- 2 rows in Trade History → row count = leg count
+- "W: 1" → Stats counter increments per paired-exit, not per leg
+- "avg W: $8.36" → sum / wins = 8.36 / 1 (paired count) instead of
+  8.36 / 2 (leg count)
+- "buys: 0" → entry counter NEVER fires for paired entries (possibly
+  gated on a fill-event path that paired-entries take a different
+  branch through)
+- "pf: 0.00" → profit factor formula divides by gross_loss; when
+  gross_loss = 0, math returns 0 instead of inf-sentinel
+
+Both are metric-drift bugs per the readiness skill's drift audit
+category #3 (metric drift — two formulas in two places that should
+agree). Fix pattern is the same for both: extract to one helper
+that all panels call; consistency by construction.
+
+### Where to look
+
+```
+grep -nE "fee_rate|fee_rate_taker" Backtest/ GUI/ CoreFrameworks/OrderManager.hpp
+grep -nE "buys.*\+\+|exits.*\+\+|wins.*\+\+|pf\s*=" GUI/
+```
+
+Likely sites for fees:
+- `GUI/DashboardPanels.hpp` — per-core P&L panel fee column
+- `GUI/TradeHistoryPanel.hpp` (or similar) — trade row fee column
+- `CoreFrameworks/OrderManager.hpp` `OMS_HandleFill` — accumulates per-core
+  fees from each fill event
+- Force-close path (whichever exit handler runs when user manually closes)
+
+Likely sites for trade-count drift:
+- `GUI/DashboardPanels.hpp` Stats sub-panel — buys / exits / W / L
+  counters; pf and avg-W/L formulas
+- Wherever paired entries are emitted; check if both leg-A AND leg-B
+  fire the buy counter, or only one. The "buys: 0" smell suggests the
+  counter increments on a code path paired entries don't take.
+
+Also worth checking: does `OMS_HandleFill` count the entry fill fee
+correctly when the entry was a maker (lower rate) but the exit is
+taker? A maker entry + taker exit asymmetry could also explain the
+1.5× ratio if one path assumes symmetric and the other does not.
+
+### Fix scope
+
+```cpp
+// MemHeaders/FeeMath.hpp (NEW, ~30 lines)
+namespace tt {
+    // Returns the fee for a single fill at the given notional, using
+    // the appropriate rate based on the fill's maker/taker classification.
+    inline FPN<F> Fee_ForFill(const ControllerConfig<F>& cfg,
+                                FPN<F> notional, int is_maker);
+
+    // Returns the round-trip fee estimate for a trade entry+exit pair.
+    // For Trade History display.
+    inline FPN<F> Fee_ForRoundTrip(const ControllerConfig<F>& cfg,
+                                    FPN<F> entry_notional,
+                                    FPN<F> exit_notional);
+}
+
+// GUI/StatsAccounting.hpp (NEW, ~40 lines)
+// Single struct + helpers for the Stats panel; both DashboardPanels
+// and TradeHistoryPanel read from this struct so counts agree by
+// construction.
+namespace tt {
+    struct PanelStats {
+        int   buys, buy_fills;     // count by leg, not by paired event
+        int   exits, exit_fills;
+        int   wins, losses;
+        double sum_win, sum_loss;
+        // gross_profit / gross_loss for pf; sentinel for inf
+    };
+    void StatsAccounting_Reset(PanelStats& s);
+    void StatsAccounting_OnEntry(PanelStats& s, int n_legs);
+    void StatsAccounting_OnExit(PanelStats& s, int n_legs, double pnl);
+    double StatsAccounting_AvgWin(const PanelStats& s);    // sum_win / wins
+    double StatsAccounting_AvgLoss(const PanelStats& s);
+    double StatsAccounting_ProfitFactor(const PanelStats& s); // returns +inf
+                                                              // sentinel when
+                                                              // sum_loss = 0
+}
+```
+
+Both panels + OMS path call these helpers. Single source of truth for
+each numeric. Counter increments take `n_legs` so paired and single-leg
+events both report leg-count semantics consistently.
+
+For pf display: render `+inf` as `"—"` or `"∞"` rather than `0.00`.
+
+### Acceptance
+
+- Per-core "Fees" total exactly equals sum of Trade History fee
+  column for any test session
+- Stats panel buys + exits counts match Trade History row count
+  (both reported by leg)
+- Stats panel pf shows `"—"` (or chosen sentinel) when no losses,
+  not `0.00`
+- avg W = sum_win / wins (per-leg), agrees with Trade History
+  averaged manually
+- Test in `controller_test.cpp`: simulate a paired entry+exit through
+  `OMS_HandleFill` + StatsAccounting helpers; assert per-core counter,
+  Trade History sum, and Stats panel each report identical fee total
+  and consistent leg counts
+
+### Risk
+
+Low. Display-only change; no engine behavior change. The actual fees
+charged by the exchange are unchanged — this only fixes the display
+to honestly reflect what was paid.
+
+### Ordering within v5.3.0
+
+Phase D ships AFTER Phase A (held-out training) and BEFORE Phase C
+(auto-stamp + ML QOL), since the trade history panel will be touched
+by Phase C's "View Stamps" panel work and Phase D's fee column fix
+is right next to it. Combining touches into one panel-edit pass is
+efficient.
+
+### Effort
+
+~1-1.5h. Extract helper, find + replace all fee computations, add
+tests, manual verify in paper mode.
+
 ## Drift audit (train ↔ serve, write ↔ read)
 
 Walked each phase asking: does this introduce a divergence between what

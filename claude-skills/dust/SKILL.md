@@ -254,3 +254,58 @@ If this proves useful:
 - `/dust diff <commitA>..<commitB>` — only audit code added in that range
 - `/dust regression` — audit invariants for missing tests, propose tests
 - `/dust touched <file>` — audit just the file currently being edited
+
+## v5.4.0 additions — orphan & dead-write detection
+
+Added after the v5.4.0 strategy-restoration postmortem.
+
+### Scan 8 — Dead-write detection (Position fields, GateParameters fields)
+
+For each struct field that gets written outside of init/free, verify
+there is at least one HOT-PATH or DISPLAY read of the field. Writes
+with no matching read are candidate dead-writes.
+
+**Pattern:** find `field = ...` and `field.x = ...` writes, then check
+if `field` is read in any of:
+- `CoreFrameworks/ExecutionCore.hpp` (hot path)
+- `CoreFrameworks/ShardedSnapshot.hpp` (display/snapshot)
+- `DataStream/EngineTUI.hpp` (legacy display)
+- `GUI/*` panels (live display)
+
+If a field is only read by tests or not at all, flag as dead-write.
+
+**Specific high-risk fields to scan first** (these caused v5.4.0
+postmortem F4):
+- `Position::stop_loss_price`
+- `Position::take_profit_price`
+- `Position::original_tp`
+
+**Why this matters:** legacy strategy `_ExitAdjust` functions write
+to `pos->stop_loss_price`, but the sharded hot path reads
+`core->live_sl + cached_params.ratchet_sl`. Both paths compile, both
+look reasonable. Dead-write detection makes the divergence visible.
+
+### Scan 9 — Orphaned function detection (active-build calls only)
+
+For each `Pattern_FunctionName` definition in `Strategies/`,
+`CoreFrameworks/`, `ML_Headers/`: grep call sites in active-build
+source files (filter out tests + experiments + commented-out code).
+Functions with zero call sites in any active build are candidate
+dead code.
+
+**Workflow:**
+
+1. Get function definitions via `tools/gen_code_map.sh` output (or
+   grep `^inline.*<name>(`).
+2. For each, run `grep -rn "\\b<name>\\s*(" engine_files/` excluding
+   tests/, experiments/, *_archived/.
+3. Zero-hit functions go on the orphan list.
+
+**Specific high-risk pattern from v5.4.0:** strategy lifecycle
+functions (`_Init`, `_Adapt`, `_BuySignal`, `_ExitAdjust`,
+`_BuildParameters`) for each of the 5 strategies. The pre-v5.4 audit
+found 19 orphans plus 1 dead-defined function via this exact pattern.
+
+A complementary tool exists: `tools/calls_graph_diff.sh` for the
+"called in legacy but not sharded" diff. The dust scan is broader
+("called nowhere in any path") and runs during routine cleanup.

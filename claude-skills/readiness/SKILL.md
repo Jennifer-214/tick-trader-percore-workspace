@@ -449,3 +449,77 @@ Match `DOCS/CLAUDE_REVIEW.md`:
   `plans/archived/`) at once
 - `/readiness simulate <plan>` — rough scope estimate by category,
   no actual greps (faster, less rigorous)
+
+## v5.4.0 additions — architectural sprint guards
+
+These three checks were added after the v5.4.0 strategy-restoration
+postmortem. The bug class they protect against: an architectural
+sprint (sharding, decoupling, extraction) that wires the new entry
+points but silently orphans existing function calls. Symptom is
+"feature still appears to work on glance, but adaptive/transitional
+logic is dead".
+
+### Check 11 — Architectural sprint detection
+
+Trigger keywords in plan: `split`, `decouple`, `extract`, `centralize`,
+`per-core`, `shard`, `port-from-legacy`, `replace X with Y`, `extract
+helpers`. When any present, require the plan to:
+
+- Enumerate every public function of the modules being changed.
+- For each function: WHERE is it called pre-sprint? WHERE will it be
+  called post-sprint? If "nowhere," the plan must say so explicitly
+  with a reason ("legacy path being removed in same sprint" or
+  "deferred to phase N").
+- Run `tools/calls_graph_diff.sh` against current vs proposed state.
+  If the script flags orphans the plan didn't account for, that's a
+  GAP — block ship until the plan addresses each one.
+
+**Why this matters:** v5.4.0 postmortem F7-F10. The 4.0 sharding port
+moved entry points to `Strategy_BuildParameters` but never wired the
+strategy `_Init`, `_Adapt`, `_BuySignal`, `_ExitAdjust` lifecycle
+calls. All five strategies had this — every adaptive behavior was
+silently dead. `calls_graph_diff.sh` catches it at plan time.
+
+### Check 12 — Display ↔ execution invariant
+
+Trigger keywords: `Position`, `take_profit_price`, `stop_loss_price`,
+`live_tp`, `live_sl`, `cached_params`, `pending_params`, GUI panel
+names. When present, require that GUI display reads the SAME field
+the hot path reads.
+
+**Specific failure mode:** GUI reads `pos->stop_loss_price`, hot path
+reads `core->live_sl + cached_params.ratchet_sl`. Both compile, both
+look reasonable in isolation, but they diverge — display shows a
+number that has nothing to do with the real exit trigger.
+
+**Verification:** for each Position field touched by the plan,
+grep both:
+- Hot path callsites (under `CoreFrameworks/ExecutionCore.hpp`,
+  `BG_Evaluate`, `SG_Evaluate`)
+- Display callsites (under `CoreFrameworks/ShardedSnapshot.hpp`,
+  `DataStream/EngineTUI.hpp`, `GUI/`)
+
+If the same display value comes from a different source struct than
+the hot-path execution decision, flag as INVARIANT BREACH — needs
+explicit reconciliation in the plan.
+
+### Check 13 — Strategy lifecycle completeness
+
+Trigger keywords: `STRATEGY_*`, `MeanReversion`, `Momentum`,
+`SimpleDip`, `EmaCross`, `MLStrategy`, `_Init`, `_Adapt`,
+`_BuildParameters`, `_ExitAdjust`, `Regime_AdjustPositions`. When
+plan touches any strategy, require all FIVE lifecycle stages to be
+accounted for:
+
+1. **Init** — per-core state allocation
+2. **Adapt** — per-cadence state update
+3. **BuildParameters** — gate parameter emit (hot path's contract)
+4. **ExitAdjust** — per-cadence trailing logic for open positions
+5. **RegimeAdjust** — on-transition retune
+
+Stages can be marked "skipped — reason" (e.g. SimpleDip has no
+Adapt because no regression feedback) but never silently absent.
+
+**Verification:** read `DOCS/STRATEGY_INTERFACE.md` for the canonical
+list. For each strategy the plan touches, check that all 5 stages
+are either being changed or are explicitly noted as skipped.

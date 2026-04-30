@@ -132,7 +132,7 @@ Allocate per-core strategy state struct unions. Add init dispatch.
 NO behavior change yet — strategies still run stateless `_BuildParameters`
 because we haven't wired `_Adapt` yet.
 
-### 1.1 — Add strategy state to `CoreContext`
+### 1.1 — Add strategy state to `CoreContext` + bump snapshot version
 
 In `ControllerEventLoop.hpp`, extend `CoreContext<F>`:
 
@@ -149,6 +149,47 @@ struct CoreContext {
 
 Use `void*` to avoid bringing all strategy headers into ControllerEventLoop.
 Concrete typing happens at the call site through the dispatcher.
+
+**Snapshot version bump (load-bearing):**
+
+`CoreContext` shape change ⇒ `SHARDED_SNAPSHOT_VERSION` MUST bump from
+3 → 4. In `CoreFrameworks/ShardedSnapshotPersist.hpp`:
+
+```cpp
+#define SHARDED_SNAPSHOT_VERSION 4u  // was 3u
+```
+
+Persist/load policy: `strategy_state` is a pointer — NOT serialized
+directly. Snapshot v4 persists `strategy_state_kind` only. On load,
+the load path calls `Strategy_InitPerCore(slot, strategy_state_kind)`
+to reallocate state from scratch matching the persisted kind. Strategy
+state is treated as session-only (matches the deferred-to-v5.5.0 note
+under "What's NOT in this plan"). Operator who restarts during open
+positions gets:
+- Position state restored (entry_price, qty, TP/SL — already persisted)
+- Strategy state freshly initialized (no adaptation history carried over)
+
+This is acceptable for v5.4 since strategy state is meant to converge
+within a few cadences anyway. v5.5.0 ships proper persistence.
+
+**Old snapshot (v3) handling:** existing load path already rejects
+on version mismatch (`version != SHARDED_SNAPSHOT_VERSION` → fail).
+With the bump, v3 snapshots fail loudly with "snapshot version 3,
+expected 4 — incompatible." Acceptable — v3 snapshots are paper-mode
+artifacts; live-mode users start fresh post-upgrade anyway.
+
+**CHANGELOG.md entry:** add to the v5.4.0 row:
+> BREAKING — SHARDED_SNAPSHOT_VERSION 3 → 4. Pre-v5.4 snapshots are
+> rejected on load with a clear error. Operators with live-trading
+> snapshots must close positions on the engine before upgrading,
+> or accept that paper-mode session state is reset.
+
+**Test:** new test in `controller_test.cpp` Phase 1.4 group:
+- Write a v3 snapshot (synthetic — just the version int + minimal payload)
+- Attempt to load with v5.4 code
+- Assert load returns failure with the expected error message
+- Then write a v4 snapshot, load, verify Strategy_InitPerCore was
+  invoked for each persisted core's strategy_state_kind
 
 ### 1.2 — `Strategy_InitPerCore(slot, strategy_id)` dispatcher
 
@@ -214,6 +255,23 @@ ratchet_sl. Validate before moving to the next.
 Order chosen because SimpleDip is the simplest and the reference impl;
 MR/Momentum/EmaCross/ML have progressively more complex state.
 
+**Per-strategy work breakdown** (each phase, except SimpleDip which has
+no `_ExitAdjust`):
+
+| sub-task | typical effort |
+|---|---|
+| Modify `_BuildParameters` signature to take state + read state | 0.5 h |
+| Wire `_Adapt` per-cadence in `EventLoop_RebuildOneCore` (dispatcher) | 0.5 h |
+| Rewrite `_ExitAdjust` to write `pending_params.ratchet_sl` via shared helper, apply fee-floor cap | 1.5 h |
+| Wire `_ExitAdjust` per-cadence in `EventLoop_RebuildOneCore` for cores with open positions | 0.25 h |
+| Add behavioral test (effective_sl trails when expected; see Phase 5 design for harness) | 1 h |
+| Backtest comparison vs pre-fix (run on known dataset, eyeball trade rate / P&L distribution) | 1 h |
+| Rebuild + run all tests, debug any unexpected failures | 0.25–0.75 h |
+| **per-strategy total** | **~5 h** (SimpleDip: ~3 h, no _ExitAdjust) |
+
+**Phase 2 revised total:** 21 h (was 14 h — original underestimated
+the `_ExitAdjust` rewrite and the per-strategy validation cost).
+
 ### 2.1 — SimpleDip wiring
 
 **Steps:**
@@ -236,7 +294,8 @@ MR/Momentum/EmaCross/ML have progressively more complex state.
 
 **Pre-tag:** `pre-v5.4.0-phase2.1-simpledip`.
 
-**Effort:** ~2h.
+**Effort:** ~3 h (no `_ExitAdjust`; reference implementation establishes
+the dispatcher + state-allocation patterns the next four phases reuse).
 
 ### 2.2 — MeanReversion wiring
 
@@ -260,7 +319,8 @@ Same shape as 2.1 plus `_ExitAdjust` rewrite:
 
 **Pre-tag:** `pre-v5.4.0-phase2.2-mr`.
 
-**Effort:** ~3h.
+**Effort:** ~5 h (full strategy template: state + adapt + build + exit-adjust
+rewrite to ratchet_sl + behavioral test + backtest comparison).
 
 ### 2.3 — Momentum wiring
 
@@ -281,7 +341,9 @@ Pick (a) for consistency.
 
 **Pre-tag:** `pre-v5.4.0-phase2.3-momentum`.
 
-**Effort:** ~3h.
+**Effort:** ~5 h (full template + extra care on the falling-knife branch's
+fee-floor cap test — assertion: even with momentum_sl_mult tight, the
+written ratchet_sl never inverts above entry × (1 - 3 × fee_rate)).
 
 ### 2.4 — EmaCross wiring
 
@@ -290,7 +352,8 @@ trigger" so fewer surprises expected.
 
 **Pre-tag:** `pre-v5.4.0-phase2.4-emacross`.
 
-**Effort:** ~2h.
+**Effort:** ~4 h (full template; EmaCross has the simplest exit-adjust
+of the four trailing strategies).
 
 ### 2.5 — MLStrategy wiring
 
@@ -307,9 +370,12 @@ MLStrategyState. After this phase, MLStrategy's state lives in
 
 **Pre-tag:** `pre-v5.4.0-phase2.5-ml`.
 
-**Effort:** ~4h (ML is more complex).
+**Effort:** ~6 h (full template + ML-specific ConfidenceScorer state
+integration + IC tracking validation + freshness decay sanity check).
 
-**Phase 2 total:** ~14h. Spread across multiple sessions probably.
+**Phase 2 total:** ~21 h (revised from initial 14 h estimate after
+readiness pass identified missing _ExitAdjust rewrite + signature
+change costs). Spread across multiple sessions.
 
 ## Phase 3 — Regime restoration
 
@@ -330,13 +396,61 @@ centralize regime detection (Phase C.6 of the audit plan).
 ### 3.2 — Centralize regime detection
 
 `state->cores[c].regime_state` becomes `state->shared_regime_state`
-(single instance, owned by producer thread or one designated core).
-`Regime_ComputeSignals` + `Regime_Classify` runs once per cadence;
-the result is replicated to each engine's CoreContext (mirror the
-ema_price replication pattern from v5.1.0).
+(single instance). The detailed synchronization design:
 
-**Risk:** parity_harness must remain byte-identical. Run it before
-and after.
+**Writer:** producer thread is sole writer of `shared_regime_state`.
+Producer already runs `Regime_ComputeSignals` + `Regime_Classify` for
+its own purposes (warmup, kill-switch); reuse that compute path.
+Centralized arch (legacy) has no producer — for that arch, the
+controller core takes the writer role (same single-writer pattern).
+
+**Replication:** mirror `EventLoop_UpdateEmaPriceAllCores` (v5.1.0 pattern).
+After producer's classify, copy two ints to each engine's CoreContext:
+```cpp
+struct CoreContext {
+    // ... existing ...
+    int  current_regime;   // replicated from producer (was state->cores[c].regime_state.current_regime)
+    int  proposed_regime;  // replicated for hysteresis visibility (read-only on per-core thread)
+};
+```
+Two int copies per engine per tick = trivial cost (~50ns total for 16
+engines, vs the 4× full Regime_ComputeSignals + Regime_Classify the
+per-core arch currently does at ~10µs each).
+
+**Reader:** per-core slow-path thread reads `ctx.current_regime`
+directly. No synchronization needed — int load is atomic on x86, and
+the value can be stale by at most one tick (eventually consistent,
+which is fine for regime).
+
+**Hysteresis state:** lives in the producer's `shared_regime_state`,
+not replicated. Per-core threads only see the post-hysteresis
+`current_regime` value. This is the correct semantic — hysteresis is
+a market-level smoothing, not a per-engine concern.
+
+**Transition detection:** per-core thread compares its locally cached
+`last_seen_regime` (a CoreContext field, single-writer by this core)
+against `ctx.current_regime` each cadence. Mismatch = transition.
+Transition triggers `Regime_AdjustPositions` (Phase 3.1).
+
+**Removed code:** `state->cores[c].regime_state` field (per-core).
+The `Regime_ComputeSignals` + `Regime_Classify` calls in
+`EventLoop_RebuildOneCore` go away — replaced by the simple read of
+`ctx.current_regime`. Saves ~10µs per cadence per core; recoups some
+of the 1000µs slow-path tail.
+
+**Risk:** parity_harness must remain byte-identical. Run BEFORE the
+centralization to capture baseline (legacy ↔ sharded match), AND
+AFTER. If centralized regime introduces tick-offset drift in regime
+transitions (hysteresis state evolving on producer cadence vs per-core
+cadence), the harness should catch it via the new trade-trajectory
+parity check (Phase 5.1).
+
+**Specific test for regime parity** (added to Phase 5.1):
+- Run identical input through legacy single_core path, sharded
+  centralized-regime path
+- Capture every regime transition (tick number, from→to)
+- Cross-reference: same tick numbers, same transitions, in both runs
+- If timestamps differ by even 1 tick, FAIL the test — that's drift
 
 ### 3.3 — TP ratchet channel
 
@@ -393,14 +507,89 @@ the harness fails before merge.
 For each strategy: synthetic input that SHOULD produce a buy → assert
 gate fires + parameters sensible. Catches dispatcher regressions.
 
-### 5.3 — Behavioral execution-layer test (Type A from earlier discussion)
+### 5.3 — Behavioral execution-layer test (Type A)
 
 For each strategy:
-- Open position
+- Open position via OMS_HandleFill (synthetic fill at known price)
 - Run slow-path adapt + trailing for N cycles with rising price
-- Assert: hot path's `effective_sl` HAS CHANGED upward
-- This test currently fails (writes are dead) → wiring verifies fix
-- Permanent gate against this regression class
+- After each cadence, inspect `state.cores[slot].cached_params.ratchet_sl`
+  AND `state.cores[slot].core->live_sl` (read directly from the
+  ExecutionCore via test-friendly accessor)
+- Assert: `effective_sl = max(live_sl, ratchet_sl)` HAS CHANGED upward
+  (with optional fee-floor cap respected)
+
+**Test harness design** (chosen approach: read core state directly):
+
+The test harness pattern already used in `controller_test.cpp` keeps a
+local `EventLoopState<F>` + `OrderManagerState<F>` + `ExecutionCore<F>`
+on the test stack. Tests can already read `state.cores[slot].*` fields
+directly. Extending this to read `core->cached_params.ratchet_sl` and
+`core->live_sl` requires zero new infrastructure — just one helper:
+
+```cpp
+// In tests/controller_test.cpp test fixture:
+template <unsigned F>
+inline FPN<F> get_effective_sl(const ExecutionCore<F>& core, uint8_t active) {
+    FPN<F> sl = active
+        ? core.live_sl
+        : core.cached_params.sg_stop_loss_price;
+    return FPN_Max(sl, core.cached_params.ratchet_sl);
+}
+```
+
+This mirrors ExecutionCore.hpp:268+322 logic exactly. Test reads it
+after each cadence to assert trailing behavior.
+
+**Worked test case for MeanReversion (template for others):**
+
+```cpp
+{
+    // Setup
+    EventLoopState<64> state;
+    EventLoopState_Init(&state, &cfg);
+    OrderManagerState<64> oms;
+    ExecutionCore<64> core;
+    state.cores[0].core = &core;
+    Strategy_InitPerCore(&state, 0, STRATEGY_MEAN_REVERSION);
+
+    // Open position (synthetic fill at $100, qty=1, TP=$103, SL=$97)
+    // ... boilerplate matching existing controller_test patterns ...
+
+    FPN<64> sl_t0 = get_effective_sl(core, /*active=*/1);
+    check("MR initial effective_sl ≈ entry_price - sl_amount",
+          FPN_ToDouble(sl_t0) > 96.0 && FPN_ToDouble(sl_t0) < 98.0);
+
+    // Run 5 cadences with rising price
+    for (int t = 0; t < 5; ++t) {
+        FPN<64> price = FPN_FromDouble<64>(100.0 + 0.5 * (t+1));  // $100.5 ... $102.5
+        EventLoop_UpdateRollingStateOneCore(&state, 0, price, ...);
+        EventLoop_RebuildOneCore(&state, 0, ...);
+        // Strategy._Adapt + _ExitAdjust ran inside RebuildOneCore;
+        // ratchet_sl pushed via seqlock; ExecutionCore_SetParameters
+        // already happened (state.cores[0].dirty consumed)
+    }
+
+    FPN<64> sl_t5 = get_effective_sl(core, /*active=*/1);
+    check("MR effective_sl trails upward after 5 cadences with rising price",
+          FPN_ToDouble(sl_t5) > FPN_ToDouble(sl_t0));
+    check("MR effective_sl respects fee-floor cap (never above entry × (1 - 3 × fee_rate))",
+          FPN_ToDouble(sl_t5) <= 100.0 * (1.0 - 3.0 * 0.001));
+}
+```
+
+**Why this works without new infrastructure:** existing tests already
+construct `ExecutionCore<64>` on stack and call slow-path helpers
+directly. Reading `core->cached_params.ratchet_sl` post-Setparameters
+is just a struct field read — same pattern as existing assertions
+checking `state.cores[c].core_realized` etc.
+
+**Effort impact on Phase 5.3:** ~30 min for the helper + ~30 min per
+strategy for the test case = total ~3 h for all 5 strategies (was
+implicitly budgeted in Phase 5's 6 h block).
+
+This test currently FAILS (strategy `_ExitAdjust` writes are dead — no
+ratchet update). After Phase 2 wiring + Phase 5.3 test, it PASSES.
+Permanent gate against this regression class.
 
 ### 5.4 — Calls-graph-diff CI integration
 
@@ -489,28 +678,34 @@ Tag `v5.4.0`. Push.
 
 ## Total effort estimate
 
+Revised after readiness pass identified gaps in Phase 2 sub-tasks
+and Phase 1 snapshot-version work:
+
 | Phase | Effort | Cumulative |
 |---|---|---|
-| 0 — Foundation | 3h | 3h |
-| 1 — Infra | 2h | 5h |
-| 2.1 — SimpleDip | 2h | 7h |
-| 2.2 — MR | 3h | 10h |
-| 2.3 — Momentum | 3h | 13h |
-| 2.4 — EmaCross | 2h | 15h |
-| 2.5 — ML | 4h | 19h |
-| 3 — Regime | 5h | 24h |
-| 4 — Display | 2h | 26h |
-| 5 — Tests | 6h | 32h |
-| 6 — Prevention | 5h | 37h |
-| 7 — Polish | 1h | 38h |
+| 0 — Foundation (HealthLog, contract, calls-graph-diff, INVARIANTS, postmortem) | 3 h | 3 h |
+| 1 — Infra (state alloc + dispatcher + SHARDED_SNAPSHOT_VERSION 3→4 + load-rejection test) | 2.5 h | 5.5 h |
+| 2.1 — SimpleDip (no _ExitAdjust; reference impl) | 3 h | 8.5 h |
+| 2.2 — MR (full template) | 5 h | 13.5 h |
+| 2.3 — Momentum (full template + falling-knife fee-floor cap test) | 5 h | 18.5 h |
+| 2.4 — EmaCross (full template, simplest exit logic) | 4 h | 22.5 h |
+| 2.5 — ML (full template + ConfidenceScorer integration) | 6 h | 28.5 h |
+| 3 — Regime (Regime_AdjustPositions wiring + centralize + TP ratchet channel) | 6 h | 34.5 h |
+| 4 — Display ↔ execution alignment | 2 h | 36.5 h |
+| 5 — Tests (parity_harness extension + smoke fires + behavioral effective_sl + calls-graph CI) | 6 h | 42.5 h |
+| 6 — Prevention (readiness skill update, dust scan, code-map call coverage, contract enforcement) | 5 h | 47.5 h |
+| 7 — Polish (postmortem update + master tag) | 1 h | 48.5 h |
 
-**~38 hours total.** Realistic spread: ~2 weeks of focused work, or
-4-6 weeks at 1-2h/day. NOT a single-session ship.
+**~48-49 hours total.** Realistic spread: ~2 weeks of focused work, or
+4-6 weeks at 1-2h/day. NOT a single-session ship. The fastest path to
+"strategies aren't badly broken anymore" is Phases 0 + 1 + 2.1 (~9 h,
+gets SimpleDip restored as the proof-of-concept) — after that the per-
+strategy work is mostly mechanical replication.
 
 ## Order of attack — what to do first
 
 The quickest path to "strategies aren't badly broken anymore" is
-Phases 0 + 1 + 2.1 (SimpleDip). That's ~7 hours and proves the
+Phases 0 + 1 + 2.1 (SimpleDip). That's ~9 hours and proves the
 infrastructure works on the simplest strategy. After SimpleDip is
 restored and validated, the rest is mechanical replication.
 
@@ -519,17 +714,20 @@ Don't try to wire all five strategies at once. The validation step
 strategy at a time means one set of behavior changes to evaluate.
 
 ```
-Day 1 (focused session):  Phases 0 + 1 + 2.1 (SimpleDip) — ~7h
-Day 2:                    Phase 2.2 (MR) — 3h
-Day 3:                    Phase 2.3 (Momentum) — 3h
-Day 4:                    Phase 2.4 (EmaCross) — 2h
-Day 5:                    Phase 2.5 (ML) — 4h
-Day 6-7:                  Phase 3 (Regime) — 5h
-Day 8:                    Phase 4 (Display) — 2h
-Days 9-10:                Phase 5 (Tests) — 6h
-Days 11-12:               Phase 6 (Prevention) — 5h
-Day 13:                   Phase 7 (Polish + ship) — 1h
+Day 1 (focused session):  Phases 0 + 1 + 2.1 (SimpleDip) — ~9 h
+Day 2:                    Phase 2.2 (MR) — 5 h
+Day 3:                    Phase 2.3 (Momentum) — 5 h
+Day 4:                    Phase 2.4 (EmaCross) — 4 h
+Day 5:                    Phase 2.5 (ML) — 6 h
+Days 6-7:                 Phase 3 (Regime) — 6 h
+Day 8:                    Phase 4 (Display) — 2 h
+Days 9-10:                Phase 5 (Tests) — 6 h
+Days 11-12:               Phase 6 (Prevention) — 5 h
+Day 13:                   Phase 7 (Polish + ship) — 1 h
 ```
+
+Each "day" is a 2-6h focused block, not a calendar day. Calendar-wise
+this could span 2-6 weeks depending on cadence.
 
 ## Future-thinking infrastructure (the part that matters most)
 
@@ -591,6 +789,40 @@ Replace TT_REGIME_DEBUG / TT_SL_DEBUG env vars with always-available
 health log categories. Operator enables `cfg.health_log_path` and gets
 structured output for any future debugging session. No code changes,
 no rebuilds — flip a config and tail.
+
+## Rollback story (consolidated)
+
+Every phase has its own pre-tag. Granular rollback at any point if a
+phase introduces unexpected behavior. The pre-tags pushed to origin in
+this session and the ones planned for v5.4.0:
+
+| Tag | What it captures | Status |
+|---|---|---|
+| `pre-v5.4.0-investigation` | clean state before any v5.4.0 work | **PUSHED 2026-04-29** |
+| `pre-v5.4.0-phase0` | before HealthLog wired + contract doc + INVARIANTS | planned |
+| `pre-v5.4.0-phase1` | before strategy state added to CoreContext + SHARDED_SNAPSHOT_VERSION bump | planned |
+| `pre-v5.4.0-phase2.1-simpledip` | before SimpleDip wiring | planned |
+| `pre-v5.4.0-phase2.2-mr` | before MeanReversion wiring | planned |
+| `pre-v5.4.0-phase2.3-momentum` | before Momentum wiring (falling-knife concern) | planned |
+| `pre-v5.4.0-phase2.4-emacross` | before EmaCross wiring | planned |
+| `pre-v5.4.0-phase2.5-ml` | before MLStrategy wiring | planned |
+| `pre-v5.4.0-phase3-regime` | before Regime_AdjustPositions wiring + centralization | planned |
+| `pre-v5.4.0-phase4-display` | before GUI/execution alignment | planned |
+| `pre-v5.4.0-phase5-tests` | before test infrastructure additions | planned |
+| `pre-v5.4.0-phase6-prevention` | before readiness/dust skill updates | planned |
+| `v5.4.0` | final ship | planned |
+
+**13 rollback points total.** Reverting from any phase:
+1. `git reset --hard <pre-tag>`
+2. Engine continues to function as it did before that phase
+3. Each phase's behavior is independent of subsequent phases
+
+**Operational rollback (no code change needed):** if any sharded-arch
+behavior is worse after a phase ships, set `engine_arch = centralized`
+in `engine.cfg` to fall back to the legacy single_core path entirely.
+That path is unaffected by Phase 1-3 changes (CoreContext additions
+don't touch PortfolioController). The centralized escape hatch is the
+ultimate "if all else fails" rollback for live deploys.
 
 ## Risks + mitigations
 

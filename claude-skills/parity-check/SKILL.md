@@ -247,6 +247,56 @@ NOT stamp-bound (potential gaps):
 - Each failure mode has rate-limited CRITICAL log
   (Health_LogCriticalRateLimited)
 
+### Section L — Production-caller field-population audit (v5.9.5b addition)
+
+Verifying that a stamp body / serialization struct contains a field
+is NOT the same as verifying every production caller POPULATES that
+field. v5.9.5b found that v5.9.2b + v5.9.3a + v5.9.4a added 10
+inference cfg fields to `StampInferenceCfgInputs`, with full verifier
+coverage and snapshot tests for the function — but the in-process
+emit at `Backtest_RunFullValidation` (the suite's Run Full Validation
+button) passed `nullptr` for `inf`. Result: every suite-emitted
+stamp lacked all 10 fields' protection. Tests passed because they
+called `stamp_write_for_model` directly with synthetic `inf`, not
+through the production caller.
+
+Same shape: a CLI tool gets a `--scaler-sha256=` flag (v5.9.3b)
+and the GUI Run Model worker logs the SHA — but no caller ever
+passes the SHA into `stamp_write_for_model`'s `scaler_sha256_hex`
+field for the auto-stamp path.
+
+For each newly-added stamp body / serialization field, /parity-check
+must walk:
+
+1. **Field defined in struct** — yes / no
+2. **Function under test populates it round-trip** — yes / no
+3. **EVERY production caller populates it** — yes / no (the gap class)
+4. **CLI tool exposes it (if applicable)** — yes / no
+5. **GUI suite exposes it via cfg/UI input** — yes / no
+
+Items 3+ are the silent-failure-class. Severity classification:
+
+- **CRITICAL** if the field's protection is silently disabled in
+  production (e.g. cfg-binding fields not emitted = stamps don't
+  catch cfg drift)
+- **HIGH** if the field is partially populated (some callers populate,
+  others don't = inconsistent stamps in same operator workflow)
+- **MEDIUM** if the field exists but no production path consumes it
+  yet (dead schema)
+
+Heuristic for finding the gap quickly:
+
+```bash
+# Does any non-test code construct StampInferenceCfgInputs?
+grep -rn "StampInferenceCfgInputs\s\+[a-z_]\+\s*=" \
+   --include="*.hpp" --include="*.cpp" \
+   $REPO | grep -v tests/
+```
+
+If the answer is "no production callers" but the verifier reads the
+fields, the protection is silently disabled. Same shape works for
+any other input-aggregator struct.
+
 ### Section K — Build-warning audit (v5.9.5a addition)
 
 Source-read audits miss bugs the compiler can statically detect.

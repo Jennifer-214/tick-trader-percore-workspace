@@ -599,3 +599,96 @@ This check fires in addition to Check 11 (architectural sprint) and
 Check 13 (strategy lifecycle completeness). Together they cover the
 v5.4.0 silent-orphan regression class plus the v5.8 X-macro variant
 selection class.
+
+## v5.9 ML hardening additions — Checks 15-17
+
+These three checks were added after the v5.9 ML Hardening sprint
+postmortem. The bug class they protect against: silent train-serve
+drift through additions to the ML pipeline that LOOK forward-compat
+but actually require a specific change-management discipline (snapshot
+test update, retrain, stamp-binding refresh).
+
+### Check 15 — ML feature change requires parity regression update
+
+Trigger keywords in plan: `FOREACH_FEATURE`, `ML_Compute_`,
+`Regime_ComputeSignals`, `RollingStats_Push`, `feature_matrix`,
+`Features_PackAll`. When any present, require the plan to:
+
+- Identify which v5.9.2a snapshot test will fail post-change.
+  Snapshot tests live at `tests/controller_test.cpp` v5.9.2a
+  EXTENSIBILITY block. Search for "Sub-area 1a" / "Sub-area 1b" /
+  "Sub-area 3" depending on what's changing (features, signals,
+  labels).
+- For each test that will fail, plan must specify EITHER:
+  - **Bytewise-equivalent refactor** — change is provably
+    output-identical; no snapshot update needed (verify by running
+    `./build.sh test` and confirming snapshot tests still pass).
+  - **Intentional semantic shift** — recorded snapshot values
+    will be updated AND the relevant `FOREACH_FEATURE` row's
+    `version` field will be bumped. CHANGELOG must list the bump
+    with retrain requirement.
+- For pure-additive changes (new features), `FEATURE_REGISTRY_HASH`
+  flips automatically (X-macro adds a row). Plan must specify the
+  retrain trigger.
+
+**Why this matters:** v5.9.2a snapshot test discipline. Pre-v5.9.2a,
+function-body changes silently passed `FEATURE_REGISTRY_HASH`
+verification (no X-macro change → no hash flip). Models loaded fine,
+predictions silently drifted. Snapshot tests catch this at PR time;
+this check catches it at plan time.
+
+### Check 16 — New cfg field with stamp-bearing → recipe doc update
+
+Trigger keywords: cfg field that affects ML inference. Specifically:
+fields stamped via `StampInferenceCfgInputs` in v5.9.2b
+(`confidence_threshold_scale`, `barrier_gate_enabled`,
+`confidence_hard_block_threshold`, `held_out_fraction`,
+`confidence_freshness_tau`, `bandit_blend_ratio`, `fee_rate_*`,
+`feature_scaler_present`, `scaler_sha256`).
+
+When plan adds a new such field:
+
+- Verify it lands in `StampInferenceCfgInputs` struct.
+- Verify `stamp_write_for_model` emits when has_* flag set.
+- Verify `verify_model_stamp` parses + populates `ModelStampResult`.
+- Verify `tools/stamp_model.sh` accepts a matching `--<field>` arg.
+- Verify v5.8.8-style round-trip test extends.
+- Verify `DOCS/ML_TEST_RECIPES.md` recipe entry updated with the
+  new flag (operators need to know what to pass to `stamp_model.sh`).
+- Verify `DOCS/PARITY_LIFECYCLE.md` row updated.
+
+If any of these is missing → GAP, plan must address before coding.
+
+### Check 17 — Model-load path changes → strict-mode integration test
+
+Trigger keywords: `CoreModelZoo`, `Model_Load`, `verify_model_stamp`,
+`ModelHandle`, `held_out_gate_strict`, `feature_scaler_present`,
+`scaler_load_failed`, `scaler_sha256`. When plan touches the model
+load path:
+
+- Verify the 3-tier strict-mode behavior (refuse / warn / skip)
+  is preserved per `DOCS/CLAUDE_ML_INVARIANTS.md`.
+- For each new failure mode, verify a corresponding PerCoreSnap
+  field surfaces it (the v5.9.0b `model_load_failed` /
+  v5.9.3a `scaler_load_failed` pattern).
+- For each new failure mode, verify ML Status panel renders
+  distinct state (red for warn-mode-with-identity, sand for
+  legacy-no-attempt).
+- For each new failure mode, verify rate-limited CRITICAL log
+  fires (using `Health_LogCriticalRateLimited` per v5.9.0b).
+- Verify integration test exists for BOTH refusal path AND
+  warn-mode observability path (per
+  `DOCS/CLAUDE_INVARIANTS.md` "Train-Serve Handoff Verification").
+
+**Why this matters:** The v5.9.0b + v5.9.3a Gap H pattern is the
+cure for the "silent fallback" class. Every new failure mode must
+inherit the pattern. Otherwise we re-introduce silent drift.
+
+**Verdict per item:**
+- **PASS** ✅ — plan addresses
+- **GAP** ⚠️ — must address before coding
+- **DEFERRED** — explicit out-of-scope decision
+
+These three checks fire in addition to Checks 11-14 (sprint guards).
+Together they cover the v5.9 silent-failure class plus the v5.8
+X-macro variant selection class.

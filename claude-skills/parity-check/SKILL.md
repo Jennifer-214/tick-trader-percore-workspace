@@ -247,6 +247,41 @@ NOT stamp-bound (potential gaps):
 - Each failure mode has rate-limited CRITICAL log
   (Health_LogCriticalRateLimited)
 
+### Section K — Build-warning audit (v5.9.5a addition)
+
+Source-read audits miss bugs the compiler can statically detect.
+Every full /parity-check pass MUST run `./build.sh test gui suite`
+and grep the output for warnings. Specific classes that are
+parity-relevant:
+
+- **`-Wstringop-overflow`** — manually-sized stack buffers in
+  serialization paths (e.g. `uint8_t body_buf[N + M + ...]`).
+  v5.9.5a found a 564-byte write into a 556-byte buffer in
+  `FeatureStandardizer.hpp` write+verify paths — `hash_w` field
+  added without updating the buffer formula. Stack overflow,
+  silent until compiler stack layout shifts.
+- **`-Waggressive-loop-optimizations`** — UB in loop bounds; can
+  cause divergence between debug + release builds (parity surface
+  if loop iterates differently across builds).
+- **`-Wuninitialized`** — read of stack-allocated state that
+  wasn't zero-init'd (v5.9.1a was an instance: 7 CoreContext
+  fields read garbage on first slow-path rebuild because
+  EventLoopState_Init didn't zero them). Compiler often misses
+  these for non-trivial types but worth grepping.
+- **`-Wstringop-truncation`** — `strncpy` patterns where the
+  truncation isn't intentional. Common in path-building for stamp
+  files / scaler sidecars.
+
+For each warning surfaced by the build:
+- Severity = CRITICAL if it lands in serialization / load paths
+  (silent file format corruption, false SHA matches, stack overflow)
+- Severity = HIGH if init-time / cfg parsing
+- Severity = MEDIUM/LOW otherwise
+
+The audit must NOT silently accept "warnings exist but tests pass."
+Tests pass when the bug's symptoms happen to land in dead stack
+space; a compiler / -O level / ASAN run change can flip that.
+
 ## Categories — narrow audit (single surface)
 
 When invoked as `/parity-check <surface>`, scope to one section

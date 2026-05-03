@@ -312,10 +312,10 @@ or v5.11 sprint planning cycle.
 - ⚠ B.3 reference-model retrain — operator coordination.
   Document the retrain ritual in DOCS/RETRAIN_RITUAL.md (or
   ML_TRAINING.md).
-- ⚠ Hour-of-day signal: if going with lookup table, table
-  must be identical across all build configs (compile-time
-  constant). Test: hash the table, assert hash unchanged
-  across builds.
+- ⚠ Hour-of-day signal: FPN_Sin/FPN_Cos via Taylor polynomial
+  (operator decision 2026-05-02). Test: epsilon-bound vs IEEE-754
+  sin within 1e-6 over [0, 2π]. New file `ML_Headers/FPN_Trig.hpp`
+  (~150 LOC + tests). Reusable for future FPN trig needs.
 
 ### Pre-coding checklist
 
@@ -595,8 +595,10 @@ These don't fit neatly into a single sub-plan but affect the sprint:
    `controller_test.cpp` will be > 12k lines. **v5.11 candidate**:
    split into multiple test binaries (`controller_test_features.cpp`,
    `controller_test_stamps.cpp`, etc.).
-8. **FPN sin/cos design** — v5.10.0b blocks until decided.
-   Lookup table recommended. **Design gate before B.1.**
+8. **FPN sin/cos design — RESOLVED 2026-05-02:** ship FPN-native
+   polynomial approximation in v5.10.0b (Taylor series, range
+   reduction, ~150 LOC). Reusable for any future FPN trig needs.
+   Lookup table is fallback if polynomial fails epsilon bound.
 
 ---
 

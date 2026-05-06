@@ -46,6 +46,7 @@ of pure data/build artifacts, gets backed up to the workspace.**
 | `.env`, `.env.*` | `configs/<name>` | Explicit copy; this skill |
 | `CLAUDE.local.md` | `CLAUDE.local.md.backup` | Explicit copy; this skill |
 | `*.local.md` (other overlays) | `<name>.backup` (workspace root) | Explicit copy; this skill |
+| `GEMINI.md` | `GEMINI.md.backup` | Explicit copy; this skill (Gemini agent's project memory) |
 
 **Skipped (regenerable / runtime data):**
 - `build*/`, `bin/`, `vendor/`, `.cache/`, `.clangd/`, `compile_commands.json`
@@ -87,6 +88,7 @@ done
 
 # Project-private memory overlays
 sync_if_newer "$ENGINE/CLAUDE.local.md" CLAUDE.local.md.backup
+sync_if_newer "$ENGINE/GEMINI.md"       GEMINI.md.backup
 for local_md in "$ENGINE"/*.local.md; do
     base=$(basename "$local_md")
     [ -f "$local_md" ] && [ "$base" != "CLAUDE.local.md" ] && \

@@ -67,6 +67,41 @@ What's intentionally public (AGPL on GitHub):
 - Build infrastructure
 - Public CLAUDE.md (architectural; no edge content)
 
+## Going-forward rule: prefer boundary-stable refactors over wide cascades
+
+When refactoring something whose outputs cross a type or struct
+boundary into many consumers (RegimeSignals fields, FeatureRegistry,
+GUI panels, snapshots, etc.), **default to keeping the public boundary
+types unchanged and doing the new computation INSIDE the function**.
+
+This generalizes the audit's "Reducing Memory Touch Sites" (Part 3)
+from cache lines to source files: don't sprawl a refactor across many
+sites if you can isolate it behind a stable interface. Achieve the
+goal (bytewise determinism, faster math, better precision, etc.) via
+deterministic conversions at the edges, not rewrites of every consumer.
+
+**Worked example (v5.10.0b.2.5.C):** FlowFeatures conversion to
+FPN_Exp/FPN_Sqrt could have cascaded `FlowState → RegimeSignals →
+FeatureRegistry → GUI → snapshot` (6 files, 3 hours, big merge risk).
+Instead: keep `double` at the function boundaries, do FPN math
+internally, return double via `FPN_ToDouble` at the edges. Saves the
+cascade for v5.11 where there's dedicated budget. Same determinism
+contract, much smaller blast radius.
+
+**When you spot a refactor in a future session:**
+- Count files in the cascade — 1-3 OK, 4+ stop and propose stable
+  boundary first
+- If the boundary type itself is the gap (e.g. operator wants the
+  RegimeSignals fields to be FPN), then cascade is correct — but
+  call this out to the operator explicitly so the choice is
+  intentional rather than absorbed into "let's refactor everything"
+- Performance-sensitive boundaries (hot path) may need cascade to
+  avoid double work; weigh that against blast radius
+
+This rule applies to Claude AND Gemini sessions; the operator
+formalized it 2026-05-06 after the FlowFeatures scope discussion.
+Memory file: `memory/feedback_reduce_touch_sites.md`.
+
 ## Going-forward rule for new plans (cold-pickup completeness)
 
 When writing a new plan in `plans/`, include these 10 context fields

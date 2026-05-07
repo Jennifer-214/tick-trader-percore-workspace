@@ -382,6 +382,88 @@ When the next anti-pattern emerges, add it here.
 
 ---
 
+## Rule 8 — Branchless mask-blend over data-dependent branches (added v5.11.2)
+
+When a latency-path computation has "do work A else do work B" semantics where:
+- The condition is data-dependent (varies tick-to-tick or push-to-push)
+- Both A and B can be computed at small marginal cost
+- The branch isn't a one-shot warmup transition that the predictor learns once
+
+**Prefer:** unconditional compute of both, mask-blend selection by the condition.
+Eliminates the non-predictive branch entirely; same throughput, no mispredict tail.
+
+### Canonical pattern
+
+```cpp
+// BAD: data-dependent branch
+if (some_condition) {
+    result = compute_A();
+} else {
+    result = compute_B();
+}
+
+// GOOD: unconditional compute + mask blend
+auto a = compute_A();              // always computed
+auto b = compute_B();              // always computed
+uint64_t mask = -((uint64_t)some_condition);  // 0 or all-1s
+result = blend(a, b, mask);        // bitwise blend, no branch
+```
+
+### FPN-specific helper (added v5.11.2.C)
+
+```cpp
+// FixedPoint/FixedPointN.hpp
+template <unsigned F>
+inline FPN<F> FPN_BlendOnMask(FPN<F> if_true, FPN<F> if_false, uint64_t mask) {
+    FPN<F> r;
+    for (unsigned i = 0; i < FPN<F>::N; ++i) {
+        r.w[i] = (if_true.w[i] & mask) | (if_false.w[i] & ~mask);
+    }
+    int32_t m32 = (int32_t)mask;  // sign-extension preserves all-or-nothing semantics
+    r.sign = (if_true.sign & m32) | (if_false.sign & ~m32);
+    return r;
+}
+```
+
+### When to use
+
+- ✓ Slow-path running sum updates (eviction term active vs warmup)
+- ✓ Conditional zeroing of FPN values in branchless predicates
+- ✓ Per-handle parameter dispatch where compute is similar across paths
+- ✓ Any "predicate fires once, condition stable post-warmup" transition
+
+### When NOT to use
+
+- ✗ Compute is genuinely heavy (one path 100ns, other path 10ns) — even with mispredict tail, the branch saves more than mask-blend overhead
+- ✗ Hot path with literal 0ns predicted-stable branches (compile-time `if constexpr` via template bool is cheaper)
+- ✗ Multi-output computation where blending each output costs more than a single mispredict (rare)
+
+### Cross-pattern: monotonic deque for sliding-window min/max
+
+Maintaining sliding-window min/max in O(1) **without branches** uses a monotonic
+deque. Standard algorithm:
+
+- Push: pop indices from the back while their values are `<= new_value` (max
+  deque) or `>= new_value` (min deque). Push new index. Result: deque values
+  are monotonically decreasing (for max) or increasing (for min).
+- Front of deque is always the current min/max (window's min/max from oldest
+  in-deque sample).
+- Evict (out-of-window): if front's index is the evicted slot, pop front.
+- O(1) amortized per push (each element enters and leaves the deque once).
+
+For our use case (RollingStats min/max over window of W=128 prices), the deque
+size is bounded by W. The pop-while-back-is-dominated loop CAN have data-
+dependent iterations, but each iteration pops a previously-popped-when-it-
+itself-was-dominated index → amortized O(1). The branch is on "deque empty?"
+which is correctly predicted in steady state (new sample rarely dominates
+all existing ones).
+
+For RollingStats post-v5.11.2.C: monotonic deque replaces the
+"if (evicted == min/max) recompute" branch with O(1) amortized branchless-ish
+maintenance. The deque pop-loop fires occasionally but is bounded.
+
+---
+
 ## Audit recommendations evaluated + deferred
 
 Some audit-suggested optimizations were evaluated during v5.11.1 and skipped

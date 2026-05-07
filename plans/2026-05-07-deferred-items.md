@@ -96,7 +96,78 @@ engine load path with fallback (~half day) + train-serve parity test
 
 ---
 
-## v5.11.9 — Carryover backlog items
+## v5.11.9 — Carryover backlog items (status update 2026-05-08)
+
+**Items SHIPPED in the late-night close:**
+- ✓ `OPERATOR_QUICKSTART.md` → in-place rewrite of `DOCS/QUICKSTART.md`
+  (commit `6059278`). Stale 100-line doc replaced with 286-line current
+  onboarding doc covering build / first paper run / GUI reading /
+  tuning / strategy authoring / backtest / going live / troubleshooting.
+- ✓ GUI UX (PERM_OFF refinement + font scale slider, v5.11.10).
+
+**Items still DEFERRED (operator preference 2026-05-08):**
+
+### #5 — Feature mask cfg per-core (4-5h, parity-critical)
+
+Spec: `plans/2026-05-08-v5.11-deferred-items.md` #5. Cfg field
+`feature_mask_<core_id>` (uint64_t bitmap). Features_PackAll checks
+mask before each FOREACH_FEATURE compute fn. Stamp body extension
+`feature_mask` + 3-tier strict-mode load-time check.
+
+**Why deferred:** parity-critical. Half-shipping it (cfg field
+without stamp binding + 3-tier strict-mode) leaves a silent ML
+input-drift hazard. Operator prefers a focused future session where
+the full parity-safe version ships in one go vs a partial cut.
+
+**Re-trigger:** when an ML ablation study workflow becomes
+load-bearing (training a model with feature subset, comparing
+generalization vs full feature set).
+
+### #7 — Scaler comparison tool (2h)
+
+Spec: `plans/2026-05-08-v5.11-deferred-items.md` #7. CLI
+`tools/compare_scalers.sh <a.scaler> <b.scaler>`. Loads both via
+FeatureStandardizer_Load, reports per-feature mean/stddev delta,
+flags > 50% change as potential regime shift.
+
+**Why deferred:** lowest risk + clean ship, but operator chose
+to call the night rather than push past 6h of session. Trivial
+re-pickup; the diagnostic value emerges only when investigating
+a scaler-drift incident.
+
+**Re-trigger:** first time an operator needs to investigate why a
+new scaler reads differently than the previous one (regime shift
+detection).
+
+### #18 — RFV scaler binding (TBD scope)
+
+Original spec mentions only "TBD" — needs investigation before
+implementation. Likely requires understanding how RFV (recursive
+feature value? ranked-feature-value?) interacts with the existing
+FeatureStandardizer Q32 sidecar binding (v5.9.3a).
+
+**Why deferred:** scope unclear; investigation is the first step,
+not the implementation.
+
+**Re-trigger:** when RFV becomes a load-bearing model type beyond
+ad-hoc experimentation.
+
+### Test file split (controller_test.cpp 15.5k → 4 files)
+
+Original spec: split by domain (portfolio/oms, regime/strategies,
+ml/parity, extensibility). ~4h mechanical surgery, risks breaking
+1772 tests.
+
+**Why deferred:** operator explicitly cut from scope (2026-05-08
+"we don't have to do the test split"). High effort, internal-dev-
+hygiene only, minimal user-visible value.
+
+**Re-trigger:** when controller_test.cpp's compile time becomes
+a development-iteration bottleneck (currently ~10s, not painful).
+
+---
+
+## Original v5.11.9 entry follows for reference
 
 **Original scope:** master plan v5.11.9. Quality-of-life items from
 the existing deferred-items doc:

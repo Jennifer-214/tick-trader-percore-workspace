@@ -66,3 +66,10 @@ User-space thread pinning (`pthread_setaffinity_np`) is insufficient for sub-mic
 * The deployment environment must boot with `isolcpus`, `nohz_full`, and `rcu_nocbs`.
 * Thread priority must be elevated to `SCHED_FIFO` (`chrt -f 99`).
 * IRQ affinity (NIC interrupts) must be explicitly routed away from the hot-path cores.
+
+## 9. Advanced System & Compiler Optimizations
+Sub-microsecond determinism requires controlling the OS and CPU at the lowest levels.
+* **Disable Nagle's Algorithm**: All TCP sockets must be initialized with `TCP_NODELAY`. An order submission must hit the wire immediately, not wait in an OS buffer.
+* **Lock Memory Pages**: The engine must call `mlockall(MCL_CURRENT | MCL_FUTURE)` on boot to prevent the Linux kernel from ever paging out critical execution memory.
+* **Flush Denormals (FTZ/DAZ)**: The `main()` function must configure the CPU's `MXCSR` register to flush subnormal floating-point numbers to zero (`_MM_SET_FLUSH_ZERO_MODE`). Denormals cause catastrophic FPU microcode stalls.
+* **Compiler Flags**: Production binaries must be built with `-O3`, `-march=native`, Link-Time Optimization (`-flto`), and ideally Profile-Guided Optimization (PGO) to maximize instruction cache alignment.

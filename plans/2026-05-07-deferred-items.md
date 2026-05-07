@@ -636,6 +636,98 @@ catalogued for fix-during-paper-testing.
 
 ---
 
+## Trade History C2/A + C2/B partial-exit legs show $0 notional + $0 P&L (2026-05-07)
+
+**Surfaced by:** operator GUI screenshot at v5.11.20. Trade History
+panel shows 3 trades:
+
+```
+#  Co… L… Entry  Exit   P&L     Fee   Reas Strat In    Out   Hold
+1  C2  B  $81060 $80940 -$0.00  $0.00 SL   AUTO  $0    $0    33m37s
+2  C2  A  $81060 $80940 -$0.00  $0.00 SL   AUTO  $0    $0    33m37s
+3  C0  A  $81141 $80942 -$6.68  $3.00 SL   DIP   $1500 $1496 39m24s
+```
+
+**Symptom shape:** trades 1+2 are the partial-exit A/B leg pair
+from core 2 (AUTO strategy). Both show:
+- Entry $81060, Exit $80940 (same prices)
+- P&L $0.00 (display rounding? or actual zero?)
+- Fee $0.00 (suspicious — fee should be ~ taker_fee × notional)
+- In $0, Out $0 (notional zero)
+
+Trade 3 is the C0 leg-A (DIP strategy) with normal-looking values:
+$1500 in, $1496 out, fee $3.00 (= 0.10% × $1500 × 2 round-trip),
+P&L = $1500 - $1496 - $3.00 = -$6.68 ✓ math checks.
+
+**Hypotheses:**
+1. **AUTO core notional accounting bug.** AUTO cores allocate
+   risk fraction differently than concrete strategies. Maybe
+   `core_2_risk_pct` defaulted to 0 and AUTO bypassed the global
+   default, allocating $0 notional. Check `cfg.core_risk_pct[2]`
+   and `Strategy_AdaptPerCore` for AUTO strategy.
+2. **Partial-exit leg-pair accounting bug.** When core 2 took a
+   position with partial exits (A+B legs), only the leg-A leg got
+   notional accounting; leg-B got $0. But both legs ARE shown
+   with $0, so it's not "leg B specifically" — both legs of core
+   2 have the issue.
+3. **Display bug, not accounting bug.** TradeReader CSV may have
+   the right notional but the GUI is reading the wrong column /
+   misformatting. Run `cat logs/trade_history.csv` to confirm.
+4. **Connection to the WF regression.** Both this + the WF 0%
+   accuracy were surfaced 2026-05-07 on v5.11.x. Could be related
+   if a v5.11.x parsing/conversion regression affects both
+   feature-extraction and notional-tracking sites.
+
+**Investigation plan (deferred):**
+- Step 0: dump `logs/trade_history.csv` for the C2/A + C2/B rows;
+  confirm whether stored notional is $0 (accounting bug) or
+  non-zero (display bug).
+- Step 1: cross-check `oms->portfolio.positions[slot].notional`
+  at exit time for AUTO cores via debug logging.
+- Step 2: bisect like the WF regression — if the same v5.11.x ship
+  produced both issues, root-causing once fixes both.
+
+**Re-trigger condition:** before any v5.11.x trained model goes
+live OR any AUTO-strategy core deploys to live. Connected to the
+WF regression investigation; root-cause both together if they
+share a cause.
+
+---
+
+## STRATEGY QUALITY panel can't open health.jsonl (2026-05-07)
+
+**Surfaced by:** operator GUI screenshot at v5.11.20. Strategy
+Quality panel shows:
+```
+fopen failed: logging/health.jsonl
+Click Refresh. Reads last 2000 lines from health.jsonl
+(set health_log_path in engine.cfg to enable per-trade logging)
+```
+
+**Symptom shape:** Operator's engine.cfg does NOT have
+`health_log_path=logging/health.jsonl` (or the path is unset and
+the panel hardcoded the default). The engine isn't writing health
+records, so the panel has nothing to read.
+
+**This is not an engine bug** — the panel's tooltip already
+explains the operator-config gap. Two possible improvements:
+
+1. **Better empty-state UI:** instead of "fopen failed:", say
+   "health.jsonl not found — set `health_log_path` in engine.cfg
+   to enable. Default suggestion: `health_log_path=logging/
+   health.jsonl`". Less alarming for new operators.
+2. **Auto-create the path:** engine could create the directory
+   when `health_log_path` is set + auto-emit a single
+   "engine started" record so the panel always has at least one
+   row to render. Avoids the empty-state path entirely.
+
+**Re-trigger condition:** operator workflow polish ship. Low
+priority; doesn't block any production functionality. Would
+fold naturally into a future "operator UX cleanup" sprint after
+the WF regression + accounting bug from above are root-caused.
+
+---
+
 ## SPSCRing+OrderEventLog stack-use-after-scope under ASAN (2026-05-07)
 
 **Surfaced by:** v5.11.17 ASAN run (build_asan controller_test).

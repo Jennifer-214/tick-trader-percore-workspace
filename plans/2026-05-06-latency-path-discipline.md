@@ -382,6 +382,103 @@ When the next anti-pattern emerges, add it here.
 
 ---
 
+## Audit recommendations evaluated + deferred
+
+Some audit-suggested optimizations were evaluated during v5.11.1 and skipped
+after closer analysis showed they don't deliver claimed gains for the actual
+code shape / workload. Documented here so a fresh session doesn't re-attempt
+them without revisiting the analysis.
+
+### Phase 1.3 — AVX-512 mask blend for active/inactive thresholds (DEFERRED)
+
+**Audit claim** (LATENCY_OPTIMIZATION_AUDIT.md Part 1.3):
+> "Use `_mm512_mask_blend_epi64` to simultaneously blend the active/inactive
+> thresholds for both Leg A and Leg B in one instruction rather than multiple
+> sequential CMOV chains." ~5-10ns saved.
+
+**Reality check (2026-05-06):**
+- Current CMOV instructions: 1-cycle latency, dispatched in parallel by Tiger
+  Lake's 4 ALU ports → effectively 1 cycle for 4 selects.
+- AVX-512 `vpblendmq`: 1-cycle latency, plus mask-register setup (~1 cycle to
+  load mask from `active` byte).
+- 4 × FPN<64> = 96 bytes — doesn't fit in __m512i (only 2 FPN<64> fit per zmm).
+- Magnitude-only blend possible (sign always 0 in hot path) but doesn't change
+  the throughput math: CMOV and vpblendmq are tied.
+
+**Net realistic gain: 0-2ns at best, possibly zero or negative due to register
+pressure changes from mask-register setup.** Not worth the bytewise-determinism
+risk + scalar-fallback infrastructure.
+
+**Revisit when:**
+- A new generation CPU significantly improves AVX-512 mask blend throughput
+  vs CMOV
+- FPN representation changes (e.g., FPN<128> for higher precision, where CMOV
+  on 40-byte values stops being single-cycle)
+- Hot path adds a 5th or 6th simultaneous threshold compare (where mask blend's
+  fixed cost amortizes better)
+
+### Phase 1.4 — Branchless ring-buffer commit (DEFERRED)
+
+**Audit claim** (LATENCY_OPTIMIZATION_AUDIT.md Part 1.4):
+> "Make the ring buffer commit completely branchless. Write the `TradeEvent`
+> to the current ring buffer slot unconditionally, and advance the head
+> pointer conditionally using: `head += (can_enter | can_exit)`. This removes
+> the final remaining control-flow branch in the hot path."
+
+**Reality check (2026-05-06):**
+
+The branch wraps the entire event-push block (entries + exits + failure
+counter). It's not a data-dependent branch — it's a "did anything fire this
+tick?" check. Branch predictor handles this well:
+
+| Fire rate per tick | Mispredict cost amortized | Branchless cost per tick |
+|---|---|---|
+| 0.1% (slow scalping) | ~0.005ns | ~5-7ns (always-construct) |
+| 1% | ~0.05ns | ~5-7ns |
+| 5% (active trading) | ~0.25ns | ~5-7ns |
+| 50% (every other tick) | ~3ns | ~5-7ns |
+| 90% (extreme HFT) | ~5ns | ~5-7ns |
+
+For any realistic strategy fire rate (≤10% of ticks), the branched version
+wins because the branchless version pays unconditional event-construction +
+ring-slot-write cost (~15-20 cycles) on every tick.
+
+**The branchless version only wins when fire rate >> 50%** — which would
+imply microsecond hold times. None of the current strategies operate at that
+frequency.
+
+**Revisit when:**
+- Strategy mix shifts to maker-order based execution where fire rate per tick
+  could be much higher (every quote update fires a cancel/replace/fill event)
+- Ultra-tight scalping strategies (microsecond holds) get added
+- Bench measurement on operator's actual workload shows branch mispredict cost
+  visible in p99 / p99.9 (would suggest fire rate is higher than estimated)
+
+**Test for "should I revisit?":** Run the engine for a representative session.
+Check `core->ring_push_failures` counter (added in v5.11.0.1) + estimated event
+push rate from controller drainer logs. If event push rate > ~10% of tick
+rate, run the bench gate comparison: `pre-v5.11.1` (branched) vs branchless
+prototype. If p50 improves by ≥ 3ns, ship branchless. Otherwise stay branched.
+
+### General principle from these deferrals
+
+Audit recommendations are **starting points** for analysis, not gospel. Always
+work through:
+1. **What's the actual cost of the current code?** (branch with predictable
+   pattern ≈ ~0ns; branch on data-dependent compare ≈ ~5-7ns mispredict cost
+   × 50% rate)
+2. **What's the cost of the proposed alternative?** (branchless replacement
+   often pays unconditional work cost where branch was free)
+3. **What workload pattern justifies the change?** (fire rate, hold time,
+   strategy mix)
+
+The audit was right that the v5.11 sprint should focus on hot-path
+optimization. But within Part 1, items 1.1 + 1.2 + 1.5 deliver the actual
+gains; 1.3 + 1.4 are micro-optimizations whose ROI depends on workload
+characteristics that don't match our current strategies.
+
+---
+
 ## Cross-references
 
 - `STRATEGY_AND_CODING_RULES.md` (Gemini-distilled invariants; companion)

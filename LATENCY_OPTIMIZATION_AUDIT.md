@@ -230,3 +230,25 @@ Even with perfect algorithmic complexity and branchless logic, the engine relies
 ### 4. Compiler-Level Deficiencies (PGO/LTO)
 **Current:** The build scripts (`build.sh`, `CMakeLists.txt`) do not utilize advanced compilation heuristics that can eliminate branches and align instruction caches based on real-world usage.
 **Optimization:** Integrate Profile-Guided Optimization (PGO) and Link-Time Optimization (LTO). Run the engine against a representative backtest dataset to generate a profile (`-fprofile-generate`), then recompile (`-fprofile-use`). Combined with `-flto`, the compiler can aggressively inline and optimize across translation unit boundaries based on actual execution frequencies.
+
+---
+
+## Part 13: Ultra-Low Level Hardware & OS Tuning
+
+To eliminate the final nanoseconds of tail variance, the engine must account for low-level CPU state transitions and hardware-level memory lookups.
+
+### 1. TLB Miss Reduction via Huge Pages
+**Current:** Memory allocations rely on standard 4KB OS pages. A large memory block (e.g., the ML parameters or Event Log) forces the CPU to constantly perform page table lookups, leading to Translation Lookaside Buffer (TLB) misses. A TLB miss forces an expensive journey to main RAM.
+**Optimization:** Map all critical arenas and custom allocators using 2MB or 1GB Huge Pages via `mmap` with the `MAP_HUGETLB` flag. This shrinks the page table footprint drastically, keeping translations entirely within the TLB.
+
+### 2. Disabling CPU C-States and P-States
+**Current:** Modern processors will put idle cores into deep sleep states (C-states) to save power, and aggressively scale frequencies down (P-states). If the hot path thread waits for a network packet while the core is asleep, waking the core up takes several microseconds.
+**Optimization:** Bind the CPU governor to `performance`. Disable deep sleep by adding `intel_idle.max_cstate=0` and `processor.max_cstate=0` to the Linux kernel boot parameters. The hot-path cores must run continuously at max frequency.
+
+### 3. NUMA Architecture Awareness
+**Current:** Thread pinning (`EngineSharded_PinThread`) does not explicitly account for Non-Uniform Memory Access (NUMA) domains. If the execution core is pinned to NUMA Node 0, but the memory arena or the network card is attached to NUMA Node 1, every memory fetch or packet will traverse the slow inter-socket QPI/UPI link.
+**Optimization:** Ensure strict NUMA locality. Pin the threads, allocate the memory, and ensure the NIC interrupts are entirely restricted to the same NUMA node using `libnuma` or `numactl`.
+
+### 4. NIC Tuning & Interrupt Coalescing
+**Current:** Standard Linux network configurations delay passing packets to user space to batch them together (Interrupt Coalescing), increasing throughput but ruining single-packet latency.
+**Optimization:** Disable adaptive RX and TX coalescing on the network interface card via `ethtool -C eth0 rx-usecs 0 rx-frames 0`. For true HFT, consider bypassing the kernel entirely in the future using DPDK or Solarflare EFVI.

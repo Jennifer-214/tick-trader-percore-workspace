@@ -73,3 +73,14 @@ Sub-microsecond determinism requires controlling the OS and CPU at the lowest le
 * **Lock Memory Pages**: The engine must call `mlockall(MCL_CURRENT | MCL_FUTURE)` on boot to prevent the Linux kernel from ever paging out critical execution memory.
 * **Flush Denormals (FTZ/DAZ)**: The `main()` function must configure the CPU's `MXCSR` register to flush subnormal floating-point numbers to zero (`_MM_SET_FLUSH_ZERO_MODE`). Denormals cause catastrophic FPU microcode stalls.
 * **Compiler Flags**: Production binaries must be built with `-O3`, `-march=native`, Link-Time Optimization (`-flto`), and ideally Profile-Guided Optimization (PGO) to maximize instruction cache alignment.
+
+## 10. Memory Pages & TLB
+Standard 4KB OS pages lead to Translation Lookaside Buffer (TLB) misses, triggering high-latency walks to RAM.
+* **Huge Pages**: All critical custom allocators and memory blocks MUST be backed by 2MB or 1GB Huge Pages.
+* **How**: Map arenas using `mmap` with the `MAP_HUGETLB` flag to dramatically reduce the page table footprint.
+
+## 11. Hardware & Kernel Tuning
+Software optimization stops mattering if the hardware decides to sleep or interrupts fire unexpectedly.
+* **CPU Sleep States**: Disable deep C-states and P-states in the Linux boot parameters (`intel_idle.max_cstate=0`, `processor.max_cstate=0`) and use the `performance` CPU governor. Cores must never sleep.
+* **NUMA Architecture**: Guarantee memory locality. The thread, its memory allocations, and the NIC interrupts must all reside on the exact same NUMA node to prevent slow cross-socket QPI/UPI links.
+* **NIC Tuning**: Disable adaptive interrupt coalescing on the network interface (`ethtool -C eth0 rx-usecs 0 rx-frames 0`) to receive packets immediately.

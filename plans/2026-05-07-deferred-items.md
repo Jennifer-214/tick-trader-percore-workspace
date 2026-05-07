@@ -568,6 +568,58 @@ v5.11.4.A's parity tests.
 
 ---
 
+## SPSCRing+OrderEventLog stack-use-after-scope under ASAN (2026-05-07)
+
+**Surfaced by:** v5.11.17 ASAN run (build_asan controller_test).
+
+**Symptom:** AddressSanitizer reports
+`stack-use-after-scope at SPSCRing.hpp:143 in SPSCRing_TryPop<OrderEvent<64>, 256>`.
+Cited stack frames are nearby in main(): `stack_var` (line 14013, v5.11.6.A
+InitArena_Owns test) + `on_stack_dummy` (line 15617, v5.11.15 AUTO/NONE
+defensiveness test). Actual access is at offset 12094304 in the frame —
+i.e., a different test's `EventLoopState<FP> state;` stack region whose
+scope has ended, reused by subsequent stack allocations, but the
+OrderEventLog async writer thread (started in OrderManager_Init at
+OrderEventLog.hpp:369, v5.11.3.B feature) is still draining the
+SPSC ring and reading from those stale stack addresses.
+
+**Why pre-existing:** ASAN error reproduces on v5.11.16 binary as well as
+v5.11.17 binary. v5.11.17 (PoolAllocator mmap backing) does NOT touch
+SPSCRing, OrderEventLog, or OrderManager. The bug has been latent since
+v5.11.3.B introduced the async writer thread — non-ASAN tests pass
+because the read happens at addresses that still hold valid bytes (the
+program just keeps running), so functional tests can't catch it.
+
+**Why not a current-engine bug:** in production the async writer's lifetime
+is bounded by OrderManagerState's lifetime which is bounded by the engine
+process's lifetime. The use-after-scope only manifests at test-suite
+scale where N test cases each `{ ... EventLoopState state; ... }` and a
+leftover thread from an earlier test sees freed-then-reused stack.
+
+**Possible fixes:**
+1. **EventLoopState_Free joins all spawned threads before returning.**
+   The right answer if EventLoopState_Free already promises symmetry
+   with EventLoopState_Init. Verify `OrderEventLog_StopAsyncWriter` is
+   called transitively. This is the boundary-stable refactor.
+2. **Test harness allocates engine state on heap.** Replace
+   `EventLoopState<FP> state;` with `auto* state = new EventLoopState<FP>;
+   ... delete state;`. Heap allocations don't have ASAN's
+   stack-use-after-scope detector. Less invasive but doesn't actually
+   fix the race — just hides it.
+3. **Disable async writer for tests.** Add a cfg / env-var override
+   so tests run with the synchronous-write fallback that v5.11.3.B
+   introduced as the FALLBACK path.
+
+**Re-trigger condition:** any v5.11.x ship that touches OrderEventLog
+or OrderManager, OR if the operator decides the ASAN test-isolation
+gap is worth a focused ship. Estimate: 1-2h for fix #1; 30 min for #2.
+
+**v5.11.17 status:** does NOT block. PoolAllocator changes verified
+green on non-ASAN controller_test (1797/0 both calloc + mmap
+backings). Deferred for follow-up.
+
+---
+
 ## Maintenance
 
 When deferring a future item, append a section here using the

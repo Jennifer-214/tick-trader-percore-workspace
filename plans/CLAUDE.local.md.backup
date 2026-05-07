@@ -1,0 +1,68 @@
+# CLAUDE.local.md — private overlay
+
+**Gitignored.** Project-private supplement to `CLAUDE.md`. Claude Code
+auto-loads this; the public repo never sees it. Backups of all
+referenced docs live in `plans/` (workspace, also private).
+
+---
+
+## Required reading before writing performance-sensitive code
+
+Two private docs (gitignored at `DOCS/`, backups in workspace plans):
+
+| Doc | Trigger — read it BEFORE writing or editing... |
+|---|---|
+| `DOCS/STRATEGY_AND_CODING_RULES.md` | any code in hot path, slow path, OMS drainer, parsing, ML inference, strategies, RollingStats / RegimeSignals / ExecutionCore — i.e., anything in `CoreFrameworks/`, `Strategies/`, `ML_Headers/`, `DataStream/`, or `FixedPoint/`. The doc is 11 strict invariants (no malloc, no virtual, no mutex, no sleep_for, no atof/strstr in parsers, cache alignment, branchless, AVX-512-friendly data layouts, SCHED_FIFO/isolcpus deployment) — every new file in those dirs must comply |
+| `DOCS/LATENCY_OPTIMIZATION_AUDIT.md` | any optimization investigation, performance-regression triage, or v5.11 sprint work. 13 parts, ~40 specific items: hot path (Part 1), slow path SIMD (2+5), arch invariants (3), ingestion+ML+memory (4), system tail variance (6), allocator eradication (7), parsing (8), OMS variance (9), concurrency (10), FPN libs (11), HFT system ops (12), hardware/OS tuning (13) |
+
+**Workflow when about to edit one of those areas:** open the rules doc
+first, scan the relevant rule sections, then write the code. The audit
+doc is consulted when the rule is "yes but how" — it has concrete
+implementation suggestions per-site (with file:line references).
+
+## v5.11 sprint orientation
+
+v5.11 is planned as a **massive optimization sprint** built directly
+from the audit. Sub-ships map to audit Parts; see workspace plan
+`plans/2026-05-XX-MASTER-v5.11-optimization-sprint.md` for the
+canonical sequencing.
+
+When opening v5.11.x sub-plans:
+1. Re-read the audit Part(s) covered by that sub-plan
+2. Re-read the relevant section(s) of the rules doc
+3. Cross-check that implementation matches both — rules are normative,
+   audit gives the concrete wins per site
+
+## Pre-v5.11 (closing v5.10)
+
+Per master plan in workspace, v5.10.0b/0c/0d/0e ships still pending
+before Sprint C (v5.11) opens:
+- 0b — FPN-end-to-end (audit Part 11 has fresh FPN intel — fold the
+  AVX-512 min/max + 128-bit divide + Lemire string conv items into
+  0b's design before kickoff)
+- 0c — hot model swap
+- 0d — FOREACH_TARGET label registry (independent)
+- 0e — drift detection + auto-retire
+
+## Privacy boundary recap
+
+What's intentionally private (workspace-backed):
+- Plans + slash commands (`plans/` + `.claude/skills` symlinks)
+- Operator cfgs (engine.cfg, backtest.cfg, controller.cfg, secrets.cfg)
+- Trained models + scalers + stamps (`models/`)
+- Runtime logs + per-symbol metrics CSVs + baseline_run/
+- Optimization audit + coding rules (this doc + the two it references)
+- This file (`CLAUDE.local.md` itself)
+
+What's intentionally public (AGPL on GitHub):
+- All source code in `CoreFrameworks/`, `Strategies/`, `ML_Headers/`,
+  `Backtest/`, `DataStream/`, `FixedPoint/`, `MemHeaders/`, `GUI/`
+- DOCS/ tracked files (architecture, invariants, code map, changelogs,
+  known issues, design notes)
+- Tests
+- Build infrastructure
+- Public CLAUDE.md (architectural; no edge content)
+
+If a question arises mid-session about whether to commit / track a
+new file: edge content → workspace + gitignore; architecture / docs
+/ test infra → public.

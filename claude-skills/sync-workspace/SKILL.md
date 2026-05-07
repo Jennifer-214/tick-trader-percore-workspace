@@ -30,11 +30,68 @@ become 12 commits. Better cadence: push at meaningful checkpoints —
 end of work session, after a plan is finalized, after a skill is
 updated. Operator picks the moment.
 
+## What gets synced (rule added 2026-05-06)
+
+Operator policy: **anything gitignored at the engine repo, outside
+of pure data/build artifacts, gets backed up to the workspace.**
+
+| Source (engine repo) | Destination (workspace) | Mechanism |
+|---|---|---|
+| `plans/*` | `plans/` (symlinked) | Auto-propagates via symlink |
+| `.claude/skills/*` | `claude-skills/` (symlinked) | Auto-propagates via symlink |
+| `engine.cfg` | `configs/engine.cfg` | Explicit copy; this skill |
+| `backtest.cfg` | `configs/backtest.cfg` | Explicit copy; this skill |
+| `controller.cfg` | `configs/controller.cfg` | Explicit copy; this skill |
+| `secrets.cfg` | `configs/secrets.cfg` | Explicit copy; this skill |
+| `.env`, `.env.*` | `configs/<name>` | Explicit copy; this skill |
+| `CLAUDE.local.md` | `CLAUDE.local.md.backup` | Explicit copy; this skill |
+| `*.local.md` (other overlays) | `<name>.backup` (workspace root) | Explicit copy; this skill |
+
+**Skipped (regenerable / runtime data):**
+- `build*/`, `bin/`, `vendor/`, `.cache/`, `.clangd/`, `compile_commands.json`
+- `*.log`, `paper_runs/`, `data/`, `baseline_run/`, `*_metrics.csv`, `*_order_history.csv`
+- `models/` — handled separately if operator wants per-model backup
+- IDE state: `.vscode/`, `.idea/`, `foxml_*.ini`, `continue.md`
+
+When the engine `.gitignore` adds a NEW non-data category, update the
+table above so this skill mirrors it.
+
 ## Procedure
 
 ```bash
 WORKSPACE=/home/caramel/code/tick-trader-percore-workspace
+ENGINE=/home/caramel/code/FoxML_Trader_v2
 cd "$WORKSPACE"
+
+# Mirror non-symlinked private files: cfgs, secrets, local memory overlays.
+# newer-mtime wins; only copies if source file exists.
+sync_if_newer() {
+    local src="$1" dst="$2"
+    [ -f "$src" ] || return 0
+    if [ ! -f "$dst" ] || [ "$src" -nt "$dst" ]; then
+        cp "$src" "$dst"
+        echo "[sync] mirrored $src -> $dst"
+    fi
+}
+
+mkdir -p configs
+sync_if_newer "$ENGINE/engine.cfg"     configs/engine.cfg
+sync_if_newer "$ENGINE/backtest.cfg"   configs/backtest.cfg
+sync_if_newer "$ENGINE/controller.cfg" configs/controller.cfg
+sync_if_newer "$ENGINE/secrets.cfg"    configs/secrets.cfg
+
+# .env files
+for env_file in "$ENGINE"/.env "$ENGINE"/.env.*; do
+    [ -f "$env_file" ] && sync_if_newer "$env_file" "configs/$(basename "$env_file")"
+done
+
+# Project-private memory overlays
+sync_if_newer "$ENGINE/CLAUDE.local.md" CLAUDE.local.md.backup
+for local_md in "$ENGINE"/*.local.md; do
+    base=$(basename "$local_md")
+    [ -f "$local_md" ] && [ "$base" != "CLAUDE.local.md" ] && \
+        sync_if_newer "$local_md" "$base.backup"
+done
 
 # Are there changes?
 if git diff --quiet && git diff --cached --quiet && [ -z "$(git status --porcelain)" ]; then

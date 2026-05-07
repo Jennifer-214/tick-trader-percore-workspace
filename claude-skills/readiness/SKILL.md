@@ -120,6 +120,38 @@ Spawn an Explore subagent with the plan file in hand. The subagent:
 1. <claimed-dep>: not in codebase. Estimated effort to add: <X>.
 2. ...
 
+## Cold-pickup context completeness (added 2026-05-06)
+
+A plan must be readable in isolation by a fresh session 7+ days
+later, with no chat memory. Verify each item is present and
+non-stale:
+
+| # | Field | What to check | Common stale signals |
+|---|-------|---------------|----------------------|
+| C.1 | **Branch state** | Plan names a SPECIFIC branch (or "stay on X") that matches current operator practice | Says "create new branch X" but operator decided to use existing branch with rollback tags |
+| C.2 | **Phase execution order matches dependency order** | If phase B depends on phase C, C is listed before B (or order is explicitly noted as "execution order != tag-number order" with rationale) | Sub-tags numbered .1 .2 .3 but .2 says "depends on .3 landing first" |
+| C.3 | **First concrete move** | Each phase has an explicit "Step 0" or "start with X" — a single mechanical action a fresh session can do without re-investigating | Phase says "convert mean/variance/slope" without naming where the conversion sites are or what the FIRST function to edit is |
+| C.4 | **Function/constructor names cited** | Plan names the EXACT function/constructor/macro to use (or explicitly notes "constructor doesn't exist; Step 0 is to add it") | Says "use a pure-integer constructor" without saying what it's called or whether it exists |
+| C.5 | **File:line refs for cited tests/baselines** | Any "re-run X test" or "verify Y baseline" cites `path:line` or at minimum the test name string | Says "Re-run v5.9.2 replay-determinism test" with no location pointer |
+| C.6 | **Stale-claim audit** | Phases don't claim work already done. Spot-check by grep: if plan says "X uses double internally" → `grep "double" path/to/X.hpp` to verify | Plan says "FPN_Sqrt is missing; we'll add it" but `grep FPN_Sqrt FixedPoint/FixedPointN.hpp` shows it already exists (even as a stub) |
+| C.7 | **Effort claims reconcile with actual file size deltas** | If plan says "~200 LOC convert" verify `wc -l path/to/file.hpp` and that the file actually has ≥200 LOC of the type being converted | Claim of 200 LOC of double math when grep shows only 4 sites |
+| C.8 | **Source-audit references** | Plan cites the canonical source-audit doc (workspace plan / Gemini audit / KNOWN_ISSUES section) backing each non-trivial claim | Bare "per the audit" with no path |
+| C.9 | **Predecessor / dependent plans named with paths** | Sub-plan that says "depends on X" cites `plans/<filename>.md` of X, not just a version number | "Predecessor: v5.10.0c" with no plan-file path |
+| C.10 | **Tag names locked** | Each phase has a unique git tag name; rollback anchors (`pre-<tag>`) noted if expected | Phases share a tag name or no tag listed |
+
+**Verdict mapping:**
+- C.1-C.6 missing → fresh session loses 30-60 min re-investigating per gap → YELLOW
+- C.7 missing → effort estimate is unreliable → YELLOW
+- C.8-C.10 missing → not session-blocking but bad hygiene → DOCUMENT-ONLY
+
+When auditing a plan, walk these 10 items in addition to the 17
+checklist items above. The cold-pickup audit is what makes
+plans-as-truth actually work for multi-day externalized state.
+
+**Encourage rather than gate:** if plan has 8/10 cold-pickup
+items, that's GREEN — the missing 2 are flagged as "fix during
+coding". Don't make the perfect the enemy of the shippable.
+
 ## Recommendations
 
 ### Must fix before coding

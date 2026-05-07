@@ -67,6 +67,48 @@ What's intentionally public (AGPL on GitHub):
 - Build infrastructure
 - Public CLAUDE.md (architectural; no edge content)
 
+## Going-forward rule for new plans (cold-pickup completeness)
+
+When writing a new plan in `plans/`, include these 10 context fields
+so a fresh session 7+ days later can pick it up without chat memory.
+The `/readiness` skill enforces this via its Cold-pickup section.
+
+1. **Branch state** — name the SPECIFIC branch (or "stay on existing
+   branch with rollback tags"). Don't leave it as "TBD" or "create
+   new branch" if operator policy is to stay on the sprint branch.
+2. **Phase execution order matches dependency order** — if phase B
+   depends on phase C, list C before B. If you must keep tag
+   numbering different from execution order, call it out explicitly.
+3. **First concrete move per phase** — every phase has a "Step 0"
+   that a fresh session can do mechanically without re-investigating
+   ("Step 0: add `FPN_FromInt` constructor at FixedPointN.hpp:124"
+   not "convert primitives to FPN").
+4. **Function / constructor / macro names** — say `FPN_FromInt`, not
+   "a pure-integer constructor". If the function doesn't exist,
+   make adding it explicit Step 0 work.
+5. **File:line refs for cited tests / baselines** — instead of
+   "re-run the v5.9.2 replay-determinism test", say "re-run
+   `tests/controller_test.cpp:10251`".
+6. **Stale-claim audit** — before committing the plan, grep the
+   files you claim contain X. If the codebase already has X (or
+   doesn't have what you claim it has), update the plan.
+7. **Effort claims reconcile with file size deltas** — if you say
+   "~200 LOC convert", `wc -l` the file and confirm there's actually
+   200 LOC of the relevant type. Stale large estimates leak from
+   draft to draft.
+8. **Source-audit references with paths** — cite the workspace plan
+   / Gemini audit / KNOWN_ISSUES section by filename, not "per the
+   audit".
+9. **Predecessor / dependent plans named with paths** — say
+   `plans/2026-05-04-v5.10.0b-fpn-end-to-end.md`, not just "v5.10.0b".
+10. **Tag names locked + rollback anchors** — each phase has a
+    unique git tag name; if you expect to roll back, note the
+    `pre-<tag>` anchor that exists or should be created.
+
+When amending an EXISTING plan (e.g. via /plan-check findings),
+re-walk these 10 fields against the amendment to make sure you
+didn't introduce new staleness while fixing old.
+
 ## Going-forward rule for new docs
 
 **When creating a new doc, default to private** if any of these apply:
@@ -89,12 +131,13 @@ What's intentionally public (AGPL on GitHub):
   that are bug-class-level (not operator-edge-level).
 
 **Auto-private gitignore patterns** (already in `.gitignore`):
-- `*_AUDIT.md`
-- `FUTURE_*.md`
-- `*-design-notes.md`
-- `STRATEGY_AND_CODING_RULES.md` (specific)
-- `LATENCY_OPTIMIZATION_AUDIT.md` (specific; also covered by glob)
-- `CLAUDE.local.md`, `*.local.md`
+- `*_AUDIT.md` — optimization audits, latency findings
+- `FUTURE_*.md` — roadmap / planned-strategy direction
+- `*-design-notes.md` — versioned design idea backlogs
+- `*-suggestions.md` — HFT / optimization research outputs
+- `*-hft-*.md` — HFT-flavored notes
+- `STRATEGY_AND_CODING_RULES.md` — Gemini-distilled coding invariants
+- `CLAUDE.local.md`, `*.local.md` — project-private memory overlays
 
 If you write a file matching one of those patterns into `DOCS/` or
 the repo root, it auto-stays-private. But still prefer `plans/` for
@@ -103,3 +146,32 @@ backup, doesn't dual-track files.
 
 **If unsure: ask the user.** "Should this doc be private?" is cheaper
 than untracking + history-rewriting later.
+
+## Going-forward rule for workspace backup (set 2026-05-06)
+
+**Anything gitignored at the engine repo, outside of pure
+data/build/runtime artifacts, gets backed up to the workspace.**
+Workspace = `~/code/tick-trader-percore-workspace`, pushed to
+`Jennyfirrr/tick-trader-percore-workspace.git` (private remote).
+
+The `/sync-workspace` skill mirrors:
+- `plans/`, `.claude/skills/` — auto-propagate via symlinks (no copy needed)
+- `engine.cfg`, `backtest.cfg`, `controller.cfg`, `secrets.cfg` → `workspace/configs/` (explicit copy by skill)
+- `.env`, `.env.*` → `workspace/configs/` (explicit copy by skill)
+- `CLAUDE.local.md`, `*.local.md` → `workspace/<name>.backup` (explicit copy by skill)
+
+**NOT mirrored** (data / runtime / regenerable):
+- Build dirs, vendor/, bin/, .cache/, .clangd/, compile_commands.json
+- Logs, paper_runs/, baseline_run/, data/, *_metrics.csv, *_order_history.csv
+- ImGui state files, IDE configs, session scratch (continue.md)
+- `models/` — handled separately if operator chooses
+
+**When you add a new gitignore category** (e.g. a new audit-style
+file pattern), check if it's edge content vs runtime data:
+- Edge content (research, design, optimization findings, configs) →
+  also update `/sync-workspace` skill's mirror table to include it
+- Runtime/data → leave gitignored, no backup needed
+
+Run `/sync-workspace` periodically (end of session, after a plan
+finalized, after a skill updated) to push the backup. The skill is
+on-demand — no auto-cron — so you control the cadence.

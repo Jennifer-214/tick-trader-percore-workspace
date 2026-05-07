@@ -52,11 +52,13 @@ Network ingestion cannot fall behind during market bursts.
   * Use SIMD-accelerated JSON parsers (e.g., `simdjson`) for single-pass `O(N)` extraction.
   * Use fast, locale-independent parsers (e.g., `fast_float`) or parse directly to `FPN<F>`.
 
-## 7. Data Structure Locality & Touch Sites
-Fetching scattered memory into the L1 cache is a primary source of memory latency.
-* **Align and Pad**: Heavily contended variables (e.g., atomic permissions or `RollingStats` outputs read by the GUI) must be isolated onto their own cache lines using `alignas(64)` to prevent **False Sharing**.
-* **Consolidate Touch Sites**: Do not scatter state updates. Group temporally related variables into cache-aligned structs so they can be copied in a single memory block.
-* **Dense Lookup Tables**: Any configuration array or index mapping must be bounded, contiguous, and fit within an L1 cache line (64 bytes).
+## 7. Memory Hierarchy & L1 Cache Optimization
+Fetching data from main RAM costs ~100ns (hundreds of CPU cycles), which absolutely destroys sub-microsecond latency. The hot path must execute entirely out of the L1/L2 cache.
+* **Prioritize L1 Cache**: Ensure that all critical path variables, state arrays, and lookup tables are small enough to remain resident in the 32KB L1 data cache.
+* **Cache Alignment (`alignas(64)`)**: Variables read and written by different threads (e.g., atomic permissions, `TUISnapshot` buffers, `RollingStats` GUI outputs) MUST be isolated on their own 64-byte cache lines using `alignas(64)`.
+* **Prevent False Sharing**: Never pack variables mutated by the hot path on the same cache line as variables mutated by the slow path or GUI. Doing so causes cross-core cache invalidation storms and massive tail latency spikes.
+* **Consolidate Touch Sites**: Do not scatter state updates across disparate memory locations. Group temporally related variables into cache-aligned, contiguous structs so they are fetched into L1 cache with a single memory load.
+* **Dense Arrays over Pointers**: Use dense, flat arrays where index calculation is pure arithmetic. Avoid pointer chasing (e.g., linked lists, trees, hash maps) on the hot path, as each pointer dereference risks an L1 cache miss and forces a slow RAM fetch.
 
 ## 8. OS Jitter Mitigation
 User-space thread pinning (`pthread_setaffinity_np`) is insufficient for sub-microsecond determinism.

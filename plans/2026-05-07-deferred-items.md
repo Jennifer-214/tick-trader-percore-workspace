@@ -616,6 +616,63 @@ labels at all.
   (test fold all-zero labels would show class_counts[0] = N,
   others = 0).
 
+**Code review findings (2026-05-07, no test data required):**
+
+Walked the ML/Backtest/FPN commit list between v5.10.0e (last
+known-good operator banner) and HEAD (v5.11.23). 12 commits
+touched ML/Backtest/FPN paths. Bisect priority order:
+
+1. **v5.11.2.C (O(1) running sums + monotonic deque)** ← TOP
+   SUSPECT. Largest refactor of the lot — RollingStats_Push
+   internals replaced with O(1) accumulator math instead of
+   O(W) loops over the window. Subtle accumulator drift would
+   compound over 128-1024 tick windows + flow into every
+   feature that reads `price_sum` / `price_sum_y2` /
+   `price_sum_xy` / `volume_sum` / `vol_sum_xy`. If labels
+   compute via the same RollingStats path (LabelFunctions.hpp
+   + Backtest/BacktestEngine.hpp), they'd drift the same way.
+   First place to bisect.
+
+2. **v5.11.2.A (reciprocal LUT for 1/n)** ← SECOND. Commit msg
+   acknowledges "1e-10 relative drift" in non-power-of-2 n
+   averages. Power-of-2 n (window sizes 128, 512, 1024) are
+   exact, so for the canonical pipeline the LUT should match
+   bytewise. If labels or features use a non-power-of-2 n
+   (e.g. R² regression with off-by-one sample counts), drift
+   could compound at decision boundaries.
+
+3. **v5.11.2.B (RollingStats cache-line layout reorder)**
+   ← THIRD. Pure layout change; no math touched. But if any
+   site reads RollingStats by RAW OFFSET (snapshot persist,
+   GUI surface, ML feature pack), a reorder breaks them
+   silently. Less likely (compiler catches member references)
+   but worth a `grep` for `offsetof(RollingStats` or any
+   pointer-arithmetic on the struct.
+
+4. **v5.11.4.C (atof/strtod → ParseFast)** ← LOW. Affects
+   STAMP body parsing + bandit state load + TradeReader CSV.
+   Doesn't touch label CSV ingestion (FPN_FromString is the
+   primary parser there + that's locale-immune by
+   construction; v5.11.4.C didn't change it).
+
+5. **v5.11.7 (Bandit AVX-512)** ← VERY LOW. Inference-time
+   probability normalization, not training/labels. Verified
+   bytewise-deterministic vs scalar in commit tests.
+
+**Quick sanity (sub-question to bisect):** in the operator's
+training pipeline, does the model's `objective` get set
+correctly? If WalkForward_ComputeMulticlassAccuracy at
+BacktestEngine.hpp:1293 receives `num_classes < 2`, it
+returns 0.0 unconditionally. Could explain "0.0% across all
+folds" exactly. Worth checking before doing a full bisect.
+
+**Bisect order if quick sanity passes:**
+1. Check out `v5.11.2` rollup tag, run WF on test_case_01.
+2. If WF still 0% → bisect goes earlier (v5.10.1.A label
+   registry hash plumb? but that was part of v5.10.0e).
+3. If WF non-zero → narrow to v5.11.2.A vs .2.B vs .2.C by
+   checking each individually.
+
 **Re-trigger condition:** before any v5.11.x trained model goes
 live OR before declaring v5.11 sprint definitively complete. v5.11
 optimization sprint shipped 17+ optimization items; some bytewise-
@@ -728,7 +785,55 @@ the WF regression + accounting bug from above are root-caused.
 
 ---
 
+## FP64_Sqrt assertion under ASAN (2026-05-07)
+
+**Surfaced by:** v5.11.26 ASAN run, after the SPSCRing
+stack-use-after-scope was closed by the OrderManagerState RAII
+destructor. Test progressed past the writer-thread bug + into
+v5.10.0a.next.2 bandit replay-determinism tests, then aborted on:
+
+```
+controller_test: FixedPoint/FixedPoint64.hpp:298: FP64 FP64_Sqrt(FP64):
+  Assertion `value.sign == 0 || value.magnitude == 0' failed.
+```
+
+**Why ASAN-only:** the assertion is in a header that's pre-built
+with `-O3 -DNDEBUG` for the engine + release controller_test, so
+asserts are stripped — sqrt(negative) silently NaNs in release.
+ASAN builds with `-O1 -g` (no NDEBUG) and asserts fire. ASAN
+caught a path where some caller passes a negative FP64 to
+FP64_Sqrt without checking sign first.
+
+**Why pre-existing:** the assert has been at
+FixedPoint64.hpp:298 since v5.0+; the test path that triggers it
+predates this v5.11 sprint. v5.11.26's RAII destructor only
+revealed it (by getting ASAN past the earlier crash).
+
+**Investigation plan:**
+- Step 0: identify which test in v5.10.0a.next.2 triggers it.
+  ASAN output shows the test progressed past the bandit
+  replay-determinism `prediccontroller_test` line — the truncated
+  output suggests it's mid-test (the line shows "predic"
+  indicating in-progress).
+- Step 1: find the call site. `grep -rnE "FP64_Sqrt\(" --include="*.hpp"`
+- Step 2: most likely it's a stat that computes `sqrt(variance)` where
+  variance went slightly negative due to FPN accumulator drift
+  (an FPN<F=64> sum-of-squares minus square-of-sum can underflow
+  by a tiny amount and become negative). Add a `fmax(0, value)`
+  clamp before FP64_Sqrt.
+
+**Re-trigger condition:** before any future ASAN-clean gate, OR
+before declaring the engine free of latent FP edge cases.
+
+---
+
 ## SPSCRing+OrderEventLog stack-use-after-scope under ASAN (2026-05-07)
+**RESOLVED 2026-05-07 in v5.11.26** — OrderManagerState RAII
+destructor calls OrderManager_Shutdown at scope exit; writer
+thread is joined before stack memory becomes invalid. Verified
+by ASAN run: 672+ tests progressed past the prior crash point
+(SPSCRing_TryPop:168). New failure (FP64_Sqrt assertion) is
+unrelated — captured above as a separate deferred item.
 
 **Surfaced by:** v5.11.17 ASAN run (build_asan controller_test).
 

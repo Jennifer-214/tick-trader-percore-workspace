@@ -60,6 +60,76 @@ scope).
 
 ---
 
+## v5.11.8 — ML AOT compile (Treelite)
+
+**Original scope:** master plan v5.11.8. Treelite-style transpiler
+emits compiled C++ for trained XGBoost/LightGBM trees. Brings
+single-row inference from ~1-5μs (XGBoost C API) down to <100ns.
+
+**Status:** DEFERRED at v5.11 sprint close. Master plan flagged it as
+SPECULATIVE up front.
+
+**Why deferred:**
+- ML inference happens on the SLOW path (every poll_interval ticks),
+  not the hot path. Slow-path is already 50-150 μs avg per cycle.
+- Saving 1-5 μs on the inference component is ~2-5% of slow-path —
+  real but not load-bearing for a non-colo / public-WS engine.
+- Adds dependency complexity: Treelite version coupling, AVX-512
+  codegen variability, stamp body schema bump (`aot_compiled_sha256`
+  field).
+- Master plan flags it as speculative + "defer if v5.11 cumulative
+  effort exceeds 3 weeks." We've been under 3 weeks but the
+  speculative tag stands.
+
+**Re-trigger condition:**
+- ML strategy becomes the dominant trading mode (vs current
+  AUTO/regime-gated strategies where ML fires only sometimes).
+- Profiling shows XGBoost C API inference is the slow-path
+  bottleneck (currently it's not — slow-path p99 is OS-bound at
+  ~1ms).
+- Operator targets sub-microsecond inference (FPGA-class).
+
+**Effort estimate when re-triggered:** 2-3 days. Treelite integration
+(~1 day) + stamp body extension via Surface G pattern (~30 min) +
+engine load path with fallback (~half day) + train-serve parity test
+(~half day).
+
+---
+
+## v5.11.9 — Carryover backlog items
+
+**Original scope:** master plan v5.11.9. Quality-of-life items from
+the existing deferred-items doc:
+- #5 feature mask cfg per-core (~3-4h)
+- #7 scaler comparison tool (~2h)
+- #18 RFV scaler binding (TBD)
+- Doc gap: `OPERATOR_QUICKSTART.md` (~3-4h)
+- Test file split (`controller_test.cpp` ~12k lines → 4 files; ~2-3h)
+
+**Status:** ALL DEFERRED at v5.11 sprint close.
+
+**Why deferred:**
+- Quality-of-life, not optimization — none affect engineering
+  correctness.
+- All items have been on backlog for at least one sprint cycle.
+- The v5.11 sprint focus was structural + performance; v5.11.9
+  items are operator-workflow QoL.
+
+**Re-trigger conditions** (per item):
+- Feature mask cfg: when an operator wants per-core feature
+  selection without rebuilding.
+- Scaler comparison tool: when investigating a scaler-drift
+  incident on a specific deployment.
+- RFV scaler binding: when RFV becomes a load-bearing model
+  type beyond ad-hoc experiments.
+- OPERATOR_QUICKSTART.md: when a new operator joins or open-source
+  uptake demands it.
+- Test file split: when controller_test.cpp's compile time
+  becomes a development-iteration bottleneck (currently ~10s,
+  not painful).
+
+---
+
 ## Multi-exchange parser pattern (2026-05-07 decision)
 
 **Status:** ARCHITECTURALLY DEFERRED. Decision pending the second-

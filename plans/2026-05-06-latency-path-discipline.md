@@ -1,0 +1,392 @@
+# Latency-Path Discipline
+
+**Architectural rules for any code on a latency-impacting path.** Hot
+path is the priority focus (strictest rules), but slow path / OMS
+drainer / parsing also benefit from the same patterns at relaxed
+intensity. This document captures patterns that aren't obvious from
+reading `STRATEGY_AND_CODING_RULES.md` alone — they emerged from the
+v5.10/v5.11 audit cycles and are easy to violate without realizing.
+
+**Discipline scales with cadence:**
+- Hot path (per-tick) — all 7 rules, strictly.
+- Slow path (per-cadence rebuild) — Rules 1, 2, 3, 5, 6, 7 apply; Rule 4
+  (branch predictor) relaxed since slow-path branch mispredicts cost
+  amortizes across the cadence interval.
+- OMS drainer (per-fill) — Rules 2 (no I/O), 3 (no inline retry),
+  6 (no pointer chasing) apply; cache layout / branch discipline
+  relaxed.
+- Parsing (per-WS-frame) — Rules 2 (no malloc), 3 (no inline blocking),
+  6 (dense buffers).
+- Snapshot publish — Rule 7 (cross-thread sync) is paramount; v5.11.3
+  Seqlock pattern.
+
+**Read this BEFORE writing or modifying:**
+- `CoreFrameworks/ExecutionCore.hpp` (per-tick hot path)
+- `CoreFrameworks/ControllerEventLoop.hpp` slow-path rebuild loop
+- `CoreFrameworks/OrderManager.hpp` drainer paths
+- `Strategies/StrategyParameters.hpp` dispatch table
+- Anything touching `RollingStats_Push` / `Regime_ComputeSignals`
+- Anything called from `EngineSharded_Run`'s per-core thread loops
+
+**Source audits:** `LATENCY_OPTIMIZATION_AUDIT.md` Parts 1-3, 6, 7;
+`STRATEGY_AND_CODING_RULES.md` (companion rules doc).
+
+---
+
+## What "latency-impacting path" means
+
+| Path | Cadence | Discipline applies? |
+|---|---|---|
+| Hot path (`ExecutionCore_Tick`, `BG_Evaluate`, `SG_Evaluate`) | Per tick (~1µs apart) | YES — strictest |
+| Slow path (`EventLoop_RebuildOneCore`, `RollingStats_Push`, `Regime_ComputeSignals`) | Per cadence (~100 ticks) | YES — high-priority |
+| OMS drainer (`OMS_DrainSubmit`, `OrderManager_Tick`) | Per fill / per-tick check | YES |
+| Producer thread fan-out | Per tick | YES |
+| Snapshot publish (TUISnapshot copy) | Per cadence | YES — torn-read class |
+| Parsing (WS ingest, REST execution reports) | Per WS frame / per fill | YES |
+| Boot init / cfg parse / TCP connect | Once at startup | NO — readable code wins |
+| Stamp emission / model save | At training time | NO |
+| TUI render loop | ~60Hz on render thread | NO (separate thread) |
+
+The discipline scales with cadence. Per-tick code gets all 7 rules
+below; per-cadence slow-path gets most of them; per-fill OMS gets the
+"no I/O / no sleep" subset.
+
+---
+
+## Rule 1 — Cache line layout discipline
+
+**Cache line = 64 bytes.** A struct field that's read every tick must
+fit in a cache line — never span two — or you load 2 lines per tick
+instead of 1. Same applies to writes.
+
+### Field-span analysis
+
+When adding a field to an existing hot struct:
+
+1. Compute `sizeof(field)` exactly. **Common gotchas:**
+   - `FPN<64>` = **24 bytes** (`uint64_t w[2]` + `int32_t sign` + 4B padding), not 16.
+   - `FPN<128>` = 40 bytes; `FPN<256>` = 72 bytes (each crosses cache lines).
+   - `std::atomic<T>` is `sizeof(T)` plus alignment requirements.
+   - Pointers are 8 bytes; references compile to pointers.
+
+2. Compute the field's offset (sum of preceding fields + their padding).
+
+3. Check if `offset + sizeof(field) > (offset / 64 + 1) * 64`. If yes,
+   the field spans two cache lines — bad.
+
+### Cache line cluster pattern
+
+Group fields by access pattern, not declaration convention:
+
+```cpp
+struct alignas(64) Foo {
+    // Line 0 (hot READS every tick):
+    field_a;          // hot read
+    field_b;          // hot read
+    // ...pad to keep all hot reads in line 0...
+
+    // Line 1+ (hot WRITES on rare events):
+    field_c;          // entry-only write
+    field_d;          // entry-only write
+
+    // Line N (cross-thread atomic):
+    alignas(64) atomic_field;
+    pad_to_64[];
+
+    // Line N+1+ (cold init-time fields):
+    cold_field;
+};
+```
+
+### Cross-thread fields → own cache line
+
+Any field written by thread A and read by thread B (or vice versa)
+should sit on its own cache line. Otherwise:
+- Thread A's write invalidates the cache line in thread B's L1d
+- Thread B reloads the entire line on next read
+- Cost: ~30-50ns per ping-pong
+
+The `permission` flag in `ExecutionCore` violated this until v5.11.1.5
+isolated it. **Verify with grep before merging:** any field accessed via
+`__atomic_load_n` / `__atomic_store_n` / `std::atomic<T>` should have
+`alignas(64)` (or be in a struct that does).
+
+### Steady-state cache footprint cap
+
+Per-tick code should fit its working set in 4-8 cache lines (256-512
+bytes). Tiger Lake L1d = 48KB / 64B = 768 lines per core; per-core
+sharded design means L1d isn't shared across cores, so eviction
+pressure is bounded — but discipline prevents creep.
+
+---
+
+## Rule 2 — No I/O on hot/slow paths (no `fprintf`, no syscalls, no `malloc`)
+
+`fprintf` grabs libc's stdio mutex. `printf` does too. `write()` is a
+syscall. `malloc` may take an internal lock. Any of these on a
+latency-impacting path can cascade-stall the entire engine.
+
+### Failure-path observability pattern
+
+When a hot-path operation can fail (SPSC ring full, NaN feature, etc.),
+**increment a counter** instead of logging:
+
+```cpp
+// BAD: hot path
+if (push_failed) {
+    fprintf(stderr, "[core %d] push failed\n", core_id);  // libc mutex!
+}
+
+// GOOD: hot path
+if (push_failed) {
+    core->push_failures++;  // single store, no I/O
+}
+
+// Slow path (or snapshot publisher):
+// Reads core->push_failures periodically, logs delta if non-zero,
+// or surfaces via TUISnapshot for GUI display.
+```
+
+Counters are:
+- Lock-free single-writer (the hot path's own thread)
+- Read by slow path with `__atomic_load_n(..., ATOMIC_RELAXED)` — relaxed
+  is fine since the slow path is OK with stale-by-1-tick data
+- Visible to TUI via existing PerCoreSnap field-add pattern
+
+### Observed in the wild
+
+`ExecutionCore_Tick`'s ring-push-failure path used to call `fprintf`
+inline. Fixed in v5.11.0.1: replaced with `ring_push_failures` counter.
+The `fprintf` only fired under degraded conditions (drainer stalled),
+but the libc mutex acquisition during such conditions could cascade-stall
+the hot path further.
+
+### Same rule for `malloc` / `free`
+
+If you find yourself reaching for `new` / `malloc` / `std::vector` on
+a hot/slow path, stop. Use:
+- Pre-allocated buffers (`char buf[64]`)
+- Custom allocators drawing from the engine's `mmap` arena
+  (post-v5.11.6 this becomes the canonical pattern)
+- Lock-free SPSC/MPSC rings for inter-thread communication
+
+---
+
+## Rule 3 — SPSC ring failure → counter, not retry
+
+`SPSCRing_TryPush` returns `false` when the ring is full. **Do not
+retry inline.** Don't busy-wait. Don't re-push next tick blindly.
+
+The correct pattern (already in `ExecutionCore_Tick`):
+1. Check the return value.
+2. If false, increment a failure counter (Rule 2).
+3. **Preserve state** — don't flip flags that depend on the push
+   succeeding. e.g., if a position-exit event failed to push, leave
+   `core->active = 1` so next tick retries naturally with a fresh tick.
+4. Slow path / drainer detects the back-pressure separately
+   (high counter, or the ring's `Depth` reading max).
+
+### Why retry-inline is wrong
+
+If you retry inline (loop until push succeeds), you couple hot-path
+latency to drainer responsiveness. Drainer briefly stalled (page
+fault, kernel preemption, sleep) → hot path stalls for the same
+duration. That's the exact tail-variance category we're killing.
+
+Counter + preserve state means: a single dropped tick has bounded
+recovery (one tick's delay), the engine self-heals next tick.
+
+---
+
+## Rule 4 — Branch predictor discipline
+
+Branches on the hot path are OK if and only if:
+1. The branch direction is data-independent OR predicts ~100% one way
+2. You annotate predicted-rare branches with `__builtin_expect(cond, 0)`
+3. The compiler knows the cold side is genuinely cold (use
+   `__attribute__((cold))` for cold helpers)
+
+### Common patterns
+
+**Predicted-not-taken (rare event):**
+```cpp
+if (__builtin_expect(can_enter | can_exit_a | can_exit_b, 0)) {
+    // event push, mostly cold
+}
+```
+The branch predictor learns "not taken" within ~1k ticks. Steady-state
+cost: ~0ns.
+
+**Compile-time elision (config flag):**
+```cpp
+template <bool LAT_ENABLED>
+__attribute__((always_inline))
+static inline void ExecutionCore_Tick(...) {
+    if constexpr (LAT_ENABLED) {
+        // sampled code: completely compiled out when LAT_ENABLED=false
+    }
+}
+```
+Zero runtime overhead in production builds. Used in v5.11.1.1.
+
+**Branchless predicate combination:**
+```cpp
+// Combine multiple bool conditions without branches:
+uint64_t can_enter = (~any_active & (uint64_t)perm & bg_fires) & 1ULL;
+// vs
+if (!any_active && perm && bg_fires) { ... }  // branchy
+```
+
+### What NOT to do
+
+- **Data-dependent branches** (e.g., `if (price > threshold)`). These are
+  mispredicted ~50% of the time on noisy data → 15-20 cycle bubble per
+  miss. Use the bitwise pattern above.
+- **`if (lat_enabled)` checks every tick** when `lat_enabled` flips
+  rarely. The branch is well-predicted, but the LOAD of `lat_enabled`
+  itself touches a cold cache line. Use template bool elision.
+
+---
+
+## Rule 5 — FPN sizing awareness
+
+`FPN<F>` template generates structs of varying sizes. Memorize:
+
+| Template | Size | Cache line position |
+|---|---|---|
+| `FPN<64>` (production default) | **24 bytes** | 2.6 fit in a cache line |
+| `FPN<128>` | 40 bytes | 1.6 fit per line |
+| `FPN<256>` | 72 bytes | spans 1+ lines per FPN |
+| `FPN<512>` | 136 bytes | spans 2+ lines per FPN |
+
+**Implications:**
+- A struct with 3+ `FPN<64>` fields back-to-back overflows a cache line
+  somewhere — must reorder + pad.
+- Wide-FPN slow-path math (v5.11.2 vectorization) doesn't fit in
+  registers cleanly; AVX-512 zmm reg = 64 bytes, holds at most 2.6
+  `FPN<64>` words. Plan accordingly.
+
+**Mistake to avoid:** assuming `FPN<64> == 2 uint64_t == 16 bytes`. The
+`int32_t sign` + 4-byte padding bumps it to 24.
+
+---
+
+## Rule 6 — Pointer chasing → dense flat arrays
+
+Linked lists, trees, hash maps all involve pointer chasing. Each
+dereference is a potential L1 miss. On the hot path that's catastrophic.
+
+**The codebase avoids:**
+- `std::unordered_map` / `std::map` / `std::list` (compile-time enforced
+  via grep audit; CLAUDE.md Decision 13 X-macro registry pattern when
+  multi-site additions are needed)
+- `std::function` (vtable + heap)
+- `std::shared_ptr` / `std::unique_ptr` on hot path (atomics + heap)
+
+**The codebase uses:**
+- `std::array` (stack, fixed size, dense)
+- C-style arrays sized via `constexpr` (e.g., `MAX_EXECUTION_CORES`)
+- Bitmaps (`uint16_t portfolio.active_bitmap`)
+- Index-keyed lookup tables (e.g., `core_id` as direct array index)
+
+Compile-time check: `static_assert(!std::is_polymorphic<T>::value, ...)`
+on key structs (added in v5.11.0.E for ExecutionCore + PortfolioController).
+
+---
+
+## Rule 7 — Cross-thread synchronization patterns
+
+For inter-thread state handoff, use the appropriate pattern:
+
+| Pattern | Use case | Latency |
+|---|---|---|
+| **SPSCRing<T, N>** | Producer/consumer, fixed throughput | ~1ns try_push when not full |
+| **ParameterSlot<T> seqlock** | Slow→hot push of GateParameters (already 1 reader, 1 writer) | ~6ns full read; ~1ns cached-seq check |
+| **`alignas(64) atomic<T>`** | Single-byte flags (e.g., `permission`, `kill_tripped`) | ~1ns atomic load (acquire) |
+| **TUISnapshot double-buffer** ⚠️ | (DEPRECATED — torn-read class; v5.11.3 replaces with seqlock) | N/A |
+
+### Don't use
+
+- `std::mutex` — kernel call on contention; tail spike up to ms
+- `std::condition_variable` — kernel call on wait
+- `std::shared_mutex` — both atomics + potential blocking
+- `pthread_rwlock` — same problems
+
+If you find yourself wanting one of these on a hot/slow path, you
+probably need:
+1. A SPSC ring instead, OR
+2. Eventually-consistent reads (relaxed atomic load + accept staleness), OR
+3. To restructure the design so the read can happen on the slow path
+
+---
+
+## Verification before merging hot-path changes
+
+Run this checklist before any PR that modifies `ExecutionCore_Tick`,
+`BG_Evaluate`, `SG_Evaluate`, or fields of `ExecutionCore` /
+`GateParameters` / `ParameterSlot`:
+
+1. **`./build.sh latency`** — builds with LATENCY_PROFILING=ON; run
+   the engine in synthetic mode + observe p50/p99/p99.9 in TUI.
+2. **`-S` assembly inspection** — `g++ ... -S -o exec_core.s` then
+   inspect `ExecutionCore_Tick` body. Check for:
+   - No `call malloc` / `call free` / `call __libc_*`
+   - No stack spills (look for `mov %rXX, -8(%rbp)` patterns
+     beyond the function preamble)
+   - No `vmovups` / `vmovdqu` reads beyond the expected hot fields
+3. **`./tools/calls_graph_diff.sh`** — confirms no new orphan symbols.
+4. **Replay-determinism test** at `tests/controller_test.cpp:10251` —
+   bytewise-equal output across runs.
+5. **Bench gate (audit's standard for hot-path mods)** — p99 ≤ baseline
+   p99 across 10M-tick replay; p99.9 should improve.
+
+If any item fails, the change isn't ready.
+
+---
+
+## Anti-patterns observed historically
+
+These all happened in this codebase before being caught + fixed.
+**Do not reintroduce.**
+
+1. **Field span across cache lines** — `live_sl` spans line 0→1 in
+   `ExecutionCore` due to `FPN<64>=24B` math being miscalculated as
+   16B. Fixed in v5.11.1.5 layout reorder.
+
+2. **`fprintf` on rare-failure hot-path branch** — was in
+   `ExecutionCore_Tick` push-failure path. Replaced with counter in
+   v5.11.0.1. (Cascading mutex-stall risk under degraded conditions.)
+
+3. **Permission flag on hot cache line** — controller atomic-stores from
+   another CPU; line 0 ping-pongs. Fixed in v5.11.1.5 by isolating
+   to its own `alignas(64)` block.
+
+4. **`if (active_b)` branch on hot path** — leg-B compares branch-gated
+   because FPN compares didn't pipeline cleanly. AVX-512 vectorization
+   in v5.11.1.2 removes the branch.
+
+5. **`lat_enabled` runtime load** — every tick read a cold cache line
+   for the enable flag. Eliminated via template bool in v5.11.1.1.
+
+6. **Snapshot torn reads** — TUISnapshot double-buffer toggle without
+   seqlock; producer can lap reader. Fixed in v5.11.3 (seqlock pattern).
+
+7. **`is_buyer_maker` dropped on slow-path scalar bus** — slow path
+   hardcoded 0 for is_buyer_maker because v5.1.2 architectural carry-
+   forward dropped the field. Train-serve parity preserved (both broken
+   the same way), but `volume_delta` feature locked at +1.0 →
+   zero-information. Documented in `KNOWN_ISSUES.md`; full closure
+   deferred to v5.10.X / v5.11+.
+
+When the next anti-pattern emerges, add it here.
+
+---
+
+## Cross-references
+
+- `STRATEGY_AND_CODING_RULES.md` (Gemini-distilled invariants; companion)
+- `LATENCY_OPTIMIZATION_AUDIT.md` (per-Part findings)
+- `OPERATOR_DEPLOYMENT.md` (OS-level tuning beyond what code can do)
+- `CLAUDE_INVARIANTS.md` (general engine-wide invariants)
+- `KNOWN_ISSUES.md` (operational gotchas; some hot-path-related)
+- v5.11 master plan: `plans/2026-05-06-MASTER-v5.11-optimization-sprint.md`

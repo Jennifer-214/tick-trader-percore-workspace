@@ -8,17 +8,22 @@ referenced docs live in `plans/` (workspace, also private).
 
 ## Required reading before writing performance-sensitive code
 
-Two private docs (gitignored at `DOCS/`, backups in workspace plans):
+Three private docs (gitignored, backups in workspace plans):
 
 | Doc | Trigger — read it BEFORE writing or editing... |
 |---|---|
 | `DOCS/STRATEGY_AND_CODING_RULES.md` | any code in hot path, slow path, OMS drainer, parsing, ML inference, strategies, RollingStats / RegimeSignals / ExecutionCore — i.e., anything in `CoreFrameworks/`, `Strategies/`, `ML_Headers/`, `DataStream/`, or `FixedPoint/`. The doc is 11 strict invariants (no malloc, no virtual, no mutex, no sleep_for, no atof/strstr in parsers, cache alignment, branchless, AVX-512-friendly data layouts, SCHED_FIFO/isolcpus deployment) — every new file in those dirs must comply |
 | `DOCS/LATENCY_OPTIMIZATION_AUDIT.md` | any optimization investigation, performance-regression triage, or v5.11 sprint work. 13 parts, ~40 specific items: hot path (Part 1), slow path SIMD (2+5), arch invariants (3), ingestion+ML+memory (4), system tail variance (6), allocator eradication (7), parsing (8), OMS variance (9), concurrency (10), FPN libs (11), HFT system ops (12), hardware/OS tuning (13) |
+| `plans/2026-05-06-latency-path-discipline.md` | any modification to **any code on a latency-impacting path**: `ExecutionCore_Tick` / `BG_Evaluate` / `SG_Evaluate` / `ExecutionCore` / `GateParameters` / `ParameterSlot` (hot path), `EventLoop_RebuildOneCore` / `RollingStats_Push` / `Regime_ComputeSignals` (slow path), `OMS_DrainSubmit` / `OrderManager_Tick` (OMS drainer), producer fan-out, snapshot publish, parsing. **7 architectural rules** scaled by cadence (hot = all; slow = most; OMS = subset) + an **anti-pattern history**, distilled from v5.10/v5.11 audit cycles: cache-line layout discipline (FPN<64>=24B!), no-I/O-on-failure pattern (counter not fprintf), SPSC ring failure handling, branch predictor patterns, FPN sizing awareness, dense flat arrays only, cross-thread sync patterns. Plus a **pre-merge verification checklist**. |
 
 **Workflow when about to edit one of those areas:** open the rules doc
 first, scan the relevant rule sections, then write the code. The audit
 doc is consulted when the rule is "yes but how" — it has concrete
-implementation suggestions per-site (with file:line references).
+implementation suggestions per-site (with file:line references). The
+hot-path discipline doc is the third leg — read it specifically when
+touching hot-path layout / per-tick code, since it captures patterns
+the rules doc misses (FPN sizing math, failure-path observability,
+cache-line-span analysis).
 
 ## v5.11 sprint orientation
 

@@ -52,17 +52,54 @@ What's intentionally private (workspace-backed):
 - Trained models + scalers + stamps (`models/`)
 - Runtime logs + per-symbol metrics CSVs + baseline_run/
 - Optimization audit + coding rules (this doc + the two it references)
+- Versioned design-note backlogs (`*-design-notes.md`)
+- Future-strategy docs (`FUTURE_*.md`)
+- All `*_AUDIT.md` going forward
 - This file (`CLAUDE.local.md` itself)
 
 What's intentionally public (AGPL on GitHub):
 - All source code in `CoreFrameworks/`, `Strategies/`, `ML_Headers/`,
   `Backtest/`, `DataStream/`, `FixedPoint/`, `MemHeaders/`, `GUI/`
-- DOCS/ tracked files (architecture, invariants, code map, changelogs,
-  known issues, design notes)
+- DOCS/ tracked files: architecture, invariants, code map, changelogs,
+  known issues, parity docs, recurring-bug patterns, public design
+  history (CLAUDE_*.md, ARCHITECTURE, CODE_MAP, CHANGELOG, etc.)
 - Tests
 - Build infrastructure
 - Public CLAUDE.md (architectural; no edge content)
 
-If a question arises mid-session about whether to commit / track a
-new file: edge content → workspace + gitignore; architecture / docs
-/ test infra → public.
+## Going-forward rule for new docs
+
+**When creating a new doc, default to private** if any of these apply:
+- Captures unshipped strategy direction or roadmap (e.g. multi-symbol
+  designs, future autotuning, planned strategy variants)
+- Distills optimization findings, profiling output, or hardware-tuned
+  performance work
+- Names operator-specific deployment details (NUMA topology, NIC
+  brand, isolcpus core IDs, etc.)
+- References private cfg values, real account balances, real symbols
+  beyond the public BTCUSDT example
+
+**Where to write it:**
+- **Private edge doc** → write directly into `plans/` (symlinked to
+  workspace, gitignored). Date-prefix the filename (e.g.
+  `plans/YYYY-MM-DD-thing.md`).
+- **Public architectural doc** → write into `DOCS/`. Architectural =
+  invariants, parity rules, code map, function interface contracts,
+  build instructions, public testing recipes, post-incident learnings
+  that are bug-class-level (not operator-edge-level).
+
+**Auto-private gitignore patterns** (already in `.gitignore`):
+- `*_AUDIT.md`
+- `FUTURE_*.md`
+- `*-design-notes.md`
+- `STRATEGY_AND_CODING_RULES.md` (specific)
+- `LATENCY_OPTIMIZATION_AUDIT.md` (specific; also covered by glob)
+- `CLAUDE.local.md`, `*.local.md`
+
+If you write a file matching one of those patterns into `DOCS/` or
+the repo root, it auto-stays-private. But still prefer `plans/` for
+new private content — single source of truth, automatic workspace
+backup, doesn't dual-track files.
+
+**If unsure: ask the user.** "Should this doc be private?" is cheaper
+than untracking + history-rewriting later.

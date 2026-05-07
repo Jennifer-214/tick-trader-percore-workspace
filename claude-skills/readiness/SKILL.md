@@ -138,6 +138,14 @@ YELLOW — fix the must-fix items above first (~30 min)
 RED — significant rescope needed; revisit plan
 ```
 
+**Save the report to a private file as well as printing it.**
+Convention (set 2026-05-06): write the report to
+`plans/plan_checks/readiness-<YYYY-MM-DD>-<plan-stem>.md` where
+`plan-stem` is the audited plan's filename without the date prefix
+and `.md` extension. Workspace-symlinked, gitignored from public
+repo. `mkdir -p plans/plan_checks` before writing. Also print the
+same report to stdout for live triage.
+
 ## Map-update suggestions (post-verify)
 
 After verifying the plan, suggest map updates the implementation will

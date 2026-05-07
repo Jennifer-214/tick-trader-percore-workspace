@@ -104,7 +104,15 @@ Spawn an Explore subagent. The subagent:
    pattern (Surface G stamp body extension, 3-tier strict-mode,
    distinct PerCoreSnap field per failure mode).
 
-5. **Output** — single markdown report, ~600-1500 lines:
+5. **Output** — single markdown report, ~600-1500 lines.
+
+**Save the report to a private file as well as printing it.**
+Convention (set 2026-05-06): write to
+`plans/plan_checks/parity-<YYYY-MM-DD>-<scope>.md` where `<scope>`
+is the audit scope (`full`, `features`, `labels`, `scaler`, `stamp`,
+`cfg`, etc., per the invocation). `mkdir -p plans/plan_checks` first.
+Workspace-symlinked, gitignored from public repo. Print to stdout
+too for live operator review.
 
 ```
 # /parity-check report — <date>

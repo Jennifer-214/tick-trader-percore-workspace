@@ -229,6 +229,23 @@ removed), flag as DRIFT — plan needs update before coding.
 
 ### 5. Output — single unified report
 
+**Save the report to a private file as well as printing it.**
+Convention (set 2026-05-06): write the report to
+`plans/plan_checks/<YYYY-MM-DD>-<master-plan-stem>.md` where
+`master-plan-stem` is the master plan's filename minus its
+date prefix and `.md` extension (e.g. `2026-05-06-v5.10-sprint.md`
+for `2026-05-02-MASTER-v5.9-to-v5.10.md`). Workspace-symlinked,
+gitignored from public repo by virtue of `plans/` being private.
+
+This creates a permanent audit-trail of plan-check verdicts and
+their fix recommendations that survives across sessions and is
+backed up to the workspace repo automatically. The agent reading
+this skill should `mkdir -p plans/plan_checks` before writing.
+
+Also print the same report to stdout so the operator sees it
+immediately. Both surfaces (stdout for live triage, on-disk for
+forensic reading) matter.
+
 ```
 # /plan-check report — <master-plan-path> — <date>
 

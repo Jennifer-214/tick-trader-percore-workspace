@@ -66,7 +66,14 @@ Spawn an Explore subagent. The subagent:
    resistance (single source of truth, structural prevention,
    etc.). Reference the v5.8 single-source-of-truth principle.
 
-5. **Output** — single markdown report, ~500-1500 lines:
+5. **Output** — single markdown report, ~500-1500 lines.
+
+**Save the report to a private file as well as printing it.**
+Convention (set 2026-05-06): write to
+`plans/plan_checks/ml-audit-<YYYY-MM-DD>-<scope>.md` where `<scope>`
+is the audit scope (`full`, `features`, `labels`, etc.). `mkdir -p
+plans/plan_checks` first. Workspace-symlinked, gitignored from
+public repo. Print to stdout too for live operator review.
 
 ```
 # /ml-audit report — <date>

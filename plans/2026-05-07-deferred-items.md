@@ -329,6 +329,48 @@ become a documented concern.
 
 ---
 
+## Strategy_FreePerCore AUTO/NONE state-pointer root-cause (2026-05-08)
+
+**Symptom:** at engine shutdown, `Strategy_FreePerCore` was firing
+`unknown kind 5` WARN on cores that should have had concrete strategy
+kinds (e.g. SIMPLE_DIP=2, MOMENTUM=1, EMA_CROSS=4 per cfg). Kind=5
+is `STRATEGY_AUTO` — a sentinel that shouldn't have a state pointer.
+
+**Patched in v5.11.11 (commit pending):** turned the AUTO/NONE case
+into a quiet null-out (no WARN, no `delete` — would be type-cast UB
+without knowing concrete type; arena owns the memory so reclamation
+happens via InitArena_Destroy at engine shutdown). Pre-fix the WARN
+cluttered shutdown logs without pointing to actionable operator
+response. Reproducible on cfgs with duplicate `core_N_strategy=`
+lines (last-wins parse).
+
+**Root-cause investigation deferred.** Reading the code, AUTO cores
+should have `state=null` post-Strategy_InitPerCore (line 153-158:
+case STRATEGY_AUTO/STRATEGY_NONE/default → `ctx.strategy_state =
+nullptr`). The shutdown observation says state is non-null, kind=AUTO.
+Three theories worth investigating:
+
+1. **AUTO resolution path allocates state on demand** without
+   updating `strategy_state_kind` to the resolved concrete strategy.
+   If true: write site is somewhere in `EventLoop_RebuildOneCore`
+   when AUTO resolves to a concrete strategy.
+2. **Snapshot persist/load** (ShardedSnapshotPersist.hpp:498) restores
+   `strategy_state_kind` from disk but doesn't restore the matching
+   `strategy_state` pointer. Then `Strategy_InitPerCore` runs and
+   sets a NEW kind, but somewhere a state alloc happened with the
+   OLD kind preserved.
+3. **Hot-swap path** (EngineSharded.hpp:1566 / :2543 set
+   `strategy_id = pending`) without calling Strategy_FreePerCore +
+   InitPerCore in a paired sequence. State from previous strategy
+   could persist with old kind.
+
+**Re-trigger:** when an operator sees the WARN reappear under a
+specific reproducer (then the root cause is investigable from the
+specific cfg + lifecycle sequence). The v5.11.11 quiet-null patch
+preserves correctness for now.
+
+---
+
 ## DepthReplayState calloc — backtest-only (deferred 2026-05-07)
 
 **Site:** `DataStream/DepthReplayState.hpp:205` —

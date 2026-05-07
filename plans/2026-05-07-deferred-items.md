@@ -9,27 +9,6 @@ This file is gitignored (private) — workspace-backed via the
 
 ---
 
-## v5.11.3.D — `mmap(MAP_POPULATE)` pre-alloc for `OrderEventLog`
-
-**Original scope:** master plan v5.11.3 item 3 — pre-allocate
-OrderEventLog capacity at boot via `mmap(MAP_POPULATE)`. No `realloc`
-mid-trading.
-
-**Deferred to:** v5.11.6 (allocator unification).
-
-**Why deferred:**
-- v5.11.3.C moved the realloc OFF the drainer thread (now happens on
-  the async writer pthread). Drainer-side urgency dropped to zero.
-- v5.11.6 will do a coordinated allocator-eradication pass across the
-  whole engine. Folding pre-alloc into that pass is cleaner than a
-  standalone ship.
-
-**Re-trigger condition:** if drainer tail latency profiling shows
-the realloc-on-writer-thread is itself a parity / replay issue.
-Current expectation: it isn't.
-
----
-
 ## v5.11.5.C — MPSC drain queue replacing N×SPSC fan-in
 
 **Original scope:** master plan v5.11.5 item 2 — replace
@@ -301,34 +280,6 @@ choice, not all-or-nothing.
 
 ---
 
-## Stamp body / bandit / TradeReader atof sites
-
-**Sites:** `ML_Headers/ModelInference.hpp` (~13 atof calls in stamp
-parser), `ML_Headers/CoreModelZoo.hpp` (3 atof calls),
-`ML_Headers/BanditLearning.hpp:407` (1 strtod call),
-`GUI/TradeReader.hpp` (4 atof calls), `tests/parity_harness.cpp` (1
-atof call), `tests/controller_test.cpp` (assorted).
-
-**Deferred to:** focused parity-locale-immunity ship if locale flips
-become a documented concern.
-
-**Why deferred:**
-- These are LOAD-TIME paths (stamp parsing on model load, bandit
-  state load on engine boot, CSV parsing in GUI render thread). No
-  hot-path or warm-path latency exposure.
-- Stamp parsing already has locale pinning at EMIT time (per the v5.9
-  parity audit) — `tools/stamp_model.sh` and the in-process emitter
-  pin LC_NUMERIC=C. Round-trip parity is preserved in the sane case.
-- The locale-flip silent-corruption hazard is theoretical for
-  load-time paths; practical on hot-path (which v5.11.4.A closed).
-
-**Re-trigger condition:** any of:
-- A documented locale-flip incident on a load-time path
-- A multi-locale deployment (operator on a non-C-locale system)
-- A v5.x parity audit that flags load-time atof as a CRITICAL gap
-
----
-
 ## Strategy_FreePerCore AUTO/NONE state-pointer root-cause (2026-05-08)
 
 **Symptom:** at engine shutdown, `Strategy_FreePerCore` was firing
@@ -548,21 +499,6 @@ abstraction.
 
 ---
 
-## v5.11.0a Hardware/OS Tuning (audit Part 13)
-
-**Status:** SHIPPED as a runbook (`DOCS/OPERATOR_DEPLOYMENT.md`),
-not as code. The runbook covers isolcpus, SCHED_FIFO, IRQ affinity,
-hugepages, intel_pstate / turbo, governor settings, NUMA pinning.
-
-**Deferred to:** when the operator co-locates and applies the
-runbook. Currently a laptop dev environment; the runbook reflects
-deployment-box settings.
-
-**No code change pending** — Part 13 is documentation-complete; only
-the operator's manual deployment work remains.
-
----
-
 ## io_uring async I/O on Binance WS connection
 
 **Why on this list:** the user asked about path to lower tick-to-trade
@@ -638,3 +574,24 @@ When deferring a future item, append a section here using the
 template above. When re-triggering and shipping, leave the section
 in place but add a `**RE-TRIGGERED → shipped in vX.Y.Z**` line at
 the top of the section so the deferral history stays queryable.
+
+### v5.11.12 cleanup (2026-05-07)
+
+Three sections removed because they were never genuinely deferred —
+they shipped under different sub-version names. Listed here as a
+back-pointer so the audit trail isn't lost:
+
+- **v5.11.3.D `mmap(MAP_POPULATE)` for OrderEventLog** → SHIPPED in
+  v5.11.5.C (per `DOCS/CHANGELOG.md` v5.11 row).
+- **Stamp body / bandit / TradeReader atof sites** → SHIPPED in
+  v5.11.4.C (locale-immune parsing sweep covered all three site
+  groups).
+- **v5.11.0a Hardware/OS Tuning (audit Part 13)** → SHIPPED as
+  `DOCS/OPERATOR_DEPLOYMENT.md` runbook (no code change pending;
+  operator deployment work, not engine code).
+
+Per future-rule (added with this cleanup): if a deferred-items
+section is actually a "shipped under different name" entry,
+remove it during the next /readiness pass on a related plan rather
+than letting it accumulate. Doc is meant to reflect what's TRULY
+deferred, not history of what was renamed mid-sprint.

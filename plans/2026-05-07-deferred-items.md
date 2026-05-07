@@ -568,6 +568,74 @@ v5.11.4.A's parity tests.
 
 ---
 
+## Walk-Forward + held-out 0.0% accuracy regression (2026-05-07)
+
+**Surfaced by:** operator GUI screenshot at v5.11.17. Training panel
+shows:
+- Train Multi-Horizon → models/test_case1.json: 44.2% in-sample
+- auto-stamp FAILED: REFUSE: gap 0.4417 > threshold 0.0000
+  (i.e. train=44.2%, held-out≈0.0% → gap≈44%)
+- Run Walk-Forward → all visible folds (2-5) at 0.0% / 0.0% / 0.0%
+- Diagnosis: "no edge — val accuracy at or below the always-predict-best baseline"
+
+**Symptom shape:** model can predict in-sample but is at-or-below
+random on every held-out / WF-test slice. Both held-out (auto-stamp
+check) and walk-forward folds report ~0%. Status="clean" so no NaN
+or warning fired — predictions DID happen, they just don't match
+labels at all.
+
+**Hypotheses to test:**
+1. **Test-fold labels are all-zero** — if WF's split places non-event
+   labels (binary 0 / multiclass 0) entirely in the test fold and
+   the model predicts class>=1, accuracy = 0/N. Check fold split's
+   label-distribution diagnostic + per-fold class_counts.
+2. **Locale or parsing regression in stamp body** — v5.11.4.C swept
+   atof/strtod to ParseFast across ML_Headers/ModelInference.hpp
+   (~13 sites) + CoreModelZoo.hpp (3 sites) + BanditLearning.hpp.
+   Could a number be mis-parsed (off-by-1000 from comma-vs-period
+   under some locale), shifting label thresholds. Re-run with
+   `LC_NUMERIC=C` env var to control for this.
+3. **FPN end-to-end (v5.10.0b) round-trip** changed an internal
+   double→FPN conversion that affects label generation.
+   `LabelFunctions.hpp` is FOREACH_TARGET-driven (v5.10.0d) — bisect
+   to v5.10.0b vs v5.11.x to localize.
+4. **Test data quirk** — operator was using `test_case1.json` /
+   `test_case_01` run name, suggesting synthetic / hand-built data.
+   May not be a real regression at all; could be data-side issue
+   that pre-existed.
+
+**Investigation plan (deferred):**
+- Step 0: re-run with a known-good prior model (one that worked at
+  v5.10.0e) — does WF still report 0%? If yes, the WF computation
+  itself is broken; if no, the model trained at v5.11.x is the
+  problem.
+- Step 1: bisect v5.11.x ships against the WF accuracy. Most
+  suspicious: v5.11.4.C (parsing sweep), v5.11.7 (Bandit AVX-512;
+  but that's inference-time, not training).
+- Step 2: dump per-fold label histograms to confirm hypothesis 1
+  (test fold all-zero labels would show class_counts[0] = N,
+  others = 0).
+
+**Re-trigger condition:** before any v5.11.x trained model goes
+live OR before declaring v5.11 sprint definitively complete. v5.11
+optimization sprint shipped 17+ optimization items; some bytewise-
+determinism preserved (replay-determinism baseline GREEN per
+CHANGELOG), but the ML training/inference path may have
+unaccounted parity drift this regression exposes.
+
+**v5.11.18a/.18 status:** does NOT block. v5.11.18a adds cfg +
+stamp infrastructure with all-on default mask (no behavior
+change). v5.11.18 (full ML wiring) MUST land after this is
+understood — adding feature_mask machinery on top of an ML pipeline
+that's already producing 0% held-out is not actionable.
+
+Operator stance 2026-05-07: "we probably broke some stuff, but
+these optimizations will make it better going forward and were
+worth it." Confirms forward-motion preference; this regression is
+catalogued for fix-during-paper-testing.
+
+---
+
 ## SPSCRing+OrderEventLog stack-use-after-scope under ASAN (2026-05-07)
 
 **Surfaced by:** v5.11.17 ASAN run (build_asan controller_test).

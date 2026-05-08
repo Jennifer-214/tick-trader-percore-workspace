@@ -1220,3 +1220,123 @@ strategy's actual paper-trading pain points, not exhaustive port.
   microstructure feature. Re-read before opening any of these as
   active work.
 
+
+## Live-side ML guardrails (pre-live-capital safety items)
+
+**Status:** Deferred. Audited 2026-05-08 against operator's earlier
+question about ML inference safety in live deployment. Each item below
+is a real gap that's fine for paper trading but worth closing before
+live capital deployment.
+
+### #1 — Disconnect-flatten policy (real safety gap)
+
+**Current behavior:** WS dropouts trigger reconnect via `reconnect_delay=5`.
+The producer thread retries the connection. Existing positions stay
+open on the exchange (TP/SL orders rest there); the engine has no
+knowledge of fill state until reconnect resolves it. If the dropout
+lasts minutes / hours, the engine is flying blind.
+
+**Risk:** A position with TP/SL set on the exchange will close at one
+of them eventually. The risk is that DURING the dropout, market moves
+through both bracket levels (gap), or the operator wants to manually
+flatten but the engine's state-of-truth is stale.
+
+**Proposed fix:** new cfg `ws_dead_time_flatten_threshold_secs` (default
+60s, 0 = disabled). Producer thread tracks last-tick-received time;
+slow-path reads + fires emergency-flatten via OMS_DrainSubmit when
+exceeded. On reconnect, engine refuses new entries for `recovery_delay`
+seconds while it reconciles position state with REST `/api/v3/account`.
+
+**Estimate:** ~half-day. Cfg field + producer timestamp + slow-path
+check + reconcile path. Tests for the dead-time threshold + recovery
+gate.
+
+**Re-trigger:** must close before live capital. Paper trading bypasses
+because no real positions at risk.
+
+### #2 — Latency-aware prediction freshness gate
+
+**Current behavior:** ConfidenceScorer has `confidence_freshness_tau=300s`
+which decays the confidence value over time. But that's a DAMPING
+(makes the gate harder to clear), not a HARD GATE. The engine could
+still fire trades on slow-path parameters that are minutes old if the
+confidence is high enough.
+
+**Risk:** Slow-path stalls (GC pause, OS scheduler hiccup, blocking
+I/O on health log) leave the hot path executing on stale GateParameters.
+Predictions made against features computed seconds ago — the regime
+may have shifted entirely.
+
+**Proposed fix:** new cfg `param_max_age_ticks` (default
+poll_interval × 10, e.g. 1000 ticks). Hot path checks
+`current_tick - param_publish_tick > max_age` → kill new entries until
+slow-path catches up. SHALT_PARAM_STALE in halt_reason channel for
+observability.
+
+**Estimate:** ~half-day. Cfg + publish_tick stamp on parameter slot
+(seqlock-friendly) + hot-path check + halt_reason code + tests.
+
+**Re-trigger:** desirable before live; can defer if paper-trading
+shows slow-path is consistently snappy (look at slow-path p99 latency
+panel — if always <500μs, less urgent).
+
+### #3 — Confidence-conditional position sizing
+
+**Current behavior:** Flat `risk_pct=5%` per position regardless of
+prediction confidence. Model says P(buy)=0.95? Same 5% as P(buy)=0.51.
+
+**Risk:** Inefficient capital allocation. High-conviction predictions
+should size up; barely-above-threshold should size down.
+
+**Proposed fix:** new cfg `risk_scale_by_confidence` (default 0 =
+disabled, 1 = linear scale, 2 = quadratic scale). When enabled,
+ML strategy multiplies effective risk_pct by a confidence-derived
+factor: `factor = clamp((p - threshold) / (1 - threshold), 0, 1)^N`
+where N=1 (linear) or 2 (quadratic). Hard caps at risk_pct (no
+upsize beyond cfg value).
+
+**Estimate:** ~half-day. ML strategy reads confidence post-Predict
++ adjusts position size in BuySignal_Compute. Single-line change in
+hot path? Or move to slow-path parameter rebuild for branchless cost.
+
+**Re-trigger:** post-paper-test. If paper shows the model has good
+calibration (high-conf predictions actually win more often), turn
+this on. If model is poorly calibrated, leave off — equal sizing
+limits damage.
+
+### #4 — WS staleness indicator in TUI / GUI
+
+**Current behavior:** Per-core latency panel exists (Stats / Per-Core
+Latency tabs). No top-level "WS health" or "ticks/sec" indicator
+visible at a glance. Operator can't tell from the dashboard if the
+engine is currently receiving ticks.
+
+**Risk:** Operator-observability gap, not a safety gap. They'd notice
+eventually (positions stop changing, P&L flat), but a heartbeat
+indicator surfaces it immediately.
+
+**Proposed fix:** Header bar shows "WS: <ticks_last_5s>/s, last tick
+<X>ms ago" with color coding (green <100ms, yellow <1s, red >5s).
+Reads from producer-thread timestamp via TUISnapshot.
+
+**Estimate:** ~1 hour. Snapshot field + Header panel render.
+
+**Re-trigger:** operator UX preference. Not load-bearing for safety
+(items #1 + #2 cover the actual risk surface).
+
+---
+
+**Order of importance for live-capital readiness:**
+1. #1 Disconnect-flatten — must-have. Without this, an extended
+   network outage with positions open is a real risk.
+2. #2 Param staleness gate — should-have. Defends against the
+   slow-path-stall class.
+3. #4 WS heartbeat — nice-to-have UX. Surfaces #1's symptom faster
+   but doesn't replace it.
+4. #3 Confidence sizing — depends on model calibration; assess after
+   paper-trading data shows whether high-conf predictions actually
+   win more.
+
+**Total estimate:** ~1.5-2 days for #1 + #2 + #4. #3 separate, defer
+until paper-trading data.
+

@@ -464,3 +464,83 @@ primary_*; otherwise tests that synthesize state will read 0 arms.
 - `Strategies/MLStrategy.hpp` — predict path uses primary_*
 - `Strategies/StrategyParameters.hpp` — bandit dispatch uses primary_*
 - `CoreFrameworks/ShardedSnapshot.hpp` — n_horizons = primary_count
+
+## Train↔serve role-naming integration contract (v5.11.62+)
+
+**Rule:** Every model role used by the engine must have a matching
+trainer save site + matching live loader entry, AND any new role
+addition must update BOTH sides in the same ship.
+
+**The contract (informal until v5.X formalizes it):**
+
+| Surface | Trainer side | Live side |
+|---|---|---|
+| Role file name | `BacktestPanels.hpp:~5122` `label_kind` switch picks role_name (`barrier`/`buy_signal`/`regime`) | `CoreModelZoo.hpp` `LoadFromDir` calls `TryLoadRole(..., "<role_name>", ...)` for each known role |
+| Stamp body | `stamp_write_for_model` writes registry hashes + cfg + label params | `verify_model_stamp` parses + checks against runtime build |
+| Scaler sidecar | `FeatureStandardizer_Save` to `<role>.json.scaler` | `FeatureStandardizer_Load` post-`Model_Load`; stamp records `scaler_sha256` |
+| Multi-horizon dir | Trainer writes to `<base>_horizon_<H>/` per horizon | `EnsembleModelZoo_AutoDetectFromDir` scans siblings + parses `_horizon_<H>` suffix |
+| Class-extraction (`buy_class_idx`) | Implicit in label_kind semantics (PEAK_VALLEY_STABLE → class 1 = peak) | Loader's primary-role selector sets per-handle `buy_class_idx` based on `num_outputs` |
+| Priority chain | n/a (trainer doesn't know which is "primary") | Loader picks priority: `buy_signal > barrier > regime > <future>` |
+
+**When adding a new label kind / role / output semantics:**
+
+ML side (1):
+- Add new `FOREACH_TARGET(X)` row in `Backtest/LabelFunctions.hpp`
+- Add label-compute function (returns float per sample)
+- Add label_kind → role_name branch in trainer save loop
+- LABEL_REGISTRY_HASH() flips automatically — old stamps refuse to
+  load (forces retrain, by design)
+
+LIVE side (5 — the v5.11.62 invariant):
+- Add `ModelHandle<F> <new_role>;` to CoreModelZoo + ensemble array
+- Add `CORE_MODEL_<NEW>` bitmask
+- Add `TryLoadRole(..., "<new_role>", ...)` calls in LoadFromDir / LoadFromCfg
+- Add branch to primary-role priority chain (decide where new role sits)
+- Add branch to `EnsurePrimary` helper
+
+PARITY side (1):
+- Run `/parity-check role` (or full `/parity-check`) to verify both sides agree
+- Snapshot test for new label-compute fn body (v5.9.2a pattern)
+- Test that trainer's role file name matches live's `TryLoadRole` call
+
+**Anti-pattern:** Adding a new label kind on the trainer side WITHOUT
+the corresponding live-side addition. Symptom: model file saves
+successfully under a new name, engine boots fine (no error), but the
+model is silently skipped — no role found by `TryLoadRole`, primary-role
+selector doesn't see it, strategy stays empty. Operator hits "model:
+LOAD FAILED" with no clear cause. /parity-check role-parity walk
+catches this class of bug at design time.
+
+## Mixed-output ensembles (v5.X — deferred)
+
+**Current state:** A multi-horizon run picks ONE `label_kind` for all
+horizons (training UI enforces it). Resulting ensemble has uniform
+output type (all regression, all binary, all 3-class). Bandit blend
+works because all horizons return prediction values on the same scale.
+
+**Deferred capability:** Heterogeneous ensembles where horizon 1 is
+binary buy_signal (output ∈ [0,1]), horizon 2 is regression (output
+∈ [-0.05, +0.05]), horizon 3 is 3-class barrier (out_result[1] ∈ [0,1]).
+Currently broken at the bandit-blend layer because outputs aren't on
+the same scale — averaging a -0.04 regression prediction with a 0.6
+binary probability is nonsense.
+
+**Fix shape (when re-triggered):**
+- Per-handle `prediction_normalizer_fn` (default: passthrough).
+  Loader sets per role:
+  - Regression → `clamp((pred + tp_pct) / (2×tp_pct), 0.5, ...)`
+- Bandit blend operates on normalized values, all in [0, 1].
+- `Model_Predict_Ensemble_Weighted` calls normalizer post-`Model_Predict`.
+
+**Why deferred:** Trainer doesn't currently produce mixed-output
+ensembles. When operator needs them (e.g. "regression at long horizons,
+classification at short horizons"), training-side first needs UI for
+per-horizon label_kind selection. Then live-side adds the normalizer.
+Two-ship sequence; live side blocked on trainer support.
+
+**Tracked in:** `plans/2026-05-07-deferred-items.md` "v5.11.62 caveat —
+Composite-signal extraction" entry covers per-handle composition;
+mixed-output normalization is a sibling concern with a different fix
+shape (normalizer fn vs. extractor fn). Both extend Model_Predict
+without touching strategy code.
+

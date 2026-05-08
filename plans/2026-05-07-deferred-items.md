@@ -1417,3 +1417,110 @@ re-couple strategy to role semantics — exactly the trap the v5.11.62
 invariant exists to prevent). Always: composition lives in
 Model_Predict / per-handle config; strategy stays role-agnostic.
 
+
+## Mixed-output ensembles (potential alpha — deferred)
+
+**Status:** Deferred. Architecturally distinct from the v5.11.62
+composite-signal caveat. This is about ensembles where different
+HORIZONS use different MODEL TYPES (regression at h=15000, binary
+classification at h=1000, 3-class barrier at h=7500), not about a
+single model with composite output.
+
+**Why this might contain alpha:**
+
+Different model types are good at different time-scales / market
+regimes:
+- **Regression at long horizons** captures trend strength as a
+  continuous value. A 50000-tick regression model produces ROR
+  predictions that scale with conviction. Good for trending regimes
+  where momentum-style sizing matters.
+- **Binary classification at short horizons** captures mean-reversion
+  dip-buying. A 1000-tick binary model says "fire at 0.55+
+  probability." Good for ranging regimes where the dip-recovery
+  pattern is binary (revert or don't).
+- **3-class barrier** at mid horizons (PEAK_VALLEY_STABLE) captures
+  regime-conditional direction. Good as a default when neither
+  pure trend nor pure mean-reversion dominates.
+
+If you train ALL THREE in one ensemble and let the per-regime
+Bandit-Exp3 learn which model TYPE works in which regime, you get:
+- TRENDING regime → bandit weights regression high, classification low
+- RANGING regime → bandit weights classification high, regression low
+- VOLATILE regime → bandit weights barrier (the 3-class with hysteresis)
+
+This is potentially orthogonal alpha to "same model type at multiple
+horizons" because the SHAPE of the prediction (continuous vs binary
+vs class-extracted) maps to different feature regimes.
+
+**Why it's broken today:**
+
+The bandit blend layer averages predictions across ensemble members:
+`final = Σ weight_i × pred_i / Σ weight_i`. When some predictions are
+in [0, 1] (probability) and others are in [-0.05, +0.05] (regression
+ROR), averaging is nonsense — a -0.03 regression and a 0.7 probability
+can't be added without normalization.
+
+**Fix shape (~3-4 hours engineering):**
+
+Per-handle **prediction normalizer** that maps any output to [0, 1]
+buy-probability space. Loader sets it based on label_kind metadata
+in the stamp:
+
+| Label kind | Normalizer | Maps from | Maps to |
+|---|---|---|---|
+| Binary classification | identity | [0, 1] | [0, 1] |
+| Regression | `clamp(0.5 + pred / (2×tp_pct), 0, 1)` | [-tp_pct, +tp_pct] (typical) | [0, 1] |
+| 3-class PEAK_VALLEY_STABLE | extract class 1 | out_result[1] | [0, 1] |
+| Future kinds | configurable | per stamp | [0, 1] |
+
+`Model_Predict_Ensemble_Weighted` calls the normalizer post-`Model_Predict`
+for each member. Bandit blend operates on normalized values. Strategy
+threshold compares against the blended normalized buy probability.
+
+**Two-ship sequence (when re-triggered):**
+
+1. **Trainer-side first:** UI for per-horizon label_kind selection in
+   Multi-Horizon training (currently single label_kind for the whole
+   run). Stamp body extension to record per-horizon label_kind +
+   normalizer params (e.g. tp_pct used for regression scaling). ~1
+   day. Includes parity-check additions.
+
+2. **Live-side after:** Per-handle `prediction_normalizer_fn` set at
+   load time based on stamp's label_kind. `Model_Predict_Ensemble_Weighted`
+   gains normalizer call. Strategy code unchanged (per the v5.11.62
+   role-agnostic invariant). ~half-day.
+
+**Re-trigger conditions:**
+
+1. Paper trading on the current uniform-3-class ensemble shows that
+   the model picks consistently-wrong direction in a specific regime
+   (e.g. always wrong in VOLATILE). That's the signal that a different
+   MODEL TYPE would do better — try mixed-output ensemble.
+2. Operator wants to express a strategy thesis that requires
+   different model types per horizon (e.g. "I want short-horizon
+   binary dips + long-horizon regression trend" — the operator's
+   actual trading philosophy mapped onto model architecture).
+3. Research finding from internal experimentation: backtest a
+   mixed-output ensemble vs uniform-output, measure if Bandit-Exp3
+   learns regime-conditional model-type preferences. If yes, alpha
+   confirmed. If no, defer permanently.
+
+**Alpha hypothesis worth testing first (cheap experiment):**
+
+Before the full mixed-output infrastructure, you can simulate it:
+1. Train 3 separate single-horizon models — one regression at 50000,
+   one binary at 1000, one 3-class barrier at 7500. Each its own dir.
+2. Run 3 separate paper traders, one per model.
+3. Compare regime-conditional P&L: which model wins in which regime?
+4. If clear regime-conditional preferences exist → mixed ensemble has
+   alpha. Build the infrastructure.
+5. If all three behave similarly per regime → no orthogonal alpha;
+   defer permanently.
+
+This avoids 1.5+ days of engineering on a hypothesis that might not
+hold. Worth ~1-2 days of paper-trading data first.
+
+**Anti-pattern:** Building the mixed-output infrastructure THEN
+discovering all model types behave similarly per regime. That's
+sunk-cost design. The alpha hypothesis comes first.
+

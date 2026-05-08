@@ -406,3 +406,61 @@ v5.9.2a EXTENSIBILITY block. When you change a feature compute fn:
 
 This same discipline applies to `Regime_ComputeSignals`,
 `RollingStats_Push`, and any function the snapshot test exercises.
+
+## Strategy is role-agnostic (v5.11.62+)
+
+**Rule:** The ML strategy predict path reads from `ezoo->primary_handles`
+(set by the loader at boot to whichever role file was actually present
+on disk: priority `buy_signal > barrier > regime`). It MUST NOT
+hardcode a specific role array. Per-handle `buy_class_idx` tells
+`Model_Predict` which output index to return as the buy probability;
+`Model_Predict` returns `out_result[buy_class_idx]` for any model
+regardless of `num_outputs`.
+
+**Why:** The training pipeline saves models under different role names
+depending on label kind (binary → `buy_signal.json`, 3-class
+PEAK_VALLEY_STABLE → `barrier.json`, regression → `buy_signal.json`).
+Pre-v5.11.62, the strategy ONLY read `ezoo->buy_signal[]`, so 3-class
+multi-horizon training output was loaded successfully into
+`ezoo->barrier[]` but the strategy then ignored it — engine.log showed
+"ensemble active (4 total models)" but ML Status panel showed "core 0:
+warmup: 8% model: LOAD FAILED" with predictions disabled. Operator
+hit this 2026-05-08 on multi_2year_01 deployment.
+
+**How to apply when adding a new model role:**
+1. Add `ModelHandle<F> <new_role>;` field to `CoreModelZoo` struct,
+   `ModelHandle<F> <new_role>[ENSEMBLE_HORIZON_MAX];` to
+   `EnsembleModelZoo`.
+2. Add `CORE_MODEL_<NEW_ROLE>` bitmask constant.
+3. Add `CoreModelZoo_TryLoadRole(...)` calls in `LoadFromDir` and
+   `LoadFromCfg`.
+4. Add a branch to the priority chain in the primary-role selector
+   (currently buy_signal > barrier > regime — extend per priority
+   intent).
+5. Add a branch to `EnsembleModelZoo_EnsurePrimary` (the test/legacy
+   backfill helper) so synthesized state still works.
+
+That's it. Strategy code, bandit ops, snapshot population, Settings
+panel — all already read `primary_*` and need zero changes.
+
+**Anti-pattern:** Reading `ezoo->buy_signal_count` in strategy / bandit
+/ snapshot / display code. ALWAYS use `primary_count`. The buy_signal_count
+field still exists (used by per-role iteration in the zoo internals
+itself — load loop, role iteration switch, sibling scaler check) but
+must NOT cross the strategy boundary. /parity-check should flag any
+new strategy code touching `buy_signal_count` as a regression.
+
+**Backstop:** `EnsembleModelZoo_EnsurePrimary(ezoo)` auto-promotes
+buy_signal to primary when callers (tests, ad-hoc paths) synthesize
+ezoo state by setting `buy_signal_count` directly. Idempotent —
+post-loader callers that already set primary_handles bypass it. New
+bandit / state ops MUST call `EnsurePrimary` first if they use
+primary_*; otherwise tests that synthesize state will read 0 arms.
+
+**Files load-bearing for this invariant:**
+- `ML_Headers/CoreModelZoo.hpp` — primary_handles field + selector +
+  EnsurePrimary helper
+- `ML_Headers/ModelInference.hpp` — `Model_Predict` reads buy_class_idx
+- `Strategies/MLStrategy.hpp` — predict path uses primary_*
+- `Strategies/StrategyParameters.hpp` — bandit dispatch uses primary_*
+- `CoreFrameworks/ShardedSnapshot.hpp` — n_horizons = primary_count

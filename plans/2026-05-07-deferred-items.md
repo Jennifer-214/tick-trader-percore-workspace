@@ -1031,6 +1031,83 @@ backings). Deferred for follow-up.
 
 ---
 
+## v5.11.62 — Role-aliasing patch is tactical, not architectural
+
+**Status:** Tactical patch SHIPPED in v5.11.62 (2026-05-08). Cleaner
+architectural refactor deferred.
+
+**What v5.11.62 does:** When a multi-horizon training run saves models
+under role names other than `buy_signal` (e.g. PEAK_VALLEY_STABLE
+3-class saves as `barrier.json`), the loader memcpy's the ModelHandle
+struct from the source role array (e.g. `ezoo->barrier[i]`) into the
+`ezoo->buy_signal[i]` slot, marks the copy as `borrowed=1`, and sets
+`buy_class_idx=1` so `Model_Predict` returns class 1 (peak) probability
+as the buy signal. All existing `buy_signal_count` callers (MLStrategy,
+StrategyParameters dispatch, Bandit ops, snapshot population) work
+unchanged.
+
+**Why it's tactical:**
+- Two ModelHandle structs reference the same XGBoost booster (one owns,
+  one borrows). The `borrowed` flag is the single check site that keeps
+  this safe — easy to forget on future struct field additions.
+- The aliasing is implicit. Reading `ezoo->buy_signal[i]` doesn't tell
+  you it came from `ezoo->barrier[i]`. Forensics for "which model is
+  this prediction from" needs to traverse `model_path` strings.
+- Bandit weights for the aliased role are tracked via the buy_signal
+  arrays. If operator later wants to train BOTH a buy_signal AND a
+  barrier model and use both, they conflict on the buy_signal slot.
+
+**Why it's fine for now:**
+- 3 label kinds covered: binary buy_signal (existing), 3-class barrier
+  PEAK_VALLEY_STABLE (aliased to buy_signal), regression buy_signal
+  (existing). New label kinds add one branch in alias logic.
+- `borrowed` flag has exactly one check site (`Model_Free`). Reviewable.
+- Ships in 30 min vs 3-4 hours for the full refactor; unblocks paper
+  trading today.
+
+**The cleaner refactor (when re-triggered):**
+- `EnsembleModelZoo` gains `primary_handles` (ModelHandle**),
+  `primary_count`, `primary_target_class`, `primary_role_name[16]`.
+- Loader picks primary role at end of `LoadFromCfg`/`AutoDetect`:
+  buy_signal > barrier > regime fallback. No memcpy, no borrowed flag.
+- `MLStrategy.hpp` predict path reads `ezoo->primary_handles` +
+  `primary_target_class`. No knowledge of role-name semantics in
+  strategy code.
+- `StrategyParameters.hpp` dispatch (Bandit_GetProbabilities, weighted
+  blend, per-arm preds) all use `primary_*` instead of `buy_signal_*`.
+- Snapshot population uses `primary_count` (not `buy_signal_count`).
+- Settings panel reads `primary_role_name` for display.
+- New `Model_Predict_AtClass(handle, features, n, class_idx)` helper
+  decouples the class-extraction concern from the role concern.
+
+**Re-trigger conditions:**
+1. Operator adds a 4th label kind whose buy semantics aren't "extract
+   one class probability" (e.g. multi-class exit signal that combines
+   class probabilities, or regime-conditional buy logic).
+2. Operator wants to train BOTH a buy_signal AND a barrier model and
+   use both simultaneously (the alias would clobber).
+3. The `borrowed` flag causes a real bug (it shouldn't — single check
+   site, but a future struct addition could break it).
+4. Bandit weights need per-role isolation (currently aliased into
+   buy_signal).
+
+**Estimate:** ~3-4 hours including snapshot/settings-panel updates,
+test coverage, boot-log message updates, hot-swap path coordination.
+Could be a v5.12.x ship or a focused v5.11.x sub-ship if a re-trigger
+fires earlier.
+
+**Files that would change in the refactor:**
+- `ML_Headers/CoreModelZoo.hpp` (struct fields + LoadFromCfg/AutoDetect)
+- `ML_Headers/ModelInference.hpp` (new `Model_Predict_AtClass` helper)
+- `Strategies/MLStrategy.hpp` (predict path)
+- `Strategies/StrategyParameters.hpp` (Bandit dispatch)
+- `CoreFrameworks/ShardedSnapshot.hpp` (population of n_horizons)
+- `DataStream/EngineTUI.hpp` (PerCoreSnap field rename or addition)
+- `GUI/SettingsPanel.hpp` (Settings UI display)
+- `tests/controller_test.cpp` (new role-priority + class-extraction tests)
+
+---
+
 ## Maintenance
 
 When deferring a future item, append a section here using the
@@ -1058,3 +1135,88 @@ section is actually a "shipped under different name" entry,
 remove it during the next /readiness pass on a related plan rather
 than letting it accumulate. Doc is meant to reflect what's TRULY
 deferred, not history of what was renamed mid-sprint.
+
+## Orderbook-depth microstructure features (queue position, new-player detection, etc.)
+
+**Status:** Deferred. Current engine uses `BinanceCrypto/Depth` WS feed
++ `DepthReplayState` for slow-path features (book_imbalance, spread_z,
+flow_*_ewma, large_trade_z) but does NOT extract microstructure-grade
+features that would matter for sub-second alpha at colo.
+
+**Candidate additions (HFT microstructure tier):**
+
+1. **Queue position estimation** — when our limit order rests at a
+   price level, estimate where we are in the FIFO queue. Inputs:
+   level depth at order placement time + cumulative trades + cancels
+   at that level since. Output: time-to-fill probability per second
+   of waiting. Strategy uses it to decide between aggressive (cross
+   spread) vs passive (rest) entries.
+
+2. **New-player / iceberg detection** — track unique participants by
+   order ID patterns (Binance exposes per-order modifications, not
+   trader IDs, but iceberg refresh patterns + symmetric replenishment
+   on opposite sides + size clustering reveal hidden players).
+   Output: per-level "informed/uninformed" prior that feeds the
+   ConfidenceScore as an additional feature.
+
+3. **Spoofing / layering detection** — orders placed > 5 levels deep
+   that get cancelled within 100ms × N occurrences = likely spoof.
+   Output: a "manipulation probability" gate that dampens entries
+   when spoof activity is high.
+
+4. **Toxic order flow indicator** — short-window post-trade P&L of
+   the LIQUIDITY TAKER (us, when we cross the spread). If our taker
+   trades consistently lose money in the next N seconds, the venue
+   is "toxic" (informed traders are picking us off). Output: spread-
+   threshold widening when toxicity rises.
+
+5. **Multi-level depth aggregation** — currently slow-path uses
+   limited depth tiers; full L2 book aggregation across N price
+   levels with weighted-by-distance imbalance gives a richer
+   regression signal than top-of-book ratio alone.
+
+6. **Trade-through / price-improvement detection** — when a trade
+   prints at a price BETWEEN BBO levels, that's a hidden order or
+   sub-tick improvement. Useful for detecting "real" market intent
+   vs mechanical fills.
+
+**Why deferred:**
+- Solo-developer tier; not all 6 are worth the engineering cost
+  before live trading proves the basic ML signal works.
+- HFT microstructure features primarily pay off at colo (sub-ms
+  decision windows). Current paper-trading-from-laptop deployment
+  has 50-200ms WS round-trip latency, dwarfing the value of
+  queue-position estimation.
+- Each feature requires non-trivial new state in slow_state +
+  feature pack additions + train-serve parity verification +
+  retraining of all models. Big sprint, not single-ship.
+
+**Re-trigger conditions:**
+1. Operator moves to colo / kernel-bypass deployment (sub-ms decision
+   loop). At that point, queue position + new-player detection
+   become first-order alpha sources.
+2. Paper trading reveals systematic adverse selection (taker fills
+   consistently lose money) — toxicity indicator becomes load-bearing.
+3. Cross-venue arbitrage strategy (multi-exchange) — spoofing
+   detection per venue + new-player tracking become critical.
+
+**Approximate sprint shape:**
+- v5.X.0: queue position estimator (1 week — needs DepthReplayState
+  extension + per-order tracking ring + exit attribution math)
+- v5.X.1: new-player / iceberg detection (1 week — pattern matching
+  on book updates + statistics ring)
+- v5.X.2: spoof detector (3-4 days)
+- v5.X.3: toxicity indicator (1 week — needs trade-fill attribution
+  + post-trade P&L lookback)
+- v5.X.4: multi-level depth aggregation (3-4 days)
+- v5.X.5: trade-through / price improvement (2-3 days)
+
+**Estimate:** ~4-5 weeks for full set. Do partial pickup based on
+strategy's actual paper-trading pain points, not exhaustive port.
+
+**Reference docs:**
+- The optimization audit (private workspace) Section 12 has more
+  detail on which colo-tier optimizations pair well with each
+  microstructure feature. Re-read before opening any of these as
+  active work.
+

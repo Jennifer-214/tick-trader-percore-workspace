@@ -39,6 +39,15 @@ of pure data/build artifacts, gets backed up to the workspace.**
 |---|---|---|
 | `plans/*` | `plans/` (symlinked) | Auto-propagates via symlink |
 | `.claude/skills/*` | `claude-skills/` (symlinked) | Auto-propagates via symlink |
+| `DOCS/CLAUDE_*.md` | `DOCS/CLAUDE_*.md` (per-file symlinked) | Auto-propagates via symlink (v5.11.43 migration) |
+| `DOCS/CHANGELOG.md`, `DOCS/changelogs/` | `DOCS/CHANGELOG.md`, `DOCS/changelogs/` (symlinked) | Auto-propagates via symlink |
+| `DOCS/CODE_MAP.md` | `DOCS/CODE_MAP.md` (symlinked) | Auto-propagates via symlink |
+| `DOCS/KNOWN_ISSUES.md`, `DOCS/RECURRING_BUG_PATTERNS.md` | `DOCS/<name>` (symlinked) | Auto-propagates via symlink |
+| `DOCS/*_INVARIANTS.md`, `DOCS/PARITY_*.md` | `DOCS/<name>` (symlinked) | Auto-propagates via symlink |
+| `DOCS/ARCHITECTURE.md`, `DOCS/COMPONENTS.md`, `DOCS/FEATURE_INTERFACE.md`, `DOCS/STRATEGY_INTERFACE.md`, `DOCS/TARGET_INTERFACE.md`, `DOCS/HOT_PATH_CHANGELOG.md` | `DOCS/<name>` (symlinked) | Auto-propagates via symlink |
+| `DOCS/ML_TEST_RECIPES.md`, `DOCS/PERFORMANCE.md`, `DOCS/FAILED_OPTIMIZATIONS.md`, `DOCS/NEXT_STEPS.md` | `DOCS/<name>` (symlinked) | Auto-propagates via symlink |
+| `DOCS/STRATEGY_REFACTOR_IDEAS.md`, `DOCS/STRATEGY_TEMPLATE.hpp` | `DOCS/<name>` (symlinked) | Auto-propagates via symlink |
+| `DOCS/sizing-audit-*.md`, `DOCS/v5.4-*.md`, `DOCS/v5.11-*.md`, `DOCS/V5_*_AUDIT.md` | `DOCS/<name>` (symlinked) | Auto-propagates via symlink |
 | `engine.cfg` | `configs/engine.cfg` | Explicit copy; this skill |
 | `backtest.cfg` | `configs/backtest.cfg` | Explicit copy; this skill |
 | `controller.cfg` | `configs/controller.cfg` | Explicit copy; this skill |
@@ -47,6 +56,15 @@ of pure data/build artifacts, gets backed up to the workspace.**
 | `CLAUDE.local.md` | `CLAUDE.local.md.backup` | Explicit copy; this skill |
 | `*.local.md` (other overlays) | `<name>.backup` (workspace root) | Explicit copy; this skill |
 | `GEMINI.md` | `GEMINI.md.backup` | Explicit copy; this skill (Gemini agent's project memory) |
+
+**DOCS/ migration note (v5.11.43)**: 96 architectural / operator-edge
+docs were moved from public engine repo to private workspace via
+per-file symlinks (`DOCS/<name>` → `../../tick-trader-percore-workspace/DOCS/<name>`).
+Public engine repo cloned without workspace gets `DOCS/` containing
+only the 7 operator-facing tracked docs: QUICKSTART, OPERATOR_DEPLOYMENT,
+CONFIGURATION, ML_USAGE, ML_TRAINING, CONTRIBUTING, LATENCY_PROFILING.
+Edits to symlinked docs auto-propagate to workspace (no copy needed);
+this skill's `git add -A` in the workspace picks up the changes.
 
 **Skipped (regenerable / runtime data):**
 - `build*/`, `bin/`, `vendor/`, `.cache/`, `.clangd/`, `compile_commands.json`

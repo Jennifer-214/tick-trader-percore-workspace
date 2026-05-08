@@ -4,7 +4,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-05-07 (commit c2ad684)
+**Last regenerated**: 2026-05-07 (commit 82bf468)
 
 ## CoreFrameworks/
 
@@ -22,9 +22,9 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### ControllerConfig.hpp
 
-- `Fee_Compute` — line 799
-- `ControllerConfig_ResolveForCore` — line 817
-- `ControllerConfig_Load` — line 1155
+- `Fee_Compute` — line 843
+- `ControllerConfig_ResolveForCore` — line 861
+- `ControllerConfig_Load` — line 1208
 
 ### ControllerEventLoop.hpp
 
@@ -32,45 +32,45 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `EventLoopState_Init` — line 500
 - `EventLoopState_InitLegacy` — line 638
 - `EventLoopState_Free` — line 669
-- `EventLoopState_RegisterCore` — line 718
-- `Sharded_LegSlot` — line 768 — All slow-path / boot-time. Trivially inlined.
-- `Sharded_ValidatePartialExitCfg` — line 805
-- `EventLoopState_SetCoreStrategy` — line 857
-- `EventLoopState_AttachTradeLog` — line 877
-- `EventLoopState_AttachOms` — line 891
-- `EventLoopState_Balance` — line 909
-- `EventLoopState_RealizedPnl` — line 914
-- `EventLoopState_FeeRate` — line 919
-- `EventLoopState_Portfolio` — line 924
-- `EventLoopState_PortfolioMut` — line 929
-- `EventLoopState_KsMinBalance` — line 934
-- `EventLoopState_KsMaxDrawdownPct` — line 939
-- `EventLoopState_KsPeakBalance` — line 944
-- `EventLoopState_TradeLog` — line 959
-- `EventLoopState_SetIntendedParams` — line 974
-- `EventLoop_DrainPostFillOneCore` — line 1029
-- `EventLoop_DrainPostFill` — line 1293
-- `EventLoop_OnEvent` — line 1337
-- `EventLoop_DrainEvents` — line 1497
-- `EventLoop_QueueParameters` — line 1531
-- `EventLoop_RebuildAllParameters` — line 1564
-- `EventLoop_UpdateRollingStateOneCore` — line 1653
-- `EventLoop_UpdateRollingStateAllCores` — line 1691
-- `EventLoop_UpdateEmaPriceAllCores` — line 1707
-- `EventLoop_RebuildAllParameters_PerCore` — line 1725
-- `EventLoop_RebuildOneCore` — line 1764
-- `EventLoop_PushParameters` — line 2477
-- `EventLoopState_ConfigureKillSwitch` — line 2507
-- `EventLoop_ClearAllPermissions` — line 2517
-- `EventLoop_KillSwitchTrip` — line 2528
-- `EventLoop_KillSwitchEvaluate` — line 2556
-- `EventLoop_TimeExitOneCore` — line 2629
-- `EventLoop_TimeExit` — line 2688
-- `EventLoop_TrailingSLRatchetOneCore` — line 2724
-- `EventLoop_TrailingSLRatchet` — line 2781
-- `EventLoop_Unpause` — line 2796
-- `EventLoop_SlowPath` — line 2819
-- `EventLoop_RunController` — line 2844
+- `EventLoopState_RegisterCore` — line 722
+- `Sharded_LegSlot` — line 772 — All slow-path / boot-time. Trivially inlined.
+- `Sharded_ValidatePartialExitCfg` — line 809
+- `EventLoopState_SetCoreStrategy` — line 861
+- `EventLoopState_AttachTradeLog` — line 881
+- `EventLoopState_AttachOms` — line 895
+- `EventLoopState_Balance` — line 913
+- `EventLoopState_RealizedPnl` — line 918
+- `EventLoopState_FeeRate` — line 923
+- `EventLoopState_Portfolio` — line 928
+- `EventLoopState_PortfolioMut` — line 933
+- `EventLoopState_KsMinBalance` — line 938
+- `EventLoopState_KsMaxDrawdownPct` — line 943
+- `EventLoopState_KsPeakBalance` — line 948
+- `EventLoopState_TradeLog` — line 963
+- `EventLoopState_SetIntendedParams` — line 978
+- `EventLoop_DrainPostFillOneCore` — line 1033
+- `EventLoop_DrainPostFill` — line 1297
+- `EventLoop_OnEvent` — line 1341
+- `EventLoop_DrainEvents` — line 1501
+- `EventLoop_QueueParameters` — line 1535
+- `EventLoop_RebuildAllParameters` — line 1568
+- `EventLoop_UpdateRollingStateOneCore` — line 1657
+- `EventLoop_UpdateRollingStateAllCores` — line 1695
+- `EventLoop_UpdateEmaPriceAllCores` — line 1711
+- `EventLoop_RebuildAllParameters_PerCore` — line 1729
+- `EventLoop_RebuildOneCore` — line 1768
+- `EventLoop_PushParameters` — line 2489
+- `EventLoopState_ConfigureKillSwitch` — line 2519
+- `EventLoop_ClearAllPermissions` — line 2529
+- `EventLoop_KillSwitchTrip` — line 2540
+- `EventLoop_KillSwitchEvaluate` — line 2568
+- `EventLoop_TimeExitOneCore` — line 2641
+- `EventLoop_TimeExit` — line 2700
+- `EventLoop_TrailingSLRatchetOneCore` — line 2736
+- `EventLoop_TrailingSLRatchet` — line 2793
+- `EventLoop_Unpause` — line 2808
+- `EventLoop_SlowPath` — line 2831
+- `EventLoop_RunController` — line 2856
 
 ### CoreLatencyStats.hpp
 
@@ -89,7 +89,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `EngineSharded_SmartSlowPathPins` — line 221 — out_pins[0..num_slow-1] gets the chosen CPU IDs. Returns 1 on success.
 - `EngineSharded_DumpLatency` — line 284
 - `CoreModelZoo_ValidateAgainstCfg` — line 362
-- `EngineSharded_Run` — line 571
+- `EngineSharded_Run` — line 590
 
 ### EventLoopAggregates.hpp
 
@@ -165,15 +165,15 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### OrderManager.hpp
 
-- `OrderManager_Init` — line 383
-- `OMS_PushSubmit` — line 654
-- `OMS_DrainSubmit` — line 699
-- `OrderManager_HandleFill` — line 738
-- `OrderManager_ProcessFillCommand` — line 924
-- `OrderManager_ProcessReconcile` — line 1026
-- `OrderManager_Tick` — line 1062
-- `OrderManager_Shutdown` — line 1096
-- `OrderManager_InflightCount` — line 1119
+- `OrderManager_Init` — line 412
+- `OMS_PushSubmit` — line 683
+- `OMS_DrainSubmit` — line 728
+- `OrderManager_HandleFill` — line 767
+- `OrderManager_ProcessFillCommand` — line 953
+- `OrderManager_ProcessReconcile` — line 1055
+- `OrderManager_Tick` — line 1091
+- `OrderManager_Shutdown` — line 1125
+- `OrderManager_InflightCount` — line 1148
 
 ### ParameterSlot.hpp
 
@@ -260,10 +260,10 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 ### SPSCRing.hpp
 
 - `SPSCRing_Init` — line 95
-- `SPSCRing_TryPush` — line 113
-- `SPSCRing_TryPop` — line 142
-- `SPSCRing_Depth` — line 164
-- `SPSCRing_Capacity` — line 173
+- `SPSCRing_TryPush` — line 132
+- `SPSCRing_TryPop` — line 167
+- `SPSCRing_Depth` — line 189
+- `SPSCRing_Capacity` — line 198
 
 ## Strategies/
 
@@ -327,14 +327,14 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### StrategyParameters.hpp
 
-- `Strategy_SpacingOk` — line 170
-- `Strategy_TpFloor` — line 189
-- `SimpleDip_BuildParameters` — line 232
-- `MeanReversion_BuildParameters` — line 311
-- `Momentum_BuildParameters` — line 382
-- `EmaCross_BuildParameters` — line 496
-- `ML_BuildParameters` — line 601
-- `Strategy_BuildParameters` — line 1041
+- `Strategy_SpacingOk` — line 187
+- `Strategy_TpFloor` — line 206
+- `SimpleDip_BuildParameters` — line 249
+- `MeanReversion_BuildParameters` — line 328
+- `Momentum_BuildParameters` — line 399
+- `EmaCross_BuildParameters` — line 513
+- `ML_BuildParameters` — line 618
+- `Strategy_BuildParameters` — line 1065
 
 ## Strategies/private/
 
@@ -350,19 +350,19 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### BinanceCrypto.hpp
 
-- `BinanceStream_Init` — line 488 — (internally tracks whether its already been called)
-- `BinanceStream_Close` — line 562 — clean shutdown: send close frame, SSL shutdown, close socket, free resources
-- `BinanceStream_Reconnect` — line 598
-- `BinanceStream_Poll` — line 644 — returns OR'd combination of POLL_NONE, POLL_SOCKET, POLL_STDIN
-- `BinanceStream_ReadTick` — line 692
-- `BinanceStream_InWindDown` — line 755 — BinanceStream_ShouldReconnect: returns 1 if it's time to close and reconnect
-- `BinanceStream_ShouldReconnect` — line 768
-- `BinanceStream_HasPending` — line 784 — returns 1 if SSL has buffered data that can be read without blocking
-- `BinanceConfig_Load` — line 795 — same key=value format as ControllerConfig_Load, skips # comments and empty lines
+- `BinanceStream_Init` — line 503 — (internally tracks whether its already been called)
+- `BinanceStream_Close` — line 577 — clean shutdown: send close frame, SSL shutdown, close socket, free resources
+- `BinanceStream_Reconnect` — line 613
+- `BinanceStream_Poll` — line 659 — returns OR'd combination of POLL_NONE, POLL_SOCKET, POLL_STDIN
+- `BinanceStream_ReadTick` — line 707
+- `BinanceStream_InWindDown` — line 781 — BinanceStream_ShouldReconnect: returns 1 if it's time to close and reconnect
+- `BinanceStream_ShouldReconnect` — line 794
+- `BinanceStream_HasPending` — line 810 — returns 1 if SSL has buffered data that can be read without blocking
+- `BinanceConfig_Load` — line 821 — same key=value format as ControllerConfig_Load, skips # comments and empty lines
 
 ### BinanceDepth.hpp
 
-- `DepthStream_Init` — line 192
+- `DepthStream_Init` — line 206
 
 ### BinanceOrderAPI.hpp
 
@@ -515,23 +515,23 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 ### HealthLog.hpp
 
 - `HealthLog_Singleton` — line 95 — Process-singleton. Engine init writes; all callers read.
-- `Health_LogConfigureWithRotation` — line 105 — preserved for legacy callers (rotation disabled = max_bytes=0).
-- `Health_LogConfigure` — line 124
-- `Health_LogPruneRotated` — line 136 — Health_Log (would loop).
-- `Health_LogEnabled` — line 165 — "level <= min_level" emits.
-- `Health_Log` — line 176 — Returns 1 on success, 0 on i/o failure (ignored by most callers).
-- `Health_LogCriticalRateLimited` — line 294 — double-emit-once on race, not data corruption).
+- `Health_LogConfigureWithRotation` — line 113 — directory still doesn't exist).
+- `Health_LogConfigure` — line 149
+- `Health_LogPruneRotated` — line 161 — Health_Log (would loop).
+- `Health_LogEnabled` — line 190 — "level <= min_level" emits.
+- `Health_Log` — line 201 — Returns 1 on success, 0 on i/o failure (ignored by most callers).
+- `Health_LogCriticalRateLimited` — line 319 — double-emit-once on race, not data corruption).
 
 ### InitArena.hpp
 
-- `InitArena_Create` — line 62 — continue but loses the pre-fault guarantee.
-- `InitArena_Alloc` — line 97 — are 8 (for plain structs) or 64 (for cache-line-aligned hot structures).
-- `InitArena_AllocOne` — line 122
-- `InitArena_Destroy` — line 128 — struct). After Destroy, the arena is empty and capacity=0.
-- `InitArena_Used` — line 145 — Introspection: how many bytes have been allocated from the arena so far.
-- `InitArena_Remaining` — line 151 — is unknown; this is an upper bound).
-- `InitArena_Owns` — line 163 — ctrl->rolling_long = nullptr;
-- `InitArena_Global` — line 182 — spawn and after they join.
+- `InitArena_Create` — line 69 — reservation gets a non-fatal degraded-but-functional path.
+- `InitArena_Alloc` — line 114 — are 8 (for plain structs) or 64 (for cache-line-aligned hot structures).
+- `InitArena_AllocOne` — line 139
+- `InitArena_Destroy` — line 145 — struct). After Destroy, the arena is empty and capacity=0.
+- `InitArena_Used` — line 162 — Introspection: how many bytes have been allocated from the arena so far.
+- `InitArena_Remaining` — line 168 — is unknown; this is an upper bound).
+- `InitArena_Owns` — line 180 — ctrl->rolling_long = nullptr;
+- `InitArena_Global` — line 199 — spawn and after they join.
 
 ### RunHistory.hpp
 
@@ -583,28 +583,28 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 - `CoreModelZoo_Init` — line 67
 - `CoreModelZoo_TryLoadRole` — line 85
-- `CoreModelZoo_LoadFromDir` — line 336
-- `CoreModelZoo_LoadLegacy` — line 381
-- `CoreModelZoo_Free` — line 392
-- `CoreModelZoo_HasAny` — line 402
-- `CoreModelZoo_VerifyExpected` — line 430 — features in the pack, model crashes or produces garbage.
-- `EnsembleModelZoo_Init` — line 680
-- `EnsembleModelZoo_RecordPrediction` — line 729
-- `EnsembleModelZoo_UpdateDrift` — line 758
-- `EnsembleModelZoo_TickRewardsFromLookback` — line 803
-- `EnsembleModelZoo_TradeCloseReward` — line 869
-- `EnsembleModelZoo_InitBandits` — line 923
-- `EnsembleModelZoo_SetDisabledHorizons` — line 962
-- `EnsembleModelZoo_Free` — line 988
-- `EnsembleModelZoo_LoadFromCfg` — line 1014
-- `EnsembleZoo_VerifyGridMemberConsistency` — line 1141
-- `EnsembleModelZoo_AutoDetectFromDir` — line 1211
-- `EnsembleModelZoo_ComputeBundleId` — line 1354
-- `EnsembleModelZoo_SaveBanditState` — line 1376
-- `EnsembleModelZoo_LoadBanditState` — line 1399
-- `EnsembleModelZoo_LoadBanditStateFromPath` — line 1439
-- `EnsembleModelZoo_SetBanditSaveInterval` — line 1466
-- `EnsembleModelZoo_MaybeSaveBanditPeriodic` — line 1482
+- `CoreModelZoo_LoadFromDir` — line 396
+- `CoreModelZoo_LoadLegacy` — line 446
+- `CoreModelZoo_Free` — line 457
+- `CoreModelZoo_HasAny` — line 467
+- `CoreModelZoo_VerifyExpected` — line 495 — features in the pack, model crashes or produces garbage.
+- `EnsembleModelZoo_Init` — line 745
+- `EnsembleModelZoo_RecordPrediction` — line 794
+- `EnsembleModelZoo_UpdateDrift` — line 823
+- `EnsembleModelZoo_TickRewardsFromLookback` — line 868
+- `EnsembleModelZoo_TradeCloseReward` — line 934
+- `EnsembleModelZoo_InitBandits` — line 988
+- `EnsembleModelZoo_SetDisabledHorizons` — line 1027
+- `EnsembleModelZoo_Free` — line 1053
+- `EnsembleModelZoo_LoadFromCfg` — line 1079
+- `EnsembleZoo_VerifyGridMemberConsistency` — line 1252
+- `EnsembleModelZoo_AutoDetectFromDir` — line 1322
+- `EnsembleModelZoo_ComputeBundleId` — line 1465
+- `EnsembleModelZoo_SaveBanditState` — line 1487
+- `EnsembleModelZoo_LoadBanditState` — line 1510
+- `EnsembleModelZoo_LoadBanditStateFromPath` — line 1550
+- `EnsembleModelZoo_SetBanditSaveInterval` — line 1577
+- `EnsembleModelZoo_MaybeSaveBanditPeriodic` — line 1593
 
 ### CostModel.hpp
 
@@ -650,6 +650,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `ML_Compute_SpreadBps` — line 263
 - `ML_Compute_SpreadZscore` — line 268
 - `Features_PackAll` — line 449
+- `Features_PackAll` — line 509
 
 ### FeatureStandardizer.hpp
 
@@ -683,15 +684,15 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 - `FeatureLookback_Max` — line 190 — used by: ValidationSplit (purge gap), PortfolioController (warmup check)
 - `FeatureLookback_CountEnabled` — line 200 — count enabled features (for validation)
-- `Model_Init` — line 288
-- `Model_Load` — line 334
-- `Model_Predict` — line 461
-- `Model_Predict_Ensemble` — line 531
-- `Model_Predict_Ensemble_Weighted` — line 604
-- `Model_PredictMulti` — line 716
-- `Model_Free` — line 771
-- `Model_IsLoaded` — line 792
-- `ModelFeatures_Pack` — line 820
+- `Model_Init` — line 313
+- `Model_Load` — line 368
+- `Model_Predict` — line 495
+- `Model_Predict_Ensemble` — line 565
+- `Model_Predict_Ensemble_Weighted` — line 638
+- `Model_PredictMulti` — line 750
+- `Model_Free` — line 805
+- `Model_IsLoaded` — line 826
+- `ModelFeatures_Pack` — line 854
 
 ### RewardTracker.hpp
 
@@ -773,11 +774,11 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 ### GuiThread.hpp
 
 - `Gui_Init` — line 84 — GUI INIT
-- `Gui_Shutdown` — line 190 — GUI SHUTDOWN
-- `Gui_BeginFrame` — line 203 — GUI FRAME
-- `Gui_EndFrame` — line 227
-- `Gui_SetupDefaultLayout` — line 242 — chart 60% left, dashboard panels stacked 40% right
-- `Gui_HandleKeys` — line 292 — GUI KEYBOARD — same controls as ANSI TUI
+- `Gui_Shutdown` — line 216 — GUI SHUTDOWN
+- `Gui_BeginFrame` — line 229 — GUI FRAME
+- `Gui_EndFrame` — line 253
+- `Gui_SetupDefaultLayout` — line 268 — chart 60% left, dashboard panels stacked 40% right
+- `Gui_HandleKeys` — line 318 — GUI KEYBOARD — same controls as ANSI TUI
 
 ### LogViewerPanel.hpp
 
@@ -800,9 +801,9 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### StrategyQualityPanel.hpp
 
-- `StrategyQuality_Init` — line 59 — log path is passed at render time via GUI_Panel_StrategyQuality).
-- `StrategyQuality_Refresh` — line 147
-- `GUI_Panel_StrategyQuality` — line 224
+- `StrategyQuality_Init` — line 60 — log path is passed at render time via GUI_Panel_StrategyQuality).
+- `StrategyQuality_Refresh` — line 160
+- `GUI_Panel_StrategyQuality` — line 237
 
 ### TradeHistoryPanel.hpp
 
@@ -819,59 +820,59 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### BacktestEngine.hpp
 
-- `BacktestData_DetectFormat` — line 57 — timestamp_us,price,quantity,is_buyer_maker
-- `BacktestData_Load` — line 64
-- `HistoricalTick_CmpByTime` — line 135 — Caller in STRICT mode should treat -1 as "abort run".
-- `BacktestData_ValidateSort` — line 143
-- `BacktestResults_Init` — line 269
-- `BacktestResults_Free` — line 281
-- `BacktestResults_Reset` — line 309 — against zero capacity (defense-in-depth) but this is the load-bearing fix.
-- `BacktestResults_EnsureCapacity` — line 332 — grow sample buffers by 2x when full
-- `BacktestResults_EnsureEquityCapacity` — line 359 — array, so silent truncation produces wrong Sharpe / max DD / return.
-- `XGBoost_ComputeScalePosWeight` — line 392 — (0.0 = negative, 1.0 = positive, 0.5 = neutral and already filtered).
-- `XGBoost_ComputeMulticlassWeights` — line 424 — receives per-class sample counts so caller can log them.
-- `BacktestStats_Compute` — line 460 — fabs() inconsistency + 2-site max_drawdown reimplementation.
-- `BacktestStats_ComputeFromEquity` — line 493 — sharpe — needs equity curve data too
-- `BacktestSharded_Run` — line 531
-- `Backtest_ComputeLabelsFromSamples` — line 579 — through samples; no per-file O(N) sample scans.
-- `Backtest_Run` — line 839 — equity curve).
-- `HeldOutSplit_TrainEval` — line 960 — helper has visibility into WalkForward_Compute* and XGBoost_Compute* funcs.
-- `Backtest_RunWalkForward` — line 1010 — behavior bytewise.
-- `Backtest_RunFullValidation` — line 1019
-- `WalkForward_ComputeAccuracy` — line 1246 — uses > 0.5f for truth so neutral (0.5) labels are never counted as positive
-- `WalkForward_ComputeMulticlassAccuracy` — line 1293 — argmax over each row, compare to integer truth (rounded from label float).
-- `WalkForward_ComputeMSE` — line 1312 — regression: mean squared error. Lower = better. Sensitive to outliers.
-- `WalkForward_ComputeCorrelation` — line 1328 — gets low MSE on small-magnitude targets while having zero predictive power).
-- `Backtest_RunWalkForward` — line 1352
-- `HeldOutSplit_TrainEval` — line 1782 — functions it uses (WalkForward_Compute*, XGBoost_Compute*) are visible.
-- `ConfigField_Set` — line 2007 — handles both FPN and PCT fields (PCT keys are stored as decimal, value comes in as %).
-- `Backtest_RunSweep` — line 2111
-- `Backtest_RunHyperparamTrainSweep` — line 2201 — mean_val_correlation (regression). Stored as positive number; higher = better.
+- `BacktestData_DetectFormat` — line 59 — timestamp_us,price,quantity,is_buyer_maker
+- `BacktestData_Load` — line 66
+- `HistoricalTick_CmpByTime` — line 137 — Caller in STRICT mode should treat -1 as "abort run".
+- `BacktestData_ValidateSort` — line 145
+- `BacktestResults_Init` — line 271
+- `BacktestResults_Free` — line 283
+- `BacktestResults_Reset` — line 311 — against zero capacity (defense-in-depth) but this is the load-bearing fix.
+- `BacktestResults_EnsureCapacity` — line 334 — grow sample buffers by 2x when full
+- `BacktestResults_EnsureEquityCapacity` — line 361 — array, so silent truncation produces wrong Sharpe / max DD / return.
+- `XGBoost_ComputeScalePosWeight` — line 394 — (0.0 = negative, 1.0 = positive, 0.5 = neutral and already filtered).
+- `XGBoost_ComputeMulticlassWeights` — line 426 — receives per-class sample counts so caller can log them.
+- `BacktestStats_Compute` — line 462 — fabs() inconsistency + 2-site max_drawdown reimplementation.
+- `BacktestStats_ComputeFromEquity` — line 495 — sharpe — needs equity curve data too
+- `BacktestSharded_Run` — line 533
+- `Backtest_ComputeLabelsFromSamples` — line 581 — through samples; no per-file O(N) sample scans.
+- `Backtest_Run` — line 841 — equity curve).
+- `HeldOutSplit_TrainEval` — line 962 — helper has visibility into WalkForward_Compute* and XGBoost_Compute* funcs.
+- `Backtest_RunWalkForward` — line 1023 — behavior bytewise.
+- `Backtest_RunFullValidation` — line 1032
+- `WalkForward_ComputeAccuracy` — line 1279 — uses > 0.5f for truth so neutral (0.5) labels are never counted as positive
+- `WalkForward_ComputeMulticlassAccuracy` — line 1326 — argmax over each row, compare to integer truth (rounded from label float).
+- `WalkForward_ComputeMSE` — line 1345 — regression: mean squared error. Lower = better. Sensitive to outliers.
+- `WalkForward_ComputeCorrelation` — line 1361 — gets low MSE on small-magnitude targets while having zero predictive power).
+- `Backtest_RunWalkForward` — line 1385
+- `HeldOutSplit_TrainEval` — line 1933 — functions it uses (WalkForward_Compute*, XGBoost_Compute*) are visible.
+- `ConfigField_Set` — line 2158 — handles both FPN and PCT fields (PCT keys are stored as decimal, value comes in as %).
+- `Backtest_RunSweep` — line 2262
+- `Backtest_RunHyperparamTrainSweep` — line 2352 — mean_val_correlation (regression). Stored as positive number; higher = better.
 
 ### BacktestPanels.hpp
 
-- `DataPanel_Init` — line 44
-- `DataPanel_Scan` — line 49
-- `RunControl_Init` — line 150
-- `SamplesSnapshot_Compute` — line 161 — only when running==0, giving a safe happens-before relationship.
-- `RunControl_Start` — line 232
-- `GUI_Panel_DataBrowser` — line 272
-- `GUI_Panel_RunControl` — line 371
-- `GUI_Panel_Results` — line 420
-- `PastRuns_Init` — line 604
-- `PastRuns_LoadOne` — line 643 — scan one run directory's metadata files
-- `PastRuns_ScanOneDir` — line 730 — backward compat with flat models/{run_name}/ runs from before v4.3.
-- `PastRuns_Scan` — line 745
-- `PastRun_MetricLabel` — line 760 — label-type-aware metric label
-- `GUI_Panel_PastRuns` — line 766
-- `Comparison_Init` — line 1431
-- `Comparison_Free` — line 1435
-- `Comparison_SaveRun` — line 1442
-- `GUI_Panel_Comparison` — line 1483
-- `OptimizerPanel_Init` — line 1633
-- `GUI_Panel_Optimizer` — line 1665
-- `TrainingPanel_Init` — line 2006
-- `GUI_Panel_Training` — line 3075
+- `DataPanel_Init` — line 50
+- `DataPanel_Scan` — line 55
+- `RunControl_Init` — line 156
+- `SamplesSnapshot_Compute` — line 167 — only when running==0, giving a safe happens-before relationship.
+- `RunControl_Start` — line 333
+- `GUI_Panel_DataBrowser` — line 373
+- `GUI_Panel_RunControl` — line 472
+- `GUI_Panel_Results` — line 521
+- `PastRuns_Init` — line 705
+- `PastRuns_LoadOne` — line 744 — scan one run directory's metadata files
+- `PastRuns_ScanOneDir` — line 831 — backward compat with flat models/{run_name}/ runs from before v4.3.
+- `PastRuns_Scan` — line 846
+- `PastRun_MetricLabel` — line 861 — label-type-aware metric label
+- `GUI_Panel_PastRuns` — line 867
+- `Comparison_Init` — line 1532
+- `Comparison_Free` — line 1536
+- `Comparison_SaveRun` — line 1543
+- `GUI_Panel_Comparison` — line 1584
+- `OptimizerPanel_Init` — line 1734
+- `GUI_Panel_Optimizer` — line 1766
+- `TrainingPanel_Init` — line 2154
+- `GUI_Panel_Training` — line 3568
 
 ### BacktestSharded.hpp
 

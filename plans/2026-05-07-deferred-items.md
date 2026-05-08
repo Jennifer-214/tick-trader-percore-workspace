@@ -9,6 +9,55 @@ This file is gitignored (private) — workspace-backed via the
 
 ---
 
+## v5.11.45 — XGBoost + libgomp + pthread parallelism (LANDMINE)
+
+**Status:** Default flipped to forced-serial (`cfg.multi_horizon_max_threads = 1`). Parallel mode opt-in only.
+
+**Symptom:** SIGSEGV in `RowsWiseBuildHistKernel` / `PredValueByOneTree` inside `libgomp::GOMP_parallel`. Hits during fold training in WF or during prediction. Two operator reports during v5.11.41-44 testing on 2026-05-07.
+
+**Root cause:** XGBoost's libgomp internal state races across pthread workers even when each pthread calls `omp_set_num_threads(1)`. Team-allocation cache in libgomp uses process-global state. v5.11.44's per-pthread cap was insufficient.
+
+**Why we didn't permanently fix it:**
+- The clean fix: `setenv("OMP_NUM_THREADS", "1", 1)` at process start in `foxml_suite.cpp:main()` and engine binaries' main(). Sets libgomp's global default once before any pthreads exist; all subsequent threads inherit it. No per-thread races.
+- Trade-off: forces XGBoost to use 1 thread for ALL training, including serial-mode Train Model which currently uses `cfg.xgb_train_nthread = 4`. Net effect: serial training 4x slower.
+- For the operator's workflow (train rarely, paper-test for hours), this is a NET LOSS — losing 4x on common case to gain 3x on rare case.
+
+**Re-trigger conditions:**
+- Operator finds they actually NEED Multi-Horizon parallelism in their workflow (e.g. retraining 8+ horizons frequently). Then the 4x serial slowdown is worth the 8x parallel speedup.
+- Process-level parallelism (shell-script that spawns N foxml_suite processes for N horizons) is enough — each process is independent, no libgomp interaction. Cumbersome but parity-safe + keeps the 4-thread serial XGBoost.
+- Future XGBoost release fixes their libgomp pthread interaction. Then we can simply re-enable parallel default.
+
+**See also:** `CLAUDE.local.md` "Known landmine" section for the full forensic write-up.
+
+## v5.11.46 candidate — Collect Features per-file parallelism
+
+**Original scope (v5.11.45 plan):** add `cfg.csv_load_workers` opt-in to spawn N pthreads, each processing one CSV file independently. Per-day file workflow → ~Nx wall-time speedup.
+
+**Why deferred:** scope estimation error. I estimated 1-1.5h; actually 3-4h refactor of `BacktestSharded_Run` (lines 102-2000 area). Cross-file shared state: per-core engine state (RollingStats, regime, flow), `total_processed`, `feature_matrix` write position, backtest stats (cumulative wins/losses), `prev_file_last_ts`. Per-file parallelism requires:
+1. Per-thread copies of `cores[]` state
+2. Per-thread feature_matrix slices (pre-sized from file_tick_counts estimate)
+3. Per-thread backtest stats accumulators
+4. Post-join merge in file order (concat feature_matrix, sum stats)
+
+Risk: BacktestSharded_Run is load-bearing for both backtest stats AND feature collection. Bug there could hit other workflows (Run Backtest, Run WF, Run Full Validation).
+
+**Re-trigger conditions:**
+- Operator runs Collect Features and finds it's actually too slow (>10 min per run, blocks iteration loop).
+- Multi-day datasets with 10+ files (worst case for serial path).
+
+**Effort:** 3-4h with proper /readiness + /parity-check given the load-bearing nature.
+
+## v5.11.45 (also deferred from this ship) — NumPy-style broadcast
+
+**Original scope:** generalize the broadcast-or-match rule. Currently anchors on horizon_count: TP/SL must be 1 (broadcast) or N (positional). NumPy-style would let effective N = max(tp_count, sl_count, horizon_count). Enables "3 TP, 1 SL, 1 horizon" as a TP-sweep.
+
+**Why deferred:** operator said "this requires way more work than i thought" — they wanted simpler UI consolidation instead. Current rule handles their common workflow (3 horizons + 3 TP + 3 SL positional, OR single TP+SL broadcast across N horizons).
+
+**Re-trigger conditions:**
+- Operator workflow evolves to "TP sweep at fixed horizon" or "SL sweep at fixed TP" — then broadcasting becomes valuable.
+
+---
+
 ## v5.11.5.C — MPSC drain queue replacing N×SPSC fan-in
 
 **Original scope:** master plan v5.11.5 item 2 — replace

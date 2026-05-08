@@ -1340,3 +1340,80 @@ Reads from producer-thread timestamp via TUISnapshot.
 **Total estimate:** ~1.5-2 days for #1 + #2 + #4. #3 separate, defer
 until paper-trading data.
 
+
+## v5.11.62 caveat — Composite-signal extraction in Model_Predict
+
+**Status:** Deferred. The v5.11.62 primary-role indirection covers
+"single class probability is the buy signal" — works for binary
+buy_signal (out_result[0]), 3-class barrier with class 1 = peak,
+regression (out_result[0]). Doesn't cover composite signals where
+the buy probability is computed from MULTIPLE class outputs.
+
+**Examples that would need the extension:**
+- `P(strong_up) - P(strong_down) > threshold` — 5-class directional
+  model where the "fire" decision uses a probability difference
+- `max(P(buy), P(strong_buy)) > threshold` — model with multiple
+  positive classes, fire if any is high enough
+- Conditional: "use class 1 in TRENDING regime, class 2 in VOLATILE
+  regime" — regime-conditional class selection
+- Linear combination: `0.7×P(up) + 0.3×P(neutral)` — soft-blended
+  decision
+
+**Why deferred:**
+- No current trained model needs this. Your existing models
+  (PEAK_VALLEY_STABLE 3-class, regression buy_signal, binary
+  buy_signal) all fit the single-class-extraction pattern via
+  `buy_class_idx`.
+- The architectural boundary stays clean — composite-signal
+  extension lives in `Model_Predict` (per-handle, in
+  ML_Headers/ModelInference.hpp), NOT in strategy code. Strategy
+  remains role-agnostic per the v5.11.62 invariant.
+- Premature implementation without a concrete use case = abstraction
+  designed for the wrong shape.
+
+**Recommended approach when re-triggered:**
+
+Approach 1 (RECOMMENDED — minimal-diff, linear-combo coverage):
+Add `target_classes[8]` + `class_weights[8]` arrays to ModelHandle.
+Loader sets them per role + per label kind. Model_Predict returns
+`Σ class_weights[i] × out_result[target_classes[i]]` over non-zero
+entries. Default: target_classes=[0], class_weights=[1.0] →
+out_result[0] (preserves existing behavior). 5-class up/down:
+target_classes=[4,0], class_weights=[+1,-1] → P(strong_up) -
+P(strong_down). Estimate: 2-3 hours.
+
+Approach 2 (more flexible, more code):
+Add function-pointer `predict_signal_fn` to ModelHandle. Default
+= extract out_result[buy_class_idx]. Loader can set custom fn for
+arbitrary semantics (max, conditional, non-linear). C++17 template
+type wrangling makes this annoying — defer until a model genuinely
+needs non-linear logic. Estimate: 3-4 hours.
+
+Approach 3 (discoverable, extensible):
+`signal_extractor` enum + switch in Model_Predict. Built-in
+extractors: EXTRACT_SINGLE_CLASS (current), EXTRACT_LINEAR_COMBO,
+EXTRACT_MAX, EXTRACT_REGIME_CONDITIONAL. New extractors via
+FOREACH_EXTRACTOR-ish registry. Estimate: 3 hours.
+
+**Re-trigger conditions:**
+1. Operator trains a model whose buy signal is a class difference
+   (e.g. 5-class up/down with explicit "strong vs weak" classes).
+2. Operator wants regime-conditional class selection (different
+   class index per regime within the same model).
+3. Operator wants a soft-blended decision rule (linear combination
+   of multiple class probabilities) instead of a hard
+   single-class threshold.
+
+**What stays unchanged when this lands:**
+- Strategy code (MLStrategy.hpp + StrategyParameters.hpp): zero
+  changes. Strategy reads ezoo->primary_handles + Model_Predict —
+  the predict-side composition is hidden behind the function call.
+- Bandit ops, snapshot population, Settings panel: unchanged.
+- Public API of CoreModelZoo / EnsembleModelZoo: unchanged.
+
+**Anti-pattern to avoid:** Encoding the composite-signal logic in
+strategy code (conditional class extraction in MLStrategy.hpp would
+re-couple strategy to role semantics — exactly the trap the v5.11.62
+invariant exists to prevent). Always: composition lives in
+Model_Predict / per-handle config; strategy stays role-agnostic.
+

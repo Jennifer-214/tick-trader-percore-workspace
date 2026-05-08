@@ -4,7 +4,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-05-07 (commit 82bf468)
+**Last regenerated**: 2026-05-08 (commit ddc2531)
 
 ## CoreFrameworks/
 
@@ -22,9 +22,9 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### ControllerConfig.hpp
 
-- `Fee_Compute` — line 843
-- `ControllerConfig_ResolveForCore` — line 861
-- `ControllerConfig_Load` — line 1208
+- `Fee_Compute` — line 850
+- `ControllerConfig_ResolveForCore` — line 868
+- `ControllerConfig_Load` — line 1216
 
 ### ControllerEventLoop.hpp
 
@@ -839,40 +839,42 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `HeldOutSplit_TrainEval` — line 962 — helper has visibility into WalkForward_Compute* and XGBoost_Compute* funcs.
 - `Backtest_RunWalkForward` — line 1023 — behavior bytewise.
 - `Backtest_RunFullValidation` — line 1032
-- `WalkForward_ComputeAccuracy` — line 1279 — uses > 0.5f for truth so neutral (0.5) labels are never counted as positive
-- `WalkForward_ComputeMulticlassAccuracy` — line 1326 — argmax over each row, compare to integer truth (rounded from label float).
-- `WalkForward_ComputeMSE` — line 1345 — regression: mean squared error. Lower = better. Sensitive to outliers.
-- `WalkForward_ComputeCorrelation` — line 1361 — gets low MSE on small-magnitude targets while having zero predictive power).
-- `Backtest_RunWalkForward` — line 1385
-- `HeldOutSplit_TrainEval` — line 1933 — functions it uses (WalkForward_Compute*, XGBoost_Compute*) are visible.
-- `ConfigField_Set` — line 2158 — handles both FPN and PCT fields (PCT keys are stored as decimal, value comes in as %).
-- `Backtest_RunSweep` — line 2262
-- `Backtest_RunHyperparamTrainSweep` — line 2352 — mean_val_correlation (regression). Stored as positive number; higher = better.
+- `WalkForward_ComputeAccuracy` — line 1302 — uses > 0.5f for truth so neutral (0.5) labels are never counted as positive
+- `WalkForward_ComputeMulticlassAccuracy` — line 1349 — argmax over each row, compare to integer truth (rounded from label float).
+- `WalkForward_ComputeMSE` — line 1368 — regression: mean squared error. Lower = better. Sensitive to outliers.
+- `WalkForward_ComputeCorrelation` — line 1384 — gets low MSE on small-magnitude targets while having zero predictive power).
+- `Backtest_RunWalkForward` — line 1408
+- `HeldOutSplit_TrainEval` — line 2001 — functions it uses (WalkForward_Compute*, XGBoost_Compute*) are visible.
+- `ConfigField_Set` — line 2226 — handles both FPN and PCT fields (PCT keys are stored as decimal, value comes in as %).
+- `Backtest_RunSweep` — line 2330
+- `Backtest_RunHyperparamTrainSweep` — line 2420 — mean_val_correlation (regression). Stored as positive number; higher = better.
 
 ### BacktestPanels.hpp
 
-- `DataPanel_Init` — line 50
-- `DataPanel_Scan` — line 55
-- `RunControl_Init` — line 156
-- `SamplesSnapshot_Compute` — line 167 — only when running==0, giving a safe happens-before relationship.
-- `RunControl_Start` — line 333
-- `GUI_Panel_DataBrowser` — line 373
-- `GUI_Panel_RunControl` — line 472
-- `GUI_Panel_Results` — line 521
-- `PastRuns_Init` — line 705
-- `PastRuns_LoadOne` — line 744 — scan one run directory's metadata files
-- `PastRuns_ScanOneDir` — line 831 — backward compat with flat models/{run_name}/ runs from before v4.3.
-- `PastRuns_Scan` — line 846
-- `PastRun_MetricLabel` — line 861 — label-type-aware metric label
-- `GUI_Panel_PastRuns` — line 867
-- `Comparison_Init` — line 1532
-- `Comparison_Free` — line 1536
-- `Comparison_SaveRun` — line 1543
-- `GUI_Panel_Comparison` — line 1584
-- `OptimizerPanel_Init` — line 1734
-- `GUI_Panel_Optimizer` — line 1766
-- `TrainingPanel_Init` — line 2154
-- `GUI_Panel_Training` — line 3568
+- `DataPanel_Init` — line 51
+- `DataPanel_Scan` — line 56
+- `RunControl_Init` — line 157
+- `SamplesSnapshot_Compute` — line 168 — only when running==0, giving a safe happens-before relationship.
+- `RunControl_Start` — line 334
+- `GUI_Panel_DataBrowser` — line 374
+- `GUI_Panel_RunControl` — line 473
+- `GUI_Panel_Results` — line 522
+- `PastRuns_Init` — line 721
+- `PastRuns_LoadOne` — line 760 — scan one run directory's metadata files
+- `PastRuns_DeleteDir` — line 860
+- `PastRun_ParseHorizon` — line 871 — out_horizon_ticks = 0).
+- `PastRuns_ScanOneDir` — line 910
+- `PastRuns_Scan` — line 932
+- `PastRun_MetricLabel` — line 1002 — label-type-aware metric label
+- `GUI_Panel_PastRuns` — line 1012 — Pass NULL to keep pre-v5.11.57 behavior (devmode-only).
+- `Comparison_Init` — line 1809
+- `Comparison_Free` — line 1813
+- `Comparison_SaveRun` — line 1820
+- `GUI_Panel_Comparison` — line 1861
+- `OptimizerPanel_Init` — line 2011
+- `GUI_Panel_Optimizer` — line 2043
+- `TrainingPanel_Init` — line 2431
+- `GUI_Panel_Training` — line 3981
 
 ### BacktestSharded.hpp
 

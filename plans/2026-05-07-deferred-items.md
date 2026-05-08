@@ -749,6 +749,103 @@ live OR any AUTO-strategy core deploys to live. Connected to the
 WF regression investigation; root-cause both together if they
 share a cause.
 
+**Code review findings (2026-05-07, no live data needed):**
+
+Inspected `logging/btcusdt_order_history.csv` directly:
+```
+timestamp_us,core_id,strategy_id,event_type,price,...,trade_size
+1778144580 0 2 E $81140 ... 0.01848239   <- DIP, slot 0, OK
+1778144590 2 5 E $81140 ... 0.01848241   <- AUTO, slot 2, OK
+1778145938 4 5 E $81060 ... 0.00000199   <- AUTO, slot 4 (partial leg A), BROKEN
+1778145938 5 5 E $81060 ... 0.00000199   <- AUTO, slot 5 (partial leg B), BROKEN
+```
+
+The non-zero `trade_size = 0.00000199` (~$0.16 at $81060) is the
+giveaway — not literally 0, but ~1/10000 of slot 0/2's normal
+value. Suggests `allocated_balance` for slots 4+5 is small but
+non-zero (FPN precision noise or genuinely tiny).
+
+`Sharded_LegSlot` (ControllerEventLoop.hpp:772) maps logical-core
+N + leg L to portfolio slot 2N+L when partial_exit_enabled=1. So
+slots 4+5 = logical core 2's A+B legs.
+
+`state->cores[]` is indexed by LOGICAL core (0..N-1 for
+num_cores=4). `state->oms->portfolio.positions[]` is indexed by
+PORTFOLIO SLOT (0..7 under partials). Boot loop sets
+`state->cores[i].allocated_balance` for i=0..3 (logical cores)
+correctly. Strategy_BuildParameters reads
+`state->cores[logical_core].allocated_balance` — so allocated
+$1500 for core 2 SHOULD produce trade_size ≈ 0.0185.
+
+**Mystery:** if allocated_balance for logical core 2 is $1500,
+where does the $0.16 trade_size come from? Possibilities:
+- `core_open_notional` mid-trade-cycle subtraction leaves the
+  available balance near-zero on a re-entry attempt
+- Strategy_BuildParameters reads a different field for AUTO cores
+  vs concrete strategies (need to trace the AUTO resolution code
+  path's allocated_balance source)
+- partial-split logic at order-submission time divides the
+  trade_size by something that rounds it to ~0
+
+**Next investigation step:** add `Health_Log(WARN)` at
+`Strategy_BuildParameters` entry showing
+`(slot, allocated_balance, intended_qty)` and at the partial-split
+site to trace where the qty drops by 4 orders of magnitude.
+
+Operator-side workaround: set `partial_exit_enabled=0` in
+engine.cfg (single-slot mode). Engine has been working there
+since the start of the v5.11 cycle.
+
+---
+
+## Run Full Validation auto-stamp internal copy failure (2026-05-07)
+
+**Surfaced by:** operator screenshot at v5.11.33 — WF passed, held-out
+0.427, gap 0.024 < threshold 0.05 (so stamp SHOULD have written),
+but worker emitted yellow status:
+
+```
+Held-out OK; auto-stamp skipped — model_path='models/test_case_05.json'
+snapshot non-empty but auto_stamp_path empty (internal copy failure;
+report bug)
+```
+
+**Code path** (`Backtest/BacktestPanels.hpp:2347-2410`): the worker
+copies `model_path_snap → fv_results.auto_stamp_path` at line
+2351-2355 ONLY if `cfg.auto_stamp_on_held_out=1`. After
+Backtest_RunFullValidation, the diagnostic at line 2402 fires when
+`fv_results.auto_stamp_path[0] == '\\0'` despite `model_path_snap`
+being non-empty. The "report bug" framing is the original author
+labelling the case as "shouldn't be reachable post-v5.10.0E."
+
+**Hypotheses:**
+1. `Backtest_RunFullValidation` (the worker's main call) MUTATES or
+   CLEARS fv_results.auto_stamp_path internally, e.g. on failure of
+   one of the validation steps. Need to grep the function for
+   writes to `.auto_stamp_path`.
+2. cfg.auto_stamp_on_held_out is actually 0 in operator's cfg
+   (DESPITE held-out OK), and the diagnostic-cascade logic took the
+   wrong branch (a `!auto_stamp_enabled` check exists at 2384 but
+   maybe it's not what fires).
+3. fv_results was zeroed mid-flight by a different worker thread or
+   code path — race with the GUI render.
+
+**Investigation (deferred):**
+- Step 0: grep the Backtest_RunFullValidation body for any
+  mutation of `out->auto_stamp_path` after the input copy.
+- Step 1: log auto_stamp_enabled + auto_stamp_path values before +
+  after the worker call to confirm which copy was lost.
+
+**Re-trigger condition:** before relying on auto-stamp output (i.e.,
+before any operator workflow that depends on having a `.stamp` file
+post-Run Full Validation). Manual workaround:
+`./tools/stamp_model.sh --model models/test_case_05.json --secret '...'`
+with the WF/held-out numbers from the screenshot.
+
+**Severity:** MEDIUM. Auto-stamp is operator-convenience. The bash
+CLI path (`tools/stamp_model.sh`) is the canonical fallback +
+already exists. Not blocking.
+
 ---
 
 ## STRATEGY QUALITY panel can't open health.jsonl (2026-05-07)

@@ -92,8 +92,37 @@ Read in order (the skill needs these to generate consistent code):
 
 ### Step 2 — Generate the strategy file
 
-Write `Strategies/<Name>.hpp` from the variant template (see
-"Variant Templates" section below). The file MUST include:
+**Copy from one of the two private template files** (gitignored,
+workspace-mirrored):
+
+| Variant | Template file (start by `cp`-ing this) |
+|---|---|
+| `static`, `regression`, `ml` | `DOCS/STRATEGY_TEMPLATE.hpp` (204 LOC, fully-commented) |
+| `online-learning` | `DOCS/STRATEGY_BANDIT_TEMPLATE.hpp` (Bandit-Exp3 with persistence + reward hook) |
+
+```bash
+cp DOCS/STRATEGY_TEMPLATE.hpp Strategies/<Name>.hpp
+# OR for online-learning:
+cp DOCS/STRATEGY_BANDIT_TEMPLATE.hpp Strategies/<Name>.hpp
+cp DOCS/STRATEGY_BANDIT_TEMPLATE.hpp Strategies/<Name>_Bandit.hpp  # split helpers
+```
+
+Then `sed` (or LLM equivalent) the placeholder tokens:
+- `<Name>` → operator's chosen CamelCase name
+- `<NAME>` → SCREAMING_SNAKE_CASE
+- `<name>` → lowercase
+
+These template files are AUTHORITATIVE — they have the correct
+function signatures + canonical includes for THIS codebase's
+current state (post-v5.11.49). Don't synthesize from memory; copy
+the template.
+
+If the template file is missing on a clone (it's gitignored), it's
+in the workspace at:
+- `/home/caramel/code/tick-trader-percore-workspace/DOCS/STRATEGY_TEMPLATE.hpp`
+- `/home/caramel/code/tick-trader-percore-workspace/DOCS/STRATEGY_BANDIT_TEMPLATE.hpp`
+
+The result must include:
 
 ```cpp
 // Copyright (c) 2026 Jennifer Lewis. All rights reserved.

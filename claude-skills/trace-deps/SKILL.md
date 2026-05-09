@@ -121,7 +121,79 @@ list THAT function's callees. If any TRANSITIVE callee:
 Don't recurse beyond 1 level (combinatorial explosion;
 diminishing returns).
 
-### 6. Save report
+### 6. Mirror data-flow audit (added 2026-05-09 — Class 18 prevention)
+
+If the plan body contains keywords:
+- "mirror"
+- "duplicate this for X"
+- "parallel to X"
+- "same pattern as X"
+- "follows X's structure"
+
+Then run a SEPARATE audit on the mirrored source code's READ surface.
+Standard symbol-existence audit (Steps 2-3) verifies CALLEES; this
+step verifies DATA SOURCES.
+
+**Procedure:**
+
+1. **Identify the mirrored source range.** Plan must cite file:line
+   range of the source code being mirrored (e.g., "v5.14.0 buy-side
+   ridge_within_horizon block at StrategyParameters.hpp:891-947").
+   If not cited explicitly, GAP — plan must add the citation.
+
+2. **Walk the source range for struct field reads.** Grep for
+   patterns matching `obj->field` or `obj.field`:
+
+```bash
+# Extract source range, find all struct member accesses:
+sed -n '<start>,<end>p' source.hpp | \
+    grep -oE '[a-zA-Z_][a-zA-Z0-9_]*->[a-zA-Z_][a-zA-Z0-9_]*' | \
+    sort -u
+# Also check `.` accesses on local references:
+sed -n '<start>,<end>p' source.hpp | \
+    grep -oE '[a-zA-Z_][a-zA-Z0-9_]*\.[a-zA-Z_][a-zA-Z0-9_]*' | \
+    sort -u
+```
+
+3. **For each (obj, field) read pair, identify the obj's struct type.**
+   At the source call site, what type is `obj`? Usually a function
+   parameter or a local variable; read the function signature or
+   the local declaration to identify the struct.
+
+4. **For each (struct, field) pair, verify the Y-side equivalent.**
+   The plan claims the mirrored block runs in a NEW context (Y).
+   Does the Y-side caller scope have the same (or parallel-named)
+   struct + field available?
+
+   Example: buy-side reads `ezoo->reward_ring`. For exit-side mirror,
+   the Y-side caller scope has `ezoo_ex` of the same EnsembleModelZoo
+   type. Does EnsembleModelZoo have a parallel `exit_reward_ring`
+   field? If not → GAP.
+
+5. **For each missing data source, flag RED.** Plan must EITHER:
+   - Add the missing data source as a NEW item in the plan
+     (e.g., "add exit_reward_ring field to EnsembleModelZoo"), OR
+   - Document an explicit data-flow gap rationale (e.g., "exit
+     side will use uniform fallback because the source ring isn't
+     yet available; full Ridge deferred to vN+M")
+
+6. **Output:** add a "Mirror data-flow audit" section to the trace
+   report. List:
+   - Source code range mirrored
+   - Every (obj, field) read inventoried
+   - Per read: PASS (Y-side has equivalent) / GAP (Y-side missing) /
+     DOCUMENTED-RISK (plan acknowledges + handles)
+
+**Why this step exists:** standard symbol-existence audit (Steps
+2-3) verifies that NAMED CALLABLES (functions, struct types) exist
+on both sides. It does NOT verify DATA-FLOW PRECONDITIONS —
+specifically, the upstream reads that the mirrored code performs.
+Class 18 (RECURRING_BUG_PATTERNS.md) is the canonical instance:
+v5.14.1.E.B's exit-side Ridge mirror would have read uninitialized
+data because exit_reward_ring didn't exist; audit GREEN'd because
+all named symbols were present.
+
+### 7. Save report
 
 Write to `plans/plan_checks/trace-deps-<YYYY-MM-DD>-<plan-stem>.md`.
 Print summary to stdout.

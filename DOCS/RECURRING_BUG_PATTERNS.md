@@ -1028,3 +1028,98 @@ grep -A50 "^struct PointedToStruct" <file>.hpp
   changes. Frac diff was deferred specifically because we thought
   cascading FeatureComputeCtx was needed. This class memory
   reminds us to look for boundary-preserving access first.
+
+---
+
+## Class 18 — "Mirror" plans missing data-flow dependencies
+
+**Surface:** any plan that says "mirror X for Y" or "duplicate the
+pattern of X for the new Y context" without enumerating the DATA
+SOURCES that X reads from. Audits verify the SYMBOLS in the
+mirrored block resolve at the new call site, but skip the upstream
+data dependencies that X consumes.
+
+**Symptom:** code COMPILES + LINKS cleanly because all named
+symbols (functions, struct fields, cfg constants) exist on the
+new side. At runtime, the mirrored block reads garbage / NaN /
+zeros / wrong handle's data because the data source X depended on
+has no Y-side equivalent. May not even trigger NaN guard if the
+zero-init looks plausible (e.g., empty ring → uniform fallback
+weights → "looks normal" but isn't actually computing what the
+operator thinks it's computing).
+
+**Root cause:** plan abstraction layer ("mirror X") hides the
+implementation detail that X reads from a specific data source.
+Audit walks SYMBOL existence (function declarations, struct field
+declarations, cfg fields) but not READ-FLOW (what the body of X
+actually consumes). For "duplicate this pattern" plans, the audit
+must walk the body of the source code being mirrored + verify
+each upstream read has an equivalent on the new side.
+
+**Detection:**
+
+```bash
+# For any plan saying "mirror X" or "duplicate X for Y":
+# 1. Identify X's source code location (file:line range)
+# 2. Grep the source range for `obj->field` reads:
+sed -n '<start>,<end>p' source.hpp | grep -oE '[a-z_]+(_)?->[a-z_]+'
+# 3. For each `obj->field` read, identify which struct obj is.
+# 4. For each (struct, field) pair, verify the Y-side equivalent
+#    has the SAME field name (or a documented parallel name).
+# 5. If any field is missing on Y-side: plan must add it BEFORE
+#    coding, OR plan must explicitly note the data-source gap.
+
+# Example: v5.14.0 buy-side Ridge override at StrategyParameters:891-947
+# Reads: ezoo->reward_ring, ezoo->reward_ring_head,
+#        ezoo->predict_call_count, ezoo->ridge_state, ezoo->primary_count,
+#        ezoo->drift[i].ic_avg, config->ridge_lambda etc.
+# For the v5.14.1.E exit-side mirror, equivalents needed:
+#   ezoo_ex->exit_reward_ring (MISSING — caught mid-coding)
+#   ezoo_ex->exit_reward_ring_head (MISSING)
+#   ezoo_ex->exit_predict_call_count (MISSING)
+#   ezoo_ex->exit_ridge_state (planned + added in .E.A)
+#   ezoo_ex->exit_predictor_count (existing v5.13.4)
+# 3 of 5 dependencies were missing from the plan; only caught
+# during coding when the implementation hit them.
+```
+
+**Known instances:**
+
+- **v5.14.1.E.B (caught + fixed mid-coding 2026-05-09)**: plan said
+  "mirror v5.14.0 buy-side ridge_within_horizon override block".
+  Audit verified all NAMED symbols (RidgeBlender_Compute, ridge_state,
+  MAX_RIDGE_MODELS, etc.) exist on both buy + exit sides. Missed:
+  the buy-side block reads `ezoo->reward_ring` which is buy-side-only.
+  Without `exit_reward_ring`, the mirrored block would have read
+  zero-initialized ring → empty correlation matrix → Ridge would
+  silently return uniform fallback weights, "looking like it works"
+  but not actually computing correlation-aware blending. Caught
+  during coding when implementing the Ridge invocation; added
+  exit_reward_ring + populator + counter (~30 LOC) before tagging
+  v5.14.1.E.B. Audit reports were GREEN; class of miss not in any
+  existing audit checklist.
+
+**Prevention:**
+
+- **`/trace-deps` skill spec update** (added v5.14.1.E.B): for any
+  plan keyword "mirror" / "duplicate" / "parallel to X" / "same
+  pattern as X", add a Step N: "Mirror data-flow audit". Walk the
+  body of X (file:line range from plan), grep for `obj->field`
+  reads, verify each (struct, field) pair has a Y-side equivalent.
+  Flag missing data sources as RED before coding starts.
+- **Plan-template discipline**: "mirror X for Y" plans MUST include
+  an "X data-flow inventory" section listing every upstream read X
+  performs + the matching Y-side data source for each. Forces the
+  plan author to enumerate dependencies, not abstract them behind
+  the "mirror" word.
+- **Audit-skill enhancement**: /readiness Check 19 (procedural
+  pre-existing-work audit) extended with a 7th step for "mirror"
+  plans: "for the source pattern being mirrored, list every struct
+  field read in its body; verify each has a target-side equivalent
+  in the same scope".
+
+**Related classes:**
+- Class 12 (Wired-but-unexercised) — similar "looks fine, isn't fine"
+  failure mode but at the call-site level rather than data-flow
+- Class 14 (Plan calls non-existent function) — symbol-existence
+  gap; this class is the data-flow analog

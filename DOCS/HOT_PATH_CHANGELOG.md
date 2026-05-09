@@ -352,6 +352,45 @@ that point.
 
 ---
 
+## v5.14.1.G — Portfolio turnover diagnostic (SLOW-PATH ONLY; ~50-600ns)
+
+**Path:** SLOW-PATH only. Hot path UNTOUCHED.
+
+**Sites added:**
+- `Strategies/StrategyParameters.hpp:~961` (slow-path blend populator;
+  pushes top-K mask after weights_buf finalized)
+- `CoreFrameworks/ShardedSnapshot.hpp:~568` (TUI snapshot publish;
+  reads avg turnover from per-core ring)
+
+**What changed:** new RollingTurnover state on per-core CoreContext.
+Per slow-path predict cycle: extract top-K arm indices from
+weights_buf via `topk_mask_from_weights` (O(N*K) selection sort),
+push to ring + compute symmetric-diff vs previous mask via
+`__builtin_popcount` (1 cycle). Per snapshot publish: average
+diff across full window (O(window) popcount loop).
+
+**Cost breakdown:**
+- `topk_mask_from_weights`: O(N*K) = 24 ops at N=8, K=3 → ~30-50ns
+- `RollingTurnover_Push`: 1 popcount + ring write → ~10-20ns
+- `RollingTurnover_Compute`: O(window) popcount loop → ~500ns at window=100
+- **Total per cycle:** ~500-600ns (predict + snapshot publish)
+- **Within 100µs slow-path budget:** ~0.6%
+
+**FUTURE OPPORTUNITY (per CLAUDE.md item 17):**
+- Cache the per-cycle popcount sum incrementally on Push → Compute
+  becomes O(1) instead of O(window). Saves ~500ns/snapshot. Defer
+  until profiler flags this as load-bearing.
+- Could also branchless-vectorize the mask compute loop with AVX-512
+  pcmpeqb, but at N=8 the scalar version is already cache-line-tight.
+
+**Storage cost:** 256B ring + 16B counters per CoreContext × 16 cores
+= ~4.4KB total. Trivial cache footprint.
+
+Per /readiness Check 23 (latency accountability — v5.14.1.F+):
+documented here so cost is never unaccounted for.
+
+---
+
 ## v5.14.1.F — IC variant dispatcher (SLOW-PATH ONLY; ~0-1ns)
 
 **Path:** SLOW-PATH only. Hot path UNTOUCHED.

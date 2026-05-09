@@ -1111,3 +1111,100 @@ latency" question. Check 23 mechanizes the prompting.
 - `/latency-track` skill — emits draft changelog entries
 
 **Effort:** 3-5 min per audit.
+
+---
+
+### Check 24 — Mirror-function call-sequence enumeration (v5.14.2.E+)
+
+**When this fires:**
+The plan adds a NEW function that mirrors an existing one (e.g., "mirror
+boot for backtest", "mirror buy-side for exit-side", "mirror v5.13.4.A
+for v5.13.4.B", "mirror single-zoo hot-swap for ensemble hot-swap", or
+"hot-swap path of an existing boot path").
+
+**What to verify:**
+1. **Run `/trace-deps` Step 6 with explicit call-sequence enumeration**
+   (not just data-flow inputs). For the EXISTING function being mirrored,
+   enumerate every function call in its body. For the NEW mirror, verify
+   it makes the same calls OR has explicit reason not to (with comment).
+2. **Recommend X-macro registry / helper extraction** if the call sequence
+   is ≥3 calls AND the mirror's caller is in a different file (boot ↔
+   backtest ↔ hot-swap pattern). Per CLAUDE.md item 19, extract before
+   duplicating.
+3. **Verify symmetry tests planned** at CI level (per the v5.14.2.E.1
+   pattern): test the helper from each call context, assert resulting
+   state bytewise-identical.
+
+**Anti-pattern caught (v5.14.2 2026-05-09):** v5.14.2.A `EnsembleHotSwap.hpp`
+mirrored boot ensemble init but enumerated only data-flow INPUTS (cfg
+fields read), not CALL SEQUENCE (which functions called). Result:
+PARITY-009 (6 sub-gaps) + PARITY-010 (2 sub-gaps) + PARITY-011 (1) +
+PARITY-012 (1) = 10 sub-gaps total, all Class 18 mirror-data-flow-incomplete.
+Closed structurally by v5.14.2.E.1's PostLoadSetup helpers + this Check 24
+mechanizes catching the pattern in future plans.
+
+**Trigger phrases in plan that should fire Check 24:**
+- "mirror existing X for Y"
+- "extend X to support Y"
+- "parallel implementation of X for Y"
+- "same as X but in Y context"
+- "hot-swap" / "backtest" path that doesn't reuse boot's setup
+
+**Cross-references:**
+- `/trace-deps` Step 6 (strengthened sub-clause: enumerate CALL SEQUENCE
+  not just DATA-FLOW INPUTS)
+- `CLAUDE.md` item 19 (structural fix > direct patch when bug class can recur)
+- `DOCS/RECURRING_BUG_PATTERNS.md` Class 18 (mirror data-flow incomplete)
+- `DOCS/PARITY_ISSUES.md` PARITY-009/010/011/012 (canonical instances)
+
+**Effort:** 5-10 min per audit (more if multiple mirror functions).
+
+---
+
+### Check 25 — TECH_DEBT.md surface-area scan (v5.14.2.E+)
+
+**When this fires:**
+Before declaring a ship complete, OR before starting a ship plan, scan
+`DOCS/TECH_DEBT.md` for entries whose surface area overlaps with the
+ship's files-touched.
+
+**What to verify:**
+1. **Read `DOCS/TECH_DEBT.md`** entries (workspace symlink in engine repo).
+2. **For each TECH_DEBT entry whose `Surface:` field overlaps with the
+   ship's files-touched:** decide explicitly:
+   - **Address now** — bundle the cleanup into this ship + close the entry
+   - **Refresh entry** — update cost estimate / trigger / context if stale
+   - **Defer with rationale** — confirm trigger isn't met; ship comment
+     references the entry
+3. **DO NOT silently leave entries stale** (e.g., old cost estimate that
+   no longer reflects current code).
+4. **Auto-write contract:** if Check 25 surfaces a NEW deferral candidate
+   (not yet in TECH_DEBT.md), agent MUST add it now (don't defer to
+   "operator copies after review"). Same discipline as PARITY_ISSUES.md
+   auto-write.
+
+**Anti-pattern caught (v5.14.2.E 2026-05-09):** Caramel: "what if I forget
+about that stuff, like doesn't addressing the deferred items now make
+future maintenance easier?" Pre-Check-25, deferred items hid in code
+comments / postmortems / chat memory + got forgotten. TECH_DEBT.md +
+Check 25 surfaces them at every ship.
+
+**Cross-references:**
+- `DOCS/TECH_DEBT.md` (the ledger)
+- `DOCS/PARITY_ISSUES.md` (sister ledger; different class)
+- `CLAUDE.local.md` auto-write contract
+
+**Effort:** 2-5 min per audit (longer if many TECH_DEBT entries match the
+ship's surface).
+
+---
+
+### Check 26 — DEFERRED-FOR-FUTURE-SHIP (placeholder)
+
+Reserved for the going-forward augmentation Caramel approved 2026-05-09:
+"If your plan adds an X-macro registry with cross-site callers, write a
+symmetry test asserting all callers produce identical state from same
+inputs. Catches Class 18 at CI not at audit." Already implemented as
+.E.1's symmetry test pattern; this check formalizes the rule.
+
+**Effort:** 5-10 min per audit (when X-macro registries are added).

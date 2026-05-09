@@ -414,6 +414,143 @@ OPEN-DEFERRED (1), or NOT-A-BUG (1). Ready for v5.14.2 audit cycle
 
 ---
 
+### PARITY-009 — Ensemble hot-swap (v5.14.2) bypasses 6 post-load setup steps that boot does
+
+- **Found:** 2026-05-09 by post-coding /parity-check + /merge-scan +
+  manual enumeration of `EngineSharded.hpp:1075-1240` boot block vs
+  `CoreFrameworks/EnsembleHotSwap.hpp:54-115` hot-swap helper.
+- **Severity:** **HIGH composite** — sub-gap F is CRITICAL on its own
+  (bypasses inference_cfg drift detection that PARITY-002/003/004/005
+  closed); other sub-gaps are MEDIUM (operator-config silently lost on swap).
+- **Class:** Class 18 (mirror data-flow incomplete); same shape as the
+  v5.9.5b production-caller field-population class but at the function-
+  composition level instead of the field-population level.
+- **Sites:**
+  - Boot reference: `CoreFrameworks/EngineSharded.hpp:1157-1240`
+  - Backtest reference: `Backtest/BacktestSharded.hpp:316-359`
+  - Hot-swap (NEW v5.14.2): `CoreFrameworks/EnsembleHotSwap.hpp:54-115`
+
+**Sub-gaps:**
+
+| ID | Step | Boot does | Hot-swap does | Severity | Operator impact |
+|---|---|---|---|---|---|
+| .A | `held_out_stamp_secret` | passes `cfg.held_out_stamp_secret` | hardcodes `nullptr` | MEDIUM | Custom-secret deploys: stamp HMAC verify silently disabled on hot-swap |
+| .B | `gap_threshold` | passes `FPN_ToDouble(cfg.gap_acceptable_threshold)` | hardcodes `0.05` | MEDIUM | Non-default gap tolerance silently reverted on hot-swap |
+| .C | `blend_mode` strncpy + clamp | reads `cfg.core_ensemble_blend_mode[i]` OR `cfg.ensemble_blend_mode` | not done | MEDIUM | Operator's per-core blend mode override silently lost |
+| .D | `SetDisabledHorizons(zoo, csv)` | passes `cfg.core_disabled_horizons[i]` | not done | MEDIUM | Operator's disabled horizon CSV silently re-enabled |
+| .E | `SetBanditSaveInterval(zoo, n)` | passes `cfg.ensemble_bandit_save_interval` | not done | LOW | Bandit save cadence reverts to defaults |
+| .F | `CoreModelZoo_ValidateAgainstCfg(zoo, ezoo, cfg, ...)` | called at line 1229 | not done | **CRITICAL** | Bypasses all inference_cfg drift checks closed by PARITY-002/003/004/005; Ridge/composite/winsor cfg drift goes undetected for hot-swapped models |
+
+- **Symptom:** Operator hot-swaps a model dir; engine continues with
+  silently-altered behavior:
+  - Ridge cfg drift not detected (sub-gap .F)
+  - Composite confidence cfg drift not detected (sub-gap .F)
+  - Winsor cfg drift not detected (sub-gap .F)
+  - Per-core blend mode reverts to global default (sub-gap .C)
+  - Disabled horizons silently re-enabled (sub-gap .D)
+  - Bandit save interval reverts (sub-gap .E)
+  - Custom HMAC secret + custom gap threshold ignored (sub-gaps .A/.B)
+- **Root cause:** v5.14.2 plan said "mirror existing zoo init for swap-zoo"
+  but the mirror enumerated only the model-load-and-bandit-init subset;
+  missed the per-core-cfg-application + post-load-validation subset.
+  Same Class 18 shape that /trace-deps Step 6 was added to prevent —
+  the audit dispatched pre-coding ran Step 6 but didn't enumerate the
+  full boot post-load sequence.
+- **Fix path:** v5.14.2.E **Extract `EnsembleModelZoo_PostLoadSetup<F>(ezoo, cfg, core_id, base_dir)` helper** containing all 8 steps. Both boot AND hot-swap call it. Closes all 6 sub-gaps structurally + makes future post-load steps impossible to forget. Boundary-stable refactor (callers' API contracts unchanged; only the storage location of the setup logic moves).
+- **Target ship:** v5.14.2.E (planned same-session ship; ~80 LOC factor + ~5 LOC at 3 call sites)
+- **Status:** **OPEN** (fix in flight)
+- **Workaround:** Avoid hot-swap until v5.14.2.E ships — restart engine to apply new model dir if any of the affected operator settings differ between current + new model
+
+---
+
+### PARITY-010 — Backtest ensemble init missing v5.13.4 exit-bandit setup
+
+- **Found:** 2026-05-09 (during PARITY-009 enumeration sweep across
+  boot / backtest / hot-swap surfaces).
+- **Severity:** MEDIUM (pre-existing v5.13.4 follow-on gap; not introduced
+  by v5.14.2).
+- **Class:** Class 18 (mirror data-flow incomplete).
+- **Sites:**
+  - Backtest: `Backtest/BacktestSharded.hpp:316-359` (missing 2 calls)
+  - Boot reference: `CoreFrameworks/EngineSharded.hpp:1180` (InitExitBandits) + `:1200` (LoadExitBanditState)
+
+**Sub-gaps:**
+
+| Step | Boot does | Backtest does |
+|---|---|---|
+| `EnsembleModelZoo_InitExitBandits` | yes (line 1180) | NO |
+| `EnsembleModelZoo_LoadExitBanditState` | yes (line 1200) | NO |
+
+- **Symptom:** Backtest replay of paper-traded data produces different
+  exit-bandit weights than live engine produced for same data. Train↔
+  serve parity violation: backtest bandits stay uniform; live bandits
+  evolve. Detected by replay-determinism regression test if it exercised
+  exit bandits (currently focused on entry side).
+- **Root cause:** v5.13.4 added exit-bandit infrastructure to live engine
+  boot; the parallel BacktestSharded boot was overlooked. Same shape as
+  the recurring "added to one path, forgotten in the other" class
+  (Class 18 mirror).
+- **Fix path:** Same as PARITY-009 — extract `EnsembleModelZoo_PostLoadSetup`
+  helper, call from both boot AND backtest AND hot-swap. Closes
+  PARITY-009 + PARITY-010 in one structural fix.
+- **Target ship:** v5.14.2.E (bundled with PARITY-009 closure)
+- **Status:** **OPEN** (fix in flight, bundled with PARITY-009)
+- **Workaround:** Don't trust backtest replay-determinism for exit-bandit
+  attribution until v5.14.2.E ships
+
+---
+
+### PARITY-011 — Single-zoo hot-swap missing VerifyExpected (Class 18 sister of PARITY-009)
+
+- **Found:** 2026-05-09 during PARITY-009 enumeration sweep across boot / backtest / hot-swap surfaces.
+- **Severity:** MEDIUM (silent train-serve drift; subset of VerifyExpected's checks already covered by ValidateAgainstCfg, but unique checks like cadence + feature_format + num_classes are bypassed)
+- **Class:** Class 18 (mirror data-flow incomplete; same shape as PARITY-009).
+- **Sites:**
+  - Boot reference (single-zoo): `CoreFrameworks/EngineSharded.hpp:1108-1131` (calls VerifyExpected at :1114)
+  - Hot-swap (single-zoo, v5.10.0c): `CoreFrameworks/EngineSharded.hpp:~2796-2820` (calls Free + Init + LoadFromDir + ValidateAgainstCfg, but NOT VerifyExpected)
+
+**What's missing:** `CoreModelZoo_VerifyExpected(zoo, dir, ...)` — checks expected.cfg sidecar for:
+- `barrier_gate_enabled` (subset of stamp-bound; partially covered by ValidateAgainstCfg)
+- `ml_buy_threshold` (NOT stamp-bound; unique to VerifyExpected)
+- `expected_num_classes` (architectural; not stamp-bound; unique to VerifyExpected)
+- `expected_role` (architectural; not stamp-bound; unique to VerifyExpected)
+- `held_out_fraction` (stamp-bound; covered by ValidateAgainstCfg)
+- `gap_acceptable_threshold` (NOT stamp-bound; unique to VerifyExpected)
+- `expected_poll_interval` (stamp-bound as `training_poll_interval`; covered by ValidateAgainstCfg)
+- `expected_feature_format_version` (build constant; not stamp-bound; unique to VerifyExpected)
+- `expected_num_features` (build constant; not stamp-bound; unique to VerifyExpected)
+
+5 of 9 checks are unique to VerifyExpected; bypassing it on hot-swap silently loses those checks for hot-swapped models.
+
+- **Symptom:** Operator hot-swaps a model dir; if the new model has different `ml_buy_threshold`, `expected_num_classes`, `expected_role`, `gap_acceptable_threshold`, or build-constants, the divergence is silently accepted. ValidateAgainstCfg catches some (barrier_gate, held_out_fraction, poll_interval) but not all.
+- **Root cause:** v5.10.0c hot-swap added (single-zoo path) only called ValidateAgainstCfg; VerifyExpected was overlooked. Class 18 — mirror missed checks.
+- **Fix path:** v5.14.2.E.1 — `CoreModelZoo_PostLoadSetup` helper containing both VerifyExpected + ValidateAgainstCfg. Boot + backtest + hot-swap all call it.
+- **Target ship:** v5.14.2.E.1 (bundled with PARITY-009/010/012 closure)
+- **Status:** **OPEN** (fix in flight)
+- **Workaround:** Avoid hot-swap until v5.14.2.E.1 ships if the new model differs in unique-VerifyExpected fields
+
+---
+
+### PARITY-012 — Backtest single-zoo missing ValidateAgainstCfg (Class 18 sister of PARITY-009/010/011)
+
+- **Found:** 2026-05-09 during PARITY-009 enumeration sweep.
+- **Severity:** MEDIUM (backtest replay-determinism: inference_cfg drift not detected during backtest validation)
+- **Class:** Class 18 (mirror data-flow incomplete).
+- **Sites:**
+  - Boot reference (single-zoo): `CoreFrameworks/EngineSharded.hpp:1229` (calls ValidateAgainstCfg)
+  - Backtest (single-zoo): `Backtest/BacktestSharded.hpp:294` (calls VerifyExpected only; missing ValidateAgainstCfg)
+
+**What's missing:** `CoreModelZoo_ValidateAgainstCfg(zoo, ezoo, cfg, ...)` — checks 13 stamp-bound cfg fields (Ridge ×5 + composite ×5 + winsor ×2 + exit_blender ×1) for inference_cfg drift between training-time stamp body and serving-time live cfg.
+
+- **Symptom:** Backtest validation skips inference_cfg drift detection. If operator changes Ridge / composite / winsor / exit_blender cfg fields between training and backtest replay, the divergence is silently accepted. Backtest may produce results that don't match what live engine would have produced under the same cfg, breaking the train-serve parity claim.
+- **Root cause:** v5.10.2.A added ValidateAgainstCfg to live boot but not to backtest boot. Class 18 — added to one path, missed at parallel path.
+- **Fix path:** v5.14.2.E.1 — `CoreModelZoo_PostLoadSetup` helper containing both VerifyExpected + ValidateAgainstCfg. Boot + backtest + hot-swap all call it. PARITY-012 closes automatically when backtest calls the helper.
+- **Target ship:** v5.14.2.E.1 (bundled with PARITY-009/010/011 closure)
+- **Status:** **OPEN** (fix in flight)
+- **Workaround:** Don't trust backtest replay-determinism for cfg-drift validation until v5.14.2.E.1 ships
+
+---
+
 ## Future audit findings will append here
 
 When `/parity-check` finds a new issue:

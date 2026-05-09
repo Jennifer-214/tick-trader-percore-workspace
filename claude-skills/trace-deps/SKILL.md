@@ -211,6 +211,51 @@ sed -n '<start>,<end>p' source.hpp | \
    - Per read: PASS (Y-side has equivalent) / GAP (Y-side missing) /
      DOCUMENTED-RISK (plan acknowledges + handles)
 
+**v5.14.2.E.1 strengthening (Class 18 → CALL-SEQUENCE enumeration):**
+
+Steps 1-6 above audit DATA-FLOW INPUTS (struct field reads). Equally
+critical for mirrors is auditing the CALL SEQUENCE — which functions
+the mirrored body invokes. PARITY-009/010/011/012 (4 separate Class 18
+findings closed by v5.14.2.E.1) all stemmed from /trace-deps Step 6
+auditing inputs but missing the call sequence.
+
+**Procedure for call-sequence audit (run alongside Steps 1-6):**
+
+A. **Walk the source range for function CALLS.** Grep for patterns
+   matching identifier-then-paren (function invocations):
+
+```bash
+sed -n '<start>,<end>p' source.hpp | \
+    grep -oE '[A-Z][a-zA-Z0-9_]+\s*\(' | \
+    sort -u
+# Also lower-case helpers:
+sed -n '<start>,<end>p' source.hpp | \
+    grep -oE '[a-z][a-zA-Z0-9_]+\s*\(' | \
+    sort -u
+```
+
+B. **For each call, verify the Y-side mirror invokes it OR has
+   explicit reason not to.** Plan must either:
+   - Show the mirror's pseudocode includes the equivalent call
+   - Document explicitly why the mirror doesn't need it
+     (e.g., "boot does Free+null on validate-fail; hot-swap does
+     log-only — preserved for v5.10.0c semantics")
+
+C. **For ≥3 calls in mirrored sequence + caller in different file:**
+   recommend X-macro registry / helper extraction (CLAUDE.md item 19).
+   Don't duplicate; extract. Mirror becomes a single helper call.
+
+D. **Output:** add "Call-sequence audit" subsection to the Mirror
+   report. List every call in source; per call: MIRROR-PRESENT /
+   MIRROR-MISSING-WITH-RATIONALE / MIRROR-MISSING-GAP.
+
+**Anti-pattern caught (v5.14.2.E.1 2026-05-09):** v5.14.2.A
+EnsembleHotSwap.hpp mirrored boot ensemble setup but enumerated only
+INPUTS (cfg fields read), not CALLS. Missed 6 of 8 boot post-load
+calls (PARITY-009 sub-gaps .C-.F). Same pre-coding /trace-deps audit
+that ran Step 6 caught only 1 of those 6. Strengthening Step 6 with
+call-sequence audit catches the pattern at audit time.
+
 **Why this step exists:** standard symbol-existence audit (Steps
 2-3) verifies that NAMED CALLABLES (functions, struct types) exist
 on both sides. It does NOT verify DATA-FLOW PRECONDITIONS —

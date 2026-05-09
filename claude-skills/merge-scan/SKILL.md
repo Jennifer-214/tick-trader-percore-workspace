@@ -111,6 +111,32 @@ inline lambda). Examples to watch:
 Don't propose extraction unless the bodies overlap > 70%.
 Premature abstraction is worse than duplication.
 
+**v5.14.2.E.3 strengthening — recommend X-macro for recurring patterns:**
+
+When the duplication is across BOOT ↔ BACKTEST ↔ HOT-SWAP sites (or
+similar mirror patterns: BUY ↔ EXIT, SINGLE-ZOO ↔ ENSEMBLE), the
+recurring class is Class 18 (mirror data-flow incomplete). Recommend
+**X-macro registry / helper extraction** even when overlap < 70% —
+because future drift is the bigger cost, not current duplication.
+
+Per CLAUDE.local.md going-forward rule: "Structural fix > direct patch
+when bug class can recur." Direct patches are for true one-off bugs;
+mirror patterns get registries.
+
+Canonical examples:
+- `STAMP_CFG_AUTOPOPULATE` (v5.14.1.E.E.B) — extracted production-caller
+  field-population pattern; extinguished v5.9.5b class after 4
+  recurrences (PARITY-002/003/004/005/008)
+- `EnsembleModelZoo_PostLoadSetup` + `CoreModelZoo_PostLoadSetup`
+  (v5.14.2.E.1) — extracted boot/backtest/hot-swap setup sequence;
+  extinguished Class 18 mirror class for model-load surface after
+  4 recurrences (PARITY-009/010/011/012)
+
+When you find duplication that fits this shape, the report should
+say: "Recommend X-macro registry + helper extraction (Class 18
+prevention; CLAUDE.local.md item: structural fix > direct patch)."
+Operator decides; bias toward structural even if more work today.
+
 ### 5. State-field reuse scan
 
 For each plan that proposes a NEW field on a load-bearing struct

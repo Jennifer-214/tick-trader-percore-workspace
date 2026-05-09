@@ -1123,3 +1123,65 @@ sed -n '<start>,<end>p' source.hpp | grep -oE '[a-z_]+(_)?->[a-z_]+'
   failure mode but at the call-site level rather than data-flow
 - Class 14 (Plan calls non-existent function) — symbol-existence
   gap; this class is the data-flow analog
+
+---
+
+## Class 18 STRENGTHENED — call-sequence enumeration (added 2026-05-09 by v5.14.2.E.1)
+
+**The strengthening:** Class 18's original detection focused on
+DATA-FLOW INPUTS (struct field reads). Equally critical for "mirror X
+for Y" plans is enumerating the CALL SEQUENCE — which functions the
+mirrored body INVOKES.
+
+PARITY-009/010/011/012 (4 separate Class 18 findings closed by v5.14.2.E.1):
+
+| ID | Mirror | Calls missed |
+|---|---|---|
+| PARITY-009 | EnsembleHotSwap.hpp mirrors boot ensemble setup | 6 of 8 boot post-load calls (blend_mode, SetDisabledHorizons, SetBanditSaveInterval, ValidateAgainstCfg, + 2 cfg passthroughs) |
+| PARITY-010 | BacktestSharded mirrors boot ensemble setup | 2 of 8 calls (InitExitBandits, LoadExitBanditState; v5.13.4 additions never propagated to backtest) |
+| PARITY-011 | Single-zoo hot-swap mirrors boot single-zoo | 1 call (VerifyExpected; original v5.10.0c hot-swap omitted) |
+| PARITY-012 | Backtest single-zoo mirrors boot single-zoo | 1 call (ValidateAgainstCfg; v5.10.2.A added to live boot but not backtest) |
+
+**Total:** 10 sub-gaps, all SAME shape — boot's full call sequence drifted
+from 3 mirror sites because audits checked inputs but not calls.
+
+**Strengthened detection:**
+
+```bash
+# Original Step 6 (data-flow audit):
+sed -n '<start>,<end>p' source.hpp | grep -oE '[a-z_]+(_)?->[a-z_]+'
+
+# NEW: also enumerate function CALLS
+sed -n '<start>,<end>p' source.hpp | grep -oE '[A-Z][a-zA-Z0-9_]+\s*\('
+sed -n '<start>,<end>p' source.hpp | grep -oE '[a-z][a-zA-Z0-9_]+\s*\('
+# For each call, verify Y-side mirror invokes it OR has explicit reason not to
+```
+
+**Strengthened prevention:**
+
+- **`/trace-deps` Step 6** strengthened with call-sequence audit
+  sub-clause (v5.14.2.E.3 ship)
+- **`/readiness` Check 24** added (v5.14.2.E.3 ship): "If your plan
+  adds a function that mirrors an existing one, run /trace-deps Step
+  6 with explicit call-sequence enumeration. If duplication is found,
+  is X-macro registry the right shape?"
+- **CLAUDE.md item 19** added (v5.14.2.E.3 ship): "Structural fix >
+  direct patch when bug class can recur." When `/parity-check` or
+  `/merge-scan` surfaces a recurring pattern, default to X-macro
+  registry / helper extraction (PostLoadSetup helpers are canonical
+  example).
+- **Symmetry tests at CI level** (v5.14.2.E.1 pattern): when an
+  X-macro registry has cross-site callers, write a test that runs
+  the helper from each site + asserts state bytewise-identical.
+
+**Class extinguished structurally for the model-load surface area** by
+v5.14.2.E.1's `EnsembleModelZoo_PostLoadSetup` + `CoreModelZoo_PostLoadSetup`
+helpers + `FOREACH_ENSEMBLE_POST_LOAD` / `FOREACH_SINGLE_ZOO_POST_LOAD`
+X-macro registries. Adding a new post-load step is ONE line in the
+registry; boot, backtest, hot-swap inherit automatically. Compile-time
+enforced inclusion at all sites; bypass impossible.
+
+**The class can still recur for OTHER surfaces** (OMS init, Reconcile
+init, ConfidenceScorer extension, etc.) — Check 24 catches those at
+audit time. v5.X+ should extract similar helpers if those surfaces
+develop their own boot↔backtest↔hot-swap mirror gaps.

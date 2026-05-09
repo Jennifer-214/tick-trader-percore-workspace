@@ -352,6 +352,45 @@ that point.
 
 ---
 
+## v5.14.2 — Ensemble hot-swap helper (OPERATOR-INITIATED; per-cycle cost = 0)
+
+**Path:** Operator-initiated boot-time-style action. Hot path UNTOUCHED.
+Slow-path per-cycle cost UNCHANGED.
+
+**Sites changed:**
+- `CoreFrameworks/EnsembleHotSwap.hpp` (NEW; 115 LOC standalone header)
+- `CoreFrameworks/EngineSharded.hpp:~88` (#include the new header)
+- `CoreFrameworks/EngineSharded.hpp:~2860` (replace ensemble REFUSE
+  block with HotSwap helper call)
+- `ML_Headers/CoreModelZoo.hpp:~1330` (4 LOC Free completeness patch)
+
+**What changed:** legacy ensemble REFUSE path replaced with proper
+Free → Init → LoadFromCfg → InitBandits → InitExitBandits →
+LoadBanditState → LoadExitBanditState sequence. Same-thread atomicity
+(slow-path c is single-reader/writer for its own ezoo).
+
+**Cost breakdown:**
+- Per-cycle steady-state (no swap pending): ZERO change. Atomic load +
+  branch on `swap_model_path_requested[c]` was already there.
+- Per-swap event (operator clicks Apply): ~50-100ms (file I/O +
+  XGBoost model load + bandit JSON parse). Was previously a ~1µs
+  fprintf-and-refuse; now does correct work.
+- Per-swap is rare (operator-initiated; not per-cycle).
+
+**FUTURE OPPORTUNITY:**
+- None planned. The cost is fundamentally bounded by XGBoost model
+  load time (file I/O + parse), which is operator-acceptable for
+  hot-swap UX. Per-cycle cost is already zero.
+
+**Storage cost:** zero new state. Reuses existing `ensemble_handle`
+storage on `state.cores[c]`.
+
+Per /readiness Check 23 (latency accountability — v5.14.1.F+):
+documented here for completeness even though per-cycle cost is zero,
+so the operator-initiated path is auditable.
+
+---
+
 ## v5.14.1.G — Portfolio turnover diagnostic (SLOW-PATH ONLY; ~50-600ns)
 
 **Path:** SLOW-PATH only. Hot path UNTOUCHED.

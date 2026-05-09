@@ -76,6 +76,61 @@ microseconds for the existing buy-side bandit work.
 
 ---
 
+### 2026-05-08 — v5.14.0 [SLOW-PATH ONLY — Ridge risk-parity blending]
+
+**File:line:** `Strategies/StrategyParameters.hpp:~870` — Ridge
+weight override path inside ML_BuildParameters ensemble dispatch.
+When `cfg.ridge_within_horizon=1` AND `ezoo->primary_count >= 2`,
+walks `ezoo->reward_ring` backward K=64 records into flat
+`history[K*N]` buffer, calls `RidgeBlender_BuildCorr`, then
+`RidgeBlender_Compute` (Cholesky solve), and overrides
+`weights_buf[]` before `Model_Predict_Ensemble_Weighted` call.
+
+**Cost (slow path):**
+- Default cfg (ridge_within_horizon=0): ~5 ns single flag check;
+  bandit path bytewise-identical to v5.13.6.
+- cfg=1 + primary_count < 2: ~10 ns flag + count check + skip.
+- cfg=1 + N=8 + K=64 history: **~3 µs/cycle**:
+  - ring → flat buffer copy: ~500 ns (cache-warm; reward_ring
+    already in L1/L2 from G.8 reward attribution path)
+  - `RidgeBlender_BuildCorr` (Pearson over K records): ~1 µs
+    (O(N²K) = 4096 ops; well-vectorizable)
+  - `RidgeBlender_Compute` (Cholesky N=8): ~2 µs
+    (O(N³/6) ≈ 85 ops + 8 sqrts; FPN_Sqrt is bytewise-deterministic
+    Newton-Raphson, ~12 iter each ≈ 50ns/sqrt = 400ns total)
+  - Total within slow-path 100µs p99 budget; ~3% of budget when on.
+
+**Branchless:** N/A — slow path; cfg flag is predicted-not-taken
+default (always-on bandit path is the predicted branch).
+
+**Cache impact:**
+- `EnsembleModelZoo` gains `RidgeWeights<F> ridge_state` field
+  (~5 KB at MAX_RIDGE_MODELS=8: 8×8 doubles × 3 matrices [corr,
+  L, internal] + scratch + output FPN). NOT in hot-path read set;
+  drainer + slow-path single-thread access; no false-sharing.
+- Stack usage when enabled: ~512 bytes for the `history[K*N]`
+  flat buffer (ENSEMBLE_HORIZON_MAX × 64 floats); transient, on
+  slow-path stack only.
+
+**Hot path UNTOUCHED.** `BG_Evaluate` / `SG_Evaluate` /
+`ExecutionCore_Tick` zero changes.
+
+**Optimization note:**
+- v5.16+ candidate: incremental correlation-matrix update (rolling
+  outer-product accumulator) instead of full BuildCorr O(N²K) per
+  cycle. Saves ~1µs per cycle when continuously enabled.
+- v5.16+ candidate: AVX-512 vectorization of Cholesky inner loops
+  (FPN_Sqrt is already AVX-friendly; the matrix ops aren't).
+- v5.15+ candidate: per-arm cost tracking (currently `cost[i]=0`
+  in the dispatch; once cost-aware bandit lands, populate from
+  per-arm fee + slippage estimates → meaningful net IC).
+
+**See also:** `DOCS/CHANGELOG.md` v5.14.0 row;
+`plans/2026-05-08-v5.14.0-ridge-blending.md`;
+`ML_Headers/RidgeBlender.hpp` (the math kernel).
+
+---
+
 ### 2026-05-08 — v5.13.0 [SLOW-PATH ONLY]
 
 **File:line:** `CoreFrameworks/EngineSharded.hpp:~2906` — sell-side

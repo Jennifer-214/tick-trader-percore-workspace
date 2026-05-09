@@ -968,3 +968,115 @@ the things you cite must exist; the things you propose must not.
 - `DOCS/RECURRING_BUG_PATTERNS.md` Class 13 — worker-arg use-after-
   free pattern that the strengthened Check 19 + /trace-deps would
   have caught at plan-time
+
+---
+
+### Check 20 — Future-proofness sanity (v5.14.1.E.E.B+)
+
+**Trigger:** plan introduces N-of-anything pattern. Specifically:
+- New function with ≥5 parameters following a pattern (e.g., per-field
+  primitive params)
+- ≥3 parallel struct field additions (`has_X`+`X`, `has_Y`+`Y`, ...)
+- ≥3 adjacent cfg parser branches following the same shape
+- "duplicate this for the new Y context" plans that COPY rather than abstract
+
+**Verdict:**
+- **PASS** — design uses X-macro registry / template / data-driven dispatch
+- **PASS-DEFERRED** — N-of-anything pattern with explicit "refactor to X-macro at v5.X cleanup" note
+- **DRIFT-RISK** — N-of-anything with no future-proofing note → re-architect before coding
+
+**Audit procedure:** count repeated patterns; cross-ref CLAUDE.md item 13;
+ask "what happens at the 14th instance?". X-macro = 1 line; manual = 14 sites.
+
+**Anti-pattern caught (v5.14.1.B 2026-05-09):** initial 10-param helper.
+Caramel pushed "is this future proof?" → pivoted to FOREACH_STAMP_BOUND_CFG.
+4× recurrence (PARITY-002/003/004/005/008) of manual-populator class proves
+N-of-anything cannot scale.
+
+**Effort:** 5 min per audit.
+
+---
+
+### Check 21 — Test count assertion fragility (v5.14.1.E.E.B+)
+
+**Trigger:** plan claims `+N tests` where N is from registry expansion.
+
+**Verdict:**
+- **PASS** — `>= N` or named-symbol assertions
+- **DRIFT-RISK** — `== N` literal; future registry growth breaks the test
+
+**Procedure:** grep for `assert/check.*== <int>` near registry-related code;
+recommend `>=` instead.
+
+**Anti-pattern caught:** `FOREACH_STAMP_BOUND_CFG_COUNT == 10` broke when
+v5.14.1.D added 2 entries. Updated to `>= 12`; v5.14.1.E added 1 → updated
+to `>= 13`. Pattern repeats for FOREACH_IC_VARIANT_COUNT (>= 1 today).
+
+**Effort:** 3 min per audit.
+
+---
+
+### Check 22 — Auto-trigger downstream re-audit after umbrella ships (v5.14.1.E.E.B+)
+
+**Trigger:** umbrella ship closes that touched a SHARED SURFACE:
+- Stamp body schema (FOREACH_STAMP_BOUND_CFG, StampInferenceCfgInputs)
+- ML feature pipeline (FOREACH_FEATURE, FeatureStandardizer)
+- Strategy registry (FOREACH_STRATEGY)
+- IC variant registry (FOREACH_IC_VARIANT)
+- Cfg fields surface (ControllerConfig)
+- EnsembleModelZoo struct shape
+
+**Verdict:** **AUTO-TRIGGER** — after each such umbrella ship, run
+/plan-check (or /sprint-recheck) over remaining sub-plans.
+
+**Procedure (post-umbrella-ship action):**
+1. Identify shared surfaces touched
+2. Enumerate remaining sub-plans mentioning those surfaces
+3. Run /trace-deps (with Step 6 mirror data-flow audit) on each
+4. Update stale plans BEFORE next sub-plan starts coding
+
+**Why this matters:** sprint-internal plans accumulate dependencies on
+shared surfaces. Without auto-trigger, downstream staleness gets found
+ad-hoc at next ship instead of proactively at umbrella close.
+
+**Effort:** 5-10 min per umbrella ship.
+
+---
+
+### Check 23 — Latency accountability (v5.14.1.F+)
+
+**Trigger:** plan adds code on hot path (≤500ns p99), slow path (≤100µs p99),
+OMS drainer, or producer fan-out.
+
+**Verdict:**
+- **PASS** — plan includes path classification (hot/slow/OMS/producer/boot/training)
+  + cost estimate (ns) + branchless analysis if hot + HOT_PATH_CHANGELOG.md
+  entry committed in same ship (or "boot/training only" justification)
+- **DRIFT-RISK** — latency-impact code without analysis. Per CLAUDE.md
+  item 17, this is required discipline.
+
+**Procedure:**
+1. **Identify path:** hot = ExecutionCore_Tick / BG_Evaluate / SG_Evaluate /
+   ExecutionCore / GateParameters / ParameterSlot. Slow = EventLoop_RebuildOneCore /
+   RollingStats_Push / Regime_ComputeSignals / ConfidenceScorer_* / Model_Predict /
+   FeatureStandardizer_Apply. OMS = OMS_DrainSubmit / OrderManager_Tick.
+   Producer = DataStream fan-out.
+2. **Verify analysis present:** path classification, cost estimate, branchless
+   discussion if hot.
+3. **Verify HOT_PATH_CHANGELOG entry planned/included:**
+   - Hot path: ALWAYS required
+   - Slow path: required if ≥10ns/cycle
+   - Boot/training: NO entry; plan should explicitly note
+4. **Cumulative-cost sanity check:** sum recent ships' per-cycle costs;
+   flag if approaching 10% of path budget.
+
+**Anti-pattern caught (v5.14.1.F 2026-05-09):** dispatcher add in slow path
+without latency note. Caught by Caramel's "ensure we aren't adding unaccounted
+latency" question. Check 23 mechanizes the prompting.
+
+**Cross-references:**
+- `CLAUDE.md` item 17 — latency-additions are tracked
+- `DOCS/HOT_PATH_CHANGELOG.md` — running ledger
+- `/latency-track` skill — emits draft changelog entries
+
+**Effort:** 3-5 min per audit.

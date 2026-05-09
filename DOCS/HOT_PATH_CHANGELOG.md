@@ -28,6 +28,102 @@ slow path, fold into existing operation, hoist to entry).
 
 ---
 
+### 2026-05-08 — v5.13.4 [DRAINER ONLY — no hot-path / slow-path impact]
+
+**File:line:** `CoreFrameworks/ControllerEventLoop.hpp:~1335` —
+sell-side bandit reward attribution at the existing
+`EventLoop_DrainPostFillOneCore` exit-loop body, immediately AFTER
+the buy-side `EnsembleModelZoo_TradeCloseReward` block. Symmetric
+shape; same drainer thread.
+
+**Cost (drainer thread, per-fill):**
+- Default cfg (exit_bandit_enabled=0): ~1 ns single flag check.
+- cfg=1, no predicted exit on this slot: ~3 ns flag + array read +
+  skip.
+- cfg=1, predicted exit + flatten=0: ~50 ns counterfactual math +
+  `Bandit_Update` (cache-hit on already-loaded `FillRecord`).
+
+**Branchless:** N/A — drainer; cfg flag predicted-not-taken default.
+
+**Cache impact:**
+- `EnsembleModelZoo` gains `BanditState exit_bandits[NUM_REGIMES]`
+  (~456 B/BanditState × 5 = ~2.3 KB) + 2 int fields. NOT in hot-
+  path read set — only touched by drainer; cold-path footprint
+  only. Note: pre-/latency-track audit 2026-05-08 the changelog
+  here said "~96 B × 5 = 480 B" — that was a per-element underestimate
+  (BanditState includes weights[8]+cum_reward[8]+pulls[8]+
+  arm_names[8][32]). Corrected.
+- `OrderManagerState` gains `int8_t last_exit_predicted_arm[16]`
+  (16 B) + `int8_t last_exit_predicted_regime[16]` (16 B). Adjacent
+  to existing `last_exit_was_predicted[]` / `last_exit_predicted_p[]`
+  — single cache line for slow-path / drainer access.
+
+**Hot path UNTOUCHED.** `BG_Evaluate` / `SG_Evaluate` /
+`ExecutionCore_Tick` zero changes.
+
+**Slow path:** zero changes to predict cycle. v5.13.0.B's exit-side
+prediction block is unchanged (just sets the same per-slot fields
+this ship now reads).
+
+**Optimization note:** future v5.13.X could move the counterfactual
+math out of the per-fill hot loop into a precomputed cache (tp_pct
++ 2×fee at entry time, stored on Position struct) → ~10 ns
+savings. Marginal; not load-bearing while drainer p99 sits in
+microseconds for the existing buy-side bandit work.
+
+**See also:** `DOCS/CHANGELOG.md` v5.13.4 row;
+`plans/2026-05-08-v5.13.4-sell-side-bandit.md`.
+
+---
+
+### 2026-05-08 — v5.13.0 [SLOW-PATH ONLY]
+
+**File:line:** `CoreFrameworks/EngineSharded.hpp:~2906` — sell-side
+ML exit-prediction submit logic. Post-RebuildOneCore (where
+ML_BuildParameters writes `state.cores[c].last_exit_prediction`),
+checks against `cfg.exit_threshold` and fires `OMS_PushSubmit(MARKET_SELL)`
+for any open positions on the core's slot(s). Per-slot tracking arrays
+written before submit (SPSC release-acquire for drainer visibility).
+
+**Cost (slow path):**
+- Default cfg (use_exit_model=0): ~5 ns (single flag check + early
+  return; predicted-not-taken).
+- cfg=1, no exit models: ~10 ns (flag + count check + skip).
+- cfg=1, N exit models loaded: ~3-15 μs/cycle (N inferences via
+  Model_Predict_Normalized + blend). Reuses already-standardized
+  features from buy-side path (sibling-scaler load-time check enforces
+  shared scaler) — no extra Features_PackAll cost.
+- Treelite AOT (when adopted via v5.12.2.D infrastructure): ~50ns/horizon.
+- Lazy rebuild (v5.12.2.B): ~half cost when stable regime skips cycle.
+
+**Branchless:** N/A — slow path; cfg flag is predicted-not-taken
+default.
+
+**Cache impact:** new `last_exit_prediction` (double) +
+`last_exit_dominant_horizon` (int) on `CoreContext` — adjacent to
+existing `staged_prediction` / `active_prediction` (same cache line).
+`last_exit_was_predicted[16]` (uint8_t) + `last_exit_predicted_p[16]`
+(double) on `OrderManagerState` — 16 + 128 = 144 bytes; padding to
+keep 8B alignment. No hot-path field touched.
+
+**Hot path UNTOUCHED.** `BG_Evaluate` / `SG_Evaluate` /
+`ExecutionCore_Tick` — zero changes.
+
+**Optimization note:** future v5.13.X could cache
+`Features_PackAll` output in slow_state when both buy + exit predict
+fire on the same cycle (currently buy-side packs once, exit-side
+reuses post-scaler features — no extra pack but the scaler step is
+shared which is the dominant cost). True optimization opportunity
+opens when buy + exit use DIFFERENT scalers (today they share via
+sibling-scaler enforcement); at that point a parallel features
+buffer becomes load-bearing.
+
+**See also:** `DOCS/CHANGELOG.md` v5.13.0 row for full design;
+`plans/2026-05-08-v5.13.0-sell-side-engine.md` for plan + audit
+gap-closures.
+
+---
+
 ### 2026-05-08 — v5.12 sprint summary (Phase 1+2+3) [SLOW-PATH + PRODUCER]
 
 **Scope:** 13 commits ahead of `experiment/per-core-sharding`; Phase 1

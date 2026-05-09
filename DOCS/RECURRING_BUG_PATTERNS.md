@@ -739,3 +739,292 @@ unpopulated by the suite caller). Worth retroactively running
   here. Reads `RECURRING_BUG_PATTERNS.md` + walks `Backtest/` for
   `free(args)` sites + diffs `args->field` reads pre/post-free +
   reports mismatches. Lower friction than the manual grep.
+
+---
+
+## Class 14 — Plan calls a function or struct field that doesn't exist
+
+**Surface:** any plan in `plans/` that names a callee or struct
+member without verifying it exists in the current codebase. Catches
+silent staleness ("v5.10 plan claimed X exists; v5.13 deleted X")
+AND wishful planning ("plan author meant to add X but forgot to
+list it as NEW").
+
+**Symptom:** plan-driven coding fails to link or compile partway
+through implementation. Operator + Claude lose 30-90 minutes
+investigating "why doesn't this build" when the answer is "the
+function the plan referenced doesn't exist." Worse: if the plan
+loosely references "the existing cancel API" without naming it,
+implementation may invent a wrong signature → runtime UB instead
+of compile failure.
+
+**Root cause:** plan author wrote against assumed-existing surface
+without `grep`ping the codebase. Common when:
+- The plan references a function from an adjacent codebase (e.g.,
+  v5.10 trader had it but v5.14 trader doesn't)
+- The plan author saw a related function (e.g., `_MarketBuy`) and
+  assumed siblings exist (`_CancelOrder`)
+- The struct field was renamed in a recent ship the plan author
+  didn't see (e.g., `dry_run` → `reconcile_mode`)
+- Cross-ship coordination missed (Plan A adds field; Plan B claims
+  to use it but A hasn't shipped yet — plans don't list dependency
+  edge)
+
+**Detection:**
+
+```bash
+# For each function name mentioned in a plan:
+grep -rn "^inline.*PROPOSED_FN_NAME\|^.*PROPOSED_FN_NAME\s*(" \
+   --include="*.hpp" --include="*.cpp" \
+   CoreFrameworks/ ML_Headers/ Strategies/ DataStream/ Backtest/
+# Empty result → BLOCKING gap; either add NEW claim or rename in plan
+
+# For each struct field referenced (e.g., obj->field_name):
+grep -A100 "^struct StructName" CoreFrameworks/<file>.hpp | \
+   grep "field_name"
+# Empty result → BLOCKING gap; either add field as NEW or fix plan
+
+# For pre-coding plan audits, /trace-deps automates both walks +
+# reports BLOCKING vs verified-PASS per callee.
+```
+
+**Known instances:**
+
+- **v5.14.4 plan**: `BinanceOrderAPI_CancelOrder` — plan Step 4
+  called the function; grep showed no such function exists in
+  `DataStream/BinanceOrderAPI.hpp`. Detected by /trace-deps before
+  coding. Fixed by adding v5.14.4.0 Phase 0 sub-tag to create the
+  function (mirror `_MarketBuy`/`_MarketSell` pattern at :503/:549).
+- **v5.14.4 plan**: `OrderManagerState.last_seen_trade_id` — plan
+  Step 3 read the field; struct doesn't have it. Same fix
+  (v5.14.4.0 adds field + zero-init in `OrderManager_Init`).
+- **v5.14.7 plan (caught via cross-ship coordination)**: also
+  claimed to add `BinanceOrderAPI_CancelOrder` as NEW. Master plan
+  ordering: v5.14.4 ships first → v5.14.7's claim updated to
+  REUSE v5.14.4.0's API instead of creating a duplicate.
+
+**Prevention:**
+
+- **`/trace-deps` skill** (created v5.14): pre-coding audit walks
+  every callee + struct-field reference in a plan, runs the
+  detection greps above, reports per-callee PASS/GAP. Run BEFORE
+  starting any sub-plan's `.A` coding.
+- **`/readiness` Check 19** (strengthened v5.14, ship-blocking):
+  procedural 6-step grep for plan-to-code references. Catches
+  same class via different invocation path.
+- **Cross-ship dependency edges**: master plan's Integration Matrix
+  lists "Plan B depends on Plan A's deliverable X". `/plan-check`
+  verifies the edge.
+- **Phase 0 sub-tag pattern**: when a plan needs pre-requisite
+  infra that doesn't exist yet, add a `.0` sub-tag at the top
+  of the sub-tag table that ships BEFORE `.A`. Example:
+  v5.14.4.0 (pre-req) → v5.14.4.A (main). Makes the sequencing
+  explicit + prevents stalled coding.
+
+---
+
+## Class 15 — Function signature drift between plan and canonical typedef
+
+**Surface:** any plan adding a new function that must match an
+existing typedef (e.g., `LabelFn`, `FeatureComputeFn`,
+`StrategyEvalFn`). The dispatcher casts function pointers via the
+typedef — wrong signature = silent runtime UB.
+
+**Symptom:** code compiles (each function compiles in isolation;
+typedef cast doesn't validate parameter shapes at compile time);
+runtime calls dispatch through wrong stack layout → wrong values
+read for arguments, undefined behavior. Tests that exercise the
+function directly pass; tests that exercise it through the
+dispatcher fail with non-deterministic values.
+
+**Root cause:** plan author wrote the new function's signature
+from memory, not from the canonical typedef. Common when:
+- The typedef was extended in a recent ship (e.g., `LabelFn`
+  gained `extra_param` for forward_ticks lookups)
+- The plan author confused two related typedefs (label vs feature
+  compute fns have different shapes)
+- The dispatcher uses `void*` casts internally, hiding the typedef
+  contract
+
+**Detection:**
+
+```bash
+# Find the canonical typedef:
+grep -rn "typedef.*Fn\b\|using.*Fn\s*=" \
+   --include="*.hpp" \
+   ML_Headers/ Strategies/ Backtest/
+
+# For each new function in a plan claiming to register via X-macro
+# dispatcher: extract proposed signature from plan, diff against
+# the typedef line-by-line.
+
+# /trace-deps Step 3 (signature drift check) runs this automatically.
+```
+
+**Known instances:**
+
+- **v5.14.5 plan, Label_CS* functions**: plan proposed signature
+  `(ticks, tick_idx, total_ticks, BacktestRunConfig*)`. Canonical
+  `LabelFn` typedef at `LabelFunctions.hpp:284-286` is
+  `(ticks, tick_idx, total_ticks, sample_price, tp_pct, sl_pct,
+  extra_param)` (7-param). All 8 existing labels use the 7-param
+  form; dispatcher casts via typedef. Plan signature would have
+  failed link. Detected by /trace-deps; fix was 5 minutes
+  (refactor 3 fn signatures to canonical 7-param, ignore tp/sl,
+  use extra_param for horizon).
+
+**Prevention:**
+
+- **`/trace-deps` Step 3**: signature drift audit. Compares plan
+  proposed signatures against canonical typedefs for any plan
+  that registers via X-macro.
+- **CLAUDE_INTEGRATION.md "Adding a label/feature/strategy" recipe**:
+  always cites the canonical typedef line first. Plan authors
+  expected to copy that signature verbatim into the plan.
+- **Plan-template discipline** (going forward): when proposing a
+  new function in a plan, paste the typedef from the codebase
+  into the plan as quoted reference. Forces the author to
+  actually read it.
+
+---
+
+## Class 16 — Naming convention drift breaks X-macro dispatcher
+
+**Surface:** any plan adding a function that must be discovered by
+an X-macro registry (e.g., `FOREACH_FEATURE(X)`, `FOREACH_TARGET(X)`,
+`FOREACH_STRATEGY(X)`). Registry expects a specific function-name
+PREFIX; missing prefix = link failure (registry calls
+non-existent name).
+
+**Symptom:** clean compile per-translation-unit; link failure with
+"undefined reference to `Compute_RegimeTrendStrength`" (the
+registry expanded `FEATURE(RegimeTrendStrength, ...)` to
+`ML_Compute_RegimeTrendStrength` but the plan defined
+`Compute_RegimeTrendStrength`). Easy to fix once detected;
+frustrating to detect mid-coding because the linker error doesn't
+explicitly name the registry / X-macro as the calling site.
+
+**Root cause:** plan author saw the symbol in conversation
+("Compute the regime trend strength") and named the function
+literally, missing the codebase's prefix discipline. Common when:
+- The codebase has two prefix conventions for sibling concepts
+  (e.g., `ML_Compute_*` for features vs `Label_*` for labels)
+- The convention was set in a recent ship; older callers haven't
+  been migrated yet so the docstrings/examples are inconsistent
+- The plan was drafted from a high-level design doc that used
+  shorthand names
+
+**Detection:**
+
+```bash
+# For each new function intended for an X-macro registry:
+# 1. Find the registry macro definition:
+grep -n "^#define FOREACH_FEATURE\|^#define FOREACH_TARGET\|^#define FOREACH_STRATEGY" \
+   --include="*.hpp" -r ML_Headers/ Strategies/
+
+# 2. Read the registry's expansion to learn the prefix it generates:
+grep -B2 -A5 "^#define FOREACH_FEATURE" ML_Headers/FeatureRegistry.hpp
+# (e.g., reveals expansion `ML_Compute_##NAME`)
+
+# 3. Verify plan's proposed function names use the prefix.
+```
+
+**Known instances:**
+
+- **v5.14.5 plan, regime feature functions**: plan proposed
+  `Compute_RegimeTrendStrength`, `Compute_RegimeVolZscore`,
+  `Compute_RegimeClassOneHot`. Codebase convention is
+  `ML_Compute_*` (all 34 existing features). FOREACH_FEATURE
+  expansion would call `ML_Compute_RegimeTrendStrength` (with
+  prefix) → link error. Detected by /trace-deps Step 4
+  (naming convention check). Fix: trivial rename (3 functions).
+
+**Prevention:**
+
+- **`/trace-deps` Step 4**: naming convention audit. For each
+  X-macro registry, verifies plan's new functions use the
+  expected prefix.
+- **DOCS/FEATURE_INTERFACE.md / TARGET_INTERFACE.md** (canonical
+  per-registry docs): top-of-file states the prefix; plan author
+  expected to read these before drafting.
+- **Plan-template snippet**: registry-related sections of new
+  plans must paste the X-macro expansion line verbatim from the
+  codebase (e.g., `// FOREACH_FEATURE expands NAME → ML_Compute_##NAME`).
+
+---
+
+## Class 17 — Architectural deferral made without grepping adjacent struct fields
+
+**Surface:** any plan that defers a feature with rationale "we
+don't have data X". Can be wrong if X (or a usable analog) IS
+already in an adjacent struct that the plan author didn't grep.
+Expensive class because it punts months of work for zero reason.
+
+**Symptom:** a feature gets deferred to vN+1 sprint with effort
+estimate "needs new infra (M LOC, 2 weeks)". Operator (or future-
+Claude) reads the plan months later, asks "wait, isn't X
+accessible via Y?" — yes, X is in `someStruct->ring_buf[]` which
+the plan author didn't check. The deferral was invalid; vN could
+have shipped in 2 hours instead of vN+1's 2 weeks.
+
+**Root cause:** pre-coding audit (typically /trace-deps) checks
+"does the surface I'm calling EXIST" but doesn't always check
+"is the data I need somewhere accessible, even if not in the
+obvious place". The audit's "data not in this struct" finding
+is correct as far as it goes, but the author + auditor stop
+before walking adjacent structs that the obvious one points to.
+
+**Detection:**
+
+```bash
+# When considering deferring "feature X needs data Y":
+# 1. List every struct accessible from the function's input ctx:
+grep -A20 "^struct CtxStructName" CoreFrameworks/<file>.hpp
+# (note every pointer field — those are doors to other structs)
+
+# 2. For each pointer field's type, walk INTO that struct and
+#    grep for fields that could provide Y:
+grep -A50 "^struct PointedToStruct" <file>.hpp
+
+# 3. Specifically look for:
+#    - `*_buf[]` ring buffers (raw history)
+#    - `*_history[]` arrays
+#    - `running_*` accumulators (deltas can give raw values)
+#    - `head` / `count` write-position markers (signal a ring exists)
+
+# Pre-coding skill /trace-deps Step 5 (NEW v5.14): for any deferral,
+# run a 2-hop walk through adjacent structs before accepting the
+# defer rationale.
+```
+
+**Known instances:**
+
+- **v5.14.5 frac diff (caught + reverted same day)**: plan
+  initially deferred `ML_Compute_FracDiff_*` to v5.16+ with
+  rationale "FeatureComputeCtx<F> only has `signals` +
+  `short_rolling` (aggregates); no raw price history accessible".
+  Operator caught it: "we have raw tick data for backtesting".
+  Investigation: `ctx->short_rolling->price_buf[W]` is the raw
+  ring (pre-existing for eviction logic; W=128 = 128 lags
+  available). Plus `head` (write position) + `count` (warmup
+  state). Frac diff truncates at K≈50 lag terms (|C(0.5,50)|<1e-6),
+  well within W=128. The feature needs ZERO new infrastructure —
+  3 inline functions reading the existing ring with `(head-1-k)
+  & (W-1)` indexing. Re-shipped as v5.14.5.C, not deferred.
+
+**Prevention:**
+
+- **`/trace-deps` Step 5** (NEW): for any deferral with rationale
+  "missing data X", explicitly walk adjacent structs (1-2 hops
+  from the input ctx) and grep for ring buffers / history arrays
+  / accumulators that could provide X. ONLY accept the deferral
+  if the 2-hop walk turns up nothing.
+- **Plan-template discipline** (going forward): "Deferred to vN+M"
+  blocks must list "Adjacent structs walked: <list>" + "Why none
+  provide the data: <reason>". Forces the deferring author to
+  show their work.
+- **CLAUDE.local.md memory** (already exists, generalizes here):
+  "boundary-stable refactor" rule — prefer NOT cascading struct
+  changes. Frac diff was deferred specifically because we thought
+  cascading FeatureComputeCtx was needed. This class memory
+  reminds us to look for boundary-preserving access first.

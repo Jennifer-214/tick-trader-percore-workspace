@@ -356,6 +356,62 @@ Status transitions (FIXED → CLOSED):
 Sprint state: **clean ledger. Resume v5.14.1.C coding** (composite
 tests — the original next ship interrupted by parity audit cycle).
 
+### 2026-05-09 v5.14.1.E close — PARITY-008 found + FIXED in same audit cycle
+
+PARITY-008 found by /parity-check rerun against HEAD 9a3e08e
+(v5.14.1.E close). Production-caller field-population gap (v5.9.5b
+class) — exit_blender_mode auto-generated stamp body slot via
+FOREACH_STAMP_BOUND_CFG but RFV stamp emit didn't populate
+inf.has_exit_blender_mode. Fix: 3-line addition to BacktestEngine.hpp
+matching the existing Ridge + composite + winsor populator pattern.
+
+Status: **FIXED** in v5.14.1.E.E (commit 770ea8f). Sweep verified
+all 13 X-macro entries now have populators. No sister gaps.
+
+**Recurring class signal (4 instances now):**
+- PARITY-002 / PARITY-003 (v5.14.1.B.1): Mark-wiring + cfg→scorer at boot
+- PARITY-004 / PARITY-005 (v5.14.1.B.3): Ridge + composite cfg stamp-binding
+- PARITY-008 (v5.14.1.E.E): exit_blender_mode stamp-binding
+
+Pattern: every time we add a stamp-bound cfg field via the X-macro
+registry, we have to remember to wire the populator at the production
+RFV emit site. This is mechanizable — the X-macro could auto-populate.
+Skill update + potential X-macro auto-populate refactor queued
+(addresses the recurring class systemically).
+
+### PARITY-008 — exit_blender_mode not populated in RFV stamp emit
+
+- **Found:** /parity-check 2026-05-09 (v5.14.1.E close, HEAD 9a3e08e)
+- **Severity:** CRITICAL (silent drift when operator opts in to feature)
+- **Class:** v5.9.5b production-caller field-population gap (4th recurrence)
+- **Site:** `Backtest/BacktestEngine.hpp:1289+` (RFV stamp emit block)
+- **Symptom:** Operator changes cfg.exit_blender_mode between training
+  and deployment; stamp lacks the field; verifier skips drift check;
+  exit predictions diverge silently.
+- **Root cause:** v5.14.1.E.A added exit_blender_mode to X-macro
+  registry but didn't update RFV stamp emit (pattern established in
+  v5.14.1.B.3.D for Ridge/composite + v5.14.1.D.C for winsor).
+- **Fix path:** Added 3-line gating block matching existing populators.
+- **Target ship:** v5.14.1.E.E (10 min hotfix)
+- **Status:** **CLOSED** (FIXED in v5.14.1.E.E commit 770ea8f;
+  verified by sweep of all 13 X-macro entries; no sister gaps)
+- **Workaround:** N/A (closed)
+
+Status transitions:
+- PARITY-001: CLOSED (unchanged)
+- PARITY-002: CLOSED (unchanged)
+- PARITY-003: CLOSED (unchanged)
+- PARITY-004: CLOSED (unchanged)
+- PARITY-005: CLOSED (unchanged)
+- PARITY-006: OPEN-DEFERRED v5.15+ (unchanged)
+- PARITY-007: NOT-A-BUG (unchanged)
+- PARITY-008: NEW → **FIXED** in same audit cycle
+
+Sprint state: **clean ledger again.** All 8 active PARITY findings
+either CLOSED (5), FIXED-pending-rerun-confirmation (1: PARITY-008),
+OPEN-DEFERRED (1), or NOT-A-BUG (1). Ready for v5.14.2 audit cycle
++ /plan-check downstream re-audit.
+
 ---
 
 ## Future audit findings will append here

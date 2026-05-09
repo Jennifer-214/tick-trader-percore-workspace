@@ -25,9 +25,40 @@ single concrete report.
 - `/readiness <path> deep` → also runs codebase-wide cross-references
   (slower, more thorough)
 
+## Execution model (added 2026-05-09 — recursion fix)
+
+**ONE-WAY HIERARCHY. NO LAYER 3.**
+
+```
+LAYER 1: ORCHESTRATION
+  - Main Claude session (or another orchestrator skill)
+  - Decides WHEN to invoke this skill
+  - Spawns ONE Explore subagent
+
+LAYER 2: EXECUTION (this skill runs HERE)
+  - The spawned Explore subagent reads this spec + applies the
+    checklist BELOW directly
+  - DOES NOT spawn further subagents
+  - May apply OTHER skill checklists (/trace-deps, etc.) INLINE
+    by reference (read their spec + execute their work in the
+    same subagent run)
+  - Returns a single combined report
+```
+
+**If you are reading this spec inside an Explore subagent:** YOU
+ARE the auditor. Apply the checklist below using your read/grep/bash
+tools. Do NOT spawn a nested subagent.
+
+**If you need another skill's checklist** (e.g., /trace-deps Step 6
+for a deep Class 18 dive): read that skill's spec + execute its
+checklist as a section of your single report. By-reference
+composition, not by-spawning.
+
+See `DOCS/SKILLS_HIERARCHY.md` for the full execution model.
+
 ## Pass structure
 
-Spawn an Explore subagent with the plan file in hand. The subagent:
+The auditor (Layer 2 subagent):
 
 1. **Parses the plan** — extracts:
    - Phases / ships / version bumps mentioned

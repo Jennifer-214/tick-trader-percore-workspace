@@ -49,9 +49,34 @@ adding a scaler, changing a feature compute fn, bumping
 - `/parity-check cfg` → focused on cfg fields that affect inference
   (stamp-bound or not; v5.9.2b enumerated 9)
 
+## Execution model (added 2026-05-09 — recursion fix)
+
+**ONE-WAY HIERARCHY. NO LAYER 3.**
+
+```
+LAYER 1: ORCHESTRATION
+  - Main Claude session (or another orchestrator skill)
+  - Decides WHEN to invoke this skill
+  - Spawns ONE Explore subagent
+
+LAYER 2: EXECUTION (this skill runs HERE)
+  - The spawned Explore subagent reads this spec + applies the
+    procedure BELOW directly
+  - DOES NOT spawn further subagents
+  - May apply OTHER skill checklists (/readiness, /trace-deps)
+    INLINE by reference
+  - Returns a single combined report
+```
+
+**If you are reading this spec inside an Explore subagent:** YOU
+ARE the parity auditor. Walk the 12 sections (A-L) using your
+read/grep/bash tools. Do NOT spawn a nested subagent.
+
+See `DOCS/SKILLS_HIERARCHY.md` for the full execution model.
+
 ## Pass structure
 
-Spawn an Explore subagent. The subagent:
+The parity auditor (Layer 2 subagent):
 
 1. **Walks the standard 10-category checklist** (see Categories
    below). For each category, identifies concrete file:line

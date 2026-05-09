@@ -44,9 +44,36 @@ about (large refactor, cross-subsystem ship, etc.).
 - Doc-only changes
 - Sub-tag splits of an already-traced master plan
 
+## Execution model (added 2026-05-09 — recursion fix)
+
+**ONE-WAY HIERARCHY. NO LAYER 3.**
+
+```
+LAYER 1: ORCHESTRATION
+  - Main Claude session (or another orchestrator skill)
+  - Decides WHEN to invoke this skill
+  - Spawns ONE Explore subagent
+
+LAYER 2: EXECUTION (this skill runs HERE)
+  - The spawned Explore subagent reads this spec + applies the
+    procedure BELOW directly
+  - DOES NOT spawn further subagents
+  - May apply OTHER skill checklists (/readiness, /parity-check)
+    INLINE by reference
+  - Returns a single combined report
+```
+
+**If you are reading this spec inside an Explore subagent:** YOU
+ARE the trace agent. Walk the dependencies using your read/grep/bash
+tools. Do NOT spawn a nested subagent — that creates the recursion
+trap that this skill, /readiness, and /parity-check all share absent
+this guidance.
+
+See `DOCS/SKILLS_HIERARCHY.md` for the full execution model.
+
 ## Procedure
 
-Spawn an Explore subagent. The subagent:
+The trace agent (Layer 2 subagent):
 
 ### 1. Parse the plan
 

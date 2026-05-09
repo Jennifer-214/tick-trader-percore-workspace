@@ -89,9 +89,8 @@ re-flagging known-issues. Update at the end of every parity audit.
   - Mark site (PARITY-002) reuses the same parameter
 - **Target ship:** v5.14.1.B.1 (paired with PARITY-002 fix) OR v5.14.2
   (if .B.1 stays minimal)
-- **Status:** OPEN
-- **Workaround:** Don't enable composite in v5.9.2 replay-determinism
-  regression test (`tests/controller_test.cpp:10251`) until fixed.
+- **Status:** **CLOSED** (FIXED in v5.14.1.B.2; verified by /parity-check rerun 2026-05-09 against HEAD bb5d57e — Section I PASS)
+- **Workaround:** N/A (closed)
 
 ### PARITY-002 — ConfidenceScorer_UpdateAndMark API exists but production callers still use legacy _Update
 
@@ -127,9 +126,8 @@ re-flagging known-issues. Update at the end of every parity audit.
   - Once PARITY-001 fixes the clock-source plumbing, swap the
     backtest path to use tick-derived time at the same Mark site
 - **Target ship:** v5.14.1.B.1 (hot patch BEFORE v5.14.1.C tests)
-- **Status:** OPEN
-- **Workaround:** Don't enable `confidence_composite_enabled=1` in
-  paper-test or live until B.1 ships.
+- **Status:** **CLOSED** (FIXED in v5.14.1.B.1; verified by /parity-check rerun 2026-05-09 against HEAD bb5d57e — UpdateAndMark wired at ControllerEventLoop:1299 + PortfolioController:623)
+- **Workaround:** N/A (closed)
 
 ### PARITY-003 — Composite cfg fields not pushed into ConfidenceScorer at boot
 
@@ -172,9 +170,8 @@ re-flagging known-issues. Update at the end of every parity audit.
     (handles operator hot-edits to cfg via TUI)
   - Update the false comment at StrategyParameters.hpp:1112-1114
 - **Target ship:** v5.14.1.B.1 (paired with PARITY-002 fix)
-- **Status:** OPEN
-- **Workaround:** Don't enable `cfg.confidence_composite_enabled=1`
-  until v5.14.1.B.1 ships; legacy IC-only path is bytewise unchanged.
+- **Status:** **CLOSED** (FIXED in v5.14.1.B.1; verified by /parity-check rerun 2026-05-09 against HEAD bb5d57e — BindCompositeCfg wired at EngineSharded:1250 + PortfolioController:403)
+- **Workaround:** N/A (closed)
 
 ### PARITY-004 — Ridge cfg fields (5) not stamp-bound; train↔serve cfg drift undetected
 
@@ -204,11 +201,9 @@ re-flagging known-issues. Update at the end of every parity audit.
   - Wire `stamp_write_for_model` callsites to populate when ridge_*=1
   - Add verifier: check ridge params vs cfg, increment drift_count +
     WARN on mismatch
-- **Target ship:** v5.14.2 (Surface G stamp body extension; medium
-  effort ~1h)
-- **Status:** OPEN-DEFERRED (v5.14.2)
-- **Workaround:** Operator manually verifies cfg.ridge_* values
-  match training cfg before deploying.
+- **Target ship:** v5.14.1.B.3 (FOREACH_STAMP_BOUND_CFG X-macro registry)
+- **Status:** **CLOSED** (FIXED in v5.14.1.B.3; verified by /parity-check rerun 2026-05-09 against HEAD bb5d57e — Section L production-caller audit PASS)
+- **Workaround:** N/A (closed)
 
 ### PARITY-005 — Composite confidence cfg fields (5) not stamp-bound; same class as PARITY-004
 
@@ -231,11 +226,9 @@ re-flagging known-issues. Update at the end of every parity audit.
   `confidence_freshness_tau_secs`, `confidence_capacity_target_dollars`,
   `confidence_capacity_kappa`, `confidence_rmse_baseline`. Canonical
   position 25+ (after Ridge fields).
-- **Target ship:** v5.14.2 (bundle with PARITY-004 = ONE Surface G
-  stamp body extension covers both)
-- **Status:** OPEN-DEFERRED (v5.14.2; bundled with PARITY-004)
-- **Workaround:** Don't change composite cfg between train + infer;
-  document training values in run notes until stamp-bound.
+- **Target ship:** v5.14.1.B.3 (bundled with PARITY-004 = ONE X-macro registry covers both)
+- **Status:** **CLOSED** (FIXED in v5.14.1.B.3; verified by /parity-check rerun 2026-05-09 against HEAD bb5d57e — Section F + Section L PASS)
+- **Workaround:** N/A (closed)
 
 ### PARITY-006 — Two distinct freshness tau cfg fields with overlapping semantics
 
@@ -311,27 +304,57 @@ re-flagging known-issues. Update at the end of every parity audit.
       drift detection per CLAUDE.md item 16 merge-scan rule)
     - `CoreFrameworks/PortfolioController.hpp:613-621` (legacy
       single_core path; preserved for parity-test scenarios)
-  - Status will move to CLOSED after one full /parity-check rerun
-    confirms regression-free.
 - PARITY-003: **FIXED** in v5.14.1.B.1.
-  - Added `ConfidenceScorer_BindCompositeCfg(cs, enabled, tau, target,
-    kappa, baseline)` helper at `ML_Headers/ConfidenceScore.hpp`.
-  - Wired at 2 of 3 boot sites:
-    - `EngineSharded.hpp:1244` (sharded engine — STRATEGY_ML cores)
-    - `PortfolioController.hpp:397` (legacy single_core)
-  - 3rd site (`ControllerEventLoop.hpp:580` per-core init) deliberately
-    deferred — that site runs BEFORE EngineSharded re-inits with cfg
-    values, so BindCompositeCfg there would have no cfg to read.
-    EngineSharded re-runs Init + BindCompositeCfg after this site for
-    STRATEGY_ML cores; non-ML cores keep safe defaults (their scorer is
-    never fed). Comment added inline at the site explaining the design.
-  - Status will move to CLOSED after one full /parity-check rerun
-    confirms regression-free.
+  - Added `ConfidenceScorer_BindCompositeCfg` helper.
+  - Wired at 2 of 3 boot sites (3rd intentionally deferred per design).
 - PARITY-007: **NOT-A-BUG** confirmed. False positive from audit.
   Closed without ship (no fix needed).
 - BONUS fix in v5.14.1.B.1: composite cfg block (5 fields) ADDED to
-  `engine.cfg.example` (was a v5.14.1.B oversight; not flagged by audit
-  but caught during PARITY-007 verification).
+  `engine.cfg.example` (was a v5.14.1.B oversight; caught during
+  PARITY-007 verification).
+
+### 2026-05-09 v5.14.1.B.2 ship — PARITY-001 closed
+
+- PARITY-001: **FIXED** in v5.14.1.B.2.
+  - now_us threaded through ML_BuildParameters via Strategy_BuildParameters
+    dispatcher.
+  - Live: clock_gettime(CLOCK_MONOTONIC) at slow-path entry.
+  - Backtest: tick.timestamp_us (deterministic; same CSV → same now_us
+    across replays). v5.9.2 replay-determinism contract restored.
+
+### 2026-05-09 v5.14.1.B.3 ship — PARITY-004 + PARITY-005 closed
+
+- PARITY-004 + PARITY-005: **FIXED** in v5.14.1.B.3 (5 sub-tags A-E).
+  - Initial 10-param caller-side helper design abandoned per Caramel
+    feedback "is this future proof" — pivoted to FOREACH_STAMP_BOUND_CFG
+    X-macro registry per CLAUDE.md item 13.
+  - New header ML_Headers/StampBoundCfgRegistry.hpp defines the registry;
+    auto-generates struct fields, emit, parser, zero-init.
+  - Drift check at CoreModelZoo_TryLoadRole; cfg threaded through
+    LoadFromDir → EngineSharded boot/hot-swap call sites.
+  - Production stamp emit at BacktestEngine RFV populates new fields.
+  - Resurrects v5.9.2b's abandoned inference_cfg_drift_count counter
+    (partial — covers the 10 X-macro-registered fields; legacy v5.9.2b
+    inference_cfg_* fields await v5.15+ migration per CLEANUP-001).
+
+### 2026-05-09 /parity-check rerun (post-B-series) — ALL CLOSED ✓
+
+Verdict: ALL 5 active PARITY findings FIXED and verified regression-free.
+Zero new findings across all 12 sections (A-L). Zero compiler warnings.
+Determinism contract restored. 10 new cfg fields fully protected.
+Field-population audit (Section L) confirms all production callers wired.
+
+Status transitions (FIXED → CLOSED):
+- PARITY-001: FIXED → **CLOSED** ✓ (verified bb5d57e)
+- PARITY-002: FIXED → **CLOSED** ✓ (verified bb5d57e)
+- PARITY-003: FIXED → **CLOSED** ✓ (verified bb5d57e)
+- PARITY-004: FIXED → **CLOSED** ✓ (verified bb5d57e)
+- PARITY-005: FIXED → **CLOSED** ✓ (verified bb5d57e)
+- PARITY-006: OPEN-DEFERRED (v5.15+ unchanged)
+- PARITY-007: NOT-A-BUG (unchanged)
+
+Sprint state: **clean ledger. Resume v5.14.1.C coding** (composite
+tests — the original next ship interrupted by parity audit cycle).
 
 ---
 

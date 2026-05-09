@@ -379,14 +379,30 @@ OPEN-DEFERRED / FIXED / DOCUMENTED-RISK / NOT-A-BUG).
      proved safe
 3. If no matching entry:
    - Allocate next `PARITY-NNN` (highest existing + 1)
-   - Add a draft entry to your audit report with the standard format
+   - **AUTO-WRITE the new entry directly into
+     `DOCS/PARITY_ISSUES.md`** — append the standard format block
      (Found / Severity / Class / Site / Symptom / Root cause / Fix
-     path / Status / Workaround)
-   - Caramel will copy the draft into `PARITY_ISSUES.md` after review
+     path / Target ship / Status: OPEN / Workaround) under the
+     "## Issues" section
+   - Also include the entry inline in the audit report for visibility
+   - Add a status-update log entry to the dated log section at the
+     bottom of `PARITY_ISSUES.md` referencing the audit report path
 
-**Why this matters:** without the cross-reference step, every audit
-re-discovers the same OPEN-DEFERRED issues (noise) and may
-incorrectly re-flag DOCUMENTED-RISK items (operator confusion).
+**Auto-write contract** (set 2026-05-09 per Caramel feedback):
+- New findings MUST be added to `PARITY_ISSUES.md` by the audit
+  agent — not deferred to operator review. The ledger is the single
+  source of truth; a finding that exists only in an audit report
+  but not in the ledger is invisible to future audits.
+- Status updates (FIXED, NOT-A-BUG, OPEN-DEFERRED reclassification)
+  also auto-write to the ledger after a verification rerun.
+- Operator reviews the ledger at sprint boundaries to recategorize
+  / accept / reject; agent does the mechanical bookkeeping.
+
+**Why this matters:** without the cross-reference step + auto-write,
+every audit re-discovers the same OPEN-DEFERRED issues (noise) and
+may incorrectly re-flag DOCUMENTED-RISK items (operator confusion).
+Without auto-write, findings live only in transient audit reports
+and disappear from the operational view.
 
 ### Effort estimate sanity check
 

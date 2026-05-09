@@ -25,6 +25,33 @@ touching hot-path layout / per-tick code, since it captures patterns
 the rules doc misses (FPN sizing math, failure-path observability,
 cache-line-span analysis).
 
+## Going-forward rule for parity audits (set 2026-05-09)
+
+**Any time `/parity-check` (or any audit that surfaces a parity
+issue) finds a new finding, the agent MUST auto-write the entry
+into `DOCS/PARITY_ISSUES.md` (workspace-private, symlinked into
+engine repo).** Don't defer to "operator copies after review" —
+the ledger is the single source of truth. A finding that exists
+only in a transient audit report but not in the ledger is invisible
+to future audits and gets re-discovered noise.
+
+Same auto-write applies to status updates: when a verification
+rerun confirms FIXED, NOT-A-BUG, or recategorization, the agent
+updates the ledger entry directly. Operator reviews at sprint
+boundaries to recategorize / accept / reject; agent does the
+mechanical bookkeeping.
+
+The /parity-check skill spec encodes the auto-write contract +
+cross-reference-before-flagging discipline. This CLAUDE.local.md
+entry exists to make the rule visible across all skills/audits
+that touch parity surfaces, not just /parity-check.
+
+Established 2026-05-09 after the v5.14.1.B series ships closed
+PARITY-001 through PARITY-005. PARITY_ISSUES.md created same day
+as the running ledger; this rule formalizes its operational role.
+
+---
+
 ## v5.11 sprint orientation
 
 v5.11 is planned as a **massive optimization sprint** built directly

@@ -349,3 +349,34 @@ documented inline in `ExecutionCore.hpp`. This changelog starts tracking
 *new* additions from v5.4.0 forward. If an old field gets hot-path
 attention during a future optimization pass, back-fill an entry here at
 that point.
+
+---
+
+## v5.14.1.F — IC variant dispatcher (SLOW-PATH ONLY; ~0-1ns)
+
+**Path:** SLOW-PATH only. Hot path UNTOUCHED.
+
+**Sites added:**
+- `CoreFrameworks/ControllerEventLoop.hpp:~1314` (drift detection at post-fill drain)
+- `CoreFrameworks/ShardedSnapshot.hpp:~561` (TUI display publish)
+
+**What changed:** direct `RollingIC_Compute(&cs->ic)` calls replaced
+with `ConfidenceScorer_ComputeICVariant(cs, variant)` dispatcher.
+Single-case switch (Spearman) + default fallthrough.
+
+**Cost today (1 registered variant):** ~0-1ns (compiler inlines
+single-case switch to direct call).
+
+**Cost when 2nd variant lands:** ~5ns/cycle slow-path (1 indirect
+branch via switch). Within 100µs slow-path budget.
+
+**FUTURE OPPORTUNITY (when budget tightens):**
+- Cache active variant's compute fn pointer at boot via
+  `ConfidenceScorer_BindIcVariant` (would require struct field
+  addition; deferred to avoid Class 4 snapshot break)
+- Compile-time elision via `template <int VARIANT>` for cores with
+  fixed-at-boot variant choice
+
+Per CLAUDE.md item 17 latency-additions discipline: documented
+here so cost is never unaccounted for. /readiness Check 23 (added
+v5.14.1.F) enforces this discipline going forward.

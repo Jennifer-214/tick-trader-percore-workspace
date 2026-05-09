@@ -84,3 +84,18 @@ Software optimization stops mattering if the hardware decides to sleep or interr
 * **CPU Sleep States**: Disable deep C-states and P-states in the Linux boot parameters (`intel_idle.max_cstate=0`, `processor.max_cstate=0`) and use the `performance` CPU governor. Cores must never sleep.
 * **NUMA Architecture**: Guarantee memory locality. The thread, its memory allocations, and the NIC interrupts must all reside on the exact same NUMA node to prevent slow cross-socket QPI/UPI links.
 * **NIC Tuning**: Disable adaptive interrupt coalescing on the network interface (`ethtool -C eth0 rx-usecs 0 rx-frames 0`) to receive packets immediately.
+## 7. OS & Socket Hardening
+Network and system interfaces must never halt the engine unexpectedly.
+* **TCP Configuration**: Always configure SO_KEEPALIVE on persistent exchange connections.
+* **OpenSSL Polling**: OpenSSL socket reads must gracefully handle SSL_ERROR_WANT_READ instead of fatally dropping.
+* **Signals**: The engine must capture SIGPIPE, SIGINT, and SIGTERM to prevent immediate crashes without saving the portfolio snapshot.
+* **Memory Limits**: The engine MUST call mlockall(MCL_CURRENT | MCL_FUTURE) during initialization to prevent latency-inducing page faults.
+
+## 8. Hot Path I/O Constraints
+File I/O operations are strictly forbidden on the critical path.
+* **NO Blocking I/O**: fprintf, fflush, fopen, and system() are banned from hot threads (ExecutionCore, DataStream). All disk operations must be deferred to an asynchronous LogDrainer ring.
+
+## 9. Machine Learning Integrity
+Feature normalization and blending math must be resilient to market data anomalies.
+* **NaN Guards**: Never execute std::sort, matrix inversions (Cholesky), or Bandit renormalization without explicit NaN guards.
+* **Zero Variance**: Feature Standardizers must check for zero variance (constant inputs) to prevent division-by-zero during inference scaling.

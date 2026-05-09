@@ -172,6 +172,30 @@ A finding that exists only in a transient audit report or chat memory gets re-di
 
 ---
 
+### TECH_DEBT-007 — Empirically verify regime_trend_strength + regime_vol_zscore add information vs existing features
+
+- **Created:** 2026-05-09 by v5.14.5.B (mid-coding audit follow-up; Path C decision)
+- **Severity:** LOW
+- **Surface:** `ML_Headers/FeatureRegistry.hpp` FOREACH_FEATURE entries `regime_trend_strength` + `regime_vol_zscore`
+- **What's deferred:** v5.14.5.B ships 2 features whose semantic differs from existing ones in normalization characteristics:
+  - `regime_trend_strength` (regression slope normalized to [-1,1] saturating) vs `SHORT_SLOPE` (slope/avg unbounded ratio)
+  - `regime_vol_zscore` (z-score: (x-mean)/stddev; sign-carrying; bounded) vs `VOL_RATIO` (short_var/long_var; positive only ratio)
+
+  The differing normalization MAY produce complementary training signal OR may train identically (depending on operator's data + model architecture). Without empirical verification on real training runs, we don't know which.
+- **Why deferred (not effort-avoidance):** Cannot static-analyze whether features add marginal information; requires actual training metrics (feature importance scores, ablation studies, marginal predictive accuracy gain). Operator-decision rather than engineering-decision.
+- **Verification trigger:** After v5.14.5 first full retrain cycle:
+  - Train with all features enabled → record feature_importance scores
+  - If `regime_trend_strength` importance < 0.01 AND `SHORT_SLOPE` importance > 0.05 → likely redundant
+  - Same check for `regime_vol_zscore` vs `VOL_RATIO`
+  - If both pass redundancy check → drop in v5.X+ ship via FEATURE_REGISTRY_HASH bump (forces operator retrain to clean schema)
+  - If at least one shows complementary signal → keep + document the empirical evidence
+- **Cost estimate:** ~30 min training-metric review post-first-retrain; ~30 min cleanup ship if drop indicated
+- **Trigger:** After v5.14.5's first full retrain cycle (operator runs Multi-Horizon training); review feature_importance dump
+- **Status:** OPEN
+- **Cross-ref:** v5.14.5.B commit; `ML_Headers/FeatureRegistry.hpp` Compute fn comments cite this entry; v5.14.5.B "empirical-verification discipline" section in plan
+
+---
+
 ## Future debt findings will append here
 
 When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral candidates:

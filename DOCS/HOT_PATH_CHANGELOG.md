@@ -28,6 +28,59 @@ slow path, fold into existing operation, hoist to entry).
 
 ---
 
+### 2026-05-08 — v5.12 sprint summary (Phase 1+2+3) [SLOW-PATH + PRODUCER]
+
+**Scope:** 13 commits ahead of `experiment/per-core-sharding`; Phase 1
+(pre-live safety) + Phase 2 (slow-path opt) + Phase 3 (ML research
+infra) all shipped. v5.11.65 → v5.12.13.
+
+**Detailed per-ship entries:** see
+`plans/plan_checks/2026-05-08-v5.12-latency-track.md` for the full
+audit emitted by `/latency-track`. 7 latency-impacting sites
+documented (1 producer + 6 slow-path); each entry covers files,
+cost estimates per cfg state, branchless analysis, cache impact,
+and FUTURE optimization paths.
+
+**Aggregate budget impact:**
+
+| Tier | Default cfg | All flags enabled |
+|---|---|---|
+| Hot path | UNCHANGED (only v5.12.1.B.3 already documented above) | UNCHANGED |
+| Producer fan_out | +5–10 ns/tick (heartbeat ring; reuses local_now_us per CLAUDE.md item 16) | +5–10 ns/tick |
+| Slow path | +20–30 ns/cycle (cfg flag checks; predicted-not-taken) | +50–150 ns/cycle |
+
+**Net positive on slow-path:** v5.12.2.B's lazy rebuild SAVES ~30–50 μs
+per skipped cycle (30–50% of cycles when stable regime). The +50–150 ns
+worst-case additive gates are dwarfed by the per-cycle savings when
+lazy rebuild fires. Slow-path budget headroom INCREASES on stable
+regimes despite the new gates.
+
+**FUTURE optimization paths (per /latency-track report):**
+Each new entry includes specific optimization paths. Common patterns:
+1. **Compile-time elision** via `template <bool ENABLED>` for default-
+   off safety gates (recompile to toggle; 0 ns when off)
+2. **Runtime predicate caching** at slow-path entry (single
+   "any_gate_enabled" word; later checks are AND-mask compares)
+3. **Reuse-audit** per CLAUDE.md item 16 — share clock/atomic/cfg
+   reads across consumers in same cycle (v5.12.1.A.4 clock hoist
+   is the canonical example, saved ~50–100 ns/cycle)
+
+**Disciplines applied during this sprint:**
+- CLAUDE.md item 16 (reuse-audit): clock hoist + cfg flag predicates
+  share existing reads
+- CLAUDE.md item 17 (latency-additions tracking): this entry plus
+  the detailed per-ship audit
+- CLAUDE.md item 18 (slow-path latency reduction priority): default-off
+  gates use predicted-not-taken branches; opt-in only
+
+**Tracker:** First sprint to apply the full latency discipline. The
+`/merge-scan` audit confirmed no missed sharing opportunities.
+`/parity-check` confirmed FEATURE_REGISTRY_HASH +
+LABEL_REGISTRY_HASH + MODEL_FORMAT_VERSION all unchanged. Engine
+LIVE-CAPABLE pending operator cfg flag flips.
+
+---
+
 ### 2026-05-08 — v5.12.1.B.3 — staleness gate (branchless mask) [LATENCY ADD]
 
 **Files:**

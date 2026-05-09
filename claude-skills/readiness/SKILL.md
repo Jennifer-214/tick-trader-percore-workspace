@@ -801,3 +801,61 @@ unified the reads (~50-100ns/cycle/core saved). This check exists
 to surface similar opportunities BEFORE they ship as separate
 implementations. See CLAUDE.md item 16 for the principle, and
 `/merge-scan` for the codebase-wide sweep.
+
+### Check 19 — Pre-existing-work audit (v5.12.3+)
+
+Trigger keywords: any plan that proposes adding a new cfg field, a
+new struct field on a load-bearing struct (EventLoopState,
+OrderManagerState, ModelHandle, GateParameters), a new function with
+a name resembling existing helpers, or a new flag bit on an
+established X-macro registry.
+
+For each addition, scan the current codebase + recent ship history
+(git log + tags) for whether the work is ALREADY DONE under a
+different name, sub-tag, or earlier ship. Common patterns:
+
+- **Cfg field already exists:** grep for the proposed field name +
+  near-synonyms in `CoreFrameworks/ControllerConfig.hpp`. If found,
+  the plan should adapt to extend the existing field rather than
+  add a new one.
+- **Function already exists:** grep for the proposed function name +
+  near-synonyms across the relevant subsystem. If a similar function
+  exists with overlapping signature/intent, propose extending it
+  rather than adding a parallel.
+- **Stamp body field already covered:** check `verify_model_stamp` /
+  `stamp_write_for_model` for existing `has_*` flags that match the
+  proposed addition.
+- **X-macro entry already shipped:** check FOREACH_FEATURE,
+  FOREACH_TARGET, FOREACH_SHALT, FOREACH_STRATEGY etc for entries
+  with names/intent matching the proposed addition.
+
+When the work is already shipped:
+- **Update the plan** to note which earlier ship covers it
+- **Reduce the new ship's scope** to only the truly-new bits (e.g.
+  v5.12.3.D's "3-tier strict-mode check" was the only truly-new
+  bit; the cfg field + pack-time gate + stamp body all shipped via
+  v5.11.18+18a)
+- **Mark in the master plan:** "Phase X.Y: ALREADY SHIPPED via
+  vP.Q.R; this ship covers <residual scope only>" (or skip the ship
+  entirely if nothing residual remains)
+
+**Verdict:**
+- **PASS** ✅ — plan author already noted pre-existing work + scoped
+  appropriately
+- **GAP** ⚠️ — pre-existing work found mid-audit; plan must be
+  updated before coding (saves a re-implementation)
+- **N/A** — addition is genuinely new (most plans hit this)
+
+**Why this matters:** v5.12.3.D was originally scoped as a 4-5h
+parity-critical ship. Audit revealed the cfg field + pack-time gate
++ stamp body extension all shipped via v5.11.18 + v5.11.18a in the
+prior sprint. The "3-tier strict-mode check" mentioned in the sub-plan
+was the only residual scope, and was deferred per CLAUDE.md item 18
+(don't add another slow-path branch). Phase 3 closed faster as a
+result. Future sprints save the same time by running this check
+PRE-coding.
+
+**Pairs with cold-pickup completeness rule #6 (stale-claim audit)**
+from CLAUDE.local.md, but is the inverse: stale-claim catches
+references-to-things-that-don't-exist; pre-existing audit catches
+proposals-for-things-that-already-exist.

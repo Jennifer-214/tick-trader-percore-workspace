@@ -74,6 +74,40 @@ universalization sprint; resume v5.14.5.B (now unblocked) + .C.
 
 ## Implementation plan
 
+### Pre-req — Resolve hysteresis threshold divergence (Finding #1; Option A)
+
+**Decision (operator 2026-05-09):** Live + backtest both read
+`cfg.regime_hysteresis` (single source of truth). Removes pre-existing
+divergence between hardcoded `Regime_Init(..., 3)` at
+`ControllerEventLoop.hpp:619` and cfg default of 5.
+
+**Behavior change (operator-visible):** Sharded live AUTO cores
+previously switched regime in 3 hysteresis cycles (hardcoded). After
+this fix, switching matches cfg default (5 cycles) unless operator
+overrides via `regime_hysteresis=3` in engine.cfg.
+
+**Why this is correct:**
+- Cfg docs always said `regime_hysteresis=5` was the value
+- Operators reading docs expected 5-cycle behavior; got 3 due to
+  hardcoded bug
+- Fix aligns reality with documentation
+- Single source of truth (cfg) trivially parity-safe
+- Future operators tune per-deployment without code change
+
+**Site change:**
+```cpp
+// BEFORE (ControllerEventLoop.hpp:619):
+Regime_Init(&state->cores[i].regime_state, 3);
+// AFTER:
+Regime_Init(&state->cores[i].regime_state, (int)cfg.regime_hysteresis);
+```
+
+**Migration support:**
+- engine.cfg.example annotation: "Set `regime_hysteresis=3` for
+  pre-v5.X behavior"
+- CHANGELOG entry documents the fix + behavior change
+- Operator-facing migration notes section in plan
+
 ### Step 1 — Universalize Regime_Classify in slow-path
 
 File: `CoreFrameworks/ControllerEventLoop.hpp` ~line 2120-2140

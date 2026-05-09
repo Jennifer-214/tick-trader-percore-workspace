@@ -356,6 +356,38 @@ agent should:
 - Distinguish "ALREADY-PROTECTED-by-vX.Y" from "open-not-in-plan"
 - New findings get next available IDs (V5_X_AUDIT-#N+1 onward)
 
+### Cross-reference DOCS/PARITY_ISSUES.md before flagging (added v5.14.1.B)
+
+`DOCS/PARITY_ISSUES.md` is a running ledger of known parity findings
+across all sprints. Format: `PARITY-NNN` IDs with status (OPEN /
+OPEN-DEFERRED / FIXED / DOCUMENTED-RISK / NOT-A-BUG).
+
+**Before flagging a new finding:**
+1. Grep `PARITY_ISSUES.md` for the file:line / cfg-field /
+   function-name your finding involves
+2. If a matching `PARITY-NNN` entry exists:
+   - **Status: OPEN** → cite the existing ID; mark as STILL-OPEN in
+     your audit, don't re-allocate a new ID
+   - **Status: OPEN-DEFERRED** → cite the ID + the target ship; flag
+     if the deferred ship is already past
+   - **Status: FIXED** → verify the fix actually holds (the FIXED →
+     CLOSED transition needs ONE clean parity-check run); re-open
+     if regression detected
+   - **Status: DOCUMENTED-RISK** → cite the ID + skip; the risk is
+     accepted by the operator
+   - **Status: NOT-A-BUG** → cite the ID + skip; investigation
+     proved safe
+3. If no matching entry:
+   - Allocate next `PARITY-NNN` (highest existing + 1)
+   - Add a draft entry to your audit report with the standard format
+     (Found / Severity / Class / Site / Symptom / Root cause / Fix
+     path / Status / Workaround)
+   - Caramel will copy the draft into `PARITY_ISSUES.md` after review
+
+**Why this matters:** without the cross-reference step, every audit
+re-discovers the same OPEN-DEFERRED issues (noise) and may
+incorrectly re-flag DOCUMENTED-RISK items (operator confusion).
+
 ### Effort estimate sanity check
 
 Reference effort costs (from v5.9 sprint):

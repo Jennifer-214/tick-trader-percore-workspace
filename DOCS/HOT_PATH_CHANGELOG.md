@@ -28,6 +28,87 @@ slow path, fold into existing operation, hoist to entry).
 
 ---
 
+### 2026-05-09 — v5.14.5.B.0 [SLOW PATH ONLY — no hot-path impact]
+
+**File:line:** `CoreFrameworks/ControllerEventLoop.hpp:~2120-2200` —
+`Regime_Classify` previously gated AUTO-mode-only; refactored to fire
+for ALL cores so ML-mode cores have hysteresed `current_regime`
+populated for feature compute. Enables `regime_class_onehot` feature
++ all future regime-context ML features (regime_persistence,
+regime_age, etc.) without further cascades.
+
+**Cost (slow path, per non-AUTO core, per cycle):**
+- ~50-100 ns per cycle: regime score computation + hysteresis branch.
+- Was 0 ns for non-AUTO cores (skipped entirely pre-v5.14.5.B.0).
+- AUTO cores: unchanged (already paid this cost).
+
+**Branchless:** No — hysteresis branch is data-dependent. Could be
+made branchless via mask compute on stable scoring threshold but
+not worth complexity at slow-path cadence.
+
+**Cache impact:** Reads existing per-core `regime_state` field
+already on `EventLoopCoreState<F>` (CLAUDE.md item 4 — per-core
+data plane). No new cache line straddles.
+
+**Optimization note:** If non-AUTO cores' compute becomes a budget
+bottleneck (~100ns × N cores × cycles/sec), three paths:
+1. **Compile-time elision via template `<bool ENABLED>`** if cfg
+   has a "regime_universalization_enabled" flag (per CLAUDE.md
+   item 18(a) compile-time elision pattern). Default-on, operator
+   sets to 0 if no regime-conditional ML features active.
+2. **Runtime cache "regime-features-enabled" predicate** at
+   slow-path entry; AND-mask gate the Regime_Classify call.
+   Cheap when no regime features registered.
+3. **Lazy classification** — only run when at least one ML model
+   feature pack would consume `current_regime`. Tracked via
+   FOREACH_FEATURE introspection at slow-path init.
+
+Today the cost is small enough (~100ns × ~16 cores × ~100/s = ~160μs/s
+total system overhead) that no optimization is needed; v5.12 sprint
+budget reduction will revisit.
+
+---
+
+### 2026-05-09 — v5.14.5.C [SLOW PATH ONLY — no hot-path impact]
+
+**File:line:** `ML_Headers/FeatureRegistry.hpp:~395-440` — 3
+fractional differentiation features (`FRAC_DIFF_PRICE_D04/D05/D06`)
+register Compute fns walking K=50 most-recent prices via branchless
+ring wrap (W=128 power-of-2). Per-call: 50 FPN_FromDouble + 50 FPN_Mul
++ 50 FPN_Add/Sub.
+
+**Cost (slow path, per Compute fn invocation):**
+- ~300-400 ns per feature (50 iters × ~5-8ns FPN_Mul + FPN_Add).
+- 3 features × ~350ns ≈ ~1μs per slow-path cycle for frac diff alone.
+- Coefficient tables: constexpr → compiled into .rodata; cold-on-arrival
+  read; once-per-feature-pack cadence so no L1 pressure.
+
+**Branchless:** Yes — branchless ring wrap (`& (W-1)`) + branchless
+sign alternation (`(k & 1) == 0`). No data-dependent branches in inner
+loop body.
+
+**Cache impact:** Reads `RollingStats<F, W=128>::price_buf[]` ring
+(W × FPN<64>=24B = 3072B = 48 cache lines). Already in L1/L2 from
+slow-path Push at cycle start. Coefficient tables (50 × 8B = 400B)
+read sequentially per Compute fn; cold L1 miss on first feature, hot
+for subsequent ones.
+
+**Optimization note:** If frac diff cost becomes load-bearing:
+1. **AVX-512 horizontal sum** — 50 element multiply-accumulate is a
+   natural fit for vpfmadd231pd in 50/8 ≈ 7 lanes. Would require
+   FPN_Mul SIMD path (audit Part 2/5; v5.11 sprint candidate).
+2. **Hoist FPN_FromDouble outside loop** — coefficients are constant
+   across all calls; cache the FPN<F> conversion once at init via
+   Meyer's singleton. Saves 50 conversions × 3 features ≈ 150ns/cycle.
+3. **Single Compute fn dispatched 3 ways via inline switch** — current
+   3-fn pattern duplicates loop body 3×; could share via runtime
+   coeffs ptr argument with same loop. Pure code-size win, no perf.
+4. **Reduce K** — empirical: K=20 captures > 99.9% weight for
+   d ∈ [0.4, 0.6]. Halves compute cost but loses some long-memory
+   removal. Worth empirical comparison post-first-retrain.
+
+---
+
 ### 2026-05-08 — v5.13.4 [DRAINER ONLY — no hot-path / slow-path impact]
 
 **File:line:** `CoreFrameworks/ControllerEventLoop.hpp:~1335` —

@@ -25,6 +25,64 @@ touching hot-path layout / per-tick code, since it captures patterns
 the rules doc misses (FPN sizing math, failure-path observability,
 cache-line-span analysis).
 
+## Going-forward rule: structural fix preferred when bug class can recur (set 2026-05-09)
+
+**When facing a bug whose ROOT CAUSE is "same pattern at multiple sites
+drifted apart" (Class 18 mirror, parallel paths), prefer compile-time
+enforcement (X-macro registry, helper extraction with all callers
+unified) over direct patch — even if direct patch is cheaper today.**
+
+**Why:** v5.9.5b production-caller class recurred 4× before
+STAMP_CFG_AUTOPOPULATE extinguished it (v5.14.1). PARITY-009/010/011/012
+were 9 sub-gaps of the same Class 18 shape at function-composition level;
+PostLoadSetup registries closed all 9 in one ship (v5.14.2.E.1).
+
+**How to apply:** when `/parity-check` or `/merge-scan` surfaces
+duplication or mirror gaps, ask: "would a registry / helper extraction +
+compile-time enforcement prevent the next instance?" If yes, that's the
+v5.X ship shape. Direct patches are for true one-off bugs only.
+
+**Caramel's framing 2026-05-09:** "headache now > issues later. set it
+up to be easy to maintain going forward, even if it does add more work
+now." Validated 4/4 times this session (10-param helper → X-macro
+refactor; Option F → Option D revised; Option 2 → Option 3; bash CLI
+catch-up → C++ wrapper binary deferral).
+
+This rule applies to Claude AND Gemini sessions; same shape as
+boundary-stable refactor preference (2026-05-06).
+
+Codified in:
+- `CLAUDE.md` item 19 (public; references this without naming Caramel)
+- `DOCS/RECURRING_BUG_PATTERNS.md` Class 18 (strengthened sub-clause)
+- `DOCS/TECH_DEBT.md` (auto-write contract; this file)
+- `/readiness` Check 24 (mirror-function audit) + Check 25 (TECH_DEBT scan)
+- `/trace-deps` Step 6 strengthening (call-sequence enumeration)
+
+## Going-forward rule: deferred items must be queryable, not buried (set 2026-05-09)
+
+**Any architectural item that's deferred from current ship MUST land in
+`DOCS/TECH_DEBT.md` ledger** with: what + why deferred + cost estimate +
+trigger + cross-ref. Don't bury in code comments / postmortems / chat
+memory — those get forgotten.
+
+**Why:** Caramel's pushback 2026-05-09: "what if I forget about that
+stuff, like doesn't addressing the deferred items now make future
+maintenance easier?" Answer: address now if architecturally bounded;
+defer if separate concern. But deferred items hidden anywhere except
+the ledger are invisible to future ships.
+
+**How to apply:** same auto-write contract as PARITY_ISSUES.md. When
+`/readiness` Check 25, `/merge-scan`, or any audit identifies a
+deferral candidate, agent MUST add the entry. `/readiness` Check 25
+scans the ledger at every ship and surfaces entries whose surface area
+overlaps with the ship's files-touched. Operator reviews at ship
+boundary; agent does mechanical bookkeeping.
+
+Established 2026-05-09 alongside the structural-fix-preferred rule
+above. TECH_DEBT.md initial 6 entries cover bash CLI catch-up,
+centralized engine removal, parser refactor, dual-tau naming,
+strict-mode unification, FOREACH_STAMP_BOUND_MODEL_CONST refactor.
+
 ## Going-forward rule for parity audits (set 2026-05-09)
 
 **Any time `/parity-check` (or any audit that surfaces a parity

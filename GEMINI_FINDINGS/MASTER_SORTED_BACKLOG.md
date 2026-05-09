@@ -231,4 +231,70 @@ This document contains all 98 findings discovered during the 10-phase deep codeb
    - **Details:** `EventLoopState` contains large inline arrays for core states and OMS structures. It lacks internal `alignas(64)` boundaries between the controller's active read/write fields and the read-only configuration arrays, inviting false sharing during hot-path polling.
 10. **`FPN` Pointer Cast UB on ARM** (`FixedPoint/FixedPointN.hpp`)
     - **Severity:** HIGH
-    - **Details:** Several internal math helpers directly cast the `uint64_t w[N_WORDS]` array to larger pointer types (like `__uint128_t*`) for vectorized loads. While x86 tolerates unaligned vector loads, ARM architectures will throw a `SIGBUS` (Bus Error) or silently corrupt the data if the `FPN` struct happens to fall on an unaligned stack boundary.
+    - **Details:** Several internal math helpers directly cast the `uint64_t w[N_WORDS]` array to larger pointer types (like `__uint128_t*`) for vectorized loads. While x86 tolerates unaligned vector loads, ARM architectures will throw a `SIGBUS` (Bus Error) or silently corrupt the data if the `FPN` struct happens to fall on an unaligned stack boundary.# Phase 15: Strategies, Logging & Fixed-Point Limits
+
+## NEW Ultra-Obscure Issues (119-128)
+
+1. **`TradeLogBuffer` Cross-Thread Data Race** (`DataStream/TradeLog.hpp`)
+   - **Severity:** CRITICAL
+   - **Details:** The `TradeLogBuffer` is written to by the hot-path producer thread (`PushBuy`) and read by the slow-path thread (`Drain`). The `head` and `count` indices, as well as the records themselves, are plain variables lacking `std::atomic` or `seqlock` synchronization. The drainer will read torn, partially written records while the hot path mutates them, corrupting the CSV log.
+2. **Q32.32 Integer Overflow on BTC Prices** (`ML_Headers/LinearRegression3X.hpp`)
+   - **Severity:** HIGH
+   - **Details:** The regression logic accumulates `sum_y2 = FPN_Mul(y, y)`. The comments claim Q32.32 (where $F=32$) provides enough headroom. However, for an asset like BTC at $100,000$, squaring yields $10,000,000,000$. The sum of 8 such squares is $80,000,000,000$. This massively exceeds the maximum 32-bit unsigned integer ($4.29B$), silently overflowing the integer space and completely breaking the linear regression for high-priced assets.
+3. **Momentum Breakout Sign-Flip Inversion** (`Strategies/Momentum.hpp`)
+   - **Severity:** HIGH
+   - **Details:** The adaptive logic subtracts a shift from `live_breakout_mult` on positive P&L. If the strategy performs well for an extended period, `live_breakout_mult` can become negative. Because `FPN_Mul` respects signs, the breakout price becomes `avg - (stddev * |mult|)`. The strategy will trigger "breakout" buys BELOW the moving average, silently transforming the momentum strategy into a mean-reversion strategy.
+4. **`FPN_FromDouble` Fractional Overflow UB** (`FixedPoint/FixedPointN.hpp`)
+   - **Severity:** HIGH
+   - **Details:** To extract the fractional component, the logic computes `double frac_hi = floor(frac_part * 18446744073709551616.0);`. Due to IEEE-754 precision rounding, if `frac_part` is `0.9999999999`, the multiplication can round exactly to `18446744073709551616.0` ($2^{64}$). Casting $2^{64}$ to `uint64_t` results in Undefined Behavior (UB), commonly wrapping to 0, which zeroes out the fractional value.
+5. **SimpleDip Falling Knife Vulnerability** (`Strategies/SimpleDip.hpp`)
+   - **Severity:** MEDIUM
+   - **Details:** The strategy computes its entry purely as a percentage drop from `state->recent_high`. It lacks a regime filter or trailing time-decay on the high. If the asset enters a multi-month bear market, `recent_high` remains anchored to the all-time high, causing the strategy to continuously buy into severe downtrends (catching falling knives) whenever the volume gate is met.
+6. **Silent Trade Drop on Burst** (`DataStream/TradeLog.hpp`)
+   - **Severity:** HIGH
+   - **Details:** `TradeLogBuffer_PushBuy` guards against overflow with `if (buf->count >= TRADE_LOG_BUF_SIZE) return;`. During a cascading liquidation event where many fills occur in the same millisecond, the buffer instantly fills, and all subsequent trades are dropped and lost forever without triggering any alert or metric increment.
+7. **LogViewerPanel First Line Truncation** (`GUI/LogViewerPanel.hpp`)
+   - **Severity:** LOW
+   - **Details:** When the file size exceeds `LOG_BUF_SIZE`, `LogViewer_Refresh` seeks into the middle of the file. It then uses `strchr` to find the first `\n` and skips to it to avoid rendering a partial line. However, it does this unconditionally. If the `fread` happened to land exactly at the start of a clean newline, it still skips the entire first valid line of logs.
+8. **TradeLog Blocking `fflush` Fallback** (`DataStream/TradeLog.hpp`)
+   - **Severity:** MEDIUM
+   - **Details:** The raw `TradeLog_Buy` and `TradeLog_Sell` functions include an explicit `fflush(log->file)` after every `fprintf`. If a developer or a new strategy directly calls these functions instead of the buffered variants, it will inject hundreds of microseconds of blocking disk I/O directly into the event loop.
+9. **`parse_double_fast_advance` Pointer Drift** (`CoreFrameworks/ParseFast.hpp`)
+   - **Severity:** MEDIUM
+   - **Details:** The function updates the string pointer to the end of the parsed number. However, if the JSON value has trailing whitespace or unexpected characters before the closing quote or comma, the pointer will not advance past them. Subsequent manual parsing logic relying on this pointer will desync and fail.
+10. **GUI Theme Color Array Out-of-Bounds** (`GUI/DashboardPanels.hpp`)
+    - **Severity:** LOW
+    - **Details:** In `DashboardPanels.hpp`, mapping strategies to theme colors (`strat_colors[sid]`) relies on `sid` not exceeding the length of the predefined color array. If a new strategy is added with an ID greater than the array bounds, it will trigger a heap out-of-bounds read during UI rendering, potentially crashing the monitoring application.# Phase 16: ODR Violations, Simulation Divergence & Cryptography
+
+## NEW Ultra-Obscure Issues (134-143)
+
+1. **ODR/Static Linkage Violation in Header Functions** (`Backtest/BacktestSharded.hpp` & `BacktestPanels.hpp`)
+   - **Severity:** HIGH
+   - **Details:** Local `static` variables (like `ml_zoos`, `tick_rings`, `depth_replay_initialized`) are declared inside `static inline` functions inside header files. In C++, this violates the One Definition Rule (ODR) across translation units. Every `.cpp` file that includes this header gets its own completely separate instance of the `static` variable, resulting in fragmented memory states and silent data isolation between subsystems.
+2. **Paper Mode Zero-Slippage Matching Anomaly** (`CoreFrameworks/OrderManager.hpp`)
+   - **Severity:** HIGH
+   - **Details:** The Paper Mode matching engine logic instantly fills orders at the exact current market price (`event_price`) regardless of order size. It does not check orderbook depth or apply slippage. This creates a massive divergence between simulation and reality, making backtests and paper trading appear artificially profitable on highly illiquid momentum breakouts.
+3. **Incomplete OpenSSL `SSL_shutdown` Protocol** (`DataStream/BinanceCrypto.hpp`)
+   - **Severity:** MEDIUM
+   - **Details:** `binance_ws_close` calls `SSL_shutdown` once and then destroys the socket. The TLS 1.3 protocol requires a bidirectional shutdown (calling it until it returns 1). Premature TCP closure sends a TCP RST instead of FIN, which Binance API firewalls log as a dirty disconnect, eventually triggering IP-level rate-limiting or soft bans.
+4. **FPN to Double Precision Loss at Exchange Boundary** (`CoreFrameworks/ExchangeAdapter.hpp`)
+   - **Severity:** MEDIUM
+   - **Details:** `OrderResult` structs force quantities and prices to pass through standard `double` types before string formatting for REST API requests. A 64-bit double only has 53 bits of mantissa. For high-precision fixed-point values (`F > 64`), this completely truncates the lowest bits, causing small pricing/quantity mismatches on the exchange.
+5. **Unchecked `TCP_NODELAY` Optimization** (`DataStream/BinanceCrypto.hpp`)
+   - **Severity:** LOW
+   - **Details:** `setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, ...)` is called, but the return value is not strictly asserted. If the OS denies the request (e.g., due to lack of privileges or specific virtualized NIC drivers), the socket falls back to Nagle's algorithm, secretly batching packets and destroying the sub-microsecond latency profile.
+6. **Intentional Memory Leaks in Test Rigs** (`tests/controller_test.cpp`)
+   - **Severity:** LOW
+   - **Details:** Test rigs (like `PartialsRig`) allocate state using `new` but intentionally omit `delete` to save teardown time. While acceptable for short-lived unit tests, running these tests under CI/CD memory sanitizers (ASan/Valgrind) floods the output with false-positive leak reports, masking genuine engine leaks.
+7. **Correlated LCG Seeds in Sharded Backtest** (`DataStream/MockGenerator.hpp`)
+   - **Severity:** MEDIUM
+   - **Details:** The `MockRNG` uses a Linear Congruential Generator (LCG). If multiple sharded cores initialize their RNG sequences with monotonically increasing or identical seeds, the pseudo-random price paths across the shards will be mathematically correlated, severely compromising the statistical independence of multi-core Monte Carlo simulations.
+8. **EVP_DigestUpdate Unchecked Return Code** (`MemHeaders/HmacSha256.hpp`)
+   - **Severity:** MEDIUM
+   - **Details:** The OpenSSL hashing functions (`EVP_DigestUpdate` and `EVP_DigestFinal_ex`) are called during model stamp verification without checking their integer return codes. If the crypto engine fails (e.g., due to an internal allocation failure), it silently proceeds and produces a garbage hash.
+9. **Epoch Microsecond Wrap-Around Logic** (`CoreFrameworks/ReconciliationLoop.hpp`)
+   - **Severity:** LOW
+   - **Details:** Time differences are calculated using `uint64_t` subtractions of epoch microseconds. If the system clock undergoes a sudden backward NTP synchronization (e.g., leap second correction or time-sync jump), the subtraction underflows to a massive 64-bit integer, instantly triggering timeout deadlocks or massive drift corrections.
+10. **Implicit Struct Conversion Scaling Bug** (`ML_Headers/LinearRegression3X.hpp`)
+    - **Severity:** HIGH
+    - **Details:** The conversion of the raw sample `count` into the `FPN` denominator `n_fp` uses `FPN_FromDouble<F>((double)count)`. Passing the integer through a double before casting it back to a wide fixed-point struct introduces unnecessary overhead and precision risks. It should use an explicit `FPN_FromInt` helper to ensure bitwise-perfect scaling.

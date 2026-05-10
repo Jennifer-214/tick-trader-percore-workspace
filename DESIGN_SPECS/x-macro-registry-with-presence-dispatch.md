@@ -74,6 +74,48 @@ Future presence categories (e.g., `PARSER_ONLY` if a field is parsed but not emi
 - "1 row per field" property maintained (presence is just one column).
 - Mechanically extensible (one macro per presence category).
 
+### Y3 dispatch — the canonical name for this preprocessor mechanism
+
+The token-paste dispatch above is called **Y3 dispatch** in v5.14.9+ docs (named after the recurring 3-axis "Y" pattern of registry / dispatcher / consumer that recurs across patterns). Y3 dispatch is the LOAD-BEARING mechanism for:
+
+- **Presence dispatch** (parser/emitter/runtime mirror — this doc's primary use)
+- **Storage class dispatch** (`HANDLE_GEN_BIT_FLAG` vs `HANDLE_GEN_COUNTER_U32` vs `HANDLE_GEN_PERCENT_U8` per FailureModeRegistry)
+- **Emit source dispatch** (`HANDLE_STAMP_EMIT_DIRECT_FIELD` vs `HANDLE_STAMP_EMIT_BITMAP_BIT` per v5.14.9.F.2 stamp-bound bitmap-field migration)
+- **Scope dispatch** (`HANDLE_GEN_PER_CORE` vs `HANDLE_GEN_ENGINE_WIDE` per FOREACH_SLOW_PATH_GATE)
+- **Type dispatch via templated helpers** (`tt::stamp_parse_field<T>` — combines Y3 with C++17 if-constexpr per CLAUDE.md item 23)
+
+**Y3 dispatch recipe:**
+
+1. Tuple has a token-column (the dispatch axis), not integer.
+2. Per-axis-value macro `HANDLE_GEN_<value>` defines what to emit at that axis-value.
+3. The X-macro extractor uses `HANDLE_GEN_##axis(...)` — preprocessor token-paste resolves at expansion time.
+4. Adding a new axis-value = 1 new `HANDLE_GEN_<value>` macro definition; no per-entry edits.
+
+**Caveats:**
+
+- **Y3 dispatch is NOT C++17 `if constexpr`.** In NON-template macro contexts, all branches of an `if constexpr` chain must be SYNTACTICALLY VALID for ALL types (char[N] strncpy + scalar cast both must compile). Y3 dispatch happens at preprocessor time → ONLY the chosen branch is emitted; other branches are discarded textually. Use Y3 when branches have INCOMPATIBLE syntax per type (char[N] vs scalar); use `if constexpr` in TEMPLATE contexts.
+- See CLAUDE.md item 23 for templated-helper integration when both are needed (e.g., `tt::stamp_parse_field<T>` per registry entry).
+
+### Emit source column extension (v5.14.9.F.2)
+
+`FOREACH_STAMP_BOUND_CFG` extended its tuple with an `emit_source` column to support cfg-flag bitmap migration:
+
+```cpp
+// Tuple: X(NAME, ..., emit_source, ...)
+//   emit_source = DIRECT_FIELD — value reads from cfg.X directly
+//   emit_source = BITMAP_BIT   — value reads from BITMAP_IS_SET(cfg.X_flags, MASK_<NAME>) ? 1 : 0
+
+#define HANDLE_STAMP_EMIT_DIRECT_FIELD(get_cfg) (get_cfg)
+#define HANDLE_STAMP_EMIT_BITMAP_BIT(get_cfg)   ((get_cfg) ? 1 : 0)
+
+#define EMIT_STAMP_BOUND_FIELD(name, ..., emit_source, ..., get_cfg) \
+    inf.name = (decltype(inf.name))HANDLE_STAMP_EMIT_##emit_source(get_cfg)
+```
+
+The `? 1 : 0` normalization is critical for HMAC byte-equivalence: bool→int promotion may differ across compilers/architectures; explicit ternary forces `int 0` or `int 1` byte-for-byte across both branches. Without it, the bitmap-bit-extracted fields would emit different bytes than DIRECT_FIELD on some platforms → HMAC chain breaks.
+
+See `wire-format-byte-preservation-discipline.md` for the byte-equivalence discipline; see `heterogeneous-registry-pattern.md` Hybrid Form 3 for the full integration.
+
 ---
 
 ## The pattern (concrete shape)

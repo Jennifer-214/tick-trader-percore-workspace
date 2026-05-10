@@ -119,6 +119,36 @@ If the synthesis drives plan amendments (or a pre-flight ship like v5.14.8.A.0.b
 
 `/parity-check` and `/merge-scan` re-runs typically NOT needed after amendments (their findings are baked in).
 
+### Mid-sprint audits (between sub-ships of the same sprint)
+
+**Added v5.14.9 (post-field-test):** initial pattern fired PRE-SPRINT (before kickoff). v5.14.9 surfaced a SECOND firing point: BETWEEN SUB-SHIPS of the same sprint, when downstream sub-ships impact a new surface.
+
+**Trigger criteria — fire mid-sprint audit when ANY of:**
+
+- HIGH-RISK sub-ship just shipped (HMAC-chain-preservation work, hot-path migrations, structural refactors that downstream sub-ships build on). Verify the new structure doesn't have latent issues before propagating to next sub-ship.
+- New pattern field-tested for the first time. Subsequent sub-ships will follow the pattern; audit verifies it's sound before propagation.
+- Plan amendments may be needed before next sub-ship if findings emerge.
+- Cross-cutting changes (registry extensions, X-macro changes affecting multiple files) where downstream sub-ships INHERIT the structure.
+- Operator explicitly invites mid-sprint checks ("also run new checks if you need to or think its a good idea").
+
+**Skip mid-sprint audit when:**
+
+- Routine pattern-application sub-ship (subsequent application of an already-validated pattern; e.g., .F.1 after .F validated; .F.3 after .F.1 + .F.2 validated).
+- Pure additive work (new tests, new docs, comments).
+- Bug fixes with bounded scope.
+
+**Suggestion format (operator policy from v5.14.9):**
+
+1. Claude session presents the mid-sprint audit suggestion with 1-sentence rationale (what risk it would catch).
+2. Claude recommends WHICH audits to run (typically 2 in parallel, like /dod-audit + /test-strength-audit; or /parity-check + /trace-deps if drift risk is the concern).
+3. Claude waits for operator response before launching.
+
+Operator retains decision authority + can also bring up audits independently. Mid-sprint audits should NOT be auto-triggered (friction); they ARE catching real issues at structural boundaries before downstream sub-ships inherit them.
+
+**Validated 2026-05-10 (v5.14.9.F.2 HIGH-RISK ship):** mid-sprint audit pattern caught HIGH.1 + HIGH.2 findings PRE-CODING; GREEN post-coding. Confirmed manual mid-sprint audit pattern works.
+
+Pattern documented in CLAUDE.local.md "suggest mid-sprint audits when work impacts downstream plans" rule.
+
 ---
 
 ## Trade-offs + when to apply

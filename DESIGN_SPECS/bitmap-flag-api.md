@@ -7,6 +7,9 @@
 - First consumer: `FOREACH_STAMP_BOUND_MODEL_CONST` has_flags (v5.14.8.A.merged)
 - Second consumer: `FOREACH_FAILURE_MODE` failure_flags (v5.14.8.B)
 - Pattern precedent: `Portfolio<uint16_t>` bitmap (CLAUDE.md item 1, FoxML_Trader_v2)
+- Sister pattern: `partner-core-bitmap-pattern.md` (per-core 1-bit-per-core variant)
+- Sister pattern: `transient-aggregation-bitmap-pattern.md` (function-local summary bitmap variant)
+- Sister pattern: `per-bit-per-core-override-pattern.md` (per-bit per-core override on bitmap fields)
 - Related: `bit-packed-storage-class-pattern.md` (TECH_DEBT-013 sweep candidates)
 
 ---
@@ -322,9 +325,74 @@ External dependency. FoxLIB has zero core dependencies; macros stay in-tree.
 
 ---
 
+## Variants — applied shapes from v5.14.9 sprint
+
+The BITMAP_* API is the base layer. v5.14.9 surfaced 4 distinct USE-SHAPES with different scopes + lifetimes. Each has its own sister DESIGN_SPEC; they share BITMAP_* primitives but apply at different surfaces:
+
+### Variant 1: domain bitmap on engine cfg (Form 2 — DOMAIN SPLIT)
+
+**Shape:** uint8/16 per cfg domain on ControllerConfig. Bits = cfg-flag toggles for that domain. Lifetime: engine-wide; boot-loaded; persistent until cfg-reload.
+
+**See:** `heterogeneous-registry-pattern.md` (DOMAIN SPLIT decision framework), `registry-tuple-as-single-source-of-truth.md` (5-col tuple per registry).
+
+**Example:** `cfg.lifecycle_cfg_flags` (3 bits: partial_exit + 2 breakeven). Read via `BITMAP_IS_SET(cfg.lifecycle_cfg_flags, MASK_LIFECYCLE_CFG_PARTIAL_EXIT_ENABLED)`.
+
+### Variant 2: per-core bitmap (1 bit per core on a parent struct)
+
+**Shape:** uint16/32/64 on EventLoopState (or similar). Bit N = core N's boolean state. Lifetime: persistent across slow-path cycles; single-thread coordinated.
+
+**See:** `partner-core-bitmap-pattern.md` (full doc on this variant).
+
+**Example:** `state->partner_pending_bitmap` (16 bits; one per core). Set via `BITMAP_SET(state->partner_pending_bitmap, BITMAP_BIT_U16(core_id))`.
+
+**Memory win:** 64× reduction vs per-core byte+padding storage.
+
+### Variant 3: transient aggregation bitmap (function-local summary)
+
+**Shape:** uint8 local var in a function body. Bits = source booleans aggregated into a summary. Lifetime: single function call.
+
+**See:** `transient-aggregation-bitmap-pattern.md` (full doc on this variant).
+
+**Example:** `scaler_summary_flags` in ShardedSnapshot snap-publish loop. Aggregates 8 source booleans into 2-bit summary; 6 bits headroom for future flags.
+
+### Variant 4: per-bit per-core override on bitmap fields
+
+**Shape:** TWO uint8/16 per cfg domain on PerCoreOverrides: `<domain>_cfg_flags_override` (values) + `<domain>_cfg_flags_override_set` (mask of which bits are overridden). Branchless bit-select at resolution: `(set & values) | (~set & global)`.
+
+**See:** `per-bit-per-core-override-pattern.md` (full doc on this variant).
+
+**Example:** `PER_CORE_OVERRIDE_BITMAP_DOMAINS` registry walks 5 domains; resolution at boot is ~30 instructions total across all domains and bits.
+
+### Variant 5: registry has_flags (parent doc's original use case)
+
+**Shape:** uint64 has_flags on a registry-derived struct (ParserResult, EmitterInputs, RuntimeHandle). Bit per registry entry. Lifetime: persistent on the struct.
+
+**See:** `x-macro-registry-with-presence-dispatch.md`, `autopopulate-pattern-for-production-caller-class.md`.
+
+**Example:** ModelHandle.has_flags (24+ bits for stamp-bound model fields).
+
+### Which variant fits?
+
+| Need | Variant | Doc |
+|---|---|---|
+| Engine-wide cfg-flag toggles | 1 | `heterogeneous-registry-pattern.md` |
+| Per-core boolean state | 2 | `partner-core-bitmap-pattern.md` |
+| Function-local boolean aggregation | 3 | `transient-aggregation-bitmap-pattern.md` |
+| Per-core override on bitmap field | 4 | `per-bit-per-core-override-pattern.md` |
+| Registry parsed/emitted field presence | 5 | `x-macro-registry-with-presence-dispatch.md` |
+
+All variants use BITMAP_* primitives at the read/write sites. The differences are in SHAPE (one bitmap field on what struct? function-local? per-domain?) and LIFETIME (transient / persistent / per-core / engine-wide).
+
+---
+
 ## Cross-references
 
 - `x-macro-registry-with-presence-dispatch.md` — uses BITMAP_* for has_flags storage in registries
+- `partner-core-bitmap-pattern.md` — per-core 1-bit-per-core variant (v5.14.9.G)
+- `transient-aggregation-bitmap-pattern.md` — function-local summary variant (v5.14.9.H)
+- `per-bit-per-core-override-pattern.md` — per-bit per-core override variant (v5.14.9.F.6)
+- `heterogeneous-registry-pattern.md` — DOMAIN SPLIT for cfg-flag domain bitmaps
+- `registry-tuple-as-single-source-of-truth.md` — 5-col tuple per domain registry
 - `bit-packed-storage-class-pattern.md` (future doc) — TECH_DEBT-013 systematic application
 - FoxML_Trader_v2 `CLAUDE.md` item 1 — Portfolio bitmap precedent
 - FoxML_Trader_v2 `CLAUDE.md` item 18 — data-oriented design + branchless mask compute philosophy

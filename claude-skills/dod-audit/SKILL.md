@@ -233,13 +233,19 @@ Detection signatures:
   atomic mask updates via `__atomic_fetch_or`)
 - Existing bool flag fields where BITMAP_* API would be cleaner
 
-Cross-ref: `DESIGN_SPECS/bitmap-flag-api.md`, CLAUDE.md item 1
-(Portfolio uint16_t bitmap), CLAUDE.md item 20 (BITMAP_* API),
+Cross-ref: `DESIGN_SPECS/bitmap-flag-api.md` (base API + variants),
+`DESIGN_SPECS/partner-core-bitmap-pattern.md` (per-core 1-bit-per-core variant),
+`DESIGN_SPECS/transient-aggregation-bitmap-pattern.md` (function-local summary variant),
+`DESIGN_SPECS/per-bit-per-core-override-pattern.md` (per-bit per-core override variant),
+`DESIGN_SPECS/cfg-flag-eligibility-criteria.md` (decision algorithm before migrating),
+CLAUDE.md item 1 (Portfolio uint16_t bitmap), CLAUDE.md item 20 (BITMAP_* API),
 TECH_DEBT-013 (BIT_FLAG candidate inventory).
 
 False-positive filter: ≥3 colocated bools required. Single bool flag
 is fine. Per-record vs cross-record awareness — DON'T flag per-Order
-bit-packing across all orders (item 20 trade-off section).
+bit-packing across all orders (item 20 trade-off section). Run
+cfg-flag-eligibility-criteria's 5-criteria before flagging cfg booleans
+(lat_enabled-class false positives caught here).
 
 #### 3f. Bit-field dispatchers
 
@@ -255,12 +261,19 @@ Detection signatures:
 
 Cross-ref: `DESIGN_SPECS/x-macro-registry-with-presence-dispatch.md`,
 `DESIGN_SPECS/autopopulate-pattern-for-production-caller-class.md`,
+`DESIGN_SPECS/autopopulate-from-arity-macro-family.md` (variant for scattered locals),
 `DESIGN_SPECS/pre-post-cfg-registry-split-for-emit-order-preservation.md`,
+`DESIGN_SPECS/registry-tuple-as-single-source-of-truth.md` (5-col tuple — registry feeds N consumers),
+`DESIGN_SPECS/curve-registry-pattern.md` (named compute fns chosen by enum — fn-pointer dispatch),
+`DESIGN_SPECS/heterogeneous-registry-pattern.md` (SCOPE COLUMN vs DOMAIN SPLIT decision),
+`DESIGN_SPECS/slow-path-gate-registry-pattern.md` (slow-path gate registry canonical example),
 CLAUDE.md items 13, 21, 22.
 
 False-positive filter: ≥3 sites required for X-macro candidate. ≥2
 production-caller construction sites required for AUTOPOPULATE. Don't
-flag single-site switches.
+flag single-site switches. For switch-on-enum dispatching to similarly-
+named free functions (linear_X / exp_X / step_X), check curve-registry-
+pattern.md before flagging — already-applied is CLEAN; missing is MISSED.
 
 #### 3g. Wire-format byte preservation discipline
 

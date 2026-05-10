@@ -6,6 +6,7 @@
 - First application: `STAMP_CFG_AUTOPOPULATE` (v5.14.1.E.E.B; cfg-bound stamp body fields)
 - Second application: `STAMP_MODEL_CONST_AUTOPOPULATE` (v5.14.8.A.merged; architectural stamp body fields)
 - Companion: `x-macro-registry-with-presence-dispatch.md`
+- **Variant for scattered locals**: `autopopulate-from-arity-macro-family.md` (v5.14.9.F-.F.3 — _FROM_PAIR / _FROM_TRIPLE / _FROM_HEX / _FROM_SEPTUPLE)
 - Closes recurring-bug class: v5.9.5b production-caller field-population gap
 
 ---
@@ -233,6 +234,35 @@ The `_autopopulate_called` sentinel is defense-in-depth. For most cases, structu
 - The downstream consumer can act on the failed check (REFUSE load, log CRITICAL)
 - The struct is large enough that 1 byte sentinel + 1 runtime branch is negligible
 - The historical recurrence is severe enough that defense-in-depth is warranted
+
+### Arity-family variant for scattered local-variable callers (v5.14.9.F-.F.3)
+
+The base pattern above takes a SINGLE `source` struct that's walked field-by-field. v5.14.9 surfaced a different caller shape: cfg parsers have N SCATTERED LOCAL booleans (not a struct). The arity-family variant handles this by defining ONE macro per arity:
+
+```cpp
+// Caller (parser body) has scattered locals — not a struct:
+int kill_switch_enabled = 0, vol_sizing_enabled = 0, ws_flatten_enabled = 0;
+fscanf(...); /* populate the 3 locals */
+
+// One-line populate via arity macro (3 args matches registry size):
+RISK_CFG_FLAG_AUTOPOPULATE_FROM_TRIPLE(cfg.risk_cfg_flags,
+    kill_switch_enabled, vol_sizing_enabled, ws_flatten_enabled);
+```
+
+The arity macro (`_FROM_TRIPLE`) is one per registry size:
+- 2 entries → `_FROM_PAIR` (OPS)
+- 3 entries → `_FROM_TRIPLE` (LIFECYCLE, RISK)
+- 6 entries → `_FROM_HEX` (GATE)
+- 7 entries → `_FROM_SEPTUPLE` (ML)
+
+Compile-time arg-count check (preprocessor error if wrong count). Branchless mask-OR preserved. Adding a registry entry = update the arity name everywhere (one-time cost; co-located with registry).
+
+See `autopopulate-from-arity-macro-family.md` for the full pattern.
+
+**When to use which:**
+- Caller has a STRUCT with matching field names → base AUTOPOPULATE (walk struct fields)
+- Caller has SCATTERED LOCALS (parser, builder) → arity-family AUTOPOPULATE
+- 9+ args → switch back to building a struct + base pattern (arity unreadable beyond ~8)
 
 ---
 

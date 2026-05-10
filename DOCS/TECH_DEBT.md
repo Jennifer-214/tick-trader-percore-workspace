@@ -524,3 +524,15 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 - **Trigger:** Address at v5.14.9.I umbrella close OR next ship that touches lifecycle/exit logic. Operator decides "wire up" vs "remove" then.
 - **Status:** OPEN
 - **Cross-ref:** v5.14.9.F (migrates flag into bitmap); `CoreFrameworks/ControllerConfig.hpp:377-1229-1887`.
+
+### TECH_DEBT-025 — Convert DESIGN_SPECS docs to invocable skills (long-horizon idea)
+
+- **Created:** 2026-05-10 by v5.14.9.I post-mortem closure (Caramel suggestion)
+- **Severity:** LOW (workflow ergonomics, not architecture)
+- **Surface:** `DESIGN_SPECS/*.md` (currently 9 → 16 after this sprint); `.claude/skills/` analog
+- **What's deferred:** DESIGN_SPECS docs today are read-only reference: a future Claude session picks up the pattern by reading the markdown. Caramel's framing 2026-05-10: "we could probably convert the design specs to skills, or something in the future". The conversion would let each pattern be invoked as a slash command (e.g. `/use-curve-registry-pattern <surface>`) — the skill would auto-apply the canonical shape (registry header, parser auto-flow, GUI extension, AUTOPOPULATE companion) given a target surface description, rather than the agent re-reading + re-deriving each time.
+- **Why deferred:** (a) DESIGN_SPECS catalog is still growing rapidly (9 → 16 in v5.14.9 alone); skill conversion is more useful once the catalog stabilizes. (b) Skill invocation model is for ACTION (auto-apply pattern); reference-pattern docs are for COMPREHENSION (understand + adapt). The split may stay valuable — not every doc needs to become a skill. (c) The 3 HIGH-priority new docs (curve-registry, autopopulate-arity-family, registry-tuple-SSOT) are the strongest skill-conversion candidates; LOW-priority docs (transient-aggregation, partner-core) might stay reference-only.
+- **Cost estimate:** ~2-4h per skill (spec write + example application + integration with /readiness). Conservative inventory at conversion time: 5-7 skills from the HIGH+MEDIUM patterns; LOWs stay reference. Total ~15-30h spread across multiple sprints.
+- **Trigger:** When DESIGN_SPECS catalog count stabilizes (no new pattern in 2+ sprints) AND when a Layer 2 orchestrator skill (/precoding-audit per TECH_DEBT-018, or new) emerges that would invoke pattern-application skills as sub-steps. Re-evaluate at v5.16 sprint planning.
+- **Status:** OPEN
+- **Cross-ref:** `tick-trader-percore-workspace/DESIGN_SPECS/README.md` catalog; TECH_DEBT-018 (precoding-audit Layer 1 orchestrator — sibling); CLAUDE.local.md "DESIGN_SPECS catalog discipline" entry.

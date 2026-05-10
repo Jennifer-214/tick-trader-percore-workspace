@@ -54,19 +54,62 @@ session can implement it without reading the original ship.
 Surprises during implementation. Compaction-degraded handoff watch-outs. Etc.
 ```
 
-## Initial seed library (v5.14.8 sprint deliverables)
+## Catalog (v5.14.8 + v5.14.9 deliverables — 16 patterns)
+
+Organized by category for quick discovery. Each pattern is one file in this dir.
+
+### Core registry patterns (X-macro-driven extensibility)
 
 | Doc | Pattern | Status |
 |---|---|---|
-| `bitmap-flag-api.md` | Reusable bit-packed flag accessor (BITMAP_*) | ACTIVE |
-| `x-macro-registry-with-presence-dispatch.md` | X-macro registry with token-paste dispatch for partial-mirror struct generation | ACTIVE |
-| `autopopulate-pattern-for-production-caller-class.md` | Production-caller field-population class extinction | ACTIVE |
-| `audit-driven-pre-coding-gate.md` | Multi-audit pattern + compaction-handoff verification | ACTIVE |
-| `wire-format-byte-preservation-discipline.md` | Guarding HMAC chains across registry refactors | ACTIVE |
-| `structural-fix-preferred-decision-framework.md` | When to invest in structural fix vs direct patch | ACTIVE |
-| `pre-post-cfg-registry-split-for-emit-order-preservation.md` | PRE/POST registry split when emit order must interleave with sister registry | ACTIVE |
-| `slow-path-gate-registry-pattern.md` | FOREACH_SLOW_PATH_GATE + AUTOPOPULATE; SCOPE COLUMN form (Y3 token-paste dispatch) | ACTIVE (v5.14.9.B.0) |
-| `heterogeneous-registry-pattern.md` | Decision framework: SCOPE COLUMN vs DOMAIN SPLIT for heterogeneous registry shape; Y3 dispatch canon; cache-layout discipline; Option D 5-col tuple expansion (single source of truth) | ACTIVE v1.0 (field-tested through v5.14.9.F-.F.6 + .G + .H) |
+| `x-macro-registry-with-presence-dispatch.md` | X-macro registry with token-paste (Y3) dispatch for partial-mirror struct generation. Emit_source column extension. | ACTIVE (v5.14.8) |
+| `autopopulate-pattern-for-production-caller-class.md` | Production-caller field-population class extinction (AUTOPOPULATE companion macro from source-struct) | ACTIVE (v5.14.8) |
+| `autopopulate-from-arity-macro-family.md` | _FROM_PAIR / _FROM_TRIPLE / _FROM_HEX / _FROM_SEPTUPLE — AUTOPOPULATE variant for callers with SCATTERED locals (no source struct) | ACTIVE (v5.14.9.F-.F.3) |
+| `pre-post-cfg-registry-split-for-emit-order-preservation.md` | PRE/POST registry split when emit order must interleave with sister registry | ACTIVE (v5.14.8) |
+| `registry-tuple-as-single-source-of-truth.md` | Option D — 5-col tuple feeds cfg + parser + GUI + override + stamp-binding + docs from ONE source | ACTIVE (v5.14.9.F.5) |
+| `curve-registry-pattern.md` | FOREACH_<DOMAIN>_CURVE — named compute fns chosen by enum (LINEAR/EXP/STEP) via fn-pointer dispatch | ACTIVE (v5.14.9.A) |
+
+### Registry decision frameworks
+
+| Doc | Pattern | Status |
+|---|---|---|
+| `heterogeneous-registry-pattern.md` | SCOPE COLUMN vs DOMAIN SPLIT vs HYBRID (Form 1/2/3); Y3 dispatch canon; cache-layout discipline | ACTIVE v1.0 (field-tested v5.14.9.F-.F.6 + .G + .H) |
+| `cfg-flag-eligibility-criteria.md` | 5-criteria decision algorithm — when a boolean is cfg-flag-eligible (and when it's not; `lat_enabled` cautionary tale) | ACTIVE (v5.14.9.F step 0) |
+| `slow-path-gate-registry-pattern.md` | FOREACH_SLOW_PATH_GATE + AUTOPOPULATE; SCOPE COLUMN form canonical example | ACTIVE (v5.14.9.B.0) |
+| `structural-fix-preferred-decision-framework.md` | When to invest in structural fix vs direct patch | ACTIVE (v5.14.8) |
+
+### Bitmap variants
+
+| Doc | Variant | Status |
+|---|---|---|
+| `bitmap-flag-api.md` | Base BITMAP_* macros (BITMAP_IS_SET / BITMAP_SET / BITMAP_BIT_U16 etc.) + 5 applied-variant cross-refs | ACTIVE (v5.14.8) |
+| `partner-core-bitmap-pattern.md` | Per-core bool[N] → 1-bit-per-core in uint16/32/64 on parent struct (v5.14.9.G — `partner_pending_bitmap`) | ACTIVE (v5.14.9.G) |
+| `transient-aggregation-bitmap-pattern.md` | Function-local aggregation bitmap with headroom (v5.14.9.H — `scaler_summary_flags`) | ACTIVE (v5.14.9.H) |
+| `per-bit-per-core-override-pattern.md` | PER_CORE_OVERRIDE_BITMAP_DOMAINS — branchless bit-select for per-core overrides on bitmap fields (v5.14.9.F.6) | ACTIVE (v5.14.9.F.6) |
+
+### Discipline / process patterns
+
+| Doc | Pattern | Status |
+|---|---|---|
+| `audit-driven-pre-coding-gate.md` | Multi-audit pattern + compaction-handoff verification + MID-sprint audit guidance | ACTIVE (v5.14.8 + .9 update) |
+| `wire-format-byte-preservation-discipline.md` | Guarding HMAC chains across registry refactors | ACTIVE (v5.14.8) |
+
+**16 patterns total.** Adding new patterns: write the doc, add a row above, cross-link from related docs.
+
+## Quick discovery — "I need to..."
+
+- **...add a cfg flag (boolean toggle)** → `cfg-flag-eligibility-criteria.md` (decide eligibility) → `heterogeneous-registry-pattern.md` (pick domain) → `registry-tuple-as-single-source-of-truth.md` (5-col tuple)
+- **...add a compute mode chosen by enum** → `curve-registry-pattern.md`
+- **...replace multiple booleans with a bitmap** → `bitmap-flag-api.md` (which VARIANT?) → variant-specific doc:
+  - Engine cfg domain → `heterogeneous-registry-pattern.md`
+  - Per-core boolean → `partner-core-bitmap-pattern.md`
+  - Function-local summary → `transient-aggregation-bitmap-pattern.md`
+  - Registry has_flags → `x-macro-registry-with-presence-dispatch.md`
+- **...add per-core override to a bitmap field** → `per-bit-per-core-override-pattern.md`
+- **...stamp-bind a registry-derived field** → `wire-format-byte-preservation-discipline.md` (HMAC byte-equivalence) + `x-macro-registry-with-presence-dispatch.md` (emit_source column)
+- **...avoid forgetting to populate a field at a production caller** → `autopopulate-pattern-for-production-caller-class.md` OR `autopopulate-from-arity-macro-family.md` (depending on caller shape)
+- **...decide between structural fix vs direct patch** → `structural-fix-preferred-decision-framework.md`
+- **...verify a sprint plan before coding** → `audit-driven-pre-coding-gate.md`
 
 These are extracted from v5.14.8 + v5.14.9 sprint work. Future sprints add more as they solve new problems.
 

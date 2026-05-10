@@ -132,7 +132,62 @@ as a v5.11.35 sub-ship (deferred from the current session because
 15. Parity-tested-by-construction (v5.9.5+). Train-serve parity surfaces (features, labels, scaler, cfg, stamp body, threading, build flags) gain protection by adding a registry/binding/snapshot rather than ad-hoc tests. Pattern: FEATURE_REGISTRY_HASH (v5.8.6) + scaler `feature_registry_hash` (v5.9.3a) + stamp body `has_*` forward-compat flags (v5.9.3a, v5.9.4a) + snapshot tests for compute-fn bodies (v5.9.2a). Prefer Surface G stamp body extension (`has_<field>` flag with `model_format_version` UNCHANGED) over `MODEL_FORMAT_VERSION` bumps — flag extensions don't break legacy stamps; format bumps lose data. Run `/parity-check` before declaring an ML-side sprint complete. See `DOCS/PARITY_LIFECYCLE.md` + `DOCS/PARITY_VERIFICATION_CHECKLIST.md`.
 16. Reuse-audit before adding new code (v5.12.1+). Before writing a NEW function or duplicating state access in a plan, scan the current codebase + adjacent in-flight plans for: (a) existing functions with overlapping responsibility (b) atomic loads / clock_gettime / cfg accesses that could be SHARED across consumers in the same slow-path cycle (c) state fields that could be reused vs adding a new field (d) conversion paths (FPN ↔ double, system_clock ↔ rdtsc) that already exist. If the plan introduces N reads/computes that an adjacent plan ALREADY does, capture as a merge candidate — either hoist the shared computation to the common caller and pass down (preferred), cache to local at the topmost gate, or defer the merge with an explicit `// FUTURE OPPORTUNITY:` comment. **Hot-path/producer paths get branchless mask compute on shared data; slow-path can use predictable branches with shared reads.** Run `/merge-scan` periodically to surface opportunities; ship-time check in `/readiness` (item 18) catches per-plan misses. v5.12.1.A.2 is the canonical example — `EventLoop_CheckWsStaleness` shares `now_us` with the existing `sp_last_tick_us` write at slow-path tail, saving ~50-100ns/cycle/core.
 17. Latency-additions are tracked (v5.12.1+). Any change that adds work to a latency-critical path (hot path target ≤500ns, producer fan_out, slow path target ≤100μs) MUST be documented in `DOCS/HOT_PATH_CHANGELOG.md` with: cost estimate (ns), branchless analysis, cache impact, and a FUTURE optimization note pointing the way to drop the cost (compile-time elision via template, runtime predicate cache, slow-path liveness flag, or reuse-audit pointer). The skill `/latency-track` audits diffs / commits and emits draft changelog entries — operator reviews + pastes. Sister to `/merge-scan` (sharing opportunities) but for additions. v5.12.1.B.3's staleness gate (~1-2ns hot-path mask) is the canonical entry — three optimization paths documented for revisit when budget tightens. Run `/latency-track` after any sprint that touches the audited surfaces; sprint-end review of the changelog surfaces entries that grew load-bearing.
-18. Slow-path latency reduction is a priority going forward (v5.12.2+). Operator policy 2026-05-08: aim to MINIMIZE slow-path branches + cycles in every ship. Default patterns: (a) DEFAULT-OFF safety gates use compile-time elision via `template <bool ENABLED>` + `if constexpr` so disabled state has zero cost (no branch, no instruction); (b) ALWAYS-ON gates use branchless mask compute on cached state; (c) RUNTIME-toggleable + load-bearing gates cache an "any_gate_enabled" mask at slow-path entry; later checks are AND-mask compares; (d) avoid sprinkling cfg-flag checks through deep functions — hoist to the slow-path top + pass a small struct of resolved predicates. The 100μs slow-path budget is loose today (OS interference dominates p99) but compounds tightly as v5.12 wins shrink the productive cycle (lazy rebuild cuts 30-50% of cycles; AOT cuts ML inference 50x). When budget tightens, the v5.12 cfg-flag-gated additions become the migration list. Run `/merge-scan` periodically; it surfaces both reuse opportunities (item 16) AND branch-density regressions in the same scan.
+18. Slow-path latency reduction is a priority going forward (v5.12.2+). Operator policy 2026-05-08: aim to MINIMIZE slow-path branches + cycles in every ship. Default patterns: (a) DEFAULT-OFF safety gates use compile-time elision via `template <bool ENABLED>` + `if constexpr` so disabled state has zero cost (no branch, no instruction); (b) ALWAYS-ON gates use branchless mask compute on cached state; (c) RUNTIME-toggleable + load-bearing gates cache an "any_gate_enabled" mask at slow-path entry; later checks are AND-mask compares; (d) avoid sprinkling cfg-flag checks through deep functions — hoist to the slow-path top + pass a small struct of resolved predicates. **(v5.14.8 addition)** Mask compute > switch on enum: for "any of these states?" queries, a single mask AND beats a switch statement (branchless, predictable, single uop). The 100μs slow-path budget is loose today (OS interference dominates p99) but compounds tightly as v5.12 wins shrink the productive cycle (lazy rebuild cuts 30-50% of cycles; AOT cuts ML inference 50x). When budget tightens, the v5.12 cfg-flag-gated additions become the migration list. Run `/merge-scan` periodically; it surfaces both reuse opportunities (item 16) AND branch-density regressions in the same scan.
+19. Structural fix preferred when bug class can recur (v5.14.2.E+). When facing a bug whose ROOT CAUSE is "same pattern at multiple sites drifted apart" (Class 18 mirror, parallel paths), prefer compile-time enforcement (X-macro registry, helper extraction with all callers unified) over direct patch — even if direct patch is cheaper today. Why: v5.9.5b production-caller class recurred 4× before STAMP_CFG_AUTOPOPULATE extinguished it (v5.14.1). PARITY-009/010/011/012 were 9 sub-gaps of the same Class 18 shape at function-composition level; PostLoadSetup registries closed all 9 in one ship (v5.14.2.E.1). How to apply: when `/parity-check` or `/merge-scan` surfaces duplication or mirror gaps, ask "would a registry / helper extraction + compile-time enforcement prevent the next instance?" If yes, that's the v5.X ship shape. Direct patches are for true one-off bugs only. Pattern documented in `DESIGN_SPECS/structural-fix-preferred-decision-framework.md`.
+20. **Bit-packed flag storage via BITMAP_\* API** (v5.14.8.A.0.b+). When 3+ boolean flags coexist in a single struct, bit-pack into a uint16_t / uint32_t / uint64_t bitmap with `MASK_<X>` constants. Use BITMAP_* primitives from `MemHeaders/BitmapMacros.hpp` for ergonomic accessors:
+    - `BITMAP_IS_SET(field, mask)` — single-flag check; **returns bool via `!= 0`** (prevents int-truncation bug for high bits in uint64_t — bit 63 truncating to 0 in `int condition` context)
+    - `BITMAP_SET / CLR / TOGGLE` — single-thread mutation
+    - `BITMAP_ANY(field, mask_set)` — branchless multi-flag check (1 cycle AND vs N branches)
+    - `BITMAP_ALL / NONE` — full-set / empty-set predicates
+    - `BITMAP_ATOMIC_*` — cross-thread variants with `__ATOMIC_RELAXED` for observability flags (no happens-before constraint); upgrade to release-acquire when the bitmap synchronizes OTHER data
+    - `BITMAP_BIT_U16/U32/U64(n)` — width-typed mask builders (avoids signed-int promotion bugs at high bits)
+    - `BITMAP_POPCOUNT_* / BITMAP_FIRST_*` — built-in iteration helpers
+
+    **Wins (data-oriented design):** memory compactness (16 flags in 2 bytes vs 16 bytes byte-per-flag), atomic multi-flag updates via `__atomic_fetch_or` (1 instruction vs N stores), cache-friendly (flag-set for entire core fits one word), branchless predicates (single mask AND).
+
+    **Trade-off — per-record vs cross-record bit-packing:** bit-pack within a SINGLE record's flag set (struct fields, registry has_*, snapshot summary). DO NOT bit-pack ACROSS records (e.g., one bit per Order across all orders); per-record cache locality + indirection cost outweigh memory savings.
+
+    **Cache-line awareness for shared bitmaps:** a single `uint64_t has_flags` fits one cache line with adjacent fields. Cross-thread flag updates cause cache-line invalidation (relevant for slow-path writes + display thread reads — keep observability bitmaps near-but-not-mixed-with hot-path data; consider separate cache line for cross-thread flags via `alignas(64)` or padding).
+
+    **Reference precedent:** Portfolio<uint16_t> (item 1) is the OG bitmap. Reusable across X-macro registries: STAMP_HAS, FAILURE_IS_SET are aliases to BITMAP_*. Pattern documented in `DESIGN_SPECS/bitmap-flag-api.md`. TECH_DEBT-013 inventory tracks systematic application across remaining byte-per-flag sites.
+
+21. **AUTOPOPULATE companion macro for X-macro registries** (v5.14.1.E.E.B+). When a registry has multiple production callers that ASSEMBLE the registry-driven struct (e.g., Train Model worker, BacktestEngine, BacktestPanels), define an AUTOPOPULATE companion macro (`STAMP_CFG_AUTOPOPULATE`, `STAMP_MODEL_CONST_AUTOPOPULATE`) that auto-generates per-field populator code via X-macro expansion. Production callers replace ~50-100 LOC of manual `inf.X = src.X; inf.has_X = 1;` blocks with one `STAMP_X_AUTOPOPULATE(target, source)` call. Closes the v5.9.5b production-caller field-population class structurally — adding a new registry field becomes 1 row; the AUTOPOPULATE expansion picks it up at next compile. Forgetting becomes impossible.
+
+    **Optional belt-and-suspenders:** add a `_autopopulate_called` bool sentinel on the target struct, set by AUTOPOPULATE, asserted by the downstream consumer (REFUSE / WARN / log). Catches future contributors who add a NEW production-caller construction site but forget AUTOPOPULATE. Cost: 1 byte + 1 runtime branch (boot-only).
+
+    **Applied at:** STAMP_CFG_AUTOPOPULATE (closed PARITY-002/003/004/005/008 — 4× recurrence), STAMP_MODEL_CONST_AUTOPOPULATE (defined v5.14.8.0; production-caller wiring v5.14.8.D). Pattern documented in `DESIGN_SPECS/autopopulate-pattern-for-production-caller-class.md`.
+
+22. **PRE/POST registry split for canonical-emit-order preservation** (v5.14.8.A.merged.4+). When a registry's entries must emit at positions INTERLEAVED with a SISTER registry's entries (HMAC-locked wire format; sister registry between this one's entries), split FOREACH into `_PRE_CFG` and `_POST_CFG` halves + walk each separately at the right point. Same tuple shape across halves; struct generation + AUTOPOPULATE walk the union (FOREACH = PRE + POST); emit walks halves separately:
+
+    ```cpp
+    FOREACH_REGISTRY_PRE_CFG(EMIT_X)    // canonical positions 1..N
+    FOREACH_SISTER_REGISTRY(SISTER_X)   // canonical positions N+1..N+M
+    FOREACH_REGISTRY_POST_CFG(EMIT_X)   // canonical positions N+M+1..end
+    ```
+
+    Adding next entry to either half = 1 row in PRE or POST; auto-flow through union for struct gen + AUTOPOPULATE; correct emit order via the split walks. Pattern documented in `DESIGN_SPECS/pre-post-cfg-registry-split-for-emit-order-preservation.md`. **Applied at:** FOREACH_STAMP_BOUND_MODEL_CONST_PRE_CFG / _POST_CFG (closes TECH_DEBT-006 fully; 26 PRE entries + 6 POST entries; emit order: PRE → FOREACH_STAMP_BOUND_CFG → POST).
+
+23. **Type-trait dispatch via templated helpers, NOT non-template `if constexpr`** (v5.14.8.A.merged.4+). C++17 `if constexpr` discards branches at TEMPLATE INSTANTIATION. In **non-template macro context** (X-macro expansion in a regular function body), all branches must be SYNTACTICALLY VALID for ALL types — a cast like `(char[16])(scalar)` in a non-taken if-constexpr branch is still a hard cast error. Fix: extract type dispatch into a templated helper function that's instantiated per-T:
+
+    ```cpp
+    namespace tt {
+        template <typename T>
+        inline void stamp_parse_field(T& dst, const char* val) {
+            if constexpr (std::is_array_v<T>) {
+                strncpy(dst, val, std::extent_v<T> - 1);
+                dst[std::extent_v<T> - 1] = '\0';
+            } else if constexpr (std::is_floating_point_v<T>) {
+                dst = static_cast<T>(parse_double_fast(val));
+            } else if constexpr (std::is_unsigned_v<T>) {
+                dst = static_cast<T>(strtoull(val, nullptr, 10));
+            } else {
+                dst = static_cast<T>(atoi(val));
+            }
+        }
+    }
+    ```
+
+    Each instantiation properly discards branches per T. Required ANY TIME a non-template context uses if-constexpr with branches that have different syntax requirements per type (typical case: char[N] strncpy vs scalar cast). Reference: `tt::stamp_parse_field<T>` in `ML_Headers/StampBoundModelConstRegistry.hpp` — parser X-macro just calls `tt::stamp_parse_field(r.name, val)` and the dispatcher works for int / uint / double / char[N] uniformly.
 
 ---
 

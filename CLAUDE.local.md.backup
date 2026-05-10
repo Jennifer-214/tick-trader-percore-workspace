@@ -359,3 +359,45 @@ Reference:
 - v5.11.45 changed default to serial
 - No upstream XGBoost issue tracking this specifically; it's a known
   general issue with libgomp's pthread interaction.
+
+## Going-forward rule: codify design principles in CLAUDE.md as patterns mature (set 2026-05-09)
+
+When a session develops a reusable architectural pattern (e.g., bit-packed
+flags, AUTOPOPULATE companion, PRE/POST registry split, type-trait dispatch
+via templated helpers), promote it to a CLAUDE.md item once the pattern has:
+- 2+ applications in the codebase, OR
+- Documented as a `DESIGN_SPECS/<pattern>.md` in workspace, AND
+- Pattern applies broadly (not single-instance edge case)
+
+Keeps the always-loaded CLAUDE.md current with how the codebase actually
+thinks. Items are short (3-15 sentences with optional code snippet);
+DESIGN_SPECS docs are the deep-dive (200-400 lines per pattern).
+
+**v5.14.8 codification (2026-05-09):** items 19-23 added:
+- 19: Structural fix preferred when bug class can recur (was already in
+  CLAUDE.local.md as feedback rule; promoted to public)
+- 20: Bit-packed flag storage via BITMAP_* API
+- 21: AUTOPOPULATE companion macro for X-macro registries
+- 22: PRE/POST registry split for canonical-emit-order preservation
+- 23: Type-trait dispatch via templated helpers, NOT non-template `if constexpr`
+
+## Going-forward rule: each DESIGN_SPECS doc has a CLAUDE.md cross-ref (set 2026-05-09)
+
+Every doc in `tick-trader-percore-workspace/DESIGN_SPECS/` should be
+referenced from at least one CLAUDE.md item. Cross-ref ensures
+discoverability — a fresh session reading CLAUDE.md can find the
+deep-dive when needed; otherwise DESIGN_SPECS docs drift into orphan
+status.
+
+Format: `Pattern documented in `DESIGN_SPECS/<pattern>.md`.` at the end
+of the relevant CLAUDE.md item.
+
+**Initial DESIGN_SPECS library (v5.14.8 sprint):**
+- bitmap-flag-api.md → CLAUDE.md item 20
+- x-macro-registry-with-presence-dispatch.md → CLAUDE.md item 13
+- autopopulate-pattern-for-production-caller-class.md → CLAUDE.md item 21
+- pre-post-cfg-registry-split-for-emit-order-preservation.md → CLAUDE.md item 22
+- audit-driven-pre-coding-gate.md → currently NO direct CLAUDE.md ref;
+  cross-ref via /parity-check + /trace-deps + /readiness skill specs
+- wire-format-byte-preservation-discipline.md → CLAUDE.md item 15 (Parity-tested-by-construction)
+- structural-fix-preferred-decision-framework.md → CLAUDE.md item 19

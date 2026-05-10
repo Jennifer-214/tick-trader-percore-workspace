@@ -158,17 +158,25 @@ A finding that exists only in a transient audit report or chat memory gets re-di
 
 ---
 
-### TECH_DEBT-006 — `FOREACH_STAMP_BOUND_MODEL_CONST` registry for architectural fields
+### TECH_DEBT-006 — `FOREACH_STAMP_BOUND_MODEL_CONST` registry for architectural fields ✅ CLOSED v5.14.8
 
 - **Created:** 2026-05-09 by v5.14.2.E.3 (during v5.14.2.E.2.B design)
 - **Severity:** LOW
 - **Surface:** `ML_Headers/ModelInference.hpp` (architectural fields added manually in v5.14.2.E.2.B)
-- **What's deferred:** 4 architectural fields (`expected_num_classes`, `expected_role`, `expected_num_features`, `expected_feature_format_version`) added with manual emit + parse + populator (separate from FOREACH_STAMP_BOUND_CFG which only handles cfg-bound fields). When count grows to 5+, refactor to a parallel X-macro registry `FOREACH_STAMP_BOUND_MODEL_CONST(X)` that handles training-time/build-time-derived fields.
-- **Why deferred (not effort-avoidance):** Heterogeneous value sources (label_kind mapping, role string, build constants) don't fit a uniform X-macro tuple shape cleanly. 4 fields with low growth rate is manageable manually for now. Refactoring at this small scope would add complexity without proportionate benefit.
+- **What was deferred:** 4 architectural fields (`expected_num_classes`, `expected_role`, `expected_num_features`, `expected_feature_format_version`) added with manual emit + parse + populator (separate from FOREACH_STAMP_BOUND_CFG which only handles cfg-bound fields). Refactor to parallel X-macro registry `FOREACH_STAMP_BOUND_MODEL_CONST(X)` that handles training-time/build-time-derived fields.
 - **Cost estimate:** ~2h to design + extract registry; LOW risk (additive refactor).
-- **Trigger:** Address when count of architectural fields reaches 5+. Documented in `ModelInference.hpp` near the field declarations.
-- **Status:** OPEN
-- **Cross-ref:** v5.14.2.E.2.B commit; `ModelInference.hpp` ~line 1290 + ~line 1940 architectural field discipline comments.
+- **Status:** ✅ **CLOSED v5.14.8 (2026-05-09).** Substantially exceeded original scope:
+  - **32 architectural fields** auto-flow from registry (originally 4 named; expanded to cover all v5.14.2 + earlier architectural fields)
+  - **Option 1 unification** across ModelStampResult / StampInferenceCfgInputs / ModelHandle to canonical wire-key names
+  - **Bit-packed has_flags uint64_t** (TECH_DEBT-013 BIT_FLAG storage class win for stamp body)
+  - **PRE_CFG/POST_CFG split** preserves canonical wire format byte-for-byte (HMAC chain unbroken)
+  - **STAMP_MODEL_CONST_AUTOPOPULATE** companion macro extinguishes v5.9.5b production-caller class for stamp body
+  - **Reusable BITMAP_* API** (`MemHeaders/BitmapMacros.hpp`) used by sister registries
+  - **Round-trip HMAC verification test** (v5.14.8.A.7; 32 fields populated; emit→parse→verify)
+  - **5 NEW v5.14.8 fields** added via POST_CFG registry (training_timestamp_us, run_name, scaler_fit_data_hash, removal_reasons_csv, environment_meta group of 5)
+  - **Stale-model gate** (v5.14.8.E) consumes training_timestamp_us
+- **Future field addition:** 1 row in `FOREACH_STAMP_BOUND_MODEL_CONST_PRE_CFG` or `_POST_CFG` → struct fields + parser + emitter + AUTOPOPULATE wiring all auto-flow.
+- **Cross-ref:** v5.14.8 umbrella ship; `DESIGN_SPECS/x-macro-registry-with-presence-dispatch.md`, `DESIGN_SPECS/pre-post-cfg-registry-split-for-emit-order-preservation.md`, `DESIGN_SPECS/autopopulate-pattern-for-production-caller-class.md`, `DESIGN_SPECS/bitmap-flag-api.md`; CLAUDE.md items 13, 20, 21, 22, 23.
 
 ---
 
@@ -309,3 +317,35 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 4. Cross-link from the audit report (`plans/plan_checks/*`)
 5. Reference in commit message of the closing ship
 6. Move to CLOSED only after a follow-up audit confirms regression-free
+
+---
+
+### TECH_DEBT-014 — ModelHandle migration to FOREACH_STAMP_BOUND_MODEL_CONST X-macro generation
+
+- **Created:** 2026-05-09 by v5.14.8.A.merged.2 (deferred during Option 1 unification scope)
+- **Severity:** LOW
+- **Surface:** `ML_Headers/ModelInference.hpp` ModelHandle struct (~line 238)
+- **What's deferred:** ModelHandle currently uses MANUAL field declarations for stamp-derived runtime fields (with `stamp_inf_*`, `stamp_xgb_*`, `stamp_label_*`, `stamp_*` prefix policy that's INCONSISTENT across groups). v5.14.8.A.merged migrated ModelStampResult + StampInferenceCfgInputs to X-macro generation but ModelHandle stayed manual because it's a PARTIAL MIRROR (only fields needed at runtime; ~10 fields exist on ModelStampResult but NOT on ModelHandle; per-group prefix policy diverges).
+- **Why deferred (not effort-avoidance):** Migration requires deciding ModelHandle's per-group prefix dispatch (or going full canonical-name). v5.14.8 ship was already large (~2400 LOC across A.0.b + A.merged.X); ModelHandle migration would have added another ~150 LOC of caller migrations. Bounded follow-up work; low risk because the FAILURE_MODE registry's STAMP_HANDLE_GEN_INCLUDE/SKIP_HANDLE token-paste dispatch is already designed for the partial-mirror case.
+- **Cost estimate:** ~2-3h (ModelHandle struct rewrite via X-macro + 10-15 caller files: CoreModelZoo_TryLoadRole copy block + EngineSharded boot WARN comparisons + StrategyParameters reads).
+- **Trigger:** Address when (a) ModelHandle gains a NEW stamp-derived field (would be the next instance of the manual N-site pattern), OR (b) v5.X+ cleanup ship dedicated to ModelHandle restructuring, OR (c) operator hits ModelHandle-specific naming inconsistency in code review.
+- **Status:** OPEN
+- **Cross-ref:** v5.14.8.A.merged.2 commit; ModelHandle struct in `ML_Headers/ModelInference.hpp:238`; v5.14.8.E manually added has_training_timestamp_us + has_run_name fields directly to ModelHandle (deferred path).
+
+---
+
+### TECH_DEBT-015 — FOREACH_FEATURE 7-col extension (max_staleness_minutes) + Features_PackAll stale-feature wiring
+
+- **Created:** 2026-05-09 by v5.14.8.E (stale-feature gating scope split)
+- **Severity:** LOW
+- **Surface:** `ML_Headers/FeatureRegistry.hpp` (FOREACH_FEATURE registry), `ML_Headers/FeatureRegistry.hpp` Features_PackAll, `ML_Headers/FeatureRegistry.hpp` FeatureComputeCtx
+- **What's deferred:** v5.14.8.E added the stale_feature_events COUNTER_U32 entry to FOREACH_FAILURE_MODE (registry + counter slot + panel constants ready) but did NOT wire Features_PackAll to actually consume per-feature staleness thresholds. Full wiring requires:
+  - FOREACH_FEATURE 7-column extension: append `max_staleness_minutes` column (per-feature threshold; 0 = disabled). All 7+ X-macro caller sites in FeatureRegistry.hpp update to 7-param signature; hash-compute caller body still reads only (name, version) so FEATURE_REGISTRY_HASH stays stable.
+  - `feature_last_update_us[NUM_REGISTERED_FEATURES]` array storage on FeatureComputeCtx (or via per-feature compute fn capturing `now_us`).
+  - Features_PackAll stale check: `if (max_staleness_minutes[i] > 0 && (now_us - last_update_us[i]) / 60000000ULL > max_staleness_minutes[i]) { features[i] = 0.0f; stale_feature_events_total++; continue; }`
+  - Slow-path latency: ~40ns when configured; HOT_PATH_CHANGELOG entry needed.
+- **Why deferred (not effort-avoidance):** v5.14.8.E delivered the high-value stale-MODEL gate (boot-time refuse on operator-deploying-expired-models). Stale-FEATURE gate is value-add but not blocking; bounded follow-up. Feature pipeline wiring spans 7+ X-macro caller sites + FeatureComputeCtx + per-feature compute fns + retest.
+- **Cost estimate:** ~2-3h (FOREACH_FEATURE column add + 7 caller-site updates + Features_PackAll wiring + HOT_PATH_CHANGELOG entry + tests).
+- **Trigger:** Address when (a) operator wants per-feature freshness UI control, OR (b) next feature added to FOREACH_FEATURE (would touch the X-macro anyway; bundle the column extension), OR (c) v5.X+ ML pipeline cleanup ship.
+- **Status:** OPEN
+- **Cross-ref:** v5.14.8.E commit; FOREACH_FAILURE_MODE entry `stale_feature_events` in `MemHeaders/FailureModeRegistry.hpp` (counter slot + panel infrastructure ready).

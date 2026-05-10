@@ -1,7 +1,7 @@
 # Heterogeneous registry pattern — scope column vs domain split
 
 **Established:** 2026-05-10 (v5.14.9.F sprint, pre-field-test draft)
-**Status:** DRAFT v0.2 (pre-field-test; expanded 2026-05-10 post-/dod-audit with Y3 dispatch canon + cache-layout discipline + concrete worked example for stamp-binding integration)
+**Status:** ACTIVE v1.0 (field-tested through v5.14.9.F-.F.6 + .G + .H; 7 ships validated DOMAIN SPLIT + Y3 dispatch + cache-layout discipline + 5-col tuple expansion (Option D) + per-bit per-core override extension)
 **Cross-references:**
 - `bitmap-flag-api.md` — bit-packed flag storage (BITMAP_*)
 - `x-macro-registry-with-presence-dispatch.md` — base X-macro pattern + presence column
@@ -603,4 +603,4 @@ This verification is a cheap insurance step. Captured as TECH_DEBT-022 (branchle
 
 - v0.1 (2026-05-10): pre-field-test draft, written before .F-.F.6 ships start
 - v0.2 (2026-05-10): post-/dod-audit expansion. Added Y3 dispatch canon section + cache-layout discipline section + concrete HYBRID worked example (stamp-binding integration via emit_source column). Addresses /dod-audit HIGH.1 + HIGH.2 + doc-debt #1 findings.
-- v1.0 (planned 2026-05-10+ at v5.14.9 umbrella close): post-field-test ACTIVE; gotchas section populated with real lessons; concrete code references updated to shipped commits; HIGH.3 branchless verification status documented.
+- **v1.0 (2026-05-10): post-field-test ACTIVE.** All 4 pre-field-test concerns validated via .F-.F.6 ships + 2 follow-up ships (.G + .H). Concrete code references point to shipped commits. Lessons section populated with real findings from .F.1 (Shape A mangling), .F.2 (Y3 dispatch HMAC byte-equivalence), .F.5 (Option D 5-col tuple expansion), .F.6 (PER_CORE_OVERRIDE_BITMAP_DOMAINS macro), .G (partner_pending per-core bitmap), .H (transient aggregation bitmap). 9 audit reports (4 pre-coding + 5 mid-sprint + post-ship); all GREEN at sprint close. Pattern now canonical for future heterogeneous registry decisions.

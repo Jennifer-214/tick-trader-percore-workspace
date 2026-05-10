@@ -131,17 +131,14 @@ A finding that exists only in a transient audit report or chat memory gets re-di
 
 ---
 
-### TECH_DEBT-004 — Dual-tau cfg field naming clarity
+### TECH_DEBT-004 — Dual-tau cfg field naming clarity ✅ CLOSED v5.14.9.D
 
 - **Created:** 2026-05-09 by v5.14.2.E.3 (originally PARITY-006; reclassified as TECH_DEBT since not a parity issue)
 - **Severity:** LOW
 - **Surface:** `ControllerConfig.hpp` cfg fields `confidence_freshness_tau` (legacy IC) + `confidence_freshness_tau_secs` (composite confidence; v5.14.1)
-- **What's deferred:** Two distinct cfg fields with overlapping semantics ("freshness tau"). Both have legitimate uses (one is bandit IC freshness; other is composite confidence freshness in seconds), but the names are confusable. Operator could set one when meaning the other. Either rename for clarity OR consolidate if they should genuinely be the same value.
-- **Why deferred (not effort-avoidance):** Operator-facing rename is a config migration (engine.cfg files in production use the old names). Consolidation requires architectural decision (are they really the same?). Both are minor compared to other v5.X work.
-- **Cost estimate:** ~3h (rename + migration code + operator notification + cfg.example update); LOW risk.
-- **Trigger:** Address when (a) operator misconfigures one for the other, OR (b) v6.X major-version cfg cleanup, OR (c) someone wants to consolidate them with paired analysis.
-- **Status:** OPEN
-- **Cross-ref:** PARITY-006 (originally raised there); `ControllerConfig.hpp` (search for `freshness_tau`).
+- **What was deferred:** Two distinct cfg fields with overlapping semantics ("freshness tau"). Operator could set one when meaning the other.
+- **Status:** ✅ **CLOSED v5.14.9.D (2026-05-10, commit b703e61).** Hard-deletion path: legacy `confidence_freshness_tau` was mathematically inert (`data_age=0` always in production; half-dead via stamp-bound drift check on a value that doesn't affect inference). Deleted entirely from ControllerConfig + 5 ConfidenceScorer_Init callsites adapted (3-arg → 2-arg signature). Legacy stamps with `inference_cfg_freshness_tau` line load successfully (parser ignores unknown key via existing forward-compat semantics; HMAC chain unbroken because HMAC is per-stamp). Operator migration: WARN log if legacy key present in cfg file ("remove from cfg"). Only `confidence_freshness_tau_secs` remains (composite-confidence freshness; not confusable since the legacy field is gone).
+- **Cross-ref:** PARITY-006 (originally raised there); v5.14.9.D commit b703e61 (engine repo); v5.14.9 umbrella.
 
 ---
 
@@ -231,17 +228,17 @@ A finding that exists only in a transient audit report or chat memory gets re-di
 
 ---
 
-### TECH_DEBT-009 — FOREACH_CFG_FIELD registry for non-stamp-bound cfg fields
+### TECH_DEBT-009 — FOREACH_CFG_FIELD registry for non-stamp-bound cfg fields (boolean subset CLOSED v5.14.9.F.4)
 
 - **Created:** 2026-05-09 by v5.14.8 scope decision (Interpretation B; deferred N-site pattern audit)
-- **Severity:** MEDIUM (every new cfg field = 4-site manual update: parser line + struct field + engine.cfg.example entry + CHANGELOG note; recurring class)
+- **Severity:** MEDIUM → LOW (boolean subset closed; non-boolean field registry remains as future work)
 - **Surface:** `CoreFrameworks/ControllerConfig.hpp` (struct), `CoreFrameworks/ControllerConfigParser.hpp` (parser), `engine.cfg.example` (operator-facing reference), `DOCS/CHANGELOG.md` (migration notes per ship)
-- **What's deferred:** Convert non-stamp-bound cfg field additions from manual N-site updates to a `FOREACH_CFG_FIELD` registry + companion `CFG_FIELD_AUTOPOPULATE` macro. Each registry entry would auto-generate: struct field declaration, parser case, default value, engine.cfg.example doc line. Stamp-bound cfg fields are already covered by `FOREACH_STAMP_BOUND_CFG` (StampBoundCfgRegistry.hpp); this would be the sister registry for non-stamped cfg.
-- **Why deferred (not effort-avoidance):** v5.14.8 work doesn't touch cfg parser subsystem; conversion would be scope creep into a different file family. Cfg parser has its own discipline (back-compat + boot WARN cadence) that needs design conversation before mechanical conversion. Different blast radius from stamp body work (parser changes affect EVERY operator's cfg loading).
-- **Cost estimate:** ~6-8h structural ship (registry + macro + docs); ~30-40 cfg fields to migrate; per-field migration trivial (~5 min each)
-- **Trigger:** Next ship that adds 3+ new non-stamp-bound cfg fields in one umbrella, OR ship that touches ControllerConfigParser.hpp for any reason. At that point address structurally instead of compounding the manual pattern.
-- **Status:** OPEN
-- **Cross-ref:** `ML_Headers/StampBoundCfgRegistry.hpp` (sister registry for stamp-bound cfg; pattern precedent); v5.14.8 (sibling structural ship for stamp body); CLAUDE.md item 13 (X-macro audited categories list — this entry would join)
+- **Status:** **PARTIAL CLOSED v5.14.9.F.4 (2026-05-10).** Boolean cfg fields (21 booleans across 5 domains) migrated to `FOREACH_<DOMAIN>_CFG_FLAG` registries with single-source-of-truth semantics. Parser auto-flows via 5 FOREACH walks (~21 inline branches → 5 walks, ~90 LOC reduction). GUI field_defs[] auto-extends via 5-col tuple expansion (v5.14.9.F.5 Option D). Per-core override extends via PER_CORE_OVERRIDE_BITMAP_DOMAINS macro (v5.14.9.F.6).
+- **Remaining (still OPEN as broader scope):** non-boolean cfg fields (FPN<F> thresholds, ints, strings, paths). Still touched manually per-field today. Future ship: `FOREACH_CFG_FIELD` registry for non-boolean fields (mirrors boolean subset's auto-flow discipline; same pattern with type-trait dispatch).
+- **Why partial close not full:** non-boolean cfg fields are heterogeneous in type + parser semantics (atoi vs atof vs strncpy); each type needs its own auto-flow path. Boolean subset was tractable (all parse identically via `int v = atoi(val); set/clr bit`). Type-trait dispatch via templated helpers (per CLAUDE.md item 23) can extend to other types but adds design surface.
+- **Cost estimate (remaining):** ~6-8h for FOREACH_CFG_FIELD registry covering ~30-40 non-boolean fields; per-field migration trivial.
+- **Trigger:** Next ship that adds 3+ new non-boolean cfg fields in one umbrella, OR ship that touches ControllerConfigParser.hpp for non-boolean reasons.
+- **Cross-ref:** v5.14.9.F-.F.6 ships (boolean subset closure); `DESIGN_SPECS/heterogeneous-registry-pattern.md` (DOMAIN SPLIT pattern reference impl); `ML_Headers/StampBoundCfgRegistry.hpp` (sister registry for stamp-bound cfg; pattern precedent); CLAUDE.md item 13 (X-macro audited categories list).
 
 ---
 
@@ -273,7 +270,7 @@ A finding that exists only in a transient audit report or chat memory gets re-di
 
 ---
 
-### TECH_DEBT-013 — Bit-packed boolean flags (BIT_FLAG storage class) for byte-per-flag patterns across codebase
+### TECH_DEBT-013 — Bit-packed boolean flags (BIT_FLAG storage class) for byte-per-flag patterns across codebase ✅ CLOSED v5.14.9
 
 - **Created:** 2026-05-09 by v5.14.8.B FOREACH_FAILURE_MODE design discussion (operator question: "couldnt we track each one using a single bit since theyre basically 1 or 0?")
 - **Severity:** MEDIUM (recurring inefficiency; data-oriented design alignment opportunity; aligns with CLAUDE.md item 1 Portfolio uint16_t bitmap pattern)
@@ -286,20 +283,23 @@ A finding that exists only in a transient audit report or chat memory gets re-di
 
 | Surface | Current flags | Bit-pack target | Effort | Trigger |
 |---|---|---|---|---|
-| `failure_flags` (FOREACH_FAILURE_MODE) | 2 | uint16_t | DONE in v5.14.8.B | — |
-| Stamp body `has_*` (FOREACH_STAMP_BOUND_MODEL_CONST) | 24+ | uint64_t (`has_flags`) | IN-SCOPE v5.14.8.A | — |
-| `PerCoreSnap` non-failure state flags (ml_scaler_present, ensemble_active, etc.) | 3-5 | merge into failure_flags OR new `state_flags` uint16_t | ~3-4h | Next ship touching PerCoreSnap layout |
-| `FOREACH_FEATURE` `enabled` flag | 40 features | uint64_t (`enabled_bitmap`) + `IS_FEATURE_ENABLED(i)` macro | ~3-4h | Next ship touching FeatureRegistry storage layout |
-| `OrderManager.partial_exit_enabled` + `ExecutionCore.lat_enabled` | 2 | engine-wide uint16_t `cfg_flags` | ~1-2h | Next ship adding 3+ engine-wide cfg flags |
-| `ControllerEventLoop.partner_pending_active` (per-core) | 1 | merge into per-core flags bitmap (NEW; or fold into `failure_flags`) | ~1h | Next ship adding 2+ per-core boolean flags |
-| `ShardedSnapshot.any_scaler_present` + `any_scaler_failed` | 2 | merge into snapshot summary bitmap | ~1h | Next ship touching ShardedSnapshot serialization |
+| `failure_flags` (FOREACH_FAILURE_MODE) | 2 | uint16_t | ✅ DONE v5.14.8.B | — |
+| Stamp body `has_*` (FOREACH_STAMP_BOUND_MODEL_CONST) | 24+ | uint64_t (`has_flags`) | ✅ DONE v5.14.8.A | — |
+| `PerCoreSnap` non-failure state flags (permission, bitmap_consistency, gate_direction, is_ml, ml_model_loaded, strategy_was_explicit_set, ladder_bottom_hit) | 6→7 | uint16_t `state_flags` + MASK_* registry | ✅ DONE v5.14.9.B.2 | — |
+| `FOREACH_FEATURE` `enabled` flag | 40 features | uint64_t `FEATURE_ENABLED_BITMAP` + `IS_FEATURE_ENABLED(i)` macro | ✅ DONE v5.14.9.E | — |
+| Engine-wide cfg bool flags (21 across 5 domains) | 21 | 5 domain bitmaps via `FOREACH_<DOMAIN>_CFG_FLAG` registries | ✅ DONE v5.14.9.F-.F.6 | — |
+| `ControllerEventLoop.partner_pending_active` (per-core) | 1 | uint16_t `partner_pending_bitmap` on EventLoopState (1 bit per core) | ✅ DONE v5.14.9.G | — |
+| `ShardedSnapshot.any_scaler_present` + `any_scaler_failed` | 2 | uint8_t `scaler_summary_flags` transient local with 6-bit headroom | ✅ DONE v5.14.9.H | — |
 
-- **Why deferred (not effort-avoidance):** Each surface has DIFFERENT caller-migration scope; bundling all into one ship would explode blast radius. Pattern-as-design-tool: future ships touching any of these surfaces apply BIT_FLAG storage class as part of the work. v5.14.8 demonstrates the pattern + establishes the ergonomic API; subsequent ships extend it.
-- **Cost estimate:** ~10-15h cumulative across all candidates (1-4h each); incremental per ship.
-- **Trigger:** Each candidate listed above has its own trigger (next ship touching that surface). Pattern documentation in `DOCS/EASY_ADDITIONS_INVARIANTS.md` (added in v5.14.8.0 docs) tells future maintainers to apply BIT_FLAG when adding boolean flags.
-- **Memory savings (cumulative if all applied):** ~70-100 bytes per core; cache-line alignment benefits compound. ~16 cores × ~80B = ~1.3 KB system-wide.
-- **Status:** OPEN (pattern established in v5.14.8.B; candidates listed for systematic application as triggered)
-- **Cross-ref:** v5.14.8.B (pattern establishment in `MemHeaders/FailureModeRegistry.hpp`); CLAUDE.md item 1 (Portfolio uint16_t bitmap precedent); CLAUDE.md item 18 (data-oriented design + branchless mask compute philosophy); `DOCS/EASY_ADDITIONS_INVARIANTS.md` (pattern documentation; updated in v5.14.8.0)
+- **Status:** ✅ **CLOSED v5.14.9 (2026-05-10).** All 7 candidates migrated. Cumulative wins:
+  - Memory saved: 15B per ControllerConfig (21 scattered ints → 5 bitmap fields) + 126B per EventLoopState (per-core bool → 2-byte bitmap) + scaler aggregation tightened
+  - Single-source-of-truth registries: registry = enum + MASK + parser + AUTOPOPULATE + GUI label + section + tooltip + per-core override (Option D 5-col tuple expansion v5.14.9.F.5)
+  - HMAC chain byte-equivalence proven for stamp-bound bit-extract entries (v5.14.9.F.2 Y3 dispatch)
+  - Per-bit per-core override capability via PER_CORE_OVERRIDE_BITMAP_DOMAINS (v5.14.9.F.6)
+  - Cache-layout discipline applied (HOT-CLUSTER alignas(8) at start of 5 domain bitmaps; cold-cluster split deferred to TECH_DEBT-021 post-paper-test profiling)
+  - Pattern documented in `DESIGN_SPECS/heterogeneous-registry-pattern.md` (DRAFT v0.1 → ACTIVE v1.0 after .F-.F.6 field tests validated all 4 pre-field-test concerns)
+- **Why valuable:** every future bool cfg flag = 1 row in registry → ALL downstream consumers auto-flow. Recurring "add bool flag = N-site update" class extinguished structurally for booleans (FOREACH_CFG_FIELD broader closure for non-boolean fields tracked under TECH_DEBT-009 partial).
+- **Cross-ref:** v5.14.9.F-.F.6 + .G + .H ships; `DESIGN_SPECS/heterogeneous-registry-pattern.md` (canonical pattern doc); CLAUDE.md item 1 (Portfolio bitmap precedent); item 18 (data-oriented design + branchless mask compute philosophy); `DOCS/EASY_ADDITIONS_INVARIANTS.md` (pattern documentation).
 
 ---
 
@@ -343,7 +343,7 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ---
 
-### TECH_DEBT-015 — FOREACH_FEATURE 7-col extension (max_staleness_minutes) + Features_PackAll stale-feature wiring
+### TECH_DEBT-015 — FOREACH_FEATURE 7-col extension (max_staleness_minutes) + Features_PackAll stale-feature wiring ✅ CLOSED v5.14.9.E
 
 - **Created:** 2026-05-09 by v5.14.8.E (stale-feature gating scope split)
 - **Severity:** LOW
@@ -355,9 +355,8 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
   - Slow-path latency: ~40ns when configured; HOT_PATH_CHANGELOG entry needed.
 - **Why deferred (not effort-avoidance):** v5.14.8.E delivered the high-value stale-MODEL gate (boot-time refuse on operator-deploying-expired-models). Stale-FEATURE gate is value-add but not blocking; bounded follow-up. Feature pipeline wiring spans 7+ X-macro caller sites + FeatureComputeCtx + per-feature compute fns + retest.
 - **Cost estimate:** ~2-3h (FOREACH_FEATURE column add + 7 caller-site updates + Features_PackAll wiring + HOT_PATH_CHANGELOG entry + tests).
-- **Trigger:** Address when (a) operator wants per-feature freshness UI control, OR (b) next feature added to FOREACH_FEATURE (would touch the X-macro anyway; bundle the column extension), OR (c) v5.X+ ML pipeline cleanup ship.
-- **Status:** OPEN
-- **Cross-ref:** v5.14.8.E commit; FOREACH_FAILURE_MODE entry `stale_feature_events` in `MemHeaders/FailureModeRegistry.hpp` (counter slot + panel infrastructure ready).
+- **Status:** ✅ **CLOSED v5.14.9.E (2026-05-10).** FOREACH_FEATURE extended 6→7 columns with `max_staleness_minutes`; `FEATURE_ENABLED_BITMAP` uint64_t replaces 40 uint8_t bool fields (312 bytes saved per FeatureComputeCtx); `IS_FEATURE_ENABLED(i)` macro; Features_PackAll do-while wrapper for staleness check skip; `feature_last_update_us[NUM_REGISTERED_FEATURES]` array storage on FeatureComputeCtx; stale_feature_events_total counter (was infrastructure-only since v5.14.8.E; now functional).
+- **Cross-ref:** v5.14.8.E commit (infrastructure); v5.14.9.E commit (wiring closed); FOREACH_FAILURE_MODE entry `stale_feature_events` in `MemHeaders/FailureModeRegistry.hpp`; CHANGELOG v5.14.9 row.
 
 ---
 

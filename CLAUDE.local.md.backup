@@ -25,6 +25,30 @@ touching hot-path layout / per-tick code, since it captures patterns
 the rules doc misses (FPN sizing math, failure-path observability,
 cache-line-span analysis).
 
+## Going-forward rule: suggest mid-sprint audits when work impacts downstream plans (set 2026-05-10)
+
+**When a ship's work has IMPACT on the rest of the planned sub-ships OR the next plan, SUGGEST a relevant audit; wait for operator greenlight or operator-initiated. Don't auto-trigger.**
+
+**Trigger criteria — "impact" = any of:**
+- HIGH-RISK ship just shipped (HMAC-chain-preservation work, hot-path migrations, structural refactors that downstream ships build on)
+- New pattern field-tested for the first time (subsequent ships will follow the pattern; audit verifies it's sound before propagation)
+- Plan amendments may be needed before next ship if findings emerge
+- Cross-cutting changes (registry extensions, X-macro changes that affect multiple files) where downstream ships inherit the structure
+- Operator explicitly invites checks ("also run new checks if you need to or think its a good idea")
+
+**When NOT to suggest:**
+- Routine pattern-application ships (subsequent applications of a field-tested pattern; e.g., .F.1 after .F validated; .F.3 after .F.1 + .F.2 validated)
+- Pure additive work (new tests, new docs, comments)
+- Bug fixes with bounded scope
+
+**Suggestion format:** present the audit suggestion + recommended subagent dispatch (e.g., "/test-strength-audit + /dod-audit in parallel on commit X") + 1-sentence rationale (what risk it would catch). Wait for operator response before launching.
+
+**Why:** ensures we're not auto-triggering audits when not needed (friction), but we ARE catching issues at structural boundaries before downstream ships inherit them. Operator retains decision authority + can also bring up audits independently.
+
+**Caramel's framing 2026-05-10:** "we just need the associated docs to make sure were using it, and not ignoring the structure and architecture laid out". Audit cadence is operator-policy + agent-suggestion when impact-triggers fire, not automated. Established after v5.14.9.F.2 HIGH-RISK ship validated the manual mid-sprint audit pattern caught real findings (HIGH.1 + HIGH.2 pre-coding; GREEN post-coding).
+
+---
+
 ## Going-forward rule: structural fix preferred when bug class can recur (set 2026-05-09)
 
 **When facing a bug whose ROOT CAUSE is "same pattern at multiple sites

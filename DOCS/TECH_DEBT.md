@@ -358,3 +358,170 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 - **Trigger:** Address when (a) operator wants per-feature freshness UI control, OR (b) next feature added to FOREACH_FEATURE (would touch the X-macro anyway; bundle the column extension), OR (c) v5.X+ ML pipeline cleanup ship.
 - **Status:** OPEN
 - **Cross-ref:** v5.14.8.E commit; FOREACH_FAILURE_MODE entry `stale_feature_events` in `MemHeaders/FailureModeRegistry.hpp` (counter slot + panel infrastructure ready).
+
+---
+
+### TECH_DEBT-018 — Codify `/precoding-audit` Layer 1 orchestrator skill
+
+- **Created:** 2026-05-10 by v5.14.9.D (post-test-strength-audit ship discussion)
+- **Severity:** LOW (workflow improvement; manual dispatch already works)
+- **Surface:** `tick-trader-percore-workspace/claude-skills/precoding-audit/SKILL.md` (NEW; doesn't exist yet)
+- **What's deferred:** Layer 1 orchestrator skill that dispatches `/readiness` + `/trace-deps` + `/dod-audit` + `/test-strength-audit` + `/merge-scan` as parallel Layer 2 subagents on a plan file, aggregates findings, emits combined report. Codifies the manual 4-agent dispatch pattern that ran successfully during v5.14.9 pre-coding gate.
+
+- **Why deferred (not effort-avoidance):** Manual 4-parallel-agent dispatch from main Layer 1 session worked for v5.14.9 pre-coding gate. Codifying as `/precoding-audit` is workflow improvement, not blocker. Want 3-5 more ship cycles using the manual pattern to identify what the orchestrator should aggregate vs forward (e.g., severity-cross-skill rollup, GREEN/YELLOW/RED unified verdict, conflict detection).
+
+- **Pattern precedent:** `/finding-analyzer` is already a Layer 1 orchestrator skill that "chains existing workspace skills (/trace-deps, /latency-track, /parity-check)". Same shape applies for `/precoding-audit`.
+
+- **Why NOT just modify `/readiness` to spawn nested subagents:** SKILLS_HIERARCHY.md establishes one-way Layer 1 → Layer 2 hierarchy after v5.14.1.G recursion-via-over-delegation incident. Layer 2 skills must NOT spawn further subagents (silently fails / hangs). Adding nested dispatch to `/readiness` would recreate that trap. The right answer is a separate Layer 1 orchestrator.
+
+- **Cost estimate:** ~3-4h (skill spec ~400 lines mirroring `/finding-analyzer` shape + skill registration + SKILLS_HIERARCHY entry + `/readiness` cross-ref)
+
+- **Trigger:** Address when ANY of:
+  - 3-5 ship cycles complete using the manual 4-parallel-agent pattern (signal: workflow stable; codify-worthy)
+  - Manual dispatch hits friction the orchestrator could fix (e.g., result aggregation pain, missed cross-skill conflicts, race conditions on shared resources)
+  - Operator wants single-command pre-coding gate (`/precoding-audit plan-file`) instead of explicit per-skill dispatch
+
+- **Status:** OPEN
+
+- **Cross-ref:** SKILLS_HIERARCHY.md (Layer 1/2 model), `/finding-analyzer` SKILL.md (orchestrator pattern precedent), v5.14.9 pre-coding gate session log (manual 4-agent dispatch worked but had friction — `/trace-deps` report didn't auto-save to disk; agent-dispatch-friction class).
+
+---
+
+### TECH_DEBT-019 — Rejected monolithic FOREACH_ENGINE_CFG_FLAG registry (design rationale preservation)
+
+- **Created:** 2026-05-10 by v5.14.9.F Option C decomposition (post-/dod-audit auto-write per CLAUDE.local.md contract)
+- **Severity:** N/A (NOT-A-BUG; rationale-preservation entry)
+- **Surface:** Conceptual / design-record only; no code surface
+- **What was considered:** Monolithic FOREACH_ENGINE_CFG_FLAG registry covering ~18 boolean cfg fields (partial_exit_enabled, depth_enabled, kill_switch_enabled, confidence_enabled, etc.) → single uint32_t engine_cfg_flags bitmap on ControllerConfig.
+- **Why rejected (post-2026-05-10 audits):** /dod-audit + /merge-scan independently identified 4 fatal heterogeneity factors that made the COLUMN form (single registry, single bitmap) wrong fit:
+  1. **Read cadences differ:** drainer reads partial_exit_enabled every cycle (hot-path-adjacent); kill_switch_enabled mutated by slow-path; depth_enabled boot-frozen; bandit_enabled slow-path-only. Single bitmap = mixed cache-line semantics.
+  2. **Mutation patterns differ:** read-only cfg booleans (depth_enabled) vs runtime-mutated state-like booleans (kill_switch_tripped) vs cfg-loadable-but-immutable-runtime (partial_exit_enabled). Single struct field = false-sharing risk.
+  3. **Coupling unrelated features:** bandit_enabled, barrier_gate_enabled, cost_gate_enabled, foxml_vol_scaling_enabled have no semantic overlap; grouping them in one registry is convenience-over-architecture.
+  4. **Future-flexibility:** ML domain growing fast (bandit warmup, ridge weights, calibration enables); RISK domain stable. Want to split independently in v5.X+ without restructuring; monolithic doesn't permit.
+- **Decision:** DOMAIN SPLIT chosen instead. 5 separate FOREACH_<DOMAIN>_CFG_FLAG registries (OMS / GATE / RISK / ML / OPS). Each domain has homogeneous read cadence + mutation pattern + cache-line concerns. Pattern documented in `DESIGN_SPECS/heterogeneous-registry-pattern.md`.
+- **Why this entry exists (NOT-A-BUG):** future sessions reading the codebase may notice "5 small registries; could combine into 1 big one" + propose monolithic refactor. This entry preserves the rejection rationale so that proposal is recognized as design-considered + correctly rejected. Also serves as canonical reference for "when domain-split wins over monolithic" on future heterogeneous-registry decisions.
+- **Cost:** 0h (no work to do; this entry is documentation)
+- **Trigger to re-litigate:** if, after v5.14.10+ paper-test profiling, the 5 small registries' overhead becomes measurable (e.g., 5 separate AUTOPOPULATE walks at slow-path entry costs >100ns) AND consolidation would actually save cycles AND the heterogeneity factors above no longer apply (e.g., all flags become uniformly slow-path-only with same cache concerns), then revisit. Until then: status NOT-A-BUG.
+- **Status:** NOT-A-BUG (preserved as rationale)
+- **Cross-ref:** v5.14.9.F-.F.3 (DOMAIN SPLIT implementation); `DESIGN_SPECS/heterogeneous-registry-pattern.md` (decision framework codified); `plans/plan_checks/dod-audit-2026-05-10-v5.14.9-postE.md` + `merge-scan-2026-05-10-v5.14.9-postE.md` (audit findings that drove the rejection)
+
+---
+
+### TECH_DEBT-020 — Per-core override SELECT macro factoring (BITMAP_SELECT)
+
+- **Created:** 2026-05-10 by v5.14.9.F.6 design (/dod-audit MEDIUM.1 finding)
+- **Severity:** LOW (micro-opt; defer until threshold met)
+- **Surface:** Per-core override resolution sites across cfg-flag domains (5 sites in .F.6); future bitmap-merge sites where override + global must combine branchlessly
+- **What's deferred:** Factor the per-core override resolution idiom into a reusable BITMAP_SELECT macro:
+
+  ```cpp
+  // Current (.F.6 inline pattern):
+  uint8_t effective_oms_flags = ((cfg.cores[c].oms_cfg_flags_override_set & cfg.cores[c].oms_cfg_flags_override) |
+                                  (~cfg.cores[c].oms_cfg_flags_override_set & cfg.oms_cfg_flags));
+
+  // Proposed BITMAP_SELECT macro (in MemHeaders/BitmapMacros.hpp):
+  #define BITMAP_SELECT(mask, when_set, when_clear) \
+      (((mask) & (when_set)) | (~(mask) & (when_clear)))
+
+  // Usage:
+  uint8_t effective_oms_flags = BITMAP_SELECT(cfg.cores[c].oms_cfg_flags_override_set,
+                                                cfg.cores[c].oms_cfg_flags_override,
+                                                cfg.oms_cfg_flags);
+  ```
+
+  Branchless bit-by-bit select: bit set in mask → use when_set; bit clear → use when_clear. Single uint op; zero branches.
+
+- **Why deferred (not effort-avoidance):** v5.14.9.F.6 has 5 use sites; CLAUDE.md item 13 threshold (≥3 entries + ≥2 caller sites) is barely met. Premature factor would extract before pattern crystallizes. Mid-flight v5.X+ work may need slight variations (tri-state select; per-bit lifetime), so factoring now risks lock-in.
+- **Cost estimate:** ~1h (write macro + migrate 5 call sites + test)
+- **Trigger:** Address when (a) 6+ use sites exist (clear pattern with bounded variations), OR (b) v5.X+ ship adds another override-resolution surface (snapshot hot-state vs cfg, OMS state vs cfg), OR (c) operator notices the inline form duplicating across files.
+- **Status:** OPEN
+- **Cross-ref:** v5.14.9.F.6; `DESIGN_SPECS/bitmap-flag-api.md` (sister BITMAP_* primitives — BITMAP_SELECT would join here when factored)
+
+---
+
+### TECH_DEBT-021 — Post-paper-test profiling: domain bitmap collapse OR further split decisions
+
+- **Created:** 2026-05-10 by v5.14.9.F Option C decomposition (/dod-audit MEDIUM.2 finding + .I scope plan)
+- **Severity:** LOW (profiling-driven optimization; depends on paper-test signal)
+- **Surface:** ControllerConfig 5 domain bitmap fields (oms_cfg_flags + gate_cfg_flags + risk_cfg_flags + ml_cfg_flags + ops_cfg_flags); FOREACH_<DOMAIN>_CFG_FLAG registries
+- **What's deferred:** After v5.14.9.F-.F.6 lands + paper-test runs surface real-world performance signal, profile and decide:
+
+  - **Domain bitmap collapse** (if profiling shows overhead from 5 separate AUTOPOPULATE walks + 5 cache-line accesses per slow-path cycle): collapse to single uint64_t engine_cfg_flags. Trade-offs: lose per-domain cache-line granularity (re-introduces false-sharing risk per TECH_DEBT-019); gain single-load reads for compound predicates.
+
+  - **Further domain split** (if profiling shows one domain growing dominant — e.g., FOREACH_ML_CFG_FLAG hits 8+ entries due to bandit warmup, ridge weights, calibration enables): split FOREACH_ML_CFG_FLAG → FOREACH_ML_CONFIDENCE_CFG_FLAG + FOREACH_ML_BANDIT_CFG_FLAG. Trade-offs: more registry boilerplate; better future-flexibility.
+
+  Decision data: paper-test p99 latency profile per slow-path cycle; per-domain AUTOPOPULATE cost; per-domain cache-line miss rate; per-domain entry growth trajectory.
+
+- **Why deferred (not effort-avoidance):** Cannot profile until paper-test runs. Both alternatives are valid + the choice depends on real signal. Premature optimization either direction would lock in wrong abstraction. v5.14.9 ships baseline; v5.14.10+ ship profiles + decides.
+- **Cost estimate:** ~30 min profiling review post-paper-test; ~3-6h ship if collapse OR further split chosen.
+- **Trigger:** After first paper-test cycle post-v5.14.9 close (typically v5.14.10+ kickoff). Operator reviews profile data; decides direction or "no change needed".
+- **Status:** OPEN
+- **Cross-ref:** v5.14.9.F-.F.6 ships; TECH_DEBT-019 (rejected monolithic — this entry's collapse direction is what 019 rejected at design-time; profiling may flip the decision); `DESIGN_SPECS/heterogeneous-registry-pattern.md` cache-layout discipline section
+
+---
+
+### TECH_DEBT-022 — Engine.cfg parser perfect-hash / trie dispatch
+
+- **Created:** 2026-05-10 by v5.14.9.F.4 design (/dod-audit LOW finding — not blocking but flagged for awareness)
+- **Severity:** LOW (boot-only path; not latency-critical)
+- **Surface:** `CoreFrameworks/ControllerConfigParser.hpp` parse_csv_engine_config function
+- **What's deferred:** parse_csv_engine_config currently does ~50 strcmp calls per cfg key (linear scan). After v5.14.9.F.4 closes the boolean subset via 5 macro-walked strcmp loops, ~30 strcmp branches remain for non-boolean cfg fields. A perfect-hash dispatch (gperf-generated) or trie-based prefix tree would eliminate the linear scan, replacing strcmp loops with O(log N) or O(1) dispatch.
+- **Why deferred (not effort-avoidance):** Parser is BOOT-ONLY (not on hot/slow path); current ~50 strcmp per key for ~100 cfg keys = ~5000 strcmp at boot. At ~5ns each, total parse overhead ~25µs at boot. Below operator-perceptible threshold. Optimization would shave maybe 10-20µs from boot time — invisible to operators.
+- **Cost estimate:** ~4-6h (gperf integration + build-time generation + parser refactor + tests). Plus ongoing maintenance burden if perfect-hash table needs regeneration when registry entries change.
+- **Trigger:** Address when (a) operator reports boot latency complaint, OR (b) v6.X cleanup ship batches engine.cfg parser improvements, OR (c) registry entry count grows to >200 (perfect-hash savings start to matter).
+- **Status:** OPEN
+- **Cross-ref:** v5.14.9.F.4 (boolean subset closed via macro-walk; non-boolean fields remain manual); TECH_DEBT-009 (broader FOREACH_CFG_FIELD scope; would also benefit from perfect-hash dispatch).
+
+---
+
+### TECH_DEBT-023 — `lat_enabled` is NOT cfg-flag-eligible (rationale preservation)
+
+- **Created:** 2026-05-10 by v5.14.9.F step 0 verification (caught audit subagent misread; cfg-flag eligibility criteria need explicit doc to prevent recurrence)
+- **Severity:** N/A (NOT-A-BUG; rationale-preservation entry to prevent future re-litigation)
+- **Surface:** `CoreFrameworks/ExecutionCore.hpp:295` (`lat_enabled` local var inside `ExecutionCore_Tick_Impl`)
+- **Class:** Same shape as TECH_DEBT-019 (rationale preservation for rejected design choice)
+- **What was considered (and rejected):** Migrating `lat_enabled` into the new `oms_cfg_flags` / `lifecycle_cfg_flags` bitmap as part of v5.14.9.F. The /readiness audit subagent flagged it as "NOT FOUND in ControllerConfig — must add" because the original plan claimed both partial_exit_enabled + lat_enabled would migrate.
+- **Why rejected (verified during step 0 inventory):** `lat_enabled` is NOT a cfg field. It's a per-Tick local variable inside `ExecutionCore_Tick_Impl<F, LAT_ENABLED, PAIR_BRANCHLESS>` template function. Three structural reasons it can't migrate:
+
+  1. **Compile-time elision:** When `LAT_ENABLED=false` (production builds without `-DLATENCY_PROFILING`), `if constexpr (LAT_ENABLED)` block compiles out entirely. **Zero runtime cost** — no atomic load, no branch, no instructions. Migrating to a runtime cfg-flag bitmap REGRESSES this to ~1-2ns per tick perpetually paid in production. At 10M ticks/sec hot-path, that's ~10-20ms/sec of pure waste. Compounds against the 40-400ns hot-path budget that's been carefully tuned.
+
+  2. **Per-core runtime mutability:** When `LAT_ENABLED=true`, the actual gate is `core->latency_stats.enabled.load(std::memory_order_relaxed)` — a per-core atomic. Operator can flip latency sampling on/off per-core via GUI live within a profiled binary. Migrating to engine-wide boot-frozen cfg LOSES this capability.
+
+  3. **CLAUDE.md item 18(a) violation:** "DEFAULT-OFF safety gates use compile-time elision via `template <bool ENABLED>` + `if constexpr` so disabled state has zero cost (no branch, no instruction)". `lat_enabled` is the canonical example of this discipline. Cfg-flag migration is an active violation.
+
+- **Decision:** v5.14.9.F migrates only OMS-DOMAIN-PROPER cfg booleans. `lat_enabled` stays as-is (template-bool + per-core atomic). Domain reframed: `FOREACH_OMS_CFG_FLAG` → `FOREACH_LIFECYCLE_CFG_FLAG` covering 3 position-exit-mechanic flags (partial_exit_enabled + breakeven_on_partial + breakeven_on_profit).
+
+- **Cfg-flag eligibility criteria (codified by this entry):** for a boolean to be cfg-flag-bitmap-eligible, ALL of the following must hold:
+  1. **Boot-frozen:** value loaded at startup; not mutated at runtime
+  2. **Engine-wide OR per-core-via-override:** not per-core via runtime atomic (those use ParameterSlot pattern)
+  3. **Hot-path-tolerant:** runtime read of bitmap bit (~1-2ns) is acceptable cost
+  4. **No compile-time elision benefit:** the flag isn't a candidate for `template <bool>` + `if constexpr` removal
+  5. **Cfg-domain-coherent:** semantically belongs to one of the 5 domains (LIFECYCLE / GATE / RISK / ML / OPS) or warrants a new domain
+
+  If ANY of (1)-(4) fails, the boolean is NOT cfg-flag-eligible. Use ParameterSlot atomic, template-bool elision, or local computation instead.
+
+- **Why this entry exists (NOT-A-BUG):** future audit subagents may make the same mistake (assuming "boolean used in code = cfg-flag-eligible"). This entry codifies the eligibility criteria as a queryable check. Future /dod-audit Pattern 3e (bit-packing candidates) should reference this entry; future /readiness Check 19 (file:line claims) should validate cfg-flag eligibility against these criteria.
+
+- **Cost:** 0h (no work to do; documentation only)
+
+- **Trigger to revisit:** if the latency-profiling subsystem itself is rewritten (e.g., replaced with hardware perf counters that don't need per-core atomic flip), revisit whether the compile-time-elision pattern is still load-bearing. Until then: status NOT-A-BUG.
+
+- **Status:** NOT-A-BUG (preserved as rationale)
+
+- **Cross-ref:** v5.14.9.F step 0 finding (2026-05-10); `CoreFrameworks/ExecutionCore.hpp:288` (template signature); CLAUDE.md item 18 (slow-path latency reduction priority — sub-clause (a)); `DESIGN_SPECS/heterogeneous-registry-pattern.md` "What's NOT cfg-flag-eligible" section (codifies criteria above).
+
+---
+
+### TECH_DEBT-024 — `breakeven_on_profit` dormant cfg field (defined + parsed; no read sites)
+
+- **Created:** 2026-05-10 by v5.14.9.F step 0 inventory
+- **Severity:** LOW (operator-facing dormant feature; no functional impact)
+- **Surface:** `CoreFrameworks/ControllerConfig.hpp:377` (declaration), `:1229` (default), `:1887` (parser)
+- **What's deferred:** `breakeven_on_profit` is an operator-facing cfg boolean ("ratchet SL to breakeven when position crosses net profit") declared + defaulted + parsed, but has ZERO read sites in the codebase. Operators can set it in engine.cfg; the engine accepts the value without applying it. Either:
+  - **Wire it up:** find the intended application site (likely `Strategies/StrategyParameters.hpp` near other SL-ratchet logic) + implement the breakeven-on-profit ratchet
+  - **Remove it:** if abandoned, delete from cfg with operator notification (engine.cfg.example update)
+- **Why deferred:** v5.14.9.F migrates this flag into FOREACH_LIFECYCLE_CFG_FLAG bitmap as part of TECH_DEBT-013(5) close. The migration is forward-compat with either wire-up or removal. After .F ships, this entry surfaces the decision: wire up vs remove.
+- **Cost estimate:** ~30 min if wire-up (locate application site + add BITMAP_IS_SET check + test); ~15 min if removal (delete + cfg.example update + operator migration WARN at boot). **Defer the decision until after .F ships.**
+- **Trigger:** Address at v5.14.9.I umbrella close OR next ship that touches lifecycle/exit logic. Operator decides "wire up" vs "remove" then.
+- **Status:** OPEN
+- **Cross-ref:** v5.14.9.F (migrates flag into bitmap); `CoreFrameworks/ControllerConfig.hpp:377-1229-1887`.

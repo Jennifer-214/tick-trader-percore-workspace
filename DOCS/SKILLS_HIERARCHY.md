@@ -43,12 +43,23 @@ skill spec + per-skill `## Execution model` section pointing at this doc.
 
 | Skill | Layer | Composition |
 |---|---|---|
-| `/readiness` | Layer 2 | May reference `/trace-deps` Step 6 inline |
+| `/readiness` | Layer 2 | May reference `/trace-deps` Step 6 inline; Check 27 references `/dod-audit` inline |
 | `/trace-deps` | Layer 2 | Standalone; may be referenced from `/readiness` Check 19 |
 | `/parity-check` | Layer 2 | May reference `DOCS/PARITY_ISSUES.md` for known-issues lookup |
 | `/plan-check` | Layer 2 | Already by-reference per its existing spec — applies `/readiness` checklist inline across N sub-plans |
 | `/merge-scan` | Layer 2 | Standalone; reuse-opportunities scan |
 | `/latency-track` | Layer 2 | Standalone; HOT_PATH_CHANGELOG entry drafting |
+| `/dod-audit` | Layer 2 | Registry-driven (DESIGN_SPECS/*.md); referenced from `/readiness` Check 27; sister to `/bug-check` (registry-driven shape) and `/foxlib-promotion` (opposite direction — application vs extraction) |
+| `/test-strength-audit` | Layer 2 | Anti-regression scan for test weakening (assertion `==` → `>=`, strict-to-loose substitutions, undocumented test deletions, empty assertions); referenced from `/readiness` Check 28 |
+| `/bug-check` | Layer 2 | Registry-driven (DOCS/RECURRING_BUG_PATTERNS.md); standalone or as part of pre-ship gate |
+| `/hft-audit` | Layer 2 | Generic HFT principles; standalone; overlaps with `/dod-audit` at cache/branchless/concurrency level (different specificity) |
+| `/foxlib-promotion` | Layer 2 | Standalone; opposite direction from `/dod-audit` (extraction vs application) |
+| `/ml-audit` | Layer 2 | Standalone; ML pipeline structural audit |
+| `/dust` | Layer 2 | Standalone; generic cleanup heuristics |
+| `/dead-code-trace` | Layer 2 | Standalone; unreferenced function detection |
+| `/finding-analyzer` | Layer 1 (orchestrator) | Composes `/trace-deps` + `/latency-track` + `/parity-check` by-reference inline; downstream consumer of `/bug-check` + `/dod-audit` findings |
+| `/patch-planner` | Layer 1 (orchestrator) | Generates HFT-compliant patching blueprints from findings; downstream consumer of `/bug-check` + `/dod-audit` |
+| `/ship` | Layer 1 (orchestrator) | Post-coding ship ritual — invokes build/test/version-bump/commit/tag/push by-script (not skill-spawning) |
 
 ## Compose by-reference, not by-spawning
 

@@ -58,14 +58,17 @@ Surprises during implementation. Compaction-degraded handoff watch-outs. Etc.
 
 | Doc | Pattern | Status |
 |---|---|---|
-| `bitmap-flag-api.md` | Reusable bit-packed flag accessor (BITMAP_*) | TODO |
-| `x-macro-registry-with-presence-dispatch.md` | X-macro registry with token-paste dispatch for partial-mirror struct generation | TODO |
-| `autopopulate-pattern-for-production-caller-class.md` | Production-caller field-population class extinction | TODO |
-| `audit-driven-pre-coding-gate.md` | Multi-audit pattern + compaction-handoff verification | TODO |
-| `wire-format-byte-preservation-discipline.md` | Guarding HMAC chains across registry refactors | TODO |
-| `structural-fix-preferred-decision-framework.md` | When to invest in structural fix vs direct patch | TODO |
+| `bitmap-flag-api.md` | Reusable bit-packed flag accessor (BITMAP_*) | ACTIVE |
+| `x-macro-registry-with-presence-dispatch.md` | X-macro registry with token-paste dispatch for partial-mirror struct generation | ACTIVE |
+| `autopopulate-pattern-for-production-caller-class.md` | Production-caller field-population class extinction | ACTIVE |
+| `audit-driven-pre-coding-gate.md` | Multi-audit pattern + compaction-handoff verification | ACTIVE |
+| `wire-format-byte-preservation-discipline.md` | Guarding HMAC chains across registry refactors | ACTIVE |
+| `structural-fix-preferred-decision-framework.md` | When to invest in structural fix vs direct patch | ACTIVE |
+| `pre-post-cfg-registry-split-for-emit-order-preservation.md` | PRE/POST registry split when emit order must interleave with sister registry | ACTIVE |
+| `slow-path-gate-registry-pattern.md` | FOREACH_SLOW_PATH_GATE + AUTOPOPULATE; SCOPE COLUMN form (Y3 token-paste dispatch) | ACTIVE (v5.14.9.B.0) |
+| `heterogeneous-registry-pattern.md` | Decision framework: SCOPE COLUMN vs DOMAIN SPLIT for heterogeneous registry shape; Y3 dispatch canon; cache-layout discipline | DRAFT v0.2 (pre-field-test; finalizes v1.0 ACTIVE at v5.14.9 umbrella close) |
 
-These are extracted from v5.14.8's design work. Future sprints add more as they solve new problems.
+These are extracted from v5.14.8 + v5.14.9 sprint work. Future sprints add more as they solve new problems.
 
 ## Going-forward
 

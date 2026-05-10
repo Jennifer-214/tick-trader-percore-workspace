@@ -1208,3 +1208,173 @@ inputs. Catches Class 18 at CI not at audit." Already implemented as
 .E.1's symmetry test pattern; this check formalizes the rule.
 
 **Effort:** 5-10 min per audit (when X-macro registries are added).
+
+---
+
+### Check 27 — DESIGN_SPECS pattern-application audit (v5.14.9+; via /dod-audit)
+
+**When this fires:**
+EVERY plan with proposed code surface (new functions, structs, registry
+entries, cfg fields, hot/slow path additions). Acts as the
+data-oriented-design pre-coding gate complementing Check 11
+(architectural sprint detection), Check 13 (strategy lifecycle), and
+Check 18 (reuse audit).
+
+**What to verify (compose-by-reference per SKILLS_HIERARCHY.md):**
+
+Read `claude-skills/dod-audit/SKILL.md` and apply its audit procedure
+INLINE as a sub-section of this report. DO NOT spawn a nested subagent.
+
+The /dod-audit procedure:
+1. Reads `tick-trader-percore-workspace/DESIGN_SPECS/*.md` catalog
+   dynamically (registry-driven; new patterns auto-included)
+2. Walks the plan's proposed code/structures
+3. Scans for missed pattern applications across 8 baseline check
+   categories: cache alignment, cache miss / false sharing,
+   concurrency invariants, branchless candidates, bit-packing
+   candidates, bit-field dispatchers, wire-format byte preservation,
+   structural-fix-preferred decisions
+4. Cross-references each finding to the relevant DESIGN_SPECS doc
+5. Severity-classifies (CRITICAL / HIGH / MEDIUM / LOW)
+
+**Verdict mapping:**
+- **PASS** ✅ — no missed pattern applications, OR all candidates
+  acknowledged in plan with explicit application or DEFERRED rationale
+- **APPLIED-N** — N existing applications correctly follow patterns
+  (sanity check; no triage needed)
+- **MISSED-N** ⚠️ — N candidate sites would benefit from pattern;
+  plan should fold in OR document deferral with `// FUTURE
+  OPPORTUNITY:` comment + TECH_DEBT entry
+- **CRITICAL** 🛑 — pattern violation has correctness/perf risk
+  (e.g., HMAC chain break, false sharing on hot path). Block ship.
+
+**Procedure for plan-mode invocation:**
+
+```bash
+# Step 1: catalog ingest
+# Walk DESIGN_SPECS/*.md (skipping README) and extract pattern signatures
+ls tick-trader-percore-workspace/DESIGN_SPECS/*.md | grep -v README
+
+# Step 2: surface enumeration from plan
+# Parse plan body for: new fns / structs / X-macro entries / cfg fields /
+# hot-path additions / slow-path additions / wire-format-affecting changes
+
+# Step 3-5: per-pattern checks (full procedure in dod-audit SKILL.md)
+# For each pattern in catalog, scan plan surface for missed applications
+# using detection signatures + symptom-based heuristics.
+```
+
+**Anti-pattern caught (v5.14.9 plan-mode pre-coding 2026-05-10):**
+v5.14.9 plan adds 4 new cfg fields + per-core override + PerCoreSnap
+factor field. /dod-audit confirms: stamp-binding via FOREACH_STAMP_BOUND_CFG
+is applied (item 21 AUTOPOPULATE pattern); FOREACH_DEGRADATION_CURVE
+registry is applied (items 13, 22); branchless curve compute fns +
+dispatch table is applied (items 18, 13); slow-path predicate cache
+is applied (item 18(c)); PerCoreSnap state_flags bitmap is applied
+(items 1, 20). MISSED would have been: bit-packing for ≥3 colocated
+bools / X-macro for ≥3 parallel sites / AUTOPOPULATE for ≥2
+production-callers. Plan-mode caught all candidates; coding starts
+with patterns intentionally-applied.
+
+**Cross-references:**
+- `claude-skills/dod-audit/SKILL.md` — full procedure + check categories
+- `tick-trader-percore-workspace/DESIGN_SPECS/` — pattern catalog
+- `DOCS/SKILLS_HIERARCHY.md` — compose-by-reference model
+- `DOCS/TECH_DEBT.md` — auto-write contract for deferred candidates
+- `CLAUDE.md` items 13, 16, 18, 19, 20, 21, 22, 23 — pattern doctrine
+
+**Effort:** 5-10 min per audit (10-15 min for full plans with
+multiple subsystems touched).
+
+---
+
+### Check 28 — Test-strength anti-regression audit (v5.14.9.D+; via /test-strength-audit)
+
+**When this fires:**
+EVERY plan that proposes test changes (new tests, modified tests,
+deleted tests). Acts as the test-specification-integrity gate
+complementing Check 27 (DESIGN_SPECS pattern application) — Check 27
+is about CODE patterns; Check 28 is about TEST-SPEC integrity.
+
+**Why this matters (v5.14.9.D 2026-05-10 lesson):**
+During v5.14.9.D coding, agent weakened a failing assertion
+(`sr.valid == 1` → `sr.model_format_version == 6`) to chase a green
+build. Caramel caught it: "we cant just edit a test to make it pass and
+lose out on an edge case or something". Reverted by deleting the
+redundant test entirely with explicit redundancy-removal justification.
+Test weakening is a Class-1 tech-debt source — it hides drift the same
+way silent exception swallowing does. Especially critical for financial
+trading software where edge case loss = real-money risk.
+
+**What to verify (compose-by-reference per SKILLS_HIERARCHY.md):**
+
+Read `claude-skills/test-strength-audit/SKILL.md` and apply its
+5-pattern detection INLINE as a sub-section of this report. DO NOT
+spawn a nested subagent.
+
+The /test-strength-audit procedure scans for:
+1. **Pattern A:** Count assertion weakenings (`==` → `>=` without
+   `_smoke_check` suffix or registry-COUNT justification)
+2. **Pattern B:** Strict-to-loose substitutions (`sr.valid == 1` →
+   `sr.format_version == N` etc.)
+3. **Pattern C:** Test deletion without justification (no commit-message
+   citation of "covered by", "property no longer testable", or "test
+   was wrong")
+4. **Pattern D:** Empty / tautological assertions (`check("foo", true)`)
+5. **Pattern E:** Comment-only test deletion (`// check(...)`)
+
+**Plan-mode invocation procedure:**
+
+```bash
+# For plan-mode: parse plan body for test-related claims
+# (e.g., "Tests: ~13 new", "delete obsolete v5.X.Y tests")
+
+# For commit-mode: scan working tree / staged / commit-range
+git diff -- 'tests/**/*.cpp' 'tests/**/*.hpp'
+# Apply Pattern A-E detection (see /test-strength-audit SKILL.md)
+
+# For each finding:
+# - Cross-reference commit message for justification
+# - Verify cited "covered by" tests actually exist + cover property
+# - Severity-classify HIGH / MEDIUM / LOW
+```
+
+**Verdict mapping:**
+- **PASS** ✅ — no weakening patterns found, OR all candidates have
+  explicit justification per the deletion convention
+- **HIGH** ⚠️ — assertion weakening hides drift. Block ship until
+  reverted or explicitly justified per `_smoke_check` suffix or
+  redundancy/obsolescence/fix citation
+- **MEDIUM** ⚠️ — borderline pattern; weakening mildly justified but
+  could be tightened. Address during current sprint.
+- **LOW** — legitimate weakening (smoke_check suffix, registry COUNT
+  loosening when registry grows). No action required.
+
+**Test naming convention (enforced by Check 28):**
+
+Tests with `_smoke_check` suffix are explicitly weak by design.
+Pattern A/B/C reports skip these. Tests without the suffix are STRICT
+by contract.
+
+**Test-deletion justification convention (enforced by Check 28):**
+
+When `check(...)` lines are removed, commit message must cite ONE of:
+- "covered by `<existing_test_name>`" — REDUNDANCY (auditor verifies)
+- "property no longer testable because `<X>`" — OBSOLESCENCE
+- "test was wrong; correct invariant is `<new_check>`" — FIX
+
+**Anti-pattern caught (v5.14.9.D 2026-05-10):**
+Strict-to-loose substitution (Pattern B): `sr.valid == 1` removed,
+replaced with `sr.model_format_version == 6`. No commit-message
+justification. Reverted via test-deletion + redundancy citation
+(comprehensive coverage by v5.14.1.B.3.E).
+
+**Cross-references:**
+- `claude-skills/test-strength-audit/SKILL.md` — full 5-pattern
+  detection procedure
+- `DOCS/SKILLS_HIERARCHY.md` — compose-by-reference model
+- `DOCS/TECH_DEBT.md` — auto-write contract for deferred-weakening entries
+- v5.14.9.D commit (b703e61) — pattern documented
+
+**Effort:** 3-5 min per audit (commit-mode); 5-10 min for plan-mode
+sweeps that surface multiple test-modifying changes.

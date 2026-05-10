@@ -279,6 +279,109 @@ If any of the following becomes painful in a future ship, revisit:
 
 ---
 
+## Storage classes within X-macro registries (v5.14.8+)
+
+Some registries have entries that can be EFFICIENTLY STORED via different
+mechanisms. v5.14.8 introduced the concept of explicit STORAGE CLASS per
+entry, allowing the X-macro to dispatch storage strategy alongside
+typed-value declaration.
+
+### Storage class vocabulary
+
+| Storage class | C++ representation | When to use |
+|---|---|---|
+| `BIT_FLAG` | 1 bit in a uint16_t / uint32_t / uint64_t bitmap | Boolean state (on/off, set/unset, fired/idle). Auto-allocates bit position. |
+| `COUNTER_U32` | Standalone `uint32_t` field | Incrementing event counter (NaN events, stale events, retry counts). |
+| `PERCENT_U8` | Standalone `uint8_t` field | 0-100 percentage (warmup progress, fill ratio). |
+| `TYPED_VALUE` | Per-entry typed field (int, double, char[N], etc.) | Architectural metadata (timestamps, hashes, names, hyperparams). |
+
+### Why BIT_FLAG matters
+
+Reference precedent: CLAUDE.md item 1 (`Portfolio<uint16_t>` bitmap;
+`OrderManagerState.order_bitmap`). Wins when applied:
+
+1. **Memory compactness** — 64 binary states in 8 bytes (vs 64 bytes byte-per-flag)
+2. **Branchless multi-flag check** — `(flags & (MASK_X | MASK_Y))` in a single uint64_t compare
+3. **Atomic multi-flag update** — `__atomic_fetch_or` instead of N separate atomic stores
+4. **Branchless "any flag set?" gate** — single uint64_t compare `(flags != 0)`
+5. **Auto-allocated bit positions** via X-macro (no manual collision risk)
+6. **Cache-friendly** — flag-state for an entire core fits in one word
+
+### Group has_* flags (preserves existing wire-format semantics)
+
+When migrating an existing structure that uses GROUP has_* flags (one
+flag gates N typed fields populated together), the registry can
+preserve the group semantic:
+
+```cpp
+// Two separate macros: groups + typed fields
+//   GROUPS lists the group has_* names + their bit positions
+//   FIELDS lists every typed value with its group association
+//   group="_" means standalone (auto-allocates own has_* bit)
+
+#define FOREACH_STAMP_BOUND_MODEL_CONST_GROUPS(X)                       \
+    X(xgb_hyperparams,     "any XGBoost hyperparam set?")     /* bit 7 */ \
+    X(stamp_inference_cfg, "any inference cfg field set?")    /* bit 8 */ \
+    X(stamp_fees,          "fee rates set?")                  /* bit 9 */ \
+    X(stamp_label_params,  "label params set?")               /* bit 10 */
+
+#define FOREACH_STAMP_BOUND_MODEL_CONST(X)                              \
+    /* bit 0 — standalone */                                            \
+    X(training_poll_interval,    _,    uint32_t, "%u",   0,   /*...*/) \
+    /* bit 1 — standalone */                                            \
+    X(stamp_model_num_outputs,   _,    int,      "%d",   0,   /*...*/) \
+    /* bit 7 (shared) — xgb_hyperparams group */                        \
+    X(stamp_xgb_max_depth,       xgb_hyperparams,   int, "%d", 0, /*..*/) \
+    X(stamp_xgb_learning_rate,   xgb_hyperparams,   double, "%.17g", 0.0, /*..*/) \
+    /* etc */
+```
+
+Wire format preserved: existing stamps still emit per-group flag lines
+(`has_xgb_hyperparams=1`, `xgb_max_depth=6`, ...). Internal storage
+shifts from N×uint8_t flags to bit positions in a single uint64_t.
+Caller migration: `m->has_X` → `STAMP_HAS(m, X)` accessor (mechanical
+find/replace).
+
+### Migration discipline (when applying BIT_FLAG to existing surface)
+
+1. **Preserve wire format** — registry entry order must match canonical
+   stamp body emit order. Verify byte-for-byte that v5.14.x stamps
+   continue to load identically.
+2. **Provide accessor macros** — `STAMP_HAS(result, name)`,
+   `STAMP_SET(result, name)`, `STAMP_CLR(result, name)`. Callers don't
+   touch raw bitmap fields.
+3. **Document bit allocation** — comments in the registry show which
+   bit means what. Future readers can cross-reference debug output.
+4. **Compile-time uniqueness** — X-macro auto-allocates bits via counter;
+   compiler enforces no duplicates. Manual bit assignment risks collisions.
+5. **Round-trip test** — emit → parse → field-access must produce
+   identical pre/post values for every registry entry.
+
+### Candidate sites for BIT_FLAG application (TECH_DEBT-013 sweep)
+
+Current byte-per-flag locations in the codebase that should adopt
+BIT_FLAG when the next ship touches their surface:
+
+| Site | Flags today | Bit-pack target | Notes |
+|---|---|---|---|
+| `ModelStampResult` has_* / `StampInferenceCfgInputs` has_* / `ModelHandle` has_* | 24+ | uint64_t `has_flags` | DONE in v5.14.8.A (mixed per-field + group semantics preserved) |
+| `PerCoreSnap` failure-mode flags | 2 binary + 4 counters/percent | uint16_t `failure_flags` + standalone counters | DONE in v5.14.8.B/C via FOREACH_FAILURE_MODE registry |
+| `PerCoreSnap` non-failure state flags (`ml_scaler_present`, `ensemble_active`, etc.) | 3-5 | merge into `failure_flags` OR new `state_flags` uint16_t | TECH_DEBT-013; trigger: next ship touching PerCoreSnap |
+| `FOREACH_FEATURE.enabled` (40 features) | 40 byte-per-flag | uint64_t `enabled_bitmap` + `IS_FEATURE_ENABLED(i)` macro | TECH_DEBT-013; trigger: next FeatureRegistry storage refactor |
+| `OrderManager.partial_exit_enabled` + `ExecutionCore.lat_enabled` | 2 | engine-wide uint16_t `cfg_flags` | TECH_DEBT-013; trigger: next ship adding 3+ engine-wide flags |
+| `ControllerEventLoop.partner_pending_active` | 1 per-core | merge into per-core flags bitmap | TECH_DEBT-013; trigger: next ship adding 2+ per-core flags |
+| `ShardedSnapshot.any_scaler_present` + `any_scaler_failed` | 2 | snapshot summary bitmap | TECH_DEBT-013; trigger: next ship touching snapshot serialization |
+| `Order.is_maker` / `is_buyer_maker` / `Tick.is_buyer_maker` | per-record | Standalone — KEEP byte-per-flag | Per-record storage; bit-packing across records adds indirection cost > savings |
+| `FeatureStandardizer.has_winsor_bounds` | 1 | could fold into scaler header bitmap | Low-priority (single flag); revisit when 3+ scaler-side flags exist |
+
+When a future ship touches one of these surfaces and would otherwise
+add another byte-per-flag field, **stop and apply BIT_FLAG instead**.
+Each migration is small (~30 min for accessor-macro substitution at
+caller sites). Cumulative win across all candidates: ~70-100 bytes per
+core; cache-line alignment benefits compound.
+
+---
+
 ## Post-v5.8 rule (CLAUDE.md decision #13)
 
 **Any new category that requires multi-site addition must use an

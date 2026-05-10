@@ -26,6 +26,8 @@ gate.
 
 ## Class 1 — Strategy lifecycle orphans
 
+**Surface:** live (engine slow-path strategy dispatch).
+
 **Symptom:** strategy adaptive behavior (regression-driven filter
 tightening, trailing SL ratchet, regime-driven retune) silently
 absent. Strategies "appear to work" because their entry gate fires,
@@ -61,6 +63,8 @@ but present in `portfolio_controller` are candidate orphans.
 ---
 
 ## Class 2 — Display ↔ execution divergence
+
+**Surface:** gui + live (display panel reads diverge from hot/slow-path execution writes).
 
 **Symptom:** GUI shows a number that has nothing to do with what
 will actually trigger an exit. e.g., displays SL=$50000 but the hot
@@ -143,6 +147,8 @@ grep -A20 "READY\|wait\|in pos" GUI/DashboardPanels.hpp | \
 
 ## Class 3 — Drain count under partials
 
+**Surface:** drainer (OMS drainer + partial fill consumption).
+
 **Symptom:** Cores beyond `num_cores` under partials silently never
 trade. Submit commands stranded in queues forever.
 
@@ -175,6 +181,8 @@ grep -rn "OMS_DrainSubmit\b" CoreFrameworks/ | \
 ---
 
 ## Class 4 — Snapshot save/load asymmetry
+
+**Surface:** boot (snapshot serialization on shutdown + load on startup).
 
 **Symptom:** Per-core stats reset on engine restart even though the
 file exists and the user expected continuity. Stats panel shows
@@ -212,6 +220,8 @@ grep -oE "fread\(&s\.[a-z_]+" ShardedSnapshotPersist.hpp | sort -u
 ---
 
 ## Class 5 — Reset Paper completeness
+
+**Surface:** boot (reset action — must clear all state, not just visible state).
 
 **Symptom:** Click "Reset Paper", expect blank slate, but the next
 trade exhibits subtle stale behavior — entry blocked by stale
@@ -252,6 +262,8 @@ grep -A40 "paper_reset_in_progress" CoreFrameworks/EngineSharded.hpp
 
 ## Class 6 — OMS counter persistence
 
+**Surface:** boot (snapshot save/load of OMS state — counters must round-trip).
+
 **Symptom:** session-cumulative counters on the OMS (fee totals,
 maker/taker breakdown, fill counts) reset to zero on engine restart
 even though `balance` and `realized_pnl` continue from the snapshot.
@@ -290,6 +302,10 @@ grep "fwrite(&state->oms->" CoreFrameworks/ShardedSnapshotPersist.hpp
 
 ## Class 7 — Threading topology violations (audited clean post-v5.4.x)
 
+**Surface:** audited-clean (per-core SoA topology + atomic-or-per-core mutating state).
+
+**Detection:** [audited-clean — N/A; durable validation is `./build.sh tsan` clean run]
+
 **Symptom:** would manifest as data races on per-core fields under
 TSan stress. Pre-fixes in v4.7.x already converted shared mutating
 state to per-core or atomic. Round 2 audit (2026-04-30) flagged two
@@ -319,6 +335,8 @@ candidate violations; both turned out to be false alarms:
 ---
 
 ## Class 8 — User-configurable features silently inactive in sharded
+
+**Surface:** live (cfg-flag → runtime decision-path consumption).
 
 **Symptom:** user flips a cfg flag, expects behavior change, sees
 none. TUI may even display "enabled" status. The cfg field is parsed,
@@ -374,6 +392,8 @@ done
 
 ## Class 9 — Shutdown blocking on operations the user didn't want
 
+**Surface:** boot (shutdown ordering + cancellation propagation).
+
 **Symptom:** Ctrl+C / window-close hangs the terminal for tens of
 seconds (or indefinitely). User can't tell if the engine is dead or
 working. Process appears stuck.
@@ -412,6 +432,8 @@ grep -n -A2 "shutdown requested\|joining threads" CoreFrameworks/EngineSharded.h
 ---
 
 ## Class 10 — Strategy-regime mismatch
+
+**Surface:** live (regime classifier → strategy dispatch coupling).
 
 **Symptom:** A strategy fires entries in regimes where its
 contract doesn't make sense (e.g. MOM buying breakouts in RANGING
@@ -463,6 +485,8 @@ jq -s 'group_by(.cat=="entry") | .[] | select(.[0].cat=="entry") |
   "wrong" regime with negative net bps is the smoking gun.
 
 ## Class 11 — Extensibility friction causing silent drift
+
+**Surface:** live (multi-site addition pattern — N sites must agree; X-macro registry pattern is the structural fix).
 
 **Symptom:** A category that supports extension (codes, metrics,
 panels, etc.) is implemented at multiple call sites without a
@@ -559,6 +583,10 @@ filters + observability, all already in place post-v5.7.
 ---
 
 ## Class 12 — Wired-but-unexercised ML paths (v5.9 sprint)
+
+**Surface:** ml (ML pipeline — feature pack, model load, inference, fall-through paths).
+
+**Detection:** [delegates to /ml-audit — that skill walks the ML pipeline structurally and surfaces wired-but-unexercised paths]
 
 ### Pattern
 
@@ -744,7 +772,7 @@ unpopulated by the suite caller). Worth retroactively running
 
 ## Class 14 — Plan calls a function or struct field that doesn't exist
 
-**Surface:** any plan in `plans/` that names a callee or struct
+**Surface:** plan-time. (Detail: any plan in `plans/` that names a callee or struct
 member without verifying it exists in the current codebase. Catches
 silent staleness ("v5.10 plan claimed X exists; v5.13 deleted X")
 AND wishful planning ("plan author meant to add X but forgot to
@@ -757,6 +785,8 @@ function the plan referenced doesn't exist." Worse: if the plan
 loosely references "the existing cancel API" without naming it,
 implementation may invent a wrong signature → runtime UB instead
 of compile failure.
+
+**Detection:** [delegates to /trace-deps — that skill performs the plan-vs-codebase grep walk. Body below documents the pattern.]
 
 **Root cause:** plan author wrote against assumed-existing surface
 without `grep`ping the codebase. Common when:
@@ -825,7 +855,7 @@ grep -A100 "^struct StructName" CoreFrameworks/<file>.hpp | \
 
 ## Class 15 — Function signature drift between plan and canonical typedef
 
-**Surface:** any plan adding a new function that must match an
+**Surface:** plan-time. (Detail: any plan adding a new function that must match an
 existing typedef (e.g., `LabelFn`, `FeatureComputeFn`,
 `StrategyEvalFn`). The dispatcher casts function pointers via the
 typedef — wrong signature = silent runtime UB.
@@ -836,6 +866,8 @@ runtime calls dispatch through wrong stack layout → wrong values
 read for arguments, undefined behavior. Tests that exercise the
 function directly pass; tests that exercise it through the
 dispatcher fail with non-deterministic values.
+
+**Detection:** [delegates to /trace-deps Step 3 — signature drift check.]
 
 **Root cause:** plan author wrote the new function's signature
 from memory, not from the canonical typedef. Common when:
@@ -890,7 +922,7 @@ grep -rn "typedef.*Fn\b\|using.*Fn\s*=" \
 
 ## Class 16 — Naming convention drift breaks X-macro dispatcher
 
-**Surface:** any plan adding a function that must be discovered by
+**Surface:** plan-time. (Detail: any plan adding a function that must be discovered by
 an X-macro registry (e.g., `FOREACH_FEATURE(X)`, `FOREACH_TARGET(X)`,
 `FOREACH_STRATEGY(X)`). Registry expects a specific function-name
 PREFIX; missing prefix = link failure (registry calls
@@ -903,6 +935,8 @@ registry expanded `FEATURE(RegimeTrendStrength, ...)` to
 `Compute_RegimeTrendStrength`). Easy to fix once detected;
 frustrating to detect mid-coding because the linker error doesn't
 explicitly name the registry / X-macro as the calling site.
+
+**Detection:** [delegates to /trace-deps — symbol-prefix verification before coding.]
 
 **Root cause:** plan author saw the symbol in conversation
 ("Compute the regime trend strength") and named the function
@@ -955,7 +989,7 @@ grep -B2 -A5 "^#define FOREACH_FEATURE" ML_Headers/FeatureRegistry.hpp
 
 ## Class 17 — Architectural deferral made without grepping adjacent struct fields
 
-**Surface:** any plan that defers a feature with rationale "we
+**Surface:** plan-time. (Detail: any plan that defers a feature with rationale "we
 don't have data X". Can be wrong if X (or a usable analog) IS
 already in an adjacent struct that the plan author didn't grep.
 Expensive class because it punts months of work for zero reason.
@@ -966,6 +1000,8 @@ Claude) reads the plan months later, asks "wait, isn't X
 accessible via Y?" — yes, X is in `someStruct->ring_buf[]` which
 the plan author didn't check. The deferral was invalid; vN could
 have shipped in 2 hours instead of vN+1's 2 weeks.
+
+**Detection:** [delegates to /trace-deps Step 5 — 2-hop adjacent-struct walk before accepting deferrals.]
 
 **Root cause:** pre-coding audit (typically /trace-deps) checks
 "does the surface I'm calling EXIST" but doesn't always check
@@ -1033,7 +1069,7 @@ grep -A50 "^struct PointedToStruct" <file>.hpp
 
 ## Class 18 — "Mirror" plans missing data-flow dependencies
 
-**Surface:** any plan that says "mirror X for Y" or "duplicate the
+**Surface:** plan-time. (Detail: any plan that says "mirror X for Y" or "duplicate the
 pattern of X for the new Y context" without enumerating the DATA
 SOURCES that X reads from. Audits verify the SYMBOLS in the
 mirrored block resolve at the new call site, but skip the upstream
@@ -1056,7 +1092,7 @@ actually consumes). For "duplicate this pattern" plans, the audit
 must walk the body of the source code being mirrored + verify
 each upstream read has an equivalent on the new side.
 
-**Detection:**
+**Detection:** [delegates to /trace-deps Step 6 — data-flow dependency walk for mirror plans.]
 
 ```bash
 # For any plan saying "mirror X" or "duplicate X for Y":
@@ -1127,6 +1163,10 @@ sed -n '<start>,<end>p' source.hpp | grep -oE '[a-z_]+(_)?->[a-z_]+'
 ---
 
 ## Class 18 STRENGTHENED — call-sequence enumeration (added 2026-05-09 by v5.14.2.E.1)
+
+**Surface:** plan-time. (Sub-section under Class 18; same delegation applies.)
+
+**Detection:** [delegates to /trace-deps Step 6 — call-sequence enumeration extension to data-flow walk.]
 
 **The strengthening:** Class 18's original detection focused on
 DATA-FLOW INPUTS (struct field reads). Equally critical for "mirror X

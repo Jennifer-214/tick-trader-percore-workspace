@@ -196,6 +196,110 @@ A finding that exists only in a transient audit report or chat memory gets re-di
 
 ---
 
+### TECH_DEBT-008 — Maker order MVP (v5.14.7) deferred until order book data captured
+
+- **Created:** 2026-05-09 by v5.14.6 close (operator decision pre-v5.14.8)
+- **Severity:** MEDIUM (blocks maker fee path; engine remains taker-only until addressed)
+- **Surface:** `CoreFrameworks/OrderManager.hpp` (Order struct + SubmitCommand), `DataStream/BinanceOrderAPI.hpp` (POST_ONLY submit + cancel REST), `CoreFrameworks/EngineSharded.hpp` (slow-path price-ladder), `Backtest/BacktestSharded.hpp` (queue-position fill simulation for full impl)
+- **What's deferred:** Full Maker order path. v5.14.7 plan (`plans/2026-05-08-v5.14.7-maker-order-mvp.md`) was a 4-sub-tag MVP (~550 LOC) for cfg-gated POST_ONLY LIMIT submit + drainer cancel-and-replace. Operator deferred 2026-05-09 because no order book data has been captured (DepthRecorder not run; no historical depth CSVs available for backtest replay). MVP path-ladder logic + drainer cancel sweep + REST endpoints are foundation work the full implementation reuses unchanged (~90% of MVP code is in full impl).
+- **Why deferred (not effort-avoidance):** Without order book data, MVP gives no testing surface — backtest can't replay LIMIT fills (no depth CSVs to advance `DepthReplayState`); live paper-test would work but is operator's call. Operator chose: defer entire maker work to a comprehensive master plan once depth data exists, vs ship MVP-now-foundation that can't be paper-validated. NOT effort-avoidance — total effort is the same (~30-45h either path); sequencing differs.
+- **Cost estimate:**
+  - MVP-now path: ~6h ship + ~25-40h v6.0 full = ~30-45h total
+  - Defer-to-master path: ~30-45h v6.0 master plan with comprehensive design (queue-position simulation, depth-aware offset, fill-rate feedback, race reconciliation, fee rebate, multi-level depth)
+- **Trigger:** When operator captures order book data (via `DepthRecorder` runs, or external depth-tape feed). At that point either:
+  - Reopen v5.14.7 MVP plan + ship as foundation
+  - OR draft v6.0 maker master plan covering full scope (recommended: this matches operator's defer-to-master decision)
+- **Status:** OPEN
+- **Cross-ref:** `plans/2026-05-08-v5.14.7-maker-order-mvp.md` (MVP plan; deferred); `plans/2026-05-08-MASTER-v5.14-foxml-port-and-maker.md` Phase 3 (master plan reference); existing depth infrastructure: `DataStream/BinanceDepth.hpp` (`BookSnapshot<F>` with bids[5]/asks[5]), `DataStream/DepthReplayState.hpp` (per-tick replay; needs CSV input), `DataStream/DepthRecorder.hpp` (capture path; not currently run); v5.14.6 close commit (predecessor)
+
+---
+
+### TECH_DEBT-009 — FOREACH_CFG_FIELD registry for non-stamp-bound cfg fields
+
+- **Created:** 2026-05-09 by v5.14.8 scope decision (Interpretation B; deferred N-site pattern audit)
+- **Severity:** MEDIUM (every new cfg field = 4-site manual update: parser line + struct field + engine.cfg.example entry + CHANGELOG note; recurring class)
+- **Surface:** `CoreFrameworks/ControllerConfig.hpp` (struct), `CoreFrameworks/ControllerConfigParser.hpp` (parser), `engine.cfg.example` (operator-facing reference), `DOCS/CHANGELOG.md` (migration notes per ship)
+- **What's deferred:** Convert non-stamp-bound cfg field additions from manual N-site updates to a `FOREACH_CFG_FIELD` registry + companion `CFG_FIELD_AUTOPOPULATE` macro. Each registry entry would auto-generate: struct field declaration, parser case, default value, engine.cfg.example doc line. Stamp-bound cfg fields are already covered by `FOREACH_STAMP_BOUND_CFG` (StampBoundCfgRegistry.hpp); this would be the sister registry for non-stamped cfg.
+- **Why deferred (not effort-avoidance):** v5.14.8 work doesn't touch cfg parser subsystem; conversion would be scope creep into a different file family. Cfg parser has its own discipline (back-compat + boot WARN cadence) that needs design conversation before mechanical conversion. Different blast radius from stamp body work (parser changes affect EVERY operator's cfg loading).
+- **Cost estimate:** ~6-8h structural ship (registry + macro + docs); ~30-40 cfg fields to migrate; per-field migration trivial (~5 min each)
+- **Trigger:** Next ship that adds 3+ new non-stamp-bound cfg fields in one umbrella, OR ship that touches ControllerConfigParser.hpp for any reason. At that point address structurally instead of compounding the manual pattern.
+- **Status:** OPEN
+- **Cross-ref:** `ML_Headers/StampBoundCfgRegistry.hpp` (sister registry for stamp-bound cfg; pattern precedent); v5.14.8 (sibling structural ship for stamp body); CLAUDE.md item 13 (X-macro audited categories list — this entry would join)
+
+---
+
+### TECH_DEBT-010 — FOREACH_CALIB_LOG_COL registry for calibration log CSV columns
+
+- **Created:** 2026-05-09 by v5.14.8 scope decision (Interpretation B; deferred N-site pattern audit)
+- **Severity:** LOW (small N currently; CSV columns relatively stable; pattern still recurring)
+- **Surface:** Calibration log CSV writer (`CoreFrameworks/CalibrationLog.hpp` or similar), reader/parser (post-process tooling), header definition
+- **What's deferred:** Convert calibration log CSV column additions from manual 3-site updates (header constant + writer column + reader/parser column) to a `FOREACH_CALIB_LOG_COL` registry. Each registry entry would auto-generate header position, writer printf format, reader scanf format.
+- **Why deferred (not effort-avoidance):** v5.14.8 work doesn't touch calibration log path; small N (currently ~20 columns) means manual pattern is tractable. Worth converting only when the next ship tries to add ≥3 columns and would otherwise compound the pattern.
+- **Cost estimate:** ~3-4h structural ship; ~20 columns to migrate; trivial per-column
+- **Trigger:** Next ship that adds 3+ calibration log columns in one umbrella (e.g., maker-side fill metrics when v6.0 maker ships, or new ML observability columns), OR ship that touches the CSV writer/reader for any reason.
+- **Status:** OPEN
+- **Cross-ref:** v5.13.0.B calibration log infrastructure; v5.14.7 deferred plan (would have added 4 maker-related columns)
+
+---
+
+### TECH_DEBT-011 — FOREACH_PER_CORE_SNAP_FIELD registry for general visible-state snapshot fields
+
+- **Created:** 2026-05-09 by v5.14.8 scope decision (Interpretation B; deferred N-site pattern audit)
+- **Severity:** MEDIUM (large N: ~30+ visible-state fields; recurring class but performance-sensitive)
+- **Surface:** `DataStream/EngineTUI.hpp` (PerCoreSnap struct + populator), `GUI/DashboardPanels.hpp` + sister panels (consumers), snapshot capture/copy paths
+- **What's deferred:** Convert PerCoreSnap general visible-state field additions (positions, gates, predictions, regime, etc.) to a `FOREACH_PER_CORE_SNAP_FIELD` registry. Each entry auto-generates struct field, populator (capture from CoreContext / EventLoopCoreState), GUI-side accessor.
+- **Why deferred (not effort-avoidance):** Distinct from FOREACH_FAILURE_MODE (v5.14.8 covers failure-mode fields specifically; this would cover the LARGER set of visible state). Performance-sensitive: snapshot capture runs in slow-path tail; registry expansion needs to preserve existing memcpy-friendly layout. Needs design conversation about: (a) whether to split capture into hot/warm/cold tiers, (b) whether registry entries should declare their write cadence, (c) cache-line alignment preservation. NOT a mechanical conversion.
+- **Cost estimate:** ~10-15h architectural ship (design + registry + migration of ~30 fields + tests); requires preceding design doc
+- **Trigger:** Next ship that adds 5+ PerCoreSnap general fields in one umbrella (likely v5.X+ ML observability work or v6.0 maker), OR ship that audits PerCoreSnap layout for cache performance.
+- **Status:** OPEN (needs design doc before implementation)
+- **Cross-ref:** v5.14.8.B+C (FOREACH_FAILURE_MODE; sister registry for the failure-mode subset); CLAUDE.md item 12 (display ↔ execution invariant — every hot-path predicate term needs PerCoreSnap field; current pattern is manual)
+
+---
+
+### TECH_DEBT-013 — Bit-packed boolean flags (BIT_FLAG storage class) for byte-per-flag patterns across codebase
+
+- **Created:** 2026-05-09 by v5.14.8.B FOREACH_FAILURE_MODE design discussion (operator question: "couldnt we track each one using a single bit since theyre basically 1 or 0?")
+- **Severity:** MEDIUM (recurring inefficiency; data-oriented design alignment opportunity; aligns with CLAUDE.md item 1 Portfolio uint16_t bitmap pattern)
+- **Surface:** Multiple — see candidate inventory below
+- **Pattern definition:** Replace `uint8_t` boolean flag fields with bit-packed `uint16_t` / `uint32_t` / `uint64_t` bitmap. X-macro entries declare `BIT_FLAG` storage class; X-macro auto-allocates bit positions + generates `MASK_##name` constants + ergonomic `IS_SET` / `SET` / `CLR` accessor macros. Wins: memory compactness (16-64 flags in 2-8 bytes), branchless multi-flag check via mask (`flags & (MASK_X | MASK_Y)`), branchless "any flag set?" check (`flags != 0`), atomic multi-flag updates via `__atomic_fetch_or`.
+- **Pattern precedent:** `Portfolio<uint16_t>` bitmap (CLAUDE.md item 1); `OrderManagerState.order_bitmap` (uint16_t); v5.14.8.B `FailureModeRegistry.hpp` (newly established X-macro pattern with BIT_FLAG / COUNTER_U32 / PERCENT_U8 storage classes).
+- **What's deferred:** Apply BIT_FLAG storage class to byte-per-flag patterns NOT in v5.14.8's active touch surface. Each target gets its own focused ship (or folds into the next ship that touches that surface).
+
+**Candidate inventory (sweep 2026-05-09):**
+
+| Surface | Current flags | Bit-pack target | Effort | Trigger |
+|---|---|---|---|---|
+| `failure_flags` (FOREACH_FAILURE_MODE) | 2 | uint16_t | DONE in v5.14.8.B | — |
+| Stamp body `has_*` (FOREACH_STAMP_BOUND_MODEL_CONST) | 24+ | uint64_t (`has_flags`) | IN-SCOPE v5.14.8.A | — |
+| `PerCoreSnap` non-failure state flags (ml_scaler_present, ensemble_active, etc.) | 3-5 | merge into failure_flags OR new `state_flags` uint16_t | ~3-4h | Next ship touching PerCoreSnap layout |
+| `FOREACH_FEATURE` `enabled` flag | 40 features | uint64_t (`enabled_bitmap`) + `IS_FEATURE_ENABLED(i)` macro | ~3-4h | Next ship touching FeatureRegistry storage layout |
+| `OrderManager.partial_exit_enabled` + `ExecutionCore.lat_enabled` | 2 | engine-wide uint16_t `cfg_flags` | ~1-2h | Next ship adding 3+ engine-wide cfg flags |
+| `ControllerEventLoop.partner_pending_active` (per-core) | 1 | merge into per-core flags bitmap (NEW; or fold into `failure_flags`) | ~1h | Next ship adding 2+ per-core boolean flags |
+| `ShardedSnapshot.any_scaler_present` + `any_scaler_failed` | 2 | merge into snapshot summary bitmap | ~1h | Next ship touching ShardedSnapshot serialization |
+
+- **Why deferred (not effort-avoidance):** Each surface has DIFFERENT caller-migration scope; bundling all into one ship would explode blast radius. Pattern-as-design-tool: future ships touching any of these surfaces apply BIT_FLAG storage class as part of the work. v5.14.8 demonstrates the pattern + establishes the ergonomic API; subsequent ships extend it.
+- **Cost estimate:** ~10-15h cumulative across all candidates (1-4h each); incremental per ship.
+- **Trigger:** Each candidate listed above has its own trigger (next ship touching that surface). Pattern documentation in `DOCS/EASY_ADDITIONS_INVARIANTS.md` (added in v5.14.8.0 docs) tells future maintainers to apply BIT_FLAG when adding boolean flags.
+- **Memory savings (cumulative if all applied):** ~70-100 bytes per core; cache-line alignment benefits compound. ~16 cores × ~80B = ~1.3 KB system-wide.
+- **Status:** OPEN (pattern established in v5.14.8.B; candidates listed for systematic application as triggered)
+- **Cross-ref:** v5.14.8.B (pattern establishment in `MemHeaders/FailureModeRegistry.hpp`); CLAUDE.md item 1 (Portfolio uint16_t bitmap precedent); CLAUDE.md item 18 (data-oriented design + branchless mask compute philosophy); `DOCS/EASY_ADDITIONS_INVARIANTS.md` (pattern documentation; updated in v5.14.8.0)
+
+---
+
+### TECH_DEBT-012 — FOREACH_OMS_STATE registry for OrderManager state fields
+
+- **Created:** 2026-05-09 by v5.14.8 scope decision (Interpretation B; deferred N-site pattern audit)
+- **Severity:** MEDIUM (recurring pattern; performance-CRITICAL surface — drainer thread reads OMS state every cycle)
+- **Surface:** `CoreFrameworks/OrderManager.hpp` (OrderManagerState struct + Init), drainer thread reads, snapshot save/load
+- **What's deferred:** Convert OMS state field additions to a `FOREACH_OMS_STATE` registry. Each entry auto-generates struct field, Init zero/default, snapshot serializer/deserializer, drainer-thread accessor.
+- **Why deferred (not effort-avoidance):** PERFORMANCE-CRITICAL surface — drainer thread reads OrderManagerState every cycle in production. Registry expansion MUST preserve current cache-line layout + alignas() decorators (RAII destructor on resource-owning structs per CLAUDE.md exception note). Conversion needs benchmarking before/after to verify no slowdown. Distinct concern from stamp body conversion (which is boot-only). Needs design conversation about: (a) whether to use intrusive macro at struct definition site or hoisted registry, (b) snapshot serialization round-trip preservation (Class 4 risk), (c) cache-line span analysis after conversion.
+- **Cost estimate:** ~12-18h architectural ship (design + benchmarking + registry + migration + snapshot round-trip tests + cache-line analysis); requires preceding design doc + bench gate
+- **Trigger:** Next ship that adds 3+ OMS state fields in one umbrella (likely v6.0 maker order lifecycle states), OR ship that touches OMS struct layout for cache performance optimization.
+- **Status:** OPEN (needs design doc + bench plan before implementation)
+- **Cross-ref:** v5.14.4 (recent OMS work; added last_seen_trade_id field manually); v5.14.7 deferred (would have added 4 maker-related Order struct fields manually); CLAUDE.md item 5 (OMS submit funneling discipline); RAII destructor exception in OrderManager.hpp:~v5.11.26
+
+---
+
 ## Future debt findings will append here
 
 When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral candidates:

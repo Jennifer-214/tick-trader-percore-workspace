@@ -41,6 +41,7 @@ Status transitions:
 - **IN-FLIGHT** — ship in progress is addressing
 - **CLOSED** — fixed in a specific ship (cite commit/tag)
 - **NOT-A-BUG** — review determined this isn't actually debt
+- **DEFERRED-INDEFINITE** — debt acknowledged but no near-term plan to ship; trigger documented (often external dependency outside operator's control). Distinct from OPEN (which implies "scheduled or schedulable"). If/when trigger event occurs, status flips back to OPEN.
 
 ## Auto-write contract (set 2026-05-09)
 
@@ -204,20 +205,28 @@ A finding that exists only in a transient audit report or chat memory gets re-di
 
 ---
 
-### TECH_DEBT-008 — Maker order MVP (v5.14.7) deferred until order book data captured
+### TECH_DEBT-008 — Maker order MVP (v5.14.7) deferred indefinitely (no consistent order book data source)
 
-- **Created:** 2026-05-09 by v5.14.6 close (operator decision pre-v5.14.8)
-- **Severity:** MEDIUM (blocks maker fee path; engine remains taker-only until addressed)
+- **Created:** 2026-05-09 by v5.14.6 close (initial decision pre-v5.14.8)
+- **Status changed:** 2026-05-09 (post-v5.14.8 close) → **DEFERRED-INDEFINITE**. Caramel's framing: "permanently defer this, im not sure when ill ever get a consistent source for orderbook data."
+- **Severity:** MEDIUM-DEFERRED (blocks maker fee path; engine stays taker-only indefinitely; not actively scheduled)
 - **Surface:** `CoreFrameworks/OrderManager.hpp` (Order struct + SubmitCommand), `DataStream/BinanceOrderAPI.hpp` (POST_ONLY submit + cancel REST), `CoreFrameworks/EngineSharded.hpp` (slow-path price-ladder), `Backtest/BacktestSharded.hpp` (queue-position fill simulation for full impl)
-- **What's deferred:** Full Maker order path. v5.14.7 plan (`plans/2026-05-08-v5.14.7-maker-order-mvp.md`) was a 4-sub-tag MVP (~550 LOC) for cfg-gated POST_ONLY LIMIT submit + drainer cancel-and-replace. Operator deferred 2026-05-09 because no order book data has been captured (DepthRecorder not run; no historical depth CSVs available for backtest replay). MVP path-ladder logic + drainer cancel sweep + REST endpoints are foundation work the full implementation reuses unchanged (~90% of MVP code is in full impl).
-- **Why deferred (not effort-avoidance):** Without order book data, MVP gives no testing surface — backtest can't replay LIMIT fills (no depth CSVs to advance `DepthReplayState`); live paper-test would work but is operator's call. Operator chose: defer entire maker work to a comprehensive master plan once depth data exists, vs ship MVP-now-foundation that can't be paper-validated. NOT effort-avoidance — total effort is the same (~30-45h either path); sequencing differs.
-- **Cost estimate:**
-  - MVP-now path: ~6h ship + ~25-40h v6.0 full = ~30-45h total
-  - Defer-to-master path: ~30-45h v6.0 master plan with comprehensive design (queue-position simulation, depth-aware offset, fill-rate feedback, race reconciliation, fee rebate, multi-level depth)
-- **Trigger:** When operator captures order book data (via `DepthRecorder` runs, or external depth-tape feed). At that point either:
-  - Reopen v5.14.7 MVP plan + ship as foundation
-  - OR draft v6.0 maker master plan covering full scope (recommended: this matches operator's defer-to-master decision)
-- **Status:** OPEN
+- **What's deferred:** Full Maker order path. v5.14.7 plan (`plans/2026-05-08-v5.14.7-maker-order-mvp.md`) was a 4-sub-tag MVP (~550 LOC) for cfg-gated POST_ONLY LIMIT submit + drainer cancel-and-replace. MVP path-ladder logic + drainer cancel sweep + REST endpoints are foundation work the full implementation reuses unchanged (~90% of MVP code is in full impl).
+- **Why deferred indefinitely (NOT effort-avoidance):** No reliable / consistent source for historical order book depth data has been identified. Without depth data:
+  - Backtest can't replay LIMIT fills (no depth CSVs to advance `DepthReplayState`)
+  - Queue-position simulation (the core of full impl realism) has nothing to simulate against
+  - Live paper-test alone is insufficient validation — engine would ship taker-only without backtest parity
+  - Free Binance archives don't expose full depth history; commercial tape feeds (Tardis, Kaiko, CoinAPI) cost $$ ongoing and Caramel has no current budget allocation; running DepthRecorder live for months to bootstrap own corpus is feasible but no firm start date and no commitment
+- **Total effort if reactivated:** ~30-45h (split as MVP-foundation ~6h + v6.0 master plan ~25-40h, OR single comprehensive v6.0 plan ~30-45h)
+- **Trigger to reopen (status flips DEFERRED-INDEFINITE → OPEN):** Any of:
+  - Caramel runs `DepthRecorder` long enough to bootstrap a usable depth corpus (months of capture for one symbol)
+  - External depth-tape feed becomes accessible (Tardis subscription, Kaiko sample, etc.)
+  - Architectural decision to ship live-only maker path without backtest validation (currently policy is "backtest validation required before live")
+- **What this means operationally:**
+  - v5.14 sprint umbrella DOES NOT block on this entry (already excluded from Phase 4)
+  - `/readiness` Check 25 (TECH_DEBT scan) may still surface this entry when it greps for files-touched overlap — operator dismisses by status (DEFERRED-INDEFINITE = no action expected). Convention: don't re-debate the dismissal each ship; only revisit if the trigger conditions above appear met.
+  - Maker-related comments in code (e.g., RESERVED enums in OrderType) stay as-is — they're cheap forward-compat hooks, not orphan WIP
+- **Status:** **DEFERRED-INDEFINITE**
 - **Cross-ref:** `plans/2026-05-08-v5.14.7-maker-order-mvp.md` (MVP plan; deferred); `plans/2026-05-08-MASTER-v5.14-foxml-port-and-maker.md` Phase 3 (master plan reference); existing depth infrastructure: `DataStream/BinanceDepth.hpp` (`BookSnapshot<F>` with bids[5]/asks[5]), `DataStream/DepthReplayState.hpp` (per-tick replay; needs CSV input), `DataStream/DepthRecorder.hpp` (capture path; not currently run); v5.14.6 close commit (predecessor)
 
 ---

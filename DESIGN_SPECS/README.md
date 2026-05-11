@@ -54,7 +54,7 @@ session can implement it without reading the original ship.
 Surprises during implementation. Compaction-degraded handoff watch-outs. Etc.
 ```
 
-## Catalog (v5.14.8 + v5.14.9 + v5.14.10 + v5.14.11 deliverables — 23 patterns)
+## Catalog (v5.14.8 + v5.14.9 + v5.14.10 + v5.14.11 deliverables — 24 patterns)
 
 Organized by category for quick discovery. Each pattern is one file in this dir.
 
@@ -95,7 +95,8 @@ Organized by category for quick discovery. Each pattern is one file in this dir.
 |---|---|---|
 | `audit-driven-pre-coding-gate.md` | Multi-audit pattern + compaction-handoff verification + MID-sprint audit guidance | ACTIVE (v5.14.8 + .9 update) |
 | `wire-format-byte-preservation-discipline.md` | Guarding HMAC chains across registry refactors | ACTIVE (v5.14.8) |
-| `avx512-byte-determinism-pattern.md` | 7 rules for AVX-512 vectorization with bytewise-identical scalar reference path; SHA-256 cross-binary lock test pattern | ACTIVE (v5.11.7 + v5.14.11.B pre-impl; first + second applications) → CLAUDE.md item 25 |
+| `avx512-byte-determinism-pattern.md` | 8 rules for AVX-512 vectorization with bytewise-identical scalar reference path; SHA-256 cross-binary lock test pattern; Rule 8 added v5.14.11.B.4 (branchless within vectorized block) | ACTIVE (v5.11.7 + v5.14.11.B; first + second applications) → CLAUDE.md item 25 |
+| `pattern-codification-lifecycle.md` | Meta-pattern — 7-stage lifecycle for codifying a new architectural pattern (audit → DESIGN_SPEC → first reference → cohort migration → CLAUDE.md item → tooling enforcement → wider audit). v5.14.11.B mega-bundle is the canonical first explicit application | ACTIVE (v5.14.11.B umbrella; meta-pattern retroactively documenting the implicit lifecycle applied in v5.14.8/.9/.10) |
 
 ### Cross-thread snapshot patterns
 
@@ -116,7 +117,7 @@ Organized by category for quick discovery. Each pattern is one file in this dir.
 |---|---|---|
 | `struct-padding-determinism-pattern.md` | Explicit `int<N>_t _padding<N> = 0;` default-init fields for structs in byte-equivalence contexts (memcmp / SHA-256 / wire format). Eliminates UB padding bytes via C++ default member init; same struct size; future-proof against stack-layout shifts | ACTIVE (v5.14.11.B.2 first application: FPN<F>; second application: ThompsonBanditState); → CLAUDE.md item 27 |
 
-**23 patterns total.** Adding new patterns: write the doc, add a row above, cross-link from related docs.
+**24 patterns total.** Adding new patterns: write the doc, add a row above, cross-link from related docs. (Process meta-tip: follow `pattern-codification-lifecycle.md` — the meta-pattern that captures HOW to fully codify a new architectural discipline end-to-end.)
 
 ## Quick discovery — "I need to..."
 
@@ -140,6 +141,7 @@ Organized by category for quick discovery. Each pattern is one file in this dir.
 - **...add a math kernel on the slow/hot path** → `branchless-math-kernel-pattern.md` (constant-iter inner reductions + pre-zero invariants; no if guards inside reductions; IEEE-754 x-0=x exact for bytewise-equivalence)
 - **...add a struct that will be compared bytewise (memcmp / SHA-256 / wire format)** → `struct-padding-determinism-pattern.md` (explicit `_padding = 0` fields for all implicit padding gaps; eliminates UB padding bytes structurally)
 - **...add a new boolean cfg field that has 2+ siblings in the same family** → `cfg-flag-eligibility-criteria.md` "Cohort audit when new field has siblings" section (run framework on cohort, not just new field)
+- **...codify a new architectural pattern that emerged from a sprint** → `pattern-codification-lifecycle.md` (7-stage lifecycle: audit → DESIGN_SPEC → first reference → cohort migration → CLAUDE.md item → tooling enforcement → wider audit)
 
 These are extracted from v5.14.8 + v5.14.9 + v5.14.10 + v5.14.11 sprint work. Future sprints add more as they solve new problems.
 

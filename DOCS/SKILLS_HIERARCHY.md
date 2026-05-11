@@ -60,6 +60,7 @@ skill spec + per-skill `## Execution model` section pointing at this doc.
 | `/finding-analyzer` | Layer 1 (orchestrator) | Composes `/trace-deps` + `/latency-track` + `/parity-check` by-reference inline; downstream consumer of `/bug-check` + `/dod-audit` findings |
 | `/patch-planner` | Layer 1 (orchestrator) | Generates HFT-compliant patching blueprints from findings; downstream consumer of `/bug-check` + `/dod-audit` |
 | `/ship` | Layer 1 (orchestrator) | Post-coding ship ritual — invokes build/test/version-bump/commit/tag/push by-script (not skill-spawning) |
+| `/handoff` | Layer 1 (orchestrator) | Pre-coding handoff prompt generator for fresh-context pickup — composes pre-flight + required reading + plan re-verification + audit gate + DESIGN_SPECS pattern check + design philosophy reminders + TECH_DEBT scan + filesystem conventions + sprint-close gate. Reads CLAUDE.local.md + DESIGN_SPECS catalog + auto-memory + TECH_DEBT dynamically. Writes `plans/<sprint>/handoffs/<YYYY-MM-DD>-<ship>-handoff.md`. Sister to `/ship` (handoff = sub-ship OPEN; ship = sub-ship CLOSE) and `/readiness` (handoff EMBEDS /readiness as Step 1 instruction; doesn't run it). |
 
 ## Compose by-reference, not by-spawning
 

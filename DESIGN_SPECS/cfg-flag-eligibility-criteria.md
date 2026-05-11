@@ -255,6 +255,69 @@ The /dod-audit should NOT auto-migrate — eligibility audit is operator decisio
 
 ---
 
+## Cohort audit when new field has siblings (v5.14.11+)
+
+**Established:** 2026-05-11 (v5.14.11 Decision 4 — ridge_* cohort migration)
+
+When the cfg field being audited has 2+ SIBLINGS in the same semantic family (e.g., the new field is `ridge_online_corr` and existing siblings are `ridge_within_horizon`, `ridge_across_horizons`, `exit_blender_mode`), run the 5-criteria framework on the COHORT, not just the new field.
+
+### Why cohort matters
+
+Running the framework on the new field alone risks creating intra-family inconsistency — itself a tech-debt class. The v5.14.11 example illustrates:
+
+`cfg.ridge_online_corr` was proposed as a new bool ML cfg field. Framework verdict on the new field alone: all 5 criteria pass → MIGRATE to FOREACH_ML_CFG_FLAG. But codebase precedent showed 3 existing siblings (ridge_within_horizon, ridge_across_horizons, exit_blender_mode) stayed as direct int cfg fields despite v5.14.9.F.2 / v5.14.10.B migration sweeps. Root cause uncertain (possibly oversight — these passed criteria too).
+
+Migrating ONE field of a 4-field cohort creates "1 in bitmap, 3 direct" inconsistency:
+- Increases cognitive load (operators need to know which ridge_* uses which storage)
+- Splits the FOREACH_STAMP_BOUND_CFG entries between DIRECT_FIELD + BITMAP_BIT emit_source
+- Breaks the consistency the registry pattern is designed to provide
+
+### Cohort audit steps
+
+1. **Identify the family.** Grep for sibling fields by:
+   - Naming convention (`ridge_*`, `confidence_*`, `bandit_*`)
+   - Semantic role (entry gates, sizing modes, ML toggles, observability flags)
+   - Section grouping in `engine.cfg.example`
+   - Stamp-binding domain group (FOREACH_STAMP_BOUND_CFG section comments)
+
+2. **Run the 5-criteria framework on EACH sibling.** Apply each one's eligibility criteria; classify as ELIGIBLE / INELIGIBLE.
+
+3. **Pick the outcome:**
+   - **All eligible** → migrate the cohort in the same ship (intra-family consistency)
+   - **Mixed eligibility** → migrate the eligible subset; auto-write TECH_DEBT entry for ineligible siblings with per-sibling rejection rationale
+   - **None eligible** → document the family-wide rejection rationale in TECH_DEBT (e.g., "all `*_threshold` fields stay direct FPN because they're scalars, not booleans"); new field stays direct alongside siblings
+
+4. **Update FOREACH_STAMP_BOUND_CFG if any cohort member is stamp-bound.** Migrated boolean siblings flip emit_source from `DIRECT_FIELD` → `BITMAP_BIT` via Y3 dispatch. Preserves HMAC chain byte-for-byte via `BITMAP_IS_SET(...) ? 1 : 0` ternary normalization (per `wire-format-byte-preservation-discipline.md` + v5.14.10 postmortem Surprise 6).
+
+### Cautionary tale — v5.14.11
+
+`cfg.ridge_online_corr` audit applied framework → MIGRATE. Codebase grep revealed 3 sibling fields all direct. Without cohort-audit, v5.14.11 would have:
+- Migrated 1 ridge field (ridge_online_corr) to bitmap
+- Left 3 ridge fields direct (within_horizon / across_horizons / exit_blender_mode)
+- Created silent intra-family inconsistency
+- Likely accumulated as TECH_DEBT for some future cleanup ship to discover and resolve
+
+Cohort-audit caught this at plan-synthesis time. Decision 4 migrated all 4 ridge_* fields in v5.14.11.C. Documented in plan synthesis + auto-wrote to TECH_DEBT-017 close trigger (ridge_across_horizons "consumer added via migration").
+
+### Generalizes to
+
+Same shape applies to:
+- FOREACH_STAMP_BOUND_CFG migration cohorts (Y3 dispatch field-by-field audit)
+- FOREACH_FEATURE additions (feature-family cohorts; e.g., regime_* features)
+- FOREACH_TARGET extensions (CS target families)
+- FOREACH_SLOW_PATH_GATE entries (gate-family migrations when underlying cfg fields change)
+- Any registry where partial migration creates intra-family inconsistency
+
+### Cross-references
+
+- CLAUDE.local.md going-forward rule "cohort-audit when new cfg field has siblings (set 2026-05-11)"
+- v5.14.11 plan: `plans/v5.14-foxml-port-and-maker/subplans/2026-05-08-v5.14.11-online-corr-update.md` (Decision 4 cohort migration)
+- v5.14.11 audit synthesis: `plans/plan_checks/2026-05-11-v5.14.11-fresh-audits-synthesis.md` (Decision 4 tension discussion)
+- `DESIGN_SPECS/heterogeneous-registry-pattern.md` (DOMAIN SPLIT — where the cohort lives)
+- `DESIGN_SPECS/wire-format-byte-preservation-discipline.md` (HMAC preservation during emit_source migration)
+
+---
+
 ## Patterns NOT used here (and why)
 
 ### "All booleans are cfg-flag candidates"

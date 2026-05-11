@@ -205,6 +205,8 @@ as a v5.11.35 sub-ship (deferred from the current session because
 
     Document the prediction-graded reward attribution explicitly when adding new ML algorithm ships. Validate the invariant still holds before designing dual-mode or shadow-training features. Promoted to CLAUDE.md item 24 from v5.14.10.A pre-coding consult after confirming it would have been a SILENT BUG without the framework correction.
 
+25. **SIMD vectorization preserves bytewise determinism with scalar reference path** (v5.14.11.B+; pre-implementation draft). Every AVX-512 (or future SIMD) kernel has a scalar fallback (`#if defined(__AVX512F__)` else baseline) and produces BYTEWISE IDENTICAL output across both paths. Cross-binary replay-determinism is the load-bearing concern — paper-trade audits + HMAC chains + cache-warm replay tests all break under 1-ULP divergence, and ML pipelines compose, so 1-ULP errors at feature extraction magnify into 1e-3 prediction differences after 10 nonlinear layers. Pattern documented in `DESIGN_SPECS/avx512-byte-determinism-pattern.md` (7 rules + SHA-256 lock test template). Applied at: v5.11.7 `Bandit_GetProbabilities` (first); v5.14.11.B RidgeBlender 3 sites (second).
+
 ---
 
 # Reference Docs (split-load — read on demand)

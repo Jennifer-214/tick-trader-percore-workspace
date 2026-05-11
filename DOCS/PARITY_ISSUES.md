@@ -624,11 +624,86 @@ OPEN-DEFERRED (1), or NOT-A-BUG (1). Ready for v5.14.2 audit cycle
 - **Status:** **OPEN** (plan-stage; pre-coding amendment recommended)
 - **Workaround:** Inspect bandit state via stderr dumps until panel surface lands
 
+### PARITY-016 — v5.14.11 Welford↔batch BuildCorr tolerance-vs-bytewise contract mismatch breaks replay-determinism under cfg.ridge_online_corr=1
+
+- **Found:** 2026-05-11 during v5.14.11 online-corr-update pre-coding parity audit (no commit yet — plan-stage finding)
+- **Severity:** HIGH
+  - Plan Step 5 line 168 specifies "1e-9 tolerance" between Welford-incremental and batch BuildCorr — correct for ML-quality contract but FALSE for v5.9.2 replay-determinism contract
+  - Plan Step 5 line 175-176 separately claims "cfg=0: bytewise-identical to v5.14.0" — only true for cfg=0; cfg=1 silently drifts within tolerance
+  - Cross-cfg replay (cfg=0 vs cfg=1) produces tolerance-equivalent but bit-different `corr_matrix` → bit-different Cholesky output → bit-different ridge weights → bit-different FPN weights → backtest replay-determinism contract broken under cfg=1
+  - Today's impact: zero (cfg=1 doesn't exist yet). Future impact: blocks cfg=1 from being used in v5.9.2 bytewise replay regression tests
+- **Class:** v5.9.2 replay-determinism contract violation (PARITY-001 / PARITY-014 sister — assumed-OK tolerance shortcut without grepping the parity contract)
+- **Site(s):**
+  - Plan declaration: `plans/v5.14-foxml-port-and-maker/subplans/2026-05-08-v5.14.11-online-corr-update.md:168` (tolerance claim) + `:175-176` (cfg=0 bytewise claim)
+  - Existing replay-determinism contract: `tests/controller_test.cpp:19506-19526` (FracDiff bytewise identity) + `:3495-3504` (composite confidence bytewise identity)
+  - Target function: `RidgeBlender_BuildCorr` at `ML_Headers/RidgeBlender.hpp:287-368` (the batch reference)
+  - Target wiring (two sites): `Strategies/StrategyParameters.hpp:996` (buy-side) + `:1195` (exit-side)
+- **Symptom:** Operator runs replay backtest on dev box under cfg.ridge_online_corr=1. Records 1000 ticks of Ridge weights to a CSV. Operator re-runs identical backtest under cfg.ridge_online_corr=0. Both produce tolerance-equivalent (≤1e-9) but bit-different corr_matrix values → bit-different Cholesky → bit-different FPN_FromDouble rounding at any double-to-FPN boundary → CSV byte hashes differ. Backtest replay-determinism CSV-byte contract silently broken under cfg=1.
+- **Root cause:** Welford one-pass incremental update and the existing two-pass batch formula produce mathematically-equivalent results in infinite precision but NOT in IEEE-754 finite precision. The plan currently treats them as "tolerance-equivalent" which is correct for ML-quality but FALSE for replay-determinism. cfg=0 (default) preserves bytewise; cfg=1 (online) silently does not.
+- **Fix path:** v5.14.11.A amendment — reframe the replay-determinism contract:
+  - Document that cfg=1 is a distinct replay-determinism regime; same-binary same-cfg replays are still bytewise (Welford accumulation is deterministic given fixed order)
+  - Add SHA-256-locked snapshot test for cfg=1 scalar path (mirror shape of `tests/controller_test.cpp:22479-22533` Thompson sample-trace lock); fixed 1000-record prediction trace; lock the corr_matrix SHA-256 hash for cfg=0 and cfg=1 separately
+  - Drop the "bytewise-identical" framing for cfg=1 ↔ cfg=0; reframe as "tolerance-equivalent (1e-9) across cfg regimes, bytewise within each regime"
+  - Periodic-reset every 1000 cycles does NOT recover bytewise identity to cfg=0 — it recovers tolerance identity at the reset boundary but bit-drifts again over the next 1000 cycles. Document this.
+- **Target ship:** v5.14.11.A (plan amendment + scalar online kernel + snapshot test; ~30 min)
+- **Status:** **OPEN** (plan-stage; pre-coding amendment recommended)
+- **Workaround:** Keep cfg.ridge_online_corr=0 (default) until v5.14.11.A snapshot tests land and operator validates the regime
+
+### PARITY-017 — v5.14.11 AVX-512 vectorization bytewise-determinism: 4 sites need explicit discipline annotation + SHA-256 snapshot lock
+
+- **Found:** 2026-05-11 during v5.14.11 online-corr-update pre-coding parity audit (no commit yet — plan-stage finding)
+- **Severity:** HIGH
+  - Cross-binary determinism contract: backtest replay across binaries (-O level, -ffp-contract flag, AVX-512 vs scalar build) must produce bit-identical corr_matrix output
+  - Plan Step 2 line 127-130 cites v5.11.7 discipline but doesn't enumerate the 4 sites where it must apply
+  - Plan Step 5 line 172 claims "AVX-512 path: byte-identical to scalar path on test harness" — no SHA-256 snapshot test currently proposed
+  - Today's impact: zero (AVX-512 path doesn't exist yet). Future impact: silent cross-binary divergence if any of the 4 sites violate discipline
+- **Class:** AVX-512 bytewise-determinism class (v5.11.7 Bandit_GetProbabilities precedent at `ML_Headers/BanditLearning.hpp:138-194` — same shape; same risk pattern)
+- **Site(s):**
+  - Plan declaration: `plans/v5.14-foxml-port-and-maker/subplans/2026-05-08-v5.14.11-online-corr-update.md:107-131` (AVX-512 design block)
+  - Build flags: `CMakeLists.txt:11,128,177,214` (`-O3 -march=native -funroll-loops -flto`); `-ffp-contract=fast` is gcc default at -O3 → fmadd fusion is on
+  - Precedent commentary: `ML_Headers/BanditLearning.hpp:146-152` (mul-by-reciprocal avoided, fmadd order matches gcc -O3, scalar reductions stay scalar)
+- **Symptom:** Operator builds engine with `-march=native` on AVX-512 box. Builds engine with `-march=x86-64-v3` (no AVX-512) on another box. Same backtest under cfg.ridge_online_corr=1 produces bit-different corr_matrix bytes between the two binaries. Backtest CSV byte hashes differ across binaries → cross-binary replay-determinism contract broken.
+- **Root cause:** Plan cites v5.11.7 discipline but doesn't enumerate the 4 sites where it must apply:
+  1. UpdateOnline outer-product reduction order — row sweep must preserve left-to-right
+  2. UpdateOnline mean-update divider — must use `_mm512_div_pd`, NOT `_mm512_mul_pd(delta, 1/n)`
+  3. FinalizeCorr division — same _mm512_div_pd discipline
+  4. FinalizeCorr constant-prediction guard — mask-blend with explicit `_mm512_setzero_pd`, NOT NaN-from-0/0
+- **Fix path:** v5.14.11.B amendment:
+  - Add explicit per-site discipline annotation in plan Step 2 (mirror v5.11.7 commentary at `ML_Headers/BanditLearning.hpp:146-152`)
+  - Add SHA-256-locked snapshot test in v5.14.11.B (mirror shape of `tests/controller_test.cpp:22498-22533` Thompson sample-trace lock); feed fixed 1000-record prediction trace through both scalar and AVX-512 paths; SHA-256 both corr_matrix byte-streams; assert hashes match
+- **Target ship:** v5.14.11.B (AVX-512 vectorization + snapshot test; ~45 min vs original ~150 LOC estimate)
+- **Status:** **OPEN** (plan-stage; pre-coding amendment recommended)
+- **Workaround:** Operator can disable AVX-512 path via `-mno-avx512f` for replay-determinism testing until snapshot lock lands
+
+### PARITY-018 — v5.14.11 periodic-recompute path may leave RidgeOnlineState stale; drift bound argument is conditional on reset semantics
+
+- **Found:** 2026-05-11 during v5.14.11 online-corr-update pre-coding parity audit (no commit yet — plan-stage finding)
+- **Severity:** MEDIUM
+  - Drift bound (plan line 71-73): "periodic full-recompute reset (~every 1000 cycles) keeps drift bounded" depends on whether the reset path also rebuilds Welford accumulators
+  - Plan Step 3 line 144-148 ONLY resets `cycles_since_recompute = 0`; does NOT reset `mean[]`, `M2[]`, `outer_xy[]`, `n` accumulators
+  - If interpretation A: drift bound argument is wrong (Welford state keeps drifting; next 1000 cycles re-write drift into corr_matrix via FinalizeCorr)
+  - If interpretation B: missing helper to rebuild RidgeOnlineState from ring history
+  - Plus sliding-window claim (line 70-72) is unspecified at Step 3 — append-only currently shown
+- **Class:** Class 18 mirror gap (PARITY-009/010/011/012 sister — logically-equivalent paths with one accumulator rebuild missing)
+- **Site(s):**
+  - Plan declaration: `plans/v5.14-foxml-port-and-maker/subplans/2026-05-08-v5.14.11-online-corr-update.md:144-148` (periodic recompute branch)
+  - Plan declaration: `plans/v5.14-foxml-port-and-maker/subplans/2026-05-08-v5.14.11-online-corr-update.md:70-72` (sliding-window claim, unspecified)
+- **Symptom:** Operator runs cfg=1 backtest. After ~2000 cycles, BuildCorr fires at cycle 1000 and refreshes corr_matrix. But Welford accumulators (mean, M2, outer_xy) keep stale state from cycles 0-999. Next FinalizeCorr at cycle 1001 writes Welford-derived corr_matrix on top of BuildCorr's value, drift resumes immediately. Drift bound argument fails silently. Detectable only by direct corr_matrix observation under long-running test.
+- **Root cause:** Plan describes "periodic full-recompute" as a drift-mitigation gate but Step 3 only resets the counter, not the accumulators. Ambiguous spec.
+- **Fix path:** v5.14.11.C amendment — decide A vs B before coding:
+  - Option A: document that periodic BuildCorr only refreshes `corr_matrix` output snapshot; Welford state keeps drifting. Drift bound argument is loosened to "snapshot resync every 1000 cycles, not full state reset"
+  - Option B (recommended): add `RidgeBlender_RebuildOnlineState(state, history, n_history, n_models)` helper called inside the same `if` branch as BuildCorr. Cost O(N²K) one-time per 1000 cycles (~1ns/cycle amortized)
+  - Sliding-window: if intended, Step 3 needs `UpdateOnline_DropOldest` arithmetic; if not, drop line 70-72 mention
+- **Target ship:** v5.14.11.C (engine wiring + propagation + cfg decision; ~30 min for helper + test)
+- **Status:** **OPEN** (plan-stage; pre-coding amendment recommended)
+- **Workaround:** N/A — needs design decision before code lands
+
 ---
 
 ## Audit log
 
 - **2026-05-10** — `/parity-check` audit of v5.14.10 Thompson bandit plan (pre-coding gate). 3 new findings written: PARITY-013 (HIGH), PARITY-014 (HIGH), PARITY-015 (MEDIUM). Verdict: YELLOW (proceed with 4 plan amendments before scope-lock). Full audit report: `plans/plan_checks/parity-check-2026-05-10-v5.14.10-thompson-bandit.md`.
+- **2026-05-11** — `/parity-check` audit of v5.14.11 online-corr-update plan (pre-coding gate). 3 new findings written: PARITY-016 (HIGH), PARITY-017 (HIGH), PARITY-018 (MEDIUM) + 1 LOW (stamp-binding eligibility — Document-only, not assigned PARITY-NNN). Verdict: YELLOW (proceed with ~60 min plan amendments before .A code starts). Default-off bytewise-identity to v5.14.10 confirmed (cfg=0 takes BuildCorr branch unchanged). No train↔serve handoff surface added. Both BuildCorr call sites flagged in plan REUSE claims (buy-side at StrategyParameters.hpp:996 + exit-side at :1195). Full audit report: `plans/plan_checks/parity-check-2026-05-11-v5.14.11.md`.
 - **2026-05-10** — `/parity-check` re-audit of v5.14.10 AMENDED plan (4 architectural decisions baked in + 13 mechanical fixes applied + 6-sub-tag structure .0/.A/.B/.C/.D/.E). Verdict: YELLOW (proceed with 7 mechanical plan-text fixes; ~10 min). Confirmed: PARITY-013 RESOLVED in .B Step 9 (FOREACH_STAMP_BOUND_CFG with 4 X-rows + AUTOPOPULATE auto-flow). PARITY-014 RESOLVED in .A Step 2+7 (own Box-Muller via raw mt19937_64::operator() + SHA-256-locked sample-trace test). PARITY-015 RESOLVED in .D Step 1+2+6 (5 PerCoreSnap fields with bit-packed thompson_state byte + ML Status panel branch + cfg=2 calib log via FOREACH_CALIB_LOG_COL). 2 NEW MEDIUM findings flagged as plan-text staleness (NOT new bug class): NEW-1 stale field name `ensemble_bandit_arm_probs` → actual `ensemble_weights[5][8]`; NEW-2 stale file path `EngineSharded.hpp:646-694` → actual `ShardedSnapshot.hpp:677-694` (publish writer). Both propagated from prior parity-check report; PARITY-015 entry's file path citation should be corrected. NO new PARITY-NNN entries. NEW parity surfaces (thompson_state.json wire format Layer 1-6 compliance, PerCoreSnap cluster restructure, 4 stamp-bind drift tests presence dispatch) all GREEN against discipline. Full audit report: `plans/plan_checks/parity-check-2026-05-10-v5.14.10-AMENDED.md`.
 
 ---

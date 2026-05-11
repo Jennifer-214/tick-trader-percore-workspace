@@ -425,3 +425,50 @@ of the relevant CLAUDE.md item.
   cross-ref via /parity-check + /trace-deps + /readiness skill specs
 - wire-format-byte-preservation-discipline.md → CLAUDE.md item 15 (Parity-tested-by-construction)
 - structural-fix-preferred-decision-framework.md → CLAUDE.md item 19
+
+**v5.14.11 additions (2026-05-11):**
+- avx512-byte-determinism-pattern.md → CLAUDE.md item 25 (NEW; promotes v5.11.7 discipline to first-class invariant)
+- sliding-window-online-statistics-pattern.md → no direct CLAUDE.md ref yet (1 application; promote when 2nd application surfaces per codification rule)
+- cfg-flag-eligibility-criteria.md → extended with new "Cohort audit when new field has siblings" section (no new CLAUDE.md item; cross-ref via item 13 reuse-audit)
+
+## Going-forward rule: cohort-audit when new cfg field has siblings (set 2026-05-11; pre-implementation draft)
+
+**When adding a new boolean cfg field that has 2+ siblings in the same
+semantic family (e.g., `ridge_*`, `confidence_*`, `bandit_*`), run the
+5-criteria `DESIGN_SPECS/cfg-flag-eligibility-criteria.md` framework
+on the COHORT, not just the new field.**
+
+**Three outcomes:**
+- **All eligible** → migrate the cohort in the same ship (intra-family
+  consistency; prevents partial-migration tech-debt class)
+- **Mixed eligibility** → migrate the eligible subset + auto-write
+  TECH_DEBT entry for ineligible siblings explaining per-sibling
+  rejection rationale
+- **None eligible** → document the family-wide rejection rationale in
+  TECH_DEBT; new field stays direct alongside siblings
+
+**Why:** v5.14.9.F.2 / v5.14.10.B migration sweeps left `ridge_within_horizon`,
+`ridge_across_horizons`, `exit_blender_mode` as direct int cfg fields
+while migrating other ML flags. Intra-family inconsistency surfaced
+2026-05-11 during v5.14.11 audit synthesis — Decision 4 corrected by
+cohort-migrating all 4 ridge_* fields. Without this rule, similar
+oversights accumulate per-sprint into a tech-debt class.
+
+**How to apply:** at plan-synthesis time, when a new boolean cfg field
+appears in proposed scope, grep for sibling fields in the same domain
+(e.g., `*_enabled` / `*_mode` / `ridge_*` in ML domain). If 2+ siblings
+exist, cohort-audit is part of plan-readiness check (per CLAUDE.md item 13
+reuse-audit + item 16). Lives alongside `/readiness` Check 24 (mirror-
+function audit) + Check 25 (TECH_DEBT scan).
+
+**Caramel's framing 2026-05-11:** "id rather not add tech debt" — captured
+at v5.14.11 plan-synthesis after seeing that (1) intra-family inconsistency
+would itself be a tech-debt class and (2) the framework verdict + codebase
+precedent diverged. Pre-implementation draft; refine as v5.14.11 ships
+and the cohort migration validates the discipline.
+
+Codified in:
+- `DESIGN_SPECS/cfg-flag-eligibility-criteria.md` (new "Cohort audit when
+  new field has siblings" section; v5.14.11 ridge_* as canonical example)
+- `CLAUDE.md` item 13 (X-macro registry; reuse-audit cross-ref)
+- This file (auto-write contract for cohort-audit findings)

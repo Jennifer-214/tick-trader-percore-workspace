@@ -54,7 +54,7 @@ session can implement it without reading the original ship.
 Surprises during implementation. Compaction-degraded handoff watch-outs. Etc.
 ```
 
-## Catalog (v5.14.8 + v5.14.9 + v5.14.10 deliverables — 19 patterns)
+## Catalog (v5.14.8 + v5.14.9 + v5.14.10 + v5.14.11 deliverables — 21 patterns)
 
 Organized by category for quick discovery. Each pattern is one file in this dir.
 
@@ -95,6 +95,7 @@ Organized by category for quick discovery. Each pattern is one file in this dir.
 |---|---|---|
 | `audit-driven-pre-coding-gate.md` | Multi-audit pattern + compaction-handoff verification + MID-sprint audit guidance | ACTIVE (v5.14.8 + .9 update) |
 | `wire-format-byte-preservation-discipline.md` | Guarding HMAC chains across registry refactors | ACTIVE (v5.14.8) |
+| `avx512-byte-determinism-pattern.md` | 7 rules for AVX-512 vectorization with bytewise-identical scalar reference path; SHA-256 cross-binary lock test pattern | ACTIVE (v5.11.7 + v5.14.11.B pre-impl; first + second applications) → CLAUDE.md item 25 |
 
 ### Cross-thread snapshot patterns
 
@@ -102,7 +103,13 @@ Organized by category for quick discovery. Each pattern is one file in this dir.
 |---|---|---|
 | `per-snapshot-cluster-layout-pattern.md` | alignas(64) clustering of cross-thread snapshot fields by concern; cache-line span budgeting; static_assert(offsetof) enforcement | ACTIVE (v5.14.10.0; first application: PerCoreSnap bandit telemetry cluster) |
 
-**19 patterns total.** Adding new patterns: write the doc, add a row above, cross-link from related docs.
+### Math kernel patterns
+
+| Doc | Pattern | Status |
+|---|---|---|
+| `sliding-window-online-statistics-pattern.md` | Sum-of-squares fixed-window incremental statistics with drop-oldest math; bounded-input numerical-stability argument; AVX-512 outer-product shape; eliminates periodic-reset code smell | ACTIVE (v5.14.11.A pre-impl; first application: Ridge correlation matrix); promote to CLAUDE.md when 2nd application surfaces |
+
+**21 patterns total.** Adding new patterns: write the doc, add a row above, cross-link from related docs.
 
 ## Quick discovery — "I need to..."
 
@@ -121,8 +128,11 @@ Organized by category for quick discovery. Each pattern is one file in this dir.
 - **...add CSV columns to a log writer (fprintf-style)** → `calibration-log-column-registry.md` (pick Variant A=fprintf-direct OR Variant B=snprintf-to-buffer based on writer characteristics)
 - **...add a post-load init/load step that runs at boot + backtest + hot-swap** → `postloadsetup-registry-pattern.md` (registry walk by single helper; prevents Class 18 mirror gap at N call sites)
 - **...add fields to a cross-thread snapshot struct (PerCoreSnap-style)** → `per-snapshot-cluster-layout-pattern.md` (cluster by concern with alignas(64); cache-line span budget)
+- **...add a SIMD-vectorized kernel that must produce bytewise-identical output to scalar** → `avx512-byte-determinism-pattern.md` (7 rules + SHA-256 cross-binary lock test pattern)
+- **...add running statistics over a fixed window (correlation, variance, IC, turnover)** → `sliding-window-online-statistics-pattern.md` (sum-of-squares fixed-window form + drop-oldest math + bounded-stability argument)
+- **...add a new boolean cfg field that has 2+ siblings in the same family** → `cfg-flag-eligibility-criteria.md` "Cohort audit when new field has siblings" section (run framework on cohort, not just new field)
 
-These are extracted from v5.14.8 + v5.14.9 + v5.14.10 sprint work. Future sprints add more as they solve new problems.
+These are extracted from v5.14.8 + v5.14.9 + v5.14.10 + v5.14.11 sprint work. Future sprints add more as they solve new problems.
 
 ## Going-forward
 

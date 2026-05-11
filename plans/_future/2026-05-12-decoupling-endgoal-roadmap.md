@@ -78,7 +78,19 @@ pattern). Auto-synced via `/sync-workspace`.
 
 ### v5.15.0 — ModelHandle X-macro migration + verify_model_stamp parser refactor (POSITIONING: ⬆️ positive)
 
-**Date:** 2026-05-12 (planned)
+**Date:** 2026-05-12 (SHIPPED; tag `v5.15.0`)
+
+**Shipped:** As described. ModelHandle migrated to FOREACH_STAMP_BOUND_MODEL_CONST
+X-macro with STAMP_HANDLE_GEN_<presence> dispatch (33 INCLUDE fields auto-generated
++ 10 SKIP_HANDLE filtered); 14 has_* direct fields → uint64_t has_flags bit-packed
+with SHARED MASK_<name> constants across ModelStampResult + StampInferenceCfgInputs;
+value fields renamed to canonical wire-key names (stamp_xgb_*/stamp_inf_*/stamp_label_*
+→ unprefixed canonical); alignas(64) + 4-cluster layout (HOT 64B / HOT-2 64B / WARM
+scaler / COLD stamp fields + paths) + explicit padding per CLAUDE.md item 27;
+verify_model_stamp PRE_CFG parser refactored to X-macro dispatch via
+tt::stamp_parse_field<T> templated helper (24 entries auto-flow; 4 hex/normalize
+exceptions retained as manual branches). +23 anchor tests (.A bit-pack + .C round-trip
+HMAC byte-equivalence). Tests 2904 → 2927. TECH_DEBT-003 + -014 CLOSED.
 
 **Change:** ModelHandle migrated to FOREACH_STAMP_BOUND_MODEL_CONST X-macro
 generation with bit-packed `has_flags` uint64_t; verify_model_stamp parser

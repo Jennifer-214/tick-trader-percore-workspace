@@ -1,8 +1,12 @@
 # v5.15 — Live-readiness hardening + ModelHandle structural unification — MASTER
 
 **Date drafted:** 2026-05-12 (post v5.14 sprint close + v5.14.post1 patch)
-**Branch:** `feat/v5.15-live-readiness` (CREATE from engine tag `v5.14` =
-commit `c4e45d1`, NOT from `v5.14.post1` — clean baseline)
+**Branch:** `feat/v5.15-live-readiness` (CREATE from engine tag `v5.14.post1` =
+commit `1752fde`, per 2026-05-12 amendment — v5.14 has known
+BacktestPanels.hpp gui/suite compile errors that post1 fixed; branching
+from v5.14 would break v5.15.0's wider-build verification gate. post1 fix
+lines later get replaced by v5.15.3.B helper switch — second structural
+touch of the same code).
 **Predecessor:** v5.14 sealed at `v5.14`; post-release patch `v5.14.post1`
 (commit `1752fde`) for `train_model_worker_fn` stamp body migration gap fix
 **Rollback anchor:** `pre-v5.15` = `v5.14` (sprint baseline)

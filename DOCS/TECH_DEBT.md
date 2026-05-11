@@ -117,17 +117,14 @@ A finding that exists only in a transient audit report or chat memory gets re-di
 
 ---
 
-### TECH_DEBT-003 — `verify_model_stamp` parser refactor to data-driven dispatch
+### TECH_DEBT-003 — `verify_model_stamp` parser refactor to data-driven dispatch ✅ CLOSED v5.15.0
 
 - **Created:** 2026-05-09 by v5.14.2.E.3 (first noted in v5.14.1 post-mortem)
 - **Severity:** LOW
-- **Surface:** `ML_Headers/ModelInference.hpp` `verify_model_stamp` function (~700 LOC)
-- **What's deferred:** Parser uses if-else chain over ~30 stamp body keys. Adding a new key requires manual `else if (strcmp(key, "...") == 0) { ... }` branch. Could be refactored to data-driven dispatch (table of `{key, parser_fn, has_field, value_field}`) so adding a key becomes a 1-line table entry. Same shape as FOREACH_STAMP_BOUND_CFG (which solved this for cfg-bound subset).
-- **Why deferred (not effort-avoidance):** Parser is stable + works correctly. Refactor is pure cleanup, not closing bugs. v5.14.1.B.3's X-macro for cfg fields already solved the worst growth-rate subset (cfg fields). Architectural fields (4 today) added in v5.14.2.E.2.B grow slowly enough that manual is acceptable for now.
-- **Cost estimate:** ~2h; MEDIUM risk (parser correctness is critical — every stamp loaded depends on it).
-- **Trigger:** Address when (a) parser key count grows > 40, OR (b) operator-reports a parser bug + we want to harden the surface, OR (c) v5.X+ adds another major field family.
-- **Status:** OPEN
-- **Cross-ref:** v5.14.1 post-mortem; FOREACH_STAMP_BOUND_CFG (`StampBoundCfgRegistry.hpp`) shows the canonical pattern.
+- **Surface:** `ML_Headers/ModelInference.hpp` `verify_model_stamp` function
+- **What was deferred:** Parser used if-else chain over ~24 PRE_CFG stamp body keys (POST_CFG was already X-macro-driven since v5.14.8.A.merged.4). Adding a new PRE_CFG key required manual `else if (strcmp(key, "...") == 0) { ... }` branch + STAMP_SET dispatch — Class 18 mirror with the registry-driven emit walk.
+- **Status:** ✅ **CLOSED v5.15.0 (2026-05-12).** v5.15.0.B refactor migrated the PRE_CFG parser branches to X-macro dispatch walking FOREACH_STAMP_BOUND_MODEL_CONST_PRE_CFG (all 27 entries auto-flow). Uses `tt::stamp_parse_field<T>` templated helper for type dispatch (CLAUDE.md item 23). The 3 hex-encoded uint64 fields (build_flags_hash, label_registry_hash, feature_mask) initially deferred as manual branches were RESOLVED by extending `tt::stamp_parse_field<T>` to take the registry's `fmt` column as an optional parameter and auto-detect base via `strchr(fmt, 'x') || strchr(fmt, 'X')` — DRY: `fmt` is now the single source of truth for emit AND parse format. The originally-proposed `parser_base` tuple column is SUPERSEDED by this approach (no tuple-shape change; future hex fields auto-flow). 1 manual branch remains: `feature_scaler_present` for defensive truthy normalization (any non-zero → 1; production emit always produces 0/1, so the branch is bounded defensive coding against malformed stamps). Closes Class 18 parser/emit mirror at the same surface AUTOPOPULATE closed for emit. ~120 LOC → ~25 LOC X-macro + 1 normalization exception.
+- **Cross-ref:** v5.14.1 post-mortem; FOREACH_STAMP_BOUND_CFG (`StampBoundCfgRegistry.hpp`) shows the canonical pattern; v5.15.0 ship; `tt::stamp_parse_field<T>` at `ML_Headers/StampBoundModelConstRegistry.hpp:101+`.
 
 ---
 
@@ -364,17 +361,14 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ---
 
-### TECH_DEBT-014 — ModelHandle migration to FOREACH_STAMP_BOUND_MODEL_CONST X-macro generation
+### TECH_DEBT-014 — ModelHandle migration to FOREACH_STAMP_BOUND_MODEL_CONST X-macro generation ✅ CLOSED v5.15.0
 
 - **Created:** 2026-05-09 by v5.14.8.A.merged.2 (deferred during Option 1 unification scope)
 - **Severity:** LOW
-- **Surface:** `ML_Headers/ModelInference.hpp` ModelHandle struct (~line 238)
-- **What's deferred:** ModelHandle currently uses MANUAL field declarations for stamp-derived runtime fields (with `stamp_inf_*`, `stamp_xgb_*`, `stamp_label_*`, `stamp_*` prefix policy that's INCONSISTENT across groups). v5.14.8.A.merged migrated ModelStampResult + StampInferenceCfgInputs to X-macro generation but ModelHandle stayed manual because it's a PARTIAL MIRROR (only fields needed at runtime; ~10 fields exist on ModelStampResult but NOT on ModelHandle; per-group prefix policy diverges).
-- **Why deferred (not effort-avoidance):** Migration requires deciding ModelHandle's per-group prefix dispatch (or going full canonical-name). v5.14.8 ship was already large (~2400 LOC across A.0.b + A.merged.X); ModelHandle migration would have added another ~150 LOC of caller migrations. Bounded follow-up work; low risk because the FAILURE_MODE registry's STAMP_HANDLE_GEN_INCLUDE/SKIP_HANDLE token-paste dispatch is already designed for the partial-mirror case.
-- **Cost estimate:** ~2-3h (ModelHandle struct rewrite via X-macro + 10-15 caller files: CoreModelZoo_TryLoadRole copy block + EngineSharded boot WARN comparisons + StrategyParameters reads).
-- **Trigger:** Address when (a) ModelHandle gains a NEW stamp-derived field (would be the next instance of the manual N-site pattern), OR (b) v5.X+ cleanup ship dedicated to ModelHandle restructuring, OR (c) operator hits ModelHandle-specific naming inconsistency in code review.
-- **Status:** OPEN
-- **Cross-ref:** v5.14.8.A.merged.2 commit; ModelHandle struct in `ML_Headers/ModelInference.hpp:238`; v5.14.8.E manually added has_training_timestamp_us + has_run_name fields directly to ModelHandle (deferred path).
+- **Surface:** `ML_Headers/ModelInference.hpp` ModelHandle struct
+- **What was deferred:** ModelHandle used MANUAL field declarations for stamp-derived runtime fields (inconsistent `stamp_inf_*`, `stamp_xgb_*`, `stamp_label_*`, `stamp_*` prefix policy across groups). v5.14.8.A.merged migrated ModelStampResult + StampInferenceCfgInputs to X-macro generation but ModelHandle stayed manual.
+- **Status:** ✅ **CLOSED v5.15.0 (2026-05-12).** ModelHandle migrated to X-macro generation walking FOREACH_STAMP_BOUND_MODEL_CONST with STAMP_HANDLE_GEN_INCLUDE/SKIP_HANDLE presence dispatch. 14 uint8_t has_* direct fields → uint64_t has_flags bit-packed (CLAUDE.md item 20; shared MASK_* constants with ModelStampResult / StampInferenceCfgInputs so a single parser dispatch table row writes both bits). Value fields renamed to canonical wire-key names (stamp_xgb_max_depth → xgb_max_depth, stamp_inf_confidence_threshold_scale → inference_cfg_confidence_threshold_scale, etc.). alignas(64) + 64B HOT cluster (handle, backend, num_*, has_flags) + HOT-2 cluster (target_classes / class_weights at cache line 2) + WARM cluster (scaler) + COLD cluster (X-macro stamp fields + paths). Explicit padding (`_hot_pad0`, `_hot_pad1[4]`) per CLAUDE.md item 27. ~80 caller sites migrated across CoreModelZoo, EngineSharded, ModelValidation, FeatureRegistryOverlay, tests. ~250 LOC delta.
+- **Cross-ref:** v5.14.8.A.merged.2 commit (deferral point); v5.15.0 ship; +23 anchor tests at `tests/controller_test.cpp` (v5.15.0.A + v5.15.0.C sections).
 
 ---
 

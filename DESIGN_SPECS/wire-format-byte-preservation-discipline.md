@@ -102,7 +102,7 @@ if (pinned) {
 
 `uselocale` is per-thread (thread-safe; doesn't affect rest of process). Pin to LC_NUMERIC=C for canonical body construction. Restore before return.
 
-### Layer 3: Registry tuple's `fmt` column
+### Layer 3: Registry tuple's `fmt` column — single source of truth for emit AND parse
 
 ```cpp
 X(name, group, presence, type, fmt, default_val, get_value, emit_when, doc)
@@ -112,6 +112,30 @@ X(name, group, presence, type, fmt, default_val, get_value, emit_when, doc)
 ```
 
 Adding a new entry requires explicit `fmt` choice. Reviewer/audit can grep for `"%g"` vs `"%.6g"` vs `"%.17g"` discrepancies.
+
+**DRY extension — fmt also drives parser base detection (v5.15.0.B):** for unsigned integer fields, the parser auto-detects strtoull base from the `fmt` column rather than maintaining a parallel `parser_base` column or per-site manual branches. Hex-encoded fields (build_flags_hash, label_registry_hash, feature_mask emit via `"%016lx"`) → strchr finds 'x'/'X' → base 16. Decimal fields ("%u", "%lu", "%d") → base 10. Result: a new hex field added to the registry auto-flows through both emit AND parse with no manual parser branch.
+
+```cpp
+// In tt::stamp_parse_field<T> (StampBoundModelConstRegistry.hpp):
+} else if constexpr (std::is_unsigned_v<T>) {
+    const int base = (fmt[0] != '\0' &&
+                      (strchr(fmt, 'x') != nullptr ||
+                       strchr(fmt, 'X') != nullptr)) ? 16 : 10;
+    dst = static_cast<T>(strtoull(val, nullptr, base));
+}
+
+// Caller (parser X-macro) passes fmt from the registry tuple:
+#define X(name, group, presence, type, fmt, default_val, get_value, emit_when, doc) \
+    else if (strcmp(key, #name) == 0) { \
+        tt::stamp_parse_field(r.name, val, fmt); \
+        STAMP_PARSER_SET_HAS_##group(name); \
+    }
+FOREACH_STAMP_BOUND_MODEL_CONST_PRE_CFG(X)
+```
+
+**Meta-principle (applies broadly):** before adding a new tuple column to encode a new dimension, check if an existing column already encodes it. The originally-proposed `parser_base` column (v5.15.0.B initial draft) was discarded in favor of fmt-detection because `fmt` already specifies the format unambiguously. Net result: 0 tuple-shape change + 0 caller updates + future hex fields auto-flow.
+
+Cost of runtime fmt-detection: 1 strchr scan per field load (~2-3ns; boot/hot-swap-time path only; not slow path or hot path). Trade-off favors DRY + auto-flow over the constant-time win of a compile-time base column.
 
 ### Layer 4: Post-coding round-trip HMAC test
 

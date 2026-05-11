@@ -319,18 +319,69 @@ Initial deferral 2026-05-09 was framed as "until depth data is captured" with v6
 
 ### Phase 4 — Optimization + bandit alternatives (~7-9 days; NEW per operator 2026-05-08; renumbered 2026-05-10)
 
-**v5.14.10 — Bayesian Thompson sampling bandit (toggle vs Exp3)** [5-6 days; renumbered from .11 2026-05-10]
-- Adds Thompson sampling as ALTERNATIVE bandit weight provider
-- ArmStats with Gaussian conjugate prior (μ, σ²) per arm per regime
-- Selection: sample from each arm's posterior; pick argmax
-- `cfg.bandit_algorithm` enum: 0=Exp3 (default), 1=Thompson, 2=Both (dual mode for A/B compare)
-- Both bandits share BanditState struct or extend with thompson-specific
-  fields (TBD at code time; likely separate struct ThompsonBanditState
-  for clarity)
-- Operator can paper-test both in same engine binary; per-fill telemetry
-  records which algorithm chose which arm for offline comparison
-- Sub-tags: .A struct + sampling math; .B engine wiring + cfg toggle;
-  .C tests + propagation
+**v5.14.10 — Bayesian Thompson sampling bandit + PerCoreSnap layout
+restructure + log-column registry generalization (mega-bundle)** [10-12
+days; EXPANDED 2026-05-10 per pre-coding audit gate + Caramel consult]
+
+Original scope (5-6d) was Thompson sampling alone; expanded to mega-bundle
+covering: (1) curve-registry-pattern retrofit FOREACH_BANDIT_ALGORITHM,
+(2) PerCoreSnap layout audit + unified bandit telemetry cluster, (3)
+generalize log column registry across calib + metrics + trade logs.
+
+**Charter ship work:**
+- Adds Thompson sampling as ALTERNATIVE bandit weight provider via
+  uniform 4-arg dispatch contract
+- `cfg.bandit_algorithm` enum: 0=Exp3 (default), 1=Thompson, 2=Both
+  (cfg=2 is valid parallel-training because per-arm rewards are
+  observable independent of arm selection — see CoreModelZoo.hpp:881-882)
+- ThompsonBanditState struct (parallel to BanditState; per-arm Gaussian
+  conjugate posterior + own Box-Muller via raw mt19937_64::operator())
+- FOREACH_BANDIT_ALGORITHM registry per curve-registry-pattern.md (3
+  algos today; future UCB1/EXP4/Bayesian linear = 1 row each)
+- thompson_state.json persistence with full wire-format byte-preservation
+  (locale pin + format_version + %.17g + hex rng_state)
+- 4 cfg fields stamp-bound via FOREACH_STAMP_BOUND_CFG (Surface G)
+- 2 slow-path-gate predicates (THOMPSON_ACTIVE + BANDIT_BOTH_ACTIVE)
+- FULL Bayesian dashboard: 5 PerCoreSnap fields (bit-packed state byte
+  + float arrays + uint32 pulls)
+- FOREACH_CALIB_LOG_COL registry for per-fill cfg=2 telemetry
+
+**Adjacent debt closes folded in:**
+- TECH_DEBT-010 close: FOREACH_CALIB_LOG_COL registry shipped via .D;
+  4-col tuple template
+- TECH_DEBT-011 substantial close: PerCoreSnap layout audit (.0) +
+  unified bandit telemetry cluster + per-snapshot-cluster-layout-pattern.md
+  DESIGN_SPECS doc (NEW)
+- TECH_DEBT-027 resolved opportunistically: locale pinning gap in
+  Bandit_SaveJSON fixed during .C
+- N2 finding from /merge-scan absorbed: generalize FOREACH_LOG_COL
+  pattern to MetricsLog + ShardedTradeLog (.F; closes recurring
+  sister-literal pattern across 3 logs)
+
+**Sub-tags (7-sub-tag structure):**
+- .0 PerCoreSnap layout audit + unified bandit telemetry cluster
+  + per-snapshot-cluster-layout-pattern.md DESIGN_SPECS doc
+- .A FOREACH_BANDIT_ALGORITHM registry + ThompsonBanditState struct
+  + Thompson math kernel + own Box-Muller + SHA-256 sample-trace test
+- .B Engine wiring + 5 cfg fields + slow-path-gate predicates +
+  4 stamp-binds via STAMP_CFG_AUTOPOPULATE
+- .C Persistence (thompson_state.json) + tt::json_io extraction +
+  FOREACH_ENSEMBLE_POST_LOAD extension (Class 18 mirror prevention)
+- .D FULL Bayesian dashboard + FOREACH_CALIB_LOG_COL registry +
+  cfg=2 calib telemetry + calibration-log-column-registry.md DESIGN_SPECS doc
+- .E Tests (~+19) + propagation (CHANGELOG + cfg.example +
+  HOT_PATH_CHANGELOG) + Version.hpp bumps per sub-tag
+- .F Generalize log column registry to MetricsLog + ShardedTradeLog
+  (FOREACH_METRICS_LOG_COL + FOREACH_TRADE_LOG_COL) + snapshot
+  byte-preservation tests
+
+**Predecessor:** v5.14.9 umbrella (b09b2d5) + docs commit 490618b
+**Pre-coding audits (5):** synthesis at
+`plans/plan_checks/2026-05-10-v5.14.10-fresh-audits-synthesis.md` +
+amendment re-audits at `*-AMENDED.md` siblings
+**LOC est:** ~1450-1750 across 7 sub-tags
+**Closes:** 2 TECH_DEBT (-010 + -011 substantial); resolves -027
+opportunistically; opens 0 new TECH_DEBT
 
 **v5.14.11 — Online correlation matrix updates (Ridge optimization)** [2-3 days; renumbered from .12 2026-05-10]
 - Replaces full O(N²K) BuildCorr recompute per cycle with incremental
@@ -412,11 +463,24 @@ v5.14.9     — Soft risk degradation ladder
                           + open TECH_DEBT-016 + workspace sync
               Closes 3 TECH_DEBT items + establishes BITMAP_* universally.
 
-v5.14.10    — Bayesian Thompson sampling bandit            [PENDING; 5-6 days]
-              (renumbered from v5.14.11 2026-05-10)
-              v5.14.10.A — struct + sampling math
-              v5.14.10.B — engine wiring + cfg.bandit_algorithm toggle
-              v5.14.10.C — tests + propagation
+v5.14.10    — Bayesian Thompson sampling bandit + mega-bundle      [PENDING; 10-12 days]
+              (renumbered from v5.14.11 2026-05-10; EXPANDED 2026-05-10
+               via pre-coding audit gate + Caramel consult)
+              v5.14.10.0 — PerCoreSnap layout audit + unified bandit
+                           telemetry cluster + per-snapshot-cluster-layout-pattern.md
+              v5.14.10.A — FOREACH_BANDIT_ALGORITHM registry + ThompsonBanditState
+                           + own Box-Muller + SHA-256 sample-trace test
+              v5.14.10.B — Wiring + 5 cfg fields + 2 slow-path-gate
+                           predicates + 4 stamp-binds (STAMP_CFG_AUTOPOPULATE)
+              v5.14.10.C — Persistence (thompson_state.json) + tt::json_io
+                           + FOREACH_ENSEMBLE_POST_LOAD extension
+              v5.14.10.D — FULL Bayesian dashboard + FOREACH_CALIB_LOG_COL
+                           + calibration-log-column-registry.md
+              v5.14.10.E — Tests (~+19) + propagation + Version.hpp bumps
+              v5.14.10.F — Generalize FOREACH_LOG_COL to MetricsLog +
+                           ShardedTradeLog (closes /merge-scan N2 finding)
+              Closes 2 TECH_DEBT items + opens 0 new (-010 + -011 substantial;
+              -027 resolved opportunistically).
 
 v5.14.11    — Online correlation matrix updates            [PENDING; 2-3 days]
               (renumbered from v5.14.12 2026-05-10)

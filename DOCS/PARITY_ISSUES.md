@@ -549,6 +549,88 @@ OPEN-DEFERRED (1), or NOT-A-BUG (1). Ready for v5.14.2 audit cycle
 - **Status:** **OPEN** (fix in flight)
 - **Workaround:** Don't trust backtest replay-determinism for cfg-drift validation until v5.14.2.E.1 ships
 
+### PARITY-013 — `cfg.bandit_algorithm` not stamp-bound; train↔serve algorithm drift undetected
+
+- **Found:** 2026-05-10 during v5.14.10 Thompson bandit pre-coding parity audit (no commit yet — plan-stage finding)
+- **Severity:** HIGH
+  - Inference-affecting: enum directly governs whether ML_BuildParameters dispatches Bandit_GetProbabilities (Exp3, blended weights) or Thompson_Sample (one-hot weights at chosen arm), or both for telemetry
+  - Default cfg=0 (Exp3) preserves pre-v5.14.10 behavior; the drift surface only arms once operator switches to cfg=1 or cfg=2
+  - Same shape as PARITY-004 (Ridge cfg) and PARITY-005 (composite cfg) which were both HIGH
+- **Class:** v5.14.1.B inference-cfg-drift class (PARITY-004/005 sister); structural fix preferred via FOREACH_STAMP_BOUND_CFG (CLAUDE.md item 19)
+- **Site(s):**
+  - Plan declaration: `plans/v5.14-foxml-port-and-maker/subplans/2026-05-08-v5.14.10-bayesian-thompson-bandit.md:161` (`cfg.bandit_algorithm` declared without stamp binding)
+  - Direct precedent (analogous enum): `cfg.exit_blender_mode` at `CoreFrameworks/ControllerConfig.hpp:1104` IS stamp-bound at `ML_Headers/StampBoundCfgRegistry.hpp:137-138`
+  - Sister Thompson hyperparams (`thompson_mu_prior`, `thompson_precision_prior`, `thompson_precision_obs`) also affect bandit-selection trajectory under cfg=1/2; same drift class
+- **Symptom:** Operator trains a model under `cfg.bandit_algorithm=0` (Exp3 default), edits engine.cfg to set cfg=1, restarts. No stamp warning fires (because cfg.bandit_algorithm not in FOREACH_STAMP_BOUND_CFG). Live engine quietly switches to Thompson sampling. weights_buf[] is now one-hot (vs Exp3 blend). Strategy dispatcher consumes different weights → different arm chosen → different fills → P&L diverges silently from training-time projections.
+- **Root cause:** Plan introduces 1 enum + 4 hyperparam cfg fields (bandit_algorithm + thompson_mu_prior + thompson_precision_prior + thompson_precision_obs + thompson_rng_seed) without stamp-binding the inference-affecting subset. Plan Step 5 doesn't list FOREACH_STAMP_BOUND_CFG additions. (Same gap class as v5.14.1.B.3 closed for Ridge/composite.)
+- **Fix path:** v5.14.10.B amendment — add 4 X-rows to FOREACH_STAMP_BOUND_CFG in `ML_Headers/StampBoundCfgRegistry.hpp` (matches `exit_blender_mode` + `ridge_*` shape):
+  - X(bandit_algorithm, int, "%d", 0, cfg.bandit_algorithm, (cfg.bandit_algorithm != 0), DIRECT_FIELD)
+  - X(thompson_mu_prior, double, "%.17g", 0.0, FPN_ToDouble(cfg.thompson_mu_prior), (cfg.bandit_algorithm != 0), DIRECT_FIELD)
+  - X(thompson_precision_prior, double, "%.17g", 0.0, FPN_ToDouble(cfg.thompson_precision_prior), (cfg.bandit_algorithm != 0), DIRECT_FIELD)
+  - X(thompson_precision_obs, double, "%.17g", 0.0, FPN_ToDouble(cfg.thompson_precision_obs), (cfg.bandit_algorithm != 0), DIRECT_FIELD)
+  - thompson_rng_seed intentionally EXCLUDED (operator should re-seed exploration without invalidating stamp; document the exclusion)
+  - STAMP_CFG_AUTOPOPULATE auto-flows per CLAUDE.md item 21; legacy stamps load with has_*=0 per Surface G
+- **Target ship:** v5.14.10.B (bundled with cfg field declarations; ~20 min code increment vs original plan)
+- **Status:** **OPEN** (plan-stage; pre-coding amendment recommended)
+- **Workaround:** Don't switch cfg.bandit_algorithm between training and serving until stamp binding lands
+
+### PARITY-014 — Thompson replay-determinism contract under-specified; std::normal_distribution non-portable
+
+- **Found:** 2026-05-10 during v5.14.10 Thompson bandit pre-coding parity audit (no commit yet — plan-stage finding)
+- **Severity:** HIGH
+  - Plan claims (line 199): "Bytewise-deterministic across runs"
+  - True for same-binary same-stdlib deployments
+  - FALSE across libstdc++ minor-version bumps OR cross-vendor (libc++) deployments
+  - v5.9.2 replay-determinism contract is at risk for any backtest replayed on a different machine / build
+  - Today's impact: zero (Thompson code doesn't exist yet). Future impact: blocks Thompson from being used in cross-binary deterministic regression tests
+- **Class:** v5.9.2 replay-determinism contract violation (related to PARITY-001 spirit — assumed-OK shortcut without grepping the parity contract)
+- **Site(s):**
+  - Plan struct: `plans/v5.14-foxml-port-and-maker/subplans/2026-05-08-v5.14.10-bayesian-thompson-bandit.md:94` (`uint64_t rng_state`)
+  - Plan REUSE list: lines 26-28 ("std::mt19937_64" + "std::normal_distribution"); codebase has zero existing <random> consumers (confirmed by grep against HEAD)
+  - Plan Step 1 sample-fn body: line 99 ("Uses Box-Muller for std::normal_distribution alternative")
+- **Symptom:** Operator runs replay backtest on dev box (libstdc++-13). Records 1000 ticks of Thompson samples to a CSV. Operator deploys binary to prod (libstdc++-12 or different vendor). Same cfg.thompson_rng_seed=42 + same reward sequence → libc++ runtime computes a different normal sample at step N → divergence point inflates → backtest CSV ≠ live decisions. Backtest replay-determinism contract silently broken.
+- **Root cause:** `std::normal_distribution` is implementation-defined per C++ standard. libstdc++ uses Marsaglia polar method (with internal `_M_saved` state); libc++ uses different algorithm. Even within libstdc++, saved-second-draw state can differ across versions. Only `std::mt19937_64::operator()` raw 64-bit output is standardized (§29.6.5.2).
+- **Fix path:** v5.14.10.A amendment — own the math directly:
+  - ThompsonBanditState stores ONLY uint64_t rng_state (live mt19937_64 internal state, advanced per draw)
+  - NO std::normal_distribution member; implement Box-Muller (or Ziggurat) directly using std::mt19937_64::operator()() raw 64-bit output
+  - Convert raw uint64 → (0,1) double via deterministic uniform conversion (NOT std::generate_canonical — also implementation-defined)
+  - Apply Box-Muller cos transform: z = sqrt(-2 ln u1) * cos(2π u2). Math uses std::log + std::sqrt + std::cos (IEEE-754 deterministic per CLAUDE.md FPN/double determinism discipline)
+  - Add snapshot test (CLAUDE.md item 15): fixed seed 42, draw 1000 samples vs 2-arm posterior, compute SHA-256 of sample-trace, lock the hash. Future stdlib-version drift trips the test immediately.
+- **Target ship:** v5.14.10.A (struct + math kernel; ~30 min direct Box-Muller + 30 min snapshot test)
+- **Status:** **OPEN** (plan-stage; pre-coding amendment recommended)
+- **Workaround:** N/A — this needs to be designed correctly before code lands
+
+### PARITY-015 — Thompson display↔execution invariant breach: no PerCoreSnap/panel surface
+
+- **Found:** 2026-05-10 during v5.14.10 Thompson bandit pre-coding parity audit (no commit yet — plan-stage finding)
+- **Severity:** MEDIUM
+  - CLAUDE.md item 12 invariant: every term in BG/SG_Evaluate (and in this case, ML_BuildParameters dispatch — slow-path predicate) must have a corresponding GUI surface
+  - Current Exp3 path has `ensemble_bandit_arm_probs` + `ensemble_n_updates_per_regime` snapshot fields populated at `CoreFrameworks/EngineSharded.hpp:646-694`
+  - Plan adds parallel ThompsonBanditState; proposes ZERO snapshot fields + ZERO ML Status panel branches → operator can't inspect Thompson posterior state
+- **Class:** Display↔execution invariant breach (v5.6.0 pattern); Class 18 sister (asymmetric snapshot coverage between Exp3 and Thompson)
+- **Site(s):**
+  - Plan: `plans/v5.14-foxml-port-and-maker/subplans/2026-05-08-v5.14.10-bayesian-thompson-bandit.md` (entire file: zero "snapshot" / "panel" / "GUI" mentions per `grep -c`)
+  - Snapshot publish reference: `CoreFrameworks/EngineSharded.hpp:646-694` (where `ensemble_bandit_arm_probs[r]` is populated for Exp3; needs parallel Thompson section)
+  - Snapshot struct: `CoreFrameworks/ShardedSnapshot.hpp` (search `ensemble_bandit_arm_probs` for parallel additions)
+  - ML_BuildParameters dispatch (the new "term"): `Strategies/StrategyParameters.hpp:887-1005`
+- **Symptom:** Operator paper-tests Thompson sampling, sees flat P&L, has NO panel surface to ask "is Thompson posterior actually diverging from uniform priors? Is mu_post moving? Are pulls evenly distributed across arms?" Must shell into the binary, dump bandit state via stderr fprintf. Worse: operator can't see which algorithm path is currently active without re-reading cfg (no "Bandit Algorithm: Exp3 / Thompson / Both" indicator). Same telemetry need that drove `ensemble_bandit_arm_probs` for the Exp3 path.
+- **Root cause:** Plan focuses on math + persistence; skips snapshot/panel propagation. Cfg=2 dual-mode telemetry mentioned at line 144 ("uses calibration log v5.13.0.B with new columns") but specifics not designed.
+- **Fix path:** v5.14.10.B amendment — add Step 7 "Snapshot + ML Status panel surface":
+  - Snapshot fields: `thompson_bandit_active` (uint8); `thompson_bandit_chosen_arm[NUM_REGIMES]` (int8); `thompson_bandit_total_pulls_per_regime[NUM_REGIMES][N_ARMS]` (uint32); `thompson_bandit_mu_post_per_regime[NUM_REGIMES][N_ARMS]` (float)
+  - Populator extends EngineSharded.hpp:646-694 ensemble snapshot section
+  - ML Status panel: new "Bandit Algorithm: Exp3 | Thompson | Both" row; new per-regime per-arm table (mu_post, precision_post, total_pulls) when Thompson active
+  - Cfg=2 telemetry: per-fill calibration log gains `exp3_chosen_arm_idx` + `thompson_chosen_arm_idx` columns
+- **Target ship:** v5.14.10.B (~60 min snapshot field + populator + panel branch + cfg=2 telemetry log columns)
+- **Status:** **OPEN** (plan-stage; pre-coding amendment recommended)
+- **Workaround:** Inspect bandit state via stderr dumps until panel surface lands
+
+---
+
+## Audit log
+
+- **2026-05-10** — `/parity-check` audit of v5.14.10 Thompson bandit plan (pre-coding gate). 3 new findings written: PARITY-013 (HIGH), PARITY-014 (HIGH), PARITY-015 (MEDIUM). Verdict: YELLOW (proceed with 4 plan amendments before scope-lock). Full audit report: `plans/plan_checks/parity-check-2026-05-10-v5.14.10-thompson-bandit.md`.
+- **2026-05-10** — `/parity-check` re-audit of v5.14.10 AMENDED plan (4 architectural decisions baked in + 13 mechanical fixes applied + 6-sub-tag structure .0/.A/.B/.C/.D/.E). Verdict: YELLOW (proceed with 7 mechanical plan-text fixes; ~10 min). Confirmed: PARITY-013 RESOLVED in .B Step 9 (FOREACH_STAMP_BOUND_CFG with 4 X-rows + AUTOPOPULATE auto-flow). PARITY-014 RESOLVED in .A Step 2+7 (own Box-Muller via raw mt19937_64::operator() + SHA-256-locked sample-trace test). PARITY-015 RESOLVED in .D Step 1+2+6 (5 PerCoreSnap fields with bit-packed thompson_state byte + ML Status panel branch + cfg=2 calib log via FOREACH_CALIB_LOG_COL). 2 NEW MEDIUM findings flagged as plan-text staleness (NOT new bug class): NEW-1 stale field name `ensemble_bandit_arm_probs` → actual `ensemble_weights[5][8]`; NEW-2 stale file path `EngineSharded.hpp:646-694` → actual `ShardedSnapshot.hpp:677-694` (publish writer). Both propagated from prior parity-check report; PARITY-015 entry's file path citation should be corrected. NO new PARITY-NNN entries. NEW parity surfaces (thompson_state.json wire format Layer 1-6 compliance, PerCoreSnap cluster restructure, 4 stamp-bind drift tests presence dispatch) all GREEN against discipline. Full audit report: `plans/plan_checks/parity-check-2026-05-10-v5.14.10-AMENDED.md`.
+
 ---
 
 ## Future audit findings will append here

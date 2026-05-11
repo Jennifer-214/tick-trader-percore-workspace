@@ -242,7 +242,7 @@ A finding that exists only in a transient audit report or chat memory gets re-di
 
 ---
 
-### TECH_DEBT-010 — FOREACH_CALIB_LOG_COL registry for calibration log CSV columns
+### TECH_DEBT-010 — FOREACH_CALIB_LOG_COL registry for calibration log CSV columns ✅ CLOSED v5.14.10.D
 
 - **Created:** 2026-05-09 by v5.14.8 scope decision (Interpretation B; deferred N-site pattern audit)
 - **Severity:** LOW (small N currently; CSV columns relatively stable; pattern still recurring)
@@ -251,8 +251,42 @@ A finding that exists only in a transient audit report or chat memory gets re-di
 - **Why deferred (not effort-avoidance):** v5.14.8 work doesn't touch calibration log path; small N (currently ~20 columns) means manual pattern is tractable. Worth converting only when the next ship tries to add ≥3 columns and would otherwise compound the pattern.
 - **Cost estimate:** ~3-4h structural ship; ~20 columns to migrate; trivial per-column
 - **Trigger:** Next ship that adds 3+ calibration log columns in one umbrella (e.g., maker-side fill metrics when v6.0 maker ships, or new ML observability columns), OR ship that touches the CSV writer/reader for any reason.
+- **Status:** **CLOSED v5.14.10.D** — `DataStream/CalibLogColRegistry.hpp` (NEW) defines FOREACH_CALIB_LOG_COL with the existing 9 columns; `OrderManager_HandleFill` row emit + `OpenCalibrationLog` header emit refactored to walk the registry; byte-format preservation (operator-parser compat) maintained. DESIGN_SPECS doc `calibration-log-column-registry.md` (NEW) captures the methodology + lists future candidate logs (MetricsLog + ShardedTradeLog scheduled for v5.14.10.F per /merge-scan N2 finding).
+- **Cross-ref:** v5.13.0.B calibration log infrastructure; v5.14.7 deferred plan (would have added 4 maker-related columns); v5.14.10.D commit (TBD); `DESIGN_SPECS/calibration-log-column-registry.md`.
+
+---
+
+### TECH_DEBT-031 — MetricsLog FOREACH registry refactor (multi-writer row-shape mismatch)
+
+- **Created:** 2026-05-10 by v5.14.10.F scope-cap decision (ShardedTradeLog migration shipped via FOREACH_TRADE_LOG_COL; MetricsLog deferred due to writer-shape heterogeneity)
+- **Severity:** LOW (cosmetic; existing 2-writer pattern works; pattern would help future column additions but not blocking)
+- **Surface:** `DataStream/MetricsLog.hpp` — 27-column CSV with 2 writers producing DIFFERENT row shapes:
+  - `MetricsLog_SlowPath`: cols 1-26 populated; col 27 (details) blank
+  - `MetricsLog_Event`: cols 1-13 populated; cols 14-26 blank (12 commas); col 27 (details) populated
+- **Class:** Same N-site sister-literal class as TECH_DEBT-010 (header constant + writer fprintf + reader parser updated in lockstep when adding a column). But the row-SHAPE divergence between the 2 writers makes a single-registry awkward — neither Variant A (fprintf direct) nor Variant B (snprintf to buffer) of `calibration-log-column-registry.md` cleanly fits.
+- **What's deferred:** Apply FOREACH_METRICS_LOG_COL registry to MetricsLog. Requires design pass on how to handle the writer-shape divergence:
+  - Option 1: 27-col registry; each writer fills caller-scope variables (with empty-string sentinel for non-populated cols); registry walk emits "" for empty-marked cols. Requires per-column NULLABILITY semantic.
+  - Option 2: SHAPE column in registry tuple (X(name, fmt, expr_slow, expr_event)); registry walk dispatches per-writer. Requires 4-col tuple instead of 3-col.
+  - Option 3: Per-writer registry walks (FOREACH_METRICS_LOG_COL_SLOW_PATH + FOREACH_METRICS_LOG_COL_EVENT). Defeats single-source-of-truth (now 2 registries to keep in sync — exactly what we're trying to avoid).
+- **Why deferred (not effort-avoidance):** v5.14.10.F's primary win is establishing the registry pattern across log writers (calib + trade). MetricsLog requires a design decision (Option 1 vs 2 vs 3) that's better made with operator input on how MetricsLog SlowPath vs Event semantics should evolve. Forcing a choice now risks locking in the wrong shape; deferring lets the next contributor decide based on what the next column needing addition actually looks like.
+- **Cost estimate:** ~150-250 LOC for the registry + writer refactors + snapshot tests; design discussion time ~30-60 min. Per CLAUDE.md "Three similar lines is better than a premature abstraction" — wait until 3rd MetricsLog column addition forces the question.
+- **Trigger:** Address (a) when next ship adds 3+ columns to MetricsLog (forcing the design decision), OR (b) operator-driven cleanup sprint targeting MetricsLog architecture.
 - **Status:** OPEN
-- **Cross-ref:** v5.13.0.B calibration log infrastructure; v5.14.7 deferred plan (would have added 4 maker-related columns)
+- **Cross-ref:** v5.14.10.F commit (TBD); `DESIGN_SPECS/calibration-log-column-registry.md` "Pattern variants" section + "Future application candidates" table; TECH_DEBT-010 (sister entry, CLOSED v5.14.10.D); /merge-scan 2026-05-10 v5.14.10 amended-plan finding N2 (originally bundled MetricsLog + ShardedTradeLog; trade log shipped, metrics deferred).
+
+---
+
+### TECH_DEBT-030 — cfg=2 dual-mode calibration log telemetry columns (deferred from v5.14.10.D)
+
+- **Created:** 2026-05-10 by v5.14.10.D scope-cap decision (FOREACH_CALIB_LOG_COL refactor shipped; cfg=2-specific columns deferred for cross-component plumbing)
+- **Severity:** LOW (operator-facing diagnostic feature; cfg=2 dispatch ships in v5.14.10.B; calibration log columns visualize the A/B comparison offline)
+- **Surface:** `DataStream/CalibLogColRegistry.hpp` FOREACH_CALIB_LOG_COL registry; `CoreFrameworks/OrderManager.hpp` HandleFill calibration log row emit; `CoreFrameworks/OrderManager.hpp` OMS state per-slot fields for predict-time → fill-time data flow
+- **What's deferred:** Add 3 cfg=2 dual-mode telemetry columns to FOREACH_CALIB_LOG_COL: `exp3_chosen_arm`, `thompson_chosen_arm`, `regime_id_at_pick`. Empty / -1 sentinels when cfg.bandit_algorithm != 2. Requires cross-component plumbing: capture exp3 + thompson chosen arms + regime at predict time (in ML_BuildParameters slow path), persist to fill time (per-slot OMS state OR Order struct field), read at HandleFill calib log row write.
+- **Why deferred (not effort-avoidance):** v5.14.10.D ships the FOREACH_CALIB_LOG_COL pattern + REFACTORS the existing 9-column writer (closes TECH_DEBT-010 structurally). Cfg=2 telemetry columns require ADDITIONAL plumbing across 3 components (slow-path predict → OMS state → drainer-thread fill emit) that's a separate concern. Would have grown .D from ~250 LOC to ~400+ LOC. Better as a focused micro-ship (v5.14.10.E or v5.14.11+) once the cross-component data flow is designed.
+- **Cost estimate:** ~100-150 LOC. Add 3 OMS per-slot fields (mirror `last_exit_predicted_arm` shape; ~30 LOC). Populate at slow-path predict (mirror `last_exit_was_predicted` population at EngineSharded.hpp:3144-3145; ~20 LOC). Read in HandleFill calib log row (caller scope contract update; ~10 LOC). Add 3 entries to FOREACH_CALIB_LOG_COL (~5 LOC). Tests for round-trip cfg=2 → calib log row (~30 LOC). Total ~95-115 LOC of focused work + tests.
+- **Trigger:** Address (a) when operator initiates first paper-test session with cfg.bandit_algorithm=2 (dual-mode A/B), OR (b) when v5.14.10.E ships (would naturally bundle), OR (c) when v5.14.11+ adds another bandit-related per-fill telemetry need (consolidation candidate).
+- **Status:** OPEN
+- **Cross-ref:** v5.14.10.B (cfg=2 dispatch shipped; data sources `ezoo->last_predicted_horizon_idx` + `ezoo->last_predicted_thompson_arm` + `ezoo->last_predicted_regime_id` available at predict time); v5.14.10.D (closes TECH_DEBT-010 via FOREACH_CALIB_LOG_COL refactor; this entry tracks the deferred cfg=2 columns); `DataStream/CalibLogColRegistry.hpp` "FUTURE COLUMNS" comment block; `DESIGN_SPECS/calibration-log-column-registry.md` "FUTURE APPLICATION CANDIDATES" table.
 
 ---
 
@@ -265,8 +299,9 @@ A finding that exists only in a transient audit report or chat memory gets re-di
 - **Why deferred (not effort-avoidance):** Distinct from FOREACH_FAILURE_MODE (v5.14.8 covers failure-mode fields specifically; this would cover the LARGER set of visible state). Performance-sensitive: snapshot capture runs in slow-path tail; registry expansion needs to preserve existing memcpy-friendly layout. Needs design conversation about: (a) whether to split capture into hot/warm/cold tiers, (b) whether registry entries should declare their write cadence, (c) cache-line alignment preservation. NOT a mechanical conversion.
 - **Cost estimate:** ~10-15h architectural ship (design + registry + migration of ~30 fields + tests); requires preceding design doc
 - **Trigger:** Next ship that adds 5+ PerCoreSnap general fields in one umbrella (likely v5.X+ ML observability work or v6.0 maker), OR ship that audits PerCoreSnap layout for cache performance.
-- **Status:** OPEN (needs design doc before implementation)
-- **Cross-ref:** v5.14.8.B+C (FOREACH_FAILURE_MODE; sister registry for the failure-mode subset); CLAUDE.md item 12 (display ↔ execution invariant — every hot-path predicate term needs PerCoreSnap field; current pattern is manual)
+- **Status:** OPEN — partially addressed by v5.14.10.0 (cluster alignment dimension)
+- **Progress (v5.14.10.0):** the cache-line alignment dimension (sub-bullet (c) of "Why deferred") is now ADDRESSED via `per-snapshot-cluster-layout-pattern.md` (NEW DESIGN_SPECS) + first reference application (PerCoreSnap bandit telemetry cluster with `alignas(64)` boundary + compile-time `static_assert(offsetof)` enforcement). Future contributors have a documented methodology + working example for cluster boundaries. The FULL `FOREACH_PER_CORE_SNAP_FIELD` registry conversion (sub-bullets (a) and (b): hot/warm/cold tier split + write-cadence-declared registry entries) remains DEFERRED — those are higher-scope architectural changes that warrant their own focused ship.
+- **Cross-ref:** v5.14.8.B+C (FOREACH_FAILURE_MODE; sister registry for the failure-mode subset); v5.14.10.0 (`per-snapshot-cluster-layout-pattern.md` DESIGN_SPECS + first application); CLAUDE.md item 12 (display ↔ execution invariant — every hot-path predicate term needs PerCoreSnap field; current pattern is manual)
 
 ---
 
@@ -536,3 +571,70 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 - **Trigger:** When DESIGN_SPECS catalog count stabilizes (no new pattern in 2+ sprints) AND when a Layer 2 orchestrator skill (/precoding-audit per TECH_DEBT-018, or new) emerges that would invoke pattern-application skills as sub-steps. Re-evaluate at v5.16 sprint planning.
 - **Status:** OPEN
 - **Cross-ref:** `tick-trader-percore-workspace/DESIGN_SPECS/README.md` catalog; TECH_DEBT-018 (precoding-audit Layer 1 orchestrator — sibling); CLAUDE.local.md "DESIGN_SPECS catalog discipline" entry.
+
+---
+
+### TECH_DEBT-026 — Per-core override of `bandit_algorithm` (per-core A/B testing)
+
+- **Created:** 2026-05-10 by /dod-audit run on v5.14.10-bayesian-thompson-bandit plan
+- **Severity:** LOW
+- **Surface:** `Strategies/StrategyParameters.hpp` ML_BuildParameters bandit dispatch (post-v5.14.10 introduction); `CoreFrameworks/PerCoreOverride.hpp` (per-bit-per-core override domains)
+- **What's deferred:** Per-core override of `bandit_algorithm` cfg field. Today (post-v5.14.10) the algorithm choice is engine-wide. Future feature: per-core selection (e.g., `core_0_bandit_algorithm=0` Exp3, `core_1_bandit_algorithm=1` Thompson) to run head-to-head A/B comparison at the per-core level — natural extension of the dual-mode (cfg=2) telemetry.
+- **Why deferred (not effort-avoidance):** v5.14.10 plan ships engine-wide algorithm choice; per-core override is a separate feature ship. Operator's primary A/B comparison happens via `cfg.bandit_algorithm=2` (both run, telemetry distinguishes) which doesn't need per-core override. Per-core override matters when operator wants to compare TRADING DECISIONS (each core actually trades on its own algorithm) vs telemetry-only. Pattern: `per-bit-per-core-override-pattern.md` (PER_CORE_OVERRIDE_BITMAP_DOMAINS) — but `bandit_algorithm` is INT enum not boolean, so the bitmap pattern doesn't directly apply; a SEPARATE per-core override mechanism is needed for INT-valued cfg fields (precedent: `risk_degradation_curve` per-core override added v5.14.9.C).
+- **Cost estimate:** ~2-3h (mirror `risk_degradation_curve` per-core override pattern; add `core_N_bandit_algorithm` cfg parser entry + per-core resolution in ControllerConfig_ResolveForCore + thread through to gate_state). LOW risk (additive; default = engine-wide preserved).
+- **Trigger:** Address when (a) operator requests per-core A/B testing of bandit algorithms (head-to-head decisions, not telemetry-only), OR (b) v5.X.Y adds another INT-enum cfg field needing per-core override (consolidation candidate), OR (c) FOREACH_BANDIT_ALGORITHM registry retrofit (TECH_DEBT-026's sister item — making algorithm-extensible amplifies the per-core override value).
+- **Status:** OPEN
+- **Cross-ref:** v5.14.10 plan (engine-wide algorithm choice ships first); `risk_degradation_curve` per-core override (v5.14.9.C precedent for INT-enum per-core override); `DESIGN_SPECS/per-bit-per-core-override-pattern.md` (boolean variant; INT variant needs adaptation); /dod-audit 2026-05-10 v5.14.10 thompson report.
+
+---
+
+### TECH_DEBT-027 — Locale pinning gap in `Bandit_SaveJSON` (LC_NUMERIC drift risk)
+
+- **Created:** 2026-05-10 by /dod-audit run on v5.14.10-bayesian-thompson-bandit plan
+- **Severity:** MEDIUM
+- **Surface:** `ML_Headers/BanditLearning.hpp:369-435` (Bandit_SaveJSON); also `ML_Headers/BanditLearning.hpp:503-...` (Bandit_LoadJSON parser side)
+- **What's deferred:** Bandit_SaveJSON does NOT pin `LC_NUMERIC=C` via `uselocale(newlocale(LC_NUMERIC_MASK, "C", 0))` before its `fprintf(..., "%.17g", ...)` calls for `weights[]` + `cum_reward[]`. Engine running under non-C locale (e.g., `LC_NUMERIC=de_DE`) would write `0,55` instead of `0.55`; load round-trip via `tt::parse_double_fast_advance` (locale-immune via `from_chars`) would parse `0` (truncated at comma) → silent state corruption. Same gap exists in any other JSON writer using `%g` family without pinning.
+- **Why deferred (not effort-avoidance):** v5.14.10's MEDIUM-2 finding (Thompson_SaveJSON locale pinning) addresses the Thompson side; opportunistic to fold Bandit_SaveJSON fix in same ship. But Bandit_SaveJSON gap pre-dates v5.14.10 and isn't strictly v5.14.10's scope. Current production deployments operate under default `LC_NUMERIC=C` so the bug is dormant. Real-world trigger requires operator to set non-C locale environment before launching engine — uncommon but possible (e.g., systemd unit inheriting user locale; Docker container with locale config).
+- **Cost estimate:** ~15-20 LOC across save + load (add `uselocale` save-restore around fprintf body; verify `tt::parse_double_fast_advance` is locale-immune already — it is per v5.11.4.C migration). NEGLIGIBLE risk (additive defensive code; preserves existing format bytes when LC_NUMERIC=C — the common case).
+- **Trigger:** Address (a) opportunistically when v5.14.10's MEDIUM-2 Thompson_SaveJSON locale pinning is implemented (same file family; same pattern; ~5 extra LOC), OR (b) when an operator reports non-C locale corruption, OR (c) at next /parity-check that walks wire-format byte-preservation surfaces.
+- **Status:** CLOSED 2026-05-10 by v5.14.10.C (ca4259f) — locale pinning added to Bandit_SaveJSON via uselocale(newlocale(LC_NUMERIC_MASK, "C", 0)) around fprintf body + uselocale(prev) + freelocale before fclose. Same pattern as ModelInference.hpp:1830-1940 stamp_write_for_model precedent. Applied opportunistically with v5.14.10.C's Thompson_SaveJSON locale pinning.
+- **Cross-ref:** /dod-audit 2026-05-10 v5.14.10 thompson report MEDIUM-2 finding; `DESIGN_SPECS/wire-format-byte-preservation-discipline.md` Layer 2 (locale pinning at emit construction); `ML_Headers/ModelInference.hpp` stamp_write_for_model v5.14.8.A.merged precedent for the canonical 3-line pattern; v5.14.10.C commit ca4259f.
+
+---
+
+### TECH_DEBT-028 — Bool-as-uint8_t fields eligible for FOREACH_PER_CORE_STATE_FLAG bitmap migration
+
+- **Created:** 2026-05-10 by /merge-scan re-audit on v5.14.10 amended plan (finding N4)
+- **Severity:** LOW (cosmetic; no functional impact; no parity risk)
+- **Surface:** PerCoreSnap struct fields in `DataStream/EngineTUI.hpp` (~line 980-1198):
+  - `ml_scaler_present` (uint8_t boolean)
+  - `drift_breached` (uint8_t boolean)
+  - `drift_kill_tripped` (uint8_t boolean)
+  - `core_kill_tripped` (uint8_t boolean)
+- **Class:** Same shape as v5.14.9.B.2 / .H bitmap migrations (per-core boolean fields → uint8 bitmap with MASK_* + BITMAP_IS_SET API per CLAUDE.md item 20). Inventory caught by /merge-scan during the v5.14.10 amendment re-audit (finding N4) — surfaced as FUTURE candidate, NOT amendment-required.
+- **What's deferred:** Migrate the 4 bool-as-uint8_t fields above into a single `uint8_t per_core_state_flags` bitmap with `MASK_PER_CORE_*` constants + accessor macros. Saves 3 bytes per PerCoreSnap (4 bytes → 1 byte); enables branchless multi-flag check via single AND mask; consistent with v5.14.9 BITMAP_* universalization sweep.
+- **Why deferred (not effort-avoidance):** v5.14.10 sprint focus is Thompson sampling + PerCoreSnap layout audit (.0) + log column registry generalization (.F). Bit-packing 4 unrelated boolean PerCoreSnap fields is a separate cleanup concern. Folding it in would scope-creep .0 from "bandit telemetry cluster" to "all PerCoreSnap bools." Better as a focused follow-up ship.
+- **Cost estimate:** ~30-50 LOC (define new uint8 field + 4 MASK_* constants + accessor macros; refactor 4 read sites + 4 write sites; tests for byte-packing). LOW risk (isolated boolean fields; backward-compat for snapshot consumers via field rename).
+- **Trigger:** Address (a) when 2+ MORE bool-as-uint8_t PerCoreSnap fields land (consolidation candidates accumulate), OR (b) when next ship touches PerCoreSnap layout for unrelated reasons (opportunistic absorb), OR (c) v5.14.10.0 PerCoreSnap layout audit may identify additional cluster opportunities that warrant a follow-up "PerCoreSnap state-flag bitmap" sub-ship.
+- **Status:** OPEN
+- **Cross-ref:** v5.14.9.B.2 (`PerCoreSnap state_flags uint16_t` migration; canonical precedent); v5.14.9.H (`ShardedSnapshot.any_scaler_present + any_scaler_failed` bitmap; same pattern); CLAUDE.md item 20 (bit-packed flag storage via BITMAP_* API); `DESIGN_SPECS/bitmap-flag-api.md`; /merge-scan 2026-05-10 v5.14.10 AMENDED report (finding N4); v5.14.10 amendment-re-audit synthesis at `plans/plan_checks/2026-05-10-v5.14.10-amended-plan-fresh-audits-synthesis.md`.
+
+---
+
+### TECH_DEBT-029 — Source file length reduction (large headers harm maintainability)
+
+- **Created:** 2026-05-10 by Caramel musing during v5.14.10.0 PerCoreSnap layout work
+- **Severity:** LOW (cosmetic / maintainability; no behavior or perf impact)
+- **Surface:** Large single-file headers in the codebase. Inventory snapshot 2026-05-10:
+  - `CoreFrameworks/ControllerConfig.hpp` — 2727 lines (largest header in repo; cfg declarations + parser + defaults + validation)
+  - `ML_Headers/CoreModelZoo.hpp` — 2239 lines (CoreModelZoo + EnsembleModelZoo + bandit + ridge state + persistence)
+  - `Strategies/StrategyParameters.hpp` — 1693 lines (ML_BuildParameters + dispatch + ridge override + composite confidence)
+  - `DataStream/EngineTUI.hpp` — 1382 lines (TUI infrastructure + TUISnapshot + PerCoreSnap)
+  - `tests/controller_test.cpp` — ~16k lines (already covered by CLAUDE.md test file size discipline section)
+- **Class:** Same maintenance-overhead class as the test file size discipline already in CLAUDE.md (test files > 5k lines must split BEFORE adding more tests). This entry surfaces the SOURCE-side analog for non-test files. Headers above 1500-2000 lines slow IDE navigation, increase merge-conflict surface, and discourage related-concern grouping (developers append to end-of-file rather than locating the relevant section).
+- **What's deferred:** Establish a SOURCE file size discipline analog to CLAUDE.md's test file discipline (e.g., "any source file > 1500 lines OR > 50 logical sections must be split BEFORE adding more"). When triggered, split candidate files into focused sub-files by concern (e.g., `ControllerConfig.hpp` → `ControllerConfigDecl.hpp` + `ControllerConfigParser.hpp` + `ControllerConfigDefaults.hpp` + `ControllerConfigValidate.hpp`).
+- **Why deferred (not effort-avoidance):** File splits are HIGH-RISK refactors (every consumer's `#include` chain shifts; build dependency graph re-evaluates; sometimes circular-include headaches surface). Each split warrants its own focused ship with rollback anchor + comprehensive build verification. Doing it ad-hoc during feature ships is risky. Better as dedicated refactor sub-ship per file (e.g., v5.X.Y "ControllerConfig.hpp → 4-file split").
+- **Cost estimate:** ~2-4h per file split (audit consumers + plan boundary + edit + build verify + test). Total inventory above: ~10-20h to address all candidate files.
+- **Trigger:** Address (a) when a specific file makes a feature ship genuinely awkward (e.g., 6+ developer hours lost to "where is X in this 2700-line file?"), OR (b) before a major refactor of one of the candidate files that would significantly increase its size further, OR (c) operator-driven cleanup sprint focused on maintainability.
+- **Status:** OPEN
+- **Cross-ref:** CLAUDE.md "Test file size discipline (added v5.11.35)" section (test-side analog; this entry is the source-side counterpart); v5.14.10.0 PerCoreSnap layout work (occasion for the musing).

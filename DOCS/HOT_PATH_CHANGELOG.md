@@ -539,3 +539,81 @@ branch via switch). Within 100µs slow-path budget.
 Per CLAUDE.md item 17 latency-additions discipline: documented
 here so cost is never unaccounted for. /readiness Check 23 (added
 v5.14.1.F) enforces this discipline going forward.
+
+---
+
+## 2026-05-10 — v5.14.10 Bayesian Thompson sampling bandit (SLOW-PATH ONLY; hot path UNTOUCHED)
+
+**Sites added (slow-path only):**
+- `Strategies/StrategyParameters.hpp:887-1009` — bandit dispatch via
+  FOREACH_BANDIT_ALGORITHM registry (cfg=0 EXP3 default branch preserved
+  bytewise; cfg!=0 routes through `BanditAlgorithm_Apply` indirect call)
+- `ML_Headers/CoreModelZoo.hpp` — Thompson init/load steps in
+  FOREACH_ENSEMBLE_POST_LOAD (boot-only path; not per-tick)
+- `CoreFrameworks/ShardedSnapshot.hpp:682-694` — Thompson display field
+  populator in TUI_CopySnapshotSharded (slow-path snapshot publish)
+- `CoreFrameworks/SlowPathGateRegistry.hpp:69-100` — 2 new entries
+  (THOMPSON_ACTIVE, BANDIT_BOTH_ACTIVE) computed once per slow-path
+  RebuildOneCore, cached in gate_state->flags for future readers
+
+**Hot path:** UNTOUCHED. p99 ≤500ns target unaffected. Verified by
+`tools/calls_graph_diff.sh` post-ship (no new symbols on the hot trace).
+
+**Slow-path cost** (per ML cycle; budget 100µs):
+
+| cfg | Math kernel cost | Dispatch overhead | Total | % of slow-path budget |
+|---|---|---|---|---|
+| 0 (EXP3 default) | ~50ns (unchanged) | 0ns (DIRECT branch — see note) | ~50ns | 0.05% |
+| 1 (THOMPSON only) | ~80ns (8 splitmix64 + Box-Muller pairs + argmax) | ~5ns indirect call | ~85ns | 0.085% |
+| 2 (BOTH parallel) | ~50 + ~80 + per-fill telemetry capture | ~5ns | ~140ns | 0.14% |
+
+Note: the **EXP3 (cfg=0) path remains DIRECT** — the dispatch table is only
+consulted when `bandit_algorithm != 0`. This preserves bytewise-identical
+behavior for the default-cfg case and avoids paying the ~5ns indirect-call
+overhead when Thompson isn't active. See StrategyParameters.hpp:880+
+"if (config->bandit_algorithm == 0) ... else ..." branch.
+
+**Branchless:**
+- Thompson dispatch when active: NOT branchless (single switch on enum;
+  bounds-checked indirect call). Acceptable on slow path (predictable when
+  cfg-stable).
+- Box-Muller: NOT branchless (rejection-sampling avoided by polar form;
+  log/sqrt/cos/sin are all single-cycle on x86 modern CPUs but not branchless).
+- splitmix64: branchless (3 multiplies + 3 XORs + 3 shifts; no branches).
+- Argmax in Thompson_Sample: branchless via cmov on `sample[j] > best_val`.
+
+**Cache impact (PerCoreSnap layout):**
+- 5 new Thompson display fields land in the unified bandit telemetry
+  cluster established by v5.14.10.0 (`alignas(64)` boundary at
+  `ensemble_active`). Cluster grows from ~408B (Exp3 only) to ~512B exact
+  (8 cache lines). No new cache-line straddles.
+- Cross-thread invalidations (slow-path writer → GUI reader): ~60 cache
+  misses/sec/core for cfg=1 or cfg=2 GUI reader (60 frames/sec × 1 cluster
+  fetch). Below noise floor.
+- ThompsonBanditState: ~112B per state × NUM_REGIMES (5) = ~560B per ezoo.
+  Per-core slow-path-only state; no false sharing.
+
+**Optimization note:**
+- **DEFAULT-OFF CHEAP:** when `cfg.bandit_algorithm == 0`, the ONLY cost
+  is the single comparison branch (`if (config->bandit_algorithm == 0)`).
+  Dispatch table is never consulted. Indirect call cost only paid when
+  Thompson is active.
+- **FUTURE: hoist to template parameter.** Per CLAUDE.md item 18(a),
+  `template <int BANDIT_ALGORITHM>` + `if constexpr` would compile-time-elide
+  the unused branches. Would require ML_BuildParameters specialization per
+  algorithm; deferred (current ~5ns cfg=0 + ~85ns cfg=1 cost is well within
+  budget). Worth revisiting if slow-path budget tightens.
+- **FUTURE: Thompson_Sample SIMD.** 8 splitmix draws via vectorized log/cos/sin
+  (intrinsic-equivalent) would parallelize the Box-Muller computation,
+  dropping ~80ns → ~10-20ns per Sample. Marginal vs slow-path budget;
+  deferred per CLAUDE.md item 18 (no need until budget tightens).
+- **FUTURE: Slow-path-gate cache for predicate.** Currently the cfg=0
+  branch reads `config->bandit_algorithm` directly. Could swap to
+  `BITMAP_IS_SET(gate_state->flags, MASK_THOMPSON_ACTIVE)` for branch-
+  predictor consistency. Marginal gain; cfg-stable reads predict well.
+
+Per CLAUDE.md item 17 latency-additions discipline: documented for the
+v5.14.10 mega-bundle (.0 layout / .A registry+math / .B wiring / .C
+persistence / .D dashboard+log registry / .E propagation / .F log
+generalization). Replay determinism (PARITY-014) enforced via SHA-256-locked
+sample-trace test in tests/controller_test.cpp v5.14.10.A.

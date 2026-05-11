@@ -54,7 +54,7 @@ session can implement it without reading the original ship.
 Surprises during implementation. Compaction-degraded handoff watch-outs. Etc.
 ```
 
-## Catalog (v5.14.8 + v5.14.9 + v5.14.10 + v5.14.11 deliverables — 24 patterns)
+## Catalog (v5.14.4 + v5.14.8 + v5.14.9 + v5.14.10 + v5.14.11 deliverables — 26 patterns)
 
 Organized by category for quick discovery. Each pattern is one file in this dir.
 
@@ -117,7 +117,19 @@ Organized by category for quick discovery. Each pattern is one file in this dir.
 |---|---|---|
 | `struct-padding-determinism-pattern.md` | Explicit `int<N>_t _padding<N> = 0;` default-init fields for structs in byte-equivalence contexts (memcmp / SHA-256 / wire format). Eliminates UB padding bytes via C++ default member init; same struct size; future-proof against stack-layout shifts | ACTIVE (v5.14.11.B.2 first application: FPN<F>; second application: ThompsonBanditState); → CLAUDE.md item 27 |
 
-**24 patterns total.** Adding new patterns: write the doc, add a row above, cross-link from related docs. (Process meta-tip: follow `pattern-codification-lifecycle.md` — the meta-pattern that captures HOW to fully codify a new architectural discipline end-to-end.)
+### Determinism patterns
+
+| Doc | Pattern | Status |
+|---|---|---|
+| `prng-choice-for-replay-determinism.md` | When replay-determinism + persistence are both load-bearing, prefer SIMPLE algorithm with small state (splitmix64; 1 uint64) over HIGH-QUALITY algorithm with large state (mt19937_64; 312 words). `std::normal_distribution` is UNSAFE for cross-binary replay (libstdc++-implementation-defined). Pattern + Box-Muller recipe + seed-scrambling helper + SHA-256-locked sample-trace test. | ACTIVE (v5.14.10.A first application: ThompsonBanditState PRNG) |
+
+### Dependency-injection patterns
+
+| Doc | Pattern | Status |
+|---|---|---|
+| `template-deferred-dependency-injection.md` | Logic-only headers preserve I/O-free contract by taking side-effect primitive as template parameter (`typename Fn`); caller injects via lambda. Same shape across live/test/backtest. Zero runtime overhead (compiler inlines lambda). | ACTIVE (v5.14.4.B.1 + .B.2 first applications: Reconcile_ApplyMissedFills + Reconcile_AutoCancelStale) |
+
+**26 patterns total.** Adding new patterns: write the doc, add a row above, cross-link from related docs. (Process meta-tip: follow `pattern-codification-lifecycle.md` — the meta-pattern that captures HOW to fully codify a new architectural discipline end-to-end.)
 
 ## Quick discovery — "I need to..."
 
@@ -142,6 +154,8 @@ Organized by category for quick discovery. Each pattern is one file in this dir.
 - **...add a struct that will be compared bytewise (memcmp / SHA-256 / wire format)** → `struct-padding-determinism-pattern.md` (explicit `_padding = 0` fields for all implicit padding gaps; eliminates UB padding bytes structurally)
 - **...add a new boolean cfg field that has 2+ siblings in the same family** → `cfg-flag-eligibility-criteria.md` "Cohort audit when new field has siblings" section (run framework on cohort, not just new field)
 - **...codify a new architectural pattern that emerged from a sprint** → `pattern-codification-lifecycle.md` (7-stage lifecycle: audit → DESIGN_SPEC → first reference → cohort migration → CLAUDE.md item → tooling enforcement → wider audit)
+- **...add a PRNG to randomized code (Monte Carlo, Bayesian sampling, training-time shuffling)** → `prng-choice-for-replay-determinism.md` (simple algorithm + small state for cross-binary replay; `std::normal_distribution` is a landmine — use own Box-Muller)
+- **...call an I/O primitive from a logic-only header without breaking the contract** → `template-deferred-dependency-injection.md` (take callable as template parameter; caller injects via lambda)
 
 These are extracted from v5.14.8 + v5.14.9 + v5.14.10 + v5.14.11 sprint work. Future sprints add more as they solve new problems.
 

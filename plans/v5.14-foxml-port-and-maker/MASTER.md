@@ -439,7 +439,7 @@ tools/dod-audit-v0.1
               Used by v5.14.9's pre-coding gate (first user).
 
 v5.14.9     — Soft risk degradation ladder
-              + adjacent debt closures                      [PENDING; 9-11 days]
+              + adjacent debt closures                      [SHIPPED 2026-05-10]
               v5.14.9.A — FOREACH_DEGRADATION_CURVE registry +
                           branchless compute fns + dispatch table +
                           cfg fields + parser shim
@@ -482,13 +482,33 @@ v5.14.10    — Bayesian Thompson sampling bandit + mega-bundle      [SHIPPED 20
               Closes 2 TECH_DEBT items + opens 0 new (-010 + -011 substantial;
               -027 resolved opportunistically).
 
-v5.14.11    — Online correlation matrix updates            [PENDING; 2-3 days]
-              (renumbered from v5.14.12 2026-05-10)
-              v5.14.11.A — incremental outer-product kernel + tests
-              v5.14.11.B — engine wiring (swap full recompute → incremental)
-              v5.14.11.C — propagation
+v5.14.11    — Online correlation matrix updates + Ridge optimization
+              + Ridge cohort cfg-flag migration            [SHIPPED 2026-05-11]
+              (renumbered from v5.14.12 2026-05-10; EXPANDED 2026-05-11
+               with .B branchless math mega-bundle + .C cohort migration)
+              v5.14.11.A — sliding-window Welford + BuildCorr refactor +
+                           RidgeBlender_OnlineCycleStep C1 helpers
+              v5.14.11.B (umbrella; sub-tags B.0..B.7):
+                  .B.0 — DESIGN_SPECS foundation (branchless-math-kernel +
+                         struct-padding-determinism) + ML_Headers audit
+                  .B.1 — Cholesky_Solve constant-8 branchless rewrite
+                  .B.2 — FPN + ThompsonBanditState explicit padding determinism
+                  .B.3 — UpdateOnline + BuildCorr AVX-512 vectorization
+                         (SHA-256 byte-determinism locks)
+                  .B.4 — CLAUDE.md items 26+27 + DESIGN_SPECS catalog 21→23
+                  .B.5 — /dod-audit + /readiness skill enforcement
+                  .B.6 — Wider engine math-kernel audit (GREEN; 0 violations)
+                  .B.7 — RidgeWeights online state alignas(64) cache-line align
+              v5.14.11.C — Ridge cohort cfg-flag migration to
+                           FOREACH_ML_CFG_FLAG bitmap + branchless multi-flag
+                           dispatch (TECH_DEBT-017 CLOSED)
+              Closes 1 TECH_DEBT (-017); opens 0 new; 2 new DESIGN_SPECS
+              (branchless-math-kernel + struct-padding-determinism) +
+              meta-DESIGN_SPEC (pattern-codification-lifecycle).
 
-v5.14       — sprint umbrella (after all above ship)       [PENDING]
+v5.14       — sprint umbrella                              [SHIPPED 2026-05-11]
+              (v5.14.7 deferred indefinitely per TECH_DEBT-008;
+               sprint does NOT block on it per Phase 4 succession rule)
 ```
 
 `git reset --hard <tag>` for surgical rollback at any granularity.

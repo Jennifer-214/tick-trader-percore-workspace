@@ -157,6 +157,53 @@ If a calling thread/context has DAZ/FTZ enabled (rare; e.g., audio code), the ke
 
 For typical ML kernels with [0, 1] inputs: subnormals don't arise; rule 7 is informational.
 
+### Rule 8 — Branchless within vectorized block (v5.14.11.B.4 addition)
+
+**No `if` guards inside the vectorized block.** Use uniform masks across all 8 lanes; rely on `_mm512_maskz_loadu_pd(mask, ptr)` (zeros unmasked lanes) + `_mm512_mask_storeu_pd(ptr, mask, vec)` (writes only masked lanes) to handle edge cases via mask semantics.
+
+**Anti-pattern (REJECTED):**
+```cpp
+#if defined(__AVX512F__)
+if (j > 0) {  // ✗ branch inside vectorized block; introduces variable latency
+    const __mmask8 mask = (__mmask8)((1u << j) - 1u);
+    // ... AVX-512 setup
+}
+#endif
+```
+
+**Correct pattern (BRANCHLESS):**
+```cpp
+#if defined(__AVX512F__)
+// Mask handles j=0 case correctly: maskz_load with mask=0 produces all-zero
+// lanes; multiplications give 0; subsequent scalar reduce over j iterations
+// (0 of them when j=0) does nothing. No branch needed.
+const __mmask8 mask = (__mmask8)((1u << j) - 1u);
+__m512d v = _mm512_maskz_loadu_pd(mask, &arr[0]);
+// ... AVX-512 ops; no if-guards
+#endif
+```
+
+OR for CONSTANT-ITER math kernels (see `branchless-math-kernel-pattern.md`):
+
+```cpp
+#if defined(__AVX512F__)
+// Algorithmic zero-invariant (pre-zero arrays at appropriate granularity)
+// makes out-of-bounds lanes have 0 values; unconditional 8-lane operation
+// is bytewise-equivalent to variable-iter via x*0=0, x-0=x exact.
+__m512d v = _mm512_loadu_pd(&arr[0]);  // unconditional 8-lane load
+__m512d prod = _mm512_mul_pd(v, w);    // unconditional 8-lane multiply
+// ...
+#endif
+```
+
+**Why this matters:**
+
+Branches inside vectorized blocks defeat the purpose of vectorization (uniform SIMD operation across lanes). Variable latency per outer iteration breaks the "predictable cycle cost" property + complicates profiling. Per CLAUDE.md item 18, slow-path math kernels must be branchless inside reductions.
+
+**v5.14.11.B.1 lesson:** The Cholesky_Solve AVX-512 implementation initially had `if (j > 0)` and `if (i > 0)` guards intended to skip vector setup for empty reductions. The guards were unnecessary (mask=0 handles the edge case correctly + scalar reduce iterates 0 times). Caramel pushback 2026-05-11: *"shouldnt we have all calculations like this be branchelss?"* surfaced the rule.
+
+Cross-reference: `branchless-math-kernel-pattern.md` (constant-iter inner reductions + pre-zero invariants make Rule 8 trivial to satisfy for math kernels).
+
 ---
 
 ## Worked example: refactoring scalar to AVX-512 with byte-determinism

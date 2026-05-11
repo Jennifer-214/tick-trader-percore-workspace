@@ -427,9 +427,13 @@ of the relevant CLAUDE.md item.
 - structural-fix-preferred-decision-framework.md → CLAUDE.md item 19
 
 **v5.14.11 additions (2026-05-11):**
-- avx512-byte-determinism-pattern.md → CLAUDE.md item 25 (NEW; promotes v5.11.7 discipline to first-class invariant)
-- sliding-window-online-statistics-pattern.md → no direct CLAUDE.md ref yet (1 application; promote when 2nd application surfaces per codification rule)
+- avx512-byte-determinism-pattern.md → CLAUDE.md item 25 (promotes v5.11.7 discipline to first-class invariant; Rule 8 added v5.14.11.B.4 for branchless within vectorized block)
+- sliding-window-online-statistics-pattern.md → no direct CLAUDE.md ref yet (1 application v5.14.11.A; v5.14.11.B.3 vectorizes it via item 25; promote to CLAUDE.md when 2nd algorithmic application surfaces beyond Ridge correlation)
 - cfg-flag-eligibility-criteria.md → extended with new "Cohort audit when new field has siblings" section (no new CLAUDE.md item; cross-ref via item 13 reuse-audit)
+
+**v5.14.11.B mega-bundle additions (2026-05-11):**
+- branchless-math-kernel-pattern.md → CLAUDE.md item 26 (NEW; constant-iter inner reductions + pre-zero invariants; canonical first reference: v5.14.11.B.1 Cholesky_Solve)
+- struct-padding-determinism-pattern.md → CLAUDE.md item 27 (NEW; explicit `_padding = 0` fields for byte-equivalence-sensitive structs; canonical first reference: v5.14.11.B.2 FPN<F>)
 
 ## Going-forward rule: cohort-audit when new cfg field has siblings (set 2026-05-11; pre-implementation draft)
 

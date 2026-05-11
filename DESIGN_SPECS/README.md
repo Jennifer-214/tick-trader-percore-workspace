@@ -54,7 +54,7 @@ session can implement it without reading the original ship.
 Surprises during implementation. Compaction-degraded handoff watch-outs. Etc.
 ```
 
-## Catalog (v5.14.8 + v5.14.9 + v5.14.10 + v5.14.11 deliverables — 21 patterns)
+## Catalog (v5.14.8 + v5.14.9 + v5.14.10 + v5.14.11 deliverables — 23 patterns)
 
 Organized by category for quick discovery. Each pattern is one file in this dir.
 
@@ -107,9 +107,16 @@ Organized by category for quick discovery. Each pattern is one file in this dir.
 
 | Doc | Pattern | Status |
 |---|---|---|
-| `sliding-window-online-statistics-pattern.md` | Sum-of-squares fixed-window incremental statistics with drop-oldest math; bounded-input numerical-stability argument; AVX-512 outer-product shape; eliminates periodic-reset code smell | ACTIVE (v5.14.11.A pre-impl; first application: Ridge correlation matrix); promote to CLAUDE.md when 2nd application surfaces |
+| `sliding-window-online-statistics-pattern.md` | Sum-of-squares fixed-window incremental statistics with drop-oldest math; bounded-input numerical-stability argument; AVX-512 outer-product shape; eliminates periodic-reset code smell | ACTIVE (v5.14.11.A first application: Ridge correlation matrix); v5.14.11.B.3 second application via UpdateOnline AVX-512 |
+| `branchless-math-kernel-pattern.md` | Constant-iter inner reductions (use MAX_* constants, not runtime n); pre-zero invariants establish zero contributions for out-of-bounds iterations; no `if` guards inside reductions; IEEE-754 x-0=x exact preserves bytewise-equivalence with prior variable-iter | ACTIVE (v5.14.11.B.1 first application: Cholesky_Solve); → CLAUDE.md item 26 |
 
-**21 patterns total.** Adding new patterns: write the doc, add a row above, cross-link from related docs.
+### Struct layout patterns
+
+| Doc | Pattern | Status |
+|---|---|---|
+| `struct-padding-determinism-pattern.md` | Explicit `int<N>_t _padding<N> = 0;` default-init fields for structs in byte-equivalence contexts (memcmp / SHA-256 / wire format). Eliminates UB padding bytes via C++ default member init; same struct size; future-proof against stack-layout shifts | ACTIVE (v5.14.11.B.2 first application: FPN<F>; second application: ThompsonBanditState); → CLAUDE.md item 27 |
+
+**23 patterns total.** Adding new patterns: write the doc, add a row above, cross-link from related docs.
 
 ## Quick discovery — "I need to..."
 
@@ -128,8 +135,10 @@ Organized by category for quick discovery. Each pattern is one file in this dir.
 - **...add CSV columns to a log writer (fprintf-style)** → `calibration-log-column-registry.md` (pick Variant A=fprintf-direct OR Variant B=snprintf-to-buffer based on writer characteristics)
 - **...add a post-load init/load step that runs at boot + backtest + hot-swap** → `postloadsetup-registry-pattern.md` (registry walk by single helper; prevents Class 18 mirror gap at N call sites)
 - **...add fields to a cross-thread snapshot struct (PerCoreSnap-style)** → `per-snapshot-cluster-layout-pattern.md` (cluster by concern with alignas(64); cache-line span budget)
-- **...add a SIMD-vectorized kernel that must produce bytewise-identical output to scalar** → `avx512-byte-determinism-pattern.md` (7 rules + SHA-256 cross-binary lock test pattern)
+- **...add a SIMD-vectorized kernel that must produce bytewise-identical output to scalar** → `avx512-byte-determinism-pattern.md` (8 rules + SHA-256 cross-binary lock test pattern)
 - **...add running statistics over a fixed window (correlation, variance, IC, turnover)** → `sliding-window-online-statistics-pattern.md` (sum-of-squares fixed-window form + drop-oldest math + bounded-stability argument)
+- **...add a math kernel on the slow/hot path** → `branchless-math-kernel-pattern.md` (constant-iter inner reductions + pre-zero invariants; no if guards inside reductions; IEEE-754 x-0=x exact for bytewise-equivalence)
+- **...add a struct that will be compared bytewise (memcmp / SHA-256 / wire format)** → `struct-padding-determinism-pattern.md` (explicit `_padding = 0` fields for all implicit padding gaps; eliminates UB padding bytes structurally)
 - **...add a new boolean cfg field that has 2+ siblings in the same family** → `cfg-flag-eligibility-criteria.md` "Cohort audit when new field has siblings" section (run framework on cohort, not just new field)
 
 These are extracted from v5.14.8 + v5.14.9 + v5.14.10 + v5.14.11 sprint work. Future sprints add more as they solve new problems.

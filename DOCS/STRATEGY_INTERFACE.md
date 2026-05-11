@@ -9,7 +9,7 @@ five stages in the right order, or explicitly mark stages skipped.
 This contract was missing pre-v5.4 and the resulting drift caused the
 v4.x sharded port to silently orphan four of the five stages across all
 five strategies. See `DOCS/v5.4-regression-postmortem.md` for the
-incident details and `plans/2026-04-29-strategy-restoration-master.md`
+incident details and `plans/archived/2026-04-29-strategy-restoration-master.md`
 for the restoration plan.
 
 ## The five stages

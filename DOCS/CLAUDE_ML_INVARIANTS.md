@@ -538,7 +538,7 @@ classification at short horizons"), training-side first needs UI for
 per-horizon label_kind selection. Then live-side adds the normalizer.
 Two-ship sequence; live side blocked on trainer support.
 
-**Tracked in:** `plans/2026-05-07-deferred-items.md` "v5.11.62 caveat —
+**Tracked in:** `plans/_cross-cutting/2026-05-07-deferred-items.md` "v5.11.62 caveat —
 Composite-signal extraction" entry covers per-handle composition;
 mixed-output normalization is a sibling concern with a different fix
 shape (normalizer fn vs. extractor fn). Both extend Model_Predict

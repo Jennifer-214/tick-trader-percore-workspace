@@ -185,7 +185,7 @@ Two passes:
 
 **Pass 1 (post-A.1, pre-amendments):** Spawned all 4 audits on the plan + then-current code state.
 
-Findings (synthesis: `plans/plan_checks/2026-05-09-v5.14.8-fresh-audits-synthesis.md`):
+Findings (synthesis: `plans/v5.14-foxml-port-and-maker/plan_checks/2026-05-09-v5.14.8-fresh-audits-synthesis.md`):
 - F1: Registry data dropped 3 fields (CRITICAL; parity-check)
 - F2: Plan code snippets uncompilable (CRITICAL; trace-deps)
 - F3: cfg.model_max_age_hours doesn't exist (BLOCKING; all 3 audits)

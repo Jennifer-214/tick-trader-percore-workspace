@@ -429,7 +429,7 @@ Recommended local-AI workflow:
 5. If iterating: LLM modifies, re-runs build, reports
 
 For autonomous operation (per future v5.12 plan
-`plans/2026-05-07-FUTURE-autonomous-local-agent.md`), this skill is
+`plans/_future/2026-05-07-FUTURE-autonomous-local-agent.md`), this skill is
 one of the building blocks: agent generates strategy variants, runs
 backtest via CLI, picks winner.
 
@@ -517,7 +517,7 @@ Next steps for operator:
 
 ## Related skills + plans
 
-- `plans/2026-05-07-FUTURE-autonomous-local-agent.md` — agent-driven
+- `plans/_future/2026-05-07-FUTURE-autonomous-local-agent.md` — agent-driven
   strategy generation as part of broader headless mode
 - `/readiness` — verify generated strategy plan before scaffolding
 - `/parity-check` — if strategy uses ML or stamps, verify after

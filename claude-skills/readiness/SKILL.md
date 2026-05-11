@@ -8,7 +8,9 @@ description: Verify a plan before coding starts. Reads a plan file, walks the 10
 ## What this does
 
 Reads a plan file the user points at (default: most recently modified
-`plans/2026-*-master.md` if no arg given) and runs a structured
+`plans/<sprint-dir>/MASTER.md` or `plans/<sprint-dir>/subplans/*.md` if
+no arg given; falls back to `plans/2026-*-master.md` for pre-reorg
+plans in `plans/archived/`) and runs a structured
 verification pass. **Does not edit files.** Output is a report. User
 decides whether the plan is GREEN to start coding, or whether the
 flagged gaps need to be patched first.
@@ -19,8 +21,9 @@ single concrete report.
 
 ## Invocation
 
-- `/readiness` → audits the most recently modified `plans/*.md` that
-  has "master" or "plan" in its name
+- `/readiness` → audits the most recently modified plan file (any of:
+  `plans/<sprint-dir>/MASTER.md`, `plans/<sprint-dir>/subplans/*.md`,
+  or `plans/<sprint-dir>/handoffs/*.md`)
 - `/readiness <path>` → audits the specific plan file
 - `/readiness <path> deep` → also runs codebase-wide cross-references
   (slower, more thorough)

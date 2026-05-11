@@ -153,7 +153,7 @@ savings. Marginal; not load-bearing while drainer p99 sits in
 microseconds for the existing buy-side bandit work.
 
 **See also:** `DOCS/CHANGELOG.md` v5.13.4 row;
-`plans/2026-05-08-v5.13.4-sell-side-bandit.md`.
+`plans/v5.13-sell-side-ml/subplans/2026-05-08-v5.13.4-sell-side-bandit.md`.
 
 ---
 
@@ -207,7 +207,7 @@ default (always-on bandit path is the predicted branch).
   per-arm fee + slippage estimates → meaningful net IC).
 
 **See also:** `DOCS/CHANGELOG.md` v5.14.0 row;
-`plans/2026-05-08-v5.14.0-ridge-blending.md`;
+`plans/v5.14-foxml-port-and-maker/subplans/2026-05-08-v5.14.0-ridge-blending.md`;
 `ML_Headers/RidgeBlender.hpp` (the math kernel).
 
 ---
@@ -255,7 +255,7 @@ sibling-scaler enforcement); at that point a parallel features
 buffer becomes load-bearing.
 
 **See also:** `DOCS/CHANGELOG.md` v5.13.0 row for full design;
-`plans/2026-05-08-v5.13.0-sell-side-engine.md` for plan + audit
+`plans/v5.13-sell-side-ml/subplans/2026-05-08-v5.13.0-sell-side-engine.md` for plan + audit
 gap-closures.
 
 ---
@@ -267,7 +267,7 @@ gap-closures.
 infra) all shipped. v5.11.65 → v5.12.13.
 
 **Detailed per-ship entries:** see
-`plans/plan_checks/2026-05-08-v5.12-latency-track.md` for the full
+`plans/v5.12-pre-live-and-optimization/plan_checks/2026-05-08-v5.12-latency-track.md` for the full
 audit emitted by `/latency-track`. 7 latency-impacting sites
 documented (1 producer + 6 slow-path); each entry covers files,
 cost estimates per cfg state, branchless analysis, cache impact,

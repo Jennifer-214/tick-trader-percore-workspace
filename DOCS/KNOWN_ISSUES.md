@@ -341,7 +341,7 @@ buy/sell pressure ... -1.0 to +1.0") relative to actual behavior.
   (it'll diverge — VOLUME_DELTA values will redistribute — so this
   requires retraining downstream models)
 
-See `plans/plan_checks/parity-2026-05-06-full.md` Finding #5 for
+See `plans/_audits/parity-2026-05-06-full.md` Finding #5 for
 the full audit context.
 
 ### `drift_history` not persisted across snapshot save/restore (v5.10.0e + v5.10.3.C documented)
@@ -368,7 +368,7 @@ more false-positive breaches from short-window noise.
   + `breach_first_us` + `kill_tripped`
 - Add back-compat read for v6 stamps (zero-fill drift_history on
   upgrade)
-- See `plans/plan_checks/parity-2026-05-06-full.md` Finding #11.
+- See `plans/_audits/parity-2026-05-06-full.md` Finding #11.
 
 ---
 

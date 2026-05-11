@@ -208,7 +208,7 @@ A finding that exists only in a transient audit report or chat memory gets re-di
 - **Status changed:** 2026-05-09 (post-v5.14.8 close) → **DEFERRED-INDEFINITE**. Caramel's framing: "permanently defer this, im not sure when ill ever get a consistent source for orderbook data."
 - **Severity:** MEDIUM-DEFERRED (blocks maker fee path; engine stays taker-only indefinitely; not actively scheduled)
 - **Surface:** `CoreFrameworks/OrderManager.hpp` (Order struct + SubmitCommand), `DataStream/BinanceOrderAPI.hpp` (POST_ONLY submit + cancel REST), `CoreFrameworks/EngineSharded.hpp` (slow-path price-ladder), `Backtest/BacktestSharded.hpp` (queue-position fill simulation for full impl)
-- **What's deferred:** Full Maker order path. v5.14.7 plan (`plans/2026-05-08-v5.14.7-maker-order-mvp.md`) was a 4-sub-tag MVP (~550 LOC) for cfg-gated POST_ONLY LIMIT submit + drainer cancel-and-replace. MVP path-ladder logic + drainer cancel sweep + REST endpoints are foundation work the full implementation reuses unchanged (~90% of MVP code is in full impl).
+- **What's deferred:** Full Maker order path. v5.14.7 plan (`plans/v5.14-foxml-port-and-maker/subplans/2026-05-08-v5.14.7-maker-order-mvp.md`) was a 4-sub-tag MVP (~550 LOC) for cfg-gated POST_ONLY LIMIT submit + drainer cancel-and-replace. MVP path-ladder logic + drainer cancel sweep + REST endpoints are foundation work the full implementation reuses unchanged (~90% of MVP code is in full impl).
 - **Why deferred indefinitely (NOT effort-avoidance):** No reliable / consistent source for historical order book depth data has been identified. Without depth data:
   - Backtest can't replay LIMIT fills (no depth CSVs to advance `DepthReplayState`)
   - Queue-position simulation (the core of full impl realism) has nothing to simulate against
@@ -224,7 +224,7 @@ A finding that exists only in a transient audit report or chat memory gets re-di
   - `/readiness` Check 25 (TECH_DEBT scan) may still surface this entry when it greps for files-touched overlap — operator dismisses by status (DEFERRED-INDEFINITE = no action expected). Convention: don't re-debate the dismissal each ship; only revisit if the trigger conditions above appear met.
   - Maker-related comments in code (e.g., RESERVED enums in OrderType) stay as-is — they're cheap forward-compat hooks, not orphan WIP
 - **Status:** **DEFERRED-INDEFINITE**
-- **Cross-ref:** `plans/2026-05-08-v5.14.7-maker-order-mvp.md` (MVP plan; deferred); `plans/2026-05-08-MASTER-v5.14-foxml-port-and-maker.md` Phase 3 (master plan reference); existing depth infrastructure: `DataStream/BinanceDepth.hpp` (`BookSnapshot<F>` with bids[5]/asks[5]), `DataStream/DepthReplayState.hpp` (per-tick replay; needs CSV input), `DataStream/DepthRecorder.hpp` (capture path; not currently run); v5.14.6 close commit (predecessor)
+- **Cross-ref:** `plans/v5.14-foxml-port-and-maker/subplans/2026-05-08-v5.14.7-maker-order-mvp.md` (MVP plan; deferred); `plans/v5.14-foxml-port-and-maker/MASTER.md` Phase 3 (master plan reference); existing depth infrastructure: `DataStream/BinanceDepth.hpp` (`BookSnapshot<F>` with bids[5]/asks[5]), `DataStream/DepthReplayState.hpp` (per-tick replay; needs CSV input), `DataStream/DepthRecorder.hpp` (capture path; not currently run); v5.14.6 close commit (predecessor)
 
 ---
 

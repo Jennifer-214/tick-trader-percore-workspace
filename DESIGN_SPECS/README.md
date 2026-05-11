@@ -54,7 +54,7 @@ session can implement it without reading the original ship.
 Surprises during implementation. Compaction-degraded handoff watch-outs. Etc.
 ```
 
-## Catalog (v5.14.8 + v5.14.9 deliverables — 16 patterns)
+## Catalog (v5.14.8 + v5.14.9 + v5.14.10 deliverables — 19 patterns)
 
 Organized by category for quick discovery. Each pattern is one file in this dir.
 
@@ -68,6 +68,8 @@ Organized by category for quick discovery. Each pattern is one file in this dir.
 | `pre-post-cfg-registry-split-for-emit-order-preservation.md` | PRE/POST registry split when emit order must interleave with sister registry | ACTIVE (v5.14.8) |
 | `registry-tuple-as-single-source-of-truth.md` | Option D — 5-col tuple feeds cfg + parser + GUI + override + stamp-binding + docs from ONE source | ACTIVE (v5.14.9.F.5) |
 | `curve-registry-pattern.md` | FOREACH_<DOMAIN>_CURVE — named compute fns chosen by enum (LINEAR/EXP/STEP) via fn-pointer dispatch | ACTIVE (v5.14.9.A) |
+| `calibration-log-column-registry.md` | FOREACH_<LOGNAME>_COL — auto-generated CSV header + row from registry; Variant A (fprintf direct) + Variant B (snprintf to buffer) | ACTIVE (v5.14.10.D + .F; 2 reference applications: calib log + trade log) |
+| `postloadsetup-registry-pattern.md` | FOREACH_<DOMAIN>_POST_LOAD — auto-flow init/load steps to N call sites (boot + backtest + hot-swap); Class 18 mirror prevention via single helper walking registry | ACTIVE (v5.10.0a.G.7 + v5.13.4 + v5.14.10.C; 3 applications) |
 
 ### Registry decision frameworks
 
@@ -94,7 +96,13 @@ Organized by category for quick discovery. Each pattern is one file in this dir.
 | `audit-driven-pre-coding-gate.md` | Multi-audit pattern + compaction-handoff verification + MID-sprint audit guidance | ACTIVE (v5.14.8 + .9 update) |
 | `wire-format-byte-preservation-discipline.md` | Guarding HMAC chains across registry refactors | ACTIVE (v5.14.8) |
 
-**16 patterns total.** Adding new patterns: write the doc, add a row above, cross-link from related docs.
+### Cross-thread snapshot patterns
+
+| Doc | Pattern | Status |
+|---|---|---|
+| `per-snapshot-cluster-layout-pattern.md` | alignas(64) clustering of cross-thread snapshot fields by concern; cache-line span budgeting; static_assert(offsetof) enforcement | ACTIVE (v5.14.10.0; first application: PerCoreSnap bandit telemetry cluster) |
+
+**19 patterns total.** Adding new patterns: write the doc, add a row above, cross-link from related docs.
 
 ## Quick discovery — "I need to..."
 
@@ -110,8 +118,11 @@ Organized by category for quick discovery. Each pattern is one file in this dir.
 - **...avoid forgetting to populate a field at a production caller** → `autopopulate-pattern-for-production-caller-class.md` OR `autopopulate-from-arity-macro-family.md` (depending on caller shape)
 - **...decide between structural fix vs direct patch** → `structural-fix-preferred-decision-framework.md`
 - **...verify a sprint plan before coding** → `audit-driven-pre-coding-gate.md`
+- **...add CSV columns to a log writer (fprintf-style)** → `calibration-log-column-registry.md` (pick Variant A=fprintf-direct OR Variant B=snprintf-to-buffer based on writer characteristics)
+- **...add a post-load init/load step that runs at boot + backtest + hot-swap** → `postloadsetup-registry-pattern.md` (registry walk by single helper; prevents Class 18 mirror gap at N call sites)
+- **...add fields to a cross-thread snapshot struct (PerCoreSnap-style)** → `per-snapshot-cluster-layout-pattern.md` (cluster by concern with alignas(64); cache-line span budget)
 
-These are extracted from v5.14.8 + v5.14.9 sprint work. Future sprints add more as they solve new problems.
+These are extracted from v5.14.8 + v5.14.9 + v5.14.10 sprint work. Future sprints add more as they solve new problems.
 
 ## Going-forward
 

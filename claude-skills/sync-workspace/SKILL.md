@@ -66,6 +66,16 @@ CONFIGURATION, ML_USAGE, ML_TRAINING, CONTRIBUTING, LATENCY_PROFILING.
 Edits to symlinked docs auto-propagate to workspace (no copy needed);
 this skill's `git add -A` in the workspace picks up the changes.
 
+**Workspace-native dirs (NO engine source; live only in workspace; written via Write tool directly to workspace path):**
+
+| Workspace dir | Purpose | Written by |
+|---|---|---|
+| `DESIGN_SPECS/` | Pattern catalog (19 docs as of v5.14.10; one .md per pattern + README index) | Authored as part of any sprint that solves a non-trivial design problem; cross-linked from postmortems |
+| `configs/` | Operator-side cfg + secrets backups (engine.cfg / backtest.cfg / controller.cfg / secrets.cfg / .env*) | This skill (sync_if_newer block above) |
+| `*.backup` (workspace root) | Project-private memory overlays (CLAUDE.local.md.backup / GEMINI.md.backup / *.local.md backups) | This skill (sync_if_newer block above) |
+
+These dirs have no engine-side source mirror. New files added here flow through the workspace's own `git add -A` + commit + push naturally; no special sync logic needed (the table above only covers cases where an engine-side source needs explicit copy because the engine repo doesn't track that path).
+
 **Skipped (regenerable / runtime data):**
 - `build*/`, `bin/`, `vendor/`, `.cache/`, `.clangd/`, `compile_commands.json`
 - `*.log`, `paper_runs/`, `data/`, `baseline_run/`, `*_metrics.csv`, `*_order_history.csv`

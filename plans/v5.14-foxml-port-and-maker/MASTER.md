@@ -463,7 +463,7 @@ v5.14.9     — Soft risk degradation ladder
                           + open TECH_DEBT-016 + workspace sync
               Closes 3 TECH_DEBT items + establishes BITMAP_* universally.
 
-v5.14.10    — Bayesian Thompson sampling bandit + mega-bundle      [PENDING; 10-12 days]
+v5.14.10    — Bayesian Thompson sampling bandit + mega-bundle      [SHIPPED 2026-05-10]
               (renumbered from v5.14.11 2026-05-10; EXPANDED 2026-05-10
                via pre-coding audit gate + Caramel consult)
               v5.14.10.0 — PerCoreSnap layout audit + unified bandit

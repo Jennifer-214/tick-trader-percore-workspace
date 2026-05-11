@@ -108,6 +108,30 @@ Verdict per callee:
 - **GAP — does not exist** (plan claim is stale; reject or update)
 - **DRIFT — exists but signature differs from plan**
 
+#### 2a. Filename ≠ type-name confusion check (v5.14.10+)
+
+**Recurring trap (v5.14.10 Surprise 2):** when a file defines MULTIPLE types or when type names diverge from filenames, plans often cite "TypeName.hpp" when the actual file is "DifferentName.hpp" containing the type. Specifically grep file paths AND type names AS SEPARATE QUERIES:
+
+```bash
+# (A) Does a file with the cited NAME exist?
+find . -name '<TypeName>.hpp' -type f
+# If 0 hits → likely filename ≠ type-name confusion; check (B)
+
+# (B) Where is the type actually DEFINED?
+rg -n "^\s*struct\s+<TypeName>\b|^\s*class\s+<TypeName>\b|^\s*template\s+.*\s+struct\s+<TypeName>\b" --glob '*.hpp'
+# This finds the file containing the type declaration regardless of filename.
+```
+
+If (A) returns 0 hits but (B) returns hits, the plan has a filename ≠ type-name confusion. Update the plan to cite the ACTUAL file path (from B) for the cited type.
+
+**Worked example (v5.14.10 plan):**
+- Plan claimed `ML_Headers/EnsembleModelZoo.hpp` cited 8+ times
+- (A) `find . -name 'EnsembleModelZoo.hpp'` → 0 hits
+- (B) `rg -n "^\s*struct\s+EnsembleModelZoo\b" --glob '*.hpp'` → `ML_Headers/CoreModelZoo.hpp:820`
+- Resolution: plan cites WRONG file; correct is `CoreModelZoo.hpp` (which defines BOTH `CoreModelZoo<F>` AND `EnsembleModelZoo<F>` structs in one file).
+
+This codebase has several known filename ≠ type-name pairs — when in doubt, query (A) + (B) as separate sub-checks before declaring "PASS / GAP / DRIFT".
+
 ### 3. Verify signature compatibility
 
 For each PASS-callee, READ the actual function signature and

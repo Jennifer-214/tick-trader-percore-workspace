@@ -248,10 +248,12 @@ If any overlapping entry exists, run `/readiness` Check 25 (TECH_DEBT scan) expl
 - Engine repo: `/home/caramel/code/FoxML_Trader_v2`
 - Plans live in workspace; symlinked from engine `plans/` → workspace `plans/`.
 - Sprint plans: `workspace/plans/<sprint-dir>/{MASTER.md, subplans/, plan_checks/, postmortems/, handoffs/}`
-- DESIGN_SPECS catalog: `workspace/DESIGN_SPECS/` (16 patterns + README)
+- DESIGN_SPECS catalog: `workspace/DESIGN_SPECS/` (19 patterns + README; promoted from 16 in v5.14.10 with per-snapshot-cluster-layout-pattern + calibration-log-column-registry + postloadsetup-registry-pattern)
 - Skill outputs go to `plans/plan_checks/<skill>-<YYYY-MM-DD>-<scope>.md` (neutral); batches into sprint dir at close.
 - TECH_DEBT auto-write: `DOCS/TECH_DEBT.md` (symlinked from workspace)
 - PARITY_ISSUES auto-write: `DOCS/PARITY_ISSUES.md` (symlinked from workspace)
+- HOT_PATH_CHANGELOG: `DOCS/HOT_PATH_CHANGELOG.md` (symlinked from workspace)
+- **DOCS/ symlinks editing convention** (post-v5.11.43 migration; surfaced as Surprise 7 in v5.14.10 postmortem): many `DOCS/*.md` files in the engine repo are PER-FILE SYMLINKS to workspace. The `Edit` tool REFUSES to write through symlinks. ALWAYS check `readlink -f path` before editing a `DOCS/*.md` file; if it resolves to a workspace path, edit via the workspace path directly. Symlink-resolved files include: HOT_PATH_CHANGELOG, PARITY_ISSUES, TECH_DEBT, plus most CLAUDE_*.md / RECURRING_BUG_PATTERNS / EASY_ADDITIONS_INVARIANTS / sister-architectural docs. Engine-tracked exceptions (NOT symlinked): QUICKSTART, OPERATOR_DEPLOYMENT, CONFIGURATION, ML_USAGE, ML_TRAINING, CONTRIBUTING, LATENCY_PROFILING.
 
 ## Step 8 — sprint-close verification gate
 

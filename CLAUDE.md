@@ -189,6 +189,22 @@ as a v5.11.35 sub-ship (deferred from the current session because
 
     Each instantiation properly discards branches per T. Required ANY TIME a non-template context uses if-constexpr with branches that have different syntax requirements per type (typical case: char[N] strncpy vs scalar cast). Reference: `tt::stamp_parse_field<T>` in `ML_Headers/StampBoundModelConstRegistry.hpp` — parser X-macro just calls `tt::stamp_parse_field(r.name, val)` and the dispatcher works for int / uint / double / char[N] uniformly.
 
+24. **Per-arm reward observability invariant** (v5.14.10.A+; engineering invariant — NOT a pattern). Each ensemble arm's prediction is graded INDEPENDENTLY against actual price movement; per-arm rewards are observable regardless of which arm was selected. Implementation: `ML_Headers/CoreModelZoo.hpp:881-882` — `slow-path lookback walks ring → for old-enough records, computes per-arm reward (direction match) → calls Bandit_Update`. Each arm has its own prediction; each prediction is independently directionally-graded against actual; each arm's reward is observable per cycle.
+
+    **Why this matters:** generic bandit / RL frameworks assume PER-CHOICE reward observability (you only see the reward of the arm you actually pulled — counterfactual rewards for unpulled arms are unobservable). That assumption is FALSE in this codebase. The per-arm-graded model shapes which designs are valid:
+
+    - **Shadow-training is mathematically valid.** Running a parallel bandit (e.g., cfg.bandit_algorithm=2 dual-mode in v5.14.10.B) where one algorithm DRIVES decisions and another LOGS its choices but doesn't act — both bandits learn from the same per-arm signal stream. Their selection STRATEGIES diverge over time; offline analysis answers "which algo would have driven better aggregate PnL." Validity holds because rewards aren't gated by which arm was pulled.
+
+    - **Counterfactual evaluation is direct.** Backtesting "what would algorithm X have done" doesn't require importance-weighted estimators or doubly-robust corrections; just replay the same per-arm reward stream into algorithm X's update math.
+
+    - **Multi-algorithm A/B testing is cheap.** Adding a 3rd, 4th, Nth algorithm in parallel costs only the algorithms' runtime cost (small per CLAUDE.md item 17 latency tracking) — no statistical machinery needed for valid comparison.
+
+    **When this invariant might NOT hold (future caution):**
+    - If the engine ever moves to a setting where ARM SELECTION CHANGES THE REWARD (e.g., maker order placement that affects market impact + fill probability for that arm specifically), the invariant breaks for that surface. cfg=2-style dual-mode would become counterfactual-invalid. v6.0+ maker work needs to verify this carefully.
+    - If reward attribution moves from per-arm prediction-grading to per-arm trade-outcome attribution (i.e., reward = actual P&L of the arm's choice rather than direction-match of its prediction), the invariant still holds for prediction-graded but DOES NOT hold for trade-outcome-graded (because only the arm that traded has an observable trade outcome).
+
+    Document the prediction-graded reward attribution explicitly when adding new ML algorithm ships. Validate the invariant still holds before designing dual-mode or shadow-training features. Promoted to CLAUDE.md item 24 from v5.14.10.A pre-coding consult after confirming it would have been a SILENT BUG without the framework correction.
+
 ---
 
 # Reference Docs (split-load — read on demand)

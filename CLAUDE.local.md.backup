@@ -476,3 +476,62 @@ Codified in:
   new field has siblings" section; v5.14.11 ridge_* as canonical example)
 - `CLAUDE.md` item 13 (X-macro registry; reuse-audit cross-ref)
 - This file (auto-write contract for cohort-audit findings)
+
+## Going-forward rule: decoupling-endgoal positioning at each fix (set 2026-05-12)
+
+**When making changes that touch GUI ↔ runtime interfaces**
+(foxml_suite GUI ↔ training entry points; engine ↔ engine_gui display;
+TUISnapshot publication; any state-flow across the GUI-process
+boundary; CLI mode dispatch; cfg ownership across viewer/runtime;
+logging path discipline), **document the decoupling implication in
+`plans/_future/2026-05-12-decoupling-endgoal-roadmap.md`** (workspace-
+private). Establish patterns that POSITION us for separation rather
+than fight it. The cumulative breadcrumbs become the pseudo-plan for
+the eventual Grafana-style decoupling sprint.
+
+**Three outcomes per ship:**
+- **Positive positioning** → write breadcrumb describing how the
+  change makes future decoupling easier (X-macro registry exposed via
+  cmdline, mmap-friendly bit-packed flags, atomic publication
+  discipline, table-driven gates, disk-based state externalization,
+  etc.). Update readiness checklist if applicable.
+- **Anti-breadcrumb** → change CONFLICTS with decoupling (callback
+  registry with fn pointers, in-process-only state, mutex protecting
+  cross-thread state where seqlock would work). Redirect the design
+  at fix time; document the redirect in the anti-breadcrumb section.
+- **Neutral** → change doesn't touch the decoupling surface; no entry
+  needed.
+
+**Why:** Caramel framing 2026-05-12 —
+> *"as we progress fixes should lay out the approach to actually
+> decouple it since we have the context in memory, that way when we
+> actually go to decouple, we basically already have a psuedo plan
+> laid out."*
+
+By the time the decoupling sprint kicks off (post-v5.15 paper-test
+era; sequenced with `plans/_future/2026-05-08-v6.0-CANDIDATE-headless-service-colo.md`),
+the doc IS the pseudo-plan: endgoal named + breadcrumbs accumulated +
+open design questions surfaced + readiness checklist saying "yes we
+can proceed cleanly."
+
+**How to apply:** at plan-synthesis time for any ship touching the
+relevant surfaces, the sub-plan's verification gate gets a "decoupling
+roadmap entry written" checkbox. At sub-ship close, the breadcrumb
+gets written before the umbrella tag lands.
+
+**Pre-seeded with retroactive entries** for v5.15.0 through v5.15.4
+in the roadmap doc (these were the first ships writing breadcrumbs;
+the doc was opened at v5.15 sprint planning 2026-05-12).
+
+Codified in:
+- `plans/_future/2026-05-12-decoupling-endgoal-roadmap.md` (the living
+  doc itself; sections: endgoal architecture, decoupling axes, running
+  breadcrumbs, readiness checklist, open design questions,
+  anti-breadcrumbs)
+- This file (auto-write contract for breadcrumbs at every relevant
+  ship)
+- Each v5.15.X sub-plan verification gate includes "decoupling roadmap
+  entry written"
+- Companion: `plans/_future/2026-05-08-v6.0-CANDIDATE-headless-service-colo.md`
+  (engine-side decoupling architecture; the roadmap doc extends this
+  to the suite side + adds the running breadcrumbs discipline)

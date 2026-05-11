@@ -668,3 +668,151 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 - **Trigger:** Address (a) when CLAUDE.md grows past ~250 lines (next 1-2 new items would breach), OR (b) when operator reports context-window pressure during a session (handoff prompts feel cramped), OR (c) operator-scheduled maintainability sprint, OR (d) when handoff skill is rewritten for other reasons (consolidate the changes).
 - **Status:** OPEN
 - **Cross-ref:** Caramel framing 2026-05-11 "this code base is too big to shove it all into the CLAUDE.md file, thats why it has ref links"; v5.14.11 plan-synthesis item 25 addition (already trimmed to demonstrate direction); `DOCS/CLAUDE_INTEGRATION.md` / `CLAUDE_INVARIANTS.md` / `CLAUDE_ML_INVARIANTS.md` / `CLAUDE_REVIEW.md` / `CLAUDE_FOXML_SUITE.md` (existing split-load infrastructure); `.claude/skills/handoff/SKILL.md` (skill that would orchestrate Layer 2 context loading); related discipline: CLAUDE.local.md "codify design principles in CLAUDE.md as patterns mature" (set 2026-05-09) — this entry is the reciprocal "and trim them back to terse form once DESIGN_SPECS carries the depth."
+
+---
+
+### TECH_DEBT-033 — `/readiness` skill wider-build verification check ✅ CLOSED v5.15.2
+
+- **Created:** 2026-05-12 by v5.14.post1 patch (train_model_worker_fn migration gap)
+- **Severity:** MEDIUM (discipline gap; missed sites in mechanical migration sweeps)
+- **Surface:** `tick-trader-percore-workspace/claude-skills/readiness/SKILL.md`
+- **What was deferred:** /readiness audited ~24 items pre-coding; none verified
+  that the previous sprint's close ran `./build.sh gui suite tsan asan all`
+  (not just `test`). v5.14.post1 was the warning shot — the wider build
+  catches BacktestPanels.hpp + GUI panel consumers that test target skips.
+- **Closure (v5.15.2.D):** /readiness Check 26 added — verify last sprint's
+  postmortem documents `./build.sh gui suite tsan asan all` GREEN result;
+  flag if only `./build.sh test` was run.
+- **Status:** ✅ **CLOSED v5.15.2.D** (planned for v5.15 sprint).
+- **Cross-ref:** v5.14.post1 patch + postmortem; `/readiness` SKILL.md
+  v5.15.2 update; plans/v5.15-live-readiness/MASTER.md.
+
+---
+
+### TECH_DEBT-034 — FOREACH_CLI_MODE registry + batch mode CLI infrastructure + per-run logging structure (deferred from v5.15.3)
+
+- **Created:** 2026-05-12 by v5.15.3 plan-synthesis (post-audit reframe;
+  speculative scope cut to focus v5.15.3 on root-cause structural fix)
+- **Severity:** LOW (foundation work for headless workflows; not blocking)
+- **Surface:** `foxml_suite.cpp:main()` (NEW batch mode entry), NEW
+  `Backtest/CliModeRegistry.hpp` (FOREACH_CLI_MODE X-macro), GUI button
+  handlers (rewire to spawn execv children), `logging/foxml_suite/<run_name>/`
+  structure (per-run dir + per-horizon `.progress` files + per-horizon `.log` files)
+- **What's deferred:** FOREACH_CLI_MODE X-macro registry (curve-registry-pattern.md
+  shape) for cmdline-invocable training operations. Each mode = 1 row:
+  mode name (wire-key for `--mode=...`), args struct, dispatch fn ptr, GUI
+  invoke entry, help text. Plus headless training path that skips
+  SDL/ImGui init in batch mode. Plus per-run logging structure. Plus
+  GUI button handlers rewired to spawn execv children + parent-side
+  waitpid + progress IPC via file polling at 200ms cadence.
+- **Why deferred (not effort-avoidance):** v5.15.3's actual root-cause
+  fix is ~200 LOC (helper extraction + plumb + libgomp setenv). The
+  FOREACH_CLI_MODE infrastructure (~300+ LOC) was speculative scope
+  added to my v5.15.3 plan draft based on a MISDIAGNOSED root cause
+  (multi-horizon stamping isn't missing; it's just missing
+  grid_member_count population). The proper structural foundation
+  helper extraction (v5.15.3.A Stamp_AssembleAndEmit) IS the
+  precursor — adding FOREACH_CLI_MODE on top of pure-function helpers
+  becomes much cleaner once helpers exist.
+- **Cost estimate:** ~300-400 LOC across batch mode entry + registry +
+  GUI rewire + progress IPC + tests. Time: ~6-8 hr dedicated focus.
+- **Trigger:** Address when ANY of:
+  - (a) CI training automation needed (Docker-based scheduled retrains)
+  - (b) Remote training via SSH requested
+  - (c) Operator wants to script grid training overnight
+  - (d) v5.16+ headless-foundation ship opens (likely sequenced after
+        paper-test era stabilizes the engine side)
+- **Status:** OPEN — foundation prepared by v5.15.3.A helper extraction
+- **Cross-ref:** v5.15.3 subplan (helper extraction is the precursor);
+  `plans/_future/2026-05-12-decoupling-endgoal-roadmap.md` (running
+  breadcrumbs; v5.15.3 entry); `plans/_future/2026-05-08-v6.0-CANDIDATE-headless-service-colo.md`
+  (companion architecture doc); CLAUDE.local.md "decoupling-endgoal
+  positioning at each fix" (set 2026-05-12)
+
+---
+
+### TECH_DEBT-035 — Engine-side state-exposure protocol + DoubleBufferedAtomic<T> template extraction (deferred from v5.15.4)
+
+- **Created:** 2026-05-12 by v5.15.4 plan-synthesis (post-audit reframe;
+  DoubleBufferedAtomic<T> template extract premature because HotSwap
+  has single-owner threading model)
+- **Severity:** LOW (foundation work for engine→viewer decoupling;
+  blocked on operator commitment to colo deployment)
+- **Surface:** NEW `MemHeaders/DoubleBufferedAtomic.hpp` (template extracted
+  from `DataStream/BinanceDepth.hpp:80-89` pattern); engine binary
+  TUISnapshot durable mmap region; viewer process separation;
+  `engine_gui` as separate binary attached via mmap
+- **What's deferred:** Template-extract `DoubleBufferedAtomic<T>` from
+  BinanceDepth's existing `snapshots[2] + active_idx + __ATOMIC_RELEASE/_ACQUIRE`
+  pattern. Make it reusable across HotSwap (NOT needed there per
+  v5.15.4 reframe; single-owner suffices) + future engine→viewer mmap
+  state exposure. Plus engine-side: replace in-process TUISnapshot
+  double-buffer with mmap'd region using the template. Plus viewer-side:
+  attach to mmap region; render ImGui or TUI from snapshot.
+- **Why deferred (not effort-avoidance):** v5.15.4's HotSwap use case
+  doesn't actually need DoubleBufferedAtomic (writer = reader = same
+  per-core slow-path thread; `__atomic_exchange_n` on pointer
+  suffices). Template extraction is premature for v5.15.4. Engine→viewer
+  protocol design needs: versioning scheme, viewer-side cfg, reconnect
+  semantics, multi-viewer support, mmap region path conventions —
+  multi-week design + implementation. Triggered by operator commitment
+  to colo deployment (separate hardware → viewer connection a real
+  need), not by v5.15 in-sprint work.
+- **Cost estimate:** ~50 LOC template + ~5-15 days for full
+  engine→viewer protocol + viewer process refactor + testing
+- **Trigger:** Address when ANY of:
+  - (a) Operator commits to colo deployment (separate hardware → SSH
+        attach pattern stabilizes)
+  - (b) Operator requests multi-viewer access (multiple GUIs to one
+        engine)
+  - (c) Engine binary needs to survive viewer crashes (today: GUI
+        crash kills engine)
+  - (d) v6.0 architecture sprint opens (per `2026-05-08-v6.0-CANDIDATE-headless-service-colo.md`)
+- **Status:** OPEN — BinanceDepth.hpp:80-89 stays as canonical precedent
+- **Cross-ref:** `DataStream/BinanceDepth.hpp:80-89` (canonical precedent
+  for template extraction); `plans/_future/2026-05-08-v6.0-CANDIDATE-headless-service-colo.md`
+  (companion architecture doc); `plans/_future/2026-05-12-decoupling-endgoal-roadmap.md`
+  (running breadcrumbs); CLAUDE.local.md "decoupling-endgoal positioning
+  at each fix" (set 2026-05-12); v5.15.4 subplan (HotSwap reframe
+  documenting why template is NOT needed for v5.15.4 itself)
+
+---
+
+### TECH_DEBT-036 — Architectural-field AUTOPOPULATE redesign (registry tuple restructure)
+
+- **Created:** 2026-05-12 by v5.15.3.A PARITY-022 discovery
+- **Severity:** LOW (no active issue; macro is unused; latent bug
+  quarantined at v5.15.3.A)
+- **Surface:** `ML_Headers/StampBoundModelConstRegistry.hpp:601-689`
+  (STAMP_MODEL_CONST_AUTOPOPULATE macro + _ONE expansion); registry
+  tuple `get_value` column semantics
+- **What's deferred:** The STAMP_MODEL_CONST_AUTOPOPULATE macro expansion
+  was semantically broken (self-referential: `(inf).X = (type)(inf->X)`
+  because registry tuples pass `inf->X` as the get_value column). At
+  v5.15.3.A the macro was QUARANTINED with a static_assert error to
+  prevent accidental use. Helper Stamp_AssembleAndEmit manually
+  populates model-const fields from StampArgs instead.
+- **Why deferred:** The proper structural fix requires restructuring the
+  registry tuple to add a SEPARATE column for the AUTOPOPULATE value
+  source (distinct from `inf->X` references that parser/emit consumers
+  use for the same tuple). This affects 4 consumer-site macros + ~30
+  registry entries + would require comprehensive byte-equivalence
+  verification. Too large for v5.15.3 scope; model-const manual
+  population matches RFV's existing working pattern.
+- **Cost estimate:** ~4-6h architectural refactor (new tuple column +
+  4 consumer-site macros updated + 32 registry entries restructured +
+  byte-equivalence test suite). MEDIUM risk (parser/emit byte-format
+  must stay byte-identical).
+- **Trigger:** Address when (a) operator wants to add an AUTOPOPULATE-
+  driven architectural field (would discover the broken macro at
+  quarantine static_assert), OR (b) v5.X+ wider AUTOPOPULATE
+  consolidation ship, OR (c) ~5+ new model-const fields land in one
+  sprint making manual population painful.
+- **Status:** OPEN — macro quarantined at v5.15.3.A; manual population
+  for v5.15 + foreseeable future
+- **Cross-ref:** PARITY-022 (workspace PARITY_ISSUES.md); v5.15.3.A
+  quarantine implementation; `ML_Headers/StampBoundModelConstRegistry.hpp:601-689`
+  (macro definition); `Backtest/BacktestEngine.hpp:1039+` (RFV manual
+  population pattern; canonical reference); CLAUDE.md item 19
+  (structural-fix preferred — quarantine + manual is the correct trade-
+  off here because the registry restructure is its own focused work)

@@ -725,11 +725,105 @@ OPEN-DEFERRED (1), or NOT-A-BUG (1). Ready for v5.14.2 audit cycle
 
 ---
 
+### PARITY-020 — train_model_worker_fn missing STAMP_CFG_AUTOPOPULATE; asymmetric with Backtest_RunFullValidation
+
+- **Found:** 2026-05-12 during `/parity-check` audit of v5.15 plan (pre-coding gate)
+- **Severity:** HIGH
+  - 3 production callers should produce identical stamp body field sets for identical training inputs (parity-tested-by-construction invariant per CLAUDE.md item 15)
+  - `Backtest_RunFullValidation` (canonical) at `Backtest/BacktestEngine.hpp:1262` calls `STAMP_CFG_AUTOPOPULATE(inf, cfg)` → populates 22 cfg-bound fields (ridge_*, composite_*, winsor_*, exit_blender_mode, risk_*, ml_buy_threshold, gap_acceptable_threshold, bandit_*)
+  - `train_model_worker_fn` at `Backtest/BacktestPanels.hpp:3206-3289` does NOT call STAMP_CFG_AUTOPOPULATE — only manually sets 10 architectural fields (inference_cfg/training_poll_interval/model_num_outputs/xgb_hyperparams/build_flags_hash/label_registry_hash/scaler/no AUTOPOPULATE call)
+  - Result: Train Model panel stamps lack drift detection for the 22 cfg-bound fields. Engine boot WARN/REFUSE cfg-binding-drift checks pass silently (has_* flags zero) for Train Model-produced models
+- **Class:** Class 18 mirror at production-caller level — same shape as v5.9.5b that PARITY-002/003/004/005/008 closed via AUTOPOPULATE (4× recurrence). This is the 5th recurrence at the SISTER production caller. v5.14.post1 fixed train_model_worker_fn field-name migration but did NOT add AUTOPOPULATE.
+- **Site(s):**
+  - Reference (correct): `Backtest/BacktestEngine.hpp:1262` (RFV)
+  - Gap site: `Backtest/BacktestPanels.hpp:3265` (after manual scaler population, before `stamp_write_for_model` call at :3278)
+  - Registry: `ML_Headers/StampBoundCfgRegistry.hpp:99` (FOREACH_STAMP_BOUND_CFG with 22 entries)
+- **Symptom:** Operator configures `ridge_lambda=0.5` for training; deploys model trained via Train Model panel with `ridge_lambda=0.7` cfg. Engine load-time drift check passes silently (no ridge_lambda line in stamp because has_ridge=0 because AUTOPOPULATE never ran). No WARN/REFUSE. Operator unaware of cfg drift; ridge-blended predictions diverge from training-time behavior.
+- **Root cause:** v5.14.post1 mechanical sweep migrated field NAMES but missed adding AUTOPOPULATE call. Train Model worker has been a silent gap since the AUTOPOPULATE pattern was introduced (v5.14.1.E.E.B).
+- **Fix path:** v5.15.3.A bundle (recommended): add `STAMP_CFG_AUTOPOPULATE(inf, run_control->results.config_used);` at `BacktestPanels.hpp:3265` (immediately after the manual scaler block, before `stamp_write_for_model`). 1 LOC + ~30 min total including verification.
+- **Target ship:** v5.15.3.A (recommended bundling — same sub-ship as multi-horizon stamping)
+- **Status:** **OPEN** (plan-stage; amendment recommended for v5.15.3.A)
+- **Workaround:** Operator using Train Model panel today should manually verify cfg.ridge_*/composite_*/winsor_*/etc. match between training session + serving cfg. Less reliable than stamp-binding drift detection.
+
+---
+
+### PARITY-021 — v5.15.3 plan root cause MISDIAGNOSED: multi-horizon DOES stamp via RFV; gap is grid_member_count/_idx never populated
+
+- **Found:** 2026-05-12 during `/parity-check` audit of v5.15 plan (pre-coding gate)
+- **Severity:** HIGH (plan-level structural error; would create duplicate stamp emit path if uncorrected)
+  - Plan v5.15.3 root cause claim "multi-horizon worker writes models but never calls stamp_write_for_model" — FALSE
+  - Verified: `mh_run_one_horizon_fv` at `Backtest/BacktestPanels.hpp:3633` calls `Backtest_RunFullValidation` which auto-stamps via canonical RFV emit path
+  - Both `train_multi_horizon_worker_fn` (serial loop) AND `mh_per_horizon_parallel_worker` (parallel pthread) delegate to `mh_run_one_horizon_fv` → both already stamp
+  - Boot warning "4/4 handles missing grid_member_count" indicates the FIELD (not the stamp file) is missing
+  - Verified: `grid_member_count` + `grid_member_idx` exist as 2 entries in FOREACH_STAMP_BOUND_MODEL_CONST_PRE_CFG (NOT POST_CFG as plan claims) at `ML_Headers/StampBoundModelConstRegistry.hpp:337-341`. Both share single `inf->has_grid_member_count` flag (group `grid_member`).
+  - Verified: ZERO production callers populate `inf.grid_member_count` or `inf.grid_member_idx` anywhere in BacktestEngine.hpp or BacktestPanels.hpp (grep across both files = 0 hits)
+  - Verified: `horizon_idx` and `horizon_count` (as stamp-bound field names) DO NOT EXIST in registry — plan claims they do; FALSE
+- **Class:** Plan-level factual error; downstream design (the `stamp_emit_for_horizon` helper) is built on the wrong premise
+- **Site(s):**
+  - Plan v5.15.3 line 174 claim: "these specific entries are in FOREACH_STAMP_BOUND_MODEL_CONST_POST_CFG"
+  - MASTER line 213 claim: "all 3 fields already in FOREACH_STAMP_BOUND_MODEL_CONST (verified during v5.14.8.E)"
+  - Registry actual: `StampBoundModelConstRegistry.hpp:337-341` (PRE_CFG; 2 fields, not 3)
+  - RFV emit reference: `Backtest/BacktestEngine.hpp:1147-1262` (RFV emits stamps; missing grid_member_* population)
+  - Recommended insert: RFV emit block (~line 1230 after label_params, before AUTOPOPULATE call) reads `out->req_grid_member_count` + `out->req_grid_member_idx` and populates inf.* + group bit
+  - Caller wiring: `mh_run_one_horizon_fv` (BacktestPanels.hpp:3534) sets `fv->req_grid_member_count = horizon_count; fv->req_grid_member_idx = h;` before RFV call
+- **Symptom:** Boot log "4/4 handles missing grid_member_count" warning fires for every multi-horizon ensemble load. Operator interprets as "stamp missing" → opens plan v5.15.3 → plan proposes wrong fix (duplicate stamp emit path).
+- **Root cause:** Two-level error: (a) registry fields are orphan placeholders (added v5.14.8.E but no production caller populates them); (b) plan misreads boot warning as "stamp file missing" rather than "field missing within otherwise-valid stamp".
+- **Fix path (revised v5.15.3 scope):**
+  1. Add `req_grid_member_count` + `req_grid_member_idx` fields to `FullValidationResults` (sibling of existing `req_label_lookahead_ticks` at BacktestEngine.hpp:990-1013)
+  2. RFV emit block populates `inf.grid_member_count = out->req_grid_member_count; inf.grid_member_idx = out->req_grid_member_idx; STAMP_SET(inf, grid_member);` when `out->req_grid_member_count > 0`
+  3. `mh_run_one_horizon_fv` sets `fv->req_grid_member_count = horizon_count; fv->req_grid_member_idx = h;` before calling RFV
+  4. Single-horizon callers leave req_grid_member_count = 0 → group bit stays unset → stamp byte-identical to pre-fix
+  5. **DROP the v5.15.3 `stamp_emit_for_horizon` helper entirely** — it would create a parallel emit path that conflicts with RFV's emit. Structural-fix-preferred (CLAUDE.md item 19) — fix via the existing chokepoint.
+- **Target ship:** v5.15.3.A (revised scope per HIGH.2 in audit report)
+- **Status:** **OPEN** (plan-stage; significant amendment recommended for v5.15.3 — reduces scope from ~150 LOC to ~30 LOC)
+- **Workaround:** Today's multi-horizon stamps lack grid identity fields but still carry HMAC + other parity-tested fields. Boot warning is informational; loadtime parity protection (feature_registry_hash, label_registry_hash, build_flags_hash, scaler binding) all functional.
+
+---
+
+### PARITY-022 — STAMP_MODEL_CONST_AUTOPOPULATE macro is defined-but-unused stub; expansion is self-referential
+
+- **Found:** 2026-05-12 during `/parity-check` audit of v5.15 plan (pre-coding gate)
+- **Severity:** MEDIUM (no production caller today → no live bug; but v5.15.3 plan relies on this macro working)
+- **Site:** `ML_Headers/StampBoundModelConstRegistry.hpp:601-607` (definition); :680-688 (per-entry expansion)
+- **Symptom:** Zero call sites in production code. The macro IS used INSIDE struct field declarations (via inner X-macro at ModelInference.hpp:1766) — that's the struct gen pass, separate from runtime population. For runtime population, calling `STAMP_MODEL_CONST_AUTOPOPULATE(inf, meta, now_us)` would expand to e.g., `(inf).training_timestamp_us = (uint64_t)((unsigned long)inf->training_timestamp_us)` — a self-referential assignment that does nothing useful (or copies a field to itself if `inf` is a pointer dereference; either way: no field copy from a meta source).
+- **Root cause:** v5.14.8.0 introduced FOREACH_STAMP_BOUND_MODEL_CONST registry + this AUTOPOPULATE companion. The companion's `get_value` column was populated with `inf->X` expressions (matching the struct field references used by other expansions like struct field gen). But for a runtime populator, get_value should reference an EXTERNAL source (e.g., `meta.X` or `cfg.X`), not the destination struct itself. Macro definition wasn't completed.
+- **Class:** Production-caller pattern incomplete — macro defined as scaffolding but never wired to a real META source
+- **Fix path:**
+  - **Option A — defer macro wiring:** v5.15 plans must NOT rely on this macro for runtime population. Production callers continue manual architectural-field population (today's pattern at RFV BacktestEngine.hpp:1153-1240). TECH_DEBT entry tracks the deferred macro completion.
+  - **Option B — wire properly in future sprint:** registry get_value column changes from `inf->X` to e.g., `cfg.X` (or to per-entry META_* dispatch macros). All production callers can then use the single-call AUTOPOPULATE.
+- **Target ship:** Plan v5.15 → Option A (defer); future sprint → Option B (when reviewer revisits architectural-field population)
+- **Status:** **OPEN** (architectural placeholder; not a runtime bug today)
+- **Workaround:** N/A (macro is inert; production callers don't call it)
+
+---
+
+### PARITY-023 — v5.15.4 HotSwapSnapshot/Revert design captures pointers only; pre-swap data destroyed in-place by Free
+
+- **Found:** 2026-05-12 during `/parity-check` audit of v5.15 plan (pre-coding gate)
+- **Severity:** MEDIUM (plan-stage design flaw; existing behavior is functional — current code uses "log-and-leave" semantics which work; v5.15.4 proposes new revert path that won't work as designed)
+- **Site:**
+  - `CoreFrameworks/EnsembleHotSwap.hpp:75-76` — `EnsembleModelZoo_Free(swap_ezoo)` destroys pre-swap state in-place
+  - `CoreFrameworks/EngineSharded.hpp:2923-2924` — single-zoo branch `CoreModelZoo_Free(swap_zoo); CoreModelZoo_Init(swap_zoo);` destroys + reinits in-place
+  - Plan v5.15.4.B line 240-254: `HotSwap_CaptureSnapshot` captures `prev_ezoo = state.cores[core_idx].ensemble_handle` — but the captured pointer is the SAME pointer that gets passed into the Free routine
+- **Symptom (under plan as written):** A failed hot-swap that triggers Revert would attempt to restore a pointer to memory that's been Free'd + reinit'd. Either segfault (dereferencing the post-init empty state) or silent corruption (next inference reads garbage from the reinit'd zoo).
+- **Root cause:** Plan design assumes capture-by-pointer preserves data; in fact data is destroyed by the subsequent Free call. Deep copy would be needed (expensive — ~1MB per core including booster handles, scaler, bandit state) OR API restructure (load new into SHADOW zoo; atomic swap on validate success; discard SHADOW on failure) OR keep existing "log-and-leave" semantics.
+- **Class:** Design-level error not caught by line-level review; would surface as runtime crash or corruption under failed hot-swap test
+- **Fix path (v5.15.4 amendment options):**
+  - **Option A (RECOMMENDED for v5.15) — de-scope:** Drop TECH_DEBT-005 closure from v5.15.4. Keep current "log-and-leave" semantics (v5.10.0c — flag-only on validate failure; operator manually reverts via cfg+restart). v5.15.4 keeps the trading_mode strict-default flip (cleanly delivers operational safety win) but doesn't restructure hot-swap. TECH_DEBT-005 stays open with effort estimate (300-400 LOC shadow-load) for future sprint.
+  - **Option B — shadow-load restructure:** EngineSharded_HotSwapEnsemble + single-zoo Free+Init+Load become: (1) allocate SHADOW zoo; (2) load new model into SHADOW; (3) validate SHADOW; (4) on success: atomic swap shadow into state.cores[c] + Free old; on failure: Free shadow + keep old. ~300-400 LOC + new tests. Deferred to future sprint.
+  - **Option C — deep-copy before Free:** Capture function deep-clones the pre-swap zoo (substantial; ~1MB/core; booster handle clone via XGBoosterSaveModelToBuffer + XGBoosterLoadModelFromBuffer; scaler memcpy; bandit state memcpy). Not free; deferred.
+- **Target ship:** v5.15.4 (de-scope) → TECH_DEBT-005 stays open
+- **Status:** **OPEN** (plan-stage; amendment recommended — de-scope OR redesign before .B coding)
+- **Workaround:** N/A — existing log-and-leave semantics are functional. Operator manually reverts via cfg+restart on hot-swap validate failure.
+
+---
+
 ## Audit log
 
 - **2026-05-10** — `/parity-check` audit of v5.14.10 Thompson bandit plan (pre-coding gate). 3 new findings written: PARITY-013 (HIGH), PARITY-014 (HIGH), PARITY-015 (MEDIUM). Verdict: YELLOW (proceed with 4 plan amendments before scope-lock). Full audit report: `plans/plan_checks/parity-check-2026-05-10-v5.14.10-thompson-bandit.md`.
 - **2026-05-11** — `/parity-check` audit of v5.14.11 online-corr-update plan (pre-coding gate). 3 new findings written: PARITY-016 (HIGH), PARITY-017 (HIGH), PARITY-018 (MEDIUM) + 1 LOW (stamp-binding eligibility — Document-only, not assigned PARITY-NNN). Verdict: YELLOW (proceed with ~60 min plan amendments before .A code starts). Default-off bytewise-identity to v5.14.10 confirmed (cfg=0 takes BuildCorr branch unchanged). No train↔serve handoff surface added. Both BuildCorr call sites flagged in plan REUSE claims (buy-side at StrategyParameters.hpp:996 + exit-side at :1195). Full audit report: `plans/plan_checks/parity-check-2026-05-11-v5.14.11.md`.
 - **2026-05-10** — `/parity-check` re-audit of v5.14.10 AMENDED plan (4 architectural decisions baked in + 13 mechanical fixes applied + 6-sub-tag structure .0/.A/.B/.C/.D/.E). Verdict: YELLOW (proceed with 7 mechanical plan-text fixes; ~10 min). Confirmed: PARITY-013 RESOLVED in .B Step 9 (FOREACH_STAMP_BOUND_CFG with 4 X-rows + AUTOPOPULATE auto-flow). PARITY-014 RESOLVED in .A Step 2+7 (own Box-Muller via raw mt19937_64::operator() + SHA-256-locked sample-trace test). PARITY-015 RESOLVED in .D Step 1+2+6 (5 PerCoreSnap fields with bit-packed thompson_state byte + ML Status panel branch + cfg=2 calib log via FOREACH_CALIB_LOG_COL). 2 NEW MEDIUM findings flagged as plan-text staleness (NOT new bug class): NEW-1 stale field name `ensemble_bandit_arm_probs` → actual `ensemble_weights[5][8]`; NEW-2 stale file path `EngineSharded.hpp:646-694` → actual `ShardedSnapshot.hpp:677-694` (publish writer). Both propagated from prior parity-check report; PARITY-015 entry's file path citation should be corrected. NO new PARITY-NNN entries. NEW parity surfaces (thompson_state.json wire format Layer 1-6 compliance, PerCoreSnap cluster restructure, 4 stamp-bind drift tests presence dispatch) all GREEN against discipline. Full audit report: `plans/plan_checks/parity-check-2026-05-10-v5.14.10-AMENDED.md`.
+- **2026-05-12** — `/parity-check` audit of v5.15 sprint plan (pre-coding gate; HIGH-RISK v5.15.0 ModelHandle migration; MEDIUM-RISK v5.15.2 trading_mode introduction; MEDIUM-RISK v5.15.3 multi-horizon stamping; MEDIUM-RISK v5.15.4 hot-swap unification + strict defaults). Verdict: **YELLOW** (proceed with amendments before .0 / .3 / .4 coding). 4 new findings written: PARITY-020 (HIGH; train_model_worker_fn missing STAMP_CFG_AUTOPOPULATE — asymmetric with RFV across 22 cfg-bound fields; recommend bundle into v5.15.3.A as 1-LOC addition); PARITY-021 (HIGH; v5.15.3 root cause misdiagnosed — multi-horizon DOES stamp via RFV; gap is grid_member_count/_idx orphan registry placeholders never populated; recommend revised approach plumbs req_grid_member_* through FullValidationResults into RFV's existing emit path; reduces v5.15.3 scope from ~150 LOC to ~30 LOC; drops stamp_emit_for_horizon helper); PARITY-022 (MEDIUM; STAMP_MODEL_CONST_AUTOPOPULATE macro defined but self-referential — v5.15.3 plan can't use it; defer wiring to future sprint); PARITY-023 (MEDIUM; v5.15.4 HotSwapSnapshot/Revert design captures only pointers — pre-swap data destroyed in-place by Free; recommend de-scope TECH_DEBT-005 from v5.15.4 OR restructure with shadow-load). Plus 6 MEDIUM + 4 LOW findings on stale line numbers + documentation accuracy. HMAC chain integrity verified GREEN (Surface G has_* flags + appending trading_mode at registry END preserves legacy stamp byte equivalence). NaN-free feature pack chokepoint preserved. Cross-mode byte-equivalence test design needs amendment for executability (xgb_train_nthread + training_timestamp_us require explicit setup). Full audit report: `plans/plan_checks/parity-check-2026-05-12-v5.15.md`.
 - **2026-05-11** — `/parity-check` re-audit of v5.14.11 AMENDED plan (post-Caramel-consult: Decision 4 cohort migration + Decision 5 (C) sliding-window Welford + (C) BuildCorr refactor + (D) Cholesky AVX-512 adopted). Verdict: **GREEN** (proceed to .A kickoff). PARITY-016/017/018 status: **PARITY-016 RESOLVED at v5.14.11.A** by structural unification + per-cfg SHA-256 baselines (cfg=0 + cfg=1 each bytewise-locked within v5.14.11; share FinalizeCorrFromSums kernel; cross-cfg tolerance ~1e-13 sum convergence). **PARITY-017 RESOLVED at v5.14.11.B for sites 1+2** (UpdateOnline outer-product + BuildCorr accumulation) via v5.11.7 discipline + per-site SHA-256 lock test; site 3 (Cholesky) split with sub-site 3c new finding (see below). **PARITY-018 RESOLVED BY ELIMINATION** — sliding-window-by-design has no periodic-reset code path; bug class cannot exist. 1 NEW MEDIUM finding: PARITY-019 (Cholesky_Solve back-solve column-access doesn't vectorize via the row-load template; needs explicit .B kickoff strategy decision). 1 LOW recommendation (NOT assigned PARITY-NNN): defensive bounded-input guard at UpdateOnline entry (production default uses BARRIER ensembles → bounded [0,1]; non-BARRIER models risk unbounded predictions → cancellation error blow-up; cheap insurance). PARITY contract reframing at line 73-79 of amended plan verified clean: 3-boundary table (v5.14.10↔v5.14.11 tolerance 1e-9 / within-v5.14.11 cfg=0↔cfg=1 tolerance ~1e-13 / scalar↔AVX-512 bytewise identical) matches the math. Stamp-binding HMAC chain integrity preserved via `BITMAP_IS_SET(...) ? 1 : 0` ternary normalization (3 ridge_* fields are confirmed boolean throughout codebase). Full audit report: `plans/plan_checks/parity-check-2026-05-11-v5.14.11-AMENDED.md`.
 
 ---

@@ -28,6 +28,47 @@ slow path, fold into existing operation, hoist to entry).
 
 ---
 
+### 2026-05-11 — v5.14.11.C [SLOW PATH ONLY — no hot-path impact]
+
+**File:line:** `Strategies/StrategyParameters.hpp:962-985` (buy-side
+Ridge dispatch) + `:1160-1178` (exit-side). Cohort migration of 3
+direct `int` cfg fields (`ridge_within_horizon`, `ridge_across_horizons`,
+`exit_blender_mode`) + new `ridge_online_corr` field into
+`FOREACH_ML_CFG_FLAG` bitmap; buy-side dispatch refactored to branchless
+multi-flag mask check when gate_state present (single AND+compare for
+"Ridge ON AND Thompson OFF"); both sites read `use_online` from gate
+state via `MASK_RIDGE_ONLINE_CORR_ACTIVE`.
+
+**Cost (slow path, per core, per cycle, when Ridge dispatched):**
+~2-3 ns net REDUCTION at buy-side gate: pre-.C was 2 scalar branches
+(`_ridge_gate && config->bandit_algorithm == 0`); post-.C is 1 mask AND
++ 1 compare. Exit-side unchanged in branch count (still 1 predicate);
+all use_online reads moved from cfg-field fallback to cached
+gate_state bit (cache-line-local).
+
+**Branchless:** YES at the gate predicate when gate_state wired (single
+AND+compare, no scalar branch). Scalar form retained for backtest
+fallback (gate_state == nullptr); same branch count as pre-.C, just
+reading from `ml_cfg_flags` bitmap instead of removed direct fields.
+
+**Cache impact:** ZERO new fields. Removes 3 `int` cfg fields (12 bytes)
+from `ControllerConfig` cache footprint — those booleans now live in
+existing `ml_cfg_flags` bitmap (cache-line-shared with other ML cfg
+flags). `RIDGE_ONLINE_CORR_ACTIVE` gate bit added to
+`SlowPathGateState.flags` (no new field; 6 bits headroom remaining in
+existing `uint16_t`).
+
+**Optimization note:** When `gate_state` always-wired (centralized
+engine removed per TECH_DEBT-002), the buy-side fallback ternary can
+be deleted → unconditional 1-mask-AND+1-compare form (saves ~1ns
+pre-decision pointer check). Future Ridge bits (e.g.
+`ridge_across_horizons` consumer ship) fold into the same mask via
+additional `MASK_RIDGE_*_ACTIVE` constants — bit-cohort additions stay
+1-row in `FOREACH_ML_CFG_FLAG` with automatic stamp-binding + parser
+flow.
+
+---
+
 ### 2026-05-09 — v5.14.5.B.0 [SLOW PATH ONLY — no hot-path impact]
 
 **File:line:** `CoreFrameworks/ControllerEventLoop.hpp:~2120-2200` —

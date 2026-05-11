@@ -247,6 +247,41 @@ Both must produce identical SHA-256.
 - Long-replay paper-trade audits reproducible across binary variants
 - Latency win without correctness cost
 
+### Partial vectorization within a function is valid
+
+Not every reduction site within a single function needs to vectorize. When memory access patterns vary per-site (e.g., row access vs column access in row-major storage), some sites legitimately stay scalar while others vectorize. Per Rule 5, the scalar path IS the byte-determinism reference; partial vectorization is canonical pattern application, NOT tech-debt deferral.
+
+**Decision algorithm per reduction site:**
+
+1. **Does the access pattern fit the contiguous-load template?**
+   - Row access in row-major storage → YES → vectorize with `_mm512_loadu_pd`
+   - Column access in row-major storage → NO → consider alternatives below
+   - Irregular indexing → NO → consider gather or scalar
+
+2. **For non-row access, evaluate alternatives:**
+   - **Scalar (default fallback):** Always byte-deterministic; simplest. For small N (≤8) with serial dependency chains, often FASTEST due to no intrinsic overhead.
+   - **`_mm512_i64gather_pd`:** Byte-deterministic (per-lane IEEE-754 loads + scalar reduce); ~10-15ns latency overhead vs ~1ns contiguous load. Worth it when N ≥ 16 and gather amortizes.
+   - **Transpose during prior pass:** Maintain transposed scratch so this pass has row access. Cost: extra ops + storage during prior pass. Net-positive only if downstream pass gain > setup cost.
+   - **Restructure data layout (column-major):** Invasive; usually rejected.
+
+3. **Compare cycle costs:**
+   - For N=8 serial dependency chain: scalar ~7 cycles; gather ~15-20 cycles; transpose+row-load ~10-15 cycles (counting setup amortization). Scalar wins.
+   - For N=16-32 with parallel adds: vector wins handily.
+
+**Worked example — Cholesky_Solve v5.14.11.B (3 sites; 2 vectorize, 1 stays scalar):**
+
+| Site | Access | Vectorized? | Rationale |
+|---|---|---|---|
+| Decomposition inner k-loop | `L_out[i][k]` (row) | YES | Row-load template fits; standard pattern |
+| Forward solve inner k-loop | `L_out[i][k]` (row) | YES | Same template |
+| Back solve inner k-loop | `L_out[k][i]` (column) | NO (scalar) | Strided in row-major; gather slower than scalar for N=8; transpose net-negative |
+
+PARITY-019 (2026-05-11) was the canonical case that formalized this subsection. Scalar back-solve preserves byte-determinism + actually wins on latency for the small N=8 + serial-dependency profile.
+
+**When NOT to mix:** if a function has uniform access patterns across all reduction sites, vectorize all-or-none (don't introduce inconsistency for the sake of it). Mixed paths are justified only when access pattern variation forces the choice.
+
+**Documentation requirement:** when a site stays scalar within an otherwise-vectorized function, document the per-site rationale in code comments referencing this section. Future contributors must understand WHY back-solve stays scalar to avoid "fixing" it incorrectly.
+
 ---
 
 ## Reference implementations

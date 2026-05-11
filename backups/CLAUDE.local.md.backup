@@ -14,7 +14,7 @@ Three private docs (gitignored, backups in workspace plans):
 |---|---|
 | `DOCS/STRATEGY_AND_CODING_RULES.md` | any code in hot path, slow path, OMS drainer, parsing, ML inference, strategies, RollingStats / RegimeSignals / ExecutionCore — i.e., anything in `CoreFrameworks/`, `Strategies/`, `ML_Headers/`, `DataStream/`, or `FixedPoint/`. The doc is 11 strict invariants (no malloc, no virtual, no mutex, no sleep_for, no atof/strstr in parsers, cache alignment, branchless, AVX-512-friendly data layouts, SCHED_FIFO/isolcpus deployment) — every new file in those dirs must comply |
 | `DOCS/LATENCY_OPTIMIZATION_AUDIT.md` | any optimization investigation, performance-regression triage, or v5.11 sprint work. 13 parts, ~40 specific items: hot path (Part 1), slow path SIMD (2+5), arch invariants (3), ingestion+ML+memory (4), system tail variance (6), allocator eradication (7), parsing (8), OMS variance (9), concurrency (10), FPN libs (11), HFT system ops (12), hardware/OS tuning (13) |
-| `plans/2026-05-06-latency-path-discipline.md` | any modification to **any code on a latency-impacting path**: `ExecutionCore_Tick` / `BG_Evaluate` / `SG_Evaluate` / `ExecutionCore` / `GateParameters` / `ParameterSlot` (hot path), `EventLoop_RebuildOneCore` / `RollingStats_Push` / `Regime_ComputeSignals` (slow path), `OMS_DrainSubmit` / `OrderManager_Tick` (OMS drainer), producer fan-out, snapshot publish, parsing. **7 architectural rules** scaled by cadence (hot = all; slow = most; OMS = subset) + an **anti-pattern history**, distilled from v5.10/v5.11 audit cycles: cache-line layout discipline (FPN<64>=24B!), no-I/O-on-failure pattern (counter not fprintf), SPSC ring failure handling, branch predictor patterns, FPN sizing awareness, dense flat arrays only, cross-thread sync patterns. Plus a **pre-merge verification checklist**. |
+| `plans/_cross-cutting/2026-05-06-latency-path-discipline.md` | any modification to **any code on a latency-impacting path**: `ExecutionCore_Tick` / `BG_Evaluate` / `SG_Evaluate` / `ExecutionCore` / `GateParameters` / `ParameterSlot` (hot path), `EventLoop_RebuildOneCore` / `RollingStats_Push` / `Regime_ComputeSignals` (slow path), `OMS_DrainSubmit` / `OrderManager_Tick` (OMS drainer), producer fan-out, snapshot publish, parsing. **7 architectural rules** scaled by cadence (hot = all; slow = most; OMS = subset) + an **anti-pattern history**, distilled from v5.10/v5.11 audit cycles: cache-line layout discipline (FPN<64>=24B!), no-I/O-on-failure pattern (counter not fprintf), SPSC ring failure handling, branch predictor patterns, FPN sizing awareness, dense flat arrays only, cross-thread sync patterns. Plus a **pre-merge verification checklist**. |
 
 **Workflow when about to edit one of those areas:** open the rules doc
 first, scan the relevant rule sections, then write the code. The audit
@@ -138,7 +138,7 @@ as the running ledger; this rule formalizes its operational role.
 
 v5.11 is planned as a **massive optimization sprint** built directly
 from the audit. Sub-ships map to audit Parts; see workspace plan
-`plans/2026-05-XX-MASTER-v5.11-optimization-sprint.md` for the
+`plans/v5.11-optimization-sprint/MASTER.md` for the
 canonical sequencing.
 
 When opening v5.11.x sub-plans:
@@ -249,7 +249,7 @@ The `/readiness` skill enforces this via its Cold-pickup section.
    / Gemini audit / KNOWN_ISSUES section by filename, not "per the
    audit".
 9. **Predecessor / dependent plans named with paths** — say
-   `plans/2026-05-04-v5.10.0b-fpn-end-to-end.md`, not just "v5.10.0b".
+   `plans/v5.10-ensemble-engine/subplans/2026-05-04-v5.10.0b-fpn-end-to-end.md`, not just "v5.10.0b".
 10. **Tag names locked + rollback anchors** — each phase has a
     unique git tag name; if you expect to roll back, note the
     `pre-<tag>` anchor that exists or should be created.

@@ -158,7 +158,7 @@ Determine what to audit:
 ### Step 3 — Pattern checks (per surface)
 
 For each pattern in the catalog, scan the surface for
-missed-application candidates. The 7 baseline check categories:
+missed-application candidates. The 10 baseline check categories:
 
 #### 3a. Cache alignment
 
@@ -303,6 +303,51 @@ CLAUDE.md item 19, RECURRING_BUG_PATTERNS Class 18.
 False-positive filter: true one-off bugs (pattern won't recur) get
 direct patch. Only fires when bug class history shows ≥2 recurrences
 OR plan explicitly identifies "we'll need to patch this again."
+
+#### 3i. Math kernel constant-iter + branchless (v5.14.11.B.5+)
+
+Detection signatures:
+- Math kernel inner reduction loop with VARIABLE upper bound that
+  varies per outer iteration (e.g., `for k=0..j-1` where j is an
+  outer-loop counter). Should be `for k=0..MAX_*` per the constant-iter
+  invariant.
+- `if` statement INSIDE a reduction loop body (no early-exit or
+  short-circuit; just edge-case skip). Branchless via algorithmic
+  zero-invariant (pre-zero state arrays).
+- `#if defined(__AVX512F__)` block with `if (...)` guards inside the
+  vectorized setup (same problem as scalar; mask handles edge case).
+- Cholesky-like algorithm without pre-zero pattern at appropriate
+  granularity (per-row, per-solve, per-cycle).
+
+Cross-ref: `DESIGN_SPECS/branchless-math-kernel-pattern.md`,
+CLAUDE.md item 26 (math kernels constant-iter + branchless),
+CLAUDE.md item 18 (slow-path latency reduction sub-clauses).
+
+False-positive filter: outer loops with per-call-stable bounds
+(`for i=0..n_models`) are ACCEPTABLE — branch predictor handles them
+cleanly. Only flag INNER reductions with bounds that vary across
+outer-loop iterations within a single call.
+
+#### 3j. Struct byte-equivalence padding (v5.14.11.B.5+)
+
+Detection signatures:
+- Struct with implicit padding (sizeof(T) > sum_of_member_sizes(T))
+  AND used in `memcmp` / `sha256_bytes` / `hmac_*` / wire-format
+  contexts. Implicit padding bytes are UB.
+- Struct has mixed-alignment members (e.g., `uint64_t` followed by
+  `int32_t`) creating padding gap; needs explicit `_padding = 0` field.
+- Struct returned by value through a function AND consumer compares
+  via `memcmp` (latent regression risk under stack-layout shifts).
+
+Cross-ref: `DESIGN_SPECS/struct-padding-determinism-pattern.md`,
+CLAUDE.md item 27 (structs in byte-equivalence contexts have explicit
+zero-init padding), CLAUDE.md item 12 (display↔execution invariant
+relies on snapshot byte determinism), CLAUDE.md item 15 (parity-tested-
+by-construction).
+
+False-positive filter: structs NOT used in byte-equivalence contexts
+(internal types only; never compared bytewise) don't need explicit
+padding. Verify usage via grep before flagging.
 
 ### Step 4 — DESIGN_SPECS cross-reference
 

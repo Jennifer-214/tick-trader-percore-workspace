@@ -1232,11 +1232,13 @@ The /dod-audit procedure:
 1. Reads `tick-trader-percore-workspace/DESIGN_SPECS/*.md` catalog
    dynamically (registry-driven; new patterns auto-included)
 2. Walks the plan's proposed code/structures
-3. Scans for missed pattern applications across 8 baseline check
+3. Scans for missed pattern applications across 10 baseline check
    categories: cache alignment, cache miss / false sharing,
    concurrency invariants, branchless candidates, bit-packing
    candidates, bit-field dispatchers, wire-format byte preservation,
-   structural-fix-preferred decisions
+   structural-fix-preferred decisions, math kernel constant-iter +
+   branchless (v5.14.11.B.5+), struct byte-equivalence padding
+   (v5.14.11.B.5+)
 4. Cross-references each finding to the relevant DESIGN_SPECS doc
 5. Severity-classifies (CRITICAL / HIGH / MEDIUM / LOW)
 

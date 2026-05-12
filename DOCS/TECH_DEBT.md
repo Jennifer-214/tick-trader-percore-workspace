@@ -848,3 +848,54 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
   redesign deferral); CLAUDE.md item 21 (AUTOPOPULATE companion
   pattern; cfg-bound fields are the canonical use; model-const
   registries are pending redesign).
+
+---
+
+### TECH_DEBT-038 — FOREACH_BITMAP_WIDTH X-macro registry deferred (BITMAP_BIT/POPCOUNT/FIRST families)
+
+- **Created:** 2026-05-12 by v5.15.5.A.1 design discussion (operator-
+  posed: "would this benefit from a registry?")
+- **Severity:** LOW (current explicit per-width macros work + are
+  clearer to read; deferral is principled, not effort-avoidance)
+- **Surface:** `MemHeaders/BitmapMacros.hpp` lines 156-181 — three
+  width-typed macro families (BITMAP_BIT_U<W>, BITMAP_POPCOUNT_U<W>,
+  BITMAP_FIRST_U<W>) each with 4 widths (U8/U16/U32/U64); 12 total
+  explicit macros.
+- **What's deferred:** Convert the 3 families to a single
+  FOREACH_BITMAP_WIDTH(X) registry that auto-generates BIT, POPCOUNT,
+  and FIRST macros per registered width. Tuple shape:
+  `X(W, T, popcount_fn, ctz_fn, full_width_mask_literal)` — e.g.,
+  `X(U8, uint8_t, __builtin_popcount, __builtin_ctz, 0xFFu)` etc.
+- **Why deferred (not effort-avoidance):** Per CLAUDE.md item 13
+  threshold (registry when adding next instance touches ≥2 sites),
+  this IS technically eligible. BUT the width family is NATURALLY
+  bounded by C integer types — uint128_t isn't standard C++ and
+  CLAUDE.md item 20 trade-off note specifies bit-pack within a
+  single record (max ~64 flags); cross-record bit-packing is
+  anti-pattern. So 5th width is unlikely. The 3 operation families
+  (BIT/POPCOUNT/FIRST) cover primary bitmap ops; a 4th family
+  (BITMAP_LAST, BITMAP_PARITY, etc.) IS possible but not currently
+  needed. Until either trigger fires (5th width OR 4th family), the
+  explicit per-width macros are clearer and more self-documenting.
+- **Cost estimate:** ~30-50 LOC refactor (registry definition +
+  3 family generator blocks + per-width parameter encoding).
+  LOW risk (additive macro definitions; existing callers see same
+  expanded result; sizeof + bit-mask values byte-identical).
+- **Trigger:** Address when (a) v5.X+ adds a 4th BITMAP operation
+  family (e.g., BITMAP_LAST_U<W>, BITMAP_PARITY_U<W>, BITMAP_NTH_U<W>)
+  — adding 4 macros for the new family across 4 widths is when
+  registry value emerges, OR (b) operator wants `__uint128_t`
+  support for some reason (not foreseeable but possible), OR
+  (c) v5.X cleanup sprint takes this on alongside other
+  registry-conversion candidates (TECH_DEBT-009 / -011 / -012
+  family).
+- **Status:** OPEN — explicit per-width macros for v5.15
+  + foreseeable future; future consolidation candidate when one
+  of the triggers fires.
+- **Cross-ref:** `MemHeaders/BitmapMacros.hpp:156-181`;
+  CLAUDE.md item 13 (X-macro registry standard pattern); CLAUDE.md
+  item 20 (BITMAP_* API; trade-off note on per-record bit-packing
+  bounds the width family); CLAUDE.md item 28 (latency-vs-cache
+  decision framework; the explicit macros' marginal differences
+  are intentional per-width optimizations); v5.15.5.A.1 audit
+  discussion 2026-05-12 establishing the deferral principle.

@@ -139,17 +139,23 @@ A finding that exists only in a transient audit report or chat memory gets re-di
 
 ---
 
-### TECH_DEBT-005 — Single-zoo hot-swap strict-mode failure handling unification
+### TECH_DEBT-005 — Single-zoo hot-swap strict-mode failure handling unification ✅ CLOSED v5.15.4
 
 - **Created:** 2026-05-09 by v5.14.2.E.3 (surfaced during v5.14.2.E.1 design)
 - **Severity:** LOW
 - **Surface:** `CoreFrameworks/EngineSharded.hpp` ~line 2820 (single-zoo hot-swap validate failure handling)
-- **What's deferred:** Boot does Free + null + flag on validate failure. Hot-swap does flag-only on validate failure (preserves v5.10.0c "log-and-leave" semantics; comment at 2803-2806 explicitly notes "TODO v5.10: free handle + return-from-boot to enforce refuse properly"). The asymmetry is intentional today (pre-swap state isn't snapshotted, so true rollback would require infrastructure) but ideally hot-swap would also free + null on strict refuse.
-- **Why deferred (not effort-avoidance):** Pre-swap snapshotting infrastructure is significant scope (would let hot-swap properly roll back to previous model). Today's flag-only behavior is operator-tolerable + documented. v5.14.2.E.1 didn't change this; it stayed at caller level intentionally.
-- **Cost estimate:** ~4-6h (snapshot infrastructure + revert logic + tests); MEDIUM risk (must not break in-flight predictions).
-- **Trigger:** Address when (a) operator hits a hot-swap that breaks engine + complains about not having safe rollback, OR (b) v5.X+ ships safe-rollback infrastructure for some other purpose (could leverage), OR (c) "true safety" becomes a cfg-policy goal.
-- **Status:** OPEN
-- **Cross-ref:** `EngineSharded.hpp:2803-2806` comment; v5.14.2.E.1 PARITY-009.F closure (which preserved the asymmetry).
+- **What was deferred:** Boot does Free + null + flag on validate failure. Hot-swap did flag-only on validate failure (preserved v5.10.0c "log-and-leave" semantics). Asymmetry was intentional pre-v5.15.4 because pre-swap state wasn't snapshotted; true rollback required infrastructure.
+- **Status:** ✅ **CLOSED v5.15.4 (2026-05-12).** Single-zoo + ensemble hot-swap unified via shadow-load pattern (per `shadow-load-state-transition-pattern.md` — promoted DRAFT v0.1 → ACTIVE v1.0). Both surfaces use `tt::HotSwap_ShadowLoad_*<F>` helpers in `CoreFrameworks/HotSwap.hpp`:
+  - **`aligned_alloc(64, sizeof(T))` allocates NEW zoo container** — pre-swap state untouched
+  - **Init + Load + PostLoadSetup into NEW zoo** — failure modes (alloc OOM / load failed / strict validate failed) all Free new + return nonzero with pre-swap pointer preserved
+  - **`__atomic_exchange_n` swap** — lock-free; readers see old OR new, never torn
+  - **Free OLD zoo** — single-owner reclamation (per-core slow-path thread is sole owner of `state.cores[c].*_handle`; no RCU grace needed)
+  - **PARITY-023 capture-pointer-revert anti-pattern eliminated** — no torn moment exists, so revert is unnecessary
+- **Bonus implicit fixes:**
+  - Boot path migrated from `static CoreModelZoo<F> ml_zoos[]` to per-core `aligned_alloc(64)` (required for `free(old_ezoo)` validity on first swap)
+  - `alignas(64)` retrofit on `CoreModelZoo<F>` + `EnsembleModelZoo<F>` so heap allocations satisfy embedded `ModelHandle<F>` + `RidgeWeights<F>` alignment guarantees
+  - Legacy `EnsembleHotSwap.hpp::EngineSharded_HotSwapEnsemble` retained for back-compat but production dispatch now goes through shadow-load
+- **Cross-ref:** `CoreFrameworks/HotSwap.hpp` (canonical implementation); `DESIGN_SPECS/shadow-load-state-transition-pattern.md` (pattern doc); PARITY-023 closure (workspace `PARITY_ISSUES.md`).
 
 ---
 

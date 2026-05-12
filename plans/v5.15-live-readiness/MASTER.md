@@ -571,13 +571,21 @@ DESIGN_SPECS doc + CLAUDE.md item are cited inline.
 
 ### v5.15.4 — Live mode strict defaults + hot-swap unification
 
+**AMENDED 2026-05-12 post-PARITY-023:** original capture-pointer + Revert
+design was structurally broken (Free destroys data in-place; captured
+pointers point at freed memory). Plan amended to use SHADOW-LOAD pattern
+(`shadow-load-state-transition-pattern.md`): allocate new state into
+SEPARATE memory + load + validate + atomic_exchange + Free-old. No
+HotSwapSnapshot struct needed; no revert path needed; failure just Free's
+the new (failed) allocation.
+
 | DOD concern | Decision | Reference |
 |---|---|---|
-| **Hot-swap pre-swap snapshot struct** | NEW struct `HotSwapSnapshot { EnsembleModelZoo<F>* prev_ezoo; int prev_n_models; uint64_t snapshot_seq; }` for revert path. `alignas(64)` (cross-thread access from slow-path + boot gate). | `per-snapshot-cluster-layout-pattern.md` |
-| **Atomic snapshot publication** | snapshot_seq uses `__atomic_store(_, _, __ATOMIC_RELEASE)` on publish + acquire-load on read; standard release-acquire sync | CLAUDE.md item 5 (no virtual / atomic seqlock patterns) |
+| **Hot-swap shadow-load** | `aligned_alloc(64, sizeof(EnsembleModelZoo<F>))` for new state allocation; `__atomic_exchange_n(slot, new, __ATOMIC_ACQ_REL)` for swap; Free OLD state after swap succeeds; on failure Free NEW state with pre-swap untouched. NO HotSwapSnapshot struct; no revert path. Same pattern for single-zoo (`CoreModelZoo<F>*`) + ensemble (`EnsembleModelZoo<F>*`) cases. | `shadow-load-state-transition-pattern.md` (canonical pattern); v5.15.4 subplan |
+| **alignas(64) retrofit on EnsembleModelZoo + CoreModelZoo** | required for `aligned_alloc(64)` allocation to round-trip cleanly + cache-line discipline on cross-thread access. `static_assert(sizeof(T) % 64 == 0)` verifies size alignment. | `per-snapshot-cluster-layout-pattern.md` |
 | **trading_mode default-flip without struct change** | post-parse normalize pass mutates existing cfg fields (model_verify_strict, reconcile_mode); no new fields. No alignment concern. | — |
 | **Stamp body byte-equivalence** | default-flip MUST NOT change stamp body emit at canonical byte level — verified via `/parity-check` (cfg-default-flip is a parse-time normalize; stamp emit reads normalized value; legacy cfgs with explicit overrides still produce same stamp body bytes) | `wire-format-byte-preservation-discipline.md`; CLAUDE.md item 15 |
-| **Cross-thread snapshot read** | hot-swap snapshot lives in EnsembleModelZoo container; reads on slow-path validate path; standard double-buffered pattern (already used for TUISnapshot) | CLAUDE.md item 5 |
+| **Cross-thread atomic swap** | `__atomic_exchange_n` on aligned pointer = single x86_64 instruction; lock-free; readers see old OR new, never torn. Single-owner write (boot gate / operator-triggered slow-path) means no RCU grace period needed before Free-old. | CLAUDE.md item 5 (lock-free reader-side discipline) |
 
 ### Cross-sprint DOD invariants (every sub-ship)
 
@@ -606,7 +614,7 @@ Catalog: `tick-trader-percore-workspace/DESIGN_SPECS/README.md`
 | v5.15.1 | bitmap-flag-api, per-snapshot-cluster-layout-pattern, transient-aggregation-bitmap-pattern | 1, 12, 20 |
 | v5.15.2 | slow-path-gate-registry-pattern, curve-registry-pattern (for trading_mode enum dispatch), cfg-flag-eligibility-criteria (cohort audit per going-forward rule 2026-05-11) | 13, 18 |
 | v5.15.3 | wire-format-byte-preservation-discipline, autopopulate-pattern-for-production-caller-class, avx512-byte-determinism-pattern (cross-mode byte-identity test extends item 25 discipline) | 15, 16 (reuse-audit; helper extraction), 21, 22, 25 |
-| v5.15.4 | cfg-flag-eligibility-criteria, structural-fix-preferred-decision-framework | 13, 15, 19 |
+| v5.15.4 | shadow-load-state-transition-pattern (PRIMARY — canonical pattern for HotSwap unification), cfg-flag-eligibility-criteria, structural-fix-preferred-decision-framework, per-snapshot-cluster-layout-pattern (alignas(64) retrofit on zoo containers), wire-format-byte-preservation-discipline (default-flip MUST NOT change stamp body bytes) | 5, 13, 15, 19, 27 |
 
 ---
 

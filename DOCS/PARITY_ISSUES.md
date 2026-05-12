@@ -813,8 +813,15 @@ OPEN-DEFERRED (1), or NOT-A-BUG (1). Ready for v5.14.2 audit cycle
   - **Option B — shadow-load restructure:** EngineSharded_HotSwapEnsemble + single-zoo Free+Init+Load become: (1) allocate SHADOW zoo; (2) load new model into SHADOW; (3) validate SHADOW; (4) on success: atomic swap shadow into state.cores[c] + Free old; on failure: Free shadow + keep old. ~300-400 LOC + new tests. Deferred to future sprint.
   - **Option C — deep-copy before Free:** Capture function deep-clones the pre-swap zoo (substantial; ~1MB/core; booster handle clone via XGBoosterSaveModelToBuffer + XGBoosterLoadModelFromBuffer; scaler memcpy; bandit state memcpy). Not free; deferred.
 - **Target ship:** v5.15.4 (de-scope) → TECH_DEBT-005 stays open
-- **Status:** **OPEN** (plan-stage; amendment recommended — de-scope OR redesign before .B coding)
-- **Workaround:** N/A — existing log-and-leave semantics are functional. Operator manually reverts via cfg+restart on hot-swap validate failure.
+- **Status:** **CLOSED v5.15.4** (2026-05-12). Plan amended to use shadow-load pattern (Option B in original finding) per Caramel's "structural fix > direct patch" direction (CLAUDE.md item 19). Implementation:
+  - `tt::HotSwap_ShadowLoad_Ensemble<F>` + `tt::HotSwap_ShadowLoad_SingleZoo<F>` in `CoreFrameworks/HotSwap.hpp`
+  - `aligned_alloc(64, sizeof(T))` for new state + Init + Load + PostLoadSetup + `__atomic_exchange_n` + Free OLD
+  - **No capture-pointer needed; no revert path needed** — pre-swap state untouched on any failure; caller continues serving from pre-swap zoo
+  - Boot path migrated from `static CoreModelZoo<F>[]` to per-core `aligned_alloc(64)` (required for `free(old_ezoo)` validity on first swap)
+  - `alignas(64)` retrofit on `CoreModelZoo<F>` + `EnsembleModelZoo<F>` container structs
+  - `DESIGN_SPECS/shadow-load-state-transition-pattern.md` promoted DRAFT v0.1 → ACTIVE v1.0 (2 field-tested applications)
+  - Anchor tests verify pre-swap handle preserved after failed shadow-load (PARITY-023 closure proof)
+- **Workaround:** N/A (closed; shadow-load eliminates the torn-state moment that revert would have addressed).
 
 ---
 

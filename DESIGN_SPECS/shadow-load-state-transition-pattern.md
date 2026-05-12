@@ -1,11 +1,13 @@
-# Shadow-load state transition pattern (DRAFT v0.1)
+# Shadow-load state transition pattern (ACTIVE v1.0)
 
 **Date opened:** 2026-05-12 (v5.15.4 plan-time)
-**Status:** DRAFT — canonical example pending v5.15.4 implementation.
-Promotes to ACTIVE v1.0 after v5.15.4 ships + field-tests both
-applications (single-zoo + ensemble hot-swap).
-**CLAUDE.md cross-ref candidate:** item 28 (post-v5.15.4 close, after
-2 applications field-validate the discipline).
+**Date promoted to ACTIVE:** 2026-05-12 (v5.15.4 ship close)
+**Status:** ACTIVE v1.0 — 2 production applications field-tested:
+`tt::HotSwap_ShadowLoad_Ensemble<F>` + `tt::HotSwap_ShadowLoad_SingleZoo<F>`
+in `CoreFrameworks/HotSwap.hpp`. PARITY-023 closed via this pattern.
+**CLAUDE.md cross-ref candidate:** item 28 (promotion pending after
+field-testing in paper-test phase; current criteria met: 2 applications,
+DESIGN_SPECS doc, broad applicability for future state-transition needs).
 
 ---
 

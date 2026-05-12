@@ -288,7 +288,7 @@ precursor regardless of which answers ship later.
 
 ### v5.15.4 — Live-mode strict defaults + shadow-load hot-swap unification (POSITIONING: ⬆️⬆️ strongly positive; AMENDED 2026-05-12 post-audit)
 
-**Date:** 2026-05-12 (amended after PARITY-023 fatal-flaw catch + design re-think)
+**Date:** 2026-05-12 (SHIPPED; tag `v5.15.4` — amended after PARITY-023 fatal-flaw catch + design re-think)
 
 **Change (AMENDED):** ControllerConfig_NormalizeForMode post-parse pass
 flips strict defaults when trading_mode=LIVE; **shadow-load pattern**

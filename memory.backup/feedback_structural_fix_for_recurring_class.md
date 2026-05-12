@@ -1,0 +1,52 @@
+---
+name: Prefer structural fix over direct patch for recurring bug classes
+description: When facing a bug whose root cause is "same pattern at multiple sites drifted apart" (Class 18 mirror, parallel paths), prefer X-macro registry / helper extraction with compile-time enforcement over direct patch — even if direct patch is cheaper today
+type: feedback
+originSessionId: 43a2b763-783f-4a6e-9b54-c3654977b44c
+---
+When `/parity-check`, `/merge-scan`, or any audit surfaces a recurring
+pattern (Class 18 mirror, parallel boot↔backtest↔hot-swap paths,
+multi-site additions), default to X-macro registry / helper extraction
+with compile-time enforcement over direct patch — even when direct
+patch is cheaper today.
+
+**Why:** Caramel pushed back 2026-05-09 on a tempting Option F (extract
+helper) in favor of Option D revised (X-macro registry) for ensemble
+post-load setup, citing the philosophy: "the philosophy of this entire
+thing right? — set it up to be easy to maintain going forward, even if
+it does add more work now." Then "headache now > issues later" when
+scope creep felt heavy. Same philosophy that drove v5.14.1's
+STAMP_CFG_AUTOPOPULATE extraction. Validated 4/4 times in single
+session (10-param helper → X-macro; Option F → Option D revised;
+Option 2 → Option 3; bash CLI catch-up → C++ wrapper deferral).
+
+**How to apply:**
+
+1. When proposing fix options for a Class 18 / mirror / parallel-paths
+   bug, lead with the structural fix (X-macro registry, helper
+   extraction, compile-time enforcement). Don't lead with "direct
+   patch is cheaper today."
+2. If direct patch IS the right choice (true one-off bug, no recurrence
+   risk), say so explicitly with rationale. Don't assume.
+3. When operator chooses structural: bundle related cleanups (TECH_DEBT
+   ledger entries) + skill spec updates + test patterns at CI level
+   (symmetry tests for X-macro registries with cross-site callers).
+4. Honest scope flagging: surface heavier work UPFRONT when
+   recommending structural ("~3.5h vs 30 min for direct patch") so
+   operator's commitment is informed. Don't hide cost.
+5. Defer is last-ditch (sister memory): if structural fix is bounded
+   + architecturally clean, do it now. If genuinely separate concern,
+   defer with TECH_DEBT.md entry (queryable, surfaced by /readiness
+   Check 25).
+
+**Cross-references:**
+- `CLAUDE.local.md` going-forward rule (structural fix preferred)
+- `/readiness` Check 24 (mirror-function call-sequence enumeration)
+- `/readiness` Check 25 (TECH_DEBT.md surface scan)
+- `/trace-deps` Step 6 strengthening (call-sequence enumeration)
+- `DOCS/RECURRING_BUG_PATTERNS.md` Class 18 strengthened
+- `DOCS/TECH_DEBT.md` (deferred-items ledger)
+- `feedback_no_defer_for_effort.md` (sister: defer is last-ditch)
+- `feedback_reduce_touch_sites.md` (sister: boundary-stable refactor)
+- v5.14.1's STAMP_CFG_AUTOPOPULATE precedent (canonical example)
+- v5.14.2.E.1's PostLoadSetup helpers (canonical example)

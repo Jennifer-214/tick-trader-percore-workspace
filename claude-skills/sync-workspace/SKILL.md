@@ -56,6 +56,7 @@ of pure data/build artifacts, gets backed up to the workspace.**
 | `CLAUDE.local.md` | `CLAUDE.local.md.backup` | Explicit copy; this skill |
 | `*.local.md` (other overlays) | `<name>.backup` (workspace root) | Explicit copy; this skill |
 | `GEMINI.md` | `GEMINI.md.backup` | Explicit copy; this skill (Gemini agent's project memory) |
+| `~/.claude/projects/<project>/memory/*.md` | `memory.backup/` | Explicit copy; this skill (Claude auto-memory). Source lives at `$HOME/.claude/`, NOT under any project repo. Added 2026-05-12 for off-machine memory persistence. |
 
 **DOCS/ migration note (v5.11.43)**: 96 architectural / operator-edge
 docs were moved from public engine repo to private workspace via
@@ -122,6 +123,19 @@ for local_md in "$ENGINE"/*.local.md; do
     [ -f "$local_md" ] && [ "$base" != "CLAUDE.local.md" ] && \
         sync_if_newer "$local_md" "$base.backup"
 done
+
+# Claude auto-memory mirror (added 2026-05-12 — off-machine persistence
+# for ~/.claude/projects/<project>/memory/). Source is in $HOME/.claude/,
+# NOT in any project repo. Sync to workspace/memory.backup/ so memories
+# survive machine reimage. Operator-policy: memory dir is workspace-private
+# (not pushed to public engine repo).
+CLAUDE_MEMORY_DIR="$HOME/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory"
+if [ -d "$CLAUDE_MEMORY_DIR" ]; then
+    mkdir -p memory.backup
+    for mem_file in "$CLAUDE_MEMORY_DIR"/*.md; do
+        [ -f "$mem_file" ] && sync_if_newer "$mem_file" "memory.backup/$(basename "$mem_file")"
+    done
+fi
 
 # Are there changes?
 if git diff --quiet && git diff --cached --quiet && [ -z "$(git status --porcelain)" ]; then

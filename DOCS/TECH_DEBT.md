@@ -797,3 +797,48 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
   population pattern; canonical reference); CLAUDE.md item 19
   (structural-fix preferred — quarantine + manual is the correct trade-
   off here because the registry restructure is its own focused work)
+
+### TECH_DEBT-037 — Cfg-derived inference_cfg_* fields live in FOREACH_STAMP_BOUND_MODEL_CONST, not FOREACH_STAMP_BOUND_CFG (taxonomy drift)
+
+- **Created:** 2026-05-12 by v5.15.3.A.1 helper extraction
+- **Severity:** LOW (manual population works; just taxonomic asymmetry)
+- **Surface:** `ML_Headers/StampHelper.hpp:158-187` (helper section 2a
+  with cfg-derived model-const manual population); registry-tuple
+  taxonomy split between FOREACH_STAMP_BOUND_CFG and
+  FOREACH_STAMP_BOUND_MODEL_CONST
+- **What's deferred:** `inference_cfg_confidence_threshold_scale`,
+  `inference_cfg_barrier_gate_enabled`,
+  `inference_cfg_confidence_hard_block_threshold`,
+  `inference_cfg_held_out_fraction`,
+  `inference_cfg_bandit_blend_ratio`,
+  `inference_cfg_fee_rate_maker`, `inference_cfg_fee_rate_taker`,
+  `training_poll_interval` are cfg-DERIVED but classified as
+  model-const in the registry split (v5.14.8.A.merged historical
+  taxonomy). STAMP_CFG_AUTOPOPULATE doesn't reach them; helper
+  must manually `inf.X = cfg.X` for each. Adding a new cfg-derived
+  inference_cfg_* field today needs both a registry entry AND a
+  manual line in the helper section 2a.
+- **Why deferred:** The proper fix has 2 options: (a) migrate these
+  entries from FOREACH_STAMP_BOUND_MODEL_CONST to
+  FOREACH_STAMP_BOUND_CFG so STAMP_CFG_AUTOPOPULATE auto-flows
+  them (requires byte-equivalence verification + per-entry
+  emit_when predicate restructure since registry-row shape
+  differs between the two macros); or (b) extend
+  STAMP_CFG_AUTOPOPULATE to optionally take cfg→stamp_field
+  mappings (requires registry tuple extension; affects all 22
+  current FOREACH_STAMP_BOUND_CFG entries). Either option is
+  larger than v5.15.3 scope; manual section 2a works correctly
+  today.
+- **Cost estimate:** ~2-3h (option a; per-entry migration with
+  byte-equivalence check) OR ~3-4h (option b; AUTOPOPULATE extension)
+- **Trigger:** Address when (a) operator adds 3+ new cfg-derived
+  inference_cfg_* fields in one sprint making manual section 2a
+  painful, OR (b) v5.X+ AUTOPOPULATE consolidation sprint takes
+  this on alongside TECH_DEBT-036 architectural-field redesign.
+- **Status:** OPEN — manual section 2a in StampHelper.hpp for v5.15
+  + foreseeable future; future consolidation candidate.
+- **Cross-ref:** v5.15.3.A.1 helper extraction; `ML_Headers/StampHelper.hpp:158-187`
+  (helper section 2a comment); TECH_DEBT-036 (sister AUTOPOPULATE
+  redesign deferral); CLAUDE.md item 21 (AUTOPOPULATE companion
+  pattern; cfg-bound fields are the canonical use; model-const
+  registries are pending redesign).

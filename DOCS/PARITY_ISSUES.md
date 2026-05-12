@@ -742,8 +742,8 @@ OPEN-DEFERRED (1), or NOT-A-BUG (1). Ready for v5.14.2 audit cycle
 - **Root cause:** v5.14.post1 mechanical sweep migrated field NAMES but missed adding AUTOPOPULATE call. Train Model worker has been a silent gap since the AUTOPOPULATE pattern was introduced (v5.14.1.E.E.B).
 - **Fix path:** v5.15.3.A bundle (recommended): add `STAMP_CFG_AUTOPOPULATE(inf, run_control->results.config_used);` at `BacktestPanels.hpp:3265` (immediately after the manual scaler block, before `stamp_write_for_model`). 1 LOC + ~30 min total including verification.
 - **Target ship:** v5.15.3.A (recommended bundling — same sub-ship as multi-horizon stamping)
-- **Status:** **OPEN** (plan-stage; amendment recommended for v5.15.3.A)
-- **Workaround:** Operator using Train Model panel today should manually verify cfg.ridge_*/composite_*/winsor_*/etc. match between training session + serving cfg. Less reliable than stamp-binding drift detection.
+- **Status:** **CLOSED v5.15.3.B.1** (2026-05-12). `train_model_worker_fn` now calls `tt::Stamp_AssembleAndEmit<BACKTEST_FP>` at `BacktestPanels.hpp:3204+` which walks `STAMP_CFG_AUTOPOPULATE(inf, cfg)` internally. All 22 cfg-bound fields automatically populated. Anchor test `v5.15.3.B.1 PARITY-020: helper-emitted stamp has has_ridge_within_horizon=1 (cfg-bound)` GREEN; sibling has_* bits for composite + exit_blender also asserted. Structural fix preferred over direct patch (CLAUDE.md item 19): helper extraction closes Class 18 mirror at production-caller level via new `tt::Stamp_AssembleAndEmit<F>` orchestration helper; future stamp-emit callers automatically inherit AUTOPOPULATE call. PARITY-020 cannot recur for callers using the helper.
+- **Workaround:** N/A (closed; train_model_worker_fn now emits complete stamps).
 
 ---
 
@@ -775,8 +775,8 @@ OPEN-DEFERRED (1), or NOT-A-BUG (1). Ready for v5.14.2 audit cycle
   4. Single-horizon callers leave req_grid_member_count = 0 → group bit stays unset → stamp byte-identical to pre-fix
   5. **DROP the v5.15.3 `stamp_emit_for_horizon` helper entirely** — it would create a parallel emit path that conflicts with RFV's emit. Structural-fix-preferred (CLAUDE.md item 19) — fix via the existing chokepoint.
 - **Target ship:** v5.15.3.A (revised scope per HIGH.2 in audit report)
-- **Status:** **OPEN** (plan-stage; significant amendment recommended for v5.15.3 — reduces scope from ~150 LOC to ~30 LOC)
-- **Workaround:** Today's multi-horizon stamps lack grid identity fields but still carry HMAC + other parity-tested fields. Boot warning is informational; loadtime parity protection (feature_registry_hash, label_registry_hash, build_flags_hash, scaler binding) all functional.
+- **Status:** **CLOSED v5.15.3.B.2** (2026-05-12). `FullValidationResults` gained 3 `req_*` fields (`req_grid_member_count`, `req_grid_member_idx`, `req_horizon_count`; defaults 1/0/1 for single-horizon callers). `mh_run_one_horizon_fv` plumbs `horizon_count` from worker arg into `fv->req_grid_member_count`, `h` into `fv->req_grid_member_idx`, `role` into `fv->req_role` before calling RFV. `Backtest_RunFullValidation` reads `out->req_grid_*` into `StampArgs::grid_member_count/idx`; helper always emits the group via `STAMP_SET(inf, grid_member)`. Anchor test `v5.15.3.B.2 PARITY-021: stamp body grid_member_count = 3` GREEN with `args.grid_member_count=3, idx=1`. Multi-horizon stamps now identify grid member; single-horizon stamps emit defaults 1/0 (additive — no MODEL_FORMAT_VERSION bump; legacy stamps load via Surface G forward-compat).
+- **Workaround:** N/A (closed; multi-horizon worker now plumbs grid identity through RFV emit path).
 
 ---
 
@@ -792,8 +792,8 @@ OPEN-DEFERRED (1), or NOT-A-BUG (1). Ready for v5.14.2 audit cycle
   - **Option A — defer macro wiring:** v5.15 plans must NOT rely on this macro for runtime population. Production callers continue manual architectural-field population (today's pattern at RFV BacktestEngine.hpp:1153-1240). TECH_DEBT entry tracks the deferred macro completion.
   - **Option B — wire properly in future sprint:** registry get_value column changes from `inf->X` to e.g., `cfg.X` (or to per-entry META_* dispatch macros). All production callers can then use the single-call AUTOPOPULATE.
 - **Target ship:** Plan v5.15 → Option A (defer); future sprint → Option B (when reviewer revisits architectural-field population)
-- **Status:** **OPEN** (architectural placeholder; not a runtime bug today)
-- **Workaround:** N/A (macro is inert; production callers don't call it)
+- **Status:** **CLOSED v5.15.3.A.0** (2026-05-12). Macro body replaced with `static_assert(false, "STAMP_MODEL_CONST_AUTOPOPULATE is QUARANTINED (PARITY-022; v5.15.3.A). Model-const fields populate manually from StampArgs in callers like Stamp_AssembleAndEmit. See TECH_DEBT-036 for architectural-field AUTOPOPULATE redesign.")` at `ML_Headers/StampBoundModelConstRegistry.hpp`. Production callers cannot accidentally invoke; compile-time error fires if they do. TECH_DEBT-036 tracks the future architectural-field AUTOPOPULATE redesign (registry get_value column would need to reference an external META source, e.g., `cfg.X` or per-entry META_* dispatch).
+- **Workaround:** N/A (closed; production callers use manual per-call population from StampArgs via `tt::Stamp_AssembleAndEmit<F>` helper).
 
 ---
 

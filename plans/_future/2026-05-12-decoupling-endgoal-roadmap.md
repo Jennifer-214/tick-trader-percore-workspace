@@ -223,7 +223,7 @@ gate, etc. Future ships use the same `kFooChecks[]` shape.
 
 ### v5.15.3 — Stamp_AssembleAndEmit helper + multi-horizon grid plumb + libgomp pthread-race close (POSITIONING: ⬆️⬆️ strongly positive; AMENDED 2026-05-12 post-audit)
 
-**Date:** 2026-05-12 (amended after PARITY-021 root-cause reframe)
+**Date:** 2026-05-12 (SHIPPED; tag `v5.15.3` — amended after PARITY-021 root-cause reframe)
 
 **Change (AMENDED):** `Stamp_AssembleAndEmit<F>` helper extracted from
 RFV's existing emit chain at BacktestEngine.hpp:1039+ (refactor, not

@@ -19,6 +19,10 @@ PAPER_TESTING/
                           things to bring back to Claude
 ```
 
+Some older sprint dirs (e.g., `POST_v5.12-v5.14-mini/`) use a single
+consolidated `PUNCH_LIST.md` instead of the 3-file split — same purpose,
+pre-dates the formalized convention. New sprints use the 3-file pattern.
+
 Each sprint's directory captures what's new in that sprint — NOT a
 full operator manual. The `DOCS/` files in the engine repo
 (OPERATOR_DEPLOYMENT, QUICKSTART, ML_USAGE, etc.) stay the canonical
@@ -29,7 +33,8 @@ watch for THIS sprint's changes."
 
 | Sprint | Status | Directory | Notes |
 |---|---|---|---|
-| **v5.15** | Open (just shipped 2026-05-12) | `POST_v5.15/` | Live-readiness sprint; 6 TECH_DEBT + 4 PARITY closures; shadow-load hot-swap; trading_mode field; Model Health drift surface; LiveReadiness boot gate; Stamp_AssembleAndEmit helper |
+| **v5.12-v5.14** | Open (paper-test never completed; needs to be done) | `POST_v5.12-v5.14-mini/` | Mini bundled punch list covering 3 sprints' worth of opt-in features (Ridge, Thompson, exit-side ML, composite confidence, risk-degradation ladder, hot-swap ensemble, WS-staleness flatten, lazy rebuild, online correlation). Single-doc PUNCH_LIST.md format (pre-dates 3-file pattern). **Do this FIRST** before validating v5.15 changes — these features are opt-in + don't depend on v5.15. |
+| **v5.15** | Open (sprint just shipped 2026-05-12) | `POST_v5.15/` | Live-readiness sprint; 6 TECH_DEBT + 4 PARITY closures; shadow-load hot-swap; trading_mode field; Model Health drift surface; LiveReadiness boot gate; Stamp_AssembleAndEmit helper. 3-file WATCH/TRY/OBSERVATIONS pattern. |
 | (future) v5.16 | Not started | — | — |
 
 ## Workflow per sprint

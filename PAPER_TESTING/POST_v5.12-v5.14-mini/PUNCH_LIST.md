@@ -1,9 +1,16 @@
-# Testing notes — v5.12 → v5.14
+# POST_v5.12-v5.14-mini — PUNCH_LIST
 
-**Audience:** Caramel (operator), pre paper-test session.
-**Status as of 2026-05-11:** v5.14.11 closed; engine on `feat/v5.14-foxml-port-and-maker` HEAD `c4e45d1`. All 2904 tests pass. **Default cfg behavior is preserved through all 3 sprints** — every new feature is opt-in via cfg flags. So a "stock run" with no cfg edits is bytewise-identical to v5.11 baseline (modulo the few bugfixes called out below).
+**Status:** Open (paper-test never completed; per Caramel 2026-05-12 "i never got around to actually testing that stuff, and need to"). Pre-dates the 3-file WATCH+TRY+OBSERVATIONS pattern (introduced for POST_v5.15); kept as a single consolidated punch list since it was already structured that way.
 
-This doc is a **testing punch list**, not a feature spec. For each feature: what cfg toggles it, what to watch for, what would be a regression. Order: highest-impact first within each sprint.
+**Engine state when this doc was written (2026-05-11):** v5.14.11 closed at `feat/v5.14-foxml-port-and-maker` HEAD `c4e45d1` (2904 tests). Engine has since advanced to v5.15.4 + v5.15 umbrella close (3006 tests). v5.15 changes are tracked separately in `../POST_v5.15/`. **Paper-test the v5.12-v5.14 features in this doc FIRST** since they're opt-in (default cfg behavior preserved through all 3 sprints) and don't depend on v5.15 changes — then validate v5.15 on top per `../POST_v5.15/`.
+
+**Default cfg behavior is preserved through all 3 sprints** — every new feature is opt-in via cfg flags. A "stock run" with no cfg edits is bytewise-identical to v5.11 baseline (modulo the bugfixes called out below).
+
+This doc is a **testing punch list**, not a feature spec. For each feature: what cfg toggles it, what to watch for, what would be a regression. Order: highest-impact first within each sprint. Findings go in `OBSERVATIONS.md` in this same directory.
+
+**Cross-references:**
+- Sister doc: `../POST_v5.15/{WATCH_LIST,TRY_LIST,OBSERVATIONS}.md` for v5.15 sprint-specific items
+- Index: `../README.md` for paper-test workflow conventions
 
 ---
 

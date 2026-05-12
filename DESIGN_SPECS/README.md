@@ -156,8 +156,11 @@ Organized by category for quick discovery. Each pattern is one file in this dir.
 - **...codify a new architectural pattern that emerged from a sprint** → `pattern-codification-lifecycle.md` (7-stage lifecycle: audit → DESIGN_SPEC → first reference → cohort migration → CLAUDE.md item → tooling enforcement → wider audit)
 - **...add a PRNG to randomized code (Monte Carlo, Bayesian sampling, training-time shuffling)** → `prng-choice-for-replay-determinism.md` (simple algorithm + small state for cross-binary replay; `std::normal_distribution` is a landmine — use own Box-Muller)
 - **...call an I/O primitive from a logic-only header without breaking the contract** → `template-deferred-dependency-injection.md` (take callable as template parameter; caller injects via lambda)
+- **...extract canonical stamp-emit / production-assembly logic shared by 2+ callers** → `orchestration-helper-with-pod-args-pattern.md` (POD args struct with default member init + helper wraps AUTOPOPULATE + manual per-call population + external call; closes Class 18 mirror at production-caller level)
+- **...safely swap state under concurrent readers (model hot-swap, cfg deploy, key rotation)** → `shadow-load-state-transition-pattern.md` (allocate-load-validate-atomic_exchange-Free-old; no torn moment → no revert needed; pre-swap untouched on any failure)
+- **...add a mode-specific cfg default flip that honors operator overrides** → `post-parse-normalize-with-explicit-key-bitmap-pattern.md` (bitmap of "operator set this key" + post-parse normalize pass; no magic sentinels; explicit overrides always respected)
 
-These are extracted from v5.14.8 + v5.14.9 + v5.14.10 + v5.14.11 sprint work. Future sprints add more as they solve new problems.
+These are extracted from v5.14.8 + v5.14.9 + v5.14.10 + v5.14.11 + v5.15 sprint work. Future sprints add more as they solve new problems.
 
 ## Going-forward
 

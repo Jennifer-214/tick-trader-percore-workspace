@@ -298,12 +298,13 @@ A finding that exists only in a transient audit report or chat memory gets re-di
 - **Created:** 2026-05-09 by v5.14.8 scope decision (Interpretation B; deferred N-site pattern audit)
 - **Severity:** MEDIUM (large N: ~30+ visible-state fields; recurring class but performance-sensitive)
 - **Surface:** `DataStream/EngineTUI.hpp` (PerCoreSnap struct + populator), `GUI/DashboardPanels.hpp` + sister panels (consumers), snapshot capture/copy paths
-- **What's deferred:** Convert PerCoreSnap general visible-state field additions (positions, gates, predictions, regime, etc.) to a `FOREACH_PER_CORE_SNAP_FIELD` registry. Each entry auto-generates struct field, populator (capture from CoreContext / EventLoopCoreState), GUI-side accessor.
+- **What's deferred:** Convert PerCoreSnap general visible-state field additions (positions, gates, predictions, regime, etc.) to a `FOREACH_PER_CORE_SNAP_FIELD` registry. Each entry auto-generates struct field, populator (capture from `CoreContext` / `EventLoopState`), GUI-side accessor. [Stale-name correction 2026-05-12: previously referenced "EventLoopCoreState" — actual struct is `EventLoopState<F>` at `CoreFrameworks/ControllerEventLoop.hpp:526` holding `CoreContext<F>` per-core elements at `:173`.]
 - **Why deferred (not effort-avoidance):** Distinct from FOREACH_FAILURE_MODE (v5.14.8 covers failure-mode fields specifically; this would cover the LARGER set of visible state). Performance-sensitive: snapshot capture runs in slow-path tail; registry expansion needs to preserve existing memcpy-friendly layout. Needs design conversation about: (a) whether to split capture into hot/warm/cold tiers, (b) whether registry entries should declare their write cadence, (c) cache-line alignment preservation. NOT a mechanical conversion.
 - **Cost estimate:** ~10-15h architectural ship (design + registry + migration of ~30 fields + tests); requires preceding design doc
 - **Trigger:** Next ship that adds 5+ PerCoreSnap general fields in one umbrella (likely v5.X+ ML observability work or v6.0 maker), OR ship that audits PerCoreSnap layout for cache performance.
 - **Status:** OPEN — partially addressed by v5.14.10.0 (cluster alignment dimension)
 - **Progress (v5.14.10.0):** the cache-line alignment dimension (sub-bullet (c) of "Why deferred") is now ADDRESSED via `per-snapshot-cluster-layout-pattern.md` (NEW DESIGN_SPECS) + first reference application (PerCoreSnap bandit telemetry cluster with `alignas(64)` boundary + compile-time `static_assert(offsetof)` enforcement). Future contributors have a documented methodology + working example for cluster boundaries. The FULL `FOREACH_PER_CORE_SNAP_FIELD` registry conversion (sub-bullets (a) and (b): hot/warm/cold tier split + write-cadence-declared registry entries) remains DEFERRED — those are higher-scope architectural changes that warrant their own focused ship.
+- **Progress (v5.15.5.B planned 2026-05-12):** further partial close anticipated via two .B sub-ships: (1) .B.2 `CoreContextDisplayMeta<F>` extraction (Rule 1 of cache-layout-discipline-for-hot-side-structs.md) — extracts display-only fields from CoreContext to a sibling struct, applying the writer-side analog of the PerCoreSnap layout discipline; (2) .B.4 `FOREACH_GATE_DIAG(X)` registry — closes the Display↔Execution Invariant (CLAUDE.md item 12) Class-18 mirror for the 12 `diag_*` fields specifically (the gate-diagnostic subset of the larger PerCoreSnap registry concern). New DESIGN_SPECS at .B umbrella: `display-execution-invariant-registry-pattern.md` (codifies FOREACH_GATE_DIAG class as generalizable for regime_signals, ML predictions, OMS state). Full `FOREACH_PER_CORE_SNAP_FIELD` registry conversion still DEFERRED beyond .B.
 - **Cross-ref:** v5.14.8.B+C (FOREACH_FAILURE_MODE; sister registry for the failure-mode subset); v5.14.10.0 (`per-snapshot-cluster-layout-pattern.md` DESIGN_SPECS + first application); CLAUDE.md item 12 (display ↔ execution invariant — every hot-path predicate term needs PerCoreSnap field; current pattern is manual)
 
 ---
@@ -625,8 +626,9 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 - **Created:** 2026-05-10 by Caramel musing during v5.14.10.0 PerCoreSnap layout work
 - **Severity:** LOW (cosmetic / maintainability; no behavior or perf impact)
-- **Surface:** Large single-file headers in the codebase. Inventory snapshot 2026-05-10:
-  - `CoreFrameworks/ControllerConfig.hpp` — 2727 lines (largest header in repo; cfg declarations + parser + defaults + validation)
+- **Surface:** Large single-file headers in the codebase. Inventory snapshot 2026-05-10 (refreshed 2026-05-12 pre-v5.15.5.B):
+  - `CoreFrameworks/ControllerEventLoop.hpp` — **3550 lines (largest header in repo as of 2026-05-12; v5.15.5.B will grow to ~3800 with cluster reorg + 4 registry additions)** — EventLoopState + CoreContext + CoreSlowState definitions + Init/Free + RegisterCore + OnEvent + DrainEvents + RebuildAllParameters + UpdateRollingStateOneCore + RebuildOneCore + TimeExitOneCore + TrailingSLRatchetOneCore + helpers
+  - `CoreFrameworks/ControllerConfig.hpp` — 2727 lines (was largest as of 2026-05-10; cfg declarations + parser + defaults + validation)
   - `ML_Headers/CoreModelZoo.hpp` — 2239 lines (CoreModelZoo + EnsembleModelZoo + bandit + ridge state + persistence)
   - `Strategies/StrategyParameters.hpp` — 1693 lines (ML_BuildParameters + dispatch + ridge override + composite confidence)
   - `DataStream/EngineTUI.hpp` — 1382 lines (TUI infrastructure + TUISnapshot + PerCoreSnap)
@@ -913,3 +915,35 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
   decision framework; the explicit macros' marginal differences
   are intentional per-width optimizations); v5.15.5.A.1 audit
   discussion 2026-05-12 establishing the deferral principle.
+
+---
+
+### TECH_DEBT-039 — ConfidenceScorer_UpdateAndMark CLOCK_REALTIME residual (drift-history wall-clock dependency)
+
+- **Created:** 2026-05-12 by /merge-scan during v5.15.5.B pre-coding audit (Finding 2 residual)
+- **Severity:** LOW (operationally negligible; per-fill cadence not per-cycle; wall-clock is semantically appropriate for drift-history's age-anchoring)
+- **Surface:** `CoreFrameworks/ControllerEventLoop.hpp:1368` — `ConfidenceScorer_UpdateAndMark` call site does its OWN `clock_gettime(CLOCK_REALTIME, &ts)` inside drift-history sampling path
+- **Context:** The v5.12.1.B `rebuild_ts_us` hoist pattern (engine-wide `now_us` cached once at slow-path entry + threaded into all consumers) is the canonical clock-read-sharing discipline (CLAUDE.md item 16 reuse-audit). The `ConfidenceScorer_UpdateAndMark` site is a residual exception because drift-history is wall-clock-anchored (CLOCK_REALTIME, drift "age" computed as wall-time delta), distinct from the slow-path cadence which is monotonic (CLOCK_MONOTONIC equivalent via `system_clock`). Two distinct clock domains today; converging is a semantic decision, not a mechanical one.
+- **What's deferred:** Migrate drift-history age-anchoring from CLOCK_REALTIME to CLOCK_MONOTONIC (or equivalent monotonic source) — eliminates the per-fill `clock_gettime` call by reusing `rebuild_ts_us` (already in scope at the call site). Alternatively: keep CLOCK_REALTIME but hoist the read to slow-path entry (parallel to `rebuild_ts_us`) + thread into `ConfidenceScorer_UpdateAndMark` via existing scorer context.
+- **Why deferred (not effort-avoidance):** Per-fill cadence (typical 1-10 fills/sec at active trading; far less at rest) means the saved `clock_gettime` call is ~50-100 ns × 1-10 Hz = 50-1000 ns/sec engine-wide — operationally negligible. The semantic conversion (wall-clock → monotonic for drift age) is the load-bearing question: drift-history age display in MLStatusPanel uses wall-clock seconds ("3.5 hours since last drift event"); converting to monotonic would shift the operator-visible age semantics. Decision requires confirming whether drift-history wall-clock-anchoring is essential (audit log correlation? operator timezone-aware UX?) or incidental (just-happens-to-be-CLOCK_REALTIME).
+- **Cost estimate:** ~30 LOC migration + audit of drift-history age display + ~1h decision discussion with operator about wall-clock semantics. LOW.
+- **Trigger:** Address (a) when next ML observability cleanup ship touches DriftHistory / MLStatusPanel; (b) operator-driven decision about drift-history age semantics; (c) if drift-history age computation moves to a context where monotonic is structurally cleaner (e.g., reproducible replay test fixtures).
+- **Status:** OPEN
+- **Cross-ref:** `CoreFrameworks/ControllerEventLoop.hpp:1368` (the residual call site); `CoreFrameworks/EngineSharded.hpp:3073-3075` (canonical `rebuild_ts_us` hoist; this is the pattern the residual diverges from); CLAUDE.md item 16 (reuse-audit / shared clock reads); `ML_Headers/ConfidenceScore.hpp` (DriftHistory struct using CLOCK_REALTIME); v5.15.5.B `/merge-scan` audit Finding 2 residual identification 2026-05-12.
+
+---
+
+### TECH_DEBT-040 — FOREACH_SESSION_PHASE cfg-side registry for 4 session_*_mult cfg fields
+
+- **Created:** 2026-05-12 by v5.15.5.B audit (.B.5 surfaced consumer-side branchless conversion; cfg-side cohort registry deferred)
+- **Severity:** LOW (4-instance cohort; semantically bounded; cfg-side refactor independent of consumer-side branchless dispatch)
+- **Surface:**
+  - `CoreFrameworks/ControllerConfig.hpp` — 4 `session_asian_mult / session_european_mult / session_us_mult / session_overnight_mult` cfg fields (cfg-side cohort)
+  - `CoreFrameworks/ControllerEventLoop.hpp:2101-2106` — consumer-side 4-way if/else dispatch (CLOSED in v5.15.5.B.5 via branchless `SESSION_BY_HOUR[24]` lookup table + `session_mult_lookup[4]` indexed by `SESSION_*` enum)
+- **Context:** v5.15.5.B.5 converts the CONSUMER-SIDE 4-way if/else to branchless table-lookup, but the CFG-SIDE remains 4 separate cfg fields with parallel cfg declarations / tooltips / parser entries / GUI inputs / use sites. That's the canonical X-macro registry candidate per CLAUDE.md item 13 (FOREACH_SESSION_PHASE(X) with `X(ASIAN, "asian", 0, 7) X(EUROPEAN, "european", 7, 13) ...` 4 rows; auto-flow cfg field decl + parser + GUI input + the consumer-side SESSION_BY_HOUR lookup table + session_mult_lookup array).
+- **What's deferred:** `FOREACH_SESSION_PHASE(X)` registry on the cfg side. Adding a 5th session phase (e.g., extra granularity for Asia open / close) becomes 1 row + auto-flow vs today's 5-site touch.
+- **Why deferred (not effort-avoidance):** v5.15.5.B is already a 9-sub-ship + umbrella ~1030-LOC ship; the cfg-side refactor is a separate concern (cfg declarations + parser + GUI). Bundling further bloats blast radius. Consumer-side branchless conversion (.B.5) captures the immediate latency-discipline win; cfg-side registry is a focused future cleanup that doesn't block.
+- **Cost estimate:** ~80-120 LOC (registry definition + cfg field auto-gen + parser auto-gen + GUI input auto-gen + tooltip auto-gen + .B.5 lookup table refactor to use registry). MEDIUM-LOW.
+- **Trigger:** Address (a) when adding a 5th session phase is required (currently no plans); (b) cfg-system cleanup sprint focused on cfg-field cohort discipline; (c) when FOREACH_<DOMAIN>_CFG_FLAG registry pattern (already established v5.14.9.F for bool cohorts) extends to enum/float cohorts via a new variant.
+- **Status:** OPEN
+- **Cross-ref:** `CoreFrameworks/ControllerEventLoop.hpp:2101-2106` (consumer-side; .B.5 converted to branchless); `CoreFrameworks/ControllerConfig.hpp` (cfg-side cohort); CLAUDE.md item 13 (X-macro registry standard pattern); CLAUDE.local.md 2026-05-11 cohort-audit-when-new-cfg-field-has-siblings rule; `DESIGN_SPECS/cfg-flag-eligibility-criteria.md` (criteria framework — these 4 are FLOAT-valued not BOOL-valued, so the existing FOREACH_<DOMAIN>_CFG_FLAG bool-bitmap variant doesn't fit directly; this would be a new "FOREACH_<DOMAIN>_CFG_FLOAT" or similar variant).

@@ -55,6 +55,33 @@ sufficient grounds to reject a PR.**
 
 Status legend: ✅ = exists pre-v5.6; ⚠ = added in v5.6.x as noted.
 
+## Coming: structural registry enforcement (v5.15.5.B.4)
+
+The Predicate↔Display matrix above is **maintained MANUALLY today.** Each new
+hot-path term requires editing CoreContext (field decl) + RebuildOneCore (reset
++ capture) + ShardedSnapshot.hpp (copy to PerCoreSnap) + EngineTUI.hpp (PerCoreSnap
+field decl) + GUI render — **5 sites per term**, drift-prone, the canonical Class-18
+mirror class (CLAUDE.md item 19). PR review is the current enforcement mechanism;
+"the presence of an unmatched term is sufficient grounds to reject a PR" relies on
+reviewer vigilance.
+
+**v5.15.5.B.4 ships `FOREACH_GATE_DIAG(X)` registry** — closes the gate-diagnostic
+subset of this class structurally. Registry auto-flows all 5 sites: adding a new
+gate diagnostic becomes 1 row in `FOREACH_GATE_DIAG(X)`; the X-macro expands to the
+CoreContext field declaration, the reset write in RebuildOneCore, the FPN_ToDouble
+copy in ShardedSnapshot, the PerCoreSnap field declaration, and the GUI render row.
+Compile-time enforcement against drift.
+
+After v5.15.5.B.4: this doc's table becomes the SOURCE OF TRUTH (the registry
+generates from a parallel manifest), but reviewer responsibility narrows from
+"track 5 sites" to "add 1 row + 1 doc-table line." The full
+`FOREACH_PER_CORE_SNAP_FIELD` registry (general visible-state; TECH_DEBT-011)
+extends this pattern beyond gate-diagnostics.
+
+Generalizable pattern documented at `DESIGN_SPECS/display-execution-invariant-registry-pattern.md`
+(written at v5.15.5.B.4); applicable to regime_signals → snapshot, ML predictions
+→ snapshot, OMS state → snapshot, and future cross-thread display surfaces.
+
 ## Halt-reason taxonomy
 
 When the slow path zero-gates a core (sets `bg_price_threshold = 0`

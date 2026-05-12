@@ -170,7 +170,30 @@ state). Both are mmap-stable layouts."
 
 ### v5.15.2 — Live-readiness boot gate + trading_mode + breakeven wire-up (POSITIONING: ⬆️⬆️ strongly positive)
 
-**Date:** 2026-05-12 (planned)
+**Date:** 2026-05-12 (SHIPPED; tag `v5.15.2`)
+
+**Shipped:** trading_mode cfg field (PAPER/LIVE/SHADOW enum) stamp-bound via
+FOREACH_STAMP_BOUND_CFG (every model carries training-time mode for audit trail).
+NEW `CoreFrameworks/LiveReadiness.hpp` with FOREACH_LIVE_READINESS_CHECK X-macro
+registry (9 entries: secret/mlockall/core_strategy/ml_model/model_age/feature_hash/
+label_hash/build_flags/hmac_verified). aggregate_zoo_drift helper reads drift from
+handle->drift_flags_at_load source-of-truth (NOT from PerCoreSnap.failure_flags which
+isn't populated until snapshot publish AFTER pthread spawns; boot gate runs BEFORE).
+LiveReadiness_Verify REFUSES on trading_mode=LIVE + any LR_SEV_REFUSE failure;
+WARN-only on paper/shadow. breakeven_on_profit wired up (TECH_DEBT-024 close) via new
+EventLoop_BreakevenOnProfit slow-path helper (mirrors trailing-SL OneCore/Wrapper
+precedent; max-write composes cleanly with trailing-SL ratchet). `/readiness` Check 31
+added (TECH_DEBT-033 close): verifies predecessor postmortem documents wider-build
+GREEN result. Discovered `cfg.core_strategies_explicit_set` uint16_t bitmap already
+existed at ControllerConfig.hpp:917 from v5.9.0c — no new tracking infra needed.
+
+Cohort-audit verdict (per CLAUDE.local.md cohort-audit rule 2026-05-11):
+trading_mode siblings = reconcile_mode + model_verify_strict; all 3 stay direct
+uint8/int (enum-valued, NOT BIT_FLAG-eligible).
+
+Tests 2940 → 2960 (+20 v5.15.2 anchor tests). Hot path UNTOUCHED. Slow-path cost:
+trading_mode is boot-only; breakeven_on_profit ~80-150ns per active position per
+cycle when bit set, ~1ns when bit unset; LiveReadiness_Verify ~10us boot-only.
 
 **Change:** New `trading_mode` cfg field (uint8 enum) introduced;
 LiveReadiness_Verify table-driven boot gate; cfg-default normalize pass;

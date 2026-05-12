@@ -553,19 +553,15 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ---
 
-### TECH_DEBT-024 — `breakeven_on_profit` dormant cfg field (defined + parsed; no read sites)
+### TECH_DEBT-024 — `breakeven_on_profit` dormant cfg field ✅ CLOSED v5.15.2
 
 - **Created:** 2026-05-10 by v5.14.9.F step 0 inventory
 - **Severity:** LOW (operator-facing dormant feature; no functional impact)
-- **Surface:** `CoreFrameworks/ControllerConfig.hpp:377` (declaration), `:1229` (default), `:1887` (parser)
-- **What's deferred:** `breakeven_on_profit` is an operator-facing cfg boolean ("ratchet SL to breakeven when position crosses net profit") declared + defaulted + parsed, but has ZERO read sites in the codebase. Operators can set it in engine.cfg; the engine accepts the value without applying it. Either:
-  - **Wire it up:** find the intended application site (likely `Strategies/StrategyParameters.hpp` near other SL-ratchet logic) + implement the breakeven-on-profit ratchet
-  - **Remove it:** if abandoned, delete from cfg with operator notification (engine.cfg.example update)
-- **Why deferred:** v5.14.9.F migrates this flag into FOREACH_LIFECYCLE_CFG_FLAG bitmap as part of TECH_DEBT-013(5) close. The migration is forward-compat with either wire-up or removal. After .F ships, this entry surfaces the decision: wire up vs remove.
-- **Cost estimate:** ~30 min if wire-up (locate application site + add BITMAP_IS_SET check + test); ~15 min if removal (delete + cfg.example update + operator migration WARN at boot). **Defer the decision until after .F ships.**
-- **Trigger:** Address at v5.14.9.I umbrella close OR next ship that touches lifecycle/exit logic. Operator decides "wire up" vs "remove" then.
-- **Status:** OPEN
-- **Cross-ref:** v5.14.9.F (migrates flag into bitmap); `CoreFrameworks/ControllerConfig.hpp:377-1229-1887`.
+- **Surface:** `CoreFrameworks/ControllerConfig.hpp` declaration + parser; FOREACH_LIFECYCLE_CFG_FLAG bitmap entry
+- **What was deferred:** `breakeven_on_profit` cfg bit was declared + parsed + bitmap-allocated (FOREACH_LIFECYCLE_CFG_FLAG via v5.14.9.F migration) but had ZERO read sites. Operators could set it in engine.cfg; engine accepted the value without applying it.
+- **Closure (v5.15.2.C):** Wired up via new slow-path helper `EventLoop_BreakevenOnProfit` + `EventLoop_BreakevenOnProfitOneCore` (`CoreFrameworks/ControllerEventLoop.hpp`). Mirrors the existing trailing-SL OneCore/Wrapper precedent. When the bit is set and an open position's gain_pct exceeds round-trip taker fees (2 × fee_rate_taker), ratchets `pending_params.ratchet_sl` to fee-floored breakeven (entry × (1 − 3 × fee_rate_taker)). Max-write semantics compose cleanly with trailing-SL ratchet (trailing wins via max once gain exceeds tp_hold_score; breakeven holds the floor below). Called from both live slow-path (`EngineSharded.hpp` near TrailingSLRatchet call site at ~line 2044) AND backtest driver (`ShardedBacktestDriver.hpp` near TrailingSLRatchet call site at ~line 376). DORMANT marker removed from registry doc string. Cost: ~80-150ns per active position per slow-path cycle when bit set; bit unset → wrapper early-exits in ~1ns. Below 100µs slow-path budget.
+- **Status:** ✅ **CLOSED v5.15.2 (2026-05-12).**
+- **Cross-ref:** v5.14.9.F (FOREACH_LIFECYCLE_CFG_FLAG bitmap migration); v5.15.2 ship; `CoreFrameworks/ControllerEventLoop.hpp` EventLoop_BreakevenOnProfit; `CoreFrameworks/LifecycleCfgFlagRegistry.hpp:58` (DORMANT marker removed).
 
 ### TECH_DEBT-025 — Convert DESIGN_SPECS docs to invocable skills (long-horizon idea)
 
@@ -668,9 +664,9 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 - **Closure (v5.15.2.D):** /readiness Check 26 added — verify last sprint's
   postmortem documents `./build.sh gui suite tsan asan all` GREEN result;
   flag if only `./build.sh test` was run.
-- **Status:** ✅ **CLOSED v5.15.2.D** (planned for v5.15 sprint).
-- **Cross-ref:** v5.14.post1 patch + postmortem; `/readiness` SKILL.md
-  v5.15.2 update; plans/v5.15-live-readiness/MASTER.md.
+- **Closure (v5.15.2.D):** /readiness Check 31 added (Check 26 placeholder reserved for v5.14.E.1 symmetry-test rule; Check 31 is the next free slot). Runs ALWAYS at audit start. Verifies predecessor postmortem documents `./build.sh gui suite tsan asan all` GREEN result (grep + commit-log scan). Non-blocking but flags risk that GUI/sanitizer-only compile errors lurk in the predecessor's surface area.
+- **Status:** ✅ **CLOSED v5.15.2.D (2026-05-12).**
+- **Cross-ref:** v5.14.post1 patch + postmortem; `tick-trader-percore-workspace/claude-skills/readiness/SKILL.md` Check 31 (added v5.15.2); v5.15.2 ship.
 
 ---
 

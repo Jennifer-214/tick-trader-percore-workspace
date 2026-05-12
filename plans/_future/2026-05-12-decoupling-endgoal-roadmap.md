@@ -119,12 +119,34 @@ state-exposure protocols (e.g., snapshot wire format).
 
 ### v5.15.1 — Model Health CollapsingHeader + PerCoreSnap bitmap (POSITIONING: ⬆️ positive)
 
-**Date:** 2026-05-12 (planned)
+**Date:** 2026-05-12 (SHIPPED; tag `v5.15.1`)
 
-**Change:** 7 new BIT_FLAG drift entries to FOREACH_FAILURE_MODE; 5 new
-uint64 value fields (hashes + timestamps) clustered alignas(64) in
-PerCoreSnap; 4 bool-as-uint8 fields migrated to existing state_flags
-bitmap.
+**Shipped:** 7 new BIT_FLAG drift entries to FOREACH_FAILURE_MODE
+under tt::GROUP_DRIFT (feature_hash_drift / label_hash_drift /
+build_flags_drift / scaler_drift / cfg_binding_drift /
+stamp_hmac_not_verified / model_age_warn); new FOREACH_ARCH_FIELD_DRIFT
+X-macro registry (4 entries) for non-CFG-bound drift detection at
+TryLoadRole post-verify chokepoint; ModelHandle.drift_flags_at_load
+uint16_t (repurposed 2B of v5.15.0's _hot_pad1) carries per-handle drift
+state. ShardedSnapshot OR-aggregates each zoo role's drift_flags_at_load
+into PerCoreSnap.failure_flags. v5.15.1.B closes TECH_DEBT-028 by
+migrating 4 bool-as-uint8 PerCoreSnap fields (ml_scaler_present,
+drift_breached, drift_kill_tripped, core_kill_tripped) to existing
+state_flags uint16_t bitmap — REUSE of v5.14.9.B.2 bitmap surface
+(cohort homogeneity preserved). MLStatusPanel Model Health
+CollapsingHeader renders aggregated drift state with severity-colored
+labels + hover tooltips + model age display.
+
+Scope refinement vs original plan: at-load diagnostic hash cluster on
+PerCoreSnap (handle_feature_hash_at_load etc.) dropped from .B.2 —
+would have required adding feature_registry_hash + label_registry_hash
+to ModelHandle as runtime-only fields (not in stamp body registry).
+Drift BITS + tooltips were sufficient for v5.15.1 operator signal.
+training_timestamp_us captured for model age display. At-load
+diagnostic values deferred to v5.15.1.post or v5.15.2.
+
+Tests 2927 → 2940 (+13 v5.15.1 anchor tests: state_flags bit round-trip
++ failure_flags drift bit round-trip + registry count invariants).
 
 **Decoupling positioning:**
 - **Drift state is publication-only.** Slow-path writes; GUI reads via

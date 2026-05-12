@@ -609,22 +609,13 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ---
 
-### TECH_DEBT-028 — Bool-as-uint8_t fields eligible for FOREACH_PER_CORE_STATE_FLAG bitmap migration
+### TECH_DEBT-028 — Bool-as-uint8_t PerCoreSnap fields migrated to state_flags bitmap ✅ CLOSED v5.15.1
 
 - **Created:** 2026-05-10 by /merge-scan re-audit on v5.14.10 amended plan (finding N4)
 - **Severity:** LOW (cosmetic; no functional impact; no parity risk)
-- **Surface:** PerCoreSnap struct fields in `DataStream/EngineTUI.hpp` (~line 980-1198):
-  - `ml_scaler_present` (uint8_t boolean)
-  - `drift_breached` (uint8_t boolean)
-  - `drift_kill_tripped` (uint8_t boolean)
-  - `core_kill_tripped` (uint8_t boolean)
-- **Class:** Same shape as v5.14.9.B.2 / .H bitmap migrations (per-core boolean fields → uint8 bitmap with MASK_* + BITMAP_IS_SET API per CLAUDE.md item 20). Inventory caught by /merge-scan during the v5.14.10 amendment re-audit (finding N4) — surfaced as FUTURE candidate, NOT amendment-required.
-- **What's deferred:** Migrate the 4 bool-as-uint8_t fields above into a single `uint8_t per_core_state_flags` bitmap with `MASK_PER_CORE_*` constants + accessor macros. Saves 3 bytes per PerCoreSnap (4 bytes → 1 byte); enables branchless multi-flag check via single AND mask; consistent with v5.14.9 BITMAP_* universalization sweep.
-- **Why deferred (not effort-avoidance):** v5.14.10 sprint focus is Thompson sampling + PerCoreSnap layout audit (.0) + log column registry generalization (.F). Bit-packing 4 unrelated boolean PerCoreSnap fields is a separate cleanup concern. Folding it in would scope-creep .0 from "bandit telemetry cluster" to "all PerCoreSnap bools." Better as a focused follow-up ship.
-- **Cost estimate:** ~30-50 LOC (define new uint8 field + 4 MASK_* constants + accessor macros; refactor 4 read sites + 4 write sites; tests for byte-packing). LOW risk (isolated boolean fields; backward-compat for snapshot consumers via field rename).
-- **Trigger:** Address (a) when 2+ MORE bool-as-uint8_t PerCoreSnap fields land (consolidation candidates accumulate), OR (b) when next ship touches PerCoreSnap layout for unrelated reasons (opportunistic absorb), OR (c) v5.14.10.0 PerCoreSnap layout audit may identify additional cluster opportunities that warrant a follow-up "PerCoreSnap state-flag bitmap" sub-ship.
-- **Status:** OPEN
-- **Cross-ref:** v5.14.9.B.2 (`PerCoreSnap state_flags uint16_t` migration; canonical precedent); v5.14.9.H (`ShardedSnapshot.any_scaler_present + any_scaler_failed` bitmap; same pattern); CLAUDE.md item 20 (bit-packed flag storage via BITMAP_* API); `DESIGN_SPECS/bitmap-flag-api.md`; /merge-scan 2026-05-10 v5.14.10 AMENDED report (finding N4); v5.14.10 amendment-re-audit synthesis at `plans/plan_checks/2026-05-10-v5.14.10-amended-plan-fresh-audits-synthesis.md`.
+- **Surface:** PerCoreSnap struct fields in `DataStream/EngineTUI.hpp`
+- **Status:** ✅ **CLOSED v5.15.1 (2026-05-12).** 4 bool-as-uint8_t PerCoreSnap fields (`ml_scaler_present`, `drift_breached`, `drift_kill_tripped`, `core_kill_tripped`) migrated to the existing `state_flags` uint16_t bitmap (4 new entries on `FOREACH_PER_CORE_STATE_FLAG`: ML_SCALER_PRESENT, DRIFT_BREACHED, DRIFT_KILL_TRIPPED, CORE_KILL_TRIPPED). Registry post-migration: 7 + 4 = 11 of 16; 5 bits headroom. Reuses the existing `state_flags` bitmap from v5.14.9.B.2 (no new bitmap surface; cohort homogeneity preserved per CLAUDE.local.md cohort-audit rule). All read sites (MLStatusPanel.hpp, DashboardPanels.hpp ×8) + write sites (ShardedSnapshot.hpp ×2) + tests migrated to STATE_FLAG_IS_SET / SET / CLR. Saves 4 bytes per PerCoreSnap. Engine-side fields (ExecutionCore.core_kill_tripped + drift_history.breached + drift_history.kill_tripped on ControllerEventLoop) intentionally STAY as-is — only the snapshot publication side moves to bitmap.
+- **Cross-ref:** v5.14.9.B.2 (`PerCoreSnap state_flags uint16_t` migration; canonical precedent); v5.14.9.H (`ShardedSnapshot.any_scaler_present + any_scaler_failed` bitmap; same pattern); CLAUDE.md item 20 (bit-packed flag storage via BITMAP_* API); `DESIGN_SPECS/bitmap-flag-api.md`; v5.15.1 ship.
 
 ---
 

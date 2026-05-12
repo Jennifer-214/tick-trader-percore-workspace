@@ -477,6 +477,62 @@ Codified in:
 - `CLAUDE.md` item 13 (X-macro registry; reuse-audit cross-ref)
 - This file (auto-write contract for cohort-audit findings)
 
+## Going-forward rule: FEATURE_LOOKUP.md auto-write on operator-visible features (set 2026-05-12)
+
+**Any time a new operator-visible feature ships — new cfg flag,
+new ML mechanism, new persistence file, new GUI surface, new
+boot gate, new strategy / regime / blender variant — the agent
+MUST add an entry to `tick-trader-percore-workspace/FEATURE_LOOKUP.md`.**
+Sister auto-write to `DOCS/PARITY_ISSUES.md` (parity findings)
+and `DOCS/TECH_DEBT.md` (deferred items).
+
+**What counts as "operator-visible":**
+- New cfg flag the operator might toggle (not internal-only)
+- New observability surface (panel field, log line, halt_reason code)
+- New persistence file (`*_state.json`, model bundle layout change)
+- New boot gate or refusal mode (live-mode strict, readiness check)
+- New training pipeline knob (CSV input, side selector, label kind)
+- New fallback path (e.g., "if no models, use legacy TP/SL")
+
+**What does NOT count (skip the auto-write):**
+- Pure refactors that don't change operator behavior
+- Internal helper extraction (X-macro splits, AUTOPOPULATE companions)
+- Bug fixes that restore expected behavior (don't entry-document
+  what was always supposed to work)
+- Performance optimizations bytewise-identical to prior path
+
+**Entry format** (one block per feature, ~40-80 LOC):
+- `### <feature_name> (vX.Y.Z+)`
+- `**What:**` 1-sentence summary
+- `**Cfg flags:**` list
+- `**Fallback:**` what happens when disabled / inputs missing
+- `**Where to verify:**` GUI panel field / log line / file (with file:line refs)
+- `**Paper-test sanity:**` numbered steps to confirm working in paper
+- `**Gotchas:**` known parity / interaction concerns
+- `**Related:**` related features + persistence files
+
+**Why:** Caramel's question 2026-05-12 — "how will I know if the
+bandit and multi-model configs actually work?" — surfaced that
+the X-macro registries give the FIELD NAMES + tooltips give the
+LOCAL BEHAVIOR but nowhere documents "to verify this feature, look
+at THIS surface in THIS panel and run THIS sanity loop." Doc bridges
+that gap.
+
+**How to apply:** at sprint-close / sub-ship close, if a new
+operator-visible feature shipped, agent updates FEATURE_LOOKUP.md
+before declaring complete. Operator reviews at boundary; agent
+does mechanical bookkeeping.
+
+Codified in:
+- `tick-trader-percore-workspace/FEATURE_LOOKUP.md` (the doc itself;
+  seeded 2026-05-12 with 20 features at v5.15.4 close)
+- This file (auto-write contract)
+- `/ship` skill (post-coding ritual) gets a FEATURE_LOOKUP check
+  added to its verification gate
+- `/sync-workspace` already mirrors workspace root MDs
+
+---
+
 ## Going-forward rule: decoupling-endgoal positioning at each fix (set 2026-05-12)
 
 **When making changes that touch GUI ↔ runtime interfaces**

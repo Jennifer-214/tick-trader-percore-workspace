@@ -211,6 +211,22 @@ as a v5.11.35 sub-ship (deferred from the current session because
 
 27. **Structs used in byte-equivalence contexts have explicit zero-init padding** (v5.14.11.B+). Any struct compared via `memcmp` / SHA-256 / wire format / HMAC input declares ALL padding bytes explicitly via `int<N>_t _padding<N> = 0;` default-init fields. Implicit C/C++ struct padding is UB unless explicitly initialized; under stack-layout shifts (function returns, struct copies, LTO inlining changes), uninit padding leaks through `memcmp` producing non-deterministic results. C++ default member init guarantees padding consistency across all constructions + copies. Pattern documented in `DESIGN_SPECS/struct-padding-determinism-pattern.md`. Canonical first reference: v5.14.11.B.2 `FPN<F>` (added `int32_t _padding = 0;` after `int32_t sign`; eliminated latent FracDiff bytewise-identity regression class). Subsequent application: v5.14.11.B.2 `ThompsonBanditState` (preventive padding fix; same pattern at 4-byte gap after `int n_arms`). Enforced via `/dod-audit` skill checks (v5.14.11.B.5).
 
+28. **Prefer cycles over cache misses; prefer branchless over data-dependent branches** (v5.15.5+). Cost reference at 3 GHz x86:
+    - 1 CPU cycle = ~0.3 ns
+    - L1 hit = ~1 ns; L2 = ~4 ns; L3 = ~13 ns
+    - **DRAM (L1 miss, cold cache) = ~100 ns (~300+ cycles; ~75-100× cycle cost)**
+    - Branch mispredict = ~3-5 ns (~10-15 cycles; ~10× cycle cost)
+
+    **Decision rules:**
+    - Approach A (+N cycles, -M cache misses) beats Approach B (-N cycles, +M cache misses) when **M > N/300**. For N=10 cycles, 1 saved miss = ~30× net win. For N=200 cycles, 1 saved miss = ~1.5× net win.
+    - Branchless A (+N cycles) beats branchy B (1 branch, M% mispredict) when **M > N/16**. For 5-cycle branchless overhead, >30% mispredict favors branchless. Data-dependent branches commonly mispredict 30-50% → branchless usually wins.
+
+    **When predictable branches stay** (don't force branchless): branch predictor learns the pattern (mispredict <5%); branch gates EXPENSIVE work (compute-skip semantics); branch is broad-control-flow (early-return, kill-switch). Per-mode dispatch on boot-set cfg = predictable → keep branchy. Per-cycle data-dependent dispatch (argmax over weights, blend mode flags from weights buf) = data-dependent → branchless wins.
+
+    **Apply during:** cache-layout audits (which struct field placement minimizes cache misses); SIMD vs scalar decisions (when 1 extra cache line for AVX-friendly layout > AVX savings); algorithm choice (constant-iter vs variable-iter per CLAUDE.md item 26); branch-density audits per Rule 8 of `DESIGN_SPECS/cache-layout-discipline-for-hot-side-structs.md`.
+
+    Pattern documented in `DESIGN_SPECS/latency-vs-cache-decision-framework.md` (cost tables, worked examples, edge cases).
+
 ---
 
 # Reference Docs (split-load — read on demand)

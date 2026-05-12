@@ -4,10 +4,11 @@
 **Status:** ACTIVE
 **Cross-references:**
 - First application: `STAMP_CFG_AUTOPOPULATE` (v5.14.1.E.E.B; cfg-bound stamp body fields)
-- Second application: `STAMP_MODEL_CONST_AUTOPOPULATE` (v5.14.8.A.merged; architectural stamp body fields)
+- Second application: `STAMP_MODEL_CONST_AUTOPOPULATE` (v5.14.8.A.merged; architectural stamp body fields) — **QUARANTINED** v5.15.3.A1 (PARITY-022; self-referential expansion broken); tracked in TECH_DEBT-036
+- **Third application: `INFERENCE_CFG_AUTOPOPULATE`** (v5.15.5.A.7; cfg-derived MODEL_CONST inference_cfg_* fields). Drives `MemHeaders/CfgDerivedInferenceCfgRegistry.hpp`; replaces `StampHelper.hpp` section 2a manual cfg→inf mapping. **Variant note:** uses prefix-aware token-paste — registry tuple has bare names (e.g., `confidence_threshold_scale`), AUTOPOPULATE expands to `inf.inference_cfg_##name` (prefixed). Closes TECH_DEBT-037 (cfg-derived inference_cfg_* taxonomy drift). See ship postmortem for the why.
 - Companion: `x-macro-registry-with-presence-dispatch.md`
 - **Variant for scattered locals**: `autopopulate-from-arity-macro-family.md` (v5.14.9.F-.F.3 — _FROM_PAIR / _FROM_TRIPLE / _FROM_HEX / _FROM_SEPTUPLE)
-- Closes recurring-bug class: v5.9.5b production-caller field-population gap
+- Closes recurring-bug class: v5.9.5b production-caller field-population gap (+ TECH_DEBT-037 v5.15.5.A.7)
 
 ---
 

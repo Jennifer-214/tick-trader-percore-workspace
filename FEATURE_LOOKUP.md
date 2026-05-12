@@ -687,6 +687,92 @@ state per core. Single bitmap field replaces 8+ separate flags
 
 ---
 
+### Per-horizon TP/SL serving (v5.15.5.A+)
+
+**What:** Multi-horizon ensemble models trained against label-specific
+barriers (via v5.13.5 Label Kind CSV + TP/SL CSV inputs) now drive
+trade barriers per-horizon at serving time. 5-mode dispatch chooses
+which arm's barriers to use (LEGACY = cfg.ml_tp_pct fallback; BLEND
+= Σ wᵢ·barrierᵢ; DOMINANT = argmax(weights) arm's barriers;
+BOTH_BLEND_DRIVES/BOTH_DOMINANT_DRIVES = one drives + the other
+recorded in shadow ring). Cfg-drift Tier 1 promotion catches
+silent train-serve barrier miscalibration at strict-mode boot.
+
+**Cfg flags:**
+- `barrier_blend_mode` (enum: legacy/blend/dominant/both_blend_drives/both_dominant_drives; default legacy)
+- `per_horizon_barrier_blend` (bool master gate; in ml_cfg_flags bitmap; default 0)
+- Per-core override: `core_N_barrier_blend_mode=<mode>`
+- Existing: `cfg.ml_tp_pct` / `cfg.ml_sl_pct` (legacy fallback values; now also stamp-bound)
+
+**Fallback:** Feature disabled (per_horizon_barrier_blend=0 default) →
+bytewise-identical to pre-v5.15.5 behavior. Single-model and non-ensemble
+cores unaffected regardless of feature flag.
+
+**Where to verify:**
+- MLStatusPanel — `last_buy_dominant_horizon`, `last_barrier_mode_used`,
+  `barrier_shadow_event_count` fields per core
+- PerCoreSnap: `ml_last_buy_dominant_horizon` (int8_t),
+  `ml_last_barrier_mode_used` (uint8_t), `ml_barrier_shadow_event_count` (uint32_t)
+- Stamp body: 4 new entries `inference_cfg_ml_tp_pct/_ml_sl_pct/_barrier_blend_mode/_per_horizon_barrier_blend`
+  on ModelHandle + parser
+
+**Paper-test sanity:**
+1. Train ensemble with multi-horizon labels (Label Kind CSV)
+2. Set `per_horizon_barrier_blend=1` + `barrier_blend_mode=dominant`
+3. Run paper-mode; observe dominant_horizon updating
+4. Modify cfg.ml_tp_pct mid-run, restart with `model_verify_strict=1` →
+   boot REFUSES with Tier 1 drift message
+5. Set `acknowledge_inference_cfg_drift=1` → loads with WARN
+
+**Gotchas:**
+- Tier 1 REFUSE in strict mode catches train-serve calibration drift
+- `acknowledge_*_drift` cfg flags migrated to `ops_cfg_flags` bitmap
+  at v5.15.5.A.7 (legacy keys still parse for backward-compat)
+- Legacy pre-v5.15.5 stamps + feature ON → triggers drift (intentional;
+  parity violation surface)
+
+**Related:** CLAUDE.md items 13/15/19/20/21/23; DESIGN_SPECS
+`dual-axis-y3-dispatch-pattern.md`, `stamp-vs-runtime-drift-detection-registry.md`,
+`autopopulate-pattern-for-production-caller-class.md` (3rd application);
+TECH_DEBT-037 + -009 boolean-tail CLOSED.
+
+---
+
+### Cfg-drift detection (v5.15.5.A.7 structural refactor)
+
+**What:** Stamp ↔ cfg drift detection via FOREACH_CFG_DRIFT_CHECK
+X-macro registry walker. 18 entries (8 cross-binary WARN + 6
+inference_cfg Tier 1/2 + 4 v5.15.5.A.7 per-horizon barrier cohort).
+Tri-axis Y3 dispatch (severity × category × compare_kind). REFUSE
+in strict + Tier 1; WARN otherwise. Per-category drift bits on
+ModelHandle.drift_flags_at_load.
+
+**Cfg flags:**
+- `acknowledge_inference_cfg_drift` (operator suppress; ops_cfg_flags bitmap)
+- `acknowledge_cross_binary_version_drift` (operator suppress; ops_cfg_flags bitmap)
+- `held_out_gate_strict=1` triggers REFUSE on Tier 1 drift (LIVE-mode default)
+
+**Where to verify:**
+- Boot stderr: `[cfg-drift] <category> <severity>: core N role=X stamp.<field>=<val> cfg.<field>=<val> — <doc>`
+- PerCoreSnap.failure_flags bits: `cfg_binding_drift`, `cfg_cross_binary_drift`
+- MLStatusPanel Model Health surface (auto-aggregates per-category bits)
+- CoreContext counters: `cfg_drift_tier1_count`, `cfg_drift_tier2_count`, `cfg_drift_strict_refused`
+
+**Gotchas:**
+- Per-category fail_mask shared across entries in same category
+  (uint16_t failure_flags headroom forces per-category granularity)
+- Surface G forward-compat: legacy stamps without new fields → has_*=0
+  → drift check skips silently (no MODEL_FORMAT_VERSION bump)
+- Adding a new drift check = 1 row in FOREACH_CFG_DRIFT_CHECK; future
+  per-entry granularity requires uint32_t widening (not yet justified)
+
+**Related:** CLAUDE.md items 13/15/17/19/20/23; DESIGN_SPECS
+`stamp-vs-runtime-drift-detection-registry.md`,
+`template-deferred-dependency-injection.md` (3rd application);
+sister narrow variant `MemHeaders/ArchFieldDriftRegistry.hpp` (v5.15.1).
+
+---
+
 ## Quick reference — where to look first
 
 When something seems wrong, check these in order:

@@ -841,13 +841,27 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
   inference_cfg_* fields in one sprint making manual section 2a
   painful, OR (b) v5.X+ AUTOPOPULATE consolidation sprint takes
   this on alongside TECH_DEBT-036 architectural-field redesign.
-- **Status:** OPEN — manual section 2a in StampHelper.hpp for v5.15
-  + foreseeable future; future consolidation candidate.
-- **Cross-ref:** v5.15.3.A.1 helper extraction; `ML_Headers/StampHelper.hpp:158-187`
-  (helper section 2a comment); TECH_DEBT-036 (sister AUTOPOPULATE
-  redesign deferral); CLAUDE.md item 21 (AUTOPOPULATE companion
-  pattern; cfg-bound fields are the canonical use; model-const
-  registries are pending redesign).
+- **Status:** ✅ **CLOSED v5.15.5.A.7 (2026-05-12).** New
+  `MemHeaders/CfgDerivedInferenceCfgRegistry.hpp` introduces single-source-of-truth
+  registry for cfg-derived inference_cfg_* fields (3-col tuple:
+  `name, cfg_extraction_expr, gate_when`). Companion macro
+  `INFERENCE_CFG_AUTOPOPULATE(inf, cfg)` walks the registry + populates
+  `inf.inference_cfg_<name>` via prefix-aware token-paste. Replaces the
+  ~20-line manual section 2a at `ML_Headers/StampHelper.hpp:168-187`
+  with ONE expansion. 11 entries today (7 existing migrated + 4 v5.15.5.A.7
+  per-horizon barrier cohort). Future cfg-derived inference_cfg_* fields
+  become 2 X-macro registry rows (MODEL_CONST entry for ModelHandle field +
+  CFG_DERIVED entry for population); NO manual code; cannot drift.
+  3rd application of `autopopulate-pattern-for-production-caller-class.md`
+  pattern (after STAMP_CFG_AUTOPOPULATE v5.14.1.E.E.B + STAMP_MODEL_CONST_AUTOPOPULATE
+  v5.14.8.A.merged quarantined at v5.15.3.A.1). Closes Class 18 mirror class
+  at the cfg-derived MODEL_CONST surface permanently. New audit test asserts
+  `FOREACH_CFG_DERIVED_INFERENCE_CFG_COUNT == 11`.
+- **Cross-ref:** v5.15.5.A.7 ship; `MemHeaders/CfgDerivedInferenceCfgRegistry.hpp`;
+  `ML_Headers/StampHelper.hpp:~165` (refactored to INFERENCE_CFG_AUTOPOPULATE call);
+  `tick-trader-percore-workspace/DESIGN_SPECS/autopopulate-pattern-for-production-caller-class.md`
+  (3rd application referenced); TECH_DEBT-036 (sister AUTOPOPULATE-MODEL_CONST
+  redesign still OPEN; quarantined macro separate concern); CLAUDE.md item 21.
 
 ---
 

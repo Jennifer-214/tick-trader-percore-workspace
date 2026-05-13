@@ -167,6 +167,20 @@ The framework can be MISAPPLIED. Anti-patterns:
 - Lesson: when an audit (e.g., pre-commit /merge-scan or design-philosophy review) catches a 2-site mirror in NEW code, the structural fix is cheap (~30 min) and pays the same future-multiplier as later-detection. Apply at audit time; don't wait for the class to recur.
 - Outcome: Class 18 (mirror-incomplete) prevented for the per-core trade-log surface; future RecordX additions cannot drift
 
+### v5.15.5.C.4 Phase F + G — Phase-separated drainer (closes transient-source-data class)
+
+- Recurrence count: 2 (D2.C `exit_entry_notional` derive UNSAFE; D2.D `exit_total_fees` derive UNSAFE; both blocked by same-cycle Position-state overwrite race)
+- Decision: structural fix via PHASE-SEPARATED DRAINER (split OrderManager_Tick into SELL-phase + BUY-phase with DrainPostFill consumer pass interleaved between)
+- Pattern: source state (Position) is guaranteed in CLOSE-completed form during the close-side consumer pass; derive-from-source becomes SAFE for previously-blocked fields
+- Closes: the "transient-source-data" failure mode class for the FillRecord-as-snapshot surface (3 fields unlocked: exit_net_pnl + exit_entry_notional + exit_total_fees)
+- Win:
+  - 1152B saved per OMS (3 FillRecord fields × 24B × 16 records)
+  - FillRecord shrinks 128B → ~56B (1 cache line per record vs 2)
+  - Drainer close-mask iter touches 1 cache line per slot (was 2)
+  - Scales to richer maker-order lifecycle (PARTIAL_FILL / CANCELED / TIMEOUT phases)
+- NEW DESIGN_SPEC: `phase-separated-drainer-for-safe-cross-temporal-derives.md`
+- Pattern composition: enables `aggressive-memory-reduction-techniques.md` Technique 4 (derive vs store) for fields that previously failed safety check; reduces `slot-state-foreach-registry-with-storage-routing.md` FOREACH_FILL_RECORD_FIELD registry to a smaller set of entries
+
 ---
 
 ## Lessons / gotchas

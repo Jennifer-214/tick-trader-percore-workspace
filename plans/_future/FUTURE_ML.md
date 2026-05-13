@@ -18,6 +18,70 @@ doc is the higher-level vision.
 
 ---
 
+## Native gradient boosting on FPN<F> — "FoxBoost" (deferred research project)
+
+**Captured 2026-05-13 from Caramel's note: "getting XGBoost to run native with FPN operations would be a neat project."**
+
+**Alpha hypothesis:** Cross-binary replay determinism extends from PREDICTION (already locked via feature_registry_hash + scaler_sha256 + AVX-512 byte-deterministic kernels) to TRAINING. Today's float64 gradient/hessian/loss computations vary by ULP across compiler/platform/optimization — a model trained on machine A is not bytewise-identical to a model trained on machine B even with the same data + seed. Native FPN<F> gradient boosting would close that gap.
+
+Secondary wins:
+- Byte-level train-serve parity (training-time math = serving-time math, not just same-result-to-N-decimals)
+- Predictable performance characteristics (branchless FPN AVX-512 ops have known cycle counts; libm transcendentals don't)
+- Eliminates the libgomp+pthread landmine (XGBoost C library) — own training thread model
+
+**Infrastructure already shipped (v5.14 / v5.15):**
+- FoxLIB branchless FPN math: `FPN_Exp`, `FPN_Log`, `FPN_Sqrt`, `FPN_Mul`, etc. (v5.10.0b.2.5.C)
+- AVX-512 byte-deterministic vectorization pattern: `DESIGN_SPECS/avx512-byte-determinism-pattern.md` + CLAUDE.md item 25 (8 rules + SHA-256 cross-binary lock test)
+- Branchless math kernels with constant-iter reductions: `DESIGN_SPECS/branchless-math-kernel-pattern.md` + CLAUDE.md item 26 (canonical: Cholesky_Solve)
+- Struct padding determinism: `DESIGN_SPECS/struct-padding-determinism-pattern.md` + CLAUDE.md item 27 (FPN<F> already padded)
+- Ridge blender + sliding-window correlation on FPN<F> + AVX-512 (v5.14.11.A/B)
+- Online regression (Ridge) + bandits (Thompson, Exp3) on FPN<F>
+
+**What's missing for native GBM:**
+- Tree node layout in FPN<F> (split threshold + leaf weight; padded for byte-determinism)
+- Histogram bin accumulator (gradient + hessian sums per bin, per feature, per node) — AVX-512 vectorized FPN<F> additions
+- Loss functions: softmax / sigmoid / log-loss / cross-entropy in FPN<F> with sufficient gradient precision
+- Split-finding gain comparison: trivially FPN<F> (subtraction + multiplication + comparison)
+- Multi-class one-vs-rest accumulation (handled per-class as scalar)
+
+**Engineering approach — 4 options:**
+
+| Option | Scope | Time | Trade-off |
+|---|---|---|---|
+| A. Fork XGBoost | Massive | 4-8 wk | Replace `double`/`bst_float` throughout. Ongoing maintenance burden; hard to merge upstream changes. Not recommended unless proprietary fork desired. |
+| B. Build FoxBoost (full GBM) | Medium | 2-4 wk MVP, 4-6 wk prod | Implement core GBM in FoxLIB. Reusable library; cleaner integration. Production-grade with SIMD + tests. |
+| C. Hybrid (train float, serve FPN) | Small | 1 wk | Train via XGBoost as today; quantize trained ensemble to FPN<F> for serving. Training-time variance becomes baked-in noise floor; serve-time determinism preserved. |
+| D. Native histogram-method GBM only | Small-Medium | 1-2 wk MVP, 2-3 wk prod | `tree_method=hist` only. Features already int-binned; only gradient accumulator + loss + leaf weights need FPN<F>. **Recommended starting point.** |
+
+**Why Option D first:** XGBoost's histogram method is already integer-friendly (features pre-binned into int8/int16). The only float→FPN work is:
+- Per-bin gradient + hessian accumulator: `FPN<F> g_sum[n_bins], h_sum[n_bins]` per node
+- Split gain: `FPN<F>` arithmetic on the gradient/hessian sums
+- Loss function: log-loss → FPN_Log + FPN_Exp (sigmoid via `1/(1+exp(-x))`)
+- Leaf weight: `FPN<F> w = -g_sum / (h_sum + lambda)`
+- Tree walk at prediction: int bin → split comparison → next node (already int-friendly)
+
+SIMD opportunity: bin accumulation is the hot loop. AVX-512 FPN<F> kernel per the existing pattern (Rule 8: branchless within vectorized block). Cross-binary determinism enforced via SHA-256 lock on trained tree state.
+
+**Test approach:**
+- SHA-256 lock test: train on fixed feature CSV + seed → assert tree state matches reference SHA-256 across rebuild + cross-binary
+- Property tests: per-class gradient propagation matches analytical derivative within FPN<F> precision
+- Calibration on real data: compare FoxBoost vs XGBoost on representative train set; expect identical SPLIT decisions if features quantize identically (FPN<F> precision in gradient accumulators should not affect split-finding for typical gain magnitudes)
+
+**Deferral status:** PARKED. Compelling but multi-week focused effort. Triggers to revisit:
+- After v5.15 + v5.16 ship + paper-trade results inform whether training-time cross-binary determinism is operationally needed
+- Regulatory / audit requirement for bytewise reproducibility of training
+- Sandbox / research interest
+
+**Cross-references for picker-up:**
+- `DESIGN_SPECS/avx512-byte-determinism-pattern.md` (8 rules + SHA-256 cross-binary lock test pattern)
+- `DESIGN_SPECS/branchless-math-kernel-pattern.md` (constant-iter inner reductions; histogram bin accumulation shape)
+- `DESIGN_SPECS/sliding-window-online-statistics-pattern.md` (for online training stats — gradient norms, residual variance)
+- `DESIGN_SPECS/struct-padding-determinism-pattern.md` (tree node + bin accumulator structs)
+- CLAUDE.md items 25 (AVX-512 byte determinism), 26 (branchless math kernels), 27 (struct padding determinism)
+- CLAUDE.local.md "Known landmine" 2026-05-07 (XGBoost+libgomp+pthread segfault — eliminated entirely by going native)
+
+---
+
 ## Currently active (post-v5.11.62)
 
 What the engine actually does today:

@@ -840,6 +840,47 @@ do {
 
 **Per CLAUDE.md item 17:** NO net latency change — same 3 ops; byte-equivalent assembly. Documented for completeness.
 
+## v5.15.5.C.4 — phase-separated drainer + derive cascade + FillRecord elimination
+
+**Surface added:** `CoreFrameworks/EngineSharded.hpp` drainer thread main loop (multi-pass dispatch) + `CoreFrameworks/OrderManager.hpp` HandleFill SELL captures + `CoreFrameworks/ControllerEventLoop.hpp` DrainPostFill derive cascade + new MemHeaders/OmsPhasedDrain.hpp, DrainerConstants.hpp, PositionFieldRegistry.hpp, OmsPushExitHelper.hpp.
+
+**Path cadence:** drainer-thread per-cycle (slow-path; ≤100μs budget); NOT per-tick. Hot path UNTOUCHED throughout the sprint.
+
+**Per-phase cost analysis:**
+
+| Phase | Surface | Δ per drainer cycle | Notes |
+|---|---|---|---|
+| D5 | OMS_PushSubmit helper extraction at 4 sites | 0 | Inline; same instructions; Class-18 close (4 sites → 1 helper) |
+| T1 | DrainerConstants POD + drainer hoists | **-10 to -20 cycles** | Hoists partial_on out of inner event loop (was N events × 1 read); single drain_count derivation; static const fee_rate_taker_d |
+| F | Phase-separated OrderManager_Tick (bucket-process) | **+10-20 ns** | Multi-pass over result_queue: 1 bucketing pass + 3 process passes; bucket-classification = 1 indexed read + 1 bit-test (branchless OrderType_IsClose) per command; ~few ns per event at typical 1-5 events/cycle |
+| POS | FOREACH_POSITION_FIELD migration + SKIP_PERSIST fields | 0 | Compile-time X-macro expansion; same generated struct layout; offsetof static_asserts lock wire format |
+| J | was_win → cross-slot uint16_t bitmap | 0 | Bit op (BITMAP_SET/CLR) replaces byte write; bit read (BITMAP_IS_SET) replaces byte read; same cycle count |
+| G | Exit-side 3-field derive cascade | **+30-100 ns per slot** ← OFFSET by **-100 ns per cache-line saved** | FillRecord shrinks 128B → 64B → 8B; 1-2 cache lines saved per slot iter; FPN_Mul/Sub/Add chain at derive site is ~5-15 cycles |
+| H | Entry-side 2-field derive cascade | **+10-30 ns per slot** ← OFFSET by same cache savings | Same shape; smaller compute (1 mul + 1 direct read) |
+| K | FillRecord struct + array deletion | **-1 cache line per slot** | Drainer working set permanently smaller; cumulative C.4 memory savings ~1.8 KB per OMS |
+
+**Aggregate drainer cycle delta:** ~+10-20 ns added (F multi-pass) offset by ~-100-300 ns saved (cache-miss reduction from FillRecord shrink to deletion; cumulative hoist savings from T1). **Net likely zero or slight savings**; well within slow-path 100μs budget (<0.05% impact).
+
+**Hot path:** UNTOUCHED. `BG_Evaluate`, `SG_Evaluate`, `ExecutionCore_Tick` zero changes throughout v5.15.5.C.4.
+
+**Wire format:** UNCHANGED. PORTFOLIO_SNAPSHOT_VERSION=5 + ShardedSnapshot v8 byte-identical to pre-C.4. PERSIST_KIND filter (POS.2) writes only the 184-byte PERSIST prefix of each Position; SKIP_PERSIST fields (exit_fill_price, is_maker) stay in struct for cache locality but never serialize.
+
+**Branchless analysis:** Phase F's classify-by-Order.type uses `OrderType_IsClose` (single bit-test exploits BUY=even / SELL=odd enum invariant). Phase G+H derive blocks are pure FPN arithmetic (no branches). Phase J replaces byte read with BITMAP_IS_SET (1 AND + 1 cmp; branchless).
+
+**Cache impact:** Cumulative win. FillRecord array 2048B → 0B; 3 parallel scalar arrays (last_realized_return, last_exit_predicted_p, etc.) PRESERVED for sparse access cache-sharing efficiency. Drainer close-mask iter touches 1-2 cache lines per slot (vs ~5 worst case pre-C.4).
+
+**Bench gate verification (CLAUDE.md item 17 + v5.15.5.C.3 Phase 7.B substrate):** drainer-cycle histogram captures p50/p99/max via `__rdtsc` brackets when `cfg.oms_bench_enabled=1`. Pre/post-C.4 measurement: run with bench gate ON; record histogram. Production builds compile-time elide (zero instrumentation overhead).
+
+**Classes closed permanently in C.4:**
+- Class-18 mirror for OMS_PushSubmit pattern (D5 — 4 sites → 1 helper)
+- Drainer-thread-stable predicate scattering (T1 — POD + Init)
+- Cross-temporal derive blocked by transient source (F — phase invariant)
+- Position struct extensions require snapshot version bump (POS — PERSIST_KIND filter)
+- byte-per-flag for per-slot boolean (J — bitmap)
+- FillRecord-as-snapshot defensive class (G+H+K — derive cascade + struct deletion)
+
+**Per CLAUDE.md item 17:** v5.15.5.C.4 phases were tracked through the rollback-anchor + per-phase commit discipline. Cumulative impact is documented above.
+
 ## v5.15.5.C.3 Phase 5.B + 6 + 8 latency discipline summary
 
 All additions sit OUTSIDE the hot path (≤ 500 ns p99 target per CLAUDE.md). Phase 6 is event-boundary one-shot (paper-reset; minutes-to-hours cadence). Phase 8 is drainer-cadence macro REPLACING existing inline code (no net cycle change). Phase 5.B adds a drainer-cadence per-fill dual-write — additive but rare-event bounded.

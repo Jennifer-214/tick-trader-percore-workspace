@@ -227,6 +227,16 @@ as a v5.11.35 sub-ship (deferred from the current session because
 
     Pattern documented in `DESIGN_SPECS/latency-vs-cache-decision-framework.md` (cost tables, worked examples, edge cases).
 
+29. **Sliding-window incremental statistics over a fixed-size window** (v5.15.5.D+). For statistics (mean, variance, covariance, correlation) over the K most recent records, maintain running sums via subtract-then-add at sample eviction: `sum += x_new - x_oldest`. Eliminates the periodic-reset code smell that's common in vanilla-Welford-with-drift-mitigation; bounds drift by window contents (each record's contribution added once + subtracted once across its K-record lifetime); single math kernel shared between full-recompute and incremental paths.
+
+    **Apply when:** bounded inputs (|x| ≤ X analytically), bounded window K, ring buffer available for oldest-record retrieval, statistics consumed periodically (per slow-path cycle).
+
+    **Multi-window variant:** when one ring buffer must serve BOTH a long window W and a short window K (K < W), maintain TWO running sums on the SAME `samples[]` array; long-window evicts at `samples[head]`, short-window evicts at `samples[head - K]`. Warm-up phase (count ≤ K) accumulates without eviction so both sums equal until count > K. Per-Push cost: 1 extra subtract + 1 extra read (typically L1-warm since K cycles ago was visited recently); per-cycle savings: full O(K) walk eliminated on the short-window read.
+
+    **Bytewise parity discipline:** when converting an existing O(K) walked consumer to an O(1) running-sum reader (as v5.15.5.D did for BookImbHistory's MeanShort), the running-sum's chronological accumulation order MUST produce bytewise-identical sums to the walked path's newest-first iteration. Verify FPN_Add associativity holds analytically (no saturation possible at any reorder) + lock the contract via a deterministic bytewise parity test exercising warm-up + steady-state + boundary transition.
+
+    **Applied at:** v5.14.11.A `RidgeBlender_OnlineCycleStep` online correlation matrix (single window over N=8 model predictions; first reference); v5.15.5.D `BookImbHistory_MeanShortFast` (dual-window variant; second reference). Pattern documented in `DESIGN_SPECS/sliding-window-online-statistics-pattern.md`.
+
 ---
 
 # Reference Docs (split-load — read on demand)

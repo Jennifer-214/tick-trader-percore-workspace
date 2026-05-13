@@ -108,7 +108,7 @@ Organized by category for quick discovery. Each pattern is one file in this dir.
 
 | Doc | Pattern | Status |
 |---|---|---|
-| `sliding-window-online-statistics-pattern.md` | Sum-of-squares fixed-window incremental statistics with drop-oldest math; bounded-input numerical-stability argument; AVX-512 outer-product shape; eliminates periodic-reset code smell | ACTIVE (v5.14.11.A first application: Ridge correlation matrix); v5.14.11.B.3 second application via UpdateOnline AVX-512 |
+| `sliding-window-online-statistics-pattern.md` | Sum-of-squares fixed-window incremental statistics with drop-oldest math; bounded-input numerical-stability argument; AVX-512 outer-product shape; eliminates periodic-reset code smell. **Multi-window variant** (v5.15.5.D): one ring buffer serves N independent running sums via per-window eviction offsets — long-window evicts at `samples[head]`, short-window at `samples[head - K]`; warm-up phase (count ≤ K) both sums equal | ACTIVE (v5.14.11.A first application: Ridge correlation matrix; v5.14.11.B.3 AVX-512 vectorization; v5.15.5.D second canonical application: BookImbHistory dual-window mean) → CLAUDE.md item 29 |
 | `branchless-math-kernel-pattern.md` | Constant-iter inner reductions (use MAX_* constants, not runtime n); pre-zero invariants establish zero contributions for out-of-bounds iterations; no `if` guards inside reductions; IEEE-754 x-0=x exact preserves bytewise-equivalence with prior variable-iter | ACTIVE (v5.14.11.B.1 first application: Cholesky_Solve); → CLAUDE.md item 26 |
 
 ### Struct layout patterns

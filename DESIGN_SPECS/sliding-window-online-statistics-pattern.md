@@ -224,6 +224,14 @@ State embedded in `RidgeWeights<F>` struct (boundary-stable; buy + exit ezoo fie
 
 Numerical stability: predictions bounded to [0, 1] (sigmoid output) + K=64 → max(sum_xx) ≤ 64 → cancellation error ≈ 10^-14. PARITY tolerance is 1e-9; 5 orders of magnitude headroom.
 
+### v5.15.5.D — BookImbalanceHistory dual-window mean
+
+Second canonical application. Single-variable case (N=1) over a ring buffer with TWO simultaneous windows: long-window W=1024 (~17 min cadence) and short-window K=64 (~1 min cadence). Both window sums are maintained incrementally over the SAME `samples[]` ring buffer; the only difference is the eviction offset (long evicts at `samples[head]`, short evicts at `samples[head - K]`).
+
+State embedded in `BookImbalanceHistory<F, W>` struct (`ML_Headers/FlowFeatures.hpp`). Pre-v5.15.5.D, `BookImbHistory_MeanShort(k=64)` did an O(K=64) sequential walk every slow-path cycle (~24 cache lines / read). Post-v5.15.5.D, a parallel `short_sum` field is maintained at Push time + `BookImbHistory_MeanShortFast(s)` reads it directly in O(1). ~10-20 cache lines saved / slow-path cycle / core.
+
+Numerical stability: book imbalance bounded to [-1, 1] + K=64 → max(|short_sum|) ≤ 64 → far below FPN<64>'s ±2^63 range → no saturation → FPN_Add is bytewise associative for these magnitudes. Bytewise parity vs the walked path verified in `tests/controller_test.cpp` via a 200-push deterministic sequence covering warm-up (count < K) and steady-state (count > K) phases.
+
 ### Future applications (anticipated)
 
 - **Online IC tracking** (v5.15+ candidate): per-arm prediction-vs-realized-return rolling correlation over K=N_recent_trades
@@ -232,6 +240,119 @@ Numerical stability: predictions bounded to [0, 1] (sigmoid output) + K=64 → m
 - **Online drift detection** (v5.15+ candidate): rolling moments of (prediction - realized) error distribution
 
 Each follows the same pattern: state struct → Update/UpdateFull → Finalize → consumer. The pattern eliminates per-feature periodic-reset boilerplate.
+
+---
+
+## Multi-window variant (added 2026-05-13 post v5.15.5.D)
+
+When the same ring buffer must serve TWO (or more) simultaneous windows of different sizes, maintain INDEPENDENT running sums per window over the shared `samples[]` ring. Each window's eviction logic reads samples at a different ring offset.
+
+### State (multi-window shape)
+
+```cpp
+template <unsigned F, unsigned W = 1024>
+struct alignas(64) RingWithTwoWindows {
+    static constexpr int SHORT_K = 64;
+
+    FPN<F> sum;          // long-window running sum (W samples)
+    FPN<F> short_sum;    // short-window running sum (SHORT_K samples)
+    int    count;        // valid sample count; saturates at W
+    int    head;         // next write position
+
+    FPN<F> samples[W];   // shared ring buffer
+};
+```
+
+Both windows share the same `samples[]` array — no duplication. The HOT cluster (sum / short_sum / count / head) fits in 1 cache line. Cache discipline per `cache-layout-discipline-for-hot-side-structs.md` Rule 4.
+
+### Push (maintain both windows)
+
+```cpp
+template <unsigned F, unsigned W>
+static inline void Ring_Push(RingWithTwoWindows<F, W>* s, FPN<F> sample) {
+    // Long-window maintenance: evict at samples[head] (W-cycles-old)
+    if (s->count >= (int)W) {
+        s->sum = FPN_Sub(s->sum, s->samples[s->head]);
+    } else {
+        s->count++;
+    }
+
+    // Short-window maintenance: evict at samples[head - SHORT_K] (K-cycles-old)
+    // Note: check `count > SHORT_K` AFTER long-window count increment so
+    // warm-up phase (count <= SHORT_K) accumulates without eviction.
+    if (s->count > RingWithTwoWindows<F, W>::SHORT_K) {
+        int evict_short = (s->head + (int)W - RingWithTwoWindows<F, W>::SHORT_K) % (int)W;
+        s->short_sum = FPN_Sub(s->short_sum, s->samples[evict_short]);
+    }
+
+    s->samples[s->head] = sample;
+    s->sum       = FPN_Add(s->sum, sample);
+    s->short_sum = FPN_Add(s->short_sum, sample);
+    s->head      = (s->head + 1) % W;
+}
+```
+
+### Read (O(1) per window)
+
+```cpp
+template <unsigned F, unsigned W>
+static inline FPN<F> Ring_MeanLong(const RingWithTwoWindows<F, W>* s) {
+    if (s->count <= 0) return FPN_Zero<F>();
+    return FPN_DivNoAssert(s->sum, FPN_FromDouble<F>((double)s->count));
+}
+
+template <unsigned F, unsigned W>
+static inline FPN<F> Ring_MeanShortFast(const RingWithTwoWindows<F, W>* s) {
+    if (s->count <= 0) return FPN_Zero<F>();
+    int effective_k = (s->count < RingWithTwoWindows<F, W>::SHORT_K)
+                          ? s->count
+                          : RingWithTwoWindows<F, W>::SHORT_K;
+    return FPN_DivNoAssert(s->short_sum, FPN_FromDouble<F>((double)effective_k));
+}
+```
+
+### Per-Push cost analysis
+
+| Operation | Long-only | Long + short (multi-window) |
+|---|---|---|
+| Eviction subtract | 1 (samples[head]) | 2 (samples[head] + samples[head-K]) |
+| Add new sample | 1 | 1 |
+| Cache lines touched | 2 (scalars + samples[head]) | 3 (scalars + samples[head] + samples[head-K]) |
+
+The samples[head-K] line is typically L1-warm because head-K was visited K=64 cycles ago and the ring buffer is small enough that L1 retains the recent window. Practical extra cost: ~1-2 ns / Push.
+
+**Trade vs the read-side savings:** if MeanShort is called once per cycle and previously walked K=64 samples (~24 cache lines), moving to O(1) saves ~20+ cache lines per cycle. The extra Push cost (1-2 ns) is dwarfed by the read-side savings (~500-1500 ns when cold).
+
+### Eligibility (Multi-window variant)
+
+Apply the multi-window variant when ALL of:
+
+1. **Single ring buffer** serves the data for multiple analytical windows (vs separate ring buffers per window — that's a different layout)
+2. **Each window's sum is independently consumed** — caller wants both long-mean and short-mean (or variance, etc.) every cycle
+3. **Bounded inputs + bounded K** for each window (per main spec eligibility) — applies independently per window
+4. **Short-window's K is well-defined at compile time** (otherwise can't pre-allocate `short_sum`; falls back to O(K) walk for runtime-variable K consumers)
+
+### Skip the multi-window variant when:
+
+- Only ONE window is consumed (single-window pattern suffices; `short_sum` field is dead weight)
+- Short window's K varies at runtime across callers (e.g., test calls with k=2 + production with k=64) — keep the O(K) walk callable for non-canonical K; add `short_sum` only if the production K is fixed AND dominant
+- Memory budget is tight enough that 1 extra FPN<F> per record is prohibitive (uncommon; ~24 B for FPN<64>)
+
+### Generalization (N-window variant)
+
+The pattern extends to N windows: N running sums + N eviction offsets per Push. Cost scales linearly with N. Diminishing returns beyond N=2-3 windows; consider whether each window genuinely needs O(1) read or if some can stay O(K) walks.
+
+The compile-time-fixed-K constraint (per Eligibility item 4) becomes harder for N>2 — would need a registry pattern (`FOREACH_WINDOW_K(X)` X-macro per `registry-tuple-as-single-source-of-truth.md`) to drive parallel SHORT_K1 / SHORT_K2 / ... constants if multiple short windows of different fixed sizes are needed.
+
+### Bytewise parity discipline
+
+When converting an existing O(K) walked consumer to the new O(1) running-sum reader (as v5.15.5.D did for BookImbHistory's MeanShort), preserve bytewise parity by:
+
+1. Verifying FPN_Add associativity holds for the input magnitudes + accumulator range (analytical check; no overflow possible at any reorder)
+2. Using the SAME divisor representation in both paths (FPN_FromDouble vs FPN_FromInt produce different bytes for fractional divisors; for whole-number K typically identical, but lock the choice explicitly)
+3. Locking the contract via a bytewise parity test exercising warm-up (count < K) + steady-state (count > K) + boundary transition
+
+See v5.15.5.D's `controller_test.cpp` BookImbHistory parity test (200-push deterministic sequence) for the canonical template.
 
 ---
 

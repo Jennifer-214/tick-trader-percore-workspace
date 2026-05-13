@@ -416,6 +416,102 @@ a positive decoupling breadcrumb.
 
 ---
 
+### v5.15.5.C — OrderManagerState cache-layout sweep + bit-packing + wire-format registry (POSITIONING: ⬆️⬆️⬆️ STRONGLY POSITIVE; structural parallel to `.B` on the OMS side)
+
+**Sub-ships:** `.C.1` (commit `945feb4`, tag `v5.15.5.C.1`) + `.C.2` partial S6
+(commit `ccf7e4e`) + `.C.2` close (commit `852a6e3`, tag `v5.15.5.C.2`) +
+`.C.2.1` fixup (commit `097f91f`, tag `v5.15.5.C.2.1`). Shipped 2026-05-13.
+
+**Positioning rationale — why `.C` is foundational for mmap-mediated
+OMS exposure:**
+
+1. **OrderManagerState HOT/WARM/COLD cluster reorg (`.C.1`)** with
+   compile-time-locked anchors (`result_queue`, `portfolio`, `adapter`,
+   `total_submitted`, `flatten_pending`, `ks_min_balance`) on 64-byte
+   boundaries. The future GUI process can mmap the OMS struct
+   read-only knowing the layout is stable; no struct walking, no
+   header re-parsing.
+
+2. **Cross-thread atomic clusters isolated** (`.C.1`):
+   `total_submitted/filled/rejected` (observability counters, drainer
+   writer + snapshot publisher reader at 60 Hz) and `flatten_pending +
+   recovery_until_us` (safety CAS, N slow-path writers + drainer
+   reader) each on own cache line via `alignas(64)`. Same ND1 pattern
+   as `.B.2` — the cross-process synchronization surface for future
+   decoupling is now pre-isolated.
+
+3. **`FOREACH_OMS_PERSIST_FIELD` wire-format registry (`.C.2`/S3a-W)**
+   makes the snapshot persist BLOCK registry-driven. The same registry
+   that drives engine save/load can drive an EXTERNAL viewer's
+   deserializer. Viewer-side schema cache becomes possible without
+   re-parsing C++ headers — same pattern as `.B`'s
+   `FOREACH_STAMP_BOUND_*` for stamp body. Cross-version compat
+   preserved via type+kind tuple shape.
+
+4. **`oms_state_flags` uint8_t bitmap (`.C.2`/S3a)** + `last_exit_
+   predicted_bitmap` uint16_t (`.C.2`/S3b) + `last_exit_predicted_
+   meta` per-slot uint8_t (`.C.2.1`/LOW-2) compact the OMS state from
+   ~50 bytes of byte-per-flag + array-per-attribute to ~3 packed
+   words. The mmap exposure region for OMS state shrinks
+   proportionally — viewer process can pull the full OMS-decision
+   snapshot in a single cache line touch.
+
+5. **FIRST APPLICATION of `multi-bit-state-encoding-pattern.md`
+   (`.C.2.1`/LOW-2)** — `MemHeaders/OmsExitPredictorMetaRegistry.hpp`
+   field-validates the pattern (regime + arm + valid in 1 byte;
+   parallel decode via ILP at consumer). Future K-state fields
+   (regime_state, strategy_id, halt_reason) inherit a tested
+   substrate; the codebase-audit follow-up (TECH_DEBT-041) becomes
+   "1 row per candidate" not bespoke per-field design.
+
+6. **Wire-format byte-preservation discipline upgraded (`.C.2`/S3a-W)**
+   via `OMS_PERSIST_SAVE_VAL_BIT(name, mask)` — bit-extracted as 4-byte
+   int at save, bit-set at load commit. Snapshot version unchanged.
+   This proves the pattern of "in-memory bit-pack + wire-format-
+   stable int-emit" works for future decoupling protocols that need
+   compact in-memory state + stable IPC wire encoding (the GUI
+   process might consume a different in-memory representation than
+   the engine's).
+
+**Concrete decoupling implications:**
+
+| Pre-`.C` surface | Post-`.C` surface | Decoupling readiness |
+|---|---|---|
+| OrderManagerState scattered HOT/COLD interleaved | Explicit HOT/WARM/COLD clusters w/ 6 offset-locked anchors | Viewer process can mmap with stable offsetof() |
+| OMS save/load = 30+ hand-written fwrite/fread lines | `FOREACH_OMS_PERSIST_FIELD` registry-driven (3 FOREACH calls) | External viewer reuses same registry for deserialize |
+| OMS state = 3 byte-per-flag + 2 per-slot byte arrays (~80 bytes) | 1 uint8_t + 1 uint16_t + 1 uint8_t[16] (~19 bytes) | OMS snapshot region shrinks 4× for mmap exposure |
+| Per-slot exit-predictor = 2 int8_t arrays (32 bytes; -1 sentinels) | 1 packed uint8_t array (16 bytes; valid-bit) | Compact wire format + parallel decode in viewer |
+| No design substrate for multi-bit state encoding | `multi-bit-state-encoding-pattern.md` + first application | Future K-state fields apply pattern by-row, not by-spec |
+
+**Updates to readiness checklist (later in this doc):**
+
+- ✅ OMS save/load format is registry-driven (was previously "TBD"; now
+  `FOREACH_OMS_PERSIST_FIELD` covers all persisted OMS fields)
+- ✅ OMS state is compact + bitmap-encoded (was previously "TBD"; now
+  ~75% reduction in OMS-state byte count)
+- ✅ Multi-bit state encoding pattern has design + first application
+  + going-forward rule (was previously "no design substrate"; now
+  fully established)
+- ⏳ STILL TBD: actually expose OMS state via mmap. Pre-decoupling:
+  works in-process. Post-decoupling: viewer mmap's snapshot region
+  read-only. The `.C` cluster reorg + registry + bit-packing means
+  this is a CONFIG flip + IPC wrapper, not a refactor.
+
+**Anti-breadcrumbs:** none. Caramel pushed for full closure of all 4 audit
+findings (MEDIUM-1, MEDIUM-2, LOW-1, LOW-2 + INFO test gap) plus FIRST
+APPLICATION of the multi-bit pattern in the `.C.2.1` fixup — same
+"headache now > issues later" discipline as `.B.7` AUTOPOPULATE 100%
+closure (vs 95% deferral).
+
+**The `.C` sub-sprint extends `.B`'s model to the OMS side and adds the
+multi-bit state encoding substrate** that downstream sprints (`.D`
+FlowFeatures, `.E` ConfidenceScorer, future v5.16 regime cohort
+migration) inherit. Both `.B` and `.C` together = positive positioning
+breadcrumb for both halves of the EventLoopState↔OrderManagerState
+struct boundary that the decoupling sprint will read across.
+
+---
+
 ## Pre-decoupling readiness checklist
 
 Updated after each ship's breadcrumb is added. When all checked, the

@@ -591,3 +591,69 @@ Codified in:
 - Companion: `plans/_future/2026-05-08-v6.0-CANDIDATE-headless-service-colo.md`
   (engine-side decoupling architecture; the roadmap doc extends this
   to the suite side + adds the running breadcrumbs discipline)
+
+---
+
+## Going-forward rule: prefer multi-bit state encoding for K-state fields (set 2026-05-13)
+
+**When adding or refactoring a K-state field (K = 2..16) stored
+WITHIN a single record (per-core / per-slot / per-order struct),
+prefer N-bit packed slots (N = ceil(log2(K))) + branchless inference
+API over plain `int` / `uint8_t` enum storage + switch dispatch.**
+
+Sister to existing `bitmap-flag-api.md` (1-bit-per-flag), which is
+the K=2 specialization. Multi-bit generalizes to K=2..16.
+
+**Wins:**
+- Memory: stores `ceil(log2(K))` bits instead of 8 or 32 (e.g., regime
+  4 states = 2 bits in shared byte; vs 4 bytes per int field).
+- Branchless dispatch: `switch (state)` → table lookup (1 array deref,
+  no branch misprediction).
+- Branchless set membership: `state in {A, C, E}` → single SHR + AND
+  + cmp via SET_MASK indexed by state value.
+- Branchless equality / transition predicates compile to 1-2 cycle ops.
+
+**Inference API** (see `DESIGN_SPECS/multi-bit-state-encoding-pattern.md`):
+- `MBS_GET(field, mask, shift)` — extract state value
+- `MBS_SET(field, mask, shift, val)` — write state value
+- `MBS_EQ(field, mask, shift, val)` — branchless equality
+- `MBS_IN_SET(field, mask, shift, set_mask)` — branchless set membership
+- `MBS_SELECT_EQ(...)` — branchless conditional compute
+- Lookup tables indexed by state value for dispatch
+
+**When NOT to use:**
+- K > 16 (5+ bits) — diminishing returns; use uint8_t directly.
+- Cross-record packing (CLAUDE.md item 20 — bit-pack within record only).
+- State mutated under cross-thread CAS with adjacent fields (atomic
+  bit-update discipline required; design review).
+- K = 2 — use `bitmap-flag-api.md` directly.
+
+**How to apply:**
+- Plan-synthesis time: when a new K-state field is proposed, audit
+  the cohort (sibling fields in same record). If 2+ K-state fields
+  share an access pattern, pack into a shared word.
+- Compose with X-macro registry: `FOREACH_<NAME>_STATE(X)` registry
+  defines state values + names + count; auto-generated MBS macros
+  expand at consumer sites.
+- Implementation checklist in design spec (10-item) catches the common
+  footguns: static_assert overflow guard, X-macro-generated SHIFT +
+  MASK constants, named SET_MASK convention.
+
+**First candidate (queued for v5.15.5.C.X follow-up):**
+`rs_current` + `rs_proposed` on CoreContext (each 4 states = 2 bits;
+pack into shared uint8_t). Savings: 7 bytes per CoreContext × 16
+cores = 112 bytes per EventLoopState. Branchless multi-regime predicate
+in slow-path body.
+
+**Caramel's framing 2026-05-13:**
+> *"could 2 bits hold 4 states? 3 bits hold 8?"* — first-principles
+> derivation from binary counting fundamentals → state encoding by
+> information content (Shannon's source coding) rather than byte-
+> aligned convenience.
+
+Codified in:
+- `DESIGN_SPECS/multi-bit-state-encoding-pattern.md` (the design spec
+  + branchless inference API + decision tree + candidate inventory)
+- This file (going-forward rule)
+- CLAUDE.md (promotion candidate after 2+ applications shipped — per
+  the existing "codify design principles as patterns mature" rule)

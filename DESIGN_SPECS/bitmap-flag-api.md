@@ -371,6 +371,18 @@ The BITMAP_* API is the base layer. v5.14.9 surfaced 4 distinct USE-SHAPES with 
 
 **Example:** ModelHandle.has_flags (24+ bits for stamp-bound model fields).
 
+### Variant 6: per-struct decision-state bitmap (per-instance boolean cohort)
+
+**Shape:** uint8 (or wider) on a per-instance struct that holds a cohort of pure-boolean DECISION flags. Lifetime: per-struct-instance; single-writer per instance (per-core slow-path thread); no atomics within the per-instance write window. Registry-driven (`FOREACH_<CTX>_STATE_FLAG`); accessor macros `<CTX>_STATE_FLAG_{IS_SET,SET,CLR,TOGGLE}` mirror the snapshot-side `STATE_FLAG_*` ergonomics.
+
+**See:** `MemHeaders/CoreStateFlagRegistry.hpp` (canonical first reference).
+
+**Example:** `CoreContext.core_state_flags` (uint8_t; 5 bits used: DIRTY, KILL_TRIPPED, MODEL_LOAD_FAILED, CFG_DRIFT_STRICT_REFUSED, WARMUP_LOG_EMITTED; 3 bits headroom). Registry: `FOREACH_CORE_STATE_FLAG(X)` in `MemHeaders/CoreStateFlagRegistry.hpp`. Shipped v5.15.5.B.3. Memory win: 5 byte-per-flag fields + `_pad_kill[3]` alignment padding = 8 B/CoreContext × 16 cores = 128 B/EventLoopState → 1 byte × 16 cores = 16 B (saved ~112 B/EventLoopState).
+
+**Distinct from Variant 2 (per-core bitmap on parent struct):** Variant 2 stores ONE bit per core on the PARENT (e.g., `EventLoopState.partner_pending_bitmap` packs 16 cores into one uint16_t). Variant 6 stores MULTIPLE bits per instance on EACH instance (e.g., each `CoreContext` has its own `core_state_flags` uint8_t with 5+ bits used). Variant 2 packs cores; Variant 6 packs flags within a struct.
+
+**Distinct from Variant 1 (engine-wide cfg-flag bitmap):** Variant 1 is engine-wide cfg (cfg-flag toggles persistent until reload). Variant 6 is per-instance runtime state (decision flags flipped during execution; e.g., DIRTY flipped per cycle).
+
 ### Which variant fits?
 
 | Need | Variant | Doc |
@@ -380,6 +392,7 @@ The BITMAP_* API is the base layer. v5.14.9 surfaced 4 distinct USE-SHAPES with 
 | Function-local boolean aggregation | 3 | `transient-aggregation-bitmap-pattern.md` |
 | Per-core override on bitmap field | 4 | `per-bit-per-core-override-pattern.md` |
 | Registry parsed/emitted field presence | 5 | `x-macro-registry-with-presence-dispatch.md` |
+| Per-struct decision-state cohort (multi-bit per instance) | 6 | `MemHeaders/CoreStateFlagRegistry.hpp` (canonical first reference) |
 
 All variants use BITMAP_* primitives at the read/write sites. The differences are in SHAPE (one bitmap field on what struct? function-local? per-domain?) and LIFETIME (transient / persistent / per-core / engine-wide).
 

@@ -658,3 +658,111 @@ v5.14.10 mega-bundle (.0 layout / .A registry+math / .B wiring / .C
 persistence / .D dashboard+log registry / .E propagation / .F log
 generalization). Replay determinism (PARITY-014) enforced via SHA-256-locked
 sample-trace test in tests/controller_test.cpp v5.14.10.A.
+
+---
+
+## 2026-05-13 — v5.15.5.B EventLoopState cache-layout sweep (NEGATIVE-COST; SLOW-PATH savings; hot path UNTOUCHED)
+
+**File(s):** `CoreFrameworks/ControllerEventLoop.hpp`, `CoreFrameworks/EngineSharded.hpp`,
+`CoreFrameworks/ShardedSnapshot.hpp`, `CoreFrameworks/ShardedSnapshotPersist.hpp`,
+`CoreFrameworks/PortfolioController.hpp`, `CoreFrameworks/ModelValidation.hpp`,
+`Backtest/BacktestSharded.hpp`, `DataStream/EngineTUI.hpp`,
+`Strategies/StrategyLifecycle.hpp`, `Strategies/StrategyParameters.hpp`,
+`tests/controller_test.cpp`. Plus 6 NEW header files (MemHeaders / CoreFrameworks /
+ML_Headers registries + 3 NEW DESIGN_SPECS in workspace).
+
+**Sub-ships:** v5.15.5.B.1 — .B.8 (B.4 subsumed by .B.2). v5.15.5.B umbrella tag
+aggregates all 8 sub-ships + this changelog entry.
+
+**Cost:** NEGATIVE — savings, not additions:
+
+- **.B.1 CoreContext H/W/C reorg + lazy_rebuild hoist on CoreSlowState:** slow-
+  path cycle's HOT cluster footprint reduced from 17 KB → 7 KB per slot (.B.1
+  cluster reorg + .B.2 DisplayMeta extraction together). Lazy-rebuild gate at
+  `EventLoop_RebuildOneCore` saves ~100 ns/cycle cold cache (was reading
+  `us_at_last_rebuild` from struct TAIL at offset 278384 pre-.B.1; now at
+  offset 24 from struct HEAD, same cache line as `ema_price` updated per-tick
+  by producer). ~30-50% of cycles fire the lazy-bail per CLAUDE.md item 18
+  Pattern 8a → engine-wide ~50-150 µs/sec savings at 16 cores × 1000 cycles/sec.
+
+- **.B.2 sp_telemetry + ws_telemetry cluster isolation + DisplayMeta extraction:**
+  alignas(64) cross-thread atomics clusters (`SlowPathTelemetry` on CoreContext +
+  `WsHeartbeatTelemetry` on EventLoopState) prevent snapshot-publisher (GUI
+  thread, ~30-60 Hz) cache-line invalidations from neighbor slow-path-written
+  fields. ~100-300 ns saved per snapshot publish × 16 cores at 60 Hz =
+  ~96-288 µs/sec engine-wide. DisplayMeta extraction moved 12 diag_* FPN fields +
+  CoreLatencyStats + 12 heterogeneous counters OFF the HOT cluster onto a
+  sibling array — slow-path cycle no longer pulls those ~9.8 KB / slot into L1.
+
+- **.B.5 SESSION_BY_HOUR[24] branchless table lookup:** replaced 4-way data-
+  dependent if/else cascade for hour-of-day session-multiplier dispatch at 3
+  consumer sites (RebuildOneCore + ShardedSnapshot publisher + legacy
+  PortfolioController). Pre-.B.5 mispredict ~25% at session transitions; post-.B.5
+  ~0% (single load + indirection + 0 branches). Savings: ~3-5 ns/cycle ×
+  session-transition cycles. Small but documented per item 17 discipline.
+
+- **.B.8 ShardedSnapshot 4-walk → 1-walk consolidation:** snapshot publisher
+  consolidated to ONE per-core walk vs FOUR pre-.B.8 (bitmap consistency, wins/
+  losses aggregation, headline_regime AUTO-finder, per_core_extra publisher).
+  Saves 3 walks × 16 cores × ~7 KB per CoreContext × 60 Hz publish = ~20 MB/s
+  memory bandwidth. Per the audit synthesis T1 estimate. Cache-warm Layer 2-4
+  reads of a CoreContext follow naturally from Layer 1's first touch.
+
+**Branchless:**
+
+- All consolidation work happens on the SLOW PATH or SNAPSHOT publisher
+  (~30-60 Hz GUI thread). HOT PATH was NOT TOUCHED — `BG_Evaluate` /
+  `SG_Evaluate` / `ExecutionCore_Tick` still read `ExecutionCore` +
+  `ParameterSlot` only; neither affected by CoreContext reorg or
+  DisplayMeta extraction.
+- Slow-path additions are mostly **registry-driven** (FOREACH expansions
+  compile to the same sequence of value-init / aggregation / publish writes
+  as the pre-.B manual code). No new data-dependent branches added.
+- `.B.5` REMOVED a data-dependent branch class (hour-of-day cascade).
+- `.B.3` bitmap migrations replaced byte-flag reads with bit-test ops
+  (`BITMAP_IS_SET` = single AND); branch behavior unchanged.
+- `.B.7` AUTOPOPULATE macros expand to the same per-field writes the
+  pre-.B.7 init/reset loops did; loop overhead negligible at boot/reset
+  cadence (per CLAUDE.md item 28 framework).
+
+**Cache impact:**
+
+- CoreContext: 17088 B → 7232 B (-58% per slot; net `cores[16]` = 273408 B →
+  115712 B; -158 KB engine-wide).
+- EventLoopState: 273536 B → 275712 B (+0.8%; explicit `alignas(64)` cluster
+  anchors at WARM `entries_processed` + COLD `sp_telemetry` + `display_meta[16]`
+  array net the size delta).
+- DisplayMeta sibling array: 16 × ~10 KB = ~160 KB on EventLoopState; never
+  touched by per-cycle decision code (read only by snapshot publisher).
+- Per-core L1 footprint: 35% (17 KB / 48 KB L1d Tiger Lake) → 14% (7 KB / 48 KB).
+- HOT cluster of CoreContext: offset 0 = `gate_state` SlowPathGateState (bitmap
+  decision-first per ND3 decision-first-cluster-layout-pattern.md); skip-
+  eligible cycles touch line 0 + CoreSlowState head's `ema_price` and bail.
+- Cross-thread atomics cluster (sp_telemetry on CoreContext, ws_telemetry on
+  EventLoopState) isolated to own cache line each via `alignas(64)` per ND1
+  cross-thread-snapshot-publish-cluster-isolation.md.
+
+**Optimization note:**
+
+- The .B sub-sprint structurally closes 9 separate Class-18 mirror classes
+  (transitive-alignment-brittleness, Display↔Execution gate-diag mirror,
+  byte-per-flag bitmap, SP_SECTION enum mirror, session_*_mult cohort,
+  RollingStats 4-window sync, CoreContext init mirror, paper-reset mirror,
+  ShardedSnapshot 4-walk redundant cache pressure). Future per-core field
+  additions touch ONE registry row; ZERO manual cross-site sync required.
+- **NO FURTHER size optimization warranted for performance** per CLAUDE.md
+  item 28 (cache miss = 75-100× cycle cost; ~7 KB / slot is well within
+  per-core L1 + L2 budgets). Further reductions would require trading
+  ML accuracy (drift_history ring buffers, ConfidenceScorer IC history) —
+  not a structural class.
+- **FUTURE candidate (out-of-scope for v5.15.5.B):** apply the same H/W/C +
+  ND3 + AUTOPOPULATE discipline to `OrderManagerState` (.C ship), `FlowFeatures`
+  (.D ship), `ConfidenceScorer` (.E ship). Each is a separate sub-sprint with
+  its own pattern-validation. ND1 + ND2 + ND3 + the cohort/template-parameterized/
+  multi-target-AUTOPOPULATE patterns are all validated 2+ applications post-.B
+  and ready for downstream reuse.
+
+Per CLAUDE.md item 17 latency-additions discipline: this entry NEGATIVE-cost
+(saves cycles + bandwidth, doesn't add). The wins compound with v5.12-era
+slow-path discipline (lazy-rebuild, WS-staleness branchless gate) — slow-path
+budget tightens cleanly as the sprint progresses.

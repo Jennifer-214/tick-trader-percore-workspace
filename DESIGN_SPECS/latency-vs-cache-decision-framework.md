@@ -212,6 +212,72 @@ when the cache penalty stays <1 line OR the savings >>30 cycles.
 - "Vectorize everything" that adds cache line fetches to enable SIMD
   on data that doesn't justify it
 
+## Memory bandwidth costs (added 2026-05-13 post v5.15.5.B.8)
+
+The cost table above (cycles vs cache lines) focuses on LATENCY per
+access. There's a complementary axis: **bandwidth** — the rate at
+which the memory subsystem can serve cache-line fills across all
+threads + cores + DMA + GPU.
+
+| Resource (Tiger Lake reference) | Peak rate | Cost per cache line (64 B) |
+|---|---|---|
+| L1d cache (per core) | ~48 KB | ~1 ns |
+| L2 cache (per core) | ~1.25 MB | ~4 ns |
+| L3 cache (shared) | ~12 MB | ~13 ns |
+| **DRAM (shared)** | **~50-100 GB/s peak; shared across cores + GPU + iGPU** | **~100 ns** |
+
+**The trap: DRAM bandwidth is shared.** A workload that consumes 26 MB/s
+on its own looks tiny against ~50 GB/s peak. But concurrent loads add up:
+
+- Producer fan-out on saturated markets: ~80 MB/s
+- Per-core slow-path rolling-window updates: ~5-10 MB/s × 16 cores = 80-160 MB/s
+- ML inference (when active): ~50-100 MB/s on feature pack + model read
+- GUI snapshot publisher: ~6-26 MB/s depending on consolidation
+
+Sum of concurrent workloads can approach 200-400 MB/s on busy markets.
+At that point, threads STALL waiting for DRAM cycles — even ones that
+"should" be CPU-bound. Adding more cores or compute doesn't help when
+the memory subsystem is the bottleneck. This is called
+**bandwidth-bound** in HPC literature (vs compute-bound).
+
+### Decision rules — bandwidth dimension
+
+- **Approach A saves N MB/s bandwidth** vs **Approach B costs M cycles**:
+  - For busy-market scenario (~50% bus saturation), 1 MB/s saved bandwidth
+    ≈ 50 cycles freed per second elsewhere (other threads no longer stalling)
+  - Bandwidth saves COMPOUND at periodic cadences: 5 MB/s at 60 Hz × 24h/day
+    = ~432 GB/day of DRAM traffic eliminated
+- **Cross-thread invalidation**: when thread A writes a cache line held
+  by thread B, B's copy invalidates (MESI; ~25-50 cycle RFO cost) AND
+  the line refills from L2/L3/DRAM. Frequent shared writes burn bandwidth
+  on top of latency. Pattern: `cross-thread-snapshot-publish-cluster-
+  isolation.md` (ND1) — `alignas(64)` isolation prevents cache-line
+  ping-pong on neighbor fields.
+
+### Bandwidth-saving patterns in this codebase
+
+| Pattern | Bandwidth effect |
+|---|---|
+| `loop-fusion-pattern.md` | Eliminate N-1 cold-cache walks of same array (canonical: v5.15.5.B.8 ~20 MB/s saved at 60 Hz) |
+| `cache-layout-discipline-for-hot-side-structs.md` Rule 1 | Display-only field extraction → per-cycle cache doesn't pull display-only lines (.B.2 ~9.8 KB/slot removed from HOT cluster) |
+| `cache-layout-discipline-for-hot-side-structs.md` Rule 4 | HOT/WARM/COLD tiering → forward-sequential access amplifies prefetcher (turns scattered cold reads into stream prefetch) |
+| `decision-first-cluster-layout-pattern.md` (ND3) | Bail-eligible cycles touch line 0 only → cold-cache reads cut from ~17 to ~2 per skip cycle |
+| `cross-thread-snapshot-publish-cluster-isolation.md` (ND1) | Cluster isolation prevents cross-thread RFO storms (.B.2 SlowPathTelemetry + WsHeartbeatTelemetry) |
+| `bitmap-flag-api.md` | Multi-flag check via single mask AND (1 line fetch + 1 AND vs N byte-fetches + N branches) |
+
+### Roofline analysis (informal)
+
+For any kernel, compute **arithmetic intensity** = (FLOPs or cycles of
+work) ÷ (bytes of memory accessed). If intensity is below
+peak_compute / peak_bandwidth (~10-20 FLOPs/byte on Tiger Lake), the
+kernel is bandwidth-bound — adding more compute won't help; fix the
+bandwidth.
+
+Most snapshot-publisher + slow-path workloads in this codebase are
+bandwidth-bound (many memory touches, modest computation per byte
+read). That's why v5.15.5.B focused on cache layout + loop fusion
+rather than SIMD or compute-side optimizations.
+
 ## Promotion criteria (this doc was promoted)
 
 Operator framing 2026-05-12: "can we make a design choice or something

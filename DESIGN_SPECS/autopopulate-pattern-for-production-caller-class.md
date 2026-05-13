@@ -195,6 +195,40 @@ Adds runtime check (boot-only, ~1ns) that catches future contributors who add a 
 
 Both cfg-bound + architectural stamp body fields are now AUTOPOPULATE-driven. Future stamp body field additions auto-flow without any production-caller manual updates.
 
+### Third application: DISPLAY_META_INIT helper + CoreContextDisplayMeta_Init (v5.15.5.B.2)
+
+- Registry: `MemHeaders/DisplayMetaRegistry.hpp` (dual: FOREACH_GATE_DIAG_PAIR + FOREACH_DISPLAY_META_FIELD)
+- Helper function: `CoreContextDisplayMeta_Init<F>(meta*)` (registry-driven init walk; templated)
+- Production caller: `EventLoopState_Init` (one call per slot: `CoreContextDisplayMeta_Init(&state->display_meta[i])`)
+- Closes: Display↔Execution Class-18 mirror for the per-core display-only fields (Variant of the AUTOPOPULATE pattern — uses a templated helper function as the registry-walk surface; macros use the helper)
+
+### Fourth application: CORE_CTX_INIT_AUTOPOPULATE + CORE_CTX_RESET_AUTOPOPULATE (v5.15.5.B.7) — FIRST MULTI-TARGET DISPATCH
+
+- Registry: `MemHeaders/CoreCtxInitRegistry.hpp` (dual: FOREACH_CORE_CTX_INIT_FIELD + FOREACH_CORE_CTX_RESET_FIELD)
+- Companion macros: `CORE_CTX_INIT_AUTOPOPULATE(state_ptr, i)` + `CORE_CTX_RESET_AUTOPOPULATE(state_ref, c)`
+- Templated helpers (per CLAUDE.md item 23): `tt::_core_ctx_init_value_fields<F>`, `tt::_core_ctx_reset_value_fields<F>`, `tt::_alloc_and_init_slow_state<F>`
+- Production callers: `EventLoopState_Init` (boot init via `CORE_CTX_INIT_AUTOPOPULATE`) + paper-reset path in `EngineSharded.hpp` (via `CORE_CTX_RESET_AUTOPOPULATE`)
+- Closes: 100% of the per-core init/reset Class-18 mirror — adding a new per-core field that needs init/reset is ONE row in the appropriate registry; future per-core "per-session counter" additions touch ONE row + the operator MUST consciously decide "does this reset between sessions?" at registry-add time
+
+### Multi-target dispatch — pattern variant
+
+The first 3 applications above are **single-target** AUTOPOPULATE companions: ONE production caller invokes the macro to populate ONE struct from ONE source.
+
+`.B.7` introduced the **multi-target** variant:
+- Same registry surface serves MULTIPLE production callers (`EventLoopState_Init` boot + `EngineSharded` paper-reset)
+- TWO registries (INIT + RESET) capture the semantic difference between "all fields" vs "subset that resets between sessions"
+- AUTOPOPULATE macros are EventLoopState-scoped (take `(state_ptr, i)` not `(ctx_ref)`) so they can access both `cores[i]` (CoreContext fields) + `display_meta[i]` (sibling-struct init) + engine-wide bitmap (e.g., `partner_pending_bitmap` clear in RESET)
+- Allocator policy (InitArena fallback to `new`) encapsulated in templated helper — single site for future allocator changes
+
+**When to use multi-target dispatch:**
+- 2+ production callers populate/reset the SAME data structure
+- Each caller's contract is SEMANTICALLY DISTINCT (e.g., boot init vs paper reset; subset of fields differs by design)
+- Field membership in each registry MUST be explicit so future contributors face the "should this field reset?" question at the registry-add boundary
+
+**When to skip multi-target:**
+- Only ONE production caller exists → single-target AUTOPOPULATE suffices (e.g., STAMP_CFG_AUTOPOPULATE)
+- All callers populate/reset the EXACT SAME field set → single registry + single AUTOPOPULATE called from multiple sites suffices (no need for a "subset" variant)
+
 ---
 
 ## Lessons / gotchas

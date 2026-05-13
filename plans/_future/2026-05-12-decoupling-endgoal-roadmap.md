@@ -332,6 +332,90 @@ draft was caught + replaced BEFORE coding; never landed in repo.)
 
 ---
 
+### v5.15.5.B — EventLoopState cache-layout sweep + 9 Class-18 mirror closures (POSITIONING: ⬆️⬆️⬆️ STRONGLY POSITIVE; foundational for mmap-mediated decoupling)
+
+**Sub-ships:** `.B.1` through `.B.8` shipped 2026-05-13; tag `v5.15.5.B`
+umbrella. Closes the EventLoopState side of the cache-layout discipline
+that the decoupling sprint will inherit.
+
+**Positioning rationale — why this is the SINGLE BIGGEST positive
+breadcrumb for the future decoupling sprint:**
+
+1. **Explicit `alignas(64)` cluster boundaries land at compile-time-
+   enforced static_asserts on CoreContext + CoreSlowState + DisplayMeta +
+   SlowPathTelemetry + WsHeartbeatTelemetry.** The decoupling sprint's
+   shared-memory readers can carve out cache-line-aligned regions
+   knowing the layout is locked. Without these, mmap-mediated GUI/engine
+   separation would need to redo the alignment work + add `alignas`
+   from scratch under unfamiliar coupling constraints.
+
+2. **`CoreContextDisplayMeta` separation (.B.2) creates a NATURAL mmap
+   region boundary.** Display-only fields now live on a sibling array
+   `display_meta[MAX_EXECUTION_CORES]` on EventLoopState. Future
+   decoupling: the GUI process can mmap THAT array read-only without
+   pulling in the per-cycle decision state on `cores[]`. Pre-`.B.2`,
+   display + decision were tangled — extracting them under decoupling
+   pressure would have been a separate sub-sprint.
+
+3. **`sp_telemetry` + `ws_telemetry` clusters (.B.2) ARE the cross-
+   thread synchronization surface for the future.** These are the
+   exact fields the engine writes that a separate GUI process would
+   need to read at ~30-60 Hz. `alignas(64)` ensures the GUI process's
+   reads don't cause cache-line ping-pong on engine's slow-path writes
+   to neighbor fields. This is THE pattern the decoupling sprint
+   inherits.
+
+4. **`CORE_CTX_INIT_AUTOPOPULATE` (.B.7) shrinks the surface area
+   that operates on EventLoopState pointer.** Future engine-process
+   boot becomes registry-driven; the GUI viewer process doesn't need
+   to know HOW the engine inits cores — just where the resulting
+   shared-memory regions live.
+
+5. **`ShardedSnapshot` loop fusion (.B.8) saves ~20 MB/s memory
+   bandwidth at 60 Hz publish — bandwidth that's available for
+   cross-process mmap operations** in the future decoupling.
+   Inter-process shared-memory access goes through the same DRAM bus
+   that the snapshot publisher uses; less GUI thread bandwidth =
+   more headroom for the engine→GUI page faults + write-tracking
+   when separated.
+
+**Concrete decoupling implications:**
+
+| Pre-`.B` surface | Post-`.B` surface | Decoupling readiness |
+|---|---|---|
+| Tangled CoreContext (display + decision in same struct) | Separate `cores[]` (decision) + `display_meta[]` (display-only) sibling arrays | Future GUI process can mmap display_meta read-only without touching cores[] |
+| Implicit alignment via `alignas(64)` on `CoreLatencyStats` (transitive) | Explicit `alignas(64)` on `struct CoreContext` + `static_assert(sizeof%64==0)` + cluster anchor offset asserts | Layout is locked; viewer process can rely on struct shape stability |
+| Cross-thread atomics scattered in CoreContext (sp_*) + EventLoopState (ws_*) | `SlowPathTelemetry` + `WsHeartbeatTelemetry` clusters each on own cache line via alignas(64) | Cross-process read traffic on these clusters is cache-line-bounded |
+| 4 snapshot publisher walks burning ~26 MB/s bandwidth | 1 fused walk burning ~6.5 MB/s | More bandwidth headroom for the future engine→GUI mmap write-tracking |
+| ~50 LOC manual init loop body per slot + ~16 LOC manual reset | One-line `CORE_CTX_{INIT,RESET}_AUTOPOPULATE` call per slot | Registry-driven; can hoist into shared init for headless engine process |
+
+**Updates to readiness checklist (later in this doc):**
+
+- ✅ Engine-side state structs have explicit cache-line alignment
+   (was previously "TBD")
+- ✅ Display-only fields separated from decision fields on EventLoopState
+   (was previously "TBD")
+- ✅ Cross-thread atomic clusters identified + alignas-isolated
+- ✅ Snapshot publisher consolidated to single walk (positions for
+   mmap-mediated zero-copy GUI in future)
+- ⏳ STILL TBD: actually expose `cores[]` / `display_meta[]` via mmap
+   shared-memory region. Pre-decoupling: works in-process. Post-
+   decoupling sprint: viewer process mmap's the regions read-only;
+   engine continues writing locally. The `.B` layout work means this
+   becomes a CONFIG flip + small ipc wrapper, not a refactor.
+
+**Anti-breadcrumbs:** none. Caramel pushed for 100% closure on `.B.7`
+(vs 95%) precisely to avoid leaving anti-breadcrumb residue ("smaller
+scope" deferral that would have left the slow_state arena allocator +
+sibling-struct init at the call site, complicating future decoupling).
+
+The `.B` sub-sprint is the model for how downstream sub-sprints (`.C`
+OrderManagerState, `.D` FlowFeatures, `.E` ConfidenceScorer) should
+unfold — registry-driven structural closures that make EACH sub-sprint
+a positive decoupling breadcrumb.
+
+---
+
 ## Pre-decoupling readiness checklist
 
 Updated after each ship's breadcrumb is added. When all checked, the

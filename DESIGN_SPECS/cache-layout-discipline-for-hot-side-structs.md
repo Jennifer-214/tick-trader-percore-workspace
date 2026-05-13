@@ -399,6 +399,13 @@ When reviewing or designing a struct that's touched per cycle:
 
 | Ship | Surface | Rules applied | Savings |
 |---|---|---|---|
+| v5.15.5.B.1 | CoreContext HOT/WARM/COLD reorg + explicit alignas(64) + 5 static_assert layout locks + CoreSlowState lazy_rebuild hoist | Rules 3 + 4 + 7 (+ ND3 first explicit ref) | per-core L1 footprint 35% → 14%; lazy-rebuild gate ~100 ns/cycle cold-cache saved on ~30-50% of cycles |
+| v5.15.5.B.2 | CoreContextDisplayMeta extraction + SlowPathTelemetry / WsHeartbeatTelemetry alignas clusters (dual X-macro registries) | Rules 1 + 3 + 4 (+ ND1 + ND2 first refs) | CoreContext 17 KB → 7 KB / slot (-58%); ~96-288 µs/sec engine-wide saved on snapshot-publisher cross-thread invalidation |
+| v5.15.5.B.3 | CoreContext.core_state_flags bitmap (5 booleans + 3-byte pad eliminated) | Rule 5 | ~112 B per EventLoopState saved + branchless multi-flag check enabled |
+| v5.15.5.B.5 | SP_SECTION + SESSION_PHASE X-macro registries + branchless SESSION_BY_HOUR[24] table | Rules 4 + 8 | 4-way data-dependent mispredict class eliminated at 3 consumer sites |
+| v5.15.5.B.6 | FOREACH_ROLLING_WINDOW registry for CoreSlowState | Rule 4 (template-parameterized cohort variant) | Structural close of 4-window multi-site init/push sync mirror |
+| v5.15.5.B.7 | FOREACH_CORE_CTX_INIT_FIELD + FOREACH_CORE_CTX_RESET_FIELD + CORE_CTX_{INIT,RESET}_AUTOPOPULATE | Rule 7 (one-line per-slot init/reset) | EventLoopState_Init body 145 LOC → 1 LOC; paper-reset 45 LOC → 1 LOC |
+| v5.15.5.B.8 | ShardedSnapshot publisher 4-walk → 1-walk consolidation | Loop-fusion pattern + Rule 4 | ~20 MB/s memory bandwidth saved at 60 Hz publish (T1 audit close) |
 | v5.15.5 | EnsembleModelZoo per_arm_barriers tight-pack | Rule 2 | ~700 ns/cycle cold cache |
 | v5.15.5 | BanditState arm_names extraction | Rule 1 | ~400 ns/cycle cold cache (per-regime access) |
 | v5.15.5 | BarrierShadowRing.head alignas isolation | Rule 3 | ~100-200 ns per GUI poll avoided |
@@ -407,6 +414,27 @@ When reviewing or designing a struct that's touched per cycle:
 | v5.14.10.0 (precedent) | PerCoreSnap bandit telemetry cluster | Rules 2 + 3 + 4 | 162B / 192B = 84% utilization in 3 cache lines |
 | v5.14.11.B.2 (precedent) | FPN<F> + ThompsonBanditState explicit padding | Rule 3 alternate (byte-equiv context) | extinguished latent bytewise-identity regression class |
 | v5.11.7 (precedent) | Bandit_GetProbabilities AVX-512 | Rule 6 | first reference for SIMD scalar fallback |
+
+### Bandwidth implications (added 2026-05-13 post v5.15.5.B.8)
+
+The latency-savings column above ("~X ns/cycle cold cache") captures
+per-access LATENCY wins. The complementary dimension is memory
+BANDWIDTH — total DRAM traffic across the system. Rules 1, 4, and
+the loop-fusion pattern reduce bandwidth directly:
+
+- **Rule 1** (display-only extraction): post-`.B.2`, ~9.8 KB / slot
+  of display-only data sits on a sibling array, OUT of the per-cycle
+  HOT cluster. At 1000 cycles/sec/core × 16 cores ≈ ~157 MB/s less
+  DRAM traffic from slow-path cycles vs the pre-extraction baseline.
+- **Rule 4** (HOT/WARM/COLD tiering): forward-sequential layout
+  triggers prefetcher engagement — turns scattered cold reads into
+  stream prefetches that saturate FEWER DRAM cycles per useful byte.
+- **Loop fusion** (`loop-fusion-pattern.md`; post-`.B.8`): 3 saved
+  walks × 16 cores × ~7 KB / CoreContext × 60 Hz = ~20 MB/s saved on
+  the snapshot publisher alone. Bandwidth-bound workloads compound.
+
+See `latency-vs-cache-decision-framework.md` § Memory bandwidth costs
+for the framework that quantifies these vs latency-adding choices.
 
 ## Surfaces to audit next (deferred to v5.15.6 / v5.16 cleanup sprint)
 

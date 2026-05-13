@@ -323,11 +323,23 @@ Callers: `if (REGISTRY_HAS(*m, group_x)) ...` instead of touching has_flags dire
 - No presence column (8-col tuple); all entries on all consumers
 - Has STAMP_CFG_AUTOPOPULATE companion (precedent for STAMP_MODEL_CONST_AUTOPOPULATE)
 
+### Second-tier application — multi-axis dispatch (v5.15.5.C.3 Phase 3b)
+
+- Registry: `MemHeaders/OmsFieldRegistry.hpp` — `FOREACH_OMS_FIELD` 8-tuple
+- Extends single-axis presence dispatch to **multi-axis**: RESET_KIND × STORAGE_KIND × PERSIST_KIND
+  - RESET_KIND: `DO_RESET` vs `NO_RESET` (init-only fields stay across paper-reset)
+  - STORAGE_KIND: `SCALAR` / `BIT` / `MULTI_BIT` / `ATOMIC` (dispatches AUTOPOPULATE expansion to the appropriate set/clear primitive)
+  - PERSIST_KIND: `PERSIST` vs `NO_PERSIST` (filter for snapshot v8 wire format; `static_assert(FOREACH_OMS_FIELD_PERSIST_COUNT == 10)` locks wire byte count)
+- Replaces 2 prior registries: `OmsPersistFieldRegistry.hpp` (deleted; absorbed via PERSIST projection) + manual init/reset blocks in `OrderManager.hpp` + `EngineSharded.hpp`
+- Companion macros: `OMS_INIT_AUTOPOPULATE` + `OMS_RESET_AUTOPOPULATE` (see sister `autopopulate-pattern-for-production-caller-class.md` Fifth application)
+- Closes: **PARITY-025 structurally** — OMS field-population class extinct
+- Lesson: when a single registry must serve N orthogonal dispatch axes, encode each axis as a tuple column with a small fixed alphabet; AUTOPOPULATE walks the registry once and uses N nested token-paste dispatches at compile time. Beats N separate registries (single source of truth) + beats one mega-tuple-per-axis (axis additions stay 1 column not N rows)
+
 ### Future application candidates
 
 - `FOREACH_FAILURE_MODE` (v5.14.8.B): observability flags + counters; uses same presence + dispatch pattern with different markers (BIT_FLAG / COUNTER_U32 / PERCENT_U8 storage classes per entry)
 - `FOREACH_PER_CORE_SNAP_FIELD` (TECH_DEBT-011): general visible-state PerCoreSnap fields
-- `FOREACH_OMS_STATE` (TECH_DEBT-012): OrderManagerState fields
+- `FOREACH_OMS_STATE` (TECH_DEBT-012): OrderManagerState fields — **SUPERSEDED by FOREACH_OMS_FIELD above (v5.15.5.C.3 Phase 3b closed this entry)**
 
 ---
 

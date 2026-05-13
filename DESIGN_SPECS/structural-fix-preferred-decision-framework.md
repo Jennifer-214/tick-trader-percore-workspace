@@ -156,6 +156,17 @@ The framework can be MISAPPLIED. Anti-patterns:
 - Pattern: extract shared call-sequence into helper; mirror sites become single helper-call
 - Outcome: Class 18 (mirror-incomplete) extinct for model-load surface
 
+### v5.15.5.C.3 Phase 5.B — ShardedTradeLog helpers (smaller-scale class close)
+
+- Recurrence count: 2-3 sites mirrored (filename format string at 3 sites; dual-write block at 2 sites)
+- Decision: structural fix via two helper extractions, applied at audit time BEFORE commit
+- Helpers:
+  - `ShardedTradeLog_FormatPerCoreFilename(buf, n, symbol, c)` — single source of truth for the per-core filename pattern (used by `_Init`, `_Rotate`, and `EngineSharded_Run` archive copy)
+  - `ShardedTradeLog_WriteRow(log, core_id, row, n)` — single chokepoint for aggregate + per-core mirror dual-write (used by `RecordEntry` + `RecordExit`; closes "next consumer forgets per-core mirror" class for any future `RecordX`)
+- Pattern: prevents the recurrence class FROM FORMING — applied at first-mirror-detection (audit-time) rather than waiting for 3-4 documented recurrences
+- Lesson: when an audit (e.g., pre-commit /merge-scan or design-philosophy review) catches a 2-site mirror in NEW code, the structural fix is cheap (~30 min) and pays the same future-multiplier as later-detection. Apply at audit time; don't wait for the class to recur.
+- Outcome: Class 18 (mirror-incomplete) prevented for the per-core trade-log surface; future RecordX additions cannot drift
+
 ---
 
 ## Lessons / gotchas

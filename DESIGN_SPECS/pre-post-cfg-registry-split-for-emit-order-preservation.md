@@ -231,6 +231,14 @@ Same as parser — population order doesn't affect emit (emit walks halves separ
 
 Most registries WON'T need the split; emit order is internal to the registry. Only when a SISTER registry's emit must interleave does this pattern apply.
 
+### Sibling pattern — registry projection via tuple-column filter (v5.15.5.C.3 Phase 3b)
+
+When the wire-format-byte-preservation discipline (`wire-format-byte-preservation-discipline.md`) must be enforced WITHOUT inter-registry interleaving (i.e., the persisted subset is a contiguous projection of one registry), the PRE/POST split is unnecessary. Instead, use a per-entry `PERSIST_KIND` tuple column + `static_assert(FOREACH_OMS_FIELD_PERSIST_COUNT == N)` to lock wire byte count.
+
+Canonical reference: `MemHeaders/OmsFieldRegistry.hpp` — `FOREACH_OMS_FIELD` walks all OMS fields; PERSIST_KIND column filters to the 10 fields that participate in snapshot v8. Wire format byte count locked structurally; adding a new field requires explicit PERSIST_KIND classification (compile-time enforcement that new fields don't accidentally pollute the wire format).
+
+Choice rule: **PRE/POST split** when emit-order INTERLEAVES with sister registry; **projection** when the emitted subset is a CONTIGUOUS filter of one registry. Both serve the same wire-format-byte-preservation discipline via different X-macro mechanisms.
+
 ---
 
 ## Lessons / gotchas

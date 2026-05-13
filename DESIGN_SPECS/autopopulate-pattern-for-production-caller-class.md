@@ -210,6 +210,15 @@ Both cfg-bound + architectural stamp body fields are now AUTOPOPULATE-driven. Fu
 - Production callers: `EventLoopState_Init` (boot init via `CORE_CTX_INIT_AUTOPOPULATE`) + paper-reset path in `EngineSharded.hpp` (via `CORE_CTX_RESET_AUTOPOPULATE`)
 - Closes: 100% of the per-core init/reset Class-18 mirror — adding a new per-core field that needs init/reset is ONE row in the appropriate registry; future per-core "per-session counter" additions touch ONE row + the operator MUST consciously decide "does this reset between sessions?" at registry-add time
 
+### Fifth application: OMS_INIT_AUTOPOPULATE + OMS_RESET_AUTOPOPULATE (v5.15.5.C.3 Phase 3b) — MULTI-AXIS DISPATCH
+
+- Registry: `MemHeaders/OmsFieldRegistry.hpp` (canonical 8-tuple FOREACH_OMS_FIELD with axes RESET_KIND × STORAGE_KIND × PERSIST_KIND)
+- Companion macros: `OMS_INIT_AUTOPOPULATE(oms_ptr, starting_balance)` + `OMS_RESET_AUTOPOPULATE(oms_ptr, starting_balance)`
+- Production callers: `CoreFrameworks/OrderManager.hpp` (boot init) + `CoreFrameworks/EngineSharded.hpp` paper-reset path
+- Sister registry absorbed via PERSIST projection: prior `OmsPersistFieldRegistry.hpp` (deleted); FOREACH_OMS_FIELD with PERSIST_KIND filter is now the single source of truth for snapshot v8 wire format (`static_assert(FOREACH_OMS_FIELD_PERSIST_COUNT == 10)`)
+- Closes: **PARITY-025 structurally** — eliminates the OMS field-population mirror class at production-caller level (Init + Reset paths cannot drift; both walk the same registry)
+- Dispatch via per-field KIND markers in the tuple: `BIT` flags route to `BITMAP_SET` / `BITMAP_CLR`; `MULTI_BIT` slots route to `MBS_SET_*` (see sister `multi-bit-state-encoding-pattern.md` — first canonical multi-bit application via `EVENT_LOG_MODE`); scalar fields route to direct assignment
+
 ### Multi-target dispatch — pattern variant
 
 The first 3 applications above are **single-target** AUTOPOPULATE companions: ONE production caller invokes the macro to populate ONE struct from ONE source.

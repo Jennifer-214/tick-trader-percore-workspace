@@ -974,3 +974,65 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 - **Trigger:** Address (a) when a focused multi-bit applications sub-sprint is scheduled (likely after .C.3 + .C.4 OMS work completes; v5.15.5.F or v5.16); (b) when adding a new K-state field that has K=2-16 sibling cohort fields within the same record (the cohort audit rule from CLAUDE.local.md 2026-05-11 triggers); (c) when memory pressure on EventLoopState becomes a bottleneck.
 - **Status:** OPEN
 - **Cross-ref:** `DESIGN_SPECS/multi-bit-state-encoding-pattern.md` (the design + candidate inventory + 10-item implementation checklist + decision tree + cost-benefit table); `MemHeaders/OmsExitPredictorMetaRegistry.hpp` (first field-tested application; v5.15.5.C.2.1 commit `097f91f`); CLAUDE.local.md "Going-forward rule: prefer multi-bit state encoding for K-state fields (set 2026-05-13)"; CLAUDE.md item 20 (per-record packing discipline) + item 28 (latency-vs-cache framework) + item 13 (X-macro registry).
+
+### TECH_DEBT-042 — Registry-driven multi-bit slot overlap static_asserts (OmsStateFlagRegistry hybrid layout)
+
+- **Created:** 2026-05-13 by /dod-audit MEDIUM-1 on commit `d410525` (v5.15.5.C.3 Phase 3b checkpoint)
+- **Severity:** MEDIUM
+- **Surface:** `MemHeaders/OmsStateFlagRegistry.hpp:190-209`
+- **What's deferred:** EVENT_LOG_MODE slot overlap static_asserts are NAMED-EXPLICIT (3 asserts hand-rolled per slot); adding a 2nd multi-bit slot to `FOREACH_OMS_STATE_MULTI_BIT` requires hand-writing parallel asserts. Class-18 mirror at compile-time-check level — the registry currently generates `MASK_OMS_STATE_<name>` + `SHIFT_OMS_STATE_<name>` + `BITS_OMS_STATE_<name>` constants but NOT the safety asserts. Header comment line 190 acknowledges this with "extend with similar checks per added slot". A 4th X-macro consumer (`X_GEN_OMS_STATE_MULTI_BIT_OVERLAP_CHECK`) can auto-generate per-slot overlap pair-asserts via `FOREACH_OMS_STATE_MULTI_BIT(X)` walking the registry: single-bit-region overlap + uint8_t capacity + (for pairwise inter-slot overlap) a running `_OMS_STATE_MULTI_BIT_REGION` bitmask via the walk.
+- **Why deferred (not effort-avoidance):** single multi-bit slot today (EVENT_LOG_MODE); deferral cost is one missed-pattern-application; trigger fires at 2nd multi-bit slot addition. Current hand-rolled asserts ARE complete + correct for the 1-slot state; structural fix is preventative.
+- **Cost estimate:** ~30 min (8-15 LOC X_GEN_OMS_STATE_MULTI_BIT_OVERLAP_CHECK macro + verify all 3 asserts still fire with current data).
+- **Trigger:** (a) next addition to `FOREACH_OMS_STATE_MULTI_BIT` (or first cross-registry multi-bit cohort pattern application introducing a 2nd slot); (b) any 2nd consumer of `FOREACH_OMS_STATE_MULTI_BIT` that requires similar overlap guarantees.
+- **Status:** OPEN
+- **Cross-ref:** `DESIGN_SPECS/multi-bit-state-encoding-pattern.md` Implementation Checklist; CLAUDE.md item 13 (X-macro registry), item 19 (structural fix preferred for recurring class); `plans/plan_checks/dod-audit-2026-05-13-v5.15.5.C.3-phase3b.md` MEDIUM-1.
+
+### TECH_DEBT-043 — OmsExitPredictorMetaRegistry custom OMS_META_* duplicates generic MBS_* primitives
+
+- **Created:** 2026-05-13 by /dod-audit LOW-1 on commit `d410525` (v5.15.5.C.3 Phase 3b checkpoint)
+- **Severity:** LOW
+- **Surface:** `MemHeaders/OmsExitPredictorMetaRegistry.hpp:126-149` (OMS_META_GET_REGIME / OMS_META_GET_ARM / OMS_META_IS_VALID / OMS_META_PACK / OMS_META_CLEAR)
+- **What's deferred:** `OmsExitPredictorMetaRegistry.hpp` (v5.15.5.C.2.1) shipped the FIRST multi-bit application with custom domain-specific accessors. Phase 3b adds generic `MBS_GET_U8` / `MBS_SET_U8` / `MBS_EQ_U8` primitives in `BitmapMacros.hpp` that supersede the domain-specific shorthand. `OMS_META_*` macros are functionally equivalent to `MBS_*` but pre-date the generic API. No bug; duplicated mechanism (CLAUDE.md item 16 reuse-audit principle). Future K-state slot additions should use generic `MBS_*` directly; `OMS_META_*` could migrate to thin convenience aliases or be removed.
+- **Why deferred (not effort-avoidance):** functional equivalence; no bug; pure reuse-audit cleanup. Existing `OMS_META_*` consumers work correctly; migration is style + DRY consistency, not load-bearing.
+- **Cost estimate:** ~1-2h (4 macros to rewrite as thin wrappers over `MBS_*_U8` + verify all 4-6 consumer sites compile / produce identical bytes / pass round-trip tests).
+- **Trigger:** (a) next edit to `MemHeaders/OmsExitPredictorMetaRegistry.hpp` (extending the layout); (b) next edit to its accessor consumers (drainer HandleFill attribution + slow-path submit-time write); (c) focused reuse-audit cleanup sub-sprint.
+- **Status:** OPEN
+- **Cross-ref:** `DESIGN_SPECS/multi-bit-state-encoding-pattern.md` (canonical generic API); CLAUDE.md item 16 (reuse-audit principle); `MemHeaders/BitmapMacros.hpp:192-195` (header doc acknowledges pre-existing first application); `plans/plan_checks/dod-audit-2026-05-13-v5.15.5.C.3-phase3b.md` LOW-1.
+
+### TECH_DEBT-044 — OMS_PROJECT_INIT_BIT / RESET_BIT use if/else; branchless mask-select for consistency with item 18(a)
+
+- **Created:** 2026-05-13 by /dod-audit LOW-2 on commit `d410525` (v5.15.5.C.3 Phase 3b checkpoint)
+- **Severity:** LOW
+- **Surface:** `MemHeaders/OmsFieldRegistry.hpp:371-375` (OMS_PROJECT_INIT_BIT) + `:410-414` (OMS_PROJECT_RESET_DO_RESET_BIT)
+- **What's deferred:** BIT-kind init/reset macros use data-dependent branch on init/reset value (`if ((int)(init)) field |= mask; else field &= ~mask;`). Branchless variant via `mask_val = -(int)!!init & mask; field = (field & ~mask) | mask_val` would be consistent with codebase's branchless mask discipline per CLAUDE.md item 18(a). Compiler likely cmov's the original form for the predictable boot-time path → zero measurable perf impact; style/consistency cleanup.
+- **Why deferred (not effort-avoidance):** boot-only paths (zero measurable perf — branch fires few times per boot, predictable, cmov'd by compiler); style/consistency only. Branchy form is also more readable for OR-or-CLR semantics; branchless variant trades readability for instruction-count discipline.
+- **Cost estimate:** ~5 min (2-line macro rewrite each × 2 macros = ~8 LOC).
+- **Trigger:** (a) next AUTOPOPULATE-shape pattern application running at non-boot cadence (slow-path AUTOPOPULATE, hot-path AUTOPOPULATE); (b) /dod-audit or /merge-scan surfaces this site in a per-cycle context; (c) codebase-wide branchless-discipline sweep.
+- **Status:** OPEN
+- **Cross-ref:** CLAUDE.md item 18(a) (branchless mask compute), item 28 (latency-vs-cache framework); `DESIGN_SPECS/latency-vs-cache-decision-framework.md` Rule 2 "Prefer branchless over data-dependent branches"; `plans/plan_checks/dod-audit-2026-05-13-v5.15.5.C.3-phase3b.md` LOW-2.
+
+### TECH_DEBT-045 — Phase 7.B runtime bench gate integration (template-dispatch wrappers + N instrumented sites + TUI surface)
+
+- **Created:** 2026-05-13 by v5.15.5.C.3 Phase 7.A close (cfg + LatencyHistogram substrate shipped; integration deferred to focused follow-up)
+- **Severity:** LOW (operator-facing feature; substrate complete; integration is mechanical wiring + TUI display)
+- **Surface:**
+  - `MemHeaders/LatencyHistogram.hpp` — primitive shipped (Phase 7.A: struct + accumulate + reset + percentile + tests)
+  - `CoreFrameworks/ControllerConfig.hpp` — `cfg.oms_bench_enabled` flag shipped (Phase 7.A; default 0)
+  - `CoreFrameworks/EngineSharded.hpp` — boot-time template dispatch NOT YET WIRED
+  - Instrumented sites NOT YET WIRED:
+    - `OrderManager_Tick<F, BENCH>` (wrap existing `OrderManager_Tick_Body`)
+    - `OMS_DrainSubmit<F, BENCH>` (wrap existing drain submit body)
+    - `DrainPostFill<F, BENCH>` per-fill timing inside the close-mask loop
+  - TUI surface NOT YET WIRED: 1-line stderr / TUI bench histogram readout per snapshot publish (BENCH=true only; BENCH=false has zero TUI bench output by compile-time elision)
+- **Context:** v5.15.5.C.3 Phase 7.A shipped the SUBSTRATE for runtime bench gate per `DESIGN_SPECS/runtime-toggleable-bench-gate-pattern.md`. The cfg flag has NO observable effect today; integration requires:
+  1. Template `<unsigned F, bool BENCH>` propagation through `EngineSharded_Run` → drainer loop → instrumented call sites
+  2. Boot-time dispatch in EngineSharded_Run wrapper: `if (cfg.oms_bench_enabled) EngineSharded_Run<F, true>(...) else EngineSharded_Run<F, false>(...)`
+  3. Per-site bench bracket: `if constexpr (BENCH) { uint64_t t0 = __rdtsc(); body(); hist.accumulate(__rdtsc() - t0); } else { body(); }`
+  4. Histogram allocation site: either on OrderManagerState (COLD cluster sub-cluster) or as static thread_local globals per drainer thread
+  5. TUI surface: snapshot publisher reads histograms + emits p50/p99/max line via `LatencyHistogram_Percentile` helper
+- **What's deferred:** All 5 items above (template propagation, boot dispatch, per-site brackets, histogram allocation, TUI surface).
+- **Why deferred (not effort-avoidance):** v5.15.5.C.3 already covers 8 phases of substantial work (canonical OMS registry refactor + MULTI_BIT + per-strategy emit + per-trade regime + paper-reset archive + per-slot macro consolidation). Phase 7.B integration is mechanical wiring once substrate is in place; deferral lets Phase 7.A ship the foundation cleanly + lets Phase 7.B be a focused ~1-2h follow-up that's easy to audit. Compose-with patterns from the design spec (AUTOPOPULATE for N-site instrumentation, multi-bit bench mode encoding, per-core bench enable) become opt-in extensions during Phase 7.B design.
+- **Cost estimate:** ~1-2h (template propagation + 3 instrumented sites + TUI line + integration tests).
+- **Trigger:** (a) operator wants to flip `cfg.oms_bench_enabled=1` and see latencies (USER demand); (b) paper-test cadence tightens enough that visibility into slow-path latency matters; (c) specific latency regression investigation needs in-binary bench (avoids rebuild cycle); (d) maker-order ship (v6.0) where slow-path latency is operator-tunable.
+- **Status:** OPEN
+- **Cross-ref:** `MemHeaders/LatencyHistogram.hpp` (Phase 7.A substrate); `DESIGN_SPECS/runtime-toggleable-bench-gate-pattern.md` (full design + 7 composition options); `CoreFrameworks/ControllerConfig.hpp` `oms_bench_enabled` field; CLAUDE.md item 18 (compile-time elision); CLAUDE.md item 25 (cross-thread cluster isolation); CLAUDE.md item 28 (latency-vs-cache framework).

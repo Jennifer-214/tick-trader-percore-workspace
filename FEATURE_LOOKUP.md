@@ -789,3 +789,96 @@ When something seems wrong, check these in order:
    `thompson_state.json` should grow + sync to disk
 7. **Slow-path log** (when verbose enabled) — rebuild cycles,
    ridge solves, hot-swap events
+
+---
+
+### paper-reset archive flow (v5.15.5.C.3+)
+
+**What:** When operator triggers "Reset Paper" in paper mode, the prior session's state is captured into a timestamped archive directory BEFORE the OMS resets. Each archive contains a full snapshot + trade-log copy + summary.json, enabling date-range session review + per-strategy aggregation across completed sessions.
+
+**Cfg flags:** None — paper-reset archive is always-on for paper mode (no operator opt-out; cost bounded — fopen + ~few MB write per reset; reset events rare).
+
+**Fallback:** If `data/paper_resets/` mkdir fails (disk full, permission denied), CRITICAL message logs to stderr and the reset proceeds WITHOUT archive. Production behavior unaffected; OMS_RESET_AUTOPOPULATE wipe always succeeds.
+
+**Where to verify:** After triggering "Reset Paper":
+- `ls -la data/paper_resets/` — new dir named `{start_iso}_to_{end_iso}.paper/`
+- `data/paper_resets/{dirname}/snapshot.dat` — full ShardedSnapshot_Save (binary)
+- `data/paper_resets/{dirname}/trades.csv` — copy of `logging/SYMBOL_order_history.csv` at reset time (aggregate)
+- `data/paper_resets/{dirname}/trades/core_<N>.csv` — Phase 5.B+ per-core mirror copies (1 file per execution core that had trade activity; `<dirname>/trades/` subdir created at archive time)
+- `data/paper_resets/{dirname}/summary.json` — JSON with 5 sections: `session` / `global` / `per_core[]` / `per_strategy[]` / `per_regime[]` (per_regime empty `[]` placeholder; per-regime aggregation is a separate follow-up — Phase 5.B per-core CSV split shipped 2026-05-13 but it splits BY CORE, not by regime; per-trade regime data is in `regime` + `regime_name` columns of every CSV)
+- Engine stderr: `[archive] paper-reset session archived: <dirname>`
+
+**Paper-test sanity:**
+1. Run engine in paper mode ≥ 1 minute (let trades fill).
+2. Click "Reset Paper".
+3. Verify `data/paper_resets/` has new directory.
+4. `cat .../summary.json | jq` — pretty-prints 5 sections.
+5. Verify `summary.json.global.balance_end` matches balance immediately before reset.
+6. Verify `summary.json.per_core[].entries` array length == num_cores.
+
+**Gotchas:**
+- Archive dirname uses ISO `YYYY-MM-DD-HHMMSS` format. Same-second resets would collide.
+- `paper_session_start_us` is captured BEFORE OMS_RESET_AUTOPOPULATE wipes it. Layer ordering documented at EngineSharded.hpp paper-reset block.
+- `trades.csv` is a COPY (not rename) — live trade log unaffected; `ShardedTradeLog_Rotate` creates its own `logging/`-side backup separately. 2 trade-log copies per reset (aggregate + per-core); acceptable cost.
+- Per-core archive copies (`trades/core_<N>.csv`) added v5.15.5.C.3 Phase 5.B (2026-05-13). Per-core source filename built via `ShardedTradeLog_FormatPerCoreFilename` (same helper used by `_Init` + `_Rotate`); local `copy_file` lambda deduplicates the aggregate + per-core fread/fwrite loops.
+- `per_regime[]` is still empty after Phase 5.B (per-core CSV split splits BY CORE, not by regime). A per-regime aggregator that scans the trades.csv `regime_name` column post-archive is a separate follow-up. Per-trade regime data IS in the CSV (Phase 5.A added `regime` + `regime_name` columns).
+
+**Related:** `OmsFieldRegistry.hpp` (paper_session_start_us field), `PaperResetArchive.hpp` (Summary_WriteJson + dirname/mkdir helpers), `CoreCtxSummaryFieldRegistry.hpp` (per_core + per_strategy emission), `EngineSharded.hpp` paper-reset block (orchestration), `ShardedTradeLog.hpp` (per_core_files[] + helpers; Phase 5.B), TECH_DEBT-045 (Phase 7.B integration tied to bench gate, not paper-reset).
+
+---
+
+### per-core trade log mirror files (v5.15.5.C.3 Phase 5.B+)
+
+**What:** Each fill row in the trade log is written to BOTH the aggregate `logging/SYMBOL_order_history.csv` (GUI/TradeReader reads this; unchanged) AND a per-core mirror file `logging/SYMBOL_core_<N>_order_history.csv` (N = 0..MAX_EXECUTION_CORES-1). Per-core files enable per-core trade analysis without parsing the aggregate. Per-core file is selected by the fill event's `core_id`.
+
+**Cfg flags:** None — per-core mirror is always-on (no operator opt-out; cost bounded — 1× extra fwrite per fill event on slow-path drainer thread). MAX_EXECUTION_CORES = 16 caps the file count well under any FILE* limit.
+
+**Fallback:** If a per-core file fails to open (mkdir issue, fd exhaustion), its slot in `per_core_files[c]` stays nullptr; subsequent fills with that core_id skip the per-core write. Aggregate file always serves the trade log — failure is silent + non-fatal. The aggregate file is the canonical source for any consumer that does not need per-core breakdown.
+
+**Where to verify:**
+- `ls -la logging/SYMBOL_*` after a paper-test session — should show 1 aggregate + N per-core files (assuming N cores fired ≥ 1 fill each)
+- `head -2 logging/SYMBOL_core_0_order_history.csv` — first line `# v3 sharded engine (per-core mirror; core=0) ...`; second line column header
+- `awk -F, 'NR>2 && $2==0' logging/SYMBOL_order_history.csv | wc -l` (rows where core_id column = 0) should match `tail -n+3 logging/SYMBOL_core_0_order_history.csv | wc -l`
+- Tests: `tests/controller_test.cpp` "v5.15.5.C.3 Phase 5.B" block (8 tests covering Init opens all per-core files, RecordEntry mirrors to correct per-core file, per-core file isolation, aggregate completeness)
+
+**Paper-test sanity:**
+1. Run engine in paper mode ≥ 5 minutes (let trades fill across multiple cores).
+2. `ls -la logging/SYMBOL_*` — 1 aggregate + ≥ 1 per-core file visible.
+3. `head -3 logging/SYMBOL_core_0_order_history.csv` — # comment header + column row + first fill (event_type=E or X, core_id=0).
+4. Spot-check: pick any per-core file N; verify every row's `core_id` column equals N (`awk -F, 'NR>2 && $2!=N' file` should print 0 rows).
+5. Aggregate completeness: row count of aggregate (minus 2 header lines) should equal sum of all per-core rows (minus 2 header lines per per-core file).
+6. Trigger "Reset Paper" — verify `data/paper_resets/<dirname>/trades/core_<N>.csv` per-core archive copies created alongside `<dirname>/trades.csv`.
+
+**Gotchas:**
+- Per-core files are append-mode (`fopen("a")`) — re-running the engine appends to existing per-core CSVs unless deleted or rotated. Matches the aggregate file behavior.
+- `ShardedTradeLog_Rotate` (Reset Paper trigger) renames both aggregate AND all per-core files with the same `YYYYMMDD-HHMMSS` timestamp suffix.
+- Per-core files are bounded at MAX_EXECUTION_CORES (16). If the engine is configured for fewer cores (e.g., 4), the extra per-core files exist but stay empty (header-only) — best-effort fopen but no writes.
+- Future operator scripts that read `logging/` should treat per-core files as ADDITIVE — the aggregate file remains the canonical trade history.
+- Per-core filename + write are both routed through helpers (`ShardedTradeLog_FormatPerCoreFilename` + `ShardedTradeLog_WriteRow`). Adding a new RecordX function (e.g., `RecordPartialFill`) MUST call `ShardedTradeLog_WriteRow` to maintain mirror discipline — closes Class-18 mirror at the dual-write level structurally.
+
+**Related:** `ShardedTradeLog.hpp` (struct + 2 NEW helpers Phase 5.B; RecordEntry / RecordExit delegate to WriteRow), `EngineSharded.hpp` paper-reset archive (per-core copy block; local `copy_file` lambda; uses `FormatPerCoreFilename`), `TradeLogColRegistry.hpp` (FOREACH_TRADE_LOG_COL — same column shape for both aggregate + per-core files), paper-reset archive flow entry above (per-core files are mirrored into `<dirname>/trades/`).
+
+---
+
+### runtime bench gate cfg flag (v5.15.5.C.3+; substrate only, Phase 7.B integration pending)
+
+**What:** Operator-facing cfg flag `oms_bench_enabled` that will (in Phase 7.B follow-up) enable runtime per-cycle latency histograms via boot-time template dispatch. Today (Phase 7.A) the flag is shipped as substrate — cfg field is parsed + defaulted to 0, `LatencyHistogram.hpp` primitive is available — but NO instrumented sites are wired yet.
+
+**Cfg flags:**
+- `oms_bench_enabled=0` (default; production; zero cost when off via Phase 7.B compile-time elision)
+- `oms_bench_enabled=1` (bench mode; Phase 7.B integration pending; flag has NO observable effect today)
+
+**Fallback:** N/A (cfg flag has no behavior wired yet).
+
+**Where to verify (Phase 7.A only):**
+- `cfg.oms_bench_enabled` field accepts `oms_bench_enabled=1` in engine.cfg
+- ControllerConfig_Default sets to 0 (verified in test block)
+- `LatencyHistogram.hpp` primitive: bucket index, Reset, Accumulate, Percentile all unit-tested
+
+**Paper-test sanity (Phase 7.A only):** Flag has no observable effect. Phase 7.B adds:
+- TUI/stderr line `[OMS_BENCH] tick p50=...ns p99=...ns max=...µs` per snapshot publish
+- Per-cycle measurement via `__rdtsc` at 3 instrumented sites (OMS_Tick / OMS_DrainSubmit / DrainPostFill)
+
+**Gotchas:** Phase 7.A is SUBSTRATE only. Flag flip has no observable effect TODAY. Phase 7.B integration tracked as `TECH_DEBT-045`.
+
+**Related:** `MemHeaders/LatencyHistogram.hpp` (primitive), `ControllerConfig.hpp` (cfg field + parser), `DESIGN_SPECS/runtime-toggleable-bench-gate-pattern.md` (full design + 7 composition options), TECH_DEBT-045 (Phase 7.B trigger ledger).

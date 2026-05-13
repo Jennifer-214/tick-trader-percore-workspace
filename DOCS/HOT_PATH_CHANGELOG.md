@@ -766,3 +766,90 @@ Per CLAUDE.md item 17 latency-additions discipline: this entry NEGATIVE-cost
 (saves cycles + bandwidth, doesn't add). The wins compound with v5.12-era
 slow-path discipline (lazy-rebuild, WS-staleness branchless gate) — slow-path
 budget tightens cleanly as the sprint progresses.
+
+## v5.15.5.C.3 Phase 6 — paper-reset archive flow (event-boundary one-shot)
+
+**Surface added:** `CoreFrameworks/EngineSharded.hpp` paper-reset block — ~80 LOC archive flow BEFORE OMS reset:
+- `PaperResetArchive_FormatDirname` + `PaperResetArchive_CreateDirectories` (mkdir -p; one shot per reset)
+- `ShardedSnapshot_Save` → `data/paper_resets/<dirname>/snapshot.dat` (existing API; ~few-MB write)
+- Trade log COPY via fread/fwrite 4 KB-buffer loop (~few-MB read+write)
+- `Summary_WriteJson` → `data/paper_resets/<dirname>/summary.json` (~few hundred fprintf calls × 16 cores ≈ ~5 ms)
+
+**Path cadence:** paper-reset is operator-initiated — fires once per session boundary (minutes-to-hours between resets). NOT per-tick, NOT per-cycle. OUTSIDE the slow-path budget — disk-bound one-shot amortized to zero across the running session.
+
+**Cost per reset event:** ~50-200 ms (bounded; rare). `mkdir -p` (~1-5 ms; EEXIST fast-path after first) + snapshot save (~few ms) + trade log copy (~50-100 ms for typical ≤ 10 MB log) + summary.json emit (~5 ms).
+
+**Branchless analysis:** N/A — archive work gated on `g_shared.paper_reset_requested && !cfg.use_real_money`. Branch predicted-not-taken in steady state (paper-reset rare); cost amortizes to zero.
+
+**Cache impact:** Archive code touches COLD-cluster OMS fields (balance, total_fees, ks_peak_balance) which the slow-path doesn't load every cycle. One-shot cold-line loads per reset; negligible.
+
+**FUTURE optimization paths (when budget tightens):**
+- Decouple archive work to a separate ARCHIVE thread via SPSC ring queue. Trigger: paper-reset blocking time becomes operator-visible (>500 ms).
+- `sendfile()` / `splice()` zero-copy for trade log copy. Trigger: trade log files routinely exceed 50 MB.
+- `O_DIRECT` snapshot writes to bypass page cache. Trigger: paper-reset competes with WS read traffic on disk bandwidth.
+
+**Per CLAUDE.md item 17:** OUTSIDE slow-path budget (operator-initiated event boundary; not per-tick). Documented for completeness; future archive optimization work cites this entry.
+
+## v5.15.5.C.3 Phase 5.B — hybrid per-core trade-log split (drainer cadence; rare-event additive)
+
+**Surface added:** `CoreFrameworks/ShardedTradeLog.hpp` per-core mirror file array — each fill row written to BOTH the existing aggregate file AND `per_core_files[event.core_id]`. New helpers:
+- `ShardedTradeLog_FormatPerCoreFilename(buf, n, symbol, core_id)` — single source of truth for `"logging/%s_core_%d_order_history.csv"` (Class-18 mirror close: format string at 3 sites prior → 1 helper)
+- `ShardedTradeLog_WriteRow(log, core_id, row, n)` — single chokepoint for aggregate write + per-core mirror + row_count bump (Class-18 close at dual-write level: future RecordX consumers cannot forget per-core mirror)
+
+Additionally, `EngineSharded_Run` paper-reset archive flow extended — per-core trade-log files copied to `<dirname>/trades/core_<N>.csv` alongside the existing aggregate `<dirname>/trades.csv`. Local `copy_file` lambda deduplicates the fread/fwrite loop.
+
+**Path cadence:** Trade-log writes fire on the slow-path drainer thread (per fill event), NOT per-tick. Fills are rare (≤ 10% of slow-path cycles at typical strategy fire rate). Paper-reset archive copy is event-boundary one-shot.
+
+**Cost per fill event:** ~1× extra fwrite (2× total: aggregate + `per_core_files[core_id]`). Each fwrite ~50-200 ns at line-buffered stdio + trailing-newline flush. Branch + bounds-check on per-core gate: ~1-2 ns. Total added ~50-200 ns per fill event. Negligible vs strategy cadence (fills rare; budget loose).
+
+**Branchless analysis:** Per-core mirror write gated on `(unsigned)core_id < (unsigned)MAX_EXECUTION_CORES && per_core_files[core_id] != nullptr` — canonical branchless-bounds-check idiom via `(unsigned)` cast (single comparison handles negative + overflow). Short-circuit branch on nullptr check; predicted-taken in steady state (all per-core files open after _Init).
+
+**Cache impact:** `per_core_files[MAX_EXECUTION_CORES]` is 128 bytes (2 cache lines) embedded in `ShardedTradeLog` struct. Slow-path only; no cross-thread access. Drainer thread loads the array once per fill; one cold cache-line load amortizes across the dual-write.
+
+**FUTURE optimization paths (when budget tightens):**
+- Drop the aggregate file entirely and merge per-core reads in TradeReader. Trigger: GUI/TradeReader migration to per-core consumer (deferred follow-up per Phase 5.B struct comment).
+- `O_DIRECT` per-core writes when aggregate file becomes append-only-on-shutdown via TradeReader merge.
+- Cache `per_core_files[core_id]` pointer in TradeEvent at hot-path produce time (avoids one indirection per drain). Trigger: drainer p99 budget binding.
+
+**Refactor net (structural fixes per CLAUDE.md item 19):** The two NEW helpers close 2 Class-18 mirror classes structurally — format-string drift at 3 sites + dual-write-forgotten-by-next-consumer class. Adding a 4th RecordX consumer (RecordPartialFill, etc.) requires calling `ShardedTradeLog_WriteRow`; per-core mirror behavior cannot be forgotten by construction.
+
+**Per CLAUDE.md item 17:** Slow-path drainer additive — ~50-200 ns per rare fill event + 1-2 ns per per-core-write branch evaluation. Aggregate slow-path budget impact <0.01% (fills rare; budget 100 μs / cycle).
+
+## v5.15.5.C.3 Phase 8 — OMS_RESET_PER_SLOT_EXIT_PREDICTOR shared macro (drainer cadence; net zero change)
+
+**Surface added:** `MemHeaders/OmsExitPredictorMetaRegistry.hpp` macro extracted from `CoreFrameworks/ControllerEventLoop.hpp` DrainPostFill site. Same 3 ops; just centralized in one definition.
+
+**Macro body:**
+```cpp
+do {
+    BITMAP_CLR((oms)->last_exit_predicted_bitmap, BITMAP_BIT_U16(slot));  // 1 AND-NOT + 1 store
+    (oms)->last_exit_predicted_p[(slot)] = 0.0;                            // 1 zero store
+    OMS_META_CLEAR((oms)->last_exit_predicted_meta[(slot)]);               // 1 byte zero store
+} while (0)
+```
+
+**Path cadence:** DrainPostFill runs on slow-path drainer cadence (per fill processed). Fills rare in steady state (per-cycle entry/exit at strategy fire rate, typically ≤ 10% of slow-path cycles).
+
+**Cost per invocation:** ~3 single-cycle ops (AND-NOT + 2 zero stores; sub-cycle on modern superscalar via parallel execution ports). ~1 cycle / fill / slot processed. Negligible.
+
+**Branchless analysis:** Inside macro all 3 ops branchless. Caller's `if (slot < MAX_PORTFOLIO_POSITIONS)` bounds-check is branchy but predicted-taken (slot always valid in DrainPostFill iteration).
+
+**Cache impact:** 3 fields co-located in COLD cluster (per v5.15.5.C.2 / C.2.1 layout). Single cache-line load amortizes the 3 ops.
+
+**Refactor net:** Pre-Phase-8 the 3-line sequence appeared at 2+ sites without shared abstraction (Class-18 mirror per /merge-scan MEDIUM-1). Post-Phase-8 one canonical macro. Adding a 4th per-slot exit-predictor state field expands ONE macro definition (Class-18 closure).
+
+**Per CLAUDE.md item 17:** NO net latency change — same 3 ops; byte-equivalent assembly. Documented for completeness.
+
+## v5.15.5.C.3 Phase 5.B + 6 + 8 latency discipline summary
+
+All additions sit OUTSIDE the hot path (≤ 500 ns p99 target per CLAUDE.md). Phase 6 is event-boundary one-shot (paper-reset; minutes-to-hours cadence). Phase 8 is drainer-cadence macro REPLACING existing inline code (no net cycle change). Phase 5.B adds a drainer-cadence per-fill dual-write — additive but rare-event bounded.
+
+Slow-path budget at v5.15.5.C.3 close: bounded by v5.12-era discipline (lazy-rebuild + WS-staleness branchless gate) + v5.15.5.B's CoreContext cluster reorg + this sprint's OMS canonical registry + AUTOPOPULATE collapse. Each new addition either:
+- (a) amortizes to zero per-cycle (Phase 6 one-shot),
+- (b) replaces existing code with byte-equivalent shared abstraction (Phase 8),
+- (c) is COMPILE-TIME ELIDED in production (Phase 7.A LatencyHistogram substrate; instrumented sites land in Phase 7.B as `if constexpr (BENCH=false)` discarded),
+- (d) is additive but rare-event bounded (Phase 5.B drainer-cadence dual-write at fill rate; ≤ 10% of slow-path cycles).
+
+**Sprint-net:** ZERO additional steady-state slow-path latency from (a)/(b)/(c). Phase 5.B (d) is bounded by fill rate; aggregate slow-path budget impact <0.01%. New disk I/O bounded to operator-initiated event boundaries (Phase 6) + rare fill events (Phase 5.B).
+
+No new entries needed for: Phase 3b (refactor; byte-equivalent OMS init/reset semantics via registry-driven dispatch); Phase 4 (CoreCtxSummaryFieldRegistry — emits at archive-flow site, NOT hot/slow path); Phase 5.A (regime + regime_name columns appended at trade-emit time; per-trade work was already bounded by snprintf truncation guard).

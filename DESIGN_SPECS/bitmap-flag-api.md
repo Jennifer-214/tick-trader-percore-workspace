@@ -249,6 +249,21 @@ For observability flags (which is the typical use case), there's no happens-befo
 
 These predate BitmapMacros.hpp; future maintenance can migrate to use the API.
 
+### Second-tier application — hybrid storage classes (v5.15.5.C.3 Phase 3b)
+
+- Registry: `MemHeaders/OmsStateFlagRegistry.hpp` — `oms_state_flags` bitmap field on `OrderManagerState`
+- First application of HYBRID storage in the same word:
+  - `BIT` kind (1 bit): `LIVE_TRADING`, `PARTIAL_EXIT_ENABLED`, `KILL_SWITCH_TRIPPED`
+  - `MULTI_BIT` kind (N bits): `EVENT_LOG_MODE` (2-bit slot) — first canonical
+    multi-bit-state-encoding-pattern application (see sister doc)
+- Companion macros: `OMS_INIT_AUTOPOPULATE` + `OMS_RESET_AUTOPOPULATE` walk the
+  registry and emit per-flag init/reset via `BITMAP_SET` (BIT) or `MBS_SET_*`
+  (MULTI_BIT) dispatching on the per-entry KIND column
+- Lesson: a single bitmap word can hold MIXED storage classes (1-bit flags
+  alongside N-bit slots) when the registry tuple includes a per-entry KIND
+  marker — closes the "different storage kinds need different containers"
+  anti-pattern
+
 ### TECH_DEBT-013 sweep candidates (explicit triggers)
 
 | Site | Flag count today | Bit-pack target | Trigger |

@@ -293,6 +293,10 @@ For one-off boot/test structs, size-descending is still a free habit. Skip the `
 
 ---
 
+## Related spec for the array case
+
+The 5 prerequisites above cover SINGLE-ELEMENT struct access. When the struct lives in an ARRAY and hot path iterates sparsely (bitmap-driven, subset-of-fields per element), additional alignment discipline applies. See `hot-side-array-element-alignment-for-sparse-access.md` (v5.15.5.C.5) — the sister spec extending prerequisite 3 (struct itself naturally aligned in memory) to the array-element-level guarantee via `alignas(64)` so that each `arr[N]` starts on a cache-line boundary.
+
 ## Cross-references to CLAUDE.md
 
 This pattern complements + reinforces:

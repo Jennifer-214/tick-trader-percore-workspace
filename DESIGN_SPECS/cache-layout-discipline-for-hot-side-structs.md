@@ -656,6 +656,7 @@ When reviewing or designing a struct that's touched per cycle:
   for byte-comparison contexts)
 - `DESIGN_SPECS/avx512-byte-determinism-pattern.md` (tight-pack arrays
   are AVX-512-friendly)
+- `DESIGN_SPECS/hot-side-array-element-alignment-for-sparse-access.md` (v5.15.5.C.5; **complementary**: Rule 2 here covers TIGHT-PACK for 1-line elements; sister spec covers MULTI-LINE structs where sparse hot-path access reads first-line subset. Same cache-discipline philosophy, different element-size regime.)
 - `DOCS/HOT_PATH_CHANGELOG.md` (per-ship cache-impact entries)
 - `STRATEGY_AND_CODING_RULES.md` Rule 7 (L1 cache prioritization)
 - `claude-skills/dod-audit/SKILL.md` (walks this doc for compliance

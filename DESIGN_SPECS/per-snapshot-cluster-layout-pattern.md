@@ -272,6 +272,7 @@ When detected → flag as `MISSED — per-snapshot-cluster-layout-pattern`. Reco
 - `bitmap-flag-api.md` — often used WITHIN clusters for compact boolean state
 - `heterogeneous-registry-pattern.md` — cluster-by-domain analog for cfg fields
 - `wire-format-byte-preservation-discipline.md` — separate concern (serialization layout, not in-memory layout)
+- `hot-side-array-element-alignment-for-sparse-access.md` (v5.15.5.C.5; **sister mechanism**: this spec is CROSS-THREAD alignas (false-sharing prevention for snapshot fields); sister spec is SINGLE-THREAD alignas (per-element cache-line alignment for sparse hot-path array access). Same `alignas(64)` mechanism, different motivations. v5.15.5.C.5 retroactively documents PerCoreSnap as a canonical application of one or both specs.)
 - FoxML_Trader_v2 `CLAUDE.md` items 4, 12, 17, 18
 - FoxML_Trader_v2 `DOCS/TECH_DEBT.md` TECH_DEBT-011 (substantially closed by v5.14.10.0)
 - FoxML_Trader_v2 `DataStream/EngineTUI.hpp:1188+` — first reference application

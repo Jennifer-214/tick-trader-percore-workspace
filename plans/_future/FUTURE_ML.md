@@ -18,6 +18,46 @@ doc is the higher-level vision.
 
 ---
 
+## FPN<32> variant — appropriate for equities (NOT for crypto/BTC)
+
+**Captured 2026-05-13 from v5.15.5.C.5 design discussion.**
+
+A reduced-precision FPN<F=32> variant would have:
+- 32 fractional bits → ~2.3e-10 of $1 precision
+- ~half the bytes of FPN<F=64> (12B vs 24B)
+- Enables Position cold-field bit-packing (entry_fee FPN<32>, original_tp/sl deltas FPN<32>): ~36B savings per Position → Position 128B = 2 cache lines exact
+- ~1KB total memory savings per OMS
+
+**Why NOT for crypto/BTC (rejected v5.15.5.C.5):**
+- Cumulative rounding drift across thousands of trades. Per-fee FPN<32> precision is fine in isolation but accumulates: 1e-10 × 10K trades/year × multiple positions = drift could reach bps-level (1e-4). For a strategy targeting bps-level edge, that's noise approaching signal magnitude.
+- Conversion boundaries (FPN<32> ↔ FPN<64>) break bytewise determinism. CLAUDE.md item 25 (AVX-512 byte-determinism) + item 15 (parity-tested-by-construction) require ULP-exact identity across SIMD/scalar/cross-binary paths. Conversion-induced rounding violates this contract.
+- P&L math compounds the drift through gross/fees/net cascade. ML training signal (which uses pnl) gets subtly noisier.
+- Total memory savings (~1KB/OMS) is marginal vs OMS state's total KB-MB footprint; not transformative.
+
+**When FPN<32> WOULD be appropriate (equities pivot):**
+- Equities prices are integer-cent-denominated (1¢ = 0.01 USD; ~2 decimal digits significant). FPN<32>'s 10-digit precision is FAR more than needed.
+- Cumulative drift at 1e-10 over 10K trades = ~1e-6 dollars = 0.0001¢. Below transaction-cost noise. Safe.
+- Equities position sizes are integer shares (no fractional shares for typical strategies). FPN<32> precision is overkill but safe.
+- Fee structures simpler (flat per-trade or per-share commissions). Easier to model in lower precision.
+- Cross-binary determinism still required but easier to maintain at lower precision (less ULP variance).
+
+**Engineering investment (if pivoted to equities):**
+- ~1-2 weeks for FPN<32> arithmetic operator overloads
+- Conversion functions FPN<32> ↔ FPN<64>
+- SHA-256 cross-binary lock tests for byte determinism per `avx512-byte-determinism-pattern.md`
+- Migration of cold-field math (entry_fee, original_tp/sl deltas, etc.) to FPN<32> at precision boundaries
+- Position 128B target achievable; ~1KB OMS savings real
+
+**Status:** PARKED for crypto era. Re-evaluate IF/WHEN pivoting to equities trading. Trigger: equities-strategy plan emerges in roadmap.
+
+**Cross-references when picked up:**
+- `DESIGN_SPECS/avx512-byte-determinism-pattern.md` (8 rules + SHA-256 cross-binary lock test pattern)
+- `DESIGN_SPECS/hot-side-array-element-alignment-for-sparse-access.md` (Position 128B alignas target)
+- `DESIGN_SPECS/struct-padding-determinism-pattern.md` (FPN<32> needs explicit padding declarations too)
+- `DOCS/TECH_DEBT.md` entry: "FPN<32> variant infrastructure — DEFERRED until equities pivot"
+
+---
+
 ## Native gradient boosting on FPN<F> — "FoxBoost" (deferred research project)
 
 **Captured 2026-05-13 from Caramel's note: "getting XGBoost to run native with FPN operations would be a neat project."**

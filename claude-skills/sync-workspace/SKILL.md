@@ -93,6 +93,13 @@ WORKSPACE=/home/caramel/code/tick-trader-percore-workspace
 ENGINE=/home/caramel/code/FoxML_Trader_v2
 cd "$WORKSPACE"
 
+# Cross-shell: make unmatched globs expand to empty instead of erroring.
+# zsh errors with "(eval): no matches found" on `.env.*` when no files
+# match; bash silently treats glob as literal unless nullglob is set.
+# Both behaviors break the for-loops below — enable both shells' equivalent.
+[ -n "$ZSH_VERSION" ]  && setopt NULL_GLOB
+[ -n "$BASH_VERSION" ] && shopt -s nullglob
+
 # Mirror non-symlinked private files: cfgs, secrets, local memory overlays.
 # newer-mtime wins; only copies if source file exists.
 sync_if_newer() {

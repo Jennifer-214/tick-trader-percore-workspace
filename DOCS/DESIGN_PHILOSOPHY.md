@@ -171,16 +171,17 @@ different codebase.
 | H11 | Math kernels on slow/hot path are CONSTANT-ITER + branchless within the inner reduction | HARD | CLAUDE.md item 26; DESIGN_SPECS/branchless-math-kernel-pattern.md |
 | H12 | Structs used in byte-equivalence contexts (memcmp / SHA-256 / wire format) have EXPLICIT zero-init padding fields | HARD | CLAUDE.md item 27; DESIGN_SPECS/struct-padding-determinism-pattern.md |
 | H13 | Type-erased `*reinterpret_cast<T*>((char*)cfg + offset) = v` style dispatch is FORBIDDEN — use `tt::<verb>_field<T>` with T deduced (Class 23 3-barrier fix) | HARD | CLAUDE.md item 23; DESIGN_SPECS/type-trait-dispatch-via-tt-namespace.md; RECURRING_BUG_PATTERNS Class 23 |
+| H14 | NO C++ bitfield syntax (`name : N`) anywhere — multi-bit state encoding uses manual `SHIFT_*`/`MASK_*` constants + `MBS_*`/`BITMAP_*` branchless accessors over `uint{8,16,32,64}_t` storage; layout/signedness/packing-order are implementation-defined (conflicts with H6/H9/H10/H12) | HARD | DESIGN_SPECS/multi-bit-state-encoding-pattern.md + DESIGN_SPECS/bitmap-flag-api.md; CLAUDE.md item 30 |
 
 **Pending codification at v5.15.5.F.4d ship** (DRAFT slots reserved here; concrete wording locks when shipped):
 
 | # | Rule | Tier | Source |
 |---|---|---|---|
-| H14 | Every X-macro registry in the codebase MUST have a row in `FOREACH_REGISTRY` (CI-checked). Adding a new registry without registering it FAILS the build. | HARD (pending .F.4d) | DESIGN_SPECS/meta-registry-pattern-for-codebase-registry-discipline.md; CLAUDE.md item 31 |
-| H15 | Every metadata bit on `FOREACH_CFG_FIELD` MUST have either (a) a corresponding derived filter declared in `FOREACH_DERIVED_FILTER` OR (b) documented "no-derived-filter" exemption with rationale (CI cross-check enforces). | HARD (pending .F.4d) | DESIGN_SPECS/metadata-bit-driven-derived-filter-framework.md |
-| H16 | Cfg struct field declarations MUST come from `FOREACH_CFG_FIELD` via X-macro generation; manual cfg field declarations FORBIDDEN. Runtime/derived state stays manual but is documented in `MANUAL_FIELDS_INVENTORY.md` with rationale. | HARD (pending .F.4d) | DESIGN_SPECS/universal-cfg-field-registry-pattern.md § Reverse-drift |
-| H17 | Custom-semantics overrides on auto-flowed registries MUST use the sidecar override pattern; parallel wide-variant registries FORBIDDEN over the same parent registry. (Promoted from STRONG to HARD at second cohort application.) | STRONG → HARD (pending .F.4d) | DESIGN_SPECS/sidecar-override-pattern-for-registry-auto-flows.md |
-| H18 | Registries with LEVEL > 0 MUST declare PARENT in `FOREACH_REGISTRY` tuple; PARENT must exist in `FOREACH_REGISTRY` or equal ROOT (CI-checked). | HARD (pending .F.4d) | DESIGN_SPECS/meta-registry-pattern-for-codebase-registry-discipline.md |
+| H15 | Every X-macro registry in the codebase MUST have a row in `FOREACH_REGISTRY` (CI-checked). Adding a new registry without registering it FAILS the build. | HARD (pending .F.4d) | DESIGN_SPECS/meta-registry-pattern-for-codebase-registry-discipline.md; CLAUDE.md item 31 |
+| H16 | Every metadata bit on `FOREACH_CFG_FIELD` MUST have either (a) a corresponding derived filter declared in `FOREACH_DERIVED_FILTER` OR (b) documented "no-derived-filter" exemption with rationale (CI cross-check enforces). | HARD (pending .F.4d) | DESIGN_SPECS/metadata-bit-driven-derived-filter-framework.md |
+| H17 | Cfg struct field declarations MUST come from `FOREACH_CFG_FIELD` via X-macro generation; manual cfg field declarations FORBIDDEN. Runtime/derived state stays manual but is documented in `MANUAL_FIELDS_INVENTORY.md` with rationale. | HARD (pending .F.4d) | DESIGN_SPECS/universal-cfg-field-registry-pattern.md § Reverse-drift |
+| H18 | Custom-semantics overrides on auto-flowed registries MUST use the sidecar override pattern; parallel wide-variant registries FORBIDDEN over the same parent registry. (Promoted from STRONG to HARD at second cohort application.) | STRONG → HARD (pending .F.4d) | DESIGN_SPECS/sidecar-override-pattern-for-registry-auto-flows.md |
+| H19 | Registries with LEVEL > 0 MUST declare PARENT in `FOREACH_REGISTRY` tuple; PARENT must exist in `FOREACH_REGISTRY` or equal ROOT (CI-checked). | HARD (pending .F.4d) | DESIGN_SPECS/meta-registry-pattern-for-codebase-registry-discipline.md |
 
 These are the floor. Everything below builds on them.
 

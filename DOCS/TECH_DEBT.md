@@ -1223,3 +1223,118 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 - **Trigger:** **AFTER .F.4d ships** + CfgDriftCheckRegistry deletion verified.
 - **Status:** OPEN (blocked on .F.4d ship)
 - **Cross-ref:** `DESIGN_SPECS/sidecar-override-pattern-for-registry-auto-flows.md` (supersedes for cfg-drift surface); `DESIGN_SPECS/stamp-vs-runtime-drift-detection-registry.md` (wide variant section); H17 invariant (pending codification at .F.4d ship).
+
+### TECH_DEBT-063 — SettingsPanel.hpp `field_defs[]` full elimination (in-progress)
+
+- **Created:** 2026-05-14 by v5.15.5.F.4c session (operator UX considerations conversation)
+- **Severity:** LOW (each removal is mechanical; cumulative impact is significant GUI bloat reduction)
+- **Surface:** `GUI/SettingsPanel.hpp` lines 48-274 — currently ~213 entries hand-maintained in `field_defs[]` array; `.F.4a/.F.4b` removed ~40 (KIND_DOUBLE/_PCT cohort migrated to FOREACH_CFG_FIELD); `.F.4c` removes ~50-60 (INT/INT_ENUM/BOOL cohort); `.F.4e` removes the remaining ~110 (STRING/FILE_PATH cohort).
+- **What's deferred:** as each cohort migrates to `FOREACH_CFG_FIELD`, the corresponding `field_defs[]` entries delete (Step 4 of each migration ship). Target: `field_defs[]` = 0 entries post-`.F.4e`; entire array + supporting `CfgFieldDef` struct + manual render loop deleted; replaced by `FOREACH_CFG_FIELD` walker via `tt::cfg_render_field<T>` dispatch.
+- **Why deferred (not effort-avoidance):** sequencing is forced — `field_defs[]` entry deletion happens IN the same ship that migrates the corresponding field to `FOREACH_CFG_FIELD`. Not a separate effort; embedded in cohort migration work.
+- **Cost estimate:** ~5 min per cohort batch (mechanical deletion in Step 4 of each ship).
+- **Trigger:** progresses with `.F.4c`/`.F.4e` migration cohorts. Verified zero at `.F.4e` ship via test: `static_assert(sizeof(field_defs) == 0)` or `field_defs` declaration deletion + grep verification.
+- **Status:** IN PROGRESS (started `.F.4a`; ~80% remaining after `.F.4b`)
+- **Cross-ref:** sister to `.F.4c` (KIND_INT/_ENUM/_BOOL migration); `.F.4e` (KIND_STRING/_FILE_PATH migration); `plans/_future/2026-05-14-headless-first-orientation.md` (deferred option).
+
+### TECH_DEBT-064 — Headless operation option (deferred 2026-05-14 — considered, GUI stays primary for now)
+
+- **Created:** 2026-05-14 by v5.15.5.F.4c session — Caramel considered prioritizing headless operation; decided GUI remains primary for now; metadata-bit hooks (TECH_DEBT-066, 067) kept as future optionality.
+- **Severity:** LOW (deferral doc; captures option not commitment)
+- **Surface:** `engine` binary (existing ANSI TUI) + future CLI subcommands (TECH_DEBT-066) + structured log output (TECH_DEBT-065/067)
+- **What's deferred:** the strategic pivot to headless-first. Considered + deferred. The `engine` binary already builds without SDL/OpenGL/ImGui (no rewrite required); pivot would be promoting it to primary entry point + freezing GUI feature additions. NOT decided.
+- **Why deferred:** Caramel preference noted (`tail -f` + CLI workflow appealing) but `tail -f` workflow hasn't been validated against actual operator use. GUI is currently working + maintained; pivot risks unwinding correct work for an unvalidated direction. Revisit when (a) `tail -f` workflow gets dogfooded, OR (b) `.F.4` closes + frameworks are mature enough to make CLI subcommands cheap, OR (c) operator explicitly says "yes, pivot."
+- **Cost estimate:** ZERO implementation cost (this entry is the deferral itself; actual pivot is a future strategic decision).
+- **Trigger:** operator decision — not auto-fire. Re-evaluate at end of `.F.4` umbrella close OR when GUI maintenance burden becomes blocking.
+- **Status:** OPEN (option preserved; not committed)
+- **Cross-ref:** TECH_DEBT-063 / 065 / 066 / 067 (related future-optionality entries); `plans/_future/2026-05-14-headless-first-orientation.md` (aspirational roadmap; revisit if/when pivot decision made).
+
+### TECH_DEBT-065 — JSON-structured log format for engine status snapshots
+
+- **Created:** 2026-05-14 by v5.15.5.F.4c session (operator UX considerations conversation)
+- **Severity:** LOW-MEDIUM (foundational headless observability feature)
+- **Surface:** NEW header `MemHeaders/StructuredLog.hpp` + integration with existing `health_log_path` machinery; per-core slow_state walker emits structured snapshots at configured cadence
+- **What's deferred:**
+  - Per-N-tick (configurable; e.g., `snapshot_log_interval_ticks=1024`) OR per-N-second (`snapshot_log_interval_ms=1000`) JSON-formatted log line emit
+  - One line per slow-path cycle per core: `{ts, core_id, regime, position_qty, position_pnl, slow_path_us_p99, hot_path_ns_p99, fills_this_cycle, ...}`
+  - Hot path sampled (1 in N ticks) for latency trend tracking without per-tick overhead
+  - Drainer + producer global cadence (per-second)
+  - `tail -f logging/structured.json | jq` becomes canonical operator workflow
+  - Header includes simple JSON-emit helper (locale-pinned per `wire-format-byte-preservation-discipline.md` Layer 2; no scientific notation; integer-formatted where possible)
+- **Why deferred:** requires (1) per-core slow_state walker (separate ship from cfg field walker); (2) `.F.4` umbrella closure for single source of truth on cfg fields used in emit; (3) cadence cfg fields landing first (covered in `.F.4c`).
+- **Cost estimate:** ~3-5 sprint days. New `StructuredLog.hpp` (~150 LOC) + per-core emit hook in slow-path body (~30 LOC) + cadence cfg fields (3-5 rows) + tests + paper-test verification of operator workflow.
+- **Trigger:** **AFTER `.F.4` umbrella closes** + `.F.4e` CLI infrastructure ships. Becomes its own sub-ship `v5.15.5.G.1` or sibling.
+- **Status:** OPEN (future sprint)
+- **Cross-ref:** TECH_DEBT-066 (CLI subcommands consume same per-core snapshot machinery); TECH_DEBT-067 (per-core + per-path observability builds on this); `plans/_future/2026-05-14-headless-first-orientation.md` (deferred option).
+
+### TECH_DEBT-066 — `engine` CLI subcommands for headless operator workflow
+
+- **Created:** 2026-05-14 by v5.15.5.F.4c session (operator UX considerations conversation)
+- **Severity:** HIGH (load-bearing for headless transition; replaces `.F.4e`'s original "5 GUI metadata bits" scope)
+- **Surface:** NEW `engine` main() argument dispatch + 4-6 CLI subcommand handlers; consume derived filters from `.F.4d` framework
+- **What's deferred:**
+  - `engine --explain-cfg <key>` — walks `FOREACH_CFG_FIELD`, prints field's kind, clamp range, applicability (strategy/op_mode/regime/risk), tooltip, deprecation status, side-effect status, current cfg-file value vs default
+  - `engine --list-cfg [--filter=<category>] [--changed-only]` — list all cfg fields (optionally filtered by category, or only fields with non-default values)
+  - `engine --validate-cfg [--report]` — boot-style validation pass against cfg file; emit pass/fail per field + warnings + summary; exit code reflects validation result
+  - `engine --status --json` — once-and-exit JSON snapshot (P&L, positions, regime per core, latency p99 per path); operator scripts consume for monitoring
+  - `engine --kill-switch on|off` — operator-friendly kill switch toggle (writes to cfg + signals running engine if applicable)
+  - `engine --version` (likely already exists; verify at scope)
+- **Why deferred:** requires `.F.4d` derived-filter framework (consumed by `--list-cfg --filter=<category>` + `--validate-cfg`) + metadata bits (`DEPRECATED` / `BOOT_ONLY` / `HAS_SIDE_EFFECT` / `WARN_ON_CLAMP` / `RESTART_REQUIRED` / `IS_SECRET` / `SAFETY_CRITICAL`) defined at `.F.4c`/`.F.4d`.
+- **Cost estimate:** ~3-5 days. Argument parsing (basic argv per codebase no-deps style) + 4-6 subcommand implementations + JSON emit + tests + headless paper-test verification.
+- **Trigger:** ship target unset — could ship at `.F.4e` IF/WHEN headless pivot approved (currently deferred per TECH_DEBT-064). Future strategic decision; depends on operator validation of `tail -f` workflow + GUI maintenance burden.
+- **Status:** OPEN (future-optionality; not committed)
+- **Cross-ref:** TECH_DEBT-064 (parent deferral decision); TECH_DEBT-065 (structured log infrastructure); `plans/_future/2026-05-14-headless-first-orientation.md` (deferred option); `.F.4d` derived filter framework (would be consumed if/when headless pivot approved).
+
+### TECH_DEBT-067 — Per-core + per-path structured log emit (TUI + log granularity)
+
+- **Created:** 2026-05-14 by v5.15.5.F.4c session (operator UX considerations conversation) (Caramel's explicit Q2)
+- **Severity:** MEDIUM (operator observability granularity for production debugging)
+- **Surface:** Per-core slow_state walker + ANSI TUI per-core row stack (DataStream/EngineTUI.hpp) + per-path log emit (hot/slow/drainer/producer)
+- **What's deferred:**
+  - **Per-core JSON log line** on each slow-path rebuild per core: `{ts, core_id, path=slow, regime, position_qty, position_pnl, slow_path_us, fills_this_cycle, ...}`
+  - **Hot-path sampled emit** (1-per-second or 1-per-1024-ticks) per core: `{ts, core_id, path=hot, hot_p99_ns, hot_max_ns, dispatch_count, ...}`. Cadence configurable.
+  - **Drainer/producer global emit** per-second: `{ts, path=drainer, drain_lat_p99_us, submitted, filled, rejected, ...}` and `{ts, path=producer, tick_rate_per_sec, ws_lag_ms, ...}`
+  - **ANSI TUI enhancement** (`EngineTUI.hpp`): per-core stacked row layout with `[core 0] BTCUSDT  TRENDING  pos=+0.05  pnl=+$12.34  slow_p99=42us  hot_p99=180ns`
+  - **`tail -f logging/structured.json | jq 'select(.core_id==3)'`** per-core filtering workflow
+  - **`tail -f | jq 'select(.path=="hot")'`** per-path filtering workflow
+- **Why deferred:** builds on TECH_DEBT-065 (`StructuredLog.hpp` infrastructure) + `.F.4` umbrella closure (single source of truth for cfg + per-core state structures). Significant scope; dedicated sub-sprint.
+- **Cost estimate:** ~1-2 weeks. Per-core slow_state walker (~80 LOC) + per-path log emit hooks (~50 LOC) + TUI enhancement (~150 LOC) + cfg fields for cadence (3-5 rows) + tests + paper-test verification of operator workflow.
+- **Trigger:** **AFTER TECH_DEBT-065 ships + `.F.4` umbrella closes + `.F.4e` CLI infrastructure lands.** Likely v5.15.5.G.2 or similar sub-sprint.
+- **Status:** OPEN (future sprint after `.F.4` closure)
+- **Cross-ref:** TECH_DEBT-065 (depends on `StructuredLog.hpp` foundation); TECH_DEBT-066 (CLI `--status --json` consumes same per-core walker); `plans/_future/2026-05-14-headless-first-orientation.md` (deferred option); sister to existing `LatencyHistogram` (provides per-path p99 data consumed by emit) + `OrderEventLog` (per-event log; sister channel).
+
+### TECH_DEBT-068 — ML-side enum X-macro registries (ml_backend / regime_model_backend / confidence_ic_variant / csv_sort_check_mode / reconcile_mode / ensemble_blend_mode)
+
+- **Created:** 2026-05-14 by v5.15.5.F.4c session (cfg field audit identified these as currently-open-ended ints; operator flagged as important follow-up)
+- **Severity:** MEDIUM (operator-UX quality; not blocking; enables INT_ENUM promotion + warn-on-invalid + label-token parsing)
+- **Surface:** create X-macro registries with `_FromString` / `_ToString` / `<NAME>_LABELS[]` per `BanditAlgorithmRegistry.hpp` / `BarrierBlendModeRegistry.hpp` / `ConfidenceScore.hpp::FOREACH_DEGRADATION_CURVE` precedent:
+  - **`ml_backend`** — XGBoost / ONNX / AOT-compiled / etc. Currently parsed as plain int. New `FOREACH_ML_BACKEND` registry in `ML_Headers/ModelInference.hpp` or sibling.
+  - **`regime_model_backend`** — same family; possibly shares ML_BACKEND registry depending on storage.
+  - **`confidence_ic_variant`** — IC variant selection (Pearson / Spearman / rank-IC / etc.); currently plain int.
+  - **`csv_sort_check_mode`** — STRICT / LENIENT / DISABLED training-time gate; currently plain int.
+  - **`reconcile_mode`** — reconciliation strategy (full / incremental / verify-only); currently plain int.
+  - **`ensemble_blend_mode`** — model blend strategy (avg / weighted / vote / etc.); currently plain int.
+- **What's deferred:** create the X-macro registries with the canonical 5-component shape (`FOREACH_<NAME>` + `<NAME>_FromString` + `<NAME>_ToString` + `<NAME>_LABELS[]` + `<NAME>_COUNT`). At `.F.4c` migration these fields land as **plain KIND_INT** rows in `FOREACH_CFG_FIELD`. Once registries exist (this TECH_DEBT closes), promotion is a single-row change: KIND_INT → KIND_INT_ENUM + payload macro `INT_ENUM(default_val, count, labels)` referencing the extern labels array.
+- **Why deferred (not effort-avoidance):** registries are non-trivial design work (each enum needs operator-meaningful name + semantic doc + numeric value lock for back-compat). Doing them mid-`.F.4c` would balloon scope. Cohort migration approach: ship `.F.4c` with KIND_INT for these 6, then dedicated follow-up ship creates the 6 registries + promotes the rows.
+- **Cost estimate:** ~2-3 hr per registry × 6 = ~12-18 hr total. Each registry: ~50-80 LOC (X-macro definition + FromString helper + ToString helper + LABELS extern + COUNT + tests). Plus single-line `.F.4c` row updates to KIND_INT_ENUM + add labels reference.
+- **Trigger:** **AFTER `.F.4` umbrella closes** (single-source-of-truth for cfg established) OR earlier if a specific enum needs the FromString helper for operator-UX (e.g., `ml_backend=XGBOOST` text input fails today due to atoi-only parse). Operator-priority decision.
+- **Status:** OPEN (high-quality optionality; aligns with `BanditAlgorithm` / `BarrierBlendMode` / `DegradationCurve` existing pattern)
+- **Cross-ref:** `Strategies/BanditAlgorithmRegistry.hpp` / `Strategies/BarrierBlendModeRegistry.hpp` / `ML_Headers/ConfidenceScore.hpp::FOREACH_DEGRADATION_CURVE` (canonical precedent); `DESIGN_SPECS/x-macro-registry-with-presence-dispatch.md`; `.F.4c` Step 2 KIND_INT_ENUM section (these rows ship as KIND_INT pending registry creation).
+
+### TECH_DEBT-069 — Codebase-wide registry-table `static const` → `inline constexpr` promotion sweep
+
+- **Created:** 2026-05-14 by v5.15.5.F.4c session (`g_cfg_field_descriptors[]` constexpr promotion at `.F.4c` validated the pattern; sweep extends to peer registries)
+- **Severity:** LOW (mechanical optimization; not blocking; quality-of-implementation)
+- **Surface:** ~6-8 registry tables across `CoreFrameworks/` + `MemHeaders/` + `ML_Headers/`:
+  - `MemHeaders/OmsStateFlagRegistry.hpp::g_oms_state_flag_descriptors[]`
+  - `MemHeaders/FailureModeRegistry.hpp::g_failure_mode_table[]`
+  - `ML_Headers/BanditAlgorithmRegistry.hpp` derivations (mostly constexpr already; verify)
+  - `ML_Headers/BarrierBlendModeRegistry.hpp` derivations (mostly constexpr already; verify)
+  - `ML_Headers/ConfidenceScore.hpp::FOREACH_DEGRADATION_CURVE` tables (verify per-table)
+  - 5 `FOREACH_*_CFG_FLAG` bitmap registry tables (mostly constexpr via X-macro; verify)
+  - Other singleton registry data tables surfaced during audit
+- **What's deferred:** sweep each registry table; if all members are trivially constexpr-init (no runtime-only construction, no mutation post-init), promote `static const` / `inline const` → `inline constexpr`. Verify nothing breaks (constexpr is stricter; some hidden runtime dependencies may surface). Place each promoted table in `.rodata` (truly read-only; OS-enforced).
+- **Why deferred (not effort-avoidance):** these tables work as-is; the promotion is mechanical optimization (slightly smaller binary footprint via `.rodata` consolidation; enables downstream constexpr computations for future framework consumers). Not blocking any current feature. Best done as a single focused sweep rather than scattered across feature sprints.
+- **Cost estimate:** ~5 min per table × 6-8 tables = ~30-45 min total + ~30 min for build/test verification per table change. Total ~3-4h focused effort.
+- **Trigger:** **near end of v5.15.5.F umbrella** (per operator direction 2026-05-14 — "do the sweep for constexpr sites for like the end of 5.15.5.F"). Specifically: after `.F.4` umbrella closes + `.F.5` per-core Thompson audit ships; before v5.15 umbrella closure. Dedicated focused-effort window; not interleaved with feature work. Could fire as `v5.15.5.F.6` sub-ship.
+- **Status:** OPEN
+- **Cross-ref:** `CoreFrameworks/CfgFieldRegistry.hpp::g_cfg_field_descriptors[]` (canonical precedent — promoted to `inline constexpr` at `.F.4c`); enables downstream constexpr mask computations via `cfg_compute_mask<Bit>()`.

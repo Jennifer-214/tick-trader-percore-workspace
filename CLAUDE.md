@@ -106,8 +106,9 @@ Full discussion: `DOCS/DESIGN_PHILOSOPHY.md` § 2 + `DOCS/STRATEGY_AND_CODING_RU
 | H11 | Math kernels on slow/hot path: CONSTANT-ITER + branchless within reductions |
 | H12 | Structs in byte-equivalence contexts (memcmp / SHA-256 / wire format / HMAC input): EXPLICIT `int<N>_t _padding<N> = 0;` default-init fields |
 | H13 | Type-erased `*reinterpret_cast<T*>((char*)cfg + offset) = v` style dispatch is FORBIDDEN — use `tt::<verb>_field<T>` with T deduced (Class 23 3-barrier fix) |
+| H14 | NO C++ bitfield syntax (`name : N`) anywhere — multi-bit state encoding uses manual `SHIFT_*`/`MASK_*` constants + `MBS_*`/`BITMAP_*` branchless accessors over `uint{8,16,32,64}_t` storage; layout/signedness/packing-order are implementation-defined (conflicts with H6/H9/H10/H12) |
 
-**Pending at v5.15.5.F.4d ship** (slots reserved; see `DOCS/DESIGN_PHILOSOPHY.md` § 3): H14 (every X-macro registry in `FOREACH_REGISTRY`), H15 (every metadata bit has a derived filter or documented exemption), H16 (cfg struct fields generated from `FOREACH_CFG_FIELD`; no manual cfg declarations), H17 (custom-semantics via sidecar override pattern; no parallel wide-variant registries — STRONG → HARD at 2nd cohort application), H18 (LEVEL > 0 registries declare PARENT in `FOREACH_REGISTRY`).
+**Pending at v5.15.5.F.4d ship** (slots reserved; see `DOCS/DESIGN_PHILOSOPHY.md` § 3): H15 (every X-macro registry in `FOREACH_REGISTRY`), H16 (every metadata bit has a derived filter or documented exemption), H17 (cfg struct fields generated from `FOREACH_CFG_FIELD`; no manual cfg declarations), H18 (custom-semantics via sidecar override pattern; no parallel wide-variant registries — STRONG → HARD at 2nd cohort application), H19 (LEVEL > 0 registries declare PARENT in `FOREACH_REGISTRY`).
 
 ## Code Conventions
 

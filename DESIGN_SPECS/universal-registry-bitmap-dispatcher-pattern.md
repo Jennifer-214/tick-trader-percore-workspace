@@ -239,6 +239,27 @@ Each row generates a NAMED composed mask + iteration helper (`FOREACH_STAMP_BOUN
 
 ---
 
+## GUI ↔ engine thread isolation (load-bearing rule)
+
+**Never pointer-share state across the GUI thread and the HP/SP threads.** The bitmap dispatcher enables clean per-thread typed mirrors of cfg state:
+
+- GUI thread owns a `ControllerConfig<F> gui_engine_cfg` instance (its mirror of `engine.cfg`)
+- Engine HP/SP threads own a separate `ControllerConfig<F> engine_cfg` instance (loaded at boot + on reload signal)
+- GUI edits modify `gui_engine_cfg` via `tt::cfg_render_field<T>` + persist to file via `cfg_write_field` per edit
+- Engine reloads from file on `reload_flag` signal; the GUI never touches engine memory directly
+
+This is the canonical channel: **file is the source of truth; reload-signal is the IPC primitive**. Aligns with H3 (no mutex/condition_variable/sleep_for/rwlock anywhere — the synchronization primitives that "share state across threads" designs rely on are forbidden in this codebase, so the file-based separation falls out naturally). Aligns with H8 (hot-path latency budget — GUI mutations of running state would force the hot path to acquire locks; forbidden by H3 + H8).
+
+The pattern generalizes to all subsystems with their own thread:
+- **GUI** owns its mirror; engine owns the running state; file is the channel
+- **Training thread** owns its training state; engine owns inference state; stamp file is the channel
+- **Backtest thread** owns backtest cfg; engine owns live cfg; backtest.cfg is the channel
+- **Future structured-log emitter** owns its emit cadence cfg; engine owns hot-path cadence; cfg file or atomic seqlock-snapshot is the channel (per CLAUDE.md design)
+
+**Anti-pattern (forbidden):** `void GUI_RenderSettings(ControllerConfig<F>& engine_cfg_running)` — GUI edits running engine state. This couples GUI thread to hot path, requires synchronization (H3 forbidden), and breaks the file-is-source-of-truth invariant. Reviewers MUST reject this shape.
+
+---
+
 ## Caveats
 
 1. **Descriptor array MUST be constexpr** for compile-time mask computation. If members aren't trivially constexpr-init (e.g., contain function pointers initialized at runtime, or string concatenation requiring runtime), masks fall back to static-init via runtime function call (still works; slight boot cost).
@@ -326,11 +347,34 @@ The bitmap dispatcher eliminates this indirection: SettingsPanel takes `Controll
 
 ### Future applications
 
+**Cfg-side:**
 - **Stamp emit** (`.F.4d`): uses `g_cfg_stamp_bound_mask` + per-row emit fn table; replaces FOREACH_STAMP_BOUND_CFG manual emit
 - **Drift check** (`.F.4d`): uses STAMP_BOUND derived filter; replaces CfgDriftCheckRegistry manual walker
 - **CLI subcommands** (`.F.4e` per TECH_DEBT-066): consumes per-bit masks for `--list-cfg --filter=<bit>`; popcount stats for `--status --json`
 - **Structured log emit** (TECH_DEBT-065/067): per-core emit walker uses composed filter for "which fields to emit per snapshot"
 - **`.F.4d` `FOREACH_DERIVED_FILTER`** (meta-registry): layers named filters ON TOP of this dispatcher primitive
+- **`.F.4j` `FOREACH_BACKTEST_CFG_FIELD`** (via `lives_in_struct = STRUCT_BACKTEST_CFG`): backtest panel renders via per-struct walker
+- **v5.15.6.A `FOREACH_CONTROLLER_CFG_FIELD`** (via `lives_in_struct = STRUCT_CONTROLLER_CFG`): controller settings tab
+- **v5.15.6.B `FOREACH_SECRETS_CFG_FIELD`** (via `lives_in_struct = STRUCT_SECRETS_CFG`): secrets tab with IS_SECRET bit gating
+- **v5.15.6.C `FOREACH_TRAINING_CFG_FIELD`** (via `lives_in_struct = STRUCT_TRAINING_CFG`): training tab
+
+**ML-side (separate registries; same pattern):**
+
+The dispatcher pattern is registry-agnostic. Future ML-side applications consuming this primitive:
+
+- **`FOREACH_FEATURE`** (ML features registry; ~50-100 rows projected): per-feature metadata (LIVE_AVAILABLE vs TRAINING_ONLY, AVX_FRIENDLY, DEPENDS_ON_ROLLING_STATS, etc.); consumers: GUI feature picker (filter by LIVE_AVAILABLE), training-time feature selector (TRAINING_ONLY), CLI `engine --list-features`, AVX-512 vectorization gate (AVX_FRIENDLY)
+- **`FOREACH_STRATEGY`** (strategies registry; ~5-10 rows): per-strategy metadata (REGIME_APPLICABLE_RANGING/TRENDING/VOLATILE/MILD_TREND, ML_DRIVEN vs STATIC_RULE, etc.); consumers: strategy dispatch (regime + applicability filter), GUI strategy picker, categorical applicability per cfg field via `applies_to_strategy_cat` mask
+- **`FOREACH_STAMP_BOUND_MODEL_CONST_PRE_CFG/_POST_CFG`** (model constants in stamp; ~10-20 rows): consolidate at `.F.4d` via bitmap framework; replaces bespoke emit_when + emit_source dispatch
+- **`FOREACH_CFG_DERIVED_INFERENCE_CFG`** (cfg → inference_cfg derived state; ~10 rows): same shape
+- **TECH_DEBT-068 ML enum registries** (ml_backend / regime_model_backend / confidence_ic_variant / csv_sort_check_mode / reconcile_mode / ensemble_blend_mode): once these get X-macro registries (per TECH_DEBT-068), each can be a bitmap dispatcher application — but at 3-5 entries each, manual switch may still win until the registry grows past ~10 items
+
+**Heuristic for when the pattern pays off:**
+- Registry size ≥10 rows
+- ≥2 consumer surfaces with different filter needs
+- Per-row metadata exists (bits OR categorical enum values)
+- Forward extension expected (new rows / new bits / new consumers)
+
+Below ~10 items, the framework overhead doesn't amortize; manual switch is simpler.
 
 ---
 

@@ -1233,8 +1233,8 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 - **Why deferred (not effort-avoidance):** sequencing is forced — `field_defs[]` entry deletion happens IN the same ship that migrates the corresponding field to `FOREACH_CFG_FIELD`. Not a separate effort; embedded in cohort migration work.
 - **Cost estimate:** ~5 min per cohort batch (mechanical deletion in Step 4 of each ship).
 - **Trigger:** progresses with `.F.4c`/`.F.4e` migration cohorts. Verified zero at `.F.4e` ship via test: `static_assert(sizeof(field_defs) == 0)` or `field_defs` declaration deletion + grep verification.
-- **Status:** IN PROGRESS (started `.F.4a`; ~80% remaining after `.F.4b`)
-- **Cross-ref:** sister to `.F.4c` (KIND_INT/_ENUM/_BOOL migration); `.F.4e` (KIND_STRING/_FILE_PATH migration); `plans/_future/2026-05-14-headless-first-orientation.md` (deferred option).
+- **Status:** IN PROGRESS — `.F.4a` removed initial ~40 (KIND_DOUBLE/_PCT cohort); `.F.4c` in flight will remove ~50-60 more (KIND_INT/_ENUM/_BOOL scalar Kinds via bitmap-dispatch walker replacing parallel-array indirection — see `.F.4c` plan body amendment + DESIGN_SPECS/universal-registry-bitmap-dispatcher-pattern.md); `.F.4e` removes the remaining ~110 (KIND_STRING/_FILE_PATH). After `.F.4e` ships: field_defs[] = 0; `CfgFieldDef` struct + manual render loop + parallel-array layer all delete; SettingsState shrinks to model-scan + per-core override structures only.
+- **Cross-ref:** sister to `.F.4c` (KIND_INT/_ENUM/_BOOL migration; bitmap-dispatch walker replaces field_defs[] auto-extender for scalar Kinds); `.F.4e` (KIND_STRING/_FILE_PATH migration; final field_defs[] elimination); `DESIGN_SPECS/universal-registry-bitmap-dispatcher-pattern.md` (codifies the dispatcher pattern; first canonical application at `.F.4c`); `plans/_future/2026-05-14-headless-first-orientation.md` (deferred option).
 
 ### TECH_DEBT-064 — Headless operation option (deferred 2026-05-14 — considered, GUI stays primary for now)
 
@@ -1318,7 +1318,7 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 - **Cost estimate:** ~2-3 hr per registry × 6 = ~12-18 hr total. Each registry: ~50-80 LOC (X-macro definition + FromString helper + ToString helper + LABELS extern + COUNT + tests). Plus single-line `.F.4c` row updates to KIND_INT_ENUM + add labels reference.
 - **Trigger:** **AFTER `.F.4` umbrella closes** (single-source-of-truth for cfg established) OR earlier if a specific enum needs the FromString helper for operator-UX (e.g., `ml_backend=XGBOOST` text input fails today due to atoi-only parse). Operator-priority decision.
 - **Status:** OPEN (high-quality optionality; aligns with `BanditAlgorithm` / `BarrierBlendMode` / `DegradationCurve` existing pattern)
-- **Cross-ref:** `Strategies/BanditAlgorithmRegistry.hpp` / `Strategies/BarrierBlendModeRegistry.hpp` / `ML_Headers/ConfidenceScore.hpp::FOREACH_DEGRADATION_CURVE` (canonical precedent); `DESIGN_SPECS/x-macro-registry-with-presence-dispatch.md`; `.F.4c` Step 2 KIND_INT_ENUM section (these rows ship as KIND_INT pending registry creation).
+- **Cross-ref:** `Strategies/BanditAlgorithmRegistry.hpp` / `Strategies/BarrierBlendModeRegistry.hpp` / `ML_Headers/ConfidenceScore.hpp::FOREACH_DEGRADATION_CURVE` (canonical precedent); `DESIGN_SPECS/x-macro-registry-with-presence-dispatch.md`; `.F.4c` Step 2 KIND_INT_ENUM section (these rows ship as KIND_INT pending registry creation); `DESIGN_SPECS/universal-registry-bitmap-dispatcher-pattern.md` (the bitmap dispatcher framework landed at `.F.4c` applies to these registries once they exist — adds per-bit/per-enum-value filtering + popcount stats + branchless iteration; below ~10 entries the framework overhead may not amortize → judgment per registry).
 
 ### TECH_DEBT-069 — Codebase-wide registry-table `static const` → `inline constexpr` promotion sweep
 

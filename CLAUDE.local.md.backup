@@ -127,6 +127,12 @@ Rules currently in force. Each links to its canonical home.
   → `DESIGN_SPECS/multi-bit-state-encoding-pattern.md`.
   Trigger: new K-state field in single record → N-bit packed slot (N=ceil(log2 K)) + branchless inference API instead of `int` + switch. Promotion candidate to CLAUDE.md after 2+ applications.
 
+### Thread isolation between subsystems
+
+- **GUI ↔ HP/SP thread isolation: NEVER share state directly** (set 2026-05-14).
+  → `DESIGN_SPECS/universal-registry-bitmap-dispatcher-pattern.md` § "GUI ↔ engine thread isolation"; `DESIGN_PHILOSOPHY.md` § 6 (Concurrency family).
+  Trigger: any new subsystem touching engine state from a different thread → GUI has its own typed mirror instance (`ControllerConfig<F>`, `TrainingCfg`, etc.); engine has its own; communicate via file + reload-signal channel; NEVER pointer-share state across threads. Aligns with H3 (no mutex/condition_variable/sleep_for/rwlock anywhere — the synchronization primitives that "share state across threads" patterns rely on are forbidden, so the discipline naturally falls out). The bitmap dispatcher framework at `.F.4c` enables this by giving each subsystem its own typed cfg mirror; the file is the canonical channel.
+
 ### Process & sprint
 
 - **Suggest mid-sprint audits when work impacts downstream** (set 2026-05-10).

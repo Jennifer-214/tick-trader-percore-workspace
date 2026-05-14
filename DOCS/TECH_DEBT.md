@@ -1036,3 +1036,20 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 - **Trigger:** (a) operator wants to flip `cfg.oms_bench_enabled=1` and see latencies (USER demand); (b) paper-test cadence tightens enough that visibility into slow-path latency matters; (c) specific latency regression investigation needs in-binary bench (avoids rebuild cycle); (d) maker-order ship (v6.0) where slow-path latency is operator-tunable.
 - **Status:** OPEN
 - **Cross-ref:** `MemHeaders/LatencyHistogram.hpp` (Phase 7.A substrate); `DESIGN_SPECS/runtime-toggleable-bench-gate-pattern.md` (full design + 7 composition options); `CoreFrameworks/ControllerConfig.hpp` `oms_bench_enabled` field; CLAUDE.md item 18 (compile-time elision); CLAUDE.md item 25 (cross-thread cluster isolation); CLAUDE.md item 28 (latency-vs-cache framework).
+
+### TECH_DEBT-046 — Fast-path companion accessor pattern (`_Fast` suffix for canonical runtime parameter) codification deferred to 2nd application
+
+- **Created:** 2026-05-13 by v5.15.5.D close (first application shipped as `BookImbHistory_MeanShortFast`; codification deferred per pattern-codification-lifecycle.md Stage 0 "Skip when pattern is ONE-OFF" rule)
+- **Severity:** LOW (no bug; pattern documentation gap; cohort migration on 2nd application closes the gap)
+- **Surface:**
+  - `ML_Headers/FlowFeatures.hpp:~115` — first application: `BookImbHistory_MeanShortFast(s)` paired with `BookImbHistory_MeanShort(s, int k)` (general API kept for tests with k=2)
+  - Pattern shape: when a public API takes a runtime parameter `k` (or similar) that's almost always one canonical value at the production caller (production: k=64; test: k=2), expose a `_Fast` companion accessor that returns the cached/derived result for the canonical case (no runtime branch on k); keep the general API for non-canonical callers.
+  - Other potential application sites (NOT surveyed in v5.15.5.D; surface during 2nd-app trigger investigation):
+    - RollingStats accessors that take a window size (currently template-parameterized — different shape; may or may not benefit)
+    - Any other "MeanShort(int k)" / "Mean(int k)" / "Variance(int k)" pattern in ML_Headers or Strategies
+- **What's deferred:** Writing a DESIGN_SPECS doc for the pattern + applying it via the pattern-codification-lifecycle.md 7-stage process (Stage 0: identification + first reference are done; Stage 1-7: codify when a 2nd application surfaces).
+- **Why deferred (not effort-avoidance):** per `DESIGN_SPECS/pattern-codification-lifecycle.md` "Skip when: pattern is ONE-OFF — apply structural fix without codification overhead." First application IS valuable on its own (eliminates O(K) walk in BookImbHistory); codification overhead (~4-6h for a focused codification ship) is not justified for 1 application. 2+ applications triggers full codification.
+- **Cost estimate (if/when triggered):** ~4-6h for codification per the lifecycle (Stage 1 audit ~1h + Stage 2 DESIGN_SPEC ~1-2h + Stage 3-4 second application ~30 min - 2h + Stage 5 CLAUDE.md ~30 min + Stage 6 tooling ~30 min - 1h + Stage 7 wider audit ~1h).
+- **Trigger:** (a) 2nd potential application site surfaces (in a `/merge-scan` or `/dod-audit` finding, or during a new ship's pre-coding); (b) operator-initiated codification request (e.g., as part of a focused pattern-codification sprint).
+- **Status:** OPEN (awaiting 2nd-application trigger)
+- **Cross-ref:** v5.15.5.D postmortem at `plans/v5.15-live-readiness/postmortems/2026-05-13-v5.15.5-D-postmortem.md` "Pattern B captured for future codification"; `ML_Headers/FlowFeatures.hpp` BookImbHistory_MeanShortFast (first application); `DESIGN_SPECS/pattern-codification-lifecycle.md` Stage 0 (identification + first reference complete).

@@ -894,3 +894,49 @@ Slow-path budget at v5.15.5.C.3 close: bounded by v5.12-era discipline (lazy-reb
 **Sprint-net:** ZERO additional steady-state slow-path latency from (a)/(b)/(c). Phase 5.B (d) is bounded by fill rate; aggregate slow-path budget impact <0.01%. New disk I/O bounded to operator-initiated event boundaries (Phase 6) + rare fill events (Phase 5.B).
 
 No new entries needed for: Phase 3b (refactor; byte-equivalent OMS init/reset semantics via registry-driven dispatch); Phase 4 (CoreCtxSummaryFieldRegistry — emits at archive-flow site, NOT hot/slow path); Phase 5.A (regime + regime_name columns appended at trade-emit time; per-trade work was already bounded by snprintf truncation guard).
+
+## 2026-05-13 — v5.15.5.D FlowFeatures cache-layout sweep + dual-window incremental sum (NEGATIVE-COST; SLOW-PATH savings; hot path UNTOUCHED)
+
+**Surface:** slow-path (`ML_Headers/FlowFeatures.hpp`, `Strategies/RegimeDetector.hpp`). 4 structs on `CoreSlowState<F>`: BookImbalanceHistory, FlowState, LargeTradeState, SpreadState.
+
+**Hot path UNTOUCHED.** Zero diffs to `BG_Evaluate` / `SG_Evaluate` / `ExecutionCore_Tick` / `ExecutionCore.hpp` / `OrderGates.hpp`. The .C series invariant continues.
+
+**Path cadence:** slow-path per-cycle (`EventLoop_UpdateRollingStateOneCore` Push + `Regime_ComputeSignals` read). Per-core cadence ~1000 cycles/sec on busy markets; budget ≤ 100 µs.
+
+### Per-phase cost analysis
+
+| Phase | Surface | Δ per slow-path cycle | Notes |
+|---|---|---|---|
+| .D.A | alignas(64) + HOT-first reorg on 4 structs | 0 | Pure layout change; same fields, reordered. Scalar metadata (sum/sum_sq/count/head) at offset 0 of each struct (was at end). Predictable cache-line behavior; no functional change. Verified bytewise-identical feature outputs (3106 tests pass unchanged). |
+| .D.B Push | short_sum maintenance: +1 subtract + 1 ring read at head-SHORT_K eviction (after warm-up) | **+1-2 ns** | The samples[head - K=64] cache line is typically L1-warm (visited K cycles ago; ring is small enough to retain). 1 extra FPN_Sub + 1 extra FPN_Add per Push. |
+| .D.B MeanShortFast | O(K=64) sequential walk → O(1) running sum read | **-10 to -100 ns (effective)** | Pre-.D.B: MeanShort(64) walked 64 × 24B = 1536B sequentially (~24 cache lines; prefetcher helps but ~5-15 cold misses worst case). Post-.D.B: read short_sum (1 line) + DivNoAssert. Per-cycle savings depend on cache-warmth: ~500-1500 ns when cold; ~10-30 ns when fully L1-warm. Median realistic savings on production cadence: ~50-200 ns/cycle. |
+| .D.B parity test | Bytewise parity loop in controller_test.cpp | 0 (test-only) | 200-push deterministic sequence locks the FPN_Add associativity contract for book imbalance magnitudes. |
+| .D.C | CLAUDE.md item 29 + DESIGN_SPECS multi-window section | 0 | Docs-only. |
+
+**Aggregate slow-path cycle delta:** **~-10 to -200 ns / cycle / core** (Push side +1-2 ns; MeanShortFast read side -50-200 ns median; net wins by ~50-200 ns / cycle). Across 16 cores × ~1000 cycles/sec = 800 µs - 3.2 ms of slow-path budget recovered per second.
+
+**Branchless analysis:**
+- MeanShortFast: 1 branch (count <= 0 early return) + 1 conditional (`effective_k` clamping via `(count < SHORT_K) ? count : SHORT_K`). Both predictable: count=0 fires once at boot then never again; effective_k clamp goes the same way after warm-up (~64 cycles in).
+- Push: 1 extra branch (`count > SHORT_K` short-eviction gate). Fires every Push after warm-up; <5% mispredict during the warm-up transition.
+
+**Cache impact:**
+- HOT cluster (sum / short_sum / sum_sq / count / head) now at offset 0..55 of each struct → predictable line 0 hit per access.
+- COLD cluster (samples[] ring) at offset 56+ → only samples[head] (write site) + samples[head - K] (short-eviction read site for BookImb) touched per Push.
+- Removed: 24-line MeanShort sequential walk per cycle (BookImb only).
+- Net per-cycle cache footprint: 2 lines (Push: scalars + samples[head]) + 1 line for samples[head-K] eviction (BookImb only) + 1 line read for MeanShortFast (scalars cache line is same as Push side; likely cached). vs. pre-D 2 + 24 cache lines (Push + MeanShort walk).
+
+**Memory delta:**
+- Per CoreSlowState: +24 B (short_sum field) + 56 B alignas trailing pad cumulative across 4 structs = +80 B / core. ~1.28 KB engine-wide across 16 cores. Sub-1-cache-line per core; well below any cache-budget concern. Structural minimum per alignas(64) requirement (rigorously verified — see plan file padding analysis).
+
+**Wire format:** UNCHANGED. None of the 4 structs are persisted (no PORTFOLIO_SNAPSHOT, no ShardedSnapshot, no model stamp body). Internal slow-path state only.
+
+**Pattern reference:** `sliding-window-online-statistics-pattern.md` Approach 3 (sliding-window incremental) Multi-window variant. 2nd canonical application after v5.14.11.A RidgeBlender correlation matrix. Promoted to CLAUDE.md item 29 per CLAUDE.local.md "codify when 2+ applications" rule.
+
+**Future optimization paths:**
+- AVX-512 vectorization of long-window MeanLong / MeanShort full-recompute paths: deferred to v5.16+ if FPN_Add SIMD wrappers become available (per `avx512-byte-determinism-pattern.md`).
+- Apply same dual-window pattern to LargeTradeState / SpreadState if a short-window z-score consumer emerges (currently only single-window full-distribution z-score; no short-window need).
+- ConfidenceScorer same-shape cache-layout audit pending in `.E` next sub-ship.
+
+**Classes closed permanently in v5.15.5.D:**
+- O(K) walk per slow-path cycle for canonical-K MeanShort consumers (via running short_sum + MeanShortFast fast-path companion accessor pattern; first application of "fast-path companion accessor" pattern, queued for codification on 2nd application per pattern-codification-lifecycle.md Stage 0).
+- Cache-layout drift on 4 FlowFeatures structs (via static_assert sizeof + offsetof + alignof locks at struct definition site).

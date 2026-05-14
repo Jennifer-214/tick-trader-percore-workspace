@@ -2,38 +2,45 @@
 
 ## Overview
 
-Tick-level crypto trading engine in C++. Branchless fixed-point arithmetic, bitmap-based portfolio management, regression-driven gate adjustment with regime detection. Per-core sharded hot path (40-400ns p99), single-symbol producer thread fanning real Binance ticks across SPSC rings to per-core consumers.
+Tick-level crypto HFT trading engine in C++. Per-core risk-sharded hot
+path (40-400ns p99); branchless fixed-point math (`FPN<F=64>` = 24B);
+X-macro registries for multi-site additions; bitmap-packed portfolio +
+flags. Single producer thread fans Binance ticks across SPSC rings →
+N per-core consumers (default 4, cap 16); each core = self-contained
+strategy unit (slow + hot pthread pair). Sharded is production. Legacy
+single_core LIVE is deprecated (warned at boot). Legacy backtest is
+gone — `Backtest_Run` wraps `BacktestSharded_Run`.
 
-**Sharded is production. Legacy single_core LIVE is deprecated (warned at boot). Legacy backtest is gone — `Backtest_Run` wraps `BacktestSharded_Run`.**
+Current sprint: **v5.15-live-readiness** (operational visibility +
+live mode strict defaults + structural unification). See
+`plans/v5.15-live-readiness/MASTER.md`.
 
 ## Build
 
-`./build.sh test` (engine + controller_test), `gui` (engine_gui + foxml_suite), `suite` (suite with XGBoost), `tsan` / `asan` (sanitizer builds), `all`, `clean`. Build flags: `-DLATENCY_PROFILING=ON`, `-DLATENCY_LITE=ON`, `-DLATENCY_BENCH=ON`, `-DBUSY_POLL=ON`, `-DUSE_NATIVE_128=ON`.
+`./build.sh test` (engine + controller_test), `gui` (engine_gui +
+foxml_suite), `suite` (suite with XGBoost), `tsan` / `asan` (sanitizer
+builds), `all`, `clean`. Build flags: `-DLATENCY_PROFILING=ON`,
+`-DLATENCY_LITE=ON`, `-DLATENCY_BENCH=ON`, `-DBUSY_POLL=ON`,
+`-DUSE_NATIVE_128=ON`.
 
-Build dirs (different compile flags → different outputs): `build/` (ANSI + tests, zero deps), `build_gui/` (engine_gui + foxml_suite — SDL2 + OpenGL3 + ImGui), `build_suite/` (same + XGBoost), `build_lat/` (LATENCY_PROFILING), `build_tsan/`, `build_asan/`.
+Build dirs (different compile flags → different outputs): `build/`
+(ANSI + tests, zero deps), `build_gui/` (engine_gui + foxml_suite —
+SDL2 + OpenGL3 + ImGui), `build_suite/` (same + XGBoost), `build_lat/`
+(LATENCY_PROFILING), `build_tsan/`, `build_asan/`.
 
-XGBoost C library (for `-DUSE_XGBOOST=ON`): clone `dmlc/xgboost` recursive, cmake with `-DBUILD_STATIC_LIB=OFF`, install + ldconfig.
+XGBoost C library (for `-DUSE_XGBOOST=ON`): clone `dmlc/xgboost`
+recursive, cmake with `-DBUILD_STATIC_LIB=OFF`, install + ldconfig.
 
-`build.sh` symlinks `engine.cfg` into each build dir; `bin/engine_gui` → `build_gui/engine_gui`.
+`build.sh` symlinks `engine.cfg` into each build dir; `bin/engine_gui`
+→ `build_gui/engine_gui`.
 
 ## Architecture (sharded)
 
-N cores (default 4, cap 16), each = self-contained strategy unit (slow + hot pthread pair). Producer thread fans Binance ticks across per-core SPSC rings; per-core hot-paths consume; per-core slow-paths rebuild gate parameters on cadence.
-
-- Per-core strategy (`core_N_strategy=simple_dip|momentum|ema_cross|ml`)
-- Per-core ML model (`core_N_model_path=...` or `core_N_model_dir=...`)
-- Per-core risk (`core_N_risk_pct=...`)
-- Per-core ConfidenceScorer (when STRATEGY_ML)
-- Per-core slow_state owns rolling/regime/flow data (v5.1.2+)
-- Hot path p99 ≤500ns
-- Partial exits (`partial_exit_enabled=1`): each core owns 2 slots (legs A+B); max cores = 8
-- `engine_arch=per_core_slow` (default v5.0+) | `centralized` (legacy)
-
 ```
-HOT PATH (per tick, per core, branchless):
+HOT PATH (per tick, per core, branchless; ≤500ns p99):
   BG_Evaluate → SG_Evaluate ×2 → TradeEvent push (rare branch)
 
-SLOW PATH (per-core thread, every poll_interval ticks):
+SLOW PATH (per-core thread, every poll_interval ticks; ≤100μs p99):
   EventLoop_UpdateRollingStateOneCore → RebuildOneCore (regime + strategy)
   → ExecutionCore_SetParameters (seqlock to hot path)
   → TimeExitOneCore → TrailingSLRatchetOneCore
@@ -44,230 +51,155 @@ GLOBAL THREADS:
   Async:    Binance trade WS, depth WS, Tick/DepthRecorder, Notify worker, GUI
 ```
 
+- Per-core strategy (`core_N_strategy=simple_dip|momentum|ema_cross|ml`)
+- Per-core ML model (`core_N_model_path=...` or `core_N_model_dir=...`)
+- Per-core risk (`core_N_risk_pct=...`)
+- Per-core ConfidenceScorer (when STRATEGY_ML)
+- Per-core slow_state owns rolling/regime/flow data (v5.1.2+)
+- Partial exits (`partial_exit_enabled=1`): each core owns 2 slots (legs A+B); max cores = 8
+- `engine_arch=per_core_slow` (default v5.0+) | `centralized` (legacy)
+
 ## Data Flow: Regime Detection
 
-```
-Per-engine slow_state (RollingStats × 4 + RORRegressor + flow + depth) →
-  RegimeSignals (slope, R², variance, ror_slope, ema_sma_spread,
-                 book_imbalance, spread_z, flow_*_ewma, large_trade_z, ...) →
-  Regime_Classify (trending_score + volatile_score with hysteresis) →
-    RANGING / TRENDING / VOLATILE / MILD_TREND → strategy dispatch
-```
+Per-engine slow_state (RollingStats × 4 + RORRegressor + flow + depth)
+→ RegimeSignals (slope, R², variance, ror_slope, ema_sma_spread,
+book_imbalance, spread_z, flow_*_ewma, large_trade_z, ...) →
+Regime_Classify (trending_score + volatile_score with hysteresis) →
+RANGING / TRENDING / VOLATILE / MILD_TREND → strategy dispatch.
 
-`RegimeSignals` is the extensibility point — see `DOCS/CLAUDE_INTEGRATION.md` for the recipe.
+`RegimeSignals` is the extensibility point — see
+`DOCS/CLAUDE_INTEGRATION.md` for the recipe.
 
 ## Directory Structure
 
-- **CoreFrameworks/** — OrderGates, Portfolio, ExecutionCore, ControllerEventLoop, EngineSharded, ShardedSnapshot/Persist, GateParameters, TradeEvent, OrderManager, ShardedBacktestDriver
-- **Strategies/** — RegimeDetector, MeanReversion, Momentum, SimpleDip, EmaCross, MLStrategy, StrategyParameters (dispatcher), StrategyInterface
-- **DataStream/** — BinanceCrypto/Depth, DepthReplayState, DepthRecorder, TickRecorder, BinanceOrderAPI, EngineTUI
-- **FixedPoint/** — FPN<F=64> (4096-bit)
-- **MemHeaders/** — PoolAllocator (bitmap order pool), BuddyAllocator
-- **ML_Headers/** — RollingStats, ROR_regressor, ConfidenceScore, ModelInference (XGBoost), FlowFeatures
-- **GUI/** — Dear ImGui native: FoxmlTheme, DashboardPanels, ChartPanel, CandleAccumulator, TradeReader, SettingsPanel, TradeHistoryPanel, LogViewerPanel, GuiThread
-- **Backtest/** — `Backtest_Run` wrapper + `BacktestSharded_Run`, BacktestPanels, LabelFunctions, HeldOutSplit, ValidationSplit
-- **tests/** — controller_test.cpp (739+ assertions), parity_harness.cpp
-- **DOCS/** — CHANGELOG.md, changelogs/, CLAUDE_*.md (split-load reference docs)
-- **plans/** — gitignored, working plans
-- **Version.hpp**, **Limits.hpp** — single source of truth
+| Dir | Contents |
+|---|---|
+| `CoreFrameworks/` | OrderGates, Portfolio, ExecutionCore, ControllerEventLoop, EngineSharded, ShardedSnapshot/Persist, GateParameters, TradeEvent, OrderManager, ShardedBacktestDriver, **CfgFieldRegistry / CfgFieldDispatch (v5.15.5.F.4b+)** |
+| `Strategies/` | RegimeDetector, MeanReversion, Momentum, SimpleDip, EmaCross, MLStrategy, StrategyParameters (dispatcher), StrategyInterface, **StrategyCategories / OpModeCategories (v5.15.5.F.4b+)** |
+| `DataStream/` | BinanceCrypto/Depth, DepthReplayState, DepthRecorder, TickRecorder, BinanceOrderAPI, EngineTUI |
+| `FixedPoint/` | FPN<F=64> (4096-bit) + `is_FPN_v` type trait |
+| `MemHeaders/` | PoolAllocator (bitmap order pool), BuddyAllocator, BitmapMacros, FailureModeRegistry |
+| `ML_Headers/` | RollingStats, ROR_regressor, ConfidenceScore, ModelInference (XGBoost), FlowFeatures, StampBoundCfgRegistry, StampBoundModelConstRegistry |
+| `GUI/` | Dear ImGui native: FoxmlTheme, DashboardPanels, ChartPanel, CandleAccumulator, TradeReader, SettingsPanel, TradeHistoryPanel, LogViewerPanel, GuiThread |
+| `Backtest/` | `Backtest_Run` wrapper + `BacktestSharded_Run`, BacktestPanels, LabelFunctions, HeldOutSplit, ValidationSplit |
+| `tests/` | controller_test.cpp (3118 tests), parity_harness.cpp |
+| `DOCS/` | CHANGELOG.md, changelogs/, CLAUDE_*.md (split-load reference docs), RECURRING_BUG_PATTERNS.md, STRATEGY_AND_CODING_RULES.md (private) |
+| `plans/` | gitignored (symlinked to workspace); working plans + plan_checks + handoffs + postmortems |
+| `Version.hpp`, `Limits.hpp` | single source of truth |
+
+## Hard Invariants (NEVER BREAK)
+
+Full discussion: `DOCS/DESIGN_PHILOSOPHY.md` § 2 + `DOCS/STRATEGY_AND_CODING_RULES.md` (private; 11 strict invariants).
+
+| # | Rule |
+|---|---|
+| H1 | NO `malloc` / `new` / `std::vector` / `std::string` / `std::function` — anywhere |
+| H2 | NO `virtual` / `std::shared_ptr` / `std::unique_ptr` on hot path |
+| H3 | NO `std::mutex` / `condition_variable` / `sleep_for` / `pthread_rwlock` — anywhere |
+| H4 | `FPN<F=64>` for accounting math; NEVER `float`/`double` on accounting paths (display-only OK) |
+| H5 | NO scalar JSON / `strstr` / `atof` in parser inner loops; use `simdjson` / `fast_float` / `tt::parse_double_fast` |
+| H6 | Cross-thread fields get `alignas(64)`; cluster fields by access pattern (hot reads / hot writes / cold init / cross-thread) |
+| H7 | Hot path BRANCHLESS for data-dependent dispatch (mask compute, cmov; per Rule 8 of latency-path-discipline) |
+| H8 | Hot path p99 ≤500ns; slow path p99 ≤100μs (regression = ship blocker) |
+| H9 | Wire-format byte preservation for HMAC-signed bodies (stamps, snapshots, RunHistory); locale pinning at emit |
+| H10 | AVX-512 SIMD kernels MUST have scalar fallback producing BYTEWISE IDENTICAL output |
+| H11 | Math kernels on slow/hot path: CONSTANT-ITER + branchless within reductions |
+| H12 | Structs in byte-equivalence contexts (memcmp / SHA-256 / wire format / HMAC input): EXPLICIT `int<N>_t _padding<N> = 0;` default-init fields |
+| H13 | Type-erased `*reinterpret_cast<T*>((char*)cfg + offset) = v` style dispatch is FORBIDDEN — use `tt::<verb>_field<T>` with T deduced (Class 23 3-barrier fix) |
 
 ## Code Conventions
 
 - `using namespace std;` throughout
-- C-style with templates, no classes (with one explicit exception:
-  RAII destructors on resource-owning structs that own threads or
-  mmap'd memory, e.g. `~OrderManagerState()` since v5.11.26 — see
-  the destructor comment in `CoreFrameworks/OrderManager.hpp` for
-  the criteria; default is still no destructor)
-- `Pattern_FunctionName` (e.g. `Portfolio_Init`, `BG_Evaluate`)
-- Hot-path math is `FPN<F>` only, no floats (F=64 = 4096-bit)
+- C-style with templates, no classes (with one exception: RAII destructors on resource-owning structs that own threads or mmap'd memory; e.g., `~OrderManagerState()` since v5.11.26 — see destructor comment in `CoreFrameworks/OrderManager.hpp` for criteria)
+- `Pattern_FunctionName` (e.g., `Portfolio_Init`, `BG_Evaluate`, `OMS_DrainSubmit`)
+- Hot-path math is `FPN<F>` only, no floats (F=64 = 4096-bit; 24 bytes)
 - Branchless: mask tricks `-(uint64_t)pass`, word-level mask-select
-- Inline comments explain reasoning, not what
+- Inline comments explain WHY, not WHAT (well-named identifiers handle the WHAT)
 - **Preserve user's voice in existing comments when editing**
+- New cfg field of recognized Kind = 1 row in `FOREACH_CFG_FIELD` (`CoreFrameworks/CfgFieldRegistry.hpp`); parser + GUI render + tooltip + per-core override emission auto-flow
 
 ### Test file size discipline (added v5.11.35)
 
-`tests/controller_test.cpp` is currently ~16k lines (1822 tests).
+`tests/controller_test.cpp` is currently ~25k lines + 3118 tests.
 That's too big — slow to compile, hard to navigate, easy to break
 during refactors. The build system already supports multiple test
 binaries (`depth_recorder_test`, `parity_harness` are precedents).
 
 **Rule:** any test file > 5k lines OR > 100 test sections must be
 split BEFORE adding more tests. Categories should be domain-aligned:
+`controller_test_engine.cpp` / `_features.cpp` / `_stamps.cpp` /
+`_ml.cpp` / `_misc.cpp`. Helpers extract into `tests/test_common.hpp`.
 
-  - `controller_test_engine.cpp` — engine paths, OMS, drainer, gates
-  - `controller_test_features.cpp` — RollingStats, FeatureRegistry,
-    Features_PackAll, FeatureStandardizer
-  - `controller_test_stamps.cpp` — verify_model_stamp,
-    stamp_write_for_model, bash-parity, scaler binding
-  - `controller_test_ml.cpp` — ConfidenceScore, MLBuildContext,
-    CoreModelZoo, BanditLearning, FOREACH_FEATURE
-  - `controller_test_misc.cpp` — utility tests, FPN math, allocators
+The actual split is queued as a v5.11.35 sub-ship (deferred from
+multiple sessions because 3118 tests at risk warrants a focused
+effort with rollback anchor).
 
-Helpers (`check`, `tests_passed`, `tests_failed`, `make_event`,
-`fpn_field_eq` etc.) extract into `tests/test_common.hpp`. Each
-split file is a separate `add_executable()` in CMakeLists.txt;
-all run via `ctest` or the existing `./build.sh test` harness.
+## Reference Docs (split-load — read on demand)
 
-The actual split for the current `controller_test.cpp` is queued
-as a v5.11.35 sub-ship (deferred from the current session because
-1822 tests at risk warrants a focused effort with rollback anchor).
-
-## Key Design Decisions
-
-1. Portfolio uses `uint16_t` bitmap (not sequential count)
-2. Per-position TP/SL exits on hot path, portfolio mgmt on slow path
-3. Fill consumption every tick (zero unprotected exposure)
-4. Per-core data-plane: each engine owns its rolling/regime/flow state (v5.1.2+)
-5. OMS submit funneling: drainer is sole `OrderManager_Submit` caller (v4.7.37)
-6. OneCore helpers shared by 3 callers (centralized live, per_core_slow live, backtest) for structural train-serve parity
-7. Warmup observes market before trading (gates on slow-path sample count)
-8. TUI independent of engine (engine runs headless, TUI reads state via double-buffered TUISnapshot)
-9. No API key for market data WS (public endpoint)
-10. Partial exits: dispatcher post-cap so strategies stay leg-A-only; hot path branch-gates leg B
-11. Smart CPU pinning (v5.1.5): slow-paths avoid SMT siblings of busy threads via /sys topology read
-12. Display ↔ execution invariant (v5.6.0): every term in BG_Evaluate / SG_Evaluate must have a corresponding GUI surface. Adding a new hot-path predicate term requires a `PerCoreSnap` field + a panel render in the same PR. See `DOCS/EXECUTION_DISPLAY_INVARIANTS.md`.
-13. X-macro registry is the standard pattern for multi-site additions (v5.8.0+). Any category where "adding the next instance" requires touching ≥2 code sites must use a `FOREACH_<CATEGORY>(X)` registry. See `DOCS/EASY_ADDITIONS_INVARIANTS.md` for the canonical spec + the audited categories. Instances: strategies, ML features, SHALT codes, halt_reason codes, regimes, stateful GUI panels, backtest metrics, stamp-bound cfg fields, **architectural stamp-body model-const fields (v5.14.8.0)**, **failure-mode observability fields (v5.14.8.B)**. **(v5.14.1.E.E.B addition)** When the registry has a "production-caller populator" side-effect (e.g. `inf.has_<name> = 1; inf.<name> = (type)(get_cfg)`), the X-macro tuple MUST include an `emit_when` predicate so the populator can be auto-generated via a SINGLE companion macro at the production caller (e.g. `STAMP_CFG_AUTOPOPULATE`, `STAMP_MODEL_CONST_AUTOPOPULATE`). Manual populators across multiple call sites recurred 4× as PARITY-002/003/004/005/008 before STAMP_CFG_AUTOPOPULATE eliminated the class. Pattern: every X-macro registry that triggers production-caller side-effects gets an auto-populate companion macro. Adding the next entry must be ONE registry line; population is guaranteed by compile-time expansion (cannot be forgotten). **(v5.14.8.B addition)** Storage classes: registries with mixed-type entries (boolean flags + counters + values) declare per-entry storage class (e.g., `BIT_FLAG` / `COUNTER_U32` / `PERCENT_U8` in FOREACH_FAILURE_MODE). `BIT_FLAG` entries auto-pack into a single bitmap word (uint16_t / uint32_t / uint64_t depending on flag count) per CLAUDE.md item 1 (Portfolio bitmap precedent). Wins: memory compactness, branchless multi-flag check via mask AND, single-word "any flag set?" check, atomic multi-flag updates via `__atomic_fetch_or`. See TECH_DEBT-013 for systematic application across remaining byte-per-flag sites.
-14. NaN-free feature pack (v5.9.0+). `Features_PackAll` is the single chokepoint where every feature value is validated. Two-layer guard: `FPN_IsValidFinite` (catches FPN saturation past 1e15) + IEEE-754 `isnan/isinf` post float-cast. Returns `-1` sentinel on any failure; caller skips the prediction cycle and increments `nan_feature_events_total` (distinct from `nan_prediction_events_total`). Adding a new feature must NOT add a separate validation site — pack-time is the load-bearing surface, downstream code trusts the pack output. See `DOCS/CLAUDE_ML_INVARIANTS.md`.
-15. Parity-tested-by-construction (v5.9.5+). Train-serve parity surfaces (features, labels, scaler, cfg, stamp body, threading, build flags) gain protection by adding a registry/binding/snapshot rather than ad-hoc tests. Pattern: FEATURE_REGISTRY_HASH (v5.8.6) + scaler `feature_registry_hash` (v5.9.3a) + stamp body `has_*` forward-compat flags (v5.9.3a, v5.9.4a) + snapshot tests for compute-fn bodies (v5.9.2a). Prefer Surface G stamp body extension (`has_<field>` flag with `model_format_version` UNCHANGED) over `MODEL_FORMAT_VERSION` bumps — flag extensions don't break legacy stamps; format bumps lose data. Run `/parity-check` before declaring an ML-side sprint complete. See `DOCS/PARITY_LIFECYCLE.md` + `DOCS/PARITY_VERIFICATION_CHECKLIST.md`.
-16. Reuse-audit before adding new code (v5.12.1+). Before writing a NEW function or duplicating state access in a plan, scan the current codebase + adjacent in-flight plans for: (a) existing functions with overlapping responsibility (b) atomic loads / clock_gettime / cfg accesses that could be SHARED across consumers in the same slow-path cycle (c) state fields that could be reused vs adding a new field (d) conversion paths (FPN ↔ double, system_clock ↔ rdtsc) that already exist. If the plan introduces N reads/computes that an adjacent plan ALREADY does, capture as a merge candidate — either hoist the shared computation to the common caller and pass down (preferred), cache to local at the topmost gate, or defer the merge with an explicit `// FUTURE OPPORTUNITY:` comment. **Hot-path/producer paths get branchless mask compute on shared data; slow-path can use predictable branches with shared reads.** Run `/merge-scan` periodically to surface opportunities; ship-time check in `/readiness` (item 18) catches per-plan misses. v5.12.1.A.2 is the canonical example — `EventLoop_CheckWsStaleness` shares `now_us` with the existing `sp_last_tick_us` write at slow-path tail, saving ~50-100ns/cycle/core.
-17. Latency-additions are tracked (v5.12.1+). Any change that adds work to a latency-critical path (hot path target ≤500ns, producer fan_out, slow path target ≤100μs) MUST be documented in `DOCS/HOT_PATH_CHANGELOG.md` with: cost estimate (ns), branchless analysis, cache impact, and a FUTURE optimization note pointing the way to drop the cost (compile-time elision via template, runtime predicate cache, slow-path liveness flag, or reuse-audit pointer). The skill `/latency-track` audits diffs / commits and emits draft changelog entries — operator reviews + pastes. Sister to `/merge-scan` (sharing opportunities) but for additions. v5.12.1.B.3's staleness gate (~1-2ns hot-path mask) is the canonical entry — three optimization paths documented for revisit when budget tightens. Run `/latency-track` after any sprint that touches the audited surfaces; sprint-end review of the changelog surfaces entries that grew load-bearing.
-18. Slow-path latency reduction is a priority going forward (v5.12.2+). Operator policy 2026-05-08: aim to MINIMIZE slow-path branches + cycles in every ship. Default patterns: (a) DEFAULT-OFF safety gates use compile-time elision via `template <bool ENABLED>` + `if constexpr` so disabled state has zero cost (no branch, no instruction); (b) ALWAYS-ON gates use branchless mask compute on cached state; (c) RUNTIME-toggleable + load-bearing gates cache an "any_gate_enabled" mask at slow-path entry; later checks are AND-mask compares; (d) avoid sprinkling cfg-flag checks through deep functions — hoist to the slow-path top + pass a small struct of resolved predicates. **(v5.14.8 addition)** Mask compute > switch on enum: for "any of these states?" queries, a single mask AND beats a switch statement (branchless, predictable, single uop). The 100μs slow-path budget is loose today (OS interference dominates p99) but compounds tightly as v5.12 wins shrink the productive cycle (lazy rebuild cuts 30-50% of cycles; AOT cuts ML inference 50x). When budget tightens, the v5.12 cfg-flag-gated additions become the migration list. Run `/merge-scan` periodically; it surfaces both reuse opportunities (item 16) AND branch-density regressions in the same scan.
-19. Structural fix preferred when bug class can recur (v5.14.2.E+). When facing a bug whose ROOT CAUSE is "same pattern at multiple sites drifted apart" (Class 18 mirror, parallel paths), prefer compile-time enforcement (X-macro registry, helper extraction with all callers unified) over direct patch — even if direct patch is cheaper today. Why: v5.9.5b production-caller class recurred 4× before STAMP_CFG_AUTOPOPULATE extinguished it (v5.14.1). PARITY-009/010/011/012 were 9 sub-gaps of the same Class 18 shape at function-composition level; PostLoadSetup registries closed all 9 in one ship (v5.14.2.E.1). How to apply: when `/parity-check` or `/merge-scan` surfaces duplication or mirror gaps, ask "would a registry / helper extraction + compile-time enforcement prevent the next instance?" If yes, that's the v5.X ship shape. Direct patches are for true one-off bugs only. Pattern documented in `DESIGN_SPECS/structural-fix-preferred-decision-framework.md`.
-20. **Bit-packed flag storage via BITMAP_\* API** (v5.14.8.A.0.b+). When 3+ boolean flags coexist in a single struct, bit-pack into a uint16_t / uint32_t / uint64_t bitmap with `MASK_<X>` constants. Use BITMAP_* primitives from `MemHeaders/BitmapMacros.hpp` for ergonomic accessors:
-    - `BITMAP_IS_SET(field, mask)` — single-flag check; **returns bool via `!= 0`** (prevents int-truncation bug for high bits in uint64_t — bit 63 truncating to 0 in `int condition` context)
-    - `BITMAP_SET / CLR / TOGGLE` — single-thread mutation
-    - `BITMAP_ANY(field, mask_set)` — branchless multi-flag check (1 cycle AND vs N branches)
-    - `BITMAP_ALL / NONE` — full-set / empty-set predicates
-    - `BITMAP_ATOMIC_*` — cross-thread variants with `__ATOMIC_RELAXED` for observability flags (no happens-before constraint); upgrade to release-acquire when the bitmap synchronizes OTHER data
-    - `BITMAP_BIT_U16/U32/U64(n)` — width-typed mask builders (avoids signed-int promotion bugs at high bits)
-    - `BITMAP_POPCOUNT_* / BITMAP_FIRST_*` — built-in iteration helpers
-
-    **Wins (data-oriented design):** memory compactness (16 flags in 2 bytes vs 16 bytes byte-per-flag), atomic multi-flag updates via `__atomic_fetch_or` (1 instruction vs N stores), cache-friendly (flag-set for entire core fits one word), branchless predicates (single mask AND).
-
-    **Trade-off — per-record vs cross-record bit-packing:** bit-pack within a SINGLE record's flag set (struct fields, registry has_*, snapshot summary). DO NOT bit-pack ACROSS records (e.g., one bit per Order across all orders); per-record cache locality + indirection cost outweigh memory savings.
-
-    **Cache-line awareness for shared bitmaps:** a single `uint64_t has_flags` fits one cache line with adjacent fields. Cross-thread flag updates cause cache-line invalidation (relevant for slow-path writes + display thread reads — keep observability bitmaps near-but-not-mixed-with hot-path data; consider separate cache line for cross-thread flags via `alignas(64)` or padding).
-
-    **Reference precedent:** Portfolio<uint16_t> (item 1) is the OG bitmap. Reusable across X-macro registries: STAMP_HAS, FAILURE_IS_SET are aliases to BITMAP_*. Pattern documented in `DESIGN_SPECS/bitmap-flag-api.md`. TECH_DEBT-013 inventory tracks systematic application across remaining byte-per-flag sites.
-
-21. **AUTOPOPULATE companion macro for X-macro registries** (v5.14.1.E.E.B+). When a registry has multiple production callers that ASSEMBLE the registry-driven struct (e.g., Train Model worker, BacktestEngine, BacktestPanels), define an AUTOPOPULATE companion macro (`STAMP_CFG_AUTOPOPULATE`, `STAMP_MODEL_CONST_AUTOPOPULATE`) that auto-generates per-field populator code via X-macro expansion. Production callers replace ~50-100 LOC of manual `inf.X = src.X; inf.has_X = 1;` blocks with one `STAMP_X_AUTOPOPULATE(target, source)` call. Closes the v5.9.5b production-caller field-population class structurally — adding a new registry field becomes 1 row; the AUTOPOPULATE expansion picks it up at next compile. Forgetting becomes impossible.
-
-    **Optional belt-and-suspenders:** add a `_autopopulate_called` bool sentinel on the target struct, set by AUTOPOPULATE, asserted by the downstream consumer (REFUSE / WARN / log). Catches future contributors who add a NEW production-caller construction site but forget AUTOPOPULATE. Cost: 1 byte + 1 runtime branch (boot-only).
-
-    **Applied at:** STAMP_CFG_AUTOPOPULATE (closed PARITY-002/003/004/005/008 — 4× recurrence), STAMP_MODEL_CONST_AUTOPOPULATE (defined v5.14.8.0; production-caller wiring v5.14.8.D). Pattern documented in `DESIGN_SPECS/autopopulate-pattern-for-production-caller-class.md`.
-
-22. **PRE/POST registry split for canonical-emit-order preservation** (v5.14.8.A.merged.4+). When a registry's entries must emit at positions INTERLEAVED with a SISTER registry's entries (HMAC-locked wire format; sister registry between this one's entries), split FOREACH into `_PRE_CFG` and `_POST_CFG` halves + walk each separately at the right point. Same tuple shape across halves; struct generation + AUTOPOPULATE walk the union (FOREACH = PRE + POST); emit walks halves separately:
-
-    ```cpp
-    FOREACH_REGISTRY_PRE_CFG(EMIT_X)    // canonical positions 1..N
-    FOREACH_SISTER_REGISTRY(SISTER_X)   // canonical positions N+1..N+M
-    FOREACH_REGISTRY_POST_CFG(EMIT_X)   // canonical positions N+M+1..end
-    ```
-
-    Adding next entry to either half = 1 row in PRE or POST; auto-flow through union for struct gen + AUTOPOPULATE; correct emit order via the split walks. Pattern documented in `DESIGN_SPECS/pre-post-cfg-registry-split-for-emit-order-preservation.md`. **Applied at:** FOREACH_STAMP_BOUND_MODEL_CONST_PRE_CFG / _POST_CFG (closes TECH_DEBT-006 fully; 26 PRE entries + 6 POST entries; emit order: PRE → FOREACH_STAMP_BOUND_CFG → POST).
-
-23. **Type-trait dispatch via templated helpers, NOT non-template `if constexpr`** (v5.14.8.A.merged.4+). C++17 `if constexpr` discards branches at TEMPLATE INSTANTIATION. In **non-template macro context** (X-macro expansion in a regular function body), all branches must be SYNTACTICALLY VALID for ALL types — a cast like `(char[16])(scalar)` in a non-taken if-constexpr branch is still a hard cast error. Fix: extract type dispatch into a templated helper function that's instantiated per-T:
-
-    ```cpp
-    namespace tt {
-        template <typename T>
-        inline void stamp_parse_field(T& dst, const char* val) {
-            if constexpr (std::is_array_v<T>) {
-                strncpy(dst, val, std::extent_v<T> - 1);
-                dst[std::extent_v<T> - 1] = '\0';
-            } else if constexpr (std::is_floating_point_v<T>) {
-                dst = static_cast<T>(parse_double_fast(val));
-            } else if constexpr (std::is_unsigned_v<T>) {
-                dst = static_cast<T>(strtoull(val, nullptr, 10));
-            } else {
-                dst = static_cast<T>(atoi(val));
-            }
-        }
-    }
-    ```
-
-    Each instantiation properly discards branches per T. Required ANY TIME a non-template context uses if-constexpr with branches that have different syntax requirements per type (typical case: char[N] strncpy vs scalar cast). Reference: `tt::stamp_parse_field<T>` in `ML_Headers/StampBoundModelConstRegistry.hpp` — parser X-macro just calls `tt::stamp_parse_field(r.name, val)` and the dispatcher works for int / uint / double / char[N] uniformly.
-
-24. **Per-arm reward observability invariant** (v5.14.10.A+; engineering invariant — NOT a pattern). Each ensemble arm's prediction is graded INDEPENDENTLY against actual price movement; per-arm rewards are observable regardless of which arm was selected. Implementation: `ML_Headers/CoreModelZoo.hpp:881-882` — `slow-path lookback walks ring → for old-enough records, computes per-arm reward (direction match) → calls Bandit_Update`. Each arm has its own prediction; each prediction is independently directionally-graded against actual; each arm's reward is observable per cycle.
-
-    **Why this matters:** generic bandit / RL frameworks assume PER-CHOICE reward observability (you only see the reward of the arm you actually pulled — counterfactual rewards for unpulled arms are unobservable). That assumption is FALSE in this codebase. The per-arm-graded model shapes which designs are valid:
-
-    - **Shadow-training is mathematically valid.** Running a parallel bandit (e.g., cfg.bandit_algorithm=2 dual-mode in v5.14.10.B) where one algorithm DRIVES decisions and another LOGS its choices but doesn't act — both bandits learn from the same per-arm signal stream. Their selection STRATEGIES diverge over time; offline analysis answers "which algo would have driven better aggregate PnL." Validity holds because rewards aren't gated by which arm was pulled.
-
-    - **Counterfactual evaluation is direct.** Backtesting "what would algorithm X have done" doesn't require importance-weighted estimators or doubly-robust corrections; just replay the same per-arm reward stream into algorithm X's update math.
-
-    - **Multi-algorithm A/B testing is cheap.** Adding a 3rd, 4th, Nth algorithm in parallel costs only the algorithms' runtime cost (small per CLAUDE.md item 17 latency tracking) — no statistical machinery needed for valid comparison.
-
-    **When this invariant might NOT hold (future caution):**
-    - If the engine ever moves to a setting where ARM SELECTION CHANGES THE REWARD (e.g., maker order placement that affects market impact + fill probability for that arm specifically), the invariant breaks for that surface. cfg=2-style dual-mode would become counterfactual-invalid. v6.0+ maker work needs to verify this carefully.
-    - If reward attribution moves from per-arm prediction-grading to per-arm trade-outcome attribution (i.e., reward = actual P&L of the arm's choice rather than direction-match of its prediction), the invariant still holds for prediction-graded but DOES NOT hold for trade-outcome-graded (because only the arm that traded has an observable trade outcome).
-
-    Document the prediction-graded reward attribution explicitly when adding new ML algorithm ships. Validate the invariant still holds before designing dual-mode or shadow-training features. Promoted to CLAUDE.md item 24 from v5.14.10.A pre-coding consult after confirming it would have been a SILENT BUG without the framework correction.
-
-25. **SIMD vectorization preserves bytewise determinism with scalar reference path** (v5.14.11.B+). Every AVX-512 (or future SIMD) kernel has a scalar fallback (`#if defined(__AVX512F__)` else baseline) and produces BYTEWISE IDENTICAL output across both paths. Cross-binary replay-determinism is the load-bearing concern — paper-trade audits + HMAC chains + cache-warm replay tests all break under 1-ULP divergence, and ML pipelines compose, so 1-ULP errors at feature extraction magnify into 1e-3 prediction differences after 10 nonlinear layers. Pattern documented in `DESIGN_SPECS/avx512-byte-determinism-pattern.md` (7 rules + SHA-256 lock test template; Rule 8 added v5.14.11.B.4: branchless within vectorized block). Applied at: v5.11.7 `Bandit_GetProbabilities` (first); v5.14.11.B.3 RidgeBlender UpdateOnline + BuildCorr (second + third).
-
-26. **Math kernels on slow/hot path are constant-iter + branchless** (v5.14.11.B+). Math kernel inner reductions iterate a compile-time-constant count (e.g., `MAX_RIDGE_MODELS=8`, not runtime `n`). NO `if` guards inside reduction loops. Zero-contribution iterations are bytewise no-ops via IEEE-754 invariants (`x*0=0`, `x-0=x` exact). Algorithmic state pre-zero (per-row, per-solve, per-cycle) establishes the zero-invariant. Outer loops with per-call-stable bounds are acceptable; branch predictor handles them cleanly. Pattern documented in `DESIGN_SPECS/branchless-math-kernel-pattern.md`. Canonical first reference: v5.14.11.B.1 `Cholesky_Solve` (constant-8 + pre-zero L_out/y_out/w_out invariant; bytewise-equivalent to prior variable-iter via IEEE-754 exactness). Subsequent applications: v5.14.11.B.3 `RidgeBlender_UpdateOnline` + `RidgeBlender_BuildCorr` (constant-iter inner reductions; vectorized via AVX-512 per item 25). Motivated by CLAUDE.md item 18 ("aim to MINIMIZE slow-path branches + cycles"); enforced via `/dod-audit` skill checks (v5.14.11.B.5).
-
-27. **Structs used in byte-equivalence contexts have explicit zero-init padding** (v5.14.11.B+). Any struct compared via `memcmp` / SHA-256 / wire format / HMAC input declares ALL padding bytes explicitly via `int<N>_t _padding<N> = 0;` default-init fields. Implicit C/C++ struct padding is UB unless explicitly initialized; under stack-layout shifts (function returns, struct copies, LTO inlining changes), uninit padding leaks through `memcmp` producing non-deterministic results. C++ default member init guarantees padding consistency across all constructions + copies. Pattern documented in `DESIGN_SPECS/struct-padding-determinism-pattern.md`. Canonical first reference: v5.14.11.B.2 `FPN<F>` (added `int32_t _padding = 0;` after `int32_t sign`; eliminated latent FracDiff bytewise-identity regression class). Subsequent application: v5.14.11.B.2 `ThompsonBanditState` (preventive padding fix; same pattern at 4-byte gap after `int n_arms`). Enforced via `/dod-audit` skill checks (v5.14.11.B.5).
-
-28. **Prefer cycles over cache misses; prefer branchless over data-dependent branches** (v5.15.5+). Cost reference at 3 GHz x86:
-    - 1 CPU cycle = ~0.3 ns
-    - L1 hit = ~1 ns; L2 = ~4 ns; L3 = ~13 ns
-    - **DRAM (L1 miss, cold cache) = ~100 ns (~300+ cycles; ~75-100× cycle cost)**
-    - Branch mispredict = ~3-5 ns (~10-15 cycles; ~10× cycle cost)
-
-    **Decision rules:**
-    - Approach A (+N cycles, -M cache misses) beats Approach B (-N cycles, +M cache misses) when **M > N/300**. For N=10 cycles, 1 saved miss = ~30× net win. For N=200 cycles, 1 saved miss = ~1.5× net win.
-    - Branchless A (+N cycles) beats branchy B (1 branch, M% mispredict) when **M > N/16**. For 5-cycle branchless overhead, >30% mispredict favors branchless. Data-dependent branches commonly mispredict 30-50% → branchless usually wins.
-
-    **When predictable branches stay** (don't force branchless): branch predictor learns the pattern (mispredict <5%); branch gates EXPENSIVE work (compute-skip semantics); branch is broad-control-flow (early-return, kill-switch). Per-mode dispatch on boot-set cfg = predictable → keep branchy. Per-cycle data-dependent dispatch (argmax over weights, blend mode flags from weights buf) = data-dependent → branchless wins.
-
-    **Apply during:** cache-layout audits (which struct field placement minimizes cache misses); SIMD vs scalar decisions (when 1 extra cache line for AVX-friendly layout > AVX savings); algorithm choice (constant-iter vs variable-iter per CLAUDE.md item 26); branch-density audits per Rule 8 of `DESIGN_SPECS/cache-layout-discipline-for-hot-side-structs.md`.
-
-    Pattern documented in `DESIGN_SPECS/latency-vs-cache-decision-framework.md` (cost tables, worked examples, edge cases).
-
-29. **Sliding-window incremental statistics over a fixed-size window** (v5.15.5.D+). For statistics (mean, variance, covariance, correlation) over the K most recent records, maintain running sums via subtract-then-add at sample eviction: `sum += x_new - x_oldest`. Eliminates the periodic-reset code smell that's common in vanilla-Welford-with-drift-mitigation; bounds drift by window contents (each record's contribution added once + subtracted once across its K-record lifetime); single math kernel shared between full-recompute and incremental paths.
-
-    **Apply when:** bounded inputs (|x| ≤ X analytically), bounded window K, ring buffer available for oldest-record retrieval, statistics consumed periodically (per slow-path cycle).
-
-    **Multi-window variant:** when one ring buffer must serve BOTH a long window W and a short window K (K < W), maintain TWO running sums on the SAME `samples[]` array; long-window evicts at `samples[head]`, short-window evicts at `samples[head - K]`. Warm-up phase (count ≤ K) accumulates without eviction so both sums equal until count > K. Per-Push cost: 1 extra subtract + 1 extra read (typically L1-warm since K cycles ago was visited recently); per-cycle savings: full O(K) walk eliminated on the short-window read.
-
-    **Bytewise parity discipline:** when converting an existing O(K) walked consumer to an O(1) running-sum reader (as v5.15.5.D did for BookImbHistory's MeanShort), the running-sum's chronological accumulation order MUST produce bytewise-identical sums to the walked path's newest-first iteration. Verify FPN_Add associativity holds analytically (no saturation possible at any reorder) + lock the contract via a deterministic bytewise parity test exercising warm-up + steady-state + boundary transition.
-
-    **Applied at:** v5.14.11.A `RidgeBlender_OnlineCycleStep` online correlation matrix (single window over N=8 model predictions; first reference); v5.15.5.D `BookImbHistory_MeanShortFast` (dual-window variant; second reference); **v5.15.5.E.D `RollingRMSE` running-sum (single-window double; third canonical reference — invariant status reached)**. Pattern documented in `DESIGN_SPECS/sliding-window-online-statistics-pattern.md`.
-
-    **Composable with:** `DESIGN_SPECS/generic-ring-buffer-template-pattern.md` (CLAUDE.md cross-link upcoming; first 2 applications shipped v5.15.5.E.C — RollingIC + RollingRMSE compose RollingWindow<T, N>). The generic ring-buffer template provides the SKELETON (count + head + window + samples[]); the sliding-window pattern provides the AGGREGATE-MAINTENANCE math (running sum / sum_sq / corr matrix). v5.15.5.E.D's RollingRMSE composes both.
-
-30. **Registry-bitmap SET discipline** (v5.15.5.F.3+). When a registry of flag bits (FOREACH_*) is paired with a bitmap field + downstream consumers (BITMAP_IS_SET / branchless mask compute / `/readiness` checks), the SET sites are SEPARATE actions from the data writes — easy to forget. Two anti-pattern shapes recur:
-    - **Shape A — Missing SET alongside data write**: code writes the underlying data field but forgets `BITMAP_SET(target->flags, MASK_X)`. Data is correct; bit stays 0; downstream consumers think "no data" → feature silently disabled.
-    - **Shape B — Chokepoint bypassed by alternate path**: a function (the "chokepoint") sets bits for a family of related conditions. NEW loader/init/replay paths added later bypass the chokepoint → bits never set for those paths → GUI/audit shows "clean" while underlying conditions are real.
-
-    **Structural fix templates** (in preference order):
-    1. **AUTOPOPULATE companion** (preferred when registry-driven) — X-macro expansion emits BOTH the data write AND the BITMAP_SET per row. Adding a new field = 1 row; forgetting becomes impossible. Per CLAUDE.md item 21.
-    2. **Single chokepoint function** — extract bit-setting into ONE function; ALL loader paths route through it. New paths inherit; bypasses become architecturally visible.
-    3. **Accessor wrapper** — `set_X_field_and_mark(...)` helper combines data write + SET; direct field writes get convention-banned.
-
-    **Applied at:** v5.15.5.F.3 `ezoo_set_per_arm_barrier` accessor (Shape A fix; arms_with_barriers_mask was never SET despite per_arm_barriers being written → ensemble barrier blending silently disabled); v5.15.5.F.3 ShardedSnapshot ensemble-handle drift aggregation walk (Shape B fix; ezoo->buy_signal[h] etc. handles' drift_flags_at_load never aggregated to PerCoreSnap.failure_flags → GUI Model Health showed "clean" while engine log emitted held-out-gate WARNs).
-
-    Pattern documented in `DESIGN_SPECS/registry-bitmap-set-discipline.md` with 3 `/dod-audit` detection signatures for catching future instances.
-
----
-
-# Reference Docs (split-load — read on demand)
-
-To keep this CLAUDE.md small (always loaded), detailed references live in
-separate files. **Read the relevant file when starting work in that area:**
+To keep this CLAUDE.md small (always loaded), detailed references live
+in separate files. **Read the relevant file when starting work in that
+area:**
 
 | When working on... | Read |
 |---|---|
-| Adding a cfg field, GUI panel, strategy, ML feature, per-core override | [`DOCS/CLAUDE_INTEGRATION.md`](DOCS/CLAUDE_INTEGRATION.md) |
-| Changing OMS, kill switch, snapshot, fee math, hot path, slow-path threading, anything load-bearing | [`DOCS/CLAUDE_INVARIANTS.md`](DOCS/CLAUDE_INVARIANTS.md) |
-| Touching FeatureRegistry, FeatureComputeCtx, MLBuildContext, CoreModelZoo, stamp_*, verify_model_stamp, train→serve path | [`DOCS/CLAUDE_ML_INVARIANTS.md`](DOCS/CLAUDE_ML_INVARIANTS.md) |
-| Planning a multi-day change | [`DOCS/CLAUDE_REVIEW.md`](DOCS/CLAUDE_REVIEW.md) |
-| Backtest suite (Run Control, Training, Walk-Forward, Held-Out) | [`DOCS/CLAUDE_FOXML_SUITE.md`](DOCS/CLAUDE_FOXML_SUITE.md) |
+| Cold-pickup / WHY any principle / design decision / contributor onboarding | `DOCS/DESIGN_PHILOSOPHY.md` (private; thematic narrative + 4-tier discipline + cross-ref index) |
+| Reusable architectural pattern catalog (27 patterns) | `tick-trader-percore-workspace/DESIGN_SPECS/README.md` |
+| Bug class catalog + detection signatures | `DOCS/RECURRING_BUG_PATTERNS.md` |
+| Hard invariants (full 11-rule discussion) | `DOCS/STRATEGY_AND_CODING_RULES.md` (private) |
+| Latency optimization audit findings (13 parts) | `DOCS/LATENCY_OPTIMIZATION_AUDIT.md` (private) |
+| Latency-path discipline (8 rules + anti-pattern history) | `plans/_cross-cutting/2026-05-06-latency-path-discipline.md` |
+| Adding cfg field / GUI panel / strategy / ML feature / per-core override | `DOCS/CLAUDE_INTEGRATION.md` |
+| Changing OMS / kill switch / snapshot / hot path / slow-path threading | `DOCS/CLAUDE_INVARIANTS.md` |
+| Touching FeatureRegistry / scaler / stamp / train→serve path | `DOCS/CLAUDE_ML_INVARIANTS.md` |
+| Planning a multi-day change | `DOCS/CLAUDE_REVIEW.md` |
+| Backtest suite (Run Control, Training, WF, Held-Out) | `DOCS/CLAUDE_FOXML_SUITE.md` |
 
-These are *never* automatically loaded — Claude reads them on-demand when
-the conversation matches one of the rows above. Keeps the always-on
-context small (~1500 words) so routine changes are fast, while the
-detailed rules are still authoritative when needed.
+These are *never* automatically loaded — read on-demand when the
+conversation matches a row above. Keeps always-on context small
+(~2000 words) so routine changes are fast; detailed rules + WHY are
+authoritative when needed.
+
+## How to ... (Quick Discovery)
+
+| Task | Where to start |
+|---|---|
+| Add a strategy | `/strategy-template` skill + `DOCS/CLAUDE_INTEGRATION.md` |
+| Add a cfg field (KIND_DOUBLE/_PCT) | 1 row in `CoreFrameworks/CfgFieldRegistry.hpp` (parser + GUI + tooltip auto-flow) |
+| Add a cfg field (KIND_INT/_BOOL/_STRING) | Wait for `.F.4c`/`.F.4d` migration; until then add to manual parser + field_defs[] |
+| Add an ML feature | `ML_Headers/FeatureRegistry.hpp` + `DOCS/CLAUDE_ML_INVARIANTS.md` |
+| Add a SHALT code / halt reason / regime / strategy / bandit algo | Registry table per X-macro pattern (CLAUDE.md item 13 → `DESIGN_PHILOSOPHY.md` § 7) |
+| Add a stateful GUI panel | `DOCS/CLAUDE_INTEGRATION.md` § "GUI panels" + display↔execution invariant check |
+| Plan a non-trivial change | `/readiness` skill against current code + `DOCS/CLAUDE_REVIEW.md` 10-item checklist |
+| Audit existing code | `/dod-audit` + `/merge-scan` + `/parity-check` + `/trace-deps` in parallel |
+| Track a new bug class | Add to `DOCS/RECURRING_BUG_PATTERNS.md` (auto-included in `/bug-check`) |
+| Ship a sub-ship | `/ship` skill (build verify + version bump + commit + tag + push) |
+| Generate handoff prompt for fresh context | `/handoff` skill |
+
+## Skill suite (audit-driven discipline)
+
+| Skill | When to fire |
+|---|---|
+| `/readiness` | Pre-coding plan verification (28-check pass) |
+| `/parity-check` | Train↔serve identity audit; HMAC chain byte preservation |
+| `/trace-deps` | Dependency-chain audit for new plan code |
+| `/merge-scan` | Reuse-merge opportunities; mirror-incomplete patterns |
+| `/dod-audit` | Data-oriented-design pattern application against DESIGN_SPECS catalog |
+| `/bug-check` | Scan codebase for instances of RECURRING_BUG_PATTERNS classes |
+| `/hft-audit` | Universal HFT principles (cache, branchless, lock-free, FPN edge cases) |
+| `/ml-audit` | ML pipeline silent failure modes + train-serve parity gaps |
+| `/dust` | Generic cleanup punch list (rotting comments, oversized fns, copy-paste) |
+| `/test-strength-audit` | Anti-regression scan for test weakening (`==` → `>=` without justification) |
+| `/handoff` | Generate self-contained handoff prompt for fresh context window |
+| `/loop` | Recurring task on interval (poll status, repeat invocation) |
+| `/sync-workspace` | Mirror plans/ + skills/ + cfg files to workspace backup |
+
+Multi-skill audit gate before HIGH-RISK ships: `/parity-check + /trace-deps + /readiness + /merge-scan + /dod-audit` in parallel via Agent tool. See `DOCS/DESIGN_PHILOSOPHY.md` § 11 (Process discipline) + `DESIGN_SPECS/audit-driven-pre-coding-gate.md`.
+
+---
+
+**End of CLAUDE.md.** Always-loaded orientation. The 30 architectural
+items previously here moved to `DOCS/DESIGN_PHILOSOPHY.md` (private)
+where they're grouped by family with WHY context + 4-tier discipline
+classification + cross-reference index. CLAUDE.local.md (private
+overlay) layers operator preferences + going-forward rules + sprint
+state on top of this baseline.

@@ -15,7 +15,8 @@ apply + worked examples + anti-patterns) live in:
 - `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/` — feedback / user / project memories
 - `tick-trader-percore-workspace/claude-skills/<skill>/SKILL.md` — operational contracts
 - `tick-trader-percore-workspace/DOCS/LANDMINES.md` — operational pitfalls
-- `CLAUDE.md` items 1-30 — codified design philosophy (always loaded)
+- `tick-trader-percore-workspace/DOCS/DESIGN_PHILOSOPHY.md` — thematic narrative + 4-tier discipline classification (HARD / STRONG / SOFT / PROCESS) + cross-reference index; the WHY companion to `CLAUDE.md`'s operational orientation (consolidated CLAUDE.md items 1-30 + adjacent principles)
+- `CLAUDE.md` — slimmed to operational orientation + 13 hard invariants + reference table (~205 lines; always loaded)
 
 Skills that fire on relevant work load matching DESIGN_SPECS bodies
 dynamically — see "Skill load contracts" below.
@@ -29,12 +30,31 @@ dynamically — see "Skill load contracts" below.
 | `DOCS/STRATEGY_AND_CODING_RULES.md` | any code in hot path, slow path, OMS drainer, parsing, ML inference, strategies, RollingStats / RegimeSignals / ExecutionCore — i.e., anything in `CoreFrameworks/`, `Strategies/`, `ML_Headers/`, `DataStream/`, or `FixedPoint/`. 11 strict invariants (no malloc, no virtual, no mutex, no sleep_for, no atof/strstr in parsers, cache alignment, branchless, AVX-512-friendly layouts, SCHED_FIFO/isolcpus deployment). |
 | `DOCS/LATENCY_OPTIMIZATION_AUDIT.md` | any optimization investigation, performance-regression triage. 13 parts, ~40 specific items: hot path, slow path SIMD, arch invariants, ingestion+ML+memory, system tail variance, allocator eradication, parsing, OMS variance, concurrency, FPN libs, HFT system ops, hardware/OS tuning. |
 | `plans/_cross-cutting/2026-05-06-latency-path-discipline.md` | any modification to **any code on a latency-impacting path**: hot path (`ExecutionCore_Tick`, `BG_Evaluate`, `SG_Evaluate`, `GateParameters`, `ParameterSlot`), slow path (`EventLoop_RebuildOneCore`, `RollingStats_Push`, `Regime_ComputeSignals`), OMS drainer (`OMS_DrainSubmit`, `OrderManager_Tick`), producer fan-out, snapshot publish, parsing. 7 architectural rules scaled by cadence + anti-pattern history + pre-merge verification checklist. |
+| `tick-trader-percore-workspace/DOCS/DESIGN_PHILOSOPHY.md` | cold-pickup of an unfamiliar surface (which family of principles applies?), designing a non-trivial change (which discipline tier?), new contributor onboarding, making a cross-family trade-off, codifying a new pattern. 14 sections: cost framework + 13 hard invariants + 9 family sections (data-oriented design / latency / determinism / concurrency / structural-fix / failure observability / architectural primitives / operator UX / process discipline) + explicit NOs + cross-reference index. |
 
 **Workflow:** open the rules doc first, scan relevant sections, then
 write code. The audit doc is consulted when the rule is "yes but how"
 — it has concrete per-site suggestions with file:line refs. The
 hot-path discipline doc is the third leg — read when touching hot-path
-layout / per-tick code.
+layout / per-tick code. The philosophy doc is the fourth leg — read
+when designing rather than implementing (which family of principles
+governs this surface? what discipline tier am I choosing into?).
+
+---
+
+## Current sprint state
+
+| Field | Value |
+|---|---|
+| Sprint | `v5.15-live-readiness` (`plans/v5.15-live-readiness/MASTER.md`) |
+| Most recent ship | `v5.15.5.F.4b` — CfgFieldRegistry + tt:: dispatch + Class 23 3-barrier fix (2026-05-14; engine `160da10` + workspace `a0680c0`) |
+| Next ship | `v5.15.5.F.4c` — KIND_INT/_INT_ENUM/_BOOL migration + STAMP_BOUND derived filter cutover (plan needs amendment before coding; see T20) |
+| Sprint-wide invariant in force | `CfgFieldDescriptor` schema LOCKED at `.F.4b`; remaining `.F.4c`/`.F.4d`/`.F.4i` migrations are mechanical row additions only — no descriptor changes |
+| After `.F.4` umbrella closes | `v5.15.5.F.5` per-core Thompson + bandit override audit; then `v5.15.5.F` umbrella close; then `v5.15` umbrella close |
+| After `v5.15` umbrella closes | Paper-test session (operator window to exercise the Settings tab + tooltip changes + live-readiness gates); then live-readiness operational items; then operational safety audit (drawdown circuit breaker / daily PnL cap / position size limits) |
+| Open architectural decisions awaiting operator input | `.F.4g` AoS-by-core re-layout: wait for slow-path profile data before deciding; TECH_DEBT-008 maker order MVP: indefinite defer per no orderbook data source |
+| Recent CLAUDE.md item promotions (last 30 days) | Item 28 (cycles/cache cost framework, v5.15.5), item 29 (sliding-window stats, v5.15.5.E.D), item 30 (registry-bitmap SET discipline, v5.15.5.F.3) — all now in `DESIGN_PHILOSOPHY.md` post-refactor |
+| Most recent anti-pattern codification | Class 23 (type-erased reinterpret_cast dispatch, 2026-05-14 v5.15.5.F.4b) + Class 14 4th recurrence (plan-API-drift caught at audit gate) |
 
 ---
 
@@ -93,6 +113,10 @@ Rules currently in force. Each links to its canonical home.
   → `DESIGN_SPECS/bitmap-overflow-protection-discipline.md`; CLAUDE.md Class 20.
   Trigger: any `FOREACH_X`-paired bitmap field → co-located `static_assert(FOREACH_X_COUNT_VALUE <= sizeof(type) * 8)`. Future entries that overflow fail build.
 
+- **Type-trait dispatch via `tt::` namespace for typed registry dispatchers** (set 2026-05-14).
+  → CLAUDE.md item 23; `DESIGN_SPECS/type-trait-dispatch-via-tt-namespace.md`; `DOCS/RECURRING_BUG_PATTERNS.md` Class 23.
+  Trigger: building any registry-driven dispatcher (parser/save/render/drift-check/snapshot) over typed fields → use `tt::<verb>_field<T>(T& dst, ...)` with destination-by-reference + type-family `static_assert` + `if constexpr` branches per type trait (`is_FPN_v<T>` / `std::is_array_v<T>` / `std::is_floating_point_v<T>` / etc.). Kind enum stays metadata-only (GUI presentation hint), NEVER drives storage type. **NEVER `*reinterpret_cast<X*>((char*)Y + offset) = v`** — that's the Class 23 anti-shape that silently corrupts FPN<F> + other template-instantiated types. 3-barrier structural fix per Class 23 Prevention closes the class entirely.
+
 - **Multi-bit state encoding for K-state fields (K = 2..16)** (set 2026-05-13).
   → `DESIGN_SPECS/multi-bit-state-encoding-pattern.md`.
   Trigger: new K-state field in single record → N-bit packed slot (N=ceil(log2 K)) + branchless inference API instead of `int` + switch. Promotion candidate to CLAUDE.md after 2+ applications.
@@ -132,7 +156,7 @@ contracts in each skill spec:
 
 | Skill | Loads dynamically |
 |---|---|
-| `/handoff` | CLAUDE.local.md + DESIGN_SPECS/README.md catalog + MEMORY.md + TECH_DEBT.md + PARITY_ISSUES.md + plan file + sprint MASTER. Scans plan for pattern symptoms → cites matched DESIGN_SPECS docs in generated prompt Step 3. Injects philosophy bullets in Step 4. |
+| `/handoff` | CLAUDE.local.md + CLAUDE.md (slim; always-loaded) + DESIGN_PHILOSOPHY.md narrative sections matching plan surface + DESIGN_SPECS/README.md catalog + MEMORY.md + TECH_DEBT.md + PARITY_ISSUES.md + plan file + sprint MASTER. Scans plan for pattern symptoms → cites matched DESIGN_SPECS docs in generated prompt Step 3 + DESIGN_PHILOSOPHY family sections in Step 4. |
 | `/readiness` Check 27 | Composes `/dod-audit` inline; reads DESIGN_SPECS/*.md catalog dynamically. |
 | `/dod-audit` | Reads DESIGN_SPECS/*.md catalog dynamically; registry-driven, future patterns auto-included. |
 | `/parity-check` | Loads `wire-format-byte-preservation-discipline.md` + `autopopulate-pattern-for-production-caller-class.md` + `x-macro-registry-with-presence-dispatch.md` per its scan. |

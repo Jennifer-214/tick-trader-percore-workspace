@@ -5,44 +5,31 @@
 **Primary Pillar:** (Extreme Invariants / Pattern Library / War Stories / Philosophy)
 
 **Style Checklist:**
-- [ ] Is it anti-corporate? (No fluff)
-- [ ] Did I use "Spaced-Out Caps" for the load-bearing concept?
-- [ ] Are pronouns lowercase (i, im, idk)?
-- [ ] Is punctuation minimal and conversational?
-- [ ] Are lines manually wrapped to 40-60 characters for LinkedIn readability?
-- [ ] Are there 2-3 distinct options to choose from?
+- [ ] Is it almost entirely lowercase (including "i", start of sentences)?
+- [ ] Did I use "i" instead of "we"? (Solitary achievement)
+- [ ] Is the formatting natural (no forced manual line breaks)?
+- [ ] Did I use ASCII arrows (`-> `) for the technical bullet points?
+- [ ] Is the tone calm, deeply technical, and matter-of-fact (no childish slang, no spaced-out caps)?
+- [ ] Does it follow the structure: Intro Feat/Problem -> Context -> "what makes it fast:" list -> Conclusion/Benchmarks?
 
 ## Strategy & Breakdown
-*Briefly explain the angle, why this hook works, and the core technical concept being translated to the "Jennifer" voice.*
+*Briefly explain the angle and the core technical concept being showcased.*
 
-## Draft Options
-
----
-**Option 1: The Blunt & Technical**
-(Focuses heavily on the raw technical implementation)
-
-[Draft here, wrapped to 40-60 chars per line]
-[No markdown headers inside the draft]
-[End with hashtags]
+## Draft
 
 ---
+[draft hook/intro detailing the achievement or problem]
 
----
-**Option 2: The Conversational & Analogy-Heavy**
-(Focuses more on the relatable pain points and analogies)
+[context on the architecture or the old way of doing things]
 
-[Draft here, wrapped to 40-60 chars per line]
-[No markdown headers inside the draft]
-[End with hashtags]
+what makes it fast: / here's how it works:
 
----
+-> [technical detail 1]
+-> [technical detail 2]
+-> [technical detail 3]
+-> [technical detail 4]
 
----
-**Option 3: The Short & Punchy**
-(A brief, hyper-condensed version for quick scrolling)
+[conclusion, casual humble brag, or benchmark stats]
 
-[Draft here, wrapped to 40-60 chars per line]
-[No markdown headers inside the draft]
-[End with hashtags]
-
+#tag1 #tag2 #tag3
 ---

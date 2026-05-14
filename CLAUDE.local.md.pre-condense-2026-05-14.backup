@@ -1,0 +1,812 @@
+# CLAUDE.local.md — private overlay
+
+**Gitignored.** Project-private supplement to `CLAUDE.md`. Claude Code
+auto-loads this; the public repo never sees it. Backups of all
+referenced docs live in `plans/` (workspace, also private).
+
+---
+
+## Required reading before writing performance-sensitive code
+
+Three private docs (gitignored, backups in workspace plans):
+
+| Doc | Trigger — read it BEFORE writing or editing... |
+|---|---|
+| `DOCS/STRATEGY_AND_CODING_RULES.md` | any code in hot path, slow path, OMS drainer, parsing, ML inference, strategies, RollingStats / RegimeSignals / ExecutionCore — i.e., anything in `CoreFrameworks/`, `Strategies/`, `ML_Headers/`, `DataStream/`, or `FixedPoint/`. The doc is 11 strict invariants (no malloc, no virtual, no mutex, no sleep_for, no atof/strstr in parsers, cache alignment, branchless, AVX-512-friendly data layouts, SCHED_FIFO/isolcpus deployment) — every new file in those dirs must comply |
+| `DOCS/LATENCY_OPTIMIZATION_AUDIT.md` | any optimization investigation, performance-regression triage, or v5.11 sprint work. 13 parts, ~40 specific items: hot path (Part 1), slow path SIMD (2+5), arch invariants (3), ingestion+ML+memory (4), system tail variance (6), allocator eradication (7), parsing (8), OMS variance (9), concurrency (10), FPN libs (11), HFT system ops (12), hardware/OS tuning (13) |
+| `plans/_cross-cutting/2026-05-06-latency-path-discipline.md` | any modification to **any code on a latency-impacting path**: `ExecutionCore_Tick` / `BG_Evaluate` / `SG_Evaluate` / `ExecutionCore` / `GateParameters` / `ParameterSlot` (hot path), `EventLoop_RebuildOneCore` / `RollingStats_Push` / `Regime_ComputeSignals` (slow path), `OMS_DrainSubmit` / `OrderManager_Tick` (OMS drainer), producer fan-out, snapshot publish, parsing. **7 architectural rules** scaled by cadence (hot = all; slow = most; OMS = subset) + an **anti-pattern history**, distilled from v5.10/v5.11 audit cycles: cache-line layout discipline (FPN<64>=24B!), no-I/O-on-failure pattern (counter not fprintf), SPSC ring failure handling, branch predictor patterns, FPN sizing awareness, dense flat arrays only, cross-thread sync patterns. Plus a **pre-merge verification checklist**. |
+
+**Workflow when about to edit one of those areas:** open the rules doc
+first, scan the relevant rule sections, then write the code. The audit
+doc is consulted when the rule is "yes but how" — it has concrete
+implementation suggestions per-site (with file:line references). The
+hot-path discipline doc is the third leg — read it specifically when
+touching hot-path layout / per-tick code, since it captures patterns
+the rules doc misses (FPN sizing math, failure-path observability,
+cache-line-span analysis).
+
+## Going-forward rule: suggest mid-sprint audits when work impacts downstream plans (set 2026-05-10)
+
+**When a ship's work has IMPACT on the rest of the planned sub-ships OR the next plan, SUGGEST a relevant audit; wait for operator greenlight or operator-initiated. Don't auto-trigger.**
+
+**Trigger criteria — "impact" = any of:**
+- HIGH-RISK ship just shipped (HMAC-chain-preservation work, hot-path migrations, structural refactors that downstream ships build on)
+- New pattern field-tested for the first time (subsequent ships will follow the pattern; audit verifies it's sound before propagation)
+- Plan amendments may be needed before next ship if findings emerge
+- Cross-cutting changes (registry extensions, X-macro changes that affect multiple files) where downstream ships inherit the structure
+- Operator explicitly invites checks ("also run new checks if you need to or think its a good idea")
+
+**When NOT to suggest:**
+- Routine pattern-application ships (subsequent applications of a field-tested pattern; e.g., .F.1 after .F validated; .F.3 after .F.1 + .F.2 validated)
+- Pure additive work (new tests, new docs, comments)
+- Bug fixes with bounded scope
+
+**Suggestion format:** present the audit suggestion + recommended subagent dispatch (e.g., "/test-strength-audit + /dod-audit in parallel on commit X") + 1-sentence rationale (what risk it would catch). Wait for operator response before launching.
+
+**Why:** ensures we're not auto-triggering audits when not needed (friction), but we ARE catching issues at structural boundaries before downstream ships inherit them. Operator retains decision authority + can also bring up audits independently.
+
+**Caramel's framing 2026-05-10:** "we just need the associated docs to make sure were using it, and not ignoring the structure and architecture laid out". Audit cadence is operator-policy + agent-suggestion when impact-triggers fire, not automated. Established after v5.14.9.F.2 HIGH-RISK ship validated the manual mid-sprint audit pattern caught real findings (HIGH.1 + HIGH.2 pre-coding; GREEN post-coding).
+
+---
+
+## Going-forward rule: structural fix preferred when bug class can recur (set 2026-05-09)
+
+**When facing a bug whose ROOT CAUSE is "same pattern at multiple sites
+drifted apart" (Class 18 mirror, parallel paths), prefer compile-time
+enforcement (X-macro registry, helper extraction with all callers
+unified) over direct patch — even if direct patch is cheaper today.**
+
+**Why:** v5.9.5b production-caller class recurred 4× before
+STAMP_CFG_AUTOPOPULATE extinguished it (v5.14.1). PARITY-009/010/011/012
+were 9 sub-gaps of the same Class 18 shape at function-composition level;
+PostLoadSetup registries closed all 9 in one ship (v5.14.2.E.1).
+
+**How to apply:** when `/parity-check` or `/merge-scan` surfaces
+duplication or mirror gaps, ask: "would a registry / helper extraction +
+compile-time enforcement prevent the next instance?" If yes, that's the
+v5.X ship shape. Direct patches are for true one-off bugs only.
+
+**Caramel's framing 2026-05-09:** "headache now > issues later. set it
+up to be easy to maintain going forward, even if it does add more work
+now." Validated 4/4 times this session (10-param helper → X-macro
+refactor; Option F → Option D revised; Option 2 → Option 3; bash CLI
+catch-up → C++ wrapper binary deferral).
+
+This rule applies to Claude AND Gemini sessions; same shape as
+boundary-stable refactor preference (2026-05-06).
+
+Codified in:
+- `CLAUDE.md` item 19 (public; references this without naming Caramel)
+- `DOCS/RECURRING_BUG_PATTERNS.md` Class 18 (strengthened sub-clause)
+- `DOCS/TECH_DEBT.md` (auto-write contract; this file)
+- `/readiness` Check 24 (mirror-function audit) + Check 25 (TECH_DEBT scan)
+- `/trace-deps` Step 6 strengthening (call-sequence enumeration)
+
+## Going-forward rule: deferred items must be queryable, not buried (set 2026-05-09)
+
+**Any architectural item that's deferred from current ship MUST land in
+`DOCS/TECH_DEBT.md` ledger** with: what + why deferred + cost estimate +
+trigger + cross-ref. Don't bury in code comments / postmortems / chat
+memory — those get forgotten.
+
+**Why:** Caramel's pushback 2026-05-09: "what if I forget about that
+stuff, like doesn't addressing the deferred items now make future
+maintenance easier?" Answer: address now if architecturally bounded;
+defer if separate concern. But deferred items hidden anywhere except
+the ledger are invisible to future ships.
+
+**How to apply:** same auto-write contract as PARITY_ISSUES.md. When
+`/readiness` Check 25, `/merge-scan`, or any audit identifies a
+deferral candidate, agent MUST add the entry. `/readiness` Check 25
+scans the ledger at every ship and surfaces entries whose surface area
+overlaps with the ship's files-touched. Operator reviews at ship
+boundary; agent does mechanical bookkeeping.
+
+Established 2026-05-09 alongside the structural-fix-preferred rule
+above. TECH_DEBT.md initial 6 entries cover bash CLI catch-up,
+centralized engine removal, parser refactor, dual-tau naming,
+strict-mode unification, FOREACH_STAMP_BOUND_MODEL_CONST refactor.
+
+## Going-forward rule for parity audits (set 2026-05-09)
+
+**Any time `/parity-check` (or any audit that surfaces a parity
+issue) finds a new finding, the agent MUST auto-write the entry
+into `DOCS/PARITY_ISSUES.md` (workspace-private, symlinked into
+engine repo).** Don't defer to "operator copies after review" —
+the ledger is the single source of truth. A finding that exists
+only in a transient audit report but not in the ledger is invisible
+to future audits and gets re-discovered noise.
+
+Same auto-write applies to status updates: when a verification
+rerun confirms FIXED, NOT-A-BUG, or recategorization, the agent
+updates the ledger entry directly. Operator reviews at sprint
+boundaries to recategorize / accept / reject; agent does the
+mechanical bookkeeping.
+
+The /parity-check skill spec encodes the auto-write contract +
+cross-reference-before-flagging discipline. This CLAUDE.local.md
+entry exists to make the rule visible across all skills/audits
+that touch parity surfaces, not just /parity-check.
+
+Established 2026-05-09 after the v5.14.1.B series ships closed
+PARITY-001 through PARITY-005. PARITY_ISSUES.md created same day
+as the running ledger; this rule formalizes its operational role.
+
+---
+
+## v5.11 sprint orientation
+
+v5.11 is planned as a **massive optimization sprint** built directly
+from the audit. Sub-ships map to audit Parts; see workspace plan
+`plans/v5.11-optimization-sprint/MASTER.md` for the
+canonical sequencing.
+
+When opening v5.11.x sub-plans:
+1. Re-read the audit Part(s) covered by that sub-plan
+2. Re-read the relevant section(s) of the rules doc
+3. Cross-check that implementation matches both — rules are normative,
+   audit gives the concrete wins per site
+
+## Pre-v5.11 (closing v5.10)
+
+Per master plan in workspace, v5.10.0b/0c/0d/0e ships still pending
+before Sprint C (v5.11) opens:
+- 0b — FPN-end-to-end (audit Part 11 has fresh FPN intel — fold the
+  AVX-512 min/max + 128-bit divide + Lemire string conv items into
+  0b's design before kickoff)
+- 0c — hot model swap
+- 0d — FOREACH_TARGET label registry (independent)
+- 0e — drift detection + auto-retire
+
+## Privacy boundary recap
+
+What's intentionally private (workspace-backed):
+- Plans + slash commands (`plans/` + `.claude/skills` symlinks)
+- Operator cfgs (engine.cfg, backtest.cfg, controller.cfg, secrets.cfg)
+- Trained models + scalers + stamps (`models/`)
+- Runtime logs + per-symbol metrics CSVs + baseline_run/
+- Optimization audit + coding rules (this doc + the two it references)
+- Versioned design-note backlogs (`*-design-notes.md`)
+- Future-strategy docs (`FUTURE_*.md`)
+- All `*_AUDIT.md` going forward
+- This file (`CLAUDE.local.md` itself)
+
+What's intentionally public (AGPL on GitHub):
+- All source code in `CoreFrameworks/`, `Strategies/`, `ML_Headers/`,
+  `Backtest/`, `DataStream/`, `FixedPoint/`, `MemHeaders/`, `GUI/`
+- DOCS/ tracked files: architecture, invariants, code map, changelogs,
+  known issues, parity docs, recurring-bug patterns, public design
+  history (CLAUDE_*.md, ARCHITECTURE, CODE_MAP, CHANGELOG, etc.)
+- Tests
+- Build infrastructure
+- Public CLAUDE.md (architectural; no edge content)
+
+## Going-forward rule: prefer boundary-stable refactors over wide cascades
+
+When refactoring something whose outputs cross a type or struct
+boundary into many consumers (RegimeSignals fields, FeatureRegistry,
+GUI panels, snapshots, etc.), **default to keeping the public boundary
+types unchanged and doing the new computation INSIDE the function**.
+
+This generalizes the audit's "Reducing Memory Touch Sites" (Part 3)
+from cache lines to source files: don't sprawl a refactor across many
+sites if you can isolate it behind a stable interface. Achieve the
+goal (bytewise determinism, faster math, better precision, etc.) via
+deterministic conversions at the edges, not rewrites of every consumer.
+
+**Worked example (v5.10.0b.2.5.C):** FlowFeatures conversion to
+FPN_Exp/FPN_Sqrt could have cascaded `FlowState → RegimeSignals →
+FeatureRegistry → GUI → snapshot` (6 files, 3 hours, big merge risk).
+Instead: keep `double` at the function boundaries, do FPN math
+internally, return double via `FPN_ToDouble` at the edges. Saves the
+cascade for v5.11 where there's dedicated budget. Same determinism
+contract, much smaller blast radius.
+
+**When you spot a refactor in a future session:**
+- Count files in the cascade — 1-3 OK, 4+ stop and propose stable
+  boundary first
+- If the boundary type itself is the gap (e.g. operator wants the
+  RegimeSignals fields to be FPN), then cascade is correct — but
+  call this out to the operator explicitly so the choice is
+  intentional rather than absorbed into "let's refactor everything"
+- Performance-sensitive boundaries (hot path) may need cascade to
+  avoid double work; weigh that against blast radius
+
+This rule applies to Claude AND Gemini sessions; the operator
+formalized it 2026-05-06 after the FlowFeatures scope discussion.
+Memory file: `memory/feedback_reduce_touch_sites.md`.
+
+## Going-forward rule for new plans (cold-pickup completeness)
+
+When writing a new plan in `plans/`, include these 10 context fields
+so a fresh session 7+ days later can pick it up without chat memory.
+The `/readiness` skill enforces this via its Cold-pickup section.
+
+1. **Branch state** — name the SPECIFIC branch (or "stay on existing
+   branch with rollback tags"). Don't leave it as "TBD" or "create
+   new branch" if operator policy is to stay on the sprint branch.
+2. **Phase execution order matches dependency order** — if phase B
+   depends on phase C, list C before B. If you must keep tag
+   numbering different from execution order, call it out explicitly.
+3. **First concrete move per phase** — every phase has a "Step 0"
+   that a fresh session can do mechanically without re-investigating
+   ("Step 0: add `FPN_FromInt` constructor at FixedPointN.hpp:124"
+   not "convert primitives to FPN").
+4. **Function / constructor / macro names** — say `FPN_FromInt`, not
+   "a pure-integer constructor". If the function doesn't exist,
+   make adding it explicit Step 0 work.
+5. **File:line refs for cited tests / baselines** — instead of
+   "re-run the v5.9.2 replay-determinism test", say "re-run
+   `tests/controller_test.cpp:10251`".
+6. **Stale-claim audit** — before committing the plan, grep the
+   files you claim contain X. If the codebase already has X (or
+   doesn't have what you claim it has), update the plan.
+7. **Effort claims reconcile with file size deltas** — if you say
+   "~200 LOC convert", `wc -l` the file and confirm there's actually
+   200 LOC of the relevant type. Stale large estimates leak from
+   draft to draft.
+8. **Source-audit references with paths** — cite the workspace plan
+   / Gemini audit / KNOWN_ISSUES section by filename, not "per the
+   audit".
+9. **Predecessor / dependent plans named with paths** — say
+   `plans/v5.10-ensemble-engine/subplans/2026-05-04-v5.10.0b-fpn-end-to-end.md`, not just "v5.10.0b".
+10. **Tag names locked + rollback anchors** — each phase has a
+    unique git tag name; if you expect to roll back, note the
+    `pre-<tag>` anchor that exists or should be created.
+
+When amending an EXISTING plan (e.g. via /plan-check findings),
+re-walk these 10 fields against the amendment to make sure you
+didn't introduce new staleness while fixing old.
+
+## Going-forward rule for new docs
+
+**When creating a new doc, default to private** if any of these apply:
+- Captures unshipped strategy direction or roadmap (e.g. multi-symbol
+  designs, future autotuning, planned strategy variants)
+- Distills optimization findings, profiling output, or hardware-tuned
+  performance work
+- Names operator-specific deployment details (NUMA topology, NIC
+  brand, isolcpus core IDs, etc.)
+- References private cfg values, real account balances, real symbols
+  beyond the public BTCUSDT example
+
+**Where to write it:**
+- **Private edge doc** → write directly into `plans/` (symlinked to
+  workspace, gitignored). Date-prefix the filename (e.g.
+  `plans/YYYY-MM-DD-thing.md`).
+- **Public architectural doc** → write into `DOCS/`. Architectural =
+  invariants, parity rules, code map, function interface contracts,
+  build instructions, public testing recipes, post-incident learnings
+  that are bug-class-level (not operator-edge-level).
+
+**Auto-private gitignore patterns** (already in `.gitignore`):
+- `*_AUDIT.md` — optimization audits, latency findings
+- `FUTURE_*.md` — roadmap / planned-strategy direction
+- `*-design-notes.md` — versioned design idea backlogs
+- `*-suggestions.md` — HFT / optimization research outputs
+- `*-hft-*.md` — HFT-flavored notes
+- `*-OPTIMIZATION-*.md` — surgical optimization references
+- `*-plan-check.md` — agent-generated plan-check reports (canonical home is `plans/plan_checks/` per skill convention)
+- `STRATEGY_AND_CODING_RULES.md` — Gemini-distilled coding invariants
+- `GEMINI.md`, `GEMINI.local.md` — Gemini agent's project memory file (analog of CLAUDE.local.md)
+- `CLAUDE.local.md`, `*.local.md` — project-private memory overlays
+
+If you write a file matching one of those patterns into `DOCS/` or
+the repo root, it auto-stays-private. But still prefer `plans/` for
+new private content — single source of truth, automatic workspace
+backup, doesn't dual-track files.
+
+**If unsure: ask the user.** "Should this doc be private?" is cheaper
+than untracking + history-rewriting later.
+
+## Going-forward rule for workspace backup (set 2026-05-06)
+
+**Anything gitignored at the engine repo, outside of pure
+data/build/runtime artifacts, gets backed up to the workspace.**
+Workspace = `~/code/tick-trader-percore-workspace`, pushed to
+`Jennyfirrr/tick-trader-percore-workspace.git` (private remote).
+
+The `/sync-workspace` skill mirrors:
+- `plans/`, `.claude/skills/` — auto-propagate via symlinks (no copy needed)
+- `engine.cfg`, `backtest.cfg`, `controller.cfg`, `secrets.cfg` → `workspace/configs/` (explicit copy by skill)
+- `.env`, `.env.*` → `workspace/configs/` (explicit copy by skill)
+- `CLAUDE.local.md`, `*.local.md` → `workspace/<name>.backup` (explicit copy by skill)
+
+**NOT mirrored** (data / runtime / regenerable):
+- Build dirs, vendor/, bin/, .cache/, .clangd/, compile_commands.json
+- Logs, paper_runs/, baseline_run/, data/, *_metrics.csv, *_order_history.csv
+- ImGui state files, IDE configs, session scratch (continue.md)
+- `models/` — handled separately if operator chooses
+
+**When you add a new gitignore category** (e.g. a new audit-style
+file pattern), check if it's edge content vs runtime data:
+- Edge content (research, design, optimization findings, configs) →
+  also update `/sync-workspace` skill's mirror table to include it
+- Runtime/data → leave gitignored, no backup needed
+
+Run `/sync-workspace` periodically (end of session, after a plan
+finalized, after a skill updated) to push the backup. The skill is
+on-demand — no auto-cron — so you control the cadence.
+
+## Known landmine: XGBoost + libgomp + pthread parallelism (set 2026-05-07, v5.11.45)
+
+**Symptom:** `foxml_suite` SIGSEGV when clicking Train Multi-Horizon (or
+Train Model post-v5.11.44 since Train Model now routes through MH
+worker). Backtrace shows crash inside `libgomp::GOMP_parallel` called
+from XGBoost internals — `RowsWiseBuildHistKernel`, `BuildHistLeftRight`,
+`PredValueByOneTree`, `PredictDMatrix`. Hits during fold training in
+WF or during prediction.
+
+**Root cause:** XGBoost is not safe under "concurrent booster trainings
+in different pthreads". libgomp's parallel-region setup races even when
+each pthread calls `omp_set_num_threads(1)` to cap its OpenMP team. The
+team allocation in libgomp uses shared process-global state that
+multiple pthreads can corrupt simultaneously.
+
+**Why the obvious fix didn't work:**
+- v5.11.41.C: parallel multi-horizon spawned N pthreads, each pinned
+  XGBoost's `xgb_train_nthread = 1`. Insufficient.
+- v5.11.44 hotfix: added `omp_set_num_threads(1)` + `omp_set_dynamic(0)`
+  at top of `mh_per_horizon_parallel_worker`, also pinned
+  `xgb_eval_nthread = 1` (WF folds use eval not train). Still segfaulted.
+- The libgomp parallel-region setup itself is the issue, not the
+  thread count.
+
+**Current mitigation (v5.11.45):** default
+`cfg.multi_horizon_max_threads = 1` (forced serial). Operator opts in
+to parallel mode by setting `>= 2`; worker fires a CRITICAL log
+warning telling them about the segfault risk.
+
+**Proper fix (deferred):** call
+`setenv("OMP_NUM_THREADS", "1", /*overwrite=*/1)` at process start in
+`foxml_suite.cpp:main()` BEFORE any pthreads exist. Sets libgomp's
+global default once; all child threads inherit. No per-thread races.
+Affects ALL XGBoost in the binary (not just multi-horizon), so it's
+more invasive than the cfg toggle. Worth doing eventually but needs
+testing across all training/prediction surfaces.
+
+**Workaround for operator who wants speedup:** train models for
+different horizons in SEPARATE foxml_suite invocations (each its own
+process, no pthread interaction). E.g. shell-script that loops over
+horizons, each runs `./bin/foxml_suite --batch ...` (no live UI).
+Cumbersome but parity-safe.
+
+**If a future Claude session sees a segfault in XGBoost training:**
+- Check if `cfg.multi_horizon_max_threads >= 2` is set (operator opted
+  in to parallel mode). If yes: set it to 1, retry serial.
+- If still crashing under serial: different root cause (NOT this
+  landmine). Look for actual memory bug in our worker code.
+
+Reference:
+- v5.11.41.C added the parallelism (`mh_per_horizon_parallel_worker`)
+- v5.11.44 attempted libgomp fix (didn't work)
+- v5.11.45 changed default to serial
+- No upstream XGBoost issue tracking this specifically; it's a known
+  general issue with libgomp's pthread interaction.
+
+## Going-forward rule: codify design principles in CLAUDE.md as patterns mature (set 2026-05-09)
+
+When a session develops a reusable architectural pattern (e.g., bit-packed
+flags, AUTOPOPULATE companion, PRE/POST registry split, type-trait dispatch
+via templated helpers), promote it to a CLAUDE.md item once the pattern has:
+- 2+ applications in the codebase, OR
+- Documented as a `DESIGN_SPECS/<pattern>.md` in workspace, AND
+- Pattern applies broadly (not single-instance edge case)
+
+Keeps the always-loaded CLAUDE.md current with how the codebase actually
+thinks. Items are short (3-15 sentences with optional code snippet);
+DESIGN_SPECS docs are the deep-dive (200-400 lines per pattern).
+
+**v5.14.8 codification (2026-05-09):** items 19-23 added:
+- 19: Structural fix preferred when bug class can recur (was already in
+  CLAUDE.local.md as feedback rule; promoted to public)
+- 20: Bit-packed flag storage via BITMAP_* API
+- 21: AUTOPOPULATE companion macro for X-macro registries
+- 22: PRE/POST registry split for canonical-emit-order preservation
+- 23: Type-trait dispatch via templated helpers, NOT non-template `if constexpr`
+
+## Going-forward rule: each DESIGN_SPECS doc has a CLAUDE.md cross-ref (set 2026-05-09)
+
+Every doc in `tick-trader-percore-workspace/DESIGN_SPECS/` should be
+referenced from at least one CLAUDE.md item. Cross-ref ensures
+discoverability — a fresh session reading CLAUDE.md can find the
+deep-dive when needed; otherwise DESIGN_SPECS docs drift into orphan
+status.
+
+Format: `Pattern documented in `DESIGN_SPECS/<pattern>.md`.` at the end
+of the relevant CLAUDE.md item.
+
+**Initial DESIGN_SPECS library (v5.14.8 sprint):**
+- bitmap-flag-api.md → CLAUDE.md item 20
+- x-macro-registry-with-presence-dispatch.md → CLAUDE.md item 13
+- autopopulate-pattern-for-production-caller-class.md → CLAUDE.md item 21
+- pre-post-cfg-registry-split-for-emit-order-preservation.md → CLAUDE.md item 22
+- audit-driven-pre-coding-gate.md → currently NO direct CLAUDE.md ref;
+  cross-ref via /parity-check + /trace-deps + /readiness skill specs
+- wire-format-byte-preservation-discipline.md → CLAUDE.md item 15 (Parity-tested-by-construction)
+- structural-fix-preferred-decision-framework.md → CLAUDE.md item 19
+
+**v5.14.11 additions (2026-05-11):**
+- avx512-byte-determinism-pattern.md → CLAUDE.md item 25 (promotes v5.11.7 discipline to first-class invariant; Rule 8 added v5.14.11.B.4 for branchless within vectorized block)
+- sliding-window-online-statistics-pattern.md → no direct CLAUDE.md ref yet (1 application v5.14.11.A; v5.14.11.B.3 vectorizes it via item 25; promote to CLAUDE.md when 2nd algorithmic application surfaces beyond Ridge correlation)
+- cfg-flag-eligibility-criteria.md → extended with new "Cohort audit when new field has siblings" section (no new CLAUDE.md item; cross-ref via item 13 reuse-audit)
+
+**v5.14.11.B mega-bundle additions (2026-05-11):**
+- branchless-math-kernel-pattern.md → CLAUDE.md item 26 (NEW; constant-iter inner reductions + pre-zero invariants; canonical first reference: v5.14.11.B.1 Cholesky_Solve)
+- struct-padding-determinism-pattern.md → CLAUDE.md item 27 (NEW; explicit `_padding = 0` fields for byte-equivalence-sensitive structs; canonical first reference: v5.14.11.B.2 FPN<F>)
+
+## Going-forward rule: cohort-audit when new cfg field has siblings (set 2026-05-11; pre-implementation draft)
+
+**When adding a new boolean cfg field that has 2+ siblings in the same
+semantic family (e.g., `ridge_*`, `confidence_*`, `bandit_*`), run the
+5-criteria `DESIGN_SPECS/cfg-flag-eligibility-criteria.md` framework
+on the COHORT, not just the new field.**
+
+**Three outcomes:**
+- **All eligible** → migrate the cohort in the same ship (intra-family
+  consistency; prevents partial-migration tech-debt class)
+- **Mixed eligibility** → migrate the eligible subset + auto-write
+  TECH_DEBT entry for ineligible siblings explaining per-sibling
+  rejection rationale
+- **None eligible** → document the family-wide rejection rationale in
+  TECH_DEBT; new field stays direct alongside siblings
+
+**Why:** v5.14.9.F.2 / v5.14.10.B migration sweeps left `ridge_within_horizon`,
+`ridge_across_horizons`, `exit_blender_mode` as direct int cfg fields
+while migrating other ML flags. Intra-family inconsistency surfaced
+2026-05-11 during v5.14.11 audit synthesis — Decision 4 corrected by
+cohort-migrating all 4 ridge_* fields. Without this rule, similar
+oversights accumulate per-sprint into a tech-debt class.
+
+**How to apply:** at plan-synthesis time, when a new boolean cfg field
+appears in proposed scope, grep for sibling fields in the same domain
+(e.g., `*_enabled` / `*_mode` / `ridge_*` in ML domain). If 2+ siblings
+exist, cohort-audit is part of plan-readiness check (per CLAUDE.md item 13
+reuse-audit + item 16). Lives alongside `/readiness` Check 24 (mirror-
+function audit) + Check 25 (TECH_DEBT scan).
+
+**Caramel's framing 2026-05-11:** "id rather not add tech debt" — captured
+at v5.14.11 plan-synthesis after seeing that (1) intra-family inconsistency
+would itself be a tech-debt class and (2) the framework verdict + codebase
+precedent diverged. Pre-implementation draft; refine as v5.14.11 ships
+and the cohort migration validates the discipline.
+
+Codified in:
+- `DESIGN_SPECS/cfg-flag-eligibility-criteria.md` (new "Cohort audit when
+  new field has siblings" section; v5.14.11 ridge_* as canonical example)
+- `CLAUDE.md` item 13 (X-macro registry; reuse-audit cross-ref)
+- This file (auto-write contract for cohort-audit findings)
+
+## Going-forward rule: FEATURE_LOOKUP.md auto-write on operator-visible features (set 2026-05-12)
+
+**Any time a new operator-visible feature ships — new cfg flag,
+new ML mechanism, new persistence file, new GUI surface, new
+boot gate, new strategy / regime / blender variant — the agent
+MUST add an entry to `tick-trader-percore-workspace/FEATURE_LOOKUP.md`.**
+Sister auto-write to `DOCS/PARITY_ISSUES.md` (parity findings)
+and `DOCS/TECH_DEBT.md` (deferred items).
+
+**What counts as "operator-visible":**
+- New cfg flag the operator might toggle (not internal-only)
+- New observability surface (panel field, log line, halt_reason code)
+- New persistence file (`*_state.json`, model bundle layout change)
+- New boot gate or refusal mode (live-mode strict, readiness check)
+- New training pipeline knob (CSV input, side selector, label kind)
+- New fallback path (e.g., "if no models, use legacy TP/SL")
+
+**What does NOT count (skip the auto-write):**
+- Pure refactors that don't change operator behavior
+- Internal helper extraction (X-macro splits, AUTOPOPULATE companions)
+- Bug fixes that restore expected behavior (don't entry-document
+  what was always supposed to work)
+- Performance optimizations bytewise-identical to prior path
+
+**Entry format** (one block per feature, ~40-80 LOC):
+- `### <feature_name> (vX.Y.Z+)`
+- `**What:**` 1-sentence summary
+- `**Cfg flags:**` list
+- `**Fallback:**` what happens when disabled / inputs missing
+- `**Where to verify:**` GUI panel field / log line / file (with file:line refs)
+- `**Paper-test sanity:**` numbered steps to confirm working in paper
+- `**Gotchas:**` known parity / interaction concerns
+- `**Related:**` related features + persistence files
+
+**Why:** Caramel's question 2026-05-12 — "how will I know if the
+bandit and multi-model configs actually work?" — surfaced that
+the X-macro registries give the FIELD NAMES + tooltips give the
+LOCAL BEHAVIOR but nowhere documents "to verify this feature, look
+at THIS surface in THIS panel and run THIS sanity loop." Doc bridges
+that gap.
+
+**How to apply:** at sprint-close / sub-ship close, if a new
+operator-visible feature shipped, agent updates FEATURE_LOOKUP.md
+before declaring complete. Operator reviews at boundary; agent
+does mechanical bookkeeping.
+
+Codified in:
+- `tick-trader-percore-workspace/FEATURE_LOOKUP.md` (the doc itself;
+  seeded 2026-05-12 with 20 features at v5.15.4 close)
+- This file (auto-write contract)
+- `/ship` skill (post-coding ritual) gets a FEATURE_LOOKUP check
+  added to its verification gate
+- `/sync-workspace` already mirrors workspace root MDs
+
+---
+
+## Going-forward rule: decoupling-endgoal positioning at each fix (set 2026-05-12)
+
+**When making changes that touch GUI ↔ runtime interfaces**
+(foxml_suite GUI ↔ training entry points; engine ↔ engine_gui display;
+TUISnapshot publication; any state-flow across the GUI-process
+boundary; CLI mode dispatch; cfg ownership across viewer/runtime;
+logging path discipline), **document the decoupling implication in
+`plans/_future/2026-05-12-decoupling-endgoal-roadmap.md`** (workspace-
+private). Establish patterns that POSITION us for separation rather
+than fight it. The cumulative breadcrumbs become the pseudo-plan for
+the eventual Grafana-style decoupling sprint.
+
+**Three outcomes per ship:**
+- **Positive positioning** → write breadcrumb describing how the
+  change makes future decoupling easier (X-macro registry exposed via
+  cmdline, mmap-friendly bit-packed flags, atomic publication
+  discipline, table-driven gates, disk-based state externalization,
+  etc.). Update readiness checklist if applicable.
+- **Anti-breadcrumb** → change CONFLICTS with decoupling (callback
+  registry with fn pointers, in-process-only state, mutex protecting
+  cross-thread state where seqlock would work). Redirect the design
+  at fix time; document the redirect in the anti-breadcrumb section.
+- **Neutral** → change doesn't touch the decoupling surface; no entry
+  needed.
+
+**Why:** Caramel framing 2026-05-12 —
+> *"as we progress fixes should lay out the approach to actually
+> decouple it since we have the context in memory, that way when we
+> actually go to decouple, we basically already have a psuedo plan
+> laid out."*
+
+By the time the decoupling sprint kicks off (post-v5.15 paper-test
+era; sequenced with `plans/_future/2026-05-08-v6.0-CANDIDATE-headless-service-colo.md`),
+the doc IS the pseudo-plan: endgoal named + breadcrumbs accumulated +
+open design questions surfaced + readiness checklist saying "yes we
+can proceed cleanly."
+
+**How to apply:** at plan-synthesis time for any ship touching the
+relevant surfaces, the sub-plan's verification gate gets a "decoupling
+roadmap entry written" checkbox. At sub-ship close, the breadcrumb
+gets written before the umbrella tag lands.
+
+**Pre-seeded with retroactive entries** for v5.15.0 through v5.15.4
+in the roadmap doc (these were the first ships writing breadcrumbs;
+the doc was opened at v5.15 sprint planning 2026-05-12).
+
+Codified in:
+- `plans/_future/2026-05-12-decoupling-endgoal-roadmap.md` (the living
+  doc itself; sections: endgoal architecture, decoupling axes, running
+  breadcrumbs, readiness checklist, open design questions,
+  anti-breadcrumbs)
+- This file (auto-write contract for breadcrumbs at every relevant
+  ship)
+- Each v5.15.X sub-plan verification gate includes "decoupling roadmap
+  entry written"
+- Companion: `plans/_future/2026-05-08-v6.0-CANDIDATE-headless-service-colo.md`
+  (engine-side decoupling architecture; the roadmap doc extends this
+  to the suite side + adds the running breadcrumbs discipline)
+
+---
+
+## Going-forward rule: prefer multi-bit state encoding for K-state fields (set 2026-05-13)
+
+**When adding or refactoring a K-state field (K = 2..16) stored
+WITHIN a single record (per-core / per-slot / per-order struct),
+prefer N-bit packed slots (N = ceil(log2(K))) + branchless inference
+API over plain `int` / `uint8_t` enum storage + switch dispatch.**
+
+Sister to existing `bitmap-flag-api.md` (1-bit-per-flag), which is
+the K=2 specialization. Multi-bit generalizes to K=2..16.
+
+**Wins:**
+- Memory: stores `ceil(log2(K))` bits instead of 8 or 32 (e.g., regime
+  4 states = 2 bits in shared byte; vs 4 bytes per int field).
+- Branchless dispatch: `switch (state)` → table lookup (1 array deref,
+  no branch misprediction).
+- Branchless set membership: `state in {A, C, E}` → single SHR + AND
+  + cmp via SET_MASK indexed by state value.
+- Branchless equality / transition predicates compile to 1-2 cycle ops.
+
+**Inference API** (see `DESIGN_SPECS/multi-bit-state-encoding-pattern.md`):
+- `MBS_GET(field, mask, shift)` — extract state value
+- `MBS_SET(field, mask, shift, val)` — write state value
+- `MBS_EQ(field, mask, shift, val)` — branchless equality
+- `MBS_IN_SET(field, mask, shift, set_mask)` — branchless set membership
+- `MBS_SELECT_EQ(...)` — branchless conditional compute
+- Lookup tables indexed by state value for dispatch
+
+**When NOT to use:**
+- K > 16 (5+ bits) — diminishing returns; use uint8_t directly.
+- Cross-record packing (CLAUDE.md item 20 — bit-pack within record only).
+- State mutated under cross-thread CAS with adjacent fields (atomic
+  bit-update discipline required; design review).
+- K = 2 — use `bitmap-flag-api.md` directly.
+
+**How to apply:**
+- Plan-synthesis time: when a new K-state field is proposed, audit
+  the cohort (sibling fields in same record). If 2+ K-state fields
+  share an access pattern, pack into a shared word.
+- Compose with X-macro registry: `FOREACH_<NAME>_STATE(X)` registry
+  defines state values + names + count; auto-generated MBS macros
+  expand at consumer sites.
+- Implementation checklist in design spec (10-item) catches the common
+  footguns: static_assert overflow guard, X-macro-generated SHIFT +
+  MASK constants, named SET_MASK convention.
+
+**First candidate (queued for v5.15.5.C.X follow-up):**
+`rs_current` + `rs_proposed` on CoreContext (each 4 states = 2 bits;
+pack into shared uint8_t). Savings: 7 bytes per CoreContext × 16
+cores = 112 bytes per EventLoopState. Branchless multi-regime predicate
+in slow-path body.
+
+**Caramel's framing 2026-05-13:**
+> *"could 2 bits hold 4 states? 3 bits hold 8?"* — first-principles
+> derivation from binary counting fundamentals → state encoding by
+> information content (Shannon's source coding) rather than byte-
+> aligned convenience.
+
+Codified in:
+- `DESIGN_SPECS/multi-bit-state-encoding-pattern.md` (the design spec
+  + branchless inference API + decision tree + candidate inventory)
+- This file (going-forward rule)
+- CLAUDE.md (promotion candidate after 2+ applications shipped — per
+  the existing "codify design principles as patterns mature" rule)
+
+---
+
+## Going-forward rule: categorical applicability for new cfg fields (set 2026-05-14)
+
+**When adding a new cfg field (or extending an existing one), declare its
+categorical applicability via `applies_to_*` columns. Do NOT hardcode
+strategy / op_mode / regime / risk_mode names in gating logic.**
+
+**Why:** v5.15.5.F.4 introduced the categorical-tag applicability pattern
+to close the Class 19 bug class (hardcoded instance names in applicability
+gating — DOCS/RECURRING_BUG_PATTERNS.md). The pattern: instances
+(strategies, op-modes, regimes) declare their categories; cfg fields
+declare which categories they apply to; GUI filtering is bitmap
+intersection. Adding a new instance = declare its categories; ALL
+category-tagged cfg fields auto-apply without registry edits.
+
+**How to apply:**
+
+- When adding a cfg field in `FOREACH_CFG_FIELD`, fill ALL category columns:
+  - `applies_to_strategy_cat`: bitmap of `STRAT_CAT_*` values (e.g., `STRAT_CAT_USES_BANDIT`)
+  - `applies_to_op_mode_cat`: bitmap of `OP_MODE_CAT_*` values (e.g., `OP_MODE_CAT_LIVE | OP_MODE_CAT_PAPER`)
+  - `applies_to_regime_cat`: defaults to `REGIME_CAT_ALL` until v5.16 specializes
+  - `applies_to_risk_cat`: defaults to `RISK_CAT_ALL` until v5.16 specializes
+- Use `_CAT_ALL` ONLY when universal applicability is verified (not as default-for-unknown — verify against the strategy/op-mode actually reading the field).
+- Use specific capability tags (`STRAT_CAT_USES_BANDIT`, not `STRATEGY_ML`) — categorical, not instance.
+- If a new strategy is added: declare its category masks in `FOREACH_STRATEGY`;
+  category-tagged cfg fields auto-apply.
+
+**Anti-patterns to avoid:**
+
+- Hardcoded enum comparisons in cfg gating: `if (strategy == STRATEGY_ML) ...`
+  (use categorical filtering instead).
+- Single-instance categories: a category declared by only one strategy is
+  just instance identity hidden under a category name — same drift class.
+- Multiple parallel descriptors per cfg file: use `lives_in_struct`
+  discriminator instead (per separate going-forward rule below).
+
+**Vocabulary discipline rules** (per `DESIGN_SPECS/categorical-tag-applicability-pattern.md`):
+- **Functional capability, not implementation detail.** `STRAT_CAT_USES_BANDIT` ✅; `STRAT_CAT_INSTANTIATES_BANDIT_T_TEMPLATE` ❌
+- **Operator-meaningful.** Categories surface in GUI; names need to make sense to non-developers.
+- **Stable.** Renaming a category breaks all consumers; use alias pattern (`#define OLD = NEW`) during transition.
+- **Promoted from observed clustering (≥3 instances).** Don't preemptively create single-instance categories.
+- **Tiered** (CORE / SPECIFIC / EXPERIMENTAL): bit assignments cluster by tier for clarity.
+
+Codified in:
+- `DESIGN_SPECS/categorical-tag-applicability-pattern.md` (full pattern + vocabulary discipline rules + 10 anti-patterns + CI consistency tests + multi-domain composition)
+- `DESIGN_SPECS/universal-cfg-field-registry-pattern.md` § "The descriptor struct" (CfgFieldDescriptor with categorical columns)
+- `DOCS/RECURRING_BUG_PATTERNS.md` Class 19 (Hardcoded instance names in applicability gating)
+- `CLAUDE.md` (promotion candidate after 2+ category domains shipped — strategy + op_mode = 2 at v5.15.5.F.4 close, eligible for promotion)
+- This file (going-forward rule)
+
+---
+
+## Going-forward rule: bitmap overflow static_assert is mandatory (set 2026-05-14)
+
+**Every bitmap field paired with a FOREACH_X registry MUST have a
+co-located `static_assert(FOREACH_X_COUNT_VALUE <= sizeof(X_flags_type) * 8)`
+overflow guard. Adding a registry entry that would overflow fails the build.**
+
+**Why:** silent-bitmap-truncation (Class 20, DOCS/RECURRING_BUG_PATTERNS.md)
+is a real recurring bug class. Without compile-time enforcement, adding
+the next entry that overflows the bitmap type silently fails — the bit
+shift truncates to 0, the flag is always 0, BITMAP_IS_SET always returns
+false, BITMAP_SET is a no-op. Hours of debug before realizing.
+
+**How to apply:**
+
+- For every `FOREACH_<X>` registry, add a compile-time count constant:
+  ```cpp
+  #define FOREACH_X_COUNT_ENTRY(...) +1
+  constexpr size_t FOREACH_X_COUNT_VALUE = 0 FOREACH_X(FOREACH_X_COUNT_ENTRY);
+  #undef FOREACH_X_COUNT_ENTRY
+  ```
+- Add a `static_assert` co-located with the FOREACH_X declaration:
+  ```cpp
+  static_assert(FOREACH_X_COUNT_VALUE <= sizeof(X_flags_type) * 8,
+                "FOREACH_X overflowed bitmap type. Upgrade type width OR "
+                "split into multiple bitmaps OR use multi-bit state encoding.");
+  ```
+- For category enums (StrategyCategory, OpModeCategory, etc.), add:
+  ```cpp
+  static_assert(/* highest used bit */ < (1ull << TYPE_WIDTH),
+                "<CategoryEnum> overflowed <type> — upgrade width or split orthogonal axes");
+  ```
+
+**When upgrade is needed** (per type-upgrade decision tree):
+- uint8_t → uint16_t (rarely affects cache layout)
+- uint16_t → uint32_t (verify cache impact for hot-path structs)
+- uint32_t → uint64_t (significant cache impact; profile if hot)
+- Beyond uint64_t: split into 2 bitmaps OR use multi-bit state encoding (CLAUDE.md item 30)
+
+**Audit:** v5.15.5.F.4.h ships an inventory of all existing bitmap pairs in
+the codebase + adds missing static_asserts to every paired bitmap registry.
+After `.F.4h` closes the existing inventory, `/dod-audit` extension catches
+future drift.
+
+**Cache-line awareness for hot-path bitmaps:** type-width upgrade for hot-
+path-resident bitmaps may affect cache-line span. Check via `pahole` after
+upgrade; if struct spans changed, verify total cache budget per CLAUDE.md
+items 28 + 30.
+
+Codified in:
+- `DESIGN_SPECS/bitmap-overflow-protection-discipline.md` (the discipline + audit script + type-upgrade decision tree + anti-patterns)
+- `DOCS/RECURRING_BUG_PATTERNS.md` Class 20 (Bitmap field without overflow guard)
+- `CLAUDE.md` item 20 (BITMAP_* API) + item 30 (registry-bitmap SET discipline) — sister patterns
+- This file (going-forward rule)
+- `/dod-audit` skill (detection signature; future extension)
+
+---
+
+## Going-forward rule: cross-file cfg surfaces use lives_in_struct (set 2026-05-14)
+
+**When adding a cfg field that belongs to a non-default cfg file
+(backtest.cfg, controller.cfg, secrets.cfg, training cfg), tag it with
+the appropriate `lives_in_struct` enum value in the FOREACH_CFG_FIELD
+registry row. Do NOT introduce a parallel CfgFieldDescriptor.**
+
+**Why:** Class 21 (Multiple parallel descriptors, DOCS/RECURRING_BUG_PATTERNS.md).
+v5.15.5.F.4 unifies the cfg surface via ONE CfgFieldDescriptor +
+`lives_in_struct` discriminator. Parser routes write to correct struct;
+save emits to correct cfg file; GUI walks ONE registry. Adding a parallel
+descriptor for a new cfg file reintroduces the drift class.
+
+**How to apply:**
+
+- New cfg field in **engine.cfg** → `lives_in_struct: STRUCT_CFG` (default; ControllerConfig<F>)
+- New cfg field in **backtest.cfg** → `lives_in_struct: STRUCT_BACKTEST_CFG` (BacktestCfg)
+- New cfg field in **controller.cfg** → `lives_in_struct: STRUCT_CONTROLLER_CFG` (ControllerCfg; v5.15.6.A)
+- New cfg field in **secrets.cfg** → `lives_in_struct: STRUCT_SECRETS_CFG` + `metadata |= IS_SECRET | LOG_VALUE_FORBIDDEN | SAFETY_CRITICAL` (v5.15.6.B)
+- New cfg field in **training cfg** → `lives_in_struct: STRUCT_TRAINING_CFG` + `applies_to_op_mode_cat: OP_MODE_CAT_TRAINING` (v5.15.6.C)
+- New cfg file (future): add new `LivesInStruct` enum value; parser dispatcher gains one new case;
+  GUI + save handle automatically; no descriptor schema changes.
+
+**Anti-patterns:**
+
+- Creating `BacktestCfgFieldDescriptor` or similar parallel descriptor (Class 21 returns; structural drift class).
+- Hardcoding cfg file routing outside the dispatcher (e.g., parser checking `if (cfg_file == "backtest.cfg")`).
+- Per-cfg-file separate save/load functions when registry-driven save dispatches via `lives_in_struct`.
+
+**Composition with op_mode categorical** (these are SEPARATE axes; don't conflate):
+
+- `lives_in_struct` is about **DATA STORAGE** — which struct/file the field is in
+- `applies_to_op_mode_cat` is about **UI RELEVANCE** — when the field is shown to the operator
+
+Both compose: a backtest-cfg field has `lives_in_struct=STRUCT_BACKTEST_CFG` (storage) AND `applies_to_op_mode_cat=OP_MODE_CAT_BACKTEST` (visibility). Most fields' storage and visibility align (backtest field → backtest mode), but exceptions exist (e.g., a backtest field that's ALSO visible in training mode → `OP_MODE_CAT_BACKTEST | OP_MODE_CAT_TRAINING`).
+
+Codified in:
+- `DESIGN_SPECS/categorical-tag-applicability-pattern.md` § "Cross-file cfg unification via lives_in_struct + applies_to_op_mode_cat"
+- `DESIGN_SPECS/universal-cfg-field-registry-pattern.md` § "The descriptor struct" (LivesInStruct enum)
+- `DOCS/RECURRING_BUG_PATTERNS.md` Class 21 (Multiple parallel descriptors)
+- This file (going-forward rule)
+- v5.15.6 plan stub (mechanical extension of design locked at v5.15.5.F.4.b)

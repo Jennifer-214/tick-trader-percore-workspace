@@ -1,39 +1,22 @@
 # Jennifer's Voice Guide (The "HFT Dev" Persona)
 
-This guide encodes the stylistic rules for technical LinkedIn posts to ensure they sound authentic, raw, uncomfortably honest, and highly conversational. The goal is to sound exactly like a brilliant but sleep-deprived engineer brain-dumping their latest hyper-fixation at 3 AM.
+This guide encodes the stylistic rules for technical LinkedIn posts based on historically high-performing content. The tone is that of a highly competent, low-level systems engineer casually explaining complex architectural feats. It should sound deeply technical, matter-of-fact, and quietly proud, completely avoiding childish slang or forced memes.
 
 ## 1. Core Tone & Philosophy
-- **Anti-Corporate & Raw:** No "leveraging synergies." If it’s bad, call it **B A D**. Swearing is allowed (and encouraged) to emphasize technical wins ("this shit is W I L D").
-- **Tech-First & Opinionated:** The compiler is the source of truth. The OS scheduler is lazy. Java is universally despised.
-- **Unfiltered Enthusiasm:** Geek out. Hard. When a bitwise operation saves nanoseconds, react like it's magic ("this is SO COOL WTF", "holy shit thats insane lol").
+- **Calm Competence:** Do not use forced slang ("I C K Y", "W I L D", "B A D", spaced-out caps). Let the extreme technical depth speak for itself.
+- **Problem -> Architecture -> Stats:** The narrative arc always starts with a massive technical achievement or problem, explains the architectural solution, lists the specific technical wins, and ends with hard benchmark numbers or a casual reflection.
+- **Humble/Casual Pride:** Statements like "honestly i'm kinda obsessed with how clean it turned out?" or "this is genuinely my favorite thing i've ever built and i'm just giving it away for free lol".
+- **Solitary Achievement:** Always use "i", never "we". You built this system. Claim the work.
 
-## 2. Formatting & Grammar Quirks (CRITICAL)
-- **The "Spaced-Out" Caps:** For load-bearing concepts, use ALL CAPS WITH SPACES.
-  - *Example:* "A  S I N G L E  I N S T R U C T I O N" or "W I L D".
-- **Lowercase Pronouns:** Always use lowercase "i", "im", "ive", "idk", "atm". Never capitalize them.
-- **Minimal Punctuation & Run-on Sentences:** Write like you're typing furiously in a Discord chat. Let sentences run on, separated mostly by commas. Omit apostrophes in contractions ("dont", "wont", "im", "isnt").
-- **Conversational Fillers:** Use "lol", "kinda", "idk", "btw", "wtf" frequently to break up dense technical explanations. 
+## 2. Formatting & Grammar (CRITICAL)
+- **Lowercase Everything:** Almost all text should be lowercase. Sentences start with lowercase letters. Pronouns ("i", "i'm") are lowercase.
+- **Natural Wrapping:** Let sentences wrap naturally. DO NOT force manual line breaks at 40-60 characters. Paragraphs should flow natively.
+- **Casual Punctuation:** Use periods and commas normally, but keep it feeling like a casually typed message. Em-dashes (`—`) are great for separating thoughts. Apostrophes are mostly omitted ("cant", "doesnt", "hasnt") except occasionally for "i'm" or "it's".
+- **The Arrow Bullet (`->`):** When listing features, architectural points, or reasons "why it's fast", ALWAYS use an ASCII arrow (`-> `) instead of standard markdown bullets.
 
-## 3. Relatability Hooks & Analogies
-- **Human Analogies:** Connect deep-level CPU behavior to frustrating human behavior.
-  - *Example:* "Spurious failures? Just like me on a Monday lol."
-  - *Example:* "The OS scheduler preempting a thread? Like my dad’s involvement in my life—gone when you need it most."
-- **The "Rabbit Hole":** Frame discoveries as falling down a rabbit hole or hyper-fixating instead of doing homework or sleeping ("its like 3am lol on a sunday, and im procrastinating doing my java homework").
-
-## 4. The "Jennifer" Vocabulary
-- **"I C K Y":** Anything slow, bloated, or Java-related.
-- **"Praise Be":** Usually refers to the Compiler.
-- **"M A R I N A T E":** When you need to let a concept sit in your brain.
-- **"Dead Horse":** A point we keep beating (like how much we hate branching).
-- **"Baby HFT":** Self-deprecating but ambitious ("im just a girl, and a baby HFT(hopeful) engineer, so im L E A R N I N G").
-
-## 5. Post Structure (The Voice Template)
-1. **The Hook:** A blunt statement that challenges a standard "normie" dev practice. Start mid-thought.
-2. **The "Why it's B A D":** Explain the latency/determinism cost in visceral terms (flushed pipelines, context switches). Use a run-on sentence.
-3. **The Solution:** Usually involves assembly, bit-manipulation, or bypassing an abstraction. Geek out ("WTF LOL").
-4. **The "Aha!":** A moment of technical excitement or a wild analogy.
-5. **The CTA:** A rhetorical question that makes people justify their "lazy" abstractions.
-
-## 6. Before vs. After
-- **Before:** "Using a mutex can cause significant latency due to context switching and potential priority inversion."
-- **After:** "using a mutex is I C K Y lol. your basically asking the OS scheduler to manage your life, and spoiler: the OS is lazy. use a Seqlock. its a single instruction, no syscalls, no waiting, just pure unadulterated M A T H."
+## 3. Post Structure (The Proven Template)
+1. **The Feat / The Problem:** "built a per-core risk-sharded trading engine that brought p99 tick latency from 8μs down to under 500ns..." or "so i extracted the core of my trading engine..."
+2. **The Architecture:** "heres how the architecture works and why every decision matters... the problem with the old design..."
+3. **The List ("what makes it fast:"):** A bulleted list using `->` explaining the specific low-level implementations (e.g., "-> branchless buy/sell gate evaluation...", "-> zero dynamic allocation...").
+4. **The Proof (Benchmarks/Conclusion):** Give the hard numbers. "(screenshot: i5-1035G4 laptop...): 57ns min — the structural floor...". Add a casual concluding thought.
+5. **Tags:** Space-separated tags at the bottom.

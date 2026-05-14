@@ -75,6 +75,29 @@ See `DOCS/SKILLS_HIERARCHY.md` for the full execution model.
 
 The trace agent (Layer 2 subagent):
 
+### 0. DESIGN_SPECS preload (added 2026-05-14 alongside CLAUDE.local.md condense)
+
+Dependency-chain audits get sharper when the auditor knows what
+structural-fix patterns and recurring-bug classes the plan should
+have applied. Load these BEFORE walking the dep tree, so Step 6
+(structural-fix-preferred call-sequence enumeration) can cite
+specific pattern rules:
+
+- `tick-trader-percore-workspace/DESIGN_SPECS/structural-fix-preferred-decision-framework.md`
+  — when "same pattern at multiple sites drifted apart" → registry/
+  helper-extract with compile-time enforcement, not direct patch
+- `tick-trader-percore-workspace/DESIGN_SPECS/categorical-tag-applicability-pattern.md`
+  — Class 19 (hardcoded instance names in applicability gating); plan
+  should use category masks not enum-name comparisons
+- `tick-trader-percore-workspace/DESIGN_SPECS/x-macro-registry-with-presence-dispatch.md`
+  — FOREACH_* registry shape; mirror-incomplete additions caught by
+  Step 6 should propose registry consolidation
+- `DOCS/RECURRING_BUG_PATTERNS.md` Classes 13-21 — bug class registry;
+  cross-ref Step 6 findings against each known class
+
+For each loaded doc, hold its body in context. Step 6 findings cite
+DESIGN_SPECS filename + class number when proposing structural fixes.
+
 ### 1. Parse the plan
 
 Extract from plan body:

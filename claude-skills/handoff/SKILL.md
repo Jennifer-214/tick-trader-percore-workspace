@@ -75,15 +75,25 @@ each invocation pulls current state.
 
 | Source | Read for |
 |---|---|
-| `/home/caramel/code/FoxML_Trader_v2/CLAUDE.local.md` | Going-forward rules; design philosophy entries; required-reading map; auto-write contracts |
+| `/home/caramel/code/FoxML_Trader_v2/CLAUDE.local.md` | Going-forward rules INDEX (since 2026-05-14 condense: rule one-liners + DESIGN_SPECS pointers + auto-write contracts + required-reading triggers). Follow pointers into DESIGN_SPECS for rule deep-dives. |
+| `/home/caramel/code/FoxML_Trader_v2/CLAUDE.md` | Codified design philosophy items 1-30 (always loaded; canonical pattern doctrine). |
 | `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/MEMORY.md` | Auto-memory index; feedback / user / project / reference entries to surface |
 | `tick-trader-percore-workspace/DESIGN_SPECS/README.md` | Pattern catalog + "I need to..." quick-discovery |
 | `tick-trader-percore-workspace/DOCS/SKILLS_HIERARCHY.md` | Layer 1 / Layer 2 conventions; compose-by-reference rule |
 | `tick-trader-percore-workspace/DOCS/TECH_DEBT.md` | Open entries; filter to ones in ship's surface area |
 | `tick-trader-percore-workspace/DOCS/PARITY_ISSUES.md` | Open parity findings (cross-ref to ship surface) |
+| `tick-trader-percore-workspace/DOCS/LANDMINES.md` | Operational landmines (e.g., XGBoost+libgomp pthread races); read before any segfault/race/parallelism debugging |
 | `plans/<sprint-dir>/MASTER.md` | Sprint context; ship's position in sub-tag sequence |
 | `<plan-path>` (resolved) | Ship's stated scope; stale-claim audit target |
 | `plans/<sprint-dir>/postmortems/` | Most-recent sub-ship postmortem (lessons that may apply) |
+
+**CLAUDE.local.md as index (post-2026-05-14 condense):** the file is
+~190 lines of pointer-based index, NOT a 800-line philosophy dump.
+For each going-forward rule named in CLAUDE.local.md that overlaps
+the ship's surface, follow its DESIGN_SPECS pointer + load that body
+into context. This ensures the generated prompt's Step 3 "design check
+against pattern library" references concrete pattern bodies the
+future session needs, not just names.
 
 ### Stage 3 — Scan plan for DESIGN_SPECS pattern symptoms
 

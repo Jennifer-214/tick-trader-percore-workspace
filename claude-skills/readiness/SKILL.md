@@ -63,6 +63,38 @@ See `DOCS/SKILLS_HIERARCHY.md` for the full execution model.
 
 The auditor (Layer 2 subagent):
 
+0. **Stage 0 — DESIGN_SPECS preload by plan surface** (added 2026-05-14
+   alongside CLAUDE.local.md condense). CLAUDE.local.md is now a
+   pointer-index; rule deep-dives live in DESIGN_SPECS. To audit a plan
+   correctly, the auditor must load the pattern BODIES it scans against,
+   not just the names. Walk the plan body + match surface keywords to
+   DESIGN_SPECS docs, then `Read` each match into context BEFORE walking
+   the 28 checks:
+
+   | Plan surface keyword | DESIGN_SPECS to load |
+   |---|---|
+   | "new cfg field", "boolean cfg", "cfg-flag" | `cfg-flag-eligibility-criteria.md`, `categorical-tag-applicability-pattern.md`, `universal-cfg-field-registry-pattern.md` |
+   | "X-macro", "FOREACH_*", "registry entry" | `x-macro-registry-with-presence-dispatch.md`, `autopopulate-pattern-for-production-caller-class.md`, `heterogeneous-registry-pattern.md` |
+   | "bit-pack", "BITMAP_*", "flag bitmap", "≥3 booleans" | `bitmap-flag-api.md`, `bitmap-overflow-protection-discipline.md`, `multi-bit-state-encoding-pattern.md` |
+   | "K-state field", "state enum", "switch on state" | `multi-bit-state-encoding-pattern.md` |
+   | "stamp body", "wire format", "HMAC", "byte-equivalence" | `wire-format-byte-preservation-discipline.md`, `pre-post-cfg-registry-split-for-emit-order-preservation.md`, `struct-padding-determinism-pattern.md` |
+   | "hot path", "branchless", "predicate cache" | `cache-layout-discipline-for-hot-side-structs.md`, `branchless-math-kernel-pattern.md`, `latency-vs-cache-decision-framework.md` |
+   | "SIMD", "AVX-512", "vectorize" | `avx512-byte-determinism-pattern.md`, `branchless-math-kernel-pattern.md` |
+   | "rolling stat", "sliding window", "incremental mean/var" | `sliding-window-online-statistics-pattern.md`, `generic-ring-buffer-template-pattern.md` |
+   | "mirror sites", "parallel paths", "Class 18", "recurring bug" | `structural-fix-preferred-decision-framework.md`, `DOCS/RECURRING_BUG_PATTERNS.md` |
+   | "per-core override", "per-core flag" | `per-bit-per-core-override-pattern.md`, `partner-core-bitmap-pattern.md` |
+   | "snapshot publish", "cross-thread state" | `cross-thread-snapshot-publish-cluster-isolation.md` |
+   | "audit before coding", "pre-coding gate" | `audit-driven-pre-coding-gate.md` |
+
+   For each loaded DESIGN_SPECS doc, hold its body in context as the
+   pattern signature for the checks below. Reference the doc by
+   filename in findings; quote relevant rule snippets in the report.
+   This makes Check 27 (DESIGN_SPECS pattern-application via /dod-audit)
+   far more accurate because pattern bodies are warm, not cold.
+
+   **Skip Stage 0** only when the plan has NO architectural surface
+   (doc-only, single-file bug fix, test addition).
+
 1. **Parses the plan** — extracts:
    - Phases / ships / version bumps mentioned
    - Files claimed to be touched (from "Files touched" sections, code

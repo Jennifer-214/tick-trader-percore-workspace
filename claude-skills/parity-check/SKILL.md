@@ -78,6 +78,46 @@ See `DOCS/SKILLS_HIERARCHY.md` for the full execution model.
 
 The parity auditor (Layer 2 subagent):
 
+0. **Stage 0 — DESIGN_SPECS preload** (added 2026-05-14 alongside
+   CLAUDE.local.md condense). Parity work has a stable cluster of
+   patterns it audits against; load these into context BEFORE walking
+   the 10-category checklist so findings can cite specific pattern
+   rules:
+
+   - `tick-trader-percore-workspace/DESIGN_SPECS/wire-format-byte-preservation-discipline.md`
+     — byte-equivalence for HMAC inputs, stamp bodies, persistence
+     formats, replay-determinism
+   - `tick-trader-percore-workspace/DESIGN_SPECS/autopopulate-pattern-for-production-caller-class.md`
+     — STAMP_CFG_AUTOPOPULATE + STAMP_MODEL_CONST_AUTOPOPULATE; closes
+     PARITY-002/003/004/005/008 production-caller class
+   - `tick-trader-percore-workspace/DESIGN_SPECS/x-macro-registry-with-presence-dispatch.md`
+     — FOREACH_STAMP_BOUND_CFG / FOREACH_FEATURE / FOREACH_STAMP_BOUND_MODEL_CONST
+     registry shape
+   - `tick-trader-percore-workspace/DESIGN_SPECS/pre-post-cfg-registry-split-for-emit-order-preservation.md`
+     — FOREACH_STAMP_BOUND_MODEL_CONST_PRE_CFG / _POST_CFG canonical
+     emit-order preservation
+   - `tick-trader-percore-workspace/DESIGN_SPECS/struct-padding-determinism-pattern.md`
+     — explicit `_padding = 0` fields for byte-equivalence structs
+   - `tick-trader-percore-workspace/DESIGN_SPECS/avx512-byte-determinism-pattern.md`
+     — scalar fallback bytewise-identical to AVX-512 paths
+   - `tick-trader-percore-workspace/DESIGN_SPECS/cfg-flag-eligibility-criteria.md`
+     — when a cfg field requires stamp-binding (5-criteria framework
+     + cohort audit)
+   - `DOCS/PARITY_ISSUES.md` (workspace-symlinked) — existing parity
+     findings ledger; cross-ref each new finding against the
+     ledger BEFORE flagging (avoid re-discovering closed items)
+   - `DOCS/RECURRING_BUG_PATTERNS.md` Classes 18-21 — recurring bug
+     class registry
+
+   For each loaded doc, hold its body in context. When a finding
+   surfaces, reference the matching DESIGN_SPECS rule by filename + line.
+
+   **Auto-write contract (CLAUDE.local.md):** any new finding MUST
+   be written to `DOCS/PARITY_ISSUES.md` with its severity classification
+   + recommended fix; don't defer the ledger update to "operator copies
+   after review". Status updates (FIXED / NOT-A-BUG / recategorization)
+   on verification reruns auto-write too.
+
 1. **Walks the standard 10-category checklist** (see Categories
    below). For each category, identifies concrete file:line
    citations of risk + classifies severity:

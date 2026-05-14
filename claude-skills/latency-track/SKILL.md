@@ -5,6 +5,19 @@ description: Audit recent edits / pending commits for changes to latency-critica
 
 # /latency-track — Latency-additions audit + draft changelog entries
 
+> **Post-2026-05-14 enhancement — uniform parameter + preload contract:**
+>
+> **Required invocation args:**
+> - `<diff_range>` — git diff range
+>
+> **Optional invocation args:**
+> - `[focus_keywords...]` — narrow which paths to emphasize
+>
+> **Stage 0 DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
+> - § 4 (Latency cost framework) — cycles vs cache vs branch costs; ROI table; reuse-audit principle (CLAUDE.md item 16); latency-additions tracked (item 17)
+>
+> Cite § 4 cost-table values in HOT_PATH_CHANGELOG drafts.
+
 ## What this does
 
 Scans recent edits / pending commits for changes to latency-critical

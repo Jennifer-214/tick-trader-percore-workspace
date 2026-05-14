@@ -5,6 +5,17 @@ description: Audit the tick-trader-percore codebase for cleanup candidates — r
 
 # /dust — Codebase audit (non-destructive)
 
+> **Post-2026-05-14 enhancement — uniform parameter + preload contract:**
+>
+> **Optional invocation args:**
+> - `<scope_path>` — file_path_glob to scope cleanup scan; default = full codebase sweep
+> - `[focus_keywords...]` — narrow scan focus (e.g., "rotting comments" "oversized fns" "copy-paste")
+>
+> **Stage 0 DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
+> - § 11 (Process discipline) — what NOT to leave behind; cleanup discipline; structural-fix-preferred over local patches when bug class can recur
+>
+> Cite § 11 in cleanup recommendations when item suggests structural fix vs surface cleanup.
+
 ## What this does
 
 Runs a structured pass over `/home/caramel/code/tick-trader-percore/` and

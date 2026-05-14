@@ -5,6 +5,19 @@ description: Systematically sweeps the codebase for deep architectural flaws, ha
 
 # /hft-audit — Deep Architectural & HFT Codebase Audit
 
+> **Post-2026-05-14 enhancement — uniform parameter + preload contract:**
+>
+> **Optional invocation args:**
+> - `<scope_path>` — file_path_glob to scope to subsystem; default = full sweep
+> - `[focus_keywords...]` — narrow scan focus (e.g., "cache alignment" "branchless" "FPN edge case")
+>
+> **Stage 0 DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
+> - § 3 (Hard Invariants) — H1-H13 are universal HFT principles
+> - § 4 (Latency cost framework) — cycle/cache/branch costs anchor decisions
+> - § 6 (Concurrency family) — lock-free, atomics, cache-line discipline, no mutexes
+>
+> Cite specific § N rows in finding descriptions.
+
 ## What this does
 
 This skill directs the agent to perform an exhaustive, multi-dimensional audit of the codebase, focusing on extreme low-level system interactions that typical linters cannot catch. It specifically looks for violations of High-Frequency Trading (HFT) invariants, such as L1 cache spills, false sharing, branch mispredictions, undefined behavior, and lock-free concurrency tears.

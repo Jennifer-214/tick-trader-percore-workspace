@@ -83,9 +83,11 @@ each invocation pulls current state.
 | `tick-trader-percore-workspace/DOCS/TECH_DEBT.md` | Open entries; filter to ones in ship's surface area |
 | `tick-trader-percore-workspace/DOCS/PARITY_ISSUES.md` | Open parity findings (cross-ref to ship surface) |
 | `tick-trader-percore-workspace/DOCS/LANDMINES.md` | Operational landmines (e.g., XGBoost+libgomp pthread races); read before any segfault/race/parallelism debugging |
+| `tick-trader-percore-workspace/DOCS/DESIGN_PHILOSOPHY.md` | **NEW (post-2026-05-14 refactor).** Thematic narrative + 4-tier discipline (HARD / STRONG / SOFT / PROCESS) + cross-reference index. Match plan keywords to family sections (§ 3 Hard Invariants / § 4 Latency / § 5 Determinism / § 6 Concurrency / § 7 Structural-fix / § 8 Failure observability / § 9 Architectural primitives / § 10 Operator UX / § 11 Process discipline) + cite specific § N rows in generated prompt's Step 4. |
 | `plans/<sprint-dir>/MASTER.md` | Sprint context; ship's position in sub-tag sequence |
 | `<plan-path>` (resolved) | Ship's stated scope; stale-claim audit target |
 | `plans/<sprint-dir>/postmortems/` | Most-recent sub-ship postmortem (lessons that may apply) |
+| `CLAUDE.local.md` Current Sprint State Tracker section | **NEW (post-2026-05-14).** Most-recent ship + next-ship + sprint-wide invariants in force + open architectural decisions. Embed as snapshot in generated prompt for cold-pickup-time drift detection. |
 
 **CLAUDE.local.md as index (post-2026-05-14 condense):** the file is
 ~190 lines of pointer-based index, NOT a 800-line philosophy dump.
@@ -94,6 +96,23 @@ the ship's surface, follow its DESIGN_SPECS pointer + load that body
 into context. This ensures the generated prompt's Step 3 "design check
 against pattern library" references concrete pattern bodies the
 future session needs, not just names.
+
+### Stage 2.5 — Verify-on-write (anti-staleness fire)
+
+**NEW (post-2026-05-14; addresses observed drift between handoff prompt and reality at cold-pickup time per `feedback_compaction_degrades_treat_handoffs_as_hints`).**
+
+Before composing the handoff prompt, run `/readiness <plan-path>` AT GENERATION TIME against the target plan. Capture findings:
+
+- **PASS items** → confirm in generated prompt as "verified at handoff write time"
+- **GAP items** → embed in generated prompt as **`⚠️ VERIFY ON COLD-PICKUP — gap detected at handoff write time:`** annotated warnings
+- **FIXED items** → no annotation needed (resolved)
+- **DEFERRED items** → cite TECH_DEBT entry if not already done
+
+This eliminates the class of bugs where handoffs are written with stale claims that the future cold-pickup session has to re-derive. The handoff is born with verified-at-write-time truth.
+
+**Compose-by-reference, NOT by-spawning.** This Stage describes what to TELL the caller to do (orchestrate `/readiness` from main session). The /handoff skill itself does NOT spawn a subagent here — orchestration stays in main session for transparency.
+
+If `/readiness` returns RED verdict (substantial gaps), HALT handoff generation + report to operator: "Plan has substantial gaps that should be amended BEFORE handoff is generated. Amending the handoff to reflect known-broken state would lock in the staleness." Operator can override or amend the plan first.
 
 ### Stage 3 — Scan plan for DESIGN_SPECS pattern symptoms
 
@@ -146,6 +165,25 @@ Assemble the prompt with this structure:
 **Sprint MASTER:** plans/<sprint-dir>/MASTER.md
 **Predecessor postmortem:** <most-recent postmortem in plans/<sprint-dir>/postmortems/>
 
+**Engine state at handoff write time (anchor-tag):**
+- HEAD commit: `<git_sha>`
+- Latest tag: `<latest_tag>`
+- Version.hpp: `<engine_version_string>`
+- Test count baseline: `<test_count>` passed (verify via `./build/controller_test`)
+- Working tree: clean (verified at write time)
+
+**Sprint state snapshot** (from CLAUDE.local.md Current Sprint State Tracker; verify against current at cold-pickup):
+- Sprint: <sprint-name> (`plans/<sprint-dir>/MASTER.md`)
+- Most recent ship at handoff write: <most-recent-ship>
+- Next ship in pipeline: <ship-tag>
+- Sprint-wide invariants in force: <invariants-from-tracker>
+- Open architectural decisions awaiting operator input: <decisions-from-tracker>
+
+**Verify-on-write status (`/readiness` fired at generation):**
+- Verdict at write time: <GREEN / YELLOW / RED>
+- Gap findings embedded as `⚠️ VERIFY ON COLD-PICKUP` warnings in body below
+- Fresh-context coder MUST run `/readiness` again at pickup + diff against this baseline
+
 ---
 
 ## Paste this prompt into a fresh Claude Code session to start <ship-tag>
@@ -155,26 +193,42 @@ I'm picking up <ship-tag> (<ship-title>) for the <sprint-name> sprint.
 This is a fresh context window; do NOT trust any prior-session memory
 — verify everything against current code.
 
-## Step 0 — orient + verify state (BEFORE planning anything)
+## Step 0 — orient + verify state (MANDATORY — BEFORE planning anything)
 
-1. Run in parallel:
-   - `cat /home/caramel/code/FoxML_Trader_v2/Version.hpp` — confirm "<current-version>"
-   - `cd /home/caramel/code/FoxML_Trader_v2 && git log --oneline -5` — confirm latest commit is <latest-commit-or-tag>
-   - `cd /home/caramel/code/FoxML_Trader_v2 && git tag --sort=-creatordate | head -5` — confirm <latest-tag> exists
-   - `cd /home/caramel/code/FoxML_Trader_v2 && git status` — confirm clean tree
+**This Step 0 is NOT optional. Drift between handoff write time + cold-pickup time is the most common source of session-restart confusion. Verify EVERY claim explicitly.**
 
-2. Read these in parallel (load context):
-   - `CLAUDE.md` (engine repo project instructions)
-   - `CLAUDE.local.md` (private overlay; design philosophy + going-forward rules)
-   - `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/MEMORY.md`
+1. **SHA-diff trigger check** — compare current state to handoff anchor-tag at top of this prompt:
+   - `cat /home/caramel/code/FoxML_Trader_v2/Version.hpp` — must match anchor-tag's "Version.hpp:" value
+   - `cd /home/caramel/code/FoxML_Trader_v2 && git rev-parse HEAD` — must match anchor-tag's "HEAD commit:"
+   - `cd /home/caramel/code/FoxML_Trader_v2 && git tag --sort=-creatordate | head -3` — confirm anchor-tag's "Latest tag:" still on top
+   - `cd /home/caramel/code/FoxML_Trader_v2 && git status` — must be clean
+   - `./build/controller_test 2>&1 | tail -3` — test count must be ≥ anchor-tag's "Test count baseline:"
+
+   **If ANY value diverges from the handoff anchor-tag**: a ship landed between handoff write + this pickup. This handoff's claims may be stale. STOP planning; investigate the divergence first by reading `git log <anchor-sha>..HEAD` to understand what changed; verify each claim in this handoff body against current state before proceeding.
+
+2. **Read these in parallel (load context):**
+   - `CLAUDE.md` (engine repo; slim post-2026-05-14 refactor — operational orientation + 13 hard invariants)
+   - `CLAUDE.local.md` (private overlay; INDEX of going-forward rules; auto-write contracts; Sprint State Tracker)
+   - `tick-trader-percore-workspace/DOCS/DESIGN_PHILOSOPHY.md` § <matched-family-sections-per-Stage-3-pattern-match> (the WHY companion)
+   - `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/MEMORY.md` (auto-memory index)
    - `plans/<sprint-dir>/MASTER.md` (sprint master plan)
-   - `<plan-path>` (THE plan for this ship)
+   - `<plan-path>` (THE plan for this ship; **READ THE POST-SHIP AMENDMENT NOTICE AT TOP IF PRESENT** — it invalidates code samples in the body)
    - `plans/<sprint-dir>/postmortems/<latest>.md` (most-recent postmortem)
+   - `plans/plan_checks/<latest synthesis doc>` (if pre-coding audit fired previously)
 
-3. Read BEFORE WRITING CODE (per CLAUDE.local.md required reading):
-   - `DOCS/STRATEGY_AND_CODING_RULES.md` (11 strict invariants)
-   - `plans/_cross-cutting/2026-05-06-latency-path-discipline.md` (7 latency-path rules)
-   - `DOCS/LATENCY_OPTIMIZATION_AUDIT.md` (Gemini sweep; touch domain-relevant parts)
+3. **Cross-check Sprint State Tracker against current** — read `CLAUDE.local.md` "Current sprint state" section. Compare to handoff snapshot at top:
+   - Most-recent ship: matches?
+   - Next ship: matches?
+   - Sprint-wide invariants in force: matches?
+   - Open architectural decisions: matches?
+
+   Drift indicates ship(s) landed between handoff + pickup. Cross-reference `CLAUDE.local.md` snapshot vs handoff snapshot; flag divergences as `[DRIFT]` items requiring re-verification before coding.
+
+4. **Read BEFORE WRITING CODE (per CLAUDE.local.md required reading):**
+   - `DOCS/STRATEGY_AND_CODING_RULES.md` (11 strict invariants — private)
+   - `plans/_cross-cutting/2026-05-06-latency-path-discipline.md` (7 latency-path rules + Rule 8 mask-blend)
+   - `DOCS/LATENCY_OPTIMIZATION_AUDIT.md` (13-part audit — private; touch domain-relevant parts)
+   - `DOCS/DESIGN_PHILOSOPHY.md` § 2 (Hard Invariants) + matched family sections per Stage 3
 
 ## Step 1 — re-verify plan against current code (HEAD)
 
@@ -212,7 +266,13 @@ Required reading (DESIGN_SPECS catalog):
 
 Don't write code until the matched-pattern docs are read + integration plan articulated.
 
-## Step 4 — design philosophy reminders (load-bearing rules from CLAUDE.local.md + memory)
+## Step 4 — design philosophy reminders (load-bearing rules from DESIGN_PHILOSOPHY.md + CLAUDE.local.md + memory)
+
+**Required reading (matched per Stage 3 plan-pattern scan):**
+- `DOCS/DESIGN_PHILOSOPHY.md` § <N> — <family-name> (relevance: <plan-keyword that matched>)
+- (...one row per matched family per Stage 3...)
+
+**Going-forward rules + feedback entries (dynamically injected from CLAUDE.local.md + memory):**
 
 <inject going-forward rules + relevant feedback entries dynamically>
 - **Defer is last-ditch, never effort-avoidance.** Implement properly the first time. Smaller-scope recommendations have been wrong 3/3 times in v5.14 sprint vs Caramel's "do it right now" instinct.

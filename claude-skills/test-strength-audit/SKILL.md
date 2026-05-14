@@ -4,6 +4,19 @@ description: Anti-regression audit for test weakening. Scans git diffs (working 
 
 # /test-strength-audit — Anti-regression scan for test weakening
 
+> **Post-2026-05-14 enhancement — uniform parameter + preload contract:**
+>
+> **Required invocation args:**
+> - `<diff_range>` — git diff range
+>
+> **Optional invocation args:**
+> - `[focus_keywords...]` — narrow which weakening patterns to emphasize
+>
+> **Stage 0 DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
+> - § 11 (Process discipline) — anti-regression discipline; test SPECIFICATION integrity over time
+>
+> Cite § 11 in finding descriptions.
+
 ## What this does
 
 Scans git diffs (working tree, staged, or commit range) for **assertion

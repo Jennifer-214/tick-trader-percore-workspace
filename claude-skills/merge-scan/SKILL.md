@@ -5,6 +5,18 @@ description: Scan the codebase + in-flight plans for reuse-merge opportunities �
 
 # /merge-scan — Reuse + sharing opportunity audit
 
+> **Post-2026-05-14 enhancement — uniform parameter + preload contract:**
+>
+> **Optional invocation args:**
+> - `<scope_path>` — plan path or code subsystem to focus reuse-merge scan; default = full sweep
+> - `[focus_keywords...]` — narrow scan focus (e.g., "atomic load" "clock_gettime" "cfg access")
+>
+> **Stage 0 DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
+> - § 4 (Latency cost framework) — reuse-audit principle; shared atomic loads / cfg accesses / conversions
+> - § 7 (Structural-fix family) — when reuse opportunity is registry-shaped, propose X-macro registry vs helper extraction
+>
+> Cite specific § N rows in merge candidate descriptions.
+
 ## What this does
 
 Scans the engine codebase + currently-active plans for places where

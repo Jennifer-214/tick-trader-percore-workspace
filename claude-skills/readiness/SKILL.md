@@ -5,6 +5,20 @@ description: Verify a plan before coding starts. Reads a plan file, walks the 10
 
 # /readiness — Plan verification (pre-coding gate)
 
+> **Post-2026-05-14 enhancement — uniform parameter + preload contract:**
+>
+> **Required invocation args:**
+> - `<plan_path>` — sub-ship plan to verify
+>
+> **Optional invocation args:**
+> - `[focus_keywords...]` — narrow which checks emphasize
+>
+> **Stage 0 DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
+> - § 11 (Process discipline) — cold-pickup completeness; verify-handoffs-against-current-code; consult-before-coding
+> - Family § matched per plan content keywords (cfg / hot path / SIMD / determinism etc.)
+>
+> Cite specific § N rows in PASS/GAP findings.
+
 ## What this does
 
 Reads a plan file the user points at (default: most recently modified

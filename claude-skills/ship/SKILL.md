@@ -210,6 +210,52 @@ git remote get-url origin
 # → https://github.com/Jennyfirrr/tick-trader-percore/tree/<branch>
 ```
 
+### Stage 8.5 — Auto-write contracts (post-push, pre-report)
+
+**NEW (post-2026-05-14).** Per CLAUDE.local.md auto-write contracts, certain ship change-types REQUIRE corresponding ledger updates. The skill detects change-type from staged diff + commit message + recent context, then drafts + offers each entry for operator review (NOT auto-commits — operator confirms).
+
+**Change-type detection:**
+
+1. **New operator-visible feature** → propose FEATURE_LOOKUP.md entry
+   - Heuristic: new files in `CoreFrameworks/` / `ML_Headers/` / `Strategies/` / `MemHeaders/` AND new cfg field added AND new GUI panel/render walk
+   - OR commit message mentions "operator-visible" / "new feature" / "Settings tab"
+   - Draft entry per FEATURE_LOOKUP template (What / Cfg flags / Fallback / Where to verify / Paper-test sanity / Gotchas / Related)
+   - Skip for: pure refactors, internal helper extraction, bug fixes restoring expected behavior, bytewise-identical perf optimizations
+
+2. **Deferred TECH_DEBT item closed/advanced** → propose TECH_DEBT.md status update
+   - Heuristic: grep `DOCS/TECH_DEBT.md` for OPEN entries; check if commit-touched files overlap with entry's `Surface:` line
+   - For matched entry: suggest status flip OPEN → PARTIAL CLOSED / CLOSED + add "<commit-sha> at v<version>" to entry's history
+   - If unsure: surface "Possible TECH_DEBT match: TECH_DEBT-N. Update? [y/N]"
+
+3. **New bug class codified** → propose RECURRING_BUG_PATTERNS.md Class N entry
+   - Heuristic: commit message mentions "Class N", "anti-pattern", "structural fix" + RECURRING_BUG_PATTERNS.md was modified in this commit
+   - If new Class added, suggest cross-link to relevant DESIGN_PHILOSOPHY family section
+   - Verify the new class entry has Surface / Symptom / Detection / Known instances / Prevention sections
+
+4. **Structural fix → cross-link to DESIGN_PHILOSOPHY family** → propose adding "Pattern documented in DESIGN_PHILOSOPHY.md § N" reference at relevant CLAUDE.md item or DESIGN_SPECS doc
+   - Heuristic: commit message mentions "structural fix" / "3-barrier" / "X-macro" / "AUTOPOPULATE"
+
+5. **CHANGELOG.md row** → propose entry per existing changelog format
+   - Always draft for non-trivial ships
+   - Skip for: pure docs, sub-letter polish if predecessor row covers it
+
+6. **Decoupling-roadmap entry** (per CLAUDE.local.md going-forward rule) → if ship touches GUI ↔ runtime / TUISnapshot / CLI mode dispatch / cfg ownership / logging path, propose entry to `plans/_future/2026-05-12-decoupling-endgoal-roadmap.md`
+
+**Output of Stage 8.5:**
+
+```
+Auto-write proposals (review + confirm each before commit-amend):
+
+[1] FEATURE_LOOKUP.md — NEW entry "<feature-name>" — Y/n/edit?
+[2] TECH_DEBT-009 — status advance (PARTIAL CLOSED → ...) — Y/n/edit?
+[3] CHANGELOG.md — new row v<version> — Y/n/edit?
+[4] RECURRING_BUG_PATTERNS — no new class detected — skip
+[5] DESIGN_PHILOSOPHY cross-link — no structural-fix indicators — skip
+[6] Decoupling-roadmap — no GUI ↔ runtime touch — skip
+```
+
+For each accepted proposal, the skill performs the Edit + amends the ship commit (or creates a follow-up commit if amend would invalidate the tag — typically amend is fine because the tag is a separate operation).
+
 ### Stage 9 — Report
 
 Report to the user with this format:
@@ -223,12 +269,33 @@ Report to the user with this format:
 - Tests: <N>/0 (Δ <+M> from previous)
 - calls_graph_diff: CLEAN
 - Push: branch ✅ / tag ✅
+- Auto-write contracts: <N>/<M> entries committed (FEATURE_LOOKUP / TECH_DEBT / CHANGELOG / etc.)
 
 <one-line theme>
 
 Next: <auto-suggest based on plan or audit findings — e.g. "Phase 2
 (v5.9.1) — edge cases + warmup observability">
 ```
+
+### Stage 10 — Optional: chain to `/handoff`
+
+**NEW (post-2026-05-14).** Skill ends with optional chain offer:
+
+```
+Generate handoff prompt for next sub-ship in queue? [y/N]
+
+Detected next sub-ship from current plan's "Successor:" metadata:
+  <successor-ship-tag>
+
+This will invoke /handoff <successor-ship-tag> with current state as
+anchor. Output: plans/<sprint>/handoffs/<YYYY-MM-DD>-<successor>-handoff.md
+```
+
+If operator answers `y`: invoke `/handoff <successor>` as a follow-on skill (Layer 1 → Layer 1; both run in main session). The `/handoff` skill's verify-on-write Stage 2.5 will fire `/readiness` against the successor plan, embedding any GAP findings as `⚠️ VERIFY ON COLD-PICKUP` warnings — gives next session a born-fresh handoff.
+
+If operator answers `N` (default): skill ends; report success + exit.
+
+**Why optional, not always-on:** operator may want to step away before next ship; may want to pivot priorities; may want to fire /plan-context-sweep first to see if downstream plans need amendment after this ship.
 
 If any gate failed, report what failed + what needs human attention,
 not a success summary.

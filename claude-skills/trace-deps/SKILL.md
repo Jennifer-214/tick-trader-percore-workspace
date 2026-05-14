@@ -1,5 +1,19 @@
 # /trace-deps — dependency-chain audit for new plan code
 
+> **Post-2026-05-14 enhancement — uniform parameter + preload contract:**
+>
+> **Required invocation args:**
+> - `<plan_path>` — sub-ship plan to audit
+>
+> **Optional invocation args:**
+> - `[focus_keywords...]` — narrow which dependencies to verify (e.g., "tt::cfg_parse_field" "ControllerConfig_Load")
+>
+> **Stage 0 DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
+> - § 7 (Structural-fix family) — verify chokepoint usage; verify X-macro extractor not bypassed
+> - § 11 (Process discipline) — boundary-stable refactors over wide cascades
+>
+> Cite specific § N rows in finding descriptions.
+
 ## What this does
 
 Reads a plan file, extracts every NEW function the plan proposes,

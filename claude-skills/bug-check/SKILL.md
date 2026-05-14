@@ -4,6 +4,18 @@ description: Scan the codebase for instances of known recurring bug patterns cat
 
 # /bug-check — Scan codebase for known bug class instances
 
+> **Post-2026-05-14 enhancement — uniform parameter + preload contract:**
+>
+> **Optional invocation args** (already parameterized — see Invocation section below):
+> - `[class_N | surface_<tag>]` — focus on one class or one surface
+> - `[plans]` — extend scan to plans/**/*.md (NEW post-v5.15.5.F.4b — see Step 3 plan scope extension)
+>
+> **Stage 0 DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
+> - § 3 (Hard Invariants) — H1-H13 are anti-pattern boundaries
+> - Family § matched per detected Class N (e.g., Class 23 → § 3 H13 + § 7 Structural-fix; Class 18 → § 7; Class 14 → § 11 Process)
+>
+> Cite specific § N rows in finding descriptions.
+
 ## What this does
 
 Reads `DOCS/RECURRING_BUG_PATTERNS.md` (the canonical record of
@@ -82,6 +94,20 @@ Surface vocabulary (per RECURRING_BUG_PATTERNS.md):
 - `boot` — initialization, snapshot load, model load
 - `plan-time` — pre-coding plan audits (delegated to /trace-deps)
 - `audited-clean` — historically-cleared category (delegated skip)
+- `plans` — **NEW (post-v5.15.5.F.4b)** scan plans/**/*.md for anti-pattern
+  CODE SAMPLES that would reintroduce a just-closed bug class. Use after
+  structural-fix ship lands (e.g., post-.F.4b: `/bug-check plans` to verify
+  queued sub-plans don't have void*+offset+reinterpret_cast samples). Also
+  invoked indirectly by `/plan-context-sweep` orchestrator.
+
+**Scope expansion (v5.15.5.F.4b+):** Detection greps run by default against
+`CoreFrameworks/`, `ML_Headers/`, `Strategies/`, `DataStream/`, `Backtest/`,
+`MemHeaders/`, `FixedPoint/`, `GUI/`, `tests/` (codebase). Adding `plans` to
+invocation extends targets to include `plans/**/*.md` (workspace-symlinked).
+This catches stale plan code samples that would reintroduce closed bug
+classes — e.g., Class 23 (type-erased reinterpret_cast) detection signature
+catches `*reinterpret_cast<X*>((char*)Y + offset)` in plan body code blocks
+just as it does in real code. Same Detection signature; different scan target.
 
 ## Pass structure
 
@@ -124,6 +150,17 @@ For each EXECUTABLE class:
 - Diff against `known_set`:
   - All hits in known_set → CLEAN-OR-KNOWN-N (already documented)
   - Some hits NOT in known_set → NEW-M instances
+
+**Plan scope extension (when `plans` invocation surface present):**
+- After running Detection against codebase, ALSO run against `plans/**/*.md`
+- Use the same Detection bash block but extend grep targets to plan files
+- Plan file matches are SEPARATELY reported as "PLAN-NEW-M" (distinct from
+  CODE-NEW-M to make the staleness vs production-bug distinction clear)
+- Plan matches typically need amendment notice (light context-correction
+  note at top) rather than code fix — different remediation path
+- Cross-link plan matches to the plan's amendment-notice block if one
+  exists (search plan body for "amendment notice" marker; if present,
+  the plan acknowledges the staleness; flag as KNOWN-AMENDED)
 
 ### Step 4 — Filter (if invoked with class_N or surface_<tag>)
 

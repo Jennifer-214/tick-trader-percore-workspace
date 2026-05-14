@@ -5,6 +5,18 @@ description: Walk the ML pipeline (feature compute → model load → inference 
 
 # /ml-audit — ML pipeline structural audit
 
+> **Post-2026-05-14 enhancement — uniform parameter + preload contract:**
+>
+> **Optional invocation args:**
+> - `<scope_path>` — file_path_glob to scope; default = full ML pipeline sweep
+> - `[focus_keywords...]` — narrow scan focus (e.g., "feature pack" "scaler" "stamp body")
+>
+> **Stage 0 DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
+> - § 5 (Determinism family) — train-serve parity, NaN-free feature pack, stamp body byte preservation
+> - § 8 (Failure observability family) — failure flags, drift detection, audit hooks
+>
+> Cite specific § N rows in finding descriptions.
+
 ## What this does
 
 Walks the ML pipeline (feature compute → model load → inference →

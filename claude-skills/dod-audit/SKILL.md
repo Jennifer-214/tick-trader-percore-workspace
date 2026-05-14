@@ -4,6 +4,19 @@ description: Data-oriented-design audit. Walks DESIGN_SPECS pattern catalog dyna
 
 # /dod-audit — Data-oriented-design pattern audit
 
+> **Post-2026-05-14 enhancement — uniform parameter + preload contract:**
+>
+> **Optional invocation args** (mirrors /precoding-audit-gate signature):
+> - `<scope_path>` — file path (plan or code file) to scope the scan; default = full codebase sweep
+> - `[focus_keywords...]` — narrow scan focus (e.g., "cache layout" "bit-pack")
+>
+> **Stage 0 DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
+> - § 3 (Hard Invariants) — H6, H7, H10-H13 are pattern-applied
+> - § 4 (Latency cost framework) — cycles vs cache vs branch costs
+> - § 7 (Structural-fix family) — X-macro registries, AUTOPOPULATE, tt:: dispatch, 3-barrier design
+>
+> Cite specific § N rows in finding descriptions to give operator the WHY context.
+
 ## What this does
 
 Reads `tick-trader-percore-workspace/DESIGN_SPECS/*.md` (the canonical

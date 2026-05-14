@@ -5,6 +5,18 @@ description: Comprehensive train↔serve identity audit. Walks every train-serve
 
 # /parity-check — Train↔serve identity audit
 
+> **Post-2026-05-14 enhancement — uniform parameter + preload contract:**
+>
+> **Optional invocation args** (mirrors /precoding-audit-gate signature):
+> - `<scope_path>` — plan path or specific code surface; default = full codebase sweep
+> - `[focus_keywords...]` — narrow scan focus (e.g., "STAMP_BOUND" "Layer 5b" "scaler binding")
+>
+> **Stage 0 DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
+> - § 5 (Determinism family) — train-serve parity, wire format, FPN, struct padding, PRNG, AVX-512 byte-determinism, math kernel constant-iter
+> - § 7 (Structural-fix family) — AUTOPOPULATE production-caller class extinction; PRE/POST registry split
+>
+> Cite specific § N rows in finding descriptions.
+
 ## What this does
 
 Walks every surface where a value computed at TRAINING TIME must

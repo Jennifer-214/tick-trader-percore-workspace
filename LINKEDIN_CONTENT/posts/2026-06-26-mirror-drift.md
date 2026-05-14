@@ -1,25 +1,109 @@
-# LinkedIn Post: Mirror Drift
+# LinkedIn Post Design Doc
 
-**Hook:** Why does your backtest say "Profit" but your live engine says "Flat"? Welcome to the world of **Mirror Drift**.
+**Topic ID:** #16
+**Target Date:** 2026-06-26
+**Primary Pillar:** Pattern Library
 
-In complex systems, we often need the same logic in two places. In HFT, we calculate features in the Backtester (to train models) and in the Live Engine (to execute trades). 
+**Style Checklist:**
+- [x] Is it anti-corporate? (No fluff)
+- [x] Did I use "Spaced-Out Caps" for the load-bearing concept?
+- [x] Are pronouns lowercase (i, im, idk)?
+- [x] Is punctuation minimal and conversational?
+- [x] Are lines manually wrapped to 40-60 characters for LinkedIn readability?
+- [x] Are there 2-3 distinct options to choose from?
 
-**The Trap:** You copy-paste the formula. 
-`double spread = (ask - bid) / mid;`
+## Strategy & Breakdown
+Addresses the silent bug of "Mirror Drift" between backtest and production engines due to manual copy-pasting, and introduces code generation via X-Macros as the fix.
 
-**The Reality:** 
-One month later, someone "optimizes" the live version to use fixed-point math for speed. They use a slightly different rounding mode. Now, the live engine sees a spread of `0.000100` while the backtest saw `0.000101`. That 1-ULP (Unit in the Last Place) difference is enough to flip a model's prediction from "Buy" to "Hold."
+## Draft Options
 
-You've just introduced a silent, systematic bias that no unit test will catch.
+---
+**Option 1: The Blunt & Technical**
 
-**The Fix: Single-Source-of-Truth Registries**
+why does your backtest say profit but
+your live engine says flat. welcome to
+mirror drift. I C K Y.
 
-We extinguished this entire bug class by banning manual mirroring. 
+you copy-pasted a formula for spread and
+a month later someone optimizes the live
+version with fixed-point math. now the
+live engine sees 0.000100 while the
+backtest saw 0.000101. that 1-ULP diff
+is enough to flip your models prediction.
+W I L D. youve introduced a silent bias
+that no unit test will ever catch.
 
-1. **X-Macro Registries:** We define the feature's metadata, formula, and dependencies in a single macro row. 
-2. **Auto-Generation:** That one row generates the C++ struct fields for the Live Engine, the JSON parser for the Backtester, and the validation logic for the GUI.
-3. **Bit-Identical Testing:** We run "Cross-Architecture Parity" tests that feed the same raw bytes into both engines and assert that the output is bitwise identical.
+we extinguished this bug class by banning
+manual mirroring. x-macro registries
+define the features metadata and formula
+in a single macro row. that one row
+generates the live struct the backtest
+parser and the GUI validation. one change
+everywhere. we run cross-architecture
+parity tests so if the bytes arent
+bitwise identical the build dies.
 
-**The Lesson:** If you have to write the same thing twice, you've already failed. Use code generation to turn "manual discipline" into "structural certainty."
+A U T O G E N E R A T I O N turns manual
+discipline into structural certainty.
 
-#HFT #Cpp #SoftwareArchitecture #MachineLearning #MLOps #Programming
+still copy-pasting formulas between
+research and production? 
+
+#HFT #MachineLearning #SoftwareArchitecture
+---
+
+---
+**Option 2: The Conversational & Analogy-Heavy**
+
+its like 3am and im thinking about how
+copy-pasting formulas is a crime lol.
+why does your backtest say profit but
+live says flat? mirror drift. I C K Y.
+
+imagine optimizing your live engine to
+use fixed-point math but forgetting the
+backtest. suddenly your live spread is
+0.000100 and backtest is 0.000101. that
+tiny 1-ULP diff flips your ML models
+prediction. W I L D. no unit test catches
+that silent bias. its like having two
+clocks that are just slightly off and
+ruining your whole day.
+
+we use x-macro registries so we define
+the formula exactly once. A U T O G E N E R A T I O N
+handles the live struct the backtest
+parser and the GUI. one button no drama.
+we feed raw bytes into both engines and
+if they arent bitwise identical the build
+dies. praise be to the compiler.
+
+tell me how much you enjoy manual labor
+copy-pasting formulas everywhere.
+
+#HFT #Cpp #MLOps
+---
+
+---
+**Option 3: The Short & Punchy**
+
+why does your backtest say profit but
+live says flat. mirror drift. I C K Y.
+
+you optimized live with fixed-point math
+and left the backtest alone. a 1-ULP
+diff flips your models prediction. W I L D.
+
+we extinguished this by banning manual
+mirroring. x-macro registries define the
+formula in one place and A U T O G E N E R A T I O N
+creates the live struct and backtest
+parser. cross-architecture parity tests
+ensure bitwise identical outputs or the
+build dies.
+
+still copy-pasting formulas between
+research and production?
+
+#HFT #MachineLearning #SoftwareArchitecture
+---

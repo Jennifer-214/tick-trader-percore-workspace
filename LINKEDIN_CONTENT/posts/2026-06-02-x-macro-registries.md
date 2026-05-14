@@ -1,66 +1,107 @@
-# LinkedIn Post: X-Macro Registries
+# LinkedIn Post Design Doc
 
 **Topic ID:** #8
 **Target Date:** 2026-06-02
 **Primary Pillar:** Pattern Library
 
----
+**Style Checklist:**
+- [x] Is it anti-corporate? (No fluff)
+- [x] Did I use "Spaced-Out Caps" for the load-bearing concept?
+- [x] Are pronouns lowercase (i, im, idk)?
+- [x] Is punctuation minimal and conversational?
+- [x] Are lines manually wrapped to 40-60 characters for LinkedIn readability?
+- [x] Are there 2-3 distinct options to choose from?
 
-## 1. The Hook (First 2 Lines)
-*Goal: Stop the scroll. Challenge an assumption or state a surprising result.*
+## Strategy & Breakdown
+Focuses on eradicating "N-site" bugs (forgetting to update a parser/struct) by using X-Macro Registries as the single source of truth.
 
-Adding one field to your system shouldn't require touching 5 different files.
-If you're still manually updating parsers, emitters, and structs, you're inviting the "N-site" bug class.
-
----
-
-## 2. The Context/Problem
-*Goal: Why does this matter? What's the pain point?*
-
-We've all been there: you add a new configuration parameter. You update the struct. You forget the JSON parser. Or the GUI panel. Or the persistence logic. Suddenly, your backtest and live production are out of sync because one site was missed.
+## Draft Options
 
 ---
+**Option 1: The Blunt & Technical**
 
-## 3. The Technical Solution
-*Goal: High-signal insight. Use lists or code-like snippets.*
+adding one field to your system shouldnt
+require touching 5 different files.
+thats B A D.
 
-We use **X-Macro Registries with Y3 Dispatch** to maintain a single source of truth for all metadata. One row in a macro generates EVERYTHING.
+if youre still manually updating parsers
+and structs youre begging for an n-site
+bug. you add a config parameter and update
+the struct but forget the JSON parser.
+suddenly your backtest and production
+are out of sync. I C K Y.
 
-- **The Registry:** A single list of fields with types, default values, and metadata.
-- **Y3 Dispatch:** Token-pasting to conditionally include fields in specific views (e.g., `PARSER_ONLY` vs `RUNTIME`).
-- **AUTOPOPULATE:** A companion macro that handles the boilerplate of copying data between structures.
+we use x-macro registries with Y3 dispatch.
+one row generates EVERYTHING. the registry
+is a single list of fields with types and
+metadata acting as the single source of
+truth. Y3 dispatch uses token-pasting to
+conditionally include fields in specific
+views. A U T O P O P U L A T E handles the
+boilerplate. 
 
-```cpp
-#define FOREACH_OMS_FIELD(X) \
-    X(order_id,   SCALAR,  INCLUDE, uint64_t) \
-    X(filled_qty, SCALAR,  INCLUDE, double)   \
-    X(debug_msg,  STRING,  SKIP,    char[64])
+dont fix bugs extinguish them. registry
+driven architecture makes it physically
+impossible to forget a site.
 
-// Expansion 1: Struct fields
-#define X(name, storage, presence, type) type name;
-struct OrderState { FOREACH_OMS_FIELD(X) };
+do you trust your memory or your compiler?
 
-// Expansion 2: JSON Parser
-#define X(name, storage, presence, type) if (key == #name) { parse_val(r.name, val); }
-```
-
+#HFT #Cpp #Metaprogramming #CleanCode
 ---
 
-## 4. The "Aha!" Moment / Lesson
-*Goal: What should the reader take away?*
+---
+**Option 2: The Conversational & Analogy-Heavy**
 
-Don't fix bugs; extinguish them. By moving to a registry-driven architecture, we made it physically impossible to "forget" a site. If it's in the macro, it's in the parser, the struct, and the GUI.
+its like 3am and im thinking about how
+n-site bugs are the bane of my existence.
+I C K Y.
 
+you add a config field to the struct but
+forget the JSON parser or the GUI. its
+like forgetting your keys when youre
+already in the car lol. B A D. your
+backtest and production go completely out
+of sync.
+
+we just use x-macros now. praise be. one
+row generates EVERYTHING. the registry is
+our single source of truth and we use Y3
+dispatch to conditionally render fields.
+A U T O P O P U L A T E does all the heavy
+lifting. if its in the macro its
+everywhere. physically impossible to
+forget.
+
+let the compiler do your busy work for
+you.
+
+do you trust your memory or your compiler?
+i know which one i pick every time.
+
+#HFT #SoftwareArchitecture #Maintainability
 ---
 
-## 5. Call to Action (CTA)
-*Goal: Drive engagement/comments.*
-
-What's your strategy for keeping parallel data structures in sync? Do you trust your memory or your compiler?
-
 ---
+**Option 3: The Short & Punchy**
 
-## 6. Hashtags
-*Copy from TAG_LIBRARY.md*
+adding one field shouldnt require touching
+5 files. B A D.
 
-#HFT #Cpp #Metaprogramming #SoftwareArchitecture #CleanCode #Maintainability
+manually updating parsers and structs is
+how you get n-site bugs. you forget one
+file and your backtest is out of sync
+with live. I C K Y.
+
+we use x-macro registries. one row
+generates EVERYTHING. the registry is
+the single source of truth. Y3 dispatch
+conditionally includes fields.
+A U T O P O P U L A T E handles the copy.
+
+registry-driven architecture makes it
+physically impossible to forget a site.
+
+do you trust your memory or your compiler?
+
+#HFT #Cpp #Metaprogramming
+---

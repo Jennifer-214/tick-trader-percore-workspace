@@ -1,22 +1,108 @@
-# LinkedIn Post: 10GB/s Market Data Parsing
+# LinkedIn Post Design Doc
 
-**Hook:** How do you parse millions of market depth updates per second without breaking a sweat? You stop treating strings like characters and start treating them like vectors.
+**Topic ID:** #11
+**Target Date:** 2026-06-11
+**Primary Pillar:** Pattern Library
 
-In our latest latency audit, we found a bottleneck: `strstr`. 
+**Style Checklist:**
+- [x] Is it anti-corporate? (No fluff)
+- [x] Did I use "Spaced-Out Caps" for the load-bearing concept?
+- [x] Are pronouns lowercase (i, im, idk)?
+- [x] Is punctuation minimal and conversational?
+- [x] Are lines manually wrapped to 40-60 characters for LinkedIn readability?
+- [x] Are there 2-3 distinct options to choose from?
 
-Standard string searching is fine for a web server, but in an HFT engine ingesting Binance or NASDAQ feeds, scalar byte-by-byte comparison is a luxury we can't afford. Each `if (*p == 's')` is a potential branch misprediction and a waste of execution ports.
+## Strategy & Breakdown
+Focuses on using AVX-512 SIMD instructions to parse strings instead of scalar operations like `strstr`.
 
-**The HFT Way: SIMD String Search**
+## Draft Options
 
-By moving to AVX-512, we replaced dozens of scalar instructions with a single vectorized operation:
+---
+**Option 1: The Blunt & Technical**
 
-1. **Vector Load:** Load 64 bytes of the market data stream into a `zmm` register.
-2. **Broadcast Search:** Broadcast the target key (e.g., `"asks"`) into another register.
-3. **Masked Comparison:** Use `_mm512_cmpeq_epi8_mask` to find all occurrences of the first character in one cycle.
-4. **Bit-Scan:** Use `__builtin_ctzll` to find the first '1' in the resulting bitmask.
+how do you parse millions of updates
+without breaking a sweat? stop treating
+strings like characters. treat them like
+V E C T O R S.
 
-**The Result:** We parse raw JSON-like market data at hardware limits. We're no longer bound by string logic; we're bound by memory bandwidth.
+strstr is I C K Y. scalar byte-by-byte
+comparison is for normies. every branch
+is a coin flip the CPU doesnt want to make.
+if youre ingesting binance feeds you dont
+have time for character drama. B A D.
 
-**The Lesson:** When performance is the product, "standard library" is often just the starting point. If your hot path spends time in `libc` string functions, you're leaving microseconds on the table.
+we moved to AVX-512 and replaced dozens
+of scalar instructions with a single
+vectorized operation. we load 64 bytes of
+the stream into a zmm register. broadcast
+the target key into another register. then
+_mm512_cmpeq_epi8_mask finds all matches
+in one cycle. a quick __builtin_ctzll
+finds the first 1 in the mask. pure
+M A T H.
 
-#HFT #AVX512 #Cpp #LowLatency #PerformanceOptimization #SystemsEngineering
+we parse raw data at hardware limits.
+the standard library is just a starting
+point for people who arent in a hurry.
+
+is your hot path still stuck in strstr?
+
+#HFT #AVX512 #Cpp #LowLatency
+---
+
+---
+**Option 2: The Conversational & Analogy-Heavy**
+
+its like 3am and im thinking about how
+scalar byte-by-byte comparison is literally
+so I C K Y.
+
+using strstr to parse market data is like
+reading a book one letter at a time.
+every if statement is a coin flip and
+branch mispredictions are a slow way to
+lose the race. W I L D.
+
+we treat strings like V E C T O R S. we
+use AVX-512 to load 64 bytes into a zmm
+register and broadcast the search key.
+one _mm512_cmpeq_epi8_mask instruction
+finds every match in a single cycle. then
+just a bit-scan to find the first 1.
+its basically magic lol. praise be to SIMD.
+
+if your hot path is stuck in libc youre
+leaving microseconds on the table for
+someone else.
+
+why do you enjoy waiting for the CPU to
+finish its character-by-character tour?
+
+#HFT #PerformanceOptimization #SystemsEngineering
+---
+
+---
+**Option 3: The Short & Punchy**
+
+stop treating strings like characters.
+treat them like V E C T O R S.
+
+strstr is I C K Y. scalar byte-by-byte
+comparison is for normies. branch
+mispredictions ruin your latency. B A D.
+
+we use AVX-512 to replace scalar ops.
+load 64 bytes into a zmm register.
+broadcast the target key. a masked
+comparison finds all matches in one
+cycle. a bit-scan finds the first match.
+pure M A T H.
+
+we parse raw data at hardware limits.
+the standard library is for people who
+arent in a hurry.
+
+is your hot path still stuck in strstr?
+
+#HFT #AVX512 #LowLatency
+---

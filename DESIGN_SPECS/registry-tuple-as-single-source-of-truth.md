@@ -265,6 +265,7 @@ GUI consumer: `GUI/SettingsPanel.hpp` deleted 14 manual entries; replaced with 5
 - `FOREACH_FEATURE` (v5.14.9.E): currently 7-col tuple (NAME + 6 columns); validates the principle.
 - `FOREACH_STAMP_BOUND_CFG` / `FOREACH_STAMP_BOUND_MODEL_CONST` (v5.14.8): 8-col / 9-col tuples; similar principle for stamp-body fields.
 - `FOREACH_FAILURE_MODE` (v5.14.8.B): 5-col with per-entry storage_class column.
+- **`FOREACH_CFG_FIELD` (v5.15.5.F.4 — universal cfg field registry; ~12-col tuple, largest Option D application to date):** consumers include parser, save/load, GUI Settings tab render, per-core override emission, drift check (via derived filter — `wire-format-byte-preservation-discipline.md`), `cfg.example` auto-gen, categorical applicability filtering (per `categorical-tag-applicability-pattern.md`), `lives_in_struct` parser routing across multiple cfg files (engine.cfg + backtest.cfg + controller.cfg + secrets.cfg + training cfg). Demonstrates Option D scaling to 213+ entries × 8+ consumers with no per-consumer manual lists. See `universal-cfg-field-registry-pattern.md`.
 - Future: any registry with ≥3 consumers should default to Option D from the start.
 
 ---

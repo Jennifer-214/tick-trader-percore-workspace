@@ -340,6 +340,34 @@ Callers: `if (REGISTRY_HAS(*m, group_x)) ...` instead of touching has_flags dire
 - `FOREACH_FAILURE_MODE` (v5.14.8.B): observability flags + counters; uses same presence + dispatch pattern with different markers (BIT_FLAG / COUNTER_U32 / PERCENT_U8 storage classes per entry)
 - `FOREACH_PER_CORE_SNAP_FIELD` (TECH_DEBT-011): general visible-state PerCoreSnap fields
 - `FOREACH_OMS_STATE` (TECH_DEBT-012): OrderManagerState fields — **SUPERSEDED by FOREACH_OMS_FIELD above (v5.15.5.C.3 Phase 3b closed this entry)**
+- `FOREACH_CFG_FIELD` **(v5.15.5.F.4 — universal cfg field registry; the largest application to date)**: 213+ cfg fields across 4-5 cfg files (engine.cfg, backtest.cfg, controller.cfg, secrets.cfg, training cfg). Tuple has ~12 columns covering: Kind dispatch (KIND_DOUBLE/INT/INT_ENUM/BOOL/STRING/FILE_PATH/FPN), metadata bitmap, lives_in_struct discriminator (cross-file unification), per-domain categorical applicability masks (strategy / op-mode / regime / risk), runtime cfg gating predicate, type-discriminated payload union (default + clamp ranges + enum labels). **Demonstrates 3 dispatch axes simultaneously:** (1) Kind via Y3 dispatch (parser/save/render per type); (2) lives_in_struct via Y3 (parser routes write to correct struct); (3) categorical applicability via bitmap intersection (per `categorical-tag-applicability-pattern.md` — sister pattern; bitmap intersection complements Y3 token-dispatch for the "applies-when" axis). See `universal-cfg-field-registry-pattern.md` for full pattern application.
+
+### Derived filter sister registry pattern (v5.15.5.F.4)
+
+**Pattern variant:** when two registries have overlapping membership (e.g., `FOREACH_STAMP_BOUND_CFG` is a SUBSET of `FOREACH_CFG_FIELD`), declare the broader registry as the source of truth + derive the sister registry as a metadata-filtered walk.
+
+```cpp
+// FOREACH_STAMP_BOUND_CFG becomes a DERIVED filter (v5.15.5.F.4):
+#define FOREACH_STAMP_BOUND_CFG_DERIVED(X) \
+    FOREACH_CFG_FIELD(EMIT_IF_STAMP_BOUND_##X)
+
+// Y3 dispatch on the STAMP_BOUND metadata bit:
+#define EMIT_IF_STAMP_BOUND_X(kind, name, label, section, meta, payload, tooltip, \
+                              applies_to_strategy, applies_to_op_mode, lives_in) \
+    EMIT_IF_STAMP_BOUND_DISPATCH_##meta(kind, name, ...)
+
+// Token-paste dispatcher selects based on whether meta contains STAMP_BOUND:
+// (uses a compile-time bit-extraction macro to select the EMIT vs SKIP branch)
+```
+
+**Canonical byte order locked via CI hash test** (per `wire-format-byte-preservation-discipline.md`). Adding a new STAMP_BOUND-flagged row to `FOREACH_CFG_FIELD` extends the derived walk in registry order; CI hash test catches accidental reorders.
+
+**Wins:**
+- Single source of truth — cfg fields declared ONCE; stamp-bound subset is a derived view
+- Adding a new stamp-bound field = 1 row in `FOREACH_CFG_FIELD` with `STAMP_BOUND` metadata bit set
+- Closes the dual-registry stamp drift class structurally (was PARITY-NNN before consolidation)
+
+**When to apply:** ANY pair of registries where one is a strict subset of the other AND the subset has its own consumers (e.g., HMAC body emit). Use Y3 dispatch on the metadata bit; lock canonical byte order via CI hash test.
 
 ---
 

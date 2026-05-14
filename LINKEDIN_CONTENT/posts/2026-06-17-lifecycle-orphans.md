@@ -1,21 +1,109 @@
-# LinkedIn Post: The Bug Where You Wire the Entry but Forget the Exit
+# LinkedIn Post Design Doc
 
-**Hook:** The most dangerous code in your repository isn't the code that fails; it's the code that's "orphaned."
+**Topic ID:** #13
+**Target Date:** 2026-06-17
+**Primary Pillar:** Philosophy
 
-We've all been there: You're porting a feature from a legacy architecture to a new one. You wire up the initialization. You wire up the main logic loop. You test it, and it looks green.
+**Style Checklist:**
+- [x] Is it anti-corporate? (No fluff)
+- [x] Did I use "Spaced-Out Caps" for the load-bearing concept?
+- [x] Are pronouns lowercase (i, im, idk)?
+- [x] Is punctuation minimal and conversational?
+- [x] Are lines manually wrapped to 40-60 characters for LinkedIn readability?
+- [x] Are there 2-3 distinct options to choose from?
 
-But you forgot the **Exit Logic**. 
+## Strategy & Breakdown
+Focuses on the architectural flaw of "orphaned" code (e.g., wiring an Init but forgetting the Exit). Advocates for an auto-dispatched X-Macro registry to enforce lifecycle completeness.
 
-**The War Story:** 
-In a recent refactor, we discovered that while our strategies were entering trades perfectly, they had stopped "Adapting" to market regime changes. The `Strategy_Adapt` calls had been silently orphaned during a sharded-engine port. The code compiled, the tests (which only checked entries) passed, but the engine was effectively flying blind to regime shifts.
+## Draft Options
 
-**How We Fixed It Structurally:**
-We didn't just patch the call site. We moved to a **Strategy Interface Contract** enforced by X-Macros.
+---
+**Option 1: The Blunt & Technical**
 
-1. **The Registry:** Every strategy is now defined in a single macro row: `X(StrategyName, Init, Adapt, Build, Exit)`.
-2. **Auto-Dispatch:** The engine uses this registry to auto-generate the dispatch table. If a strategy is added, all five lifecycle stages are *automatically* wired.
-3. **Orphan Audits:** We now use a custom tool to diff the call graph. If a lifecycle stage exists but isn't called by the engine, the build fails.
+the most dangerous code in your repo isnt
+the code that fails. its the code that is
+O R P H A N E D.
 
-**The Lesson:** When a bug class keeps recurring, stop patching the instances. Change the architecture so the bug becomes physically impossible to write. 
+youre porting a feature. you wire the init
+and you wire the loop. it looks green but
+you forgot the exit logic. I C K Y. your
+strategies enter trades perfectly but they
+stop adapting to the market. the code
+compiles and tests pass but your engine is
+flying blind. 
 
-#HFT #Cpp #SoftwareArchitecture #TechnicalDebt #SystemsEngineering #Programming
+we moved to a strategy interface contract
+enforced by x-macros. every strategy is
+defined in one row like X(StrategyName,
+Init, Adapt, Build, Exit). the engine just
+auto-generates the dispatch table so you
+physically cant forget a lifecycle stage.
+our custom tool diffs the call graph and
+if a stage exists but isnt called the
+build fails. no orphans allowed.
+
+change the architecture so the bug becomes
+physically impossible.
+
+how many orphaned features are lurking
+in your repo?
+
+#HFT #Cpp #SoftwareArchitecture
+---
+
+---
+**Option 2: The Conversational & Analogy-Heavy**
+
+its like 3am and im thinking about how
+the worst bugs are the ones where the code
+compiles perfectly but its just O R P H A N E D.
+
+imagine wiring the init and the loop for a
+new feature but forgetting the exit logic.
+your engine is entering trades but stops
+adapting. its like a car that can accelerate
+but cant steer lol. so I C K Y.
+
+we fixed this with x-macros. praise be.
+every strategy is defined in a single row
+and the engine auto-generates the entire
+dispatch table. you literally cannot forget
+a lifecycle stage. we also run orphan
+audits that diff the call graph. if you
+write a stage and it isnt called the build
+dies.
+
+its like having a co-pilot who actually
+knows where youre going.
+
+are you brave enough to audit your call
+graph for orphans?
+
+#HFT #SystemsEngineering #TechnicalDebt
+---
+
+---
+**Option 3: The Short & Punchy**
+
+the most dangerous code in your repo is
+the code that is O R P H A N E D.
+
+you wire the init and loop but forget the
+exit logic. tests pass but your engine is
+flying blind. I C K Y.
+
+we use an x-macro registry to define
+strategies in one row. the engine
+auto-generates the dispatch table. you
+physically cant forget a lifecycle stage.
+orphan audits diff the call graph and
+fail the build if a stage isnt called.
+
+change the architecture so the bug becomes
+physically impossible.
+
+how many orphaned features are in your
+legacy repo?
+
+#HFT #Cpp #SoftwareArchitecture
+---

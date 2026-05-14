@@ -84,6 +84,8 @@ This is the **AUTOPOPULATE-eligible recurring class** (CLAUDE.md item 21): singl
 
 ### The descriptor struct (heterogeneous payload via `Kind`-discriminated union)
 
+**Cache-line budget decision (v5.15.5.F.4):** cfg metadata is read at boot (parser) + 60 Hz (GUI render) — neither is latency-critical (per `latency-vs-cache-decision-framework.md`). Descriptor is **128 bytes (2 cache lines)** — keeps `clamp_min/max` inline (simpler structure, no sparse-table indirection at parse-time). Slow-path-resolved cfg uses a separate `ResolvedCoreCfg` struct (`slow-path-cfg-resolution-cache-pattern.md`) which IS cache-line-aligned and HOT-first.
+
 ```cpp
 // CoreFrameworks/CfgFieldRegistry.hpp
 
@@ -97,37 +99,86 @@ struct CfgFieldDescriptor {
         KIND_STRING      = 5,  // const char* / std::string
         KIND_FILE_PATH   = 6,  // string + file picker hint
         KIND_FPN         = 7,  // FPN<F> direct (rare; most are converted from double at boot)
+        KIND_RANGE_INT   = 8,  // training: hyperparameter sweep range (future, v5.15.6)
+        KIND_RANGE_DOUBLE = 9, // training: hyperparameter sweep range (future, v5.15.6)
     };
 
-    // Metadata bitmap (item 20)
-    enum MetadataFlag : uint8_t {
-        PER_CORE_OK         = 1 << 0,  // emit per-core override
-        RESTART_REQUIRED    = 1 << 1,  // GUI badge: "restart needed"
-        SAFETY_CRITICAL     = 1 << 2,  // GUI warning + confirmation prompt
-        DEPRECATED          = 1 << 3,  // GUI: strikethrough + tooltip
-        STAMP_BOUND         = 1 << 4,  // include in stamp drift check
-        HIDDEN_BY_DEFAULT   = 1 << 5,  // GUI: collapsed section
+    // Metadata bitmap (item 20; upgraded to uint16_t for headroom — see bitmap-overflow-protection-discipline.md)
+    enum MetadataFlag : uint16_t {
+        PER_CORE_OK             = 1u << 0,   // emit per-core override
+        RESTART_REQUIRED        = 1u << 1,   // GUI badge: "restart needed"
+        SAFETY_CRITICAL         = 1u << 2,   // GUI warning + confirmation prompt
+        DEPRECATED              = 1u << 3,   // GUI: strikethrough + tooltip
+        STAMP_BOUND             = 1u << 4,   // include in stamp drift check + derived FOREACH_STAMP_BOUND_CFG filter
+        HIDDEN_BY_DEFAULT       = 1u << 5,   // GUI: collapsed section
+        IS_SECRET               = 1u << 6,   // password-masking in GUI; never logged
+        IS_BOOT_ONLY            = 1u << 7,   // changes after boot are ignored — restart required for effect
+        AFFECTS_STAMP_PARITY    = 1u << 8,   // training-time concern (bound to model stamp; not runtime-mutable for live ML)
+        LOG_VALUE_FORBIDDEN     = 1u << 9,   // value never appears in logs (privacy/security)
+        // ... ~6 bits headroom for future ...
     };
 
-    Kind         kind;
-    uint8_t      metadata_flags;
-    const char*  cfg_field_name;       // matches Cfg::<name>
-    const char*  label;                // GUI label
-    const char*  section;              // GUI section heading
-    const char*  tooltip;              // GUI tooltip + cfg.example comment
+    // Storage discriminator — which cfg struct this field lives in (cross-file unification)
+    enum LivesInStruct : uint8_t {
+        STRUCT_CFG             = 0,  // engine.cfg → ControllerConfig<F>
+        STRUCT_BACKTEST_CFG    = 1,  // backtest.cfg → BacktestCfg (v5.15.5.F.4 .F.4i)
+        STRUCT_CONTROLLER_CFG  = 2,  // controller.cfg → ControllerCfg (v5.15.6)
+        STRUCT_SECRETS_CFG     = 3,  // secrets.cfg → SecretsCfg (v5.15.6)
+        STRUCT_TRAINING_CFG    = 4,  // training cfg → TrainingCfg (v5.15.6)
+        // ... new cfg files add new enum values here; no parser/save/GUI changes ...
+    };
 
+    // ─── Header (8 bytes) ───
+    Kind          kind;             // 1 byte
+    uint8_t       lives_in_struct;  // 1 byte (LivesInStruct enum)
+    uint16_t      metadata_flags;   // 2 bytes (extended from uint8_t for headroom)
+    uint16_t      _reserved;        // 2 bytes — future use; zero-init
+    uint16_t      field_idx;        // 2 bytes (FIELD_IDX_<name>; for sidecar-table lookup)
+
+    // ─── String pointers (32 bytes) ───
+    const char*   cfg_field_name;   // matches Cfg::<name>
+    const char*   label;            // GUI label
+    const char*   section;          // GUI section heading
+    const char*   tooltip;          // GUI tooltip + cfg.example comment
+
+    // ─── Categorical applicability masks (10 bytes — see categorical-tag-applicability-pattern.md) ───
+    uint32_t      applies_to_strategy_cat;   // STRAT_CAT_* bitmap (uint32_t = 32 max categories)
+    uint16_t      applies_to_op_mode_cat;    // OP_MODE_CAT_* bitmap (uint16_t = 16 max — LIVE/PAPER/BACKTEST/TRAINING/OFFLINE + room)
+    uint16_t      applies_to_regime_cat;     // REGIME_CAT_* bitmap (default = REGIME_CAT_ALL; v5.16 specializes)
+    uint16_t      applies_to_risk_cat;       // RISK_CAT_* bitmap (default = RISK_CAT_ALL; v5.16 specializes)
+
+    // ─── Runtime cfg gating (8 bytes) ───
+    const char*   requires_cfg;     // gating expression ("bandit_algorithm == THOMPSON"); null if always applicable
+
+    // ─── Payload union (32 bytes — keeps clamp_min/max inline; no sparse-table indirection) ───
     union {
         struct { double default_val; double clamp_min; double clamp_max; }            as_double;   // KIND_DOUBLE, KIND_DOUBLE_PCT
-        struct { int    default_val; int    clamp_min; int    clamp_max; }            as_int;      // KIND_INT
-        struct { int    default_val; const char* const* labels; uint8_t count; }      as_int_enum; // KIND_INT_ENUM
-        struct { uint8_t default_val; }                                               as_bool;     // KIND_BOOL
-        struct { const char* default_val; }                                           as_string;   // KIND_STRING, KIND_FILE_PATH
+        struct { int64_t default_val; int64_t clamp_min; int64_t clamp_max; }         as_int;      // KIND_INT
+        struct { int default_val; const char* const* labels; uint8_t count; uint8_t _pad[3]; }     as_int_enum; // KIND_INT_ENUM
+        struct { uint8_t default_val; uint8_t _pad[7]; }                              as_bool;     // KIND_BOOL
+        struct { const char* default_val; size_t buf_len; uint16_t _pad[8]; }         as_string;   // KIND_STRING, KIND_FILE_PATH
     } payload;
+
+    // ─── End: ~80 bytes used; 48 bytes padding to 128 ───
 };
 
-static_assert(sizeof(CfgFieldDescriptor) <= 64,
-              "CfgFieldDescriptor must fit one cache line — adjust packing if violated");
+static_assert(sizeof(CfgFieldDescriptor) <= 128,
+              "CfgFieldDescriptor must fit two cache lines — adjust layout if violated. "
+              "Cache impact of descriptor size is hygiene-level (GUI render is 60 Hz, cache-warm); "
+              "see latency-vs-cache-decision-framework.md for rationale.");
+
+// Per-domain category overflow guards (per bitmap-overflow-protection-discipline.md):
+static_assert(/* highest STRAT_CAT_* bit value */ STRAT_CAT_MAX_USED_BIT < (1ull << 32),
+              "StrategyCategory overflowed uint32_t — upgrade to uint64_t or split orthogonal axes");
+static_assert(/* highest OP_MODE_CAT_* bit value */ OP_MODE_CAT_MAX_USED_BIT < (1u << 16),
+              "OpModeCategory overflowed uint16_t — upgrade to uint32_t");
+static_assert(/* highest MetadataFlag bit */ LOG_VALUE_FORBIDDEN < (1u << 16),
+              "MetadataFlag overflowed uint16_t — upgrade to uint32_t");
 ```
+
+**Categorical applicability** (added v5.15.5.F.4 per `categorical-tag-applicability-pattern.md`): cfg fields tag which strategy/op-mode/regime/risk categories they apply to. GUI filters by `(applies_to_* & active_*_cats) != 0` per domain (AND across domains). Instances (strategies, op-modes) declare their category memberships in `FOREACH_STRATEGY` / `FOREACH_OP_MODE` registries. Adding a new strategy = declare its categories; ALL category-tagged cfg fields auto-apply without registry edits.
+
+**Cross-file cfg unification** (added v5.15.5.F.4): `lives_in_struct` discriminates which cfg file/struct each field belongs to. Parser routes write to the appropriate struct; save emits to the appropriate cfg file; GUI walks ONE registry and filters by current op-mode. Closes the multi-cfg-file fragmentation class (Settings tab unified across engine.cfg + backtest.cfg + controller.cfg + secrets.cfg + training cfg).
 
 ### tt:: dispatch helpers (CLAUDE.md item 23)
 
@@ -280,24 +331,50 @@ When ADDING a new cfg field:
 
 ---
 
-## Future work (not in initial scope)
+## Promoted from Future Work to in-scope (v5.15.5.F.4)
 
-- **Auto-generate cfg.example** from registry tooltips. Closes a 7th gap class (cfg.example documentation drift).
-- **Reverse drift check:** at boot, walk registry and verify Cfg struct has matching field names (catches Cfg refactors that miss registry update).
-- **Cohort migration:** apply `cfg-flag-eligibility-criteria.md` cohort-audit at registry insertion time (e.g., new ridge_* sibling triggers existing ridge_* cohort review).
+Per CLAUDE.md item 19 (structural fix preferred when bug class can recur) + Caramel's "do it right now > headache later" framing, the following are folded into the initial sprint:
+
+- **Auto-generate cfg.example** from registry tooltips → **shipped in `.F.4d`**. AUTOPOPULATE companion emits per-field cfg.example lines (one file per `lives_in_struct` value: `engine.cfg.example`, `backtest.cfg.example`, etc.; grouped by primary category). Closes the cfg.example documentation drift class.
+- **Reverse drift check** (Cfg struct → Registry direction) → **shipped in `.F.4d`** as Python CI script + (stretch goal at `.F.4b`) X-macro generates Cfg struct fields via `FOREACH_CFG_FIELD(EMIT_CFG_STRUCT_FIELD)` for full structural closure. If X-macro struct-gen lands, the CI script becomes redundant safety belt.
+- **STAMP_BOUND derived filter** (was Open Decision #1 → resolved) → `FOREACH_STAMP_BOUND_CFG` becomes a DERIVED filter walking `FOREACH_CFG_FIELD` with `STAMP_BOUND` metadata bit. Canonical byte order locked via CI hash test (per `wire-format-byte-preservation-discipline.md` derived-filter section). Closes the dual-registry stamp drift class.
+
+## Future work (deferred to v5.15.6+)
+
+- **Cohort migration audit** at registry insertion time (e.g., new ridge_* sibling triggers existing ridge_* cohort review) — extends `/dod-audit` per `cfg-flag-eligibility-criteria.md`.
 - **Composable with snapshot publish:** if a cfg field is also published per-cycle in PerCoreSnap, derive snapshot field declaration + populate from same registry (closes display↔execution invariant gap for new fields).
+- **Phase 2 cfg struct unification:** merge separate cfg structs (ControllerConfig + BacktestCfg + ControllerCfg + SecretsCfg + TrainingCfg) into ONE struct with `lives_in_struct`-grouped sections. Currently Phase 1 (GUI unification + parser routing) covers operator UX needs; Phase 2 is structural simplification deferred until Phase 1 validates the approach.
+- **Cross-domain category rollout (v5.16):** populate `applies_to_regime_cat` + `applies_to_risk_cat` (currently defaulted to `_CAT_ALL`); apply categorical pattern to FOREACH_FEATURE; controller.cfg + secrets.cfg + training cfg integration.
 
 ---
 
 ## Field-test plan
 
-Stage migration in 3-4 sub-ships to keep PR sizes reviewable:
+Updated scope (v5.15.5.F.4 + v5.15.6 split per "design upfront + ship in waves"):
 
-- **.F.4a** — Write this design spec + slow-path-cfg-resolution-cache spec + audit existing cfg fields (DONE in v5.15.5.F.4 plan)
-- **.F.4b** — Implement FieldDescriptor + tt:: dispatchers + migrate KIND_DOUBLE + KIND_DOUBLE_PCT (~40 fields). Build all binaries; verify byte-identical cfg roundtrip.
-- **.F.4c** — Migrate KIND_INT + KIND_INT_ENUM + KIND_BOOL (~80 fields).
-- **.F.4d** — Migrate KIND_STRING + KIND_FILE_PATH + add metadata-driven GUI features (HIDDEN_BY_DEFAULT collapse, RESTART_REQUIRED badge).
-- **.F.4e** — Migrate per-core override emission to PER_CORE_OK metadata.
-- **.F.4f** — Migrate stamp drift check to STAMP_BOUND metadata; deprecate separate FOREACH_STAMP_BOUND_CFG (or keep as PRE/POST split per item 22 if HMAC ordering requires).
+### v5.15.5.F.4 — Engine + backtest unification (9 sub-ships)
 
-Each sub-ship is independently testable + rollback-able; the registry grows additively.
+- **.F.4a** — Design specs + audit (DONE 2026-05-13/14)
+- **.F.4b** — `CfgFieldRegistry.hpp` + `CfgFieldDispatch.hpp` (tt:: dispatch) + KIND_DOUBLE + KIND_DOUBLE_PCT migration (~40 fields). **Bake in the full descriptor design** (categorical columns + lives_in_struct + 128-byte budget). **Stretch: X-macro generates Cfg struct fields** (full structural closure for reverse drift). STAMP_BOUND derived filter implemented + CI hash test.
+- **.F.4c** — KIND_INT + KIND_INT_ENUM + KIND_BOOL migration (~80 fields)
+- **.F.4d** — KIND_STRING + KIND_FILE_PATH + metadata-driven GUI features (HIDDEN_BY_DEFAULT collapse, RESTART_REQUIRED badge, SAFETY_CRITICAL modal, IS_SECRET password masking) + **cfg.example auto-gen** + **reverse drift CI script**
+- **.F.4e** — ResolvedCoreCfg struct + slow-path migration (slow-path-cfg-resolution-cache-pattern.md)
+- **.F.4f** — K-state enum cohort packing (item 30 multi-bit state encoding)
+- **.F.4g** — Per-core override AoS-by-core re-layout
+- **.F.4h** — Strategy → category audit (Explore agent pass on Strategies/) + FOREACH_STRATEGY rework with category-mask column + populate `applies_to_strategy_cat` for all 213 registry rows + **bitmap-overflow audit pass** (per `bitmap-overflow-protection-discipline.md`) + add missing `static_assert` overflow guards across all bitmap registries
+- **.F.4i** — backtest.cfg + Training cfg integration: extend FOREACH_CFG_FIELD with rows from BacktestCfg + TrainingCfg structs; populate `lives_in_struct` + `applies_to_op_mode_cat`; Settings tab dispatches save to correct struct + filters render by current op-mode; per-struct cfg.example auto-gen
+
+### v5.15.6 — Remaining cfg file integration (mechanical extension; design locked)
+
+- **.F.5.A** — controller.cfg integration (audit + registry rows + GUI render)
+- **.F.5.B** — secrets.cfg integration (audit + registry rows + IS_SECRET metadata + password masking UX + never-log discipline)
+- **.F.5.C** — Training cfg full integration (KIND_RANGE_INT / KIND_RANGE_DOUBLE for hyperparameter sweeps if needed)
+
+### v5.16+ — Deferred (architectural)
+
+- Phase 2 cfg struct unification (merge structs; currently Phase 1 GUI unification only)
+- Cross-domain category rollout: regime / risk / feature categories
+- Cohort-audit `/dod-audit` extension
+- Composable with snapshot publish
+
+Each sub-ship is independently testable + rollback-able; the registry grows additively. Descriptor design is **locked at `.F.4b`** — subsequent sub-ships add rows + populate masks; no descriptor schema changes after `.F.4b`.

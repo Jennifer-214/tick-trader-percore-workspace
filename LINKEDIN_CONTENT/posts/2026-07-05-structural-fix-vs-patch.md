@@ -1,22 +1,102 @@
-# LinkedIn Post: Structural Fix vs. Patch
+# LinkedIn Post Design Doc
 
-**Hook:** If you find yourself fixing the same "type" of bug for the third time, stop. You don't have a bug; you have an architectural debt.
+**Topic ID:** #19
+**Target Date:** 2026-07-05
+**Primary Pillar:** Philosophy
 
-Every developer has a choice when a bug surfaces:
-1. **The Direct Patch:** Fix the instance. It's fast, low-risk, and gets the PR merged today.
-2. **The Structural Fix:** Redesign the system so that the entire *class* of bug is physically impossible to write.
+**Style Checklist:**
+- [x] Is it anti-corporate? (No fluff)
+- [x] Did I use "Spaced-Out Caps" for the load-bearing concept?
+- [x] Are pronouns lowercase (i, im, idk)?
+- [x] Is punctuation minimal and conversational?
+- [x] Are lines manually wrapped to 40-60 characters for LinkedIn readability?
+- [x] Are there 2-3 distinct options to choose from?
 
-**Our "Rule of Three":**
-- **1st Occurrence:** Direct patch. It might be a one-off.
-- **2nd Occurrence:** Direct patch + Tag. We document it in our `RECURRING_BUG_PATTERNS` ledger.
-- **3rd Occurrence:** **Mandatory Structural Fix.** 
+## Strategy & Breakdown
+This post attacks the practice of applying the same patch multiple times instead of fixing the root architectural cause. It emphasizes the "Rule of Three" and structural fixes over lazy direct patches.
 
-**The Example:** 
-We kept seeing "N-site update bugs"—where someone added a feature to the engine but forgot to add it to the GUI or the Parser. After the 3rd time, we stopped patching. We built an X-Macro Registry that generates all three sites from one line of code. 
+## Draft Options
 
-Upfront cost: 4 hours. 
-Future savings: Infinite. We never saw that bug again.
+---
+**Option 1: The Blunt & Technical**
 
-**The Lesson:** Senior engineers don't just fix code; they fix the *process* of writing code. Be the engineer who extinguishes bug classes, not just bugs.
+if youre fixing the same type of bug for
+the third time stop. you dont have a bug
+you have an architectural debt. B A D.
 
-#HFT #SoftwareArchitecture #SystemsEngineering #TechnicalDebt #CleanCode #Programming
+every dev has a choice between the direct
+patch which is fast lazy and I C K Y or
+the structural fix that extinguishes the
+bug class entirely. one gets the PR
+merged today and the other makes sure
+you never merge it again. 
+
+our rule of three is the law. first
+occurrence is a direct patch because maybe
+its a one-off. second occurrence is a
+patch plus tagging it in our recurring
+bug patterns ledger. third occurrence is
+a mandatory S T R U C T U R A L  F I X.
+we redesign the system so the bug is
+physically impossible to write.
+
+senior engineers fix the process of
+writing code not just the code itself.
+
+what bug class are you extinguishing
+this week?
+
+#HFT #SoftwareArchitecture #TechnicalDebt
+---
+
+---
+**Option 2: The Conversational & Analogy-Heavy**
+
+its like 3am and im hyper-fixating on
+how lazy patches are basically a crime.
+if youre fixing the same bug for the
+third time its architectural debt. B A D.
+
+doing a direct patch is like mopping the
+floor when a pipe is leaking instead of
+just fixing the pipe. its so I C K Y.
+one gets the PR merged today but you
+know youll be back next month.
+
+we enforce the rule of three. first time
+is a patch. second time is a patch and
+we log it. third time is a mandatory
+S T R U C T U R A L  F I X. you have to
+redesign the system so the compiler
+makes the bug physically impossible to
+write. praise be to x-macros for saving
+my sanity and my weekends lol.
+
+are you still patching the same leak or
+have you finally replaced the pipe?
+
+#HFT #SystemsEngineering #CleanCode
+---
+
+---
+**Option 3: The Short & Punchy**
+
+if youre fixing the same type of bug
+for the third time stop. B A D.
+
+you dont have a bug you have an
+architectural debt. a direct patch is
+fast but I C K Y. a structural fix
+extinguishes the bug class.
+
+we use the rule of three. first time
+patch it. second time log it. third
+time mandatory S T R U C T U R A L  F I X.
+redesign the system so the bug is
+physically impossible to write.
+
+what bug class are you extinguishing
+this week?
+
+#HFT #TechnicalDebt #CleanCode
+---

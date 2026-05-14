@@ -1,40 +1,108 @@
-# LinkedIn Post: AVX-512 Determinism
+# LinkedIn Post Design Doc
 
 **Topic ID:** #6
 **Target Date:** 2026-05-27
 **Primary Pillar:** Pattern Library
 
----
+**Style Checklist:**
+- [x] Is it anti-corporate? (No fluff)
+- [x] Did I use "Spaced-Out Caps" for the load-bearing concept?
+- [x] Are pronouns lowercase (i, im, idk)?
+- [x] Is punctuation minimal and conversational?
+- [x] Are lines manually wrapped to 40-60 characters for LinkedIn readability?
+- [x] Are there 2-3 distinct options to choose from?
 
-## 1. The Hook (First 2 Lines)
-SIMD is usually for speed. We use it for bit-for-bit replayability. Vectorizing a kernel shouldn't mean sacrificing the determinism of your scalar reference path.
+## Strategy & Breakdown
+Focuses on the danger of SIMD instructions destroying bit-for-bit replayability and introduces strict patterns to force AVX-512 to match scalar output.
 
----
-
-## 2. The Context/Problem
-When you vectorize a math kernel with AVX-512, it's easy to gain 10x performance while losing bitwise parity. Intrinsics like `_mm512_reduce_add_pd` might sum vector lanes in a different order than your scalar `for` loop, leading to 1-ULP drifts. In ML-driven trading, these tiny errors accumulate across layers, turning a "strong buy" into a "neutral" signal.
-
----
-
-## 3. The Technical Solution
-We follow a strict **AVX-512 Byte-Determinism Pattern** to ensure vectorized kernels are identical to their scalar fallbacks.
-
-- **Explicit Reduction Order:** We BANNED `_reduce_add` variants. Instead, we vectorize the parallel work but perform the final reduction serially in scalar to preserve Left-to-Right addition order.
-- **Div vs. Mul-by-Reciprocal:** Scalar `a / b` is not the same as `a * (1.0 / b)`. We use `_mm512_div_pd` to match scalar division bit-for-bit.
-- **FMA Fusion Matching:** We mirror the compiler's FMA (Fused Multiply-Add) behavior. If scalar code fuses `a*b + c`, our SIMD path must use `_mm512_fmadd_pd`. 
-- **SHA-256 Lock Tests:** Every SIMD kernel includes a test that hashes the output bytes. We run this test on both scalar and AVX-512 builds; they must produce the same SHA-256 digest.
+## Draft Options
 
 ---
+**Option 1: The Blunt & Technical**
 
-## 4. The "Aha!" Moment / Lesson
-Performance and correctness are not a trade-off. By constraining our SIMD implementation to follow scalar semantics, we get the best of both worlds: extreme throughput for our ML models and the ability to perfectly replay any live event in a scalar debugger.
+simd is usually for speed. we use it for
+bit-for-bit replayability. vectorizing
+shouldnt mean sacrificing the truth.
 
+_mm512_reduce_add_pd is I C K Y. it sums
+vector lanes in whatever order it feels
+like. thats a 1-ULP drift that ruins your
+ml models and makes your backtest a lie.
+close enough is just a slow way to lose
+money. B A D.
+
+we use a strict AVX-512 byte-determinism
+pattern. vectorized kernels must be
+identical to scalar fallbacks. we banned
+_reduce_add and perform the final
+reduction serially. scalar division must
+match SIMD so we use _mm512_div_pd not
+reciprocal approximations. we mirror
+compiler FMA behavior exactly. every SIMD
+output is hashed and if it doesnt match
+the scalar hash the build dies.
+
+D E T E R M I N I S M. performance and
+correctness arent a trade-off.
+
+do you verify bit-level parity when you
+vectorize?
+
+#HFT #Cpp #AVX512 #SoftwareReliability
 ---
 
-## 5. Call to Action (CTA)
-Do you verify bit-level parity when you vectorize your code? Or is "close enough" okay for your domain? Let's discuss the challenges of SIMD determinism in the comments.
+---
+**Option 2: The Conversational & Analogy-Heavy**
 
+its like 3am and im hyper-fixating on
+how _mm512_reduce_add_pd is basically
+a crime against determinism. I C K Y.
+
+vectorizing a kernel and accepting a 1-ULP
+drift is like having a bank that rounds
+your balance whenever it feels like it
+lol. W I L D. close enough is a slow way
+to lose money.
+
+we enforce an AVX-512 byte-determinism
+pattern. the SIMD kernel must produce the
+exact same bytes as scalar. we banned
+_reduce_add and do the final sum serially.
+we use real division not approximations.
+we even hash the outputs of both and kill
+the build if they dont match. praise be.
+D E T E R M I N I S M is everything.
+
+its like having your cake and knowing
+exactly how many crumbs are on the plate.
+
+is close enough your middle name?
+
+#HFT #SIMD #SystemsProgramming
 ---
 
-## 6. Hashtags
-#HFT #Cpp #SIMD #AVX512 #ModernCpp #SystemsProgramming #SoftwareReliability #HighPerformanceComputing
+---
+**Option 3: The Short & Punchy**
+
+simd is for speed but vectorizing a kernel
+shouldnt sacrifice the truth.
+
+_mm512_reduce_add_pd sums lanes randomly.
+that 1-ULP drift ruins backtests. close
+enough is a slow way to lose money.
+I C K Y.
+
+we enforce AVX-512 byte-determinism. SIMD
+must match scalar bit-for-bit. we banned
+_reduce_add and sum serially. division
+uses _mm512_div_pd without approximation.
+SIMD output must pass a SHA-256 hash
+check against scalar or the build dies.
+
+D E T E R M I N I S M is the only option.
+
+do you verify bit-level parity when you
+vectorize?
+
+#HFT #Cpp #AVX512 #HighPerformanceComputing
+---

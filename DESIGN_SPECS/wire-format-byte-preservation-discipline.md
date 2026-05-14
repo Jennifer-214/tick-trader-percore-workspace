@@ -191,6 +191,46 @@ check("v5.14.8.A.7: registry canonical body output hash unchanged",
 
 Future PR that reorders registry rows → body bytes change → hash changes → test fails. Forces deliberate hash reset.
 
+### Layer 5b: Derived-filter byte-order locking via CI hash test (v5.15.5.F.4)
+
+When a registry is a DERIVED FILTER of a larger source registry (per `x-macro-registry-with-presence-dispatch.md` derived-filter section), the wire-format byte-preservation discipline extends:
+
+**Problem:** `FOREACH_STAMP_BOUND_CFG` becomes a derived walk over `FOREACH_CFG_FIELD` with `STAMP_BOUND` metadata bit filter. Adding a new STAMP_BOUND-flagged row to the SOURCE registry (`FOREACH_CFG_FIELD`) extends the DERIVED walk. **Risk:** if a NEW stamp-bound field is inserted in the middle of `FOREACH_CFG_FIELD` (rather than at the end of the STAMP_BOUND-flagged subsequence), the derived walk produces fields in a DIFFERENT order than the legacy `FOREACH_STAMP_BOUND_CFG`. HMAC chain breaks for all legacy stamps.
+
+**Mitigation pattern — locked reference hash:**
+
+```cpp
+// At v5.15.5.F.4 ship commit (before any FOREACH_CFG_FIELD addition that affects STAMP_BOUND ordering):
+
+// 1. Synthetically populate every STAMP_BOUND-flagged registry field with deterministic values
+StampInferenceCfgInputs inf{};
+populate_synthetic_stamp_bound_all_fields(&inf);
+
+// 2. Build canonical body via the DERIVED walk (FOREACH_STAMP_BOUND_CFG_DERIVED)
+char body_via_derived[4096];
+int n_derived = build_stamp_body_via_derived(body_via_derived, sizeof(body_via_derived), &inf);
+
+// 3. Hash the derived walk output
+uint64_t derived_hash = fnv1a_64(body_via_derived, n_derived);
+
+// 4. Lock the hash at v5.15.5.F.4 ship time:
+constexpr uint64_t LOCKED_STAMP_BOUND_DERIVED_HASH_V5_15_5_F4 = 0xCAFEBABEDEADBEEFull;
+check("v5.15.5.F.4: STAMP_BOUND derived walk produces locked canonical byte sequence",
+      derived_hash == LOCKED_STAMP_BOUND_DERIVED_HASH_V5_15_5_F4);
+```
+
+**On intentional change** (new STAMP_BOUND field added that legitimately extends the chain — bumping `MODEL_FORMAT_VERSION`):
+
+1. Recompute the hash with the new field included
+2. Update `LOCKED_STAMP_BOUND_DERIVED_HASH_V<X.Y>` constant in the test
+3. Document in CHANGELOG: "v<X.Y>.<Z>: STAMP_BOUND derived walk extended with `<new_field>`; legacy stamps unchanged (Surface G discipline); MODEL_FORMAT_VERSION bumped to N+1"
+
+**On accidental change** (reorder of existing rows, format string drift, registry refactor): test fails. Investigate before merging — drift was almost certainly NOT intentional; HMAC chain would break for legacy stamps.
+
+**Why this matters:** the derived filter is a structural win (single source of truth; drift class extinct on the cfg side) BUT introduces a new risk surface — the DERIVED walk's byte order depends on the SOURCE registry's row order. Without the locked hash, a refactor that reorders `FOREACH_CFG_FIELD` for clarity could silently break HMAC verification for all production-signed stamps. Hash test makes the order load-bearing + audit-detectable.
+
+**First application:** `FOREACH_STAMP_BOUND_CFG_DERIVED` at v5.15.5.F.4 (universal cfg field registry; STAMP_BOUND metadata bit filter). Subsequent applications: any derived-filter sister registry where the derived walk produces wire-format bytes.
+
 ### Layer 6: Surface G discipline (back-compat for legacy stamps)
 
 ```cpp

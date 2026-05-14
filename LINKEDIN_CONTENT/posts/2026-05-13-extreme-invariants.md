@@ -1,38 +1,112 @@
-# LinkedIn Post: Extreme HFT Invariants
+# LinkedIn Post Design Doc
 
-**Hook:** In a sub-microsecond trading engine, performance isn't about what you *add*. It's about what you have the discipline to *ban*.
+**Topic ID:** #1
+**Target Date:** 2026-05-13
+**Primary Pillar:** Philosophy
 
-In our latest HFT engine iteration, we operate under a set of "Extreme Invariants." These aren't just suggestions; they are hard rules that, if broken, fail the build.
+**Style Checklist:**
+- [x] Is it anti-corporate? (No fluff)
+- [x] Did I use "Spaced-Out Caps" for the load-bearing concept?
+- [x] Are pronouns lowercase (i, im, idk)?
+- [x] Is punctuation minimal and conversational?
+- [x] Are lines manually wrapped to 40-60 characters for LinkedIn readability?
+- [x] Are there 2-3 distinct options to choose from?
 
-Here are 5 things we banned to guarantee deterministic, low-latency execution:
+## Strategy & Breakdown
+Focuses on the overarching "Extreme Invariants" that define the HFT architecture. Lists the top 5 banned practices.
 
-### 1. Zero System Allocators
-No `malloc`, no `new`, no `std::vector`, no `std::string`. 
-Why? The system allocator is a black box. It has locks. It has fragmentation. It has non-deterministic tail latency. 
-**The Fix:** Everything is pre-allocated at startup into custom `PoolAllocator` or `BuddyAllocator` structures. If we run out of memory during a trade, we have a design flaw, not a runtime error.
+## Draft Options
 
-### 2. Zero VTables
-No `virtual` functions. 
-Why? Dynamic dispatch requires a vtable lookup, which is an indirect jump. This often bypasses the CPU's branch predictor, leading to pipeline stalls.
-**The Fix:** We use flat enumerations, template monomorphization, and X-Macros to handle polymorphism at compile-time.
+---
+**Option 1: The Blunt & Technical**
 
-### 3. Zero Mutexes
-No `std::mutex`, no `std::lock_guard`. 
-Why? Context switching and thread suspension are the enemies of microsecond consistency. 
-**The Fix:** Lock-free concurrency only. We use Seqlocks (ParameterSlots) for single-writer/multiple-reader state, and MPSC rings for event passing. If we need to wait, we use adaptive spin-waits with `_mm_pause()`.
+performance isnt about what you add its
+about what you have the guts to B A N.
 
-### 4. Zero Branches on Hot Path
-If it's in the `ExecutionCore_Tick` loop, it can't have an `if`. 
-Why? Even a correctly predicted branch consumes execution ports. A mispredicted one is a catastrophe (~20-50 cycles). 
-**The Fix:** Bitwise arithmetic and AVX-512 `cmov` instructions. We evaluate both "Leg A" and "Leg B" of a trade unconditionally and use mask blending to select the result.
+in our engine extreme invariants arent
+suggestions they are the law. break them
+and the build fails. we operate under a
+scorched-earth policy for latency.
 
-### 5. Zero Floating Point (Mostly)
-We avoid `double` and `float` on the hot path.
-Why? IEEE-754 is non-deterministic across different compilers and hardware (rounding modes, FMA vs. separate mul/add). 
-**The Fix:** We built a custom `FPN<F>` (Fixed-Point Number) library using `uint64_t` words. It’s bytewise-deterministic, ensuring that a backtest on a dev machine matches live execution exactly, down to the last bit.
+1. zero system allocators. malloc is
+I C K Y. we pre-allocate into custom pools.
+2. zero vtables. dynamic dispatch stalls
+the pipeline. we use template
+monomorphization and x-macros.
+3. zero mutexes. asking the OS to manage
+threads is a joke. lock-free only.
+4. zero branches. an if statement is a
+C A T A S T R O P H E. we use bitwise
+math and cmov.
+5. zero floating point. ieee-754 is
+non-deterministic. we built a custom
+fixed-point library for bytewise parity.
 
-**The Lesson:** High performance is often the result of removing abstractions, not adding them.
+high performance is the result of removing
+abstractions.
 
-What’s the most "extreme" constraint you’ve ever worked under? 
+whats the most extreme constraint youve
+worked under?
 
-#HFT #Cpp #LowLatency #Programming #SoftwareArchitecture #SystemsEngineering
+#HFT #Cpp #LowLatency #SystemsEngineering
+---
+
+---
+**Option 2: The Conversational & Analogy-Heavy**
+
+its like 3am and im thinking about how
+performance is mostly just having the guts
+to B A N things lol. 
+
+we have these extreme invariants and if
+you break them the build dies. crying
+wont help. malloc is I C K Y so no system
+allocators. no vtables because dynamic
+dispatch is like asking for directions
+in a city you hate. W I L D. no mutexes
+because context switching is the enemy.
+
+no branches on the hot path because an
+if statement is basically a
+C A T A S T R O P H E for the pipeline.
+and no floating point math because ieee
+754 is garbage and ruins backtests. we
+use fixed-point integer math everywhere.
+praise be.
+
+if the CPU has to think youve already
+lost. 
+
+are you still using std string on the
+hot path?
+
+#HFT #SoftwareArchitecture #NoFluff
+---
+
+---
+**Option 3: The Short & Punchy**
+
+performance isnt about what you add its
+about what you have the guts to B A N.
+
+extreme invariants are the law. break them
+and the build fails.
+
+1. zero system allocators. malloc is
+I C K Y. pre-allocate everything.
+2. zero vtables. use templates instead.
+3. zero mutexes. lock-free concurrency
+only.
+4. zero branches. an if statement is a
+C A T A S T R O P H E. use cmov.
+5. zero floating point. fixed-point
+ensures byte determinism.
+
+high performance comes from removing
+abstractions. if the CPU has to guess
+youve lost.
+
+whats your most extreme constraint?
+
+#HFT #Cpp #LowLatency #Programming
+---

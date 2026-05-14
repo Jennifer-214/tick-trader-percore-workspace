@@ -239,6 +239,19 @@ as a v5.11.35 sub-ship (deferred from the current session because
 
     **Composable with:** `DESIGN_SPECS/generic-ring-buffer-template-pattern.md` (CLAUDE.md cross-link upcoming; first 2 applications shipped v5.15.5.E.C — RollingIC + RollingRMSE compose RollingWindow<T, N>). The generic ring-buffer template provides the SKELETON (count + head + window + samples[]); the sliding-window pattern provides the AGGREGATE-MAINTENANCE math (running sum / sum_sq / corr matrix). v5.15.5.E.D's RollingRMSE composes both.
 
+30. **Registry-bitmap SET discipline** (v5.15.5.F.3+). When a registry of flag bits (FOREACH_*) is paired with a bitmap field + downstream consumers (BITMAP_IS_SET / branchless mask compute / `/readiness` checks), the SET sites are SEPARATE actions from the data writes — easy to forget. Two anti-pattern shapes recur:
+    - **Shape A — Missing SET alongside data write**: code writes the underlying data field but forgets `BITMAP_SET(target->flags, MASK_X)`. Data is correct; bit stays 0; downstream consumers think "no data" → feature silently disabled.
+    - **Shape B — Chokepoint bypassed by alternate path**: a function (the "chokepoint") sets bits for a family of related conditions. NEW loader/init/replay paths added later bypass the chokepoint → bits never set for those paths → GUI/audit shows "clean" while underlying conditions are real.
+
+    **Structural fix templates** (in preference order):
+    1. **AUTOPOPULATE companion** (preferred when registry-driven) — X-macro expansion emits BOTH the data write AND the BITMAP_SET per row. Adding a new field = 1 row; forgetting becomes impossible. Per CLAUDE.md item 21.
+    2. **Single chokepoint function** — extract bit-setting into ONE function; ALL loader paths route through it. New paths inherit; bypasses become architecturally visible.
+    3. **Accessor wrapper** — `set_X_field_and_mark(...)` helper combines data write + SET; direct field writes get convention-banned.
+
+    **Applied at:** v5.15.5.F.3 `ezoo_set_per_arm_barrier` accessor (Shape A fix; arms_with_barriers_mask was never SET despite per_arm_barriers being written → ensemble barrier blending silently disabled); v5.15.5.F.3 ShardedSnapshot ensemble-handle drift aggregation walk (Shape B fix; ezoo->buy_signal[h] etc. handles' drift_flags_at_load never aggregated to PerCoreSnap.failure_flags → GUI Model Health showed "clean" while engine log emitted held-out-gate WARNs).
+
+    Pattern documented in `DESIGN_SPECS/registry-bitmap-set-discipline.md` with 3 `/dod-audit` detection signatures for catching future instances.
+
 ---
 
 # Reference Docs (split-load — read on demand)

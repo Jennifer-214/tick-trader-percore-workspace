@@ -232,6 +232,20 @@ State embedded in `BookImbalanceHistory<F, W>` struct (`ML_Headers/FlowFeatures.
 
 Numerical stability: book imbalance bounded to [-1, 1] + K=64 → max(|short_sum|) ≤ 64 → far below FPN<64>'s ±2^63 range → no saturation → FPN_Add is bytewise associative for these magnitudes. Bytewise parity vs the walked path verified in `tests/controller_test.cpp` via a 200-push deterministic sequence covering warm-up (count < K) and steady-state (count > K) phases.
 
+### v5.15.5.E.D — RollingRMSE running-sum
+
+Third canonical application. Single-variable (squared-error doubles) over a ring buffer of window=32 with running `sum_squared_errors` aggregate maintained at Push via subtract-then-add at eviction (the pattern's canonical update form).
+
+State embedded in `RollingRMSE` struct (`ML_Headers/ConfidenceScore.hpp`). Pre-v5.15.5.E.D, `RollingRMSE_Compute` walked all 32 samples per call (O(N) loop). Post-v5.15.5.E.D, Compute reads `sqrt(sum_squared_errors / count)` in O(1).
+
+`sum_squared_errors` is intentionally NOT in `FOREACH_CONFIDENCE_PERSIST_FIELD` (derivable from samples). Post-load helper `ConfidenceScorer_RecomputeRunningSums` reconstructs it from samples — keeps wire format minimal (no SHARDED_SNAPSHOT_VERSION bump for a derivable field).
+
+**FP non-associativity caveat:** RollingRMSE uses `double` (not FPN<F>); running-sum vs walked-sum are NOT bytewise identical due to FP rounding order. Bytewise parity test (`tests/controller_test.cpp` 200-push deterministic sequence) uses 1e-12 tolerance, well below realistic squared-error magnitudes (~1e-4) at window=32. For TRUE bytewise determinism, use FPN<F> (as BookImbHistory does); for slow-path scalar consumers like RMSE, tolerance-based equivalence is sufficient.
+
+### Pattern strengthens to invariant status
+
+With 3 canonical applications shipped (Ridge correlation + BookImbHistory dual-window + RollingRMSE), the pattern is firmly invariant. CLAUDE.md item 29 cross-references all 3 applications. Future sliding-window candidates (per the "Future applications" section below) inherit the pattern; the codification lifecycle has completed all 7 stages for this pattern as of v5.15.5.E.D.
+
 ### Future applications (anticipated)
 
 - **Online IC tracking** (v5.15+ candidate): per-arm prediction-vs-realized-return rolling correlation over K=N_recent_trades

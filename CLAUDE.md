@@ -235,7 +235,9 @@ as a v5.11.35 sub-ship (deferred from the current session because
 
     **Bytewise parity discipline:** when converting an existing O(K) walked consumer to an O(1) running-sum reader (as v5.15.5.D did for BookImbHistory's MeanShort), the running-sum's chronological accumulation order MUST produce bytewise-identical sums to the walked path's newest-first iteration. Verify FPN_Add associativity holds analytically (no saturation possible at any reorder) + lock the contract via a deterministic bytewise parity test exercising warm-up + steady-state + boundary transition.
 
-    **Applied at:** v5.14.11.A `RidgeBlender_OnlineCycleStep` online correlation matrix (single window over N=8 model predictions; first reference); v5.15.5.D `BookImbHistory_MeanShortFast` (dual-window variant; second reference). Pattern documented in `DESIGN_SPECS/sliding-window-online-statistics-pattern.md`.
+    **Applied at:** v5.14.11.A `RidgeBlender_OnlineCycleStep` online correlation matrix (single window over N=8 model predictions; first reference); v5.15.5.D `BookImbHistory_MeanShortFast` (dual-window variant; second reference); **v5.15.5.E.D `RollingRMSE` running-sum (single-window double; third canonical reference — invariant status reached)**. Pattern documented in `DESIGN_SPECS/sliding-window-online-statistics-pattern.md`.
+
+    **Composable with:** `DESIGN_SPECS/generic-ring-buffer-template-pattern.md` (CLAUDE.md cross-link upcoming; first 2 applications shipped v5.15.5.E.C — RollingIC + RollingRMSE compose RollingWindow<T, N>). The generic ring-buffer template provides the SKELETON (count + head + window + samples[]); the sliding-window pattern provides the AGGREGATE-MAINTENANCE math (running sum / sum_sq / corr matrix). v5.15.5.E.D's RollingRMSE composes both.
 
 ---
 

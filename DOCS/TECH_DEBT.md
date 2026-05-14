@@ -1053,3 +1053,21 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 - **Trigger:** (a) 2nd potential application site surfaces (in a `/merge-scan` or `/dod-audit` finding, or during a new ship's pre-coding); (b) operator-initiated codification request (e.g., as part of a focused pattern-codification sprint).
 - **Status:** OPEN (awaiting 2nd-application trigger)
 - **Cross-ref:** v5.15.5.D postmortem at `plans/v5.15-live-readiness/postmortems/2026-05-13-v5.15.5-D-postmortem.md` "Pattern B captured for future codification"; `ML_Headers/FlowFeatures.hpp` BookImbHistory_MeanShortFast (first application); `DESIGN_SPECS/pattern-codification-lifecycle.md` Stage 0 (identification + first reference complete).
+
+### TECH_DEBT-049 — AoS time-series pattern codification deferred to 2nd application
+
+- **Created:** 2026-05-13 by v5.15.5.E.B close (first application shipped as DriftHistory AoS DriftSample interleave; codification deferred per pattern-codification-lifecycle.md Stage 0 "Skip when pattern is ONE-OFF" rule)
+- **Severity:** LOW (no bug; pattern documentation gap; cohort migration on 2nd application closes the gap)
+- **Surface:**
+  - `ML_Headers/ConfidenceScore.hpp:~657` (post-.E.B) — first application: `DriftSample {double ic; uint64_t ts;}; samples[256]` replaces parallel `double ic_samples[256] + uint64_t ts_us[256]` arrays.
+  - Pattern shape: when a struct stores parallel arrays where each element-index is read at the same iteration step (canonical case: time-series with paired value + timestamp accessed together), prefer AoS `struct Sample {...}; samples[N]` over SoA parallel arrays. Per-iteration cache footprint: 1 line vs 2 lines (when array spacing > cache line size).
+  - Other potential application sites (NOT surveyed in v5.15.5.E.B; surface during 2nd-app trigger investigation):
+    - Future RollingFoo types that pair (value, timestamp) per sample
+    - Per-cycle event-log structs with (event_data, event_time) pairs
+    - Any "parallel arrays accessed at same index" pattern in tight loops
+- **What's deferred:** Writing a DESIGN_SPECS doc `aos-time-series-pattern.md` for the pattern + applying it via the pattern-codification-lifecycle.md 7-stage process (Stage 0: identification + first reference are done; Stage 1-7: codify when a 2nd application surfaces).
+- **Why deferred (not effort-avoidance):** per `DESIGN_SPECS/pattern-codification-lifecycle.md` "Skip when: pattern is ONE-OFF — apply structural fix without codification overhead." First application IS valuable on its own (2× CheckBreach cache locality); codification overhead (~4-6h for a focused codification ship) is not justified for 1 application. 2+ applications triggers full codification.
+- **Cost estimate (if/when triggered):** ~4-6h for codification per the lifecycle (Stage 1 audit ~1h + Stage 2 DESIGN_SPEC ~1-2h + Stage 3-4 second application ~30 min - 2h + Stage 5 CLAUDE.md ~30 min + Stage 6 tooling ~30 min - 1h + Stage 7 wider audit ~1h).
+- **Trigger:** (a) 2nd potential application site surfaces (in a `/merge-scan` or `/dod-audit` finding, or during a new ship's pre-coding); (b) operator-initiated codification request.
+- **Status:** OPEN (awaiting 2nd-application trigger)
+- **Cross-ref:** v5.15.5.E postmortem at `plans/v5.15-live-readiness/postmortems/2026-05-13-v5.15.5-E-postmortem.md`; `ML_Headers/ConfidenceScore.hpp` DriftSample struct (first application); `DESIGN_SPECS/latency-vs-cache-decision-framework.md` (cost framework that justifies the AoS decision); `DESIGN_SPECS/pattern-codification-lifecycle.md` Stage 0.

@@ -940,3 +940,72 @@ No new entries needed for: Phase 3b (refactor; byte-equivalent OMS init/reset se
 **Classes closed permanently in v5.15.5.D:**
 - O(K) walk per slow-path cycle for canonical-K MeanShort consumers (via running short_sum + MeanShortFast fast-path companion accessor pattern; first application of "fast-path companion accessor" pattern, queued for codification on 2nd application per pattern-codification-lifecycle.md Stage 0).
 - Cache-layout drift on 4 FlowFeatures structs (via static_assert sizeof + offsetof + alignof locks at struct definition site).
+
+## 2026-05-13 — v5.15.5.E ConfidenceScorer + DriftHistory cache sweep + structural unblock + sliding-window 3rd app (NEGATIVE-COST; SLOW-PATH savings; hot path UNTOUCHED)
+
+**Surface:** slow-path (`ML_Headers/ConfidenceScore.hpp`, `CoreFrameworks/PortfolioController.hpp`, `CoreFrameworks/ShardedSnapshotPersist.hpp`, `CoreFrameworks/ControllerEventLoop.hpp`, `CoreFrameworks/ShardedSnapshot.hpp`). 7+ structs touched: ConfidenceScorer, RollingIC, RollingRMSE, RollingFreshness, RollingCapacity, DriftHistory + new RollingWindow<T,N> template + DriftSample struct.
+
+**Hot path UNTOUCHED.** Zero diffs to `BG_Evaluate` / `SG_Evaluate` / `ExecutionCore_Tick` / `ExecutionCore.hpp` / `OrderGates.hpp`. The .C + .D + .E ships have held this invariant through 11 sub-ships.
+
+**Path cadence:** slow-path post-fill drainer (~10-100 Hz) + slow-path Compute (~1-2 Hz) + snapshot publisher (1-30 Hz GUI refresh).
+
+### Per-sub-ship cost analysis
+
+| Sub-ship | Δ per slow-path cycle | Notes |
+|---|---|---|
+| .E.0 | 0 (boot-time + load-time work) | Structural unblock: FOREACH_CONFIDENCE_PERSIST_FIELD + AUTOPOPULATE helpers + shadow-load. Decouples wire format from runtime layout permanently. Class-18 mirror PortfolioController ↔ ShardedSnapshotPersist CLOSED. Wire format byte-identical on sharded path (no SHARDED_SNAPSHOT_VERSION bump); legacy v11 path bumps to v12 with shadow-load migration. |
+| .E.A | **~+0-50 ns / cycle (cache impact)** | ConfidenceScorer + 3 sub-structs alignas(64) + HOT-first reorg. last_confidence + freshness_tau at offset 0 (decision-first ordering ND3) → predictable line-0 hit per Compute call. +152B per ConfidenceScorer (28 cache lines exact); engine-wide ~2.4 KB heap growth. |
+| .E.B | **-50-100 ns / cycle (CheckBreach AoS savings)** | DriftHistory_CheckBreach: AoS DriftSample interleave → 1 cache line per iteration (was 2; arrays 2048B apart). At cap=256 worst case: ~128 saved line fills (~12-25 µs at 10-100 Hz CheckBreach cadence). Bitmap packs flags (8B → 1B). +40B per DriftHistory; engine-wide ~640B. |
+| .E.C | 0 (Class-18 mirror closure; runtime behavior unchanged) | RollingWindow<T, N> generic template extraction. RollingIC + RollingRMSE refactor to compose template. NEW DESIGN_SPEC + /dod-audit Stage 6 detection signature. Sizeof preserved. Future RollingFoo additions use the template (mechanical). |
+| .E.D | **-few hundred ns / cycle (RollingRMSE_Compute O(N) → O(1))** | sum_squared_errors running aggregate added; Compute reads it directly. 3rd canonical sliding-window pattern application; strengthens CLAUDE.md item 29 to 3 production sites. ConfidenceScorer_RecomputeRunningSums helper restores running sum on load (not persisted; cheap O(N=32) recompute). |
+
+**Aggregate slow-path cycle delta:** **~-100-200 ns / cycle / core** (AoS + RollingRMSE O(1) Compute wins; .E.A predictable cache layout). At 16 cores × 1000-3000 cycles/sec = ~1.6-9.6 ms/sec slow-path budget recovered engine-wide.
+
+**Branchless analysis:**
+- AoS DriftSample iteration: 1 branch (timestamp window filter) + 1 add (sum accumulator). Branch is data-dependent but predictably skipped after window exhaustion. No mispredict mitigation needed.
+- BITMAP_IS_SET / BITMAP_SET / BITMAP_CLR: single mask AND or OR/AND-NOT. 1-cycle ops.
+- RollingRMSE_Compute: 1 branch (count < 2 → return 1.0) + 1 sqrt + 1 div. O(1) total.
+
+**Cache impact:**
+- ConfidenceScorer HOT cluster (last_confidence + freshness_tau) at offset 0 → cycle-entry cache miss predictable.
+- DriftHistory HOT cluster (count + head + drift_state_flags) at offset 0 → 1 line per CheckBreach scalar access.
+- AoS samples[idx] read: 1 cache line for both .ic + .ts (was 2 with parallel arrays).
+- RollingWindow's HOT scalars accessible via shorter pointer chains (compose-time inlining keeps runtime cost unchanged).
+
+**Memory delta:** +280 B per core (alignas trailing pads + bitmap byte + sum_squared_errors field). 16 cores × 280 = **~4.5 KB engine-wide**. Sub-L1-cache-budget growth; below any cache pressure threshold.
+
+**Wire format:**
+- CONTROLLER_SNAPSHOT_VERSION 11 → 12 (PortfolioController legacy path).
+- SHARDED_SNAPSHOT_VERSION UNCHANGED (8). Sharded byte sequence IDENTICAL pre/post-.E.
+- Legacy v11 snapshots load via shadow-load migration (no operator data loss; composite-mode fields re-init from cfg).
+
+**Pattern references:**
+- DESIGN_SPECS/structural-fix-preferred-decision-framework.md (Class-18 closures × 3)
+- DESIGN_SPECS/registry-tuple-as-single-source-of-truth.md (FOREACH_CONFIDENCE_PERSIST_FIELD)
+- DESIGN_SPECS/autopopulate-pattern-for-production-caller-class.md (FieldwiseWrite/Read/Commit autopopulate)
+- DESIGN_SPECS/shadow-load-state-transition-pattern.md (legacy v11 migration)
+- DESIGN_SPECS/wire-format-byte-preservation-discipline.md (version dispatch)
+- DESIGN_SPECS/cache-layout-discipline-for-hot-side-structs.md Rules 1 + 4 + 5
+- DESIGN_SPECS/decision-first-cluster-layout-pattern.md (ND3 — HOT scalars offset 0)
+- DESIGN_SPECS/bitmap-flag-api.md (drift_state_flags)
+- DESIGN_SPECS/sliding-window-online-statistics-pattern.md (RollingRMSE 3rd app)
+- DESIGN_SPECS/latency-vs-cache-decision-framework.md (AoS justification)
+- DESIGN_SPECS/pattern-codification-lifecycle.md (generic-ring-buffer codification)
+- DESIGN_SPECS/persisted-struct-with-ephemeral-field-coexistence-pattern.md (display extraction)
+- DESIGN_SPECS/generic-ring-buffer-template-pattern.md (**NEW** Stage 2 codification)
+
+**Future optimization paths:**
+- Migrate BookImbalanceHistory + LargeTradeState + SpreadState + DriftHistory.samples to RollingWindow<T, N> (Stage 7 wider audit per pattern-codification-lifecycle.md).
+- AVX-512 vectorization of running-sum updates (defer to v5.16+ if FPN SIMD wrappers + double SIMD per CLAUDE.md item 25 become available).
+- TECH_DEBT-046 (fast-path companion accessor) codification on 2nd app.
+- TECH_DEBT-049 (aos-time-series-pattern) codification on 2nd app.
+- TECH_DEBT-002 closure (legacy PortfolioController removal) — now mechanically easier post-.E.
+
+**Classes closed permanently in v5.15.5.E:**
+- PortfolioController ↔ ShardedSnapshotPersist Class-18 mirror for ConfidenceScorer persistence.
+- ConfidenceScorer frozen-sizeof constraint (v5.14.1.F design note).
+- RollingIC ≅ RollingRMSE Class-18 mirror.
+- DriftHistory parallel-arrays anti-pattern (ic_samples + ts_us).
+- DriftHistory byte-per-flag boolean storage.
+- breach_first_us in-struct display-only field.
+- RollingRMSE_Compute O(N) walked sum (replaced by O(1) running aggregate).

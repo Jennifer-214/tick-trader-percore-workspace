@@ -70,6 +70,7 @@ Organized by category for quick discovery. Each pattern is one file in this dir.
 | `curve-registry-pattern.md` | FOREACH_<DOMAIN>_CURVE — named compute fns chosen by enum (LINEAR/EXP/STEP) via fn-pointer dispatch | ACTIVE (v5.14.9.A) |
 | `calibration-log-column-registry.md` | FOREACH_<LOGNAME>_COL — auto-generated CSV header + row from registry; Variant A (fprintf direct) + Variant B (snprintf to buffer) | ACTIVE (v5.14.10.D + .F; 2 reference applications: calib log + trade log) |
 | `postloadsetup-registry-pattern.md` | FOREACH_<DOMAIN>_POST_LOAD — auto-flow init/load steps to N call sites (boot + backtest + hot-swap); Class 18 mirror prevention via single helper walking registry | ACTIVE (v5.10.0a.G.7 + v5.13.4 + v5.14.10.C; 3 applications) |
+| `type-trait-dispatch-via-tt-namespace.md` | `tt::<verb>_field<T>(T& dst, ...)` with destination-by-reference + type-family static_assert + if-constexpr branches per trait. 3-barrier structural fix (no void*+offset API + X-macro extractor chokepoint + compile-time type guard) closes Class 23 (type-erased reinterpret_cast dispatch) | ACTIVE (v5.14.8.A.merged precedent at `tt::stamp_parse_field<T>`; codified v5.15.5.F.4b at `tt::cfg_parse_field<T>`) |
 
 ### Registry decision frameworks
 
@@ -131,7 +132,7 @@ Organized by category for quick discovery. Each pattern is one file in this dir.
 |---|---|---|
 | `template-deferred-dependency-injection.md` | Logic-only headers preserve I/O-free contract by taking side-effect primitive as template parameter (`typename Fn`); caller injects via lambda. Same shape across live/test/backtest. Zero runtime overhead (compiler inlines lambda). | ACTIVE (v5.14.4.B.1 + .B.2 first applications: Reconcile_ApplyMissedFills + Reconcile_AutoCancelStale) |
 
-**26 patterns total.** Adding new patterns: write the doc, add a row above, cross-link from related docs. (Process meta-tip: follow `pattern-codification-lifecycle.md` — the meta-pattern that captures HOW to fully codify a new architectural discipline end-to-end.)
+**27 patterns total.** Adding new patterns: write the doc, add a row above, cross-link from related docs. (Process meta-tip: follow `pattern-codification-lifecycle.md` — the meta-pattern that captures HOW to fully codify a new architectural discipline end-to-end.)
 
 ## Quick discovery — "I need to..."
 
@@ -161,6 +162,7 @@ Organized by category for quick discovery. Each pattern is one file in this dir.
 - **...extract canonical stamp-emit / production-assembly logic shared by 2+ callers** → `orchestration-helper-with-pod-args-pattern.md` (POD args struct with default member init + helper wraps AUTOPOPULATE + manual per-call population + external call; closes Class 18 mirror at production-caller level)
 - **...safely swap state under concurrent readers (model hot-swap, cfg deploy, key rotation)** → `shadow-load-state-transition-pattern.md` (allocate-load-validate-atomic_exchange-Free-old; no torn moment → no revert needed; pre-swap untouched on any failure)
 - **...add a mode-specific cfg default flip that honors operator overrides** → `post-parse-normalize-with-explicit-key-bitmap-pattern.md` (bitmap of "operator set this key" + post-parse normalize pass; no magic sentinels; explicit overrides always respected)
+- **...build a typed-field dispatcher over a registry (parser/save/render/drift-check)** → `type-trait-dispatch-via-tt-namespace.md` (3-barrier structural fix: no void*+offset API + X-macro extractor chokepoint + compile-time type guard; closes Class 23 type-erased reinterpret_cast anti-pattern; CLAUDE.md item 23)
 
 These are extracted from v5.14.8 + v5.14.9 + v5.14.10 + v5.14.11 + v5.15 sprint work. Future sprints add more as they solve new problems.
 

@@ -1,0 +1,14 @@
+# Indexing artifacts (large generated files)
+.foxml_index.json
+.foxml_index/
+*.embeddings.json
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*~
+
+# OS noise
+.DS_Store
+Thumbs.db

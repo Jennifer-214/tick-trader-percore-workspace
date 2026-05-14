@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: Generate a self-contained handoff prompt for opening a sub-ship in a fresh context window. Composes the 9-step pickup workflow (pre-flight verification → required reading → plan re-verification → pre-coding audit gate → DESIGN_SPECS pattern check → design philosophy reminders → TECH_DEBT items in surface area → filesystem conventions → sprint-close verification gate). Reads CLAUDE.local.md going-forward rules + DESIGN_SPECS/*.md catalog + auto-memory MEMORY.md + DOCS/TECH_DEBT.md dynamically so each prompt reflects current discipline. Output: plans/<sprint>/handoffs/<YYYY-MM-DD>-<ship>-handoff.md. Layer 1 orchestrator (compose-by-reference, NOT by-spawning).
+description: Generate a self-contained handoff prompt for opening a sub-ship in a fresh context window. Composes the 9-step pickup workflow (pre-flight verification → required reading → plan re-verification → pre-coding audit gate → DESIGN_SPECS pattern check → design philosophy reminders → TECH_DEBT items in surface area → filesystem conventions → sprint-close verification gate). Reads CLAUDE.local.md going-forward rules + DESIGN_SPECS/*.md catalog + auto-memory MEMORY.md + DOCS/TECH_DEBT.md dynamically so each prompt reflects current discipline. Output: /home/caramel/code/tick-trader-percore-workspace/plans/<sprint>/handoffs/<YYYY-MM-DD>-<ship>-handoff.md (WORKSPACE path explicitly, never engine-side symlink). Layer 1 orchestrator (compose-by-reference, NOT by-spawning).
 ---
 
 # /handoff — Generate a sub-ship handoff prompt
@@ -246,8 +246,11 @@ If any overlapping entry exists, run `/readiness` Check 25 (TECH_DEBT scan) expl
 
 - Workspace path: `/home/caramel/code/tick-trader-percore-workspace`
 - Engine repo: `/home/caramel/code/FoxML_Trader_v2`
-- Plans live in workspace; symlinked from engine `plans/` → workspace `plans/`.
-- Sprint plans: `workspace/plans/<sprint-dir>/{MASTER.md, subplans/, plan_checks/, postmortems/, handoffs/}`
+- Plans live in workspace; symlinked from engine `plans/` → workspace `plans/` (directory-level symlink).
+
+**Path discipline (set 2026-05-14):** ALWAYS cite workspace paths in chat / generated prompts / cross-references. The engine-side `/home/caramel/code/FoxML_Trader_v2/plans/...` resolves identically via symlink, but using it obscures where the file actually lives. Apply to: `plans/` (dir symlink), `.claude/skills/` → workspace `claude-skills/` (dir symlink), `DESIGN_SPECS/` (workspace-native), `DOCS/<symlinked-md>` (per-file symlinks; Edit tool REFUSES writes through these). When in doubt: `readlink -f <path>` to see the real location.
+
+- Sprint plans: `/home/caramel/code/tick-trader-percore-workspace/plans/<sprint-dir>/{MASTER.md, subplans/, plan_checks/, postmortems/, handoffs/}`
 - DESIGN_SPECS catalog: `workspace/DESIGN_SPECS/` (19 patterns + README; promoted from 16 in v5.14.10 with per-snapshot-cluster-layout-pattern + calibration-log-column-registry + postloadsetup-registry-pattern)
 - Skill outputs go to `plans/plan_checks/<skill>-<YYYY-MM-DD>-<scope>.md` (neutral); batches into sprint dir at close.
 - TECH_DEBT auto-write: `DOCS/TECH_DEBT.md` (symlinked from workspace)
@@ -299,14 +302,37 @@ Good luck. Caramel will iterate with you on findings before coding.
 
 ### Stage 6 — Write to disk
 
-Save to `plans/<sprint-dir>/handoffs/<YYYY-MM-DD>-<ship-tag>-handoff.md`.
+**ALWAYS write to the workspace path explicitly:**
 
-`mkdir -p` the dir if it doesn't exist (sprint-dir/handoffs/ may not exist if no prior handoffs in that sprint).
+```
+/home/caramel/code/tick-trader-percore-workspace/plans/<sprint-dir>/handoffs/<YYYY-MM-DD>-<ship-tag>-handoff.md
+```
+
+**Do NOT write to `/home/caramel/code/FoxML_Trader_v2/plans/...` even though it resolves identically via symlink.**
+
+**Why:** the engine repo's `/home/caramel/code/FoxML_Trader_v2/plans/` is a DIRECTORY-LEVEL SYMLINK to workspace `plans/`. Writing through the engine path technically works (the underlying file ends up in workspace), BUT the path you CITE in subsequent communication misleads about where the file actually lives. Caramel called this out 2026-05-14:
+
+> "why did you make the plan in this directory? it should be in the tick trader one."
+
+Use the workspace path EXPLICITLY in:
+1. The `Write` tool call's `file_path` parameter
+2. The Stage 7 confirmation output to the user
+3. Any cross-reference paths included in the generated handoff doc body's "Quick links" section + "Plan file" / "Sprint MASTER" / "Latest postmortem" lines in the header
+
+`mkdir -p` the dir via the workspace path if it doesn't exist (`/home/caramel/code/tick-trader-percore-workspace/plans/<sprint-dir>/handoffs/`).
+
+**Same path-discipline rule applies to all workspace-symlinked content** when this skill or subsequent ships need to write to:
+- `plans/` (directory symlink) → write via `/home/caramel/code/tick-trader-percore-workspace/plans/...`
+- `.claude/skills/` (directory symlink) → write via `/home/caramel/code/tick-trader-percore-workspace/claude-skills/...`
+- `DESIGN_SPECS/` (workspace-native; no engine source) → write via `/home/caramel/code/tick-trader-percore-workspace/DESIGN_SPECS/...`
+- `DOCS/<symlinked-md>` (per-file symlinks; Edit tool REFUSES to write through them) → write via `/home/caramel/code/tick-trader-percore-workspace/DOCS/<file>.md`
+
+Cite workspace paths in chat / generated prompts / cross-references regardless of which path the tool harness happens to accept.
 
 ### Stage 7 — Confirm to user
 
 Print:
-- Path of generated handoff
+- **Path of generated handoff — WORKSPACE path explicitly (`/home/caramel/code/tick-trader-percore-workspace/plans/<sprint-dir>/handoffs/<file>.md`).** Do NOT cite the engine-side `/home/caramel/code/FoxML_Trader_v2/plans/...` path even though it resolves identically via symlink. Caramel wants workspace paths for clarity (2026-05-14 feedback after the first miscited handoff).
 - Top-level structure summary (which patterns matched, which TECH_DEBT items overlapping, audit-gate qualified?)
 - Reminder that the handoff is GENERATED, not iterated — operator can edit if they want to customize
 
@@ -364,8 +390,8 @@ $ /handoff v5.14.10
 [skill reads MASTER, plan, CLAUDE.local.md, MEMORY.md, DESIGN_SPECS/README.md, TECH_DEBT.md]
 [skill scans plan for DESIGN_SPECS pattern symptoms — matches: curve-registry, bitmap-flag-api, x-macro-registry, autopopulate (because Thompson dispatch + new bandit state + persistence)]
 [skill scans TECH_DEBT for surface overlap — matches TECH_DEBT-008 (bandit telemetry deferral)]
-[skill writes plans/v5.14-foxml-port-and-maker/handoffs/2026-05-10-v5.14.10-handoff.md]
-[skill prints summary + path]
+[skill writes /home/caramel/code/tick-trader-percore-workspace/plans/v5.14-foxml-port-and-maker/handoffs/2026-05-10-v5.14.10-handoff.md  (WORKSPACE path explicitly)]
+[skill prints summary + WORKSPACE path]
 ```
 
 ## Pattern provenance

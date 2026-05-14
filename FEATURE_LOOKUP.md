@@ -882,3 +882,79 @@ When something seems wrong, check these in order:
 **Gotchas:** Phase 7.A is SUBSTRATE only. Flag flip has no observable effect TODAY. Phase 7.B integration tracked as `TECH_DEBT-045`.
 
 **Related:** `MemHeaders/LatencyHistogram.hpp` (primitive), `ControllerConfig.hpp` (cfg field + parser), `DESIGN_SPECS/runtime-toggleable-bench-gate-pattern.md` (full design + 7 composition options), TECH_DEBT-045 (Phase 7.B trigger ledger).
+
+---
+
+## Universal cfg field registry (v5.15.5.F.4b+)
+
+**What.** Single-source-of-truth registry (`FOREACH_CFG_FIELD` in
+`CoreFrameworks/CfgFieldRegistry.hpp`) for cfg field declarations. Initial
+KIND_DOUBLE/_PCT cohort: ~40 fields (`take_profit_pct`, `stop_loss_pct`,
+`fee_rate`, `risk_pct`, `regime_*`, `momentum_*`, `emacross_*`, `ml_*`,
+`bandit_blend_ratio`, etc.). Adding a NEW cfg field of these kinds = **ONE
+row** in `FOREACH_CFG_FIELD`; parser + GUI render + tooltip + per-core override
+emission all auto-flow from that single row. Closes the panel_gap +
+parser_gap + persist_gap classes structurally (3-barrier fix for
+DOCS/RECURRING_BUG_PATTERNS.md Class 23).
+
+**Cfg flags.** Registry rows have 12-col Option D tuple:
+`(KIND, name, label, section, metadata_flags, payload, tooltip,
+applies_to_strategy_cat, applies_to_op_mode_cat, applies_to_regime_cat,
+applies_to_risk_cat, lives_in_struct)`. Metadata flags include
+`PER_CORE_OK`, `RESTART_REQUIRED`, `SAFETY_CRITICAL`, `STAMP_BOUND`,
+`HIDDEN_BY_DEFAULT`, `IS_SECRET`, etc.
+
+**Fallback.** Manual `CFG_PARSE_FPN/PCT/U32/INT` macros in
+`ControllerConfig_Load<F>` body remain for fields NOT yet in registry
+(KIND_INT/_BOOL/_STRING migrate at .F.4c/.F.4d). Manual `field_defs[]`
+entries in `GUI/SettingsPanel.hpp` remain for non-migrated fields.
+Coexistence is safe — registry walk uses `continue;` so manual fallback
+handles unknown keys.
+
+**Where to verify (operator runtime):**
+- Boot: registry-driven parser runs at start of `ControllerConfig_Load<F>`
+  body (`CoreFrameworks/ControllerConfig.hpp:1873-1903`). Any KIND_DOUBLE/_PCT
+  cfg field is parsed via `tt::cfg_parse_field<T>` (type-safe + locale-immune
+  via `parse_double_fast`).
+- GUI: Settings tab in `foxml_suite` shows the auto-extended cfg fields with
+  correct label / section / tooltip. Hand-tuned multi-line tooltips for
+  `fee_rate`, `regime_crossover_threshold`, `regime_strong_crossover` etc.
+  preserved byte-identical from pre-v5.15.5.F.4b.
+- Tests: `tests/controller_test.cpp:test_v5_15_5_F4b_cfg_field_dispatch()` —
+  10 PASS runtime tests verify roundtrip, locale-immunity, CI Test 2
+  (applies_to_strategy_cat != 0), tooltip preservation. Plus 8 compile-time
+  static_asserts for trait correctness + bitmap overflow guards. Run
+  `./build/controller_test` → see `[v5.15.5.F.4b CfgFieldRegistry + tt::
+  dispatch]` block.
+- Compile-time: `static_assert(sizeof(CfgFieldDescriptor) <= 128)` + 3
+  bitmap overflow guards (`MetadataFlag`, `StrategyCategory`, `OpModeCategory`).
+
+**Paper-test sanity:** Edit any migrated cfg field (e.g., `take_profit_pct`)
+in `foxml_suite` Settings tab; click Save; verify new value persists in
+`engine.cfg` (per-field text-splice via `cfg_write_field` preserves operator
+comments). Restart engine; verify value loads back correctly via boot log
+cfg dump.
+
+**Gotchas.**
+- Tooltip preservation is for **migrated fields only** (~14 hand-tuned
+  multi-line tooltips byte-identical). New cfg fields added via registry
+  get author-supplied tooltips; refine via direct registry edit.
+- Format strings: KIND_DOUBLE_PCT renders/saves with `%.2f`; KIND_DOUBLE
+  with `%.4f`. Pre-migration some fields used `%.1f` / `%.5f` / `%.6f` —
+  minor display precision shift (always RICHER decimals, not poorer).
+- **The 3-barrier structural fix means NEVER use** `*reinterpret_cast<T*>((char*)cfg + offset) = v`
+  style dispatch. See `DOCS/RECURRING_BUG_PATTERNS.md` Class 23 +
+  `DESIGN_SPECS/type-trait-dispatch-via-tt-namespace.md` for canonical antidote.
+
+**Related:**
+- `CoreFrameworks/CfgFieldRegistry.hpp` (registry + descriptor + bitmap overflow asserts)
+- `CoreFrameworks/CfgFieldDispatch.hpp` (tt:: parse + save with locale pinning)
+- `Strategies/StrategyCategories.hpp` + `Strategies/OpModeCategories.hpp` (categorical applicability enums)
+- `DESIGN_SPECS/universal-cfg-field-registry-pattern.md` (full pattern spec)
+- `DESIGN_SPECS/type-trait-dispatch-via-tt-namespace.md` (3-barrier antidote)
+- `DESIGN_SPECS/categorical-tag-applicability-pattern.md` (applies_to_*_cat columns)
+- `DESIGN_SPECS/registry-tuple-as-single-source-of-truth.md` (12-col Option D)
+- `DOCS/RECURRING_BUG_PATTERNS.md` Class 23 (3-barrier structural fix), Class 14 (plan-API-drift 4th recurrence)
+- CLAUDE.md item 23 (type-trait dispatch), item 19 (structural fix preferred), item 13 (X-macro registry)
+- CLAUDE.local.md going-forward rule "Type-trait dispatch via tt:: namespace" (2026-05-14)
+- TECH_DEBT-009 (full KIND coverage migration; .F.4c+ for INT/BOOL/STRING; .F.4i for backtest cfg; v5.15.6 for controller/secrets/training cfg)

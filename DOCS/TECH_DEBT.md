@@ -231,17 +231,23 @@ A finding that exists only in a transient audit report or chat memory gets re-di
 
 ---
 
-### TECH_DEBT-009 — FOREACH_CFG_FIELD registry for non-stamp-bound cfg fields (boolean subset CLOSED v5.14.9.F.4)
+### TECH_DEBT-009 — FOREACH_CFG_FIELD registry for non-stamp-bound cfg fields (boolean subset CLOSED v5.14.9.F.4; KIND_DOUBLE/_PCT subset CLOSED v5.15.5.F.4b)
 
 - **Created:** 2026-05-09 by v5.14.8 scope decision (Interpretation B; deferred N-site pattern audit)
-- **Severity:** MEDIUM → LOW (boolean subset closed; non-boolean field registry remains as future work)
-- **Surface:** `CoreFrameworks/ControllerConfig.hpp` (struct), `CoreFrameworks/ControllerConfigParser.hpp` (parser), `engine.cfg.example` (operator-facing reference), `DOCS/CHANGELOG.md` (migration notes per ship)
-- **Status:** **PARTIAL CLOSED v5.14.9.F.4 (2026-05-10).** Boolean cfg fields (21 booleans across 5 domains) migrated to `FOREACH_<DOMAIN>_CFG_FLAG` registries with single-source-of-truth semantics. Parser auto-flows via 5 FOREACH walks (~21 inline branches → 5 walks, ~90 LOC reduction). GUI field_defs[] auto-extends via 5-col tuple expansion (v5.14.9.F.5 Option D). Per-core override extends via PER_CORE_OVERRIDE_BITMAP_DOMAINS macro (v5.14.9.F.6).
-- **Remaining (still OPEN as broader scope):** non-boolean cfg fields (FPN<F> thresholds, ints, strings, paths). Still touched manually per-field today. Future ship: `FOREACH_CFG_FIELD` registry for non-boolean fields (mirrors boolean subset's auto-flow discipline; same pattern with type-trait dispatch).
-- **Why partial close not full:** non-boolean cfg fields are heterogeneous in type + parser semantics (atoi vs atof vs strncpy); each type needs its own auto-flow path. Boolean subset was tractable (all parse identically via `int v = atoi(val); set/clr bit`). Type-trait dispatch via templated helpers (per CLAUDE.md item 23) can extend to other types but adds design surface.
-- **Cost estimate (remaining):** ~6-8h for FOREACH_CFG_FIELD registry covering ~30-40 non-boolean fields; per-field migration trivial.
-- **Trigger:** Next ship that adds 3+ new non-boolean cfg fields in one umbrella, OR ship that touches ControllerConfigParser.hpp for non-boolean reasons.
-- **Cross-ref:** v5.14.9.F-.F.6 ships (boolean subset closure); `DESIGN_SPECS/heterogeneous-registry-pattern.md` (DOMAIN SPLIT pattern reference impl); `ML_Headers/StampBoundCfgRegistry.hpp` (sister registry for stamp-bound cfg; pattern precedent); CLAUDE.md item 13 (X-macro audited categories list).
+- **Severity:** MEDIUM → LOW → LOW (boolean + KIND_DOUBLE/_PCT subsets closed; KIND_INT/_BOOL/_STRING remain as future work; descriptor schema locked at .F.4b — remaining migration is mechanical row additions)
+- **Surface:** `CoreFrameworks/ControllerConfig.hpp` (struct), parser body inline in `ControllerConfig_Load<F>` template function, `GUI/SettingsPanel.hpp` field_defs[] (operator-facing render), `engine.cfg.example` (cfg.example doc — generation deferred to .F.4d)
+- **Status:** **PARTIAL CLOSED across multiple ships:**
+  - **v5.14.9.F.4 (2026-05-10):** Boolean cfg fields (21 across 5 domains) migrated to `FOREACH_<DOMAIN>_CFG_FLAG` registries with single-source-of-truth semantics. Parser auto-flows via 5 FOREACH walks (~21 inline branches → 5 walks, ~90 LOC reduction). GUI field_defs[] auto-extends via 5-col tuple expansion (v5.14.9.F.5 Option D). Per-core override extends via PER_CORE_OVERRIDE_BITMAP_DOMAINS macro (v5.14.9.F.6).
+  - **v5.15.5.F.4b (2026-05-14):** KIND_DOUBLE/_PCT subset (~40 fields) migrated to `FOREACH_CFG_FIELD` registry (NEW; `CoreFrameworks/CfgFieldRegistry.hpp`) with 12-col Option D tuple. 3-barrier structural fix for DOCS/RECURRING_BUG_PATTERNS.md Class 23 (`tt::cfg_parse_field<T>` type-trait dispatch + X-macro extractor chokepoint + compile-time type-family static_assert) makes type-erased reinterpret_cast dispatch unreachable. Parser + GUI render + tooltip preservation byte-identical for hand-tuned operator prose. Descriptor schema LOCKS at .F.4b — remaining migration is row additions only.
+- **Remaining (still OPEN as ~3 sub-ship scope):**
+  - **.F.4c:** KIND_INT + KIND_INT_ENUM + KIND_BOOL migration (~80 fields). Plus STAMP_BOUND derived filter cutover (FOREACH_STAMP_BOUND_CFG → derived walk over FOREACH_CFG_FIELD with STAMP_BOUND metadata bit; Layer 5b canonical body hash lock).
+  - **.F.4d:** KIND_STRING + KIND_FILE_PATH migration + cfg.example auto-gen + reverse-drift CI script + metadata-driven GUI features (HIDDEN_BY_DEFAULT collapse, RESTART_REQUIRED badge, SAFETY_CRITICAL modal, IS_SECRET password masking).
+  - **.F.4i:** backtest.cfg integration via lives_in_struct=STRUCT_BACKTEST_CFG.
+  - **v5.15.6:** controller/secrets/training cfg integration via STRUCT_CONTROLLER_CFG / STRUCT_SECRETS_CFG / STRUCT_TRAINING_CFG.
+- **Why incremental close vs full close:** non-boolean cfg fields are heterogeneous in type + parser semantics (atoi vs atof vs strncpy vs FPN<F>::F-templated); each type needs its own `if constexpr` branch in tt::cfg_parse_field<T>. KIND_DOUBLE/_PCT cohort at .F.4b validates the 3-barrier design + descriptor schema; subsequent sub-ships add rows + extend tt:: dispatch incrementally per-kind.
+- **Cost estimate (remaining):** ~2-3h per Kind cohort (.F.4c ~80 fields ~3h; .F.4d ~40 fields + cfg.example ~3-4h; .F.4i + v5.15.6 ~6-9h total).
+- **Trigger:** Sequential ship plan within v5.15.5.F.4 + v5.15.6 sprints.
+- **Cross-ref:** v5.14.9.F-.F.6 ships (boolean subset closure); v5.15.5.F.4b engine commit `160da10` + tag `v5.15.5.F.4b` (KIND_DOUBLE/_PCT subset closure); `DESIGN_SPECS/heterogeneous-registry-pattern.md` (DOMAIN SPLIT pattern reference impl); `DESIGN_SPECS/universal-cfg-field-registry-pattern.md` (12-col Option D); `DESIGN_SPECS/type-trait-dispatch-via-tt-namespace.md` (3-barrier antidote); `DOCS/RECURRING_BUG_PATTERNS.md` Class 23 (structurally extinct); `ML_Headers/StampBoundCfgRegistry.hpp` (sister registry for stamp-bound cfg; pattern precedent); CLAUDE.md item 13 (X-macro audited categories list).
 
 ---
 

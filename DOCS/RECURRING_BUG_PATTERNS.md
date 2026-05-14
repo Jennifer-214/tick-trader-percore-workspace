@@ -1225,3 +1225,147 @@ enforced inclusion at all sites; bypass impossible.
 init, ConfidenceScorer extension, etc.) — Check 24 catches those at
 audit time. v5.X+ should extract similar helpers if those surfaces
 develop their own boot↔backtest↔hot-swap mirror gaps.
+
+---
+
+## Class 19 — Hardcoded instance names in applicability gating (Class 18 at predicate-condition level)
+
+**Surface:** live + slow-path + GUI. Wherever code reads cfg/state and decides "does this matter for the current setup?" — strategy gating, regime conditional logic, op-mode dispatch, risk-mode handling.
+
+**Symptom:** adding a new strategy (or regime, op-mode, variant) requires editing N call sites that gate behavior based on the old enum value. Sometimes silently misses sites → new strategy's cfg fields are inaccessible / new regime's filtering doesn't apply / new variant's feature is dead code. Operator sees "the new strategy doesn't seem to use bandit_blend_ratio even though docs say it should."
+
+**Root cause:** code expresses "this cfg field / behavior is relevant when X" as `if (strategy == STRATEGY_ML) { ... }` — hardcoded enum value. When STRATEGY_ENSEMBLE_V1 is added (same capability cluster as STRATEGY_ML), every gating site must add `|| strategy == STRATEGY_ENSEMBLE_V1`. Forgetting any site causes silent gap. Same Class 18 mirror shape, but at the **predicate-condition level** instead of function-composition level.
+
+**Detection:**
+```bash
+# Find hardcoded strategy/regime/mode comparisons in gating contexts:
+rg "strategy\s*==\s*STRATEGY_\w+" Strategies/ ML_Headers/ GUI/
+rg "regime\s*==\s*REGIME_\w+" Strategies/ ML_Headers/
+rg "op_mode\s*==\s*OP_MODE_\w+|mode\s*==\s*BACKTEST|is_backtest|is_live" Backtest/ CoreFrameworks/
+
+# Each match is a candidate for categorical-tag conversion.
+# True applicability is "capability bit" (STRAT_CAT_USES_BANDIT), not "specific instance name" (STRATEGY_ML).
+```
+
+**Known instances:**
+- 2026-05-14: surfaced during v5.15.5.F.4 categorical-tag pattern design. Multiple cfg gating sites (`if (strategy == STRATEGY_ML) render(cfg.bandit_blend_ratio)`) would have silently broken on STRATEGY_ENSEMBLE_V1 addition or similar variants. Structurally closed at `.F.4b/h` via categorical applicability + capability tags. Pattern: `DESIGN_SPECS/categorical-tag-applicability-pattern.md`. CLAUDE.local.md "Going-forward rule: categorical applicability for new cfg fields (set 2026-05-14)".
+
+**Prevention:**
+- **Categorical-tag pattern**: instances declare capability categories (`STRATEGY_ML` declares `STRAT_CAT_USES_BANDIT | STRAT_CAT_USES_RIDGE | ...`); consumers gate on bitmap intersection (`if (descriptor.applies_to_strategy_cat & active_strategy_cats)`). Adding a new instance = declare its categories; consumers auto-apply.
+- **CI consistency tests** (Test 1: no orphan categories; Test 2: no orphan cfg fields; Test 3: instance capability dependencies hold).
+- **`/dod-audit` extension:** detection signature above; flag hardcoded instance-name gating as candidates for categorical conversion.
+
+**Related classes:**
+- Class 18 (Mirror-incomplete plans) — same shape at function-composition level
+- Class 14 (Plan calls non-existent function) — symbol-existence gap
+- Class 21 (Multiple parallel descriptors) — both are "N parallel things drift" at different layers
+
+---
+
+## Class 20 — Bitmap field without overflow guard (silent-truncation)
+
+**Surface:** any registry + bitmap pair (~30+ in the codebase). FOREACH_X paired with X_flags field of fixed width (uint8_t / uint16_t / uint32_t / uint64_t).
+
+**Symptom:** new registry entry's flag bit "doesn't work" — `BITMAP_IS_SET(flags, MASK_NEW)` always returns false; `BITMAP_SET(flags, MASK_NEW)` is a silent no-op. Code compiles cleanly; tests using the flag pass trivially (because the flag is always 0 — there's no bit to test or set); operator-visible behavior diverges from documentation. Hours of debug before realizing the bit shift overflowed the bitmap type.
+
+**Root cause:** FOREACH_X registry grows organically. Bitmap type was uint8_t when registry had 5 entries. Now registry has 9 entries; `1 << 8` exceeds uint8_t's width; result is implementation-defined (typically 0, sometimes UB). The new enum value silently equals 0; `BITMAP_IS_SET(flags, 0)` is always false; `BITMAP_SET(flags, 0)` is a no-op. **No runtime check** can detect this — the bit doesn't exist; nothing to inspect.
+
+**Detection:**
+```bash
+# Find all FOREACH_X registries + their paired bitmap fields:
+rg "^#define FOREACH_(\w+)\s*\(X\)" --type cpp .
+
+# For each, find bitmap field paired with it:
+rg "uint(8|16|32|64)_t\s+\w+_flags" CoreFrameworks/ ML_Headers/ MemHeaders/
+
+# For each pair, check for paired static_assert:
+rg "static_assert\(FOREACH_\w+_COUNT_VALUE\s*<=\s*sizeof" CoreFrameworks/ ML_Headers/ MemHeaders/
+# Missing static_assert = vulnerable to overflow.
+```
+
+**Known instances:**
+- 2026-05-14: surfaced during v5.15.5.F.4 audit synthesis. Multiple bitmap-paired registries in codebase lack overflow guards. Structurally closed at `.F.4h` via audit pass + adding `static_assert(FOREACH_X_COUNT_VALUE <= sizeof(X_flags_type) * 8)` to every paired bitmap. Pattern: `DESIGN_SPECS/bitmap-overflow-protection-discipline.md`. CLAUDE.local.md "Going-forward rule: bitmap overflow static_assert is mandatory (set 2026-05-14)".
+
+**Prevention:**
+- **Co-located static_assert** at end of every FOREACH_X declaration:
+  ```cpp
+  #define FOREACH_X_COUNT_ENTRY(...) +1
+  constexpr size_t FOREACH_X_COUNT_VALUE = 0 FOREACH_X(FOREACH_X_COUNT_ENTRY);
+  #undef FOREACH_X_COUNT_ENTRY
+  
+  static_assert(FOREACH_X_COUNT_VALUE <= sizeof(X_flags_type) * 8,
+                "FOREACH_X overflowed bitmap type. Upgrade type width OR "
+                "split into multiple bitmaps OR use multi-bit state encoding.");
+  ```
+- **Type-upgrade decision tree** (per `DESIGN_SPECS/bitmap-overflow-protection-discipline.md`): uint8_t → uint16_t → uint32_t → uint64_t → split or multi-bit pack.
+- **`/dod-audit` extension** detects every FOREACH_X without a paired static_assert.
+- CLAUDE.md item promotion candidate (after `.F.4h` audit closes the existing inventory).
+
+**Related classes:**
+- Class 18 (Mirror-incomplete) — same "silently appears to work" failure shape
+- CLAUDE.md item 20 (BITMAP_* API) — usage pattern; this class is the discipline complement
+- CLAUDE.md item 30 (registry-bitmap SET discipline) — sister rule for SET-site consistency
+
+---
+
+## Class 21 — Multiple parallel descriptors for similar surfaces (cross-file drift)
+
+**Surface:** any subsystem where multiple structurally-similar descriptors exist (e.g., separate per-cfg-file descriptors: CfgFieldDescriptor + BacktestCfgFieldDescriptor + ControllerCfgFieldDescriptor; or multiple per-field metadata tables side-by-side).
+
+**Symptom:** adding a feature to one descriptor (e.g., new metadata bit like RESTART_REQUIRED, new tt:: dispatch specialization for a new Kind) requires updating N parallel descriptors. Forgetting any = inconsistent behavior across surfaces (e.g., backtest cfg has SAFETY_CRITICAL modals but live cfg doesn't, or vice versa). Same Class 18 mirror shape at the descriptor level.
+
+**Root cause:** historical organic growth — each cfg file got its own descriptor when introduced. As features accrue (RESTART_REQUIRED, SAFETY_CRITICAL, IS_SECRET, categorical applicability, etc.), each must be added to N descriptors. Drift accumulates.
+
+**Detection:**
+```bash
+# Find multiple structurally-similar descriptor types:
+rg "struct\s+\w+Descriptor" CoreFrameworks/ ML_Headers/ MemHeaders/
+# Compare field lists; if 2+ descriptors share ~70% of fields, candidate for consolidation via discriminator pattern.
+
+# Find consumers that switch on descriptor TYPE:
+rg "switch\s*\(.*descriptor\.type|\.kind\s*==.*Descriptor" .
+```
+
+**Known instances:**
+- 2026-05-14: surfaced during v5.15.5.F.4 design discussion. Pre-design considered separate BacktestCfgFieldDescriptor / ControllerCfgFieldDescriptor / SecretsCfgFieldDescriptor / TrainingCfgFieldDescriptor for the 5 cfg files; rejected in favor of ONE CfgFieldDescriptor + `lives_in_struct` discriminator + extension points (metadata bits, Kind enum values, sidecar tables). Per `DESIGN_SPECS/universal-cfg-field-registry-pattern.md` + `DESIGN_SPECS/categorical-tag-applicability-pattern.md` § "Cross-file cfg unification".
+
+**Prevention:**
+- **Single descriptor + discriminator pattern:** ONE descriptor type + an enum field (e.g., `LivesInStruct`) that routes data to the appropriate underlying struct. Adding a new "kind" of data = new enum value; descriptor unchanged.
+- **Extension points:** metadata bitmap for feature flags; Kind enum for type-specific handling; sidecar tables for sparse per-entry data that doesn't fit the common descriptor.
+- **`/merge-scan` extension:** flag parallel descriptors with ≥70% field overlap as consolidation candidates.
+- CLAUDE.local.md "Going-forward rule: cross-file cfg surfaces use lives_in_struct (set 2026-05-14)".
+
+**Related classes:**
+- Class 18 (Mirror-incomplete plans) — same shape at function level
+- Class 19 (Hardcoded instance names) — both are "N parallel things drift" — different layer
+- Class 22 (Runtime cfg gating in code paths) — sibling drift class within cfg surface
+
+---
+
+## Class 22 — Runtime cfg gating scattered in code paths (instead of registry)
+
+**Surface:** cfg field with runtime enablement chain (e.g., `thompson_*_prior` cfg fields only matter when `bandit_algorithm == THOMPSON`; `ridge_lambda` only matters when `ridge_within_horizon || ridge_across_horizons`).
+
+**Symptom:** changing a cfg field's gating condition requires editing N call sites that all check the same gating predicate. Forgetting any site → cfg field is read in some paths but not others → inconsistent runtime behavior (e.g., operator changes `bandit_algorithm`, GUI updates correctly but ML inference still reads the old algorithm's params). Adding a new gated read = remember to add the gating check; missing it causes silent dead-config.
+
+**Root cause:** gating predicate (`if (cfg.bandit_algorithm == THOMPSON)`) is repeated wherever the cfg field is read or rendered. Sites include parser validation, GUI rendering, validator checks, inference body. Adding a new consumer = remember to add the same gating predicate. Drift across N sites.
+
+**Detection:**
+```bash
+# Find repeated gating predicates around cfg field reads:
+rg "if\s*\(.*bandit_algorithm.*==.*THOMPSON\)" .
+rg "if\s*\(.*ridge_within_horizon.*\|\|.*ridge_across_horizons\)" .
+# Each occurrence is a candidate for centralized registry-level gating.
+```
+
+**Known instances:**
+- 2026-05-14: surfaced during v5.15.5.F.4 design. Multiple cfg fields have runtime gating predicates scattered across consumer sites (parser validates, GUI hides, inference reads). Structurally closed at `.F.4b` via `requires_cfg` column in CfgFieldDescriptor + centralized predicate evaluation in GUI render walk.
+
+**Prevention:**
+- **`requires_cfg` column** in CfgFieldDescriptor — names the gating cfg condition as a string expression. GUI evaluates at render time; validators can query the predicate via centralized helper; consumers reference the column instead of inlining the check.
+- **CI test:** every `requires_cfg` expression is reachable + non-contradictory (no field whose gating predicate is impossible to satisfy).
+- **`/dod-audit` extension:** flag scattered identical `if (cfg.X == Y)` patterns as candidates for `requires_cfg` migration.
+
+**Related classes:**
+- Class 21 (Multiple parallel descriptors) — both are "centralize metadata to avoid drift" at different layers
+- Class 19 (Hardcoded instance names) — different applicability axis (categorical scope vs runtime gate); both compose at the cfg field level

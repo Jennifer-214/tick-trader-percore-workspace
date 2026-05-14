@@ -657,3 +657,156 @@ Codified in:
 - This file (going-forward rule)
 - CLAUDE.md (promotion candidate after 2+ applications shipped — per
   the existing "codify design principles as patterns mature" rule)
+
+---
+
+## Going-forward rule: categorical applicability for new cfg fields (set 2026-05-14)
+
+**When adding a new cfg field (or extending an existing one), declare its
+categorical applicability via `applies_to_*` columns. Do NOT hardcode
+strategy / op_mode / regime / risk_mode names in gating logic.**
+
+**Why:** v5.15.5.F.4 introduced the categorical-tag applicability pattern
+to close the Class 19 bug class (hardcoded instance names in applicability
+gating — DOCS/RECURRING_BUG_PATTERNS.md). The pattern: instances
+(strategies, op-modes, regimes) declare their categories; cfg fields
+declare which categories they apply to; GUI filtering is bitmap
+intersection. Adding a new instance = declare its categories; ALL
+category-tagged cfg fields auto-apply without registry edits.
+
+**How to apply:**
+
+- When adding a cfg field in `FOREACH_CFG_FIELD`, fill ALL category columns:
+  - `applies_to_strategy_cat`: bitmap of `STRAT_CAT_*` values (e.g., `STRAT_CAT_USES_BANDIT`)
+  - `applies_to_op_mode_cat`: bitmap of `OP_MODE_CAT_*` values (e.g., `OP_MODE_CAT_LIVE | OP_MODE_CAT_PAPER`)
+  - `applies_to_regime_cat`: defaults to `REGIME_CAT_ALL` until v5.16 specializes
+  - `applies_to_risk_cat`: defaults to `RISK_CAT_ALL` until v5.16 specializes
+- Use `_CAT_ALL` ONLY when universal applicability is verified (not as default-for-unknown — verify against the strategy/op-mode actually reading the field).
+- Use specific capability tags (`STRAT_CAT_USES_BANDIT`, not `STRATEGY_ML`) — categorical, not instance.
+- If a new strategy is added: declare its category masks in `FOREACH_STRATEGY`;
+  category-tagged cfg fields auto-apply.
+
+**Anti-patterns to avoid:**
+
+- Hardcoded enum comparisons in cfg gating: `if (strategy == STRATEGY_ML) ...`
+  (use categorical filtering instead).
+- Single-instance categories: a category declared by only one strategy is
+  just instance identity hidden under a category name — same drift class.
+- Multiple parallel descriptors per cfg file: use `lives_in_struct`
+  discriminator instead (per separate going-forward rule below).
+
+**Vocabulary discipline rules** (per `DESIGN_SPECS/categorical-tag-applicability-pattern.md`):
+- **Functional capability, not implementation detail.** `STRAT_CAT_USES_BANDIT` ✅; `STRAT_CAT_INSTANTIATES_BANDIT_T_TEMPLATE` ❌
+- **Operator-meaningful.** Categories surface in GUI; names need to make sense to non-developers.
+- **Stable.** Renaming a category breaks all consumers; use alias pattern (`#define OLD = NEW`) during transition.
+- **Promoted from observed clustering (≥3 instances).** Don't preemptively create single-instance categories.
+- **Tiered** (CORE / SPECIFIC / EXPERIMENTAL): bit assignments cluster by tier for clarity.
+
+Codified in:
+- `DESIGN_SPECS/categorical-tag-applicability-pattern.md` (full pattern + vocabulary discipline rules + 10 anti-patterns + CI consistency tests + multi-domain composition)
+- `DESIGN_SPECS/universal-cfg-field-registry-pattern.md` § "The descriptor struct" (CfgFieldDescriptor with categorical columns)
+- `DOCS/RECURRING_BUG_PATTERNS.md` Class 19 (Hardcoded instance names in applicability gating)
+- `CLAUDE.md` (promotion candidate after 2+ category domains shipped — strategy + op_mode = 2 at v5.15.5.F.4 close, eligible for promotion)
+- This file (going-forward rule)
+
+---
+
+## Going-forward rule: bitmap overflow static_assert is mandatory (set 2026-05-14)
+
+**Every bitmap field paired with a FOREACH_X registry MUST have a
+co-located `static_assert(FOREACH_X_COUNT_VALUE <= sizeof(X_flags_type) * 8)`
+overflow guard. Adding a registry entry that would overflow fails the build.**
+
+**Why:** silent-bitmap-truncation (Class 20, DOCS/RECURRING_BUG_PATTERNS.md)
+is a real recurring bug class. Without compile-time enforcement, adding
+the next entry that overflows the bitmap type silently fails — the bit
+shift truncates to 0, the flag is always 0, BITMAP_IS_SET always returns
+false, BITMAP_SET is a no-op. Hours of debug before realizing.
+
+**How to apply:**
+
+- For every `FOREACH_<X>` registry, add a compile-time count constant:
+  ```cpp
+  #define FOREACH_X_COUNT_ENTRY(...) +1
+  constexpr size_t FOREACH_X_COUNT_VALUE = 0 FOREACH_X(FOREACH_X_COUNT_ENTRY);
+  #undef FOREACH_X_COUNT_ENTRY
+  ```
+- Add a `static_assert` co-located with the FOREACH_X declaration:
+  ```cpp
+  static_assert(FOREACH_X_COUNT_VALUE <= sizeof(X_flags_type) * 8,
+                "FOREACH_X overflowed bitmap type. Upgrade type width OR "
+                "split into multiple bitmaps OR use multi-bit state encoding.");
+  ```
+- For category enums (StrategyCategory, OpModeCategory, etc.), add:
+  ```cpp
+  static_assert(/* highest used bit */ < (1ull << TYPE_WIDTH),
+                "<CategoryEnum> overflowed <type> — upgrade width or split orthogonal axes");
+  ```
+
+**When upgrade is needed** (per type-upgrade decision tree):
+- uint8_t → uint16_t (rarely affects cache layout)
+- uint16_t → uint32_t (verify cache impact for hot-path structs)
+- uint32_t → uint64_t (significant cache impact; profile if hot)
+- Beyond uint64_t: split into 2 bitmaps OR use multi-bit state encoding (CLAUDE.md item 30)
+
+**Audit:** v5.15.5.F.4.h ships an inventory of all existing bitmap pairs in
+the codebase + adds missing static_asserts to every paired bitmap registry.
+After `.F.4h` closes the existing inventory, `/dod-audit` extension catches
+future drift.
+
+**Cache-line awareness for hot-path bitmaps:** type-width upgrade for hot-
+path-resident bitmaps may affect cache-line span. Check via `pahole` after
+upgrade; if struct spans changed, verify total cache budget per CLAUDE.md
+items 28 + 30.
+
+Codified in:
+- `DESIGN_SPECS/bitmap-overflow-protection-discipline.md` (the discipline + audit script + type-upgrade decision tree + anti-patterns)
+- `DOCS/RECURRING_BUG_PATTERNS.md` Class 20 (Bitmap field without overflow guard)
+- `CLAUDE.md` item 20 (BITMAP_* API) + item 30 (registry-bitmap SET discipline) — sister patterns
+- This file (going-forward rule)
+- `/dod-audit` skill (detection signature; future extension)
+
+---
+
+## Going-forward rule: cross-file cfg surfaces use lives_in_struct (set 2026-05-14)
+
+**When adding a cfg field that belongs to a non-default cfg file
+(backtest.cfg, controller.cfg, secrets.cfg, training cfg), tag it with
+the appropriate `lives_in_struct` enum value in the FOREACH_CFG_FIELD
+registry row. Do NOT introduce a parallel CfgFieldDescriptor.**
+
+**Why:** Class 21 (Multiple parallel descriptors, DOCS/RECURRING_BUG_PATTERNS.md).
+v5.15.5.F.4 unifies the cfg surface via ONE CfgFieldDescriptor +
+`lives_in_struct` discriminator. Parser routes write to correct struct;
+save emits to correct cfg file; GUI walks ONE registry. Adding a parallel
+descriptor for a new cfg file reintroduces the drift class.
+
+**How to apply:**
+
+- New cfg field in **engine.cfg** → `lives_in_struct: STRUCT_CFG` (default; ControllerConfig<F>)
+- New cfg field in **backtest.cfg** → `lives_in_struct: STRUCT_BACKTEST_CFG` (BacktestCfg)
+- New cfg field in **controller.cfg** → `lives_in_struct: STRUCT_CONTROLLER_CFG` (ControllerCfg; v5.15.6.A)
+- New cfg field in **secrets.cfg** → `lives_in_struct: STRUCT_SECRETS_CFG` + `metadata |= IS_SECRET | LOG_VALUE_FORBIDDEN | SAFETY_CRITICAL` (v5.15.6.B)
+- New cfg field in **training cfg** → `lives_in_struct: STRUCT_TRAINING_CFG` + `applies_to_op_mode_cat: OP_MODE_CAT_TRAINING` (v5.15.6.C)
+- New cfg file (future): add new `LivesInStruct` enum value; parser dispatcher gains one new case;
+  GUI + save handle automatically; no descriptor schema changes.
+
+**Anti-patterns:**
+
+- Creating `BacktestCfgFieldDescriptor` or similar parallel descriptor (Class 21 returns; structural drift class).
+- Hardcoding cfg file routing outside the dispatcher (e.g., parser checking `if (cfg_file == "backtest.cfg")`).
+- Per-cfg-file separate save/load functions when registry-driven save dispatches via `lives_in_struct`.
+
+**Composition with op_mode categorical** (these are SEPARATE axes; don't conflate):
+
+- `lives_in_struct` is about **DATA STORAGE** — which struct/file the field is in
+- `applies_to_op_mode_cat` is about **UI RELEVANCE** — when the field is shown to the operator
+
+Both compose: a backtest-cfg field has `lives_in_struct=STRUCT_BACKTEST_CFG` (storage) AND `applies_to_op_mode_cat=OP_MODE_CAT_BACKTEST` (visibility). Most fields' storage and visibility align (backtest field → backtest mode), but exceptions exist (e.g., a backtest field that's ALSO visible in training mode → `OP_MODE_CAT_BACKTEST | OP_MODE_CAT_TRAINING`).
+
+Codified in:
+- `DESIGN_SPECS/categorical-tag-applicability-pattern.md` § "Cross-file cfg unification via lives_in_struct + applies_to_op_mode_cat"
+- `DESIGN_SPECS/universal-cfg-field-registry-pattern.md` § "The descriptor struct" (LivesInStruct enum)
+- `DOCS/RECURRING_BUG_PATTERNS.md` Class 21 (Multiple parallel descriptors)
+- This file (going-forward rule)
+- v5.15.6 plan stub (mechanical extension of design locked at v5.15.5.F.4.b)

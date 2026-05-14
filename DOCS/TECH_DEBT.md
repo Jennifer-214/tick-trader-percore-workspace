@@ -1071,3 +1071,98 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 - **Trigger:** (a) 2nd potential application site surfaces (in a `/merge-scan` or `/dod-audit` finding, or during a new ship's pre-coding); (b) operator-initiated codification request.
 - **Status:** OPEN (awaiting 2nd-application trigger)
 - **Cross-ref:** v5.15.5.E postmortem at `plans/v5.15-live-readiness/postmortems/2026-05-13-v5.15.5-E-postmortem.md`; `ML_Headers/ConfidenceScore.hpp` DriftSample struct (first application); `DESIGN_SPECS/latency-vs-cache-decision-framework.md` (cost framework that justifies the AoS decision); `DESIGN_SPECS/pattern-codification-lifecycle.md` Stage 0.
+
+---
+
+## Drift-class closures (v5.15.5.F.4 — universal cfg field registry sprint)
+
+The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the universal cfg field registry + categorical-tag applicability + STAMP_BOUND derived filter + bitmap overflow audit. Class-level closures (individual TECH_DEBT-NNN entries flip CLOSED on their addressing ship):
+
+| Class | Closure mechanism | Closure ship |
+|---|---|---|
+| `parser_gap` (cfg parser drift across files; 123 missed cfg fields proved recurrence) | registry-driven parser via `tt::cfg_parse_field<KIND_X>` + `lives_in_struct` routing | `.F.4b` (DOUBLE/PCT) + `.F.4c` (INT/INT_ENUM/BOOL) + `.F.4d` (STRING/FILE_PATH) |
+| `panel_gap` (SettingsPanel field_defs[] drift) | registry-driven GUI render walk | `.F.4b-d` |
+| `persist_gap` (manual Cfg_Save drift; cfg.example documentation drift) | registry-driven save dispatch + cfg.example auto-gen per `lives_in_struct` | `.F.4d` |
+| `per_core_gap` (per-core override emission drift; PARITY-002/003/004/005/008 4× recurrence) | `PER_CORE_OK` metadata bit auto-emits override storage + AoS-by-core re-layout consolidates scattered arrays | `.F.4b` (auto-emit) + `.F.4g` (AoS-by-core) |
+| `stamp_drift_gap` (TECH_DEBT-006: FOREACH_STAMP_BOUND_CFG vs FOREACH_CFG_FIELD dual registry) | `STAMP_BOUND` derived filter + canonical byte order locked via CI hash test (Layer 5b of `wire-format-byte-preservation-discipline.md`) | `.F.4b` |
+| `cfg.example_doc_gap` (cfg.example manual drift; 7th gap class from registry spec future work) | AUTOPOPULATE companion emits per-`lives_in_struct` cfg.example | `.F.4d` |
+| `silent_bitmap_truncation` (Class 20: FOREACH_X paired with bitmap field, no overflow guard) | `.F.4h` audit pass adds `static_assert` to all existing bitmap-paired registries | `.F.4h` |
+
+**Hardcoded-instance-gating class (Class 19)** was not previously surfaced as TECH_DEBT but would have recurred on next strategy / regime / op_mode addition. Closed proactively by categorical-tag pattern at `.F.4b/h`.
+
+---
+
+### TECH_DEBT-050 — controller.cfg integration into universal cfg field registry deferred to v5.15.6
+
+- **Created:** 2026-05-14 by v5.15.5.F.4 planning (universal cfg field registry sprint scope cap)
+- **Severity:** MEDIUM (operator-visible — controller.cfg currently requires manual text edit)
+- **Surface:** `controller.cfg` + corresponding ControllerCfg struct + foxml_suite Settings tab
+- **What's deferred:** extend FOREACH_CFG_FIELD with controller.cfg fields tagged `lives_in_struct=STRUCT_CONTROLLER_CFG`. Currently controller.cfg fields don't surface in Settings tab; operator edits the file manually.
+- **Why deferred (not effort-avoidance):** v5.15.5.F.4 caps scope at engine+backtest unification (9 sub-ships). controller.cfg integration is mechanical extension of design locked at `.F.4b`; ships in v5.15.6.A as a focused follow-on sprint.
+- **Cost estimate:** ~2-3h (audit ControllerCfg struct + add ~10-20 rows + verify byte-identical roundtrip + Settings tab dispatch).
+- **Trigger:** v5.15.6 sprint kickoff OR earlier if operator complaint surfaces about controller.cfg manual edit friction.
+- **Status:** OPEN
+- **Cross-ref:** `plans/v5.15-live-readiness/subplans/2026-05-13-v5.15.5.F.4-universal-cfg-registry-sprint.md` (umbrella, v5.15.6 section); `DESIGN_SPECS/categorical-tag-applicability-pattern.md` § "Cross-file cfg unification"; `plans/v5.15-live-readiness/subplans/2026-05-14-v5.15.5.F.4i-backtest-cfg-integration.md` (sister; backtest is the prototype that this ship inherits the pattern from).
+
+### TECH_DEBT-051 — secrets.cfg integration with IS_SECRET metadata deferred to v5.15.6
+
+- **Created:** 2026-05-14 by v5.15.5.F.4 planning
+- **Severity:** MEDIUM (operator-visible + security-critical — secrets currently require manual text edit + no UX safeguards)
+- **Surface:** `secrets.cfg` + SecretsCfg struct + foxml_suite Settings tab
+- **What's deferred:** extend FOREACH_CFG_FIELD with secrets.cfg fields tagged `lives_in_struct=STRUCT_SECRETS_CFG, metadata_flags |= IS_SECRET | LOG_VALUE_FORBIDDEN | SAFETY_CRITICAL`. GUI password masking via ImGuiInputTextFlags_Password; never-log enforcement via `Cfg_DumpForLogging` redaction; HMAC stamps never include IS_SECRET fields.
+- **Why deferred:** scope cap; v5.15.6.B. Requires careful UX work (password masking + confirmation modal + security audit pass).
+- **Cost estimate:** ~3-4h (audit + IS_SECRET metadata wiring + GUI affordances + security audit).
+- **Trigger:** v5.15.6 sprint OR earlier if security concern surfaces.
+- **Status:** OPEN
+- **Cross-ref:** sister to TECH_DEBT-050; `DESIGN_SPECS/universal-cfg-field-registry-pattern.md` § "MetadataFlag enum" (IS_SECRET bit reserved at `.F.4b`); `plans/v5.15-live-readiness/subplans/2026-05-13-v5.15.5.F.4d-string-filepath-gui-metadata.md` (IS_SECRET first GUI application).
+
+### TECH_DEBT-052 — Training cfg integration deferred to v5.15.6
+
+- **Created:** 2026-05-14 by v5.15.5.F.4 planning
+- **Severity:** MEDIUM (operator-visible — training params currently scattered between foxml_suite Training panel + Python scripts)
+- **Surface:** training cfg (xgb hyperparameters + training pipeline params) + TrainingCfg struct + foxml_suite Training panel
+- **What's deferred:** extend FOREACH_CFG_FIELD with training cfg fields tagged `lives_in_struct=STRUCT_TRAINING_CFG, applies_to_op_mode_cat=OP_MODE_CAT_TRAINING`. May require Kind enum extension: KIND_RANGE_INT, KIND_RANGE_DOUBLE for hyperparameter sweep ranges (e.g., `xgb_max_depth_range=4,6,8,12`).
+- **Why deferred:** scope cap; v5.15.6.C. New Kind values require additional tt:: dispatch specializations.
+- **Cost estimate:** ~3-4h (audit + new KIND_RANGE_* tt:: specializations if needed + Training panel integration).
+- **Trigger:** v5.15.6 sprint OR earlier if Training panel UX concern surfaces.
+- **Status:** OPEN
+- **Cross-ref:** sister to TECH_DEBT-050/051; `DOCS/CLAUDE_FOXML_SUITE.md` (training panel architecture); `DESIGN_SPECS/universal-cfg-field-registry-pattern.md` (KIND_RANGE_* reserved in descriptor).
+
+### TECH_DEBT-053 — Phase 2 cfg struct unification (merge cfg structs into one) deferred to v5.16+
+
+- **Created:** 2026-05-14 by v5.15.5.F.4 planning
+- **Severity:** LOW (architectural cleanup; Phase 1 GUI unification at v5.15.5.F.4 + v5.15.6 covers operator UX needs)
+- **Surface:** All 5 cfg structs (ControllerConfig + BacktestCfg + ControllerCfg + SecretsCfg + TrainingCfg)
+- **What's deferred:** merge separate cfg structs into ONE struct with nested sections (`cfg.engine.X`, `cfg.backtest.X`, `cfg.controller.X`, etc.). Currently Phase 1 keeps structs separate; `lives_in_struct` discriminator routes parser/save.
+- **Why deferred:** Phase 1 covers all operator-visible cfg unification needs without struct refactoring. Phase 2 is downstream code cleanup, not user-facing. Defer until v6.0 architectural pressure or burdensome cross-struct accessor surface.
+- **Cost estimate:** ~6-8h (significant — touches Cfg struct definition + all consumers + may break snapshot wire format if Cfg is persisted; would need version bump + migration).
+- **Trigger:** (a) v6.0 headless-service split where unified Cfg simplifies cross-process state externalization; (b) cross-struct accessor site count becomes burdensome; (c) Phase 1 validates the unification model + Phase 2 becomes worth the refactor cost.
+- **Status:** OPEN
+- **Cross-ref:** `plans/v5.15-live-readiness/subplans/2026-05-13-v5.15.5.F.4-universal-cfg-registry-sprint.md` (Phase 2 mentioned in Future Work); `plans/_future/2026-05-12-decoupling-endgoal-roadmap.md` (v6.0 alignment).
+
+### TECH_DEBT-054 — Regime + risk-mode + feature categorical rollout deferred to v5.16+
+
+- **Created:** 2026-05-14 by v5.15.5.F.4 planning
+- **Severity:** LOW (operator-visible — additional category dimensions provide finer-grained UX filtering)
+- **Surface:** CfgFieldDescriptor's `applies_to_regime_cat` / `applies_to_risk_cat` columns (defaulted to `_CAT_ALL` at v5.15.5.F.4); FOREACH_REGIME + FOREACH_RISK_MODE registries; FOREACH_FEATURE for feature categorical
+- **What's deferred:** populate regime + risk-mode + feature category masks for relevant cfg fields. Currently descriptor has columns; v5.15.5.F.4 only populates strategy + op_mode dimensions; remaining dimensions use `_CAT_ALL` placeholder.
+- **Why deferred:** v5.15.5.F.4 caps scope at strategy + op_mode categorical (2 dimensions). Additional dimensions are extension of the locked design per CLAUDE.local.md "design upfront + ship in waves." Each dimension = audit pass + populate masks; no descriptor changes.
+- **Cost estimate:** ~2-3h per dimension; 3 dimensions = ~6-9h total. Plus FOREACH_FEATURE rework with category column for feature dimension.
+- **Trigger:** (a) operator complains about UX filtering granularity; (b) v5.16 sprint focused on categorical dimension extension; (c) regime-aware ML feature subset selection needs the categorical surface.
+- **Status:** OPEN
+- **Cross-ref:** `DESIGN_SPECS/categorical-tag-applicability-pattern.md` § "Future application catalog"; `plans/v5.15-live-readiness/subplans/2026-05-14-v5.15.5.F.4h-strategy-category-audit-and-bitmap-overflow-audit.md` (strategy audit shipped at .F.4h; regime/risk audits are the analog).
+
+### TECH_DEBT-055 — ResolvedCoreCfg AVX-512 batch-load + prefetch + delta-cache deferred to v5.16+
+
+- **Created:** 2026-05-14 by v5.15.5.F.4 planning (.F.4e ship logs these as Future Work paths)
+- **Severity:** LOW (performance optimization stack on top of `.F.4e` resolution cache substrate; activation deferred until measurement shows need)
+- **Surface:** `CoreFrameworks/ResolvedCoreCfg.hpp` (struct shipped at .F.4e; sized to 3 × 64 byte cache lines for AVX-512 readiness)
+- **What's deferred:** 3 future optimization paths on top of the .F.4e substrate:
+  1. **Prefetch** — `__builtin_prefetch(&cfg->per_core_overrides[core_idx])` at slow-path entry (hides L2→L1 latency; ~10ns/cycle/core savings; 1 LOC)
+  2. **AVX-512 batch-load** — 3 cache lines × `_mm512_load_pd` = 3 uops vs ~24 scalar loads (~30ns/cycle/core savings; requires AVX-512 CPU support; bytewise determinism preservation per CLAUDE.md item 25)
+  3. **Epoch-compare delta-cache** — skip resolution if cfg.epoch + override_set_mask unchanged since last cycle (~60-cycle savings per cycle when cfg stable; epoch tracking required)
+- **Why deferred:** v5.15.5.F.4 ships the resolution cache substrate at `.F.4e`; 100-400 ns/cycle warm savings is the primary win. Optimization paths above are stacked wins for when latency budget tightens. Not load-bearing at current operator cadence.
+- **Cost estimate:** ~30 min for prefetch; ~2-3h for AVX-512 batch-load (CPU support check + intrinsic discipline + bytewise determinism test); ~1-2h for delta-cache (epoch tracking + invalidation logic).
+- **Trigger:** (a) slow-path p99 latency regression or budget tightening; (b) profile shows resolution body in top 3 slow-path hot spots; (c) AVX-512 deployment broadens.
+- **Status:** OPEN
+- **Cross-ref:** `DESIGN_SPECS/slow-path-cfg-resolution-cache-pattern.md` § "Future work"; `DESIGN_SPECS/avx512-byte-determinism-pattern.md` (CLAUDE.md item 25); `DOCS/HOT_PATH_CHANGELOG.md` (.F.4e entry logs these optimization paths with cost analysis).

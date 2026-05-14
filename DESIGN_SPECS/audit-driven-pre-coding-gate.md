@@ -243,6 +243,34 @@ Plan to re-run after every plan amendment that touches >2 sub-tags.
 
 If 3+ audits independently flag the same gap, it's a real gap. Act on convergent findings without further verification.
 
+### Amendment-notice-on-stale-body is INSUFFICIENT (added 2026-05-14 from v5.15.5.F.4c audit)
+
+When a previously-drafted plan has stale code samples invalidated by a post-draft architectural ship, **the standard practice was to add an amendment notice at the top while preserving the body for "scope intent."** This proved insufficient at the 5th Class 14 recurrence (`.F.4c` plan body's 6 fictional APIs).
+
+**Failure mode:** a fresh-context coder reading top-down may copy body code samples verbatim before reaching/noticing the amendment notice block. The "scope intent" preservation argument loses to "first thing the reader sees is the literal stale sample."
+
+**Going-forward rule (2026-05-14):** when amending a plan with stale code samples, **DELETE the stale body** — don't preserve-with-notice. The amendment note can REFERENCE what was removed (in a brief history section at the top) but must not display the lethal samples.
+
+Plan amendment template:
+```markdown
+## Plan amendment history
+
+- 2026-05-13: Original draft (pre-X ship; STALE samples).
+- 2026-05-14: <X> ship invalidated body samples. Body REWRITTEN per <synthesis>; stale samples DELETED.
+```
+
+This applies to ALL plan amendments going forward; Class 14 recurrence prevention.
+
+### Operator-policy on audit gate firing (CLAUDE.local.md rule)
+
+Audit gate FIRES on:
+- HIGH-RISK ships (wide blast radius; structural fix; wire-format-affecting)
+- First application of a new pattern
+- Cross-cutting changes (≥4 files; multiple subsystems)
+- Cold-pickup from compaction-degraded handoff
+
+Operator (Caramel) decides when to fire; not auto-triggered. Each fire produces a synthesis doc + consult phase before coding starts. Per `feedback_consult_on_audit_findings` memory.
+
 Audit-specific findings (one audit only) need cross-check before acting — could be a false positive (skill-specific edge case) OR a real gap that other audits missed.
 
 ### Verdicts are SNAPSHOT-IN-TIME

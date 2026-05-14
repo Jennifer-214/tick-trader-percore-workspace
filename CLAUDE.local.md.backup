@@ -47,14 +47,16 @@ governs this surface? what discipline tier am I choosing into?).
 | Field | Value |
 |---|---|
 | Sprint | `v5.15-live-readiness` (`plans/v5.15-live-readiness/MASTER.md`) |
-| Most recent ship | `v5.15.5.F.4b` — CfgFieldRegistry + tt:: dispatch + Class 23 3-barrier fix (2026-05-14; engine `160da10` + workspace `a0680c0`) |
-| Next ship | `v5.15.5.F.4c` — KIND_INT/_INT_ENUM/_BOOL migration + STAMP_BOUND derived filter cutover (plan needs amendment before coding; see T20) |
-| Sprint-wide invariant in force | `CfgFieldDescriptor` schema LOCKED at `.F.4b`; remaining `.F.4c`/`.F.4d`/`.F.4i` migrations are mechanical row additions only — no descriptor changes |
+| Most recent ship | `v5.15.5.F.4b` — CfgFieldRegistry + tt:: dispatch + Class 23 3-barrier fix (2026-05-14; engine `160da10` + workspace `bae0894`) |
+| Next ship | `v5.15.5.F.4c` (RESCOPED Option D+) — non-STAMP_BOUND INT/INT_ENUM/BOOL migration + `tt::cfg_render_field<T>` + X_GEN_LABEL extern reuse + INT_ENUM string-token branch + tooltip byte-identity discipline test. ~280 LOC; LOW risk. **STAMP_BOUND derived filter cutover MOVED to new `.F.4d`** per audit synthesis 2026-05-14. |
+| Ship after `.F.4c` | `v5.15.5.F.4d` (NEW — wire-format framework + structural closure ship) — 4 new DESIGN_SPECs (metadata-bit-driven-derived-filter-framework / meta-registry-pattern / sidecar-override-pattern / framework-composition-overview) + 5 new invariants H14-H18 + CLAUDE.md item 31 + DESIGN_PHILOSOPHY §1.5 + cfg field audit + ~113-row migration + X-macro struct generation + DERIVED_FILTER framework + FOREACH_REGISTRY meta-registry + sidecar override pattern + STAMP_BOUND Layer 5b first application + bit-packed DriftOverride/RegistryRosterEntry/ManualFieldInventoryEntry + branchless dispatch + 12+ consumer migration + v5.14 stamp fixture + CFG_DRIFT_AUTOPOPULATE + extended categorical tests + cohort-eligibility CI + legacy `FOREACH_STAMP_BOUND_CFG` deprecation. ~1500 LOC code + ~600 LOC specs + ~400 LOC docs + ~3 hr audit. MED-HIGH risk; full pre-coding audit gate before coding. |
+| Ship after `.F.4d` | `v5.15.5.F.4e` (RENAMED from old `.F.4d`) — KIND_STRING + KIND_FILE_PATH + 5 GUI metadata derived filters via framework (HIDDEN_BY_DEFAULT, RESTART_REQUIRED, SAFETY_CRITICAL, IS_SECRET, DEPRECATED) + cfg.example auto-gen + cross-cutting metadata doc + reverse-drift CI. ~300 LOC; LOW-MED risk. Validates the framework via 5 real second-source applications. |
+| Sprint-wide invariant in force | `CfgFieldDescriptor` schema LOCKED at `.F.4b` (struct layout unchanged); `.F.4d` adds Kind enum sub-tokens within reserved slots 7-9 (storage-width tokens KIND_INT_I32/_I64/_U32/_U64) — no struct layout change. `.F.4c`/`.F.4e+` row additions only. |
 | After `.F.4` umbrella closes | `v5.15.5.F.5` per-core Thompson + bandit override audit; then `v5.15.5.F` umbrella close; then `v5.15` umbrella close |
 | After `v5.15` umbrella closes | Paper-test session (operator window to exercise the Settings tab + tooltip changes + live-readiness gates); then live-readiness operational items; then operational safety audit (drawdown circuit breaker / daily PnL cap / position size limits) |
-| Open architectural decisions awaiting operator input | `.F.4g` AoS-by-core re-layout: wait for slow-path profile data before deciding; TECH_DEBT-008 maker order MVP: indefinite defer per no orderbook data source |
-| Recent CLAUDE.md item promotions (last 30 days) | Item 28 (cycles/cache cost framework, v5.15.5), item 29 (sliding-window stats, v5.15.5.E.D), item 30 (registry-bitmap SET discipline, v5.15.5.F.3) — all now in `DESIGN_PHILOSOPHY.md` post-refactor |
-| Most recent anti-pattern codification | Class 23 (type-erased reinterpret_cast dispatch, 2026-05-14 v5.15.5.F.4b) + Class 14 4th recurrence (plan-API-drift caught at audit gate) |
+| Open architectural decisions awaiting operator input | `.F.4g`/`.F.4h` (renamed from `.F.4f`/`.F.4g`) AoS-by-core re-layout: wait for slow-path profile data before deciding; TECH_DEBT-008 maker order MVP: indefinite defer per no orderbook data source |
+| Recent CLAUDE.md item promotions (last 30 days) | Item 28 (cycles/cache cost framework, v5.15.5), item 29 (sliding-window stats, v5.15.5.E.D), item 30 (registry-bitmap SET discipline, v5.15.5.F.3), **item 31 (framework-driven extensibility meta-principle, v5.15.5.F.4d planning)** — all in `DESIGN_PHILOSOPHY.md` post-refactor |
+| Most recent anti-pattern codification | Class 23 (type-erased reinterpret_cast dispatch, 2026-05-14 v5.15.5.F.4b) + Class 14 5th recurrence (plan-API-drift in `.F.4c` body, caught at 2026-05-14 audit gate; lesson: amendment notice insufficient — DELETE stale samples, don't preserve-with-notice) + Class 18 recurrence (INT_ENUM label arrays duplication risk caught at same audit; prevention via X_GEN_LABEL extern reuse) |
 
 ---
 
@@ -92,6 +94,10 @@ Rules currently in force. Each links to its canonical home.
 - **Structural fix preferred when bug class can recur** (set 2026-05-09).
   → CLAUDE.md item 19; `DESIGN_SPECS/structural-fix-preferred-decision-framework.md`.
   Trigger: same pattern at multiple sites drifted apart → registry/helper-extract with compile-time enforcement, not direct patch.
+
+- **Framework discipline over ad-hoc per-instance code when recurrence is foreseeable** (set 2026-05-14).
+  → CLAUDE.md item 31; `DESIGN_PHILOSOPHY.md` § 1.5; `DESIGN_SPECS/pattern-codification-lifecycle.md`.
+  Trigger: ≥2 future applications projected AND bug class can recur AND framework cost ≤ projected savings × N → invest upfront in framework (registry / AUTOPOPULATE / `tt::` dispatch / derived-filter macro / sidecar override / meta-registry) rather than ad-hoc per-instance solutions. Accept upfront complexity for future-application mechanicalization. The trade-off: framework code reads harder at first encounter; PAYOFF is future additions become 1-row mechanical changes + framework API encodes the discipline so contributors can't drift. Canonical applications (.F.4 sprint composing 6 frameworks: universal cfg registry + `tt::` dispatch + derived-filter framework + sidecar override + meta-registry + X-macro struct gen — extinguishing 5 bug classes: Class 14/18/19/21/23).
 
 - **Boundary-stable refactors over wide cascades** (set 2026-05-06).
   → `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/feedback_reduce_touch_sites.md`.

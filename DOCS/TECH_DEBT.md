@@ -239,10 +239,11 @@ A finding that exists only in a transient audit report or chat memory gets re-di
 - **Status:** **PARTIAL CLOSED across multiple ships:**
   - **v5.14.9.F.4 (2026-05-10):** Boolean cfg fields (21 across 5 domains) migrated to `FOREACH_<DOMAIN>_CFG_FLAG` registries with single-source-of-truth semantics. Parser auto-flows via 5 FOREACH walks (~21 inline branches → 5 walks, ~90 LOC reduction). GUI field_defs[] auto-extends via 5-col tuple expansion (v5.14.9.F.5 Option D). Per-core override extends via PER_CORE_OVERRIDE_BITMAP_DOMAINS macro (v5.14.9.F.6).
   - **v5.15.5.F.4b (2026-05-14):** KIND_DOUBLE/_PCT subset (~40 fields) migrated to `FOREACH_CFG_FIELD` registry (NEW; `CoreFrameworks/CfgFieldRegistry.hpp`) with 12-col Option D tuple. 3-barrier structural fix for DOCS/RECURRING_BUG_PATTERNS.md Class 23 (`tt::cfg_parse_field<T>` type-trait dispatch + X-macro extractor chokepoint + compile-time type-family static_assert) makes type-erased reinterpret_cast dispatch unreachable. Parser + GUI render + tooltip preservation byte-identical for hand-tuned operator prose. Descriptor schema LOCKS at .F.4b — remaining migration is row additions only.
-- **Remaining (still OPEN as ~3 sub-ship scope):**
-  - **.F.4c:** KIND_INT + KIND_INT_ENUM + KIND_BOOL migration (~80 fields). Plus STAMP_BOUND derived filter cutover (FOREACH_STAMP_BOUND_CFG → derived walk over FOREACH_CFG_FIELD with STAMP_BOUND metadata bit; Layer 5b canonical body hash lock).
-  - **.F.4d:** KIND_STRING + KIND_FILE_PATH migration + cfg.example auto-gen + reverse-drift CI script + metadata-driven GUI features (HIDDEN_BY_DEFAULT collapse, RESTART_REQUIRED badge, SAFETY_CRITICAL modal, IS_SECRET password masking).
-  - **.F.4i:** backtest.cfg integration via lives_in_struct=STRUCT_BACKTEST_CFG.
+- **Remaining (still OPEN; RESTRUCTURED 2026-05-14 by Option D+ ship sequence per `/precoding-audit-gate` synthesis):**
+  - **.F.4c (RESCOPED non-STAMP_BOUND only):** KIND_INT + KIND_INT_ENUM + KIND_BOOL non-STAMP_BOUND migration (~50-60 fields) + `tt::cfg_render_field<T>` impl + X_GEN_LABEL extern reuse (for BanditAlgorithm / BarrierBlendMode / DegradationCurve enums) + INT_ENUM string-token branch + tooltip byte-identity discipline test. ~280 LOC; LOW risk.
+  - **.F.4d (NEW — wire-format framework + structural closure):** STAMP_BOUND derived filter cutover (FOREACH_STAMP_BOUND_CFG_DERIVED via metadata bit) + Layer 5b canonical body hash lock + v5.14 stamp fixture + 12+ consumer migration + cohort migration (~14 STAMP_BOUND fields: 11 doubles + 3 ints; plus 4 bitmap-resident bools via two-source variant). PLUS DERIVED_FILTER framework + FOREACH_REGISTRY meta-registry + sidecar override pattern (replaces wide-variant CfgDriftCheckRegistry) + bit-packed DriftOverride/RegistryRosterEntry/ManualFieldInventoryEntry + branchless dispatch refactor + X-macro struct generation for cfg + ~113-row cfg field audit. PLUS 4 new DESIGN_SPECs (metadata-bit-driven-derived-filter-framework / meta-registry-pattern / sidecar-override-pattern / framework-composition-overview) + 5 new invariants H14-H18 + CLAUDE.md item 31 + DESIGN_PHILOSOPHY §1.5 (Framework discipline). ~1500 LOC code + ~600 LOC specs + ~400 LOC docs + ~3 hr cfg field audit. MED-HIGH risk; full pre-coding audit gate fires before coding.
+  - **.F.4e (RENAMED from old .F.4d):** KIND_STRING + KIND_FILE_PATH migration + cfg.example auto-gen + cross-cutting metadata doc + 5 GUI metadata derived filters via framework (HIDDEN_BY_DEFAULT, RESTART_REQUIRED, SAFETY_CRITICAL, IS_SECRET, DEPRECATED) + reverse-drift CI fully closed. Validates the .F.4d framework via 5 real second-source applications.
+  - **.F.4f - .F.4j (RENAMED from .F.4e - .F.4i):** ResolvedCoreCfg slow-path cache / K-state enum cohort pack / AoS-by-core override re-layout / strategy-category audit / backtest.cfg integration. Sub-letter renames per `feedback_rename_plans_to_match_ship_order` to preserve monotonic Version.hpp tag sequence.
   - **v5.15.6:** controller/secrets/training cfg integration via STRUCT_CONTROLLER_CFG / STRUCT_SECRETS_CFG / STRUCT_TRAINING_CFG.
 - **Why incremental close vs full close:** non-boolean cfg fields are heterogeneous in type + parser semantics (atoi vs atof vs strncpy vs FPN<F>::F-templated); each type needs its own `if constexpr` branch in tt::cfg_parse_field<T>. KIND_DOUBLE/_PCT cohort at .F.4b validates the 3-barrier design + descriptor schema; subsequent sub-ships add rows + extend tt:: dispatch incrementally per-kind.
 - **Cost estimate (remaining):** ~2-3h per Kind cohort (.F.4c ~80 fields ~3h; .F.4d ~40 fields + cfg.example ~3-4h; .F.4i + v5.15.6 ~6-9h total).
@@ -1172,3 +1173,53 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 - **Trigger:** (a) slow-path p99 latency regression or budget tightening; (b) profile shows resolution body in top 3 slow-path hot spots; (c) AVX-512 deployment broadens.
 - **Status:** OPEN
 - **Cross-ref:** `DESIGN_SPECS/slow-path-cfg-resolution-cache-pattern.md` § "Future work"; `DESIGN_SPECS/avx512-byte-determinism-pattern.md` (CLAUDE.md item 25); `DOCS/HOT_PATH_CHANGELOG.md` (.F.4e entry logs these optimization paths with cost analysis).
+
+### TECH_DEBT-056 — Codebase-wide bitpacking + branchless API audit (Caramel's later-review sweep)
+
+- **Created:** 2026-05-14 by v5.15.5.F.4d planning (Caramel's explicit ask post-Option-D-locked)
+- **Severity:** LOW (hygiene; not blocking; DOD discipline reinforcement)
+- **Surface:** entire codebase — any struct with ≥2 adjacent `uint8_t state_<N>` fields (where each represents enum ≤4 values); any dispatch endpoint using `if (override.X) { use override } else { use default }` shape instead of branchless mask compute
+- **What's deferred:** AFTER most v5.15.5.F.4 frameworks land (.F.4d + .F.4e shipped), Caramel will personally review a codebase-wide sweep flagging:
+  1. **Bitpacking candidates:** structs with adjacent `uint8_t state_<N>` fields representing small enums (~4 values each) → consolidate into single byte/word with bit-accessor helpers per `multi-bit-state-encoding-pattern.md` (CLAUDE.md item 30) + `bitmap-flag-api.md`. Anti-pattern detection signature added to `/dod-audit` Stage 6 at v5.15.5.F.4d ship.
+  2. **Branchless API endpoints:** dispatch points using `if`-chain selection where branchless mask compute would have equivalent runtime cost AND be more DOD-aligned (mask AND > switch on enum for "any of these states?" queries; mask-mux > if-else for binary selection). Per DESIGN_PHILOSOPHY § 4 "Branchless mask compute for data-dependent dispatch" bullet (added 2026-05-14).
+- **Why deferred (not effort-avoidance):** Caramel's explicit framing — "once most of the frameworks are done, I'll look at this." The .F.4d ship establishes the discipline (.F.4d-specific structs are bit-packed + branchless from day 1); this entry tracks the SWEEP of EXISTING codebase structs to apply the same discipline retroactively where the cost-benefit favors it.
+- **Cost estimate:** ~3-4h for codebase sweep (scan all struct definitions; identify candidates; prioritize by frequency-of-access × LOC-savings). Per-candidate refactor: ~30-60 min including accessor migration + test verification. Probably 5-15 candidates worth migrating; ~4-8h total refactor work across the sweep.
+- **Trigger:** **AFTER .F.4d + .F.4e ship + frameworks validated.** Caramel personally reviews + selects which candidates to migrate. Not auto-fire; operator-gated.
+- **Status:** OPEN
+- **Cross-ref:** `DESIGN_SPECS/multi-bit-state-encoding-pattern.md` (CLAUDE.md item 30; INVARIANT STATUS after 3rd canonical application at .F.4d); `DESIGN_SPECS/bitmap-flag-api.md`; `DOCS/DESIGN_PHILOSOPHY.md` § 4 (bit-packing-for-state-fields bullet added 2026-05-14); `/dod-audit` skill Stage 6 detection signature.
+
+### TECH_DEBT-057 — Migrate ~15 unmigrated registries to FOREACH_REGISTRY meta-registry
+
+- **Created:** 2026-05-14 by v5.15.5.F.4d planning
+- **Severity:** LOW (each migration is a 1-line PR; primarily discoverability + CI cross-check benefit)
+- **Surface:** ~15 X-macro registries that aren't yet declared in `CoreFrameworks/RegistryRoster.hpp` `FOREACH_REGISTRY` at .F.4d initial ship. Examples: FOREACH_SHALT, FOREACH_DEGRADATION_CURVE, FOREACH_BANDIT_ALGORITHM, FOREACH_BARRIER_BLEND_MODE, FOREACH_SLOW_PATH_GATE, 5 FOREACH_*_CFG_FLAG bitmap registries, FOREACH_CFG_DERIVED_INFERENCE_CFG, FOREACH_STAMP_BOUND_MODEL_CONST_PRE_CFG/_POST_CFG, FOREACH_FEATURE, FOREACH_REGIME, etc.
+- **What's deferred:** add a row in `FOREACH_REGISTRY` for each currently-undeclared registry. Each row encodes: NAME, source_file, LEVEL (0=concrete), PARENT (ROOT or meta-registry name), design_spec ref, bug_class (if applicable), wire_format_kind (NOT_WIRE / WIRE_FORMAT / WIRE_FORMAT_TWO_SOURCE / MIXED), doc. Per `DESIGN_SPECS/meta-registry-pattern-for-codebase-registry-discipline.md`.
+- **Why deferred (not effort-avoidance):** .F.4d initial ship populates the FOREACH_REGISTRY with 10-15 most-load-bearing entries (CFG_FIELD, DERIVED_FILTER, STRATEGY, FEATURE, FAILURE_MODE, CFG_DRIFT_CHECK, ARCH_FIELD_DRIFT, ML_CFG_FLAG, etc.). Remaining registries get rows added as time allows; each is mechanical (~5 min per row). Per H14 (pending invariant): every X-macro registry MUST eventually be in FOREACH_REGISTRY; CI test enforces.
+- **Cost estimate:** ~5 min per registry × 15 registries = ~75 min total. Best done as a single cleanup pass.
+- **Trigger:** (a) batch addition opportunity during quiet period between sub-ships; (b) CI test added at .F.4d ship may flag undeclared registries as build warning → motivates migration; (c) `/precoding-audit-gate` auto-derivation accuracy improves with more roster coverage.
+- **Status:** OPEN
+- **Cross-ref:** `DESIGN_SPECS/meta-registry-pattern-for-codebase-registry-discipline.md` (DRAFT v1.0 at .F.4d); H14 invariant (pending codification at .F.4d ship); `CoreFrameworks/RegistryRoster.hpp` (created at .F.4d).
+
+### TECH_DEBT-058 — REGISTRY_TOPOLOGY.md auto-generation Python script
+
+- **Created:** 2026-05-14 by v5.15.5.F.4d planning
+- **Severity:** LOW (manual REGISTRY_TOPOLOGY.md ships at .F.4d; auto-gen is hygiene improvement)
+- **Surface:** new file `tools/generate_registry_topology.py` (~50 LOC Python script that parses `CoreFrameworks/RegistryRoster.hpp` `FOREACH_REGISTRY` entries + emits ASCII tree visualization to `workspace/DOCS/REGISTRY_TOPOLOGY.md`)
+- **What's deferred:** auto-generation of `REGISTRY_TOPOLOGY.md` from the FOREACH_REGISTRY data. Manual version ships at .F.4d (hand-written ASCII tree); auto-gen converts that to a CI-checked derived artifact (regenerate on every registry change + diff against committed version to ensure freshness).
+- **Why deferred:** Manual REGISTRY_TOPOLOGY.md at .F.4d is sufficient for immediate cold-pickup needs (20-25 entries; hand-curatable). Auto-gen pays off once entries grow + manual maintenance drift risks setting in. Scaffolding for the auto-gen pattern at v5.15.6+ when 2nd derived-doc surface (e.g., cfg-by-metadata.md from .F.4e) makes generator generalization worthwhile.
+- **Cost estimate:** ~1-2h (Python script + CI integration + test against current FOREACH_REGISTRY content; treat as derived artifact).
+- **Trigger:** (a) FOREACH_REGISTRY entry count grows past ~25; (b) manual REGISTRY_TOPOLOGY.md drifts from FOREACH_REGISTRY content; (c) v5.15.6 introduces second derived-doc surface (cfg-by-metadata.md) — generalize the auto-gen pattern.
+- **Status:** OPEN
+- **Cross-ref:** `DESIGN_SPECS/meta-registry-pattern-for-codebase-registry-discipline.md`; sister to TECH_DEBT-057 (rate-limiting factor: FOREACH_REGISTRY coverage); `tools/` directory (sibling Python derived-doc tools).
+
+### TECH_DEBT-059 — stamp-vs-runtime-drift-detection-registry.md wide variant DEPRECATION (post-.F.4d ship)
+
+- **Created:** 2026-05-14 by v5.15.5.F.4d planning
+- **Severity:** LOW (DESIGN_SPEC update; documents the pattern's evolution post-.F.4d superseding by sidecar pattern)
+- **Surface:** `workspace/DESIGN_SPECS/stamp-vs-runtime-drift-detection-registry.md` § "Wide variant (FOREACH_CFG_DRIFT_CHECK — 10-col tuple, multi-axis Y3, ack-aware)"
+- **What's deferred:** mark the WIDE variant as DEPRECATED-FOR-CFG-DRIFT in the DESIGN_SPEC. Replaced by `DESIGN_SPECS/sidecar-override-pattern-for-registry-auto-flows.md` (NEW at .F.4d). Narrow variant (FOREACH_ARCH_FIELD_DRIFT) stays — different surface; not over cfg fields. Wide variant pattern itself remains valid for OTHER non-cfg drift surfaces; only the cfg-drift application supersedes.
+- **Why deferred (until .F.4d ships):** Wide variant currently has 1 production application (`CfgDriftCheckRegistry.hpp` 19-entry registry). .F.4d ship retires it (auto-flow via CFG_DRIFT_AUTOPOPULATE + 5-entry FOREACH_DRIFT_OVERRIDE sidecar). After .F.4d ships, update the wide-variant section to add DEPRECATION notice + cross-ref to sidecar pattern.
+- **Cost estimate:** ~15 min (light edit to wide-variant section header + Cross-references update + DESIGN_SPECS/README.md catalog status update).
+- **Trigger:** **AFTER .F.4d ships** + CfgDriftCheckRegistry deletion verified.
+- **Status:** OPEN (blocked on .F.4d ship)
+- **Cross-ref:** `DESIGN_SPECS/sidecar-override-pattern-for-registry-auto-flows.md` (supersedes for cfg-drift surface); `DESIGN_SPECS/stamp-vs-runtime-drift-detection-registry.md` (wide variant section); H17 invariant (pending codification at .F.4d ship).

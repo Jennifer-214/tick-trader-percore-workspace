@@ -54,7 +54,29 @@ session can implement it without reading the original ship.
 Surprises during implementation. Compaction-degraded handoff watch-outs. Etc.
 ```
 
-## Catalog (v5.14.4 + v5.14.8 + v5.14.9 + v5.14.10 + v5.14.11 deliverables — 26 patterns)
+## Tag schema (added v5.15.5.F.4d planning 2026-05-14)
+
+Each pattern can be tagged on 6 dimensions to enable `/precoding-audit-gate` Stage 1 auto-derivation, discoverability filters, and codification-lifecycle visibility:
+
+| Dimension | Values | Use |
+|---|---|---|
+| **Surface** | hot-path / slow-path / boot / parser / GUI / wire-format / drainer / cross-thread / training / backtest | Where the pattern applies |
+| **Concern** | latency / determinism / structural-fix / failure-observability / operator-UX / maintainability / framework-discipline | What problem class the pattern serves |
+| **Bug-class closed** | Class 11 / 14 / 18 / 19 / 20 / 21 / 23 (per `DOCS/RECURRING_BUG_PATTERNS.md`) | Which RECURRING_BUG_PATTERNS class this pattern extinguishes |
+| **Hard invariant served** | H1-H18 (per `DOCS/DESIGN_PHILOSOPHY.md` § 3) | Which hard invariant this pattern enables |
+| **Lifecycle stage** | Stage 1 (audit) / 2 (DRAFT) / 3 (first ref) / 4 (cohort) / 5 (CLAUDE.md item) / 6 (tooling) / 7 (wider audit) | Per `pattern-codification-lifecycle.md` |
+| **Application count** | 1 / 2-3 / 3+ | Maturity indicator |
+
+Tagged format example (compact 1-line):
+```
+**Tags:** structural-fix, wire-format, registry-driven; closes Class 18 + Class 21; serves H9 + H17; Stage 4 (cohort migration); 3 applications
+```
+
+**Tagging discipline:** new patterns get tagged at DESIGN_SPEC draft (Stage 2). Existing untagged patterns are tagged retroactively as time allows — see TECH_DEBT entry for codebase-wide tagging sweep (added 2026-05-14). Tags enable `/precoding-audit-gate` to auto-derive focus by matching plan keywords to spec tags.
+
+---
+
+## Catalog (v5.14.4 + v5.14.8 + v5.14.9 + v5.14.10 + v5.14.11 + v5.15.5 deliverables — 57+ patterns)
 
 Organized by category for quick discovery. Each pattern is one file in this dir.
 
@@ -132,7 +154,20 @@ Organized by category for quick discovery. Each pattern is one file in this dir.
 |---|---|---|
 | `template-deferred-dependency-injection.md` | Logic-only headers preserve I/O-free contract by taking side-effect primitive as template parameter (`typename Fn`); caller injects via lambda. Same shape across live/test/backtest. Zero runtime overhead (compiler inlines lambda). | ACTIVE (v5.14.4.B.1 + .B.2 first applications: Reconcile_ApplyMissedFills + Reconcile_AutoCancelStale) |
 
-**27 patterns total.** Adding new patterns: write the doc, add a row above, cross-link from related docs. (Process meta-tip: follow `pattern-codification-lifecycle.md` — the meta-pattern that captures HOW to fully codify a new architectural discipline end-to-end.)
+### Framework discipline patterns (CLAUDE.md item 31 + DESIGN_PHILOSOPHY § 1.5)
+
+These are meta-patterns codified at v5.15.5.F.4d planning — frameworks that other patterns compose into. Each documents a framework that future-cohort migrations reuse 1-row mechanically.
+
+| Doc | Pattern | Status | Tags |
+|---|---|---|---|
+| `metadata-bit-driven-derived-filter-framework.md` | Generic framework for declaring derived filters over a parent registry (e.g., FOREACH_CFG_FIELD) via metadata bit. 3 variants: GUI-only / wire-format / wire-format-two-source. Composes with Layer 5b lock + AUTOPOPULATE + bitmap-bool emit_source dispatch. First canonical application: STAMP_BOUND_CFG_DERIVED at .F.4d. | DRAFT v1.0 (pending v5.15.5.F.4d ship; will become ACTIVE Stage 3) | structural-fix, wire-format, registry-driven; closes Class 21 at derived-filter surface; serves H9 + H15; Stage 2 (DRAFT); 0 applications until .F.4d |
+| `meta-registry-pattern-for-codebase-registry-discipline.md` | Codebase-wide registry-of-registries discipline. `FOREACH_REGISTRY` with LEVEL/PARENT columns; CI cross-checks every X-macro registry has a row. Closes "added registry but forgot to document" class structurally. | DRAFT v1.0 (pending .F.4d ship) | structural-fix, framework-discipline, discoverability; closes Class 18 at meta-layer; serves H14 + H18; Stage 2 (DRAFT); 0 applications until .F.4d |
+| `sidecar-override-pattern-for-registry-auto-flows.md` | Sidecar override table for registries with standard-case auto-flow + custom-semantics overrides. Replaces wide-variant duality with single auto-flow path + small sparse sidecar indexed by parent's FIELD_IDX. CI cross-check enforces relationship. First canonical: FOREACH_DRIFT_OVERRIDE at .F.4d (replaces FOREACH_CFG_DRIFT_CHECK wide variant). | DRAFT v1.0 (pending .F.4d ship) | structural-fix, registry-driven, framework-discipline; closes Class 21 at auto-flow-with-overrides surface; serves H17; Stage 2 (DRAFT); 0 applications until .F.4d |
+| `framework-composition-overview.md` | Visualizes how multiple frameworks compose for cfg infra at .F.4d (universal cfg registry + tt:: dispatch + derived-filter framework + sidecar override + meta-registry + X-macro struct gen). Cold-pickup map. | DRAFT v1.0 (pending .F.4d ship) | framework-discipline, discoverability; Stage 2 (DRAFT); 1 composition application at .F.4d |
+
+**Status note (post-.F.4d):** stamp-vs-runtime-drift-detection-registry.md wide variant gets DEPRECATED for cfg-drift surface (superseded by sidecar pattern). Narrow variant stays — different surface; not over cfg. See TECH_DEBT-059.
+
+**~61 patterns total** (57 catalog + 4 NEW DRAFT pending .F.4d). Adding new patterns: write the doc, add a row above with tags, cross-link from related docs. (Process meta-tip: follow `pattern-codification-lifecycle.md` — the meta-pattern that captures HOW to fully codify a new architectural discipline end-to-end.)
 
 ## Quick discovery — "I need to..."
 

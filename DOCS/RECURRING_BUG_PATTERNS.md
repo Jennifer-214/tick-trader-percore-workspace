@@ -850,6 +850,24 @@ grep -A100 "^struct StructName" CoreFrameworks/<file>.hpp | \
   for Class 14** — pattern remains active; pre-coding mitigation
   via `/readiness` + `/trace-deps` skills working as intended (zero
   production occurrences across all 4 detection events).
+- **v5.15.5.F.4c plan body (2026-05-14 — caught at `/precoding-audit-gate`
+  Layer-1 orchestrator)**: 6 fictional APIs surfaced again — `Cfg_LoadFromString`,
+  `Cfg_Save`, `Cfg_LoadFromFile`, `cfg_field_offset`, `cfg_dispatch_target<KIND>`,
+  `template <Kind K> void cfg_parse_field<KIND_X>`. The `.F.4c` plan had an
+  authoritative amendment notice at lines 15-66 explicitly invalidating these,
+  but the PLAN BODY preserved the stale code samples as "scope intent."
+  Caught by `/trace-deps` GAP-B + GAP-D + `/dod-audit` Class 14 detection;
+  reported in `plans/plan_checks/2026-05-14-v5.15.5.F.4c-fresh-audits-synthesis.md`.
+  **5th detection event for Class 14 + lesson learned:** amendment-notice
+  scaffolding is INSUFFICIENT. A fresh-context coder reading top-down might
+  copy body samples verbatim before noticing the notice. **Going forward:
+  when amending a plan with stale code samples, DELETE the stale body —
+  don't preserve-with-notice.** Plan amended at v5.15.5.F.4d planning to
+  delete Step 1 entirely ("nothing to do — tt:: covers integers via shipped
+  infrastructure") and rewrite Step 6 tests against canonical T1-T6 shape
+  at `tests/controller_test.cpp:1548`. Lesson codified in
+  `DESIGN_SPECS/audit-driven-pre-coding-gate.md` § Lessons + CLAUDE.local.md
+  Sprint State Tracker.
 
 **Prevention:**
 
@@ -1152,6 +1170,30 @@ sed -n '<start>,<end>p' source.hpp | grep -oE '[a-z_]+(_)?->[a-z_]+'
   exit_reward_ring + populator + counter (~30 LOC) before tagging
   v5.14.1.E.B. Audit reports were GREEN; class of miss not in any
   existing audit checklist.
+- **v5.15.5.F.4c plan body (2026-05-14 — caught at `/merge-scan` audit
+  during `/precoding-audit-gate` Layer-1 orchestrator)**: plan Step 3
+  proposed declaring NEW arrays `BANDIT_ALGO_LABELS[]`,
+  `RISK_CURVE_LABELS[]`, `BARRIER_BLEND_LABELS[]`, `ENGINE_ARCH_LABELS[]`
+  for INT_ENUM cfg field dropdown rendering. **All four enums already
+  had full X-macro registries with ToString/FromString:**
+  `Strategies/BanditAlgorithmRegistry.hpp:87` (3 entries — plan claimed 2,
+  drift); `ML_Headers/ConfidenceScore.hpp:714` FOREACH_DEGRADATION_CURVE;
+  `Strategies/BarrierBlendModeRegistry.hpp:82` (5 entries — plan's
+  proposed labels `SHADOW_A`/`SHADOW_B` did NOT match actual
+  `BOTH_BLEND_DRIVES`/`BOTH_DOMINANT_DRIVES`, would have rendered
+  wrong labels in GUI). Mirror-incomplete shape at the **enum label
+  table layer** — same shape as function-mirror at predicate layer.
+  Caught by `/merge-scan` F1 (Class 18 mirror-incomplete risk in plan
+  Step 3) reported in
+  `plans/plan_checks/2026-05-14-v5.15.5.F.4c-fresh-audits-synthesis.md`.
+  Plan amended at v5.15.5.F.4d planning to reuse via X_GEN_LABEL
+  helper at each registry source → exports auto-generated
+  `extern const char* const NAME_LABELS[]` → CfgFieldRegistry
+  references the extern. Single source of truth preserved; future
+  enum-name renames flow automatically. Pattern codification candidate:
+  "cross-registry label export pattern" (sub-pattern of
+  `x-macro-registry-with-presence-dispatch.md`); promote to
+  DESIGN_SPEC after 2nd application.
 
 **Prevention:**
 
@@ -1346,12 +1388,14 @@ rg "switch\s*\(.*descriptor\.type|\.kind\s*==.*Descriptor" .
 
 **Known instances:**
 - 2026-05-14: surfaced during v5.15.5.F.4 design discussion. Pre-design considered separate BacktestCfgFieldDescriptor / ControllerCfgFieldDescriptor / SecretsCfgFieldDescriptor / TrainingCfgFieldDescriptor for the 5 cfg files; rejected in favor of ONE CfgFieldDescriptor + `lives_in_struct` discriminator + extension points (metadata bits, Kind enum values, sidecar tables). Per `DESIGN_SPECS/universal-cfg-field-registry-pattern.md` + `DESIGN_SPECS/categorical-tag-applicability-pattern.md` § "Cross-file cfg unification".
+- **v5.15.5.F.4d planning (2026-05-14 — structural closure at the drift-detection surface)**: original Option D framing kept `FOREACH_CFG_DRIFT_CHECK` wide variant (19 entries) as a PARALLEL registry alongside `FOREACH_CFG_FIELD` post-derived-filter — preserving Class 21 risk at the drift-detection surface. Re-examined during operator consult; replaced wide-variant with **sidecar override pattern** (`FOREACH_DRIFT_OVERRIDE` ~5 entries indexed by FIELD_IDX; CFG_DRIFT_AUTOPOPULATE walks STAMP_BOUND derived filter + dispatches via override lookup). Single auto-flow path; per-field customization via small sparse sidecar; wide-variant CfgDriftCheckRegistry deprecated. Class 21 structurally closed at the auto-flow-with-overrides surface. Pattern codified in `DESIGN_SPECS/sidecar-override-pattern-for-registry-auto-flows.md` (DRAFT v1.0 pending .F.4d ship); generalizable to 6 future surfaces (per-strategy custom gating, per-feature custom validation, custom cfg rendering, custom INT_ENUM parsing, per-failure-mode escalation, per-slow-path-gate evaluation). Per `DESIGN_PHILOSOPHY.md` § 1.5 (Framework discipline meta-principle) + CLAUDE.md item 31.
 
 **Prevention:**
 - **Single descriptor + discriminator pattern:** ONE descriptor type + an enum field (e.g., `LivesInStruct`) that routes data to the appropriate underlying struct. Adding a new "kind" of data = new enum value; descriptor unchanged.
 - **Extension points:** metadata bitmap for feature flags; Kind enum for type-specific handling; sidecar tables for sparse per-entry data that doesn't fit the common descriptor.
-- **`/merge-scan` extension:** flag parallel descriptors with ≥70% field overlap as consolidation candidates.
-- CLAUDE.local.md "Going-forward rule: cross-file cfg surfaces use lives_in_struct (set 2026-05-14)".
+- **Sidecar override pattern for auto-flowed registries** (added 2026-05-14 from .F.4d planning): when a registry has standard-case auto-flow PLUS custom-semantics cases, use a sidecar override table indexed by parent registry's FIELD_IDX + CI cross-check; NEVER a parallel wide-variant registry. See `DESIGN_SPECS/sidecar-override-pattern-for-registry-auto-flows.md`. Aligns with H17 (pending invariant at .F.4d ship).
+- **`/merge-scan` extension:** flag parallel descriptors with ≥70% field overlap as consolidation candidates. Extended to flag parallel registries-over-same-parent.
+- CLAUDE.local.md "Going-forward rule: cross-file cfg surfaces use lives_in_struct (set 2026-05-14)" + "Framework discipline over ad-hoc (set 2026-05-14)".
 
 **Related classes:**
 - Class 18 (Mirror-incomplete plans) — same shape at function level

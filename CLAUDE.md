@@ -107,6 +107,8 @@ Full discussion: `DOCS/DESIGN_PHILOSOPHY.md` § 2 + `DOCS/STRATEGY_AND_CODING_RU
 | H12 | Structs in byte-equivalence contexts (memcmp / SHA-256 / wire format / HMAC input): EXPLICIT `int<N>_t _padding<N> = 0;` default-init fields |
 | H13 | Type-erased `*reinterpret_cast<T*>((char*)cfg + offset) = v` style dispatch is FORBIDDEN — use `tt::<verb>_field<T>` with T deduced (Class 23 3-barrier fix) |
 
+**Pending at v5.15.5.F.4d ship** (slots reserved; see `DOCS/DESIGN_PHILOSOPHY.md` § 3): H14 (every X-macro registry in `FOREACH_REGISTRY`), H15 (every metadata bit has a derived filter or documented exemption), H16 (cfg struct fields generated from `FOREACH_CFG_FIELD`; no manual cfg declarations), H17 (custom-semantics via sidecar override pattern; no parallel wide-variant registries — STRONG → HARD at 2nd cohort application), H18 (LEVEL > 0 registries declare PARENT in `FOREACH_REGISTRY`).
+
 ## Code Conventions
 
 - `using namespace std;` throughout
@@ -143,7 +145,12 @@ area:**
 | When working on... | Read |
 |---|---|
 | Cold-pickup / WHY any principle / design decision / contributor onboarding | `DOCS/DESIGN_PHILOSOPHY.md` (private; thematic narrative + 4-tier discipline + cross-ref index) |
-| Reusable architectural pattern catalog (27 patterns) | `tick-trader-percore-workspace/DESIGN_SPECS/README.md` |
+| Reusable architectural pattern catalog (57+ patterns; tagged by surface/concern/lifecycle/applications) | `tick-trader-percore-workspace/DESIGN_SPECS/README.md` |
+| Why frameworks (meta-principle: extensibility through framework discipline) | `DOCS/DESIGN_PHILOSOPHY.md` § 1.5 + item 31 |
+| Metadata-bit-driven derived filter framework (.F.4d) | `DESIGN_SPECS/metadata-bit-driven-derived-filter-framework.md` |
+| Codebase-wide registry-of-registries discipline (.F.4d) | `DESIGN_SPECS/meta-registry-pattern-for-codebase-registry-discipline.md` |
+| Sidecar override pattern for registry auto-flows (.F.4d) | `DESIGN_SPECS/sidecar-override-pattern-for-registry-auto-flows.md` |
+| Framework composition overview for cfg infra (.F.4d) | `DESIGN_SPECS/framework-composition-overview.md` |
 | Bug class catalog + detection signatures | `DOCS/RECURRING_BUG_PATTERNS.md` |
 | Hard invariants (full 11-rule discussion) | `DOCS/STRATEGY_AND_CODING_RULES.md` (private) |
 | Latency optimization audit findings (13 parts) | `DOCS/LATENCY_OPTIMIZATION_AUDIT.md` (private) |
@@ -165,7 +172,10 @@ authoritative when needed.
 |---|---|
 | Add a strategy | `/strategy-template` skill + `DOCS/CLAUDE_INTEGRATION.md` |
 | Add a cfg field (KIND_DOUBLE/_PCT) | 1 row in `CoreFrameworks/CfgFieldRegistry.hpp` (parser + GUI + tooltip auto-flow) |
-| Add a cfg field (KIND_INT/_BOOL/_STRING) | Wait for `.F.4c`/`.F.4d` migration; until then add to manual parser + field_defs[] |
+| Add a cfg field (KIND_INT/_BOOL non-STAMP_BOUND) | After `.F.4c` ships: 1 row in `FOREACH_CFG_FIELD` (tt:: dispatch + GUI render + per-core override auto-flow). Before `.F.4c`: manual parser + field_defs[]. |
+| Add a cfg field (STAMP_BOUND) | After `.F.4d` ships: 1 row in `FOREACH_CFG_FIELD` with STAMP_BOUND metadata bit (derived filter + Layer 5b hash + drift check auto-flow). Before `.F.4d`: stays in legacy `FOREACH_STAMP_BOUND_CFG`. |
+| Add a cfg field (KIND_STRING/_FILE_PATH) | After `.F.4e` ships: 1 row. Before `.F.4e`: manual. |
+| Add a new derived filter (metadata-bit cohort) | After `.F.4d` ships: 1 row in `FOREACH_DERIVED_FILTER` (framework auto-flow). See `DESIGN_SPECS/metadata-bit-driven-derived-filter-framework.md`. |
 | Add an ML feature | `ML_Headers/FeatureRegistry.hpp` + `DOCS/CLAUDE_ML_INVARIANTS.md` |
 | Add a SHALT code / halt reason / regime / strategy / bandit algo | Registry table per X-macro pattern (CLAUDE.md item 13 → `DESIGN_PHILOSOPHY.md` § 7) |
 | Add a stateful GUI panel | `DOCS/CLAUDE_INTEGRATION.md` § "GUI panels" + display↔execution invariant check |
@@ -200,6 +210,7 @@ Multi-skill audit gate before HIGH-RISK ships: `/parity-check + /trace-deps + /r
 **End of CLAUDE.md.** Always-loaded orientation. The 30 architectural
 items previously here moved to `DOCS/DESIGN_PHILOSOPHY.md` (private)
 where they're grouped by family with WHY context + 4-tier discipline
-classification + cross-reference index. CLAUDE.local.md (private
-overlay) layers operator preferences + going-forward rules + sprint
-state on top of this baseline.
+classification + cross-reference index. Item 31 (framework-driven
+extensibility meta-principle; § 1.5) added at v5.15.5.F.4d planning.
+CLAUDE.local.md (private overlay) layers operator preferences +
+going-forward rules + sprint state on top of this baseline.

@@ -1,7 +1,8 @@
 # Multi-bit state encoding + branchless inference API
 
 **Established:** 2026-05-13 (post-v5.15.5.C.2)
-**Status:** PROPOSED (zero applications yet; DESIGN_SPEC drafted before first application per CLAUDE.local.md "DESIGN_SPECS written BEFORE coding" rule)
+**Status:** INVARIANT (post-`.F.4d` ship; 3 canonical applications: EVENT_LOG_MODE + DriftOverride + RegistryRosterEntry + ManualFieldInventoryEntry meets ≥3-application invariant-promotion threshold per `pattern-codification-lifecycle.md`)
+**Tags:** structural-fix, framework-discipline, hot-path-cache-density; closes byte-waste anti-pattern; serves H6 (cache-line discipline) + H12 (struct padding determinism); Stage 5+ (CLAUDE.md item 30 — promoted to INVARIANT at `.F.4d`); 4+ applications
 **Cross-references:**
 - Sister pattern: `bitmap-flag-api.md` (the 1-bit specialization — N booleans into 1 word)
 - Generalizes: same compressive-storage philosophy as Portfolio<uint16_t> (CLAUDE.md item 1)
@@ -628,16 +629,70 @@ Found in the FoxML_Trader_v2 codebase as of 2026-05-13:
 - Sister: `bitmap-flag-api.md` second-tier application section (same registry;
   first canonical HYBRID storage application)
 
+### Second application: DriftOverride bit-packed flags (v5.15.5.F.4d)
+
+- File: `CoreFrameworks/CfgFieldDriftOverride.hpp` (NEW at `.F.4d`)
+- Struct: `DriftOverride` — 8 bytes (flags uint8_t + eps_idx uint8_t + explicit
+  padding)
+- Bits packed: has_override (1 bit) + severity (1 bit) + category (1 bit) +
+  compare_kind (2 bits) = 5 bits used / 3 bits reserved
+- Replaces: would-have-been `struct { uint8_t severity; uint8_t category;
+  uint8_t compare_kind; uint8_t _pad; double custom_eps; }` (16 bytes) →
+  `struct { uint8_t flags; uint8_t eps_idx; int16_t _padding1; int32_t _padding2; }`
+  (8 bytes). 50% memory reduction; cache-line packs 8 entries per 64B line
+  vs 4 entries previously.
+- Branchless accessors: `drift_ovr_has` / `_severity` / `_category` /
+  `_compare_kind` per `bitmap-flag-api.md` API style
+- Sparse eps values via separate constexpr `g_drift_custom_eps[]` table
+  (~5 unique values; index 1 byte into per-row struct)
+- Pattern: applies bit-packing-for-state-fields discipline (DESIGN_PHILOSOPHY § 4
+  STRONG bullet added 2026-05-14)
+
+### Third application: RegistryRosterEntry bit-packed flags (v5.15.5.F.4d)
+
+- File: `CoreFrameworks/RegistryRoster.hpp` (NEW at `.F.4d`)
+- Struct: `RegistryRosterEntry` — 40 bytes total
+- Bits packed: `flags` uint8_t = LEVEL (4 bits; 0-15) + WIRE_FORMAT_KIND
+  (2 bits; NOT_WIRE/WIRE_FORMAT/TWO_SOURCE/MIXED) + reserved (2 bits)
+- Replaces: would-have-been `uint8_t level; uint8_t wire_format_kind; uint8_t _pad[2];` =
+  4 bytes → 1 byte packed flags
+- Branchless accessors: `roster_level(flags)` / `roster_wire_format_kind(flags)`
+- Bug_class column: 5 bits used / 3 bits reserved in `uint8_t bug_class`
+  (Class N codes 0-31 fit; future growth to Class 32-255 fits in reserved)
+
+### Fourth application: ManualFieldInventoryEntry bit-packed kind (v5.15.5.F.4d)
+
+- File: `MANUAL_FIELDS_INVENTORY.md` (workspace DOCS; output of cfg field audit)
+- Struct: per-entry encoding for non-cfg manual fields documented in inventory
+- Bits packed: `kind` uint8_t = CATEGORY (3 bits; DERIVED/RUNTIME_STATE/PER_CORE_OVERRIDE/INTERNAL) + reserved (5 bits)
+
+### 3-application threshold → INVARIANT promotion
+
+Per `pattern-codification-lifecycle.md` Stage 5 criteria (≥2 applications OR
+DESIGN_SPEC + ≥1 application AND pattern is broad → CLAUDE.md item promotion):
+the pattern has 3 canonical applications across DIFFERENT domains (OMS state
+encoding + sidecar drift override + registry roster + manual fields
+inventory). Promoted to INVARIANT STATUS at `.F.4d` ship. Same status as
+sliding-window-online-statistics-pattern (CLAUDE.md item 29).
+
 ---
 
 ## Cross-references to CLAUDE.md
 
-This pattern, once applied 2× in the codebase, qualifies for promotion to a CLAUDE.md item per the CLAUDE.local.md "codify design principles as patterns mature" going-forward rule (set 2026-05-09). Currently at 1 application (EVENT_LOG_MODE above); promote when 2nd application surfaces (likely candidate: regime state in CoreContext per "First-application recommendation" above).
+**CLAUDE.md item 30** (codified v5.15.5.F.3; promoted to INVARIANT at v5.15.5.F.4d):
+> **30. Multi-bit state encoding via N-bit packed slots — INVARIANT.** K-state field (K=2..16) within a record stores in `ceil(log2(K))` bits. Branchless inference API (MBS_GET / EQ / IN_SET / SELECT_EQ / dispatch table). See `DESIGN_SPECS/multi-bit-state-encoding-pattern.md` + sister `bitmap-flag-api.md` (1-bit specialization). 4 canonical applications: EVENT_LOG_MODE (v5.15.5.C.3) + DriftOverride + RegistryRosterEntry + ManualFieldInventoryEntry (all v5.15.5.F.4d).
 
-Pre-promotion: this DESIGN_SPEC stands alone; consumers reference it directly from their X-macro registry headers.
+**Future application candidates** (cfg field audit at `.F.4d` may surface more):
+- `RegimeClassification` in CoreContext (4 states; 2 bits)
+- `strategy_id` in per-core slow-state (5-8 strategies; 3 bits)
+- `OrderType` in Order<F> (4-8 types; 3 bits)
+- `TradeEventType` on TradeEvent<F> (3 states; 2 bits)
+- `OrderState` on Order<F> (5 states; 3 bits)
+- `halt_reason` on PerCoreSnap (4-8 reasons; 3 bits)
 
-Post-promotion (after 2+ applications shipped): add CLAUDE.md item:
-> **N. Multi-bit state encoding via N-bit packed slots** — K-state field (K=2-16) within a record stores in `ceil(log2(K))` bits. Branchless inference API (MBS_GET / EQ / IN_SET / SELECT_EQ / dispatch table). See `DESIGN_SPECS/multi-bit-state-encoding-pattern.md` + sister `bitmap-flag-api.md` (1-bit specialization).
+Per `/dod-audit` Stage 6 detection signature added 2026-05-14: any new struct
+with ≥2 adjacent `uint8_t state_<N>` fields where each represents an enum
+≤4 values → flagged as bit-packing candidate.
 
 ---
 

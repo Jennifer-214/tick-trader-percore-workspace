@@ -79,6 +79,78 @@ Decision rules that fall out of this:
 
 ---
 
+## 1.5 Framework discipline (the meta-principle behind structural fixes)
+
+This codebase deliberately invests upfront complexity in FRAMEWORKS — X-macro
+registries, AUTOPOPULATE companions, type-trait dispatch (`tt::` namespace),
+derived-filter macros, sidecar override tables, meta-registries — when the
+trade-off math favors framework over ad-hoc:
+
+1. **Pattern recurrence is foreseeable** (≥2 future applications projected)
+2. **Bug class can recur** (sites can drift apart over time)
+3. **Framework cost ≤ projected savings across N applications** (upfront LOC + maintenance < per-instance ad-hoc cost × N)
+
+The trade-off: framework code is HARDER TO READ at first encounter than
+ad-hoc per-instance code. The PAYOFF is that future additions become
+1-row mechanical changes; the framework's API encodes the discipline so
+contributors can't drift from it.
+
+### Why this matters in this codebase specifically
+
+Recurring drift classes have cost 1-3h per occurrence on average, and we've
+seen 3-4× recurrence on classes that "weren't going to come back" — Class 14
+plan-API-drift (5× recurrence), Class 18 mirror-incomplete (4× recurrence
+before `EnsembleModelZoo_PostLoadSetup` structurally closed it), Class 21
+parallel descriptors (closed structurally at v5.15.5.F.4 via single
+`CfgFieldDescriptor` + `lives_in_struct` discriminator). Each framework that
+closes a bug class structurally saves multiples of its upfront cost.
+
+### Complexity budget calculation
+
+Before investing in a framework, compute the breakeven:
+- **Upfront cost:** framework code LOC + DESIGN_SPEC drafting + audit/test infrastructure
+- **Per-application savings:** avoided per-instance LOC × projected N applications
+- **Breakeven N ≈ upfront cost / per-app savings**
+
+For the v5.15.5.F.4 cfg-registry work: upfront ~1500 LOC; per-app savings
+50-200 LOC × ~20 known future applications (cfg fields + derived filters +
+drift overrides + new registries) = breakeven within the v5.15.6 sprint;
+lifetime payoff 4-10×.
+
+### When NOT to invest in a framework
+
+- Single known application + no clear recurrence signal (one-shot bug fix)
+- Pattern variance too high (no shared shape to extract)
+- Framework cost ≥ projected savings × N (negative ROI)
+- Premature: less than 3 codebase applications + no DESIGN_SPEC yet
+  (per `pattern-codification-lifecycle.md` Stage 2 requirement)
+
+### Composition reduces total complexity
+
+Multiple frameworks often COMPOSE — e.g., the v5.15.5.F.4d ship composes:
+- Universal cfg registry (`FOREACH_CFG_FIELD`)
+- `tt::` type-trait dispatch (parse / save / render trio)
+- Derived-filter framework (`FOREACH_DERIVED_FILTER` over CFG_FIELD)
+- Sidecar override pattern (over CFG_FIELD)
+- Meta-registry (`FOREACH_REGISTRY` managing all the above)
+- X-macro struct generation (Cfg struct fields from `FOREACH_CFG_FIELD`)
+
+The composition is intentional. Each framework handles ONE concern;
+together they extinguish 5 bug classes (Class 14, 18, 19, 21, 23). Without
+the framework discipline, each concern would be solved independently with
+parallel infrastructure — more total complexity, less coverage.
+
+### Cross-references
+
+- § 7 Structural-fix family — the bug-class-recurrence motivation
+- § 11 Process discipline — "don't measure structural work by LOC"
+- `DESIGN_SPECS/pattern-codification-lifecycle.md` — the 7-stage codification process
+- `DESIGN_SPECS/structural-fix-preferred-decision-framework.md` — direct-patch vs structural-fix decision
+- CLAUDE.md item 19 — structural fix preferred (codified principle)
+- CLAUDE.md item 31 — framework-driven extensibility (codifies THIS section)
+
+---
+
 ## 2. Hard invariants (NEVER break)
 
 These define what this codebase IS. Breaking any of them = building a
@@ -98,6 +170,17 @@ different codebase.
 | H10 | AVX-512 SIMD kernels MUST have a scalar fallback producing BYTEWISE IDENTICAL output | HARD | CLAUDE.md item 25; DESIGN_SPECS/avx512-byte-determinism-pattern.md |
 | H11 | Math kernels on slow/hot path are CONSTANT-ITER + branchless within the inner reduction | HARD | CLAUDE.md item 26; DESIGN_SPECS/branchless-math-kernel-pattern.md |
 | H12 | Structs used in byte-equivalence contexts (memcmp / SHA-256 / wire format) have EXPLICIT zero-init padding fields | HARD | CLAUDE.md item 27; DESIGN_SPECS/struct-padding-determinism-pattern.md |
+| H13 | Type-erased `*reinterpret_cast<T*>((char*)cfg + offset) = v` style dispatch is FORBIDDEN — use `tt::<verb>_field<T>` with T deduced (Class 23 3-barrier fix) | HARD | CLAUDE.md item 23; DESIGN_SPECS/type-trait-dispatch-via-tt-namespace.md; RECURRING_BUG_PATTERNS Class 23 |
+
+**Pending codification at v5.15.5.F.4d ship** (DRAFT slots reserved here; concrete wording locks when shipped):
+
+| # | Rule | Tier | Source |
+|---|---|---|---|
+| H14 | Every X-macro registry in the codebase MUST have a row in `FOREACH_REGISTRY` (CI-checked). Adding a new registry without registering it FAILS the build. | HARD (pending .F.4d) | DESIGN_SPECS/meta-registry-pattern-for-codebase-registry-discipline.md; CLAUDE.md item 31 |
+| H15 | Every metadata bit on `FOREACH_CFG_FIELD` MUST have either (a) a corresponding derived filter declared in `FOREACH_DERIVED_FILTER` OR (b) documented "no-derived-filter" exemption with rationale (CI cross-check enforces). | HARD (pending .F.4d) | DESIGN_SPECS/metadata-bit-driven-derived-filter-framework.md |
+| H16 | Cfg struct field declarations MUST come from `FOREACH_CFG_FIELD` via X-macro generation; manual cfg field declarations FORBIDDEN. Runtime/derived state stays manual but is documented in `MANUAL_FIELDS_INVENTORY.md` with rationale. | HARD (pending .F.4d) | DESIGN_SPECS/universal-cfg-field-registry-pattern.md § Reverse-drift |
+| H17 | Custom-semantics overrides on auto-flowed registries MUST use the sidecar override pattern; parallel wide-variant registries FORBIDDEN over the same parent registry. (Promoted from STRONG to HARD at second cohort application.) | STRONG → HARD (pending .F.4d) | DESIGN_SPECS/sidecar-override-pattern-for-registry-auto-flows.md |
+| H18 | Registries with LEVEL > 0 MUST declare PARENT in `FOREACH_REGISTRY` tuple; PARENT must exist in `FOREACH_REGISTRY` or equal ROOT (CI-checked). | HARD (pending .F.4d) | DESIGN_SPECS/meta-registry-pattern-for-codebase-registry-discipline.md |
 
 These are the floor. Everything below builds on them.
 
@@ -124,6 +207,14 @@ larger working sets OK, but no syscalls / no allocations / no mutex).
 - Cache: flag-set for entire core fits one word
 - Use `BITMAP_*` macros from `MemHeaders/BitmapMacros.hpp` (CLAUDE.md item 20)
 - Per-record bit-packing (one bit per record across many records) is the EXCEPTION — usually loses to per-record cache locality
+
+**STRONG: Bit-pack small-state fields (1-3 bits each) into a single byte/word — NOT adjacent `uint8_t` fields.**
+- Anti-pattern: `struct { uint8_t severity; uint8_t category; uint8_t mode; uint8_t _pad; }` — wastes 3 bytes; loses cache-line packing efficiency; later widening (uint8 → uint16) is schema bend
+- Pattern: pack states as bits in a single `uint8_t` / `uint16_t` with named bit positions + branchless accessor helpers (per `bitmap-flag-api.md`)
+- Apply DURING struct design — retrofitting later is schema bend (consumer macros need updates)
+- For ≥4 distinct values per field: use multi-bit slots per `multi-bit-state-encoding-pattern.md` (CLAUDE.md item 30)
+- Detection: any new struct with ≥2 adjacent `uint8_t state_<N>` fields where each represents an enum of ≤4 values → consolidation candidate. `/dod-audit` Stage 6 detection signature.
+- Canonical applications: `DriftOverride` flags + `RegistryRosterEntry.flags` + `ManualFieldInventoryEntry.kind` (all v5.15.5.F.4d ship)
 
 **STRONG: Cluster fields by access pattern, not declaration convention.**
 - Hot READS go in line 0 (first cache line of struct)
@@ -685,6 +776,11 @@ for quick lookups when implementing or reviewing.
 | Boundary-stable refactors | (memory rule) | — | — |
 | Audit-driven pre-coding gate | (CLAUDE.local.md rule) | audit-driven-pre-coding-gate.md | — |
 | Pattern codification lifecycle | (CLAUDE.local.md rule) | pattern-codification-lifecycle.md | — |
+| Framework-driven extensibility (meta-principle) | 31 | (§ 1.5 — this doc) | — |
+| Metadata-bit-driven derived filter framework | (item 31 sub-pattern) | metadata-bit-driven-derived-filter-framework.md | — |
+| Meta-registry of registries (codebase-wide) | (item 31 sub-pattern) | meta-registry-pattern-for-codebase-registry-discipline.md | — |
+| Sidecar override pattern for auto-flows | (item 31 sub-pattern) | sidecar-override-pattern-for-registry-auto-flows.md | — |
+| Framework composition (cfg infra at .F.4d) | (item 31 sub-pattern) | framework-composition-overview.md | — |
 | Plan API drift (fictional functions) | — | — | Class 14 |
 | Function signature drift | — | — | Class 15 |
 | Naming convention drift | — | — | Class 16 |

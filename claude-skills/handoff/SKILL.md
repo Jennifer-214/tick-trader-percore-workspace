@@ -68,6 +68,29 @@ return an error. /handoff is only invoked from main session.
    - Latest tag (rollback anchor for the new ship)
    - Clean working tree status
 
+### Stage 1.5 — Capture in-flight task state (TaskList serialization)
+
+**NEW (set 2026-05-15 per operator request after `.F.4c.3` Step 2 partial handoff — without explicit TaskList capture, fresh-session pickup loses track of the multi-step plan progress; in-flight tasks must be recreated from memory which drifts).**
+
+Before composing the handoff body, invoke `TaskList` and serialize the result into a structured table that the generated handoff embeds verbatim. Each task entry captures:
+
+| Field | Source |
+|---|---|
+| ID | TaskList task ID (e.g., `#4`) |
+| Status | `completed` / `in_progress` / `pending` |
+| Subject | task subject line |
+| Description (optional) | task description if non-empty and load-bearing |
+
+The captured table goes into the generated handoff doc body under a dedicated section: **"## TaskList state at handoff write (preserve verbatim for fresh-session pickup)"** between the "What remains" section and the "Paste this prompt" code block.
+
+The generated cold-pickup prompt MUST include an instruction in its Step 0 (or wherever appropriate):
+
+> **Recreate the TaskList** from this handoff's TaskList table — use TaskCreate for each entry to preserve the multi-step plan tracking. Mark <completed-ids> completed, <in-progress-ids> in_progress, <pending-ids> pending.
+
+This eliminates the "TaskList evaporates between sessions" failure mode. Fresh-session-me knows immediately which sub-steps remain, which are in progress (typically only 1), and which are done.
+
+If TaskList is empty at handoff write time, the generated handoff says "No active task list — fresh-session pickup may create one based on remaining sub-commits enumerated below."
+
 ### Stage 2 — Read source docs (DYNAMIC catalog ingestion)
 
 Read these dynamically (NOT hardcoded). The skill's value is freshness:
@@ -186,6 +209,24 @@ Assemble the prompt with this structure:
 
 ---
 
+## TaskList state at handoff write (preserve verbatim for fresh-session pickup)
+
+| ID | Status | Subject |
+|---|---|---|
+<row per task from Stage 1.5 capture; e.g.,>
+| #1 | completed | Step 0.A — Tag rollback anchor + verify build baseline |
+| #2 | completed | Step 0.C — Cfg field scope classification table |
+| #3 | completed | Step 1 — Two-registry framework infrastructure |
+| #4 | **in_progress** | **Step 2 — Cohort migration + ControllerConfig restructure** |
+| #5 | pending | Step 3 — Parser state machine for [core N] sections |
+| <...> |
+
+**Fresh-session pickup should recreate this TaskList** via TaskCreate for each entry so the multi-step plan stays trackable across sessions. Mark <completed-ids> completed, <in-progress-id> in_progress, <pending-ids> pending immediately after recreation.
+
+If no in-flight tasks at handoff write: "No active task list — fresh-session pickup may create one from the remaining sub-commits below if helpful."
+
+---
+
 ## Paste this prompt into a fresh Claude Code session to start <ship-tag>
 
 ```
@@ -224,7 +265,9 @@ This is a fresh context window; do NOT trust any prior-session memory
 
    Drift indicates ship(s) landed between handoff + pickup. Cross-reference `CLAUDE.local.md` snapshot vs handoff snapshot; flag divergences as `[DRIFT]` items requiring re-verification before coding.
 
-4. **Read BEFORE WRITING CODE (per CLAUDE.local.md required reading):**
+4. **Recreate TaskList from the handoff's "TaskList state" section.** Use TaskCreate per entry to preserve multi-step plan tracking. After all created, set statuses to match the handoff snapshot (`completed` / `in_progress` / `pending`). Without this step the multi-step plan progress evaporates and you'll re-discover already-done work.
+
+5. **Read BEFORE WRITING CODE (per CLAUDE.local.md required reading):**
    - `DOCS/STRATEGY_AND_CODING_RULES.md` (11 strict invariants — private)
    - `plans/_cross-cutting/2026-05-06-latency-path-discipline.md` (7 latency-path rules + Rule 8 mask-blend)
    - `DOCS/LATENCY_OPTIMIZATION_AUDIT.md` (13-part audit — private; touch domain-relevant parts)
@@ -438,6 +481,7 @@ The skill consumes (READS) these dynamically:
 - `/home/caramel/code/FoxML_Trader_v2/CLAUDE.md` — public project instructions
 - `/home/caramel/code/FoxML_Trader_v2/Version.hpp` — current version (for sprint detection)
 - Plan file at the resolved path
+- **Live `TaskList` invocation** — serialize current in-flight task state into the generated handoff (Stage 1.5; set 2026-05-15)
 
 The skill INSTRUCTS the generated prompt to invoke these as Layer 2:
 - `/readiness` — plan re-verification + cold-pickup check (Step 1 of generated prompt)

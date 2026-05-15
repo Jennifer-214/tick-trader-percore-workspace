@@ -1,0 +1,37 @@
+
+  Why each was deferred (honest reasoning)
+
+  Item: Item 5 (per-core override refactor)
+  Reason: Genuinely scope-separable. Per-core tab is a structurally distinct GUI surface (different sections,
+    per-core dropdowns, model-path picker). Adding PerCoreOverrides typed mirror + g_cfg_per_core_override_mask
+    walker is another ~80 LOC + careful read of per-core tab edge cases. The Global-tab refactor is the
+    load-bearing structural win; per-core is the sister-pattern ship. Clean boundary.
+  ────────────────────────────────────────
+  Item: Item 6 (Reset+Modified UI)
+  Reason: Framework support is shipped (tt::cfg_assign_field + tt::cfg_diff_field ready). The deferral is purely
+
+    UI button wiring (~60 LOC). Lower priority than cohort migrations + tests. Trivial follow-up.
+  ────────────────────────────────────────
+  Item: use_real_money custom hook
+  Reason: Has conditional "REAL MONEY" warning label rendered only when value=1. Bitmap walker doesn't have a
+    post-render hook mechanism yet. Needs design (likely a FOREACH_CFG_POST_RENDER_HOOK sidecar registry —
+    sidecar override pattern). Real design work, not mechanical.
+  ────────────────────────────────────────
+  Item: reconcile_dry_run tagging
+  Reason: Honestly I just missed it. It's a DEPRECATED back-compat shim with paired writes
+  (cfg.reconcile_dry_run
+    + cfg.reconcile_mode + cfg_keys_explicit bit). Should have been added to FOREACH_CFG_FIELD as a
+    HAS_SIDE_EFFECT + DEPRECATED registry-only row alongside the 4 others. Tiny follow-up (~10 LOC).
+  ────────────────────────────────────────
+  Item: TECH_DEBT-068 ML enum registries
+  Reason: Substantial new work. Each enum needs FOREACH_<NAME> X-macro registry + _FromString / _ToString /
+    LABELS[] helpers (~50-80 LOC per registry × 6 registries = ~300-500 LOC). Own ship, not a follow-up sweep.
+  ────────────────────────────────────────
+  Item: TECH_DEBT-069 constexpr sweep
+  Reason: Operator-directed timing — Caramel said "end of v5.15.5.F umbrella" earlier in session. Firing now
+    would be premature. ~30-45 min mechanical work but operator wants it at a specific sprint boundary.
+
+  The "small" follow-ups (item 6 + reconcile_dry_run tagging) could be batched into a .F.4c.1 polish ship if you
+   want. The "substantial" ones (item 5 + use_real_money + TECH_DEBT-068) are their own ships.
+
+

@@ -33,9 +33,13 @@ This codebase is built around deterministic execution + tight tail latency — p
 
 ---
 
-## The principle
+## The principle (H20 invariant)
 
 **Data-dependent dispatch on slow-path / hot-path / drainer code is BRANCHLESS by default. Branches in these paths require explicit justification per the decision matrix below.**
+
+**H20 INVARIANT (CLAUDE.md):** Branchless preferred for SP/HP data-dependent dispatch EVEN WHEN NOMINALLY SLOWER. Mask code / fn pointer tables / cmov / mask-select / dummy-redirect approaches can be optimized later (better instruction selection at next compiler upgrade, vectorization opportunity, prefetch hints, hot-cold split). Branch mispredicts CANNOT be optimized away — they're a hardware cost (30-100ns real-world per `DESIGN_PHILOSOPHY.md` § 4). The choice isn't "minimize average cycles"; it's "minimize variance to make the system deterministic." A branchless dispatch that costs +5ns deterministic is better than a branch that costs 0-100ns variable, because the +5ns CAN be reduced over time while the 100ns mispredict tail CAN'T.
+
+This invariant inverts the throughput-frame default: don't ask "is the branch's expected cost acceptable?"; ask "can this be branchless?" If yes (per the decision matrix), make it branchless. Reach for branchy only when one of the documented exceptions applies (boot-time / `__builtin_expect`-rare / `if constexpr` / genuine binary predicate without alternative).
 
 Dispatch examples that should be branchless:
 - Order type → fill handler (BUY / SELL / LIMIT_BUY / LIMIT_SELL)

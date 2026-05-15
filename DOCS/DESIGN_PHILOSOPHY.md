@@ -84,10 +84,11 @@ Decision rules that fall out of this:
 - **Approach A (+N cycles, -M cache misses) beats Approach B (-N cycles, +M misses) when M > N/300.** For N=10 cycles, 1 saved miss = ~30× net win.
 - **Branchless A (+N cycles) beats branchy B (1 branch, M% mispredict) when M > N/100** (using real-world 30ns mispredict cost; was N/16 under textbook 5ns number). For data-dependent branches commonly mispredicting 30-50%, branchless ALWAYS wins.
 - **Branchless ALWAYS wins on p99** (deterministic cost vs branch's variable mispredict tail). For a system that values determinism over throughput (this codebase), p99 consistency dominates average throughput.
+- **H20 INVARIANT: Branchless preferred for SP/HP data-dependent dispatch EVEN WHEN NOMINALLY SLOWER.** Mask code / fn pointer tables / cmov / mask-select / dummy-redirect approaches can be optimized later (better instruction selection at next compiler upgrade, vectorization opportunity, prefetch hints, hot-cold split). Branch mispredicts CANNOT be optimized away — they're a hardware cost. The choice isn't "minimize average cycles"; it's "minimize variance to make the system deterministic." A branchless dispatch that costs +5ns deterministic is better than a branch that costs 0-100ns variable, because the +5ns can be reduced over time while the 100ns mispredict tail can't. Codified as H20 in CLAUDE.md. Closes Class 28 (branchy SP/HP dispatch when branchless feasible).
 - **NEVER syscall on hot path.** A single syscall costs more than the full per-tick budget.
 - **NEVER allow page faults on critical pages.** Lock memory at boot via `mlockall(MCL_CURRENT | MCL_FUTURE)`.
 - **NEVER acquire mutexes on hot/slow path.** The unbounded tail under contention nukes any latency budget.
-- **NEVER default to "branch is fine because predictor handles it" for SP/HP data-dependent dispatch.** That's a throughput frame applied to a determinism-prioritizing system. Default to branchless via fn pointer table / 2D state-table / pre-resolution per `DESIGN_SPECS/branchless-dispatch-discipline.md`.
+- **NEVER default to "branch is fine because predictor handles it" for SP/HP data-dependent dispatch.** That's a throughput frame applied to a determinism-prioritizing system. Per H20: default to branchless via fn pointer table / 2D state-table / mask-select / pre-resolution per `DESIGN_SPECS/branchless-dispatch-discipline.md`.
 
 **Cross-references:** CLAUDE.md item 28 (cycles vs cache), `DESIGN_SPECS/latency-vs-cache-decision-framework.md`, `DESIGN_SPECS/branchless-dispatch-discipline.md` (NEW at .F.4c.3 WIP2d-1.B.0d).
 

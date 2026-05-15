@@ -201,22 +201,61 @@ The single-param sig makes this impossible by construction: there's no flat-fiel
 
 ### Grep signatures — anti-pattern detection
 
-Audit hooks (firable via `/dod-audit` or `/bug-check`):
+Audit hooks (firable via `/dod-audit` or `/bug-check`). Most are now build-failing via `tools/check_per_core_registry_integrity.py` at `.F.4c.3` WIP2d-0; greps remain for manual audit or external-PR review.
 
 ```bash
 # A1: Consumer fn taking ControllerConfig<F>* (forbidden for per-core consumers)
+# Class 25 anti-pattern; closed structurally at WIP2g flat-field deletion.
 rg -n "(BuildParameters|_Tick|_Adapt|_Rebuild)\(.*const ControllerConfig<F>\*" --type cpp
 
 # A2: Per-core field read through `config->` instead of `core_cfg->` (in any fn taking PerCoreCfg<F>*)
 # Heuristic: a fn body containing both `core_cfg` and `config->` is suspicious — likely two-param
-# legacy that needs cleanup.
+# legacy that needs cleanup. Mixed-scope = Class 25 risk.
 rg -nP "(?s)PerCoreCfg<F>\*.*?config->[a-z_]+" --multiline --type cpp
+
+# A3 (NEW at WIP2d-0): Parallel array shadowing per-core registry row.
+# Scans ControllerConfig.hpp for `<type> core_<name>[(16|MAX_EXECUTION_CORES)]` declarations.
+# Every match MUST appear inside FOREACH_MANUAL_PER_CORE_FIELD X-macro expansion;
+# stray declarations elsewhere = Class A bug shape.
+rg -nP '^\s+\S+\s+core_\w+\[(16|MAX_EXECUTION_CORES)\]' CoreFrameworks/ControllerConfig.hpp
+
+# A4 (NEW at WIP2d-0): Anti-pattern 1 consumer (global default + per-core override).
+# Co-occurrence of cfg.<X> and cfg.core_overrides[<c>].<X> for same field X in same scope.
+# UNEXPRESSIBLE after WIP2f deletes core_overrides[16]; signature catches regression attempts.
+rg -nP '(?s)cfg\.(\w+).*?cfg\.core_overrides\[\w+\]\.\1' --type cpp
+
+# A5 (NEW at WIP2d-0): Manual struct field bypass in PerCoreCfg<F>.
+# After WIP2d-0 X-macro struct gen, PerCoreCfg<F> body should be EMPTY except for the
+# FOREACH_PER_CORE_CFG_FIELD(EMIT_PER_CORE_CFG_STRUCT_FIELD) call. Any other declaration
+# inside the struct body = Class B bug shape.
+# (Build-failing via CI; this grep is for manual cross-check.)
+rg -nP -A50 'struct alignas\(64\) PerCoreCfg' CoreFrameworks/ControllerConfig.hpp | \
+    rg -v 'FOREACH_PER_CORE_CFG_FIELD|alignas|^[\s-]*(struct|template|};|//|static_assert|$)'
+
+# A6 (NEW at WIP2d-0): Transitional exemption rot detection.
+# MANUAL_FIELDS_INVENTORY.md TRANSITIONAL entries with missing or already-shipped migration triggers.
+# (Build-WARN via CI; full automation at .F.4d.)
+rg -nP 'TRANSITIONAL.*delete at' DOCS/MANUAL_FIELDS_INVENTORY.md
 ```
 
 False-positive cases (documented exemptions):
-- `ControllerConfig_ResolveForCore` itself — the resolver that produces per-core views; takes `const ControllerConfig<F>&` by design. (Going away at Step 2 end anyway.)
-- Boot-time engine init paths that legitimately need the full cfg (multi-core setup; non-trading consumer).
+- `ControllerConfig_ResolveForCore` itself — the resolver that produces per-core views; takes `const ControllerConfig<F>&` by design. (Deleted at WIP2f.)
+- Boot-time engine init paths that legitimately need the full cfg (multi-core setup; non-trading consumer; documented per Class 25 catalog).
 - `ControllerConfig_NormalizeForMode` — operates on the whole cfg by design.
+- `FOREACH_MANUAL_PER_CORE_FIELD` X-macro expansion in ControllerConfig.hpp — A3 signature matches BUT the regex check excludes the X-macro expansion area (delimited by macro define + EMIT_MANUAL_PER_CORE_DECL undef).
+
+### CI enforcement (build-failing at WIP2d-0)
+
+The grep signatures above are codified in `tools/check_per_core_registry_integrity.py` (NEW at `.F.4c.3` WIP2d-0). The script runs at every `build.sh` invocation pre-compile:
+
+1. PerCoreCfg<F> field declarations cross-checked bidirectionally against FOREACH_PER_CORE_CFG_FIELD
+2. Parallel arrays must appear inside FOREACH_MANUAL_PER_CORE_FIELD expansion region
+3. FOREACH_MANUAL_PER_CORE_FIELD ↔ MANUAL_FIELDS_INVENTORY.md bidirectional cross-check
+4. No name duplication between FOREACH_PER_CORE_CFG_FIELD + FOREACH_MANUAL_PER_CORE_FIELD
+5. Anti-pattern 1 consumer scan (WARN; becomes ERROR after WIP2f)
+6. TRANSITIONAL exemption trigger sanity (WARN on missing; ERROR on already-shipped triggers)
+
+Violations BREAK the build with diff suggesting registry migration. New per-core fields flow through `FOREACH_PER_CORE_CFG_FIELD` mechanically (1-row addition); no other path exists.
 
 ### Caller-resolved globals — when to use scalar args vs adding a global param
 

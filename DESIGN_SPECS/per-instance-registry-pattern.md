@@ -204,6 +204,70 @@ Each new axis = 1 new `FOREACH_PER_<AXIS>_CFG_FIELD` X-macro + new struct genera
 
 **Caramel's stated direction (2026-05-15):** *"these can be generalized once we have it locked in to make the ML side easy to update as well? i guess thats the benefit of shared headers lol"* — the pattern is the shared-header dividend. ML side becomes 1-row-additions per future-axis registry.
 
+## Documented exemptions via FOREACH_MANUAL_PER_<AXIS>_FIELD
+
+Some fields legitimately can't fit the registry yet — KIND_STRING fields awaiting `.F.4e`, hex64 bitmaps awaiting type infrastructure, or fields TRANSITIONAL during migration. The per-instance-registry framework composes with `manual-fields-inventory-pattern.md` to handle these:
+
+```cpp
+// Default path: registry-driven; auto-flows everywhere
+#define FOREACH_PER_CORE_CFG_FIELD(X) \
+    X(FPN<F>,   KIND_DOUBLE_PCT, take_profit_pct, ...) \
+    /* ... ~92 registry-driven rows ... */
+
+// Exemption path: documented exceptions awaiting framework support OR transitional
+// Each row MUST have a MANUAL_FIELDS_INVENTORY.md entry; CI cross-checks.
+#define FOREACH_MANUAL_PER_CORE_FIELD(X) \
+    X(char,     core_model_dir,     "[64]",  "KIND_STRING cohort at .F.4e") \
+    X(uint64_t, core_feature_mask,  "",      "KIND_HEX64 needed at .F.4e") \
+    X(uint8_t,  core_strategies,    "",      "TRANSITIONAL — delete at WIP2g")
+    /* ... up to ~8 documented exemptions ... */
+```
+
+ControllerConfig declares parallel arrays via the X-macro ONLY:
+```cpp
+template <unsigned F>
+struct ControllerConfig {
+    PerCoreCfg<F> cores[MAX_EXECUTION_CORES];   // registry-driven (default)
+    
+    #define EMIT_MANUAL_PER_CORE_DECL(type, name, suffix, rationale) \
+        type name[MAX_EXECUTION_CORES] suffix;
+    FOREACH_MANUAL_PER_CORE_FIELD(EMIT_MANUAL_PER_CORE_DECL)
+    #undef EMIT_MANUAL_PER_CORE_DECL
+};
+```
+
+CI script (`tools/check_per_core_registry_integrity.py`) cross-checks bidirectionally:
+- Stray `core_X[16]` declarations outside FOREACH_MANUAL_PER_CORE_FIELD = BUILD ERROR
+- FOREACH_MANUAL_PER_CORE_FIELD entry without MANUAL_FIELDS_INVENTORY.md row = BUILD ERROR (and vice versa)
+- Name duplication between FOREACH_PER_CORE_CFG_FIELD + FOREACH_MANUAL_PER_CORE_FIELD = BUILD ERROR
+- TRANSITIONAL exemption with missing or already-shipped migration trigger = WARN/ERROR
+
+After this discipline lands at `.F.4c.3` WIP2d-0, manual-field-bypass + parallel-array drift are STRUCTURALLY UNEXPRESSIBLE for the per-core surface.
+
+See `manual-fields-inventory-pattern.md` (NEW Stage 2 DRAFT at .F.4c.3) for the full pattern documentation.
+
+## X-macro struct generation closes manual-field bypass
+
+The framework primitive at WIP2d-0 generates `PerCoreCfg<F>` struct fields via X-macro expansion:
+
+```cpp
+// Each FOREACH_PER_CORE_CFG_FIELD row carries STORAGE_TYPE as its first column:
+// X(STORAGE_TYPE, KIND_TOKEN, name, label, section, meta, payload, tooltip, ...)
+
+#define EMIT_PER_CORE_CFG_STRUCT_FIELD(STORAGE_T, KIND_TOKEN, name, label, section, meta, \
+                                        payload, tooltip, ...) \
+    STORAGE_T name;
+
+template <unsigned F>
+struct alignas(64) PerCoreCfg {
+    FOREACH_PER_CORE_CFG_FIELD(EMIT_PER_CORE_CFG_STRUCT_FIELD)
+};
+```
+
+After WIP2d-0, the struct body IS the X-macro expansion. No manual field declarations possible. Adding a field outside the registry = CI build error. Future per-core field additions flow through `FOREACH_PER_CORE_CFG_FIELD` mechanically (1-row addition).
+
+Sister rule for parallel array exemptions: `FOREACH_MANUAL_PER_CORE_FIELD` (see above) — same X-macro discipline applied to legacy exemptions.
+
 ## Anti-patterns to avoid
 
 - **"Global default + per-instance override" pattern.** This is the structural shape this DESIGN_SPEC eliminates. When you find yourself writing `global_value` PLUS `override_value[N]` PLUS `override_presence_bit[N]` PLUS resolve logic, stop. Either the field is genuinely global (use the global registry) OR it's per-instance (use the per-instance registry and eliminate the global default entirely). NO HYBRID.

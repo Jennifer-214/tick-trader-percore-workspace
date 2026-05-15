@@ -1,8 +1,8 @@
 # Meta-registry pattern for codebase-wide registry discipline
 
 **Established:** 2026-05-14 (v5.15.5.F.4d planning — DRAFT v1.0 pending ship)
-**Status:** DRAFT v1.0 (codification Stage 2; first canonical reference application at v5.15.5.F.4d)
-**Tags:** structural-fix, framework-discipline, discoverability; closes Class 18 at meta-layer (added registry but forgot to document) + Class 21 (parallel descriptors at registry-roster level); serves H14 + H18; Stage 2 (DRAFT); 0 production applications until `.F.4d` ships
+**Status:** Stage 3 ACTIVE v1.0 — **FIRST CANONICAL APPLICATION landed at v5.15.5.F.4c.3 WIP2d-0.B** (`FOREACH_PER_CORE_DOMAIN_BITMAP` meta-registry over the 5 cfg-domain bitmap registries — lifecycle/gate/ml/risk/ops; engine commit `4154009`). The application is bounded (5-row meta-registry; cfg-domain scope only); codebase-wide `FOREACH_REGISTRY` top-level meta-registry pattern (Level 0) lands at `.F.4d` as the second canonical application + H15 codification. Pattern composes upward: at `.F.4d`, `FOREACH_PER_CORE_DOMAIN_BITMAP` gets a row in `FOREACH_REGISTRY` itself.
+**Tags:** structural-fix, framework-discipline, discoverability; closes Class 18 at meta-layer (added registry but forgot to document) + Class 21 (parallel descriptors at registry-roster level); serves H14 + H18; Stage 3 (1 application landed; 1 pending at .F.4d)
 
 **Cross-references:**
 - Parent pattern: `x-macro-registry-with-presence-dispatch.md` (registries themselves; this is the meta-layer)

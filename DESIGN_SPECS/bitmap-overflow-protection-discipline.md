@@ -408,6 +408,36 @@ After `.F.4h` audit pass retrofits the existing bitmap inventory (10+ pairs abov
 
 ---
 
+## Auto-generation via meta-registry (added v5.15.5.F.4c.3 WIP2d-0.B)
+
+When a cohort of bitmap-paired registries shares the same shape (e.g., 5 cfg-domain bitmaps: lifecycle / gate / ml / risk / ops), the static_asserts can be **auto-generated via a meta-registry** per `meta-registry-pattern-for-codebase-registry-discipline.md`. This eliminates the manual maintenance burden — adding a new domain registry generates the matching static_assert automatically.
+
+Canonical first application at v5.15.5.F.4c.3 WIP2d-0.B — `FOREACH_PER_CORE_DOMAIN_BITMAP` meta-registry in `CoreFrameworks/CfgFieldRegistry.hpp`:
+
+```cpp
+#define FOREACH_PER_CORE_DOMAIN_BITMAP(X)                                                      \
+    /* align, domain,    field,                  storage,  child registry token */            \
+    X(8,      LIFECYCLE, lifecycle_cfg_flags,    uint8_t,  FOREACH_LIFECYCLE_CFG_FLAG)         \
+    X(0,      GATE,      gate_cfg_flags,         uint8_t,  FOREACH_GATE_CFG_FLAG)              \
+    X(0,      ML,        ml_cfg_flags,           uint16_t, FOREACH_ML_CFG_FLAG)                \
+    X(0,      RISK,      risk_cfg_flags,         uint8_t,  FOREACH_RISK_CFG_FLAG)              \
+    X(0,      OPS,       ops_cfg_flags,          uint8_t,  FOREACH_OPS_CFG_FLAG)
+
+#define EMIT_DOMAIN_OVERFLOW_ASSERT(align_n, domain, field, storage, child)                    \
+    static_assert(domain##_CFG_COUNT <= sizeof(storage) * 8,                                   \
+                  "Bitmap overflow: " #domain "_CFG_COUNT exceeds " #storage " bits; "          \
+                  "upgrade storage type in FOREACH_PER_CORE_DOMAIN_BITMAP row for " #domain);
+
+FOREACH_PER_CORE_DOMAIN_BITMAP(EMIT_DOMAIN_OVERFLOW_ASSERT)
+```
+
+This generates 5 static_asserts at file scope from the 5-row meta-registry — adding a 6th domain registry is 1 row addition + the assert auto-generates. **Defense in depth** alongside each child registry's own static_assert (per-domain assert catches storage-type/COUNT mismatch at child registry; meta-registry assert catches mismatch between meta-registry's declared storage and child's actual COUNT).
+
+Future application candidates for auto-generation:
+- Any cohort of FOREACH_X / paired-bitmap pairs (e.g., FAILURE_MODE bits if expanded to cohort)
+- ML feature registries with paired bitmaps (if shipped)
+- Strategy categorical-applicability bitmaps (`STRAT_CAT_*` if expanded to multi-domain meta-registry)
+
 ## Cross-references
 
 - `bitmap-flag-api.md` — bitmap accessor primitives (CLAUDE.md item 20); this spec adds the overflow guard discipline

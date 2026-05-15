@@ -163,6 +163,10 @@ Organized by category for quick discovery. Each pattern is one file in this dir.
 
 These are meta-patterns codified at v5.15.5.F.4d planning — frameworks that other patterns compose into. Each documents a framework that future-cohort migrations reuse 1-row mechanically.
 
+| Doc | Pattern | Status |
+|---|---|---|
+| `decision-time-data-binding-pattern.md` | The principle that per-instance cfg values bind at decision time and flow forward with the in-flight object (Order/Position/Event/TradeEvent), NOT in subsystem state. First line of defense: pre-resolve onto in-flight object. Second line (fallback): registry-driven per-instance cache (`FOREACH_<SUBSYS>_CFG_CACHE`). Codifies the framework-selection sub-principle (registries optimize for ADDING; principle+sweep optimizes for ELIMINATING) — first canonical "registry was wrong; principle is right" application. Closes Class 27 (scalar cfg-mirror flattens per-instance distinction). CI Check 7 + `/accounting-audit` skill + `/registry-fit-audit` skill enforce. | **NEW (v5.15.5.F.4c.3 WIP2d-1.B.0c)** DRAFT v1.0 — structural-fix, framework-selection, decision-framework; closes Class 27; serves H4 (accounting integrity) + H6 (cache discipline); Stage 2 (DRAFT); 0 applications until WIP2d-1.B.1 (Order `effective_fee_rate`) + WIP2d-1.B.1.b cohort sweep |
+
 | Doc | Pattern | Status | Tags |
 |---|---|---|---|
 | `metadata-bit-driven-derived-filter-framework.md` | Generic framework for declaring derived filters over a parent registry (e.g., FOREACH_CFG_FIELD) via metadata bit. 3 variants: GUI-only / wire-format / wire-format-two-source. Composes with Layer 5b lock + AUTOPOPULATE + bitmap-bool emit_source dispatch. First canonical application: STAMP_BOUND_CFG_DERIVED at .F.4d. | DRAFT v1.0 (pending v5.15.5.F.4d ship; will become ACTIVE Stage 3) | structural-fix, wire-format, registry-driven; closes Class 21 at derived-filter surface; serves H9 + H15; Stage 2 (DRAFT); 0 applications until .F.4d |

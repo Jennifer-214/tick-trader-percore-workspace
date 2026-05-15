@@ -48,8 +48,28 @@ infrastructure change), one-off bug fix.
 - `plan_path` (REQUIRED) — workspace path to the sub-ship plan being
   audited. E.g., `plans/v5.15-live-readiness/subplans/2026-05-13-v5.15.5.F.4c-int-int_enum-bool-migration.md`
 - `audit_set` (OPTIONAL; default = `parity,trace,readiness,merge,dod`) —
-  comma-separated subset of the 5 audits to fire. Use to skip irrelevant
-  audits for narrow ships.
+  comma-separated subset of the available audits to fire. Use to skip irrelevant
+  audits for narrow ships, OR EXTEND to include accounting + registry-fit when
+  scope warrants.
+
+  **Extended audit set (NEW v5.15.5.F.4c.3 WIP2d-1.B.0c):**
+  - `accounting` — fires `/accounting-audit` for plans touching OMS / drainer /
+    fee/commission / kill switches / fee floors / slippage / P&L / balance /
+    backtest accounting paths. Scans for Class 27 (scalar cfg-mirror), per-core
+    fee indexing, H4 violations, cross-path parity, static cache hazards.
+  - `registry-fit` — fires `/registry-fit-audit` for plans introducing a NEW
+    registry, OR touching framework selection (when alternative principle +
+    sweep might be better than a registry). Scans existing registries against
+    framework-selection criteria.
+
+  **Recommended audit set per ship type:**
+  | Ship type | Recommended `audit_set` |
+  |---|---|
+  | Cfg field / parser / GUI / settings | `parity,trace,readiness,merge,dod` (default) |
+  | OMS / drainer / fee / commission / P&L / accounting | `parity,trace,readiness,merge,dod,accounting` |
+  | NEW registry introduction OR per-instance cache | `parity,trace,readiness,merge,dod,accounting,registry-fit` |
+  | ML pipeline / model / inference | `parity,trace,readiness,merge,dod,accounting` (Class 27 also affects ConfidenceScorer / Bandit state) |
+  | Wire-format / stamp / drift / Layer 5b | `parity,trace,readiness,merge,dod` (default; accounting if fees in stamps) |
 - `focus_keywords` (OPTIONAL; trailing args) — extra context phrases
   injected into each subagent prompt to narrow scope. E.g., `"STAMP_BOUND
   derived filter" "Layer 5b hash lock"` to focus audits on a specific

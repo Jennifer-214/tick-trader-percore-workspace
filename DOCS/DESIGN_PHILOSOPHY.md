@@ -140,12 +140,42 @@ together they extinguish 5 bug classes (Class 14, 18, 19, 21, 23). Without
 the framework discipline, each concern would be solved independently with
 parallel infrastructure — more total complexity, less coverage.
 
+### Framework-selection criteria (added v5.15.5.F.4c.3 WIP2d-1.B.0c)
+
+> **Registries optimize for ADDING MORE of a pattern. When the right answer is to STOP HAVING the pattern, a principle + audit + delete is better than a registry.**
+
+A sharpening of the framework-discipline meta-principle. Not every pattern that repeats N times warrants a registry. The decision matrix:
+
+| Pattern characteristic | Reach for |
+|---|---|
+| N items share structure + multi-site addition is recurring + N is GROWING (and SHOULD grow) | **Registry** (X-macro / FOREACH_X) |
+| Pattern should NOT exist or should be ELIMINATED | **Principle + audit + delete + CI check** |
+| Mix: some instances genuine + most should be eliminated | **Principle PRIMARY + registry as fallback** for the rare genuine instances |
+
+Why this matters: a registry mechanicalizes ADDITIONS of the pattern. If we name the pattern + make adding it easy, we make eliminating it harder — registry rows accumulate, become load-bearing, become "the way we do this," entrench. When the pattern should shrink (Class 27 cfg-mirror caches that should be replaced by pre-resolution onto in-flight objects), a registry framework actively works against closure.
+
+The principle-first answer:
+1. **Name the principle** in a DESIGN_SPEC (one canonical doc)
+2. **Sweep the codebase** for existing instances (one audit)
+3. **Delete + migrate** each instance to the principle-aligned shape (per-site)
+4. **CI check** enforces that new instances can't be added (one tool extension)
+5. **Registry as fallback** only for the edge cases where the principle genuinely doesn't apply (rare; near-vestigial)
+
+First canonical case: Class 27 (scalar cfg-mirror on subsystem state). Initial impulse was `FOREACH_SUBSYSTEM_CFG_CACHE` registry to mechanicalize per-core cache addition. Sharpening pushback: most instances should be ELIMINATED via pre-resolve onto in-flight Order/Position/Event, not mechanicalized. Registry kept as second-line fallback for the genuinely-no-in-flight-object cases (likely 0-1 actual instances). Codified in `DESIGN_SPECS/decision-time-data-binding-pattern.md`.
+
+The discipline contrast:
+- Framework-discipline meta-principle (this section above): "invest in framework when recurrence is foreseeable"
+- Framework-selection sub-principle (this addition): "but FIRST ask whether the recurrence is itself the bug — if so, principle + sweep + delete + CI beats framework"
+
+Both apply. The trade-off question is: WILL this pattern accumulate value (more instances over time = more leverage from framework), OR will this pattern accumulate technical debt (more instances over time = more sites to eventually clean up)? If accumulate-debt, don't optimize for additions — optimize for elimination.
+
 ### Cross-references
 
 - § 7 Structural-fix family — the bug-class-recurrence motivation
-- § 11 Process discipline — "don't measure structural work by LOC"
+- § 11 Process discipline — "don't measure structural work by LOC" + decision discipline application
 - `DESIGN_SPECS/pattern-codification-lifecycle.md` — the 7-stage codification process
 - `DESIGN_SPECS/structural-fix-preferred-decision-framework.md` — direct-patch vs structural-fix decision
+- `DESIGN_SPECS/decision-time-data-binding-pattern.md` — first canonical "registry was wrong; principle is right" application; closes Class 27
 - CLAUDE.md item 19 — structural fix preferred (codified principle)
 - CLAUDE.md item 31 — framework-driven extensibility (codifies THIS section)
 

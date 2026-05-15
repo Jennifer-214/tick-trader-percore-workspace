@@ -65,6 +65,8 @@ RECURRING_BUG_PATTERNS.md or FOREACH_FEATURE registry-as-source-of-truth.
 | /parity-check | Train↔serve identity | Orthogonal — different audit dimension |
 | /latency-track | Latency-critical addition tracking | Sister — /latency-track = "you added this; document the cost"; /dod-audit = "you should apply this pattern; the cost would be lower" |
 | /patch-planner | Generates fix blueprints from findings | Downstream — /dod-audit FINDS, /patch-planner BLUEPRINTS |
+| /accounting-audit | Class 27 cfg-mirror caches + accounting / money tracking surface | **Composes** — /dod-audit findings touching accounting paths defer the Class 27 + accounting-specific verdicts here (NEW v5.15.5.F.4c.3) |
+| /registry-fit-audit | Registry-fit per framework-selection criteria (registry vs principle+sweep) | **Composes** — when /dod-audit finding suggests "this registry shape is wrong" OR "should this be a registry at all?", defer verdict to /registry-fit-audit (NEW v5.15.5.F.4c.3). /dod-audit identifies pattern application gaps; /registry-fit-audit decides whether the proposed pattern (registry) is the right shape. |
 
 ## When to use
 

@@ -72,6 +72,20 @@ return an error. /handoff is only invoked from main session.
 
 **NEW (set 2026-05-15 per operator request after `.F.4c.3` Step 2 partial handoff — without explicit TaskList capture, fresh-session pickup loses track of the multi-step plan progress; in-flight tasks must be recreated from memory which drifts).**
 
+**Additional dynamic-load contracts (set 2026-05-15 at WIP2d-1.B.0c):**
+
+When composing the handoff body, scan the in-flight plan + recent commits for surface indicators and pre-load matching DESIGN_SPECS bodies + skill references:
+
+| Plan / commit surface contains | Pre-load reference |
+|---|---|
+| OMS / drainer / fee_rate / commission / slippage / P&L / kill switch | `decision-time-data-binding-pattern.md` + RECURRING_BUG_PATTERNS Class 27 + `/accounting-audit` skill reference |
+| New registry introduction OR cache-on-subsystem-state | `decision-time-data-binding-pattern.md` § Framework-selection criteria + `/registry-fit-audit` skill reference + DESIGN_PHILOSOPHY § 1.5 Framework-selection criteria sub-section |
+| `cfg.cores[c]` reads or per-core registry work | `cfg-scope-discipline.md` + RECURRING_BUG_PATTERNS Class 25 + Class 26 + Class 27 |
+| ML cfg fields (ridge_*, thompson_*, confidence_*, bandit_*) | `cfg-scope-discipline.md` + decision-time-data-binding-pattern.md (ConfidenceScorer / ThompsonBandit state are Class 27 target subsystems) + `/accounting-audit` |
+| ImGui widget / Settings panel | (no new dynamic load at .F.4c.3; existing widget-ID discipline applies) |
+
+These cross-references go into the generated handoff Step 3 (DESIGN_SPECS pattern check) + Step 4 (design philosophy reminders) sections, so the fresh-session pickup has the relevant principle context loaded before code reads start.
+
 Before composing the handoff body, invoke `TaskList` and serialize the result into a structured table that the generated handoff embeds verbatim. Each task entry captures:
 
 | Field | Source |

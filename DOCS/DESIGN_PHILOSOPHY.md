@@ -62,20 +62,34 @@ At ~3 GHz x86 with AVX-512:
 | L2 hit | ~4 ns | ~13× |
 | L3 hit | ~13 ns | ~43× |
 | **DRAM (L1 miss; cold cache)** | **~100 ns** | **~300×** |
-| Branch mispredict | ~3-5 ns | ~10-15× |
+| Branch mispredict (textbook single stall) | ~3-5 ns | ~10-15× |
+| **Branch mispredict (real-world HFT pipelined)** | **~30-100 ns** | **~100-300×** |
+| Indirect call (fn pointer, L1-hot target) | ~3-5 ns deterministic | ~10-15× |
 | Locked atomic / mutex acquire | ~20-50 ns + scheduling | ~100×+ |
 | Syscall | ~200-500 ns | ~700×+ |
 | Page fault | ~10-100 μs | ~30,000×+ |
 | Mutex contention (kernel wait) | up to ms | ~3,000,000×+ |
 
+**Branch mispredict cost — real-world vs textbook (updated 2026-05-15 at v5.15.5.F.4c.3 WIP2d-1.B.0d after a hand-wave audit caught this gap):**
+
+The textbook "5-15ns" mispredict cost is the SINGLE-STALL number. On modern pipelined x86 CPUs (14-20 stage pipelines) executing dependent operations, mispredict cost commonly measures 30-100ns in real HFT codebases because:
+- Pipeline flush discards speculative work downstream of the mispredict
+- Dependent operations on the wrong-side branch cascade
+- Wrong-side branch target may not be in L1i cache (instruction-cache miss on recovery)
+- Compounds especially badly under instruction-level parallelism (HFT code is ILP-heavy)
+
+For decisions about branchless-vs-branchy SP/HP dispatch, use the **30-100ns** number, not 5-15ns. The textbook number is misleading for this codebase's measurement context.
+
 Decision rules that fall out of this:
 - **Approach A (+N cycles, -M cache misses) beats Approach B (-N cycles, +M misses) when M > N/300.** For N=10 cycles, 1 saved miss = ~30× net win.
-- **Branchless A (+N cycles) beats branchy B (1 branch, M% mispredict) when M > N/16.** For data-dependent branches commonly mispredicting 30-50%, branchless usually wins.
+- **Branchless A (+N cycles) beats branchy B (1 branch, M% mispredict) when M > N/100** (using real-world 30ns mispredict cost; was N/16 under textbook 5ns number). For data-dependent branches commonly mispredicting 30-50%, branchless ALWAYS wins.
+- **Branchless ALWAYS wins on p99** (deterministic cost vs branch's variable mispredict tail). For a system that values determinism over throughput (this codebase), p99 consistency dominates average throughput.
 - **NEVER syscall on hot path.** A single syscall costs more than the full per-tick budget.
 - **NEVER allow page faults on critical pages.** Lock memory at boot via `mlockall(MCL_CURRENT | MCL_FUTURE)`.
 - **NEVER acquire mutexes on hot/slow path.** The unbounded tail under contention nukes any latency budget.
+- **NEVER default to "branch is fine because predictor handles it" for SP/HP data-dependent dispatch.** That's a throughput frame applied to a determinism-prioritizing system. Default to branchless via fn pointer table / 2D state-table / pre-resolution per `DESIGN_SPECS/branchless-dispatch-discipline.md`.
 
-**Cross-references:** CLAUDE.md item 28 (cycles vs cache), `DESIGN_SPECS/latency-vs-cache-decision-framework.md`.
+**Cross-references:** CLAUDE.md item 28 (cycles vs cache), `DESIGN_SPECS/latency-vs-cache-decision-framework.md`, `DESIGN_SPECS/branchless-dispatch-discipline.md` (NEW at .F.4c.3 WIP2d-1.B.0d).
 
 ---
 

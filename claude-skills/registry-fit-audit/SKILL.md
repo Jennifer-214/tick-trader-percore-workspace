@@ -32,11 +32,32 @@ For each registry in `FOREACH_REGISTRY`, the audit asks:
 
 Output is a structured findings report with a per-registry verdict. NOT actual edits.
 
+## Scope (per audit-scope-taxonomy.md)
+
+This skill accepts scope as first positional arg per `DESIGN_SPECS/audit-scope-taxonomy.md`. Registry-fit-audit has a registry-specific interpretation of scope:
+
+- `current` (default when no scope specified) — recently added or modified registries (per git log since branch base)
+- `wide` — full sweep across all FOREACH_* macros in `FOREACH_REGISTRY` meta-registry (~62 registries at .F.4c.3)
+- `scoped <glob>` — file/dir glob (e.g., `/registry-fit-audit scoped CoreFrameworks/Cfg*`)
+- `module:<name>` — named module per `MODULE_MAP.md` registry; audits registries declared in that module
+- `registry:<NAME>` — focused audit of one registry (e.g., `/registry-fit-audit registry:FOREACH_OMS_CFG_CACHE`) — legacy invocation shape preserved
+- `category:<cat>` — category-narrowed (e.g., `cfg`, `ML`, `stamp`) — legacy invocation shape preserved
+
+**Most appropriate scope shapes for /registry-fit-audit:** `current` (recently added/modified registries), `registry:<NAME>` (focused single-registry audit), `module:<name>` (iterative module audits), `wide` (annual + post-framework-selection-criteria-codification sweeps).
+
 ## Invocation
 
-- `/registry-fit-audit` → full sweep across all 62 registries in FOREACH_REGISTRY
-- `/registry-fit-audit <registry_name>` → focused audit (e.g., `/registry-fit-audit FOREACH_OMS_CFG_CACHE`)
-- `/registry-fit-audit <category>` → category-narrowed (e.g., `/registry-fit-audit cfg`, `/registry-fit-audit ML`, `/registry-fit-audit stamp`)
+- `/registry-fit-audit` — default scope `current`; audit recently added/modified registries
+- `/registry-fit-audit <scope>` — explicit scope per taxonomy
+- `/registry-fit-audit registry:<NAME>` — focused single-registry audit (legacy shape)
+- `/registry-fit-audit category:<cat>` — category-narrowed (legacy shape)
+
+**Examples:**
+- `/registry-fit-audit current` — audit registries touched in current branch
+- `/registry-fit-audit wide` — annual full sweep
+- `/registry-fit-audit registry:FOREACH_OMS_CFG_CACHE` — focused single-registry
+- `/registry-fit-audit module:cfg-surface` — audit cfg-surface module registries
+- `/registry-fit-audit category:ML` — ML-category registries only
 
 ## Pass structure
 

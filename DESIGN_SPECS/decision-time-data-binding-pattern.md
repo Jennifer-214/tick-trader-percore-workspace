@@ -182,10 +182,72 @@ The combination — delete current instances + CI prevents new ones + DESIGN_SPE
 
 Populated at Stage 3 ACTIVE — shipped sites get file:line refs back-linked here.
 
-- (pending) `CoreFrameworks/OrderManager.hpp` — Order `effective_fee_rate` + `effective_slippage_pct` field; HandleFill simplification (.F.4c.3 WIP2d-1.B.1)
+- (pending) `CoreFrameworks/Order.hpp` — `OrderPreResolved<F>` sub-struct (fee_rate + slippage_pct) + `Order_BindPreResolved(o, core_cfg)` helper; first canonical sub-struct refinement (.F.4c.3 WIP2d-1.B.1)
+- (pending) `CoreFrameworks/OrderManager.hpp` — HandleFill reads `o->pre_resolved.fee_rate` (zero OMS cache lookup); OMS scalar fee_rate/maker/taker/slippage_pct fields DELETED (.F.4c.3 WIP2d-1.B.1)
 - (pending) `CoreFrameworks/ControllerEventLoop.hpp` — slow-path direct `cfg.cores[c]` reads (.F.4c.3 WIP2d-1.B.2)
 - Already exists (recognized retroactively): `Portfolio<F>::positions[slot].entry_fee` — Position carries entry_fee pre-resolved at open; this pattern existed pre-codification; named "decision-time-data-binding" by analysis at .F.4c.3
 - Already exists (recognized retroactively): `TradeEvent<F>::intended_tp` / `intended_sl` — Event carries intended values pre-resolved at gate fire
+
+## Sub-struct refinement (preferred shape for ≥2 pre-resolved fields)
+
+When the in-flight object accumulates ≥2 pre-resolved values, group them into a NAMED SUB-STRUCT rather than flat fields. The sub-struct is strictly better than flat fields on three axes (with identical memory layout + zero runtime cost):
+
+1. **Semantic clustering** — all decision-time-bound values visually grouped; reader immediately sees "these are the pre-resolved values, not live cfg reads"
+2. **Extension point** — adding a new pre-resolved field = 1 line in the sub-struct + extend the binding helper; consumer sites unchanged
+3. **API-level discipline** — the binding helper (`<Object>_BindPreResolved(o, core_cfg)`) is the EXPLICIT "pre-resolve happens HERE" call; prevents forgetting to bind one of the fields when adding a new one
+
+Canonical shape (Order<F> example):
+
+```cpp
+template <unsigned F>
+struct OrderPreResolved {
+    FPN<F> fee_rate;       // pre-resolved at submit: is_maker ? maker_rate : taker_rate
+    FPN<F> slippage_pct;   // pre-resolved per-core
+    // Future per-resolved fields extend here mechanically:
+    // - effective_kill_switch_threshold (per-core risk envelope at submit time)
+    // - effective_min_holding_ticks (per-core time-exit floor)
+    // - effective_intended_strategy_dispatch (pre-resolved dispatch arm)
+};
+
+template <unsigned F>
+struct Order {
+    // ... HOT identity + intent fields ...
+    OrderPreResolved<F> pre_resolved;  // 48B at end of HOT cluster; future extension point
+    // ... COLD cluster ...
+};
+
+template <unsigned F>
+inline void Order_BindPreResolved(Order<F>* o, const PerCoreCfg<F>& core_cfg) {
+    bool is_maker = Order_GetIsMaker(o);
+    o->pre_resolved.fee_rate = is_maker
+        ? core_cfg.fee_rate_maker
+        : core_cfg.fee_rate_taker;
+    o->pre_resolved.slippage_pct = core_cfg.slippage_pct;
+    // Future bindings extend here in lockstep with OrderPreResolved fields
+}
+```
+
+Consumer reads (HandleFill, drainer thread):
+```cpp
+FPN<F> entry_rate = o->pre_resolved.fee_rate;        // semantically clear
+FPN<F> slip_pct   = o->pre_resolved.slippage_pct;    // self-documenting
+```
+
+vs the flat-field alternative (`o->effective_fee_rate`, `o->effective_slippage_pct`) which is functionally equivalent but loses the semantic grouping + API-level discipline anchor.
+
+### When to introduce the sub-struct
+
+- **Stage 1 single field**: flat field on in-flight object is fine. No premature sub-struct.
+- **Stage 2 second field added**: refactor to sub-struct AT THAT POINT. The second addition is when the grouping pays off.
+- **Stage 3 ≥3 fields**: sub-struct is mandatory; `<Object>_BindPreResolved` helper is mandatory.
+
+Order<F> at v5.15.5.F.4c.3 enters at Stage 2 (fee_rate + slippage_pct simultaneously). The sub-struct + helper are introduced at the same commit.
+
+### Cross-references
+
+- `cache-layout-discipline-for-hot-side-structs.md` — sub-struct placement within HOT/WARM/COLD clusters
+- `decision-first-cluster-layout-pattern.md` — sub-struct placement within HOT cluster (decision-relevant fields toward front; pre-resolved values can sit at end-of-HOT since they're READ after dispatch decision)
+- `function-struct-alignment-for-single-mov-access.md` — sub-struct alignment for cache-friendly access
 
 ---
 

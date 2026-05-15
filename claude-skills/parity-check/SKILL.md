@@ -46,19 +46,33 @@ when the change is specifically train-or-serve adjacent (e.g.
 adding a scaler, changing a feature compute fn, bumping
 `MODEL_FORMAT_VERSION`).
 
+## Scope (per audit-scope-taxonomy.md)
+
+This skill accepts scope as first positional arg per `DESIGN_SPECS/audit-scope-taxonomy.md` (NEW v5.15.5.F.4c.3 WIP2d-1.B.0d):
+
+- `current` (default when no scope specified) — parity audit of recent edits + touched train-serve surfaces
+- `wide` — full codebase train-serve parity sweep across all 10-category checklist; HIGH context cost; recommended quarterly + before live-readiness ships
+- `scoped <glob>` — file/dir glob
+- `module:<name>` — named module per MODULE_MAP.md (most-used: `ML-pipeline`, `wire-format`); iterative module-by-module parity audits
+- `features` / `labels` / `scaler` / `stamp` / `cfg` (legacy invocations) — surface-narrowed scans (preserved)
+
+**Most appropriate scope shapes for /parity-check:** `current` (during active ML-pipeline coding), `module:ML-pipeline` / `module:wire-format` (iterative deep audits), legacy surface-narrowed (`features`, `stamp`, etc.) when focused, `wide` (pre-live-readiness + quarterly).
+
 ## Invocation
 
-- `/parity-check` → audits all train-serve handoff surfaces against
-  the standard 10-category checklist
-- `/parity-check features` → focused on `Features_PackAll` /
-  `Regime_ComputeSignals` / RollingStats / FOREACH_FEATURE
-- `/parity-check labels` → focused on `Label_*` body parity / no
-  `LABEL_REGISTRY_HASH` exists yet (v5.10 candidate)
-- `/parity-check scaler` → focused on FeatureStandardizer /
-  `.scaler` sidecar / stamp's `scaler_sha256`
-- `/parity-check stamp` → focused on stamp body schema (every field
-  that's verified at load)
-- `/parity-check cfg` → focused on cfg fields that affect inference
+- `/parity-check` — default scope `current`; recent train-serve edit audit
+- `/parity-check <scope>` — explicit scope per taxonomy
+- `/parity-check features` → focused on `Features_PackAll` / `Regime_ComputeSignals` / RollingStats / FOREACH_FEATURE (legacy)
+- `/parity-check labels` → focused on `Label_*` body parity (legacy)
+- `/parity-check scaler` → focused on FeatureStandardizer / `.scaler` sidecar / stamp's `scaler_sha256` (legacy)
+- `/parity-check stamp` → focused on stamp body schema (legacy)
+- `/parity-check cfg` → focused on cfg fields that affect inference (legacy)
+
+**Examples:**
+- `/parity-check current` — fast feedback during active ML-pipeline coding
+- `/parity-check module:ML-pipeline` — deep audit of ML-pipeline module
+- `/parity-check module:wire-format stamp` — stamp-focused scan in wire-format module
+- `/parity-check wide` — pre-live-readiness + quarterly full sweep
   (stamp-bound or not; v5.9.2b enumerated 9)
 
 ## Execution model (added 2026-05-09 — recursion fix)

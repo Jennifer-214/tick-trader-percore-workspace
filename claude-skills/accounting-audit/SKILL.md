@@ -28,11 +28,30 @@ Walks the accounting / money-tracking paths systematically looking for silent-co
 
 Output is a structured findings report. NOT actual edits. Operator decides which items to pick up.
 
+## Scope (per audit-scope-taxonomy.md)
+
+This skill accepts scope as first positional arg per `DESIGN_SPECS/audit-scope-taxonomy.md`:
+
+- `current` (default when no scope specified) — accounting paths in recent edits + touched files
+- `wide` — full codebase accounting sweep; HIGH context cost; recommended quarterly
+- `scoped <glob>` — file/dir glob (e.g., `/accounting-audit scoped CoreFrameworks/OrderManager*`)
+- `module:<name>` — named module per `MODULE_MAP.md` registry. Most-used for accounting: `OMS`, `accounting`, `backtest`. Recommended for iterative module-by-module accounting deep-dives.
+- `chain:<symbol>` — N/A (use `/dependency-chain-trace` for symbol flow traces; chain-trace pairs well with accounting-audit for fee/slippage cohort sweeps)
+
+**Most appropriate scope shapes for /accounting-audit:** `current` (during active work), `module:OMS` / `module:accounting` / `module:backtest` (iterative deep accounting audits), `wide` (quarterly + post-Class-27-codification sweeps).
+
 ## Invocation
 
-- `/accounting-audit` → full sweep across all accounting / money paths (OMS, drainer, portfolio, fee/commission, slippage, P&L, balance updates, kill switches, drawdown calc)
-- `/accounting-audit <subsystem>` → narrow scope (e.g., `/accounting-audit OMS` or `/accounting-audit BacktestSharded`)
-- `/accounting-audit <focus_keyword>` → narrow by concern (e.g., `/accounting-audit fee_rate` or `/accounting-audit cross-path-parity`)
+- `/accounting-audit` — default scope `current`; accounting paths in recent edits
+- `/accounting-audit <scope>` — explicit scope per taxonomy
+- `/accounting-audit <scope> [focus_keywords...]` — narrow by concern within scope
+
+**Examples:**
+- `/accounting-audit current` — fast feedback during active coding
+- `/accounting-audit module:OMS` — deep accounting audit of OMS module
+- `/accounting-audit module:accounting fee_rate` — focused fee_rate scan in accounting module
+- `/accounting-audit wide cross-path-parity` — full sweep narrowed to live↔backtest parity
+- `/accounting-audit scoped Backtest/BacktestSharded.hpp` — single-file scan
 
 ## Pass structure
 

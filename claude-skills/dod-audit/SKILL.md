@@ -90,16 +90,32 @@ RECURRING_BUG_PATTERNS.md or FOREACH_FEATURE registry-as-source-of-truth.
 - Recently run (within 24h) and codebase hasn't materially changed
 - During paper-testing phase (run BEFORE start, not during)
 
+## Scope (per audit-scope-taxonomy.md)
+
+This skill accepts scope as first positional arg per `DESIGN_SPECS/audit-scope-taxonomy.md`:
+
+- `current` (default when no scope specified) — pattern-application audit of recent edits + touched files
+- `wide` — full codebase sweep across all DESIGN_SPECS patterns; HIGH context cost
+- `scoped <glob>` — file/dir glob (e.g., `/dod-audit scoped CoreFrameworks/OrderManager*`)
+- `module:<name>` — named module per `MODULE_MAP.md` registry (e.g., `OMS`, `ML-pipeline`, `accounting`); recommended for iterative module-by-module pattern application audits
+- `plan <plan-path>` — plan-mode (existing); audit a plan file's proposed code against pattern library
+- `pattern <pattern-name>` — focused single-pattern scan (existing)
+
+**Most appropriate scope shapes for /dod-audit:** `current` (during active work), `module:<name>` (iterative deep pattern audits), `plan <plan-path>` (pre-coding plan verification), `wide` (post-new-pattern-codification sweeps).
+
 ## Invocation
 
-- `/dod-audit` — full codebase sweep; audits all subsystems against
-  full DESIGN_SPECS catalog
-- `/dod-audit <path>` — focused sweep of a subsystem (e.g.,
-  `/dod-audit CoreFrameworks/OrderManager.hpp`)
-- `/dod-audit plan <plan-path>` — plan-mode; audit a plan file's
-  proposed code/structures against pattern library before coding
-- `/dod-audit pattern <pattern-name>` — focused single-pattern scan
-  (e.g., `/dod-audit pattern bitmap-flag-api`)
+- `/dod-audit` — default scope `current`; pattern-application audit of recent edits
+- `/dod-audit <scope>` — explicit scope per taxonomy
+- `/dod-audit plan <plan-path>` — plan-mode (legacy invocation; remains supported)
+- `/dod-audit pattern <pattern-name>` — focused single-pattern scan (legacy invocation; remains supported)
+
+**Examples:**
+- `/dod-audit current` — fast feedback during active coding
+- `/dod-audit module:OMS` — deep pattern-application audit of OMS module
+- `/dod-audit wide` — quarterly full sweep across DESIGN_SPECS catalog
+- `/dod-audit plan plans/v5.15-live-readiness/subplans/<plan>.md` — pre-coding plan check
+- `/dod-audit pattern decision-time-data-binding-pattern` — focused single-pattern scan
 
 ## Execution model (per SKILLS_HIERARCHY.md)
 

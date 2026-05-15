@@ -49,27 +49,44 @@ infrastructure change), one-off bug fix.
   audited. E.g., `plans/v5.15-live-readiness/subplans/2026-05-13-v5.15.5.F.4c-int-int_enum-bool-migration.md`
 - `audit_set` (OPTIONAL; default = `parity,trace,readiness,merge,dod`) —
   comma-separated subset of the available audits to fire. Use to skip irrelevant
-  audits for narrow ships, OR EXTEND to include accounting + registry-fit when
-  scope warrants.
+  audits for narrow ships, OR EXTEND to include accounting + registry-fit + hft when
+  scope warrants. **Per-audit scope shapes supported** (NEW v5.15.5.F.4c.3 WIP2d-1.B.0d
+  per `audit-scope-taxonomy.md`) — each audit in the set can carry its own scope shape:
 
-  **Extended audit set (NEW v5.15.5.F.4c.3 WIP2d-1.B.0c):**
-  - `accounting` — fires `/accounting-audit` for plans touching OMS / drainer /
-    fee/commission / kill switches / fee floors / slippage / P&L / balance /
-    backtest accounting paths. Scans for Class 27 (scalar cfg-mirror), per-core
+  ```
+  audit_set := <audit>[:<scope>][,<audit>[:<scope>]]...
+  scope     := current | wide | module:<name> | scoped:<glob>
+  ```
+
+  Examples:
+  - `parity,trace,readiness,merge,dod` — all audits default scope (current)
+  - `parity:wide,trace,readiness,merge,dod:module:OMS` — parity wide-sweep + DOD scoped to OMS
+  - `parity,trace,readiness,merge,dod,hft:module:OMS,accounting:module:accounting` — extended set with per-audit module scopes
+  - `dod:module:wire-format,parity:current` — narrow audit gate for wire-format ship
+
+  When scope is omitted, defaults to `current`. The per-audit-scope discipline minimizes
+  context budget overflow on large plans while giving appropriate depth per concern.
+
+  **Extended audit set:**
+  - `accounting` (NEW v5.15.5.F.4c.3 WIP2d-1.B.0c) — fires `/accounting-audit` for plans
+    touching OMS / drainer / fee/commission / kill switches / fee floors / slippage / P&L /
+    balance / backtest accounting paths. Scans for Class 27 (scalar cfg-mirror), per-core
     fee indexing, H4 violations, cross-path parity, static cache hazards.
-  - `registry-fit` — fires `/registry-fit-audit` for plans introducing a NEW
-    registry, OR touching framework selection (when alternative principle +
-    sweep might be better than a registry). Scans existing registries against
-    framework-selection criteria.
+  - `registry-fit` (NEW v5.15.5.F.4c.3 WIP2d-1.B.0c) — fires `/registry-fit-audit` for plans
+    introducing a NEW registry, OR touching framework selection.
+  - `hft` (NEW v5.15.5.F.4c.3 WIP2d-1.B.0d) — fires `/hft-audit` for plans touching SP/HP/
+    drainer code. Includes Branchless dispatch opportunity scan + cache layout discipline +
+    Class 28 prevention.
 
-  **Recommended audit set per ship type:**
+  **Recommended audit set per ship type (default scope = current per-audit unless noted):**
   | Ship type | Recommended `audit_set` |
   |---|---|
   | Cfg field / parser / GUI / settings | `parity,trace,readiness,merge,dod` (default) |
-  | OMS / drainer / fee / commission / P&L / accounting | `parity,trace,readiness,merge,dod,accounting` |
-  | NEW registry introduction OR per-instance cache | `parity,trace,readiness,merge,dod,accounting,registry-fit` |
-  | ML pipeline / model / inference | `parity,trace,readiness,merge,dod,accounting` (Class 27 also affects ConfidenceScorer / Bandit state) |
-  | Wire-format / stamp / drift / Layer 5b | `parity,trace,readiness,merge,dod` (default; accounting if fees in stamps) |
+  | OMS / drainer / fee / commission / P&L / accounting | `parity,trace,readiness,merge,dod:module:OMS,accounting:module:OMS,hft:module:OMS` |
+  | NEW registry introduction OR per-instance cache | `parity,trace,readiness,merge,dod,accounting,registry-fit,hft` |
+  | ML pipeline / model / inference | `parity:module:ML-pipeline,trace,readiness,merge,dod:module:ML-pipeline,accounting:module:ML-pipeline` |
+  | Wire-format / stamp / drift / Layer 5b | `parity:module:wire-format,trace,readiness,merge,dod:module:wire-format` |
+  | SP/HP/drainer touching ships | Add `hft:module:<area>` to the base set per branchless discipline |
 - `focus_keywords` (OPTIONAL; trailing args) — extra context phrases
   injected into each subagent prompt to narrow scope. E.g., `"STAMP_BOUND
   derived filter" "Layer 5b hash lock"` to focus audits on a specific

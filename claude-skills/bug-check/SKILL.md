@@ -76,14 +76,33 @@ consumer reads from it).
 - Recently run (within 24h) and codebase hasn't materially changed
 - During paper-testing phase (run BEFORE start, not during)
 
+## Scope (per audit-scope-taxonomy.md)
+
+This skill accepts scope as first positional arg per `DESIGN_SPECS/audit-scope-taxonomy.md` (NEW v5.15.5.F.4c.3 WIP2d-1.B.0d):
+
+- `current` (default when no scope specified) — scan recent edits + touched files for known bug class instances
+- `wide` — full codebase scan across all Class N entries in RECURRING_BUG_PATTERNS.md; HIGH context cost; recommended quarterly + after new Class N codification
+- `scoped <glob>` — file/dir glob
+- `module:<name>` — named module per MODULE_MAP.md registry; iterative module-by-module bug-class scans
+- `class_N` (legacy invocation) — focused single-class scan
+- `surface_<tag>` (legacy invocation) — surface-tag-filtered scan
+- `plans` (legacy invocation) — extend scan to plans/**/*.md (post-v5.15.5.F.4b)
+
+**Most appropriate scope shapes for /bug-check:** `current` (during active work), `class_N` (post-new-class-codification sweep), `module:<name>` (iterative module audits), `wide` (quarterly).
+
 ## Invocation
 
-- `/bug-check` — full scan; runs Detection for every non-delegated
-  class
-- `/bug-check class_N` — focused single-class scan (e.g.
-  `/bug-check class_13`)
-- `/bug-check surface_<tag>` — filter by `**Surface:**` tag
-  (e.g. `/bug-check surface_live`, `/bug-check surface_ml`)
+- `/bug-check` — default scope `current`
+- `/bug-check <scope>` — explicit scope per taxonomy
+- `/bug-check class_N` — focused single-class scan (e.g. `/bug-check class_28`) — legacy shape preserved
+- `/bug-check surface_<tag>` — surface-tag filter (legacy shape)
+- `/bug-check plans` — extend scan to plans/**/*.md (legacy)
+
+**Examples:**
+- `/bug-check current` — fast feedback during active coding
+- `/bug-check wide` — quarterly + post-new-class-codification full sweep
+- `/bug-check module:OMS class_28` — Class 28 scan limited to OMS module
+- `/bug-check class_27 module:accounting` — Class 27 scan in accounting module
 
 Surface vocabulary (per RECURRING_BUG_PATTERNS.md):
 - `live` — production hot/slow path

@@ -159,6 +159,82 @@ Sister to:
 - `categorical-tag-applicability-pattern.md` (set 2026-05-14) — categorical applicability metadata
 - Cohort-audit rule (set 2026-05-11) — sibling fields share scope + metadata
 
+## Consumer function signatures over per-core slices
+
+The cfg-scope-discipline applies not just to FIELD DECLARATION but also to CONSUMER FUNCTION SIGNATURES that read per-core fields. The structural rule:
+
+> **Per-core consumer functions take `const PerCoreCfg<F>*` (single-param), NEVER `const ControllerConfig<F>*`.** Genuinely-global reads (e.g., `poll_interval` for tick→time conversion) are CALLER-RESOLVED as scalar args, not in-function reads through a passed cfg pointer.
+
+Canonical example — strategy `_BuildParameters` family at `Strategies/StrategyParameters.hpp`:
+
+```cpp
+// CORRECT — single per-core slice param; globals (if any) as explicit scalars
+template <unsigned F, unsigned W = 128>
+inline void SimpleDip_BuildParameters(
+    const RollingStats<F, W>* rolling,
+    const PerCoreCfg<F>* core_cfg,        // per-core slice — body reads core_cfg->X
+    FPN<F> allocated_balance,
+    GateParameters<F>* out,
+    /* ... other args ... */
+);
+
+// Caller pre-resolves globals when needed:
+ML_BuildParameters(rolling, rolling_long, core_cfg, allocated_balance, out, model_ctx, now_us,
+                    /*global*/ (int)cfg.poll_interval);   // poll_interval extracted at call site
+```
+
+```cpp
+// FORBIDDEN — full cfg pointer = scope-erosion bug bait (see Class 25)
+template <unsigned F, unsigned W = 128>
+inline void SimpleDip_BuildParameters(
+    const RollingStats<F, W>* rolling,
+    const ControllerConfig<F>* config,   // <-- WRONG: per-core fn taking full cfg
+    /* ... */
+);
+```
+
+### Why the single-param sig matters
+
+If a per-core consumer fn takes `const ControllerConfig<F>*`, the FIELD READS inside the body can land anywhere — `config->take_profit_pct` reads the FLAT field, not `config->cores[c].take_profit_pct`. Under the two-storage shadow window of `.F.4c.3` Step 2, this works accidentally because `PopulateCoresFromFlat` syncs the values. After Step 7 deletes the flat fields, the read becomes a compile error (good — caught early). But the WORSE case is: future contributor adds a new consumer fn, reaches for `const ControllerConfig<F>*` "because it's simpler," reads `config->some_per_core_field` (flat) — code works for core 0 but silently uses core 0's values for ALL cores. That's the Class 25 anti-pattern.
+
+The single-param sig makes this impossible by construction: there's no flat-field access path through `core_cfg`. Every per-core read goes through the per-core slice.
+
+### Grep signatures — anti-pattern detection
+
+Audit hooks (firable via `/dod-audit` or `/bug-check`):
+
+```bash
+# A1: Consumer fn taking ControllerConfig<F>* (forbidden for per-core consumers)
+rg -n "(BuildParameters|_Tick|_Adapt|_Rebuild)\(.*const ControllerConfig<F>\*" --type cpp
+
+# A2: Per-core field read through `config->` instead of `core_cfg->` (in any fn taking PerCoreCfg<F>*)
+# Heuristic: a fn body containing both `core_cfg` and `config->` is suspicious — likely two-param
+# legacy that needs cleanup.
+rg -nP "(?s)PerCoreCfg<F>\*.*?config->[a-z_]+" --multiline --type cpp
+```
+
+False-positive cases (documented exemptions):
+- `ControllerConfig_ResolveForCore` itself — the resolver that produces per-core views; takes `const ControllerConfig<F>&` by design. (Going away at Step 2 end anyway.)
+- Boot-time engine init paths that legitimately need the full cfg (multi-core setup; non-trading consumer).
+- `ControllerConfig_NormalizeForMode` — operates on the whole cfg by design.
+
+### Caller-resolved globals — when to use scalar args vs adding a global param
+
+- **One-off global read (1-2 sites):** caller pre-resolves + passes as scalar arg. Documented edge; minor sig growth.
+- **Many global reads (5+):** consider whether the consumer should actually be DECOMPOSED into per-core part + global-resolved part. The per-core part reads only per-core fields; the global-resolved part returns pre-resolved scalars the per-core part consumes.
+- **NEVER:** add `const ControllerConfig<F>* config` "for convenience" alongside `const PerCoreCfg<F>* core_cfg`. Two-param sig silently re-introduces Class 25.
+
+### Future axes — same discipline
+
+When per-symbol / per-strategy / per-horizon / per-regime axes ship (per `per-instance-registry-pattern.md` § "Anticipated future axes"), per-axis consumer fns follow the same single-param discipline:
+
+```cpp
+PerSymbol_BuildIngestPipeline(const PerSymbolCfg<F>* symbol_cfg, ...);
+PerHorizon_TrainModel(const PerHorizonCfg<F>* horizon_cfg, ...);
+```
+
+Globals are caller-resolved; cross-axis access happens at the caller, never inside the per-axis fn body.
+
 ## Why this discipline matters — Class 24 structural close
 
 Class 24 (Capability-cfg surface mismatch) is the recurring bug where ML capability exists in code but cfg/Settings/stamp/drift surface doesn't expose it. The cfg-scope-discipline closes this class at the architectural-decision level:

@@ -958,3 +958,42 @@ cfg dump.
 - CLAUDE.md item 23 (type-trait dispatch), item 19 (structural fix preferred), item 13 (X-macro registry)
 - CLAUDE.local.md going-forward rule "Type-trait dispatch via tt:: namespace" (2026-05-14)
 - TECH_DEBT-009 (full KIND coverage migration; .F.4c+ for INT/BOOL/STRING; .F.4i for backtest cfg; v5.15.6 for controller/secrets/training cfg)
+
+### v5.15.5.F.4c extension — Bitmap dispatcher framework + Option 2 GUI refactor
+
+**What landed at v5.15.5.F.4c:**
+
+1. **Bitmap dispatcher framework** (`CoreFrameworks/CfgFieldRegistry.hpp:297+` `[BITMAP DISPATCHER FRAMEWORK]` section): per-metadata-bit constexpr `CfgMaskArray` masks via `FOREACH_METADATA_BIT(X)` X-macro (12 bits) + per-LivesInStruct-value masks via `FOREACH_LIVES_IN_STRUCT(X)` (5 values; forward-compat for ML/training/backtest cohorts) + 5 composed view masks (`g_cfg_render_mask`, `g_cfg_save_mask`, `g_cfg_stamp_emit_mask`, `g_cfg_cli_explain_mask`, `g_cfg_per_core_override_mask`). All `inline constexpr`; lands in `.rodata`; compile-time computed (zero runtime init cost). `g_cfg_field_descriptors[]` promoted `inline const` → `inline constexpr`.
+
+2. **Iteration + stats helpers**: `CFG_FIELD_FOR_EACH_SET_BIT(mask, idx, body)` branchless iteration macro (uses `__builtin_ctzll` single TZCNT instruction); `cfg_field_count(mask)` constexpr popcount for one-shot stats.
+
+3. **tt:: dispatch quintet completed**: `tt::cfg_parse_field<T>` (extended with INT_ENUM strcasecmp string-token + warn-on-invalid + WARN_ON_CLAMP emission + KIND_BOOL truthy-int normalization), `tt::cfg_save_field<T>` (KIND_BOOL 0/1 normalized save), `tt::cfg_assign_field<T>` NEW (sets cfg field from descriptor default), `tt::cfg_diff_field<T>` NEW (current vs default comparison), `tt::cfg_render_field<T>` (lives in `GUI/SettingsPanel.hpp` ns tt — ImGui dispatch via type-trait; INT_ENUM→Combo, BOOL→Checkbox, INT→SliderInt, FPN→SliderFloat).
+
+4. **2 new metadata bits** added to existing 10: `HAS_SIDE_EFFECT` (1<<10; registry walker skips parse for tagged rows; manual block keeps logic), `WARN_ON_CLAMP` (1<<11; emits operator-clarity warning when parse clamps value or KIND_BOOL non-{0,1}).
+
+5. **Option 2 SettingsPanel refactor** (Settings_RenderGlobalTab uses bitmap-dispatch walker via `CfgRenderTable<F>::fns[idx]` calling `cfg_render_and_persist<T>`; `gui_engine_cfg` typed mirror REPLACES parallel-array indirection for scalar Kinds; field_defs[] retains entries only for STRING/FILE_PATH bridge + hardcoded special-case fields).
+
+6. **63 cohort migrations** to `FOREACH_CFG_FIELD`:
+   - C1 (15 KIND_BOOL): operational + safety toggles
+   - C2 (17 KIND_INT): lifecycle / cooldown / persistence (HIGH-6 tooltip byte-identity preserved for 9 fields)
+   - C3 (18 KIND_INT): ML / training BOOT_ONLY params (thompson_rng_seed tagged HAS_SIDE_EFFECT — hex parsing preserved in manual parser)
+   - C4+C5 (13 KIND_INT migrations + 4 HAS_SIDE_EFFECT registry rows): notify / health / reconcile / operational
+
+7. **4 HAS_SIDE_EFFECT registry-only rows** (in registry for documentation/CLI surfaces; walker skips parse): `reconcile_mode` (string FromString + cfg_keys_explicit + reconcile_dry_run mirror), `engine_mode` (string FromString), `engine_arch` (string FromString), `model_verify_strict` (cfg_keys_explicit bit for NormalizeForMode flip rule).
+
+8. **Test additions**: `tests/controller_test.cpp:test_v5_15_5_F4c_cfg_field_dispatch` — 12 sub-tests T7-T18 covering KIND_INT/_BOOL parse/save/clamp dispatch + bitmap framework popcount/iteration + composed mask correctness + cfg_assign/diff sisters + HIGH-6 tooltip preservation + registry size sanity + tooltip-byte-count stability. Total: 3144 tests (was 3118; +26 sub-tests).
+
+**Deferred to follow-up ships** (captured as TECH_DEBT or noted in plan body):
+- Per-core override path refactor (sister-pattern walker via `g_cfg_per_core_override_mask` consuming `PerCoreOverrides` typed mirror)
+- Reset-to-defaults + Modified-badge GUI consumers (framework support shipped; just needs UI button wiring)
+- `use_real_money` custom render hook (REAL MONEY warning label needs post-render-hook mechanism design; sidecar override pattern candidate)
+- `reconcile_dry_run` HAS_SIDE_EFFECT + DEPRECATED tagging (~10 LOC follow-up)
+- ML enum X-macro registries per TECH_DEBT-068 (promotes KIND_INT → KIND_INT_ENUM for `ml_backend` / `regime_model_backend` / `confidence_ic_variant` / `csv_sort_check_mode` / `reconcile_mode` / `ensemble_blend_mode`)
+- Constexpr promotion sweep per TECH_DEBT-069 (operator-directed timing: end of `.F` umbrella)
+
+**Related (.F.4c-specific):**
+- `DESIGN_SPECS/universal-registry-bitmap-dispatcher-pattern.md` (NEW; Stage 2 DRAFT v1.0) — codifies the pattern; first canonical application is this ship; future applications outlined for stamp emit / drift check / CLI subcommands / per-core observability
+- CLAUDE.md item 31 (Framework-driven extensibility meta-principle); H14 (manual bit-packing only — codified this ship)
+- CLAUDE.local.md going-forward rule "GUI ↔ HP/SP thread isolation" (codified this ship)
+- TECH_DEBT-063 (field_defs[] elimination — progressed 80% → 95% at `.F.4c`; closes at `.F.4e`)
+- TECH_DEBT-064 / 065 / 066 / 067 / 068 / 069 (all NEW this ship; headless deferral + observability roadmap + ML enum registries + constexpr sweep)

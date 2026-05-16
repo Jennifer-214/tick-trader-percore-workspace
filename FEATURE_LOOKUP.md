@@ -997,3 +997,72 @@ cfg dump.
 - CLAUDE.local.md going-forward rule "GUI ↔ HP/SP thread isolation" (codified this ship)
 - TECH_DEBT-063 (field_defs[] elimination — progressed 80% → 95% at `.F.4c`; closes at `.F.4e`)
 - TECH_DEBT-064 / 065 / 066 / 067 / 068 / 069 (all NEW this ship; headless deferral + observability roadmap + ML enum registries + constexpr sweep)
+
+
+### v5.15.5.F.4d MERGED extension — Bandit/Thompson 5-state + Pattern 5 path consolidation + 47-col calib log + 3 TECH_DEBT fold-ins
+
+**What.** Comprehensive bandit/thompson cohort migration + framework foundation + 3 TECH_DEBT fold-ins shipped at v5.15.5.F.4d MERGED (2026-05-16; engine commit `545b087` + GPG-signed tag `v5.15.5.F.4d`).
+
+**Operator-affecting changes:**
+
+1. **5-state bandit_algorithm enum** (was 3 states pre-`.F.4d`). New states:
+   - cfg=0 EXP3 — UNCHANGED (legacy default; Exp3-IX only; Thompson posterior frozen)
+   - cfg=1 THOMPSON — **Class 24 fix**: pre-`.F.4d` Thompson posterior NEVER updated despite this setting; post-`.F.4d` Thompson_Update wires correctly via g_buy_reward_dispatch
+   - cfg=2 EXP3_OP_THOMPSON_GHOST — was 'BOTH' pre-`.F.4d`; legacy 'Both'/'BOTH' string aliases preserved; semantic = Exp3 drives chosen_arm + Thompson shadow-learns from per-arm reward signal
+   - cfg=3 THOMPSON_OP_EXP3_GHOST — NEW; mirror of cfg=2 (Thompson drives + Exp3 shadow-learns)
+   - cfg=4 BLENDED — NEW EXPERIMENTAL; weighted blend via thompson_exp3_blend_alpha cfg knob (default 0.5 = 50/50 Exp3↔Thompson softmax)
+
+2. **NEW cfg field: thompson_exp3_blend_alpha** (FPN<F>; per-core; default 0.5; range [0.0, 1.0]). Only meaningful when bandit_algorithm=4 BLENDED. GUI should grey-out otherwise. Stamp-bound (parity-critical; reproducibility requires α locked to training-time value).
+
+3. **47-col calibration log** (was 9-col pre-`.F.4d`). New columns appended after legacy 9:
+   - 6 bandit-context singletons: bandit_algorithm, regime_id_at_emit, chosen_arm, reward_bps_attributed, thompson_telemetry_arm, thompson_exp3_blend_alpha
+   - 32 per-arm cols: 8 arms × {exp3_w_armN, thompson_mu_armN, thompson_prec_armN, thompson_pulls_armN}
+   - Legacy 9-col prefix UNCHANGED (operator parsers depend on byte order for first 9 fields).
+   - Non-ML cores OR null-ezoo cores emit 0.0/0u placeholders for new cols (row format byte-stable).
+
+4. **Persistence file path rename** (TECH_DEBT-084 cascade rename close):
+   - `<model_dir>/thompson_state.json` → `<model_dir>/buy_thompson_state.json` (Save writes new name)
+   - `<model_dir>/thompson_exit_state.json` → `<model_dir>/exit_thompson_state.json` (Save writes new name)
+   - **Load-side back-compat alias**: existing on-disk model bundles with legacy names load cleanly (Load tries new name first, falls back to legacy)
+   - **Operator action: NONE for existing models** (back-compat alias handles it); new model saves use new names
+
+5. **3 .F.5 residual fields now per-core** (TECH_DEBT-082 close):
+   - `lazy_rebuild_price_threshold_pct` — was global; now per-core via `core_N_lazy_rebuild_price_threshold_pct=<val>` syntax (or global `lazy_rebuild_price_threshold_pct=<val>` propagates to all cores via shadow walker until `.F.4f` cleanup)
+   - `exit_threshold` — was global; now per-core via `core_N_exit_threshold=<val>` syntax
+   - `confidence_ic_floor` — was global; now per-core via `core_N_confidence_ic_floor=<val>` syntax
+
+**Cfg flags (new at `.F.4d`):**
+- `bandit_algorithm=0|1|2|3|4` or string form: `EXP3`/`THOMPSON`/`EXP3_OP_THOMPSON_GHOST`/`Both`/`BOTH`/`THOMPSON_OP_EXP3_GHOST`/`BLENDED` (case-insensitive; legacy aliases preserved)
+- `thompson_exp3_blend_alpha=<0.0..1.0>` (only consumed when bandit_algorithm=4)
+- Plus the 3 newly-per-core fields above
+
+**Fallback:** All defaults pre-existing — bandit_algorithm=0 (legacy EXP3) preserved; thompson_exp3_blend_alpha=0.5 default unused unless cfg=4 BLENDED; per-core fields fall back to global setting via shadow walker.
+
+**Where to verify:**
+- **Settings panel** (GUI) — bandit_algorithm dropdown shows 5 options; thompson_exp3_blend_alpha slider appears + grey-out logic when bandit_algorithm != 4
+- **Calibration log** — emit at every fill; 47 columns instead of 9; per-arm Thompson posterior values reflect ghost-training behavior
+- **Boot log** — bandit init messages show `InitBuyThompsonBandits` + `InitExitThompsonBandits` (renamed per TECH_DEBT-084)
+- **Stamp body** — thompson_exp3_blend_alpha only emits when bandit_algorithm == 4 (preserves HMAC byte equivalence for legacy stamps)
+- **Drift check** — 5 new drift-check rows: bandit_algorithm + thompson_mu_prior + thompson_precision_prior + thompson_precision_obs + thompson_exp3_blend_alpha (PARITY-026 close)
+
+**Paper-test sanity:**
+1. Set `bandit_algorithm=2` + run paper trade — Thompson posterior should shift (visible in MLStatusPanel) after each rewarded close; pre-`.F.4d` Thompson stayed frozen
+2. Set `bandit_algorithm=4` + `thompson_exp3_blend_alpha=0.3` — weights should reflect 30% Exp3 + 70% Thompson softmax blend
+3. Train model with cfg=0 + paper-test with cfg=2 — drift check should fire (bandit_algorithm changed = drift)
+4. Load v5.14-era model bundle (`thompson_state.json` old name on disk) — Load succeeds via back-compat alias; subsequent Save writes new `buy_thompson_state.json` name
+
+**Gotchas:**
+- Operator running `.F.4c.3` models or older with cfg=2 on `.F.4d` engine — Thompson posterior NOW updates (was silent pre-`.F.4d`). Existing trained models will see Thompson learn for the first time; may diverge from pre-`.F.4d` backtest expectations.
+- thompson_exp3_blend_alpha STAMP_BOUND only when bandit_algorithm == 4 — operator changing alpha while bandit_algorithm != 4 has no effect on stamp body bytes (HMAC chain preserved)
+- 3 TECH_DEBT-082 fields (lazy_rebuild_price_threshold_pct + exit_threshold + confidence_ic_floor) now per-core via `core_N_<field>` syntax; global `<field>=<val>` still works during `.F.4d`→`.F.4f` transition (shadow walker propagates)
+
+**Related:**
+- `subplans/2026-05-16-v5.15.5.F.4d-merged-framework-bandit-thompson.md` (plan body)
+- `subplans/2026-05-16-v5.15.5.F.4d-merged-framework-bandit-thompson-examples.md` (sidecar examples)
+- `postmortems/2026-05-16-v5.15.5.F.4d-merged-postmortem.md`
+- `DESIGN_SPECS/decision-time-data-binding-pattern.md` Stage 3 amendment v1.2 (Order::flags_packed bandit context bits 17-25 5th canonical)
+- `DESIGN_SPECS/sink-fn-pointer-for-optional-side-effect-pattern.md` Pattern 5 (Thompson_Update branchless wire; noop/real sink fns)
+- `DESIGN_SPECS/branchless-dispatch-discipline.md` Pattern 1 (g_buy/g_exit_reward_dispatch auto-derived fn-pointer table) + Class 28 6 cmov sites
+- CLAUDE.md H15-H20 (codified at .F.4d) + item 31 (framework-driven extensibility meta-principle)
+- TECH_DEBT-082/-083/-084 (closed at .F.4d) + TECH_DEBT-085 (Thread A FULL residual; .F.4d.1 dedicated ship)
+

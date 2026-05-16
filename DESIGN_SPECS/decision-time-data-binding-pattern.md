@@ -333,6 +333,143 @@ The `noop_fill_emit` fn from `sink-fn-pointer-for-optional-side-effect-pattern.m
 
 Both express the same shape: an always-callable sentinel that defaults to no-op + can be set to real on enable. Distinct domains; shared shape.
 
+### Scope boundary — Pattern 4 doesn't apply to dispatch-state enums (added v5.15.5.F.4c.4)
+
+Pattern 4 pre-resolves per-instance cfg VALUES onto in-flight objects (Order, Position, Event, TradeEvent) at decision time, where the object knows its per-instance context (core_id, symbol, horizon). The downstream consumer reads from the object — zero cache lookup, zero per-instance distinction lost.
+
+This works for SCALAR cfg values that the in-flight object can carry: `effective_fee_rate`, `effective_slippage_pct`, `effective_kill_switch_threshold`. The object is the natural carrier because:
+- It exists at decision time (Order created in slow-path with cfg in scope)
+- It carries one value per instance (one rate per Order)
+- The consumer (HandleFill, DrainPostFill) reads from the object on its hot/drainer path
+
+Pattern 4 does NOT apply when the per-instance cfg value is a **dispatch-state enum** that selects a DIFFERENT consumer fn — e.g., `cfg.cores[c].bandit_algorithm` selects which bandit algorithm runs for core c's reward attribution. The bandit-algorithm choice happens BEFORE any in-flight Order is created (at slow-path-rebuild time when ML_BuildParameters runs); no Order to pre-resolve onto. The dispatch happens at reward-attribution time on the slow path with `cfg.cores[c].bandit_algorithm` in scope.
+
+The right shape for dispatch-state enums:
+- Cfg value lives in `FOREACH_PER_CORE_CFG_FIELD` per `cfg-scope-discipline.md` default-per-core rule
+- Consumer reads `core_cfg->bandit_algorithm` via single-param `const PerCoreCfg<F>*` sig (Class 25 prevention)
+- Dispatch via Pattern 1 fn-pointer table indexed by the enum value (per `branchless-dispatch-discipline.md`)
+- For multi-state asymmetric dispatch, compose with `multi-state-dispatch-with-per-state-update-metadata.md` (auto-derived dispatch table from row metadata)
+
+So: Pattern 4 for SCALAR per-instance values that flow forward with an in-flight object; Pattern 1 + multi-state-dispatch + cfg-scope-discipline for DISPATCH-STATE enums that select consumer behavior at slow-path-rebuild time. Distinct shapes; both branchless; both per-core via direct registration (no override mechanism).
+
 ---
 
-**Stage 3 ACTIVE v1.0 — promoted 2026-05-15 at v5.15.5.F.4c.3 r-8 ship close.** Original Pattern 4 (pre-resolve onto in-flight object) + new lesson (downstream consumers read canonical; never recompute) + composition note with Pattern 5.
+### Stage 3 amendment v1.1 — Sibling-array family canonical (added 2026-05-16 at v5.15.5.F.4c.4)
+
+The sibling-array variant (sister to in-flight-object sub-struct expansion) has accumulated **7 canonical applications** at the `.F.4c.4` retroactive recognition + grow-to-6-OMS-cluster work:
+
+| # | Canonical | Site | Set at | Read at |
+|---|---|---|---|---|
+| 1 | `Position::entry_fee` | `Portfolio<F>::positions[slot].entry_fee` | HandleFill BUY (decision time for entry side) | calib emit + post-fill consumers |
+| 2 | `oms->per_slot.last_realized_return[pslot]` | OmsPerSlotContext sub-struct (retroactively recognized at `.F.4c.4`) | HandleFill SELL | Aggregate calculations + sweep loops |
+| 3 | `oms->per_slot.last_exit_fill_price[pslot]` | Same OmsPerSlotContext cluster | HandleFill SELL | calib emit + post-fill |
+| 4 | `oms->per_slot.last_exit_fee[pslot]` | Same cluster (originally `.F.4c.3` r-4 canonical; named-cluster refactored at `.F.4c.4`) | HandleFill SELL (decision time for exit side) | DrainPostFill + calib emit |
+| 5 | `oms->per_slot.last_exit_predicted_p[pslot]` | Same cluster (retroactively recognized) | HandleFill SELL | calib emit body |
+| 6 | `oms->per_slot.last_exit_predicted_meta[pslot]` | Same cluster (retroactively recognized) | HandleFill SELL | calib emit body |
+| 7 | `oms->per_slot.bandit_reward_bps[pslot]` | Same cluster (NEW `.F.4c.4`) | HandleFill SELL (just before calib emit) | calib emit body |
+
+### Cohort threshold reached → `FOREACH_OMS_PER_SLOT_FIELD` registry primitive
+
+With 6 sibling arrays in the OmsPerSlotContext named cluster, the cohort-threshold (4+ siblings) is met per framework-selection-criteria (CLAUDE.md item 31). The sibling-array variant family promotes to a registry primitive at `.F.4c.4`:
+
+```cpp
+// CoreFrameworks/OrderManager.hpp — FOREACH_OMS_PER_SLOT_FIELD canonical
+#define FOREACH_OMS_PER_SLOT_FIELD(X)                                                                            \
+    X(last_realized_return,     FPN<F>,    "Realized return at HandleFill SELL")                                  \
+    X(last_exit_fill_price,     FPN<F>,    "Exit fill price at HandleFill SELL")                                  \
+    X(last_exit_fee,            FPN<F>,    "Exit fee from Order pre_resolved (Pattern 4 canonical .F.4c.3 r-4)")  \
+    X(last_exit_predicted_p,    double,    "Predicted exit probability at HandleFill SELL")                       \
+    X(last_exit_predicted_meta, uint16_t,  "Predicted exit meta flags at HandleFill SELL")                        \
+    X(bandit_reward_bps,        double,    "Bandit reward attribution at HandleFill SELL (.F.4c.4)")
+
+#define EMIT_PER_SLOT_FIELD(name, type, doc) type name[MAX_PORTFOLIO_POSITIONS];
+template <unsigned F>
+struct alignas(64) OmsPerSlotContext {
+    FOREACH_OMS_PER_SLOT_FIELD(EMIT_PER_SLOT_FIELD)
+    uint8_t _padding_oms_per_slot[32] = {0};  // explicit trailing padding for 64-byte cluster boundary
+};
+#undef EMIT_PER_SLOT_FIELD
+static_assert(sizeof(OmsPerSlotContext<64>) % 64 == 0, "OmsPerSlotContext must be 64-byte multiple");
+```
+
+Future per-slot decision-time-bound additions = 1 row in `FOREACH_OMS_PER_SLOT_FIELD` mechanical. Enrolled in `FOREACH_REGISTRY` meta-registry per H15 (CI gate `tools/check_meta_registry.py` enforces).
+
+### Sweep loop discipline note (SoA wins for our access pattern)
+
+OmsPerSlotContext uses SoA (Struct-of-Arrays) layout despite AoS marginally winning at single-slot read (per-trade emit ~5-15ns saved). Workload-weighted analysis at `.F.4c.4`:
+
+- Per-trade calib emit (~0.05 Hz): AoS saves ~5-15ns per emit; total ~1ns/sec at typical cadence
+- Sweep loops over single field × all slots (~5 Hz at slow-path-rebuild): SoA saves ~50-150ns per sweep; total ~500ns/sec at typical cadence
+
+**Net latency: SoA wins by ~499ns/sec at typical trading tempo.** AoS reserved for cases where single-slot access dominates frequency (e.g., Position struct — one per slot, accessed as a unit at trade lifecycle events).
+
+**Shape definition (sibling-array variant family):**
+
+```cpp
+// Owning subsystem state struct (Portfolio, OmsState, etc.) declares NAMED sub-struct
+// holding per-slot decision-time-bound data. alignas(64) on the sub-struct preserves
+// cache discipline. Sibling array of size MAX_PORTFOLIO_SLOTS (or analogous) per field.
+
+template <unsigned F>
+struct OwnerPerSlotDecisionContext {  // Example: OmsPerSlotDecisionContext, PortfolioPerSlotEntry, ...
+    FPN<F>  field1[MAX_PORTFOLIO_SLOTS];  // decision-time-bound at one event
+    double  field2[MAX_PORTFOLIO_SLOTS];  // decision-time-bound at another event
+    // Future per-slot decision-time-bound additions = 1 row here mechanical
+};
+
+template <unsigned F>
+struct OwnerState {
+    // ... HOT cluster ...
+    alignas(64) OwnerPerSlotDecisionContext<F> per_slot_decision;
+    // ... rest ...
+};
+
+// Write at decision time (single-source-of-truth event):
+oms->per_slot_decision.field1[pslot] = value_at_decision_time;
+
+// Read at downstream consumer time (NEVER recompute):
+value = oms->per_slot_decision.field1[pslot];
+```
+
+**When to apply sibling-array variant vs in-flight-object sub-struct variant:**
+
+| Variant | Use when... |
+|---|---|
+| **In-flight-object sub-struct** (e.g., `Order::pre_resolved`) | Object has its own lifecycle that flows through multiple consumers (Order: Submit → Fill → Cancel). Multiple consumers each read from the object on its path. Sub-struct refinement Stage 1 → 2 → 3 on the object. |
+| **Sibling-array on owning subsystem** (e.g., `oms->per_slot_decision.X[]`) | Subsystem owns a slot lifecycle with single decision-time write + single (or few) downstream consumer reads in same slot lifecycle (HandleFill BUY → HandleFill SELL → calib emit). Slot index is the natural key. |
+| **Both** can apply to different fields on same subsystem (e.g., Order::pre_resolved.fee_rate flows with Order; OmsState's last_exit_fee flows per-slot) — each field picks its best variant by lifecycle. |
+
+### Stage 3 amendment v1.2 — Multi-bit-state-encoding bit-pack on existing struct field as Pattern 4 carrier (added 2026-05-16 at v5.15.5.F.4c.4)
+
+**Sister Pattern 4 carrier mechanism** discovered at `.F.4c.4`: when at-decision-time fields are small K-state values (e.g., 3 enums each fitting in 3 bits), they can be bit-packed into an EXISTING struct field on the in-flight object, sister to an existing canonical bit on the same field.
+
+**First canonical:** Order::flags_packed bandit context bits at `.F.4c.4` (sister to existing `MASK_ORDER_PRE_RESOLVED` bit at the same field per `.F.4c.3`). Saves Order layout disruption that sub-struct expansion would cause; composes with `multi-bit-state-encoding-pattern.md` (also at Stage 3 promotion).
+
+**Shape:** existing uint32_t field on the in-flight object; manual SHIFT_*/MASK_* allocation; MBS_*-named branchless accessors per H14:
+
+```cpp
+// Bit allocation documented at struct definition site
+constexpr int SHIFT_OBJ_<FIELD> = N;
+constexpr uint32_t MASK_OBJ_<FIELD>_<KBIT> = ...;
+inline int MBS_Obj<Field>(const Obj& o) {
+    return (o.existing_packed_field >> SHIFT_OBJ_<FIELD>) & MASK_OBJ_<FIELD>_<KBIT>;
+}
+inline void MBS_ObjSet<Field>(Obj* o, int value) {
+    constexpr uint32_t CLEAR_MASK = ~(MASK_OBJ_<FIELD>_<KBIT> << SHIFT_OBJ_<FIELD>);
+    o->existing_packed_field = (o->existing_packed_field & CLEAR_MASK) |
+        ((uint32_t)(value & MASK_OBJ_<FIELD>_<KBIT>) << SHIFT_OBJ_<FIELD>);
+}
+```
+
+**When to apply this variant vs sub-struct expansion:**
+
+| Variant | Use when... |
+|---|---|
+| **Bit-pack into existing packed field** | At-decision-time values are small K-state enums (≤8 values fits 3 bits; ≤16 fits 4 bits); existing packed field has free bits; struct size invariant is load-bearing (would break if grown) |
+| **Sub-struct expansion** | At-decision-time values include scalars that can't bit-pack (FPN<F>, double, large ints); OR struct doesn't have an existing packed field with free bits; OR there are ≥3 fields and a sub-struct is structurally clearer |
+
+**Composition:** the two variants can co-exist on the same in-flight object. Example: `Order::pre_resolved` sub-struct for fee_rate/slippage_pct (scalars; HOT cluster) + `Order::flags_packed` bit-pack for bandit context (small enums; same field as existing canonical bit).
+
+---
+
+**Stage 3 ACTIVE v1.2 — promoted 2026-05-15 at v5.15.5.F.4c.3 r-8; sibling-array family canonical + bit-pack carrier variant added 2026-05-16 at v5.15.5.F.4c.4.** Three Pattern 4 carrier variants documented: (1) in-flight-object sub-struct refinement (Order::pre_resolved), (2) sibling-array on owning subsystem (OmsPerSlotDecisionContext), (3) bit-pack into existing packed field on in-flight object (Order::flags_packed bandit context).

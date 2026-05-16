@@ -13,6 +13,8 @@
 - `DOCS/DESIGN_PHILOSOPHY.md` § 4 Latency cost framework — cost basis
 - CLAUDE.md item 18 + 28 — latency discipline references
 - `decision-time-data-binding-pattern.md` — composes (pre-resolution is itself a branchless win)
+- `multi-state-dispatch-with-per-state-update-metadata.md` — composes (Pattern 1 fn-pointer dispatch table entries auto-derived from registry metadata via X-macro reduction; adding a new dispatch state = 1 row mechanical change; sister pattern for metadata-driven branchless dispatch on multi-state enums)
+- `sink-fn-pointer-for-optional-side-effect-pattern.md` — Pattern 5 (sister to Pattern 1/2/3/4); branchless optional side-effect emit via fn-pointer with noop default
 
 ---
 
@@ -103,6 +105,29 @@ inline void OrderManager_HandleFill(OrderManagerState<F>* oms, Order<F>* o, FPN<
 ```
 
 Cost per fill: 1 table lookup (~1ns L1 hit) + 1 indirect call (~3-5ns) + handler body. ZERO mispredict variance regardless of access pattern.
+
+#### Pattern 1 sub-variant — Metadata-driven auto-derived dispatch table
+
+When the enum has per-state metadata in its X-macro registry row (per `multi-state-dispatch-with-per-state-update-metadata.md`), the dispatch table entries can be COMPUTED at compile time from the metadata via X-macro reduction instead of hand-coded. Adding a new state = 1 row in the registry → dispatch table auto-extends; no scattered changes; Class 18 + Class 28 closed in one shape.
+
+```cpp
+// Per-state metadata in FOREACH_X declares each row's dispatch behavior:
+//   FOREACH_BANDIT_ALGORITHM(X) row: (name, value, apply_fn, exp3_up, thompson_up, drives, doc)
+// Reduction computes dispatch entry from metadata at compile time:
+#define _DISPATCH_ENTRY(name, val, fn, exp3_up, thompson_up, drives, doc) \
+    [val] = ((exp3_up) && (thompson_up)) ? &both_handler<F> \
+          : (exp3_up)                    ? &exp3_only_handler<F> \
+          : &thompson_only_handler<F>,
+
+template <unsigned F>
+static constexpr DispatchFn<F> g_dispatch_table[FOREACH_BANDIT_ALGORITHM_COUNT] = {
+    FOREACH_BANDIT_ALGORITHM(_DISPATCH_ENTRY)
+};
+```
+
+Same Pattern 1 dispatch cost at the callsite (~5-7ns deterministic). The win is structural: 6th state addition = 1 row in `FOREACH_X` → table auto-extends → all dispatch sites work unchanged. Class 18 mirror closure works at the row level because adding a row with the right metadata extends every consumer that consumes the metadata.
+
+See `multi-state-dispatch-with-per-state-update-metadata.md` for the full pattern body + orthogonal-axes shape + composition with Pattern 5 sink-fn-pointer.
 
 ### Pattern 2 — 2D state×type dispatch table (composite dispatch)
 

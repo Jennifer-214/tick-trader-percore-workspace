@@ -171,6 +171,28 @@ struct PerCoreState {
 };
 ```
 
+### With multi-state-dispatch-with-per-state-update-metadata.md (per-state side-effect emit)
+
+When optional side effects should fire per certain dispatch states (e.g., per-arm Thompson posterior emission only when Thompson is learning), per-state side-effect bits live in the dispatch enum's X-macro metadata. The Pattern 5 sink-fn-pointer assignment can be DRIVEN by metadata: real_fn for states where the side effect fires, noop_fn for states where it doesn't.
+
+Simpler composition (most common): the Pattern 5 sink-fn-pointer is set by SUBSYSTEM enable (file configured) and fires unconditionally when called; per-state filtering happens INSIDE the real fn (or not at all if the side effect should emit comprehensively). Maximum diagnostic data when subsystem enabled; zero callsite branches.
+
+More complex composition (deferred until 2nd application): per-state fn-pointer table where each state's row metadata picks real_fn or noop_fn:
+
+```cpp
+// Hypothetical per-state telemetry emit dispatch — auto-derived from metadata column
+#define _TELEMETRY_DISPATCH(name, val, fn, exp3_up, thompson_up, drives, emit_telem, doc) \
+    [val] = (emit_telem) ? &real_telemetry_emit<F> : &noop_telemetry_emit<F>,
+template <unsigned F>
+static constexpr TelemetryEmitFn<F> g_telemetry_dispatch[FOREACH_BANDIT_ALGORITHM_COUNT] = {
+    FOREACH_BANDIT_ALGORITHM(_TELEMETRY_DISPATCH)
+};
+```
+
+Adding a new state with `emit_telem=1` automatically extends the telemetry dispatch table without callsite changes.
+
+See `multi-state-dispatch-with-per-state-update-metadata.md` § "Composition with Pattern 5" for the full pattern body.
+
 ---
 
 ## Anti-patterns

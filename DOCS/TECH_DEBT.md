@@ -1513,3 +1513,44 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 - **Trigger:** Bundle with `.F.4f` cleanup ship (TECH_DEBT-076 to -080 plus this for cohort-harmonization completeness) OR include in `.F.4d` Thread B as additional 3-field cohort migration if scope permits (decision: see `.F.4d` merged plan body Thread B Section 5.G-J — operator/coder decision at coding time).
 - **Status:** OPEN (queued for `.F.4f` cleanup ship OR `.F.4d` scope expansion per operator decision)
 - **Cross-ref:** `subplans/2026-05-13-v5.15.5.F.5-per-core-thompson-bandit-overrides.md` (SUPERSEDED SKETCH; 13-field cohort enumeration); `DESIGN_SPECS/cfg-flag-eligibility-criteria.md` (per-core eligibility framework); `CoreFrameworks/CfgFieldRegistry.hpp:412+` (`FOREACH_PER_CORE_CFG_FIELD` canonical registry); CLAUDE.md item 23 (Class 23 anti-pattern — manual parser); CLAUDE.md item 19 (structural fix preferred when bug class can recur).
+
+### TECH_DEBT-083 — IWYU hygiene sweep: 8 headers use `uintN_t` without direct `<cstdint>` / `<stdint.h>` include
+
+- **Created:** 2026-05-16 (surfaced during `.F.4d` Step 1.C coding when removing an unused `<cstdint>` include from `ML_Headers/bandit_dispatch_table.hpp` exposed a transitive-include chain dependency; 2 chain-breakers — `CoreFrameworks/ParseFast.hpp` + `ML_Headers/BanditLearning.hpp` — fixed inline; 8 others remain latent)
+- **Severity:** LOW (latent IWYU gap; not breaking current build because of transitive include chains in canonical use; would break if include order changes OR if a new header is added before the transitive cstdint-pull lands)
+- **Surface:** 8 headers that use `uint64_t` (or `uint32_t`) without directly including `<cstdint>` or `<stdint.h>`:
+  - `ML_Headers/CoreModelZoo.hpp`
+  - `ML_Headers/ModelInference.hpp`
+  - `ML_Headers/RewardTracker.hpp`
+  - `ML_Headers/StampBoundModelConstRegistry.hpp`
+  - `ML_Headers/WelfordStats.hpp`
+  - `Strategies/MeanReversion.hpp`
+  - `Strategies/Momentum.hpp`
+  - `Strategies/RegimeDetector.hpp`
+- **What's deferred:** add `#include <cstdint>` to each of the 8 headers; ~1-line mechanical addition per file; total ~8 lines + brief IWYU-discipline comment. Closes the latent class (any future include-order change won't expose new chain-breakers).
+- **Why deferred (not effort-avoidance):** scope guard on `.F.4d` — pre-coding gate set scope at bandit/thompson 5-state + framework consolidation; IWYU hygiene is unrelated to that scope. Mechanical sweep belongs in a cleanup window. Per CLAUDE.local.md `feedback_consult_on_audit_findings` + scope-creep discipline: surface for operator triage, don't auto-sweep.
+- **Cost estimate:** ~30 min focused (8 mechanical edits + verify clean build).
+- **Trigger:** Bundle with `.F.4f` cleanup ship Phase 2 (TECH_DEBT-077 bitmap-bool migration also touches these surfaces) OR standalone micro-cleanup post-`.F.4d`. Operator decision on timing.
+- **Status:** OPEN (queued for `.F.4f` cleanup ship OR standalone)
+- **Cross-ref:** discovered during `.F.4d` Step 1.C coding (this session 2026-05-16); fixed inline: `CoreFrameworks/ParseFast.hpp:37` + `ML_Headers/BanditLearning.hpp:47` (both got explicit `#include <cstdint>`); CLAUDE.md item 19 (structural fix preferred when bug class can recur — closing the class via codebase-wide sweep is the right structural answer).
+
+### TECH_DEBT-084 — Full symmetric rename of `thompson_bandits` → `buy_thompson_bandits` + FOREACH_BANDIT_SIDE auto-gen across all 6 per-side symbol families
+
+- **Created:** 2026-05-16 during `.F.4d` Step 1.D Pattern 5 sink-fn-pointer design (this session) — explicit design decision to HAND-MIRROR exit-side rather than full FOREACH_BANDIT_SIDE auto-gen now, to avoid a cascade rename of existing `thompson_bandits` field across ~50 call sites. Captured as future cleanup so the design intent isn't lost.
+- **Severity:** LOW (design-quality hygiene; current hand-mirror works correctly; future addition of a 3rd side — per-symbol? per-strategy? — would need 4× hand-writing per fn family without this cleanup)
+- **Surface:** rename `EnsembleModelZoo<F>::thompson_bandits` → `buy_thompson_bandits` + `thompson_update_fn` → `buy_thompson_update_fn` + `last_predicted_thompson_arm` → `last_predicted_buy_thompson_arm` + `MASK_EZOO_THOMPSON_READY` → `MASK_EZOO_BUY_THOMPSON_READY` + `EnsembleModelZoo_InitThompsonBandits` → `EnsembleModelZoo_InitBuyThompsonBandits` (+ symmetric for `_Save`/`_Load`/`_State` JSON paths). All ~50 call sites + persistence file paths + test fixtures + GUI display references migrate.
+- **What's deferred:** full FOREACH_BANDIT_SIDE auto-gen across all 6 per-side symbol families per § G.1 of `.F.4d` merged plan body. Replaces hand-mirror at `.F.4d` (which produces `thompson_bandits` + `thompson_exit_bandits` asymmetric naming + duplicate `_InitThompsonBandits`/`_InitExitThompsonBandits` fn bodies) with single X-macro expansion per consumer site:
+  ```cpp
+  #define _DEFINE_INIT_FN(side) \
+      template <unsigned F> \
+      inline void EnsembleModelZoo_Init##side##ThompsonBandits(EnsembleModelZoo<F>* ezoo, ...) { \
+          /* body parameterized; field accessed as ezoo->side##_thompson_bandits[r] via token-paste */ \
+      }
+  FOREACH_BANDIT_SIDE(_DEFINE_INIT_FN)
+  ```
+  Adding a 3rd side (e.g., per-symbol Thompson) becomes 1 row in `FOREACH_BANDIT_SIDE(X) X(buy) X(exit) X(per_symbol)` → 6 mirror sites auto-generate (init fn / load fn / save fn / dispatch table entry / sink-fn field / init flag).
+- **Why deferred (not effort-avoidance):** cascade rename of `thompson_bandits` field affects ~50 call sites across ML_Headers/ + GUI/ + tests/ + persistence file paths. Scope-creep risk for `.F.4d` which is already MED-HIGH risk. Per `feedback_overengineering_boundary_when_future_easier` — at the borderline of "harder now / easier future" the rule is "pick harder when future MUCH easier". Here the future-easier multiplier is modest (2 sides today, 3-4 projected; ~30-50 lines saved per future side). Defer is legitimate cost/benefit call.
+- **Cost estimate:** ~6-10h focused (cascade rename via careful Edit replace_all + per-site verification + test fixture sweep + persistence file path migration + GUI display refresh + back-compat alias for old `thompson_state.json` filename → new `buy_thompson_state.json`).
+- **Trigger:** when a 3rd per-side axis (per-symbol Thompson? per-strategy Thompson?) is proposed — at that point the rename cost is amortized by the auto-gen value. OR bundled into `.F.4f` cleanup ship if scope permits. OR standalone hygiene ship post-`.F.4e`.
+- **Status:** OPEN (queued post-`.F.4d`; trigger-driven OR bundled with `.F.4f`)
+- **Cross-ref:** `.F.4d` merged plan body § G (FOREACH_BANDIT_SIDE auto-mirror full design); `ML_Headers/CoreModelZoo.hpp` `EnsembleModelZoo<F>` struct (current asymmetric naming); `ML_Headers/ThompsonBandit.hpp` `ThompsonUpdateFn` typedef + noop/real wrappers (sink-fn infrastructure ready for auto-gen consumer); CLAUDE.md item 19 (structural fix preferred when bug class can recur); CLAUDE.md item 31 (framework-driven extensibility); `DESIGN_SPECS/sink-fn-pointer-for-optional-side-effect-pattern.md` Pattern 5 — full auto-gen would generalize this).

@@ -106,6 +106,8 @@ Cost per fill: 1 table lookup (~1ns L1 hit) + 1 indirect call (~3-5ns) + handler
 
 ### Pattern 2 — 2D state×type dispatch table (composite dispatch)
 
+**When to apply:** BOTH axes must be genuinely data-dependent dispatch axes — state AND type both vary, AND the dispatch needs to react to their combination. If one axis is trivially constant by invariant (e.g., entering function in only one state by construction) OR doesn't reach terminal/dedup states at the dispatch point, Pattern 1 (1D) suffices and is cleaner. The hypothetical example below illustrates the shape; verify your site actually needs the 2D dispatch before reaching for it.
+
 For dispatch on a COMBINATION of state values (e.g., Order state × Order type, where state determines dedup AND type determines handler):
 
 ```cpp
@@ -150,6 +152,42 @@ oms->mask = (uint16_t)((oms->mask & ~maker_bit) | maker_mask);
 ```
 
 The ternary lowers to cmov; the mask-select replaces branch + conditional store with deterministic ALU ops. Cost: ~3-4 cycles deterministic vs branch + mispredict potential.
+
+#### Pattern 3 sub-variant — Bitmap-search via match-mask + tzcnt
+
+For find-first-match search loops over a small bitmap-gated array (typical case: 16 OMS slots), the branchy shape is:
+
+```cpp
+// PRE — branchy: per-slot bitmap gate + early-exit on match
+int found = -1;
+for (int s = 0; s < N; ++s) {
+    if (!(bitmap & (1u << s))) continue;       // data-dependent branch (gate)
+    if (predicate(arr[s])) {                    // data-dependent branch (match)
+        found = s;
+        break;
+    }
+}
+```
+
+Two data-dependent branches per slot (gate + match) plus an early-exit `break`. Variable cost = O(match-position); injects p99 variance.
+
+```cpp
+// POST — branchless: build match-bitmap via fixed-cost compare per slot;
+// AND with gate-bitmap; tzcnt picks first set bit.
+uint16_t match_mask = 0;
+for (int s = 0; s < N; ++s) {
+    int eq = predicate(arr[s]) ? 1 : 0;        // cmov; no branch
+    match_mask = (uint16_t)(match_mask | ((uint16_t)eq << s));  // ALU only
+}
+uint16_t valid = (uint16_t)(match_mask & bitmap);
+int found = valid ? (int)__builtin_ctz(valid) : -1;
+```
+
+Branchless inside the loop: ternary → cmov, mask-or is pure ALU. The `__builtin_ctz` is a single `tzcnt` instruction. Cost: fixed N × (predicate cycles + 2-3 ALU ops). Variance = 0.
+
+When to apply: search loops where N is small (≤16-32 typical), predicate has fixed cost (e.g., `memcmp` on fixed-size data), and the cost difference between branchy avg vs branchless fixed is dominated by mispredict variance — which it is on SP/HP per the cost framework above.
+
+Composes with `bitmap-flag-api.md` (BITMAP_* primitives) and `decision-time-data-binding-pattern.md` (the matched slot's `core_id` flows forward as pre-resolved value).
 
 ### Pattern 4 — Branchless via pre-resolution at decision time
 
@@ -203,10 +241,13 @@ If your case doesn't fit one of the above, branchless is the default.
 
 Populated at Stage 3 ACTIVE — shipped sites get file:line refs.
 
-- (pending) `CoreFrameworks/OrderManager.hpp` — `OrderManager_HandleFill` 2D state×type dispatch table (.F.4c.3 WIP2d-1.B.1). First canonical Pattern 2 application.
+- (pending) `CoreFrameworks/OrderManager.hpp` — `OrderManager_HandleFill` **1D type dispatch table** (.F.4c.3 WIP2d-1.B.1). First canonical **Pattern 1** application. Originally planned as Pattern 2 (2D state×type) but body inspection showed Order is never in terminal state at HandleFill entry by state-machine invariant — Pattern 2's terminal-state-noop rows would be dead code. Pattern 1 (1D type) is the correct shape; portfolio-bitmap dedup at slot-already-closed stays as `__builtin_expect`-rare branch (race-protection only, legitimate per decision matrix).
+- (pending) `CoreFrameworks/OrderManager.hpp` — `OrderManager_HandleFill` `last_was_win_bitmap` SET/CLR converted to mask-select (.F.4c.3 WIP2d-1.B.1). Pattern 3 first canonical.
+- (pending) `CoreFrameworks/Reconcile.hpp` — `Reconcile_ApplyMissedFills` originating-core_id bitmap-search via match-mask + tzcnt (.F.4c.3 WIP2d-1.B.1). **Pattern 3 sub-variant first canonical** (bitmap-search). Closes Reconcile cross-core fee accuracy structurally.
 - Already exists (retroactively recognized): `bitmap-flag-api.md` BITMAP_* macros — branchless bitmap flag checks via mask-select. Pattern 3 precedent.
 - Already exists (retroactively recognized): hot-path `ExecutionCore_Tick` mask compute for SG dispatch — branchless from inception. Pattern 1 precedent.
-- (pending) `CoreFrameworks/Order.hpp` — `OrderPreResolved` sub-struct + `Order_BindPreResolved` helper (.F.4c.3 WIP2d-1.B.1). First canonical Pattern 4 application.
+- Already exists (retroactively recognized): `OrderManager_Submit` free-slot allocation via `~oms->order_bitmap` + `__builtin_ctz` — Pattern 3 sub-variant precedent (free-bit search vs match-bit search; same primitive).
+- (pending) `CoreFrameworks/Order.hpp` — `OrderPreResolved` sub-struct + `Order_BindPreResolved` helper (.F.4c.3 WIP2d-1.B.1). First canonical **Pattern 4** application. Sister: `flags_packed` widened to `uint32_t` + `MASK_ORDER_PRE_RESOLVED` bit + `TT_ASSERT_PRE_RESOLVED_BOUND` test-build assert structurally closes the silent-zero-fee class.
 
 ---
 

@@ -299,4 +299,20 @@ Sister rule for parallel array exemptions: `FOREACH_MANUAL_PER_CORE_FIELD` (see 
 
 ---
 
-**Stage 2 DRAFT v1.0 — committed 2026-05-15 ahead of v5.15.5.F.4c.3 ship.** Promotes to Stage 3 ACTIVE v1.0 at ship close once per-core reference implementations land.
+## Stage 3 ACTIVE — axis evolution note (added at v5.15.5.F.4c.3 r-8 ship close, 2026-05-15)
+
+The per-core axis is the FIRST canonical application of per-instance registry shape. Future axes (per-symbol, per-strategy, per-horizon, per-regime) extend mechanically:
+
+- **Per-symbol** (next likely): `FOREACH_PER_SYMBOL_CFG_FIELD` + `PerSymbolCfg<F>` struct; consumer fns add `const PerSymbolCfg<F>* symbols` param per the consumer-over-per-instance-array shape (`cfg-scope-discipline.md` Stage 3 § "consumer over per-core array" — generalizes to ANY per-instance axis)
+- **Per-strategy** (when ML hyperparameters grow per-strategy independence): same shape; `FOREACH_PER_STRATEGY_CFG_FIELD` + array
+- **Per-horizon / per-regime** (further future): same shape; orthogonal to per-core via type-system composition
+
+**Sig shape evolution is structurally enforced**: each new axis adds 1 more `const Per<Axis>Cfg<F>* <axis_name>` param to multi-axis consumer fns. Type system catches every caller at axis-addition ship.
+
+**Multi-axis composition** (per-core × per-symbol): per-instance instance count = N(cores) × N(symbols). Storage: `PerCoreCfg<F> cores[MAX_EXECUTION_CORES]; PerSymbolCfg<F> symbols[MAX_SYMBOLS];` — separate arrays, separate consumer fns. Don't conflate into a single 2D struct unless ALL trading-axis fields cross both axes (rare).
+
+**Not deferred**: this evolution path is the structural framework. Future ships that add new axes follow this pattern WITHOUT redesign. Per `branchless-dispatch-discipline.md` composition note: Pattern 5 noop fn-pointer dispatch composes with multi-axis registry (per-axis enable bits drive fn-pointer selection).
+
+---
+
+**Stage 3 ACTIVE v1.0 — promoted 2026-05-15 at v5.15.5.F.4c.3 r-8 ship close.** Per-core axis live; per-symbol / per-strategy / per-horizon / per-regime axes structurally enforced by sig discipline; multi-axis composition expressible via separate per-axis arrays + sig extension.

@@ -301,3 +301,38 @@ Codified in `DOCS/DESIGN_PHILOSOPHY.md` § 11 sub-section "Framework-selection c
 - **The retroactive recognition pattern.** Position.entry_fee already followed this principle pre-codification. Codifying the principle let us NAME what was already working — and apply it deliberately to new surfaces. Worth scanning the codebase for other retroactive applications when the spec promotes to Stage 3.
 - **Cross-thread cfg read brittleness is masked by boot-time-only cfg today.** If a future hot-swap path is added without pre-resolution discipline, accounting can briefly use mixed rates. Pre-resolution at decision time sidesteps the entire concurrency question.
 - **Don't reach for the registry mechanism first.** The registry was the first impulse during design; the principle was the second. Naming the principle first lets us see when the registry isn't actually needed.
+
+---
+
+## Stage 3 ACTIVE amendments (added at v5.15.5.F.4c.3 r-8 ship close, 2026-05-15)
+
+### Lesson: downstream consumer READS canonical value, never recomputes from cfg
+
+**The recompute-from-cfg anti-pattern** — discovered during `.F.4c.3` r-4 when 2 failing tests pointed at a real architectural gap:
+
+`DrainPostFillOneCore` was RECOMPUTING `exit_fee = exit_notional * cfg_lookup(fee_rate_maker_or_taker)` even though `HandleFill SELL` had ALREADY computed the authoritative `exit_fee` from `o->pre_resolved.fee_rate`. The recompute-from-cfg path loses authority over edge cases:
+
+- **Per-core variation**: post-Class 27 closure, cfg has per-core fee_rate. Recompute-from-cfg path got wrong fee for cross-core fills.
+- **Hot-swap timing**: if cfg reloads mid-trade (future hot-swap), recompute uses NEW cfg rate for OLD trade's accounting.
+- **Authority duplication**: 3-place compute (HandleFill BUY, HandleFill SELL, DrainPostFill) → drift risk.
+
+**Pattern**: downstream consumers READ canonical value from authoritative storage; never recompute.
+
+**Implementation pattern**: HandleFill SELL writes `oms->last_exit_fee[pslot] = exit_fee` (sibling array; SoA layout); DrainPostFill reads `oms->last_exit_fee[slot]`. ONE compute (at decision time, from Order pre_resolved) + N reads (downstream consumers). Sister to existing `last_exit_fill_price[pslot]` pattern.
+
+**When to apply**: any downstream consumer of a fill / event / position lifecycle that's tempted to recompute. Reach for the sibling-array-read pattern instead.
+
+**First canonical**: `CoreFrameworks/OrderManager.hpp::handle_sell_fill` writes `oms->last_exit_fee[pslot]`; `CoreFrameworks/ControllerEventLoop.hpp::EventLoop_DrainPostFillOneCore` reads. Closes a latent correctness bug + simplifies (no cfg-threading needed at DrainPostFill wrapper).
+
+### Compose with Pattern 5 (sink-fn-pointer)
+
+The `noop_fill_emit` fn from `sink-fn-pointer-for-optional-side-effect-pattern.md` is the canonical "stub" semantic — always-call, default no-op. Composes with decision-time-data-binding's "second line of defense" stub pattern:
+
+- **Decision-time-data-binding stub**: per-instance cfg cache fallback when no in-flight object exists (rare case; second line of defense)
+- **Pattern 5 noop fn stub**: optional side-effect emit when subsystem is disabled (always-call, default no-op)
+
+Both express the same shape: an always-callable sentinel that defaults to no-op + can be set to real on enable. Distinct domains; shared shape.
+
+---
+
+**Stage 3 ACTIVE v1.0 — promoted 2026-05-15 at v5.15.5.F.4c.3 r-8 ship close.** Original Pattern 4 (pre-resolve onto in-flight object) + new lesson (downstream consumers read canonical; never recompute) + composition note with Pattern 5.

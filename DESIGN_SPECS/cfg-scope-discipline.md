@@ -303,4 +303,49 @@ Plus: the cfg-↔-ML surface-alignment going-forward rule (CLAUDE.local.md, set 
 
 ---
 
-**Stage 2 DRAFT v1.0 — committed 2026-05-15 ahead of v5.15.5.F.4c.3 ship.** Promotes to Stage 3 ACTIVE v1.0 at ship close once cfg-field-scope-classification + per-core registry reference implementations land.
+## Stage 3 ACTIVE amendments (added at v5.15.5.F.4c.3 r-8 ship close, 2026-05-15)
+
+Two new canonical consumer-fn-sig shapes are first-applied at the `.F.4c.3` B.1 ship. Added to this spec to durably codify the discipline:
+
+### Shape: consumer over per-core array (multi-slot dispatch)
+
+When a consumer fn iterates ALL per-core slices (force-close, flatten-all, reconcile multi-fill replay), the canonical sig is:
+
+```cpp
+template <unsigned F>
+inline int fn_name(/* primary state */, const PerCoreCfg<F>* cores, /* other args */);
+```
+
+Caller passes `&cfg.cores[0]` (full array base). Body indexes `cores[slot]` per-iteration. Type-safe against Class 25 (no `ControllerConfig<F>*` access). Future axis additions (per-symbol, per-strategy) extend by adding additional slice-pointer params — STRUCTURALLY ENFORCED + type-checked.
+
+**First canonical applications (v5.15.5.F.4c.3 r-1/r-2):**
+- `CoreFrameworks/ShardedLiveSafety.hpp::EngineSharded_ForceCloseOnShutdown` — boot/safety force-close
+- `CoreFrameworks/ControllerEventLoop.hpp::EventLoop_FlattenAll` — slow-path flatten-all on WS staleness
+
+### Shape: recovery-path nullable pointer (with branchless stub fallback)
+
+When a fn is on a RECOVERY path (Reconcile, post-crash replay) where cfg may legitimately be absent, sig is:
+
+```cpp
+template <unsigned F>
+inline int fn_name(/* primary state */, /* args */, const PerCoreCfg<F>* cores = nullptr);
+```
+
+Body uses branchless stub-array fallback at entry:
+```cpp
+static const PerCoreCfg<F> NULL_PER_CORE_CFG_STUB_ARRAY[MAX_EXECUTION_CORES] = {};
+const PerCoreCfg<F>* effective_cores = cores ? cores : NULL_PER_CORE_CFG_STUB_ARRAY;
+// ... loop body uses effective_cores[idx] — pure ALU, no per-iter branch
+```
+
+Nullable semantic = "recovery path; missing cfg is graceful no-op (FPN_Zero fees)." Sister to OrderManager_Submit nullable `core_cfg` pattern (.F.4c.3 r-1).
+
+**First canonical applications (v5.15.5.F.4c.3 r-2/r-3):**
+- `CoreFrameworks/Reconcile.hpp::Reconcile_ApplyMissedFills` — recovery replay of missed fills
+- `CoreFrameworks/ControllerEventLoop.hpp::EventLoopState_ReconstructPerCoreFromEventLog` — boot replay from event log
+- `CoreFrameworks/ControllerEventLoop.hpp::EventLoop_OnEvent` + `EventLoop_DrainPostFillOneCore` — legacy + slow-path consumers with optional cfg
+- `CoreFrameworks/OrderManager.hpp::OrderManager_Submit` + `OMS_PushSubmit` — test-fixture nullable form (production callers MUST pass cfg per discipline)
+
+---
+
+**Stage 3 ACTIVE v1.0 — promoted 2026-05-15 at v5.15.5.F.4c.3 r-8 ship close.** 4 canonical sig shapes: (1) single per-core slice for single-core consumer (original), (2) consumer over per-core array for multi-slot dispatch (NEW), (3) recovery-path nullable pointer with branchless stub fallback (NEW), (4) caller-resolved globals as scalar args (original).

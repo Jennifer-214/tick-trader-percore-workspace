@@ -1,7 +1,7 @@
 # Multi-bit state encoding + branchless inference API
 
 **Established:** 2026-05-13 (post-v5.15.5.C.2)
-**Status:** INVARIANT (post-`.F.4d` ship; 3 canonical applications: EVENT_LOG_MODE + DriftOverride + RegistryRosterEntry + ManualFieldInventoryEntry meets ≥3-application invariant-promotion threshold per `pattern-codification-lifecycle.md`)
+**Status:** INVARIANT (post-`.F.4d` ship; **5 canonical applications**: EVENT_LOG_MODE + DriftOverride + RegistryRosterEntry + ManualFieldInventoryEntry + Order::flags_packed bandit context bits 17-25 — exceeds ≥3-application invariant-promotion threshold per `pattern-codification-lifecycle.md`)
 **Tags:** structural-fix, framework-discipline, hot-path-cache-density; closes byte-waste anti-pattern; serves H6 (cache-line discipline) + H12 (struct padding determinism); Stage 5+ (CLAUDE.md item 30 — promoted to INVARIANT at `.F.4d`); 4+ applications
 **Cross-references:**
 - Sister pattern: `bitmap-flag-api.md` (the 1-bit specialization — N booleans into 1 word)
@@ -666,13 +666,24 @@ Found in the FoxML_Trader_v2 codebase as of 2026-05-13:
 - Struct: per-entry encoding for non-cfg manual fields documented in inventory
 - Bits packed: `kind` uint8_t = CATEGORY (3 bits; DERIVED/RUNTIME_STATE/PER_CORE_OVERRIDE/INTERNAL) + reserved (5 bits)
 
-### 3-application threshold → INVARIANT promotion
+### Fifth application: Order::flags_packed bandit context bits (v5.15.5.F.4d Thread B)
+
+- File: `CoreFrameworks/Order.hpp` `Order<F>::flags_packed` uint32_t field (canonical bit-pack carrier since `.F.4c.3` r-1)
+- Struct: `Order<F>` (320B; bit-pack added at bits 17-25 of flags_packed; sister to existing `MASK_ORDER_PRE_RESOLVED` at bit 16)
+- Bits packed: 9 bits across 3 sub-slots — `bandit_active_state` (3 bits; 5 states fit) + `bandit_regime` (3 bits; NUM_REGIMES=5 fits) + `bandit_chosen_arm` (3 bits; ENSEMBLE_HORIZON_MAX=8 fits)
+- Accessors: `MBS_OrderBanditActiveState(o)` / `MBS_OrderBanditRegime(o)` / `MBS_OrderBanditChosenArm(o)` / `MBS_OrderSetBanditContext(o, state, regime, arm)` per H14 manual-bit-packing-discipline
+- Set at: `Order_BindPreResolved` sister helper (decision-time binding per `decision-time-data-binding-pattern.md` Pattern 4 carrier variant — bits flow with Order through lifecycle to calib emit time)
+- Read at: calib log emission (`real_on_exit_calibration` body in `OrderManager.hpp:651`) for diagnostic columns (bandit_algorithm + regime_id_at_emit + chosen_arm singletons per `.F.4d` § N.1 + § M)
+- Cluster placement: existing `flags_packed` field is in HOT cluster (read at every fill); 9 new bits piggyback on existing alignment + cache-line residency — zero new allocation, zero cache impact
+- 5 free bits remain at bits 26-31 of flags_packed for future Order metadata
+
+### 4-application threshold → INVARIANT promotion (now 5 applications at `.F.4d`)
 
 Per `pattern-codification-lifecycle.md` Stage 5 criteria (≥2 applications OR
 DESIGN_SPEC + ≥1 application AND pattern is broad → CLAUDE.md item promotion):
-the pattern has 3 canonical applications across DIFFERENT domains (OMS state
+the pattern has **5 canonical applications** across DIFFERENT domains (OMS state
 encoding + sidecar drift override + registry roster + manual fields
-inventory). Promoted to INVARIANT STATUS at `.F.4d` ship. Same status as
+inventory + Order::flags_packed bandit context bits 17-25). Promoted to INVARIANT STATUS at `.F.4d` ship. Same status as
 sliding-window-online-statistics-pattern (CLAUDE.md item 29).
 
 ---
@@ -680,7 +691,7 @@ sliding-window-online-statistics-pattern (CLAUDE.md item 29).
 ## Cross-references to CLAUDE.md
 
 **CLAUDE.md item 30** (codified v5.15.5.F.3; promoted to INVARIANT at v5.15.5.F.4d):
-> **30. Multi-bit state encoding via N-bit packed slots — INVARIANT.** K-state field (K=2..16) within a record stores in `ceil(log2(K))` bits. Branchless inference API (MBS_GET / EQ / IN_SET / SELECT_EQ / dispatch table). See `DESIGN_SPECS/multi-bit-state-encoding-pattern.md` + sister `bitmap-flag-api.md` (1-bit specialization). 4 canonical applications: EVENT_LOG_MODE (v5.15.5.C.3) + DriftOverride + RegistryRosterEntry + ManualFieldInventoryEntry (all v5.15.5.F.4d).
+> **30. Multi-bit state encoding via N-bit packed slots — INVARIANT.** K-state field (K=2..16) within a record stores in `ceil(log2(K))` bits. Branchless inference API (MBS_GET / EQ / IN_SET / SELECT_EQ / dispatch table). See `DESIGN_SPECS/multi-bit-state-encoding-pattern.md` + sister `bitmap-flag-api.md` (1-bit specialization). **5 canonical applications** at `.F.4d` ship close: EVENT_LOG_MODE (v5.15.5.C.3) + DriftOverride + RegistryRosterEntry + ManualFieldInventoryEntry (Thread A canonicals 2-4 at `.F.4d`) + Order::flags_packed bandit context bits 17-25 (Thread B 5th canonical at `.F.4d`; sister to existing MASK_ORDER_PRE_RESOLVED at bit 16).
 
 **Future application candidates** (cfg field audit at `.F.4d` may surface more):
 - `RegimeClassification` in CoreContext (4 states; 2 bits)

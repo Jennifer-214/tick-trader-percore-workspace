@@ -1,8 +1,8 @@
 # Metadata-bit-driven derived filter framework
 
-**Established:** 2026-05-14 (v5.15.5.F.4d planning — DRAFT v1.0 pending ship)
-**Status:** DRAFT v1.0 (codification Stage 2; first canonical reference application at v5.15.5.F.4d)
-**Tags:** structural-fix, wire-format, registry-driven, framework-discipline; closes Class 21 at derived-filter surface; serves H9 + H15; Stage 2 (DRAFT); 0 production applications until `.F.4d` ships
+**Established:** 2026-05-14 (v5.15.5.F.4d planning); promoted to Stage 3 ACTIVE at v5.15.5.F.4d ship close 2026-05-16
+**Status:** **Stage 3 ACTIVE v1.0** (first canonical reference application landed at v5.15.5.F.4d ship close 2026-05-16; STAMP_BOUND_CFG_DERIVED metadata bit on `CfgFieldDescriptor` drives DERIVED_FILTER auto-generation producing 3 downstream registry expansions per flagged source row — POST_CFG mirror + CfgDerivedInferenceCfgRegistry + CfgDriftCheckRegistry; bandit/thompson cohort + `.A.7` retroactive cohort + bandit_blend_ratio + 5-6 other inference_cfg fields migrate as first canonical applications)
+**Tags:** structural-fix, wire-format, registry-driven, framework-discipline; closes Class 21 at derived-filter surface; serves H9 + H16; Stage 2 (DRAFT); 0 production applications until `.F.4d` ships
 
 **Cross-references:**
 - Parent pattern: `x-macro-registry-with-presence-dispatch.md` § "Derived filter sister registry pattern" (extends + concretizes)
@@ -12,7 +12,7 @@
 - Composes with: `autopopulate-pattern-for-production-caller-class.md` (production-caller side mechanical)
 - Composes with: `meta-registry-pattern-for-codebase-registry-discipline.md` (`FOREACH_DERIVED_FILTER` is a Level-1 meta-registry)
 - Closes: Class 21 (Multiple parallel descriptors) at the derived-filter surface
-- Serves: H9 (wire-format byte preservation) + H15 (metadata bit ↔ derived filter cross-check; pending codification at `.F.4d` ship)
+- Serves: H9 (wire-format byte preservation) + H16 (metadata bit ↔ derived filter cross-check; pending codification at `.F.4d` ship)
 - CLAUDE.md item 31 (Framework-driven extensibility — meta-principle)
 
 ---
@@ -190,7 +190,7 @@ When the codebase has 3+ derived filters, declare them in a Level-1 meta-registr
 ```cpp
 #define FOREACH_DERIVED_FILTER(X) \
     X(STAMP_BOUND_CFG,       WIRE_FORMAT_TWO_SOURCE, FOREACH_CFG_FIELD, STAMP_BOUND, \
-      FOREACH_ML_CFG_FLAG, ml_cfg_flags, LOCKED_STAMP_BOUND_DERIVED_HASH_V5_15_5_F4, \
+      FOREACH_ML_CFG_FLAG, ml_cfg_flags, LOCKED_STAMP_BOUND_DERIVED_HASH_V5_15_5_F4D, \
       "tests/fixtures/v5_14_stamp_canonical.bin") \
     X(IS_SECRET_CFG,         GUI_ONLY,               FOREACH_CFG_FIELD, IS_SECRET, _, _, _, _) \
     X(HIDDEN_BY_DEFAULT_CFG, GUI_ONLY,               FOREACH_CFG_FIELD, HIDDEN_BY_DEFAULT, _, _, _, _) \
@@ -208,7 +208,7 @@ When the codebase has 3+ derived filters, declare them in a Level-1 meta-registr
 FOREACH_DERIVED_FILTER(EMIT_DERIVED_FILTER)
 ```
 
-This roster-level Y3 dispatch closes the meta-Class-18 (adding a metadata bit but forgetting the derived filter) — CI test enumerates `MetadataFlag` values + asserts each has a row in `FOREACH_DERIVED_FILTER` OR a documented exemption. H15 invariant.
+This roster-level Y3 dispatch closes the meta-Class-18 (adding a metadata bit but forgetting the derived filter) — CI test enumerates `MetadataFlag` values + asserts each has a row in `FOREACH_DERIVED_FILTER` OR a documented exemption. H16 invariant.
 
 ### AUTOPOPULATE companion for production-caller side
 
@@ -267,7 +267,7 @@ Production callers replace manual blocks (per-field if-chains) with one walker i
 - `CoreFrameworks/StampBoundDerivedFilter.hpp` (first concrete application via WIRE_FORMAT_TWO_SOURCE variant):
   - Source registry: `FOREACH_CFG_FIELD` (filter on `STAMP_BOUND` metadata bit)
   - Bitmap source: `FOREACH_ML_CFG_FLAG` + `cfg.ml_cfg_flags` field (for 4 bitmap-resident bools)
-  - Locked hash: `LOCKED_STAMP_BOUND_DERIVED_HASH_V5_15_5_F4`
+  - Locked hash: `LOCKED_STAMP_BOUND_DERIVED_HASH_V5_15_5_F4D`
   - Fixture path: `tests/fixtures/v5_14_stamp_canonical.bin`
 - Cohort: 14 fields (11 FPN<F> doubles + 3 ints) + 4 bitmap-resident bools
 - 12+ consumer-site migration via `CFG_DRIFT_AUTOPOPULATE` + manual stamp emit body migration
@@ -311,7 +311,7 @@ The first wire-format derived filter to ship validates the Layer 5b methodology:
 
 If Layer 5b doesn't fire on accidental reorder in production (subsequent ship), the framework's Layer 5b implementation is missing a path. Audit + extend.
 
-### CI cross-check (H15 pending invariant)
+### CI cross-check (H16 pending invariant)
 
 Every metadata bit on `FOREACH_CFG_FIELD` must have either a derived filter in `FOREACH_DERIVED_FILTER` OR a documented "no-derived-filter" exemption with rationale. CI test:
 
@@ -360,7 +360,7 @@ Would obviate this entire pattern (metadata-bit reflection → auto-derived cons
 - `DOCS/DESIGN_PHILOSOPHY.md` § 1.5 (Framework discipline meta-principle) + § 7 (Structural-fix family)
 - `DOCS/RECURRING_BUG_PATTERNS.md` Class 21 (Multiple parallel descriptors — closed at derived-filter surface)
 - CLAUDE.md item 31 (Framework-driven extensibility — meta-principle codification)
-- H9 (wire-format byte preservation) + H15 (metadata bit ↔ derived filter — pending codification at `.F.4d` ship)
+- H9 (wire-format byte preservation) + H16 (metadata bit ↔ derived filter — pending codification at `.F.4d` ship)
 
 ---
 
@@ -368,8 +368,8 @@ Would obviate this entire pattern (metadata-bit reflection → auto-derived cons
 
 - **Stage 1** (audit / problem identification): ✅ 2026-05-14 pre-coding audit gate caught Class 21 risk at STAMP_BOUND derived filter surface
 - **Stage 2** (DESIGN_SPEC draft): ✅ THIS DOC (DRAFT v1.0; 2026-05-14)
-- **Stage 3** (first reference): pending v5.15.5.F.4d ship (STAMP_BOUND_CFG first canonical application)
+- **Stage 3** (first reference): ✅ landed at v5.15.5.F.4d ship close 2026-05-16 (STAMP_BOUND_CFG_DERIVED first canonical application — bandit/thompson cohort + retroactive `.A.7` cohort + bandit_blend_ratio + 5-6 other inference_cfg fields)
 - **Stage 4** (cohort migration): pending v5.15.5.F.4e ship (5 GUI-only applications validate framework via real second-source applications)
 - **Stage 5** (CLAUDE.md item promotion): pending v5.15.5.F.4e ship close (CLAUDE.md item 31 elevation from meta-principle stub to full CLAUDE.md item with framework-discipline section)
-- **Stage 6** (tooling enforcement): pending v5.15.6+ ship (CI cross-check tests for H15 invariant)
+- **Stage 6** (tooling enforcement): pending v5.15.6+ ship (CI cross-check tests for H16 invariant)
 - **Stage 7** (wider audit): pending v5.16+ sprint (scan codebase for other parent-registry + metadata-bit cohort patterns to apply this framework)

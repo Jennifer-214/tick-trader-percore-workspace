@@ -338,6 +338,7 @@ Violates the "every vX.Y.Z tag includes Version.hpp bump" rule (CLAUDE.local.md 
 - `cfg-flag-eligibility-criteria.md` "Cohort audit when new field has siblings" section (Stage 4 cohort migration discipline)
 - `branchless-math-kernel-pattern.md` (canonical first reference of this lifecycle)
 - `struct-padding-determinism-pattern.md` (canonical second reference of this lifecycle)
+- `registry-coverage-ci-check-pattern.md` (**canonical example of RETROACTIVE EXTRACTION at Stage 2** — spec written after 3 canonical applications already shipped in code; demonstrates the "skip Stage 1 audit" + "extract umbrella unification at 3rd canonical" variant of this lifecycle; written at `.F.4c.4` from Check 2 + Check 7 at `.F.4c.3` + Check 8 NEW. Per-variant Stage tracking inside one spec body — Shape A Stage 3 ACTIVE; Shape B Stage 2 DRAFT — is also a canonical example of this lifecycle's "multi-shape spec body" pattern)
 - FoxML_Trader_v2 `CLAUDE.md` item 19 (structural fix preferred — the WHY underlying this lifecycle)
 - FoxML_Trader_v2 `CLAUDE.local.md` going-forward rule "codify design principles in CLAUDE.md as patterns mature" (Stage 5 promotion criterion)
 - FoxML_Trader_v2 `CLAUDE.local.md` going-forward rule "each DESIGN_SPECS doc has a CLAUDE.md cross-ref" (Stage 5 cross-link requirement)

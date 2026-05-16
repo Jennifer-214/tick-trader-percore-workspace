@@ -45,4 +45,4 @@ These are technical hooks and patterns extracted from the repository, ready to b
 
 | Date | Topic | Key Takeaway | Link/Ref |
 | :--- | :--- | :--- | :--- |
-| - | - | - | - |
+| 2026-05-16 | **Professionalization Phase** (project update) | Framing the multi-week framework-consolidation investment as deliberate, not stalled work. Tree-screenshot proof: 65 plan files / 21,149 lines for the v5.15-live-readiness sprint. | `posts/2026-05-16-professionalization-phase.md` |

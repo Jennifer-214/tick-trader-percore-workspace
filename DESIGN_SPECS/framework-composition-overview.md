@@ -1,8 +1,8 @@
 # Framework composition overview — cfg infrastructure at v5.15.5.F.4d
 
-**Established:** 2026-05-14 (v5.15.5.F.4d planning — DRAFT v1.0 pending ship)
-**Status:** DRAFT v1.0 (codification Stage 2; first canonical composition application at v5.15.5.F.4d)
-**Tags:** framework-discipline, discoverability; serves H14 + H15 + H16 + H17 + H18; Stage 2 (DRAFT); 1 composition application (.F.4d)
+**Established:** 2026-05-14 (v5.15.5.F.4d planning); promoted to Stage 3 ACTIVE at v5.15.5.F.4d ship close 2026-05-16
+**Status:** **Stage 3 ACTIVE v1.0** (first canonical composition application landed at v5.15.5.F.4d ship close 2026-05-16; composes 6 framework primitives — universal cfg registry + `tt::` type-trait dispatch + DERIVED_FILTER + sidecar override + meta-registry + X-macro struct gen — across plan body Charters 8-14 + Stage 1 audit migration)
+**Tags:** framework-discipline, discoverability; serves H15 + H16 + H17 + H18 + H19; Stage 2 (DRAFT); 1 composition application (.F.4d)
 
 **Cross-references:**
 - Composes: `universal-cfg-field-registry-pattern.md` (parent universal cfg registry)
@@ -22,7 +22,7 @@
 
 The v5.15.5.F.4d cfg infrastructure ship composes ~6 documented frameworks into one cohesive cfg discipline stack. This doc visualizes how they connect — useful for **cold-pickup orientation** + **audit-gate framework-completeness verification** + **future cohort migration sequencing**.
 
-Each framework handles ONE concern; together they extinguish 5 bug classes (Class 14, 18, 19, 21, 23) + serve 5 hard invariants (H9, H14-H18 + H17 STRONG-pending) + scale to 7+ future derived filter applications + 6+ future sidecar applications + ~20+ existing X-macro registries.
+Each framework handles ONE concern; together they extinguish 5 bug classes (Class 14, 18, 19, 21, 23) + serve 5 hard invariants (H9, H15-H19 + H18 STRONG-pending) + scale to 7+ future derived filter applications + 6+ future sidecar applications + ~20+ existing X-macro registries.
 
 ---
 
@@ -36,7 +36,7 @@ Each framework handles ONE concern; together they extinguish 5 bug classes (Clas
 |         (RegistryRoster.hpp)        discipline.md                           |
 |         15-22 initial rows                                                  |
 |         (TECH_DEBT-057: migrate ~15 remaining)                              |
-|         CI: H14 (every registry has a row) + H18 (LEVEL>0 has PARENT)       |
+|         CI: H15 (every registry has a row) + H19 (LEVEL>0 has PARENT)       |
 |                                                                             |
 +======================+======================================================+
                        |
@@ -61,7 +61,7 @@ Each framework handles ONE concern; together they extinguish 5 bug classes (Clas
 |   driven-derived-     |   +==========================================+
 |   filter-framework.md |
 |                       |
-|   CI: H15 (every      |
+|   CI: H16 (every      |
 |   metadata bit has a  |
 |   derived filter or   |
 |   documented exempt)  |
@@ -79,7 +79,7 @@ Each framework handles ONE concern; together they extinguish 5 bug classes (Clas
 |  ← categorical-tag-applicability-pattern.md                                 |
 |                                                                             |
 |  CI: T4 (every row has non-zero applies_to_strategy_cat)                    |
-|  H16: cfg struct fields generated from this via X-macro                     |
+|  H17: cfg struct fields generated from this via X-macro                     |
 |                                                                             |
 |  Schema LOCKED at .F.4b (Kind enum extended within reserved slots 7-9       |
 |   at .F.4d for storage-width tokens; no struct layout change)              |
@@ -130,7 +130,7 @@ Each framework handles ONE concern; together they extinguish 5 bug classes (Clas
 |     uselocale(LC_NUMERIC=C) per-thread                                     |
 |                                                                             |
 |  Layer 5b (canonical body snapshot hash lock) ←─ shipped at .F.4d         |
-|     LOCKED_STAMP_BOUND_DERIVED_HASH_V5_15_5_F4 constant                    |
+|     LOCKED_STAMP_BOUND_DERIVED_HASH_V5_15_5_F4D constant                    |
 |     fires on accidental row reorder; CHANGELOG-locked intentional change   |
 |                                                                             |
 |  Layer 4 (round-trip HMAC vs v5.14 fixture) ←─ commits at .F.4d           |
@@ -162,7 +162,7 @@ Each framework handles ONE concern; together they extinguish 5 bug classes (Clas
 | **`tt::` type-trait dispatch** | 3-sister trio (`tt::cfg_parse_field<T>` + `tt::cfg_save_field<T>` + `tt::cfg_render_field<T>`); 3-barrier Class 23 prevention; destination-by-reference + T-deduced. Parser / save / render handle integer + FPN + array + string types uniformly. | `type-trait-dispatch-via-tt-namespace.md` |
 | **Metadata-bit-driven derived filter framework** | `FOREACH_DERIVED_FILTER` (Level-1 meta-registry); 3 variants (GUI-only / wire-format / wire-format-two-source); STAMP_BOUND first canonical application; Layer 5b hash lock for wire-format variants. | `metadata-bit-driven-derived-filter-framework.md` |
 | **Sidecar override pattern** | `FOREACH_DRIFT_OVERRIDE` sidecar over FOREACH_CFG_FIELD STAMP_BOUND derived filter; standard cases via AUTOPOPULATE + custom cases via 8-byte bit-packed override entries indexed by FIELD_IDX. Replaces wide-variant CfgDriftCheckRegistry. | `sidecar-override-pattern-for-registry-auto-flows.md` |
-| **Meta-registry-of-registries** | `FOREACH_REGISTRY` (Level-2 codebase-wide); LEVEL/PARENT tuple encodes topology; CI cross-check for H14 + H18. | `meta-registry-pattern-for-codebase-registry-discipline.md` |
+| **Meta-registry-of-registries** | `FOREACH_REGISTRY` (Level-2 codebase-wide); LEVEL/PARENT tuple encodes topology; CI cross-check for H15 + H19. | `meta-registry-pattern-for-codebase-registry-discipline.md` |
 | **X-macro struct generation** | `FOREACH_CFG_FIELD` generates `ControllerConfig<F>` struct field declarations directly; manual cfg struct fields FORBIDDEN; runtime/derived state stays manual in `MANUAL_FIELDS_INVENTORY.md`. | (sub-pattern of `universal-cfg-field-registry-pattern.md` § Reverse-drift) |
 | **Wire-format byte preservation** | Layer 2 locale pinning + Layer 5b hash lock + Layer 4 round-trip HMAC vs v5.14 fixture. STAMP_BOUND derived filter ships Layer 5b first canonical application. | `wire-format-byte-preservation-discipline.md` |
 | **Multi-bit state encoding** | DriftOverride / RegistryRosterEntry / ManualFieldInventoryEntry bit-packed; CLAUDE.md item 30 promoted to INVARIANT at `.F.4d` with 3 canonical applications. | `multi-bit-state-encoding-pattern.md` |
@@ -218,7 +218,7 @@ Each framework handles ONE concern; together they extinguish 5 bug classes (Clas
 6. SHA-256 hash over canonical body bytes
 7. HMAC sign with held-out secret
 8. Write `.stamp` file
-9. Layer 5b test verifies `LOCKED_STAMP_BOUND_DERIVED_HASH_V5_15_5_F4` matches; fires on accidental reorder
+9. Layer 5b test verifies `LOCKED_STAMP_BOUND_DERIVED_HASH_V5_15_5_F4D` matches; fires on accidental reorder
 
 ---
 
@@ -228,7 +228,7 @@ Each framework handles ONE concern; together they extinguish 5 bug classes (Clas
 
 1. **One row** in `FOREACH_CFG_FIELD` with chosen Kind + metadata + categorical applicability
 2. Auto-flow:
-   - Cfg struct field auto-generated (H16 via X-macro struct gen)
+   - Cfg struct field auto-generated (H17 via X-macro struct gen)
    - Parser walks the new row (no manual parser edit)
    - Save walks the new row (no manual save edit)
    - GUI renders the new row (no manual field_defs[] edit)
@@ -259,7 +259,7 @@ Same as above, **plus**:
 1. Write the registry per existing patterns (`x-macro-registry-with-presence-dispatch.md`)
 2. **One row** in `FOREACH_REGISTRY` declaring NAME + LEVEL + PARENT + design_spec + tags
 3. If managed by an existing Level-1 meta-registry: PARENT = meta-registry name
-4. CI test verifies H14 (registry has a row) + H18 (parent exists)
+4. CI test verifies H15 (registry has a row) + H19 (parent exists)
 5. **Net cost: registry body + 1 row in FOREACH_REGISTRY.**
 
 ---
@@ -275,8 +275,8 @@ Same as above, **plus**:
 | Multiple parallel descriptors for cfg fields | Class 21 | universal-cfg-field-registry-pattern (single descriptor + lives_in_struct) |
 | Parallel wide-variant registries for drift / rendering / etc. | Class 21 | sidecar-override-pattern (custom-semantics via small sidecar; no parallel registries) |
 | Type-erased reinterpret_cast through char*+offset | Class 23 | tt:: 3-barrier dispatch (no void*+offset API; X-macro extractor chokepoint; compile-time type-family static_assert) |
-| Adding metadata bit but forgetting derived filter | (NEW potential class; pre-emptively closed) | H15 CI cross-check (FOREACH_DERIVED_FILTER coverage of MetadataFlag enum values) |
-| Adding X-macro registry but forgetting documentation | (NEW potential class; pre-emptively closed) | H14 CI cross-check (FOREACH_REGISTRY coverage of all FOREACH_* in codebase) |
+| Adding metadata bit but forgetting derived filter | (NEW potential class; pre-emptively closed) | H16 CI cross-check (FOREACH_DERIVED_FILTER coverage of MetadataFlag enum values) |
+| Adding X-macro registry but forgetting documentation | (NEW potential class; pre-emptively closed) | H15 CI cross-check (FOREACH_REGISTRY coverage of all FOREACH_* in codebase) |
 
 ---
 
@@ -334,5 +334,5 @@ All specs referenced in the topology + role tables above. Also:
 - `DOCS/DESIGN_PHILOSOPHY.md` § 1.5 (Framework discipline) + § 7 (Structural-fix family)
 - `DOCS/RECURRING_BUG_PATTERNS.md` Class 14 + 18 + 19 + 21 + 23 (closed at composition surface)
 - CLAUDE.md item 31 (Framework-driven extensibility) — meta-principle codification
-- H9 + H14-H18 (invariants served)
+- H9 + H15-H19 (invariants served)
 - TECH_DEBT-009 (cfg field migration progress); TECH_DEBT-056 (codebase-wide bitpacking sweep — Caramel's later review); TECH_DEBT-057 (FOREACH_REGISTRY migration); TECH_DEBT-058 (REGISTRY_TOPOLOGY.md auto-gen); TECH_DEBT-059 (wide-variant deprecation)

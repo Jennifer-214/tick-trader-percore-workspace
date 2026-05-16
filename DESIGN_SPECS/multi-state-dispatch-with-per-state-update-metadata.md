@@ -1,6 +1,6 @@
 # Multi-state dispatch with per-state update metadata
 
-**Stage:** Stage 2 DRAFT v1.0 → Stage 3 ACTIVE v1.0 at v5.15.5.F.4c.4 ship close
+**Stage:** Stage 2 DRAFT v1.0 → Stage 3 ACTIVE v1.0 at v5.15.5.F.4d ship close
 **Author intent:** capture the pattern before code lands so the first canonical application validates the documented design rather than rationalizes the implemented one (per `pattern-codification-lifecycle.md`)
 **Closes:** Class 18 (mirror-incomplete) + Class 19 (hardcoded enum names) + Class 24 (capability-cfg surface mismatch) + Class 28 (branchy SP/HP dispatch) structurally for the dispatch family
 
@@ -175,7 +175,7 @@ This is Pattern 1 of `branchless-dispatch-discipline.md` SPECIALIZED for metadat
 
 When optional side effects (telemetry, calibration log emission, debug capture) should fire per certain states, compose with `sink-fn-pointer-for-optional-side-effect-pattern.md` Pattern 5: place the optional-emit fn-pointer on subsystem state with default = noop; set to real at boot if subsystem is enabled; ALWAYS call via fn-pointer (no callsite branch). Per-state semantics layer on top: the real fn can early-return based on metadata, OR a state-indexed table of fn-pointers selects per-state.
 
-Example: per-trade-close calibration log emission. The calibration log should emit ALL diagnostic data (per-arm Thompson posteriors + per-arm Exp3 weights + cfg.bandit_algorithm + chosen arm + reward) whenever the calibration log file is configured — independent of state. Pattern 5 makes the callsite branchless:
+Example: per-trade-close calibration log emission. The calibration log should emit ALL diagnostic data (per-arm Thompson posteriors + per-arm Exp3 weights + cfg.bandit_algorithm + chosen arm + reward) whenever the calibration log file is configured — independent of state. Pattern 5 makes the callsite branchless. **Variant choice:** the GENERIC example below shows a STANDALONE parallel sink on subsystem state (for cases where no existing sister sink exists). If a sister sink already exists on a related subsystem (e.g., `oms->on_exit_calibration` already provides per-fill calib emission via Pattern 5), prefer **EXTENDING that existing sink** rather than adding a parallel one — see `sink-fn-pointer-for-optional-side-effect-pattern.md` Anti-pattern 4 ("parallel sinks") + the bandit/thompson canonical's actual choice (plan body § F at `.F.4d`):
 
 ```cpp
 template <unsigned F>
@@ -255,7 +255,7 @@ GUI labels for state names come from `X_GEN_LABEL` extern walking the X-macro re
 
 Adding a new state without updating dispatch-site mask constants → state's behavior never fires at the dispatch site. Bug class history:
 - v5.15.5.A.2.a: per-arm-barriers data write without setting the arms_with_barriers_mask → ensemble barrier blending SILENTLY DISABLED
-- v5.14.10.B (first canonical fix at v5.15.5.F.4c.4): `Thompson_Update` defined + tested but NEVER CALLED in production reward attribution → Thompson sampling effectively-disabled despite cfg=1 being settable
+- v5.14.10.B (first canonical fix at v5.15.5.F.4d): `Thompson_Update` defined + tested but NEVER CALLED in production reward attribution → Thompson sampling effectively-disabled despite cfg=1 being settable
 
 Both are the same shape: capability exists, dispatch site doesn't read it.
 
@@ -281,7 +281,7 @@ This is what "framework discipline meta-principle" (CLAUDE.md item 31) means in 
 
 ## First canonical application
 
-**v5.15.5.F.4c.4 — Bandit 5-state ghost-training expansion**
+**v5.15.5.F.4d — Bandit 5-state ghost-training expansion**
 
 - Registry: `ML_Headers/BanditAlgorithmRegistry.hpp` `FOREACH_BANDIT_ALGORITHM`
 - States: EXP3 / THOMPSON / EXP3_OP_THOMPSON_GHOST / THOMPSON_OP_EXP3_GHOST / BLENDED (values 0..4; Option C semantic-preserving wire-format-byte numbering)
@@ -289,7 +289,7 @@ This is what "framework discipline meta-principle" (CLAUDE.md item 31) means in 
 - Auto-computed masks: `BANDIT_EXP3_UPDATE_MASK` + `BANDIT_THOMPSON_UPDATE_MASK`
 - Auto-derived predicates: `MASK_THOMPSON_ACTIVE` (any thompson_up=1) + `MASK_BANDIT_SHADOW_LEARNING` (any exp3_up=1 AND thompson_up=1) — both via mask-extract from auto-computed masks
 - Pattern 1 fn-pointer dispatch tables: `g_buy_reward_dispatch<F>[5]` + `g_exit_reward_dispatch<F>[5]` — entries computed from metadata at compile time
-- Pattern 5 sink-fn-pointer composition: `ezoo->thompson_update_fn` (subsystem-gated noop-or-real) + `ezoo->on_trade_close_calib_emit` (subsystem-gated noop-or-real); per-state branching ABSENT from callsites
+- Pattern 5 sink-fn-pointer composition: `ezoo->thompson_update_fn` (subsystem-gated noop-or-real for Thompson init guard). For calib emit path at the bandit/thompson canonical: **EXTEND existing `oms->on_exit_calibration` sink rather than adding parallel `ezoo->on_trade_close_calib_emit`** (per Anti-pattern 4 in `sink-fn-pointer-for-optional-side-effect-pattern.md` + plan body § F at `.F.4d`). The "Composes with Pattern 5" section above teaches the GENERIC parallel-sink variant; canonical applications check for existing sister sink first + prefer extension when available. Per-state branching ABSENT from callsites either way.
 - Per-core registration: `bandit_algorithm` row in `FOREACH_PER_CORE_CFG_FIELD` (per `cfg-scope-discipline.md` default-per-core rule); NO override mechanism
 
 Closes: Class 18 (mirror) + Class 19 (enum naming) + Class 24 (capability-cfg surface mismatch) + Class 28 (branchy SP/HP dispatch) recurrence risk for the bandit dispatch family.
@@ -316,9 +316,9 @@ Adoption order: codify-on-first-application (this ship); audit cohort eligibilit
 
 Populated at Stage 3 ACTIVE — shipped sites get file:line refs back-linked here.
 
-- (pending at v5.15.5.F.4c.4 ship close) `ML_Headers/BanditAlgorithmRegistry.hpp` — `FOREACH_BANDIT_ALGORITHM` with 7-column tuple including metadata columns (`exp3_up`, `thompson_up`, `drives`) — first canonical
-- (pending at v5.15.5.F.4c.4 ship close) `ML_Headers/bandit_dispatch_table.hpp` (NEW) — `g_buy_reward_dispatch<F>[5]` + `g_exit_reward_dispatch<F>[5]` Pattern 1 fn-pointer tables auto-derived via X-macro reduction from `FOREACH_BANDIT_ALGORITHM` metadata
-- (pending at v5.15.5.F.4c.4 ship close) `CoreFrameworks/SlowPathGateRegistry.hpp` — `THOMPSON_ACTIVE` + `BANDIT_SHADOW_LEARNING` predicates derive from auto-computed masks (NOT hardcoded value checks)
+- (pending at v5.15.5.F.4d ship close) `ML_Headers/BanditAlgorithmRegistry.hpp` — `FOREACH_BANDIT_ALGORITHM` with 7-column tuple including metadata columns (`exp3_up`, `thompson_up`, `drives`) — first canonical
+- (pending at v5.15.5.F.4d ship close) `ML_Headers/bandit_dispatch_table.hpp` (NEW) — `g_buy_reward_dispatch<F>[5]` + `g_exit_reward_dispatch<F>[5]` Pattern 1 fn-pointer tables auto-derived via X-macro reduction from `FOREACH_BANDIT_ALGORITHM` metadata
+- (pending at v5.15.5.F.4d ship close) `CoreFrameworks/SlowPathGateRegistry.hpp` — `THOMPSON_ACTIVE` + `BANDIT_SHADOW_LEARNING` predicates derive from auto-computed masks (NOT hardcoded value checks)
 
 ## Cross-references
 
@@ -335,4 +335,4 @@ Populated at Stage 3 ACTIVE — shipped sites get file:line refs back-linked her
 
 ---
 
-**Stage 2 DRAFT v1.0 → Stage 3 ACTIVE v1.0 — promoted 2026-05-16 at v5.15.5.F.4c.4 ship close.** First canonical: bandit 5-state ghost-training dispatch (`FOREACH_BANDIT_ALGORITHM` with metadata columns) + Pattern 1 fn-pointer dispatch table composition (buy + exit) + Pattern 5 sink-fn-pointer composition (thompson_update + calib emit) + auto-derived slow-path-gate predicates + per-core direct registration via `FOREACH_PER_CORE_CFG_FIELD`. Closes Class 18 + Class 19 + Class 24 + Class 28 structurally for the bandit dispatch family.
+**Stage 2 DRAFT v1.0 → Stage 3 ACTIVE v1.0 — promoted 2026-05-16 at v5.15.5.F.4d ship close.** First canonical: bandit 5-state ghost-training dispatch (`FOREACH_BANDIT_ALGORITHM` with metadata columns) + Pattern 1 fn-pointer dispatch table composition (buy + exit) + Pattern 5 sink-fn-pointer composition (thompson_update + calib emit) + auto-derived slow-path-gate predicates + per-core direct registration via `FOREACH_PER_CORE_CFG_FIELD`. Closes Class 18 + Class 19 + Class 24 + Class 28 structurally for the bandit dispatch family.

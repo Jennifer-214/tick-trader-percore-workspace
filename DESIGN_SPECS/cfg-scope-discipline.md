@@ -257,6 +257,8 @@ The grep signatures above are codified in `tools/check_per_core_registry_integri
 
 Violations BREAK the build with diff suggesting registry migration. New per-core fields flow through `FOREACH_PER_CORE_CFG_FIELD` mechanically (1-row addition); no other path exists.
 
+**Pattern lineage**: `tools/check_per_core_registry_integrity.py` is the **canonical Shape A application** (positive coverage — every field MUST be in registry) of `registry-coverage-ci-check-pattern.md`. Section C (Class 27 scalar cfg-mirror anti-pattern detection) is the **canonical Shape B application** (anti-pattern enforcement — every field MUST NOT match forbidden shape). Sister tool `tools/check_oms_per_slot_registry_integrity.py` at `.F.4c.4` extends the pattern to OmsState per-slot sibling array coverage (Check 8 — closes Class 30 latent drift on `last_exit_fee[]` enrollment). Future per-subsystem registry coverage checks clone the same Python template + adjust the field-shape regex + exemption list. Per-variant Stage tracking in `registry-coverage-ci-check-pattern.md` spec body: Shape A Stage 3 ACTIVE (2 canonical apps: Check 2 + Check 8); Shape B Stage 2 DRAFT (1 canonical: Check 7) — Shape B variant-level promotion to Stage 3 awaits 2nd canonical.
+
 ### Caller-resolved globals — when to use scalar args vs adding a global param
 
 - **One-off global read (1-2 sites):** caller pre-resolves + passes as scalar arg. Documented edge; minor sig growth.

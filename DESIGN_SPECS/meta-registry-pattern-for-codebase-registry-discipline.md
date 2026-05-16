@@ -2,7 +2,7 @@
 
 **Established:** 2026-05-14 (v5.15.5.F.4d planning — DRAFT v1.0 pending ship)
 **Status:** Stage 3 ACTIVE v1.0 — **FIRST CANONICAL APPLICATION landed at v5.15.5.F.4c.3 WIP2d-0.B** (`FOREACH_PER_CORE_DOMAIN_BITMAP` meta-registry over the 5 cfg-domain bitmap registries — lifecycle/gate/ml/risk/ops; engine commit `4154009`). The application is bounded (5-row meta-registry; cfg-domain scope only); codebase-wide `FOREACH_REGISTRY` top-level meta-registry pattern (Level 0) lands at `.F.4d` as the second canonical application + H15 codification. Pattern composes upward: at `.F.4d`, `FOREACH_PER_CORE_DOMAIN_BITMAP` gets a row in `FOREACH_REGISTRY` itself.
-**Tags:** structural-fix, framework-discipline, discoverability; closes Class 18 at meta-layer (added registry but forgot to document) + Class 21 (parallel descriptors at registry-roster level); serves H14 + H18; Stage 3 (1 application landed; 1 pending at .F.4d)
+**Tags:** structural-fix, framework-discipline, discoverability; closes Class 18 at meta-layer (added registry but forgot to document) + Class 21 (parallel descriptors at registry-roster level); serves H15 + H19; Stage 3 (1 application landed; 1 pending at .F.4d)
 
 **Cross-references:**
 - Parent pattern: `x-macro-registry-with-presence-dispatch.md` (registries themselves; this is the meta-layer)
@@ -10,7 +10,7 @@
 - Composes with: `bitmap-flag-api.md` (RegistryRosterEntry packed flags per `multi-bit-state-encoding-pattern.md`)
 - Composes with: `pattern-codification-lifecycle.md` (each row tracks its DESIGN_SPEC + lifecycle stage)
 - Closes: Class 18 at meta-layer (silent registry drift across codebase)
-- Serves: H14 (every X-macro registry in `FOREACH_REGISTRY`) + H18 (LEVEL > 0 registries declare PARENT)
+- Serves: H15 (every X-macro registry in `FOREACH_REGISTRY`) + H19 (LEVEL > 0 registries declare PARENT)
 - CLAUDE.md item 31 (Framework-driven extensibility — meta-principle)
 
 ---
@@ -119,15 +119,15 @@ inline uint8_t roster_wire_format_kind(uint8_t flags) {
 }
 ```
 
-### CI cross-check (H14 + H18 invariant)
+### CI cross-check (H15 + H19 invariant)
 
 ```cpp
 void test_foreach_registry_completeness() {
-    // H14: every X-macro registry in the codebase MUST have a row in FOREACH_REGISTRY.
+    // H15: every X-macro registry in the codebase MUST have a row in FOREACH_REGISTRY.
     // CI script greps for "^#define FOREACH_[A-Z_]+\\(X\\)" across codebase, compares
-    // against FOREACH_REGISTRY entries. Missing rows → build warning (or error per H14 maturity).
+    // against FOREACH_REGISTRY entries. Missing rows → build warning (or error per H15 maturity).
     //
-    // H18: every row with LEVEL > 0 MUST declare a valid PARENT.
+    // H19: every row with LEVEL > 0 MUST declare a valid PARENT.
     // - PARENT == ROOT for Level-0 concrete registries with no managing meta
     // - PARENT == <name> for Level-0 registries managed by Level-1 meta
     // - PARENT == ROOT for Level-1 metas (managed by Level-2 FOREACH_REGISTRY itself)
@@ -135,7 +135,7 @@ void test_foreach_registry_completeness() {
         const auto& e = g_registry_roster[i];
         uint8_t lvl = roster_level(e.flags);
         if (lvl > 0) {
-            check("H18: LEVEL > 0 row has valid PARENT",
+            check("H19: LEVEL > 0 row has valid PARENT",
                   e.parent_idx == ROOT_PARENT_IDX || e.parent_idx < FOREACH_REGISTRY_COUNT);
         }
         // source_file exists at compile time (verified via static_assert(__has_include(source_file)))
@@ -164,7 +164,7 @@ A Python script `tools/generate_registry_topology.py` parses `RegistryRoster.hpp
 
 ### Cost:
 - `RegistryRoster.hpp` declaration + ~20 initial rows: ~150 LOC
-- CI completeness test: ~50 LOC (covers H14 + H18 invariants)
+- CI completeness test: ~50 LOC (covers H15 + H19 invariants)
 - Per-registry migration (adding a row to FOREACH_REGISTRY for existing registries): ~5 min per registry × 15 unmigrated = ~75 min total — tracked via TECH_DEBT-057
 - Auto-generation script (deferred per TECH_DEBT-058): ~50 LOC Python
 - New registry addition: 1 row to FOREACH_REGISTRY (5 min)
@@ -173,7 +173,7 @@ A Python script `tools/generate_registry_topology.py` parses `RegistryRoster.hpp
 - Single discoverability surface (`grep FOREACH_REGISTRY` shows all)
 - `/dod-audit` can walk the roster + verify pattern compliance per registry
 - `/precoding-audit-gate` Stage 1 auto-derivation uses roster metadata (DESIGN_SPEC links + tags) to match plan content
-- Adding a new registry without registering it FAILS the build (H14 CI test)
+- Adding a new registry without registering it FAILS the build (H15 CI test)
 - Cohort discipline anchored (FOREACH_DERIVED_FILTER managed by FOREACH_REGISTRY at Level 2)
 - DESIGN_SPECS cross-links auto-maintained (CI verifies design_spec column matches a real file)
 
@@ -186,7 +186,7 @@ A Python script `tools/generate_registry_topology.py` parses `RegistryRoster.hpp
 - `CoreFrameworks/RegistryRoster.hpp` (NEW file; ~150 LOC)
 - ~15-22 initial rows: CFG_FIELD, DERIVED_FILTER (Level 1), STAMP_BOUND_DERIVED, STRATEGY, FEATURE, REGIME, FAILURE_MODE, CFG_DRIFT_CHECK, ARCH_FIELD_DRIFT, ML_CFG_FLAG, OMS_FIELD, STAMP_BOUND_MODEL_CONST (split presented as one entry with PRE/POST note in doc), CFG_DERIVED_INFERENCE_CFG, BANDIT_ALGORITHM, BARRIER_BLEND_MODE
 - Remaining ~10-15 registries migrate per TECH_DEBT-057 as time allows
-- CI completeness test (H14 + H18) added to controller_test
+- CI completeness test (H15 + H19) added to controller_test
 - Manual `REGISTRY_TOPOLOGY.md` (workspace DOCS/) shipped at `.F.4d` (auto-gen Python script per TECH_DEBT-058)
 
 ### Future application catalog
@@ -237,7 +237,7 @@ Considered: each registry's header includes `RegistryRoster.hpp` + adds itself v
 
 ### Runtime reflection via dlsym / debug symbols
 
-Considered: enumerate registries at runtime via dlsym lookup. Rejected — loses compile-time guarantees (H14 CI test wouldn't catch missing rows); platform-specific (Linux-only via dlsym); incompatible with the codebase's static-binary deployment model.
+Considered: enumerate registries at runtime via dlsym lookup. Rejected — loses compile-time guarantees (H15 CI test wouldn't catch missing rows); platform-specific (Linux-only via dlsym); incompatible with the codebase's static-binary deployment model.
 
 ### Auto-generated FOREACH_REGISTRY from grep + parse
 
@@ -253,11 +253,12 @@ Considered: Python script greps codebase for `^#define FOREACH_*` patterns + emi
 - `multi-bit-state-encoding-pattern.md` (CLAUDE.md item 30) — RegistryRosterEntry as canonical application
 - `pattern-codification-lifecycle.md` — each row tracks its DESIGN_SPEC + lifecycle stage
 - `structural-fix-preferred-decision-framework.md` — motivation (Class 18 mirror at meta-layer)
+- `registry-coverage-ci-check-pattern.md` — **ORTHOGONAL AT PERPENDICULAR LAYER**: H15 / this spec = registries-in-meta-registry (codebase-wide topology + each registry is enrolled in `FOREACH_REGISTRY`); sister spec = fields-in-registries (per-registry coverage enforcement — every struct field matching predicate must be in its registry, OR explicit-exempt with rationale). Both enforce framework discipline at different layers and compose: each row in `FOREACH_REGISTRY` can have its own coverage CI check via the sister spec's Python tool template. Discoverability at meta-layer (this spec) + integrity at field-add layer (sister spec).
 - `DOCS/DESIGN_PHILOSOPHY.md` § 1.5 (Framework discipline) + § 7 (Structural-fix family)
 - `DOCS/RECURRING_BUG_PATTERNS.md` Class 18 (mirror-incomplete at meta-layer) + Class 21 (parallel descriptors)
 - CLAUDE.md item 31 (Framework-driven extensibility — codification)
-- H14 (every X-macro registry in FOREACH_REGISTRY — pending codification at `.F.4d` ship)
-- H18 (LEVEL > 0 registries declare PARENT in FOREACH_REGISTRY tuple — pending codification at `.F.4d` ship)
+- H15 (every X-macro registry in FOREACH_REGISTRY — pending codification at `.F.4d` ship)
+- H19 (LEVEL > 0 registries declare PARENT in FOREACH_REGISTRY tuple — pending codification at `.F.4d` ship)
 - TECH_DEBT-057 (migrate remaining ~15 registries to FOREACH_REGISTRY)
 - TECH_DEBT-058 (REGISTRY_TOPOLOGY.md auto-generation Python script)
 - `workspace/DOCS/REGISTRY_TOPOLOGY.md` (manual at `.F.4d`; auto-gen post-TECH_DEBT-058)

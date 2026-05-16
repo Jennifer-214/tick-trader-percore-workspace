@@ -5,10 +5,11 @@
 **Tags:** structural-fix, latency, drainer, hot-path-cache, framework-selection; closes Class 27; serves H4 + H6; Stage 2 (DRAFT); 0 applications until `.F.4c.3` ship close
 **Cross-references:**
 - `cfg-scope-discipline.md` — sister spec (WHERE the field lives); this spec answers WHEN it's READ
-- `cache-layout-discipline-for-hot-side-structs.md` — companion (subsystem state layout)
+- `cache-layout-discipline-for-hot-side-structs.md` — companion (subsystem state layout; sub-struct grouping is an ORTHOGONAL cache concern, NOT part of this Pattern 4 framework — see v1.1 cleanup amendment at `.F.4c.4`)
 - `hot-side-array-element-alignment-for-sparse-access.md` — composes (per-instance cache fallback layout)
 - `postloadsetup-registry-pattern.md` — fallback mechanism integration point
-- `DOCS/RECURRING_BUG_PATTERNS.md` Class 27 — the anti-pattern this closes
+- `registry-coverage-ci-check-pattern.md` — CI enforcement mechanism (Shape A canonical Check 8 closes Class 30 for the sibling-array carrier variant at `.F.4c.4`)
+- `DOCS/RECURRING_BUG_PATTERNS.md` Class 27 — the anti-pattern this closes (sibling-array variant additionally closes Class 30 via Check 8 enforcement)
 - CLAUDE.md item 31 — framework discipline meta-principle
 - `pattern-codification-lifecycle.md` — Stage 2 → 3 promotion criteria
 
@@ -354,90 +355,115 @@ So: Pattern 4 for SCALAR per-instance values that flow forward with an in-flight
 
 ---
 
-### Stage 3 amendment v1.1 — Sibling-array family canonical (added 2026-05-16 at v5.15.5.F.4c.4)
+### Stage 3 amendment v1.1 — Sibling-array family canonical (added 2026-05-16 at v5.15.5.F.4c.4; v1.1 cleanup applied per decisions-capture Decision 1)
 
-The sibling-array variant (sister to in-flight-object sub-struct expansion) has accumulated **7 canonical applications** at the `.F.4c.4` retroactive recognition + grow-to-6-OMS-cluster work:
+**Earlier v1.1 draft was SUPERSEDED** by v1.1 cleanup at `.F.4c.4` fresh-context audit per decisions-capture Decision 1. Prior text framed `.F.4c.4` as "extracting `FOREACH_OMS_PER_SLOT_FIELD` registry primitive at cohort-threshold 6+ fields via a `OmsPerSlotContext` named-cluster sub-struct." That framing was wrong on two grounds:
 
-| # | Canonical | Site | Set at | Read at |
-|---|---|---|---|---|
-| 1 | `Position::entry_fee` | `Portfolio<F>::positions[slot].entry_fee` | HandleFill BUY (decision time for entry side) | calib emit + post-fill consumers |
-| 2 | `oms->per_slot.last_realized_return[pslot]` | OmsPerSlotContext sub-struct (retroactively recognized at `.F.4c.4`) | HandleFill SELL | Aggregate calculations + sweep loops |
-| 3 | `oms->per_slot.last_exit_fill_price[pslot]` | Same OmsPerSlotContext cluster | HandleFill SELL | calib emit + post-fill |
-| 4 | `oms->per_slot.last_exit_fee[pslot]` | Same cluster (originally `.F.4c.3` r-4 canonical; named-cluster refactored at `.F.4c.4`) | HandleFill SELL (decision time for exit side) | DrainPostFill + calib emit |
-| 5 | `oms->per_slot.last_exit_predicted_p[pslot]` | Same cluster (retroactively recognized) | HandleFill SELL | calib emit body |
-| 6 | `oms->per_slot.last_exit_predicted_meta[pslot]` | Same cluster (retroactively recognized) | HandleFill SELL | calib emit body |
-| 7 | `oms->per_slot.bandit_reward_bps[pslot]` | Same cluster (NEW `.F.4c.4`) | HandleFill SELL (just before calib emit) | calib emit body |
+1. **Registry already canonical**: `FOREACH_OMS_PER_SLOT_FIELD` exists at `MemHeaders/OmsFieldRegistry.hpp:321` since `v5.15.5.C.5` with 3 entries (4-arg tuple `X(NAME[_i], TYPE, INIT, RESET)`). This ship EXTENDS — does NOT extract.
+2. **Sub-struct is cosmetic**: named-cluster grouping doesn't physically rearrange flat sibling SoA arrays. Mixes Pattern 4 framework concerns with ORTHOGONAL cache-layout concerns (cache layout belongs in HP refactor scope per `HP_REFACTOR.md` observation O6).
 
-### Cohort threshold reached → `FOREACH_OMS_PER_SLOT_FIELD` registry primitive
+**Corrected framing**: `.F.4c.4` extends the existing 3-row registry by 2 rows; flat sibling SoA arrays stay at canonical positions at `OrderManager.hpp:411`-region; no field move; no sub-struct introduction.
 
-With 6 sibling arrays in the OmsPerSlotContext named cluster, the cohort-threshold (4+ siblings) is met per framework-selection-criteria (CLAUDE.md item 31). The sibling-array variant family promotes to a registry primitive at `.F.4c.4`:
+### Sibling-array family canonical applications (corrected at `.F.4c.4`)
+
+The sibling-array variant has the following canonical applications at `.F.4c.4` ship close:
+
+| # | Canonical | Location | Registry status | Set at | Read at |
+|---|---|---|---|---|---|
+| 1 | `Position::entry_fee` | `Portfolio<F>::positions[slot].entry_fee` | retroactive recognition (lives on Position struct; not in OmsState registry) | HandleFill BUY (decision time for entry side) | calib emit + post-fill consumers |
+| 2 | `oms->last_realized_return[pslot]` | `OrderManager.hpp:335` (flat sibling array) | enrolled in `FOREACH_OMS_PER_SLOT_FIELD` since `.C.5`; retroactively recognized as Pattern 4 canonical | HandleFill SELL | Aggregate calculations + sweep loops |
+| 3 | `oms->last_exit_predicted_p[pslot]` | `OrderManager.hpp:419` (flat sibling array) | enrolled since `.C.5`; retroactively recognized | HandleFill SELL | calib emit body |
+| 4 | `oms->last_exit_fill_price[pslot]` | `OrderManager.hpp:404` (flat sibling array) | enrolled since `.C.5`; retroactively recognized | HandleFill SELL | calib emit + post-fill |
+| 5 | `oms->last_exit_fee[pslot]` | `OrderManager.hpp:411` (flat sibling array since `.F.4c.3` r-4) | **NEW enrollment at `.F.4c.4`** — closes Class 30 latent drift (array existed but wasn't in registry) | HandleFill SELL | DrainPostFill + calib emit |
+| 6 | `oms->bandit_reward_bps[pslot]` | NEW flat sibling array at `.F.4c.4` | **NEW registry row at `.F.4c.4`** | HandleFill SELL (just before calib emit) | calib emit body |
+| EXEMPT | `oms->last_exit_predicted_meta[pslot]` | `OrderManager.hpp:443` (`uint8_t` per-slot array) | EXEMPT from registry per `SPECIAL_CLEAR_HELPER` rationale — uses dedicated `OMS_META_CLEAR` helper because per-slot clear semantics differ from standard registry RESET path (canonical since `.C.5`; comment at `OmsFieldRegistry.hpp:317-319` documents) | HandleFill SELL | HandleFill (post-attribution clear via dedicated helper) |
+
+### Registry extension at `.F.4c.4` (2-row addition; not extraction)
 
 ```cpp
-// CoreFrameworks/OrderManager.hpp — FOREACH_OMS_PER_SLOT_FIELD canonical
-#define FOREACH_OMS_PER_SLOT_FIELD(X)                                                                            \
-    X(last_realized_return,     FPN<F>,    "Realized return at HandleFill SELL")                                  \
-    X(last_exit_fill_price,     FPN<F>,    "Exit fill price at HandleFill SELL")                                  \
-    X(last_exit_fee,            FPN<F>,    "Exit fee from Order pre_resolved (Pattern 4 canonical .F.4c.3 r-4)")  \
-    X(last_exit_predicted_p,    double,    "Predicted exit probability at HandleFill SELL")                       \
-    X(last_exit_predicted_meta, uint16_t,  "Predicted exit meta flags at HandleFill SELL")                        \
-    X(bandit_reward_bps,        double,    "Bandit reward attribution at HandleFill SELL (.F.4c.4)")
-
-#define EMIT_PER_SLOT_FIELD(name, type, doc) type name[MAX_PORTFOLIO_POSITIONS];
-template <unsigned F>
-struct alignas(64) OmsPerSlotContext {
-    FOREACH_OMS_PER_SLOT_FIELD(EMIT_PER_SLOT_FIELD)
-    uint8_t _padding_oms_per_slot[32] = {0};  // explicit trailing padding for 64-byte cluster boundary
-};
-#undef EMIT_PER_SLOT_FIELD
-static_assert(sizeof(OmsPerSlotContext<64>) % 64 == 0, "OmsPerSlotContext must be 64-byte multiple");
+// MemHeaders/OmsFieldRegistry.hpp:321 — EXTEND existing FOREACH_OMS_PER_SLOT_FIELD by 2 rows.
+// Canonical 4-arg tuple shape preserved: X(NAME[_i], TYPE, INIT, RESET).
+#define FOREACH_OMS_PER_SLOT_FIELD(X)                                                       \
+    X(last_realized_return[_i],         double,    0.0,            0.0)                     \
+    X(last_exit_predicted_p[_i],        double,    0.0,            0.0)                     \
+    X(last_exit_fill_price[_i],         FPN<F>,    FPN_Zero<F>(),  FPN_Zero<F>())           \
+    /* NEW at .F.4c.4 — closes Class 30 latent drift (array existed since .F.4c.3 r-4) */   \
+    X(last_exit_fee[_i],                FPN<F>,    FPN_Zero<F>(),  FPN_Zero<F>())           \
+    /* NEW at .F.4c.4 — bandit reward attribution sibling array */                          \
+    X(bandit_reward_bps[_i],            double,    0.0,            0.0)
 ```
 
-Future per-slot decision-time-bound additions = 1 row in `FOREACH_OMS_PER_SLOT_FIELD` mechanical. Enrolled in `FOREACH_REGISTRY` meta-registry per H15 (CI gate `tools/check_meta_registry.py` enforces).
+Static_assert at `OmsFieldRegistry.hpp:377-381` bumps from `>= 3` to `>= 5` with `.F.4c.4` extension comment.
 
-### Sweep loop discipline note (SoA wins for our access pattern)
+### CI enforcement via NEW Check 8 (Class 30 structural closure)
 
-OmsPerSlotContext uses SoA (Struct-of-Arrays) layout despite AoS marginally winning at single-slot read (per-trade emit ~5-15ns saved). Workload-weighted analysis at `.F.4c.4`:
+Class 30 (per `DOCS/RECURRING_BUG_PATTERNS.md`) is structurally closed at `.F.4c.4` via three-barrier shape per `registry-coverage-ci-check-pattern.md` Shape A canonical:
 
-- Per-trade calib emit (~0.05 Hz): AoS saves ~5-15ns per emit; total ~1ns/sec at typical cadence
-- Sweep loops over single field × all slots (~5 Hz at slow-path-rebuild): SoA saves ~50-150ns per sweep; total ~500ns/sec at typical cadence
+- **Barrier 1**: enroll `last_exit_fee` + `bandit_reward_bps` in `FOREACH_OMS_PER_SLOT_FIELD` (direct fix at canonical instance site)
+- **Barrier 2**: NEW `tools/check_oms_per_slot_registry_integrity.py` CI Check 8 — scans `OmsState` for `\w+[MAX_PORTFOLIO_POSITIONS]` arrays + verifies enrollment OR explicit exemption (structural enforcement)
+- **Barrier 3**: Class 30 codification in RBP + this spec's amendment + cross-ref from `registry-coverage-ci-check-pattern.md` § Canonical Application 3 (pattern visibility for future contributors)
 
-**Net latency: SoA wins by ~499ns/sec at typical trading tempo.** AoS reserved for cases where single-slot access dominates frequency (e.g., Position struct — one per slot, accessed as a unit at trade lifecycle events).
+Future per-slot sibling additions on `OmsState` either enroll OR add to Check 8 exemption list with rationale category + migration trigger. The class cannot recur without explicit bypass at multiple structural points.
 
-**Shape definition (sibling-array variant family):**
+### Sub-struct grouping is an orthogonal cache concern (NOT part of Pattern 4)
+
+Pattern 4 sibling-array variant says: the field LIVES AS a per-slot sibling array on the owning subsystem (vs a scalar cache that flattens per-instance distinction when cfg grows a per-instance axis). It does NOT say HOW the sibling arrays are LAID OUT in memory (flat siblings vs grouped sub-struct).
+
+Cache-layout decisions (sub-struct named-cluster grouping with `alignas(64)` + trailing padding; AoS-by-slot vs SoA-by-field) are an ORTHOGONAL concern — they belong in HP refactor scope. Profile data needed before deciding sub-struct grouping is worth the migration cost (currently flat SoA + sequential-walk pattern is already cache-friendly per `slot-state-foreach-registry-with-storage-routing.md` decision tree from `.C.5`).
+
+The `OmsPerSlotContext` named-cluster sub-struct + AoS-by-slot conversion are DEFERRED to a future HP refactor ship per `HP_REFACTOR.md` observation O6.
+
+### Shape definition (sibling-array variant family — corrected at `.F.4c.4`)
+
+The sibling-array variant is a SoA cluster of per-slot arrays on the owning subsystem state, enrolled in a canonical X-macro registry that drives AUTOPOPULATE walks (init, reset, snapshot, drift check, calib emit, etc.). Flat sibling arrays + registry enrollment IS the pattern. Sub-struct grouping is OPTIONAL (orthogonal cache concern; not required by this Pattern 4 framework).
 
 ```cpp
-// Owning subsystem state struct (Portfolio, OmsState, etc.) declares NAMED sub-struct
-// holding per-slot decision-time-bound data. alignas(64) on the sub-struct preserves
-// cache discipline. Sibling array of size MAX_PORTFOLIO_SLOTS (or analogous) per field.
-
-template <unsigned F>
-struct OwnerPerSlotDecisionContext {  // Example: OmsPerSlotDecisionContext, PortfolioPerSlotEntry, ...
-    FPN<F>  field1[MAX_PORTFOLIO_SLOTS];  // decision-time-bound at one event
-    double  field2[MAX_PORTFOLIO_SLOTS];  // decision-time-bound at another event
-    // Future per-slot decision-time-bound additions = 1 row here mechanical
-};
+// Canonical shape — flat sibling SoA arrays on owning subsystem state, enrolled in registry.
+// Sub-struct grouping is OPTIONAL (orthogonal cache concern; see HP_REFACTOR.md).
 
 template <unsigned F>
 struct OwnerState {
     // ... HOT cluster ...
-    alignas(64) OwnerPerSlotDecisionContext<F> per_slot_decision;
-    // ... rest ...
+
+    // Per-slot decision-time-bound sibling arrays (WARM cluster — drainer reads at slot lifecycle event)
+    double field1[MAX_PORTFOLIO_SLOTS];      // decision-time-bound at one event
+    FPN<F> field2[MAX_PORTFOLIO_SLOTS];      // decision-time-bound at another event
+    // Future per-slot decision-time-bound additions = 1 row in FOREACH_<OWNER>_PER_SLOT_FIELD + 1 array here
+
+    // ... rest of struct ...
 };
 
+// X-macro registry enrolls each sibling for AUTOPOPULATE walks (init/reset/snapshot/drift/emit/etc.)
+#define FOREACH_<OWNER>_PER_SLOT_FIELD(X)              \
+    X(field1[_i], double, 0.0,           0.0)          \
+    X(field2[_i], FPN<F>, FPN_Zero<F>(), FPN_Zero<F>())
+
+// CI check per registry-coverage-ci-check-pattern.md Shape A enforces struct ↔ registry consistency.
+// Adding a new sibling array without enrolling = build failure (modulo explicit exemption with rationale).
+
 // Write at decision time (single-source-of-truth event):
-oms->per_slot_decision.field1[pslot] = value_at_decision_time;
+owner->field1[pslot] = value_at_decision_time;
 
 // Read at downstream consumer time (NEVER recompute):
-value = oms->per_slot_decision.field1[pslot];
+value = owner->field1[pslot];
 ```
 
-**When to apply sibling-array variant vs in-flight-object sub-struct variant:**
+### SoA vs AoS decision (workload-weighted; SoA wins for slot-lifecycle pattern)
+
+Flat sibling SoA layout despite AoS marginally winning at single-slot reads (per-trade emit ~5-15ns saved):
+
+- Per-trade calib emit (~0.05 Hz cadence): AoS saves ~5-15ns per emit; total ~1ns/sec at typical trading rate
+- Sweep loops over single field × all slots (~5 Hz at slow-path-rebuild): SoA saves ~50-150ns per sweep; total ~500ns/sec at typical rate
+
+**Net latency: SoA wins by ~499ns/sec at typical trading tempo.** AoS reserved for cases where single-slot access dominates frequency (e.g., Position struct — one per slot, accessed as a unit at trade lifecycle events).
+
+### When to apply sibling-array variant vs in-flight-object sub-struct variant
 
 | Variant | Use when... |
 |---|---|
 | **In-flight-object sub-struct** (e.g., `Order::pre_resolved`) | Object has its own lifecycle that flows through multiple consumers (Order: Submit → Fill → Cancel). Multiple consumers each read from the object on its path. Sub-struct refinement Stage 1 → 2 → 3 on the object. |
-| **Sibling-array on owning subsystem** (e.g., `oms->per_slot_decision.X[]`) | Subsystem owns a slot lifecycle with single decision-time write + single (or few) downstream consumer reads in same slot lifecycle (HandleFill BUY → HandleFill SELL → calib emit). Slot index is the natural key. |
-| **Both** can apply to different fields on same subsystem (e.g., Order::pre_resolved.fee_rate flows with Order; OmsState's last_exit_fee flows per-slot) — each field picks its best variant by lifecycle. |
+| **Sibling-array on owning subsystem** (e.g., `oms->X[pslot]` enrolled in canonical registry) | Subsystem owns a slot lifecycle with single decision-time write + single (or few) downstream consumer reads in same slot lifecycle (HandleFill BUY → HandleFill SELL → calib emit). Slot index is the natural key. CI Check 8 enforces enrollment per `registry-coverage-ci-check-pattern.md`. |
+| **Both** can apply to different fields on same subsystem | e.g., `Order::pre_resolved.fee_rate` flows with Order; `OmsState::last_exit_fee[pslot]` flows per-slot — each field picks its best variant by lifecycle |
 
 ### Stage 3 amendment v1.2 — Multi-bit-state-encoding bit-pack on existing struct field as Pattern 4 carrier (added 2026-05-16 at v5.15.5.F.4c.4)
 
@@ -472,4 +498,4 @@ inline void MBS_ObjSet<Field>(Obj* o, int value) {
 
 ---
 
-**Stage 3 ACTIVE v1.2 — promoted 2026-05-15 at v5.15.5.F.4c.3 r-8; sibling-array family canonical + bit-pack carrier variant added 2026-05-16 at v5.15.5.F.4c.4.** Three Pattern 4 carrier variants documented: (1) in-flight-object sub-struct refinement (Order::pre_resolved), (2) sibling-array on owning subsystem (OmsPerSlotDecisionContext), (3) bit-pack into existing packed field on in-flight object (Order::flags_packed bandit context).
+**Stage 3 ACTIVE v1.2 — promoted 2026-05-15 at v5.15.5.F.4c.3 r-8; sibling-array family canonical + bit-pack carrier variant added 2026-05-16 at v5.15.5.F.4c.4; v1.1 cleanup applied at .F.4c.4 fresh-context audit per decisions-capture Decision 1 (registry was extended by 2 rows, not extracted; sub-struct decoupled as orthogonal cache concern).** Three Pattern 4 carrier variants documented: (1) in-flight-object sub-struct refinement (`Order::pre_resolved` at Stage 2 — 2 fields `fee_rate` + `slippage_pct`; UNCHANGED at `.F.4c.4`), (2) sibling-array on owning subsystem enrolled in canonical registry (e.g., `FOREACH_OMS_PER_SLOT_FIELD` at 5 entries post-`.F.4c.4` + 1 EXEMPT per `SPECIAL_CLEAR_HELPER` rationale), (3) bit-pack into existing packed field on in-flight object (`Order::flags_packed` bandit context bits 17-25; sister to existing `MASK_ORDER_PRE_RESOLVED` canonical at bit 16). CI enforcement via `registry-coverage-ci-check-pattern.md` Check 8 closes Class 30 for the sibling-array variant.

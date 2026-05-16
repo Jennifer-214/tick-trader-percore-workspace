@@ -1,8 +1,8 @@
 # Sidecar override pattern for registry auto-flows
 
-**Established:** 2026-05-14 (v5.15.5.F.4d planning — DRAFT v1.0 pending ship)
-**Status:** DRAFT v1.0 (codification Stage 2; first canonical reference application at v5.15.5.F.4d)
-**Tags:** structural-fix, registry-driven, framework-discipline; closes Class 21 at auto-flow-with-overrides surface; serves H17; Stage 2 (DRAFT); 0 production applications until `.F.4d` ships
+**Established:** 2026-05-14 (v5.15.5.F.4d planning); promoted to Stage 3 ACTIVE at v5.15.5.F.4d ship close 2026-05-16
+**Status:** **Stage 3 ACTIVE v1.0** (first canonical reference application landed at v5.15.5.F.4d ship close 2026-05-16; FOREACH_DRIFT_OVERRIDE sparse sidecar indexed by parent FIELD_IDX scheme — 5 XGBoost training-only fields canonical at `CfgDriftCheckRegistry.hpp:202-221` move from wide-variant inline form to sidecar; split per registry scope: `g_global_drift_overrides` + `g_per_core_drift_overrides` per C4 decision at `.F.4d`)
+**Tags:** structural-fix, registry-driven, framework-discipline; closes Class 21 at auto-flow-with-overrides surface; serves H18; Stage 2 (DRAFT); 0 production applications until `.F.4d` ships
 
 **Cross-references:**
 - Parent pattern: `x-macro-registry-with-presence-dispatch.md` (registry-driven dispatch)
@@ -11,7 +11,7 @@
 - Composes with: `bitmap-flag-api.md` (DriftOverride flags packed per `multi-bit-state-encoding-pattern.md`)
 - Supersedes (for cfg-drift surface): `stamp-vs-runtime-drift-detection-registry.md` § "Wide variant" — see TECH_DEBT-059 deprecation
 - Closes: Class 21 at auto-flow-with-overrides surface (no parallel wide-variant registries)
-- Serves: H17 (custom-semantics overrides via sidecar; no parallel wide-variant registries)
+- Serves: H18 (custom-semantics overrides via sidecar; no parallel wide-variant registries)
 - CLAUDE.md item 31 (Framework-driven extensibility — meta-principle)
 
 ---
@@ -73,13 +73,24 @@ X(KIND_DOUBLE, xgb_subsample, ..., &drift_compare_xgb_subsample)
 // CoreFrameworks/CfgFieldDriftOverride.hpp
 struct DriftOverride { /* packed flags + eps_idx */ };
 
+// First canonical application: 5 XGBoost training-only hyperparameters needing
+// WARN_ALWAYS + CROSS_BINARY override (existing rows at CfgDriftCheckRegistry.hpp:202-221
+// move from wide-variant inline form to sidecar at `.F.4d`):
 #define FOREACH_DRIFT_OVERRIDE(X) \
-    X(xgb_subsample,        WARN_ALWAYS, CROSS_BINARY, EPS_TIGHT,  1) \
-    X(xgb_eta,              WARN_ALWAYS, CROSS_BINARY, EPS_TIGHT,  2) \
-    /* ... 3 more custom entries ... */
+    X(xgb_subsample,        WARN_ALWAYS, CROSS_BINARY, EPS_DEFAULT, 0) \
+    X(xgb_colsample_bytree, WARN_ALWAYS, CROSS_BINARY, EPS_DEFAULT, 0) \
+    X(xgb_min_child_weight, WARN_ALWAYS, CROSS_BINARY, EXACT,       0) \
+    X(xgb_seed,             WARN_ALWAYS, CROSS_BINARY, EXACT,       0) \
+    X(xgb_tree_method,      WARN_ALWAYS, CROSS_BINARY, STRING,      0) \
+    /* Per C4 decision at `.F.4d`: split sidecars per registry scope —
+     * g_global_drift_overrides + g_per_core_drift_overrides — to mirror
+     * the cfg registry split (FOREACH_GLOBAL_CFG_FIELD + FOREACH_PER_CORE_CFG_FIELD).
+     * Branchless lookup at X-macro expansion time selects appropriate sidecar.
+     */
 
-// Dense sidecar array indexed by FIELD_IDX (most entries zero):
-DriftOverride g_drift_overrides[FIELD_IDX_END] = {0};
+// Split sidecar arrays indexed by parent registry's FIELD_IDX scheme (most entries zero):
+DriftOverride g_global_drift_overrides[FIELD_IDX_GLOBAL_END] = {0};
+DriftOverride g_per_core_drift_overrides[FIELD_IDX_PER_CORE_END] = {0};
 
 // CFG_DRIFT_AUTOPOPULATE walks STAMP_BOUND derived filter + dispatches via sidecar:
 //   const DriftOverride& ovr = g_drift_overrides[FIELD_IDX_<field>];
@@ -128,26 +139,28 @@ inline uint8_t drift_ovr_compare_kind(uint8_t flags) { return (flags >> 3)  & 0x
 // Sparse eps values table (only used by EPS_CUSTOM compare_kind):
 inline constexpr double g_drift_custom_eps[] = {
     /* [0] */ 1e-9,    // EPS_DEFAULT fallback
-    /* [1] */ 1e-3,    // xgb_subsample / xgb_colsample_bytree / xgb_gamma
-    /* [2] */ 1e-4,    // xgb_eta
-    /* [3] */ 1e-12,   // future tight-precision fields
+    /* [1] */ 1e-3,    // xgb_subsample / xgb_colsample_bytree (XGBoost subsample fraction tolerance)
+    /* [2] */ 1e-12,   // future tight-precision fields
 };
 ```
 
 ### Sidecar registry declaration
 
+**Note on array shape (per C4 decision at `.F.4d` ship; see Option D above):** the `.F.4d` first canonical uses SPLIT sidecars per registry scope (`g_global_drift_overrides[FIELD_IDX_GLOBAL_END]` + `g_per_core_drift_overrides[FIELD_IDX_PER_CORE_END]`) because the cfg registry is split into global + per-core at `.F.4c`. Pedagogical code blocks below show a singular `g_drift_overrides[FIELD_IDX_END]` form for teaching clarity; production code should split per Option D.
+
 ```cpp
 // CoreFrameworks/CfgFieldDriftOverride.hpp
 //
 // Tuple: X(field_name_token, SEVERITY_TOKEN, CATEGORY_TOKEN, COMPARE_KIND_TOKEN, eps_idx)
-
+// First canonical row list (matches HEAD CfgDriftCheckRegistry.hpp:202-221 at `.F.4d` ship):
 #define FOREACH_DRIFT_OVERRIDE(X) \
-    X(xgb_subsample,        WARN_ALWAYS, CROSS_BINARY, EPS_TIGHT,  1) \
-    X(xgb_eta,              WARN_ALWAYS, CROSS_BINARY, EPS_TIGHT,  2) \
-    X(xgb_colsample_bytree, WARN_ALWAYS, CROSS_BINARY, EPS_TIGHT,  1) \
-    X(xgb_min_child_weight, WARN_ALWAYS, CROSS_BINARY, EPS_DEFAULT, 0) \
-    X(xgb_gamma,            WARN_ALWAYS, CROSS_BINARY, EPS_TIGHT,  1)
+    X(xgb_subsample,        WARN_ALWAYS, CROSS_BINARY, EPS_DEFAULT, 0) \
+    X(xgb_colsample_bytree, WARN_ALWAYS, CROSS_BINARY, EPS_DEFAULT, 0) \
+    X(xgb_min_child_weight, WARN_ALWAYS, CROSS_BINARY, EXACT,       0) \
+    X(xgb_seed,             WARN_ALWAYS, CROSS_BINARY, EXACT,       0) \
+    X(xgb_tree_method,      WARN_ALWAYS, CROSS_BINARY, STRING,      0)
 
+// Pedagogical singular-array form (production uses split per Option D + C4 decision):
 // Auto-generate dense g_drift_overrides[FIELD_IDX_END] sparse array:
 #define EMIT_DRIFT_OVERRIDE_INIT(name, severity, category, compare, eps) \
     [FIELD_IDX_##name] = {                                               \
@@ -184,7 +197,7 @@ STAMP_BOUND_CFG_walk_filtered_rows(g_cfg_field_descriptors, FIELD_IDX_END,
                                     +emit_drift_check_lambda, &drift_ctx);
 ```
 
-### CI cross-check (H17 invariant)
+### CI cross-check (H18 invariant)
 
 ```cpp
 void test_drift_override_sidecar_coverage() {
@@ -255,7 +268,7 @@ Net: ~140 LOC NEW. Versus wide-variant approach: ~250 LOC of FOREACH_CFG_DRIFT_C
 
 | Application | Parent registry | Override columns | Status |
 |---|---|---|---|
-| Drift override (`.F.4d` canonical) | FOREACH_CFG_FIELD (STAMP_BOUND filter) | severity + category + compare_kind + eps_idx | DRAFT v1.0 |
+| Drift override (`.F.4d` canonical) | FOREACH_CFG_FIELD (STAMP_BOUND filter) | severity + category + compare_kind + eps_idx | **Stage 3 ACTIVE v1.0** (landed `.F.4d` ship close 2026-05-16) |
 | Custom strategy gating | FOREACH_STRATEGY | gate_fn_ptr for non-default gates | v5.16+ |
 | Custom feature NaN validation | FOREACH_FEATURE | validator_fn_ptr + range overrides | v5.16+ |
 | Custom cfg rendering | FOREACH_CFG_FIELD (any metadata bit) | render_fn_ptr for non-default widgets | v5.15.6.C+ |
@@ -334,5 +347,5 @@ Considered: keep wide-variant registry; mark some rows as `DEFAULT_SUPPRESSED` s
 - `DOCS/DESIGN_PHILOSOPHY.md` § 1.5 (Framework discipline) + § 7 (Structural-fix family)
 - `DOCS/RECURRING_BUG_PATTERNS.md` Class 21 (Multiple parallel descriptors — closed at auto-flow-with-overrides surface)
 - CLAUDE.md item 31 (Framework-driven extensibility)
-- H17 (custom-semantics via sidecar; STRONG initially, HARD after 2nd cohort application — pending codification at `.F.4d` ship)
+- H18 (custom-semantics via sidecar; STRONG initially, HARD after 2nd cohort application — pending codification at `.F.4d` ship)
 - TECH_DEBT-059 (wide-variant `CfgDriftCheckRegistry` DEPRECATION post-`.F.4d`)

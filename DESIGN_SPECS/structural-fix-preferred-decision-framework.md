@@ -181,6 +181,14 @@ The framework can be MISAPPLIED. Anti-patterns:
 - NEW DESIGN_SPEC: `phase-separated-drainer-for-safe-cross-temporal-derives.md`
 - Pattern composition: enables `aggressive-memory-reduction-techniques.md` Technique 4 (derive vs store) for fields that previously failed safety check; reduces `slot-state-foreach-registry-with-storage-routing.md` FOREACH_FILL_RECORD_FIELD registry to a smaller set of entries
 
+### v5.15.5.F.4c.4 — registry-coverage-ci-check-pattern.md (NEW Stage 3 ACTIVE spec; CI tooling structural-fix mechanism category)
+
+- Recurrence count: 5 across bug-class shapes that share the "field added without registry/coverage enforcement" pattern at meta-layer — Class 18 (mirror-incomplete) + Class 19 (hardcoded enum names) + Class 21 (parallel descriptors) + Class 27 (scalar cfg-mirror) + Class 30 NEW (sibling array without registry enrollment)
+- Decision: structural fix via NEW DESIGN_SPEC retroactively extracted from 3 canonical applications (Check 2 per-core cfg coverage + Check 7 scalar cfg-mirror anti-pattern + Check 8 OmsState per-slot sibling coverage). Per-variant Stage tracking inside one spec body: Shape A (positive coverage) Stage 3 ACTIVE; Shape B (anti-pattern enforcement) Stage 2 DRAFT
+- Pattern: Python CI tool template + struct↔registry coverage check + explicit-exempt mechanism with rationale category + migration trigger
+- Outcome: bug class structurally cannot recur at field-add-discipline layer; future per-subsystem registries get matching CI check via template cloning
+- **NEW STRUCTURAL-FIX MECHANISM CATEGORY: CI tooling** — sister to compile-time `static_assert` (Class 14 `static_assert(FOREACH_X_COUNT <= sizeof(type)*8)` precedent) + helper-extraction (Class 18 PostLoadSetup precedent) + AUTOPOPULATE companion macro (Class 11 `STAMP_CFG_AUTOPOPULATE` precedent). Each mechanism enforces at a different layer; CI tooling enforces at PR/merge time with actionable error messages
+
 ---
 
 ## Lessons / gotchas

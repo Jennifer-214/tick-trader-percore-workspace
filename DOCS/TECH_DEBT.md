@@ -1388,3 +1388,104 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 - **Trigger:** **after v5.15 umbrella closes** (sprint state confirmed; current sprint stays C++17). Dedicated infrastructure ship; should be its own version (e.g., `v5.16.0` or `v5.15.6.A` depending on umbrella sequencing). Operator decision on naming + timing.
 - **Status:** OPEN (queued for post-v5.15 umbrella; sequenced after live-readiness operational items if those are higher priority)
 - **Cross-ref:** TECH_DEBT-070 (SubmitCommand required-field enforcement; first canonical C++20 unlock); `CoreFrameworks/SubmitCommand.hpp` (target of first C++20-enabled refactor); `DESIGN_PHILOSOPHY.md` § 11 Process discipline (upgrade-as-dedicated-ship); CLAUDE.md "Build" section (build flag references); `build.sh` (C++ standard flag).
+
+### TECH_DEBT-074 — Future `DOCS/DATA_FLOW.md` doc (proposed during .F.4c.4 planning; defer to post-v5.15 umbrella close)
+
+- **Created:** 2026-05-16 by v5.15.5.F.4c.4 fresh-context audit session (Decision 13 in decisions-capture bridge doc — Caramel proposed function map / data flow graph during planning).
+- **Severity:** LOW (documentation enhancement; operator onboarding + cold-pickup quality).
+- **Surface:** workspace `DOCS/DATA_FLOW.md` (NEW; ~200-400 lines proposed). Companion to existing `DOCS/CODE_MAP.md` + `DOCS/COMPONENTS.md` + `DOCS/ARCHITECTURE.md` + `DOCS/CLAUDE_INTEGRATION.md`. Cross-references each existing doc + bridges them with concrete data-flow narratives.
+- **What's deferred:**
+  - **Hand-crafted data flow narratives** for the system's load-bearing paths:
+    - Hot path: `BG_Evaluate → SG_Evaluate ×2 → TradeEvent push` (per-tick; ≤500ns p99)
+    - Slow path per-core: `EventLoop_RebuildOneCore → RollingStats_Push → Regime_Classify → Strategy_BuildParameters → ExecutionCore_SetParameters` (seqlock publish; every poll_interval ticks; ≤100µs p99)
+    - OMS drainer: `OMS_DrainSubmit → OrderManager_Tick HandleFill BUY/SELL → Pattern 5 sink-fn-pointer dispatch` (trade_log + calib_log)
+    - GUI publish: producer thread → `TUISnapshot` double-buffered atomic exchange → ImGui render
+    - Snapshot save/load: per-core slow_state + OMS + Position serialize via FOREACH walkers → file write → restart load + drift check
+    - Paper reset: archive trade_log + reset OMS state + bump `paper_session_start_us`
+    - Regime transitions: hysteresis-bounded `RANGING ↔ TRENDING ↔ VOLATILE ↔ MILD_TREND` state machine
+    - Fan-out timing: producer thread tick read → SPSC ring per-core fan_out → per-core consumer
+  - **Integration contracts cross-reference INDEX** — one page linking each cross-thread boundary → relevant DESIGN_SPEC (`cfg-scope-discipline.md` / `decision-time-data-binding-pattern.md` / `sink-fn-pointer-for-optional-side-effect-pattern.md` / etc.). Operator can trace any cross-thread interaction to its discipline anchor.
+  - **NOT in scope: full function enumeration** — `rg <symbol>` answers in 50ms; static enumeration rots fast as new code lands. Hand-crafted narratives + integration contracts add value that grep doesn't; per-function listings don't.
+- **Why deferred (not effort-avoidance):** ~6-10h focused writing window needed to do this WELL (not as ship-rider afterthought); workspace docs are operator-onboarding artifacts that benefit from a focused review pass. Better timing is after `.F` umbrella closes when the architectural shape is stable + the per-instance discipline patterns are canonical — premature writing would document a moving target. Operational safety audit / paper-test prep sprint is the natural home for this doc (operator workflow validation phase).
+- **Cost estimate:** ~6-10h focused (~200-400 LOC markdown + cross-ref hyperlinks + 3-4 diagrams in ASCII art or PlantUML). Includes 1-2h cross-ref walking to ensure each DESIGN_SPEC is properly linked from its relevant data-flow narrative position.
+- **Trigger:** **after v5.15 umbrella closes** — during operational safety audit / paper-test prep sprint. Specifically: after `.F.5` per-core Thompson audit ships + `.F` umbrella closes + paper-test session lands, the operational items sprint can carve out a focused window for this doc.
+- **Status:** OPEN (queued for post-v5.15 operational items sprint)
+- **Cross-ref:** `DOCS/CODE_MAP.md` (existing module-level catalog); `DOCS/COMPONENTS.md` (component breakdown); `DOCS/ARCHITECTURE.md` (high-level diagram); `DOCS/CLAUDE_INTEGRATION.md` (how-to-add-X recipes); `DOCS/EXECUTION_DISPLAY_INVARIANTS.md` (display↔execution discipline); CLAUDE.md "Architecture (sharded)" section (high-level data flow already documented); `DESIGN_SPECS/cfg-scope-discipline.md` + `DESIGN_SPECS/decision-time-data-binding-pattern.md` + `DESIGN_SPECS/sink-fn-pointer-for-optional-side-effect-pattern.md` (key boundary discipline references).
+
+### TECH_DEBT-076 — `.F.4c.3` deferred WIP2d-1.B.2/B.3/B.4 — ControllerEventLoop + EngineSharded + Backtest wrapper migrations
+
+- **Created:** 2026-05-16 (backfill per `.F.4d` pre-coding verification audit; `.F.4c.3` ship shipped ~60% of original subplan scope and postmortem was silent on this deferred phase)
+- **Severity:** MEDIUM (cleanup discipline; not blocking new framework work)
+- **Surface:** ControllerEventLoop wrapper sites (per-core slice param threading; complete the single-param consumer sig discipline established at WIP2c.0/2c.2); EngineSharded boot default paths; Backtest path equivalents. Specific sites enumerated in the original `.F.4c.3` subplan body (Steps 4-7 region).
+- **What's deferred:** finish applying single-param `const PerCoreCfg<F>*` discipline to remaining ControllerEventLoop wrapper sites + EngineSharded boot defaults that still read flat `cfg.X` instead of per-core sliced `core_cfg->X`. ~10-15 sites estimated.
+- **Why deferred (not effort-avoidance):** `.F.4c.3` scope-shifted mid-flight to absorb the OMS structural closure (Class 27/28/29 + comprehensively branchless OrderManager) when DrainPostFill recompute-from-cfg gap surfaced; the WIP2d-1.B.2/B.3/B.4 wrapper migrations were the next-planned phase but pushed to keep ship boundary focused. Code at HEAD is functional via `ControllerConfig_PopulateCoresFromFlat` shadow walker.
+- **Cost estimate:** ~4-6h focused (mechanical migration; sister-canonical pattern to Class 25 sweep at `.F.4c.3`).
+- **Trigger:** Bundle with WIP2e+f+g/h into single cleanup ship (`.F.4f` or `.F.5-pre`) post-`.F.4d` per operator decision 2026-05-16 ("finish current then do incomplete items").
+- **Status:** OPEN (queued for cleanup ship post-`.F.4d`)
+- **Cross-ref:** `.F.4c.3` subplan + postmortem § "Deferred from original subplan scope" (added 2026-05-16); CLAUDE.md item 19 (structural fix preferred); `DESIGN_SPECS/cfg-scope-discipline.md` § "Consumer over per-core array" + "single-param sig discipline".
+
+### TECH_DEBT-077 — `.F.4c.3` deferred WIP2e — A2 bitmap-bool migration (28 KIND_BOOL flat rows → domain bitmaps)
+
+- **Created:** 2026-05-16 (backfill per `.F.4d` pre-coding verification audit)
+- **Severity:** MEDIUM (cohort-harmonization discipline; partial coverage today)
+- **Surface:** Remaining 28 KIND_BOOL flat cfg rows that should migrate to domain bitmaps (`ml_cfg_flags`, `lifecycle_cfg_flags`, etc.) per the bitmap-dispatcher framework established at `.F.4c`. Specific rows enumerated in original `.F.4c.3` subplan WIP2e section.
+- **What's deferred:** identify candidate KIND_BOOL rows (those that pass cfg-flag-eligibility criteria per `DESIGN_SPECS/cfg-flag-eligibility-criteria.md`); migrate from `KIND_BOOL` direct-int storage to bitmap-bit storage in appropriate domain (`ml_cfg_flags` or `lifecycle_cfg_flags` or new domain).
+- **Why deferred (not effort-avoidance):** `.F.4c.3` shipped the higher-priority registry-split framework infrastructure (WIP1-WIP2d) + emergent OMS work; cohort-uniform bool migration was the next phase.
+- **Cost estimate:** ~3-4h focused (mechanical per-flag migration via established bitmap-dispatcher pattern; ~28 rows; sister to `.F.4c.1`'s 18-row STAMP_BOUND cohort migration).
+- **Trigger:** Bundle with WIP2d-1.B.2/B.3/B.4 + WIP2f + WIP2g/h into single cleanup ship post-`.F.4d`.
+- **Status:** OPEN (queued for cleanup ship post-`.F.4d`)
+- **Cross-ref:** `DESIGN_SPECS/bitmap-flag-api.md`; `DESIGN_SPECS/universal-registry-bitmap-dispatcher-pattern.md`; `DESIGN_SPECS/cfg-flag-eligibility-criteria.md`; TECH_DEBT-013 (BIT_FLAG storage class win for bool patterns) CLOSED at v5.14.9.
+
+### TECH_DEBT-078 — `.F.4c.3` deferred WIP2f — Legacy `PerCoreOverrides<F>` + `ControllerConfig_ResolveForCore` + `core_overrides[16]` deletion
+
+- **Created:** 2026-05-16 (backfill per `.F.4d` pre-coding verification audit)
+- **Severity:** MEDIUM-HIGH (transitional infrastructure should not persist long-term; can confuse contributors)
+- **Surface:** `CoreFrameworks/ControllerConfig.hpp` — `PerCoreOverrides<F>` struct definition (~255) + `ControllerConfig_ResolveForCore` function (~1404) + `core_overrides[16]` field on ControllerConfig + all caller sites still using `ResolveForCore` resolution path.
+- **What's deferred:** Mark `PerCoreOverrides<F>` + `ControllerConfig_ResolveForCore` as legacy in `.F.4c.3`'s WIP2f phase but not actually deleted. The `PerCoreCfg<F>` struct + `ControllerConfig_PopulateCoresFromFlat` shadow walker are the new canonical infrastructure; legacy path still works but should be retired. Comment at `CfgFieldRegistry.hpp:700` says "TRANSITIONAL — delete at WIP2f".
+- **Why deferred (not effort-avoidance):** WIP2f deletion requires all consumer sites to migrate first (WIP2d-1.B.2/B.3/B.4 per TECH_DEBT-076 + test fixture migrations per TECH_DEBT-079). Deletion CANNOT happen before consumer migration completes (forward dependency).
+- **Cost estimate:** ~2-3h focused (after WIP2d-1.B.2/B.3/B.4 + WIP2g/h consumer migrations complete; deletion itself is mechanical).
+- **Trigger:** AFTER TECH_DEBT-076 + TECH_DEBT-079 close (dependency chain). Sequenced into cleanup ship post-`.F.4d`.
+- **Status:** OPEN (queued for cleanup ship post-`.F.4d`; sequenced after TECH_DEBT-076 + TECH_DEBT-079 within ship)
+- **Cross-ref:** `.F.4c.3` subplan WIP2f section; CLAUDE.md item 13 (single source of truth via X-macro); `DESIGN_SPECS/cfg-scope-discipline.md` (canonical PerCoreCfg<F> single-param sig discipline supersedes ResolveForCore resolver pattern).
+
+### TECH_DEBT-079 — `.F.4c.3` deferred WIP2g/h — Atomic flag-day (89 flat field declarations + ~414 test fixture migrations + 9 band-aid call removals)
+
+- **Created:** 2026-05-16 (backfill per `.F.4d` pre-coding verification audit)
+- **Severity:** HIGH (largest deferred scope from `.F.4c.3`; ~414 test fixture writes still target legacy flat fields; transitional infrastructure persists)
+- **Surface:** ControllerConfig struct (89 flat per-core field declarations like `int core_0_strategy`, `FPN<F> core_0_risk_pct`, etc.); test fixtures across `tests/controller_test.cpp` + sister test files (~414 write sites that target flat fields); 7-9 band-aid `ControllerConfig_PopulateCoresFromFlat(&cfg)` call-sites in tests; final cleanup at consumer sites that still read flat fields.
+- **What's deferred:** Atomic flag-day deletion of all 89 flat field declarations from ControllerConfig + sweep migration of ~414 test fixture writes from `cfg.core_0_X = Y` shape to `cfg.cores[0].X = Y` shape + remove the 7-9 band-aid `PopulateCoresFromFlat` calls. After flag-day, the shadow walker becomes orphaned + can be deleted; legacy flat fields gone; PerCoreCfg<F> is sole source-of-truth.
+- **Why deferred (not effort-avoidance):** ~414 test fixture writes is a significant migration scope; deferring kept `.F.4c.3` ship boundary focused on framework infrastructure + emergent OMS work. Mechanical migration but high-touch; flag-day discipline (atomic switch + test sweep) is its own focused effort.
+- **Cost estimate:** ~6-10h focused (mostly mechanical sed-style migration with verification; risk of breaking tests if migration is imprecise — needs careful per-fixture verification).
+- **Trigger:** Bundle with TECH_DEBT-076 + TECH_DEBT-077 + TECH_DEBT-078 into single cleanup ship post-`.F.4d`.
+- **Status:** OPEN (queued for cleanup ship post-`.F.4d`)
+- **Cross-ref:** `.F.4c.3` subplan WIP2g/h section; CLAUDE.md item 13 (single source of truth); test file size discipline note in CLAUDE.md (tests may get split during this migration if controller_test.cpp grows further).
+
+### TECH_DEBT-080 — `.F.4c.3` deferred `[core N]` section parser syntax (operator-facing cfg syntax)
+
+- **Created:** 2026-05-16 (backfill per `.F.4d` pre-coding verification audit)
+- **Severity:** MEDIUM (operator UX improvement; current flat-prefix syntax works but verbose)
+- **Surface:** `CoreFrameworks/ControllerConfigParser.hpp` parser; `engine.cfg` example documentation. In-code comment at `ControllerConfig.hpp:2097` explicitly says "Future ship .F.4c.3 Step 3 introduces [core N] section parser".
+- **What's deferred:** Add `[core 0]`, `[core 1]`, ... section header syntax to engine.cfg parser. Operator writes section-scoped key=value lines instead of verbose `core_N_X=Y` flat-prefix form. Parser detects `[core N]` header + scopes subsequent key=value lines until next section header or EOF.
+- **Why deferred (not effort-avoidance):** Operator UX improvement; not load-bearing for framework correctness. Original `.F.4c.3` Step 3 planned this; ship boundary refocused on infrastructure + OMS work.
+- **Cost estimate:** ~2-3h focused (parser changes + cfg.example doc + test coverage).
+- **Trigger:** Bundle with WIP2g/h flag-day (TECH_DEBT-079) OR can stand alone post-flag-day. Operator-facing change; should ship with documented migration path (legacy flat-prefix syntax stays acceptable post-shipping; section syntax is sugar).
+- **Status:** OPEN (queued for cleanup ship post-`.F.4d`)
+- **Cross-ref:** in-code TODO at `ControllerConfig.hpp:2097`; `.F.4c.3` subplan Step 3 section; `DESIGN_SPECS/cfg-scope-discipline.md`.
+
+### TECH_DEBT-075 — HP_REFACTOR.md O1-O6 bridge entry (cache-audit observations; profile-driven deferral)
+
+- **Created:** 2026-05-16 by v5.15.5.F.4d merged ship planning (Option G decision session; auto-write contract gap closed — `tick-trader-percore-workspace/DOCS/HP_REFACTOR.md` had deferred observations O1-O6 but no TECH_DEBT bridge entry per the auto-write contract on `feedback_no_defer_for_effort` discipline).
+- **Severity:** LOW-MED (cache layout optimization; profile-driven; not blocking)
+- **Surface:** `tick-trader-percore-workspace/DOCS/HP_REFACTOR.md` cache-audit observations section. 6 deferred items:
+  - **O1**: Per-slot data scattered across 3 different owners (Portfolio + OmsState + Order) — drainer at trade-close emits ~3-4 different cache lines. Cross-owner unification could reduce.
+  - **O2**: ThompsonBandit SoA layout per-arm field separation — Thompson_Sample reads mu_post[i] + precision_post[i] + total_pulls[i] per-arm = 2-3 cache lines per access × 8 arms. AoS-pack alternative ~50-100ns p99 savings (profile-driven).
+  - **O3**: Bandit_GetProbabilities AVX-512 path alignment verification (~30-60 min audit; LOW risk).
+  - **O4**: Cross-cutting struct padding determinism audit (~2-4h audit; LOW risk).
+  - **O5**: Cluster placement on EnsembleModelZoo + ThompsonBanditState post-multi-side expansion (`.F.4d` adds exit-side mirror; cluster surface grows ~25%; HOT/WARM/COLD cluster boundaries may need rebalancing).
+  - **O6**: OmsPerSlotContext named-cluster sub-struct + AoS-by-slot conversion (decoupled from Pattern 4 framework concerns at `.F.4d` per decisions-capture Decision 1; cache-layout-only concern; orthogonal to framework discipline).
+- **What's deferred:** all 6 cache-audit observations. Each has its own trigger documented in HP_REFACTOR.md sections O1-O6. Aggregate cache-audit-ship scope: ~2-3 days focused work; MED risk (cross-cutting; cache miss cascade potential); profile-data prerequisite.
+- **Why deferred (not effort-avoidance):** profile-driven decisions; without production cache-miss + latency profile data, cache restructure is premature optimization (often regresses unexpectedly per HP_REFACTOR.md "Anti-premature-optimization reminder"). The proper ordering: structural framework consolidation FIRST (this ship `.F.4d`), THEN profile-driven cache optimization in dedicated HP-refactor ship. Per `feedback_no_defer_for_effort` discipline: legitimate timing defer (last-ditch wait for the right time), not effort-avoidance escape hatch.
+- **Cost estimate:** O3 + O4 = ~3-5h (audit-only; low risk; could happen at any ship if needed). O1 + O2 + O5 + O6 = ~2-3 days focused effort (cache restructure; MED risk; requires profile data).
+- **Trigger:** any of 4 trigger scenarios documented in HP_REFACTOR.md "When to consider an HP-refactor ship" section: (1) hot-path p99 budget pressure observed in production profile data; (2) new latency-sensitive feature requires hot-path expansion (e.g., maker order MVP per TECH_DEBT-008); (3) framework progression stabilizes — `.F.4d` umbrella close + `.F.4e` close + `.F.5` per-core Thompson audit ship + paper-test session is the natural window; (4) hardware/OS environment change.
+- **Status:** OPEN (queued for post-framework-progression dedicated HP-refactor ship; profile-data prerequisite gates trigger 1 + 3)
+- **Cross-ref:** `tick-trader-percore-workspace/DOCS/HP_REFACTOR.md` (scope document with full observation bodies + triggers); `tick-trader-percore-workspace/DOCS/DESIGN_PHILOSOPHY.md` § 4 Latency cost framework; `DOCS/STRATEGY_AND_CODING_RULES.md` (private; H7+H8 hot path invariants); `plans/_cross-cutting/2026-05-06-latency-path-discipline.md` (7 latency-path rules + anti-pattern history); `DESIGN_SPECS/branchless-dispatch-discipline.md`; `feedback_no_defer_for_effort` (operator framing — defer is last-ditch); auto-write contract per `CLAUDE.local.md` "Deferred items → DOCS/TECH_DEBT.md" rule (set 2026-05-09).

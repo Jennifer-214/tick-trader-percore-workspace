@@ -214,9 +214,9 @@ int n_derived = build_stamp_body_via_derived(body_via_derived, sizeof(body_via_d
 uint64_t derived_hash = fnv1a_64(body_via_derived, n_derived);
 
 // 4. Lock the hash at v5.15.5.F.4 ship time:
-constexpr uint64_t LOCKED_STAMP_BOUND_DERIVED_HASH_V5_15_5_F4 = 0xCAFEBABEDEADBEEFull;
+constexpr uint64_t LOCKED_STAMP_BOUND_DERIVED_HASH_V5_15_5_F4D = 0xCAFEBABEDEADBEEFull;
 check("v5.15.5.F.4: STAMP_BOUND derived walk produces locked canonical byte sequence",
-      derived_hash == LOCKED_STAMP_BOUND_DERIVED_HASH_V5_15_5_F4);
+      derived_hash == LOCKED_STAMP_BOUND_DERIVED_HASH_V5_15_5_F4D);
 ```
 
 **On intentional change** (new STAMP_BOUND field added that legitimately extends the chain — bumping `MODEL_FORMAT_VERSION`):

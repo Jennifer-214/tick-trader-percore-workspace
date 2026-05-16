@@ -166,12 +166,12 @@ Codebase-wide CACHE concerns surfaced during `.F.4c.4` audit-gate review 2026-05
 
 #### O1 — Per-slot data scattered across 3 different owners
 
-Per-slot decision-time-bound data lives on different structs:
+Per-slot decision-time-bound data lives on different structs (CORRECTED at `.F.4c.4` cleanup per decisions-capture Decision 1 — flat sibling arrays, NOT named-cluster sub-struct):
 - `Portfolio<F>::positions[slot].entry_fee` (in Portfolio<F>; Pattern 4 retroactively recognized)
-- `OmsState::per_slot_decision.last_exit_fee[pslot]` (in OmsState; canonical at `.F.4c.3` r-4; named-cluster at `.F.4c.4`)
-- `OmsState::per_slot_decision.bandit_reward_bps[pslot]` (in OmsState; this ship)
-- `Order<F>::flags_packed` bandit context bits (in Order<F>; `.F.4c.4` Option 8 bit-pack)
-- `Order<F>::pre_resolved.fee_rate / .slippage_pct` (in Order<F>; `.F.4c.3` r-1 canonical)
+- `OmsState::last_exit_fee[pslot]` (in OmsState as **flat sibling array** since `.F.4c.3` r-4; registry-enrolled at `.F.4c.4` via `FOREACH_OMS_PER_SLOT_FIELD` 2-row extension — closes Class 30 latent drift)
+- `OmsState::bandit_reward_bps[pslot]` (in OmsState as **flat sibling array**; NEW at `.F.4c.4`)
+- `Order<F>::flags_packed` bandit context bits 17-25 (in Order<F>; `.F.4c.4` Option 8 bit-pack carrier variant; sister to existing `MASK_ORDER_PRE_RESOLVED` at bit 16)
+- `Order<F>::pre_resolved.fee_rate / .slippage_pct` (in Order<F>; `.F.4c.3` r-1 canonical sub-struct at Stage 2; UNCHANGED at `.F.4c.4`)
 
 Result: drainer at trade-close has to touch 3-4 different cache lines across Position + OmsState + Order to assemble the calib emit row. Cross-owner unification could improve cache locality at trade-close emit time. **Profile-driven decision; not premature today.**
 
@@ -253,6 +253,42 @@ Scope estimate:
 - Effort: ~2-3h profile + restructure
 - Risk: MED (cluster changes touch reader sites)
 - Benefit: slow-path latency improvement; cache footprint reduction
+
+#### O6 — `OmsPerSlotContext` named-cluster sub-struct + AoS-by-slot conversion DEFERRED from `.F.4c.4`
+
+At `.F.4c.4` planning (fresh-context audit per decisions-capture Decision 1), considered + DEFERRED a named-cluster sub-struct `OmsPerSlotContext` that would group OmsState per-slot sibling arrays (5 at ship close: `last_realized_return`, `last_exit_fill_price`, `last_exit_fee`, `last_exit_predicted_p`, `bandit_reward_bps`) under one `alignas(64)` container with explicit trailing padding.
+
+**Rationale for deferral:**
+
+1. **Sub-struct is cosmetic** — doesn't physically rearrange flat sibling SoA arrays (no actual cache benefit without further changes; just visual grouping)
+2. **Mixes Pattern 4 framework concerns (this ship's scope) with cache layout concerns (HP refactor scope)** — separation of concerns wins
+3. **Sequential SoA-walk pattern already cache-friendly** for the dominant access shape (slow-path-rebuild sweep over slots reads each field × all slots in sequence; SoA = consecutive cache lines per sweep field; AoS = scattered)
+4. **Profile data needed first** — different patterns might emerge that change the decision (sequential-walk vs random-per-slot access pattern dominance)
+
+**What's available for future HP refactor ship to evaluate:**
+
+- **AoS-by-slot conversion** — per-slot struct array vs sibling SoA arrays; DIFFERENT cache behavior. Wins when per-slot access dominates (e.g., per-trade emit reads ALL of pslot's fields at trade close = 1 cache line vs 5 lines). Loses when sweep-loops dominate (e.g., slow-path-rebuild over all slots × single field = consecutive cache lines for SoA; scattered for AoS).
+- **Named-cluster grouping with `alignas(64)` + explicit trailing padding** — physical co-location of cluster boundary; preserves SoA but adds cluster discipline. Useful if cluster crosses a natural cache-line boundary today (verify via `static_assert(offsetof)` audit).
+- **Profile data measurement plan**: capture `perf record` on representative trading workload + analyze cache-miss rates on OmsState per-slot fields at (a) slow-path-rebuild sweep entry points, (b) trade-close emit, (c) HandleFill SELL write. Compare expected gains for SoA vs AoS vs cluster-grouped layouts.
+
+**Trigger to revisit:**
+
+- Slow-path profile data shows `last_exit_*` sibling array L1 misses dominate `DrainPostFill` cycle cost, OR
+- New per-slot fields land that push the cluster past natural cache-line boundaries (current 5 fields × 16 slots × 8B-24B/element = ~640B-1920B span — already crosses 10-30 cache lines), OR
+- AoS-by-slot opportunity surfaces from access-pattern profile (per-trade-emit cadence rises with new feature, e.g., maker order MVP)
+
+**Why NOT a Pattern 4 framework concern** (per `decision-time-data-binding-pattern.md` v1.1 cleanup at `.F.4c.4`):
+
+Pattern 4 says: per-instance cfg values bind at decision time and either (a) flow forward with the in-flight object (Order/Position/Event/TradeEvent) OR (b) live as per-slot sibling arrays on the owning subsystem enrolled in a canonical registry. It does NOT say HOW the sibling arrays are LAID OUT IN MEMORY. Cache layout is orthogonal.
+
+The named-cluster sub-struct grouping is purely cosmetic from Pattern 4's perspective — the framework concern (no scalar flatten of per-instance distinction) is satisfied by flat sibling arrays enrolled in `FOREACH_OMS_PER_SLOT_FIELD`. The cluster grouping addresses a DIFFERENT concern (cache locality for specific access patterns) that requires profile data to evaluate.
+
+Decoupling these concerns at `.F.4c.4` is correct discipline. Coupling them (as the original Option A++ design did pre-cleanup) would have: (1) mixed orthogonal concerns in one ship's scope; (2) made the wrong shape easier to add silently (e.g., scalar sub-struct fields could regress to Class 27 flatten behavior); (3) premature optimization without profile-driven evidence.
+
+Scope estimate if pursued:
+- AoS-by-slot conversion only: restructure `OmsState` per-slot fields into `struct PerSlotState arr[16]`; audit + migrate ~10-15 read/write sites; re-run determinism tests; effort: ~4-6h; risk: MED
+- Named-cluster sub-struct only: refactor 5 flat arrays into `OmsPerSlotContext` sub-struct with `alignas(64)` + trailing padding; ~5-7 reader migrations; effort: ~2-3h; risk: LOW
+- Benefit (combined): profile-driven; estimated 5-50ns p99 trade-close emit improvement (assuming per-trade emit cadence ~0.05 Hz × ~5-15ns saving per emit ≈ ~1ns/sec); much higher upside if maker order MVP changes access pattern dominance
 
 ### Aggregate cache-audit-ship rough scope
 

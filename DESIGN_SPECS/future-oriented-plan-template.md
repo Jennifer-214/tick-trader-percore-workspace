@@ -1,7 +1,7 @@
 # Future-oriented plan template
 
 **Established:** 2026-05-17 (v5.15.5.F.4d.1.B.1 planning — codified during conversation about "format plans for future-oriented solutions going forward" + "find optimal solution to reduce future headaches")
-**Status:** **Stage 2 DRAFT v1.0 → Stage 3 first reference at `v5.15.5.F.4d.1.B.1` ship** (this ship's plan body retrofitted to match template at v1.1; future plans use template from inception)
+**Status:** **Stage 3 ACTIVE v1.1** (promoted from Stage 2 DRAFT at `v5.15.5.F.4d.1.B.1` ship close 2026-05-17; first canonical reference = `.B.1` plan body v1.1 retrofit demonstrating "Canonical sister registries considered" + "Design space + future-oriented choice" sections; future new plans (`.B.2` full draft / `.F.4e` / etc.) use template from inception via `/plan-draft` skill)
 **Tags:** plan-template, framework-discipline, future-oriented, pre-coding-gate, structural-fix; serves item 31 + canonical-sister-extension-discipline; composes with /readiness Check 29 + 30 + /anti-spaghetti + /precoding-audit-gate
 
 **Cross-references:**

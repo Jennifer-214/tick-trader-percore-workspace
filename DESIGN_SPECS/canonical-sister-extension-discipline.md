@@ -1,7 +1,7 @@
 # Canonical sister extension discipline
 
 **Established:** 2026-05-17 (v5.15.5.F.4d.1.B planning — codified during deep design conversation after Path γ-class structural critique #2 was caught at pre-coding audit gate; sister codification to `feedback_audit_canonical_sister_before_new_infra.md` + `feedback_plans_cite_sister_registry_inspection.md` memory files + `/anti-spaghetti` skill)
-**Status:** **Stage 2 DRAFT v1.0 → Stage 3 first reference at `v5.15.5.F.4d.1.B.1` ship** (framework consolidation ships the FOREACH_CFG_GATE sidecar as 1st canonical of gate-type sidecar + 3 consumer macros over master cfg field registry; the discipline IS what shapes the ship's scope)
+**Status:** **Stage 3 ACTIVE v1.1** (promoted from Stage 2 DRAFT at `v5.15.5.F.4d.1.B.1` ship close 2026-05-17; first canonical reference = `.B.1`'s "Canonical sister registries considered" section retrofitted into plan body v1.1; full activation continues at `.B.2`/`.B.3` consumer migration)
 **Tags:** framework-discipline, structural-fix, pre-coding-gate, registry-driven; serves H15 + H19 + item 31 + items 19 (structural fix); closes Path γ-class structural critique pattern via systematic pre-coding audit
 
 **Cross-references:**

@@ -1,7 +1,7 @@
 # /anti-spaghetti — Structural codebase audit for parallel-infrastructure anti-patterns
 
 **Established:** 2026-05-17 (v5.15.5.F.4d.1.B planning — codified during deep design conversation when Caramel asked "is this codebase becoming spaghetti?")
-**Status:** **Stage 2 DRAFT v1.0** — first canonical reference pending; first run is the `/merge-scan` codebase-wide batch at `.B` audit Batch 2 whose findings retroactively validate the methodology
+**Status:** **Stage 3 ACTIVE v1.1** (promoted from Stage 2 DRAFT at `v5.15.5.F.4d.1.B.1` ship close 2026-05-17; first canonical run at `.B` audit Batch 2 found 3-way triplet CRITICAL + CoreCtx HIGH + 6 MEDs KEEP; methodology retroactively validated; periodic cadence locked per `project_anti_spaghetti_audit_cadence` memory)
 
 **Tags:** structural-audit, framework-discipline, registry-driven, pre-coding-gate, periodic-health-check
 

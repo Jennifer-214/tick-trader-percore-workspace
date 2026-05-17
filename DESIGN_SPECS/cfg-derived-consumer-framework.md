@@ -1,7 +1,7 @@
 # Cfg-derived consumer framework
 
 **Established:** 2026-05-17 (v5.15.5.F.4d.1.B planning — codified as the master pattern doc for cfg-derived behavior; landed alongside `canonical-sister-extension-discipline.md` after Batch 1+2 pre-coding audit gate identified the 3-way triplet `FOREACH_CFG_DERIVED_INFERENCE_CFG × FOREACH_CFG_DRIFT_CHECK × FOREACH_STAMP_BOUND_CFG` consolidation opportunity)
-**Status:** **Stage 2 DRAFT v1.0 → Stage 3 first reference at `v5.15.5.F.4d.1.B.1` ship** (framework consolidation ships canonical FOREACH_CFG_GATE sparse sidecar + 3 derived-filter consumer macros walking master cfg field registry + tt:: dispatch + metadata bit filter)
+**Status:** **Stage 3 ACTIVE v1.1** (promoted from Stage 2 DRAFT at `v5.15.5.F.4d.1.B.1` ship close 2026-05-17; first canonical = NEW `MemHeaders/CfgGateRegistry.hpp` + 3 derived-filter consumer template fns + tt:: dispatch quartet → septet extension; walker iterates 0 rows at `.B.1` post-Step-6 vacuous-PASS tests; full activation at `.B.2` cohort migration when STAMP_BOUND_CFG_DERIVED bit flagged on 24+ source rows)
 **Tags:** framework-discipline, master-pattern, cfg-infrastructure, registry-driven, future-easier; serves H15 + H17 + H18 + H19 + item 31; composes with metadata-bit-driven-derived-filter-framework + sidecar-override-pattern + tt:: dispatch via tt:: namespace + autopopulate-pattern-for-production-caller-class
 
 **Cross-references:**

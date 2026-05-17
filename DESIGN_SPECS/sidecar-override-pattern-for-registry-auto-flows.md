@@ -1,8 +1,8 @@
 # Sidecar override pattern for registry auto-flows
 
-**Established:** 2026-05-14 (v5.15.5.F.4d planning); promoted to Stage 3 ACTIVE at v5.15.5.F.4d ship close 2026-05-16
-**Status:** **Stage 3 ACTIVE v1.0** (first canonical reference application landed at v5.15.5.F.4d ship close 2026-05-16; FOREACH_DRIFT_OVERRIDE sparse sidecar indexed by parent FIELD_IDX scheme — 5 XGBoost training-only fields canonical at `CfgDriftCheckRegistry.hpp:202-221` move from wide-variant inline form to sidecar; split per registry scope: `g_global_drift_overrides` + `g_per_core_drift_overrides` per C4 decision at `.F.4d`)
-**Tags:** structural-fix, registry-driven, framework-discipline; closes Class 21 at auto-flow-with-overrides surface; serves H18; Stage 2 (DRAFT); 0 production applications until `.F.4d` ships
+**Established:** 2026-05-14 (v5.15.5.F.4d planning); **v1.1 Path γ+ v2 status correction (2026-05-17)**
+**Status:** **Stage 2 DRAFT v1.1 (corrected 2026-05-17)** — Stage 3 ACTIVE promotion claim at `.F.4d` ship close was ASPIRATIONAL. `.F.4d` reserved relevant infrastructure but NO `FOREACH_DRIFT_OVERRIDE` registry / `DriftOverride` struct / `g_*_drift_overrides` arrays actually shipped. ZERO matches for these symbols at engine HEAD `545b087`. **Stage 3 first canonical reference now sequenced at `v5.15.5.F.4d.1.C` ship close** (when 5 XGBoost training-only fields + bit-packed `DriftOverride` + sidecar arrays actually land per `.C` plan body v1.2). Per D4 audit + Path γ+ v2 triage 2026-05-17 per `plan_checks/2026-05-16-v5.15.5.F.4d.1-tech-debt-audit-findings.md` § Finding 2. Sister to `metadata-bit-driven-derived-filter-framework.md` v1.2 Path γ correction (same aspirational-promotion class). Closes Class 14 (plan API drift) at spec-claim layer. Full spec body content below stays accurate (describes the pattern correctly); status badge corrected to match actual landing timeline.
+**Tags:** structural-fix, registry-driven, framework-discipline; closes Class 21 at auto-flow-with-overrides surface + Class 14 (spec-vs-code drift correction); serves H18; Stage 2 DRAFT v1.1; 0 production applications until `.F.4d.1.C` ships
 
 **Cross-references:**
 - Parent pattern: `x-macro-registry-with-presence-dispatch.md` (registry-driven dispatch)

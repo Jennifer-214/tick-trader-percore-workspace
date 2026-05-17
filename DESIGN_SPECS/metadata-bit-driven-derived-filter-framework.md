@@ -1,8 +1,8 @@
 # Metadata-bit-driven derived filter framework
 
-**Established:** 2026-05-14 (v5.15.5.F.4d planning); promoted to Stage 3 ACTIVE at v5.15.5.F.4d ship close 2026-05-16
-**Status:** **Stage 3 ACTIVE v1.0** (first canonical reference application landed at v5.15.5.F.4d ship close 2026-05-16; STAMP_BOUND_CFG_DERIVED metadata bit on `CfgFieldDescriptor` drives DERIVED_FILTER auto-generation producing 3 downstream registry expansions per flagged source row — POST_CFG mirror + CfgDerivedInferenceCfgRegistry + CfgDriftCheckRegistry; bandit/thompson cohort + `.A.7` retroactive cohort + bandit_blend_ratio + 5-6 other inference_cfg fields migrate as first canonical applications)
-**Tags:** structural-fix, wire-format, registry-driven, framework-discipline; closes Class 21 at derived-filter surface; serves H9 + H16; Stage 2 (DRAFT); 0 production applications until `.F.4d` ships
+**Established:** 2026-05-14 (v5.15.5.F.4d planning); **v1.2 Path γ correction in progress at v5.15.5.F.4d.1.A planning 2026-05-16**
+**Status:** **v1.2 Path γ correction in progress (2026-05-16)** — Stage 3 ACTIVE promotion at `.F.4d` ship close was ASPIRATIONAL; `.F.4d` reserved the STAMP_BOUND_CFG_DERIVED bit but NO derived filter framework was built. First ACTUAL canonical reference now sequenced at `.F.4d.1.A` per Path γ. **v1.0/v1.1 mechanism (Option B runtime walk + 3 macro variants `DERIVED_FILTER_DECLARE_GUI / WIRE_FORMAT / WIRE_FORMAT_TWO_SOURCE`) is SUPERSEDED by Option E (existing FOREACH_METADATA_BIT + cfg_compute_mask + CFG_FIELD_FOR_EACH_SET_BIT infrastructure at `CfgFieldRegistry.hpp:1020-1159`).** Option E is strictly better on every axis: compile-time mask (`.rodata` constant; zero runtime init) + branchless TZCNT iteration (vs runtime per-row branch) + already production-tested at `GUI/SettingsPanel.hpp:1100,1136` + the canonical mechanism per CLAUDE.md item 31 (comment at `CfgFieldRegistry.hpp:1020-1022` states the discipline explicitly). Code samples in this doc still show v1.0/v1.1 macro signatures + parallel walker mechanism — both superseded. See `plans/v5.15-live-readiness/plan_checks/2026-05-16-v5.15.5.F.4d.1-tech-debt-audit-findings.md` for full Path γ rationale + composition sister pattern (`composed-filter-mask-pattern.md`) + invariants helper extraction (`wire-format-canonical-body-invariants-helper.md`). Full doc cleanup at `.F.4d.1.A` ship close.
+**Tags:** structural-fix, wire-format, registry-driven, framework-discipline; closes Class 21 at derived-filter surface + Class 18 at framework layer (via Option E reuse — Path γ) + Class 14 (spec drift correction); serves H9 + H16; v1.2 Path γ correction in progress; 0 production applications until `.F.4d.1.A` ships
 
 **Cross-references:**
 - Parent pattern: `x-macro-registry-with-presence-dispatch.md` § "Derived filter sister registry pattern" (extends + concretizes)
@@ -82,9 +82,70 @@ X(KIND_DOUBLE, fee_floor_mult, "Fee Floor", "Trading", STAMP_BOUND_NO, ...)
 
 **Useful for emit-order interleaving but not the primary mechanism.** PRE/POST split is when SISTER registries must interleave at HMAC-locked emit order (canonical reference: `FOREACH_STAMP_BOUND_MODEL_CONST_PRE_CFG` / `_POST_CFG`). For STAMP_BOUND derived filter at `.F.4d`, the consumer walks STAMP_BOUND-only rows — no sister-registry interleaving — so PRE/POST split is unnecessary overhead.
 
-### Chosen: Option B (runtime walk) for all 7 known surfaces
+### Option E — Compile-time mask via existing FOREACH_METADATA_BIT X-macro infrastructure (added v1.2 Path γ correction 2026-05-16; CHOSEN)
 
-The framework's macro API abstracts the mechanism; under the hood, Option B (runtime walk filtering on metadata bit) is the implementation. If a future cohort needs emit-order interleaving with a sister registry, Option D (PRE/POST split) can be added as a 4th variant without breaking the API.
+The codebase ALREADY has at `CfgFieldRegistry.hpp:1020-1159` (since `.F.4c.3`, ~2 weeks before this spec was first drafted):
+
+```cpp
+// FOREACH_METADATA_BIT(X) — X-macro registry of metadata bits (line 1064-1075)
+#define FOREACH_METADATA_BIT(X)                                            \
+    X(restart_required,     RESTART_REQUIRED)                              \
+    X(safety_critical,      SAFETY_CRITICAL)                               \
+    X(deprecated,           DEPRECATED)                                    \
+    X(stamp_bound,          STAMP_BOUND)                                   \
+    X(hidden_by_default,    HIDDEN_BY_DEFAULT)                             \
+    X(is_secret,            IS_SECRET)                                     \
+    X(is_boot_only,         IS_BOOT_ONLY)                                  \
+    X(affects_stamp_parity, AFFECTS_STAMP_PARITY)                          \
+    X(log_value_forbidden,  LOG_VALUE_FORBIDDEN)                           \
+    X(has_side_effect,      HAS_SIDE_EFFECT)                               \
+    X(warn_on_clamp,        WARN_ON_CLAMP)
+    /* NEW at .F.4d.1.A: X(stamp_bound_cfg_derived, STAMP_BOUND_CFG_DERIVED) */
+
+// cfg_compute_mask<Bit>(arr) — constexpr; walks descriptor array at compile time;
+// produces .rodata CfgMaskArray<N_WORDS> constant (line 1039)
+template <uint16_t Bit, size_t N>
+constexpr CfgMaskArray<(N + 63) / 64> cfg_compute_mask(const CfgFieldDescriptor (&arr)[N]) { ... }
+
+// Per-registry per-bit precomputed mask arrays — X-macro generated (line 1079-1088)
+#define X_GEN_GLOBAL_MASK(lname, BITNAME) \
+    inline constexpr auto g_global_cfg_##lname##_mask = \
+        cfg_compute_mask<CfgFieldDescriptor::BITNAME>(g_global_cfg_field_descriptors);
+FOREACH_METADATA_BIT(X_GEN_GLOBAL_MASK)
+#undef X_GEN_GLOBAL_MASK
+/* Same pattern for X_GEN_PER_CORE_MASK */
+
+// CFG_FIELD_FOR_EACH_SET_BIT — branchless TZCNT iteration (line 1150-1159)
+//   for each set bit in mask: invoke body with idx_var bound to FIELD_IDX_*
+//   Uses __builtin_ctzll (single TZCNT on Haswell+) + word &= word - 1
+#define CFG_FIELD_FOR_EACH_SET_BIT(mask, idx_var, body) ...
+```
+
+Adding a new derived filter under Option E = **1 row in FOREACH_METADATA_BIT** + small consumer using CFG_FIELD_FOR_EACH_SET_BIT. Auto-generated masks live in `.rodata`. Live consumer at `GUI/SettingsPanel.hpp:1100,1136` (both global + per-core walkers in production GUI Settings panel).
+
+The comment at `CfgFieldRegistry.hpp:1020-1022` literally states the framework discipline:
+> "Per CLAUDE.md framework discipline (item 31): adding a new metadata bit = 1 row in FOREACH_METADATA_BIT below; mask arrays auto-generate for BOTH registries via X-macro instantiation pass."
+
+**Strictly better than Option B on every axis:**
+
+| Property | Option B (runtime walk) | **Option E (compile-time mask + TZCNT)** |
+|---|---|---|
+| Init cost | Runtime descriptor scan per consumer | **Zero** (`.rodata` constant) |
+| Iteration cost | Per-row branch (mispredict variance) | **Branchless `__builtin_ctzll`** (single TZCNT instruction) |
+| Production-tested | New (would be first canonical) | **Yes** — `SettingsPanel.hpp:1100,1136` |
+| CI-tested | New | **Yes** — `tests/controller_test.cpp:1731-1747` (T12) |
+| LOC at first canonical | ~80 LOC framework macros + ~30 LOC roster + ~50 LOC consumer | **~5 LOC** (1 FOREACH_METADATA_BIT row + small consumer) |
+| Adding `.F.4e` 5 GUI metadata consumers | Thread through framework macro per consumer | 4 of 5 bits ALREADY enrolled at line 1065-1070; masks already auto-generated; consumer is `CFG_FIELD_FOR_EACH_SET_BIT(g_*_cfg_<name>_mask.words, idx, { gui_logic })` |
+| Composition (when needed) | Re-implement per composed consumer | Use `composed-filter-mask-pattern.md` — combine masks via bitwise ops at compile time (3 existing canonicals: `render_mask` / `save_mask` / `cli_explain_mask`) |
+| CLAUDE.md item 31 alignment | Violates ("don't duplicate the walker") | **Aligned** (the canonical way per `:1020-1022` comment) |
+
+### Chosen: Option E (compile-time mask via FOREACH_METADATA_BIT) — Path γ correction (was Option B in v1.0/v1.1)
+
+Under Option E, the "framework" IS the existing X-macro reduction at `CfgFieldRegistry.hpp:1020-1088`. New derived filters add **1 row** to `FOREACH_METADATA_BIT`; masks auto-generate; consumers use `CFG_FIELD_FOR_EACH_SET_BIT` for branchless iteration. Composition handled by `composed-filter-mask-pattern.md` (Stage 2 DRAFT 2026-05-16). Wire-format byte-preservation structural invariants extracted as reusable helper per `wire-format-canonical-body-invariants-helper.md` (Stage 2 DRAFT 2026-05-16).
+
+The 3 macro variants from v1.0/v1.1 (`DERIVED_FILTER_DECLARE_GUI / WIRE_FORMAT / WIRE_FORMAT_TWO_SOURCE`) and the `DerivedFilterRoster.hpp` Level-1 meta-registry concept are **SUPERSEDED**. They were the wrong abstraction layer — the iteration mechanism doesn't need framework macros when the underlying infrastructure already provides it more cleanly.
+
+If a future cohort genuinely needs a runtime-mutable mask (e.g., operator-toggleable filter), Option B can resurface as a 4th variant. Currently no use case projected.
 
 ---
 

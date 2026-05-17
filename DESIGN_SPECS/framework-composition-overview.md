@@ -1,8 +1,8 @@
 # Framework composition overview — cfg infrastructure at v5.15.5.F.4d
 
-**Established:** 2026-05-14 (v5.15.5.F.4d planning); promoted to Stage 3 ACTIVE at v5.15.5.F.4d ship close 2026-05-16
-**Status:** **Stage 3 ACTIVE v1.0** (first canonical composition application landed at v5.15.5.F.4d ship close 2026-05-16; composes 6 framework primitives — universal cfg registry + `tt::` type-trait dispatch + DERIVED_FILTER + sidecar override + meta-registry + X-macro struct gen — across plan body Charters 8-14 + Stage 1 audit migration)
-**Tags:** framework-discipline, discoverability; serves H15 + H16 + H17 + H18 + H19; Stage 2 (DRAFT); 1 composition application (.F.4d)
+**Established:** 2026-05-14 (v5.15.5.F.4d planning); **v1.1 Path γ correction in progress at v5.15.5.F.4d.1.A planning 2026-05-16**
+**Status:** **v1.1 Path γ correction in progress (2026-05-16)** — Stage 3 ACTIVE promotion at `.F.4d` ship close was ASPIRATIONAL; the DERIVED_FILTER framework component was not actually built (only the metadata bit was reserved). v1.0 topology diagram + composition tables describe a parallel walker mechanism that doesn't match the codebase. The **actual** canonical mechanism uses existing `FOREACH_METADATA_BIT` + `cfg_compute_mask` + `CFG_FIELD_FOR_EACH_SET_BIT` infrastructure at `CfgFieldRegistry.hpp:1020-1159` (since `.F.4c.3`). Plus 3 canonical composed-filter masks at `:1162-1257` (`render_mask` / `save_mask` / `cli_explain_mask`). Full topology + table updates land at `.F.4d.1.A` ship close. See `plans/v5.15-live-readiness/plan_checks/2026-05-16-v5.15.5.F.4d.1-tech-debt-audit-findings.md` for Path γ rationale + sister patterns (`composed-filter-mask-pattern.md` + `wire-format-canonical-body-invariants-helper.md`). Topology + per-framework brief tables below are v1.0 SUPERSEDED text pending rewrite at `.A` ship close.
+**Tags:** framework-discipline, discoverability; serves H15 + H16 + H17 + H18 + H19; v1.1 Path γ correction in progress; 1 composition application planned (.F.4d.1.A using corrected Option E mechanism)
 
 **Cross-references:**
 - Composes: `universal-cfg-field-registry-pattern.md` (parent universal cfg registry)

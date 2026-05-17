@@ -1,8 +1,8 @@
 # Multi-bit state encoding + branchless inference API
 
-**Established:** 2026-05-13 (post-v5.15.5.C.2)
-**Status:** INVARIANT (post-`.F.4d` ship; **5 canonical applications**: EVENT_LOG_MODE + DriftOverride + RegistryRosterEntry + ManualFieldInventoryEntry + Order::flags_packed bandit context bits 17-25 — exceeds ≥3-application invariant-promotion threshold per `pattern-codification-lifecycle.md`)
-**Tags:** structural-fix, framework-discipline, hot-path-cache-density; closes byte-waste anti-pattern; serves H6 (cache-line discipline) + H12 (struct padding determinism); Stage 5+ (CLAUDE.md item 30 — promoted to INVARIANT at `.F.4d`); 4+ applications
+**Established:** 2026-05-13 (post-v5.15.5.C.2); **v1.1 Path γ+ v2 canonical count correction (2026-05-17)**
+**Status:** **Stage 5 v1.1 (count corrected 2026-05-17)** — INVARIANT promotion at `.F.4d` claimed 5 canonical applications but only **2 actually shipped at engine HEAD `545b087`**: EVENT_LOG_MODE + Order::flags_packed bandit context bits 17-25. The other 3 canonicals (DriftOverride + RegistryRosterEntry + ManualFieldInventoryEntry) land at `v5.15.5.F.4d.1.C` ship close (TECH_DEBT-085 Path γ+ v2 sub-ship .C). **INVARIANT promotion accurately becomes 5 canonicals at `.C` ship close synchronization** — until then, status is Stage 5 with 2 confirmed canonicals (still meets CLAUDE.md item 30 promotion threshold per ≥2 applications). Per D4 audit + Path γ+ v2 triage 2026-05-17 per `plan_checks/2026-05-16-v5.15.5.F.4d.1-tech-debt-audit-findings.md` § Finding 2 (3rd DRIFT-MAJOR canonical-count claim correction). Spec body content describes the pattern correctly; only the application-count badge was inflated.
+**Tags:** structural-fix, framework-discipline, hot-path-cache-density; closes byte-waste anti-pattern + Class 14 (spec-vs-code application-count drift correction); serves H6 (cache-line discipline) + H12 (struct padding determinism); Stage 5 (CLAUDE.md item 30 — promoted at `.F.4d` with 2 canonicals); 2 applications at HEAD; 5 at `.C` ship close
 **Cross-references:**
 - Sister pattern: `bitmap-flag-api.md` (the 1-bit specialization — N booleans into 1 word)
 - Generalizes: same compressive-storage philosophy as Portfolio<uint16_t> (CLAUDE.md item 1)

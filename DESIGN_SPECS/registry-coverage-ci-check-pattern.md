@@ -80,6 +80,75 @@ Both shapes share the same Python tool template + exemption list mechanism + CI 
 
 ---
 
+## Mechanism choice: compile-time vs runtime
+
+Both Shape A (positive coverage) and Shape B (anti-pattern enforcement) can be enforced via two mechanism variants. The choice is **data-availability-driven**: compile-time when the source data is X-macro-driven; runtime Python tool when the source data is runtime-only (struct field grep, build artifact analysis).
+
+### Compile-time variant — X-macro static_assert
+
+**When to use:**
+- Source data is X-macro-driven (`FOREACH_*` registry rows enumerable at compile time)
+- Predicate can be expressed as X-macro reduction (bitmap OR, count, etc.)
+- Result fits a single `static_assert(expr, message)` evaluable at compile time
+
+**Mechanism:**
+```cpp
+// X-macro reduction gathers covered items via FOREACH expansion:
+#define X_GATHER(...) | <bit-or-count-expr>
+inline constexpr <type> COVERED = (0 FOREACH_<NAME>(X_GATHER));
+#undef X_GATHER
+
+// Exemption set (explicit; documented per-bit/row):
+inline constexpr <type> EXEMPT = <bit-or-row-expr> | <...>;
+
+// All items in use:
+inline constexpr <type> ALL_IN_USE = <bit-or-row-expr>;
+
+// Coverage assertion — build fails on violation:
+static_assert(
+    (ALL_IN_USE & ~(COVERED | EXEMPT)) == 0,
+    "<violation description + actionable fix instruction>"
+);
+```
+
+**Strictly better than Python CI tool when applicable:**
+- **Build-fails** on violation — can't be bypassed (Python CI can be skipped via `--no-verify` or environment toggle)
+- **Single file** — no separate `tools/` script to maintain or invoke
+- **Aligns with existing codebase discipline** — X-macro static_asserts are canonical here (`bitmap-overflow-protection-discipline.md` HARD invariant + `CfgFieldRegistry.hpp:212` MetadataFlag overflow guard + `:959-962` descriptor array size guard + ~10 instances of `FOREACH_X_COUNT_ONE` reduction)
+- **Error message at static_assert site** — easier to debug than parsing Python output; the violation message can include the specific bit/row name + actionable fix
+- **No Python interpreter dependency** at CI time
+
+**Canonical first application:** H16 enforcement at `v5.15.5.F.4d.1.A` — `CfgFieldDescriptor::MetadataFlag` bit coverage via `FOREACH_DERIVED_FILTER` reduction co-located in `CoreFrameworks/CfgFieldRegistry.hpp` (was originally planned as `.D` Check 9 Python tool; revised to compile-time at `.F.4d.1` planning per "compile-time mechanism preferred when source data X-macro-driven" amendment).
+
+### Runtime variant — Python CI tool
+
+**When to use:**
+- Source data is NOT X-macro-driven (struct field declarations grepped from headers; build artifacts; cross-file consistency)
+- Predicate requires regex or AST parsing (not expressible as compile-time reduction)
+- Result depends on data that isn't constexpr-available
+
+**Mechanism:** Python script under `tools/` per `## Detection shape` template below.
+
+**Canonical applications:**
+- **Check 7** (`tools/check_per_core_registry_integrity.py` Shape B): scalar cfg-mirror anti-pattern enforcement on subsystem struct fields — fields are flat declarations, NOT X-macro-driven; regex scan required.
+- **Check 8** (`tools/check_per_core_registry_integrity.py` Shape A extension): OmsState per-slot sibling array coverage — array fields are flat declarations (not yet X-macro-driven); regex scan against `FOREACH_OMS_PER_SLOT_FIELD` body.
+- **Check 10** (`tools/check_cohort_eligibility.py` Shape A; lands at `v5.15.5.F.4d.1.D`): cohort harmonization audit per `cfg-flag-eligibility-criteria.md` — heuristic grouping by section + cohort drift detection; not expressible as pure compile-time reduction.
+
+### Mechanism choice decision matrix
+
+| Question | Answer | Mechanism |
+|---|---|---|
+| Is the source data enumerable via `FOREACH_*` registry? | YES | **Compile-time static_assert** (preferred) |
+| Is the source data struct-field-declared (not in X-macro)? | YES | Runtime Python tool |
+| Is the predicate expressible as bitmask OR / count / equality? | YES + source X-macro-driven | **Compile-time static_assert** |
+| Does the predicate require regex / AST / heuristic grouping? | YES | Runtime Python tool |
+| Is performance / build-time cost a concern? | Build-time check has zero runtime cost | Either; compile-time slightly heavier at build, zero at run |
+| Does the check need to fire in pre-commit hooks WITHOUT a build? | Pre-commit needs runtime mechanism | Runtime Python tool |
+
+**Preference order:** compile-time first if data permits; runtime Python tool when compile-time not feasible.
+
+---
+
 ## Trigger criteria
 
 Apply this pattern when ALL conditions hold:

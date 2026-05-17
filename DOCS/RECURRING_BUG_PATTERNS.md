@@ -1599,6 +1599,10 @@ New CLAUDE.local.md going-forward rule (codified at .F.4c.1):
 
 Optional `/cfg-ml-alignment` skill (deferred until 2nd ML feature add validates the rule fires correctly).
 
+### .F.4d closure update (2026-05-16)
+
+Class 24 instance #2 (Thompson_Update wire gap at `.F.4c.2`) **structurally closed at `v5.15.5.F.4d` MERGED**. `FOREACH_BANDIT_ALGORITHM` 3→5 state expansion (`EXP3` / `THOMPSON` / `EXP3_OP_THOMPSON_GHOST` / `THOMPSON_OP_EXP3_GHOST` / `BLENDED`) + auto-derived `g_buy_reward_dispatch` + `g_exit_reward_dispatch` dispatch tables (from metadata columns `exp3_up` + `thompson_up`) ensure `Thompson_Update` is wired via dispatch table from reward-attribution callers — `cfg.bandit_algorithm=THOMPSON` now actually updates the Thompson posterior in production paths (was silently frozen pre-`.F.4d`). Sister Class 24 instance landed via `DESIGN_SPECS/multi-state-dispatch-with-per-state-update-metadata.md` Stage 3 ACTIVE (first canonical = bandit 5-state dispatch).
+
 ### Related classes
 
 - **Class 11** (Extensibility friction) — sister at a different layer.
@@ -1688,6 +1692,10 @@ Documented exemptions (false-positives):
 - `ControllerConfig_ResolveForCore` — the resolver itself; producing per-core view from full cfg by design. (Deleted at `.F.4c.3` Step 2 end anyway.)
 - `ControllerConfig_NormalizeForMode` — operates on whole cfg by design (mode-flip normalize pass).
 - Boot-time engine init paths — full cfg needed for multi-core setup.
+
+### .F.4d sweep extension (2026-05-16)
+
+Sweep extended to OMS consumer surface at `v5.15.5.F.4d` MERGED. `PerCoreCfg<F>*` single-param sig threaded through reward-attribution path: `TickRewardsFromLookback` + `TradeCloseReward` + `ControllerEventLoop` exit-side. Same discipline as `.F.4c.3` WIP2c.2 first canonical — per-core consumer functions take `const PerCoreCfg<F>*` only; full `ControllerConfig` pointer never reaches per-core execution code. Two-param convenience sigs (`const ControllerConfig<F>*, const PerCoreCfg<F>*`) remain FORBIDDEN.
 
 ### Related classes
 
@@ -1942,6 +1950,20 @@ False-positive exemptions (documented per case):
 - Genuine binary predicate without alternative computation (e.g., null-ptr check)
 - Test fixtures / non-production code paths
 
+### .F.4d canonical additions (2026-05-16)
+
+6 additional Class 28 sites closed at `v5.15.5.F.4d` MERGED:
+- `Bandit_Update` — cmov for per-arm probability normalization
+- `Thompson_Sample` — cmov for posterior parameter clamp
+- `ModelInference_Predict` — cmov for prediction validity check
+- `WeightedBlend` — cmov for blend-mode dispatch
+- `RollingTurnover` — cmov for window-warm-up gate
+- `__builtin_expect`-tagged rare bounds guard at `FOREACH_OMS_PER_SLOT_FIELD` post-fill clear
+
+Plus **Pattern 5 sink-fn-pointer canonical extension** at `.F.4d` for Thompson_Update dispatch via `EnsembleModelZoo<F>::buy_thompson_update_fn` + `exit_thompson_update_fn` fields (noop default + `real_thompson_update` attach when bandit algorithm requires posterior updates — sister to existing Pattern 5 trade_log + calibration_log canonicals at `.F.4c.3` WIP2d-1.B.1).
+
+**H20 ratification at `.F.4d`** enshrines this discipline in the hard-invariants table (codified `.F.4c.3` WIP2d-1.B.0d; promoted to HARD at `.F.4d` ship close 2026-05-16). H20 generalizes the branchless-dispatch discipline from H7 (hot-path strict) to SP + drainer + producer-fan-out.
+
 ### Related classes
 
 - **Class 27** (Scalar cfg-mirror cache) — sister; both are "default-to-easy thinking" anti-patterns. Class 27 is state-design layer; Class 28 is dispatch-code layer. Pre-resolution (Pattern 4) closes both classes when the dispatch is on cfg-derived values.
@@ -2076,6 +2098,8 @@ False-positive exemptions (documented per case):
 
 **Detected:** 2026-05-16 (during v5.15.5.F.4c.4 verification pass; surfaced after FOREACH_OMS_PER_SLOT_FIELD ground-truth grep revealed `OmsState::last_exit_fee[MAX_PORTFOLIO_POSITIONS]` exists as a sibling array but is not enrolled in the canonical per-slot registry).
 **Severity:** LATENT (no production impact yet — `last_exit_fee` is touched by manual code at HandleFill SELL + DrainPostFill paths, so init/access works; the gap is registry-coverage, not behavior). Risk: AUTOPOPULATE expansions silently skip the unenrolled field, future cache cluster moves miss it, init/reset semantics drift between manually-handled and registry-walked fields.
+
+**Landing ship note (2026-05-16):** Internal references below to `.F.4c.4` reflect planning-time ship naming; `.F.4c.4` MERGED into `v5.15.5.F.4d` per Option G ratification (see `.F.4d` MERGED postmortem Decision 1). Actual structural closure landed at `v5.15.5.F.4d` 2026-05-16 (engine commit `545b087` + GPG-signed tag `v5.15.5.F.4d`).
 
 ### Recurring symptom
 

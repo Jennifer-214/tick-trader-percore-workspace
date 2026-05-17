@@ -191,45 +191,87 @@ check("v5.14.8.A.7: registry canonical body output hash unchanged",
 
 Future PR that reorders registry rows → body bytes change → hash changes → test fails. Forces deliberate hash reset.
 
-### Layer 5b: Derived-filter byte-order locking via CI hash test (v5.15.5.F.4)
+### Layer 5b: Structural invariant tests for derived-filter wire-format protection
 
-When a registry is a DERIVED FILTER of a larger source registry (per `x-macro-registry-with-presence-dispatch.md` derived-filter section), the wire-format byte-preservation discipline extends:
+**Established 2026-05-14 (v5.15.5.F.4 planning); REVISED 2026-05-16 (v5.15.5.F.4d.1 first-application discipline correction per Option F):** original draft proposed a LOCKED-hash-constant snapshot mechanism; Caramel's "principle beats registry for ELIMINATING" rule (set 2026-05-15 at `.F.4c.3` WIP2d-1.B.0c) caught a Class 18 mirror at the hash-constant layer. Option F replaces snapshot-as-lock with structural invariant tests at the consumer site, aligning § 5b with existing Layer 4 + `calls_graph_diff` + Check 7 discipline.
 
-**Problem:** `FOREACH_STAMP_BOUND_CFG` becomes a derived walk over `FOREACH_CFG_FIELD` with `STAMP_BOUND` metadata bit filter. Adding a new STAMP_BOUND-flagged row to the SOURCE registry (`FOREACH_CFG_FIELD`) extends the DERIVED walk. **Risk:** if a NEW stamp-bound field is inserted in the middle of `FOREACH_CFG_FIELD` (rather than at the end of the STAMP_BOUND-flagged subsequence), the derived walk produces fields in a DIFFERENT order than the legacy `FOREACH_STAMP_BOUND_CFG`. HMAC chain breaks for all legacy stamps.
+When a registry is a DERIVED FILTER of a larger source registry (per `x-macro-registry-with-presence-dispatch.md` derived-filter section), the wire-format byte-preservation discipline extends with **structural invariant tests** that encode the canonical body's intent directly.
 
-**Mitigation pattern — locked reference hash:**
+**Problem:** `FOREACH_STAMP_BOUND_CFG_DERIVED` becomes a derived walk over `FOREACH_CFG_FIELD` filtered by `STAMP_BOUND_CFG_DERIVED` metadata bit. Adding a new flagged row to the SOURCE registry extends the DERIVED walk. **Risk:** if a NEW field is inserted in the middle of `FOREACH_CFG_FIELD` (rather than at the end of the flagged subsequence), the derived walk produces fields in a DIFFERENT order. HMAC chain breaks for all legacy stamps. **Plus:** format-string drift, locale leak, walker code bug — each is a separate drift vector requiring detection.
+
+**Mechanism — structural invariant tests (Option F canonical):**
+
+The framework macro `DERIVED_FILTER_DECLARE_WIRE_FORMAT(NAME, SOURCE_FOREACH, METADATA_BIT)` (revised signature; no LOCKED params) generates a canonical body emit fn + a `NAME##_run_generic_invariants()` runner that asserts the canonical body's intent:
+
+| # | Invariant | Drift caught |
+|---|---|---|
+| I1 | Line count == flagged-row count (per scalar source) | Walker skip-condition bug; missing emit |
+| I2 | Each line matches `<name>=<value>\n` pattern | Format-string drift; emit body bug |
+| I3 | Body contains no `,` decimal separator | Locale-pin Layer 2 leak (e.g., LC_NUMERIC=de_DE bug) |
+| I4 | Per-row name appears EXACTLY when bit set | Filter logic inverted; row silently skipped |
+| I5 | Per-core descriptors emit before global descriptors | Walker invocation order regression |
+
+Two-source variants (`WIRE_FORMAT_TWO_SOURCE`) extend invariants to bitmap-source rows. Domain-specific invariants (e.g., bitmap-bool ternary normalization for HMAC byte-equivalence) live in the consumer header (e.g., `StampBoundDerivedFilter.hpp`).
+
+**Concrete code snippet:**
 
 ```cpp
-// At v5.15.5.F.4 ship commit (before any FOREACH_CFG_FIELD addition that affects STAMP_BOUND ordering):
+// CoreFrameworks/StampBoundDerivedFilter.hpp — invokes framework macro
+DERIVED_FILTER_DECLARE_WIRE_FORMAT_TWO_SOURCE(
+    STAMP_BOUND_CFG,
+    FOREACH_CFG_FIELD,                          // scalar source
+    STAMP_BOUND_CFG_DERIVED,                    // metadata bit
+    FOREACH_ML_CFG_FLAG,                        // bitmap source
+    ml_cfg_flags                                // bitmap field on cfg struct
+);
+// Auto-generates: STAMP_BOUND_CFG_emit_canonical_body(buf, cap) +
+//                 STAMP_BOUND_CFG_run_generic_invariants() — I1-I5 stubs
 
-// 1. Synthetically populate every STAMP_BOUND-flagged registry field with deterministic values
-StampInferenceCfgInputs inf{};
-populate_synthetic_stamp_bound_all_fields(&inf);
-
-// 2. Build canonical body via the DERIVED walk (FOREACH_STAMP_BOUND_CFG_DERIVED)
-char body_via_derived[4096];
-int n_derived = build_stamp_body_via_derived(body_via_derived, sizeof(body_via_derived), &inf);
-
-// 3. Hash the derived walk output
-uint64_t derived_hash = fnv1a_64(body_via_derived, n_derived);
-
-// 4. Lock the hash at v5.15.5.F.4 ship time:
-constexpr uint64_t LOCKED_STAMP_BOUND_DERIVED_HASH_V5_15_5_F4D = 0xCAFEBABEDEADBEEFull;
-check("v5.15.5.F.4: STAMP_BOUND derived walk produces locked canonical byte sequence",
-      derived_hash == LOCKED_STAMP_BOUND_DERIVED_HASH_V5_15_5_F4D);
+// Test section (in controller_test.cpp):
+{
+    SECTION("STAMP_BOUND_CFG generic invariants PASS");
+    STAMP_BOUND_CFG_run_generic_invariants();
+    // Each invariant logs via check() inside the runner; named output per invariant
+}
 ```
 
-**On intentional change** (new STAMP_BOUND field added that legitimately extends the chain — bumping `MODEL_FORMAT_VERSION`):
+**On intentional change** (new STAMP_BOUND_CFG_DERIVED field added):
+1. Add metadata bit to source row in `FOREACH_CFG_FIELD` (1-row mechanical change)
+2. Invariants auto-handle the new row: I1's flagged-row count grows by 1; line count grows correspondingly; I4 verifies new row appears in body; all other invariants stay true
+3. **No manual LOCKED const update.** **No fixture file regeneration.** **No CHANGELOG drudgery** for the byte-preservation discipline (the new field's CHANGELOG entry covers it).
 
-1. Recompute the hash with the new field included
-2. Update `LOCKED_STAMP_BOUND_DERIVED_HASH_V<X.Y>` constant in the test
-3. Document in CHANGELOG: "v<X.Y>.<Z>: STAMP_BOUND derived walk extended with `<new_field>`; legacy stamps unchanged (Surface G discipline); MODEL_FORMAT_VERSION bumped to N+1"
+**On accidental change** (reorder of existing rows, format-string drift, locale leak, walker bug):
+- I1-I5 fire with **semantic failure messages** ("STAMP_BOUND_CFG I3: locale-pin Layer 2 (no comma decimals) FAILED")
+- Investigation is direct: invariant name points at the drift vector
+- Compare to LOCKED-const approach: "hash mismatch: got 0x...; expected 0x..." — opaque; investigator has to bisect
 
-**On accidental change** (reorder of existing rows, format string drift, registry refactor): test fails. Investigate before merging — drift was almost certainly NOT intentional; HMAC chain would break for legacy stamps.
+**Why structural invariants beat snapshot mechanisms:**
 
-**Why this matters:** the derived filter is a structural win (single source of truth; drift class extinct on the cfg side) BUT introduces a new risk surface — the DERIVED walk's byte order depends on the SOURCE registry's row order. Without the locked hash, a refactor that reorders `FOREACH_CFG_FIELD` for clarity could silently break HMAC verification for all production-signed stamps. Hash test makes the order load-bearing + audit-detectable.
+| Property | LOCKED const (rejected v1.0) | Fixture file (rejected) | **Structural invariants (chosen v1.1)** |
+|---|---|---|---|
+| Magic number in source | Yes (hex hash constant) | No | **None** |
+| Class 18 mirror | Constant ↔ runtime walker | Fixture ↔ runtime walker | **None** — tests encode intent directly |
+| Per-cohort manual update | 6+ across `.B` cohort migration | 1 per ship (tool invocation) | **Zero** — invariants auto-handle |
+| Failure message | Opaque hex diff | Byte diff (inspectable) | **Named invariant + semantic message** |
+| Generated files in git | No (in-source) | Yes (fixture) | **No** |
+| New CI infrastructure | LOCKED const CI test | Tool + git-diff verify | **None** — tests in `controller_test.cpp` |
+| Aligned with existing discipline | Novel mechanism | Yes (sister to Layer 4) | **Yes** (sister to Layer 4 + `calls_graph_diff` + Check 7) |
+| Closes Class 18 at mirror layer | No (introduces it) | Partially | **Fully** |
 
-**First application:** `FOREACH_STAMP_BOUND_CFG_DERIVED` at v5.15.5.F.4 (universal cfg field registry; STAMP_BOUND metadata bit filter). Subsequent applications: any derived-filter sister registry where the derived walk produces wire-format bytes.
+**Alignment with codified rule:** Per CLAUDE.local.md "Registries optimize for ADDING; principle + sweep optimizes for ELIMINATING" (set 2026-05-15) — the snapshot-as-lock mechanism is a registry-of-bytes that shouldn't accumulate. Structural invariant tests apply the principle (canonical body must satisfy these invariants) without the registry intermediate.
+
+**Why this aligns with Layer 4 + sister CI patterns:**
+- Layer 4 (existing): committed `v5_14_stamp_canonical.bin` fixture serves a DIFFERENT purpose — back-compat verification (legacy stamps still load). Layer 5b's concern (anti-regression on canonical body shape) is structurally different + handled by invariants, NOT another snapshot.
+- `tools/calls_graph_diff.sh verify`: compares current call graph to BASELINE; baseline file IS the snapshot. Same shape as a fixture; appropriate for call-graph regression but Layer 5b can do better with invariants (semantic checks > byte-diff).
+- CI Check 7 (`check_per_core_registry_integrity.py`): predicate-based, not snapshot-based. Closest in spirit to Option F.
+
+**First application:** `STAMP_BOUND_CFG_DERIVED` at v5.15.5.F.4d.1.A (universal cfg field registry; bit 13 reserved at v5.15.5.F.4d; first canonical implementation at v5.15.5.F.4d.1.A). Subsequent applications: any wire-format derived-filter sister registry uses the same `_run_generic_invariants()` mechanism mechanically (1-row addition to `FOREACH_DERIVED_FILTER` + framework auto-generates the invariant runner; consumer adds domain-specific invariants if needed).
+
+**Alternatives considered + rejected (documented for future contributors):**
+- **Path A — LOCKED-constant hash:** magic number in source code; Class 18 mirror at constant ↔ runtime walker; per-cohort manual sync. Original v1.0 draft of this section; rejected at first-application time per Caramel's "magic number" pushback.
+- **Path C — fixture file as lock:** eliminates magic number but still a registry-of-bytes accumulating per filter; per-cohort fixture regeneration (or tool-driven) still required. Rejected per "principle beats registry for ELIMINATING" rule.
+- **Path D — CMake-generated header with hash:** generated-files-in-git smell; CMake-specific; still a snapshot artifact. Rejected.
+- **Path E — comments-as-fixture inline:** source file growth; manual sync at comment level (Class 18 mirror at comment-vs-runtime); awkward for binary content. Rejected.
 
 ### Layer 6: Surface G discipline (back-compat for legacy stamps)
 

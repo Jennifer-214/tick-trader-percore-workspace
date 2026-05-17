@@ -277,9 +277,85 @@ Net: ~140 LOC NEW. Versus wide-variant approach: ~250 LOC of FOREACH_CFG_DRIFT_C
 
 Pattern lifecycle:
 - Stage 2 (DRAFT) — this doc; pending ship
-- Stage 3 (first reference) — `.F.4d` FOREACH_DRIFT_OVERRIDE application
-- Stage 4 (cohort migration) — when 2nd application emerges (e.g., custom strategy gating at v5.16+), promote pattern
-- Stage 5 (CLAUDE.md item promotion) — when 3rd application emerges, codify as full CLAUDE.md item
+- Stage 3 (first reference) — `.F.4d` FOREACH_DRIFT_OVERRIDE application (custom-semantics override sidecar; sparse 5/213 rows for XGBoost cohort)
+- **Stage 4 (cohort migration) — landed at `v5.15.5.F.4d.1.B` with `FOREACH_DRIFT_GATE`** (cohort gate dispatch sidecar; sparse ~15/24 STAMP_BOUND_CFG_DERIVED rows; sister to FOREACH_DRIFT_OVERRIDE; different concern, same shape). **Codifies per-concern separation discipline** — see § "Per-concern separation: multiple sidecars per distinct concern" below.
+- Stage 5 (CLAUDE.md item promotion) — when 3rd application emerges (e.g., custom strategy gating at v5.16+ OR GUI gate dispatch at v5.15.6+), codify as full CLAUDE.md item
+
+---
+
+## Per-concern separation: multiple sidecars per distinct concern (Stage 4 codification 2026-05-16)
+
+**Codified at `v5.15.5.F.4d.1` planning** with `FOREACH_DRIFT_GATE` (cohort gate dispatch sidecar at `.B`) as 2nd canonical application of the sidecar pattern, sister to `FOREACH_DRIFT_OVERRIDE` (custom-semantics override sidecar at `.C`).
+
+### The principle
+
+When multiple distinct ADDING-pattern concerns exist over the same parent registry, **each concern gets its own sidecar — NOT stacked into one** "god sidecar" with bit-packed handling of multiple concerns.
+
+Concrete contrast at `v5.15.5.F.4d.1`:
+
+| Concern | Sidecar | Sparseness | Default semantic | Bit-pack |
+|---|---|---|---|---|
+| Custom-semantics override for drift compare (5 XGBoost training-only rows need WARN_ALWAYS + CROSS_BINARY) | `FOREACH_DRIFT_OVERRIDE` at `.C` | ~5/213 (truly sparse) | `has_override=0` → use defaults | `DriftOverride.flags` = severity + category + compare_kind |
+| Cohort gate dispatch for drift gate (~15/24 STAMP_BOUND_CFG_DERIVED rows need non-Default cohort tag) | `FOREACH_DRIFT_GATE` at `.B` | ~15/24 (semi-dense within flagged subset) | unset entry → `DRIFT_GATE_DEFAULT` cohort | `DriftGateKind` enum (single value per row) |
+
+Both sidecars are indexed by parent's `FIELD_IDX`. Both follow the same pattern shape. Different concerns; different sparseness profiles; different default semantics.
+
+### Why NOT stack into one sidecar
+
+Tempting to merge: extend `DriftOverride.flags` with cohort_gate_kind bits (3 bits within the existing reserved bits 5-7). Why this is the wrong shape:
+
+1. **Conflates two distinct concerns.** Override semantics (severity + category) and cohort gate (which cfg state gates the field) are independent dimensions. A field could need WARN_ALWAYS override AND be in the bandit cohort — both apply, but they're orthogonal. Conflating means every consumer disentangles two concerns from one byte.
+
+2. **Sparseness profile mismatch.** DRIFT_OVERRIDE is truly sparse (5/213, ~2.3%); DRIFT_GATE is semi-dense within the flagged subset (15/24, 62%). Forcing them into one sidecar means rows that need cohort gate but NO override-semantics get sparse-table entries just for the cohort tag. Sparse pattern degrades.
+
+3. **Future extension stacks badly.** When 3rd cohort-style concern emerges (e.g., per-row render-conditional GUI gating at `.F.4e`; or `.F.5+` backtest-conditional behavior), stacking into one sidecar consumes more bit budget in `DriftOverride.flags` (currently 5 bits used; 3 reserved → would saturate fast). Per-concern separation = ADD new sister sidecar (`FOREACH_GUI_GATE`, `FOREACH_BACKTEST_GATE`) without disrupting existing.
+
+4. **CI verification independence.** Each sidecar gets its own forward + reverse coverage cross-check (sister to `test_drift_override_sidecar_coverage`). Conflating concerns means CI check has to disentangle which concern's coverage gap fired.
+
+5. **Test isolation.** Each sidecar's behavior is testable independently (gate dispatch tests + override dispatch tests, separate). Conflated mode requires coupled tests.
+
+### When to add a NEW sidecar vs extend existing
+
+**Add NEW sidecar when:**
+- The new data dimension is semantically independent of existing sidecar's dimensions (different concern)
+- The new data dimension has a different sparseness profile (sparse vs semi-dense vs dense)
+- The new data dimension's default semantic differs from existing (default-on-zero means different things)
+
+**Extend existing sidecar when:**
+- The new data is an additional facet of the same concern (e.g., adding `eps_idx` to `DriftOverride.flags` because eps tolerance is part of drift semantics)
+- The new data has matching sparseness profile + default-on-zero semantic
+- The new data dimension is naturally bit-pack-able alongside existing fields without saturating budget
+
+### CI cross-check applies per sidecar
+
+Each sidecar gets its own forward + reverse coverage check:
+
+```cpp
+// Per sidecar: forward (every sidecar row's parent has the required source-registry bit set)
+// Per sidecar: reverse (every flagged source-registry row has expected coverage in sidecar OR explicit default)
+```
+
+For FOREACH_DRIFT_OVERRIDE: forward = "every override row's parent has STAMP_BOUND_CFG_DERIVED bit"; reverse = sparse (most rows DON'T need override; default-on-zero is correct).
+
+For FOREACH_DRIFT_GATE: forward = "every gate row's parent has STAMP_BOUND_CFG_DERIVED bit"; reverse = "every STAMP_BOUND_CFG_DERIVED row has an explicit gate tag OR uses DEFAULT (no row in FOREACH_DRIFT_GATE)".
+
+### Composition relationships
+
+- **Same parent registry** (`FOREACH_CFG_FIELD` filtered by `STAMP_BOUND_CFG_DERIVED`)
+- **Different consumers** (DRIFT_OVERRIDE consumed by drift-check severity / category selection; DRIFT_GATE consumed by drift-check gate predicate)
+- **Independent CI cross-checks** (each forward + reverse, per sidecar)
+- **Sister meta-registry enrollment** (both as Level-0 with PARENT=DERIVED_FILTER in `FOREACH_REGISTRY`)
+- **Sister `multi-bit-state-encoding-pattern.md` applications** (DriftOverride.flags + DriftGateKind enum both bit-packed where appropriate)
+
+### Future cohort applications
+
+When 3rd sidecar emerges, it should follow the same shape:
+- Sparse / semi-dense sidecar indexed by parent's FIELD_IDX
+- Default-on-zero semantic (or default-on-absence-of-row)
+- Bit-packed struct OR enum tag (multi-bit-state-encoding-pattern.md)
+- CI cross-check forward + reverse
+- Enrolled in FOREACH_REGISTRY (LEVEL=0; PARENT=parent-meta-registry)
+- Concrete examples: FOREACH_GUI_GATE (`.F.4e+`); FOREACH_BACKTEST_GATE (`v5.16+`); FOREACH_TRAINING_GATE (`v5.15.6.C+`)
 
 ---
 

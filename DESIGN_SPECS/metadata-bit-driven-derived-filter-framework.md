@@ -90,6 +90,8 @@ The framework's macro API abstracts the mechanism; under the hood, Option B (run
 
 ## The pattern (concrete shape)
 
+> **v1.1 revision banner (2026-05-16):** Variants 2 + 3 macro signatures **simplified at v5.15.5.F.4d.1 first-application time** per Caramel's "principle beats registry for ELIMINATING" rule. The original v1.0 macro signatures included `LOCKED_HASH_VAR` and `FIXTURE_PATH` parameters for Layer 5b hash-lock mechanism. **REVISED**: Layer 5b uses structural invariant tests (see `wire-format-byte-preservation-discipline.md` § 5b revised) rather than LOCKED-constant snapshot. Macro signatures now: `DERIVED_FILTER_DECLARE_WIRE_FORMAT(NAME, SOURCE_FOREACH, METADATA_BIT)` and `DERIVED_FILTER_DECLARE_WIRE_FORMAT_TWO_SOURCE(NAME, SOURCE_FOREACH, METADATA_BIT, BITMAP_SOURCE, BITMAP_FIELD)` — no LOCKED/FIXTURE columns. The framework macro auto-generates `NAME##_emit_canonical_body(buf, cap)` + `NAME##_run_generic_invariants()` runner that asserts I1-I5 (line count / format / locale-pin / row presence / canonical order). Domain-specific invariants live in consumer headers. **The code snippets below still show the v1.0 LOCKED-param signatures** — pending full doc cleanup at `.F.4d.1.A` ship close auto-write. For implementation, use the revised signatures + consult `2026-05-16-v5.15.5.F.4d.1.A-framework-infra-examples.md` sidecar for current canonical code.
+
 ### Three macro families covering 7 known applications
 
 ```cpp

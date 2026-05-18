@@ -21,11 +21,11 @@ or modify code. The handoff doc TELLS the future session to run audits.
 
 ## Invocation
 
-- `/handoff <ship-tag>` — auto-resolve plan path via glob
-  - `/handoff v5.14.10` → finds `plans/<active-sprint>/subplans/*v5.14.10*.md`
-- `/handoff <ship-tag> <plan-path>` — explicit plan path
-  - `/handoff v5.14.10 plans/v5.14-foxml-port-and-maker/subplans/2026-05-08-v5.14.10-bayesian-thompson-bandit.md`
+- `/handoff <ship-tag>` — auto-resolve plan path via glob: `plans/<active-sprint-dir>/subplans/*<ship-tag>*.md`
+- `/handoff <ship-tag> <plan-path>` — explicit plan path (use when glob is ambiguous or the plan lives outside the standard subplans dir)
 - `/handoff` (no args) → ERROR. Sub-ship target must be specified.
+
+The `<ship-tag>` is whatever uniquely identifies the sub-ship in the workspace (typically a version sub-tag like the rightmost `.X` of the plan's target ship; the skill substitutes it everywhere in the generated handoff via placeholders).
 
 ## Execution model (Layer 1 orchestrator)
 
@@ -52,7 +52,7 @@ return an error. /handoff is only invoked from main session.
 
 ### Stage 1 — Resolve sub-ship target + active sprint
 
-1. Parse `<ship-tag>` (e.g., `v5.14.10`, `v5.14.10.A`, `v5.14.11`).
+1. Parse `<ship-tag>` (any sub-ship identifier — typically a version sub-tag of the form `vMAJOR.MINOR.PATCH[.LETTER...]` or shorter rightmost form like `.A.1`).
 2. Detect active sprint from current `Version.hpp`:
    - Read `/home/caramel/code/FoxML_Trader_v2/Version.hpp`
    - Extract `ENGINE_VERSION_STRING` (e.g., "5.14.9")
@@ -105,6 +105,67 @@ This eliminates the "TaskList evaporates between sessions" failure mode. Fresh-s
 
 If TaskList is empty at handoff write time, the generated handoff says "No active task list — fresh-session pickup may create one based on remaining sub-commits enumerated below."
 
+### Stage 1.6 — Multi-session ship awareness
+
+Detect when ship state spans multiple sessions. Without this Stage, fresh-session pickup loses visibility into in-flight ship progress; handoffs become brittle when intra-ship WIP-checkpoint commits or plan body amendments accumulate mid-ship.
+
+**Detection commands:**
+
+1. **Pre-tag rollback anchor** (always exists for any ship that's started coding): `git tag --list 'pre-<ship-tag>'`
+2. **WIP-checkpoint commits** (present when ship has had mid-session commits): `git log <pre-tag>..HEAD --oneline --grep='WIP-checkpoint'` — captures commit hash + subject + LOC stats per commit via `--stat`
+3. **Plan body iteration history**: parse plan body status banner (line starting with `**Status:**`) — extract current version + each "v1.N closes" / "v1.N supersedes" sub-clause referenced
+4. **Audit batch history**: glob `plans/<sprint-dir>/plan_checks/*<ship-tag>*synthesis*.md` — list all audit synthesis docs with their batch labels (Batch 1, Batch 2 RE-SWEEP, Batch N pre-coding, etc.)
+
+**Embed in generated handoff prompt body** as a "Ship state across sessions" section. Use placeholder rows; the dynamic-load fills in actual values per ship. If WIP-checkpoint commits don't exist (single-session ship), omit that sub-section. If plan body has only 1 iteration (no v1.N history), omit history table.
+
+Template shape (skill substitutes actual values):
+
+```markdown
+## Ship state across sessions (multi-session awareness)
+
+**Pre-tag rollback anchor:** `pre-<ship-tag>` at engine commit `<sha>` (initial coding start)
+
+**Mid-ship WIP-checkpoint commits** (intra-ship rollback anchors; omit if none):
+- `<sha>` — `<commit subject>` (<files>/<insertions>/<deletions>)
+
+**Plan body iteration history** (omit if single iteration):
+- v1.<N> → `<one-line summary of what landed>`
+- ...
+
+**Audit batches fired** (omit if no audits):
+| Batch | Date | Verdict | Synthesis doc |
+|---|---|---|---|
+| <batch label> | <date> | <verdict> | `plan_checks/<filename>` |
+```
+
+### Stage 1.7 — Per-Step landed/pending status enumeration
+
+Parse the plan body's Steps section for Step identifiers + cross-reference to commit log:
+
+1. Extract all Step identifiers from plan body (regex `Step \d+(\.\d+([.a-zA-Z0-9]+)*)?`)
+2. For each Step: grep commits between pre-tag and HEAD for the Step reference (commit subject or body)
+3. Categorize each Step:
+   - **LANDED**: commit message references Step with verbiage like "complete" / "landed" / "closure" / "shipped"
+   - **IN_PROGRESS**: current TaskList shows the Step as `in_progress`, OR commit references it as WIP/partial
+   - **PENDING**: neither LANDED nor IN_PROGRESS
+4. For LANDED Steps, capture short SHA of landing commit
+5. For PENDING Steps, parse plan body BUILD-FORCED sequencing list to identify what's BLOCKING (predecessor Steps)
+
+**Embed in generated handoff prompt body** as a "Per-Step status at handoff write" section. Table shape (skill substitutes actual rows):
+
+```markdown
+## Per-Step status at handoff write
+
+| Step | Status | Landed at | Blocked by |
+|---|---|---|---|
+| <step identifier> | LANDED | `<commit-sha>` | — |
+| <step identifier> | IN_PROGRESS | — | — |
+| <step identifier> | **NEXT** (ready) | — | — |
+| <step identifier> | PENDING | — | <blocking predecessor> |
+```
+
+Visualizes ship progress at a glance + makes "where to start" unambiguous for fresh-session pickup. For single-session ships where everything is PENDING, the table is still useful as a checklist.
+
 ### Stage 2 — Read source docs (DYNAMIC catalog ingestion)
 
 Read these dynamically (NOT hardcoded). The skill's value is freshness:
@@ -151,6 +212,57 @@ This eliminates the class of bugs where handoffs are written with stale claims t
 
 If `/readiness` returns RED verdict (substantial gaps), HALT handoff generation + report to operator: "Plan has substantial gaps that should be amended BEFORE handoff is generated. Amending the handoff to reflect known-broken state would lock in the staleness." Operator can override or amend the plan first.
 
+### Stage 2.6 — Coding-time discoveries auto-extraction
+
+If plan body has a "Coding-time discoveries" section (any plan body that follows the convention of capturing session-real findings as `D-N` numbered entries; common shape: `## Coding-time discoveries` header followed by `### D-N: <title>` entries with Catalyst / Resolution / Lesson sub-fields), auto-extract entries verbatim into the generated handoff body.
+
+These entries capture what coding sessions ACTUALLY found vs what plan-time audits initially expected (e.g., missed consumer X-macro caught at build break; field-type asymmetry surfaced at struct-gen; sequencing dependency discovered at implementation). Fresh-session pickup reads them BEFORE diving in to avoid re-discovering the same issues.
+
+**Extraction shape** in generated prompt (skill substitutes actual D-N entries from plan body):
+
+```markdown
+## Coding-time discoveries from prior session(s)
+
+Pulled verbatim from plan body "Coding-time discoveries" section. Session-real findings; assume they shape what you'll hit next.
+
+### D-<N>: <title>
+- **Catalyst:** <what triggered the discovery>
+- **Resolution:** <what was done>
+- **Lesson:** <what to watch for>
+
+(...one entry per D-N row in plan body...)
+```
+
+If plan body has no "Coding-time discoveries" section, omit this section entirely from the generated handoff.
+
+### Stage 2.7 — Mid-session meta-gap codification detection
+
+Detect DESIGN_SPECS amendments made since the pre-tag rollback anchor via workspace git log:
+
+```bash
+cd /home/caramel/code/tick-trader-percore-workspace
+git log <pre-tag-creation-time>..HEAD --pretty=format:'%h %s' --diff-filter=AM -- DESIGN_SPECS/
+```
+
+For each DESIGN_SPEC amendment found:
+1. Cross-reference to plan body "Meta-gaps surfaced" / "DESIGN_SPECs landed/amended" sections if present
+2. Categorize: NEW Stage 2 DRAFT / EXTENDED with new sub-section / Banner-only revision
+3. Identify any PROMISED ship-close auto-writes referenced in plan body Step 9 list (feedback memories / skill amendments / CLAUDE.local.md going-forward rule additions)
+
+**Embed in generated prompt** as a "Mid-ship DESIGN_SPEC amendments" section:
+
+```markdown
+## Mid-ship DESIGN_SPEC amendments (and PROMISED ship-close auto-writes)
+
+| Spec amended this ship | Change type | Promised auto-writes at ship close |
+|---|---|---|
+| `<spec-filename>` | <NEW Stage 2 DRAFT / EXTENDED § / Banner-only> | <e.g., NEW feedback memory / /readiness Check N / skill amendment> |
+```
+
+This makes mid-ship discipline codification visible across sessions — fresh-session pickup knows what's already landed in DESIGN_SPECs vs what's still pending in feedback/memory/skill auto-writes scheduled at ship close.
+
+If no DESIGN_SPEC amendments since pre-tag, omit this section entirely.
+
 ### Stage 3 — Scan plan for DESIGN_SPECS pattern symptoms
 
 Read the plan body + extract pattern symptoms. For each pattern in
@@ -176,16 +288,83 @@ indicator phrases (heuristic, not exhaustive):
 Record matched patterns + cite the relevant DESIGN_SPECS doc by filename.
 Future session reads these as recommended (not mandatory) starting points.
 
-### Stage 4 — Scan TECH_DEBT for surface overlap
+### Stage 4 — Scan TECH_DEBT for ship-scoped in-flight status
+
+Two passes:
+
+**Pass A — Surface overlap (existing debt that the ship might absorb):**
 
 For each OPEN TECH_DEBT entry:
 1. Parse `Surface:` line
 2. Check if surface mentions any path/file/registry the ship will touch
-3. If overlap: include the entry in the handoff with the surface match
-   highlighted
+3. If overlap: include the entry in the handoff with the surface match highlighted
 
-This surfaces existing-debt that the ship might naturally absorb or
-explicitly defer.
+This surfaces existing-debt that the ship might naturally absorb or explicitly defer.
+
+**Pass B — Ship-scoped in-flight status (NEW):**
+
+For TECH_DEBT entries cited in the ship's plan body (either as closure targets or as NEW entries to open):
+1. Parse plan body for `TECH_DEBT-NNN` references (closures + new-opens)
+2. For each cited entry, check current status in `DOCS/TECH_DEBT.md` (OPEN / CLOSED / IN-FLIGHT / PARTIAL)
+3. Check commits between pre-tag and HEAD for the entry reference (commit messages)
+4. Categorize at handoff write time:
+   - **CLOSED IN SHIP**: commit references entry as closed; verify ledger entry updated
+   - **PARTIAL CLOSED**: some sites migrated but plan body lists remaining work
+   - **PENDING CLOSURE**: cited as ship closure target but no commit references yet
+   - **NEW OPENED MID-SHIP**: commit message references entry as NEW; verify ledger
+   - **NEW SCHEDULED**: plan body Step 9 list includes entry but not yet opened
+
+**Embed in generated prompt** as a "TECH_DEBT scoreboard at handoff write" section:
+
+```markdown
+## TECH_DEBT scoreboard (in-flight status at handoff write)
+
+**Closure targets cited in plan body:**
+| TECH_DEBT | Title | Status |
+|---|---|---|
+| -<N> | <title> | <CLOSED IN SHIP / PARTIAL / PENDING> @ `<commit-sha if landed>` |
+
+**NEW entries this ship:**
+| TECH_DEBT | Title | Status |
+|---|---|---|
+| -<N> NEW | <title> | <NEW OPENED MID-SHIP / NEW SCHEDULED at ship close> |
+
+**Overlapping existing debt (Pass A surface match):**
+| TECH_DEBT | Surface match | Decision |
+|---|---|---|
+| -<N> | <surface line> | <absorb / refresh / explicit defer> |
+```
+
+If any overlapping entry exists, the generated handoff Step 5 still includes the explicit `/readiness` Check 25 (TECH_DEBT scan) reminder.
+
+### Stage 4.5 — Pre-pickup self-audit per 4-pillar discipline
+
+Per the discipline pattern "audit own proposals with same rigor as operator-proposed plans" (any plan body that triggers a handoff should pass a 4-pillar self-audit before claiming "ready for pickup"). The 4 dimensions:
+
+1. **DESIGN_SPECS cross-check**: which patterns in the catalog apply to the ship's next-action? Cite each by filename + relevance per Stage 3 pattern-symptom scan.
+
+2. **Anti-pattern catalog check**: review `DOCS/RECURRING_BUG_PATTERNS.md` Classes 1-N against the ship's next-action. Verify no anti-pattern instances introduced by the staged next-action; explicit CLEAN status per relevant class.
+
+3. **Operator-impact dimension**: what action does the operator (Caramel) need? Migration burden? Workflow disruption? Default toward non-breaking alternatives unless breaking is structurally necessary.
+
+4. **Novel-alternative consideration**: could a novel design fit better given the SPECIFIC purpose of THIS code? Don't default to existing patterns out of inertia; don't default to novelty out of cleverness.
+
+**Embed in generated prompt** as a "Pre-pickup self-audit" section:
+
+```markdown
+## Pre-pickup self-audit (4-pillar discipline)
+
+Verified at handoff write time. Fresh-session pickup may re-evaluate if scope shifts.
+
+| Pillar | Verdict | Notes |
+|---|---|---|
+| 1. DESIGN_SPECS cross-check | <patterns-matched-list per Stage 3> | <relevance per pattern> |
+| 2. Anti-pattern catalog | CLEAN per Classes <enumerate-relevant-classes> | <verification notes> |
+| 3. Operator-impact | <None / Documented migration steps / Workflow note> | <details> |
+| 4. Novel alternative | <Considered, rejected because... / Accepted, supersedes default pattern> | <details> |
+```
+
+Fresh-session pickup can verify each pillar against current state. If any pillar's verdict has DRIFTED (e.g., new anti-pattern Class codified post-handoff), pickup re-evaluates before coding.
 
 ### Stage 5 — Compose handoff prompt
 
@@ -227,17 +406,29 @@ Assemble the prompt with this structure:
 
 | ID | Status | Subject |
 |---|---|---|
-<row per task from Stage 1.5 capture; e.g.,>
-| #1 | completed | Step 0.A — Tag rollback anchor + verify build baseline |
-| #2 | completed | Step 0.C — Cfg field scope classification table |
-| #3 | completed | Step 1 — Two-registry framework infrastructure |
-| #4 | **in_progress** | **Step 2 — Cohort migration + ControllerConfig restructure** |
-| #5 | pending | Step 3 — Parser state machine for [core N] sections |
-| <...> |
+<row per task from Stage 1.5 capture — generic placeholders; the skill substitutes actual TaskList rows at generation time>
+| #<n> | <completed / in_progress / pending> | <task subject line> |
+| <...one row per task...> |
+
+For a canonical example of how this table looks when populated with real tasks, see any committed handoff in `plans/<sprint>/handoffs/*.md` — the skill regenerates the table per-ship; do NOT hardcode values here.
 
 **Fresh-session pickup should recreate this TaskList** via TaskCreate for each entry so the multi-step plan stays trackable across sessions. Mark <completed-ids> completed, <in-progress-id> in_progress, <pending-ids> pending immediately after recreation.
 
 If no in-flight tasks at handoff write: "No active task list — fresh-session pickup may create one from the remaining sub-commits below if helpful."
+
+---
+
+<insert "Ship state across sessions" section here per Stage 1.6 output — omit entirely if single-session ship with no WIP-checkpoint commits + no plan body iteration history + no audit batches fired>
+
+<insert "Per-Step status at handoff write" section here per Stage 1.7 output>
+
+<insert "Coding-time discoveries from prior session(s)" section here per Stage 2.6 output — omit entirely if plan body has no "Coding-time discoveries" section>
+
+<insert "Mid-ship DESIGN_SPEC amendments" section here per Stage 2.7 output — omit entirely if no DESIGN_SPECS amendments since pre-tag>
+
+<insert "TECH_DEBT scoreboard (in-flight status at handoff write)" section here per Stage 4 Pass B output — include even if empty (says "No TECH_DEBT cited in plan body")>
+
+<insert "Pre-pickup self-audit (4-pillar discipline)" section here per Stage 4.5 output>
 
 ---
 
@@ -260,6 +451,17 @@ This is a fresh context window; do NOT trust any prior-session memory
    - `./build/controller_test 2>&1 | tail -3` — test count must be ≥ anchor-tag's "Test count baseline:"
 
    **If ANY value diverges from the handoff anchor-tag**: a ship landed between handoff write + this pickup. This handoff's claims may be stale. STOP planning; investigate the divergence first by reading `git log <anchor-sha>..HEAD` to understand what changed; verify each claim in this handoff body against current state before proceeding.
+
+1.5. **Multi-session ship anchor check (NEW)** — if this is a multi-session ship (handoff "Ship state across sessions" section lists WIP-checkpoint commits), verify those anchors are still in the log:
+   - `git log <pre-tag>..HEAD --oneline --grep='WIP-checkpoint'` — should match handoff's listed WIP-checkpoint commits
+   - `git log <pre-tag>..HEAD --stat | head -50` — review LOC stats per commit against handoff claims
+   - If a WIP-checkpoint commit listed in the handoff is MISSING from log: someone rebased/squashed mid-ship; investigate before proceeding
+   - If EXTRA WIP-checkpoint commits appear (handoff doesn't list them): handoff is stale; verify what those commits did before assuming any "Per-Step status" claim in handoff is current
+
+1.6. **Per-Step status drift check (NEW)** — handoff's "Per-Step status at handoff write" table may have drifted:
+   - For each LANDED Step listed: `git log --oneline --grep='<Step identifier>' <pre-tag>..HEAD` — verify the cited landing commit still exists
+   - For each IN_PROGRESS Step listed: verify TaskList recreation at Step 0.4 below preserves that status
+   - For PENDING Steps: verify BUILD-FORCED sequencing in plan body hasn't been amended since handoff (re-read plan body BUILD-FORCED list)
 
 2. **Read these in parallel (load context):**
    - `CLAUDE.md` (engine repo; slim post-2026-05-14 refactor — operational orientation + 13 hard invariants)
@@ -332,7 +534,7 @@ Don't write code until the matched-pattern docs are read + integration plan arti
 **Going-forward rules + feedback entries (dynamically injected from CLAUDE.local.md + memory):**
 
 <inject going-forward rules + relevant feedback entries dynamically>
-- **Defer is last-ditch, never effort-avoidance.** Implement properly the first time. Smaller-scope recommendations have been wrong 3/3 times in v5.14 sprint vs Caramel's "do it right now" instinct.
+- **Defer is last-ditch, never effort-avoidance.** Implement properly the first time. Smaller-scope recommendations consistently underperform "do it right now" instinct per `feedback_no_defer_for_effort` memory.
 - **Structural fix > direct patch for recurring bug classes.** If the ship has any "same pattern at multiple sites" shape, use X-macro registry / helper extraction with compile-time enforcement.
 - **No MVP for plumbing/refactor work.** MVP framing is reserved for genuinely-new features with unknown unknowns. Pattern-application work ships the full documented design.
 - **Boundary-stable refactors preferred over wide cascades.** Keep public boundary types unchanged + isolate behavior inside.
@@ -378,12 +580,12 @@ If any overlapping entry exists, run `/readiness` Check 25 (TECH_DEBT scan) expl
 **Path discipline (set 2026-05-14):** ALWAYS cite workspace paths in chat / generated prompts / cross-references. The engine-side `/home/caramel/code/FoxML_Trader_v2/plans/...` resolves identically via symlink, but using it obscures where the file actually lives. Apply to: `plans/` (dir symlink), `.claude/skills/` → workspace `claude-skills/` (dir symlink), `DESIGN_SPECS/` (workspace-native), `DOCS/<symlinked-md>` (per-file symlinks; Edit tool REFUSES writes through these). When in doubt: `readlink -f <path>` to see the real location.
 
 - Sprint plans: `/home/caramel/code/tick-trader-percore-workspace/plans/<sprint-dir>/{MASTER.md, subplans/, plan_checks/, postmortems/, handoffs/}`
-- DESIGN_SPECS catalog: `workspace/DESIGN_SPECS/` (19 patterns + README; promoted from 16 in v5.14.10 with per-snapshot-cluster-layout-pattern + calibration-log-column-registry + postloadsetup-registry-pattern)
+- DESIGN_SPECS catalog: `workspace/DESIGN_SPECS/` — pattern catalog + README. New patterns promote in via 2+ canonical applications per `pattern-codification-lifecycle.md`. Catalog grows over time; do NOT hardcode count here (consult README.md for current set).
 - Skill outputs go to `plans/plan_checks/<skill>-<YYYY-MM-DD>-<scope>.md` (neutral); batches into sprint dir at close.
 - TECH_DEBT auto-write: `DOCS/TECH_DEBT.md` (symlinked from workspace)
 - PARITY_ISSUES auto-write: `DOCS/PARITY_ISSUES.md` (symlinked from workspace)
 - HOT_PATH_CHANGELOG: `DOCS/HOT_PATH_CHANGELOG.md` (symlinked from workspace)
-- **DOCS/ symlinks editing convention** (post-v5.11.43 migration; surfaced as Surprise 7 in v5.14.10 postmortem): many `DOCS/*.md` files in the engine repo are PER-FILE SYMLINKS to workspace. The `Edit` tool REFUSES to write through symlinks. ALWAYS check `readlink -f path` before editing a `DOCS/*.md` file; if it resolves to a workspace path, edit via the workspace path directly. Symlink-resolved files include: HOT_PATH_CHANGELOG, PARITY_ISSUES, TECH_DEBT, plus most CLAUDE_*.md / RECURRING_BUG_PATTERNS / EASY_ADDITIONS_INVARIANTS / sister-architectural docs. Engine-tracked exceptions (NOT symlinked): QUICKSTART, OPERATOR_DEPLOYMENT, CONFIGURATION, ML_USAGE, ML_TRAINING, CONTRIBUTING, LATENCY_PROFILING.
+- **DOCS/ symlinks editing convention:** many `DOCS/*.md` files in the engine repo are PER-FILE SYMLINKS to workspace. The `Edit` tool REFUSES to write through symlinks. ALWAYS check `readlink -f path` before editing a `DOCS/*.md` file; if it resolves to a workspace path, edit via the workspace path directly. Symlink-resolved files include: HOT_PATH_CHANGELOG, PARITY_ISSUES, TECH_DEBT, plus most CLAUDE_*.md / RECURRING_BUG_PATTERNS / EASY_ADDITIONS_INVARIANTS / sister-architectural docs. Engine-tracked exceptions (NOT symlinked): QUICKSTART, OPERATOR_DEPLOYMENT, CONFIGURATION, ML_USAGE, ML_TRAINING, CONTRIBUTING, LATENCY_PROFILING.
 
 ## Step 8 — sprint-close verification gate
 
@@ -509,28 +711,30 @@ When opening a new sprint:
 3. MASTER.md at sprint-dir root
 4. First sub-ship gets a handoff via this skill (`/handoff <first-sub-tag>`) so the discipline is locked in from sprint start
 
-## Example invocation
+## Example invocation (generic flow)
 
 ```
-$ /handoff v5.14.10
-[skill reads Version.hpp → 5.14.9 → active sprint dir = v5.14-foxml-port-and-maker]
-[skill globs plans/v5.14-foxml-port-and-maker/subplans/*v5.14.10*.md → 1 match]
+$ /handoff <ship-tag>
+[skill reads Version.hpp → extracts ENGINE_VERSION_STRING → resolves active sprint dir via glob]
+[skill globs plans/<active-sprint-dir>/subplans/*<ship-tag>*.md → 1 match expected]
 [skill reads MASTER, plan, CLAUDE.local.md, MEMORY.md, DESIGN_SPECS/README.md, TECH_DEBT.md]
-[skill scans plan for DESIGN_SPECS pattern symptoms — matches: curve-registry, bitmap-flag-api, x-macro-registry, autopopulate (because Thompson dispatch + new bandit state + persistence)]
-[skill scans TECH_DEBT for surface overlap — matches TECH_DEBT-008 (bandit telemetry deferral)]
-[skill writes /home/caramel/code/tick-trader-percore-workspace/plans/v5.14-foxml-port-and-maker/handoffs/2026-05-10-v5.14.10-handoff.md  (WORKSPACE path explicitly)]
-[skill prints summary + WORKSPACE path]
+[skill scans plan for DESIGN_SPECS pattern symptoms — matches per Stage 3 indicator table]
+[skill scans TECH_DEBT for ship-scope status (Pass A surface overlap + Pass B in-flight)]
+[skill detects multi-session state per Stage 1.6 (WIP-checkpoints / iteration history / audit batches)]
+[skill enumerates Per-Step status per Stage 1.7]
+[skill extracts Coding-time discoveries (Stage 2.6) + DESIGN_SPEC amendments (Stage 2.7) if present]
+[skill runs Stage 4.5 4-pillar self-audit]
+[skill composes handoff prompt per Stage 5 + writes via Stage 6 workspace path]
+[skill prints summary + WORKSPACE path per Stage 7]
 ```
+
+For a canonical example output, see any committed handoff in `plans/<sprint-dir>/handoffs/*-handoff.md` — each one represents the actual generated output for a specific ship. Do NOT use any specific handoff as a hardcoded template here; the skill regenerates per-ship dynamically.
 
 ## Pattern provenance
 
-This skill formalizes the ad-hoc handoff prompt convention used through
-v5.14.x sprint. First applied retroactively for v5.14.10 (Thompson
-sampling bandit) post v5.14.9 close. Pattern captured because every
-sprint sub-ship pickup was hitting the same checklist; ad-hoc handoffs
-drifted in completeness vs the canonical shape.
+This skill formalizes the ad-hoc handoff prompt convention that emerged in early sprints. Pattern captured because every sprint sub-ship pickup was hitting the same checklist; ad-hoc handoffs drifted in completeness vs the canonical shape.
 
 Documented in:
 - `tick-trader-percore-workspace/DOCS/SKILLS_HIERARCHY.md` (Layer 1 entry)
 - This file
-- First example: `plans/v5.14-foxml-port-and-maker/handoffs/2026-05-10-v5.14.10-thompson-bandit-handoff.md`
+- Canonical example handoffs: `plans/<sprint-dir>/handoffs/*-handoff.md` — each committed handoff is a real ship's generated output. Reference the most recent multi-session ship handoff (one with WIP-checkpoint commits in its "Ship state across sessions" section) for canonical multi-session output shape.

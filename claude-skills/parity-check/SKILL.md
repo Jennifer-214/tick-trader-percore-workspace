@@ -48,7 +48,7 @@ adding a scaler, changing a feature compute fn, bumping
 
 ## Scope (per audit-scope-taxonomy.md)
 
-This skill accepts scope as first positional arg per `DESIGN_SPECS/audit-scope-taxonomy.md` (NEW v5.15.5.F.4c.3 WIP2d-1.B.0d):
+This skill accepts scope as first positional arg per `DESIGN_SPECS/audit-scope-taxonomy.md`:
 
 - `current` (default when no scope specified) — parity audit of recent edits + touched train-serve surfaces
 - `wide` — full codebase train-serve parity sweep across all 10-category checklist; HIGH context cost; recommended quarterly + before live-readiness ships

@@ -24,8 +24,7 @@ Per CLAUDE.local.md going-forward rule "Suggest mid-sprint audits when
 work impacts downstream" + DESIGN_PHILOSOPHY § 11 (Process discipline —
 audit-driven pre-coding gate):
 
-- HIGH-RISK ship before coding starts (.F.4b, .F.4e, .F.4g style — wide
-  blast radius, structural fix, wire-format-affecting)
+- HIGH-RISK ship before coding starts (structural-fix ships / wire-format-affecting ships / ships with wide cross-cutting blast radius)
 - First application of a new pattern (e.g., first STAMP_BOUND derived
   filter ship; first 3-barrier structural fix application)
 - Cross-cutting changes (touches ≥4 files; touches multiple subsystems)
@@ -45,13 +44,12 @@ infrastructure change), one-off bug fix.
 
 **Args:**
 
-- `plan_path` (REQUIRED) — workspace path to the sub-ship plan being
-  audited. E.g., `plans/v5.15-live-readiness/subplans/2026-05-13-v5.15.5.F.4c-int-int_enum-bool-migration.md`
+- `plan_path` (REQUIRED) — workspace path to the sub-ship plan being audited. Shape: `plans/<sprint-dir>/subplans/<plan-filename>.md`
 - `audit_set` (OPTIONAL; default = `parity,trace,readiness,merge,dod`) —
   comma-separated subset of the available audits to fire. Use to skip irrelevant
   audits for narrow ships, OR EXTEND to include accounting + registry-fit + hft when
-  scope warrants. **Per-audit scope shapes supported** (NEW v5.15.5.F.4c.3 WIP2d-1.B.0d
-  per `audit-scope-taxonomy.md`) — each audit in the set can carry its own scope shape:
+  scope warrants. **Per-audit scope shapes supported** per `audit-scope-taxonomy.md` —
+  each audit in the set can carry its own scope shape:
 
   ```
   audit_set := <audit>[:<scope>][,<audit>[:<scope>]]...
@@ -68,15 +66,14 @@ infrastructure change), one-off bug fix.
   context budget overflow on large plans while giving appropriate depth per concern.
 
   **Extended audit set:**
-  - `accounting` (NEW v5.15.5.F.4c.3 WIP2d-1.B.0c) — fires `/accounting-audit` for plans
-    touching OMS / drainer / fee/commission / kill switches / fee floors / slippage / P&L /
-    balance / backtest accounting paths. Scans for Class 27 (scalar cfg-mirror), per-core
-    fee indexing, H4 violations, cross-path parity, static cache hazards.
-  - `registry-fit` (NEW v5.15.5.F.4c.3 WIP2d-1.B.0c) — fires `/registry-fit-audit` for plans
-    introducing a NEW registry, OR touching framework selection.
-  - `hft` (NEW v5.15.5.F.4c.3 WIP2d-1.B.0d) — fires `/hft-audit` for plans touching SP/HP/
-    drainer code. Includes Branchless dispatch opportunity scan + cache layout discipline +
-    Class 28 prevention.
+  - `accounting` — fires `/accounting-audit` for plans touching OMS / drainer / fee/commission /
+    kill switches / fee floors / slippage / P&L / balance / backtest accounting paths. Scans
+    for Class 27 (scalar cfg-mirror), per-core fee indexing, H4 violations, cross-path parity,
+    static cache hazards.
+  - `registry-fit` — fires `/registry-fit-audit` for plans introducing a NEW registry, OR
+    touching framework selection.
+  - `hft` — fires `/hft-audit` for plans touching SP/HP/drainer code. Includes branchless
+    dispatch opportunity scan + cache layout discipline + Class 28 prevention.
 
   **Recommended audit set per ship type (default scope = current per-audit unless noted):**
   | Ship type | Recommended `audit_set` |
@@ -92,18 +89,23 @@ infrastructure change), one-off bug fix.
   derived filter" "Layer 5b hash lock"` to focus audits on a specific
   surface within the plan.
 
-**Examples:**
+**Examples (generic invocation shapes):**
 
 ```
-# Full pre-coding audit gate (all 5 audits) for .F.4c:
-/precoding-audit-gate plans/v5.15-live-readiness/subplans/2026-05-13-v5.15.5.F.4c-int-int_enum-bool-migration.md
+# Full pre-coding audit gate (default 5-audit set) for any plan:
+/precoding-audit-gate plans/<sprint-dir>/subplans/<plan-filename>.md
 
-# Focused audit on wire-format work only:
-/precoding-audit-gate plans/.../v5.15.5.F.4c-...md parity,dod "STAMP_BOUND derived filter"
+# Focused audit on wire-format work only (subset; with focus keyword):
+/precoding-audit-gate plans/<sprint-dir>/subplans/<plan-filename>.md parity,dod "<focus phrase>"
 
 # Skip merge-scan (mostly mechanical row-additions — no reuse to find):
-/precoding-audit-gate plans/.../v5.15.5.F.4c-...md parity,trace,readiness,dod
+/precoding-audit-gate plans/<sprint-dir>/subplans/<plan-filename>.md parity,trace,readiness,dod
+
+# Extended audit set with per-audit module scope:
+/precoding-audit-gate plans/<sprint-dir>/subplans/<plan-filename>.md parity,trace,readiness,merge,dod:module:<area>,accounting:module:<area>
 ```
+
+For canonical real-world invocations on shipped plans, see `plans/<sprint-dir>/plan_checks/*-synthesis.md` files — each synthesis doc names the `audit_set` it was generated from.
 
 **Exit codes / verdict:**
 
@@ -275,7 +277,7 @@ post-synthesis) do, per their respective auto-write contracts.
 
 ## Examples — past audit gate fires
 
-- `2026-05-14 v5.15.5.F.4b` — fired all 5 audits in parallel. Caught CRITICAL Class 23 anti-pattern reintroduction (FPN<F>-vs-double type-erased reinterpret_cast dispatch — ~38 of 40 fields would have silently corrupted) + CRITICAL Class 14 fictional function references (5 missing functions) + 7 HIGH + 13 MED + 6 LOW findings. Plan rewritten via context-correction synthesis. Zero production occurrences. Saved estimated 6-8 hr of debug + revert vs production-ship-then-fix path.
+Past audit gate fires are documented as committed synthesis docs in `plans/<sprint-dir>/plan_checks/*-synthesis.md` — each captures the ship audited, audit set fired, severity counts, and operator triage decisions. Review committed synthesis docs for canonical examples of HIGH-RISK ship audit outcomes (CRITICAL findings caught pre-coding; structural anti-pattern reintroduction prevention; fictional symbol surfacing; etc.).
 
 ## Cost model
 
@@ -301,4 +303,4 @@ vs alternative (no audit gate): ~6-8 hr debug per CRITICAL finding that escapes 
 - `tick-trader-percore-workspace/CLAUDE.local.md` going-forward rule "Suggest mid-sprint audits when work impacts downstream"
 - Engine memory `feedback_consult_on_audit_findings` (consult before coding)
 - Engine memory `feedback_compaction_degrades_treat_handoffs_as_hints` (verify on cold pickup)
-- Past audit gate fires: `plans/plan_checks/2026-05-14-v5.15.5.F.4b-fresh-audits-synthesis.md` (canonical reference)
+- Past audit gate fires: see committed synthesis docs at `plans/<sprint-dir>/plan_checks/*-synthesis.md` (multiple ships' canonical references; the most recent multi-batch ship's synthesis is the best reference for current discipline)

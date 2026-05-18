@@ -68,9 +68,22 @@ Any plan proposing new framework infrastructure MUST include a "Canonical sister
 | ... | ... | ... | ... |
 ```
 
-Each candidate gets a verdict:
-- **FOLD** — extend the canonical sister; don't build parallel
-- **NO-FOLD** — distinct concern; legitimately new infrastructure required (with rationale)
+Each candidate gets a verdict from this **expanded menu** (per `feedback_proportionate_response_to_audit_findings` set 2026-05-17 at `.B.2` ship close — original FOLD/NO-FOLD menu was too narrow + biased toward architecting; expanded menu adds proportionate-response options):
+
+- **(A) INLINE MERGE** — delete the duplicate; inline its content into the canonical sister; ship as one piece + close the case. **Smallest response. PREFERRED when:** duplication is small (< 5 rows) + canonical sister is the structurally correct home + you can do the inline in the current ship without growing scope. The senior-engineer move at Path γ #2 at `.B` would have been "delete β4 + inline the duplicate predicate + ship `.B` as one ship" instead of escalating to 3-sub-ship split + 2 NEW DESIGN_SPECs.
+- **(B) ACCEPT WITH RATIONALE** — keep both registries; document why duplication is appropriate (distinct semantics, distinct concerns, intentional asymmetry). **PREFERRED when:** the audit's "duplication" framing turned out to be incorrect on closer inspection. Path γ #3 at `.B.2` CfgDriftCheck branch is an example: looked like duplication of FOREACH_STAMP_BOUND_CFG bandit gate but actually uses different semantic (`BITMAP_IS_SET` vs `cfg.bandit_algorithm != 0`); accept-with-rationale was the right call.
+- **(C) FOLD into canonical sister** — extend the canonical with the new rows/scope; deprecate the parallel structure; migrate consumers. **PREFERRED when:** sites-eliminated significantly exceeds sites-added (per the first-pass mechanical filter below). 60 sites eliminated + 4 files added = clear win. Sister to "EXTEND" verdict.
+- **(D) ARCHITECT NEW FRAMEWORK** — propose new registry / sidecar / DESIGN_SPEC / skill / consumer macro. **PREFERRED ONLY when:** (A) + (B) + (C) clearly insufficient AND sites-eliminated × N future applications justifies the meta-layer cost AND payoff curve hasn't flattened (per `feedback_framework_layer_payoff_diminishing_returns`). **LAST resort, not first.**
+- **NO-FOLD / first-of-kind** — genuinely new infrastructure required for distinct concern; no canonical sister exists. Document rationale.
+
+**First-pass mechanical filter** (apply BEFORE choosing menu option):
+
+Count **sites added vs sites eliminated** by the proposed response:
+- 60 sites eliminated + 4 files added → ship the framework approach (option C or D)
+- 6 sites eliminated + 5 files added → roughly broken even + buys future maintenance burden → REJECT the framework approach (prefer A or B)
+- Walker iterating 0 rows at proposal time → infrastructure-only; can't have earned its keep yet → STRONG bias toward A or B
+
+If `/anti-spaghetti` or `/merge-scan` surfaces a finding at pre-coding audit gate, the response menu MUST include all 5 options (A through E). Don't auto-pick (D). Walk the menu in order; stop at the first sufficient option.
 
 If the section is missing or each candidate is "no inspection done", the plan fails pre-coding readiness Check 29.
 

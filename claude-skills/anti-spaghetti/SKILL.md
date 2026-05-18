@@ -93,6 +93,29 @@ Plus secondary patterns to flag:
 - **Class 19 instances** — hardcoded enum name strings in gating expressions
 - **Class 27 instances** — scalar cfg-mirror caches (CI already enforces; flag NEW occurrences pre-CI)
 
+## Proportionate-response discipline (set 2026-05-17 at `.B.2` ship close per `feedback_proportionate_response_to_audit_findings`)
+
+When findings surface duplication / parallel-infrastructure / drift surface, the
+report's "Structural fix proposal" MUST walk the expanded response menu in ORDER
++ recommend the FIRST sufficient option (not default to architect):
+
+- **(A) INLINE MERGE** — delete duplicate; inline content into canonical sister; close case. Smallest response. PREFERRED for small duplications (< 5 rows) where canonical sister is structurally correct home.
+- **(B) ACCEPT WITH RATIONALE** — keep both; document why duplication is appropriate (distinct semantics, distinct concerns). PREFERRED when audit's "duplication" framing turned out incorrect on closer inspection.
+- **(C) FOLD into canonical sister** — extend canonical; deprecate parallel; migrate consumers. PREFERRED when sites-eliminated significantly exceeds sites-added.
+- **(D) ARCHITECT NEW FRAMEWORK** — propose new registry / sidecar / DESIGN_SPEC / skill / consumer macro. **LAST resort, NOT first.** Only when (A) + (B) + (C) clearly insufficient AND sites-eliminated × N future applications justifies the meta-layer cost AND payoff curve hasn't flattened.
+
+**First-pass mechanical filter (apply BEFORE recommending fix):**
+
+Count **sites added vs sites eliminated** by the proposed response:
+- 60 sites eliminated + 4 files added → ship (option C/D)
+- 6 sites eliminated + 5 files added → roughly broken even + buys future maintenance burden → REJECT framework approach (prefer A/B)
+- Walker iterating 0 rows at proposal time → infrastructure-only; hasn't earned keep yet → STRONG bias toward A/B
+- Per `feedback_framework_layer_payoff_diminishing_returns`: late-stage framework consolidation sprints (past sprint-specific inflection point) should default heavily toward A/B; only escalate to C/D when the payoff is clearly transformative
+
+**Why this discipline matters:** `/anti-spaghetti` catches are information; the response is judgment. Reflexive audit-then-architect grew meta-layers past inflection point through v5.15.5.F sprint (`.B.1` walker iterating 0 rows is a tell). The catch is the system working; the proportionate response is the senior-engineer move.
+
+Cross-refs: `feedback_proportionate_response_to_audit_findings` (response-menu discipline); `feedback_framework_layer_payoff_diminishing_returns` (inflection-point recognition); `canonical-sister-extension-discipline.md` v1.2+ (expanded verdict menu sister to this).
+
 ## Output format
 
 Structured findings report (saved to `plan_checks/anti-spaghetti-<date>-<ship>.md`):

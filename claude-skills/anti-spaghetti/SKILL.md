@@ -93,28 +93,34 @@ Plus secondary patterns to flag:
 - **Class 19 instances** — hardcoded enum name strings in gating expressions
 - **Class 27 instances** — scalar cfg-mirror caches (CI already enforces; flag NEW occurrences pre-CI)
 
-## Proportionate-response discipline (set 2026-05-17 at `.B.2` ship close per `feedback_proportionate_response_to_audit_findings`)
+## Proportionate-response discipline (per `feedback_proportionate_response_to_audit_findings` + `feedback_plan_right_not_fast`)
 
 When findings surface duplication / parallel-infrastructure / drift surface, the
-report's "Structural fix proposal" MUST walk the expanded response menu in ORDER
-+ recommend the FIRST sufficient option (not default to architect):
+report's "Structural fix proposal" section **surfaces the full response menu +
+evaluates each option honestly + recommends what's actually right** (NOT first
+sufficient; NOT smallest; the option the evaluation produces):
 
-- **(A) INLINE MERGE** — delete duplicate; inline content into canonical sister; close case. Smallest response. PREFERRED for small duplications (< 5 rows) where canonical sister is structurally correct home.
-- **(B) ACCEPT WITH RATIONALE** — keep both; document why duplication is appropriate (distinct semantics, distinct concerns). PREFERRED when audit's "duplication" framing turned out incorrect on closer inspection.
-- **(C) FOLD into canonical sister** — extend canonical; deprecate parallel; migrate consumers. PREFERRED when sites-eliminated significantly exceeds sites-added.
-- **(D) ARCHITECT NEW FRAMEWORK** — propose new registry / sidecar / DESIGN_SPEC / skill / consumer macro. **LAST resort, NOT first.** Only when (A) + (B) + (C) clearly insufficient AND sites-eliminated × N future applications justifies the meta-layer cost AND payoff curve hasn't flattened.
+- **(A) INLINE MERGE** — delete duplicate; inline content into canonical sister; close case. Right when: duplication is small + canonical sister is the structurally correct home + inline doesn't grow current ship scope.
+- **(B) ACCEPT WITH RATIONALE** — keep both; document why duplication is appropriate (distinct semantics, distinct concerns, intentional asymmetry). Right when: audit's "duplication" framing turned out incorrect on closer inspection.
+- **(C) FOLD into canonical sister** — extend canonical; deprecate parallel; migrate consumers. Right when: sites-eliminated significantly exceeds sites-added + sister has the consumer pipeline.
+- **(D) ARCHITECT NEW FRAMEWORK** — propose new registry / sidecar / DESIGN_SPEC / skill / consumer macro. Right when: (A)+(B)+(C) clearly insufficient AND sites-eliminated × N justifies meta-layer cost AND project is in build/consolidation phase.
 
-**First-pass mechanical filter (apply BEFORE recommending fix):**
+**Don't auto-pick any option.** The default audit-then-architect reflex is wrong because it skips alternatives entirely; but "always pick smallest" or "stop at first sufficient" is also wrong — those are speed heuristics that compress planning depth (per `feedback_plan_right_not_fast`: planning IS the hard part now; disciplines should support decide-rightly, not decide-quickly).
 
-Count **sites added vs sites eliminated** by the proposed response:
-- 60 sites eliminated + 4 files added → ship (option C/D)
-- 6 sites eliminated + 5 files added → roughly broken even + buys future maintenance burden → REJECT framework approach (prefer A/B)
-- Walker iterating 0 rows at proposal time → infrastructure-only; hasn't earned keep yet → STRONG bias toward A/B
-- Per `feedback_framework_layer_payoff_diminishing_returns`: late-stage framework consolidation sprints (past sprint-specific inflection point) should default heavily toward A/B; only escalate to C/D when the payoff is clearly transformative
+**Mechanical filter as INPUT to honest evaluation** (not a triage shortcut):
 
-**Why this discipline matters:** `/anti-spaghetti` catches are information; the response is judgment. Reflexive audit-then-architect grew meta-layers past inflection point through v5.15.5.F sprint (`.B.1` walker iterating 0 rows is a tell). The catch is the system working; the proportionate response is the senior-engineer move.
+Count sites added vs sites eliminated — one input among many:
+- 60 sites eliminated + 4 files added → suggests C or D justified
+- 6 sites eliminated + 5 files added → suggests framework approach dubious; A or B may be right; evaluate honestly
+- Walker iterating 0 rows at proposal time → strong signal infrastructure hasn't earned keep yet
 
-Cross-refs: `feedback_proportionate_response_to_audit_findings` (response-menu discipline); `feedback_framework_layer_payoff_diminishing_returns` (inflection-point recognition); `canonical-sister-extension-discipline.md` v1.2+ (expanded verdict menu sister to this).
+These numbers support honest evaluation. They don't replace it. Combined with lifecycle phase per `feedback_framework_layer_payoff_diminishing_returns`, future-ease multiplier per `feedback_overengineering_boundary_when_future_easier`, robustness + design alignment + maintenance cost — they produce a reasoned choice.
+
+**Why this discipline matters:** `/anti-spaghetti` catches are information; the response is judgment. Reflexive audit-then-architect skips alternatives. Reflexive "smallest sufficient" skips honest evaluation. The senior-engineer move is sitting with the option set long enough to produce the right choice.
+
+**Report structure:** "Structural fix proposal" section presents the full A-through-D menu + honest evaluation of each + recommended option + reasoning. Don't pre-filter to a single answer; surface the alternatives + your evaluation so operator's planning has the full picture.
+
+Cross-refs: `feedback_plan_right_not_fast` (meta-discipline); `feedback_proportionate_response_to_audit_findings` (response-menu discipline); `feedback_framework_layer_payoff_diminishing_returns` (inflection-point recognition); `canonical-sister-extension-discipline.md` (expanded verdict menu sister to this).
 
 ## Output format
 

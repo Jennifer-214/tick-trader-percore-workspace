@@ -1,47 +1,87 @@
 ---
 name: proportionate-response-to-audit-findings
-description: "When audit catches a structural issue (parallel-infrastructure, duplication, drift surface), the response menu has MORE OPTIONS than \"architect new framework\". Options include: FOLD into canonical sister + extend; INLINE MERGE the duplicate + close the case; ACCEPT WITH RATIONALE + document why duplication is appropriate here; SCALE BACK the proposed scope. The default audit-then-architect reflex grows meta-layers past the inflection point per `feedback_framework_layer_payoff_diminishing_returns`. The senior-engineer move is choosing the smallest sufficient response."
+description: "When an audit catches a structural issue (parallel-infrastructure, duplication, drift surface), the response menu has MORE OPTIONS than \"architect new framework\". Surface the full menu (INLINE MERGE / ACCEPT WITH RATIONALE / FOLD into canonical / ARCHITECT NEW FRAMEWORK / NO-FOLD first-of-kind) and evaluate each honestly. The audit catching the issue is the system working; the response is judgment. Don't default to architect; don't default to smallest either — evaluate and pick what's actually right. Per `feedback_plan_right_not_fast`: planning depth produces right answers; speed heuristics undercut it."
 metadata: 
   node_type: memory
   type: feedback
   originSessionId: d6b9cf31-8bdc-41b7-aaf5-20e8983e9dfb
 ---
 
-When an audit (`/merge-scan`, `/anti-spaghetti`, `/precoding-audit-gate`, `/readiness`) catches a structural issue — parallel infrastructure, sister-registry duplication, drift surface, Class 14/18/21 instance — the **response menu has more options than "architect new framework"**. Default reflex was audit-then-architect; that's wrong-shaped when the marginal payoff has flattened.
+When an audit (`/merge-scan`, `/anti-spaghetti`, `/precoding-audit-gate`, `/readiness`) catches a structural issue — parallel infrastructure, sister-registry duplication, drift surface, Class 14/18/21 instance — the **response menu has more options than "architect new framework"**. Default audit-then-architect reflex skips alternatives that may actually be the right answer.
 
-**Why:** Caramel framed this 2026-05-17 at `.B.2` ship close after watching the v5.15.5.F sprint's escalation pattern: Path γ at `.A` → adjusted to use existing infra (right-sized, small cost). Path γ #2 at `.B` → split into 3 sub-ships + 2 new DESIGN_SPECs + new skill spec (escalated; large cost). Path γ #3 at `.B.1` self-audit → banked for `.B.2`; COHORT_GATE_* extraction at `.B.2` (more meta-layer). Each catch was valid given the discipline's internal logic. But the SUM accumulated meta-layers past the inflection point. **A senior-engineer move available at Path γ #2 was "delete β4, inline the duplicate predicate, ship `.B` as one ship, move on" — but that option wasn't on the menu I was considering.**
+## The response menu
 
-Quote from her framing: "The audit-gate machinery flagging B as duplicating canonical infrastructure is the system working. The question isn't 'did I screw up' — it's 'is the response to each catch proportionate?' Right now the response is 'spawn another sub-ship with its own DESIGN_SPECs.' A proportionate response is sometimes 'merge this back into the parent and move on.'"
+Present the full menu when audit finds a structural issue. Evaluate each option honestly against the situation; pick what's actually right (per `feedback_plan_right_not_fast`: not the first sufficient option; not the smallest option; the RIGHT option).
 
-**How to apply:**
+- **(A) INLINE MERGE** — delete the duplicate; inline its content into the canonical sister; ship as one piece + close the case. Smallest response.
+  - Right when: duplication is small (< 5 rows); canonical sister is the structurally correct home; the inline doesn't grow current ship scope.
+  - Wrong when: duplication is large; sister's shape doesn't accommodate inline cleanly; future-app multiplier suggests this duplication will recur.
 
-When an audit fires + finds parallel-infrastructure / sister-registry / drift surface, run the response-menu through this checklist BEFORE proposing a framework-architect response:
+- **(B) ACCEPT WITH RATIONALE** — keep both structures; document why duplication is appropriate (distinct semantics, distinct concerns, intentional asymmetry).
+  - Right when: the audit's "duplication" framing turned out incorrect on closer inspection; two structures look similar but encode legitimately different axes; forcing unification would compress legitimately-distinct concerns into a shape that drifts again.
+  - Wrong when: rationale is "we'd have to think about it" rather than a genuine structural distinction.
 
-1. **Count sites added vs sites eliminated.** This is the first-pass mechanical filter per `feedback_framework_layer_payoff_diminishing_returns`:
-   - 60 sites eliminated, 4 files added → ship the framework
-   - 6 sites eliminated, 5 files added → roughly broken even + buys future maintenance burden → REJECT the framework approach
-   - Walker iterating 0 rows at proposal time → infrastructure-only; tell it hasn't earned its keep yet
+- **(C) FOLD into canonical sister** — extend the canonical with the new rows/scope; deprecate the parallel structure; migrate consumers.
+  - Right when: sites-eliminated significantly exceeds sites-added; sister registry is the right structural home; sister has the consumer pipeline you'd otherwise recreate.
+  - Wrong when: the fold itself adds substantial scope or breaks sister's coherent shape.
 
-2. **Walk the response menu in order. Stop at the first option that fits:**
-   - **(A) INLINE MERGE** — delete the duplicate; inline its content into the canonical sister; ship as one piece + close the case. Smallest response. Right answer when duplication is small + the canonical sister is the structurally correct home.
-   - **(B) ACCEPT WITH RATIONALE** — keep both; document why duplication is appropriate (distinct semantics, distinct concerns, intentional for some reason). Right answer when the audit's "duplication" framing turned out to be incorrect on closer inspection. Document in postmortem; the discipline accepts that not every catch needs structural close.
-   - **(C) FOLD into canonical sister** — extend the canonical with the new rows/scope; deprecate the parallel structure; migrate consumers. Right answer when sites-eliminated significantly exceeds sites-added.
-   - **(D) ARCHITECT NEW FRAMEWORK** — propose new registry / sidecar / DESIGN_SPEC / skill. ONLY use this option when (A) + (B) + (C) clearly insufficient AND sites-eliminated × N future applications justifies the meta-layer cost. THIS WAS THE DEFAULT RESPONSE THROUGH `.B.1`+`.B.2`; it should be the LAST resort, not the first.
+- **(D) ARCHITECT NEW FRAMEWORK** — propose new registry / sidecar / DESIGN_SPEC / skill / consumer macro.
+  - Right when: (A) + (B) + (C) clearly insufficient AND sites-eliminated × N future applications justifies the meta-layer cost AND project is in build/consolidation phase (not post-inflection per `feedback_framework_layer_payoff_diminishing_returns`).
+  - Wrong when: default reflex skipped alternatives; sites-added-vs-eliminated ratio is poor; payoff curve has flattened.
 
-3. **Tested-by-construction discipline applies to ALL response options.** Even INLINE MERGE produces compile failures + CI failures when wrong; doesn't introduce silent bugs. The risk of choosing the smaller response isn't correctness; it's that you might revisit the same site later. That's a much smaller cost than building meta-layers that ultimately don't earn back.
+- **NO-FOLD / first-of-kind** — genuinely new infrastructure required for distinct concern; no canonical sister exists. Document rationale.
 
-4. **The audit-gate catching a structural issue is the system working.** The right reaction is "good catch; now what's the proportionate fix?" — not "spawn another sub-ship + DESIGN_SPEC". The catch is information; the response is judgment.
+## Mechanical filter as INPUT to evaluation (not as triage shortcut)
 
-**Trigger conditions where this discipline applies most heavily:**
-- Late-stage framework consolidation sprints (the v5.15.5.F sprint past `.B.1`/`.B.2`)
-- Pre-coding audit gate firing on a plan that already has substantial framework
-- `/anti-spaghetti` cadence audits finding new duplications post-codification
-- Any time the proposal involves a new DESIGN_SPEC or new skill spec — those have ongoing maintenance cost beyond the code itself
+Counting **sites added vs sites eliminated** is one input to honest evaluation, not a decision shortcut:
+- 60 sites eliminated + 4 files added → suggests C or D is justified
+- 6 sites eliminated + 5 files added → suggests framework approach is dubious; A or B may be right; but EVALUATE not auto-pick
+- Walker iterating 0 rows at proposal time → strong signal that infrastructure hasn't earned its keep yet
 
-**Sister memories:**
-- `feedback_framework_layer_payoff_diminishing_returns` (the inflection-point recognition; this memory is the response-side companion)
-- `feedback_audit_canonical_sister_before_new_infra` (the pre-coding audit discipline; this memory expands its response menu)
-- `feedback_no_defer_for_effort` (still applies; defer-for-effort is wrong; INLINE-MERGE-as-proportionate-response is right)
-- `feedback_motivated_collaborator_for_caramel` (senior-engineer judgment includes knowing when smaller is right; not always grinding through to bigger response)
+These are sanity-check numbers. They support honest evaluation. They don't replace it.
 
-**Codified at:** 2026-05-17 (`.B.2` ship close session, after Caramel's reflective framing about `.B.1`/`.B.2` escalation pattern). First canonical opportunity to apply: `.B.3` pre-coding audit gate — if findings surface, walk the response menu (A) → (B) → (C) → (D) and stop at the first sufficient option. Don't reflexively reach for (D).
+## Why this discipline matters
+
+The reflex was: audit catches duplication → architect a new framework that prevents the duplication. Each catch escalates scope. The audit catching the issue was VALID. But the response was DISPROPORTIONATE — meta-layers added that don't earn back.
+
+The reframe: the audit catch is **information**. The response is **judgment** — and judgment means evaluating the full option set, not auto-picking architect. Reflexive audit-then-architect skips the judgment step entirely.
+
+## Tested-by-construction discipline applies to ALL options
+
+Even INLINE MERGE produces compile failures + CI failures when wrong; doesn't introduce silent bugs. The risk of choosing a smaller response isn't correctness; it's that you might revisit the same site later. The bug-introduction worry is misplaced if your framework discipline is sound — failures show up as build errors, not silent production drift.
+
+## How to apply
+
+1. When audit fires + finds parallel-infrastructure / sister-registry / drift surface, **surface the full menu** (A through D + NO-FOLD). Don't pre-filter to your favorite.
+
+2. **Evaluate each option honestly** against the situation. Use:
+   - Sites-added vs sites-eliminated as one input
+   - Lifecycle phase (build / consolidation / post-inflection / maintenance) per `feedback_framework_layer_payoff_diminishing_returns`
+   - Future-ease multiplier per `feedback_overengineering_boundary_when_future_easier` (still applies — one input among many)
+   - Robustness + design alignment + maintenance cost per `feedback_evaluate_options_on_robustness_latency_design_not_time`
+
+3. **Pick what's actually right, not first sufficient.** "Sufficient" is a low bar. Sitting with options long enough to evaluate honestly is what produces right answers (per `feedback_plan_right_not_fast`).
+
+4. **Present recommendation + reasoning, not just recommendation.** Operator's planning depth depends on seeing the full evaluation. Don't compress.
+
+5. Document the chosen option + rationale in plan body / postmortem so future readers see the proportionate-response thinking + the alternatives considered + WHY this option was right (not just that it was chosen).
+
+## What this DOESN'T mean
+
+- Doesn't mean "always pick the smallest option." Smaller is sometimes right; sometimes ARCHITECT is right; depends on the situation.
+- Doesn't mean "always present all options every time." For routine cases, recommendations are fine. For substantial structural decisions, present alternatives.
+- Doesn't mean "infinite planning." At some point planning concludes + execution starts. The "stop walking" moment per `feedback_framework_layer_payoff_diminishing_returns` is real — but it comes from "we've evaluated and have the right answer", not from "first option that's sufficient".
+
+## Sister memories
+
+- `feedback_plan_right_not_fast` — meta-discipline; this memory's "evaluate honestly not auto-pick" framing applies that meta to audit findings specifically
+- `feedback_framework_layer_payoff_diminishing_returns` — inflection-point recognition; informs whether (D) ARCHITECT is even on the table for current lifecycle phase
+- `feedback_audit_canonical_sister_before_new_infra` — the pre-coding audit discipline; this memory expands its response menu (was FOLD/NO-FOLD only; now A/B/C/D/NO-FOLD)
+- `feedback_consult_on_audit_findings` — present findings + iterate with operator; this discipline strengthens what "present findings" means (full menu, honest reasoning)
+- `feedback_motivated_collaborator_for_caramel` — senior-engineer judgment includes presenting alternatives honestly + sitting with decisions long enough to get them right
+
+## Codification trigger
+
+Originally codified after a consolidation sprint where audit catches kept escalating to "spawn new sub-ship + new DESIGN_SPEC" responses; each catch was valid; the SUM of escalations grew meta-layers past inflection point. Operator surfaced reframe: "the audit catching B as duplicating canonical infrastructure is the system working. The question isn't 'did I screw up' — it's 'is the response to each catch proportionate?' Right now the response is 'spawn another sub-ship with its own DESIGN_SPECs.' A proportionate response is sometimes 'merge this back into the parent and move on.'"
+
+Re-calibrated to remove speed bias after operator surfaced: planning IS the hard part of SWE now; discipline should support decide-rightly, not decide-quickly. "Walk menu in order + stop at first sufficient" was speed-bias that compressed planning depth + was therefore wrong-shaped for planning-grade decisions. Discipline now: surface the full menu + evaluate honestly + pick what's actually right.

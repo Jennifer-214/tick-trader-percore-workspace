@@ -1,6 +1,6 @@
 ---
 name: framework-layer-payoff-diminishing-returns
-description: "Framework layers have diminishing returns. The first registry that eliminates 90 manual sites is transformative; the seventh layer that eliminates 6 sites is a rounding error. Stop adding framework layers when the payoff curve flattens — not because the direction was wrong, but because you've walked past the point where investment pays back. `.F.4f` is the canonical wind-down ship for the v5.15.5.F sprint; after it, work shifts to \"moving code around\" maintainability wins (mega-headers split + 26k-line test file split) which have no meta-layer risk."
+description: "Framework consolidation has a payoff curve that flattens as more layers accumulate. The first registry that eliminates 90 manual sites is transformative; the seventh layer that eliminates 6 sites is a rounding error you can feel in your hands but not on the clock. Recognize the inflection point + stop adding framework layers when past it. The right move past inflection isn't \"wrong direction\" — it's \"right direction, walked past the payoff curve\". Re-evaluate when project enters a new build phase OR a genuinely transformative opportunity emerges."
 metadata: 
   node_type: memory
   type: feedback
@@ -9,34 +9,53 @@ metadata:
 
 Framework consolidation has diminishing returns. The maintainability gain curve is: transformative early (first registry eliminates 90 manual sites), then steep, then flattens (seventh layer eliminates 6 sites you can feel in your hands but not on the clock).
 
-**The work hasn't been wrong — it's been right, just past the inflection point.** Adding a cfg field NOW is genuinely easier than it was two months ago. That's a real and measurable maintainability win. But the marginal layer's payoff is small enough that the cognitive cost of holding another abstraction in your head exceeds the maintenance savings it produces.
+**The work isn't wrong past inflection — it's right, just past the payoff curve.** Adding a cfg field NOW (post-consolidation) is genuinely easier than before. That's a real maintainability win. But the marginal layer's payoff is small enough that the cognitive cost of holding another abstraction in your head exceeds the maintenance savings it produces.
 
-**Why:** Caramel framed this 2026-05-17 mid-`.B.2`/late-cycle: "You didn't pick the wrong direction. You picked the right direction and walked one or two stops past where the payoff curve flattened. That's a much easier thing to fix than picking wrong — you just stop walking. F.4f is already shaped to do that ('zero framework additions allowed'). Let B.1/B.2 close, then let F.4f be the wind-down, then the mega-headers and the 26k-line test file are next and those are pure maintainability wins with no meta-layer risk because you're just moving code around."
+## Recognition markers (apply at any consolidation sprint)
 
-**How to apply:**
-- After the v5.15.5.F sprint completes (`.B.3` → `.C` → `.D` → `.F.4e` → `.F.4f`), STOP adding framework layers. The next maintainability work is **code-moving**: split `controller_test.cpp` (~25-26K lines → ~5 domain-aligned files), split mega-headers, etc.
-- `.F.4f` discipline: **zero framework additions allowed**. It's the cleanup ship; closes TECH_DEBT-076 through -080 + dust H1 + CoreCtx INIT/RESET/SUMMARY trio. NO new registries, NO new sidecars, NO new consumer macros, NO new metadata bits. If something feels like it needs framework infrastructure mid-`.F.4f`, defer to a future ship — don't grow the layer.
-- When tempted to add a new registry or consumer macro at a future ship, ask: "Does this eliminate 30+ manual sites OR close a recurring bug class that has bitten us 3+ times?" If neither — it's diminishing returns; skip.
-- Framework discipline still applies for NEW work (don't write parallel registries when canonical sister exists; per `feedback_audit_canonical_sister_before_new_infra`). But don't INVENT new framework infrastructure to make existing ad-hoc patterns mechanical when the ad-hoc pattern only repeats 2-3 times. Per CLAUDE.md item 31: "≥2 future applications projected AND bug class can recur AND framework cost ≤ projected savings × N" — the third clause (cost-benefit) is what flattens past the inflection point.
-- "Just done with this layer" is a complete answer. Not a retreat, not a rationalization. The right thing was done; the right amount of it was done.
+When considering a NEW framework layer (registry / sidecar / consumer macro / metadata bit / DESIGN_SPEC / skill), check these indicators FIRST:
 
-**Sister memories:**
-- `feedback_overengineering_boundary_when_future_easier` — when to invest extra LOC for future ease (still applies for ≥2 future apps; doesn't apply for marginal layers past inflection)
-- `feedback_dont_measure_structural_work_by_loc` — structural work value is in classes closed + patterns codified, not LOC. Inflection-point recognition uses this same lens (the "feel in hands not on clock" framing)
-- `feedback_motivated_collaborator_for_caramel` — stake-holder mindset includes recognizing when to stop, not just when to grind through. Knowing when the work is complete IS the senior engineer judgment
-- `user_mvp_to_professional_transition` — professionalization phase doesn't mean infinite framework layers; means right-sized investment to lock in quality
+- **Sites-added vs sites-eliminated ratio.** Mechanical filter:
+  - 60 sites eliminated + 4 files added → ship it (clear win)
+  - 6 sites eliminated + 5 files added → roughly broken even + buys future maintenance burden → REJECT
+  - Walker iterating 0 rows at proposal time → infrastructure-only; can't have earned its keep yet → STRONG bias against adding
+- **Audit catch trajectory.** If recent pre-coding audit catches have been finding small duplications (5-row drift surfaces) rather than large structural Class 14/18/21 instances, the framework has likely converged — further layers chase diminishing returns.
+- **Meta-layer depth.** Count how many abstractions deep before reaching data. More layers = harder to reason about; the cognitive tax compounds.
+- **"In my hands but not on the clock"** feeling. If the proposed layer's value is felt (it's nicer code) but doesn't measurably reduce time-to-add-a-feature, that's the inflection-point tell.
+
+## Lifecycle phase context
+
+Software consolidation work fits a typical phase arc:
+- **Build phase** — primitives still landing; framework velocity high; bias toward ARCHITECT for new patterns (the future-ease multiplier from `feedback_overengineering_boundary_when_future_easier` dominates)
+- **Consolidation phase** — drift surfaces being eliminated; first framework layers earning massively (60:4 ratios common); aggressive framework discipline
+- **Post-inflection** — marginal payoff flattens; new framework layers stop earning back; THIS DISCIPLINE applies here
+- **Maintenance phase** — framework frozen; emphasis shifts to code-moving wins (test file splits, mega-header splits, targeted bug fixes) with no meta-layer risk
+- **Late-stage** — defensive only; rare critical features; new framework essentially never warranted
+
+The discipline shifts by phase. Past inflection (the recognition markers above):
+- Default response to audit findings shifts toward smaller per `feedback_proportionate_response_to_audit_findings`
+- New consolidation sprints become "wind-down ships" with explicit "zero framework additions allowed" character
+- Subsequent maintainability work is **code-moving** (test splits, header splits, file reorganization) — pure wins with no meta-layer cost
+
+**Phase transitions are operator-signaled, not algorithmic.** Caramel will surface inflection-point recognition in reflective moments ("we picked the right direction and walked one or two stops past where the payoff curve flattened"). When she does, recalibrate. Don't try to detect transitions yourself — the recognition markers above help diagnose, but the call belongs to the operator.
+
+## How to apply
+
+1. When tempted to propose a new framework layer, **surface the recognition markers as evaluation inputs** (sites-added-vs-eliminated, walker-iterating-zero-rows, audit catch trajectory, "in hands but not on clock" feeling). These are inputs to honest evaluation, NOT triage shortcuts that auto-decide.
+2. Per CLAUDE.md item 31 cost-benefit clause ("framework cost ≤ projected savings × N"): if N is genuinely small (e.g., 2-3 future applications max), the framework cost rarely justifies. Past inflection, N for new layers is usually small — but evaluate the specific N for the specific proposal; don't blanket-reject.
+3. "Just done with this layer" is a complete answer when the evaluation produces it. Not a retreat, not a rationalization. The right thing was done; the right amount of it was done.
+4. After consolidation phase ends, **code-moving maintainability wins** become available: split oversized files (per `controller_test.cpp >5K lines + >100 sections must split` rule), split mega-headers, extract test helpers. These have zero meta-layer risk because they're pure file reorganization. Worth considering as alternative when framework-layer proposals don't pass evaluation.
+5. Reset readiness: if a new sprint surfaces a genuinely transformative opportunity (clear high-ratio site elimination + closes recurring bug class structurally), the discipline doesn't prevent investing — operator's signal + honest evaluation supports the call.
+6. Per `feedback_plan_right_not_fast`: this discipline supports decide-rightly, not decide-quickly. Recognition markers help diagnose what phase you're in + what kind of payoff a proposed layer faces; they don't pre-decide the answer.
+
+## Codification trigger
+
+Originally codified after a long consolidation sprint where the team (operator + Claude) walked past the inflection point — initial framework layers paid back massively; later layers added meta-discipline that didn't earn back. The operator surfaced the framing reflectively + the lesson generalized.
+
+## Sister memories
+
+- `feedback_proportionate_response_to_audit_findings` — response-side companion; when audit catches issues past inflection, walk a 4-option menu instead of reflexively architecting
+- `feedback_overengineering_boundary_when_future_easier` — the future-ease multiplier (still applies in build/consolidation phases; doesn't apply past inflection)
+- `feedback_dont_measure_structural_work_by_loc` — value is classes-closed + patterns-codified, not LOC. Inflection-point recognition uses the same "value vs cost" lens.
+- `feedback_motivated_collaborator_for_caramel` — senior-engineer judgment includes knowing when to STOP, not just when to grind through. Knowing the work is complete IS the senior judgment.
 - `feedback_no_defer_for_effort` — defer-for-effort is wrong; defer-for-past-payoff-curve is RIGHT. Different reason; different action.
-
-**Sequencing for the rest of v5.15:**
-1. `.B.3` close (legacy empty-out + 8 `.B.2` deferrals; FORCED by registry deletion → no choice but to land them properly)
-2. `.C` (sidecar override + bit-packed inventory; LAST framework layer; canonicalizes patterns 6/7/8 of multi-bit-state-encoding INVARIANT)
-3. `.D` (CI verification + fixture regression; validation, not new framework)
-4. `.F.4e` (KIND_STRING + 5 GUI metadata derived filters; VALIDATES the framework via second-source applications — not framework additions, framework EXERCISES)
-5. **`.F.4f` (wind-down ship; ZERO framework additions allowed; closes 5+ TECH_DEBTs)**
-6. `.F.5.A/.B/.C` (ML refactor; folded into v5.15 per 2026-05-17 decision; scope TBD by `/anti-spaghetti` audit at `.F.4f` close)
-7. `v5.15.6.A/.B` (operational safety; drawdown / daily PnL / position size)
-8. `v5.15` umbrella close → paper-test session
-
-After paper-test session: code-moving maintainability wins (controller_test split + mega-header splits). No framework risk; pure file reorganization.
-
-**Codification trigger:** if future-Claude in a fresh session is tempted to propose a new framework layer at `.F.4f` or later (in v5.15), the answer is "no — diminishing returns past the inflection point per this memory + `feedback_motivated_collaborator_for_caramel` recognizes when to stop". Re-evaluate from scratch at v5.16+ if a new transformative opportunity emerges (something that would eliminate 30+ sites OR close a recurring bug class structurally).

@@ -68,22 +68,24 @@ Any plan proposing new framework infrastructure MUST include a "Canonical sister
 | ... | ... | ... | ... |
 ```
 
-Each candidate gets a verdict from this **expanded menu** (per `feedback_proportionate_response_to_audit_findings` set 2026-05-17 at `.B.2` ship close — original FOLD/NO-FOLD menu was too narrow + biased toward architecting; expanded menu adds proportionate-response options):
+Each candidate gets a verdict from this **expanded menu** (per `feedback_proportionate_response_to_audit_findings` — original FOLD/NO-FOLD menu was too narrow + biased toward architecting; expanded menu surfaces proportionate-response options):
 
-- **(A) INLINE MERGE** — delete the duplicate; inline its content into the canonical sister; ship as one piece + close the case. **Smallest response. PREFERRED when:** duplication is small (< 5 rows) + canonical sister is the structurally correct home + you can do the inline in the current ship without growing scope. The senior-engineer move at Path γ #2 at `.B` would have been "delete β4 + inline the duplicate predicate + ship `.B` as one ship" instead of escalating to 3-sub-ship split + 2 NEW DESIGN_SPECs.
-- **(B) ACCEPT WITH RATIONALE** — keep both registries; document why duplication is appropriate (distinct semantics, distinct concerns, intentional asymmetry). **PREFERRED when:** the audit's "duplication" framing turned out to be incorrect on closer inspection. Path γ #3 at `.B.2` CfgDriftCheck branch is an example: looked like duplication of FOREACH_STAMP_BOUND_CFG bandit gate but actually uses different semantic (`BITMAP_IS_SET` vs `cfg.bandit_algorithm != 0`); accept-with-rationale was the right call.
-- **(C) FOLD into canonical sister** — extend the canonical with the new rows/scope; deprecate the parallel structure; migrate consumers. **PREFERRED when:** sites-eliminated significantly exceeds sites-added (per the first-pass mechanical filter below). 60 sites eliminated + 4 files added = clear win. Sister to "EXTEND" verdict.
-- **(D) ARCHITECT NEW FRAMEWORK** — propose new registry / sidecar / DESIGN_SPEC / skill / consumer macro. **PREFERRED ONLY when:** (A) + (B) + (C) clearly insufficient AND sites-eliminated × N future applications justifies the meta-layer cost AND payoff curve hasn't flattened (per `feedback_framework_layer_payoff_diminishing_returns`). **LAST resort, not first.**
+- **(A) INLINE MERGE** — delete the duplicate; inline its content into the canonical sister; ship as one piece + close the case. Right when: duplication is small + canonical sister is the structurally correct home + inline doesn't grow current ship scope.
+- **(B) ACCEPT WITH RATIONALE** — keep both registries; document why duplication is appropriate (distinct semantics, distinct concerns, intentional asymmetry). Right when: the audit's "duplication" framing turned out incorrect on closer inspection (e.g., two structures look similar but encode legitimately different axes).
+- **(C) FOLD into canonical sister** — extend the canonical with the new rows/scope; deprecate the parallel structure; migrate consumers. Right when: sites-eliminated significantly exceeds sites-added (per mechanical filter below) + sister has the consumer pipeline you'd otherwise recreate.
+- **(D) ARCHITECT NEW FRAMEWORK** — propose new registry / sidecar / DESIGN_SPEC / skill / consumer macro. Right when: (A)+(B)+(C) clearly insufficient AND sites-eliminated × N future applications justifies the meta-layer cost AND project is in build/consolidation phase (not post-inflection per `feedback_framework_layer_payoff_diminishing_returns`).
 - **NO-FOLD / first-of-kind** — genuinely new infrastructure required for distinct concern; no canonical sister exists. Document rationale.
 
-**First-pass mechanical filter** (apply BEFORE choosing menu option):
+**Surface the full menu + evaluate each option honestly + pick what's actually right.** Don't auto-pick any option (per `feedback_plan_right_not_fast` — speed heuristics like "walk in order + stop at first sufficient" undercut planning depth; this discipline supports decide-rightly, not decide-quickly).
 
-Count **sites added vs sites eliminated** by the proposed response:
-- 60 sites eliminated + 4 files added → ship the framework approach (option C or D)
-- 6 sites eliminated + 5 files added → roughly broken even + buys future maintenance burden → REJECT the framework approach (prefer A or B)
-- Walker iterating 0 rows at proposal time → infrastructure-only; can't have earned its keep yet → STRONG bias toward A or B
+**Mechanical filter as input to honest evaluation** (not as triage shortcut):
 
-If `/anti-spaghetti` or `/merge-scan` surfaces a finding at pre-coding audit gate, the response menu MUST include all 5 options (A through E). Don't auto-pick (D). Walk the menu in order; stop at the first sufficient option.
+Count **sites added vs sites eliminated** by the proposed response — this is one input to honest evaluation, not a decision shortcut:
+- 60 sites eliminated + 4 files added → suggests C or D justified
+- 6 sites eliminated + 5 files added → suggests framework approach is dubious; A or B may be right
+- Walker iterating 0 rows at proposal time → strong signal that infrastructure hasn't earned its keep yet
+
+These numbers support honest evaluation. They don't replace it. Combined with lifecycle phase + future-ease multiplier + design alignment + maintenance cost, they produce a reasoned choice.
 
 If the section is missing or each candidate is "no inspection done", the plan fails pre-coding readiness Check 29.
 

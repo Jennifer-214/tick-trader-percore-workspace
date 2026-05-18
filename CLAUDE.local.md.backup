@@ -15,8 +15,8 @@ apply + worked examples + anti-patterns) live in:
 - `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/` — feedback / user / project memories
 - `tick-trader-percore-workspace/claude-skills/<skill>/SKILL.md` — operational contracts
 - `tick-trader-percore-workspace/DOCS/LANDMINES.md` — operational pitfalls
-- `tick-trader-percore-workspace/DOCS/DESIGN_PHILOSOPHY.md` — thematic narrative + 4-tier discipline classification (HARD / STRONG / SOFT / PROCESS) + cross-reference index; the WHY companion to `CLAUDE.md`'s operational orientation (consolidated CLAUDE.md items 1-30 + adjacent principles)
-- `CLAUDE.md` — slimmed to operational orientation + 13 hard invariants + reference table (~205 lines; always loaded)
+- `tick-trader-percore-workspace/DOCS/DESIGN_PHILOSOPHY.md` — thematic narrative + 4-tier discipline classification + cross-reference index; the WHY companion to `CLAUDE.md`
+- `CLAUDE.md` — slimmed to operational orientation + H1-H20 hard invariants + reference table (always loaded)
 
 Skills that fire on relevant work load matching DESIGN_SPECS bodies
 dynamically — see "Skill load contracts" below.
@@ -25,20 +25,16 @@ dynamically — see "Skill load contracts" below.
 
 ## Required reading before performance-sensitive code
 
-| Doc | Trigger — read it BEFORE writing or editing... |
+| Doc | Trigger |
 |---|---|
-| `DOCS/STRATEGY_AND_CODING_RULES.md` | any code in hot path, slow path, OMS drainer, parsing, ML inference, strategies, RollingStats / RegimeSignals / ExecutionCore — i.e., anything in `CoreFrameworks/`, `Strategies/`, `ML_Headers/`, `DataStream/`, or `FixedPoint/`. 11 strict invariants (no malloc, no virtual, no mutex, no sleep_for, no atof/strstr in parsers, cache alignment, branchless, AVX-512-friendly layouts, SCHED_FIFO/isolcpus deployment). |
-| `DOCS/LATENCY_OPTIMIZATION_AUDIT.md` | any optimization investigation, performance-regression triage. 13 parts, ~40 specific items: hot path, slow path SIMD, arch invariants, ingestion+ML+memory, system tail variance, allocator eradication, parsing, OMS variance, concurrency, FPN libs, HFT system ops, hardware/OS tuning. |
-| `plans/_cross-cutting/2026-05-06-latency-path-discipline.md` | any modification to **any code on a latency-impacting path**: hot path (`ExecutionCore_Tick`, `BG_Evaluate`, `SG_Evaluate`, `GateParameters`, `ParameterSlot`), slow path (`EventLoop_RebuildOneCore`, `RollingStats_Push`, `Regime_ComputeSignals`), OMS drainer (`OMS_DrainSubmit`, `OrderManager_Tick`), producer fan-out, snapshot publish, parsing. 7 architectural rules scaled by cadence + anti-pattern history + pre-merge verification checklist. |
-| `tick-trader-percore-workspace/DOCS/DESIGN_PHILOSOPHY.md` | cold-pickup of an unfamiliar surface (which family of principles applies?), designing a non-trivial change (which discipline tier?), new contributor onboarding, making a cross-family trade-off, codifying a new pattern. 14 sections: cost framework + 13 hard invariants + 9 family sections (data-oriented design / latency / determinism / concurrency / structural-fix / failure observability / architectural primitives / operator UX / process discipline) + explicit NOs + cross-reference index. |
+| `DOCS/STRATEGY_AND_CODING_RULES.md` | any code in hot path, slow path, OMS drainer, parsing, ML inference, strategies. 11 strict invariants. |
+| `DOCS/LATENCY_OPTIMIZATION_AUDIT.md` | any optimization investigation, performance-regression triage. 13 parts. |
+| `plans/_cross-cutting/2026-05-06-latency-path-discipline.md` | any modification to latency-impacting path. 7 architectural rules scaled by cadence + anti-pattern history + pre-merge checklist. |
+| `DOCS/DESIGN_PHILOSOPHY.md` | cold-pickup of unfamiliar surface; designing non-trivial change; cross-family trade-off; new pattern codification. 14 sections with cross-ref index. |
 
-**Workflow:** open the rules doc first, scan relevant sections, then
-write code. The audit doc is consulted when the rule is "yes but how"
-— it has concrete per-site suggestions with file:line refs. The
-hot-path discipline doc is the third leg — read when touching hot-path
-layout / per-tick code. The philosophy doc is the fourth leg — read
-when designing rather than implementing (which family of principles
-governs this surface? what discipline tier am I choosing into?).
+Workflow: rules doc first → audit doc for "yes but how" → hot-path
+discipline when touching per-tick code → philosophy doc when
+designing rather than implementing.
 
 ---
 
@@ -47,225 +43,138 @@ governs this surface? what discipline tier am I choosing into?).
 | Field | Value |
 |---|---|
 | Sprint | `v5.15-live-readiness` (`plans/v5.15-live-readiness/MASTER.md`) |
-| Most recent ship | **`v5.15.5.F.4d.1.B.2`** — Cohort migration (2 of 3 in `.F.4d.1.B` split). Populates framework infrastructure shipped at `.B.1`: 24 fields flag STAMP_BOUND_CFG_DERIVED (19 master per-core + 1 global trading_mode + 4 ML_CFG_FLAG BITMAP_BIT) + framework extended to walk FOREACH_ML_CFG_FLAG (Step 0.5b) + Decision 5 prefix drop in framework template fns + FOREACH_ML_CFG_FLAG 5→6 sig migration (metadata_flags column; 4 consumer X-macros migrated incl. `_PARSE_OV_BITMAP_ROW_ml` coding-time-discovered) + ml_buy_threshold pre-canonical parity gap closed + gap_acceptable_threshold registry row + GUI delete + 6 COHORT_GATE_* macros extracted (Path γ #3 PARTIAL closure; 2-of-3 cohort-gate-predicate registries unified) + sidecar populated with 16 cohort entries + Winsor parse-time cross-field invariant validation + **NEW FPN<F> 6 comparison operators codebase-wide** + tt:: dispatch extended (SrcT/DstT/HasT + StampT/CfgT) + wire_format_invariants dual-mask shape + 22 new substantive correctness tests. **10 coding-time discoveries documented** including Decision 9 v1.2 reframe (override-inherit pattern at `ControllerConfig.hpp:200-224` is intentional, NOT Class 18 mirror as audit synthesis HIGH-CONV-E misread). **DEFERRED to `.B.3` (8 LOAD-BEARING items; TECH_DEBT-093 through -100 entries; .B.3 plan body Step 1.6.1-1.6.7 enumerates explicitly; `.B.3` Step 2 legacy registry deletion FORCES items 4-6 — build breaks if not addressed):** manual cfg storage cleanup (gap_acceptable_threshold); 5 prefixed-only fields bit-add + inf struct unification; ModelInference struct-gen migrations (3 sites); production canonical body emit migration (:1788); StampHelper.hpp:156 STAMP_CFG_AUTOPOPULATE; CoreModelZoo.hpp:243 drift walker + framework reason-buffer; stamp_format_version 5 sub-steps (coupled). Shipped 2026-05-17 LOCALLY; 3235/2 controller_test (+22 new) + 17 depth + 5 binaries clean; CI 3+6 PASS. Bug classes closed at `.B.2`: Class 14/18/21 at cfg-derived consumer + Path γ #3 PARTIAL + Class 24 strengthened. Hot path UNTOUCHED. Postmortem at `plans/v5.15-live-readiness/postmortems/2026-05-17-v5.15.5.F.4d.1.B.2-postmortem.md`. |
-| Predecessor ship | **`v5.15.5.F.4d.1.B.1`** — Framework consolidation (first of 3 split sub-ships in `.F.4d.1.B`; `.B` split into `.B.1`/`.B.2`/`.B.3` per `/readiness` audit recommendation + CRIT-1 wider-scope acceptance 2026-05-17). NEW `MemHeaders/CfgGateRegistry.hpp` canonical gate-type sparse sidecar (H18 first canonical of gate-type sub-pattern) + 3 derived-filter consumer template fns in `cfg_derived::` namespace (`populate_inference_cfg_from_derived` + `populate_stamp_cfg_from_derived` + `drift_check_from_derived` wrapped in INFERENCE_CFG_POPULATE_FROM_DERIVED / STAMP_CFG_POPULATE_FROM_DERIVED / DRIFT_CHECK_FROM_DERIVED macros; template fn wrappers required for correct C++ if-constexpr discard) + tt:: dispatch quartet → septet at `CfgFieldDispatch.hpp` (NEW `cfg_emit_field` + `cfg_populate_inf_field` + `cfg_drift_compare`) + 2 NEW DESIGN_SPECs Stage 3 ACTIVE (canonical-sister-extension-discipline + cfg-derived-consumer-framework) + 1 NEW DESIGN_SPEC Stage 3 ACTIVE (future-oriented-plan-template; `.B.1` plan body v1.1 retrofit demonstrates required sections) + NEW `/anti-spaghetti` skill Stage 3 ACTIVE (first canonical run at `.B` Batch 2 validated methodology) + NEW `/plan-draft` skill Stage 2 DRAFT (scaffolds plan bodies from template) + 4 NEW going-forward rules in CLAUDE.local.md + 4 NEW memory files + 5-row addition to FOREACH_REGISTRY (65/65 enrolled) + 14 walker integration tests (vacuous PASS at 0-row walker). DEFERRED to `.B.3`: StampHelper.hpp:183 swap + controller_test.cpp:24962-25047 A.7 test swap (PARITY-020 regression risk at 0-row walker; documented in `.B.3` skeleton Step 1.5). Shipped 2026-05-17 LOCALLY (engine commit TBD + GPG-signed tag `v5.15.5.F.4d.1.B.1`); 3215/0 tests (+19 new) + 17 depth + 5 binaries clean; check_meta_registry.py 3 checks PASS 65/65; check_per_core_registry_integrity.py 6 checks PASS. **3-tier defense against parallel-infrastructure drift now in force.** **ML refactor folded into v5.15** (Phase C `.F.5` umbrella; scope TBD by /anti-spaghetti at `.F.4f` close). Roadmap at `plans/v5.15-live-readiness/ROADMAP-2026-05-17-to-paper-test.md`. Postmortem at `plans/v5.15-live-readiness/postmortems/2026-05-17-v5.15.5.F.4d.1.B.1-postmortem.md`. |
-| Previous ship | `v5.15.5.F.4d.1.A` — Path γ+ v2 framework infra: 1-row FOREACH_METADATA_BIT addition (STAMP_BOUND_CFG_DERIVED bit 13) + CoreFrameworks/StampBoundDerivedFilter.hpp consumer + tests/wire_format_invariants.hpp helper + CFG_COMPOSE_AUDIT_DECISIONS audit registry + H16 static_assert + cli_explain_mask bug fix + 22 new tests + 6 TECH_DEBT entries opened + 2 NEW DESIGN_SPECs Stage 3 + 4 amended (shipped 2026-05-17; engine `39b9947` + pushed; 3196/0 tests + 5 binaries clean; 63/63 enrolled). Postmortem at `plans/v5.15-live-readiness/postmortems/2026-05-17-v5.15.5.F.4d.1.A-postmortem.md`. |
-| Predecessor ship | `v5.15.5.F.4d` MERGED — Thread B FULL (bandit/thompson 5-state dispatch + Pattern 5 Thompson_Update wire + Class 24/25/28/30 closures + § F path consolidation + § M calib log 9→47 cols + Order::flags_packed bandit context bits 17-25 + 26 new Step 9 assertions) + Thread A foundation (H15-H20 codified + 4 Thread A DESIGN_SPECs Stage 3 ACTIVE + FOREACH_BANDIT_SIDE enrolled in FOREACH_REGISTRY + STAMP_BOUND_CFG_DERIVED metadata bit reserved + CLAUDE.md item 31) + 3 substantial TECH_DEBT fold-ins closed (-082 `.F.5` residual / -083 IWYU / -084 cascade rename) (shipped 2026-05-16; engine `545b087` + GPG-signed tag `v5.15.5.F.4d`; 3174/0 tests + 17 depth + 5 binaries clean). |
-| In-progress ship | **`v5.15.5.F.4d.1` umbrella** — `.A` shipped + pushed 2026-05-17; **`.B` SPLIT into `.B.1`/`.B.2`/`.B.3` per `/readiness` audit recommendation + CRIT-1 wider-scope acceptance 2026-05-17.** Path γ-class structural critique #2 caught at pre-coding audit gate Batch 1 — `.B` v1.2 β4 `FOREACH_DRIFT_GATE` sparse sidecar duplicates canonical `FOREACH_CFG_DERIVED_INFERENCE_CFG` (93% row overlap; the 5th BANDIT_THOMPSON field β4 missed is already in canonical at line 113). `/anti-spaghetti` skill first canonical run at Batch 2 confirmed 3-way triplet (CFG_DERIVED × CFG_DRIFT_CHECK × STAMP_BOUND_CFG; 16-row lockstep drift surface). Wider-scope pivot: **eliminate `FOREACH_CFG_DERIVED_INFERENCE_CFG` entirely + canonical `MemHeaders/CfgGateRegistry.hpp` sparse sidecar + 3 derived-filter consumer macros** (INFERENCE_CFG_POPULATE_FROM_DERIVED + STAMP_CFG_POPULATE_FROM_DERIVED + DRIFT_CHECK_AUTOPOPULATE) over master cfg field registry filtered by STAMP_BOUND_CFG_DERIVED bit + per-row gate via sidecar + tt:: type-trait dispatch. Adding new cfg field = 1 row in master + (rare) 1 row in sidecar; adding new consumer concern = 1 new macro. Closes Path γ-class structural class. **Split:** `.B.1` framework consolidation (~6-8h MED) → `.B.2` cohort migration (~6-8h MED-HIGH) → `.B.3` legacy empty-out (~4-6h MED). Defensive ordering: framework first → exercise → cleanup. New artifacts at planning close 2026-05-17: 3 split plan bodies + 2 NEW DESIGN_SPECs Stage 2 DRAFT (`canonical-sister-extension-discipline.md` + `cfg-derived-consumer-framework.md` Stage 3 first reference at `.B.1` ship) + 3 NEW memory files (canonical-sister audit + plan citation + audit cadence) + `/anti-spaghetti` skill spec live at `claude-skills/anti-spaghetti/SKILL.md`. Original `.B` v1.2 plan body SUPERSEDED. **Next: `.B.1` pre-coding tag + Step 0 of coding.** Sub-master v1.3: `subplans/2026-05-16-v5.15.5.F.4d.1-thread-a-framework-full.md`. Audit synthesis: `plan_checks/2026-05-17-v5.15.5.F.4d.1.B-audit-synthesis.md`. |
-| Previous ship | `v5.15.5.F.4c.1` — ImGui widget-ID structural fix + 18-row STAMP_BOUND cohort + Class 24 codification (2026-05-15; engine `88043ea` + tag `v5.15.5.F.4c.1`; 3144 tests pass) |
-| Ship after `.F.4d` | **`v5.15.5.F.4d.1`** (NEW; inserted 2026-05-16 per `.F.4d` MERGED ship close audit) — TECH_DEBT-085 Thread A FULL framework consolidation. Foundation laid at `.F.4d` (H15-H20 + STAMP_BOUND_CFG_DERIVED bit reserved + 4 Thread A DESIGN_SPECs Stage 3 ACTIVE + FOREACH_BANDIT_SIDE first canonical enrolled); residual implementation: DerivedFilterFramework.hpp (3 macro variants) + StampBoundDerivedFilter.hpp first canonical + Layer 5b hash lock + 24-row FOREACH_STAMP_BOUND_CFG migration (always-emit Q3.G + drift-check gate_when per cohort) + legacy registry empty-out + FOREACH_ML_CFG_FLAG 5→6 arg sig migration (12 rows; 5 get STAMP_BOUND_CFG_DERIVED) + FOREACH_DRIFT_OVERRIDE sparse sidecar + bit-packed DriftOverride/RegistryRosterEntry/ManualFieldInventoryEntry (multi-bit-state-encoding canonicals 6-8) + CI Checks 9-12 (cohort eligibility + coverage gates) + v5.14 stamp fixture regression + 12+ consumer migration sites + CFG_DRIFT_AUTOPOPULATE companion macro. ~15-25h focused (multi-day project — multi-session). MED risk; foundation makes implementation mechanical. STUB plan body: `subplans/2026-05-16-v5.15.5.F.4d.1-thread-a-framework-full.md`. |
-| Ship after `.F.4d.1` | `v5.15.5.F.4e` — KIND_STRING + KIND_FILE_PATH + 5 GUI metadata derived filters via framework (HIDDEN_BY_DEFAULT, RESTART_REQUIRED, SAFETY_CRITICAL, IS_SECRET, DEPRECATED) + cfg.example auto-gen + cross-cutting metadata doc + reverse-drift CI. LOW-MED risk. Validates the framework via 5 real second-source applications. |
-| Ship after `.F.4e` | **`v5.15.5.F.4f`** — **wind-down ship** (zero framework additions; cleanup + TECH_DEBT closure only). Per `feedback_framework_layer_payoff_diminishing_returns` post-inflection discipline. Inserted 2026-05-16 per `.F.4d` pre-coding verification audit. Closes `.F.4c.3` deferred original-subplan scope: TECH_DEBT-076 (WIP2d-1.B.2/B.3/B.4 ControllerEventLoop+EngineSharded+Backtest wrapper migrations; ~4-6h) + TECH_DEBT-077 (WIP2e A2 bitmap-bool migration; 28 KIND_BOOL flat rows → domain bitmaps; ~3-4h) + TECH_DEBT-078 (WIP2f legacy deletion: PerCoreOverrides<F> struct + ControllerConfig_ResolveForCore fn + core_overrides[16] field; ~2-3h) + TECH_DEBT-079 (WIP2g/h atomic flag-day: 89 flat field declarations deletion + ~414 test fixture migrations + 9 band-aid call removals; ~6-10h) + TECH_DEBT-080 ([core N] section parser syntax; ~2-3h). Plus smaller `.F.4c` deferred items (per-core override path refactor + Reset/Modified UI; surfaced in backfilled `.F.4c` postmortem 2026-05-16). Optional Phase 7 fold-in target: **TECH_DEBT-082** (3 `.F.5` unmigrated fields — `confidence_ic_floor` / `lazy_rebuild_price_threshold_pct` / `exit_threshold`) if `.F.4d` Thread B does not absorb at coding time. Per operator decision 2026-05-16: "finish current then do incomplete items" — sequenced AFTER `.F.4e` so `.F.4d` framework consolidation + `.F.4e` second-source validation land first. ~2-3 days focused; MED risk (mechanical migration; test fixture sweep is high-touch). **STUB plan body created 2026-05-16:** `subplans/2026-05-16-v5.15.5.F.4f-cleanup-tech-debt-076-080.md` (scope + 7-phase sequence + sub-ship boundary recommendation + pre-coding triggers; full plan body draft + audit gate required before promoting to ACTIVE). |
-| Sprint-wide invariant in force | `CfgFieldDescriptor` schema LOCKED at `.F.4b` (struct layout unchanged). Kind enum is GUI metadata only — NEVER drives storage (H13 + H14 consolidated decision 2026-05-14; no storage-width Kind sub-tokens at any ship). Storage width comes from `T` via X-macro extractor with per-row `static_assert(clamp ∈ numeric_limits<T>)` safety. `.F.4c`/`.F.4d`/`.F.4e+` are row additions + framework infrastructure only; `.F.4d` struct-generation TYPE-signal mechanism is an open design question (separate column OR payload-macro variants — NOT Kind sub-tokens). |
-| After `.F.4` umbrella closes | `v5.15.5.F` umbrella close; then `v5.15` umbrella close. (NOTE 1: `v5.15.5.F.5` per-core Thompson + bandit override charter **ABSORBED into `.F.4d` MERGED** at Decision 15 / Option G 2026-05-16 — per-core capability shipped structurally at `.F.4c.3` via canonical `FOREACH_PER_CORE_CFG_FIELD`; bandit/thompson 5-field cohort migration in `.F.4d` Thread B; original `.F.5` SKETCH plan body at `subplans/2026-05-13-v5.15.5.F.5-per-core-thompson-bandit-overrides.md` carries SUPERSEDED banner. 3 unmigrated `.F.5` fields tracked at TECH_DEBT-082 — bundle into `.F.4f` cleanup ship Phase 7 OR `.F.4d` Thread B per coding-time decision.) (NOTE 2: `.F.4f` cleanup ship — see "Ship after `.F.4e`" row — closes `.F.4c.3` deferred scope structurally BEFORE `.F.4` umbrella close.) |
-| After `v5.15` umbrella closes | Paper-test session (operator window to exercise the Settings tab + tooltip changes + live-readiness gates); then live-readiness operational items; then operational safety audit (drawdown circuit breaker / daily PnL cap / position size limits). **Post-paper-test maintainability work — code-moving wins (no framework risk per `feedback_framework_layer_payoff_diminishing_returns` maintenance-phase guidance):** controller_test.cpp split (~25-26K lines → ~5 domain-aligned files; queued per v5.11.35 Test file size discipline rule); mega-header splits if any oversized headers remain. New structural-recurrence opportunities considered ONLY when recognition markers warrant (clear 60:4-or-better ratio + recurring bug class) — operator signals re-entry into a new build/consolidation phase. |
-| Open architectural decisions awaiting operator input | `.F.4i` AoS-by-core re-layout (was `.F.4h` pre-cascade; full cascade landed at `.F.4d` pre-coding verification audit 2026-05-16 per `.F.4f` cleanup-ship insertion: `.F.4f`→`.F.4g` ResolvedCoreCfg / `.F.4g`→`.F.4h` K-state / `.F.4h`→`.F.4i` AoS / `.F.4i`→`.F.4j` strategy-cat / `.F.4j`→`.F.4k` backtest.cfg; each renamed plan body carries RENAMED banner): wait for slow-path profile data before deciding; TECH_DEBT-008 maker order MVP: indefinite defer per no orderbook data source |
-| Recent CLAUDE.md item promotions (last 30 days) | Item 28 (cycles/cache cost framework, v5.15.5), item 29 (sliding-window stats, v5.15.5.E.D), item 30 (registry-bitmap SET discipline, v5.15.5.F.3), **item 31 (framework-driven extensibility meta-principle, v5.15.5.F.4d planning)** — all in `DESIGN_PHILOSOPHY.md` post-refactor |
-| Most recent anti-pattern codification | Class 23 (type-erased reinterpret_cast dispatch, 2026-05-14 v5.15.5.F.4b) + Class 24 (Capability-cfg surface mismatch, .F.4c.1) + Class 25 (Scope-erosion in per-core consumer function, codified+closed .F.4c.3 WIP2c.0/.2) + **Class 27 (Scalar cfg-mirror cache flattens per-instance distinction — codified+structurally closed at .F.4c.3 WIP2d-1.B.0c via Order::pre_resolved sub-struct + Pattern 4 decision-time-data-binding; CI Check 7 enforces 0 Section C exemptions; OMS fee_rate/_maker/_taker/_slippage_pct fields DELETED)** + **Class 28 (Branchy SP/HP dispatch when branchless feasible — variance injection in determinism-prioritizing path; codified .F.4c.3 WIP2d-1.B.0d after hand-wave audit; first canonicals Pattern 1 fn-pointer table + Pattern 3 mask-select + Pattern 3 bitmap-search via __builtin_ctz + Pattern 5 sink-fn-pointer at WIP2d-1.B.1; /hft-audit extended)** + **Class 29 (Silent zero-fee-rate from Order missing pre-resolution binding — Class 27 closure sibling; codified+closed at .F.4c.3 WIP2d-1.B.1 via MASK_ORDER_PRE_RESOLVED bit + TT_ASSERT_PRE_RESOLVED_BOUND runtime warn + construction-site survey; /accounting-audit NEW skill)** |
+| Most recent ship | **`v5.15.5.F.4d.1.B.2`** (2026-05-17) — Cohort migration. 24 fields flag STAMP_BOUND_CFG_DERIVED + framework activated across 3 cohort registries + Path γ #3 PARTIAL closure (2-of-3 cohort-gate registries unified via COHORT_GATE_* macros) + FPN<F> 6 comparison operators codebase-wide + Winsor parse-time validation + 22 new tests. 8 LOAD-BEARING deferrals to `.B.3` (TECH_DEBT-093 through -100; `.B.3` Step 1.6.1-1.6.7 enumerates; Step 2 legacy registry deletion FORCES items 4-6). 10 coding-time discoveries documented incl. Decision 9 v1.2 override-inherit-pattern reframe. Postmortem at `plans/v5.15-live-readiness/postmortems/2026-05-17-v5.15.5.F.4d.1.B.2-postmortem.md`. |
+| In-progress umbrella | **`v5.15.5.F.4d.1` Thread A FULL framework consolidation** — `.A` shipped + pushed; `.B` split into `.B.1`/`.B.2`/`.B.3`; `.B.1`+`.B.2` shipped (local); **`.B.3` queued** with handoff at `plans/v5.15-live-readiness/handoffs/2026-05-17-v5.15.5.F.4d.1.B.3-handoff.md`. Sub-master v1.3 at `subplans/2026-05-16-v5.15.5.F.4d.1-thread-a-framework-full.md`. Then `.C` (sidecar override + bit-packed inventory) → `.D` (CI verification + fixture regression) → `.F.4d.1` umbrella close. |
+| Sprint-wide invariant | `CfgFieldDescriptor` schema LOCKED at `.F.4b` (Kind enum is GUI metadata only — NEVER drives storage; H13 + H14 consolidated). |
+| Ship-after sequence | `.F.4d.1` → `.F.4e` (KIND_STRING + 5 GUI metadata derived filters; validates framework via second-source apps; LOW-MED risk) → `.F.4f` **wind-down ship** (zero framework additions; closes TECH_DEBT-076-080 + dust H1 + CoreCtx trio; ~2-3 days MED) → `.F.5.A/.B/.C` (ML-side refactor; folded into v5.15 per 2026-05-17 decision; scope TBD by `/anti-spaghetti` at `.F.4f` close) → `v5.15.6.A/.B` (operational safety) → `v5.15` umbrella close → paper-test session. |
+| Post-paper-test work | Code-moving maintainability wins (no framework risk per `feedback_framework_layer_payoff_diminishing_returns`): controller_test.cpp split (~25-26K lines → ~5 domain-aligned files; per v5.11.35 rule); mega-header splits if any oversized headers remain. New structural-recurrence opportunities considered ONLY when recognition markers warrant (clear 60:4-or-better ratio + recurring bug class) — operator signals re-entry into a new build/consolidation phase. |
+| Open architectural decisions | `.F.4i` AoS-by-core re-layout: wait for slow-path profile data; TECH_DEBT-008 maker order MVP: indefinite defer per no orderbook data source. |
+| Recent anti-pattern codifications | Class 23 (type-erased reinterpret_cast dispatch, `.F.4b`) + Class 24 (capability-cfg surface mismatch, `.F.4c.1`) + Class 25 (scope-erosion in per-core consumer, `.F.4c.3`) + Class 27 (scalar cfg-mirror cache, `.F.4c.3`) + Class 28 (branchy SP/HP dispatch, `.F.4c.3`) + Class 29 (silent zero-fee-rate from missing pre-resolution, `.F.4c.3`). |
 
 ---
 
 ## Auto-write contracts
 
-When an audit / skill / sub-ship surfaces an item below, the agent
-MUST write the entry to the named ledger. Operator reviews at boundary;
-agent does mechanical bookkeeping. Don't bury in chat / code comments
-/ postmortems — those rotate or get compacted.
+When an audit / skill / sub-ship surfaces an item below, agent MUST
+write the entry to the named ledger. Operator reviews at boundary;
+agent does mechanical bookkeeping.
 
 | Surface | Ledger | Trigger |
 |---|---|---|
 | Parity findings | `DOCS/PARITY_ISSUES.md` | `/parity-check` or any audit naming a parity surface |
 | Deferred items | `DOCS/TECH_DEBT.md` | `/readiness` Check 25, `/merge-scan`, scope-discussion deferrals |
-| Operator-visible features | `tick-trader-percore-workspace/FEATURE_LOOKUP.md` | New cfg flag / observability surface / persistence file / boot gate / training knob / fallback path at sub-ship close |
+| Operator-visible features | `tick-trader-percore-workspace/FEATURE_LOOKUP.md` | New cfg flag / observability / persistence / boot gate / training knob / fallback at sub-ship close |
 | Decoupling positioning | `plans/_future/2026-05-12-decoupling-endgoal-roadmap.md` | Any ship touching GUI ↔ runtime, TUISnapshot, CLI mode dispatch, cfg ownership, logging path |
 | Cohort-audit findings | `DOCS/TECH_DEBT.md` | New boolean cfg field with 2+ siblings → cohort eligibility per `DESIGN_SPECS/cfg-flag-eligibility-criteria.md` |
 | Operational landmines | `tick-trader-percore-workspace/DOCS/LANDMINES.md` | Non-obvious pitfall (segfault / race / library quirk) that took >1h to debug |
 
-**FEATURE_LOOKUP entry template:** `### <name> (vX.Y.Z+)` → **What** /
-**Cfg flags** / **Fallback** / **Where to verify** (panel field /
-log line / file with file:line refs) / **Paper-test sanity** / **Gotchas** /
-**Related**. Skip auto-write for: pure refactors, internal helper
-extraction, bug fixes restoring expected behavior, bytewise-identical
-perf optimizations.
+**FEATURE_LOOKUP entry template:** `### <name> (vX.Y.Z+)` →
+**What** / **Cfg flags** / **Fallback** / **Where to verify** /
+**Paper-test sanity** / **Gotchas** / **Related**. Skip for pure
+refactors, internal helper extraction, bug fixes restoring expected
+behavior, bytewise-identical perf optimizations.
 
 ---
 
 ## Going-forward rules (index)
 
-Rules currently in force. Each links to its canonical home.
+Each rule = one-line trigger + canonical doc pointer. Body lives in
+the canonical doc.
 
 ### Code & design
 
-- **Structural fix preferred when bug class can recur** (set 2026-05-09).
-  → CLAUDE.md item 19; `DESIGN_SPECS/structural-fix-preferred-decision-framework.md`.
-  Trigger: same pattern at multiple sites drifted apart → registry/helper-extract with compile-time enforcement, not direct patch.
-
-- **Framework discipline over ad-hoc per-instance code when recurrence is foreseeable** (set 2026-05-14).
-  → CLAUDE.md item 31; `DESIGN_PHILOSOPHY.md` § 1.5; `DESIGN_SPECS/pattern-codification-lifecycle.md`.
-  Trigger: ≥2 future applications projected AND bug class can recur AND framework cost ≤ projected savings × N → invest upfront in framework (registry / AUTOPOPULATE / `tt::` dispatch / derived-filter macro / sidecar override / meta-registry) rather than ad-hoc per-instance solutions. Accept upfront complexity for future-application mechanicalization. The trade-off: framework code reads harder at first encounter; PAYOFF is future additions become 1-row mechanical changes + framework API encodes the discipline so contributors can't drift. Canonical applications (.F.4 sprint composing 6 frameworks: universal cfg registry + `tt::` dispatch + derived-filter framework + sidecar override + meta-registry + X-macro struct gen — extinguishing 5 bug classes: Class 14/18/19/21/23).
-
-- **Boundary-stable refactors over wide cascades** (set 2026-05-06).
-  → `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/feedback_reduce_touch_sites.md`.
-  Trigger: refactor crosses ≥4 files → stop, propose stable boundary first; do new computation inside, return deterministic conversion at edges.
-
-- **Cohort-audit when new cfg field has 2+ siblings** (set 2026-05-11).
-  → `DESIGN_SPECS/cfg-flag-eligibility-criteria.md` § "Cohort audit".
-  Trigger: new boolean cfg field with 2+ semantic siblings (`ridge_*`, `bandit_*`) → audit cohort; all-eligible migrate together; mixed → TECH_DEBT per-sibling.
-
-- **Categorical applicability for new cfg fields** (set 2026-05-14).
-  → `DESIGN_SPECS/categorical-tag-applicability-pattern.md`; CLAUDE.md Class 19.
-  Trigger: new cfg field → fill `applies_to_strategy_cat` / `applies_to_op_mode_cat` / `applies_to_regime_cat` / `applies_to_risk_cat`. No hardcoded enum names in gating.
-
-- **Cross-file cfg surfaces use `lives_in_struct`** (set 2026-05-14).
-  → `DESIGN_SPECS/categorical-tag-applicability-pattern.md` § "Cross-file"; CLAUDE.md Class 21.
-  Trigger: cfg field in non-default cfg file (backtest / controller / secrets / training) → tag with `lives_in_struct` enum value. ONE CfgFieldDescriptor; no parallel descriptors.
-
-- **Bitmap overflow static_assert is mandatory** (set 2026-05-14).
-  → `DESIGN_SPECS/bitmap-overflow-protection-discipline.md`; CLAUDE.md Class 20.
-  Trigger: any `FOREACH_X`-paired bitmap field → co-located `static_assert(FOREACH_X_COUNT_VALUE <= sizeof(type) * 8)`. Future entries that overflow fail build.
-
-- **Type-trait dispatch via `tt::` namespace for typed registry dispatchers** (set 2026-05-14).
-  → CLAUDE.md item 23; `DESIGN_SPECS/type-trait-dispatch-via-tt-namespace.md`; `DOCS/RECURRING_BUG_PATTERNS.md` Class 23.
-  Trigger: building any registry-driven dispatcher (parser/save/render/drift-check/snapshot) over typed fields → use `tt::<verb>_field<T>(T& dst, ...)` with destination-by-reference + type-family `static_assert` + `if constexpr` branches per type trait (`is_FPN_v<T>` / `std::is_array_v<T>` / `std::is_floating_point_v<T>` / etc.). Kind enum stays metadata-only (GUI presentation hint), NEVER drives storage type. **NEVER `*reinterpret_cast<X*>((char*)Y + offset) = v`** — that's the Class 23 anti-shape that silently corrupts FPN<F> + other template-instantiated types. 3-barrier structural fix per Class 23 Prevention closes the class entirely.
-
-- **Multi-bit state encoding for K-state fields (K = 2..16)** (set 2026-05-13).
-  → `DESIGN_SPECS/multi-bit-state-encoding-pattern.md`.
-  Trigger: new K-state field in single record → N-bit packed slot (N=ceil(log2 K)) + branchless inference API instead of `int` + switch. Promotion candidate to CLAUDE.md after 2+ applications.
-
-- **Cfg↔ML surface-alignment audit at every ML feature add** (set 2026-05-14, codified at v5.15.5.F.4c.1).
-  → `DOCS/RECURRING_BUG_PATTERNS.md` Class 24; `DESIGN_PHILOSOPHY.md` § 1.5; CLAUDE.md item 31.
-  Trigger: any new ML capability (model role, ensemble dimension, bandit algorithm, blender mode, confidence component, regime knob, exit-side mirror) → answer four columns: (1) cfg parse? (2) Settings render? (3) Stamp tag? (4) Per-core override? Any "no" without documented exemption = feature not done. Fire `/ml-audit` at sub-ship close for any ship touching ML capability. Closes Class 24 structurally. Why: v5.15.5.F.4c paper-test surfaced ~17 ML cfg fields (bandit_algorithm / thompson_* / ridge_* / confidence_*) existing in struct + parser + stamp but invisible in Settings panel — operator-invisible ML capability = silent miscalibration risk. Same shape applies to wire gaps (Thompson_Update never called in production paths despite mode being settable, .F.4c.2 fix).
-
-- **Decision-time data binding for per-instance cfg values** (set 2026-05-15, codified at v5.15.5.F.4c.3 WIP2d-1.B.0c).
-  → `DESIGN_SPECS/decision-time-data-binding-pattern.md`; `DOCS/RECURRING_BUG_PATTERNS.md` Class 27; `DESIGN_PHILOSOPHY.md` § 1.5 Framework-selection criteria.
-  Trigger: subsystem (OMS, ConfidenceScorer, PortfolioController, ThompsonBandit state, ...) needs to read a cfg value at per-fill / per-event time → pre-resolve onto in-flight object (Order/Position/Event/TradeEvent) at decision time (FIRST LINE); registry-driven per-instance cache (`FOREACH_<SUBSYS>_CFG_CACHE`) only when no in-flight object exists (FALLBACK, rare). FORBIDDEN: scalar cfg-mirror field on subsystem state (Class 27 — silently flattens per-instance distinction when cfg grows per-core axis). FORBIDDEN: `static const T cached = FPN_ToDouble(cfg.X);` fn-local cache (Class 27 fn-local variant). CI Check 7 (`tools/check_per_core_registry_integrity.py`) enforces structurally; exemptions in `MANUAL_FIELDS_INVENTORY.md` Section C with rationale category + migration trigger. Why: OMS scalar `fee_rate_maker/_taker/_slippage` flattened core 1-15 accounting to core 0's values once cfg went per-core; ~5+ similar instances projected across subsystems. Closes Class 27 structurally. Sister `/accounting-audit` skill canonical first run at WIP2d-1.B.1.b sweeps for additional instances.
-
-- **Registries optimize for ADDING; principle + sweep optimizes for ELIMINATING** (set 2026-05-15, codified at v5.15.5.F.4c.3 WIP2d-1.B.0c — sub-principle of framework discipline).
-  → `DESIGN_PHILOSOPHY.md` § 1.5 Framework-selection criteria; `DESIGN_SPECS/decision-time-data-binding-pattern.md` (first canonical "registry was wrong; principle is right" application).
-  Trigger: considering a new registry for a pattern → ask "should this pattern accumulate over time (registry good) OR should it shrink (registry counterproductive — entrenches the wrong shape)?" If the pattern is itself the bug (Class 27 cfg-mirror caches that should be eliminated, not mechanicalized), reach for principle + audit + delete + CI INSTEAD of registry. Registry stays as second-line fallback for genuine edge cases. New skill `/registry-fit-audit` scans existing registries for misapplication per these criteria. Why: initial impulse for Class 27 fix was `FOREACH_SUBSYSTEM_CFG_CACHE` registry; sharpening pushback recognized that mechanicalizing-the-pattern would entrench it; principle (decision-time-data-binding) + sweep + Check 7 closes the class without making the wrong shape easier to add.
-
-- **Branchless dispatch preferred for SP/HP data-dependent code** (set 2026-05-15, codified at v5.15.5.F.4c.3 WIP2d-1.B.0d — hand-wave audit remediation).
-  → `DESIGN_SPECS/branchless-dispatch-discipline.md`; `DOCS/RECURRING_BUG_PATTERNS.md` Class 28; `DESIGN_PHILOSOPHY.md` § 4 Latency cost framework (updated).
-  Trigger: data-dependent dispatch (if/else or switch on runtime enum) on slow-path, hot-path, drainer, or producer-fan-out code → convert to fn pointer table (Pattern 1) or 2D state×type table (Pattern 2) or pre-resolve at decision time (Pattern 4) per `branchless-dispatch-discipline.md`. Branch acceptable ONLY when predicate is boot-time-only OR `__builtin_expect`-tagged rare OR `if constexpr` compile-time OR genuine binary predicate with no alternative computation. **Real-world mispredict cost is 30-100ns (not textbook 5-15ns) due to pipeline depth + dependent op cascade + possible L1i miss on wrong-side target.** Branchless ALWAYS wins on p99 (deterministic vs variable tail); for a system valuing determinism (this codebase, H8), p99 consistency dominates average throughput. Don't default to "branch is fine because predictor handles it" — that's throughput thinking applied to a determinism-prioritizing system. Why: hand-wave audit 2026-05-15 caught the framing "branch is fine because predictor handles it" being applied to HandleFill BUY/SELL dispatch + dedup early-exit; both should be branchless via 2D state×type dispatch table. Class 28 codified; `/hft-audit` extended with Branchless dispatch opportunity scan.
-
-- **Audit hand-waves proactively when "branch is fine" framing surfaces** (set 2026-05-15, codified at v5.15.5.F.4c.3 WIP2d-1.B.0d).
-  → `DESIGN_SPECS/branchless-dispatch-discipline.md` § "The hand-wave anti-pattern".
-  Trigger: assertion that includes "branch is fine because predictor handles it" OR "average cost is acceptable" OR "mispredict is only 5-15ns" → STOP. Re-examine through determinism + p99 lens. Real-world mispredict is 30-100ns; branches inject variance; consistency wins for HFT. Pattern: convince yourself the branch IS the bug, not whether the average is acceptable. If you still want to keep branch, document the explicit justification per the decision matrix in `branchless-dispatch-discipline.md` (boot-time / __builtin_expect-rare / if-constexpr / genuine-binary-without-alternative). Why: throughput-frame defaults silently accumulate variance in a system whose entire premise is deterministic low-variance execution.
-
-- **Audit invocations specify scope per situation** (set 2026-05-15, codified at v5.15.5.F.4c.3 WIP2d-1.B.0d).
-  → `DESIGN_SPECS/audit-scope-taxonomy.md` (5-shape scope taxonomy + decision matrix).
-  Trigger: invoking any audit skill (/hft-audit, /dod-audit, /bug-check, /parity-check, /accounting-audit, /registry-fit-audit, /precoding-audit-gate) → specify scope per situation rather than defaulting to "comprehensive vs focused" coarse binary. Five scope shapes: `current` (active edits — fast feedback, low context), `wide` (full codebase — HIGH context cost; quarterly + post-codification sweeps only), `scoped <glob>` (file-glob), `module:<name>` (semantic module per MODULE_MAP.md — module-by-module deep audits; bounded context per pass), `chain:<symbol>` (data-flow trace via `/dependency-chain-trace` skill). Default to `current` for active work; escalate to `module:<name>` for area focus; reserve `wide` for quarterly health + post-new-anti-pattern-codification sweeps. Why: large codebase + comprehensive sweep eats context fast → shallow findings; situational scope gives appropriate depth per pass. Plus chain trace is a genuinely new audit shape (symbol-flow vs point-scan) not previously available.
-
-- **Multi-state dispatch with per-state metadata when N-state enum exhibits asymmetric behavior** (set 2026-05-16, codified at v5.15.5.F.4c.4 — first canonical).
-  → `DESIGN_SPECS/multi-state-dispatch-with-per-state-update-metadata.md` Stage 3 ACTIVE.
-  Trigger: dispatch enum has ≥3 states OR projected expansion past 3, with per-state behavior splitting along ≥2 orthogonal axes (e.g., "which posterior updates?" × "which array drives selection?") → encode behavior in X-macro row METADATA COLUMNS; auto-compute dispatch tables + masks + predicates via X-macro reduction; adding a new state = 1 row mechanical change with complete dispatch metadata. Composes with `branchless-dispatch-discipline.md` Pattern 1 (auto-derived fn-pointer table) + `sink-fn-pointer-for-optional-side-effect-pattern.md` Pattern 5 (per-state optional side-effect dispatch) + `cfg-scope-discipline.md` (per-core direct registration via `FOREACH_PER_CORE_CFG_FIELD` — NEVER via the FORBIDDEN `PerCoreOverrides<F>` extension). Closes Class 18 (mirror) + Class 19 (hardcoded enum names) + Class 24 (capability-cfg surface mismatch) + Class 28 (branchy SP/HP dispatch) structurally for the dispatch family. Why: first canonical (bandit 5-state ghost training at `.F.4c.4`) replaces scattered mask constants + switch statements with row-local metadata + auto-derived dispatch primitives; adding a 6th bandit algorithm becomes 1 row with metadata tuple → both dispatch tables (buy + exit) + masks + slow-path predicates + GUI labels + stamp emit all auto-extend. Pattern-codification-lifecycle.md observed: codify-on-first-canonical here; extract-cross-application generic spec when 2nd application (regime classifier? strategy variant?) lands.
-
-- **Audit canonical sister before proposing new framework infrastructure** (set 2026-05-17, codified at v5.15.5.F.4d.1.B.1 planning).
-  → `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/feedback_audit_canonical_sister_before_new_infra.md`; `DESIGN_SPECS/canonical-sister-extension-discipline.md` Stage 2 DRAFT → Stage 3 at `.B.1` ship.
-  Trigger: any plan proposing new X-macro registry / metadata bit / dispatch table / sidecar / consumer macro → grep codebase for canonical sister patterns FIRST; if sister with ≥50% projected row overlap + same consumer behavior exists, EXTEND it rather than build parallel. Closes Path γ-class structural critiques pre-coding (caught Path γ at `.A` 2026-05-16 + Path γ #2 at `.B` 2026-05-17 — both same shape; `/merge-scan` + `/anti-spaghetti` at pre-coding audit gate flag the missing-sister case). Why: parallel infrastructure when canonical sister exists produces Class 14/18/21 instances + drift surface; the 5th BANDIT_THOMPSON field that `.B` v1.2 β4 plan MISSED was already in canonical `FOREACH_CFG_DERIVED_INFERENCE_CFG` at line 113 — direct evidence of duplication-induced drift. Codified to catch the class pre-coding rather than ad-hoc per-plan.
+- **Structural fix preferred when bug class can recur** (2026-05-09) — CLAUDE.md item 19; `DESIGN_SPECS/structural-fix-preferred-decision-framework.md`. Trigger: same pattern at multiple sites drifted apart → registry/helper-extract with compile-time enforcement.
+- **Framework discipline over ad-hoc per-instance code when recurrence is foreseeable** (2026-05-14) — CLAUDE.md item 31; `DESIGN_SPECS/pattern-codification-lifecycle.md`. Trigger: ≥2 future applications projected AND bug class can recur AND framework cost ≤ projected savings × N → invest upfront.
+- **Boundary-stable refactors over wide cascades** (2026-05-06) — `feedback_reduce_touch_sites.md`. Trigger: refactor crosses ≥4 files → propose stable boundary first.
+- **Cohort-audit when new cfg field has 2+ siblings** (2026-05-11) — `DESIGN_SPECS/cfg-flag-eligibility-criteria.md`. Trigger: new boolean cfg field with 2+ semantic siblings → audit cohort.
+- **Categorical applicability for new cfg fields** (2026-05-14) — `DESIGN_SPECS/categorical-tag-applicability-pattern.md`. Trigger: new cfg field → fill applies_to_* columns; no hardcoded enum names in gating.
+- **Cross-file cfg surfaces use `lives_in_struct`** (2026-05-14) — same doc § Cross-file. Trigger: cfg field in non-default cfg file → tag with `lives_in_struct` enum.
+- **Bitmap overflow static_assert is mandatory** (2026-05-14) — `DESIGN_SPECS/bitmap-overflow-protection-discipline.md`. Trigger: any FOREACH_X-paired bitmap field → co-located `static_assert(COUNT <= sizeof(type)*8)`.
+- **Type-trait dispatch via `tt::` namespace for typed registry dispatchers** (2026-05-14) — CLAUDE.md item 23; `DESIGN_SPECS/type-trait-dispatch-via-tt-namespace.md`. Trigger: building registry-driven dispatcher → use `tt::<verb>_field<T>` with destination-by-reference + type-family static_assert. NEVER `*reinterpret_cast<X*>(...)` punning.
+- **Multi-bit state encoding for K-state fields (K = 2..16)** (2026-05-13) — `DESIGN_SPECS/multi-bit-state-encoding-pattern.md`. Trigger: new K-state field → N-bit packed slot (N=ceil(log2 K)) + branchless inference API.
+- **Cfg↔ML surface-alignment audit at every ML feature add** (2026-05-14) — RECURRING_BUG_PATTERNS Class 24; CLAUDE.md item 31. Trigger: new ML capability → answer 4 columns (cfg parse / Settings render / Stamp tag / Per-core override). Fire `/ml-audit` at sub-ship close.
+- **Decision-time data binding for per-instance cfg values** (2026-05-15) — `DESIGN_SPECS/decision-time-data-binding-pattern.md`; Class 27. Trigger: subsystem needs cfg value at per-fill/event time → pre-resolve onto in-flight object at decision time. FORBIDDEN: scalar cfg-mirror field on subsystem state.
+- **Registries optimize for ADDING; principle + sweep optimizes for ELIMINATING** (2026-05-15) — `DESIGN_PHILOSOPHY.md` § 1.5. Trigger: considering new registry → ask "should this pattern accumulate (registry good) OR shrink (registry counterproductive)?"
+- **Branchless dispatch preferred for SP/HP data-dependent code** (2026-05-15) — `DESIGN_SPECS/branchless-dispatch-discipline.md`; Class 28. Trigger: data-dependent dispatch on SP/HP/drainer/producer code → fn pointer table / 2D state×type table / pre-resolve. Real-world mispredict is 30-100ns.
+- **Audit hand-waves proactively when "branch is fine" framing surfaces** (2026-05-15) — same doc § "The hand-wave anti-pattern". Trigger: "branch is fine because predictor handles it" OR "mispredict is only 5-15ns" → STOP; re-examine through determinism + p99 lens.
+- **Audit invocations specify scope per situation** (2026-05-15) — `DESIGN_SPECS/audit-scope-taxonomy.md`. Trigger: invoking audit skill → specify scope (current / wide / scoped <glob> / module:<name> / chain:<symbol>). Default `current`; reserve `wide` for quarterly + post-codification.
+- **Multi-state dispatch with per-state metadata when N-state enum exhibits asymmetric behavior** (2026-05-16) — `DESIGN_SPECS/multi-state-dispatch-with-per-state-update-metadata.md`. Trigger: dispatch enum has ≥3 states + behavior splits along ≥2 orthogonal axes → encode in X-macro row metadata columns; auto-compute dispatch tables.
+- **Audit canonical sister before proposing new framework infrastructure** (2026-05-17) — `feedback_audit_canonical_sister_before_new_infra.md`; `DESIGN_SPECS/canonical-sister-extension-discipline.md`. Trigger: plan proposing new registry/bit/dispatch/sidecar/macro → grep codebase for canonical sister patterns FIRST; if ≥50% overlap + same consumer behavior → EXTEND.
+- **Framework-layer payoff has diminishing returns; stop at the inflection point** (2026-05-17) — `feedback_framework_layer_payoff_diminishing_returns.md`. Trigger: tempted to propose new framework layer past inflection. Recognition: sites-added-vs-eliminated (60:4 ship; 6:5 reject); walker iterating zero rows; audit catches small-duplication territory. Lifecycle: build (ARCHITECT bias OK) → consolidation (aggressive framework) → post-inflection (this discipline) → maintenance (code-moving wins). Phase transitions operator-signaled.
+- **Proportionate response to audit findings** (2026-05-17) — `feedback_proportionate_response_to_audit_findings.md`. Trigger: audit catches structural issue. Surface full menu (A INLINE MERGE / B ACCEPT WITH RATIONALE / C FOLD / D ARCHITECT + NO-FOLD first-of-kind) + evaluate each honestly + pick what's actually right (not first sufficient; not smallest). Audit catch is information; response is judgment.
+- **Plan right, not fast** (2026-05-17) — `feedback_plan_right_not_fast.md`. Trigger: planning-grade decision. Planning IS the hard part of SWE in 2026; AI handles mechanical coding; human value-add concentrates in planning. Disciplines support decide-rightly, not decide-quickly. Indecisiveness is feature; speed heuristics undercut planning depth.
+- **4-pillar self-audit before surfacing recommendations** (2026-05-17) — `feedback_audit_own_proposals_with_same_rigor.md` + 3 sister memories. Trigger: before surfacing ANY recommendation (auto-pick on design space; framework extension; new spec; refactor scope). Apply 4-pillar discipline: (1) DESIGN_SPECS cross-check — does existing catalog cover this pattern?; (2) Anti-pattern catalog check — verify against all 30+ classes in `DOCS/RECURRING_BUG_PATTERNS.md` with CLEAN/CLOSES/N-A per class; (3) Operator-impact dimension — what action does Caramel need? Migration burden? Workflow disruption? Default toward non-breaking alternatives unless breaking is structurally necessary (`feedback_surface_operator_migration_path_proactively.md`); (4) Novel-alternative consideration — could a novel design fit better given the SPECIFIC purpose? Don't default to existing patterns out of inertia (`feedback_proactive_novel_alternative_consideration.md`). On pushback-triggered reconsideration: re-check existing DESIGN_SPECS + anti-pattern catalog for BOTH options before committing (`feedback_recheck_designspecs_on_pushback.md` — caught Decision C reactive flip to Class 21 anti-pattern at `.B.3`). Plan body amendments MUST include all 4 dimensions as explicit sections per `future-oriented-plan-template.md`. `/readiness` Checks 31-33 verify presence mechanically.
+- **Future-headache vs optimization scope framework** (2026-05-17) — `feedback_future_headache_vs_optimization_scope_framework.md`. Trigger: scope discoveries surface during refactor/cleanup ships (e.g., surviving anti-pattern instances). Axis: "does this reduce FUTURE HEADACHE" (close at ship) vs "is this PURE PERFORMANCE OPTIMIZATION" (defer + document). Anti-pattern instance survival = grind through (per `feedback_motivated_collaborator_for_caramel`); slow-path cycle reduction = defer (per `feedback_framework_layer_payoff_diminishing_returns`). Codified at `.B.3` v1.6 applying to TECH_DEBT-104 (closed) vs TECH_DEBT-103 (deferred). Caramel framing: "this refactor is about cleaning up messy code and making it future maintainable".
+- **Iteration spiral as audit-meta-gap signal** (2026-05-17) — `feedback_iteration_spiral_signals_audit_meta_gap.md`. Trigger: plan body amendment iterations finding smaller-and-smaller findings across 4+ cycles. STOP individual-finding-chase; ask "what AUDIT METHODOLOGY GAP caused us to keep finding small issues?". Codify META-gap immediately + apply comprehensive sweep + verify inflection (next iteration finds nothing material). Codified at `.B.3` v1.8 after 6-iteration spiral; v1.8 codified consumer-enumeration meta-gap; v1.9 applied + caught stamp_model.sh + inflection reached. Common meta-gaps: consumer enumeration / cross-pattern access / cross-file-type / sister-registry / naming-asymmetry. Skill amendments scheduled at ship close: `/precoding-audit-gate` iteration tracking + `/readiness` Check 35 (verify meta-gap codified if 5+ amendments) + `audit-driven-pre-coding-gate.md` DESIGN_SPEC new section.
+- **Comprehensive consumer enumeration before registry-row deletion** (2026-05-17) — `feedback_enumerate_consumers_before_registry_row_deletion.md`. Trigger: plan proposes X-macro registry row deletion / rename / column-1-vs-source-name change. Run ONE comprehensive grep covering ALL access patterns (dot/arrow/STAMP_HAS/token-paste) across all file types BEFORE finalizing scope. Piecemeal cross-greps miss sites + cause iteration spiral. For >30 sites: procedure-based plan body capture + coding-time `rg`-driven enumeration + full-token replace_all per field + build verify each. Codified at `.B.3` v1.8 after 7 iterations of plan body each finding more consumer sites — one comprehensive grep revealed 149 total across 8 files. Sister to `feedback_audit_canonical_sister_before_new_infra` (producer side; this is consumer side).
 
 ### Thread isolation between subsystems
 
-- **GUI ↔ HP/SP thread isolation: NEVER share state directly** (set 2026-05-14).
-  → `DESIGN_SPECS/universal-registry-bitmap-dispatcher-pattern.md` § "GUI ↔ engine thread isolation"; `DESIGN_PHILOSOPHY.md` § 6 (Concurrency family).
-  Trigger: any new subsystem touching engine state from a different thread → GUI has its own typed mirror instance (`ControllerConfig<F>`, `TrainingCfg`, etc.); engine has its own; communicate via file + reload-signal channel; NEVER pointer-share state across threads. Aligns with H3 (no mutex/condition_variable/sleep_for/rwlock anywhere — the synchronization primitives that "share state across threads" patterns rely on are forbidden, so the discipline naturally falls out). The bitmap dispatcher framework at `.F.4c` enables this by giving each subsystem its own typed cfg mirror; the file is the canonical channel.
+- **GUI ↔ HP/SP thread isolation: NEVER share state directly** (2026-05-14) — `DESIGN_SPECS/universal-registry-bitmap-dispatcher-pattern.md` § GUI ↔ engine. Trigger: new subsystem touching engine state from different thread → typed mirror per side; communicate via file + reload-signal; NEVER pointer-share. Aligns with H3.
 
 ### Process & sprint
 
-- **Suggest mid-sprint audits when work impacts downstream** (set 2026-05-10).
-  Trigger: HIGH-RISK ship just shipped / first pattern application / cross-cutting changes → suggest `/test-strength-audit` + `/dod-audit` + `/parity-check` in parallel; wait for greenlight. Skip for routine pattern-application or pure additive work.
-
-- **Sub-plan sidecar files for substantial sections with implementation code samples** (set 2026-05-16).
-  → `tick-trader-percore-workspace/plans/<sprint>/subplans/<plan-name>-examples.md` convention.
-  Trigger: a sub-plan section spans (a) multi-file coordination OR (b) has architectural decision points (e.g., "where does X get into scope?") OR (c) exceeds ~100 LOC implementation OR (d) introduces new framework pattern application → create a sidecar `-examples.md` file alongside the main plan body with: concrete code samples for the implementation, design decision rationale (alternatives considered + chosen), file:line refs to insertion points + cohort sites, and verification expectations (test names that should land + build flags exercised). The sidecar is a COMPANION to the main plan body — main body has the WHY + SCOPE + CHARTER; sidecar has the WHAT-IT-LOOKS-LIKE-IN-CODE. **Why:** cold-pickup at coding time wastes effort re-deriving "what does this look like" when the planning agent already had the design in head. Sidecars capture the implementation intent at planning time so the coder doesn't redo the design work mid-Step. Retroactive examples that would have benefited (per `.F.4d` coding experience 2026-05-16): § F Pattern 5 path consolidation `ezoo` lookup decision (could have pre-decided Option A `oms->ezoo_ref` field), § M calib log columns matrix-reduce mechanism (could have pre-specified FOREACH_PERARM_CALIB_COL expansion pattern), § C cfg→inf wiring + drift row gating (could have pre-specified group-bit vs per-field STAMP_HAS choice). Apply going-forward to plans drafted after `.F.4d` ships.
-
-- **Each DESIGN_SPECS doc has a CLAUDE.md cross-ref** (set 2026-05-09).
-  Format: `Pattern documented in DESIGN_SPECS/<name>.md.` at end of relevant CLAUDE.md item. Ensures discoverability.
-
-- **Codify design principles in CLAUDE.md as patterns mature** (set 2026-05-09).
-  Promote to CLAUDE.md once: ≥2 codebase applications OR DESIGN_SPECS doc exists, AND pattern is broad. Items 19-30 are the codified history.
-
-- **Auto-pick the more future-oriented design option when trade-off is clear; surface only genuine ambiguities** (set 2026-05-17).
-  → `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/feedback_auto_pick_future_oriented.md`.
-  Trigger: at any design choice point, ask "which option is more future-oriented per trajectory + sister patterns + framework-discipline alignment?" If clear from context, auto-pick + state alternative considered + state rationale chosen. Surface ONLY when (a) future-vs-now trade-off is genuinely sharp OR (b) I genuinely don't know which is more future-oriented. Never punt with "your call" framing on auto-decidable decisions; never manufacture options that aren't actual contenders. Sister to `feedback_overengineering_boundary_when_future_easier` (when to invest extra LOC for future ease) + `feedback_evaluate_options_on_robustness_latency_design_not_time` (criteria) + `feedback_consult_on_audit_findings` (consult on findings, not on auto-decidable details). Set after Caramel's "how do i know your using the optimal design pattern and not just giving me the easiest" pushback at v5.15.5.F.4d.1.A planning consult 2026-05-17.
-
-- **Framework-layer payoff has diminishing returns; stop at the inflection point** (set 2026-05-17).
-  → `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/feedback_framework_layer_payoff_diminishing_returns.md`.
-  Trigger: tempted to propose a new framework layer (registry / sidecar / consumer macro / metadata bit / DESIGN_SPEC / skill). Recognition markers: count sites-added vs sites-eliminated (60 eliminated + 4 added = ship; 6 eliminated + 5 added = reject); walker would iterate zero rows at proposal time; recent audit catches are small-duplication territory not large structural class instances. Lifecycle phases shift the discipline: build phase (ARCHITECT bias OK) → consolidation (aggressive framework discipline; 60:4 ratios common) → post-inflection (this discipline applies; stop adding layers) → maintenance (code-moving wins like file splits; framework frozen). Phase transitions are operator-signaled. The right amount was done; "just done with this layer" is a complete answer. Sister to `feedback_overengineering_boundary_when_future_easier` (still applies in build/consolidation; doesn't apply past inflection per cost-benefit clause of CLAUDE.md item 31).
-
-- **Proportionate response to audit findings** (set 2026-05-17).
-  → `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/feedback_proportionate_response_to_audit_findings.md`.
-  Trigger: audit (`/merge-scan` / `/anti-spaghetti` / `/precoding-audit-gate` / `/readiness`) catches a structural issue. **Surface the full response menu** (A INLINE MERGE / B ACCEPT WITH RATIONALE / C FOLD into canonical / D ARCHITECT NEW FRAMEWORK + NO-FOLD first-of-kind) **+ evaluate each option honestly + pick what's actually right** (not first sufficient; not smallest). Default audit-then-architect reflex skips alternatives entirely. Mechanical filter (sites-added vs sites-eliminated) is ONE INPUT to honest evaluation, not a triage shortcut. The audit catch is information; the response is judgment. Sister to `feedback_plan_right_not_fast` (the meta-discipline; this applies it to audit findings) + `feedback_framework_layer_payoff_diminishing_returns` (inflection-point recognition informs whether D is on table) + `feedback_audit_canonical_sister_before_new_infra` (expands its response menu).
-
-- **Plan right, not fast** (set 2026-05-17).
-  → `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/feedback_plan_right_not_fast.md`.
-  Trigger: any planning-grade decision (architecture / right-fix / what-discipline-applies). Planning IS the hard part of SWE in 2026 — AI handles mechanical coding; human value-add concentrates in planning. Disciplines should support **decide-rightly, not decide-quickly**. Indecisiveness during planning is a feature; sitting with multiple options long enough to honestly evaluate them produces right answers. Speed heuristics ("walk menu in order + stop at first sufficient"; auto-pick reflexes) preempt the sitting-with-it. When presenting recommendations: surface full option set + honest evaluation + then pick. Don't compress planning depth for speed. Sister to `feedback_evaluate_options_on_robustness_latency_design_not_time` (evaluation axes) + `feedback_auto_pick_future_oriented` (applies only when trade-off genuinely clear; not a default).
-
-- **Audit → update → implement → ship cycle PER sub-ship to prevent endless planning loops** (set 2026-05-17).
-  → Standard discipline; sister to `feedback_consult_on_audit_findings` + `feedback_no_defer_for_effort` + per-sub-ship structure already encoded in plan templates.
-  Trigger: each sub-ship in a multi-sub-ship umbrella → run `/precoding-audit-gate` → triage findings + consult → update plan body if needed → implement Steps → ship + postmortem. THEN advance to next sub-ship's cycle. Insight: the ship boundary forces forward motion. Without it, we'd find new audit dimensions + spec drift + sister patterns indefinitely (Level 5/6/7 audits). Cycle's discipline: "audit ENOUGH to make THIS sub-ship structurally sound; bank the rest as TECH_DEBT for future ships' cycles". Sister to auto-pick (prevents per-decision punting); both serve "ship while maintaining quality". Set after Caramel's "i guess this prevents endless planning loops, probably a good idea" insight at v5.15.5.F.4d.1.A planning consult 2026-05-17.
-
-- **Plans introducing new registries cite existing sister registry inspection** (set 2026-05-17, codified at v5.15.5.F.4d.1.B.1 planning).
-  → `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/feedback_plans_cite_sister_registry_inspection.md`; `/readiness` Check 29 amendment.
-  Trigger: plan body proposes any FOREACH_X(X) new registry / metadata bit / dispatch table / sidecar / consumer macro → MUST include "Canonical sister registries considered" header section with per-candidate file:line + fold/no-fold verdict + rationale (per `feedback_audit_canonical_sister_before_new_infra` 3-question test). `/merge-scan` + `/anti-spaghetti` at pre-coding audit gate verify the verdicts (catches missed sisters). Ship-blocker if section missing OR each candidate is "no inspection done". Exemptions: genuinely first-of-kind infrastructure / hotfixes / read-only diagnostics.
-
-- **Anti-spaghetti audit on cadence** (set 2026-05-17, first canonical run at v5.15.5.F.4d.1.B Batch 2).
-  → `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/project_anti_spaghetti_audit_cadence.md`; `tick-trader-percore-workspace/claude-skills/anti-spaghetti/SKILL.md` Stage 2 DRAFT.
-  Trigger: quarterly codebase-wide `/anti-spaghetti` run + post-new-anti-pattern-codification sweep + ad-hoc when "is this becoming spaghetti?" feeling surfaces. Distinct from `/bug-check` (instance scan) + `/dod-audit` (DESIGN_SPECS application) + `/merge-scan` (reuse opportunities) + `/dust` (generic cleanup). First canonical run 2026-05-17 found 3-way triplet `FOREACH_CFG_DERIVED_INFERENCE_CFG × FOREACH_CFG_DRIFT_CHECK × FOREACH_STAMP_BOUND_CFG` (93% overlap) — being closed at `.B.1`/`.B.2`/`.B.3` via canonical `FOREACH_CFG_GATE` sparse sidecar + 3 derived-filter consumer macros. Cadence schedule: Q2 ~2026-08-17; Q3 ~2026-11-17; plus ad-hoc per triggers.
-
-- **New plans use future-oriented plan template** (set 2026-05-17, codified at v5.15.5.F.4d.1.B.1 planning per "format plans for future-oriented solutions going forward" request).
-  → `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/feedback_new_plans_use_future_oriented_template.md`; `DESIGN_SPECS/future-oriented-plan-template.md` Stage 2 DRAFT → Stage 3 at `.B.1` v1.1 retrofit; `claude-skills/plan-draft/SKILL.md` Stage 2 DRAFT.
-  Trigger: any new plan body draft (sub-master sub-ship / standalone ship / STUB→ACTIVE promotion / retrofit). Required sections: Design space + future-oriented choice (≥2 options) / Canonical sister registries considered (per-candidate verdict) / Bug classes this closes (structural mapping) / DESIGN_SPECs landed-amended (lifecycle tracking) / Verification gate / TECH_DEBT auto-write expectations / Pre-coding triggers. `/readiness` Check 29 + 30 verify presence. `/plan-draft` skill scaffolds template + pre-scans sister registries. Bakes discipline INTO plan structure so it can't be forgotten (Path γ #1 + #2 + .B.1 v1.0 self-violation all caught by audit gate AFTER drafting; this catches AT drafting time).
+- **Suggest mid-sprint audits when work impacts downstream** (2026-05-10). Trigger: HIGH-RISK ship just shipped / first pattern application / cross-cutting changes → suggest `/test-strength-audit` + `/dod-audit` + `/parity-check`; wait for greenlight.
+- **Sub-plan sidecar files for substantial sections with implementation code samples** (2026-05-16) — convention: `<plan-name>-examples.md`. Trigger: section spans multi-file coordination OR architectural decision points OR >100 LOC OR new framework pattern → create sidecar.
+- **Each DESIGN_SPECS doc has a CLAUDE.md cross-ref** (2026-05-09). Format: `Pattern documented in DESIGN_SPECS/<name>.md.` at end of relevant CLAUDE.md item.
+- **Codify design principles in CLAUDE.md as patterns mature** (2026-05-09). Promote to CLAUDE.md once: ≥2 codebase applications OR DESIGN_SPECS doc exists, AND pattern is broad.
+- **Auto-pick the more future-oriented design option when trade-off is clear** (2026-05-17) — `feedback_auto_pick_future_oriented.md`. Surface ONLY when (a) future-vs-now trade-off genuinely sharp OR (b) I genuinely don't know which is more future-oriented. Never punt with "your call" framing on auto-decidable decisions.
+- **Audit → update → implement → ship cycle PER sub-ship** (2026-05-17). Trigger: each sub-ship in multi-sub-ship umbrella → `/precoding-audit-gate` → triage + consult → update plan → implement → ship + postmortem. Bank rest as TECH_DEBT.
+- **Plans introducing new registries cite existing sister registry inspection** (2026-05-17) — `feedback_plans_cite_sister_registry_inspection.md`; `/readiness` Check 29. Trigger: plan proposes new registry/bit/dispatch/sidecar/macro → MUST include "Canonical sister registries considered" header section with per-candidate verdict.
+- **Anti-spaghetti audit on cadence** (2026-05-17) — `project_anti_spaghetti_audit_cadence.md`. Trigger: quarterly codebase-wide run + post-new-anti-pattern-codification sweep + ad-hoc.
+- **New plans use future-oriented plan template** (2026-05-17) — `feedback_new_plans_use_future_oriented_template.md`; `DESIGN_SPECS/future-oriented-plan-template.md`. Required sections: Design space + future-oriented choice / Canonical sister registries considered / Bug classes this closes / DESIGN_SPECs landed-amended / Verification gate / TECH_DEBT auto-write / Pre-coding triggers.
 
 ### Docs & files
 
-- **New docs default to private** (set 2026-05-06).
-  Trigger: doc captures unshipped direction / optimization findings / operator-edge / private cfgs → write to `plans/` (workspace, gitignored, date-prefixed). Public architectural-only → `DOCS/`.
-  Auto-private gitignore patterns: `*_AUDIT.md`, `FUTURE_*.md`, `*-design-notes.md`, `*-suggestions.md`, `*-hft-*.md`, `*-OPTIMIZATION-*.md`, `*-plan-check.md`, `STRATEGY_AND_CODING_RULES.md`, `GEMINI*.md`, `*.local.md`. If unsure: ask.
+- **New docs default to private** (2026-05-06). Trigger: doc captures unshipped direction / optimization findings / operator-edge / private cfgs → write to `plans/`. Public architectural-only → `DOCS/`. Auto-private patterns: `*_AUDIT.md`, `FUTURE_*.md`, `*-design-notes.md`, `*-hft-*.md`, `*-OPTIMIZATION-*.md`, `*-plan-check.md`, `STRATEGY_AND_CODING_RULES.md`, `GEMINI*.md`, `*.local.md`.
+- **Workspace mirror for edge content** (2026-05-06) — `/sync-workspace` skill is canonical. Mirrors plans/, .claude/skills/ (symlinked); engine.cfg / backtest.cfg / controller.cfg / secrets.cfg / .env* / *.local.md (explicit copy).
+- **Cold-pickup plan completeness — 10 fields** (2026-05-06) — `/readiness` Cold-pickup section is canonical. Branch / exec-order / Step-0 / function-names / file:line refs / stale-claim audit / effort-vs-LOC / source-audit paths / predecessor paths / tag+rollback anchors.
 
-- **Workspace mirror for edge content** (set 2026-05-06).
-  → `/sync-workspace` skill spec is canonical.
-  Mirrors: plans/, .claude/skills/ (auto via symlinks); engine.cfg / backtest.cfg / controller.cfg / secrets.cfg / .env* / *.local.md (explicit copy). Run on-demand at end of session / after plan finalized / after skill updated.
+### Operator collaboration
 
-- **Cold-pickup plan completeness — 10 fields** (set 2026-05-06).
-  → `/readiness` Cold-pickup section is canonical enforcement.
-  Branch / exec-order matches deps / Step-0 / function-names cited / file:line refs / stale-claim audit / effort-vs-LOC / source-audit paths / predecessor paths / tag+rollback anchors.
+- **Address Caramel as Caramel / she / her** (`feedback_address_user_as_caramel.md`).
+- **No AskUserQuestion modal boxes** — present options inline (`feedback_no_question_boxes.md`).
+- **Evaluate options on robustness + latency + design philosophy, NOT time** (`feedback_evaluate_options_on_robustness_latency_design_not_time.md`).
+- **After pre-coding checks, ALWAYS consult before coding** (`feedback_consult_on_audit_findings.md`).
+- **Defer is last-ditch, never effort-avoidance** (`feedback_no_defer_for_effort.md`).
+- **Compaction degrades — verify handoffs against current code** (`feedback_compaction_degrades_treat_handoffs_as_hints.md`).
+- **Motivated collaborator for Caramel** — work mindset (`feedback_motivated_collaborator_for_caramel.md`). Public AGPL + hedge fund attention + exacting standards = high quality bar. When tempted to shortcut, pick the path that produces the best software.
 
 ---
 
 ## Skill load contracts
 
-Skills that fire on relevant work pre-load matching deep-dive bodies
-so cold sessions / fresh contexts have full pattern access. Updated
-contracts in each skill spec:
+Skills pre-load matching deep-dive bodies so cold sessions have full
+pattern access:
 
 | Skill | Loads dynamically |
 |---|---|
-| `/handoff` | CLAUDE.local.md + CLAUDE.md (slim; always-loaded) + DESIGN_PHILOSOPHY.md narrative sections matching plan surface + DESIGN_SPECS/README.md catalog + MEMORY.md + TECH_DEBT.md + PARITY_ISSUES.md + plan file + sprint MASTER. Scans plan for pattern symptoms → cites matched DESIGN_SPECS docs in generated prompt Step 3 + DESIGN_PHILOSOPHY family sections in Step 4. |
+| `/handoff` | CLAUDE.local.md + CLAUDE.md + DESIGN_PHILOSOPHY.md matched family sections + DESIGN_SPECS/README.md + MEMORY.md + TECH_DEBT.md + PARITY_ISSUES.md + plan file + sprint MASTER. Scans plan for pattern symptoms → cites matched DESIGN_SPECS in Step 3 + DESIGN_PHILOSOPHY family sections in Step 4. |
 | `/readiness` Check 27 | Composes `/dod-audit` inline; reads DESIGN_SPECS/*.md catalog dynamically. |
-| `/dod-audit` | Reads DESIGN_SPECS/*.md catalog dynamically; registry-driven, future patterns auto-included. |
-| `/parity-check` | Loads `wire-format-byte-preservation-discipline.md` + `autopopulate-pattern-for-production-caller-class.md` + `x-macro-registry-with-presence-dispatch.md` per its scan. |
+| `/dod-audit` | Reads DESIGN_SPECS/*.md catalog dynamically; registry-driven. |
+| `/parity-check` | Loads `wire-format-byte-preservation-discipline.md` + `autopopulate-pattern-for-production-caller-class.md` + `x-macro-registry-with-presence-dispatch.md` per scan. |
 | `/trace-deps` | Loads `structural-fix-preferred-decision-framework.md` for Step 6 call-sequence enumeration. |
 | `/bug-check` | Reads `DOCS/RECURRING_BUG_PATTERNS.md` registry dynamically. |
 | `/merge-scan` | Compose-by-reference reads relevant DESIGN_SPECS when surfacing candidates. |
+| `/anti-spaghetti` | Reads DESIGN_SPECS catalog + applies proportionate-response discipline per `feedback_proportionate_response_to_audit_findings`. |
 
 ---
 
 ## Privacy boundary recap
 
-**Private (workspace-backed):**
-plans/, .claude/skills/, engine.cfg / backtest.cfg / controller.cfg /
-secrets.cfg, models/, runtime logs + per-symbol metrics CSVs +
-baseline_run/, `DOCS/LATENCY_OPTIMIZATION_AUDIT.md`,
+**Private (workspace-backed):** plans/, .claude/skills/,
+engine.cfg / backtest.cfg / controller.cfg / secrets.cfg, models/,
+runtime logs + per-symbol metrics CSVs + baseline_run/,
+`DOCS/LATENCY_OPTIMIZATION_AUDIT.md`,
 `DOCS/STRATEGY_AND_CODING_RULES.md`, `*-design-notes.md`,
-`FUTURE_*.md`, all `*_AUDIT.md`, this file (`CLAUDE.local.md`).
+`FUTURE_*.md`, all `*_AUDIT.md`, this file.
 
-**Public (AGPL on GitHub):**
-all source in `CoreFrameworks/`, `Strategies/`, `ML_Headers/`,
-`Backtest/`, `DataStream/`, `FixedPoint/`, `MemHeaders/`, `GUI/`;
-tracked `DOCS/` (architecture, invariants, code map, changelogs,
-known issues, parity docs, recurring-bug patterns, public design
-history); tests; build infrastructure; `CLAUDE.md`.
+**Public (AGPL on GitHub):** all source in `CoreFrameworks/`,
+`Strategies/`, `ML_Headers/`, `Backtest/`, `DataStream/`,
+`FixedPoint/`, `MemHeaders/`, `GUI/`; tracked `DOCS/` (architecture,
+invariants, code map, changelogs, known issues, parity docs,
+recurring-bug patterns, public design history); tests; build
+infrastructure; `CLAUDE.md`.
 
 ---
 
@@ -277,27 +186,5 @@ entries: XGBoost+libgomp pthread parallelism (v5.11.45).
 
 ---
 
-## Memory file cross-refs
-
-Feedback rules / user / project / reference memories live at
-`~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/`.
-MEMORY.md index is always loaded (truncates after line 200). Key
-load-bearing memories referenced from rules above:
-
-- `feedback_reduce_touch_sites.md` — boundary-stable refactor rule
-- `feedback_structural_fix_for_recurring_class.md` — structural fix rule
-- `feedback_consult_on_audit_findings.md` — after pre-coding checks, always consult before coding
-- `feedback_no_defer_for_effort.md` — defer is last-ditch, not effort-avoidance
-- `feedback_no_mvp_for_plumbing_only_for_unknown_unknowns.md` — no MVP for refactor/plumbing
-- `feedback_evaluate_options_on_robustness_latency_design_not_time.md` — evaluation criteria
-- `feedback_overengineering_boundary_when_future_easier.md` — pick harder when future much easier
-- `feedback_dont_measure_structural_work_by_loc.md` — LOC ≠ value for structural work
-- `feedback_address_user_as_caramel.md` — address Caramel as Caramel
-- `feedback_no_question_boxes.md` — no AskUserQuestion modal widgets
-- `feedback_compaction_degrades_treat_handoffs_as_hints.md` — verify handoffs against current code
-- `project_engine_clauder_md_is_symlink.md` — CLAUDE.md is workspace symlink; CLAUDE.local.md is NOT (explicit-copy backup)
-- `feedback_audit_canonical_sister_before_new_infra.md` — audit canonical sister before proposing new framework infrastructure (Path γ-class catch)
-- `feedback_plans_cite_sister_registry_inspection.md` — plan body MUST cite sister registry inspection (`/readiness` Check 29)
-- `project_anti_spaghetti_audit_cadence.md` — periodic `/anti-spaghetti` codebase audit (quarterly + post-codification + ad-hoc)
-
-Read MEMORY.md (always loaded) for the full index + descriptions.
+Memory cross-refs live in `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/MEMORY.md`
+(auto-loaded; full index).

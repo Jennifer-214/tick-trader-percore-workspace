@@ -1,5 +1,15 @@
 # CLAUDE.md
 
+Always-loaded architectural orientation for this codebase. Stays GENERAL — sprint state + going-forward rules + memory live elsewhere (see Reference docs below).
+
+## Purpose
+
+Claude assists with **planning + implementation of an HFT trading engine** in C++. The codebase prioritizes (in order): **latency** (sub-microsecond hot path) → **determinism** (cross-run / cross-binary / cross-locale byte equivalence) → **maintainability** (structural fix preferred when a bug class can recur) → **operator UX**.
+
+When trade-offs conflict, name which wins + why per `DOCS/DESIGN_PHILOSOPHY.md` § 1. Default to deeper architectural option when the operator is engaged + the math favors it (per `feedback_overengineering_boundary_when_future_easier` + `feedback_plan_right_not_fast`).
+
+For sprint state, going-forward rules, and operator-collaboration discipline, see `CLAUDE.local.md` (private overlay) + `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/MEMORY.md`.
+
 ## Overview
 
 Tick-level crypto HFT trading engine in C++. Per-core risk-sharded hot
@@ -10,10 +20,6 @@ N per-core consumers (default 4, cap 16); each core = self-contained
 strategy unit (slow + hot pthread pair). Sharded is production. Legacy
 single_core LIVE is deprecated (warned at boot). Legacy backtest is
 gone — `Backtest_Run` wraps `BacktestSharded_Run`.
-
-Current sprint: **v5.15-live-readiness** (operational visibility +
-live mode strict defaults + structural unification). See
-`plans/v5.15-live-readiness/MASTER.md`.
 
 ## Build
 
@@ -143,25 +149,38 @@ The actual split is queued as a v5.11.35 sub-ship (deferred from
 multiple sessions because 3118 tests at risk warrants a focused
 effort with rollback anchor).
 
-## Reference Docs (split-load — read on demand)
+## Reference Docs (portal hierarchy — read on demand)
 
-To keep this CLAUDE.md small (always loaded), detailed references live
-in separate files. **Read the relevant file when starting work in that
-area:**
+CLAUDE.md is orientation; the portal hierarchy descends from here:
+
+```
+CLAUDE.md                          (orientation — this doc; always loaded)
+     ↓
+DOCS/DESIGN_PHILOSOPHY.md          (WHY + meta-rules; master settings portal)
+     ↓
+DESIGN_SPECS/                      (HOW patterns — 80+ specs; read per topic)
+     ↓
+DOCS/RECURRING_BUG_PATTERNS.md     (anti-patterns; pre-coding sweep)
+     ↓
+memory/                            (operator-collaboration rules; auto-loaded)
+     ↓
+CLAUDE.local.md                    (operator overlay + sprint state index; auto-loaded)
+```
+
+If you can't find the answer at the layer you're looking at, go DOWN the hierarchy.
+
+**Read on-demand when the work matches:**
 
 | When working on... | Read |
 |---|---|
-| Cold-pickup / WHY any principle / design decision / contributor onboarding | `DOCS/DESIGN_PHILOSOPHY.md` (private; thematic narrative + 4-tier discipline + cross-ref index) |
-| Reusable architectural pattern catalog (57+ patterns; tagged by surface/concern/lifecycle/applications) | `tick-trader-percore-workspace/DESIGN_SPECS/README.md` |
-| Why frameworks (meta-principle: extensibility through framework discipline) | `DOCS/DESIGN_PHILOSOPHY.md` § 1.5 + item 31 |
-| Metadata-bit-driven derived filter framework (.F.4d) | `DESIGN_SPECS/metadata-bit-driven-derived-filter-framework.md` |
-| Codebase-wide registry-of-registries discipline (.F.4d) | `DESIGN_SPECS/meta-registry-pattern-for-codebase-registry-discipline.md` |
-| Sidecar override pattern for registry auto-flows (.F.4d) | `DESIGN_SPECS/sidecar-override-pattern-for-registry-auto-flows.md` |
-| Framework composition overview for cfg infra (.F.4d) | `DESIGN_SPECS/framework-composition-overview.md` |
-| Bug class catalog + detection signatures | `DOCS/RECURRING_BUG_PATTERNS.md` |
-| Hard invariants (full 11-rule discussion) | `DOCS/STRATEGY_AND_CODING_RULES.md` (private) |
-| Latency optimization audit findings (13 parts) | `DOCS/LATENCY_OPTIMIZATION_AUDIT.md` (private) |
-| Latency-path discipline (8 rules + anti-pattern history) | `plans/_cross-cutting/2026-05-06-latency-path-discipline.md` |
+| Cold-pickup / WHY any principle / contributor onboarding / cross-family trade-off / new pattern codification | `DOCS/DESIGN_PHILOSOPHY.md` (master settings portal; 14 sections with cross-ref index) |
+| Reusable architectural pattern catalog (80+ patterns; tagged by surface/concern/lifecycle/applications) | `DESIGN_SPECS/README.md` |
+| Bug class catalog + detection signatures (30+ recurring anti-pattern classes) | `DOCS/RECURRING_BUG_PATTERNS.md` |
+| Operator-collaboration rules (how Claude should engage with the operator on this codebase) | `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/MEMORY.md` |
+| Going-forward rules + sprint state + auto-write contracts | `CLAUDE.local.md` (private overlay) |
+| Hard invariants (full discussion of H1-H11 strict rules; private) | `DOCS/STRATEGY_AND_CODING_RULES.md` |
+| Latency optimization audit findings (13-part private audit) | `DOCS/LATENCY_OPTIMIZATION_AUDIT.md` |
+| Latency-path discipline (architectural rules + anti-pattern history) | `plans/_cross-cutting/2026-05-06-latency-path-discipline.md` |
 | Adding cfg field / GUI panel / strategy / ML feature / per-core override | `DOCS/CLAUDE_INTEGRATION.md` |
 | Changing OMS / kill switch / snapshot / hot path / slow-path threading | `DOCS/CLAUDE_INVARIANTS.md` |
 | Touching FeatureRegistry / scaler / stamp / train→serve path | `DOCS/CLAUDE_ML_INVARIANTS.md` |
@@ -175,49 +194,42 @@ authoritative when needed.
 
 ## How to ... (Quick Discovery)
 
+Each entry: GENERAL task → where to start. For sprint-specific phasing of cfg-field auto-flow + stamp-binding readiness, see `CLAUDE.local.md` "Current sprint state" + `DOCS/DESIGN_PHILOSOPHY.md` § 11.
+
 | Task | Where to start |
 |---|---|
 | Add a strategy | `/strategy-template` skill + `DOCS/CLAUDE_INTEGRATION.md` |
-| Add a cfg field (KIND_DOUBLE/_PCT) | 1 row in `CoreFrameworks/CfgFieldRegistry.hpp` (parser + GUI + tooltip auto-flow) |
-| Add a cfg field (KIND_INT/_BOOL non-STAMP_BOUND) | After `.F.4c` ships: 1 row in `FOREACH_CFG_FIELD` (tt:: dispatch + GUI render + per-core override auto-flow). Before `.F.4c`: manual parser + field_defs[]. |
-| Add a cfg field (STAMP_BOUND) | After `.F.4d` ships: 1 row in `FOREACH_CFG_FIELD` with STAMP_BOUND metadata bit (derived filter + Layer 5b hash + drift check auto-flow). Before `.F.4d`: stays in legacy `FOREACH_STAMP_BOUND_CFG`. |
-| Add a cfg field (KIND_STRING/_FILE_PATH) | After `.F.4e` ships: 1 row. Before `.F.4e`: manual. |
-| Add a new derived filter (metadata-bit cohort) | After `.F.4d` ships: 1 row in `FOREACH_DERIVED_FILTER` (framework auto-flow). See `DESIGN_SPECS/metadata-bit-driven-derived-filter-framework.md`. |
+| Add a cfg field | 1 row in master registry at `CoreFrameworks/CfgFieldRegistry.hpp` (parser + GUI render + tooltip + per-core override emission auto-flow per framework state — see `DESIGN_SPECS/universal-cfg-field-registry-pattern.md` for current capabilities) |
+| Add a STAMP_BOUND cfg field | Set `STAMP_BOUND_CFG_DERIVED` bit in master registry row's metadata column (drift check + Layer 5b hash + wire emit auto-flow per `DESIGN_SPECS/metadata-bit-driven-derived-filter-framework.md`) |
+| Add a new derived filter (metadata-bit cohort) | 1 row in `FOREACH_DERIVED_FILTER` (framework auto-flow per `DESIGN_SPECS/metadata-bit-driven-derived-filter-framework.md`) |
 | Add an ML feature | `ML_Headers/FeatureRegistry.hpp` + `DOCS/CLAUDE_ML_INVARIANTS.md` |
-| Add a SHALT code / halt reason / regime / strategy / bandit algo | Registry table per X-macro pattern (CLAUDE.md item 13 → `DESIGN_PHILOSOPHY.md` § 7) |
+| Add a SHALT code / halt reason / regime / strategy / bandit algo | Registry table per X-macro pattern (`DESIGN_PHILOSOPHY.md` § 7 + `DESIGN_SPECS/x-macro-registry-with-presence-dispatch.md`) |
 | Add a stateful GUI panel | `DOCS/CLAUDE_INTEGRATION.md` § "GUI panels" + display↔execution invariant check |
-| Plan a non-trivial change | `/readiness` skill against current code + `DOCS/CLAUDE_REVIEW.md` 10-item checklist |
-| Audit existing code | `/dod-audit` + `/merge-scan` + `/parity-check` + `/trace-deps` in parallel |
-| Track a new bug class | Add to `DOCS/RECURRING_BUG_PATTERNS.md` (auto-included in `/bug-check`) |
+| Plan a non-trivial change | `/readiness` skill + `DOCS/CLAUDE_REVIEW.md` checklist + new plan body uses `DESIGN_SPECS/future-oriented-plan-template.md` |
+| Audit a plan before coding | `/precoding-audit-gate` (orchestrator) → SHAPE audits in parallel + (`/blindspot-scan` if struct-gen / type unification / cross-registry consumer / wire-format ordering migration) |
+| Audit existing code for anti-patterns | `/bug-check` (against RECURRING_BUG_PATTERNS classes) + `/dod-audit` (against DESIGN_SPECS catalog) + `/anti-spaghetti` (codebase-wide structural sweep) |
+| Track a new bug class | Add to `DOCS/RECURRING_BUG_PATTERNS.md` (auto-included in `/bug-check`); include "False-positive surface" subsection per M3 discipline |
+| Track a new meta-discipline (audit-methodology gap) | Codify per `DESIGN_PHILOSOPHY.md` § 11.5 procedure (NEW DESIGN_SPEC + skill amendment + `/readiness` Check + memory + CI tool if mechanical) |
 | Ship a sub-ship | `/ship` skill (build verify + version bump + commit + tag + push) |
 | Generate handoff prompt for fresh context | `/handoff` skill |
 
 ## Skill suite (audit-driven discipline)
 
-| Skill | When to fire |
-|---|---|
-| `/readiness` | Pre-coding plan verification (28-check pass) |
-| `/parity-check` | Train↔serve identity audit; HMAC chain byte preservation |
-| `/trace-deps` | Dependency-chain audit for new plan code |
-| `/merge-scan` | Reuse-merge opportunities; mirror-incomplete patterns |
-| `/dod-audit` | Data-oriented-design pattern application against DESIGN_SPECS catalog |
-| `/bug-check` | Scan codebase for instances of RECURRING_BUG_PATTERNS classes |
-| `/hft-audit` | Universal HFT principles (cache, branchless, lock-free, FPN edge cases) |
-| `/ml-audit` | ML pipeline silent failure modes + train-serve parity gaps |
-| `/dust` | Generic cleanup punch list (rotting comments, oversized fns, copy-paste) |
-| `/test-strength-audit` | Anti-regression scan for test weakening (`==` → `>=` without justification) |
-| `/handoff` | Generate self-contained handoff prompt for fresh context window |
-| `/loop` | Recurring task on interval (poll status, repeat invocation) |
-| `/sync-workspace` | Mirror plans/ + skills/ + cfg files to workspace backup |
+Skills group by concern. Read each skill's `claude-skills/<name>/SKILL.md` for invocation details.
 
-Multi-skill audit gate before HIGH-RISK ships: `/parity-check + /trace-deps + /readiness + /merge-scan + /dod-audit` in parallel via Agent tool. See `DOCS/DESIGN_PHILOSOPHY.md` § 11 (Process discipline) + `DESIGN_SPECS/audit-driven-pre-coding-gate.md`.
+| Concern | Skills |
+|---|---|
+| **Pre-coding plan verification** | `/readiness` (28-check pass) + `/precoding-audit-gate` (orchestrator firing parallel audits) |
+| **SHAPE audits (design-layer)** | `/parity-check` (train↔serve identity; wire byte preservation) + `/trace-deps` (dependency chains) + `/merge-scan` (reuse opportunities) + `/dod-audit` (DESIGN_SPECS pattern application) |
+| **IMPLEMENTATION-DETAIL audits (code-layer)** | `/blindspot-scan` (12-category implementation taxonomy; fires after SHAPE returns GREEN/YELLOW per `DESIGN_PHILOSOPHY.md` § 11.5) |
+| **DOMAIN audits** | `/accounting-audit` (OMS / fee / P&L) + `/hft-audit` (universal HFT principles) + `/ml-audit` (ML pipeline) + `/registry-fit-audit` (registry misapplication) |
+| **Anti-pattern scans** | `/bug-check` (RECURRING_BUG_PATTERNS instances) + `/anti-spaghetti` (codebase-wide structural sweep) + `/dust` (generic cleanup) + `/test-strength-audit` (test-weakening regression) |
+| **Post-coding** | `/ship` (build verify + version bump + commit + tag + push) + `/post-ship-audit` (retrospective) + `/latency-track` (HOT_PATH_CHANGELOG draft) |
+| **Workflow** | `/handoff` (self-contained pickup prompt) + `/plan-draft` (scaffold future-oriented plan body) + `/sync-workspace` (mirror to workspace backup) |
+| **Recurrence** | `/loop` (recurring task on interval) + `/schedule` (remote-agent cron) |
+
+Audit-driven discipline: HIGH-RISK ships fire `/precoding-audit-gate` (SHAPE) + `/blindspot-scan` (IMPLEMENTATION-DETAIL) in parallel before coding. Per-ship cycle: audit → consult → update plan → implement → ship → postmortem. See `DESIGN_PHILOSOPHY.md` § 11 + § 11.5 + `DESIGN_SPECS/audit-driven-pre-coding-gate.md` + `DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md`.
 
 ---
 
-**End of CLAUDE.md.** Always-loaded orientation. The 30 architectural
-items previously here moved to `DOCS/DESIGN_PHILOSOPHY.md` (private)
-where they're grouped by family with WHY context + 4-tier discipline
-classification + cross-reference index. Item 31 (framework-driven
-extensibility meta-principle; § 1.5) added at v5.15.5.F.4d planning.
-CLAUDE.local.md (private overlay) layers operator preferences +
-going-forward rules + sprint state on top of this baseline.
+**End of CLAUDE.md.** Always-loaded orientation: Purpose + Hard Invariants (H1-H20) + Reference table + How-to discovery + Skill suite categories. Architectural detail + WHY context lives in `DOCS/DESIGN_PHILOSOPHY.md` (master settings portal). Operator preferences + sprint state + going-forward rule index live in `CLAUDE.local.md` (private overlay). Collaboration rules live in `memory/MEMORY.md`. Patterns live in `DESIGN_SPECS/`. Anti-patterns live in `DOCS/RECURRING_BUG_PATTERNS.md`. Each layer has ONE home; no duplication across layers.

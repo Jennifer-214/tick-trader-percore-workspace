@@ -287,6 +287,7 @@ The canonical end-state is: ONE master registry with metadata bits + sidecars; M
 - Sister: `meta-registry-pattern-for-codebase-registry-discipline.md` (H15 + H19 topology discipline)
 - Sister: `framework-composition-overview.md` v1.2+ (composition narrative)
 - Sister: `pattern-codification-lifecycle.md` (Stage 1-5 framework)
+- Sister: `implementation-layer-blindspot-taxonomy.md` (meta-discipline M4; this discipline IS the M1 codification — the implementation-detail blind-spot taxonomy is the meta-discipline registry where M1 lives)
 - Skill: `/anti-spaghetti` (codebase-wide audit)
 - Sister doc (master pattern): `cfg-derived-consumer-framework.md` (this discipline's 1st canonical application)
 - CLAUDE.md item 31 (framework-driven extensibility meta-principle)

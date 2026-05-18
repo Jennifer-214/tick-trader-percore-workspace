@@ -74,6 +74,14 @@ infrastructure change), one-off bug fix.
     touching framework selection.
   - `hft` — fires `/hft-audit` for plans touching SP/HP/drainer code. Includes branchless
     dispatch opportunity scan + cache layout discipline + Class 28 prevention.
+  - `blindspot` — fires `/blindspot-scan` (IMPLEMENTATION-DETAIL layer per DESIGN_PHILOSOPHY § 11.5
+    meta-discipline M4) for plans where SHAPE audits return GREEN/YELLOW after 3+ iterations, OR
+    struct-gen migration crosses ≥2 registries, OR type unification migration, OR cross-registry
+    consumer, OR macro hoisting into framework primitive, OR include surface change, OR wire-format
+    ordering change. Walks 12-category implementation-detail blind-spot taxonomy at
+    `DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md`. Distinct from SHAPE audits:
+    SHAPE catches design-layer issues; `/blindspot-scan` catches code-layer issues (type-change
+    cascades, field-name collisions, context-dependent C++, include cycles, row-order drift).
 
   **Recommended audit set per ship type (default scope = current per-audit unless noted):**
   | Ship type | Recommended `audit_set` |
@@ -82,8 +90,10 @@ infrastructure change), one-off bug fix.
   | OMS / drainer / fee / commission / P&L / accounting | `parity,trace,readiness,merge,dod:module:OMS,accounting:module:OMS,hft:module:OMS` |
   | NEW registry introduction OR per-instance cache | `parity,trace,readiness,merge,dod,accounting,registry-fit,hft` |
   | ML pipeline / model / inference | `parity:module:ML-pipeline,trace,readiness,merge,dod:module:ML-pipeline,accounting:module:ML-pipeline` |
-  | Wire-format / stamp / drift / Layer 5b | `parity:module:wire-format,trace,readiness,merge,dod:module:wire-format` |
+  | Wire-format / stamp / drift / Layer 5b | `parity:module:wire-format,trace,readiness,merge,dod:module:wire-format,blindspot` |
   | SP/HP/drainer touching ships | Add `hft:module:<area>` to the base set per branchless discipline |
+  | Struct-gen migration / type unification / cross-registry consumer | Base set + `blindspot` (IMPLEMENTATION-DETAIL layer; meta-discipline M4 per DESIGN_PHILOSOPHY § 11.5) |
+  | SHAPE audits returned GREEN/YELLOW after 3+ iterations on same plan | Add `blindspot` (iteration-spiral inflection signal per `feedback_iteration_spiral_signals_audit_meta_gap`) |
 - `focus_keywords` (OPTIONAL; trailing args) — extra context phrases
   injected into each subagent prompt to narrow scope. E.g., `"STAMP_BOUND
   derived filter" "Layer 5b hash lock"` to focus audits on a specific

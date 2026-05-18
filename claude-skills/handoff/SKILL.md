@@ -505,12 +505,24 @@ Run `/readiness <plan-path>` and address every GAP / stale-reference finding. Co
 Per `DESIGN_SPECS/audit-driven-pre-coding-gate.md`, fire the gate when ship has 2+ of: closes recurring bug class structurally, touches wire format, adds 5+ new fields/functions/cfg entries, refactors fn used at 5+ sites, picks up work from previous (possibly compacted) session.
 
 <conditionally-included if ship qualifies>
-Spawn these audits IN PARALLEL via Agent tool with Explore subagents:
+
+**SHAPE-layer audits (always fire):** Spawn these audits IN PARALLEL via Agent tool with Explore subagents:
 1. `/parity-check` — focus: train↔serve identity; stamp body if applicable; production-caller field-population
 2. `/trace-deps` — focus: plan file:line claims; function signatures match planned; dependency-chain
-3. `/readiness` (full 28-check pass) — cold-pickup completeness; new cfg field eligibility; X-macro variant selection
+3. `/readiness` (full 28-check pass + Checks 36-39 per M4) — cold-pickup completeness; new cfg field eligibility; X-macro variant selection; sister-registry parity / transitional state / include topology / row-order parity
 4. `/merge-scan` — focus: reuse opportunities; mirror-incomplete patterns
 5. `/dod-audit` — focus: DESIGN_SPECS pattern application; missed bit-packing / X-macro / cache-alignment candidates
+
+**IMPLEMENTATION-DETAIL-layer audit (conditional fire per meta-discipline M4):** AFTER SHAPE audits return GREEN/YELLOW, fire `/blindspot-scan` if ANY of:
+6. Struct-gen migration crosses ≥2 registries
+7. Type unification migration (STORAGE_T column adoption; type shifts across rows)
+8. Cross-registry consumer (single struct/function reads fields from ≥2 registries)
+9. Macro hoisting (X-macro walker bodies extracted from call sites into framework primitive)
+10. Include surface change (new cross-directory includes proposed)
+11. Wire-format ordering change (master registry order differs from legacy walker emit order)
+12. SHAPE audits returned GREEN/YELLOW after 3+ iterations on same plan (inflection signal)
+
+`/blindspot-scan` walks the 12-category implementation-detail taxonomy at `DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md` (per `DOCS/DESIGN_PHILOSOPHY.md` § 11.5 meta-discipline M4). SHAPE audits answer "is design right?"; IMPLEMENTATION-DETAIL answers "will code compile/run without surprise?" — both layers needed.
 
 After all reports return, synthesize convergent findings to `plans/plan_checks/<date>-<ship-tag>-fresh-audits-synthesis.md`. THEN consult Caramel before coding. Do NOT auto-proceed even if findings look addressable (per CLAUDE.local.md feedback_consult_on_audit_findings memory).
 </conditionally-included>

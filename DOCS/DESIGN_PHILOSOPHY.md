@@ -756,6 +756,94 @@ recurring bug classes pre-coding, and keeps the audit infrastructure
 
 ---
 
+## 11.5 Meta-disciplines (when audits surface their own gaps)
+
+The audit-driven pre-coding gate (§ 11) catches plan-vs-code drift, dependency gaps, plan completeness, reuse opportunities, pattern-application gaps. But audits THEMSELVES have gaps — surfaces they don't reach. When iteration count grows with DIMINISHING per-iteration severity, the iteration count IS the signal of an audit METHODOLOGY gap (a META-gap).
+
+This section codifies the meta-disciplines that close audit-methodology gaps as they emerge — and how the discipline catalog evolves over time.
+
+### PROCESS: Iteration spiral signals a meta-gap.
+
+When plan body amendment iterations find smaller-and-smaller findings across 4+ cycles, stop individual-finding-chase. Ask: "what AUDIT METHODOLOGY GAP caused us to keep finding small issues?". Codify the META-gap immediately; apply a comprehensive sweep with new discipline; verify inflection (next iteration finds nothing material).
+
+Common meta-gap shapes (catalog grows as new gaps surface):
+
+| Meta-discipline | Signal | Codification | Closes |
+|---|---|---|---|
+| **M1 — Sister-registry parity verification** | Plan body references column on sister registry that doesn't exist at HEAD; or sister registry sig migrated but cohort siblings deferred without rationale | `canonical-sister-extension-discipline.md` § Temporal evolution + cohort migration; `/readiness` Check 36; `/trace-deps` cohort-parity amendment | Class 14 sister-registry-shape-drift instance prevention |
+| **M2 — Cross-tool emit-site enumeration** | Wire-format-changing plan enumerates engine code but misses cross-process emitters (CLI tools, training scripts, recording tools) | `wire-format-byte-preservation-discipline.md` Layer 7; `/parity-check` Section E amendment; future-oriented-plan-template wire-format section | Wire-format drift across cross-process emit surfaces |
+| **M3 — Anti-pattern codification distinguishes legitimate siblings** | New anti-pattern class text would false-positive on legitimate sibling patterns that match the textual shape but are semantically different | `RECURRING_BUG_PATTERNS.md` codification template requires explicit "False-positive surface" subsection | False-positive recurrence reports on legitimate patterns |
+| **M4 — Implementation-detail audit layer above SHAPE** | SHAPE audits (parity / trace / readiness / merge / dod) return GREEN-or-YELLOW after 3+ iterations; operator senses unaddressed concerns; type-change cascades / field-name collisions / context-dependent C++ constructs / row-order drift remain unchecked | `implementation-layer-blindspot-taxonomy.md` (12-category taxonomy); `/blindspot-scan` skill (Layer-2 audit); `/readiness` Checks 36-39; `/trace-deps` TYPE-SENSITIVE classification; `/parity-check` claim→evidence + row-order amendments; CI tools `check_field_name_uniqueness.py` + `check_storage_t_coverage.py` | 12 categories of implementation-detail blind spots SHAPE audits miss |
+
+### PROCESS: SHAPE audits answer "is the design right?"; IMPLEMENTATION-DETAIL audits answer "will the code compile and run without surprise rework?"
+
+Both layers needed; neither substitutes for the other. After `/precoding-audit-gate` returns GREEN-or-YELLOW with the SHAPE audit set, fire `/blindspot-scan` if any of: struct-gen migration crosses ≥2 registries / type unification migration / cross-registry consumer / macro hoisting from call site into framework primitive / include surface change / wire-format ordering change / pre-coding audit gate ran 3+ batches with iterative findings.
+
+### PROCESS: Adding a new meta-discipline.
+
+When a meta-gap surfaces:
+
+1. Recognize the iteration-spiral signal (per `feedback_iteration_spiral_signals_audit_meta_gap`)
+2. Codify the META-gap as a DESIGN_SPEC body (Stage 2 DRAFT)
+3. Amend the relevant audit skill(s) to encode the discipline structurally
+4. Add `/readiness` Check (N+1) if plan-time verification is feasible
+5. Add a CI tool stub if mechanical detection is feasible
+6. Write a feedback memory documenting the trigger + how-to-apply
+7. Add the new Mn row to the meta-discipline table above
+8. At ship close: promote the DESIGN_SPEC to Stage 3 ACTIVE; the new discipline is now part of the gate
+
+This is the discipline-evolution machinery: the codebase's meta-rules are NOT static; they grow as new audit-methodology gaps surface. Each Mn codification adds a structural guard that future ships inherit mechanically — the discipline encoded in skills + specs + CI rather than in human memory.
+
+### PROCESS: DESIGN_PHILOSOPHY as the master settings portal.
+
+Where to find any principle in force, organized by layer:
+
+| Layer | Source | Read when |
+|---|---|---|
+| **Hard invariants (H1-H20)** | § 2 of this doc + CLAUDE.md table | Always-loaded; never break |
+| **Family principles** | § 3-10 of this doc | Designing a non-trivial change in that family |
+| **Process disciplines** | § 11 + § 11.5 of this doc | Planning a ship; recognizing meta-gap; firing audits |
+| **Patterns catalog** | `DESIGN_SPECS/README.md` + per-pattern doc | Building a new feature; sister-extension search |
+| **Anti-pattern catalog** | `DOCS/RECURRING_BUG_PATTERNS.md` | Pre-coding sweep; codifying new Class |
+| **Operator-collaboration rules** | `memory/MEMORY.md` + per-rule body | How Claude should engage with operator on this codebase |
+| **Sprint state** | sprint MASTER plan + CLAUDE.local.md "Current sprint state" | Cold-pickup; ship sequencing |
+| **Going-forward rule index** | CLAUDE.local.md "Going-forward rules" | Discovering which discipline applies to a trigger |
+| **Auto-write contracts** | CLAUDE.local.md "Auto-write contracts" | Determining which ledger an audit finding belongs in |
+
+The portal hierarchy reads top-down:
+
+```
+CLAUDE.md                       (orientation; always loaded)
+     ↓
+DESIGN_PHILOSOPHY.md            (WHY + meta-rules; this doc; read on cold-pickup)
+     ↓
+DESIGN_SPECS/                   (HOW patterns; 80+ specs; read on-demand per topic)
+     ↓
+RECURRING_BUG_PATTERNS.md       (anti-patterns; 30+ classes; read for pre-coding sweep)
+     ↓
+memory/                         (operator-collaboration rules; auto-loaded)
+     ↓
+CLAUDE.local.md                 (operator overlay + sprint state index; auto-loaded)
+```
+
+CLAUDE.md is for ARCHITECTURAL ORIENTATION (what the codebase IS). DESIGN_PHILOSOPHY is for PRINCIPLES (why it is that way + how to extend). DESIGN_SPECS is for PATTERNS (how to apply the principles concretely). RECURRING_BUG_PATTERNS is for ANTI-PATTERNS (what to avoid). Memory is for COLLABORATION (how Claude should engage with this specific operator). CLAUDE.local.md is for INDEX + SPRINT STATE (where to find things + what's currently in flight).
+
+If you can't find the answer at the layer you're looking at, go DOWN the hierarchy. CLAUDE.md → DESIGN_PHILOSOPHY → DESIGN_SPECS is the standard descent.
+
+**Cross-references:**
+
+- `feedback_iteration_spiral_signals_audit_meta_gap` (memory rule; the recognition pattern)
+- `feedback_implementation_detail_blindspot_recovery_via_taxonomy` (memory rule; M4 specifically)
+- `feedback_audit_canonical_sister_before_new_infra` (memory rule; M1 producer side)
+- `feedback_enumerate_consumers_before_registry_row_deletion` (memory rule; M1 consumer side)
+- `DESIGN_SPECS/audit-driven-pre-coding-gate.md` (parent pattern for /precoding-audit-gate)
+- `DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md` (M4 codification)
+- `DESIGN_SPECS/canonical-sister-extension-discipline.md` (M1 codification)
+- `DESIGN_SPECS/wire-format-byte-preservation-discipline.md` Layer 7 (M2 codification)
+- `DESIGN_SPECS/pattern-codification-lifecycle.md` (Stage 2 DRAFT → Stage 3 ACTIVE workflow)
+
+---
+
 ## 12. What this codebase EXPLICITLY does NOT optimize for
 
 Every codebase has design choices it says NO to. Naming them keeps focus.
@@ -835,6 +923,10 @@ for quick lookups when implementing or reviewing.
 | Multiple parallel descriptors | — | — | Class 21 |
 | Runtime cfg gating scattered | — | — | Class 22 |
 | Type-erased reinterpret_cast dispatch | — | type-trait-dispatch-via-tt-namespace.md | Class 23 |
+| M1 — Sister-registry parity verification (meta-discipline) | (this doc § 11.5) | canonical-sister-extension-discipline.md | — |
+| M2 — Cross-tool emit-site enumeration (meta-discipline) | (this doc § 11.5) | wire-format-byte-preservation-discipline.md § Layer 7 | — |
+| M3 — Anti-pattern codification distinguishes legitimate siblings (meta-discipline) | (this doc § 11.5) | (codification template in RECURRING_BUG_PATTERNS.md intro) | — |
+| M4 — Implementation-detail audit layer above SHAPE (meta-discipline) | (this doc § 11.5) | implementation-layer-blindspot-taxonomy.md | — |
 
 ---
 

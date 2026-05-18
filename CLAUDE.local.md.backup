@@ -1,25 +1,22 @@
 # CLAUDE.local.md — private overlay
 
-**Gitignored.** Project-private supplement to `CLAUDE.md`. Claude
-Code auto-loads this; the public repo never sees it. Workspace backup:
-`tick-trader-percore-workspace/CLAUDE.local.md.backup` via
-`/sync-workspace`.
+**Gitignored.** Project-private supplement to `CLAUDE.md`. Auto-loaded by Claude Code; never reaches the public repo. Workspace backup: `tick-trader-percore-workspace/CLAUDE.local.md.backup` via `/sync-workspace`.
 
-**This file is an INDEX.** Each rule = one-line statement + one-line
-trigger + canonical-doc pointer. Deep-dive bodies (Why + How to
-apply + worked examples + anti-patterns) live in:
+**Purpose:** index of operator-specific overlay on top of CLAUDE.md baseline — required-reading triggers, sprint state pointer, going-forward rule index (each entry ≤3 lines; bodies live in canonical docs), auto-write contracts, skill load contracts, privacy boundary, landmines pointer.
 
-- `tick-trader-percore-workspace/DESIGN_SPECS/<pattern>.md` — pattern bodies
-- `DOCS/RECURRING_BUG_PATTERNS.md` — bug class registry
+**Each going-forward rule = one-line trigger + canonical-doc pointer.** Deep-dive bodies (Why + How to apply + worked examples + anti-patterns + specific event context) live in:
+
+- `tick-trader-percore-workspace/DESIGN_SPECS/<pattern>.md` — pattern bodies (HOW)
+- `tick-trader-percore-workspace/DOCS/DESIGN_PHILOSOPHY.md` — master settings portal (WHY + meta-rules; § 11.5 is the meta-discipline registry)
+- `DOCS/RECURRING_BUG_PATTERNS.md` — anti-pattern registry
 - `DOCS/TECH_DEBT.md`, `DOCS/PARITY_ISSUES.md`, `FEATURE_LOOKUP.md` — auto-write ledgers
-- `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/` — feedback / user / project memories
-- `tick-trader-percore-workspace/claude-skills/<skill>/SKILL.md` — operational contracts
+- `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/` — operator-collaboration + project + reference memories
+- `tick-trader-percore-workspace/claude-skills/<skill>/SKILL.md` — operational skill contracts
 - `tick-trader-percore-workspace/DOCS/LANDMINES.md` — operational pitfalls
-- `tick-trader-percore-workspace/DOCS/DESIGN_PHILOSOPHY.md` — thematic narrative + 4-tier discipline classification + cross-reference index; the WHY companion to `CLAUDE.md`
-- `CLAUDE.md` — slimmed to operational orientation + H1-H20 hard invariants + reference table (always loaded)
 
-Skills that fire on relevant work load matching DESIGN_SPECS bodies
-dynamically — see "Skill load contracts" below.
+## Meta-disciplines (audit-methodology gaps codified)
+
+When SHAPE audits return GREEN/YELLOW after 3+ iterations but blind spots persist, the META gap itself is the signal. See `DOCS/DESIGN_PHILOSOPHY.md` § 11.5 for the canonical meta-discipline registry. Currently codified: **M1** sister-registry parity verification / **M2** cross-tool emit-site enumeration / **M3** anti-pattern codification distinguishes legitimate siblings / **M4** implementation-detail audit layer above SHAPE (taxonomy at `DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md`; skill at `/blindspot-scan`). Adding a new Mn → procedure in DESIGN_PHILOSOPHY § 11.5.
 
 ---
 
@@ -40,16 +37,15 @@ designing rather than implementing.
 
 ## Current sprint state
 
+Full state body lives at `plans/v5.15-live-readiness/MASTER.md` + the in-flight ship's plan body. This table is the INDEX pointer.
+
 | Field | Value |
 |---|---|
-| Sprint | `v5.15-live-readiness` (`plans/v5.15-live-readiness/MASTER.md`) |
-| Most recent ship | **`v5.15.5.F.4d.1.B.2`** (2026-05-17) — Cohort migration. 24 fields flag STAMP_BOUND_CFG_DERIVED + framework activated across 3 cohort registries + Path γ #3 PARTIAL closure (2-of-3 cohort-gate registries unified via COHORT_GATE_* macros) + FPN<F> 6 comparison operators codebase-wide + Winsor parse-time validation + 22 new tests. 8 LOAD-BEARING deferrals to `.B.3` (TECH_DEBT-093 through -100; `.B.3` Step 1.6.1-1.6.7 enumerates; Step 2 legacy registry deletion FORCES items 4-6). 10 coding-time discoveries documented incl. Decision 9 v1.2 override-inherit-pattern reframe. Postmortem at `plans/v5.15-live-readiness/postmortems/2026-05-17-v5.15.5.F.4d.1.B.2-postmortem.md`. |
-| In-progress umbrella | **`v5.15.5.F.4d.1` Thread A FULL framework consolidation** — `.A` shipped + pushed; `.B` split into `.B.1`/`.B.2`/`.B.3`; `.B.1`+`.B.2` shipped (local); **`.B.3` queued** with handoff at `plans/v5.15-live-readiness/handoffs/2026-05-17-v5.15.5.F.4d.1.B.3-handoff.md`. Sub-master v1.3 at `subplans/2026-05-16-v5.15.5.F.4d.1-thread-a-framework-full.md`. Then `.C` (sidecar override + bit-packed inventory) → `.D` (CI verification + fixture regression) → `.F.4d.1` umbrella close. |
-| Sprint-wide invariant | `CfgFieldDescriptor` schema LOCKED at `.F.4b` (Kind enum is GUI metadata only — NEVER drives storage; H13 + H14 consolidated). |
-| Ship-after sequence | `.F.4d.1` → `.F.4e` (KIND_STRING + 5 GUI metadata derived filters; validates framework via second-source apps; LOW-MED risk) → `.F.4f` **wind-down ship** (zero framework additions; closes TECH_DEBT-076-080 + dust H1 + CoreCtx trio; ~2-3 days MED) → `.F.5.A/.B/.C` (ML-side refactor; folded into v5.15 per 2026-05-17 decision; scope TBD by `/anti-spaghetti` at `.F.4f` close) → `v5.15.6.A/.B` (operational safety) → `v5.15` umbrella close → paper-test session. |
-| Post-paper-test work | Code-moving maintainability wins (no framework risk per `feedback_framework_layer_payoff_diminishing_returns`): controller_test.cpp split (~25-26K lines → ~5 domain-aligned files; per v5.11.35 rule); mega-header splits if any oversized headers remain. New structural-recurrence opportunities considered ONLY when recognition markers warrant (clear 60:4-or-better ratio + recurring bug class) — operator signals re-entry into a new build/consolidation phase. |
-| Open architectural decisions | `.F.4i` AoS-by-core re-layout: wait for slow-path profile data; TECH_DEBT-008 maker order MVP: indefinite defer per no orderbook data source. |
-| Recent anti-pattern codifications | Class 23 (type-erased reinterpret_cast dispatch, `.F.4b`) + Class 24 (capability-cfg surface mismatch, `.F.4c.1`) + Class 25 (scope-erosion in per-core consumer, `.F.4c.3`) + Class 27 (scalar cfg-mirror cache, `.F.4c.3`) + Class 28 (branchy SP/HP dispatch, `.F.4c.3`) + Class 29 (silent zero-fee-rate from missing pre-resolution, `.F.4c.3`). |
+| Sprint | `v5.15-live-readiness` — see `plans/v5.15-live-readiness/MASTER.md` for full sprint state, ship pipeline, deferrals, post-paper-test work |
+| In-flight ship | **`v5.15.5.F.4d.1.B.3`** (Legacy empty-out) — handoff at `plans/v5.15-live-readiness/handoffs/2026-05-18-v5.15.5.F.4d.1.B.3-step-1.6.3-coding-handoff.md`; plan body at `subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md` |
+| Recent meta-discipline codifications | M1+M2+M3 codified at v1.10 of `.B.3` plan body; **M4** (implementation-detail blind-spot taxonomy) codified at v1.11 mid-coding (2026-05-18). All 4 cross-ref'd at `DOCS/DESIGN_PHILOSOPHY.md` § 11.5 |
+| Recent anti-pattern codifications | See `DOCS/RECURRING_BUG_PATTERNS.md` for full Class catalog (currently Class 1-30 + Class 31 + Class 32 NEW codified at `.B.3` ship close) |
+| Sprint-wide invariant | `CfgFieldDescriptor` schema LOCKED at `.F.4b` (Kind enum is GUI metadata only — NEVER drives storage; H13 + H14 consolidated) |
 
 ---
 
@@ -103,10 +99,11 @@ the canonical doc.
 - **Framework-layer payoff has diminishing returns; stop at the inflection point** (2026-05-17) — `feedback_framework_layer_payoff_diminishing_returns.md`. Trigger: tempted to propose new framework layer past inflection. Recognition: sites-added-vs-eliminated (60:4 ship; 6:5 reject); walker iterating zero rows; audit catches small-duplication territory. Lifecycle: build (ARCHITECT bias OK) → consolidation (aggressive framework) → post-inflection (this discipline) → maintenance (code-moving wins). Phase transitions operator-signaled.
 - **Proportionate response to audit findings** (2026-05-17) — `feedback_proportionate_response_to_audit_findings.md`. Trigger: audit catches structural issue. Surface full menu (A INLINE MERGE / B ACCEPT WITH RATIONALE / C FOLD / D ARCHITECT + NO-FOLD first-of-kind) + evaluate each honestly + pick what's actually right (not first sufficient; not smallest). Audit catch is information; response is judgment.
 - **Plan right, not fast** (2026-05-17) — `feedback_plan_right_not_fast.md`. Trigger: planning-grade decision. Planning IS the hard part of SWE in 2026; AI handles mechanical coding; human value-add concentrates in planning. Disciplines support decide-rightly, not decide-quickly. Indecisiveness is feature; speed heuristics undercut planning depth.
-- **4-pillar self-audit before surfacing recommendations** (2026-05-17) — `feedback_audit_own_proposals_with_same_rigor.md` + 3 sister memories. Trigger: before surfacing ANY recommendation (auto-pick on design space; framework extension; new spec; refactor scope). Apply 4-pillar discipline: (1) DESIGN_SPECS cross-check — does existing catalog cover this pattern?; (2) Anti-pattern catalog check — verify against all 30+ classes in `DOCS/RECURRING_BUG_PATTERNS.md` with CLEAN/CLOSES/N-A per class; (3) Operator-impact dimension — what action does Caramel need? Migration burden? Workflow disruption? Default toward non-breaking alternatives unless breaking is structurally necessary (`feedback_surface_operator_migration_path_proactively.md`); (4) Novel-alternative consideration — could a novel design fit better given the SPECIFIC purpose? Don't default to existing patterns out of inertia (`feedback_proactive_novel_alternative_consideration.md`). On pushback-triggered reconsideration: re-check existing DESIGN_SPECS + anti-pattern catalog for BOTH options before committing (`feedback_recheck_designspecs_on_pushback.md` — caught Decision C reactive flip to Class 21 anti-pattern at `.B.3`). Plan body amendments MUST include all 4 dimensions as explicit sections per `future-oriented-plan-template.md`. `/readiness` Checks 31-33 verify presence mechanically.
-- **Future-headache vs optimization scope framework** (2026-05-17) — `feedback_future_headache_vs_optimization_scope_framework.md`. Trigger: scope discoveries surface during refactor/cleanup ships (e.g., surviving anti-pattern instances). Axis: "does this reduce FUTURE HEADACHE" (close at ship) vs "is this PURE PERFORMANCE OPTIMIZATION" (defer + document). Anti-pattern instance survival = grind through (per `feedback_motivated_collaborator_for_caramel`); slow-path cycle reduction = defer (per `feedback_framework_layer_payoff_diminishing_returns`). Codified at `.B.3` v1.6 applying to TECH_DEBT-104 (closed) vs TECH_DEBT-103 (deferred). Caramel framing: "this refactor is about cleaning up messy code and making it future maintainable".
-- **Iteration spiral as audit-meta-gap signal** (2026-05-17) — `feedback_iteration_spiral_signals_audit_meta_gap.md`. Trigger: plan body amendment iterations finding smaller-and-smaller findings across 4+ cycles. STOP individual-finding-chase; ask "what AUDIT METHODOLOGY GAP caused us to keep finding small issues?". Codify META-gap immediately + apply comprehensive sweep + verify inflection (next iteration finds nothing material). Codified at `.B.3` v1.8 after 6-iteration spiral; v1.8 codified consumer-enumeration meta-gap; v1.9 applied + caught stamp_model.sh + inflection reached. Common meta-gaps: consumer enumeration / cross-pattern access / cross-file-type / sister-registry / naming-asymmetry. Skill amendments scheduled at ship close: `/precoding-audit-gate` iteration tracking + `/readiness` Check 35 (verify meta-gap codified if 5+ amendments) + `audit-driven-pre-coding-gate.md` DESIGN_SPEC new section.
-- **Comprehensive consumer enumeration before registry-row deletion** (2026-05-17) — `feedback_enumerate_consumers_before_registry_row_deletion.md`. Trigger: plan proposes X-macro registry row deletion / rename / column-1-vs-source-name change. Run ONE comprehensive grep covering ALL access patterns (dot/arrow/STAMP_HAS/token-paste) across all file types BEFORE finalizing scope. Piecemeal cross-greps miss sites + cause iteration spiral. For >30 sites: procedure-based plan body capture + coding-time `rg`-driven enumeration + full-token replace_all per field + build verify each. Codified at `.B.3` v1.8 after 7 iterations of plan body each finding more consumer sites — one comprehensive grep revealed 149 total across 8 files. Sister to `feedback_audit_canonical_sister_before_new_infra` (producer side; this is consumer side).
+- **4-pillar self-audit before surfacing recommendations** — `feedback_audit_own_proposals_with_same_rigor.md`. Trigger: before surfacing ANY recommendation. 4 pillars: DESIGN_SPECS cross-check / anti-pattern catalog check / operator-impact / novel-alternative. `/readiness` Checks 31-33 verify. Sister memories: `feedback_recheck_designspecs_on_pushback`, `feedback_surface_operator_migration_path_proactively`, `feedback_proactive_novel_alternative_consideration`.
+- **Future-headache vs optimization scope framework** — `feedback_future_headache_vs_optimization_scope_framework.md`. Trigger: scope discoveries during refactor/cleanup. Anti-pattern instance survival = close at ship; pure perf optimization = defer + document.
+- **Iteration spiral as audit-meta-gap signal** — `feedback_iteration_spiral_signals_audit_meta_gap.md`. Trigger: plan body amendments find smaller-and-smaller findings across 4+ cycles. STOP individual-finding-chase; codify META-gap immediately per `DOCS/DESIGN_PHILOSOPHY.md` § 11.5 procedure; verify inflection. Common meta-gap shapes: consumer enumeration / cross-pattern access / cross-file-type / sister-registry / naming-asymmetry.
+- **Comprehensive consumer enumeration before registry-row deletion** — `feedback_enumerate_consumers_before_registry_row_deletion.md`. Trigger: plan proposes X-macro registry row deletion / rename / column-1-vs-source-name change. Run ONE comprehensive grep covering all access patterns across all file types BEFORE plan body lock. Sister: `feedback_audit_canonical_sister_before_new_infra` (producer side; this is consumer side).
+- **Implementation-detail audit layer (M4) above SHAPE** — `feedback_implementation_detail_blindspot_recovery_via_taxonomy.md`. Trigger: SHAPE audits return GREEN/YELLOW after 3+ iterations OR struct-gen migration crosses ≥2 registries OR type unification OR cross-registry consumer OR macro hoisting OR wire-format ordering change. Fire `/blindspot-scan` against the 12-category taxonomy at `DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md`.
 
 ### Thread isolation between subsystems
 
@@ -157,6 +154,7 @@ pattern access:
 | `/bug-check` | Reads `DOCS/RECURRING_BUG_PATTERNS.md` registry dynamically. |
 | `/merge-scan` | Compose-by-reference reads relevant DESIGN_SPECS when surfacing candidates. |
 | `/anti-spaghetti` | Reads DESIGN_SPECS catalog + applies proportionate-response discipline per `feedback_proportionate_response_to_audit_findings`. |
+| `/blindspot-scan` | Loads `implementation-layer-blindspot-taxonomy.md` (12-pillar taxonomy) + reads cited CfgFieldRegistry / MlCfgFlagRegistry / GateCfgFlagRegistry / CfgFieldDispatch.hpp dynamically per pillar walk; cross-refs `wire-format-byte-preservation-discipline.md` (Layer 5b) for B12 row-order parity. Fires AFTER `/precoding-audit-gate` SHAPE audits return GREEN/YELLOW. |
 
 ---
 

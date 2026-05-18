@@ -365,6 +365,35 @@ Print summary to stdout.
 - **YELLOW** — DRIFT findings need plan update but not blocking
 - **RED** — GAP findings; plan must update before ship
 
+## TYPE-SENSITIVE consumer classification (added 2026-05-18 — meta-discipline M4 / Pillar B8)
+
+When enumerating consumer sites for a struct-gen migration or type-unification migration, classify each call site by TYPE-SENSITIVITY. Plain consumer enumeration (Class 14 prevention) is necessary but not sufficient — type-change cascades (Pillar B1 from `implementation-layer-blindspot-taxonomy.md`) require knowing WHICH sites would break compile on a struct field type shift.
+
+**Per-site classification:**
+
+| Class | Definition | Action on type change |
+|---|---|---|
+| **TYPE-SENSITIVE-READ** | Site compares field against literal of OLD type (e.g., `sr.ridge_lambda == 0.005` against `double`) | Wrap with conversion OR add cross-type operator |
+| **TYPE-SENSITIVE-WRITE** | Site assigns field to OR from a variable of OLD type (e.g., `handle->ridge_lambda = double_var`) | Conversion OR field-type alignment |
+| **TYPE-AGNOSTIC** | Site passes through; copies value-by-value; doesn't compare or write by-type | No action |
+
+**Procedure (per migration crossing 2+ registries OR involving STORAGE_T column adoption):**
+
+1. After standard consumer enumeration (Class 14 prevention), revisit each cited site
+2. For each: classify per the table above
+3. Emit per-file site count split by class: TYPE-SENSITIVE-READ / TYPE-SENSITIVE-WRITE / TYPE-AGNOSTIC
+4. Compute total TYPE-SENSITIVE = READ + WRITE
+5. Effort estimate: ~5 min per TYPE-SENSITIVE site for conversion/operator-add; TYPE-AGNOSTIC sites are mechanical replace_all
+
+**Verdict:**
+- TOTAL TYPE-SENSITIVE ≥30 → LOAD-BEARING-LOUD (consider pre-coding type-diff to surface ALL sites at once)
+- TOTAL TYPE-SENSITIVE <30 → GUARDED-BY-BUILD (compile failures surface remaining incrementally)
+
+**Cross-references:**
+- `DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md` § B1 + § B8
+- `DESIGN_PHILOSOPHY.md` § 11.5 meta-discipline M4
+- `claude-skills/blindspot-scan/SKILL.md` Pillar B1 + B8
+
 ## Cross-references
 
 - `/readiness` Check 19 — calls this skill for deep dives

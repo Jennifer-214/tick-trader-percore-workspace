@@ -1607,3 +1607,73 @@ This is non-blocking but flags risk. The current sprint can proceed; just be awa
 **Trigger origin:** v5.14.post1 patched a `train_model_worker_fn` migration gap that `./build.sh test` missed but `./build.sh gui suite` would have caught. TECH_DEBT-033 closure (v5.15.2.D).
 
 ---
+
+### Check 36 — Sister-registry parity verification (meta-discipline M1)
+
+**When this fires:** plan body references column / bit / field on a sister registry (e.g., FOREACH_GATE_CFG_FLAG metadata_flags column when sister FOREACH_ML_CFG_FLAG was already migrated to 6-col sig).
+
+**Why this matters:** plans assume sister-registry shape parity; sister sig migrations can drift across cohort siblings if not audited.
+
+**What to verify:** for each referenced sister-registry column/bit, `rg "#define FOREACH_<sister>\(X\)"` to read the current sig at HEAD. Verify column count + position matches plan body assumption. If sister sig was migrated but cohort siblings deferred without rationale → flag for cohort-migration sub-step in plan body.
+
+**Cross-references:** `DESIGN_SPECS/canonical-sister-extension-discipline.md` § Temporal evolution + cohort migration. `DESIGN_PHILOSOPHY.md` § 11.5 M1. `feedback_verify_sister_registry_parity_pre_coding` (memory rule).
+
+**Effort:** 2-5 min per audit (one grep per sister registry).
+
+---
+
+### Check 37 — Transitional state coexistence budget (meta-discipline M4 / Pillar B3)
+
+**When this fires:** plan body proposes multi-step migration where SOURCE pattern + TARGET pattern co-exist temporarily (e.g., legacy walker + new framework walker both alive between Step N and Step M).
+
+**What to verify:** plan body annotates "transitional state allowed; size budget = N KB; resolves at Step <N>" explicitly. Estimate peak struct size or memory footprint during coexistence. Verify ≤25KB per struct (suggested ceiling for boot-time structs) OR ≤100KB program-wide.
+
+**Verdict:** PASS if annotation + budget present; GAP if implicit coexistence without budget annotation.
+
+**Cross-references:** `DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md` § B3. `DESIGN_PHILOSOPHY.md` § 11.5 M4.
+
+**Effort:** 3-5 min per audit.
+
+---
+
+### Check 38 — Include topology cycle risk (meta-discipline M4 / Pillar B7)
+
+**When this fires:** plan body proposes new cross-directory include relationship (`MemHeaders/` ↔ `CoreFrameworks/` ↔ `ML_Headers/`).
+
+**What to verify:** map current include graph for the affected files (`rg "#include" <files>`). Inspect new include edges proposed by migration. Compute: any cycle in resulting graph? Mitigations available if cycle detected (forward declarations / template parameterization / header split).
+
+**Verdict:** PASS if no cycle OR cycle-mitigation specified; GAP if new include edge introduces cycle without mitigation note.
+
+**Cross-references:** `DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md` § B7. `DESIGN_PHILOSOPHY.md` § 11.5 M4.
+
+**Effort:** 5-10 min per audit (one grep per affected file).
+
+---
+
+### Check 40 — Cross-walker struct-field uniqueness (meta-discipline M4 / Pillar B13)
+
+**When this fires:** plan body proposes new X-macro walker that generates struct fields on a struct that ALREADY has fields from another walker (e.g., adding STAMP_RESULT_DERIVED_FIELDS_AUTO_GEN to ModelStampResult which has FOREACH_STAMP_BOUND_MODEL_CONST walker).
+
+**What to verify:** any name appearing in BOTH walker registries must be registered in the appropriate SIDECAR EXCLUSION (per H18 SIDECAR pattern). Run `tools/check_struct_field_uniqueness.py` to mechanically detect cross-walker collisions + verify sidecar registration.
+
+**Verdict:** PASS if no collisions OR all collisions in exclusion sidecar; GAP if any collision is unregistered. Sister to Check 36 (sister-registry parity); B13 is the cross-walker-scope extension.
+
+**Cross-references:** `DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md` § B13. `DESIGN_SPECS/cross-walker-struct-field-uniqueness-discipline.md` (NEW). `DESIGN_PHILOSOPHY.md` § 11.5 meta-discipline M4. `tools/check_struct_field_uniqueness.py` CI tool.
+
+**Effort:** 2-5 min per audit (run CI tool; inspect sidecar).
+
+---
+
+### Check 39 — Wire-format row ordering parity (meta-discipline M4 / Pillar B12)
+
+**When this fires:** plan body migrates emit walker from legacy registry (e.g., FOREACH_STAMP_BOUND_CFG body order) to master registry (e.g., FOREACH_PER_CORE_CFG_FIELD master declaration order) for currently-flagged STAMP_BOUND_CFG_DERIVED rows.
+
+**What to verify:** legacy walker emit order vs master registry declaration order. Diff → produce reorder punch-list. Verify Layer 5b structural invariants tolerate the diff OR plan body explicitly documents intentional reorder OR existing wire-format-byte-preservation-discipline.md SOFT-bump procedure applies.
+
+**Verdict:** PASS if orders identical OR diff annotated + SOFT-bump landing; SILENT-RISK if diff present + not annotated + Layer 5b invariants only catch post-facto.
+
+**Cross-references:** `DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md` § B12. `DESIGN_SPECS/wire-format-byte-preservation-discipline.md` Layer 5b. `DESIGN_PHILOSOPHY.md` § 11.5 M4.
+
+**Effort:** 10-15 min per audit (one grep + order-diff).
+
+---

@@ -3,10 +3,12 @@
 **Established:** 2026-05-09 (v5.14.8 sprint)
 **Status:** ACTIVE
 **Cross-references:**
-- Skills used: `/parity-check`, `/trace-deps`, `/readiness`, `/merge-scan`
-- First systematic application: v5.14.8.A pre-A.merged + post-A.0.b
+- Skills used (SHAPE layer): `/parity-check`, `/trace-deps`, `/readiness`, `/merge-scan`, `/dod-audit`, plus extended set `/accounting-audit`, `/registry-fit-audit`, `/hft-audit`
+- Skills used (IMPLEMENTATION-DETAIL layer; added 2026-05-18): `/blindspot-scan` — fires after SHAPE returns GREEN-or-YELLOW; walks 12-category taxonomy at `implementation-layer-blindspot-taxonomy.md`. SHAPE audits answer "is design right?"; IMPLEMENTATION-DETAIL audits answer "will code compile/run without surprise?"
+- First systematic application: v5.14.8.A pre-A.merged + post-A.0.b (SHAPE); first `/blindspot-scan` canonical application: v5.15.5.F.4d.1.B.3 Step 1.6.3 pre-coding (2026-05-18)
 - Companion: `compaction-degraded-handoff-discipline` (sister rule)
-- FoxML_Trader_v2 `CLAUDE.local.md` `feedback_compaction_degrades_treat_handoffs_as_hints.md`
+- Master meta-discipline registry: `DOCS/DESIGN_PHILOSOPHY.md` § 11.5 (Mn entries — M4 codified 2026-05-18 as the IMPLEMENTATION-DETAIL layer extension)
+- FoxML_Trader_v2 `CLAUDE.local.md` `feedback_compaction_degrades_treat_handoffs_as_hints.md` + `feedback_implementation_detail_blindspot_recovery_via_taxonomy.md`
 
 ---
 

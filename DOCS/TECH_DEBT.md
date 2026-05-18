@@ -1788,3 +1788,44 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 - **Status:** OPEN (logged at `.B.2` ship close 2026-05-17)
 - **Accountability mechanism:** `.B.3` Step 1.6.2 enumerates (paired with TECH_DEBT-094); inf struct unification at `.B.3` enables.
 - **Cross-ref:** `plans/v5.15-live-readiness/postmortems/2026-05-17-v5.15.5.F.4d.1.B.2-postmortem.md`; `subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md` Step 1.6.2; TECH_DEBT-094 (sister; paired migration); `ML_Headers/MlCfgFlagRegistry.hpp:64` comment block (documents the .B.3 deferral inline at the row).
+
+### TECH_DEBT-108 — `double` STORAGE_T in FOREACH_PER_CORE_CFG_FIELD (H4 violation candidate) — CLOSED (verified compliant)
+
+- **Created:** 2026-05-18 (surfaced by NEW CI tool `tools/check_storage_t_coverage.py` at `.B.3` mid-coding META program landing)
+- **Closed:** 2026-05-18 (same-day investigation; both rows verified compliant with H4 "display-only OK" exemption)
+- **Severity:** MED (downgraded to N-A after investigation)
+- **Surface:** 2 rows in `CoreFrameworks/CfgFieldRegistry.hpp` declare `double` STORAGE_T:
+  - `:653` — `ensemble_min_agreement_pct` (DBL(0.0, 0.0, 1.0); voting threshold for ML horizon-agreement gate)
+  - `:664` — `confidence_ic_floor` (DBL(0.02, -1.0, 1.0); rolling IC threshold for ML drift detection)
+- **Investigation findings:**
+  - **ensemble_min_agreement_pct read sites:** `Strategies/StrategyParameters.hpp:1084` (voting threshold comparison; NOT accounting); `ControllerConfig.hpp:1787` (default init); `ControllerConfig.hpp:2606` (parser). NO accounting-path read sites.
+  - **confidence_ic_floor read sites:** `EngineSharded.hpp:2490` (drift gate comparison; NOT accounting); `ConfidenceScore.hpp:835` (comment); `MLStatusPanel.hpp:323` (GUI display). NO accounting-path read sites.
+  - **Pre-existing explicit exemption documentation:** `ControllerConfig.hpp:316` comment explicitly states "double: ML voting threshold exemption (ensemble_min_agreement_pct only)" — confirms intentional design.
+  - **H4 compliance:** Both rows are STATISTICAL THRESHOLDS / VOTING METRICS used for gate-decision comparison only. Neither flows into FPN-based accounting calculations. Per H4 "display-only OK" + extension to "threshold-only comparison" — compliant.
+- **Resolution:** No migration needed. Both rows are intentional `double` exemptions for statistical/voting threshold use. CI tool finding is a false-positive at the `double` variant level — the tool can't distinguish "accounting double" (H4 violation) from "threshold double" (H4 compliant). Future CI tool extension could add metadata column to `H4_COMPLIANT_EXEMPTION` annotation per row.
+- **Status:** **CLOSED 2026-05-18** (investigated + verified compliant + documented rationale)
+- **Future improvement (LOW priority):** Extend `check_storage_t_coverage.py` to recognize H4-compliant exemption metadata (e.g., new `H4_THRESHOLD_EXEMPT` bit on metadata_flags column) — would auto-suppress false-positive `double` warnings on documented exemption rows. Not urgent — only 2 known exemptions; manual rationale suffices.
+- **Cross-ref:** `tools/check_storage_t_coverage.py`; `DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md` § B6; `CLAUDE.md` H4 invariant; `CoreFrameworks/ControllerConfig.hpp:316` (pre-existing exemption documentation).
+
+### TECH_DEBT-109 — Skill SKILL.md drift audit (24 remaining skills; refined scope post-sampling)
+
+- **Created:** 2026-05-18 (deferred from META program at `.B.3` mid-coding per scope-bounded landing)
+- **Refined scope 2026-05-18:** initial estimate "24 skills × hardcoded refs each" was based on raw grep count (250+ refs across 17 skills). Sampling 3 skills (/readiness 75 refs, /bug-check 6 refs, /dust 5 refs) revealed **majority of refs are LEGITIMATE WORKED EXAMPLES** (postmortem context, "added after vX.Y" annotations, "first canonical at vN" markers). These set discipline context for future readers — REMOVING them loses information.
+- **Severity:** LOW (drift items are estimated 10-30 across 17 skills; bulk replace_all WRONG — needs per-ref classification)
+- **Surface:** `claude-skills/<skill>/SKILL.md` for 24 skills. **Genuine drift patterns** (need fixing):
+  - Skill description text citing sprint-specific phasing as if canonical (e.g., "for v5.15.5.F.4d.1.B.3 work")
+  - Trigger conditions citing TECH_DEBT-N as the ONLY trigger (vs categorical trigger family)
+  - Examples that use sprint-specific filenames in `<placeholder>` positions
+  - "(NEW post-v5.15.5.F.4b)" descriptors that became "(LEGACY)" without update
+- **Legitimate worked-example patterns** (KEEP — discipline context for future readers):
+  - "First systematic application: v5.14.8.A pre-A.merged" (canonical reference)
+  - "v5.4.0 postmortem F7-F10 motivation" (why-this-Check-exists context)
+  - "Codified at v5.15.5.F.4d after Class N recurrence" (anti-pattern history)
+- **What's deferred:** per-skill classification scan (~30-60 min per skill × 17 = ~10-15h FULL) OR pragmatic triage (~5 min per skill × 17 = ~1.5h scope-bounded; fix only obvious-drift instances + leave worked-example sections alone).
+- **Why deferred (refined; NOT effort-avoidance):** Bulk-edit approach (initial idea) would LOSE legitimate worked-example context. Per-ref classification is genuine scope. Out of `.B.3` Step 1.6.3 critical path. Not blocking; cleanup polish.
+- **Cost estimate:** ~1.5-2h pragmatic triage (recommended); ~10-15h full per-ref classification.
+- **Trigger:** future maintenance ship dedicated to skill cleanup; OR ad-hoc when sprint-specific drift is noticed in a skill spec during routine work.
+- **Status:** OPEN with REFINED SCOPE (logged 2026-05-18; refined same-day after sampling)
+- **Accountability mechanism:** No automated detection. Could codify as M5 meta-discipline if recurrence pattern emerges (CI tool `check_skill_md_sprint_refs.py` distinguishing worked-example sections from skill description/trigger text).
+- **Cross-ref:** `claude-skills/precoding-audit-gate/SKILL.md` (canonical generalized precedent; explicit "NO hardcoded refs" claim); META program at `.B.3` for context; `DESIGN_PHILOSOPHY.md` § 11.5 (where M5 codification would live).
+- **Sampling notes (2026-05-18):** /readiness 75 refs (~90% worked-example; ~10% drift candidate). /bug-check 6 refs (mostly "post-v5.15.5.F.4b scope extension" markers — legit). /dust 5 refs (mostly "post-v5.4.0 addition" historical context — legit). True drift items concentrate in description text / trigger conditions, not in body Check rationale.

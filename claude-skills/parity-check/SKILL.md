@@ -346,6 +346,51 @@ NOT stamp-bound (potential gaps):
 - Each failure mode has rate-limited CRITICAL log
   (Health_LogCriticalRateLimited)
 
+### Section M — Claim → evidence chain requirement (added 2026-05-18 — meta-discipline M4 / Pillar B9)
+
+Every claim in a `/parity-check` report about runtime behavior, type compatibility, or framework-handles-this-automatically MUST cite source-of-truth evidence: file:line + the relevant code excerpt OR description of what the cited code DOES.
+
+**Anti-pattern (caught at .B.3 v1.11):** report claims "`tt::cfg_drift_compare<T>` auto-handles FPN/double cross-type comparison via implicit conversion" — but report didn't cite the template definition file:line + the relevant branch. Operator question forced verification → trust-but-verify discipline gap.
+
+**Procedure:**
+
+1. For every "framework handles X" / "T auto-converts to T'" / "this is already safe" claim, identify the file:line of the implementation
+2. Read the cited file:line; verify the claim matches actual code
+3. Cite both the file:line AND the verification result in the report
+
+**Verdict:**
+- All claims cited + verified → PASS
+- Any unverified claim → demote to "unverified; needs follow-up read" status; demand follow-up before plan body lock
+
+**Cross-references:**
+- `DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md` § B9
+- `DESIGN_PHILOSOPHY.md` § 11.5 meta-discipline M4
+
+---
+
+### Section N — Row-order parity (added 2026-05-18 — meta-discipline M4 / Pillar B12)
+
+When migrating an emit walker from legacy registry (e.g., FOREACH_STAMP_BOUND_CFG body order) to master registry (e.g., FOREACH_PER_CORE_CFG_FIELD master declaration order) for currently-flagged STAMP_BOUND_CFG_DERIVED rows, verify wire-format row ordering preserves OR is annotated as intentional reorder under SOFT-bump.
+
+**Procedure:**
+
+1. Enumerate currently-flagged rows in master registry
+2. Compare to legacy walker emit order for the same rows
+3. Diff → emit reorder punch-list per row
+4. Verify Layer 5b structural invariants (`tests/wire_format_invariants.hpp` I1-I5) tolerate the diff OR plan body documents intentional reorder under SOFT-bump procedure per `wire-format-byte-preservation-discipline.md`
+
+**Verdict:**
+- Order identical → PASS
+- Diff annotated + SOFT-bump landing → PASS
+- Diff present + not annotated → SILENT-RISK (Layer 5b invariants only catch post-facto; surface in pre-coding)
+
+**Cross-references:**
+- `DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md` § B12
+- `DESIGN_SPECS/wire-format-byte-preservation-discipline.md` Layer 5b + Layer 6
+- `DESIGN_PHILOSOPHY.md` § 11.5 meta-discipline M4
+
+---
+
 ### Section L — Production-caller field-population audit (v5.9.5b addition)
 
 Verifying that a stamp body / serialization struct contains a field

@@ -4,6 +4,7 @@
 **Status:** ACTIVE
 **Cross-references:**
 - Companion: `x-macro-registry-with-presence-dispatch.md` (registry as source of truth for canonical wire format)
+- Sister: `implementation-layer-blindspot-taxonomy.md` (meta-discipline M4; this discipline's Layer 7 cross-tool emit-site enumeration IS the M2 codification — the implementation-detail blind-spot taxonomy is the meta-discipline registry where M2 lives)
 - First systematic application: FOREACH_STAMP_BOUND_MODEL_CONST migration in v5.14.8.A.merged
 - Pattern precedent: `feature_registry_hash` (v5.8.6); `model_format_version` (v5.9.0)
 - Closes: GATE-NEW-2 in v5.14.8 audit gates

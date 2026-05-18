@@ -1679,3 +1679,112 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 - **Trigger:** **`.F.4d.1.A` ship — IN-FLIGHT now. CLOSED at `.A` ship close.**
 - **Status:** **IN-FLIGHT at `.F.4d.1.A` Path γ+ v2 implementation 2026-05-17** (originally OPEN at logging; promoted to IN-FLIGHT per Path γ+ v2 LOCKED scope per Caramel triage)
 - **Cross-ref:** `plan_checks/2026-05-16-v5.15.5.F.4d.1-tech-debt-audit-findings.md` Finding 6 + Path γ+ v2 LOCKED scope (origin); `plan_checks/d2-foreach-lives-in-struct-verification-2026-05-16.md` (Phase 2 D2 audit finding); `CfgFieldRegistry.hpp:212` (bitmap-overflow static_assert precedent); `CfgFieldRegistry.hpp:1064-1075` (FOREACH_METADATA_BIT — 11 enrolled bits; +1 STAMP_BOUND_CFG_DERIVED at `.A`); `CfgFieldRegistry.hpp:1099-1133` (FOREACH_LIVES_IN_STRUCT — 5 enum values); TECH_DEBT-087 (sister general-purpose consumer-existence enforcement); CLAUDE.md item 31 (framework-driven extensibility); H15 + H16 (sister discipline at namespace-collision layer).
+
+### TECH_DEBT-093 — `.B.2` deferral: `gap_acceptable_threshold` manual cfg storage cleanup (decl/default/parser)
+
+- **Created:** 2026-05-17 (at `v5.15.5.F.4d.1.B.2` ship close per Caramel accountability pushback — "are we actually going to do the things you're deferring")
+- **Severity:** LOW (no behavioral defect at HEAD; registry row added at `.B.2` provides descriptor + metadata bit + GUI auto-render; manual decl/default/parser stays but produces correct values)
+- **Surface:** `CoreFrameworks/ControllerConfig.hpp:889` (manual decl `FPN<F> gap_acceptable_threshold`) + `:1729` (manual default `FPN_FromDouble<F>(0.05)`) + `:2554` (manual parser `CFG_PARSE_FPN(gap_acceptable_threshold)`)
+- **What's deferred:** DELETE the 3 manual sites; rely on FOREACH_GLOBAL_CFG_FIELD struct-gen extension (currently absent — global registry only generates descriptor array + masks + GUI, NOT struct fields).
+- **Why deferred (not effort-avoidance):** Coding-time Discovery 8 at `.B.2`: FOREACH_GLOBAL_CFG_FIELD does NOT auto-gen struct fields (only PerCoreCfg<F> auto-gens via FOREACH_PER_CORE_CFG_FIELD). Deletion at `.B.2` would leave `cfg.gap_acceptable_threshold` undefined → build breaks. Requires struct-gen extension to FOREACH_GLOBAL_CFG_FIELD per H17 ("ControllerConfig<F> cfg struct fields auto-generated from FOREACH_CFG_FIELD") — partial implementation today. Cleanup belongs with struct-gen extension landing.
+- **Cost estimate:** ~30-45 min for `gap_acceptable_threshold`-specific deletion + ~2-3h for FOREACH_GLOBAL_CFG_FIELD struct-gen extension. Latter is wider scope.
+- **Trigger:** `.B.3` Step 1.6.1 OR `.F.4f` cleanup ship (operator decision at `.B.3` planning: do here OR defer with H17 completion). `.B.3` cycle's pre-coding audit gate `/precoding-audit-gate` MUST verify decision documented.
+- **Status:** OPEN (logged at `.B.2` ship close 2026-05-17)
+- **Accountability mechanism:** `.B.3` plan body Step 1.6.1 explicitly enumerates this item; ship close postmortem MUST mark CLOSED or re-deferred with rationale + new target ship.
+- **Cross-ref:** `plans/v5.15-live-readiness/postmortems/2026-05-17-v5.15.5.F.4d.1.B.2-postmortem.md` (Discovery 8); `subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md` Step 1.6.1; `tick-trader-percore-workspace/DESIGN_SPECS/cfg-scope-discipline.md` (override-inherit pattern documentation; sister discipline); CLAUDE.md H17 (cfg struct auto-gen invariant — partial at HEAD; .B.3 or .F.4f completes).
+
+### TECH_DEBT-094 — `.B.2` deferral: 4 retroactive `.A.7` + bandit_blend_ratio bit-add + inf struct unification (5 fields)
+
+- **Created:** 2026-05-17 (at `v5.15.5.F.4d.1.B.2` ship close per Caramel accountability pushback)
+- **Severity:** MED (5 STAMP_BOUND-eligible fields cannot be framework-walked at `.B.2`; PARITY-024 retroactive scope partially open)
+- **Surface:** `CoreFrameworks/CfgFieldRegistry.hpp:524-528 + :637` (5 master rows: `ml_tp_pct`, `ml_sl_pct`, `barrier_blend_mode`, `bandit_blend_ratio` — locate; `per_horizon_barrier_blend` in FOREACH_ML_CFG_FLAG at `MlCfgFlagRegistry.hpp:64`) — bit-add. Plus `StampInferenceCfgInputs` + `ModelStampResult` struct-gen at `ML_Headers/ModelInference.hpp:1199 + 1643` — inf struct unification (eliminate `inf.inference_cfg_<name>` prefix OR add unprefixed sister fields).
+- **What's deferred:** Bit-add the 5 fields at master registry + inf struct unification at ModelInference.hpp struct-gen. Pre-condition: framework walker must access unprefixed `inf.<name>` (per Decision 5 prefix drop); currently 5 fields only have prefixed POST_CFG versions.
+- **Why deferred (not effort-avoidance):** Coding-time Discovery 6 at `.B.2`: 5 fields have ONLY POST_CFG-prefixed inf fields; bit-adding at `.B.2` would cause framework walker to access non-existent `inf.<name>` → build breaks. Adding unprefixed inf fields manually at `.B.2` would create Class 18 mirror at struct layer (duplicate prefixed + unprefixed storage). `.B.3`'s legacy POST_CFG deletion is the natural unification point — eliminates prefixed; ADD unprefixed; cohort bit-add becomes clean.
+- **Cost estimate:** ~30-45 min mechanical (bit-add + struct field rename/add) once `.B.3` legacy deletion forces the change.
+- **Trigger:** `.B.3` Step 1.6.2 — paired with Step 2 POST_CFG deletion (legacy registry deletion at Step 2 forces this; build BREAKS if not addressed alongside).
+- **Status:** OPEN (logged at `.B.2` ship close 2026-05-17)
+- **Accountability mechanism:** `.B.3` plan body Step 1.6.2 explicitly enumerates; ship close postmortem MUST mark CLOSED; `.B.3` Step 2 legacy deletion FORCES this — build breaks if not addressed.
+- **Cross-ref:** `plans/v5.15-live-readiness/postmortems/2026-05-17-v5.15.5.F.4d.1.B.2-postmortem.md` (Discovery 6); `subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md` Step 1.6.2; TECH_DEBT-100 (sister — same root cause for per_horizon_barrier_blend specifically); audit synthesis CRIT-CONV-2 / CRIT-CONV-5 / HIGH-CONV-F (sister scope items addressed at `.B.2`).
+
+### TECH_DEBT-095 — `.B.2` deferral: ModelInference struct-gen migrations (3 sites)
+
+- **Created:** 2026-05-17 (at `v5.15.5.F.4d.1.B.2` ship close per Caramel accountability pushback)
+- **Severity:** MED-HIGH (production stamp emit path; coupled with legacy registry deletion)
+- **Surface:** `ML_Headers/ModelInference.hpp:1199` (StampInferenceCfgInputs struct-gen via FOREACH_STAMP_BOUND_CFG); `:1401` (parser walker); `:1643` (ModelStampResult struct-gen)
+- **What's deferred:** Replace FOREACH_STAMP_BOUND_CFG(X) walkers at all 3 sites with framework-driven walks over master registry filtered by STAMP_BOUND_CFG_DERIVED bit + FOREACH_ML_CFG_FLAG filtered by same bit. Coupled with TECH_DEBT-094 inf struct unification.
+- **Why deferred (not effort-avoidance):** Struct-gen approach decision (Approach A unconditional generation / B macro-level filter / C defer) — unresolved at `.B.2`; deferring let us validate framework via other walker site migrations first. Now post-`.B.2` validation, Approach A (unconditional generation per Decision 5 prefix drop) is the natural choice for `.B.3`.
+- **Cost estimate:** ~45-60 min mechanical (3 walker sites; X-macro filter pattern; struct-gen approach decision).
+- **Trigger:** `.B.3` Step 1.6.3 — paired with Step 2 legacy registry deletion (Step 2 deletes FOREACH_STAMP_BOUND_CFG body → these 3 walkers reference deleted macro → build BREAKS without migration).
+- **Status:** OPEN (logged at `.B.2` ship close 2026-05-17)
+- **Accountability mechanism:** `.B.3` plan body Step 1.6.3 enumerates; `.B.3` Step 2 legacy deletion FORCES.
+- **Cross-ref:** `plans/v5.15-live-readiness/postmortems/2026-05-17-v5.15.5.F.4d.1.B.2-postmortem.md`; `subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md` Step 1.6.3; audit synthesis MED-1 (struct-gen approach unresolved).
+
+### TECH_DEBT-096 — `.B.2` deferral: Production canonical body emit migration (ModelInference.hpp:1788)
+
+- **Created:** 2026-05-17 (at `v5.15.5.F.4d.1.B.2` ship close per Caramel accountability pushback)
+- **Severity:** HIGH (production wire-format path; coupled with stamp_format_version bump TECH_DEBT-099)
+- **Surface:** `ML_Headers/ModelInference.hpp:1788` — `FOREACH_STAMP_BOUND_CFG(X)` walker emits canonical body bytes for HMAC chain
+- **What's deferred:** Replace walker with `STAMP_CFG_POPULATE_FROM_DERIVED(canonical, sizeof(canonical), cfg)` framework call. Changes wire byte order (framework walks master registry declaration order; legacy walks hand-crafted FOREACH_STAMP_BOUND_CFG row order). Triggers CRIT-6 byte order change → stamp_format_version bump (TECH_DEBT-099).
+- **Why deferred (not effort-avoidance):** Coupled with stamp_format_version bump procedure; both should land together. `.B.3`'s Step 2 legacy registry deletion forces this — build BREAKS without migration (FOREACH_STAMP_BOUND_CFG body deleted).
+- **Cost estimate:** ~15-20 min walker replacement + paired with TECH_DEBT-099 stamp_format_version sub-steps.
+- **Trigger:** `.B.3` Step 1.6.4 — paired with Step 1.6.7 (stamp_format_version bump) AND Step 2 legacy deletion.
+- **Status:** OPEN (logged at `.B.2` ship close 2026-05-17)
+- **Accountability mechanism:** `.B.3` Step 1.6.4 enumerates; Step 2 legacy deletion FORCES; ship-close postmortem documents the stamp_format_version bump procedure as canonical reference.
+- **Cross-ref:** `plans/v5.15-live-readiness/postmortems/2026-05-17-v5.15.5.F.4d.1.B.2-postmortem.md`; `subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md` Step 1.6.4; TECH_DEBT-099 (coupled stamp_format_version bump); audit synthesis CRIT-6.
+
+### TECH_DEBT-097 — `.B.2` deferral: StampHelper.hpp:156 STAMP_CFG_AUTOPOPULATE migration
+
+- **Created:** 2026-05-17 (at `v5.15.5.F.4d.1.B.2` ship close per Caramel accountability pushback)
+- **Severity:** MED (legacy struct-field population path; cleanup after `.B.3` inf struct unification)
+- **Surface:** `ML_Headers/StampHelper.hpp:156` — `STAMP_CFG_AUTOPOPULATE(inf, cfg)` macro populates `inf.<name>` fields for cohort
+- **What's deferred:** Delete the call (or replace with framework-driven population) once `.B.3` legacy POST_CFG deletion eliminates the prefixed fields; inf struct has only unprefixed fields per Decision 5; framework writes them directly via STAMP_CFG_POPULATE_FROM_DERIVED.
+- **Why deferred (not effort-avoidance):** Legacy macro still writes useful state (populates the inf struct fields the legacy parser at :1401 also writes); `.B.3`'s legacy macro body deletion is the trigger for this cleanup.
+- **Cost estimate:** ~10-15 min.
+- **Trigger:** `.B.3` Step 1.6.5 — paired with Step 2 legacy macro deletion.
+- **Status:** OPEN (logged at `.B.2` ship close 2026-05-17)
+- **Accountability mechanism:** `.B.3` Step 1.6.5 enumerates; Step 2 forces (STAMP_CFG_AUTOPOPULATE macro body deleted at `.B.3` → callers must migrate).
+- **Cross-ref:** `plans/v5.15-live-readiness/postmortems/2026-05-17-v5.15.5.F.4d.1.B.2-postmortem.md`; `subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md` Step 1.6.5.
+
+### TECH_DEBT-098 — `.B.2` deferral: CoreModelZoo.hpp:243 drift walker migration (with framework reason-buffer extension)
+
+- **Created:** 2026-05-17 (at `v5.15.5.F.4d.1.B.2` ship close per Caramel accountability pushback)
+- **Severity:** MED (drift-check semantics + operator-visible error message preservation)
+- **Surface:** `ML_Headers/CoreModelZoo.hpp:243` — custom drift walker over FOREACH_STAMP_BOUND_CFG sets `sr.inference_cfg_drift_count` + `sr.reason` (first drift produces operator-visible error message)
+- **What's deferred:** Replace walker with `DRIFT_CHECK_FROM_DERIVED(...)` framework macro. Requires framework extension: add `char* reason_buf, size_t reason_cap` args to `cfg_derived::drift_check_from_derived` to preserve "first-drift sets reason" semantic. OR migration accepts behavior change (drift detected via failure_flags only; no human-readable reason; debug via post-fact mask inspection).
+- **Why deferred (not effort-avoidance):** Coding-time Discovery 10 at `.B.2`: framework's `DRIFT_CHECK_FROM_DERIVED` uses branchless mask-select (per H20); doesn't have reason buffer. Adding reason buffer changes framework signature + semantics. Decision belongs at `.B.3` framework-extension consideration.
+- **Cost estimate:** ~30-45 min (framework extension + walker migration + test).
+- **Trigger:** `.B.3` Step 1.6.6 — paired with Step 2 legacy registry deletion (walker references FOREACH_STAMP_BOUND_CFG which gets deleted; migration forced).
+- **Status:** OPEN (logged at `.B.2` ship close 2026-05-17)
+- **Accountability mechanism:** `.B.3` Step 1.6.6 enumerates; Step 2 forces; postmortem documents framework reason-buffer decision (extend OR accept behavior change).
+- **Cross-ref:** `plans/v5.15-live-readiness/postmortems/2026-05-17-v5.15.5.F.4d.1.B.2-postmortem.md` (Discovery 10); `subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md` Step 1.6.6; framework signature at `MemHeaders/CfgGateRegistry.hpp:277-310`.
+
+### TECH_DEBT-099 — `.B.2` deferral: stamp_format_version 5 sub-steps (extract + bounds check + bump + fixture test + DESIGN_SPEC amendment)
+
+- **Created:** 2026-05-17 (at `v5.15.5.F.4d.1.B.2` ship close per Caramel accountability pushback)
+- **Severity:** HIGH (wire-format compatibility signaling; first canonical use of stamp_format_version bump procedure)
+- **Surface:** `ML_Headers/ModelInference.hpp:1747` (hardcoded literal `"stamp_format_version=1\n"`) + `:1346-1351` (parser; no upper-bound validation) + `tick-trader-percore-workspace/DESIGN_SPECS/wire-format-byte-preservation-discipline.md` (procedure documentation)
+- **What's deferred:** 5 sub-steps:
+  1. Extract literal → `static constexpr uint32_t STAMP_FORMAT_VERSION_CURRENT = 1;` named constant
+  2. Add `MAX_SUPPORTED_STAMP_FORMAT_VERSION` + parser bounds check (refuse load if version > MAX_SUPPORTED)
+  3. Bump `STAMP_FORMAT_VERSION_CURRENT` 1 → 2
+  4. Test fixture failure-mode: v1 stamp → operator-visible error message
+  5. Write NEW section in `wire-format-byte-preservation-discipline.md` titled "Procedure for wire-format changes during framework refactoring" as first canonical procedure for future bumps
+- **Why deferred (not effort-avoidance):** Coupled with TECH_DEBT-096 (production walker migration changes wire byte order). Both should land together. `.B.3`'s legacy registry deletion forces the wire-byte-order change → triggers stamp_format_version bump as the canonical signaling mechanism.
+- **Cost estimate:** ~45 min (5 sub-steps).
+- **Trigger:** `.B.3` Step 1.6.7 — paired with Step 1.6.4 (production walker migration) AND Step 2 legacy deletion.
+- **Status:** OPEN (logged at `.B.2` ship close 2026-05-17)
+- **Accountability mechanism:** `.B.3` Step 1.6.7 enumerates; Step 2 forces wire-format change; DESIGN_SPEC amendment is explicit ship deliverable per HIGH-CONV-G audit finding.
+- **Cross-ref:** `plans/v5.15-live-readiness/postmortems/2026-05-17-v5.15.5.F.4d.1.B.2-postmortem.md`; `subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md` Step 1.6.7; TECH_DEBT-096 (coupled production walker migration); audit synthesis CRIT-CONV-4 + HIGH-CONV-G + CRIT-6.
+
+### TECH_DEBT-100 — `.B.2` deferral: per_horizon_barrier_blend ML_CFG_FLAG STAMP_BOUND_CFG_DERIVED bit-add
+
+- **Created:** 2026-05-17 (at `v5.15.5.F.4d.1.B.2` ship close per Caramel accountability pushback)
+- **Severity:** LOW-MED (1 specific field; same structural root cause as TECH_DEBT-094)
+- **Surface:** `ML_Headers/MlCfgFlagRegistry.hpp:64` — `PER_HORIZON_BARRIER_BLEND` row metadata_flags column (currently `0`; revert to `CfgFieldDescriptor::STAMP_BOUND_CFG_DERIVED` once inf struct unification lands)
+- **What's deferred:** Bit-add for PER_HORIZON_BARRIER_BLEND once `inf.per_horizon_barrier_blend` unprefixed field exists (currently only prefixed POST_CFG version exists). Sister to TECH_DEBT-094 (same root cause; same .B.3 trigger).
+- **Why deferred (not effort-avoidance):** Coding-time Discovery 6 at `.B.2`: no unprefixed `inf.per_horizon_barrier_blend` field; bit-add at `.B.2` would cause framework walker to access non-existent field. Inf struct unification at `.B.3` (paired with TECH_DEBT-094) enables this single-row bit-add.
+- **Cost estimate:** ~2-3 min (1-row metadata_flags column edit).
+- **Trigger:** `.B.3` Step 1.6.2 (paired with TECH_DEBT-094) — same .B.3 Step.
+- **Status:** OPEN (logged at `.B.2` ship close 2026-05-17)
+- **Accountability mechanism:** `.B.3` Step 1.6.2 enumerates (paired with TECH_DEBT-094); inf struct unification at `.B.3` enables.
+- **Cross-ref:** `plans/v5.15-live-readiness/postmortems/2026-05-17-v5.15.5.F.4d.1.B.2-postmortem.md`; `subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md` Step 1.6.2; TECH_DEBT-094 (sister; paired migration); `ML_Headers/MlCfgFlagRegistry.hpp:64` comment block (documents the .B.3 deferral inline at the row).

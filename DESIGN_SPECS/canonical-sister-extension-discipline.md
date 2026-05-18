@@ -105,6 +105,67 @@ Future: `tools/check_registry_overlap.py` — pairwise row-name overlap analysis
 
 ---
 
+## Temporal evolution + cohort migration of sister registries
+
+Sister-extension discipline applies at TWO points in registry lifecycle: at plan-time (verify sister parity BEFORE assuming columns/bits exist) and at evolution-time (when one sister registry's sig migrates, audit cohort registries for parity-or-deferred-with-rationale). Path γ + Path γ #2 (precedents below) were SPATIAL divergence — parallel infrastructure built when canonical sister exists. Temporal evolution is the OTHER axis: one sister migrates; siblings stay behind; future plans assume the migration applies uniformly. Both shapes are addressable by the same underlying discipline: explicit sister inspection at the relevant lifecycle moment.
+
+### Sister-registry parity verification (defensive — Meta-gap M1a)
+
+When a plan body references a sister-registry's column / bit / field / metadata-flags entry, the plan body MUST verify the column exists at HEAD before plan body lock. Otherwise the plan body contains a Class 14 instance (fictional symbol) that compiles silently in plan text but fails build at coding time.
+
+**Concrete catch (v5.15.5.F.4d.1.B.3 v1.9 RE-SWEEP, 2026-05-17):**
+
+Plan body Step 1.6.2 entry 12 said `barrier_gate_enabled` "metadata_flags gains STAMP_BOUND_CFG_DERIVED" — but `FOREACH_GATE_CFG_FLAG` at HEAD is 5-col (no `metadata_flags` column). Sister `FOREACH_ML_CFG_FLAG` is 6-col (migrated at `.B.2` engine commit `de41ff2`); the structural divergence between sisters wasn't surfaced at plan-time. Caught at audit re-sweep when /parity-check HIGH-2 + /trace-deps MED-1 convergently flagged the missing column.
+
+**Discipline:**
+
+- Plan body that proposes adding/modifying a row's metadata column → grep HEAD for the column existence on THAT registry; if absent, add explicit setup-step migration BEFORE the consuming work
+- Plan body that proposes sig-migration on one registry → audit cohort sisters (same family / shared consumer X-macros) for parity status; if sister stays behind, document explicit rationale per registry header NOTE block (e.g., `CoreFrameworks/GateCfgFlagRegistry.hpp:23-27` documents the model-const stamp-binding choice at HEAD)
+
+**Enforcement:**
+
+- `/readiness` Check 36 NEW — "Sister registry parity verified for any plan body claim referencing sister-registry columns/bits/fields; explicit setup-step migration scheduled if column absent at HEAD"
+- `/trace-deps` amendment — when verifying symbol existence, ALSO verify sister-registry col-count parity across registries with shared consumer X-macros (audit signal: convergent /parity-check + /trace-deps findings on column gap)
+
+### Sister-registry sig migration as cohort discipline (offensive — Meta-gap M1b)
+
+When ANY X-macro registry undergoes a sig migration — col-count change, type column addition, metadata-flags addition, tuple shape change — audit sister registries that share consumer X-macros OR are recognized as cohort siblings.
+
+**Recognition triggers (audit-mandatory):**
+
+| Trigger | Cohort scope |
+|---|---|
+| Adding a column to one member of a registry family (e.g., `FOREACH_*_CFG_FLAG`) | All members of the family |
+| Adding `metadata_flags` / `category` / `kind` column to a registry | All registries with same consumer macros |
+| Tuple shape change (3-tuple → 4-tuple, 5-tuple → 6-tuple) | All registries enrolled in `FOREACH_REGISTRY` with same consumer pattern |
+| Adding a column type that drives derived-filter framework | All registries that could plausibly need the same derived behavior |
+
+**Decision per sister registry (audit + document):**
+
+- **MIGRATE atomically (cohort migration)** — when cohort cohesion warrants uniform shape (3+ family members exist; consumer code expects uniform tuple; foreseeable future need across cohort). Add migration to current ship's scope per `cfg-flag-eligibility-criteria.md` cohort-audit discipline.
+- **DEFER with explicit rationale in registry header** — when the sister doesn't need the new column at THIS ship + future need is uncertain. Document the deferral in a NOTE block in the registry header citing what would trigger the migration. Future ship that needs the column adds the migration as a setup step in same commit.
+
+**Concrete precedents:**
+
+| Ship | Migration | Decision for sister registries |
+|---|---|---|
+| `.B.2` (2026-05-17) | FOREACH_ML_CFG_FLAG 5→6 col (add `metadata_flags` for STAMP_BOUND_CFG_DERIVED bit-flagging) | FOREACH_GATE_CFG_FLAG + FOREACH_LIFECYCLE_CFG_FLAG **DEFERRED** (no STAMP_BOUND_CFG_DERIVED consumer need at `.B.2`); implicit rationale (NOTE at `GateCfgFlagRegistry.hpp:23-27`) |
+| `.B.3` (2026-05-17) | FOREACH_GATE_CFG_FLAG 5→6 col (setup step Step 0.5d.a.0 BEFORE Step 0.5d.a walker extension) | Triggered BY `barrier_gate_enabled` stamp-binding need (Class 32 closure scope); FOREACH_LIFECYCLE_CFG_FLAG cohort migration deferred until consumer demand surfaces |
+
+**Enforcement:**
+
+- This DESIGN_SPEC sub-section is discoverable via spec catalog (cross-referenced from CLAUDE.local.md going-forward rules)
+- TECH_DEBT entry tracks future CI tool `tools/check_sister_registry_sig_parity.py` (LOW priority defer — discipline alone is sufficient at current cohort scale; CI tool warranted when 3+ family members exist with shared consumer pattern)
+
+### Pattern lifecycle for these sub-sections
+
+- **Stage 1 (problem identification):** v1.9 RE-SWEEP caught CRIT-RESWEEP-2 (M1a — parity verification gap) + Step 1.6.8 enumeration caught at v1.9 vs full enumeration at v1.10 (M1b — cohort migration timing)
+- **Stage 2 (DESIGN_SPEC):** THIS section codified at `.B.3` v1.10 plan body
+- **Stage 3 (first reference):** `.B.3` ship — Step 0.5d.a.0 is the canonical first application of M1b cohort migration discipline; `/readiness` Check 36 first invocation is M1a's canonical first application
+- **Stage 4 (subsequent applications):** future ships that add cohort columns to any X-macro registry family apply M1b mechanically
+
+---
+
 ## Trade-offs + when to apply
 
 ### Apply when:

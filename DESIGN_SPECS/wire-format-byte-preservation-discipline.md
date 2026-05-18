@@ -300,6 +300,59 @@ if (STAMP_HAS(r, field_X)) {
 
 Surface G means: legacy stamps (without new fields) load with `has_*=0` defaults; new code skips checks for absent fields. Forward-compat without version bump.
 
+### Layer 7: Cross-tool emit-site enumeration discipline
+
+**Established 2026-05-17** (v5.15.5.F.4d.1.B.3 v1.9 RE-SWEEP — Meta-gap M2 codified after `/parity-check` caught 2 missing cross-tool emit sites that the wire-key-only enumeration at v1.9 had scoped past).
+
+Layers 1-6 enforce byte-preservation at the engine emit/parse boundary. But the wire format is also produced by **non-engine** emit sites — `tools/*.sh` CLI helpers, training scripts, recording tools, any cross-process tool that writes the same on-disk format. Engine-side wire-format changes alone are insufficient: cross-tool emit sites must be enumerated + migrated atomically with the engine change.
+
+**Threat shape (#4 in Threat model expanded):**
+
+Cross-process boundaries — tool A (e.g., `tools/stamp_model.sh`) emits wire format; tool B (engine) parses. Engine refactor changes the wire format; tool A still emits old shape; tool A's output fails verification against engine parser. Symptom: operator runs CLI helper post-engine-upgrade; produced stamp doesn't load.
+
+**Caught at v5.15.5.F.4d.1.B.3 v1.9 RE-SWEEP:**
+
+Plan body Step 1.6.8 enumerated wire-key migrations in `tools/stamp_model.sh` (lines 240-262, 6 cohort fields). But missed:
+- **Line 221:** `stamp_format_version=1` hardcoded literal (engine bumped to v2 at `.B.3` → CLI would emit v1-versioned + v2-keyed stamps; engine parser sees version mismatch + drift check inconsistent)
+- **Line 244:** `inference_cfg_freshness_tau=` orphan emit (engine deleted at v5.14.9.D; tool still emits → engine parser sees unknown key; cosmetic + tool-state-stale)
+
+The cross-tool enumeration at v1.9 was PARTIAL because it scoped to "the keys in the deletion cohort" without scanning for ALL wire-format literals in cross-process emit sites.
+
+**Discipline (when wire-format changes — applies to engine version bumps + key renames + format-string changes + field deletions):**
+
+1. **Comprehensive grep** over `tools/` (and other cross-tool emit dirs) for ALL literals matching the changing format:
+   - Version literals (e.g., `rg "stamp_format_version=" tools/`)
+   - Format key prefixes (e.g., `rg "inference_cfg_" tools/`)
+   - Format-specific tokens (HMAC-emit shape, fee_rate format, any other engine-mirrored literal)
+2. **Per-site disposition decision:**
+   - **MIGRATE** — site emits a key in the deletion/change scope → update to new shape
+   - **DELETE** — site emits an orphan key (engine no longer parses) → remove
+   - **PRESERVE WITH CROSS-REF COMMENT** — site emits a legitimate key (e.g., training-time field that stays in scope) → add comment cross-referencing the engine-side canonical definition
+3. **Mandatory comprehensive enumeration in plan body** when wire-format change is in scope (not piecemeal during coding):
+   - Per-file site count
+   - Per-pattern site count (version literal / key prefix / format token)
+   - Disposition decision per site
+
+**Cross-tool version literal sync discipline:**
+
+The version literal (e.g., `stamp_format_version=N`) is duplicated in C++ header (`STAMP_FORMAT_VERSION_CURRENT` constant at `ML_Headers/ModelInference.hpp`) AND bash script (`tools/stamp_model.sh:221`). The 2-source sync is acceptable for low-recurrence cross-tool, enforced by:
+
+- **Cross-reference comments** at each site pointing to the other (e.g., bash comment "MUST match engine `STAMP_FORMAT_VERSION_CURRENT` at `ML_Headers/ModelInference.hpp`")
+- **Wire-format ship-close checklist:** when bumping `STAMP_FORMAT_VERSION_CURRENT`, search-replace the bash literal in same commit
+- **Future CI:** `tools/check_cross_tool_emit_parity.py` compares wire keys emitted by engine vs CLI (TECH_DEBT defer — discipline alone is sufficient at current scale; CI tool warranted when 3+ cross-tool emit sites exist)
+
+**Enforcement:**
+
+- `/parity-check` Section E amendment — scan `tools/*.sh` + cross-process emit sites when wire-format change proposed; report per-file site counts + per-pattern site counts + disposition per site
+- `future-oriented-plan-template.md` amendment — wire-format-changing plans MUST include "Cross-tool emit-site enumeration" section with per-file + per-pattern + per-site disposition
+
+### Pattern lifecycle for Layer 7
+
+- **Stage 1 (problem identification):** v1.9 RE-SWEEP caught CRIT-RESWEEP-1 (version literal) + HIGH-RESWEEP-1 (orphan key) — Meta-gap M2 surfaced
+- **Stage 2 (DESIGN_SPEC):** THIS Layer codified at `.B.3` v1.10 plan body
+- **Stage 3 (first canonical reference):** `.B.3` ship — Step 1.6.8 expansion is the canonical first application (comprehensive enumeration + per-site disposition + cross-reference comments)
+- **Stage 4 (subsequent applications):** future ships with wire-format changes apply Layer 7 mechanically per `future-oriented-plan-template.md` amendment
+
 ---
 
 ## Trade-offs + when to apply

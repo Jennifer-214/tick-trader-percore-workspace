@@ -1829,3 +1829,33 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 - **Accountability mechanism:** No automated detection. Could codify as M5 meta-discipline if recurrence pattern emerges (CI tool `check_skill_md_sprint_refs.py` distinguishing worked-example sections from skill description/trigger text).
 - **Cross-ref:** `claude-skills/precoding-audit-gate/SKILL.md` (canonical generalized precedent; explicit "NO hardcoded refs" claim); META program at `.B.3` for context; `DESIGN_PHILOSOPHY.md` § 11.5 (where M5 codification would live).
 - **Sampling notes (2026-05-18):** /readiness 75 refs (~90% worked-example; ~10% drift candidate). /bug-check 6 refs (mostly "post-v5.15.5.F.4b scope extension" markers — legit). /dust 5 refs (mostly "post-v5.4.0 addition" historical context — legit). True drift items concentrate in description text / trigger conditions, not in body Check rationale.
+
+### TECH_DEBT-110 — `tools/stamp_model.sh` deprecation shim deletion target (Phase L retention)
+
+- **Created:** 2026-05-18 (deferred from `.B.3` Phase L per `framework-driven-cli-binary-pattern.md` v1.1 § Deprecation shim discipline)
+- **Severity:** LOW (1 file; 1-line shim; operator workflow continuity concern)
+- **Surface:** `tools/stamp_model.sh` (1-line `exec` redirect to `build/stamp_model_cli "$@"` introduced at `.B.3` Phase L L5 sub-step)
+- **What's deferred:** delete the `tools/stamp_model.sh` deprecation shim entirely. Header preserved at Phase L ship close as deprecation notice cross-ref'd to `DESIGN_SPECS/framework-driven-cli-binary-pattern.md` + new `tools/stamp_model_cli.cpp` binary.
+- **Why deferred (NOT effort-avoidance):** Operator scripts/aliases hardcoded to `tools/stamp_model.sh --model X` invocation need migration time to `build/stamp_model_cli --model X`. Typical retention: 1-2 ship cycles (matches Decision F SOFT compat philosophy for wire-format back-compat). Premature deletion would break operator workflow continuity per `feedback_surface_operator_migration_path_proactively`.
+- **Cost estimate:** ~5 min (delete 1 file + verify no remaining references in operator scripts; `rg "tools/stamp_model.sh"` across workspace + engine repo + operator's scripts directory).
+- **Trigger:** Explicit operator confirmation that all CLI invocation sites updated to `build/stamp_model_cli`. Or: 2 sub-ships shipped past Phase L without operator-flagged regression on the shim path.
+- **Status:** OPEN (created 2026-05-18 at Phase L planning; will become accountable at Phase L ship close when shim lands).
+- **Accountability mechanism:** Sub-ship plan body at the trigger ship will reference TECH_DEBT-110 in scope; ship-close auto-write removes this entry.
+- **Cross-ref:** `DESIGN_SPECS/framework-driven-cli-binary-pattern.md` v1.1 § Step 4 (Deprecate the bash script) + § Deprecation shim discipline; `plans/v5.15-live-readiness/subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md` Phase L Step L5; `feedback_surface_operator_migration_path_proactively.md`.
+
+### TECH_DEBT-111 — CI defense-in-depth: `tools/check_cli_flag_drift.py` (anti-pattern enforcement for X-macro auto-gen CLI flag table)
+
+- **Created:** 2026-05-18 (deferred from `.B.3` Phase L per `framework-driven-cli-binary-pattern.md` v1.1 § Audit detection)
+- **Severity:** LOW (defense-in-depth; X-macro discipline is enforced by code review at 1st canonical scale)
+- **Surface:** NEW Python CI script `tools/check_cli_flag_drift.py`. Sister to existing `tools/check_struct_field_uniqueness.py` (cross-walker struct-field uniqueness; same pillar B13 + B2 enforcement category).
+- **What's deferred:** Python script that:
+  - Parses `tools/stamp_model_cli.cpp` (and future framework-driven CLI binaries)
+  - Verifies `static struct option longopts[]` array is auto-generated via `FOREACH_*_CFG_FIELD(X_GEN_LONGOPT_*)` X-macro walkers (flags any manual `{"--flag", ...}` entries that bypass the registry walk)
+  - Verifies cross-walker collision exclusions match `FOREACH_STAMP_RESULT_FIELD_EXCLUSION` sidecar at `MemHeaders/CfgGateRegistry.hpp:512-515` (per Phase L B13 resolution)
+  - Reports per-binary verdict + flag-count + collision-detection summary
+- **Why deferred (NOT effort-avoidance):** At 1st canonical framework-driven CLI binary (`.B.3` Phase L), X-macro discipline is enforced by code review + the audit gate. CI tool warranted when 2+ framework-driven CLI binaries exist (per `feedback_framework_layer_payoff_diminishing_returns` — pattern earns its place at 2+ applications). Premature CI tooling at 1 application = framework-layer scope creep.
+- **Cost estimate:** ~30-60 min (sister to existing `check_struct_field_uniqueness.py` template; ~150-200 LOC Python script).
+- **Trigger:** 2nd framework-driven CLI binary lands (candidate workflows: schema migration CLI; per-core override emission CLI; per-cohort offline validation CLI). At 2nd canonical, CI tool delivers structural-fix mechanism category (per `structural-fix-preferred-decision-framework.md` § "NEW STRUCTURAL-FIX MECHANISM CATEGORY: CI tooling").
+- **Status:** OPEN with explicit trigger (created 2026-05-18 at Phase L planning).
+- **Accountability mechanism:** Cross-ref in `DESIGN_SPECS/framework-driven-cli-binary-pattern.md` v1.1 Pattern lifecycle § Stage 6 (tooling enforcement); future sub-ship adding 2nd canonical references TECH_DEBT-111 in scope.
+- **Cross-ref:** `DESIGN_SPECS/framework-driven-cli-binary-pattern.md` v1.1 § Audit detection + § Pattern lifecycle Stage 6; `DESIGN_SPECS/registry-coverage-ci-check-pattern.md` Shape B (anti-pattern enforcement); `tools/check_struct_field_uniqueness.py` (sister CI tool precedent); `feedback_framework_layer_payoff_diminishing_returns.md`.

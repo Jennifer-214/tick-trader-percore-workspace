@@ -437,6 +437,36 @@ without it (per-core path leaves core idle if ML required).
 
 **Related:** PARITY_ISSUES.md (any new drift class lands there).
 
+### Stamp model CLI binary (framework-driven; v5.15.5.F.4d.1.B.3+)
+
+**What.** `tools/stamp_model_cli` C++ binary (built at `build/stamp_model_cli`) replaces legacy `tools/stamp_model.sh` bash script for offline stamp signing of trained models. CLI uses engine framework API (`stamp_write_for_model`) directly — no bash↔C++ wire format mirror; drift impossible by construction. CLI flag table auto-generated via X-macro walkers from FOREACH_PER_CORE_CFG_FIELD + FOREACH_GLOBAL_CFG_FIELD + FOREACH_ML_CFG_FLAG + FOREACH_GATE_CFG_FLAG + FOREACH_STAMP_BOUND_MODEL_CONST_PRE_CFG + POST_CFG (~33 CLI flags total). Adding a new cfg field with stamp-binding = 1 row in master registry → `--<field_name>` CLI flag auto-appears at next compile; no manual CLI sync.
+
+**Cfg flags / CLI flags:** All operator-controllable stamp-bound cfg fields auto-flow to CLI flags by registry name (snake_case: `--ridge_lambda`, `--bandit_algorithm`, `--xgb_max_depth`, etc.). Plus hardcoded workflow flags: `--model`, `--secret`, `--wf-mean-val`, `--held-out-metric`, `--gap-threshold`, `--trained-on`, `--format-version`, `--force`. Use `tools/stamp_model_cli --help` for full auto-generated list with per-flag tooltip from registry.
+
+**Fallback / Operator workflow continuity.** `tools/stamp_model.sh` REMAINS at `.B.3+` as a 1-line `exec` deprecation shim → redirects to `build/stamp_model_cli "$@"`. Operator scripts hardcoded to `tools/stamp_model.sh --model X` invocation continue working during retention period. Deletion target tracked via TECH_DEBT-110 (typical retention: 1-2 ship cycles).
+
+**Where to verify:**
+- Build target: `build/stamp_model_cli` (added at `CMakeLists.txt` alongside `compare_scalers`)
+- HMAC chain identity: `tests/controller_test.cpp` extensibility test (X-macro walker validates per-row round-trip byte-identity)
+- Layer 5b structural invariants apply to CLI emit (sister to engine in-process emit; same `populate_stamp_cfg_from_derived` path)
+- `tools/stamp_model.sh` deprecation shim: 1-line `exec` + header notice
+
+**Paper-test sanity:**
+1. Train a model via `foxml_suite` (in-process Backtest_RunFullValidation)
+2. Note metrics (wf_mean_val, held_out_metric, gap)
+3. Run `build/stamp_model_cli --model <path> --secret <secret> --wf-mean-val 0.5 --held-out-metric 0.48 --gap-threshold 0.05` to sign
+4. Verify `.stamp` produced; load model on engine; verify HMAC + no drift refuse
+5. Sanity check: legacy bash-stamped model (pre-`.B.3`) still verifies on `.B.3+` engine (via Decision F SOFT parser back-compat)
+
+**Gotchas:**
+- CLI flag names = registry field names (snake_case). Operator scripts using kebab-case bash flags (e.g., `--confidence-threshold-scale`) get a deprecation alias layer with stderr warning during retention period.
+- Adding new cfg field with stamp-binding = CLI flag auto-appears at next compile; no manual CLI code edit required.
+- `--xgb_min_child_weight` / `--xgb_seed` / `--xgb_train_nthread` exist in BOTH FOREACH_GLOBAL_CFG_FIELD AND FOREACH_STAMP_BOUND_MODEL_CONST_POST_CFG at HEAD; CLI binary excludes these from cfg walker (MC walker is authoritative for architectural-constant semantic) via existing `FOREACH_STAMP_RESULT_FIELD_EXCLUSION` sidecar reuse.
+- Pinned `LC_NUMERIC=C` (matches engine in-process emit; HMAC byte preservation).
+- Engine-downgrade hazard: v2-formatted stamps from `.B.3+` CLI don't load on `.B.2` engine; forward-compat OK, backward-compat requires Decision F parser back-compat at `.B.3+`.
+
+**Related:** DESIGN_SPECS/framework-driven-cli-binary-pattern.md v1.1 (Stage 2 DRAFT; Stage 3 first canonical at this binary); DESIGN_SPECS/cfg-derived-consumer-framework.md v1.3 (extensibility test pattern); TECH_DEBT-110 (shim deletion target); TECH_DEBT-111 (CI defense-in-depth: tools/check_cli_flag_drift.py at 2nd canonical).
+
 ---
 
 ## Partial exits (legs A+B)

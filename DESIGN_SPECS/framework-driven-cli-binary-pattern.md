@@ -301,21 +301,47 @@ void cli_args_dispatch(const char* flag_name, const char* optarg, CliReceived& a
 
 **Apply received args to cfg + inf:**
 
+Per `/blindspot-scan` v1.15 B8 finding: `cfg.name = args.name` MUST filter rows flagged NO_FLAT_FIELD (e.g., `strategy` row at HEAD has NO_FLAT_FIELD bit; no `cfg.strategy` scalar exists — compile fail without filter). Sister precedent: `ControllerConfig.hpp:1447-1454` uses `if constexpr (!((meta) & NO_FLAT_FIELD))` filter. Per `/blindspot-scan` v1.15 B11-ALT: `apply_cli_args_to_cfg` must be template-parameterized on `unsigned F` for FPN<F> dispatch (sister to `populate_inference_cfg_from_derived<F, InfT>`).
+
 ```cpp
-ControllerConfig<64> cfg = ControllerConfig_Default<64>();
-StampInferenceCfgInputs inf{};
+template <unsigned F>
+void apply_cli_args_to_cfg(const CliReceived& args, ControllerConfig<F>& cfg) {
+    #define X_APPLY_CFG(STORAGE_T, KIND_TOKEN, name, label, section, meta, payload, tooltip, applies_strat, applies_op, applies_regime, applies_risk, lives_in_struct) \
+        if constexpr (!((meta) & CfgFieldDescriptor::NO_FLAT_FIELD)) { \
+            if (args.has_##name) cfg.name = args.name; \
+        }
+    FOREACH_PER_CORE_CFG_FIELD(X_APPLY_CFG)
+    FOREACH_GLOBAL_CFG_FIELD(X_APPLY_CFG)
+    #undef X_APPLY_CFG
 
-#define X_APPLY_CFG(STORAGE_T, KIND_TOKEN, name, label, section, meta, payload, tooltip, applies_strat, applies_op, applies_regime, applies_risk, lives_in_struct) \
-    if (args.has_##name) cfg.name = args.name;
-FOREACH_PER_CORE_CFG_FIELD(X_APPLY_CFG)
-FOREACH_GLOBAL_CFG_FIELD(X_APPLY_CFG)
-#undef X_APPLY_CFG
+    /* Sister X-macros for ML/GATE_CFG_FLAG — set bitmap bit if args.has_<flag>:
+     *   if (args.has_<legacy_field>) {
+     *       if (args.<legacy_field>) BITMAP_SET(cfg.ml_cfg_flags, MASK_ML_CFG_<NAME>);
+     *       else                     BITMAP_CLR(cfg.ml_cfg_flags, MASK_ML_CFG_<NAME>);
+     *   }
+     */
+}
 
-/* Sister X-macros for ML/GATE_CFG_FLAG (set bitmap bit) + MC_PRE/POST (apply to inf) */
+template <unsigned F>
+void apply_cli_args_to_inf(const CliReceived& args, StampInferenceCfgInputs& inf) {
+    /* Sister X-macros for MC_PRE/POST — apply directly to inf.<name>; inf has all
+     * fields auto-genned via STAMP_RESULT_DERIVED_FIELDS_AUTO_GEN per cfg-derived-
+     * consumer-framework.md v1.2 § "Action-parameterized meta-walker". */
+}
 
-// Then call framework API directly:
-StampWriteResult r = stamp_write_for_model(args.model_path, args.secret, /* ... */, &inf);
+int main(int argc, char** argv) {
+    /* parse loop … */
+    ControllerConfig<64> cfg = ControllerConfig_Default<64>();
+    StampInferenceCfgInputs inf{};
+    apply_cli_args_to_cfg<64>(args, cfg);
+    apply_cli_args_to_inf<64>(args, inf);
+
+    // Then call framework API directly:
+    StampWriteResult r = stamp_write_for_model(args.model_path, args.secret, /* ... */, &inf);
+}
 ```
+
+**B13 cross-walker longopts[] collision resolution** (per `/blindspot-scan` v1.15 finding): 3 names appear in BOTH FOREACH_GLOBAL_CFG_FIELD AND FOREACH_STAMP_BOUND_MODEL_CONST_POST_CFG at HEAD (`xgb_min_child_weight` / `xgb_seed` / `xgb_train_nthread`). Existing sister sidecar `FOREACH_STAMP_RESULT_FIELD_EXCLUSION` at `MemHeaders/CfgGateRegistry.hpp:512-515` already excludes these 3 names at struct-gen layer (per H18 SIDECAR OVERRIDE pattern + Pillar B13). **REUSE the same sidecar at longopts[] auto-gen layer:** cfg walker (`X_GEN_LONGOPT_ALL_CFG`) wraps each row with `#define/#undef` redirect bracket; excluded names redirect to dead `_longopts_excluded_<name>` macro (zero bytes emitted). MC walker emits authoritative entry per architectural-constant semantic. Future cross-walker collisions = add 1 row to existing sidecar + 2 #define/#undef lines per consumer site (struct-gen + longopts[]). Bounded scope; CI check (TECH_DEBT-111) detects new collisions.
 
 **Drift impossibility by construction:**
 
@@ -405,21 +431,42 @@ exec "$(dirname "$0")/../build/stamp_model_cli" "$@"
 The manual round-trip test enumerates each field explicitly (e.g., `controller_test.cpp` v5.14.1.B.3.E section listed 17 fields with per-field set + emit + parse + assert blocks). **That's Class 21 at the TEST LAYER** — manual sync of test enumeration when new flagged rows are added. The structural fix: X-macro walker that synthesizes value per flagged row + runs stamp emit/parse + validates round-trip byte-identity per row. Adding a new flagged row = test auto-validates that row's round-trip; no test code edit required.
 
 ```cpp
-// Per-type synthetic value generator (deterministic per field-name hash):
+// Per-type synthetic value generator (deterministic per field-name hash).
+// Coverage: every STORAGE_T variant in tt:: family (per check_storage_t_coverage.py at HEAD: 7 variants)
+// MUST have a branch + a dependent-type static_assert in the else for compile-time unreachable enforcement.
+// Per /blindspot-scan v1.15 B6 finding: missing `is_floating_point_v<T>` (raw double — appears in PER_CORE
+// per check_storage_t_coverage.py) + `is_array_v<T>` (char[N] forward-compat) + proper static_assert in else.
 template <typename T>
 T synthetic_value_for_field(const char* field_name) {
     uint64_t h = tt::fnv1a_64(field_name, strlen(field_name));
     if constexpr (is_FPN_v<T>) {
         // Deterministic FPN<F> value in [0.001, 1.001) range
         return FPN_FromDouble<64>((double)(h % 1000) / 1000.0 + 0.001);
-    } else if constexpr (std::is_integral_v<T>) {
-        return T((h % 100) + 1);
+    } else if constexpr (std::is_floating_point_v<T>) {
+        // Raw double/float STORAGE_T (e.g., per_core fee/slippage fields if present)
+        return T((double)(h % 1000) / 1000.0 + 0.001);
     } else if constexpr (std::is_same_v<T, bool>) {
         return (h & 1) != 0;
+    } else if constexpr (std::is_integral_v<T>) {
+        // Order matters: bool check before integral check (bool is integral in C++)
+        return T((h % 100) + 1);
     } else if constexpr (std::is_array_v<T>) {
-        /* tt::stamp_str_N — generate deterministic string */
+        // char[N] / tt::stamp_str_N — generate deterministic string fitting buffer
+        T result{};
+        const char* charset = "abcdefghijklmnopqrstuvwxyz0123456789";
+        constexpr size_t cap = std::extent_v<T> - 1;  // leave room for \0
+        for (size_t i = 0; i < cap; i++) result[i] = charset[(h >> (i * 4)) % 36];
+        return result;
+    } else {
+        // Dependent-type static_assert: triggers only when this branch instantiates
+        // (i.e., a new STORAGE_T variant entered the registry without adding a branch here).
+        // Sister discipline to check_storage_t_coverage.py — that CI tool catches missing
+        // tt::cfg_parse_field<T> branches; this static_assert catches missing
+        // synthetic_value_for_field<T> branches at first instantiation.
+        static_assert(!std::is_same_v<T, T>,
+                      "extend synthetic_value_for_field<T> with branch for new STORAGE_T; "
+                      "sister discipline to check_storage_t_coverage.py for tt::cfg_*_field<T>");
     }
-    static_assert(/* unreachable per registry STORAGE_T set */, "extend synthetic_value_for_field<T>");
 }
 
 // Helper: deterministic equality check (FPN_ToDouble where applicable)

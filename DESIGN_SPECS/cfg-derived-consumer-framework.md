@@ -278,18 +278,32 @@ The cfg-derived consumer framework has a complementary **test recurrence vector*
 ### The pattern (concrete shape)
 
 ```cpp
-// Helper: deterministic synthetic value per field (FNV-1a hash of field name → value):
+// Helper: deterministic synthetic value per field (FNV-1a hash of field name → value).
+// Coverage: every STORAGE_T variant the registry uses MUST have a branch; sister discipline
+// to check_storage_t_coverage.py for tt::cfg_*_field<T>. Per /blindspot-scan v1.15 B6:
+// include is_floating_point_v + is_array_v branches + dependent-type static_assert in else.
+// Order matters: bool check BEFORE integral check (bool is_integral in C++; would match wrong branch).
 template <typename T>
 T synthetic_value_for_field(const char* field_name) {
     uint64_t h = tt::fnv1a_64(field_name, strlen(field_name));
     if constexpr (is_FPN_v<T>) {
         return FPN_FromDouble<64>((double)(h % 1000) / 1000.0 + 0.001);
-    } else if constexpr (std::is_integral_v<T>) {
-        return T((h % 100) + 1);
+    } else if constexpr (std::is_floating_point_v<T>) {
+        return T((double)(h % 1000) / 1000.0 + 0.001);
     } else if constexpr (std::is_same_v<T, bool>) {
         return (h & 1) != 0;
+    } else if constexpr (std::is_integral_v<T>) {
+        return T((h % 100) + 1);
+    } else if constexpr (std::is_array_v<T>) {
+        T result{};
+        const char* cs = "abcdefghijklmnopqrstuvwxyz0123456789";
+        constexpr size_t cap = std::extent_v<T> - 1;
+        for (size_t i = 0; i < cap; i++) result[i] = cs[(h >> (i * 4)) % 36];
+        return result;
+    } else {
+        static_assert(!std::is_same_v<T, T>,
+                      "extend synthetic_value_for_field<T> with branch for new STORAGE_T");
     }
-    /* extend per STORAGE_T set */
 }
 
 // Helper: type-aware equality (FPN_ToDouble where applicable; bit-exact otherwise):

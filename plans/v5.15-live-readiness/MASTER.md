@@ -289,6 +289,40 @@ RidgeWeights AVX-512 vectorized per item 25). Required for
 
 ---
 
+## v5.15.5 series (MASTER amendment 2026-05-18 — pipeline catch-up)
+
+**Status: substantial sub-ship series not previously catalogued in MASTER.** MASTER last touched 2026-05-11; the v5.15.5.B / .C / .F series (universal cfg field registry consolidation; cfg-stamp-binding framework; cross-tool decoupling) shipped/in-flight without MASTER updates.
+
+This section is a catch-up index — per-ship detail lives in the respective subplans/postmortems; this section provides navigation.
+
+### v5.15.5.B — EventLoopState cache-layout sweep + 9 Class-18 mirror closures [SHIPPED]
+- Tag: `v5.15.5.B.*`
+- 9 mirror-state instances closed structurally; foundational for mmap-mediated decoupling
+- Decoupling-positioning: ⬆️⬆️⬆️ STRONGLY POSITIVE per `plans/_future/2026-05-12-decoupling-endgoal-roadmap.md`
+
+### v5.15.5.C — OrderManagerState cache-layout sweep + bit-packing + wire-format registry [SHIPPED]
+- Tag: `v5.15.5.C.*`
+- OMS cluster reorg + multi-bit state encoding substrate
+- Decoupling-positioning: ⬆️⬆️⬆️ STRONGLY POSITIVE
+
+### v5.15.5.F.4b/c/c.3/d — Universal cfg field registry framework consolidation [SHIPPED]
+- Series: `.F.4b` (boolean subset; KIND_BOOL) → `.F.4c` (KIND_DOUBLE/_PCT subset; Path γ correction Option E) → `.F.4c.3` (per-core sharding + Class 27 closure + WIP2d-1.B.0c CI tool) → `.F.4d` (STAMP_BOUND derived filter framework; sister specs landed)
+- Closes TECH_DEBT-009 PARTIAL (boolean + KIND_DOUBLE subsets); H15/H16/H17/H18/H19/H20 codified
+- NEW DESIGN_SPECS landed across series: universal-cfg-field-registry-pattern, type-trait-dispatch-via-tt-namespace, categorical-tag-applicability-pattern, branchless-dispatch-discipline, audit-scope-taxonomy, decision-time-data-binding-pattern, multi-state-dispatch-with-per-state-update-metadata, sidecar-override-pattern-for-registry-auto-flows, meta-registry-pattern-for-codebase-registry-discipline, metadata-bit-driven-derived-filter-framework, framework-composition-overview
+
+### v5.15.5.F.4d.1 — Cfg-derived consumer framework + cross-tool elimination [IN-FLIGHT]
+- `.A` (LANDED 2026-05-17): framework primitive infrastructure; metadata-bit-driven-derived-filter-framework Option E first canonical
+- `.B.1` (LANDED 2026-05-17): NEW `MemHeaders/CfgGateRegistry.hpp` framework consolidation; sidecar pattern + 3 derived-filter consumer template fns + 12 sister-extension verdicts. NEW DESIGN_SPECS: cfg-derived-consumer-framework + canonical-sister-extension-discipline + failure-attribution-buffer-pattern
+- `.B.2` (LANDED 2026-05-17): cohort migration; 15 cfg fields flag STAMP_BOUND_CFG_DERIVED; FOREACH_ML_CFG_FLAG 5→6 col migration; COHORT_GATE_* macros codified
+- **`.B.3` (IN-FLIGHT 2026-05-18): Legacy empty-out + cross-tool decoupling via Phase L.** Plan body: `subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md` v1.15. Engine state at WIP-checkpoint 6 (`3d27512`). Scope: Steps 1.6.2 → 0.5d.b/c → 1.5 → Phase F same-commit trio (Step 1.6.4 + 1.6.7 + 1.6.8' **Phase L**) → 1.6.6 → Step 2 (legacy registry deletion FORCED LAST) → Steps 3-9 ship close. **Phase L is framework-driven CLI binary `tools/stamp_model_cli.cpp` replacing `tools/stamp_model.sh` (closes TECH_DEBT-001 — oldest open item; 3 major versions overdue).** Estimated ~13-19h focused coding from current state. CLOSES 13 TECH_DEBT entries total (-001/-018/-093/-094/-095/-096/-097/-098/-099/-100/-102/-104/-109); NEW 7 entries (-101/-103/-105/-106/-107/-110/-111); net -6.
+- `.C / .D / .F.4e` future ships: per `feedback_new_plans_use_future_oriented_template`; details when scoped
+
+**Decoupling-positioning across .F.4d.1.B series:** ⬆️⬆️⬆️ STRONGLY POSITIVE — first framework-driven CLI binary precedent (Phase L) enables FOREACH_CLI_MODE registry application at decoupling sprint; cfg-stamp-binding never-refactor-again at runtime + cross-tool surfaces.
+
+**See:** `plans/v5.15-live-readiness/subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md` for in-flight ship details; `plans/_future/2026-05-12-decoupling-endgoal-roadmap.md` for accumulated breadcrumbs.
+
+---
+
 ## TECH_DEBT closure table
 
 | Entry | Sub-ship | Closure form |

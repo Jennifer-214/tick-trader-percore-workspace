@@ -7,7 +7,7 @@ audit_cadence: quarterly
 tags: [doc-discipline, audit-methodology, framework-discipline]
 surface: [ci-tooling]
 sister_skills: [/anti-spaghetti, /find, /index-rebuild, /doc-create]
-loads_dynamically: [DESIGN_SPECS/doc-frontmatter-convention.md, DESIGN_SPECS/doc-tag-vocabulary.md, DESIGN_SPECS/file-size-split-discipline.md]
+loads_dynamically: [DESIGN_SPECS/meta-disciplines/doc-frontmatter-convention.md, DESIGN_SPECS/meta-disciplines/doc-tag-vocabulary.md, DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md]
 ---
 
 # /metadata-audit — Periodic doc-system drift audit
@@ -76,7 +76,7 @@ Sister to `/anti-spaghetti` quarterly cadence — `/anti-spaghetti` audits CODE 
 
 ## Output format
 
-Per `DESIGN_SPECS/audit-report-format.md` standardized shape:
+Per `DESIGN_SPECS/audit-methodologies/audit-report-format.md` standardized shape:
 
 ```markdown
 ---
@@ -149,10 +149,10 @@ established: YYYY-MM-DD
 - Sister skill: `/find` (queries metadata; this skill audits metadata)
 - Sister skill: `/index-rebuild` (regenerates indexes; this skill detects drift)
 - Sister skill: `/doc-create` (creates compliant docs; this skill audits compliance)
-- Reference: `DESIGN_SPECS/doc-frontmatter-convention.md` (frontmatter discipline)
-- Reference: `DESIGN_SPECS/doc-tag-vocabulary.md` (canonical tag list)
-- Reference: `DESIGN_SPECS/file-size-split-discipline.md` (file-size thresholds)
-- Reference: `DESIGN_SPECS/audit-report-format.md` (output format)
+- Reference: `DESIGN_SPECS/meta-disciplines/doc-frontmatter-convention.md` (frontmatter discipline)
+- Reference: `DESIGN_SPECS/meta-disciplines/doc-tag-vocabulary.md` (canonical tag list)
+- Reference: `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md` (file-size thresholds)
+- Reference: `DESIGN_SPECS/audit-methodologies/audit-report-format.md` (output format)
 - Tool: `tools/check_doc_metadata.py` (sister CI tool for commit-time validation)
 - Memory: `feedback_metadata_audit_quarterly.md` (going-forward rule)
 - Memory: `project_anti_spaghetti_audit_cadence.md` (sister cadence)

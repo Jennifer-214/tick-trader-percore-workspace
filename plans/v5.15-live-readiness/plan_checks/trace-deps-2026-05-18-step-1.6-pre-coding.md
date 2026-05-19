@@ -188,4 +188,4 @@ The iteration-spiral discipline codified at v1.8-v1.10 (consumer enumeration / c
 - `/readiness` Check 19 — symbol existence verification (this skill INVOKED by Check 19; covered here)
 - `/parity-check` v1.9 RE-SWEEP — Layer 7 cross-tool emit findings + sister-registry parity (synthesized into plan body v1.10; verified here)
 - `/precoding-audit-gate` orchestrator — iteration-spiral discipline (codified at v1.8-v1.10; HOLDS at v1.10 RE-SWEEP)
-- `DESIGN_SPECS/canonical-sister-extension-discipline.md` § Sister-registry sig migration as cohort discipline — Stage 3 first reference at Step 0.5d.a.0 VERIFIED LANDED.
+- `DESIGN_SPECS/meta-disciplines/canonical-sister-extension-discipline.md` § Sister-registry sig migration as cohort discipline — Stage 3 first reference at Step 0.5d.a.0 VERIFIED LANDED.

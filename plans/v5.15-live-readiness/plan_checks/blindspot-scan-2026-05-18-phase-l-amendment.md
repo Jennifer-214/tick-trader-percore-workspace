@@ -68,7 +68,7 @@
 
 4. **(B8 sub-finding)** Plan body L2 should specify **the exact framework call site** the CLI uses. `stamp_write_for_model` at `ML_Headers/ModelInference.hpp:1688` takes `const StampInferenceCfgInputs* inf` as final arg. CLI's main() needs to: (a) construct `StampInferenceCfgInputs inf{}`, (b) populate via `STAMP_HAS_SET(inf, <field>)` + value assignment per supplied flag, (c) call `stamp_write_for_model(...&inf)`. Plan body L2 mentions the API but doesn't spell out the population pattern. (~5 min plan body amendment.)
 
-5. **(B9 strengthening)** Plan body L1 says "framework-driven-cli-binary-pattern.md Stage 2 DRAFT (LANDED at workspace)". **Verify** this spec lives at workspace path before Phase L coding starts (skill spec requires Stage 2 DRAFT in place for Stage 3 first canonical to refer back to it). Quick check: `ls /home/caramel/code/tick-trader-percore-workspace/DESIGN_SPECS/framework-driven-cli-binary-pattern.md`. If not present, L1 must precede L2-L6.
+5. **(B9 strengthening)** Plan body L1 says "framework-driven-cli-binary-pattern.md Stage 2 DRAFT (LANDED at workspace)". **Verify** this spec lives at workspace path before Phase L coding starts (skill spec requires Stage 2 DRAFT in place for Stage 3 first canonical to refer back to it). Quick check: `ls /home/caramel/code/tick-trader-percore-workspace/DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-pattern.md`. If not present, L1 must precede L2-L6.
 
 ---
 

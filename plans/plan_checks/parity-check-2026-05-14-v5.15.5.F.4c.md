@@ -108,7 +108,7 @@
 
 **Severity:** HIGH (deferred from `.F.4b` Plan-check finding HIGH-3; this ship is supposed to close it)
 
-**Site:** Plan body has NO mention of `LOCKED_STAMP_BOUND_DERIVED_HASH_V5_15_5_F4` constant nor reference to `DESIGN_SPECS/wire-format-byte-preservation-discipline.md:194-232` (Layer 5b: derived-filter byte-order locking).
+**Site:** Plan body has NO mention of `LOCKED_STAMP_BOUND_DERIVED_HASH_V5_15_5_F4` constant nor reference to `DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md:194-232` (Layer 5b: derived-filter byte-order locking).
 
 **Symptom:** Even if Finding 2 Path 2 (full expansion) is taken, without Layer 5b the canonical-body hash is not committed; future row reorders in `FOREACH_CFG_FIELD` could silently break HMAC chain for production stamps. The locked hash test is the structural guard.
 
@@ -238,6 +238,6 @@ Per `CLAUDE.local.md` going-forward rule "Auto-write contracts", I would normall
 - `/home/caramel/code/FoxML_Trader_v2/ML_Headers/MlCfgFlagRegistry.hpp:52` (bitmap-bit-resident bools)
 - `/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/ControllerConfig.hpp:484,652,713,1184` (bitmap migration history for stamp-bound bools)
 - `/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:1548-1629` (canonical F.4b test pattern)
-- `/home/caramel/code/tick-trader-percore-workspace/DESIGN_SPECS/wire-format-byte-preservation-discipline.md:194-232` (Layer 5b spec)
-- `/home/caramel/code/tick-trader-percore-workspace/DESIGN_SPECS/x-macro-registry-with-presence-dispatch.md:345-371` (derived-filter sister-registry pattern)
+- `/home/caramel/code/tick-trader-percore-workspace/DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md:194-232` (Layer 5b spec)
+- `/home/caramel/code/tick-trader-percore-workspace/DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md:345-371` (derived-filter sister-registry pattern)
 - `/home/caramel/code/FoxML_Trader_v2/DOCS/PARITY_ISSUES.md` (PARITY ledger — no existing entries match these findings)

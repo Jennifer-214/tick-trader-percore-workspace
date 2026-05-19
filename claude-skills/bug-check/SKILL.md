@@ -85,7 +85,7 @@ consumer reads from it).
 
 ## Scope (per audit-scope-taxonomy.md)
 
-This skill accepts scope as first positional arg per `DESIGN_SPECS/audit-scope-taxonomy.md`:
+This skill accepts scope as first positional arg per `DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md`:
 
 - `current` (default when no scope specified) — scan recent edits + touched files for known bug class instances
 - `wide` — full codebase scan across all Class N entries in RECURRING_BUG_PATTERNS.md; HIGH context cost; recommended quarterly + after new Class N codification

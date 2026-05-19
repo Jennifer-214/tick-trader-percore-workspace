@@ -112,6 +112,6 @@ For each embedded struct touched in slow-path:
 
 ## Cross-references
 
-- `DESIGN_SPECS/cache-layout-discipline-for-hot-side-structs.md`
+- `DESIGN_SPECS/data-disciplines/cache-layout-discipline-for-hot-side-structs.md`
 - `CLAUDE.md` items 7, 17, 20, 27
 - `plans/v5.15-live-readiness/subplans/2026-05-12-v5.15.5-per-horizon-tp-sl-serving.md`

@@ -7,7 +7,7 @@ audit_cadence: per-ship
 tags: [audit-methodology, structural-fix, framework-discipline]
 surface: [registry, cfg-flow]
 sister_skills: [/readiness, /parity-check, /merge-scan, /dod-audit, /precoding-audit-gate, /dependency-chain-trace]
-loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/structural-fix-preferred-decision-framework.md]
+loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/meta-disciplines/structural-fix-preferred-decision-framework.md]
 ---
 
 # /trace-deps — dependency-chain audit for new plan code
@@ -109,13 +109,13 @@ have applied. Load these BEFORE walking the dep tree, so Step 6
 (structural-fix-preferred call-sequence enumeration) can cite
 specific pattern rules:
 
-- `tick-trader-percore-workspace/DESIGN_SPECS/structural-fix-preferred-decision-framework.md`
+- `tick-trader-percore-workspace/DESIGN_SPECS/meta-disciplines/structural-fix-preferred-decision-framework.md`
   — when "same pattern at multiple sites drifted apart" → registry/
   helper-extract with compile-time enforcement, not direct patch
-- `tick-trader-percore-workspace/DESIGN_SPECS/categorical-tag-applicability-pattern.md`
+- `tick-trader-percore-workspace/DESIGN_SPECS/framework-patterns/categorical-tag-applicability-pattern.md`
   — Class 19 (hardcoded instance names in applicability gating); plan
   should use category masks not enum-name comparisons
-- `tick-trader-percore-workspace/DESIGN_SPECS/x-macro-registry-with-presence-dispatch.md`
+- `tick-trader-percore-workspace/DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md`
   — FOREACH_* registry shape; mirror-incomplete additions caught by
   Step 6 should propose registry consolidation
 - `DOCS/RECURRING_BUG_PATTERNS.md` Classes 13-21 — bug class registry;
@@ -403,7 +403,7 @@ When enumerating consumer sites for a struct-gen migration or type-unification m
 - TOTAL TYPE-SENSITIVE <30 → GUARDED-BY-BUILD (compile failures surface remaining incrementally)
 
 **Cross-references:**
-- `DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md` § B1 + § B8
+- `DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md` § B1 + § B8
 - `DESIGN_PHILOSOPHY.md` § 11.5 meta-discipline M4
 - `claude-skills/blindspot-scan/SKILL.md` Pillar B1 + B8
 

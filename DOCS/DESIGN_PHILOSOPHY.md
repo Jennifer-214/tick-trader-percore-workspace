@@ -88,9 +88,9 @@ Decision rules that fall out of this:
 - **NEVER syscall on hot path.** A single syscall costs more than the full per-tick budget.
 - **NEVER allow page faults on critical pages.** Lock memory at boot via `mlockall(MCL_CURRENT | MCL_FUTURE)`.
 - **NEVER acquire mutexes on hot/slow path.** The unbounded tail under contention nukes any latency budget.
-- **NEVER default to "branch is fine because predictor handles it" for SP/HP data-dependent dispatch.** That's a throughput frame applied to a determinism-prioritizing system. Per H20: default to branchless via fn pointer table / 2D state-table / mask-select / pre-resolution per `DESIGN_SPECS/branchless-dispatch-discipline.md`.
+- **NEVER default to "branch is fine because predictor handles it" for SP/HP data-dependent dispatch.** That's a throughput frame applied to a determinism-prioritizing system. Per H20: default to branchless via fn pointer table / 2D state-table / mask-select / pre-resolution per `DESIGN_SPECS/refactor-patterns/branchless-dispatch-discipline.md`.
 
-**Cross-references:** CLAUDE.md item 28 (cycles vs cache), `DESIGN_SPECS/latency-vs-cache-decision-framework.md`, `DESIGN_SPECS/branchless-dispatch-discipline.md` (NEW at .F.4c.3 WIP2d-1.B.0d).
+**Cross-references:** CLAUDE.md item 28 (cycles vs cache), `DESIGN_SPECS/refactor-patterns/latency-vs-cache-decision-framework.md`, `DESIGN_SPECS/refactor-patterns/branchless-dispatch-discipline.md` (NEW at .F.4c.3 WIP2d-1.B.0d).
 
 ---
 
@@ -176,7 +176,7 @@ The principle-first answer:
 4. **CI check** enforces that new instances can't be added (one tool extension)
 5. **Registry as fallback** only for the edge cases where the principle genuinely doesn't apply (rare; near-vestigial)
 
-First canonical case: Class 27 (scalar cfg-mirror on subsystem state). Initial impulse was `FOREACH_SUBSYSTEM_CFG_CACHE` registry to mechanicalize per-core cache addition. Sharpening pushback: most instances should be ELIMINATED via pre-resolve onto in-flight Order/Position/Event, not mechanicalized. Registry kept as second-line fallback for the genuinely-no-in-flight-object cases (likely 0-1 actual instances). Codified in `DESIGN_SPECS/decision-time-data-binding-pattern.md`.
+First canonical case: Class 27 (scalar cfg-mirror on subsystem state). Initial impulse was `FOREACH_SUBSYSTEM_CFG_CACHE` registry to mechanicalize per-core cache addition. Sharpening pushback: most instances should be ELIMINATED via pre-resolve onto in-flight Order/Position/Event, not mechanicalized. Registry kept as second-line fallback for the genuinely-no-in-flight-object cases (likely 0-1 actual instances). Codified in `DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md`.
 
 The discipline contrast:
 - Framework-discipline meta-principle (this section above): "invest in framework when recurrence is foreseeable"
@@ -188,9 +188,9 @@ Both apply. The trade-off question is: WILL this pattern accumulate value (more 
 
 - § 7 Structural-fix family — the bug-class-recurrence motivation
 - § 11 Process discipline — "don't measure structural work by LOC" + decision discipline application
-- `DESIGN_SPECS/pattern-codification-lifecycle.md` — the 7-stage codification process
-- `DESIGN_SPECS/structural-fix-preferred-decision-framework.md` — direct-patch vs structural-fix decision
-- `DESIGN_SPECS/decision-time-data-binding-pattern.md` — first canonical "registry was wrong; principle is right" application; closes Class 27
+- `DESIGN_SPECS/meta-disciplines/pattern-codification-lifecycle.md` — the 7-stage codification process
+- `DESIGN_SPECS/meta-disciplines/structural-fix-preferred-decision-framework.md` — direct-patch vs structural-fix decision
+- `DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md` — first canonical "registry was wrong; principle is right" application; closes Class 27
 - CLAUDE.md item 19 — structural fix preferred (codified principle)
 - CLAUDE.md item 31 — framework-driven extensibility (codifies THIS section)
 
@@ -211,18 +211,18 @@ different codebase.
 | H6 | Cross-thread fields get `alignas(64)` to isolate cache lines; no false sharing | HARD | STRATEGY_AND_CODING_RULES Rule 7; CLAUDE.md item 12 |
 | H7 | Hot path is BRANCHLESS for data-dependent dispatch (mask compute, cmov; per Rule 8 of latency-path-discipline) | HARD | latency-path-discipline.md Rule 8 |
 | H8 | Hot path p99 ≤500ns; slow path p99 ≤100μs (regression = ship blocker) | HARD | CLAUDE.md item 17 |
-| H9 | Wire-format byte preservation for HMAC-signed bodies (stamps, snapshots, RunHistory); locale pinning at emit | HARD | DESIGN_SPECS/wire-format-byte-preservation-discipline.md |
-| H10 | AVX-512 SIMD kernels MUST have a scalar fallback producing BYTEWISE IDENTICAL output | HARD | CLAUDE.md item 25; DESIGN_SPECS/avx512-byte-determinism-pattern.md |
-| H11 | Math kernels on slow/hot path are CONSTANT-ITER + branchless within the inner reduction | HARD | CLAUDE.md item 26; DESIGN_SPECS/branchless-math-kernel-pattern.md |
-| H12 | Structs used in byte-equivalence contexts (memcmp / SHA-256 / wire format) have EXPLICIT zero-init padding fields | HARD | CLAUDE.md item 27; DESIGN_SPECS/struct-padding-determinism-pattern.md |
-| H13 | Type-erased `*reinterpret_cast<T*>((char*)cfg + offset) = v` style dispatch is FORBIDDEN — use `tt::<verb>_field<T>` with T deduced (Class 23 3-barrier fix) | HARD | CLAUDE.md item 23; DESIGN_SPECS/type-trait-dispatch-via-tt-namespace.md; RECURRING_BUG_PATTERNS Class 23 |
-| H14 | NO C++ bitfield syntax (`name : N`) anywhere — multi-bit state encoding uses manual `SHIFT_*`/`MASK_*` constants + `MBS_*`/`BITMAP_*` branchless accessors over `uint{8,16,32,64}_t` storage; layout/signedness/packing-order are implementation-defined (conflicts with H6/H9/H10/H12) | HARD | DESIGN_SPECS/multi-bit-state-encoding-pattern.md + DESIGN_SPECS/bitmap-flag-api.md; CLAUDE.md item 30 |
-| **H15** | Every X-macro registry in the codebase MUST have a row in `FOREACH_REGISTRY` meta-registry. Adding a new registry without enrollment fails CI Check `test_meta_registry_coverage`. Closes meta-Class-18 (added registry but forgot to document). | **HARD (codified `.F.4d` 2026-05-16)** | DESIGN_SPECS/meta-registry-pattern-for-codebase-registry-discipline.md; CLAUDE.md item 31 |
-| **H16** | Every `CfgFieldDescriptor::MetadataFlag` bit MUST have a derived filter row in `FOREACH_DERIVED_FILTER` OR a documented exemption with rationale. CI Check `test_metadata_bit_to_derived_filter_coverage` enforces. | **HARD (codified `.F.4d` 2026-05-16)** | DESIGN_SPECS/metadata-bit-driven-derived-filter-framework.md |
-| **H17** | `ControllerConfig<F>` cfg struct fields auto-generated from `FOREACH_CFG_FIELD` via X-macro; NO manual cfg field declarations. `PerCoreCfg<F>` body = X-macro only (CI Check 2 since `.F.4c`). Runtime/derived state stays manual but documented in `MANUAL_FIELDS_INVENTORY.md` with rationale. CI build-fails on drift via `tools/check_per_core_registry_integrity.py`. | **HARD (codified `.F.4d` 2026-05-16)** | DESIGN_SPECS/manual-fields-inventory-pattern.md; DESIGN_SPECS/universal-cfg-field-registry-pattern.md § Reverse-drift |
-| **H18** | Custom-semantics for registry auto-flows via SIDECAR OVERRIDE pattern (sparse `FOREACH_<DOMAIN>_OVERRIDE` indexed by parent's `FIELD_IDX`); NEVER parallel wide-variant registries (Class 21 anti-pattern at auto-flow surface). STRONG initially; HARD after 2nd cohort application per `pattern-codification-lifecycle.md`. | **STRONG → HARD (codified `.F.4d` 2026-05-16; 1st canonical: XGBoost drift override 5-row cohort in `FOREACH_DRIFT_OVERRIDE`)** | DESIGN_SPECS/sidecar-override-pattern-for-registry-auto-flows.md |
-| **H19** | Every `FOREACH_REGISTRY` row with LEVEL > 0 (meta-registry) MUST declare a valid PARENT. Topology discipline; CI Check `test_meta_registry_topology` enforces (Level 0 = standalone data registries; Level 1 = meta-registries managing cohorts; Level 2 = top-level `FOREACH_REGISTRY` itself). | **HARD (codified `.F.4d` 2026-05-16)** | DESIGN_SPECS/meta-registry-pattern-for-codebase-registry-discipline.md |
-| **H20** | Branchless preferred for SP/HP data-dependent dispatch EVEN WHEN NOMINALLY SLOWER. Mask code / fn pointer tables / cmov / mask-select / dummy-redirect can be optimized later (better instruction selection, vectorization, prefetch hints); branch mispredicts CANNOT (30-100ns real-world per § 4 framework). For determinism-prioritizing system (HFT premise), variance from branches is the bigger cost. Sister to H7 (hot-path strict); H20 generalizes to SP + drainer + producer-fan-out. Exceptions per decision matrix in `branchless-dispatch-discipline.md`. | **HARD (codified `.F.4c.3` WIP2d-1.B.0d 2026-05-15; ratified into hard-invariants table at `.F.4d` 2026-05-16)** | DESIGN_SPECS/branchless-dispatch-discipline.md; CLAUDE.md item 18 + 28; RECURRING_BUG_PATTERNS Class 28 |
+| H9 | Wire-format byte preservation for HMAC-signed bodies (stamps, snapshots, RunHistory); locale pinning at emit | HARD | DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md |
+| H10 | AVX-512 SIMD kernels MUST have a scalar fallback producing BYTEWISE IDENTICAL output | HARD | CLAUDE.md item 25; DESIGN_SPECS/wire-format-patterns/avx512-byte-determinism-pattern.md |
+| H11 | Math kernels on slow/hot path are CONSTANT-ITER + branchless within the inner reduction | HARD | CLAUDE.md item 26; DESIGN_SPECS/refactor-patterns/branchless-math-kernel-pattern.md |
+| H12 | Structs used in byte-equivalence contexts (memcmp / SHA-256 / wire format) have EXPLICIT zero-init padding fields | HARD | CLAUDE.md item 27; DESIGN_SPECS/wire-format-patterns/struct-padding-determinism-pattern.md |
+| H13 | Type-erased `*reinterpret_cast<T*>((char*)cfg + offset) = v` style dispatch is FORBIDDEN — use `tt::<verb>_field<T>` with T deduced (Class 23 3-barrier fix) | HARD | CLAUDE.md item 23; DESIGN_SPECS/framework-patterns/type-trait-dispatch-via-tt-namespace.md; RECURRING_BUG_PATTERNS Class 23 |
+| H14 | NO C++ bitfield syntax (`name : N`) anywhere — multi-bit state encoding uses manual `SHIFT_*`/`MASK_*` constants + `MBS_*`/`BITMAP_*` branchless accessors over `uint{8,16,32,64}_t` storage; layout/signedness/packing-order are implementation-defined (conflicts with H6/H9/H10/H12) | HARD | DESIGN_SPECS/refactor-patterns/multi-bit-state-encoding-pattern.md + DESIGN_SPECS/framework-patterns/bitmap-flag-api.md; CLAUDE.md item 30 |
+| **H15** | Every X-macro registry in the codebase MUST have a row in `FOREACH_REGISTRY` meta-registry. Adding a new registry without enrollment fails CI Check `test_meta_registry_coverage`. Closes meta-Class-18 (added registry but forgot to document). | **HARD (codified `.F.4d` 2026-05-16)** | DESIGN_SPECS/framework-patterns/meta-registry-pattern-for-codebase-registry-discipline.md; CLAUDE.md item 31 |
+| **H16** | Every `CfgFieldDescriptor::MetadataFlag` bit MUST have a derived filter row in `FOREACH_DERIVED_FILTER` OR a documented exemption with rationale. CI Check `test_metadata_bit_to_derived_filter_coverage` enforces. | **HARD (codified `.F.4d` 2026-05-16)** | DESIGN_SPECS/framework-patterns/metadata-bit-driven-derived-filter-framework.md |
+| **H17** | `ControllerConfig<F>` cfg struct fields auto-generated from `FOREACH_CFG_FIELD` via X-macro; NO manual cfg field declarations. `PerCoreCfg<F>` body = X-macro only (CI Check 2 since `.F.4c`). Runtime/derived state stays manual but documented in `MANUAL_FIELDS_INVENTORY.md` with rationale. CI build-fails on drift via `tools/check_per_core_registry_integrity.py`. | **HARD (codified `.F.4d` 2026-05-16)** | DESIGN_SPECS/framework-patterns/manual-fields-inventory-pattern.md; DESIGN_SPECS/framework-patterns/universal-cfg-field-registry-pattern.md § Reverse-drift |
+| **H18** | Custom-semantics for registry auto-flows via SIDECAR OVERRIDE pattern (sparse `FOREACH_<DOMAIN>_OVERRIDE` indexed by parent's `FIELD_IDX`); NEVER parallel wide-variant registries (Class 21 anti-pattern at auto-flow surface). STRONG initially; HARD after 2nd cohort application per `pattern-codification-lifecycle.md`. | **STRONG → HARD (codified `.F.4d` 2026-05-16; 1st canonical: XGBoost drift override 5-row cohort in `FOREACH_DRIFT_OVERRIDE`)** | DESIGN_SPECS/framework-patterns/sidecar-override-pattern-for-registry-auto-flows.md |
+| **H19** | Every `FOREACH_REGISTRY` row with LEVEL > 0 (meta-registry) MUST declare a valid PARENT. Topology discipline; CI Check `test_meta_registry_topology` enforces (Level 0 = standalone data registries; Level 1 = meta-registries managing cohorts; Level 2 = top-level `FOREACH_REGISTRY` itself). | **HARD (codified `.F.4d` 2026-05-16)** | DESIGN_SPECS/framework-patterns/meta-registry-pattern-for-codebase-registry-discipline.md |
+| **H20** | Branchless preferred for SP/HP data-dependent dispatch EVEN WHEN NOMINALLY SLOWER. Mask code / fn pointer tables / cmov / mask-select / dummy-redirect can be optimized later (better instruction selection, vectorization, prefetch hints); branch mispredicts CANNOT (30-100ns real-world per § 4 framework). For determinism-prioritizing system (HFT premise), variance from branches is the bigger cost. Sister to H7 (hot-path strict); H20 generalizes to SP + drainer + producer-fan-out. Exceptions per decision matrix in `branchless-dispatch-discipline.md`. | **HARD (codified `.F.4c.3` WIP2d-1.B.0d 2026-05-15; ratified into hard-invariants table at `.F.4d` 2026-05-16)** | DESIGN_SPECS/refactor-patterns/branchless-dispatch-discipline.md; CLAUDE.md item 18 + 28; RECURRING_BUG_PATTERNS Class 28 |
 
 **Family grouping notes:** H1-H6 are operational baseline (no malloc / no virtual / no mutex / no float on accounting / no slow parser / cache discipline). H7-H8 are latency budget. H9-H12 are determinism guards (wire-format / SIMD parity / math kernels / struct padding). H13-H14 are type-system + bit-encoding discipline (Class 23 / Class 20 / Class 14 prevention). **H15-H20 close the framework consolidation cycle (codified `.F.4d` 2026-05-16)** — codebase-wide registry topology (H15 + H19) + metadata-bit derived filter coverage (H16) + cfg struct auto-generation (H17) + sidecar override for custom semantics (H18) + branchless dispatch generalized to SP/drainer/producer (H20).
 
@@ -265,7 +265,7 @@ larger working sets OK, but no syscalls / no allocations / no mutex).
 - Hot WRITES go in their own cluster (avoid invalidating reads)
 - Cross-thread fields (atomic flags, snapshot pointers) get `alignas(64)` on their OWN line
 - Cold init-time fields go in the cold cluster (last lines of struct)
-- See `DESIGN_SPECS/cache-layout-discipline-for-hot-side-structs.md` + `decision-first-cluster-layout-pattern.md`
+- See `DESIGN_SPECS/data-disciplines/cache-layout-discipline-for-hot-side-structs.md` + `decision-first-cluster-layout-pattern.md`
 
 **STRONG: Branchless mask compute for data-dependent dispatch on hot path.**
 - Pattern: `result = (cond_mask & if_true_value) | (~cond_mask & if_false_value)`
@@ -289,7 +289,7 @@ larger working sets OK, but no syscalls / no allocations / no mutex).
 - ❌ Mutex protection of bitmap reads (bitmap reads are inherently lock-free)
 - ❌ Bitmap field without overflow guard — `static_assert(FOREACH_X_COUNT_VALUE <= sizeof(type) * 8)` is mandatory (Class 20; bitmap-overflow-protection-discipline.md)
 
-**Cross-references:** CLAUDE.md items 1, 12, 20, 28; DESIGN_SPECS/bitmap-flag-api.md, cache-layout-discipline-for-hot-side-structs.md, decision-first-cluster-layout-pattern.md, per-snapshot-cluster-layout-pattern.md, multi-bit-state-encoding-pattern.md, latency-vs-cache-decision-framework.md; RECURRING_BUG_PATTERNS Class 20 (bitmap overflow).
+**Cross-references:** CLAUDE.md items 1, 12, 20, 28; DESIGN_SPECS/framework-patterns/bitmap-flag-api.md, cache-layout-discipline-for-hot-side-structs.md, decision-first-cluster-layout-pattern.md, per-snapshot-cluster-layout-pattern.md, multi-bit-state-encoding-pattern.md, latency-vs-cache-decision-framework.md; RECURRING_BUG_PATTERNS Class 20 (bitmap overflow).
 
 ---
 
@@ -408,7 +408,7 @@ deterministic source.
 - ❌ Variable-iteration math kernels on slow path (drift class; replace with constant-iter + pre-zero)
 - ❌ Wide refactors that change struct field offsets in HMAC-signed bodies (Layer 5b hash test fires; investigate before resetting hash)
 
-**Cross-references:** CLAUDE.md items 14, 15, 24, 25, 26, 27, 29; DESIGN_SPECS/wire-format-byte-preservation-discipline.md, avx512-byte-determinism-pattern.md, branchless-math-kernel-pattern.md, struct-padding-determinism-pattern.md, prng-choice-for-replay-determinism.md, sliding-window-online-statistics-pattern.md; PARITY_LIFECYCLE.md, PARITY_VERIFICATION_CHECKLIST.md.
+**Cross-references:** CLAUDE.md items 14, 15, 24, 25, 26, 27, 29; DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md, avx512-byte-determinism-pattern.md, branchless-math-kernel-pattern.md, struct-padding-determinism-pattern.md, prng-choice-for-replay-determinism.md, sliding-window-online-statistics-pattern.md; PARITY_LIFECYCLE.md, PARITY_VERIFICATION_CHECKLIST.md.
 
 ---
 
@@ -528,7 +528,7 @@ times, structural fix is the correct path even at higher upfront cost.
 - ❌ Adding to a registry without updating its AUTOPOPULATE companion (silently breaks production callers)
 - ❌ Bypassing the X-macro extractor with hand-written if-chains (defeats the structural fix; reintroduces the drift class)
 
-**Cross-references:** CLAUDE.md items 13, 19, 21, 22, 23, 30; DESIGN_SPECS/x-macro-registry-with-presence-dispatch.md, autopopulate-pattern-for-production-caller-class.md, autopopulate-from-arity-macro-family.md, pre-post-cfg-registry-split-for-emit-order-preservation.md, structural-fix-preferred-decision-framework.md, type-trait-dispatch-via-tt-namespace.md, registry-bitmap-set-discipline.md, pattern-codification-lifecycle.md; RECURRING_BUG_PATTERNS Class 11 (extensibility friction), Class 13 (snapshot mirror), Class 18 (mirror-incomplete), Class 23 (type-erased dispatch).
+**Cross-references:** CLAUDE.md items 13, 19, 21, 22, 23, 30; DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md, autopopulate-pattern-for-production-caller-class.md, autopopulate-from-arity-macro-family.md, pre-post-cfg-registry-split-for-emit-order-preservation.md, structural-fix-preferred-decision-framework.md, type-trait-dispatch-via-tt-namespace.md, registry-bitmap-set-discipline.md, pattern-codification-lifecycle.md; RECURRING_BUG_PATTERNS Class 11 (extensibility friction), Class 13 (snapshot mirror), Class 18 (mirror-incomplete), Class 23 (type-erased dispatch).
 
 ---
 
@@ -752,7 +752,7 @@ recurring bug classes pre-coding, and keeps the audit infrastructure
 - ❌ Premature deferral as effort-avoidance
 - ❌ MVP-style ship for refactor work where the design is documented
 
-**Cross-references:** CLAUDE.local.md going-forward rules; memories at `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/`; /readiness, /parity-check, /trace-deps, /merge-scan, /dod-audit, /bug-check, /handoff skills; DESIGN_SPECS/audit-driven-pre-coding-gate.md, structural-fix-preferred-decision-framework.md, pattern-codification-lifecycle.md.
+**Cross-references:** CLAUDE.local.md going-forward rules; memories at `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/`; /readiness, /parity-check, /trace-deps, /merge-scan, /dod-audit, /bug-check, /handoff skills; DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md, structural-fix-preferred-decision-framework.md, pattern-codification-lifecycle.md.
 
 ---
 
@@ -836,11 +836,11 @@ If you can't find the answer at the layer you're looking at, go DOWN the hierarc
 - `feedback_implementation_detail_blindspot_recovery_via_taxonomy` (memory rule; M4 specifically)
 - `feedback_audit_canonical_sister_before_new_infra` (memory rule; M1 producer side)
 - `feedback_enumerate_consumers_before_registry_row_deletion` (memory rule; M1 consumer side)
-- `DESIGN_SPECS/audit-driven-pre-coding-gate.md` (parent pattern for /precoding-audit-gate)
-- `DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md` (M4 codification)
-- `DESIGN_SPECS/canonical-sister-extension-discipline.md` (M1 codification)
-- `DESIGN_SPECS/wire-format-byte-preservation-discipline.md` Layer 7 (M2 codification)
-- `DESIGN_SPECS/pattern-codification-lifecycle.md` (Stage 2 DRAFT → Stage 3 ACTIVE workflow)
+- `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md` (parent pattern for /precoding-audit-gate)
+- `DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md` (M4 codification)
+- `DESIGN_SPECS/meta-disciplines/canonical-sister-extension-discipline.md` (M1 codification)
+- `DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md` Layer 7 (M2 codification)
+- `DESIGN_SPECS/meta-disciplines/pattern-codification-lifecycle.md` (Stage 2 DRAFT → Stage 3 ACTIVE workflow)
 
 ---
 

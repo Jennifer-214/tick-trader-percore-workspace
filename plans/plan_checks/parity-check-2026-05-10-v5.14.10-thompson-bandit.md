@@ -127,7 +127,7 @@ Effort: ~30 min for direct Box-Muller implementation + 30 min snapshot test. Sav
 
 #### MED-1 — Wire-format byte-preservation incomplete in `thompson_state.json` spec
 
-**Severity rationale:** Plan correctly identifies `format_version` header (per BANDIT_STATE_FORMAT_VERSION precedent) and "forward-compat-by-absence" (per exit_bandit_state.json shape at CoreModelZoo.hpp:1942-1990). But several wire-format discipline items per `DESIGN_SPECS/wire-format-byte-preservation-discipline.md` are unspecified:
+**Severity rationale:** Plan correctly identifies `format_version` header (per BANDIT_STATE_FORMAT_VERSION precedent) and "forward-compat-by-absence" (per exit_bandit_state.json shape at CoreModelZoo.hpp:1942-1990). But several wire-format discipline items per `DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md` are unspecified:
 
 1. **Per-field `fmt` strings not locked.** BanditLearning.hpp:404-414 uses `%.17g` for doubles (lossless round-trip), `%d` for ints. Plan Step 4 doesn't specify; risk of `%g` slipping in (locale-dependent precision drift).
 2. **LC_NUMERIC pinning at write time.** BanditLearning.hpp:355-358 documents that the engine boot pins LC_NUMERIC=C process-wide but does NOT do per-write `uselocale` (relies on operator pinning at boot). Plan should explicitly call out the same dependency. Cross-process portability concern: if a Python tool ever reads `thompson_state.json`, locale matters again.

@@ -7,7 +7,7 @@ audit_cadence: ad-hoc
 tags: [fixed-point-math, structural-fix, failure-observability]
 surface: [oms-drainer, hot-path, slow-path, backtest, live-trading, wire-format]
 sister_skills: [/parity-check, /hft-audit, /dod-audit, /bug-check, /ml-audit]
-loads_dynamically: [DESIGN_SPECS/decision-time-data-binding-pattern.md, DESIGN_SPECS/cfg-scope-discipline.md, DESIGN_SPECS/cache-layout-discipline-for-hot-side-structs.md, DESIGN_SPECS/postloadsetup-registry-pattern.md, DOCS/DESIGN_PHILOSOPHY.md]
+loads_dynamically: [DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md, DESIGN_SPECS/refactor-patterns/cfg-scope-discipline.md, DESIGN_SPECS/data-disciplines/cache-layout-discipline-for-hot-side-structs.md, DESIGN_SPECS/framework-patterns/postloadsetup-registry-pattern.md, DOCS/DESIGN_PHILOSOPHY.md]
 ---
 
 # /accounting-audit — Accounting / money-tracking path audit
@@ -37,7 +37,7 @@ Output is a structured findings report. NOT actual edits. Operator decides which
 
 ## Scope (per audit-scope-taxonomy.md)
 
-This skill accepts scope as first positional arg per `DESIGN_SPECS/audit-scope-taxonomy.md`:
+This skill accepts scope as first positional arg per `DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md`:
 
 - `current` (default when no scope specified) — accounting paths in recent edits + touched files
 - `wide` — full codebase accounting sweep; HIGH context cost; recommended quarterly
@@ -73,7 +73,7 @@ Spawn an Explore subagent. The subagent walks the standard 10-category checklist
 
 ### 10-category checklist
 
-1. **Class 27 instances (scalar cfg-mirror)** — scan designated subsystem state types (per `DESIGN_SPECS/decision-time-data-binding-pattern.md` § Class 27 target subsystems) for scalar fields that mirror cfg field names. Each is a candidate for pre-resolve onto in-flight object (Order/Position/Event) OR registry-driven per-instance cache (FOREACH_<SUBSYS>_CFG_CACHE fallback). The CI check that enforces Class 27 prevention (currently `tools/check_per_core_registry_integrity.py` Check 7) catches new instances; this audit catches existing ones + edge-case patterns.
+1. **Class 27 instances (scalar cfg-mirror)** — scan designated subsystem state types (per `DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md` § Class 27 target subsystems) for scalar fields that mirror cfg field names. Each is a candidate for pre-resolve onto in-flight object (Order/Position/Event) OR registry-driven per-instance cache (FOREACH_<SUBSYS>_CFG_CACHE fallback). The CI check that enforces Class 27 prevention (currently `tools/check_per_core_registry_integrity.py` Check 7) catches new instances; this audit catches existing ones + edge-case patterns.
 
 2. **Per-core / per-instance fee_rate + commission indexing** — every fee/commission read MUST resolve to the relevant instance (per-core via `cfg.cores[c]` or pre-resolved on in-flight object). Flag global `cfg.fee_rate_*` reads at sites that have per-instance context available.
 
@@ -147,10 +147,10 @@ Cross-reference EVERY finding to:
 
 ## Cross-references
 
-- `DESIGN_SPECS/decision-time-data-binding-pattern.md` — the principle for Class 27 closure
-- `DESIGN_SPECS/cfg-scope-discipline.md` — per-instance scope for accounting fields
-- `DESIGN_SPECS/cache-layout-discipline-for-hot-side-structs.md` — subsystem state layout
-- `DESIGN_SPECS/postloadsetup-registry-pattern.md` — fallback cache cfg-reload hook
+- `DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md` — the principle for Class 27 closure
+- `DESIGN_SPECS/refactor-patterns/cfg-scope-discipline.md` — per-instance scope for accounting fields
+- `DESIGN_SPECS/data-disciplines/cache-layout-discipline-for-hot-side-structs.md` — subsystem state layout
+- `DESIGN_SPECS/framework-patterns/postloadsetup-registry-pattern.md` — fallback cache cfg-reload hook
 - `DOCS/RECURRING_BUG_PATTERNS.md` Classes 24, 25, 26, 27 — the recurring anti-patterns this skill catches
 - `tools/check_per_core_registry_integrity.py` Check 7 — CI enforcement for Class 27
 - `DOCS/MANUAL_FIELDS_INVENTORY.md` Section C — Class 27 exemption registry

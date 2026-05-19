@@ -261,9 +261,9 @@ Each core's HMAC stamp now covers ITS per-core cfg (not a global cfg). At boot:
 - Check the example `engine.cfg.example` (4-core sample) shipped with `.F.4c.3`
 - The plan + DESIGN_SPECs are at:
   - `plans/v5.15-live-readiness/subplans/2026-05-15-v5.15.5.F.4c.3-global-vs-per-core-registry-split.md`
-  - `DESIGN_SPECS/cfg-scope-discipline.md` (the discipline doc with categorical rationale)
-  - `DESIGN_SPECS/per-instance-registry-pattern.md` (the framework pattern)
-  - `DESIGN_SPECS/cfg-section-parser-state-machine.md` (the parser implementation)
+  - `DESIGN_SPECS/refactor-patterns/cfg-scope-discipline.md` (the discipline doc with categorical rationale)
+  - `DESIGN_SPECS/framework-patterns/per-instance-registry-pattern.md` (the framework pattern)
+  - `DESIGN_SPECS/refactor-patterns/cfg-section-parser-state-machine.md` (the parser implementation)
 
 ---
 

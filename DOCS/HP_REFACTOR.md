@@ -153,9 +153,9 @@ If multiple strategies per core become hot-path simultaneous (today: 2 max), AVX
 - `DOCS/STRATEGY_AND_CODING_RULES.md` (private) — 11 strict invariants (H1-H14 + H20)
 - `DOCS/LATENCY_OPTIMIZATION_AUDIT.md` (private) — 13-part audit of optimization opportunities
 - `plans/_cross-cutting/2026-05-06-latency-path-discipline.md` — 7 latency-path rules + anti-pattern history
-- `DESIGN_SPECS/branchless-dispatch-discipline.md` — Pattern 1/2/3/4/5 canonical shapes
-- `DESIGN_SPECS/latency-vs-cache-decision-framework.md` — Cost model for cache vs branch decisions
-- `DESIGN_SPECS/avx512-byte-determinism-pattern.md` — AVX-512 SIMD with scalar fallback discipline
+- `DESIGN_SPECS/refactor-patterns/branchless-dispatch-discipline.md` — Pattern 1/2/3/4/5 canonical shapes
+- `DESIGN_SPECS/refactor-patterns/latency-vs-cache-decision-framework.md` — Cost model for cache vs branch decisions
+- `DESIGN_SPECS/wire-format-patterns/avx512-byte-determinism-pattern.md` — AVX-512 SIMD with scalar fallback discipline
 - `tick-trader-percore-workspace/DOCS/DESIGN_PHILOSOPHY.md` § 2 (Hard Invariants — H7 + H8 + H20 governing hot path)
 
 ## Companion: cache-audit-related observations + rough scope idea

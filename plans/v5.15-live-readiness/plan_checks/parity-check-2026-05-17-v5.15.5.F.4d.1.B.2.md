@@ -123,7 +123,7 @@ Loaded per skill spec:
 #### HIGH-P3 — Layer 5b structural invariant tests not named in Step 9 plan; replaces snapshot-as-lock per `.A` REVISED Option F
 
 **File:line refs:**
-- `DESIGN_SPECS/wire-format-byte-preservation-discipline.md` Layer 5b (lines 195-274) — REVISED Option F replaces LOCKED-hash-constant snapshot with structural invariants (I1-I5) per `feedback_principle_beats_registry_for_eliminating` 2026-05-15
+- `DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md` Layer 5b (lines 195-274) — REVISED Option F replaces LOCKED-hash-constant snapshot with structural invariants (I1-I5) per `feedback_principle_beats_registry_for_eliminating` 2026-05-15
 - Plan Step 9.4 line 736 — "Compute canonical body hash; lock as `LOCKED_STAMP_BOUND_CFG_DERIVED_HASH_V5_15_5_F4D_1_B_2`"
 - Plan Step 9.6 line 745-748 — walker integration tests "verify framework consumer macros populate same inf/result struct fields as legacy walker would have populated"
 

@@ -116,7 +116,7 @@ Option (Z) — Defer B13 to next ship. **REJECTED** per `feedback_no_defer_for_e
 ## Per-finding cross-references
 
 - **B13** — `comm -12 /tmp/mc_names.txt /tmp/global_names.txt` confirms 3-way overlap; sister H18 SIDECAR at `CfgGateRegistry.hpp:619-622`; struct-gen application at `ML_Headers/ModelInference.hpp:1225-1227 + :1668-1670`.
-- **B11** — Plan body `subplans/2026-05-17-...-legacy-empty-out.md:871-878` (muddled Y3 sketch) vs spec `DESIGN_SPECS/framework-driven-cli-binary-pattern.md:213-217` (resolved approach).
+- **B11** — Plan body `subplans/2026-05-17-...-legacy-empty-out.md:871-878` (muddled Y3 sketch) vs spec `DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-pattern.md:213-217` (resolved approach).
 - **B8** — Sister precedent `CoreFrameworks/ControllerConfig.hpp:1447-1454` (`EMIT_PER_CORE_COPY` uses `if constexpr (!((meta) & NO_FLAT_FIELD))`); NO_FLAT_FIELD row example `CoreFrameworks/CfgFieldRegistry.hpp:441` (strategy).
 - **B6 SUB-FINDING** — Spec `cfg-derived-consumer-framework.md:282-293`; current 7-variant coverage verified via `tools/check_storage_t_coverage.py`.
 - **B11 ALT** — Sister template context at `MemHeaders/CfgGateRegistry.hpp:287-289` (`template <unsigned F, typename InfT>`).

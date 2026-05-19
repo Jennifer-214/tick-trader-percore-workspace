@@ -104,12 +104,12 @@ Legacy backtest is gone — `Backtest_Run` wraps `BacktestSharded_Run`.
 | Coding rules + 11 strict invariants | `DOCS/STRATEGY_AND_CODING_RULES.md` (private) |
 | Per-component invariants | `DOCS/CLAUDE_INVARIANTS.md` |
 | ML pipeline invariants | `DOCS/CLAUDE_ML_INVARIANTS.md` |
-| Thread architecture + sync primitives | `DESIGN_SPECS/concurrency-model-summary.md` |
-| Cache layout + alignment discipline | `DESIGN_SPECS/cache-line-discipline.md` |
-| Branchless dispatch discipline | `DESIGN_SPECS/branchless-dispatch-discipline.md` |
-| Wire-format byte preservation | `DESIGN_SPECS/wire-format-byte-preservation-discipline.md` |
-| X-macro registry pattern | `DESIGN_SPECS/x-macro-registry-with-presence-dispatch.md` |
-| Meta-registry topology | `DESIGN_SPECS/meta-registry-pattern-for-codebase-registry-discipline.md` |
+| Thread architecture + sync primitives | `DESIGN_SPECS/concurrency-patterns/concurrency-model-summary.md` |
+| Cache layout + alignment discipline | `DESIGN_SPECS/data-disciplines/cache-line-discipline.md` |
+| Branchless dispatch discipline | `DESIGN_SPECS/refactor-patterns/branchless-dispatch-discipline.md` |
+| Wire-format byte preservation | `DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md` |
+| X-macro registry pattern | `DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md` |
+| Meta-registry topology | `DESIGN_SPECS/framework-patterns/meta-registry-pattern-for-codebase-registry-discipline.md` |
 | Bug class catalog | `DOCS/RECURRING_BUG_PATTERNS.md` |
 | Decoupling roadmap (long-horizon) | `plans/_future/2026-05-12-decoupling-endgoal-roadmap.md` |
 
@@ -180,9 +180,9 @@ See CLAUDE.md § Design philosophy + priorities for the end-state vision:
 - `DOCS/CODE_MAP.md` (per-file responsibilities)
 - `DOCS/HOT_PATH_CHANGELOG.md` (hot path cadence tier classification)
 - `DOCS/STRATEGY_AND_CODING_RULES.md` (private; 11 strict invariants)
-- `DESIGN_SPECS/concurrency-model-summary.md` (thread architecture detail)
-- `DESIGN_SPECS/cache-line-discipline.md` (DOD layout discipline detail)
-- `DESIGN_SPECS/branchless-dispatch-discipline.md` (Class 28 + H20 detail)
+- `DESIGN_SPECS/concurrency-patterns/concurrency-model-summary.md` (thread architecture detail)
+- `DESIGN_SPECS/data-disciplines/cache-line-discipline.md` (DOD layout discipline detail)
+- `DESIGN_SPECS/refactor-patterns/branchless-dispatch-discipline.md` (Class 28 + H20 detail)
 - `plans/_future/2026-05-12-decoupling-endgoal-roadmap.md` (long-horizon roadmap)
 
 ---

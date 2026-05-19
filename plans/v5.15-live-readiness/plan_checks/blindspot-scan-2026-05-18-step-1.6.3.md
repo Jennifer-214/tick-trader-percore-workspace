@@ -1,6 +1,6 @@
 # /blindspot-scan report — Step 1.6.3 ModelInference struct-gen migration — 2026-05-18
 
-**Audit scope:** Step 1.6.3 implementation-detail verification per DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md
+**Audit scope:** Step 1.6.3 implementation-detail verification per DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md
 **Target plan:** `/plans/v5.15-live-readiness/subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md`
 **Engine HEAD:** `a406120` (WIP-checkpoint 2)
 **Decision:** C Approach A (unconditional struct-gen across 4 registries)
@@ -185,12 +185,12 @@
 
 **1. B3 struct-size budget annotation (SILENT-RISK mitigation)** — ~30 min
    - Add explicit statement to Step 1.6.3 plan body: "Transitional struct-size peak ~1.1–1.5KB between Step 1.6.3 and Step 2; within acceptable bounds; resolves at Step 2."
-   - Cross-reference: B3 category definition at DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md lines 95–109
+   - Cross-reference: B3 category definition at DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md lines 95–109
 
 **2. B8 type-sensitive consumer classification (SILENT-RISK mitigation)** — ~1 hour
    - Enhance `/trace-deps` enumeration summary with explicit count breakdown:
      - "149 total consumer sites enumerated at v1.8; estimated ~80–100 TYPE-SENSITIVE-READ (need FPN_ToDouble wrap or operator), ~10–20 TYPE-SENSITIVE-WRITE (need FPN_FromDouble wrap), rest TYPE-AGNOSTIC (pass-through safe)"
-   - Cross-reference: B8 category definition at DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md lines 182–196
+   - Cross-reference: B8 category definition at DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md lines 182–196
 
 **3. B9 audit claim correction (LOAD-BEARING verification)** — ~15 min
    - Update `/parity-check` MEDIUM-1 report narrative:
@@ -252,7 +252,7 @@ Per CLAUDE.local.md auto-write rules:
 ## Cross-references
 
 - **Plan:** `/plans/v5.15-live-readiness/subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md` v1.11
-- **Taxonomy:** `DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md` Stage 2 DRAFT v1.0 (committed 2026-05-18)
+- **Taxonomy:** `DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md` Stage 2 DRAFT v1.0 (committed 2026-05-18)
 - **Skill:** `claude-skills/blindspot-scan/SKILL.md` (this audit instantiation)
 - **Parent audit gate:** `/precoding-audit-gate` (extended with blindspot-scan as Layer 2)
 - **CI tools:** `tools/check_field_name_uniqueness.py` (B2 verified 2026-05-18) + `tools/check_storage_t_coverage.py` (B6 verified 2026-05-18)

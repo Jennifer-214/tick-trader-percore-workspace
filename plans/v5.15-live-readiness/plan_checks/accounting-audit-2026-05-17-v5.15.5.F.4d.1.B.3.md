@@ -20,10 +20,10 @@ Money-path verdict: **NO direct accounting-path changes at `.B.3`.** Step 1.6.4 
 
 ## Findings
 
-### [CRITICAL-1] Step 1.6.7 stamp_format_version=2 bump is FIRST canonical use AND DESIGN_SPEC amendment LANDS AT THE SAME SHIP — discipline circularity risk (`subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md:226-232` + `tick-trader-percore-workspace/DESIGN_SPECS/wire-format-byte-preservation-discipline.md:194-274`)
+### [CRITICAL-1] Step 1.6.7 stamp_format_version=2 bump is FIRST canonical use AND DESIGN_SPEC amendment LANDS AT THE SAME SHIP — discipline circularity risk (`subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md:226-232` + `tick-trader-percore-workspace/DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md:194-274`)
 
 - **Severity:** CRITICAL
-- **Category:** § 1 Wire-format byte preservation under version bump (DESIGN_SPECS/wire-format-byte-preservation-discipline.md Layer 5b methodology — structural invariant tests at consumer site)
+- **Category:** § 1 Wire-format byte preservation under version bump (DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md Layer 5b methodology — structural invariant tests at consumer site)
 - **Class:** Wire-format chain re-baseline; H9 invariant (per CLAUDE.md "wire-format byte preservation for HMAC-signed bodies")
 - **Details:** plan-body Step 1.6.7 sequences 5 sub-steps (`.0` extract literal → `.1` add MAX_SUPPORTED bounds check → `.2` bump constant → `.3` v1 fixture failure-mode test → `.4` DESIGN_SPEC amendment). Two structural gaps:
   1. **The DESIGN_SPEC procedure being amended at sub-step `.4` is the procedure being EXECUTED for the first time at sub-steps `.0`-`.3`.** The plan body cites `wire-format-byte-preservation-discipline.md` Layer 5b methodology as the methodology, but Layer 5b is the structural-invariant TEST mechanism for derived filters (added 2026-05-14 / revised 2026-05-16 per Option F at lines 194-274), NOT a procedure for stamp_format_version bumps. The procedure being codified IS new at `.B.3`; the plan should not present the amendment as if the procedure already exists elsewhere.

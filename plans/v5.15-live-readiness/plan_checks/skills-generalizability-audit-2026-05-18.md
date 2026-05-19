@@ -49,18 +49,18 @@
 
 **Line 51:** Hardcoded `NEW v5.15.5.F.4c.3 WIP2d-1.B.0d` in a scope-parameter description  
 ```
-per `DESIGN_SPECS/audit-scope-taxonomy.md` (NEW v5.15.5.F.4c.3 WIP2d-1.B.0d):
+per `DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md` (NEW v5.15.5.F.4c.3 WIP2d-1.B.0d):
 ```
 
 **Issue:** The skill spec is documenting "this audit-scope-taxonomy doc is NEW at version v5.15.5.F.4c.3." The version tag is historical context (date-stamped when the feature landed), but embedding it in a reusable skill spec creates a fragile cross-reference. If a future skill adds its own NEW features, the version becomes stale and confusing.
 
 **Fix:** Replace with a reference pattern:  
 ```
-per `DESIGN_SPECS/audit-scope-taxonomy.md` (post-v5.15 enhancement):
+per `DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md` (post-v5.15 enhancement):
 ```
 Or:
 ```
-per `DESIGN_SPECS/audit-scope-taxonomy.md` (see DESIGN_SPECS/README.md Catalog Version History):
+per `DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md` (see DESIGN_SPECS/README.md Catalog Version History):
 ```
 
 **Effort estimate:** ~2 min. Single-line edit.
@@ -271,7 +271,7 @@ promoted with per-snapshot-cluster-layout-pattern + calibration-log-column-regis
 1. **Adopt version-tag discipline for skill spec enhancements:** When a skill spec documents a NEW feature (e.g., "extended audit set in precoding-audit-gate"), cite the feature via a **pointer reference** instead of inline version tag:
    ```markdown
    # GOOD:
-   (enhanced in DESIGN_SPECS/audit-driven-pre-coding-gate.md § 3)
+   (enhanced in DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md § 3)
    
    # AVOID:
    (NEW v5.15.5.F.4c.3 WIP2d-1.B.0c)

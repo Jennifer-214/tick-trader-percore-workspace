@@ -7,7 +7,7 @@
 - **Audit scope:** module:wire-format — focused on Step 1.6.3 + 1.6.4 + 1.6.6.b + 1.6.7 (the SOFT bump) + 1.6.8 cross-tool migration
 - **Cross-check baseline:** Layer 7 cross-tool emit discipline (NEW v1.10), Layer 5b structural invariants (live at HEAD), Surface G back-compat (live), post-v5.14.8.A.merged HMAC chain protections
 - **Plan file:** `plans/v5.15-live-readiness/subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md` v1.10 (862 lines)
-- **Wire-format spec referenced:** `DESIGN_SPECS/wire-format-byte-preservation-discipline.md` (Layers 1-7)
+- **Wire-format spec referenced:** `DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md` (Layers 1-7)
 
 ## Stage 0 — DESIGN_PHILOSOPHY preload + DESIGN_SPECS used
 

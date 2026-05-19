@@ -179,7 +179,7 @@ fields, so this is one entry covering both surfaces.)
 `RidgeOnlineState_Reset` zeros mean/M2/outer_xy/n/cycles. Called from
 PostLoadSetup; idempotent; cheap.
 
-Per `DESIGN_SPECS/postloadsetup-registry-pattern.md`: any new
+Per `DESIGN_SPECS/framework-patterns/postloadsetup-registry-pattern.md`: any new
 "initialize-once-at-boot/backtest/hot-swap" state should flow through
 this registry. RidgeOnlineState qualifies.
 

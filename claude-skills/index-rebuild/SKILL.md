@@ -7,7 +7,7 @@ audit_cadence: per-ship
 tags: [doc-discipline, framework-discipline]
 surface: []
 sister_skills: [/find, /doc-create, /metadata-audit]
-loads_dynamically: [DESIGN_SPECS/doc-frontmatter-convention.md, DESIGN_SPECS/doc-tag-vocabulary.md]
+loads_dynamically: [DESIGN_SPECS/meta-disciplines/doc-frontmatter-convention.md, DESIGN_SPECS/meta-disciplines/doc-tag-vocabulary.md]
 ---
 
 # /index-rebuild — Auto-regenerate doc-system indexes
@@ -99,7 +99,7 @@ For each tag in vocabulary: list files using that tag
 
 ### framework-discipline (N files)
 - DESIGN_SPECS/meta-registry-pattern.md
-- DESIGN_SPECS/structural-fix-preferred-decision-framework.md
+- DESIGN_SPECS/meta-disciplines/structural-fix-preferred-decision-framework.md
 - ...
 
 ### audit-methodology (N files)
@@ -147,6 +147,6 @@ Optionally fire at CI pre-commit for ALL indexes; verifies indexes match current
 - Sister: `/find` (queries metadata; this skill maintains canonical indexes)
 - Sister: `/doc-create` (creates new docs; this skill re-indexes after creation)
 - Sister: `/metadata-audit` (audits metadata; this skill repairs index drift)
-- Reference: `DESIGN_SPECS/doc-frontmatter-convention.md` (frontmatter schema)
-- Reference: `DESIGN_SPECS/doc-tag-vocabulary.md` (canonical tag list)
+- Reference: `DESIGN_SPECS/meta-disciplines/doc-frontmatter-convention.md` (frontmatter schema)
+- Reference: `DESIGN_SPECS/meta-disciplines/doc-tag-vocabulary.md` (canonical tag list)
 - TECH_DEBT-115 Phase 2 (this skill lands at `.C` candidate ship)

@@ -51,9 +51,9 @@ A reduced-precision FPN<F=32> variant would have:
 **Status:** PARKED for crypto era. Re-evaluate IF/WHEN pivoting to equities trading. Trigger: equities-strategy plan emerges in roadmap.
 
 **Cross-references when picked up:**
-- `DESIGN_SPECS/avx512-byte-determinism-pattern.md` (8 rules + SHA-256 cross-binary lock test pattern)
-- `DESIGN_SPECS/hot-side-array-element-alignment-for-sparse-access.md` (Position 128B alignas target)
-- `DESIGN_SPECS/struct-padding-determinism-pattern.md` (FPN<32> needs explicit padding declarations too)
+- `DESIGN_SPECS/wire-format-patterns/avx512-byte-determinism-pattern.md` (8 rules + SHA-256 cross-binary lock test pattern)
+- `DESIGN_SPECS/data-disciplines/hot-side-array-element-alignment-for-sparse-access.md` (Position 128B alignas target)
+- `DESIGN_SPECS/wire-format-patterns/struct-padding-determinism-pattern.md` (FPN<32> needs explicit padding declarations too)
 - `DOCS/TECH_DEBT.md` entry: "FPN<32> variant infrastructure — DEFERRED until equities pivot"
 
 ---
@@ -71,9 +71,9 @@ Secondary wins:
 
 **Infrastructure already shipped (v5.14 / v5.15):**
 - FoxLIB branchless FPN math: `FPN_Exp`, `FPN_Log`, `FPN_Sqrt`, `FPN_Mul`, etc. (v5.10.0b.2.5.C)
-- AVX-512 byte-deterministic vectorization pattern: `DESIGN_SPECS/avx512-byte-determinism-pattern.md` + CLAUDE.md item 25 (8 rules + SHA-256 cross-binary lock test)
-- Branchless math kernels with constant-iter reductions: `DESIGN_SPECS/branchless-math-kernel-pattern.md` + CLAUDE.md item 26 (canonical: Cholesky_Solve)
-- Struct padding determinism: `DESIGN_SPECS/struct-padding-determinism-pattern.md` + CLAUDE.md item 27 (FPN<F> already padded)
+- AVX-512 byte-deterministic vectorization pattern: `DESIGN_SPECS/wire-format-patterns/avx512-byte-determinism-pattern.md` + CLAUDE.md item 25 (8 rules + SHA-256 cross-binary lock test)
+- Branchless math kernels with constant-iter reductions: `DESIGN_SPECS/refactor-patterns/branchless-math-kernel-pattern.md` + CLAUDE.md item 26 (canonical: Cholesky_Solve)
+- Struct padding determinism: `DESIGN_SPECS/wire-format-patterns/struct-padding-determinism-pattern.md` + CLAUDE.md item 27 (FPN<F> already padded)
 - Ridge blender + sliding-window correlation on FPN<F> + AVX-512 (v5.14.11.A/B)
 - Online regression (Ridge) + bandits (Thompson, Exp3) on FPN<F>
 
@@ -113,10 +113,10 @@ SIMD opportunity: bin accumulation is the hot loop. AVX-512 FPN<F> kernel per th
 - Sandbox / research interest
 
 **Cross-references for picker-up:**
-- `DESIGN_SPECS/avx512-byte-determinism-pattern.md` (8 rules + SHA-256 cross-binary lock test pattern)
-- `DESIGN_SPECS/branchless-math-kernel-pattern.md` (constant-iter inner reductions; histogram bin accumulation shape)
-- `DESIGN_SPECS/sliding-window-online-statistics-pattern.md` (for online training stats — gradient norms, residual variance)
-- `DESIGN_SPECS/struct-padding-determinism-pattern.md` (tree node + bin accumulator structs)
+- `DESIGN_SPECS/wire-format-patterns/avx512-byte-determinism-pattern.md` (8 rules + SHA-256 cross-binary lock test pattern)
+- `DESIGN_SPECS/refactor-patterns/branchless-math-kernel-pattern.md` (constant-iter inner reductions; histogram bin accumulation shape)
+- `DESIGN_SPECS/refactor-patterns/sliding-window-online-statistics-pattern.md` (for online training stats — gradient norms, residual variance)
+- `DESIGN_SPECS/wire-format-patterns/struct-padding-determinism-pattern.md` (tree node + bin accumulator structs)
 - CLAUDE.md items 25 (AVX-512 byte determinism), 26 (branchless math kernels), 27 (struct padding determinism)
 - CLAUDE.local.md "Known landmine" 2026-05-07 (XGBoost+libgomp+pthread segfault — eliminated entirely by going native)
 

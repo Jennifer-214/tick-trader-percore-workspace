@@ -7,7 +7,7 @@ audit_cadence: ad-hoc
 tags: [framework-discipline, pattern-codification, structural-fix]
 surface: [registry]
 sister_skills: [/dod-audit, /anti-spaghetti, /merge-scan, /precoding-audit-gate]
-loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/decision-time-data-binding-pattern.md, DESIGN_SPECS/pattern-codification-lifecycle.md, DESIGN_SPECS/meta-registry-pattern-for-codebase-registry-discipline.md, DESIGN_SPECS/x-macro-registry-with-presence-dispatch.md]
+loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md, DESIGN_SPECS/meta-disciplines/pattern-codification-lifecycle.md, DESIGN_SPECS/framework-patterns/meta-registry-pattern-for-codebase-registry-discipline.md, DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md]
 ---
 
 # /registry-fit-audit — Registry-fit audit per framework-selection criteria
@@ -41,7 +41,7 @@ Output is a structured findings report with a per-registry verdict. NOT actual e
 
 ## Scope (per audit-scope-taxonomy.md)
 
-This skill accepts scope as first positional arg per `DESIGN_SPECS/audit-scope-taxonomy.md`. Registry-fit-audit has a registry-specific interpretation of scope:
+This skill accepts scope as first positional arg per `DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md`. Registry-fit-audit has a registry-specific interpretation of scope:
 
 - `current` (default when no scope specified) — recently added or modified registries (per git log since branch base)
 - `wide` — full sweep across all FOREACH_* macros enrolled in `FOREACH_REGISTRY` meta-registry
@@ -150,10 +150,10 @@ Spawn an Explore subagent. The subagent:
 ## Cross-references
 
 - `DESIGN_PHILOSOPHY.md` § 11 Framework-selection criteria — the meta-principle this skill enforces
-- `DESIGN_SPECS/decision-time-data-binding-pattern.md` — first canonical "registry was wrong; principle is right" case
-- `DESIGN_SPECS/pattern-codification-lifecycle.md` — staging discipline; registries at Stage 1-2 are NOT mature targets
-- `DESIGN_SPECS/meta-registry-pattern-for-codebase-registry-discipline.md` — the meta-registry walked by this audit
-- `DESIGN_SPECS/x-macro-registry-with-presence-dispatch.md` — base registry pattern
+- `DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md` — first canonical "registry was wrong; principle is right" case
+- `DESIGN_SPECS/meta-disciplines/pattern-codification-lifecycle.md` — staging discipline; registries at Stage 1-2 are NOT mature targets
+- `DESIGN_SPECS/framework-patterns/meta-registry-pattern-for-codebase-registry-discipline.md` — the meta-registry walked by this audit
+- `DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md` — base registry pattern
 - `CoreFrameworks/MetaRegistry.hpp` — `FOREACH_REGISTRY` codebase catalog
 - `tools/check_meta_registry.py` — CI that keeps the meta-registry in sync (different concern; not fit-audit)
 - CLAUDE.md item 31 — framework discipline meta-principle (codified)

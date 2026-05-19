@@ -209,7 +209,7 @@ However: these COULD benefit from precomputed masks if a future consumer (e.g., 
 
 ### Current status of `composed-filter-mask-pattern.md`
 
-Per `/home/caramel/code/tick-trader-percore-workspace/DESIGN_SPECS/composed-filter-mask-pattern.md`:
+Per `/home/caramel/code/tick-trader-percore-workspace/DESIGN_SPECS/framework-patterns/composed-filter-mask-pattern.md`:
 
 > **Established:** 2026-05-16 (v5.15.5.F.4d.1.A planning — extracted retroactively during Path γ structural redesign)
 > **Status:** **Stage 2 DRAFT v1.0** (3 existing canonical applications at HEAD `545b087`; Stage 3 first explicit reference pending — either at `.F.4d.1.A` if `.A` introduces a new composed mask OR at next ship that adds a composed mask)
@@ -276,7 +276,7 @@ Note that `FOREACH_METADATA_BIT` doesn't include any row with `lname = "struct_c
 - Read `CoreFrameworks/CfgFieldRegistry.hpp:40-1262` (full mask infrastructure region)
 - Read `GUI/SettingsPanel.hpp:160-238, 1090-1170` (consumer walker + Kind dispatch)
 - Read `CoreFrameworks/CfgFieldDispatch.hpp:67-287` (parser/save Kind dispatch sites)
-- Read `tick-trader-percore-workspace/DESIGN_SPECS/composed-filter-mask-pattern.md:1-60` (DESIGN_SPEC status verification)
+- Read `tick-trader-percore-workspace/DESIGN_SPECS/framework-patterns/composed-filter-mask-pattern.md:1-60` (DESIGN_SPEC status verification)
 - `rg "FOREACH_LIVES_IN_STRUCT"` — registry shape verification
 - `rg "g_(global|per_core)_cfg_struct_"` — consumer detection (zero matches confirms orphan)
 - `rg "STRUCT_BACKTEST_CFG|..."` — row applicability data (zero rows tagged non-default)

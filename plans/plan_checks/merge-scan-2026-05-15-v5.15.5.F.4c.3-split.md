@@ -283,7 +283,7 @@ differs; iteration scaffold is shared).
 **Effort estimate:** ~150 LOC added at .F.4c.3 (FOREACH_REGISTRY_ACTION + RegistryWalker primitive) saves ~500 LOC at successor ships (.F.4d adds stamp emit walker over per-core registry; .F.4e adds cfg.example auto-gen consumer; .F.5+ adds per-axis registries that each need all 5 actions).
 
 **Recommendation:** STRONG ADOPT. This is the canonical pre-coding moment per CLAUDE.md item 31 — "frameworks designed before second-application" rule. Building the multi-action walker family at .F.4c.3 means .F.4d / .F.4e / .F.4i / per-axis registries all consume it mechanically. Document in NEW spec
-`DESIGN_SPECS/multi-action-registry-walker-family.md` (or fold into per-instance-registry-pattern.md).
+`DESIGN_SPECS/framework-patterns/multi-action-registry-walker-family.md` (or fold into per-instance-registry-pattern.md).
 
 ---
 

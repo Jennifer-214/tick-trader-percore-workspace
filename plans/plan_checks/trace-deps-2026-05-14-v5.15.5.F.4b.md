@@ -94,7 +94,7 @@ Without resolution, the .F.4b parser will silently corrupt ~38 cfg field
 values, breaking backtest determinism + live trade calculations. Cannot ship.
 
 **Cross-ref:**
-- `DESIGN_SPECS/universal-cfg-field-registry-pattern.md:196` — design assumes raw double offset
+- `DESIGN_SPECS/framework-patterns/universal-cfg-field-registry-pattern.md:196` — design assumes raw double offset
 - `CLAUDE.md item 23` — `tt::stamp_parse_field<T>` is the resolvable pattern
 - `CoreFrameworks/ControllerConfig.hpp:1877-1913` — existing CFG_PARSE_FPN/_PCT/_FPN_POS that .F.4b removes
 

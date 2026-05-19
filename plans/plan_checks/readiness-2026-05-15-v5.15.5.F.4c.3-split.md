@@ -133,8 +133,8 @@ The operator-flagged ~1550 LOC actual estimate (~200 framework + ~300 cohort + ~
 ### Q3 — DESIGN_SPECs Stage 2 DRAFT presence
 
 Both verified:
-- `tick-trader-percore-workspace/DESIGN_SPECS/per-instance-registry-pattern.md` (238 lines, Stage 2 DRAFT v1.0)
-- `tick-trader-percore-workspace/DESIGN_SPECS/cfg-scope-discipline.md` (191 lines, Stage 2 DRAFT v1.0)
+- `tick-trader-percore-workspace/DESIGN_SPECS/framework-patterns/per-instance-registry-pattern.md` (238 lines, Stage 2 DRAFT v1.0)
+- `tick-trader-percore-workspace/DESIGN_SPECS/refactor-patterns/cfg-scope-discipline.md` (191 lines, Stage 2 DRAFT v1.0)
 
 Stage 2 → Stage 3 transition criteria documented in each:
 - per-instance-registry-pattern.md: "Promotes to Stage 3 ACTIVE v1.0 at `.F.4c.3` ship close once per-core reference implementations land."

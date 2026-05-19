@@ -1,6 +1,6 @@
 # Dependency chain trace: `STAMP_BOUND_CFG_DERIVED` — 2026-05-17
 
-**Scope:** `chain:STAMP_BOUND_CFG_DERIVED` per `DESIGN_SPECS/audit-scope-taxonomy.md` § 5
+**Scope:** `chain:STAMP_BOUND_CFG_DERIVED` per `DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md` § 5
 **Audit context:** Pre-coding for `.B` of `v5.15.5.F.4d.1` umbrella
 **HEAD verified:** `39b9947` (`.F.4d.1.A` ship close, 2026-05-17)
 

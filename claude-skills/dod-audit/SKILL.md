@@ -99,7 +99,7 @@ RECURRING_BUG_PATTERNS.md or FOREACH_FEATURE registry-as-source-of-truth.
 
 ## Scope (per audit-scope-taxonomy.md)
 
-This skill accepts scope as first positional arg per `DESIGN_SPECS/audit-scope-taxonomy.md`:
+This skill accepts scope as first positional arg per `DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md`:
 
 - `current` (default when no scope specified) — pattern-application audit of recent edits + touched files
 - `wide` — full codebase sweep across all DESIGN_SPECS patterns; HIGH context cost
@@ -208,7 +208,7 @@ Detection signatures:
 - Hot/cold field placement: cold fields placed in middle of hot
   cluster (forces cache-line load for cold data on hot access)
 
-Cross-ref: `DESIGN_SPECS/bitmap-flag-api.md` (cache-line awareness
+Cross-ref: `DESIGN_SPECS/framework-patterns/bitmap-flag-api.md` (cache-line awareness
 section), CLAUDE.md item 4 (per-core data plane), TECH_DEBT-011
 (PerCoreSnap layout sensitivity).
 
@@ -271,11 +271,11 @@ Detection signatures:
   atomic mask updates via `__atomic_fetch_or`)
 - Existing bool flag fields where BITMAP_* API would be cleaner
 
-Cross-ref: `DESIGN_SPECS/bitmap-flag-api.md` (base API + variants),
-`DESIGN_SPECS/partner-core-bitmap-pattern.md` (per-core 1-bit-per-core variant),
-`DESIGN_SPECS/transient-aggregation-bitmap-pattern.md` (function-local summary variant),
-`DESIGN_SPECS/per-bit-per-core-override-pattern.md` (per-bit per-core override variant),
-`DESIGN_SPECS/cfg-flag-eligibility-criteria.md` (decision algorithm before migrating),
+Cross-ref: `DESIGN_SPECS/framework-patterns/bitmap-flag-api.md` (base API + variants),
+`DESIGN_SPECS/data-disciplines/partner-core-bitmap-pattern.md` (per-core 1-bit-per-core variant),
+`DESIGN_SPECS/refactor-patterns/transient-aggregation-bitmap-pattern.md` (function-local summary variant),
+`DESIGN_SPECS/framework-patterns/per-bit-per-core-override-pattern.md` (per-bit per-core override variant),
+`DESIGN_SPECS/refactor-patterns/cfg-flag-eligibility-criteria.md` (decision algorithm before migrating),
 CLAUDE.md item 1 (Portfolio uint16_t bitmap), CLAUDE.md item 20 (BITMAP_* API),
 TECH_DEBT-013 (BIT_FLAG candidate inventory).
 
@@ -297,14 +297,14 @@ Detection signatures:
 - PRE/POST split candidate: registry with canonical wire-format that
   must interleave with sister registry (item 22)
 
-Cross-ref: `DESIGN_SPECS/x-macro-registry-with-presence-dispatch.md`,
-`DESIGN_SPECS/autopopulate-pattern-for-production-caller-class.md`,
-`DESIGN_SPECS/autopopulate-from-arity-macro-family.md` (variant for scattered locals),
-`DESIGN_SPECS/pre-post-cfg-registry-split-for-emit-order-preservation.md`,
-`DESIGN_SPECS/registry-tuple-as-single-source-of-truth.md` (5-col tuple — registry feeds N consumers),
-`DESIGN_SPECS/curve-registry-pattern.md` (named compute fns chosen by enum — fn-pointer dispatch),
-`DESIGN_SPECS/heterogeneous-registry-pattern.md` (SCOPE COLUMN vs DOMAIN SPLIT decision),
-`DESIGN_SPECS/slow-path-gate-registry-pattern.md` (slow-path gate registry canonical example),
+Cross-ref: `DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md`,
+`DESIGN_SPECS/framework-patterns/autopopulate-pattern-for-production-caller-class.md`,
+`DESIGN_SPECS/framework-patterns/autopopulate-from-arity-macro-family.md` (variant for scattered locals),
+`DESIGN_SPECS/wire-format-patterns/pre-post-cfg-registry-split-for-emit-order-preservation.md`,
+`DESIGN_SPECS/framework-patterns/registry-tuple-as-single-source-of-truth.md` (5-col tuple — registry feeds N consumers),
+`DESIGN_SPECS/framework-patterns/curve-registry-pattern.md` (named compute fns chosen by enum — fn-pointer dispatch),
+`DESIGN_SPECS/framework-patterns/heterogeneous-registry-pattern.md` (SCOPE COLUMN vs DOMAIN SPLIT decision),
+`DESIGN_SPECS/framework-patterns/slow-path-gate-registry-pattern.md` (slow-path gate registry canonical example),
 CLAUDE.md items 13, 21, 22.
 
 False-positive filter: ≥3 sites required for X-macro candidate. ≥2
@@ -320,7 +320,7 @@ Detection signatures:
   version-locked wire format WITHOUT explicit byte-preservation note
 - Field rename/delete in registries that emit canonical bodies
 
-Cross-ref: `DESIGN_SPECS/wire-format-byte-preservation-discipline.md`,
+Cross-ref: `DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md`,
 CLAUDE.md item 15 (parity-tested-by-construction).
 
 False-positive filter: only fires for stamp body, snapshot, model
@@ -335,7 +335,7 @@ Detection signatures:
 - Multiple sites being patched independently when a unified helper +
   registry would close the class
 
-Cross-ref: `DESIGN_SPECS/structural-fix-preferred-decision-framework.md`,
+Cross-ref: `DESIGN_SPECS/meta-disciplines/structural-fix-preferred-decision-framework.md`,
 CLAUDE.md item 19, RECURRING_BUG_PATTERNS Class 18.
 
 False-positive filter: true one-off bugs (pattern won't recur) get
@@ -357,7 +357,7 @@ Detection signatures:
 - Cholesky-like algorithm without pre-zero pattern at appropriate
   granularity (per-row, per-solve, per-cycle).
 
-Cross-ref: `DESIGN_SPECS/branchless-math-kernel-pattern.md`,
+Cross-ref: `DESIGN_SPECS/refactor-patterns/branchless-math-kernel-pattern.md`,
 CLAUDE.md item 26 (math kernels constant-iter + branchless),
 CLAUDE.md item 18 (slow-path latency reduction sub-clauses).
 
@@ -377,7 +377,7 @@ Detection signatures:
 - Struct returned by value through a function AND consumer compares
   via `memcmp` (latent regression risk under stack-layout shifts).
 
-Cross-ref: `DESIGN_SPECS/struct-padding-determinism-pattern.md`,
+Cross-ref: `DESIGN_SPECS/wire-format-patterns/struct-padding-determinism-pattern.md`,
 CLAUDE.md item 27 (structs in byte-equivalence contexts have explicit
 zero-init padding), CLAUDE.md item 12 (display↔execution invariant
 relies on snapshot byte determinism), CLAUDE.md item 15 (parity-tested-

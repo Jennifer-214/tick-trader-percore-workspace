@@ -248,9 +248,9 @@ Confirmed boolean. **HMAC byte-equivalence preserved.** Plan Step 9 line 365 ("S
 
 ### 8. Cross-references + doc coherence
 
-- `DESIGN_SPECS/avx512-byte-determinism-pattern.md`: written + referenced correctly at plan line 38 + line 320-321. 7 rules clean; reference applications cited.
-- `DESIGN_SPECS/sliding-window-online-statistics-pattern.md`: written + referenced at plan line 130 + line 178. Math kernel + state shape + drop-math all match plan.
-- `DESIGN_SPECS/wire-format-byte-preservation-discipline.md`: referenced at plan line 68. Pattern correctly applied to Decision 4 cohort migration.
+- `DESIGN_SPECS/wire-format-patterns/avx512-byte-determinism-pattern.md`: written + referenced correctly at plan line 38 + line 320-321. 7 rules clean; reference applications cited.
+- `DESIGN_SPECS/refactor-patterns/sliding-window-online-statistics-pattern.md`: written + referenced at plan line 130 + line 178. Math kernel + state shape + drop-math all match plan.
+- `DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md`: referenced at plan line 68. Pattern correctly applied to Decision 4 cohort migration.
 - `DOCS/PARITY_ISSUES.md`: PARITY-016/017/018 entries present; status will transition OPEN → FIXED when v5.14.11 ships.
 
 ---

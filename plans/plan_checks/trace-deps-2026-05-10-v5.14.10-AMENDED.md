@@ -320,9 +320,9 @@ g) Plan .B Step 9 mirrors `cfg.exit_blender_mode` pattern — verified to work b
 
 ## Cross-references
 
-- `DESIGN_SPECS/structural-fix-preferred-decision-framework.md` — used for Decision A reversal rationale
-- `DESIGN_SPECS/curve-registry-pattern.md` — Decision A's structural shape (FOREACH_BANDIT_ALGORITHM mirrors FOREACH_DEGRADATION_CURVE)
-- `DESIGN_SPECS/x-macro-registry-with-presence-dispatch.md` — base pattern (FOREACH_ENSEMBLE_POST_LOAD applies)
+- `DESIGN_SPECS/meta-disciplines/structural-fix-preferred-decision-framework.md` — used for Decision A reversal rationale
+- `DESIGN_SPECS/framework-patterns/curve-registry-pattern.md` — Decision A's structural shape (FOREACH_BANDIT_ALGORITHM mirrors FOREACH_DEGRADATION_CURVE)
+- `DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md` — base pattern (FOREACH_ENSEMBLE_POST_LOAD applies)
 - `CLAUDE.md` items 12 (display↔execution invariant), 17 (latency-additions tracked), 18 (slow-path latency reduction), 19 (structural-fix-preferred), 20 (bit-packed flags), 21 (AUTOPOPULATE companion), 22 (PRE/POST registry split), 23 (type-trait dispatch)
 - `CLAUDE.local.md` `feedback_overengineering_boundary_when_future_easier` — used to support Decision A
 - `DOCS/RECURRING_BUG_PATTERNS.md` Class 18 — mirror-incomplete (same class as PARITY-009/010/011/012)

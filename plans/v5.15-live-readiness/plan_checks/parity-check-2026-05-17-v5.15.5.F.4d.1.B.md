@@ -34,13 +34,13 @@ The plan body § Step 9 enumerates only `CoreModelZoo.hpp:225-247` + `StampHelpe
 
 **Recommended action:** Either (a) expand `.B` Step 9 to migrate all 5 ModelInference + StampHelper consumer sites to the Path γ walker before Step 12 empty-out, OR (b) keep the legacy macro non-empty post-`.B` and defer empty-out to a follow-up "consumer-empty-out" sub-ship after framework-side equivalents land for struct gen + parser + emit. Option (b) preserves byte equivalence with lowest risk; option (a) is the documented intent but plan body underestimates scope by ~3-4× LOC.
 
-Cross-ref: `DESIGN_SPECS/autopopulate-pattern-for-production-caller-class.md` Class L (production-caller field-population gap class).
+Cross-ref: `DESIGN_SPECS/framework-patterns/autopopulate-pattern-for-production-caller-class.md` Class L (production-caller field-population gap class).
 
 ### HIGH-2 — `STAMP_CFG_AUTOPOPULATE` (the existing PARITY-020 closure) is NOT preserved by `CFG_DRIFT_AUTOPOPULATE`
 
 The plan body presents `CFG_DRIFT_AUTOPOPULATE` as "sister to STAMP_CFG_AUTOPOPULATE + INFERENCE_CFG_AUTOPOPULATE" (§ Step 8), but the existing `STAMP_CFG_AUTOPOPULATE(inf, cfg)` macro (`StampBoundCfgRegistry.hpp:226`) **populates `inf.has_<name> = 1; inf.<name> = (type)(get_cfg)`** at production emit time. The drift-check macro performs comparison only. `.B` deletes `FOREACH_STAMP_BOUND_CFG` body at Step 12 but does NOT replace `STAMP_CFG_AUTOPOPULATE`. `StampHelper.hpp:156` (`Stamp_AssembleAndEmit`, the PARITY-020 fix call site) then expands to nothing → **every stamp emitted via `Stamp_AssembleAndEmit` post-`.B` lacks all 24 cohort fields**. Wire format silently regresses on every production caller; HMAC chain still computes but body shape strictly shrinks. Re-introduces PARITY-020 (production-caller field-population class) at the framework-migration surface.
 
-**Recommended action:** Add a **`STAMP_CFG_POPULATE_FROM_DERIVED(inf, cfg)`** companion macro to `.B` scope alongside `CFG_DRIFT_AUTOPOPULATE`. The populate walker reuses `tt::cfg_get_field<T>` to read source-row cfg value + writes `inf.has_<name>=1 + inf.<name>=...` via `tt::cfg_save_field<T>` (the second-source from `.A`'s tt:: trio). Then `StampHelper.hpp:156` swaps `STAMP_CFG_AUTOPOPULATE(inf, cfg)` → the new macro. Without this, PARITY-020 re-opens. Cross-ref: `DESIGN_SPECS/autopopulate-pattern-for-production-caller-class.md`.
+**Recommended action:** Add a **`STAMP_CFG_POPULATE_FROM_DERIVED(inf, cfg)`** companion macro to `.B` scope alongside `CFG_DRIFT_AUTOPOPULATE`. The populate walker reuses `tt::cfg_get_field<T>` to read source-row cfg value + writes `inf.has_<name>=1 + inf.<name>=...` via `tt::cfg_save_field<T>` (the second-source from `.A`'s tt:: trio). Then `StampHelper.hpp:156` swaps `STAMP_CFG_AUTOPOPULATE(inf, cfg)` → the new macro. Without this, PARITY-020 re-opens. Cross-ref: `DESIGN_SPECS/framework-patterns/autopopulate-pattern-for-production-caller-class.md`.
 
 ### HIGH-3 — Bitmap-row emit-shape ternary `(BITMAP_IS_SET(...) ? 1 : 0)` is load-bearing for H9 byte equivalence; sidecar's `tt::cfg_emit_synthetic_field<T>` proposes per-type emit that bypasses it
 

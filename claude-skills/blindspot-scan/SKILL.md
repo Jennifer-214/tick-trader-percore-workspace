@@ -1,20 +1,20 @@
 ---
 name: blindspot-scan
-description: Implementation-layer blind-spot audit. Fires AFTER /precoding-audit-gate SHAPE/SCOPE/CONSUMER audits return GREEN-or-YELLOW, BEFORE substantive coding starts. Walks the 12-category implementation-detail blind-spot taxonomy (DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md) against a target plan + current code state. Produces per-category verdict (GUARDED-BY-BUILD / SILENT-RISK / IRRELEVANT / N-A) + concrete punch-list of pre-coding amendments. Honors consult-before-coding — returns synthesis for operator review; never auto-proceeds. Distinct from SHAPE audits (/parity-check / /trace-deps / /readiness / etc.) which catch design-layer concerns.
+description: Implementation-layer blind-spot audit. Fires AFTER /precoding-audit-gate SHAPE/SCOPE/CONSUMER audits return GREEN-or-YELLOW, BEFORE substantive coding starts. Walks the 12-category implementation-detail blind-spot taxonomy (DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md) against a target plan + current code state. Produces per-category verdict (GUARDED-BY-BUILD / SILENT-RISK / IRRELEVANT / N-A) + concrete punch-list of pre-coding amendments. Honors consult-before-coding — returns synthesis for operator review; never auto-proceeds. Distinct from SHAPE audits (/parity-check / /trace-deps / /readiness / etc.) which catch design-layer concerns.
 type: skill
 concern: impl-detail-audit
 audit_cadence: ad-hoc
 tags: [audit-methodology, meta-discipline, framework-discipline]
 surface: [registry, wire-format, cfg-flow]
 sister_skills: [/precoding-audit-gate, /parity-check, /trace-deps, /readiness, /dod-audit]
-loads_dynamically: [DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md, DESIGN_SPECS/wire-format-byte-preservation-discipline.md, CoreFrameworks/CfgFieldRegistry.hpp, CoreFrameworks/CfgFieldDispatch.hpp]
+loads_dynamically: [DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md, DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md, CoreFrameworks/CfgFieldRegistry.hpp, CoreFrameworks/CfgFieldDispatch.hpp]
 ---
 
 # /blindspot-scan — Implementation-detail audit for pre-coding readiness
 
 ## What this does
 
-Walks the 12-category blind-spot taxonomy at `DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md` against a target plan + current code state. Per category, classifies risk + produces concrete detection output:
+Walks the 12-category blind-spot taxonomy at `DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md` against a target plan + current code state. Per category, classifies risk + produces concrete detection output:
 
 | Pillar | Category | Detection |
 |---|---|---|
@@ -253,7 +253,7 @@ Print:
 
 Per CLAUDE.local.md:
 - Audit findings → `plans/<sprint-dir>/plan_checks/blindspot-scan-<YYYY-MM-DD>-<scope>.md`
-- NEW blind-spot category surfaced (B13+) → DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md amendment (add row + worked example)
+- NEW blind-spot category surfaced (B13+) → DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md amendment (add row + worked example)
 - NEW TECH_DEBT items → DOCS/TECH_DEBT.md (if defer decisions emerge)
 
 The skill writes the per-audit report. Taxonomy amendments + TECH_DEBT writes are operator-mediated post-synthesis.
@@ -290,8 +290,8 @@ vs alternative (no `/blindspot-scan`; rely on build to surface): ~1-2 build cycl
 
 ## Cross-references
 
-- `DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md` — the canonical taxonomy this skill instantiates
-- `DESIGN_SPECS/audit-driven-pre-coding-gate.md` — parent pattern; this skill extends the audit catalog
+- `DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md` — the canonical taxonomy this skill instantiates
+- `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md` — parent pattern; this skill extends the audit catalog
 - `claude-skills/precoding-audit-gate/SKILL.md` — orchestrator that can fire this skill in extended audit_set
 - `tools/check_field_name_uniqueness.py` (B2) + `tools/check_storage_t_coverage.py` (B6) — automated CI guards
 - engine memory `feedback_implementation_detail_blindspot_recovery_via_taxonomy.md` — operator-collaboration rule

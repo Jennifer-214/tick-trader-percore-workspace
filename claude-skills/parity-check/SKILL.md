@@ -7,7 +7,7 @@ audit_cadence: per-ship
 tags: [wire-format, framework-discipline, audit-methodology]
 surface: [ml-inference, training, wire-format, parser, cfg-flow]
 sister_skills: [/ml-audit, /trace-deps, /readiness, /precoding-audit-gate]
-loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/wire-format-byte-preservation-discipline.md, DESIGN_SPECS/autopopulate-pattern-for-production-caller-class.md, DESIGN_SPECS/x-macro-registry-with-presence-dispatch.md]
+loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md, DESIGN_SPECS/framework-patterns/autopopulate-pattern-for-production-caller-class.md, DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md]
 ---
 
 # /parity-check — Train↔serve identity audit
@@ -55,7 +55,7 @@ adding a scaler, changing a feature compute fn, bumping
 
 ## Scope (per audit-scope-taxonomy.md)
 
-This skill accepts scope as first positional arg per `DESIGN_SPECS/audit-scope-taxonomy.md`:
+This skill accepts scope as first positional arg per `DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md`:
 
 - `current` (default when no scope specified) — parity audit of recent edits + touched train-serve surfaces
 - `wide` — full codebase train-serve parity sweep across all 10-category checklist; HIGH context cost; recommended quarterly + before live-readiness ships
@@ -117,23 +117,23 @@ The parity auditor (Layer 2 subagent):
    the 10-category checklist so findings can cite specific pattern
    rules:
 
-   - `tick-trader-percore-workspace/DESIGN_SPECS/wire-format-byte-preservation-discipline.md`
+   - `tick-trader-percore-workspace/DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md`
      — byte-equivalence for HMAC inputs, stamp bodies, persistence
      formats, replay-determinism
-   - `tick-trader-percore-workspace/DESIGN_SPECS/autopopulate-pattern-for-production-caller-class.md`
+   - `tick-trader-percore-workspace/DESIGN_SPECS/framework-patterns/autopopulate-pattern-for-production-caller-class.md`
      — STAMP_CFG_AUTOPOPULATE + STAMP_MODEL_CONST_AUTOPOPULATE; closes
      PARITY-002/003/004/005/008 production-caller class
-   - `tick-trader-percore-workspace/DESIGN_SPECS/x-macro-registry-with-presence-dispatch.md`
+   - `tick-trader-percore-workspace/DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md`
      — FOREACH_STAMP_BOUND_CFG / FOREACH_FEATURE / FOREACH_STAMP_BOUND_MODEL_CONST
      registry shape
-   - `tick-trader-percore-workspace/DESIGN_SPECS/pre-post-cfg-registry-split-for-emit-order-preservation.md`
+   - `tick-trader-percore-workspace/DESIGN_SPECS/wire-format-patterns/pre-post-cfg-registry-split-for-emit-order-preservation.md`
      — FOREACH_STAMP_BOUND_MODEL_CONST_PRE_CFG / _POST_CFG canonical
      emit-order preservation
-   - `tick-trader-percore-workspace/DESIGN_SPECS/struct-padding-determinism-pattern.md`
+   - `tick-trader-percore-workspace/DESIGN_SPECS/wire-format-patterns/struct-padding-determinism-pattern.md`
      — explicit `_padding = 0` fields for byte-equivalence structs
-   - `tick-trader-percore-workspace/DESIGN_SPECS/avx512-byte-determinism-pattern.md`
+   - `tick-trader-percore-workspace/DESIGN_SPECS/wire-format-patterns/avx512-byte-determinism-pattern.md`
      — scalar fallback bytewise-identical to AVX-512 paths
-   - `tick-trader-percore-workspace/DESIGN_SPECS/cfg-flag-eligibility-criteria.md`
+   - `tick-trader-percore-workspace/DESIGN_SPECS/refactor-patterns/cfg-flag-eligibility-criteria.md`
      — when a cfg field requires stamp-binding (5-criteria framework
      + cohort audit)
    - `DOCS/PARITY_ISSUES.md` (workspace-symlinked) — existing parity
@@ -363,7 +363,7 @@ Every claim in a `/parity-check` report about runtime behavior, type compatibili
 - Any unverified claim → demote to "unverified; needs follow-up read" status; demand follow-up before plan body lock
 
 **Cross-references:**
-- `DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md` § B9
+- `DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md` § B9
 - `DESIGN_PHILOSOPHY.md` § 11.5 meta-discipline M4
 
 ---
@@ -385,8 +385,8 @@ When migrating an emit walker from legacy registry (e.g., FOREACH_STAMP_BOUND_CF
 - Diff present + not annotated → SILENT-RISK (Layer 5b invariants only catch post-facto; surface in pre-coding)
 
 **Cross-references:**
-- `DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md` § B12
-- `DESIGN_SPECS/wire-format-byte-preservation-discipline.md` Layer 5b + Layer 6
+- `DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md` § B12
+- `DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md` Layer 5b + Layer 6
 - `DESIGN_PHILOSOPHY.md` § 11.5 meta-discipline M4
 
 ---

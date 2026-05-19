@@ -298,7 +298,7 @@ Suggest writing this to PARITY_ISSUES.md AFTER Caramel reviews the YELLOW verdic
 ## Map-update suggestions (post-audit)
 
 - **DOCS/PARITY_LIFECYCLE.md:** add a row for "FOREACH_CFG_FIELD" (new parity surface as of v5.15.5.F.4+) noting it inherits FOREACH_STAMP_BOUND_CFG's HMAC-locked subset via derived filter
-- **DESIGN_SPECS/wire-format-byte-preservation-discipline.md:** add a paragraph under Layer 5b on "what happens when derived registry migration is staged" — the lock-and-rotate vs lock-at-completion decision
+- **DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md:** add a paragraph under Layer 5b on "what happens when derived registry migration is staged" — the lock-and-rotate vs lock-at-completion decision
 
 ---
 

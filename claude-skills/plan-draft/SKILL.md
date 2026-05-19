@@ -7,7 +7,7 @@ audit_cadence: ad-hoc
 tags: [plan-template, doc-discipline, framework-discipline, pattern-codification]
 surface: []
 sister_skills: [/handoff, /readiness, /precoding-audit-gate]
-loads_dynamically: [DESIGN_SPECS/future-oriented-plan-template.md]
+loads_dynamically: [DESIGN_SPECS/plan-templates/future-oriented-plan-template.md]
 ---
 
 # /plan-draft — Scaffold a future-oriented plan body from canonical template

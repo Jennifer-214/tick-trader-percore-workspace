@@ -37,13 +37,13 @@ still need Pattern 1/2/3 migration (Class 26 application). 3 sites already have 
 1. **This handoff** (you're here)
 2. **`plans/v5.15-live-readiness/subplans/2026-05-15-v5.15.5.F.4c.3-global-vs-per-core-registry-split.md`**
    — full plan; scroll to "Remaining sub-commits" table for execution order
-3. **`tick-trader-percore-workspace/DESIGN_SPECS/cfg-scope-discipline.md`** — Class 25 +
+3. **`tick-trader-percore-workspace/DESIGN_SPECS/refactor-patterns/cfg-scope-discipline.md`** — Class 25 +
    Class 26 (NEW); Pattern 1/2/3 decision criteria for Phase 3 sites
-4. **`tick-trader-percore-workspace/DESIGN_SPECS/per-instance-registry-pattern.md`** — the
+4. **`tick-trader-percore-workspace/DESIGN_SPECS/framework-patterns/per-instance-registry-pattern.md`** — the
    broader framework this ship instantiates (per-core axis = first canonical application)
-5. **`tick-trader-percore-workspace/DESIGN_SPECS/meta-registry-pattern-for-codebase-registry-discipline.md`**
+5. **`tick-trader-percore-workspace/DESIGN_SPECS/framework-patterns/meta-registry-pattern-for-codebase-registry-discipline.md`**
    — Stage 3 ACTIVE; FOREACH_REGISTRY now codebase-wide (CoreFrameworks/MetaRegistry.hpp)
-6. **`tick-trader-percore-workspace/DESIGN_SPECS/manual-fields-inventory-pattern.md`**
+6. **`tick-trader-percore-workspace/DESIGN_SPECS/framework-patterns/manual-fields-inventory-pattern.md`**
    — NEW this session; Section A/B documented exemptions
 7. **`DOCS/MANUAL_FIELDS_INVENTORY.md`** (in engine repo) — current state: 12 Section A
    entries + 5 Section B entries (now auto-generated)
@@ -53,12 +53,12 @@ still need Pattern 1/2/3 migration (Class 26 application). 3 sites already have 
    H15 pulled forward to .F.4c.3 (was pending .F.4d)
 
 ### Skim-only / on-demand
-- `DESIGN_SPECS/type-trait-dispatch-via-tt-namespace.md` — 2nd canonical app landed at
+- `DESIGN_SPECS/framework-patterns/type-trait-dispatch-via-tt-namespace.md` — 2nd canonical app landed at
   WIP2d-1 Phase 1 (if-constexpr filter on walkers)
-- `DESIGN_SPECS/bitmap-overflow-protection-discipline.md` § Auto-generation via
+- `DESIGN_SPECS/refactor-patterns/bitmap-overflow-protection-discipline.md` § Auto-generation via
   meta-registry — references FOREACH_PER_CORE_DOMAIN_BITMAP
-- `DESIGN_SPECS/x-macro-registry-with-presence-dispatch.md`
-- `DESIGN_SPECS/autopopulate-pattern-for-production-caller-class.md`
+- `DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md`
+- `DESIGN_SPECS/framework-patterns/autopopulate-pattern-for-production-caller-class.md`
 
 ---
 
@@ -157,7 +157,7 @@ walker semantics; what remains is migrating production READ sites that still hit
    reload pulls stale fee_rate after operator change; LOW severity; mitigation = make-stale-window-explicit).
 3. **`tools/check_per_core_registry_integrity.py`** Check 7 — `HAS_SIDE_EFFECT` consistency
    audit (every NO_FLAT_FIELD row has `_no_flat_field` reason in MANUAL_FIELDS_INVENTORY.md).
-4. **`tick-trader-percore-workspace/DESIGN_SPECS/cfg-scope-discipline.md`** — new §
+4. **`tick-trader-percore-workspace/DESIGN_SPECS/refactor-patterns/cfg-scope-discipline.md`** — new §
    "Global consumer reading per-core field" + § "HAS_SIDE_EFFECT uniform skip" (semantic
    note: bit split rendered the term obsolete; redirect to MANUAL_PARSER / NO_FLAT_FIELD).
 

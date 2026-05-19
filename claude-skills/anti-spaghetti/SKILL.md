@@ -96,7 +96,7 @@ For each finding:
 - **Registry pair** + overlap analysis (row set Jaccard + shared consumers + semantic overlap)
 - **Structural fix proposal** — which registry stays canonical; which folds; what consumer macros emerge
 - **Cross-ref** to `RECURRING_BUG_PATTERNS.md` Class 14/18/19/21/27 as appropriate
-- **Cross-ref** to `DESIGN_SPECS/canonical-sister-extension-discipline.md` (NEW Stage 2 DRAFT; lands alongside this skill)
+- **Cross-ref** to `DESIGN_SPECS/meta-disciplines/canonical-sister-extension-discipline.md` (NEW Stage 2 DRAFT; lands alongside this skill)
 - **Effort estimate** per fix (LOC delta + consumer migration count)
 - **Risk classification** (LOW / MED / HIGH wide-blast-radius)
 

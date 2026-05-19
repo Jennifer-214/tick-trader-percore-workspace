@@ -5,7 +5,7 @@
 - **Plan target:** `plans/v5.15-live-readiness/subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md` v1.12 (DRAFT FULL plan body) — Phase L is v1.14 amendment landed pre-audit
 - **Engine HEAD:** `3d27512` (WIP-checkpoint 6, Step 1.6.3 TYPE-SENSITIVE mitigations)
 - **Audit scope:** `current` per audit-scope-taxonomy — Phase L amendment (Decision G + Step 1.6.8' replacing v1.10 Step 1.6.8 bash-patches with framework-driven C++ CLI binary `tools/stamp_model_cli.cpp` superseding `tools/stamp_model.sh`)
-- **Cross-check baseline:** post-v5.9.4a protections inventory + Decision F SOFT compat parser dual-recognition + Layer 5b structural invariants (`tests/wire_format_invariants.hpp` I1-I5) + Layer 7 cross-tool emit-site enumeration discipline + framework-driven CLI binary pattern Stage 2 DRAFT (workspace `DESIGN_SPECS/framework-driven-cli-binary-pattern.md`)
+- **Cross-check baseline:** post-v5.9.4a protections inventory + Decision F SOFT compat parser dual-recognition + Layer 5b structural invariants (`tests/wire_format_invariants.hpp` I1-I5) + Layer 7 cross-tool emit-site enumeration discipline + framework-driven CLI binary pattern Stage 2 DRAFT (workspace `DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-pattern.md`)
 - **DESIGN_PHILOSOPHY preload:** § 5 (Determinism family) — train-serve parity, wire format, FPN, struct padding, PRNG, AVX-512 byte determinism; § 7 (Structural-fix family) — AUTOPOPULATE production-caller class extinction
 - **Stage 0 DESIGN_SPECS preload:**
   - `wire-format-byte-preservation-discipline.md` Layer 7 (verified present at workspace lines 304-366; Stage 2 DRAFT landed)
@@ -24,7 +24,7 @@
 | **F2. Step 1.6.4 + 1.6.7.3 + 1.6.8' same-commit coupling** | **GREEN** | Plan body lines 990 (1.6.4 ↔ 1.6.7.3), 735 (1.6.7.4 must same-commit 1.6.4 + 1.6.7.3), 836+1003 (Phase L ↔ 1.6.7.3) all explicit; Layer 7 § Cross-tool version literal sync clause obviated for this surface (version literal lives ONCE post-Phase-L at engine `STAMP_FORMAT_VERSION_CURRENT`) but coupling retained for L2 (CLI binary references engine constant via framework call inheritance) |
 | **F3. Cross-tool emit-site enumeration verification** | **GREEN** | Comprehensive grep across `tools/` + `scripts/` + `OPS/` + `experiments/` confirms `tools/stamp_model.sh` is the SOLE bash/python script emitting wire format keys (`stamp_format_version` / `inference_cfg_*` / HMAC body). `tools/validate_feature_mask.sh` had hits but only on `[secret]` USAGE doc + comment lines (no wire-format emit). No other bash script mirrors engine emit. Phase L scope is COMPLETE at this surface |
 | **F4. Layer 6 Surface G discipline preservation** | **GREEN** | Phase L doesn't change parser; Decision F SOFT parser dual-recognition (Step 1.6.7.4 — 15 legacy prefixed keys) remains active; CLI binary's emit path under v1 format mode (`--format-version 5`) inherits engine's `has_stamp_ver = (format_version >= 5)` gate at `ModelInference.hpp:1753`; Step 1.6.7.5 v1 LOAD test fixture covers bash-stamped legacy model verification |
-| **F5. Decision G novel alternative consideration** | **GREEN** | All 5 alternatives (β codegen / γ CI check / δ eliminate CLI / ε shared library / ζ schema-driven) rejected with concrete rationale at `DESIGN_SPECS/framework-driven-cli-binary-pattern.md` lines 76-104; rejection rationale survives audit — no missed edge case justifies switching from α |
+| **F5. Decision G novel alternative consideration** | **GREEN** | All 5 alternatives (β codegen / γ CI check / δ eliminate CLI / ε shared library / ζ schema-driven) rejected with concrete rationale at `DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-pattern.md` lines 76-104; rejection rationale survives audit — no missed edge case justifies switching from α |
 
 **Overall verdict: GREEN — Phase L is well-formed; coding can start once operator greenlights.**
 
@@ -108,7 +108,7 @@ Phase L's evidence chain claims walked:
 | `tools/compare_scalers.cpp` sister C++ tool precedent in `tools/` dir | Verified — file present, ~159 LOC, CMake target at `CMakeLists.txt:248-251` | PASS |
 | CLI flag interface from `tools/stamp_model.sh` getopt loop (`--model` / `--secret` / etc.) | Verified at `tools/stamp_model.sh` getopt loop (lines ~50-200) | PASS |
 | 6+ cross-tool sync recurrence history (v5.2.3 / v5.8.8 / v5.9.3b / v5.9.4a / v5.9.5c / v5.11.18a) | Verified at script header comment block | PASS |
-| `framework-driven-cli-binary-pattern.md` Stage 2 DRAFT exists at workspace | Verified — `/home/caramel/code/tick-trader-percore-workspace/DESIGN_SPECS/framework-driven-cli-binary-pattern.md` 454 lines | PASS |
+| `framework-driven-cli-binary-pattern.md` Stage 2 DRAFT exists at workspace | Verified — `/home/caramel/code/tick-trader-percore-workspace/DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-pattern.md` 454 lines | PASS |
 | Layer 7 § Cross-tool version literal sync exists at workspace | Verified at workspace `wire-format-byte-preservation-discipline.md:304+` | PASS |
 | Decision F SOFT parser dual-recognition covers 15 legacy prefixed keys | Verified at plan body Step 1.6.7.4 + Decision F section | PASS |
 

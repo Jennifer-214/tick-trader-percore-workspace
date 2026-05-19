@@ -459,7 +459,7 @@ I'm picking up <ship-tag> (<ship-title>) for the <sprint-name> sprint.
 
 **Ship end goal:** <1-sentence: what this ship CLOSES / DELIVERS; e.g., "close cfg-derived consumer drift via FOREACH_<COHORT>(BASE_X) meta-walker">
 
-**Plan type:** <refactor | feature | live-readiness | hotfix> — drives acceptance criteria sections per `DESIGN_SPECS/future-oriented-plan-template.md` § Ship type.
+**Plan type:** <refactor | feature | live-readiness | hotfix> — drives acceptance criteria sections per `DESIGN_SPECS/plan-templates/future-oriented-plan-template.md` § Ship type.
 
 **Required reading BEFORE planning** (load in parallel):
 - `CLAUDE.md § Design philosophy + priorities` (NEW 2026-05-18 — End state + DOD + Priority gradients + Doc layer separation)
@@ -533,7 +533,7 @@ Run `/readiness <plan-path>` and address every GAP / stale-reference finding. Co
 
 ## Step 2 — pre-coding audit gate (multi-skill parallel)
 
-Per `DESIGN_SPECS/audit-driven-pre-coding-gate.md`, fire the gate when ship has 2+ of: closes recurring bug class structurally, touches wire format, adds 5+ new fields/functions/cfg entries, refactors fn used at 5+ sites, picks up work from previous (possibly compacted) session.
+Per `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md`, fire the gate when ship has 2+ of: closes recurring bug class structurally, touches wire format, adds 5+ new fields/functions/cfg entries, refactors fn used at 5+ sites, picks up work from previous (possibly compacted) session.
 
 <conditionally-included if ship qualifies>
 
@@ -553,7 +553,7 @@ Per `DESIGN_SPECS/audit-driven-pre-coding-gate.md`, fire the gate when ship has 
 11. Wire-format ordering change (master registry order differs from legacy walker emit order)
 12. SHAPE audits returned GREEN/YELLOW after 3+ iterations on same plan (inflection signal)
 
-`/blindspot-scan` walks the 12-category implementation-detail taxonomy at `DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md` (per `DOCS/DESIGN_PHILOSOPHY.md` § 11.5 meta-discipline M4). SHAPE audits answer "is design right?"; IMPLEMENTATION-DETAIL answers "will code compile/run without surprise?" — both layers needed.
+`/blindspot-scan` walks the 12-category implementation-detail taxonomy at `DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md` (per `DOCS/DESIGN_PHILOSOPHY.md` § 11.5 meta-discipline M4). SHAPE audits answer "is design right?"; IMPLEMENTATION-DETAIL answers "will code compile/run without surprise?" — both layers needed.
 
 After all reports return, synthesize convergent findings to `plans/plan_checks/<date>-<ship-tag>-fresh-audits-synthesis.md`. THEN consult Caramel before coding. Do NOT auto-proceed even if findings look addressable (per CLAUDE.local.md feedback_consult_on_audit_findings memory).
 </conditionally-included>

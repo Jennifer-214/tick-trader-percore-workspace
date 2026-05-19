@@ -980,19 +980,19 @@ No new entries needed for: Phase 3b (refactor; byte-equivalent OMS init/reset se
 - Legacy v11 snapshots load via shadow-load migration (no operator data loss; composite-mode fields re-init from cfg).
 
 **Pattern references:**
-- DESIGN_SPECS/structural-fix-preferred-decision-framework.md (Class-18 closures × 3)
-- DESIGN_SPECS/registry-tuple-as-single-source-of-truth.md (FOREACH_CONFIDENCE_PERSIST_FIELD)
-- DESIGN_SPECS/autopopulate-pattern-for-production-caller-class.md (FieldwiseWrite/Read/Commit autopopulate)
-- DESIGN_SPECS/shadow-load-state-transition-pattern.md (legacy v11 migration)
-- DESIGN_SPECS/wire-format-byte-preservation-discipline.md (version dispatch)
-- DESIGN_SPECS/cache-layout-discipline-for-hot-side-structs.md Rules 1 + 4 + 5
-- DESIGN_SPECS/decision-first-cluster-layout-pattern.md (ND3 — HOT scalars offset 0)
-- DESIGN_SPECS/bitmap-flag-api.md (drift_state_flags)
-- DESIGN_SPECS/sliding-window-online-statistics-pattern.md (RollingRMSE 3rd app)
-- DESIGN_SPECS/latency-vs-cache-decision-framework.md (AoS justification)
-- DESIGN_SPECS/pattern-codification-lifecycle.md (generic-ring-buffer codification)
-- DESIGN_SPECS/persisted-struct-with-ephemeral-field-coexistence-pattern.md (display extraction)
-- DESIGN_SPECS/generic-ring-buffer-template-pattern.md (**NEW** Stage 2 codification)
+- DESIGN_SPECS/meta-disciplines/structural-fix-preferred-decision-framework.md (Class-18 closures × 3)
+- DESIGN_SPECS/framework-patterns/registry-tuple-as-single-source-of-truth.md (FOREACH_CONFIDENCE_PERSIST_FIELD)
+- DESIGN_SPECS/framework-patterns/autopopulate-pattern-for-production-caller-class.md (FieldwiseWrite/Read/Commit autopopulate)
+- DESIGN_SPECS/feature-patterns/shadow-load-state-transition-pattern.md (legacy v11 migration)
+- DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md (version dispatch)
+- DESIGN_SPECS/data-disciplines/cache-layout-discipline-for-hot-side-structs.md Rules 1 + 4 + 5
+- DESIGN_SPECS/data-disciplines/decision-first-cluster-layout-pattern.md (ND3 — HOT scalars offset 0)
+- DESIGN_SPECS/framework-patterns/bitmap-flag-api.md (drift_state_flags)
+- DESIGN_SPECS/refactor-patterns/sliding-window-online-statistics-pattern.md (RollingRMSE 3rd app)
+- DESIGN_SPECS/refactor-patterns/latency-vs-cache-decision-framework.md (AoS justification)
+- DESIGN_SPECS/meta-disciplines/pattern-codification-lifecycle.md (generic-ring-buffer codification)
+- DESIGN_SPECS/framework-patterns/persisted-struct-with-ephemeral-field-coexistence-pattern.md (display extraction)
+- DESIGN_SPECS/refactor-patterns/generic-ring-buffer-template-pattern.md (**NEW** Stage 2 codification)
 
 **Future optimization paths:**
 - Migrate BookImbalanceHistory + LargeTradeState + SpreadState + DriftHistory.samples to RollingWindow<T, N> (Stage 7 wider audit per pattern-codification-lifecycle.md).

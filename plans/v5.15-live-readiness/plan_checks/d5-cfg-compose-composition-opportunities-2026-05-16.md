@@ -291,7 +291,7 @@ Alternative: promote to Stage 3 at `.A` on the grounds that `CFG_COMPOSE_AUDIT_D
 - `CoreFrameworks/ControllerConfig.hpp:1467-1500, 2110-2145` (parser + copy walker X-macros — manual composition site B)
 - `CoreFrameworks/CfgFieldDispatch.hpp:120-150` (clamp-warn single-bit check)
 - `tests/controller_test.cpp:1700-1830` (T12+T13 popcount tests)
-- `tick-trader-percore-workspace/DESIGN_SPECS/composed-filter-mask-pattern.md` (Stage 2 DRAFT — pattern spec)
+- `tick-trader-percore-workspace/DESIGN_SPECS/framework-patterns/composed-filter-mask-pattern.md` (Stage 2 DRAFT — pattern spec)
 - `tick-trader-percore-workspace/plans/v5.15-live-readiness/plan_checks/2026-05-16-v5.15.5.F.4d.1-tech-debt-audit-findings.md` (Gap 1 source)
 
 ---

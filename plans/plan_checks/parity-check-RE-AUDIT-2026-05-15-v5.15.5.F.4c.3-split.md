@@ -219,10 +219,10 @@ These three entries reflect the re-audit findings; staged for operator review be
 
 | Spec | Path | Stage | Status |
 |---|---|---|---|
-| `per-instance-registry-pattern.md` | `/home/caramel/code/tick-trader-percore-workspace/DESIGN_SPECS/per-instance-registry-pattern.md` | Stage 2 DRAFT v1.0 | PRESENT (14292 bytes) |
-| `cfg-scope-discipline.md` | `/home/caramel/code/tick-trader-percore-workspace/DESIGN_SPECS/cfg-scope-discipline.md` | Stage 2 DRAFT v1.0 | PRESENT (16124 bytes) |
-| `multi-action-registry-walker-family.md` | `/home/caramel/code/tick-trader-percore-workspace/DESIGN_SPECS/multi-action-registry-walker-family.md` | Stage 2 DRAFT v1.0 | PRESENT (10703 bytes); well-formed; composes correctly with per-instance + bitmap-dispatcher + tt:: patterns; first canonical application = `.F.4c.3` (5 actions × 2 registries) |
-| `cfg-section-parser-state-machine.md` | `/home/caramel/code/tick-trader-percore-workspace/DESIGN_SPECS/cfg-section-parser-state-machine.md` | Stage 2 DRAFT v1.0 | PRESENT (10847 bytes); well-formed; state machine + error-with-migration-hint + future axes (per-symbol/per-strategy/per-horizon/per-regime/per-bandit-arm) documented |
+| `per-instance-registry-pattern.md` | `/home/caramel/code/tick-trader-percore-workspace/DESIGN_SPECS/framework-patterns/per-instance-registry-pattern.md` | Stage 2 DRAFT v1.0 | PRESENT (14292 bytes) |
+| `cfg-scope-discipline.md` | `/home/caramel/code/tick-trader-percore-workspace/DESIGN_SPECS/refactor-patterns/cfg-scope-discipline.md` | Stage 2 DRAFT v1.0 | PRESENT (16124 bytes) |
+| `multi-action-registry-walker-family.md` | `/home/caramel/code/tick-trader-percore-workspace/DESIGN_SPECS/framework-patterns/multi-action-registry-walker-family.md` | Stage 2 DRAFT v1.0 | PRESENT (10703 bytes); well-formed; composes correctly with per-instance + bitmap-dispatcher + tt:: patterns; first canonical application = `.F.4c.3` (5 actions × 2 registries) |
+| `cfg-section-parser-state-machine.md` | `/home/caramel/code/tick-trader-percore-workspace/DESIGN_SPECS/refactor-patterns/cfg-section-parser-state-machine.md` | Stage 2 DRAFT v1.0 | PRESENT (10847 bytes); well-formed; state machine + error-with-migration-hint + future axes (per-symbol/per-strategy/per-horizon/per-regime/per-bandit-arm) documented |
 
 Subplan stub for symbol axis deferral:
 

@@ -93,7 +93,7 @@ When `.F.4d` ships + we draft `DOCS/ML_ARCHITECTURE.md`, this brainstorm provide
 3. **Section "Future directions"** — Idea 1 mode flag + Idea 2 label redesign as numbered enhancement candidates with cost estimates + sequencing
 4. **Section "When dual-model wins / when it doesn't"** — guidance for future contributors deciding whether to add a new mode vs extend dual-model
 
-Suggested file location at promotion time: `DOCS/ML_ARCHITECTURE.md` (public engine repo `DOCS/`; symlinked from workspace per existing convention). Length target: ~300-500 lines markdown. Should cross-reference `DESIGN_SPECS/cfg-scope-discipline.md`, `DESIGN_SPECS/decision-time-data-binding-pattern.md`, `DESIGN_SPECS/branchless-dispatch-discipline.md`, current `.F.4d` ship's FOREACH_BANDIT_SIDE meta-X-macro pattern.
+Suggested file location at promotion time: `DOCS/ML_ARCHITECTURE.md` (public engine repo `DOCS/`; symlinked from workspace per existing convention). Length target: ~300-500 lines markdown. Should cross-reference `DESIGN_SPECS/refactor-patterns/cfg-scope-discipline.md`, `DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md`, `DESIGN_SPECS/refactor-patterns/branchless-dispatch-discipline.md`, current `.F.4d` ship's FOREACH_BANDIT_SIDE meta-X-macro pattern.
 
 ---
 
@@ -128,7 +128,7 @@ Cost: ~1-2ns indirect call (predicted to same target → no mispredict; same tar
 - `ML_Headers/ThompsonBandit.hpp` — `noop_thompson_update` + `real_thompson_update` + `ThompsonUpdateFn` typedef
 - `ML_Headers/CoreModelZoo.hpp` — `thompson_update_fn` + `exit_thompson_update_fn` fields on `EnsembleModelZoo<F>`; default-init in `_Init`; boot-wire in `_InitThompsonBandits` / `_InitExitThompsonBandits`
 
-**Pattern doc:** `DESIGN_SPECS/sink-fn-pointer-for-optional-side-effect-pattern.md` (Pattern 5 of `branchless-dispatch-discipline.md`). `.F.4d` is the 5th canonical application.
+**Pattern doc:** `DESIGN_SPECS/framework-patterns/sink-fn-pointer-for-optional-side-effect-pattern.md` (Pattern 5 of `branchless-dispatch-discipline.md`). `.F.4d` is the 5th canonical application.
 
 ### Decision B: FOREACH_BANDIT_SIDE meta-X-macro for buy/exit symmetry — hybrid auto-mirror
 
@@ -185,11 +185,11 @@ Cost: ~1-2ns indirect call (predicted to same target → no mispredict; same tar
 - `MBS_OrderBanditActiveState(o)` / `MBS_OrderBanditRegime(o)` / `MBS_OrderBanditChosenArm(o)` — read
 - `MBS_OrderSetBanditContext(o, state, regime, arm)` — write (clear-and-set in one expression)
 
-**Order<F> size:** UNCHANGED at 320B (uses existing free bits in uint32_t). 5th canonical application of `DESIGN_SPECS/multi-bit-state-encoding-pattern.md` INVARIANT pattern.
+**Order<F> size:** UNCHANGED at 320B (uses existing free bits in uint32_t). 5th canonical application of `DESIGN_SPECS/refactor-patterns/multi-bit-state-encoding-pattern.md` INVARIANT pattern.
 
 **Bit-width invariants:** static_asserted in `ML_Headers/bandit_dispatch_table.hpp` (where `FOREACH_BANDIT_ALGORITHM_COUNT` + `NUM_REGIMES` + `ENSEMBLE_HORIZON_MAX` are visible). Tied to `MASK_ORDER_BANDIT_3BIT == 0x7` so future mask widening cascades automatically.
 
-**Cross-ref:** `DESIGN_SPECS/decision-time-data-binding-pattern.md` Stage 3 amendment v1.2 (sibling-array carrier + bit-pack carrier mechanisms for Pattern 4; Order::pre_resolved sub-struct unchanged at 2 fields).
+**Cross-ref:** `DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md` Stage 3 amendment v1.2 (sibling-array carrier + bit-pack carrier mechanisms for Pattern 4; Order::pre_resolved sub-struct unchanged at 2 fields).
 
 ### Decision E: ParseFast.hpp + BanditLearning.hpp explicit cstdint (latent IWYU fix)
 

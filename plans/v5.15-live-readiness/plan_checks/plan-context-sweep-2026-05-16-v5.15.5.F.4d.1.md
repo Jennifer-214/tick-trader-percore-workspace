@@ -3,7 +3,7 @@
 **Date:** 2026-05-16
 **Sprint:** `v5.15-live-readiness`
 **Engine HEAD at sweep:** `545b0879948a0893f806dc6afe7992968acd57e3` = tag `v5.15.5.F.4d`
-**Trigger:** Path γ pivot adopted at `.F.4d.1.A` planning consult — `DESIGN_SPECS/metadata-bit-driven-derived-filter-framework.md` v1.0/v1.1 mechanism (parallel runtime walker + 3 macro variants `DERIVED_FILTER_DECLARE_*` + `DerivedFilterRoster.hpp`) is SUPERSEDED by Option E (existing `FOREACH_METADATA_BIT` + `cfg_compute_mask` + `CFG_FIELD_FOR_EACH_SET_BIT` infrastructure at `CfgFieldRegistry.hpp:1020-1159`). Queued plans drafted before the Path γ pivot may reference the SUPERSEDED framework macros + walker mechanism.
+**Trigger:** Path γ pivot adopted at `.F.4d.1.A` planning consult — `DESIGN_SPECS/framework-patterns/metadata-bit-driven-derived-filter-framework.md` v1.0/v1.1 mechanism (parallel runtime walker + 3 macro variants `DERIVED_FILTER_DECLARE_*` + `DerivedFilterRoster.hpp`) is SUPERSEDED by Option E (existing `FOREACH_METADATA_BIT` + `cfg_compute_mask` + `CFG_FIELD_FOR_EACH_SET_BIT` infrastructure at `CfgFieldRegistry.hpp:1020-1159`). Queued plans drafted before the Path γ pivot may reference the SUPERSEDED framework macros + walker mechanism.
 
 **Sweep scope:** 10 plan bodies across queued sub-ships:
 

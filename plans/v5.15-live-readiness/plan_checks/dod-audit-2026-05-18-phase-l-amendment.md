@@ -2,7 +2,7 @@
 
 **Scope:** plan-mode + new-DESIGN_SPEC structural validation
 **Plan body:** `plans/v5.15-live-readiness/subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md` (v1.14)
-**New spec:** `DESIGN_SPECS/framework-driven-cli-binary-pattern.md` (Stage 2 DRAFT v1.0)
+**New spec:** `DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-pattern.md` (Stage 2 DRAFT v1.0)
 **Sprint:** v5.15.5.F.4d.1.B.3 (in-flight; Phase L pre-coding)
 **Stage 0 DESIGN_PHILOSOPHY preload context:** § 1.5 (Framework discipline meta-principle) + § 7 (Structural-fix family) + § 11 (audit-driven pre-coding gate)
 
@@ -42,7 +42,7 @@
 
 ### HIGH — H-1: New DESIGN_SPEC missing `## Audit detection` section (Stage 2 lifecycle requirement)
 
-- **Surface:** `DESIGN_SPECS/framework-driven-cli-binary-pattern.md` (entire spec; no `## Audit detection` heading present per `grep -n "^## " | wc -l` = 16 section count vs Stage 2 requirement)
+- **Surface:** `DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-pattern.md` (entire spec; no `## Audit detection` heading present per `grep -n "^## " | wc -l` = 16 section count vs Stage 2 requirement)
 - **Pattern:** `pattern-codification-lifecycle.md` § Stage 2 line 71 — "**`## Audit detection` section** — symptoms that `/dod-audit` (or similar tooling) can grep for; enables auto-discovery + future enforcement"
 - **Symptom:** Stage 2 lifecycle explicitly mandates `## Audit detection` section so that future `/dod-audit` runs can auto-detect this pattern's violations. Sister Stage 2 specs (`branchless-math-kernel-pattern.md:278` + `struct-padding-determinism-pattern.md:257`) both have this section. New spec has Problem statement / Design space / Pattern shape / Trade-offs / Reference implementations / Lessons / Patterns-NOT-used / Lifecycle / Cross-references — but NO Audit detection section.
 - **Suggested fix:** add `## Audit detection` section between "## Lessons / gotchas" and "## Patterns NOT used here". Grep signatures should target:
@@ -86,7 +86,7 @@
 
 ### MEDIUM — M-2: Pattern lifecycle Stage 5 promotion criteria — 2nd canonical projection could be sharper
 
-- **Surface:** `DESIGN_SPECS/framework-driven-cli-binary-pattern.md` § Pattern lifecycle Stage 4-5 (lines 422-426)
+- **Surface:** `DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-pattern.md` § Pattern lifecycle Stage 4-5 (lines 422-426)
 - **Pattern:** `pattern-codification-lifecycle.md` Stage 5 — CLAUDE.md item promotion gated on ≥2 canonical applications
 - **Symptom:** Stage 4 lists "future ships with cross-tool wire-format surfaces apply this pattern per the spec" but the `## Reference implementations` § Future application candidates table at lines 329-337 marks most candidates as "NO — diagnostic concern" or "MAYBE — if recurrence accumulates". Only 2 entries marked YES (Schema migration CLI; Per-core override emission CLI) — both gated on "if recurrence count ≥ 3". The spec is honest about this scarcity; HOWEVER it should be EXPLICIT that Stage 5 CLAUDE.md promotion is LOW-PROBABILITY in the near term unless a non-stamp surface accumulates recurrence.
 - **Suggested fix:** amend Stage 5 entry to add: "Stage 5 promotion may take multiple ship cycles; this pattern is structurally rare (cross-tool wire-format mirror) and most cross-tool surfaces are diagnostic. If 2nd canonical doesn't materialize within 4-6 ships, consider promoting to CLAUDE.md anyway based on the singular structural-fix value at the stamp surface."
@@ -95,7 +95,7 @@
 
 ### LOW — L-1: Stage 2 DRAFT version literal v1.0 marker placement
 
-- **Surface:** `DESIGN_SPECS/framework-driven-cli-binary-pattern.md:4` — "Status: **Stage 2 DRAFT v1.0**"
+- **Surface:** `DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-pattern.md:4` — "Status: **Stage 2 DRAFT v1.0**"
 - **Pattern:** Standard convention check — Stage 2 marker present? YES. Stage 3 forward-ref present? YES (Reference implementations § Stage 3 first canonical line 312-318). Stage 4-7 lifecycle present? YES (lines 415-431).
 - **Symptom:** Stage 2 DRAFT marker correctly placed in frontmatter. Version literal "v1.0" is appropriate for first draft. Stage 3 canonical reference clear ("Stage 3 first canonical reference = `tools/stamp_model_cli.cpp` at `.B.3` ship close"). NO gaps.
 - **Verdict:** CLEAN — Stage 2 DRAFT discipline correctly applied; literal not stale.
@@ -190,9 +190,9 @@ Phase L coding can proceed after these amendments land — they don't require wa
 ## Cross-references
 
 - Plan body: `plans/v5.15-live-readiness/subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md` (v1.14)
-- New DESIGN_SPEC audited: `DESIGN_SPECS/framework-driven-cli-binary-pattern.md` (Stage 2 DRAFT v1.0)
-- Sister spec Layer 7 amendment landed: `DESIGN_SPECS/wire-format-byte-preservation-discipline.md:352-359`
-- Lifecycle reference: `DESIGN_SPECS/pattern-codification-lifecycle.md` § Stage 2 line 71 (Audit detection requirement)
+- New DESIGN_SPEC audited: `DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-pattern.md` (Stage 2 DRAFT v1.0)
+- Sister spec Layer 7 amendment landed: `DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md:352-359`
+- Lifecycle reference: `DESIGN_SPECS/meta-disciplines/pattern-codification-lifecycle.md` § Stage 2 line 71 (Audit detection requirement)
 - Framework API verified: `ML_Headers/ModelInference.hpp:1688` (`stamp_write_for_model`)
 - Bug classes verified: `DOCS/RECURRING_BUG_PATTERNS.md` Class 18 (line 1106) / Class 19 (line 1291) / Class 21 (line 1371) / Class 22 (line 1407)
 - Sister C++ tool precedent: `tools/compare_scalers.cpp` (verified present at `tools/` ls)

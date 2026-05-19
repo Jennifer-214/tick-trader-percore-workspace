@@ -106,15 +106,15 @@ CLAUDE.local.md required reading (for performance-sensitive code):
 
 DESIGN_SPECS that v5.15.0 explicitly cites (read before .A Step 1):
 - `tick-trader-percore-workspace/DESIGN_SPECS/README.md` (catalog + "I need to..." discovery)
-- `DESIGN_SPECS/heterogeneous-registry-pattern.md` (X-macro with presence-dispatch — the cited "x-macro-registry-with-presence-dispatch.md" maps to this file)
-- `DESIGN_SPECS/bitmap-flag-api.md` (BITMAP_* macros; bit-packed has_flags discipline)
-- `DESIGN_SPECS/autopopulate-pattern-for-production-caller-class.md` (STAMP_*_AUTOPOPULATE companion)
-- `DESIGN_SPECS/pre-post-cfg-registry-split-for-emit-order-preservation.md` (the FOREACH_STAMP_BOUND_MODEL_CONST_PRE_CFG / _POST_CFG split this ship preserves)
-- `DESIGN_SPECS/wire-format-byte-preservation-discipline.md` (HMAC chain byte-equivalence)
-- `DESIGN_SPECS/struct-padding-determinism-pattern.md` (alignas + explicit `_padding = 0`)
-- `DESIGN_SPECS/per-snapshot-cluster-layout-pattern.md` (alignas(64) + hot/warm/cold clusters)
-- `DESIGN_SPECS/structural-fix-preferred-decision-framework.md` (Class 18 mirror — both sides of source/sink boundary)
-- `DESIGN_SPECS/audit-driven-pre-coding-gate.md` (already-applied to this ship)
+- `DESIGN_SPECS/framework-patterns/heterogeneous-registry-pattern.md` (X-macro with presence-dispatch — the cited "x-macro-registry-with-presence-dispatch.md" maps to this file)
+- `DESIGN_SPECS/framework-patterns/bitmap-flag-api.md` (BITMAP_* macros; bit-packed has_flags discipline)
+- `DESIGN_SPECS/framework-patterns/autopopulate-pattern-for-production-caller-class.md` (STAMP_*_AUTOPOPULATE companion)
+- `DESIGN_SPECS/wire-format-patterns/pre-post-cfg-registry-split-for-emit-order-preservation.md` (the FOREACH_STAMP_BOUND_MODEL_CONST_PRE_CFG / _POST_CFG split this ship preserves)
+- `DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md` (HMAC chain byte-equivalence)
+- `DESIGN_SPECS/wire-format-patterns/struct-padding-determinism-pattern.md` (alignas + explicit `_padding = 0`)
+- `DESIGN_SPECS/data-disciplines/per-snapshot-cluster-layout-pattern.md` (alignas(64) + hot/warm/cold clusters)
+- `DESIGN_SPECS/meta-disciplines/structural-fix-preferred-decision-framework.md` (Class 18 mirror — both sides of source/sink boundary)
+- `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md` (already-applied to this ship)
 
 CLAUDE.md items relevant: **12** (display↔execution invariant), **13**
 (X-macro registry), **15** (parity-tested-by-construction), **18**
@@ -450,12 +450,12 @@ canonical X-macro pattern for multi-horizon worker stamping. Get
 ModelHandle right + the rest of the sprint inherits sound primitives.
 
 If you find yourself writing complex bit-position logic, stop — re-read
-`DESIGN_SPECS/bitmap-flag-api.md` Section "Critical design decision:
+`DESIGN_SPECS/framework-patterns/bitmap-flag-api.md` Section "Critical design decision:
 predicate macros return bool explicitly". The top-bit truncation
 landmine is real.
 
 If you find yourself replicating registry-walk logic, stop — re-read
-`DESIGN_SPECS/heterogeneous-registry-pattern.md` Y3 dispatch canon. The
+`DESIGN_SPECS/framework-patterns/heterogeneous-registry-pattern.md` Y3 dispatch canon. The
 FOREACH expansion + token-paste dispatch is the right shape.
 
 Good luck. Caramel will iterate with you on findings before coding.

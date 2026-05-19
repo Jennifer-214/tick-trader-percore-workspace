@@ -3,7 +3,7 @@
 **Scope:** Phase L NEW v1.14 amendment to `plans/v5.15-live-readiness/subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md` proposing replacement of `tools/stamp_model.sh` with `tools/stamp_model_cli.cpp` framework-driven C++ CLI binary.
 **Date:** 2026-05-18
 **Engine HEAD:** 3d27512 (WIP-checkpoint 6)
-**Audited spec:** `tick-trader-percore-workspace/DESIGN_SPECS/framework-driven-cli-binary-pattern.md` v1.0 Stage 2 DRAFT
+**Audited spec:** `tick-trader-percore-workspace/DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-pattern.md` v1.0 Stage 2 DRAFT
 **DESIGN_PHILOSOPHY preload:** § 4 (Latency cost framework — N/A for cold-path CLI; tagged informational); § 7 (Structural-fix family — IS the framework Phase L applies).
 
 ## Verdicts (per focus area)

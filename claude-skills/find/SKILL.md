@@ -1,13 +1,13 @@
 ---
 name: find
-description: Natural-language metadata-filtered search over the doc system. Translates query into rg patterns against YAML frontmatter (type / tags / surface / stage / sister_specs). Composes from DESIGN_SPECS/doc-tag-vocabulary.md + doc-frontmatter-convention.md. Output: list of matching files with path + type + relevant tags + brief excerpt.
+description: Natural-language metadata-filtered search over the doc system. Translates query into rg patterns against YAML frontmatter (type / tags / surface / stage / sister_specs). Composes from DESIGN_SPECS/meta-disciplines/doc-tag-vocabulary.md + doc-frontmatter-convention.md. Output: list of matching files with path + type + relevant tags + brief excerpt.
 type: skill
 concern: workflow
 audit_cadence: ad-hoc
 tags: [doc-discipline]
 surface: []
 sister_skills: [/doc-create, /metadata-audit, /index-rebuild]
-loads_dynamically: [DESIGN_SPECS/doc-tag-vocabulary.md, DESIGN_SPECS/doc-frontmatter-convention.md]
+loads_dynamically: [DESIGN_SPECS/meta-disciplines/doc-tag-vocabulary.md, DESIGN_SPECS/meta-disciplines/doc-frontmatter-convention.md]
 ---
 
 # /find — Metadata-filtered doc retrieval
@@ -16,7 +16,7 @@ loads_dynamically: [DESIGN_SPECS/doc-tag-vocabulary.md, DESIGN_SPECS/doc-frontma
 
 Translates natural-language query → metadata-filtered grep over doc system frontmatter. Returns matching files with path + type + relevant tags + brief excerpt.
 
-Composes from `DESIGN_SPECS/doc-tag-vocabulary.md` (canonical tag list) + `DESIGN_SPECS/doc-frontmatter-convention.md` (frontmatter schema). The skill IS the operationalization of CLAUDE.md § How to find anything — grep recipes wrapped in natural language interface.
+Composes from `DESIGN_SPECS/meta-disciplines/doc-tag-vocabulary.md` (canonical tag list) + `DESIGN_SPECS/meta-disciplines/doc-frontmatter-convention.md` (frontmatter schema). The skill IS the operationalization of CLAUDE.md § How to find anything — grep recipes wrapped in natural language interface.
 
 ## Invocation
 
@@ -35,7 +35,7 @@ Examples:
 
 1. Parse natural-language query
 2. Identify CONCERN tags / SURFACE tags / TYPE values from query keywords
-3. Map keywords to canonical tag vocabulary (consult `DESIGN_SPECS/doc-tag-vocabulary.md`)
+3. Map keywords to canonical tag vocabulary (consult `DESIGN_SPECS/meta-disciplines/doc-tag-vocabulary.md`)
 4. Compose `rg` patterns combining matched tags
 5. Execute searches in parallel
 6. Aggregate results; rank by tag-match count
@@ -100,7 +100,7 @@ If no matches: `No matches for "<query>"; consider broader terms or check `doc-t
 - Sister: `/doc-create` (creates new docs; this skill finds existing)
 - Sister: `/metadata-audit` (audits metadata; this skill queries metadata)
 - Sister: `/index-rebuild` (regenerates indexes; this skill uses indexes)
-- Reference: `DESIGN_SPECS/doc-tag-vocabulary.md` (canonical tag list)
-- Reference: `DESIGN_SPECS/doc-frontmatter-convention.md` (frontmatter schema)
+- Reference: `DESIGN_SPECS/meta-disciplines/doc-tag-vocabulary.md` (canonical tag list)
+- Reference: `DESIGN_SPECS/meta-disciplines/doc-frontmatter-convention.md` (frontmatter schema)
 - Reference: CLAUDE.md § How to find anything (grep recipes)
 - TECH_DEBT-115 Phase 2 (this skill lands at `.C` candidate ship)

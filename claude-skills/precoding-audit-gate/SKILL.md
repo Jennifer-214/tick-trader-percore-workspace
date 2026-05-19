@@ -7,7 +7,7 @@ audit_cadence: per-ship
 tags: [audit-methodology, framework-discipline, operator-collaboration]
 surface: [registry, cfg-flow, wire-format, hot-path, slow-path]
 sister_skills: [/readiness, /parity-check, /trace-deps, /merge-scan, /dod-audit, /blindspot-scan, /accounting-audit, /hft-audit, /registry-fit-audit]
-loads_dynamically: [DESIGN_SPECS/audit-scope-taxonomy.md, DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md, DOCS/DESIGN_PHILOSOPHY.md]
+loads_dynamically: [DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md, DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md, DOCS/DESIGN_PHILOSOPHY.md]
 ---
 
 # /precoding-audit-gate — Layer 1 orchestrator for parallel audit fire
@@ -86,7 +86,7 @@ infrastructure change), one-off bug fix.
     struct-gen migration crosses ≥2 registries, OR type unification migration, OR cross-registry
     consumer, OR macro hoisting into framework primitive, OR include surface change, OR wire-format
     ordering change. Walks 12-category implementation-detail blind-spot taxonomy at
-    `DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md`. Distinct from SHAPE audits:
+    `DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md`. Distinct from SHAPE audits:
     SHAPE catches design-layer issues; `/blindspot-scan` catches code-layer issues (type-change
     cascades, field-name collisions, context-dependent C++, include cycles, row-order drift).
 
@@ -316,7 +316,7 @@ vs alternative (no audit gate): ~6-8 hr debug per CRITICAL finding that escapes 
 ## Cross-references
 
 - `tick-trader-percore-workspace/DOCS/DESIGN_PHILOSOPHY.md` § 11 (Process discipline — audit-driven pre-coding gate)
-- `tick-trader-percore-workspace/DESIGN_SPECS/audit-driven-pre-coding-gate.md` (the canonical pattern this skill instantiates)
+- `tick-trader-percore-workspace/DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md` (the canonical pattern this skill instantiates)
 - `tick-trader-percore-workspace/CLAUDE.local.md` going-forward rule "Suggest mid-sprint audits when work impacts downstream"
 - Engine memory `feedback_consult_on_audit_findings` (consult before coding)
 - Engine memory `feedback_compaction_degrades_treat_handoffs_as_hints` (verify on cold pickup)

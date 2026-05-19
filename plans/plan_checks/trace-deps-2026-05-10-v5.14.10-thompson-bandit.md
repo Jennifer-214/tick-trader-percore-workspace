@@ -193,7 +193,7 @@ Then `FOREACH_ENSEMBLE_POST_LOAD_COUNT` becomes 9.
 
 **Plan introduces:** `EnsembleModelZoo.thompson_bandits[NUM_REGIMES]` parallel to existing `bandits[NUM_REGIMES]`.
 
-**Class 18 framing (per `DESIGN_SPECS/structural-fix-preferred-decision-framework.md`):**
+**Class 18 framing (per `DESIGN_SPECS/meta-disciplines/structural-fix-preferred-decision-framework.md`):**
 
 | Recurrence count of "parallel bandit array" pattern in EnsembleModelZoo | Decision per framework |
 |---|---|
@@ -206,7 +206,7 @@ Then `FOREACH_ENSEMBLE_POST_LOAD_COUNT` becomes 9.
 
 **Forward-looking signal in plan body:** plan cross-refs `Pass 2 #5 finding (FoxML_Core decisioning/bayesian_policy.py:50-120)` + frames Thompson as "alternative for non-stationary markets". If the operator's Pass 2 backlog includes UCB1 / EXP4 / linear Thompson variants → 4th and 5th algorithm WILL come → structural fix MANDATORY at 5th instance regardless. Better to do it now at the 3rd than to do it later at the 5th.
 
-**Sister pattern in the codebase:** `DESIGN_SPECS/curve-registry-pattern.md` explicitly handles "named compute fns chosen by enum" with `FOREACH_<DOMAIN>_CURVE` X-macro registry + function-pointer dispatch table. This is the EXACT shape: bandit algorithm is a compute-mode enum chosen by `cfg.bandit_algorithm`. Pattern map:
+**Sister pattern in the codebase:** `DESIGN_SPECS/framework-patterns/curve-registry-pattern.md` explicitly handles "named compute fns chosen by enum" with `FOREACH_<DOMAIN>_CURVE` X-macro registry + function-pointer dispatch table. This is the EXACT shape: bandit algorithm is a compute-mode enum chosen by `cfg.bandit_algorithm`. Pattern map:
 
 ```cpp
 // PROPOSED (parallel to FOREACH_DEGRADATION_CURVE in ConfidenceScore.hpp:498-634):
@@ -305,9 +305,9 @@ j) Add a registry-symmetry test (mirror of `tests/controller_test.cpp:20279-2034
 
 ## Cross-references
 
-- `DESIGN_SPECS/structural-fix-preferred-decision-framework.md` — used for mirror-array Class-18 framing
-- `DESIGN_SPECS/curve-registry-pattern.md` — proposed structural-fix shape if retrofit-now is chosen
-- `DESIGN_SPECS/x-macro-registry-with-presence-dispatch.md` — base pattern (FOREACH_ENSEMBLE_POST_LOAD applies)
+- `DESIGN_SPECS/meta-disciplines/structural-fix-preferred-decision-framework.md` — used for mirror-array Class-18 framing
+- `DESIGN_SPECS/framework-patterns/curve-registry-pattern.md` — proposed structural-fix shape if retrofit-now is chosen
+- `DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md` — base pattern (FOREACH_ENSEMBLE_POST_LOAD applies)
 - `CLAUDE.md` items 13 + 19 + 21 — X-macro registry, structural fix, AUTOPOPULATE
 - `CLAUDE.local.md` "structural fix preferred when bug class can recur" — operator framing
 - `DOCS/TECH_DEBT.md` — deferral ledger (per going-forward rule, defer must land here with trigger)

@@ -317,7 +317,7 @@ unsatisfied with plain `malloc`). NEW DESIGN_SPEC:
   named MASK_CFG_KEY_* constants) keeps cfg state mmap-friendly.
 
 **Pattern established:** "shadow-load state transition" → captured in
-DESIGN_SPECS/shadow-load-state-transition-pattern.md as first-class
+DESIGN_SPECS/feature-patterns/shadow-load-state-transition-pattern.md as first-class
 pattern (DRAFT v0.1 → ACTIVE v1.0 after v5.15.4 field-tests both
 applications).
 
@@ -579,8 +579,8 @@ preserves wire format byte-for-byte; HMAC chain verifies bash-stamped legacy mod
 on engine via Decision F SOFT compat parser).
 
 **Cross-references:**
-- `DESIGN_SPECS/framework-driven-cli-binary-pattern.md` (NEW Stage 2 DRAFT)
-- `DESIGN_SPECS/wire-format-byte-preservation-discipline.md` § Layer 7 (cross-tool
+- `DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-pattern.md` (NEW Stage 2 DRAFT)
+- `DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md` § Layer 7 (cross-tool
   emit-site enumeration discipline — Phase L OBVIATES Layer 7 at this specific
   surface)
 - `subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md` Decision G + Step 1.6.8'

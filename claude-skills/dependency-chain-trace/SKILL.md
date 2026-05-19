@@ -7,7 +7,7 @@ audit_cadence: ad-hoc
 tags: [audit-methodology, structural-fix, concurrency]
 surface: [registry, cfg-flow, hot-path, slow-path]
 sister_skills: [/hft-audit, /bug-check, /dod-audit, /trace-deps]
-loads_dynamically: [DESIGN_SPECS/audit-scope-taxonomy.md, DESIGN_SPECS/cfg-scope-discipline.md, DESIGN_SPECS/decision-time-data-binding-pattern.md, DESIGN_SPECS/branchless-dispatch-discipline.md, DOCS/DESIGN_PHILOSOPHY.md]
+loads_dynamically: [DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md, DESIGN_SPECS/refactor-patterns/cfg-scope-discipline.md, DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md, DESIGN_SPECS/refactor-patterns/branchless-dispatch-discipline.md, DOCS/DESIGN_PHILOSOPHY.md]
 ---
 
 # /dependency-chain-trace — Symbol / data-path flow audit
@@ -242,8 +242,8 @@ Generate a structured markdown report:
 
 ## Cross-references
 
-- `DESIGN_SPECS/audit-scope-taxonomy.md` § 5 (`chain:<symbol>` shape definition)
-- `DESIGN_SPECS/decision-time-data-binding-pattern.md` — relevant when tracing pre-resolved values
-- `DESIGN_SPECS/cfg-scope-discipline.md` — relevant when tracing cfg fields
-- `DESIGN_SPECS/branchless-dispatch-discipline.md` — relevant when tracing dispatch-table inputs
+- `DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md` § 5 (`chain:<symbol>` shape definition)
+- `DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md` — relevant when tracing pre-resolved values
+- `DESIGN_SPECS/refactor-patterns/cfg-scope-discipline.md` — relevant when tracing cfg fields
+- `DESIGN_SPECS/refactor-patterns/branchless-dispatch-discipline.md` — relevant when tracing dispatch-table inputs
 - All point-scan audit skills — sister/complementary tools

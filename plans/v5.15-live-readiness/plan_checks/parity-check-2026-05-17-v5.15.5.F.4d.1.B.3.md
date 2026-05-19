@@ -112,7 +112,7 @@ exit_blender_mode=...\n            # was row 13
 #### HIGH-1 — Layer 5b structural-invariant generator (`DERIVED_FILTER_DECLARE_WIRE_FORMAT_TWO_SOURCE`) DOES NOT EXIST at HEAD; plan Step 4 CI Checks 9-12 don't cover canonical-body invariant testing
 
 **File:line citations:**
-- DESIGN_SPECS Layer 5b spec: `tick-trader-percore-workspace/DESIGN_SPECS/wire-format-byte-preservation-discipline.md:194-275` — describes the framework macro `DERIVED_FILTER_DECLARE_WIRE_FORMAT_TWO_SOURCE(NAME, SOURCE_FOREACH, METADATA_BIT, BITMAP_SOURCE, BITMAP_FIELD)` + `STAMP_BOUND_CFG_run_generic_invariants()` runner with 5 invariants (I1 line-count vs flagged-count, I2 `<name>=<value>\n` pattern, I3 no comma decimals, I4 per-row name appears EXACTLY when bit set, I5 per-core descriptors emit before global)
+- DESIGN_SPECS Layer 5b spec: `tick-trader-percore-workspace/DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md:194-275` — describes the framework macro `DERIVED_FILTER_DECLARE_WIRE_FORMAT_TWO_SOURCE(NAME, SOURCE_FOREACH, METADATA_BIT, BITMAP_SOURCE, BITMAP_FIELD)` + `STAMP_BOUND_CFG_run_generic_invariants()` runner with 5 invariants (I1 line-count vs flagged-count, I2 `<name>=<value>\n` pattern, I3 no comma decimals, I4 per-row name appears EXACTLY when bit set, I5 per-core descriptors emit before global)
 - Search verification (no hits): `rg "DERIVED_FILTER_DECLARE_WIRE_FORMAT|run_generic_invariants" CoreFrameworks/ MemHeaders/ ML_Headers/` returns ZERO results in the engine
 - Plan Step 4 CI Checks 9-12 (`:246-249`) covers metadata-bit coverage (every flagged source row has a derived filter consumer) but does NOT add the canonical-body invariant runner test
 

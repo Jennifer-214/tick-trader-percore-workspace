@@ -231,8 +231,8 @@ Plan-required restructure:
 ## Section 8 — DESIGN_SPECs verification
 
 Both DRAFT v1.0 specs exist at workspace paths per plan Step 0.B:
-- `/home/caramel/code/tick-trader-percore-workspace/DESIGN_SPECS/per-instance-registry-pattern.md` ✓
-- `/home/caramel/code/tick-trader-percore-workspace/DESIGN_SPECS/cfg-scope-discipline.md` ✓
+- `/home/caramel/code/tick-trader-percore-workspace/DESIGN_SPECS/framework-patterns/per-instance-registry-pattern.md` ✓
+- `/home/caramel/code/tick-trader-percore-workspace/DESIGN_SPECS/refactor-patterns/cfg-scope-discipline.md` ✓
 
 Referenced existing specs all present:
 - `universal-cfg-field-registry-pattern.md` ✓

@@ -35,15 +35,15 @@ Layout determines performance. Layout by ACCESS PATTERN, not LOGICAL GROUPING. F
 **False-sharing prevention.** Cross-thread fields written by one thread + read by another → `alignas(64)` padding to avoid cache-line ping-pong. Producer→drainer SPSC queues, slow→hot seqlock cfg → all aligned.
 
 → DESIGN_PHILOSOPHY § 3 (Data-oriented design family) + § 6 (Concurrency family — false-sharing discipline).
-→ DESIGN_SPECS/multi-bit-state-encoding-pattern.md (K-state encoding for K=2..16).
-→ DESIGN_SPECS/bitmap-overflow-protection-discipline.md (mandatory static_assert for BITMAP_* paired counts).
+→ DESIGN_SPECS/refactor-patterns/multi-bit-state-encoding-pattern.md (K-state encoding for K=2..16).
+→ DESIGN_SPECS/refactor-patterns/bitmap-overflow-protection-discipline.md (mandatory static_assert for BITMAP_* paired counts).
 
 ### Priority gradients (prefer X over Y when both work)
 
 When two options both compile + both run, the gradient resolves the choice. These are NOT absolute (Hard Invariants H1-H20 are absolute) — they're how to think about borderline trade-offs.
 
 **Performance:**
-- Branchless > branched for data-dependent dispatch on hot/slow/drainer/producer paths (H7 hot-path strict; H20 generalizes). Hand-wave "branch predictor handles it" is anti-pattern (Class 28). → § 4 (latency cost) + DESIGN_SPECS/branchless-dispatch-discipline.md.
+- Branchless > branched for data-dependent dispatch on hot/slow/drainer/producer paths (H7 hot-path strict; H20 generalizes). Hand-wave "branch predictor handles it" is anti-pattern (Class 28). → § 4 (latency cost) + DESIGN_SPECS/refactor-patterns/branchless-dispatch-discipline.md.
 - `FPN<F=64>` > `double` on accounting paths; never `float` on hot/slow path math (H4). → § 5 (determinism).
 - Bit-packed slots > byte-per-bool (H14 + MBS_* encoding). Memory bandwidth + cache footprint compound.
 - `alignas(64)` cross-thread + cluster by access pattern > flat struct (H6). → § 3.
@@ -51,16 +51,16 @@ When two options both compile + both run, the gradient resolves the choice. Thes
 - SIMD with bytewise-identical scalar fallback > SIMD-only (H10). → § 5.
 
 **Maintenance:**
-- Structural fix > one-time patch when bug class can recur. → § 7 + DESIGN_SPECS/structural-fix-preferred-decision-framework.md.
-- Framework-driven (X-macro registry + auto-flow) > ad-hoc per-instance code when recurrence foreseeable. → § 1.5 + DESIGN_SPECS/pattern-codification-lifecycle.md.
+- Structural fix > one-time patch when bug class can recur. → § 7 + DESIGN_SPECS/meta-disciplines/structural-fix-preferred-decision-framework.md.
+- Framework-driven (X-macro registry + auto-flow) > ad-hoc per-instance code when recurrence foreseeable. → § 1.5 + DESIGN_SPECS/meta-disciplines/pattern-codification-lifecycle.md.
 - Auto-flowing registry > manual N-site sync (H15-H19 codify mandatory registry discipline). → § 7.
-- `tt::` type-trait dispatch > `reinterpret_cast` punning (H13). Class 23 closure. → DESIGN_SPECS/type-trait-dispatch-via-tt-namespace.md.
+- `tt::` type-trait dispatch > `reinterpret_cast` punning (H13). Class 23 closure. → DESIGN_SPECS/framework-patterns/type-trait-dispatch-via-tt-namespace.md.
 - Compile-time enforcement (static_assert / CI Check) > runtime check / convention.
-- Categorical triggers > hardcoded refs in always-loaded content (CLAUDE.md / CLAUDE.local.md / MEMORY.md / SKILL.md). → DESIGN_SPECS/categorical-triggers-in-always-loaded-docs.md.
+- Categorical triggers > hardcoded refs in always-loaded content (CLAUDE.md / CLAUDE.local.md / MEMORY.md / SKILL.md). → DESIGN_SPECS/doc-disciplines/categorical-triggers-in-always-loaded-docs.md.
 - Boundary-stable refactor > wide cascade across ≥4 files.
 
 **Determinism:**
-- Wire byte preservation always for HMAC-signed bodies (H9). → § 5 + DESIGN_SPECS/wire-format-byte-preservation-discipline.md.
+- Wire byte preservation always for HMAC-signed bodies (H9). → § 5 + DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md.
 - Single-source-of-truth emit (sidecar override per H18) > parallel mirror registry. Class 21 closure.
 - Constant-iter math + branchless within reductions (H11).
 - Locale pinning at emit (`tt::format_double_canonical`).
@@ -104,7 +104,7 @@ Hot path is BRANCHLESS (H7); branch mispredicts cost 30-100ns real-world per `DE
 | Bitmap structures (portfolio / flags) | uint64_t typical | H14 — never C++ bitfield syntax |
 | Stack frames on hot path | <few KB | No deep recursion / large stack-alloc |
 
-L1d working-set discipline: hot path SHOULD fit in single core's L1d (32-64KB). Verify via perf counters when uncertain. → DESIGN_SPECS/cache-line-discipline.md (Stage 2 DRAFT).
+L1d working-set discipline: hot path SHOULD fit in single core's L1d (32-64KB). Verify via perf counters when uncertain. → DESIGN_SPECS/data-disciplines/cache-line-discipline.md (Stage 2 DRAFT).
 
 ### Concurrency model summary
 
@@ -139,7 +139,7 @@ Binance WS                OMS_DrainSubmit     SLOW thread (1 per core)
 - Pointer-sharing between GUI thread and HP/SP threads (file-mediated + reload-signal instead)
 - C++ bitfield syntax in cross-thread structs (H14 — layout/signedness/packing-order implementation-defined)
 
-**False-sharing prevention:** cross-thread struct fields padded to cache-line boundaries; producer-written + consumer-read fields in separate cache lines. → DESIGN_SPECS/concurrency-model-summary.md + DESIGN_SPECS/cache-line-discipline.md (Stage 2 DRAFT).
+**False-sharing prevention:** cross-thread struct fields padded to cache-line boundaries; producer-written + consumer-read fields in separate cache lines. → DESIGN_SPECS/concurrency-patterns/concurrency-model-summary.md + DESIGN_SPECS/data-disciplines/cache-line-discipline.md (Stage 2 DRAFT).
 
 ### Doc layer separation
 
@@ -157,7 +157,7 @@ Binance WS                OMS_DrainSubmit     SLOW thread (1 per core)
 **Rule:** Always-loaded docs (`CLAUDE.md` + `CLAUDE.local.md` + `MEMORY.md` + `SKILL.md` files) = GUIDELINES + INDEX (timeless; "how to think"). On-demand docs (plans/, ledgers, handoffs) = IN-FLIGHT WORK (ephemeral; "what to do this sprint"). NEVER put TODO content or sprint-version-specific phrasing in always-loaded docs — track in TECH_DEBT or plans instead. Drift sentinels: "queued as v5.X.Y sub-ship", "(NEW post-v5.X.Y)", specific TECH_DEBT-NNN in trigger bodies that should be categorical pattern triggers.
 
 → DESIGN_PHILOSOPHY § 0 (purpose hierarchy) + § 13 (cross-reference index).
-→ DESIGN_SPECS/categorical-triggers-in-always-loaded-docs.md (the discipline).
+→ DESIGN_SPECS/doc-disciplines/categorical-triggers-in-always-loaded-docs.md (the discipline).
 
 ## Overview
 
@@ -262,12 +262,12 @@ Full discussion: `DOCS/DESIGN_PHILOSOPHY.md` § 2 + `DOCS/STRATEGY_AND_CODING_RU
 | H12 | Structs in byte-equivalence contexts (memcmp / SHA-256 / wire format / HMAC input): EXPLICIT `int<N>_t _padding<N> = 0;` default-init fields |
 | H13 | Type-erased `*reinterpret_cast<T*>((char*)cfg + offset) = v` style dispatch is FORBIDDEN — use `tt::<verb>_field<T>` with T deduced (Class 23 3-barrier fix) |
 | H14 | NO C++ bitfield syntax (`name : N`) anywhere — multi-bit state encoding uses manual `SHIFT_*`/`MASK_*` constants + `MBS_*`/`BITMAP_*` branchless accessors over `uint{8,16,32,64}_t` storage; layout/signedness/packing-order are implementation-defined (conflicts with H6/H9/H10/H12) |
-| **H15** | **Every X-macro registry in the codebase MUST have a row in `FOREACH_REGISTRY` meta-registry** at `CoreFrameworks/MetaRegistry.hpp` (codified `.F.4d` 2026-05-16). Adding a new registry without enrollment fails CI Check `test_meta_registry_coverage`. Closes meta-Class-18 (added registry but forgot to document). See `DESIGN_SPECS/meta-registry-pattern-for-codebase-registry-discipline.md`. |
+| **H15** | **Every X-macro registry in the codebase MUST have a row in `FOREACH_REGISTRY` meta-registry** at `CoreFrameworks/MetaRegistry.hpp` (codified `.F.4d` 2026-05-16). Adding a new registry without enrollment fails CI Check `test_meta_registry_coverage`. Closes meta-Class-18 (added registry but forgot to document). See `DESIGN_SPECS/framework-patterns/meta-registry-pattern-for-codebase-registry-discipline.md`. |
 | H16 | (Structural detail; full discussion in `DOCS/STRATEGY_AND_CODING_RULES.md` § H16 private overlay.) Every `CfgFieldDescriptor::MetadataFlag` bit MUST have a derived filter row in `FOREACH_DERIVED_FILTER` OR a documented exemption with rationale. CI Check `test_metadata_bit_to_derived_filter_coverage` enforces. Codified `.F.4d` 2026-05-16. |
 | H17 | (Structural detail; full discussion in `DOCS/STRATEGY_AND_CODING_RULES.md` § H17 private overlay.) `ControllerConfig<F>` cfg struct fields auto-generated from `FOREACH_CFG_FIELD`; NO manual cfg field declarations. `PerCoreCfg<F>` body = X-macro only (CI Check 2 since `.F.4c`). Codified `.F.4d` 2026-05-16. |
-| **H18** | **Custom-semantics for registry auto-flows via SIDECAR OVERRIDE pattern** (sparse `FOREACH_<DOMAIN>_OVERRIDE` indexed by parent's `FIELD_IDX`); NEVER parallel wide-variant registries (Class 21 anti-pattern at auto-flow surface). STRONG initially; **HARD after 2nd cohort application** per pattern-codification-lifecycle.md. Codified `.F.4d` 2026-05-16 (1st canonical: XGBoost drift override cohort, 5 rows in `FOREACH_DRIFT_OVERRIDE`). See `DESIGN_SPECS/sidecar-override-pattern-for-registry-auto-flows.md`. |
-| **H19** | **Every `FOREACH_REGISTRY` row with LEVEL > 0 (meta-registry) MUST declare a valid PARENT** (the registry it manages). Topology discipline; CI Check `test_meta_registry_topology` enforces (Level 0 = standalone data registries; Level 1 = meta-registries managing cohorts; Level 2 = top-level `FOREACH_REGISTRY` itself). Codified `.F.4d` 2026-05-16. See `DESIGN_SPECS/meta-registry-pattern-for-codebase-registry-discipline.md`. |
-| **H20** | **Branchless preferred for SP/HP data-dependent dispatch EVEN WHEN NOMINALLY SLOWER** (added v5.15.5.F.4c.3 WIP2d-1.B.0d). Mask code / fn pointer tables / cmov / mask-select / dummy-redirect can be optimized later (better instruction selection, vectorization, prefetch hints). Branch mispredicts CANNOT be optimized (hardware cost; 30-100ns real-world per `DESIGN_PHILOSOPHY.md` § 4 updated). For a determinism-prioritizing system (HFT premise), variance from branches is the bigger cost. Sister to H7 (hot path strict); H20 generalizes the discipline to SP + drainer + producer-fan-out. Exceptions per decision matrix in `DESIGN_SPECS/branchless-dispatch-discipline.md` (boot-time-only / `__builtin_expect`-rare / `if constexpr` compile-time / genuine binary predicate with no alternative computation). Closes Class 28. |
+| **H18** | **Custom-semantics for registry auto-flows via SIDECAR OVERRIDE pattern** (sparse `FOREACH_<DOMAIN>_OVERRIDE` indexed by parent's `FIELD_IDX`); NEVER parallel wide-variant registries (Class 21 anti-pattern at auto-flow surface). STRONG initially; **HARD after 2nd cohort application** per pattern-codification-lifecycle.md. Codified `.F.4d` 2026-05-16 (1st canonical: XGBoost drift override cohort, 5 rows in `FOREACH_DRIFT_OVERRIDE`). See `DESIGN_SPECS/framework-patterns/sidecar-override-pattern-for-registry-auto-flows.md`. |
+| **H19** | **Every `FOREACH_REGISTRY` row with LEVEL > 0 (meta-registry) MUST declare a valid PARENT** (the registry it manages). Topology discipline; CI Check `test_meta_registry_topology` enforces (Level 0 = standalone data registries; Level 1 = meta-registries managing cohorts; Level 2 = top-level `FOREACH_REGISTRY` itself). Codified `.F.4d` 2026-05-16. See `DESIGN_SPECS/framework-patterns/meta-registry-pattern-for-codebase-registry-discipline.md`. |
+| **H20** | **Branchless preferred for SP/HP data-dependent dispatch EVEN WHEN NOMINALLY SLOWER** (added v5.15.5.F.4c.3 WIP2d-1.B.0d). Mask code / fn pointer tables / cmov / mask-select / dummy-redirect can be optimized later (better instruction selection, vectorization, prefetch hints). Branch mispredicts CANNOT be optimized (hardware cost; 30-100ns real-world per `DESIGN_PHILOSOPHY.md` § 4 updated). For a determinism-prioritizing system (HFT premise), variance from branches is the bigger cost. Sister to H7 (hot path strict); H20 generalizes the discipline to SP + drainer + producer-fan-out. Exceptions per decision matrix in `DESIGN_SPECS/refactor-patterns/branchless-dispatch-discipline.md` (boot-time-only / `__builtin_expect`-rare / `if constexpr` compile-time / genuine binary predicate with no alternative computation). Closes Class 28. |
 
 **H15-H19 codified at v5.15.5.F.4d ship close 2026-05-16** (per `plans/v5.15-live-readiness/subplans/2026-05-16-v5.15.5.F.4d-merged-framework-bandit-thompson.md` Charter 11 closure). Placement decision: H15/H18/H19 in this CLAUDE.md table (broad framework-discipline visibility); H16/H17 in `DOCS/STRATEGY_AND_CODING_RULES.md` private overlay (structural enforcement detail). See `DOCS/DESIGN_PHILOSOPHY.md` § 2 for the family-grouped narrative discussion of all 20 invariants.
 
@@ -302,7 +302,7 @@ TECH_DEBT-114 tracks this specific test split).
 ### File-size split discipline (generalized; added 2026-05-18)
 
 Test file size rule above generalizes to ALL files. Thresholds per
-file type at `DESIGN_SPECS/file-size-split-discipline.md`:
+file type at `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md`:
 
 | File type | Hard threshold |
 |---|---|
@@ -328,7 +328,7 @@ dedicated sub-ship with rollback anchor + sed-based cross-ref sweep.
 
 ## How to find anything (search guide)
 
-Doc system is institutional memory + type-tag driven + greppable. Retrieval recipes below. Tag vocabulary lives at `DESIGN_SPECS/doc-tag-vocabulary.md` (CONCERN + SURFACE + LIFECYCLE axes); frontmatter discipline at `DESIGN_SPECS/doc-frontmatter-convention.md`.
+Doc system is institutional memory + type-tag driven + greppable. Retrieval recipes below. Tag vocabulary lives at `DESIGN_SPECS/meta-disciplines/doc-tag-vocabulary.md` (CONCERN + SURFACE + LIFECYCLE axes); frontmatter discipline at `DESIGN_SPECS/meta-disciplines/doc-frontmatter-convention.md`.
 
 ### By type
 ```
@@ -472,13 +472,13 @@ Each entry: GENERAL task → where to start. For sprint-specific phasing of cfg-
 | Task | Where to start |
 |---|---|
 | Add a strategy | `/strategy-template` skill + `DOCS/CLAUDE_INTEGRATION.md` |
-| Add a cfg field | 1 row in master registry at `CoreFrameworks/CfgFieldRegistry.hpp` (parser + GUI render + tooltip + per-core override emission auto-flow per framework state — see `DESIGN_SPECS/universal-cfg-field-registry-pattern.md` for current capabilities) |
-| Add a STAMP_BOUND cfg field | Set `STAMP_BOUND_CFG_DERIVED` bit in master registry row's metadata column (drift check + Layer 5b hash + wire emit auto-flow per `DESIGN_SPECS/metadata-bit-driven-derived-filter-framework.md`) |
-| Add a new derived filter (metadata-bit cohort) | 1 row in `FOREACH_DERIVED_FILTER` (framework auto-flow per `DESIGN_SPECS/metadata-bit-driven-derived-filter-framework.md`) |
+| Add a cfg field | 1 row in master registry at `CoreFrameworks/CfgFieldRegistry.hpp` (parser + GUI render + tooltip + per-core override emission auto-flow per framework state — see `DESIGN_SPECS/framework-patterns/universal-cfg-field-registry-pattern.md` for current capabilities) |
+| Add a STAMP_BOUND cfg field | Set `STAMP_BOUND_CFG_DERIVED` bit in master registry row's metadata column (drift check + Layer 5b hash + wire emit auto-flow per `DESIGN_SPECS/framework-patterns/metadata-bit-driven-derived-filter-framework.md`) |
+| Add a new derived filter (metadata-bit cohort) | 1 row in `FOREACH_DERIVED_FILTER` (framework auto-flow per `DESIGN_SPECS/framework-patterns/metadata-bit-driven-derived-filter-framework.md`) |
 | Add an ML feature | `ML_Headers/FeatureRegistry.hpp` + `DOCS/CLAUDE_ML_INVARIANTS.md` |
-| Add a SHALT code / halt reason / regime / strategy / bandit algo | Registry table per X-macro pattern (`DESIGN_PHILOSOPHY.md` § 7 + `DESIGN_SPECS/x-macro-registry-with-presence-dispatch.md`) |
+| Add a SHALT code / halt reason / regime / strategy / bandit algo | Registry table per X-macro pattern (`DESIGN_PHILOSOPHY.md` § 7 + `DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md`) |
 | Add a stateful GUI panel | `DOCS/CLAUDE_INTEGRATION.md` § "GUI panels" + display↔execution invariant check |
-| Plan a non-trivial change | `/readiness` skill + `DOCS/CLAUDE_REVIEW.md` checklist + new plan body uses `DESIGN_SPECS/future-oriented-plan-template.md` |
+| Plan a non-trivial change | `/readiness` skill + `DOCS/CLAUDE_REVIEW.md` checklist + new plan body uses `DESIGN_SPECS/plan-templates/future-oriented-plan-template.md` |
 | Audit a plan before coding | `/precoding-audit-gate` (orchestrator) → SHAPE audits in parallel + (`/blindspot-scan` if struct-gen / type unification / cross-registry consumer / wire-format ordering migration) |
 | Audit existing code for anti-patterns | `/bug-check` (against RECURRING_BUG_PATTERNS classes) + `/dod-audit` (against DESIGN_SPECS catalog) + `/anti-spaghetti` (codebase-wide structural sweep) |
 | Track a new bug class | Add to `DOCS/RECURRING_BUG_PATTERNS.md` (auto-included in `/bug-check`); include "False-positive surface" subsection per M3 discipline |
@@ -501,7 +501,7 @@ Skills group by concern. Read each skill's `claude-skills/<name>/SKILL.md` for i
 | **Workflow** | `/handoff` (self-contained pickup prompt) + `/plan-draft` (scaffold future-oriented plan body) + `/sync-workspace` (mirror to workspace backup) |
 | **Recurrence** | `/loop` (recurring task on interval) + `/schedule` (remote-agent cron) |
 
-Audit-driven discipline: HIGH-RISK ships fire `/precoding-audit-gate` (SHAPE) + `/blindspot-scan` (IMPLEMENTATION-DETAIL) in parallel before coding. Per-ship cycle: audit → consult → update plan → implement → ship → postmortem. See `DESIGN_PHILOSOPHY.md` § 11 + § 11.5 + `DESIGN_SPECS/audit-driven-pre-coding-gate.md` + `DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md`.
+Audit-driven discipline: HIGH-RISK ships fire `/precoding-audit-gate` (SHAPE) + `/blindspot-scan` (IMPLEMENTATION-DETAIL) in parallel before coding. Per-ship cycle: audit → consult → update plan → implement → ship → postmortem. See `DESIGN_PHILOSOPHY.md` § 11 + § 11.5 + `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md` + `DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md`.
 
 ---
 

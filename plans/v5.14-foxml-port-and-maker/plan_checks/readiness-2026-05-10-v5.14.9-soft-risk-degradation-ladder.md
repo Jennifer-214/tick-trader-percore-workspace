@@ -48,7 +48,7 @@
 | 5 | Backward compat | ✅ PASS | Legacy cfg field `confidence_freshness_tau` deprecated-with-WARN (not hard-removed mid-ship, per plan .D); legacy stamps parse correctly (forward-compat per Surface G). MODEL_FORMAT_VERSION stays 6. |
 | 6 | Multi-threading | ✅ PASS | All new state is slow-path-only (single-writer: ControllerEventLoop_RebuildOneCore). PerCoreSnap fields (ml_confidence_factor, state_flags) are per-core (no cross-core atomics introduced). No new atomic state. |
 | 7 | Test coverage | ✅ PASS | ~68 new tests planned (13+7+6+6+8+5+12+4+3+4 per sub-tag breakdown). Existing v5.12.1.D tests extended. Test path explicit. |
-| 8 | Docs + invariants | ✅ PASS | CHANGELOG.md entry planned (.I); HOT_PATH_CHANGELOG entries for slow-path additions (.B, .E); TECH_DEBT.md updates (.I closes -004/-013/-015, opens -016); DESIGN_SPECS/curve-registry-pattern.md to be written (.I). |
+| 8 | Docs + invariants | ✅ PASS | CHANGELOG.md entry planned (.I); HOT_PATH_CHANGELOG entries for slow-path additions (.B, .E); TECH_DEBT.md updates (.I closes -004/-013/-015, opens -016); DESIGN_SPECS/framework-patterns/curve-registry-pattern.md to be written (.I). |
 | 9 | Forward maintenance | ✅ PASS | FOREACH_DEGRADATION_CURVE registry (≥3 cases) + FOREACH_STAMP_BOUND_CFG integration + FOREACH_FEATURE 7-col extension prevent copy-paste at future curves. X-macro shape scales. |
 | 10 | Rollback story | ✅ PASS | Pre-tag anchors per sub-tag; v5.14.8 umbrella as umbrella rollback point; feature-flagged defaults (OFF = pre-v5.14.9 behavior) allow revert without data loss. |
 | 11 | Architectural sprint detection | ✅ PASS | No architectural refactor; additive on v5.14.8 base. Strategy registry untouched; no lifecycle function rewiring. Entry points unchanged. |

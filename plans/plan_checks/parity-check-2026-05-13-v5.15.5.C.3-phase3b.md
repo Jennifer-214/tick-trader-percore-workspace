@@ -105,7 +105,7 @@ grep -n "MASK_OMS_STATE_PARTIAL_EXIT_ENABLED" Backtest/BacktestSharded.hpp
 
 **Effort:** ~10 minutes; 8 LOC delete + comment update.
 
-**Cross-ref:** CLAUDE.md item 19 (structural fix preferred for recurring class). Pattern documented in `DESIGN_SPECS/structural-fix-preferred-decision-framework.md`.
+**Cross-ref:** CLAUDE.md item 19 (structural fix preferred for recurring class). Pattern documented in `DESIGN_SPECS/meta-disciplines/structural-fix-preferred-decision-framework.md`.
 
 **Auto-write:** This finding allocated as **PARITY-025**. Auto-written to `DOCS/PARITY_ISSUES.md` per the auto-write contract in CLAUDE.local.md (set 2026-05-09).
 
@@ -267,7 +267,7 @@ check("round-trip: oms.paper_session_start_us restored",
 
 **Additional opportunity (LOW, deferred):** A compile-time `static_assert(_persist_row_count == 10)` would lock the PERSIST row count + force the next contributor to explicitly justify any change. This pairs with the existing `static_assert(FOREACH_OMS_FIELD_COUNT >= 30)` lock in OmsFieldRegistry.hpp:339. Defer or bundle with the test additions.
 
-**Cross-ref:** CLAUDE.md item 15 (Parity-tested-by-construction). DESIGN_SPECS/wire-format-byte-preservation-discipline.md. Not a PARITY-NNN allocation (pre-existing test gap, not a new bug class introduced by Phase 3b).
+**Cross-ref:** CLAUDE.md item 15 (Parity-tested-by-construction). DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md. Not a PARITY-NNN allocation (pre-existing test gap, not a new bug class introduced by Phase 3b).
 
 ---
 
@@ -371,7 +371,7 @@ static_assert(FOREACH_OMS_PERSIST_FIELD_COUNT == 10,
 
 **Effort:** ~10 minutes; ~10 LOC added.
 
-**Cross-ref:** CLAUDE.md item 15 (Parity-tested-by-construction). Pattern documented in `DESIGN_SPECS/wire-format-byte-preservation-discipline.md`.
+**Cross-ref:** CLAUDE.md item 15 (Parity-tested-by-construction). Pattern documented in `DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md`.
 
 ---
 
@@ -379,7 +379,7 @@ static_assert(FOREACH_OMS_PERSIST_FIELD_COUNT == 10,
 
 #### DOC-1 — Multi-bit-state-encoding-pattern hits 2-application threshold (CLAUDE.md item candidate)
 
-Phase 3b's Finding A' is the **2nd codebase application** of `DESIGN_SPECS/multi-bit-state-encoding-pattern.md`:
+Phase 3b's Finding A' is the **2nd codebase application** of `DESIGN_SPECS/refactor-patterns/multi-bit-state-encoding-pattern.md`:
 1. v5.15.5.C.2.1 LOW-2 — `last_exit_predicted_meta[16]` (per-slot 8-bit slots with arm + regime + valid bits)
 2. v5.15.5.C.3 Finding A' — `EVENT_LOG_MODE` 2-bit slot in `oms_state_flags`
 

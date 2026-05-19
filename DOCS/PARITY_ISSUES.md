@@ -56,6 +56,18 @@ re-flagging known-issues. Update at the end of every parity audit.
 
 ### PARITY-001 — clock_gettime in composite confidence path breaks backtest replay-determinism
 
+```yaml
+id: PARITY-001
+title: clock_gettime in composite confidence path breaks backtest replay-determinism
+surface_tags: [slow-path, ml-inference, backtest]
+severity: medium
+parity_axis: live↔backtest
+status: closed
+detected_at: v5.14.1.B (2026-05-09)
+closed_at: v5.14.1.B.2 (2026-05-09)
+related_specs: []
+```
+
 - **Found:** v5.14.1.B (commit 38d4607)
 - **Severity:** MEDIUM
   - Only manifests when `cfg.confidence_composite_enabled=1`
@@ -94,6 +106,18 @@ re-flagging known-issues. Update at the end of every parity audit.
 
 ### PARITY-002 — ConfidenceScorer_UpdateAndMark API exists but production callers still use legacy _Update
 
+```yaml
+id: PARITY-002
+title: ConfidenceScorer_UpdateAndMark API exists but production callers still use legacy _Update
+surface_tags: [ml-inference, oms-drainer, slow-path]
+severity: high
+parity_axis: train↔serve
+status: closed
+detected_at: v5.14.1.B (2026-05-09)
+closed_at: v5.14.1.B.1 (2026-05-09)
+related_specs: [DESIGN_SPECS/framework-patterns/autopopulate-pattern-for-production-caller-class.md]
+```
+
 - **Found:** v5.14.1.B (commit 38d4607)
 - **Severity:** HIGH
   - With composite_enabled=1 today: `freshness.last_predict_us=0`
@@ -130,6 +154,18 @@ re-flagging known-issues. Update at the end of every parity audit.
 - **Workaround:** N/A (closed)
 
 ### PARITY-003 — Composite cfg fields not pushed into ConfidenceScorer at boot
+
+```yaml
+id: PARITY-003
+title: Composite cfg fields not pushed into ConfidenceScorer at boot
+surface_tags: [cfg-flow, ml-inference, boot-time]
+severity: blocker
+parity_axis: train↔serve
+status: closed
+detected_at: v5.14.1.B (2026-05-09)
+closed_at: v5.14.1.B.1 (2026-05-09)
+related_specs: [DESIGN_SPECS/framework-patterns/autopopulate-pattern-for-production-caller-class.md]
+```
 
 - **Found:** `/parity-check` full audit 2026-05-09 (against v5.14.1.B HEAD 38d4607)
 - **Severity:** CRITICAL
@@ -175,6 +211,18 @@ re-flagging known-issues. Update at the end of every parity audit.
 
 ### PARITY-004 — Ridge cfg fields (5) not stamp-bound; train↔serve cfg drift undetected
 
+```yaml
+id: PARITY-004
+title: Ridge cfg fields (5) not stamp-bound; train↔serve cfg drift undetected
+surface_tags: [cfg-flow, ml-inference, wire-format, registry]
+severity: high
+parity_axis: train↔serve
+status: closed
+detected_at: v5.14.1.B (2026-05-09)
+closed_at: v5.14.1.B.3 (2026-05-09)
+related_specs: [DESIGN_SPECS/framework-patterns/autopopulate-pattern-for-production-caller-class.md, DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md, DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md]
+```
+
 - **Found:** `/parity-check` full audit 2026-05-09 (against v5.14.1.B HEAD 38d4607)
 - **Severity:** HIGH (when Ridge enabled; MEDIUM today since
   ridge_*=0 default)
@@ -207,6 +255,18 @@ re-flagging known-issues. Update at the end of every parity audit.
 
 ### PARITY-005 — Composite confidence cfg fields (5) not stamp-bound; same class as PARITY-004
 
+```yaml
+id: PARITY-005
+title: Composite confidence cfg fields (5) not stamp-bound; same class as PARITY-004
+surface_tags: [cfg-flow, ml-inference, wire-format, registry]
+severity: medium
+parity_axis: train↔serve
+status: closed
+detected_at: v5.14.1.B (2026-05-09)
+closed_at: v5.14.1.B.3 (2026-05-09)
+related_specs: [DESIGN_SPECS/framework-patterns/autopopulate-pattern-for-production-caller-class.md, DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md, DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md]
+```
+
 - **Found:** `/parity-check` full audit 2026-05-09 (against v5.14.1.B HEAD 38d4607)
 - **Severity:** MEDIUM (composite is opt-in; once enabled, cfg
   retuning between train + infer = silent drift)
@@ -231,6 +291,17 @@ re-flagging known-issues. Update at the end of every parity audit.
 - **Workaround:** N/A (closed)
 
 ### PARITY-006 — Two distinct freshness tau cfg fields with overlapping semantics
+
+```yaml
+id: PARITY-006
+title: Two distinct freshness tau cfg fields with overlapping semantics
+surface_tags: [cfg-flow, ml-inference]
+severity: low
+parity_axis: train↔serve
+status: open
+detected_at: v5.14.1.B (2026-05-09)
+related_specs: []
+```
 
 - **Found:** `/parity-check` full audit 2026-05-09 (against v5.14.1.B HEAD 38d4607)
 - **Severity:** LOW (cosmetic / clarity)
@@ -261,6 +332,18 @@ re-flagging known-issues. Update at the end of every parity audit.
 - **Workaround:** Reference this entry when tuning either field.
 
 ### PARITY-007 — Ridge cfg fields not documented in cfg.example [NOT-A-BUG]
+
+```yaml
+id: PARITY-007
+title: Ridge cfg fields not documented in cfg.example
+surface_tags: [cfg-flow]
+severity: low
+parity_axis: train↔serve
+status: closed
+detected_at: v5.14.1.B (2026-05-09)
+closed_at: v5.14.1.B.1 (2026-05-09)
+related_specs: []
+```
 
 - **Found:** `/parity-check` full audit 2026-05-09 (against v5.14.1.B HEAD 38d4607)
 - **Severity:** LOW
@@ -381,6 +464,18 @@ Skill update + potential X-macro auto-populate refactor queued
 
 ### PARITY-008 — exit_blender_mode not populated in RFV stamp emit
 
+```yaml
+id: PARITY-008
+title: exit_blender_mode not populated in RFV stamp emit
+surface_tags: [wire-format, ml-inference, backtest, registry]
+severity: blocker
+parity_axis: train↔serve
+status: closed
+detected_at: v5.14.1.E (2026-05-09)
+closed_at: v5.14.1.E.E (2026-05-09)
+related_specs: [DESIGN_SPECS/framework-patterns/autopopulate-pattern-for-production-caller-class.md, DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md]
+```
+
 - **Found:** /parity-check 2026-05-09 (v5.14.1.E close, HEAD 9a3e08e)
 - **Severity:** CRITICAL (silent drift when operator opts in to feature)
 - **Class:** v5.9.5b production-caller field-population gap (4th recurrence)
@@ -415,6 +510,17 @@ OPEN-DEFERRED (1), or NOT-A-BUG (1). Ready for v5.14.2 audit cycle
 ---
 
 ### PARITY-009 — Ensemble hot-swap (v5.14.2) bypasses 6 post-load setup steps that boot does
+
+```yaml
+id: PARITY-009
+title: Ensemble hot-swap (v5.14.2) bypasses 6 post-load setup steps that boot does
+surface_tags: [boot-time, ml-inference, cfg-flow, slow-path]
+severity: high
+parity_axis: train↔serve
+status: in-flight
+detected_at: v5.14.2 (2026-05-09)
+related_specs: [DESIGN_SPECS/framework-patterns/postloadsetup-registry-pattern.md, DESIGN_SPECS/framework-patterns/autopopulate-pattern-for-production-caller-class.md]
+```
 
 - **Found:** 2026-05-09 by post-coding /parity-check + /merge-scan +
   manual enumeration of `EngineSharded.hpp:1075-1240` boot block vs
@@ -465,6 +571,17 @@ OPEN-DEFERRED (1), or NOT-A-BUG (1). Ready for v5.14.2 audit cycle
 
 ### PARITY-010 — Backtest ensemble init missing v5.13.4 exit-bandit setup
 
+```yaml
+id: PARITY-010
+title: Backtest ensemble init missing v5.13.4 exit-bandit setup
+surface_tags: [backtest, ml-inference, boot-time]
+severity: medium
+parity_axis: live↔backtest
+status: in-flight
+detected_at: v5.14.2 (2026-05-09)
+related_specs: [DESIGN_SPECS/framework-patterns/postloadsetup-registry-pattern.md]
+```
+
 - **Found:** 2026-05-09 (during PARITY-009 enumeration sweep across
   boot / backtest / hot-swap surfaces).
 - **Severity:** MEDIUM (pre-existing v5.13.4 follow-on gap; not introduced
@@ -502,6 +619,17 @@ OPEN-DEFERRED (1), or NOT-A-BUG (1). Ready for v5.14.2 audit cycle
 
 ### PARITY-011 — Single-zoo hot-swap missing VerifyExpected (Class 18 sister of PARITY-009)
 
+```yaml
+id: PARITY-011
+title: Single-zoo hot-swap missing VerifyExpected (Class 18 sister of PARITY-009)
+surface_tags: [boot-time, ml-inference, cfg-flow]
+severity: medium
+parity_axis: train↔serve
+status: in-flight
+detected_at: v5.14.2 (2026-05-09)
+related_specs: [DESIGN_SPECS/framework-patterns/postloadsetup-registry-pattern.md]
+```
+
 - **Found:** 2026-05-09 during PARITY-009 enumeration sweep across boot / backtest / hot-swap surfaces.
 - **Severity:** MEDIUM (silent train-serve drift; subset of VerifyExpected's checks already covered by ValidateAgainstCfg, but unique checks like cadence + feature_format + num_classes are bypassed)
 - **Class:** Class 18 (mirror data-flow incomplete; same shape as PARITY-009).
@@ -533,6 +661,17 @@ OPEN-DEFERRED (1), or NOT-A-BUG (1). Ready for v5.14.2 audit cycle
 
 ### PARITY-012 — Backtest single-zoo missing ValidateAgainstCfg (Class 18 sister of PARITY-009/010/011)
 
+```yaml
+id: PARITY-012
+title: Backtest single-zoo missing ValidateAgainstCfg (Class 18 sister of PARITY-009/010/011)
+surface_tags: [backtest, cfg-flow, ml-inference]
+severity: medium
+parity_axis: live↔backtest
+status: in-flight
+detected_at: v5.14.2 (2026-05-09)
+related_specs: [DESIGN_SPECS/framework-patterns/postloadsetup-registry-pattern.md]
+```
+
 - **Found:** 2026-05-09 during PARITY-009 enumeration sweep.
 - **Severity:** MEDIUM (backtest replay-determinism: inference_cfg drift not detected during backtest validation)
 - **Class:** Class 18 (mirror data-flow incomplete).
@@ -550,6 +689,17 @@ OPEN-DEFERRED (1), or NOT-A-BUG (1). Ready for v5.14.2 audit cycle
 - **Workaround:** Don't trust backtest replay-determinism for cfg-drift validation until v5.14.2.E.1 ships
 
 ### PARITY-013 — `cfg.bandit_algorithm` not stamp-bound; train↔serve algorithm drift undetected
+
+```yaml
+id: PARITY-013
+title: cfg.bandit_algorithm not stamp-bound; train↔serve algorithm drift undetected
+surface_tags: [cfg-flow, ml-inference, wire-format, registry]
+severity: high
+parity_axis: train↔serve
+status: in-flight
+detected_at: v5.14.10 (2026-05-10)
+related_specs: [DESIGN_SPECS/framework-patterns/autopopulate-pattern-for-production-caller-class.md, DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md]
+```
 
 - **Found:** 2026-05-10 during v5.14.10 Thompson bandit pre-coding parity audit (no commit yet — plan-stage finding)
 - **Severity:** HIGH
@@ -575,6 +725,17 @@ OPEN-DEFERRED (1), or NOT-A-BUG (1). Ready for v5.14.2 audit cycle
 - **Workaround:** Don't switch cfg.bandit_algorithm between training and serving until stamp binding lands
 
 ### PARITY-014 — Thompson replay-determinism contract under-specified; std::normal_distribution non-portable
+
+```yaml
+id: PARITY-014
+title: Thompson replay-determinism contract under-specified; std::normal_distribution non-portable
+surface_tags: [ml-inference, backtest, test-infrastructure]
+severity: high
+parity_axis: live↔backtest
+status: in-flight
+detected_at: v5.14.10 (2026-05-10)
+related_specs: [DESIGN_SPECS/wire-format-patterns/prng-choice-for-replay-determinism.md, DESIGN_SPECS/wire-format-patterns/avx512-byte-determinism-pattern.md]
+```
 
 - **Found:** 2026-05-10 during v5.14.10 Thompson bandit pre-coding parity audit (no commit yet — plan-stage finding)
 - **Severity:** HIGH
@@ -602,6 +763,17 @@ OPEN-DEFERRED (1), or NOT-A-BUG (1). Ready for v5.14.2 audit cycle
 
 ### PARITY-015 — Thompson display↔execution invariant breach: no PerCoreSnap/panel surface
 
+```yaml
+id: PARITY-015
+title: Thompson display↔execution invariant breach; no PerCoreSnap/panel surface
+surface_tags: [gui-thread, ml-inference, wire-format]
+severity: medium
+parity_axis: train↔serve
+status: in-flight
+detected_at: v5.14.10 (2026-05-10)
+related_specs: [DESIGN_SPECS/framework-patterns/display-execution-invariant-registry-pattern.md, DESIGN_SPECS/framework-patterns/calibration-log-column-registry.md]
+```
+
 - **Found:** 2026-05-10 during v5.14.10 Thompson bandit pre-coding parity audit (no commit yet — plan-stage finding)
 - **Severity:** MEDIUM
   - CLAUDE.md item 12 invariant: every term in BG/SG_Evaluate (and in this case, ML_BuildParameters dispatch — slow-path predicate) must have a corresponding GUI surface
@@ -625,6 +797,17 @@ OPEN-DEFERRED (1), or NOT-A-BUG (1). Ready for v5.14.2 audit cycle
 - **Workaround:** Inspect bandit state via stderr dumps until panel surface lands
 
 ### PARITY-016 — v5.14.11 Welford↔batch BuildCorr tolerance-vs-bytewise contract mismatch breaks replay-determinism under cfg.ridge_online_corr=1
+
+```yaml
+id: PARITY-016
+title: v5.14.11 Welford↔batch BuildCorr tolerance-vs-bytewise contract mismatch breaks replay-determinism under cfg.ridge_online_corr=1
+surface_tags: [ml-inference, backtest, slow-path]
+severity: high
+parity_axis: live↔backtest
+status: in-flight
+detected_at: v5.14.11 (2026-05-11)
+related_specs: [DESIGN_SPECS/wire-format-patterns/avx512-byte-determinism-pattern.md]
+```
 
 - **Found:** 2026-05-11 during v5.14.11 online-corr-update pre-coding parity audit (no commit yet — plan-stage finding)
 - **Severity:** HIGH
@@ -650,6 +833,17 @@ OPEN-DEFERRED (1), or NOT-A-BUG (1). Ready for v5.14.2 audit cycle
 - **Workaround:** Keep cfg.ridge_online_corr=0 (default) until v5.14.11.A snapshot tests land and operator validates the regime
 
 ### PARITY-017 — v5.14.11 AVX-512 vectorization bytewise-determinism: 4 sites need explicit discipline annotation + SHA-256 snapshot lock
+
+```yaml
+id: PARITY-017
+title: v5.14.11 AVX-512 vectorization bytewise-determinism; 4 sites need explicit discipline annotation + SHA-256 snapshot lock
+surface_tags: [ml-inference, slow-path, test-infrastructure]
+severity: high
+parity_axis: scalar↔SIMD
+status: in-flight
+detected_at: v5.14.11 (2026-05-11)
+related_specs: [DESIGN_SPECS/wire-format-patterns/avx512-byte-determinism-pattern.md]
+```
 
 - **Found:** 2026-05-11 during v5.14.11 online-corr-update pre-coding parity audit (no commit yet — plan-stage finding)
 - **Severity:** HIGH
@@ -677,6 +871,17 @@ OPEN-DEFERRED (1), or NOT-A-BUG (1). Ready for v5.14.2 audit cycle
 
 ### PARITY-018 — v5.14.11 periodic-recompute path may leave RidgeOnlineState stale; drift bound argument is conditional on reset semantics
 
+```yaml
+id: PARITY-018
+title: v5.14.11 periodic-recompute path may leave RidgeOnlineState stale; drift bound argument is conditional on reset semantics
+surface_tags: [ml-inference, slow-path]
+severity: medium
+parity_axis: train↔serve
+status: in-flight
+detected_at: v5.14.11 (2026-05-11)
+related_specs: [DESIGN_SPECS/wire-format-patterns/avx512-byte-determinism-pattern.md]
+```
+
 - **Found:** 2026-05-11 during v5.14.11 online-corr-update pre-coding parity audit (no commit yet — plan-stage finding)
 - **Severity:** MEDIUM
   - Drift bound (plan line 71-73): "periodic full-recompute reset (~every 1000 cycles) keeps drift bounded" depends on whether the reset path also rebuilds Welford accumulators
@@ -700,6 +905,18 @@ OPEN-DEFERRED (1), or NOT-A-BUG (1). Ready for v5.14.2 audit cycle
 
 ### PARITY-019 — v5.14.11.B Cholesky_Solve back-solve column-access doesn't vectorize via the row-load AVX-512 template
 
+```yaml
+id: PARITY-019
+title: v5.14.11.B Cholesky_Solve back-solve column-access doesn't vectorize via the row-load AVX-512 template
+surface_tags: [ml-inference, slow-path]
+severity: medium
+parity_axis: scalar↔SIMD
+status: closed
+detected_at: v5.14.11 (2026-05-11)
+closed_at: v5.14.11.B (2026-05-11)
+related_specs: [DESIGN_SPECS/wire-format-patterns/avx512-byte-determinism-pattern.md]
+```
+
 - **Found:** 2026-05-11 during v5.14.11 AMENDED plan re-audit (no commit yet — plan-stage finding)
 - **Severity:** MEDIUM
   - Plan Step 7 line 339-343 lists 3 Cholesky_Solve sub-sites for AVX-512 vectorization (diagonal, forward solve, back solve)
@@ -720,12 +937,24 @@ OPEN-DEFERRED (1), or NOT-A-BUG (1). Ready for v5.14.2 audit cycle
     - Option A (recommended; simplest): keep scalar for back-solve. Inner loop is ≤7 iterations at n=8; SIMD gain marginal. Decision: "back-solve column access; scalar bytewise-deterministic reference; vectorization gain <50ns not worth column-load complexity." Doesn't affect overall .B latency win materially.
     - Option B: transpose L_out → L_T_out once after decomposition (~50ns); back-solve reads `L_T_out[i][k]` (row access on transposed). ~50ns saved on back-solve, paying ~50ns transpose. Net ~0-50ns at n=8; preserves bytewise-determinism since transpose is deterministic.
 - **Target ship:** v5.14.11.B (decision baked into plan at amendment time)
-- **Status:** **RESOLVED** 2026-05-11 via partial-vectorization decision (Option A — scalar back-solve). Rationale: per `DESIGN_SPECS/avx512-byte-determinism-pattern.md` Rule 5, scalar fallback is the byte-determinism reference; partial vectorization within a function (2 of 3 sites here) is canonical pattern application, not tech-debt deferral. Quantitative justification: for N=8 inner loop with serial dependency chain, scalar back-solve is ~7 cycles vs gather-based ~17 cycles vs transpose-during-decomp net-zero. Plan Step 7 updated 2026-05-11 to explicitly state 2/3 sites vectorize (decomp + forward solve via row-load template); back-solve stays scalar with rationale documented in plan. avx512-byte-determinism-pattern.md extended with "Partial vectorization within a function" subsection (formalizes the pattern for future SIMD work where access pattern varies per-site).
+- **Status:** **RESOLVED** 2026-05-11 via partial-vectorization decision (Option A — scalar back-solve). Rationale: per `DESIGN_SPECS/wire-format-patterns/avx512-byte-determinism-pattern.md` Rule 5, scalar fallback is the byte-determinism reference; partial vectorization within a function (2 of 3 sites here) is canonical pattern application, not tech-debt deferral. Quantitative justification: for N=8 inner loop with serial dependency chain, scalar back-solve is ~7 cycles vs gather-based ~17 cycles vs transpose-during-decomp net-zero. Plan Step 7 updated 2026-05-11 to explicitly state 2/3 sites vectorize (decomp + forward solve via row-load template); back-solve stays scalar with rationale documented in plan. avx512-byte-determinism-pattern.md extended with "Partial vectorization within a function" subsection (formalizes the pattern for future SIMD work where access pattern varies per-site).
 - **Workaround:** N/A — resolved at plan-amendment time
 
 ---
 
 ### PARITY-020 — train_model_worker_fn missing STAMP_CFG_AUTOPOPULATE; asymmetric with Backtest_RunFullValidation
+
+```yaml
+id: PARITY-020
+title: train_model_worker_fn missing STAMP_CFG_AUTOPOPULATE; asymmetric with Backtest_RunFullValidation
+surface_tags: [training, wire-format, ml-inference, registry]
+severity: high
+parity_axis: train↔serve
+status: closed
+detected_at: v5.15 (2026-05-12)
+closed_at: v5.15.3.B.1 (2026-05-12)
+related_specs: [DESIGN_SPECS/framework-patterns/autopopulate-pattern-for-production-caller-class.md, DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md]
+```
 
 - **Found:** 2026-05-12 during `/parity-check` audit of v5.15 plan (pre-coding gate)
 - **Severity:** HIGH
@@ -748,6 +977,18 @@ OPEN-DEFERRED (1), or NOT-A-BUG (1). Ready for v5.14.2 audit cycle
 ---
 
 ### PARITY-021 — v5.15.3 plan root cause MISDIAGNOSED: multi-horizon DOES stamp via RFV; gap is grid_member_count/_idx never populated
+
+```yaml
+id: PARITY-021
+title: v5.15.3 plan root cause misdiagnosed; multi-horizon DOES stamp via RFV; gap is grid_member_count/_idx never populated
+surface_tags: [training, wire-format, ml-inference, registry, backtest]
+severity: high
+parity_axis: train↔serve
+status: closed
+detected_at: v5.15 (2026-05-12)
+closed_at: v5.15.3.B.2 (2026-05-12)
+related_specs: [DESIGN_SPECS/framework-patterns/autopopulate-pattern-for-production-caller-class.md, DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md]
+```
 
 - **Found:** 2026-05-12 during `/parity-check` audit of v5.15 plan (pre-coding gate)
 - **Severity:** HIGH (plan-level structural error; would create duplicate stamp emit path if uncorrected)
@@ -782,6 +1023,18 @@ OPEN-DEFERRED (1), or NOT-A-BUG (1). Ready for v5.14.2 audit cycle
 
 ### PARITY-022 — STAMP_MODEL_CONST_AUTOPOPULATE macro is defined-but-unused stub; expansion is self-referential
 
+```yaml
+id: PARITY-022
+title: STAMP_MODEL_CONST_AUTOPOPULATE macro is defined-but-unused stub; expansion is self-referential
+surface_tags: [registry, wire-format, ml-inference]
+severity: medium
+parity_axis: train↔serve
+status: closed
+detected_at: v5.15 (2026-05-12)
+closed_at: v5.15.3.A.0 (2026-05-12)
+related_specs: [DESIGN_SPECS/framework-patterns/autopopulate-pattern-for-production-caller-class.md, DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md]
+```
+
 - **Found:** 2026-05-12 during `/parity-check` audit of v5.15 plan (pre-coding gate)
 - **Severity:** MEDIUM (no production caller today → no live bug; but v5.15.3 plan relies on this macro working)
 - **Site:** `ML_Headers/StampBoundModelConstRegistry.hpp:601-607` (definition); :680-688 (per-entry expansion)
@@ -798,6 +1051,18 @@ OPEN-DEFERRED (1), or NOT-A-BUG (1). Ready for v5.14.2 audit cycle
 ---
 
 ### PARITY-023 — v5.15.4 HotSwapSnapshot/Revert design captures pointers only; pre-swap data destroyed in-place by Free
+
+```yaml
+id: PARITY-023
+title: v5.15.4 HotSwapSnapshot/Revert design captures pointers only; pre-swap data destroyed in-place by Free
+surface_tags: [boot-time, ml-inference, slow-path]
+severity: medium
+parity_axis: train↔serve
+status: closed
+detected_at: v5.15 (2026-05-12)
+closed_at: v5.15.4 (2026-05-12)
+related_specs: [DESIGN_SPECS/feature-patterns/shadow-load-state-transition-pattern.md, DESIGN_SPECS/framework-patterns/postloadsetup-registry-pattern.md]
+```
 
 - **Found:** 2026-05-12 during `/parity-check` audit of v5.15 plan (pre-coding gate)
 - **Severity:** MEDIUM (plan-stage design flaw; existing behavior is functional — current code uses "log-and-leave" semantics which work; v5.15.4 proposes new revert path that won't work as designed)
@@ -819,13 +1084,24 @@ OPEN-DEFERRED (1), or NOT-A-BUG (1). Ready for v5.14.2 audit cycle
   - **No capture-pointer needed; no revert path needed** — pre-swap state untouched on any failure; caller continues serving from pre-swap zoo
   - Boot path migrated from `static CoreModelZoo<F>[]` to per-core `aligned_alloc(64)` (required for `free(old_ezoo)` validity on first swap)
   - `alignas(64)` retrofit on `CoreModelZoo<F>` + `EnsembleModelZoo<F>` container structs
-  - `DESIGN_SPECS/shadow-load-state-transition-pattern.md` promoted DRAFT v0.1 → ACTIVE v1.0 (2 field-tested applications)
+  - `DESIGN_SPECS/feature-patterns/shadow-load-state-transition-pattern.md` promoted DRAFT v0.1 → ACTIVE v1.0 (2 field-tested applications)
   - Anchor tests verify pre-swap handle preserved after failed shadow-load (PARITY-023 closure proof)
 - **Workaround:** N/A (closed; shadow-load eliminates the torn-state moment that revert would have addressed).
 
 ---
 
 ### PARITY-024 — Per-arm trained TP/SL barriers stamped at training but not consumed at serving; ml_tp_pct/ml_sl_pct Tier 1 promotion missing
+
+```yaml
+id: PARITY-024
+title: Per-arm trained TP/SL barriers stamped at training but not consumed at serving; ml_tp_pct/ml_sl_pct Tier 1 promotion missing
+surface_tags: [slow-path, ml-inference, cfg-flow, wire-format, registry]
+severity: high
+parity_axis: train↔serve
+status: open
+detected_at: v5.15.5 (2026-05-12)
+related_specs: [DESIGN_SPECS/feature-patterns/per-horizon-barrier-blending-with-shadow-mode.md, DESIGN_SPECS/framework-patterns/autopopulate-pattern-for-production-caller-class.md, DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md]
+```
 
 - **Found:** 2026-05-12 during `/parity-check` audit of v5.15.5 plan (pre-coding gate)
 - **Severity:** HIGH (silent decision drift; trades fire at cfg-side TP/SL even when model trained on different barriers; train-serve gap observable in P&L over hours under multi-horizon ensembles)
@@ -847,6 +1123,18 @@ OPEN-DEFERRED (1), or NOT-A-BUG (1). Ready for v5.14.2 audit cycle
 ---
 
 ### PARITY-025 — BacktestSharded.hpp retains stale external SET/CLR mirror for MASK_OMS_STATE_PARTIAL_EXIT_ENABLED (Class 18 mirror not fully eliminated by v5.15.5.C.3 Phase 3b Finding A)
+
+```yaml
+id: PARITY-025
+title: BacktestSharded.hpp retains stale external SET/CLR mirror for MASK_OMS_STATE_PARTIAL_EXIT_ENABLED
+surface_tags: [backtest, oms-drainer, registry, bitmap-packed]
+severity: high
+parity_axis: live↔backtest
+status: closed
+detected_at: v5.15.5.C.3 (2026-05-13)
+closed_at: v5.15.5.C.3.1 (2026-05-13)
+related_specs: [DESIGN_SPECS/framework-patterns/autopopulate-pattern-for-production-caller-class.md, DESIGN_SPECS/refactor-patterns/registry-bitmap-set-discipline.md]
+```
 
 - **Found:** 2026-05-13 during `/parity-check` audit of v5.15.5.C.3 Phase 3b (commit d410525, post-coding gate)
 - **Severity:** HIGH (Class 18 mirror — Phase 3b's Finding A was specifically intended to eliminate this exact mirror class; EngineSharded was correctly cleaned, BacktestSharded sister site was missed)

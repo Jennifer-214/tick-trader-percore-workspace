@@ -60,7 +60,7 @@ Per `/readiness` SKILL.md Checks 36-39 (added 2026-05-18 at v1.11 to operational
    - **Program-wide transitional struct count:** 1 per parser invocation + 1 per emit. Hot-path impact: NONE (stamp I/O is cold path, boot/load-time only per H20).
 3. **Plan body annotation check:** Step 1.6.3 § scope (lines 542-549) LACKS explicit "transitional state allowed; size budget = N KB; resolves at Step 2" annotation. **GAP IDENTIFIED.**
 4. **Annotation text suggestion (for Phase B amendment):**
-   > Step 1.6.3 Approach A unconditional struct-gen: peak transitional state ~13-17KB per struct (ModelStampResult + StampInferenceCfgInputs) during coexistence of 27 legacy + 144 master fields. Coexistence bounded; resolves at Step 2 when legacy registry body deleted. Impact: parser boot-time only; no hot-path memory bloat. Within acceptable envelope per DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md § B3 suggested ceiling (≤25KB per struct; ≤100KB program-wide).
+   > Step 1.6.3 Approach A unconditional struct-gen: peak transitional state ~13-17KB per struct (ModelStampResult + StampInferenceCfgInputs) during coexistence of 27 legacy + 144 master fields. Coexistence bounded; resolves at Step 2 when legacy registry body deleted. Impact: parser boot-time only; no hot-path memory bloat. Within acceptable envelope per DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md § B3 suggested ceiling (≤25KB per struct; ≤100KB program-wide).
 
 **VERDICT:** **FIXED** (amendment identified) — Transitional state TECHNICALLY SOUND (size budget within spec ceiling); annotation MISSING from plan body text. Recommend Phase B amendment to add the 2-sentence budget clarification at Step 1.6.3 scope boundary.
 
@@ -238,7 +238,7 @@ Per audit discipline: when running new checks (36-39), also re-verify existing a
    Step 1.6.3 Approach A unconditional struct-gen: peak transitional state ~13-17KB 
    per struct (ModelStampResult + StampInferenceCfgInputs) during coexistence of 27 
    legacy + 144 master fields. Coexistence bounded; resolves at Step 2. Within 
-   acceptable envelope per DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md § B3.
+   acceptable envelope per DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md § B3.
    ```
 
 2. **Check 39 gap:** Step 1.6.4 scope MISSING wire-format row-order annotation + Layer 5b reference. Recommend 3-sentence addition:
@@ -295,7 +295,7 @@ Per audit discipline: when running new checks (36-39), also re-verify existing a
   StampInferenceCfgInputs) during coexistence of 27 legacy FOREACH_STAMP_BOUND_CFG fields + 
   144 master registry fields. Coexistence window: Step 1.6.3 landing → Step 2 legacy deletion. 
   Memory impact: parser boot-time only; no hot-path bloat. Within spec ceiling per 
-  DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md § B3 suggested envelope (≤25KB per 
+  DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md § B3 suggested envelope (≤25KB per 
   struct; ≤100KB program-wide).
 ```
 

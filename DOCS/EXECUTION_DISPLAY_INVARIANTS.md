@@ -78,7 +78,7 @@ generates from a parallel manifest), but reviewer responsibility narrows from
 `FOREACH_PER_CORE_SNAP_FIELD` registry (general visible-state; TECH_DEBT-011)
 extends this pattern beyond gate-diagnostics.
 
-Generalizable pattern documented at `DESIGN_SPECS/display-execution-invariant-registry-pattern.md`
+Generalizable pattern documented at `DESIGN_SPECS/framework-patterns/display-execution-invariant-registry-pattern.md`
 (written at v5.15.5.B.4); applicable to regime_signals → snapshot, ML predictions
 → snapshot, OMS state → snapshot, and future cross-thread display surfaces.
 

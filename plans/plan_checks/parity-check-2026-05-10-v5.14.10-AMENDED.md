@@ -376,8 +376,8 @@ When v5.14.10 closes (after .E ships), run `/parity-check` once more to flip PAR
 - **DOCS/PARITY_ISSUES.md** — update PARITY-015 file path citation (mechanical fix #7); flip PARITY-013/014/015 to FIXED post-v5.14.10 close
 - **DOCS/PARITY_LIFECYCLE.md** — bandit-state JSON files now a documented surface triplet: bandit_state.json + exit_bandit_state.json + thompson_state.json. After v5.14.10.C ships, append paragraph documenting the triplet and the shared `_LoadXxxBanditState` pattern.
 - **DOCS/CLAUDE_ML_INVARIANTS.md** — consider a sentence about "non-deterministic <random> distributions are forbidden in train-serve paths; raw mt19937_64 output + own-the-math is the discipline" once .A ships and PARITY-014 closes.
-- **DESIGN_SPECS/per-snapshot-cluster-layout-pattern.md** — NEW; ships with v5.14.10.0 per plan
-- **DESIGN_SPECS/calibration-log-column-registry.md** — NEW; ships with v5.14.10.D per plan
+- **DESIGN_SPECS/data-disciplines/per-snapshot-cluster-layout-pattern.md** — NEW; ships with v5.14.10.0 per plan
+- **DESIGN_SPECS/framework-patterns/calibration-log-column-registry.md** — NEW; ships with v5.14.10.D per plan
 - **CLAUDE.md** — consider promoting "deterministic <random> usage" to a CLAUDE.md item once the Thompson math kernel + SHA-256 snapshot test land (per going-forward rule "codify design principles in CLAUDE.md as patterns mature" — v5.14.8 codification precedent for items 19-23).
 
 ---

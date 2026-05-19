@@ -193,7 +193,7 @@ Manual `field_defs[]` operator-prose tooltips that .F.4c removes (per Step 4) an
 - `danger_enabled` (SettingsPanel:131) — GATE-adjacent?
 - `held_out_gate_strict` / `auto_stamp_on_held_out` / `auto_kill_on_drift` — OPS or ML?
 
-**Recommendation:** Plan needs explicit per-field decision: each goes either (a) into an existing bitmap (cohort migration alongside .F.4c) or (b) into FOREACH_CFG_FIELD as KIND_BOOL. Half-and-half = leaks the universal-registry-discipline. The eligibility framework is `DESIGN_SPECS/cfg-flag-eligibility-criteria.md`. Cohort-audit per CLAUDE.local.md rule 2026-05-11.
+**Recommendation:** Plan needs explicit per-field decision: each goes either (a) into an existing bitmap (cohort migration alongside .F.4c) or (b) into FOREACH_CFG_FIELD as KIND_BOOL. Half-and-half = leaks the universal-registry-discipline. The eligibility framework is `DESIGN_SPECS/refactor-patterns/cfg-flag-eligibility-criteria.md`. Cohort-audit per CLAUDE.local.md rule 2026-05-11.
 
 ---
 

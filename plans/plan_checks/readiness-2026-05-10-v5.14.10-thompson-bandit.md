@@ -97,7 +97,7 @@
 
 ## Cfg-flag eligibility audit (5 new cfg fields)
 
-Per `tick-trader-percore-workspace/DESIGN_SPECS/cfg-flag-eligibility-criteria.md` 5-criteria framework:
+Per `tick-trader-percore-workspace/DESIGN_SPECS/refactor-patterns/cfg-flag-eligibility-criteria.md` 5-criteria framework:
 
 | Cfg field | Type | Bitmap-eligible? | Decision | Rationale |
 |---|---|---|---|---|
@@ -273,7 +273,7 @@ The plan is shipper-ready after the must-fix items + Caramel decisions on 6-7. E
 
 - Run `./tools/gen_code_map.sh` after .D — will pick up `Thompson_*` family + `EnsembleModelZoo_(Init|Save|Load)ThompsonBandits/State` family.
 - Append CHANGELOG.md v5.14.10 row covering: bandit_algorithm cfg + ThompsonBanditState + 8 mirror functions + persistence file.
-- If FOREACH_BANDIT_ALGORITHM adopted (recommended): document in `DESIGN_SPECS/x-macro-registry-with-presence-dispatch.md` with bandit-family as canonical 3rd application alongside FOREACH_FAILURE_MODE + FOREACH_DEGRADATION_CURVE. Update CLAUDE.md item 13 audited categories list.
+- If FOREACH_BANDIT_ALGORITHM adopted (recommended): document in `DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md` with bandit-family as canonical 3rd application alongside FOREACH_FAILURE_MODE + FOREACH_DEGRADATION_CURVE. Update CLAUDE.md item 13 audited categories list.
 - TECH_DEBT entry append (open or close):
   - If FOREACH_BANDIT_ALGORITHM adopted: close TECH_DEBT-NNN (new entry to be appended now documenting the structural choice).
   - If deferred: open TECH_DEBT-NNN with the FUTURE OPPORTUNITY note + trigger ("3rd bandit algorithm proposed").

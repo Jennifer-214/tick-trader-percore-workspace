@@ -7,7 +7,7 @@ audit_cadence: per-ship
 tags: [audit-methodology, structural-fix, branchless-discipline, pattern-codification]
 surface: [registry, hot-path, slow-path, oms-drainer]
 sister_skills: [/precoding-audit-gate, /hft-audit, /dod-audit, /bug-check, /accounting-audit, /registry-fit-audit]
-loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/audit-scope-taxonomy.md, DESIGN_SPECS/branchless-dispatch-discipline.md, DESIGN_SPECS/decision-time-data-binding-pattern.md, DESIGN_SPECS/pattern-codification-lifecycle.md]
+loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md, DESIGN_SPECS/refactor-patterns/branchless-dispatch-discipline.md, DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md, DESIGN_SPECS/meta-disciplines/pattern-codification-lifecycle.md]
 ---
 
 # /post-ship-audit — Post-ship retrospective + structural-gap audit
@@ -251,11 +251,11 @@ Generate `plans/<sprint>/postmortems/<YYYY-MM-DD>-<ship>-postship-audit.md`:
 
 ## Cross-references
 
-- `DESIGN_SPECS/audit-scope-taxonomy.md` — scope shapes used by this skill
-- `DESIGN_SPECS/branchless-dispatch-discipline.md` — H20 invariant + Class 28 detection
-- `DESIGN_SPECS/decision-time-data-binding-pattern.md` — Class 27 detection
-- `DESIGN_SPECS/structural-fix-preferred-decision-framework.md` — verifies structural-vs-patch claims
-- `DESIGN_SPECS/pattern-codification-lifecycle.md` — pattern Stage 3 reference application verification
+- `DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md` — scope shapes used by this skill
+- `DESIGN_SPECS/refactor-patterns/branchless-dispatch-discipline.md` — H20 invariant + Class 28 detection
+- `DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md` — Class 27 detection
+- `DESIGN_SPECS/meta-disciplines/structural-fix-preferred-decision-framework.md` — verifies structural-vs-patch claims
+- `DESIGN_SPECS/meta-disciplines/pattern-codification-lifecycle.md` — pattern Stage 3 reference application verification
 - `DOCS/RECURRING_BUG_PATTERNS.md` — all classes for cross-checking
 - `DOCS/DESIGN_PHILOSOPHY.md` § 4 + § 11 — discipline references
 - CLAUDE.md Hard Invariants — H1-H14 + H20 verification

@@ -271,7 +271,7 @@ universalization, mirroring v5.14.8's TECH_DEBT-006 closure shape.
 - .F TECH_DEBT-013 (5): OMS + ExecutionCore cfg_flags
 - .G TECH_DEBT-013 (6): ControllerEventLoop per-core bitmap
 - .H TECH_DEBT-013 (7): ShardedSnapshot summary bitmap
-- .I docs ship: DESIGN_SPECS/curve-registry-pattern.md + CHANGELOG
+- .I docs ship: DESIGN_SPECS/framework-patterns/curve-registry-pattern.md + CHANGELOG
   + close TECH_DEBT-004 / -013 / -015 + open -016 + workspace sync
 
 **Predecessor:** v5.14.8 close (commit 165a988); /dod-audit micro-ship
@@ -458,7 +458,7 @@ v5.14.9     — Soft risk degradation ladder
               v5.14.9.F — TECH_DEBT-013 (5): OMS + ExecutionCore cfg_flags
               v5.14.9.G — TECH_DEBT-013 (6): ControllerEventLoop per-core bitmap
               v5.14.9.H — TECH_DEBT-013 (7): ShardedSnapshot summary bitmap
-              v5.14.9.I — DESIGN_SPECS/curve-registry-pattern.md +
+              v5.14.9.I — DESIGN_SPECS/framework-patterns/curve-registry-pattern.md +
                           CHANGELOG + close TECH_DEBT-004 / -013 / -015
                           + open TECH_DEBT-016 + workspace sync
               Closes 3 TECH_DEBT items + establishes BITMAP_* universally.

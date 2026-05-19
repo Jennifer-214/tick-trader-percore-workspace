@@ -27,7 +27,7 @@
 | `61ff185` | WIP1 | Two-registry framework — `FOREACH_GLOBAL_CFG_FIELD` (47 rows) + `FOREACH_PER_CORE_CFG_FIELD` (79 rows initial) + templated `CfgMaskArray<N>` + per-registry mask arrays + `cfg_field_names_unique<N>` + PER_CORE_OK metadata bit REMOVED + 3 REMOVED rows dropped from registries (struct fields stay; pending WIP2f) |
 | `22933ab` | WIP2a | `PerCoreCfg<F>` struct (79 fields, alignas(64), sizeof%64==0 + alignof==64 static_asserts) + `cores[MAX_EXECUTION_CORES]` field on `ControllerConfig<F>` |
 | `fd67e6d` | WIP2b | `ControllerConfig_PopulateCoresFromFlat<F>` X-macro shadow walker; called at `Default()` + `Load()` end |
-| `13462b4` (workspace) | WIP2c.0 | `DESIGN_SPECS/cfg-scope-discipline.md` § "Consumer function signatures over per-core slices" (NEW) + `RECURRING_BUG_PATTERNS.md` Class 25 (NEW) + plan body HIGH-1 amendment + `.F.4c.3.A` symbol axis stub note |
+| `13462b4` (workspace) | WIP2c.0 | `DESIGN_SPECS/refactor-patterns/cfg-scope-discipline.md` § "Consumer function signatures over per-core slices" (NEW) + `RECURRING_BUG_PATTERNS.md` Class 25 (NEW) + plan body HIGH-1 amendment + `.F.4c.3.A` symbol axis stub note |
 | `df1cb03` | WIP2c.1 | Classify-first — 10 un-classified per-core fields → registry + struct (strategy-TP-overrides + offset_stddev_mult + confidence_hard_block_threshold + ensemble_min_agreement_pct + barrier_blend_mode) + 5 bitmap storage fields cohort-moved to `PerCoreCfg<F>` |
 | `49649b8` | WIP2c.2 | **Class 25 structurally closed.** 8 fn sigs migrate to `const PerCoreCfg<F>* core_cfg` exclusively (5 inner `_BuildParameters` + 1 `Strategy_BuildParameters` dispatcher + 2 helpers `Strategy_NotEnoughSpacing` + `Strategy_TpFloor`); 32 external call sites updated via verified perl substitution; `poll_interval_ticks` scalar arg propagates ML + dispatcher; 3 cohort additions (fee_rate_maker/_taker/foxml_vol_scaling_z_max) |
 | `24a4aaf` | WIP2c.3 | Fix WIP2c.2 transient test failures — fee_rate_maker/_taker tagged HAS_SIDE_EFFECT (manual parser handles `explicit_set` flag for downstream legacy-mirror gate); 8 test blocks band-aided with `ControllerConfig_PopulateCoresFromFlat(&cfg)` post-mutation sync. **Tests GREEN: 3148 + 856 = 0 failures.** |
@@ -43,7 +43,7 @@
 - `experiments/per_core_sharding/test_strategy_parameters.cpp` (~8 `&config` → `&config.cores[0]` migrations)
 
 **Workspace docs landed:**
-- `DESIGN_SPECS/cfg-scope-discipline.md` — § "Consumer function signatures over per-core slices" (NEW; grep signatures for audit hooks)
+- `DESIGN_SPECS/refactor-patterns/cfg-scope-discipline.md` — § "Consumer function signatures over per-core slices" (NEW; grep signatures for audit hooks)
 - `DOCS/RECURRING_BUG_PATTERNS.md` — Class 25 catalog entry (NEW)
 - `plans/v5.15-live-readiness/subplans/2026-05-15-v5.15.5.F.4c.3-global-vs-per-core-registry-split.md` — HIGH-1 amendment + scope-discipline rationale (committed at WIP2c.0; progress note added in this handoff prep, uncommitted at time of writing)
 - `plans/v5.15-live-readiness/subplans/2026-05-15-v5.15.5.F.4c.3.A-symbol-axis-per-core-migration.md` — per-symbol consumer fn discipline note
@@ -102,7 +102,7 @@
 
 **Title:** Scope-erosion in per-core consumer function (registry says per-core; consumer reads from wrong scope)
 **Catalog:** `DOCS/RECURRING_BUG_PATTERNS.md` (NEW entry at WIP2c.0)
-**Discipline spec:** `DESIGN_SPECS/cfg-scope-discipline.md` § "Consumer function signatures over per-core slices" (NEW at WIP2c.0)
+**Discipline spec:** `DESIGN_SPECS/refactor-patterns/cfg-scope-discipline.md` § "Consumer function signatures over per-core slices" (NEW at WIP2c.0)
 **First canonical application:** `Strategies/StrategyParameters.hpp` 8-fn family (closed at WIP2c.2)
 **Grep signatures (anti-pattern detection):**
 ```bash
@@ -135,7 +135,7 @@ This is a fresh context window. Verify everything against current code; don't tr
    - `/home/caramel/code/FoxML_Trader_v2/CLAUDE.local.md` (Sprint State Tracker → "In-progress ship: v5.15.5.F.4c.3 — Step 2 PARTIAL")
    - `/home/caramel/code/tick-trader-percore-workspace/plans/v5.15-live-readiness/subplans/2026-05-15-v5.15.5.F.4c.3-global-vs-per-core-registry-split.md` (THE plan body + "## Progress as of 2026-05-15" section at bottom — lists landed commits + remaining sub-commits)
    - `/home/caramel/code/tick-trader-percore-workspace/plans/v5.15-live-readiness/handoffs/2026-05-15-step2-partial-handoff.md` (THIS document — landed/remaining/test-state/Class 25)
-   - `/home/caramel/code/tick-trader-percore-workspace/DESIGN_SPECS/cfg-scope-discipline.md` (§ "Consumer function signatures over per-core slices" — the discipline that locked at WIP2c.2)
+   - `/home/caramel/code/tick-trader-percore-workspace/DESIGN_SPECS/refactor-patterns/cfg-scope-discipline.md` (§ "Consumer function signatures over per-core slices" — the discipline that locked at WIP2c.2)
    - `/home/caramel/code/FoxML_Trader_v2/DOCS/RECURRING_BUG_PATTERNS.md` Class 25 (NEW; structural fix applied at WIP2c.2)
    - `/home/caramel/code/tick-trader-percore-workspace/plans/plan_checks/cfg-field-scope-classification-2026-05-15.md` (LOCKED classification table; 47 GLOBAL / 79 PER_CORE / 3 REMOVED + later 3 cohort additions)
    - `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/MEMORY.md` (auto-memory index)
@@ -165,7 +165,7 @@ Alternative ordering: WIP2d/2f/2g/2h first (the mechanical migration sweep) befo
 
 Per `feedback_consult_on_audit_findings` going-forward rule: when surfacing structural questions (e.g., WIP2f deletion of legacy override path + multi-core regression until Step 3 ships), pause + consult Caramel before coding.
 
-Pattern library reference: `DESIGN_SPECS/per-instance-registry-pattern.md` (this ship's first canonical application) + `DESIGN_SPECS/cfg-scope-discipline.md` (the discipline framework).
+Pattern library reference: `DESIGN_SPECS/framework-patterns/per-instance-registry-pattern.md` (this ship's first canonical application) + `DESIGN_SPECS/refactor-patterns/cfg-scope-discipline.md` (the discipline framework).
 
 ## Step 3 — operator collaboration norms
 

@@ -4,6 +4,12 @@ class_id: 8
 title: User-configurable features silently inactive in sharded
 parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-18
+surface_tags: [cfg-flow, live-trading, slow-path]
+severity: high
+recurrence_count: 2
+first_instance: v5.4.4
+closure_mechanism: /readiness check requiring explicit "where is this consumed" for legacy + sharded paths on *_enabled cfg fields + /dust Scan 9 extended to orphan cfg-enabled detection + port CostModel/VolScaler into Strategy_BuildParameters dispatcher
+sister_classes: [1, 24]
 ---
 
 ## Class 8 — User-configurable features silently inactive in sharded

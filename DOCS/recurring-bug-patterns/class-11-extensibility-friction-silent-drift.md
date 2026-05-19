@@ -4,6 +4,12 @@ class_id: 11
 title: Extensibility friction causing silent drift
 parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-18
+surface_tags: [registry, live-trading, gui-thread]
+severity: high
+recurrence_count: 5
+first_instance: v5.6.0
+closure_mechanism: X-macro registry pattern (FOREACH_<CATEGORY>) + auto-generated arrays + static_assert size parity + single-helper extraction for shared formulas + display/math separation via flags not sentinels + /readiness deep audit for divergent formulas pre-coding
+sister_classes: [1, 2, 18, 21, 24]
 ---
 
 ## Class 11 — Extensibility friction causing silent drift

@@ -4,6 +4,12 @@ class_id: 6
 title: OMS counter persistence
 parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-18
+surface_tags: [boot-time, oms-drainer, wire-format]
+severity: medium
+recurrence_count: 1
+first_instance: v5.4.4
+closure_mechanism: bump SHARDED_SNAPSHOT_VERSION + schema-struct-iterated fwrite/fread so save/load mismatch becomes compile-time static_assert
+sister_classes: [4]
 ---
 
 ## Class 6 — OMS counter persistence

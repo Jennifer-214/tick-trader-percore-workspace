@@ -17,6 +17,17 @@ External cross-refs use canonical ID format `TECH_DEBT-NNN`. The ID is preserved
 
 ### TECH_DEBT-063 — SettingsPanel.hpp `field_defs[]` full elimination (in-progress)
 
+```yaml
+id: TECH_DEBT-063
+title: SettingsPanel.hpp field_defs[] full elimination (in-progress)
+severity: low
+surface_tags: [gui-thread, registry, cfg-flow]
+trigger: sub-ship-.F.4e
+status: in-flight
+opened: 2026-05-14
+related_specs: [DESIGN_SPECS/framework-patterns/universal-registry-bitmap-dispatcher-pattern.md]
+```
+
 - **Created:** 2026-05-14 by v5.15.5.F.4c session (operator UX considerations conversation)
 - **Severity:** LOW (each removal is mechanical; cumulative impact is significant GUI bloat reduction)
 - **Surface:** `GUI/SettingsPanel.hpp` lines 48-274 — currently ~213 entries hand-maintained in `field_defs[]` array; `.F.4a/.F.4b` removed ~40 (KIND_DOUBLE/_PCT cohort migrated to FOREACH_CFG_FIELD); `.F.4c` removes ~50-60 (INT/INT_ENUM/BOOL cohort); `.F.4e` removes the remaining ~110 (STRING/FILE_PATH cohort).
@@ -30,6 +41,17 @@ External cross-refs use canonical ID format `TECH_DEBT-NNN`. The ID is preserved
 ---
 
 ### TECH_DEBT-092 — X_GEN_* namespace collision CI check (FOREACH_METADATA_BIT vs FOREACH_LIVES_IN_STRUCT lname overlap protection)
+
+```yaml
+id: TECH_DEBT-092
+title: X_GEN_* namespace collision CI check (FOREACH_METADATA_BIT vs FOREACH_LIVES_IN_STRUCT lname overlap protection)
+severity: low
+surface_tags: [registry, ci-tooling, cfg-flow]
+trigger: sub-ship-.F.4d.1.A
+status: in-flight
+opened: 2026-05-17
+related_specs: []
+```
 
 - **Created:** 2026-05-17 (at v5.15.5.F.4d.1.A Path γ+ v2 triage — Finding 6 from `plan_checks/2026-05-16-v5.15.5.F.4d.1-tech-debt-audit-findings.md` + D2 audit recommendation)
 - **Severity:** LOW (future-protection; doesn't fire at HEAD — no overlap today between the 11 FOREACH_METADATA_BIT lnames + 5 FOREACH_LIVES_IN_STRUCT lnames; protects against future addition that accidentally creates collision)

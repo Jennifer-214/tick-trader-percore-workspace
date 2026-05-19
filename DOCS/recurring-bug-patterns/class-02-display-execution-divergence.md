@@ -4,6 +4,12 @@ class_id: 2
 title: Display ↔ execution divergence
 parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-18
+surface_tags: [gui-thread, live-trading, hot-path]
+severity: high
+recurrence_count: 4
+first_instance: v5.4.0
+closure_mechanism: predicate-display invariant matrix (DOCS/EXECUTION_DISPLAY_INVARIANTS.md) + /readiness Check 12 display↔execution + /dust Scan 8 dead-write detection + single-source rule (GUI reads SAME variable as controller)
+sister_classes: [1, 11]
 ---
 
 ## Class 2 — Display ↔ execution divergence

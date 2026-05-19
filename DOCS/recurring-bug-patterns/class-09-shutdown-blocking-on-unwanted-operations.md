@@ -4,6 +4,12 @@ class_id: 9
 title: Shutdown blocking on operations the user didn't want
 parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-18
+surface_tags: [boot-time, live-trading]
+severity: medium
+recurrence_count: 1
+first_instance: v5.4.5
+closure_mechanism: shutdown sequence discipline (save→join→close, no blocking work between) + cfg gate (default off) for any "graceful X on shutdown" step + property test that N-open-position shutdown completes <5s
+sister_classes: []
 ---
 
 ## Class 9 — Shutdown blocking on operations the user didn't want

@@ -4,6 +4,12 @@ class_id: 10
 title: Strategy-regime mismatch
 parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-18
+surface_tags: [live-trading, slow-path, gui-thread]
+severity: high
+recurrence_count: 1
+first_instance: v5.7.0
+closure_mechanism: v5.7.2 boot guard refusing live mode with hardcoded strategies (acknowledge cfg flag required) + v5.7.5 MOM-specific quality filters (momentum_min_tp_margin_pct, _min_r2, _min_buy_delta_recent) + v5.7.6 per-strategy quality dashboard panel
+sister_classes: [8, 19]
 ---
 
 ## Class 10 — Strategy-regime mismatch

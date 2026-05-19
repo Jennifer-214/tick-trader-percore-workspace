@@ -4,6 +4,12 @@ class_id: 27
 title: Single-value cache flattens per-instance distinction (subsystem state mirrors cfg as a scalar)
 parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-18
+surface_tags: [oms-drainer, cfg-flow, fixed-point-math, hot-path]
+severity: high
+recurrence_count: 1
+first_instance: v5.15.5.F.4c.3
+closure_mechanism: decision-time-data-binding-pattern (pre-resolve onto in-flight Order/Position/Event/TradeEvent at creation; downstream reads from object directly) + registry-driven per-instance cache fallback when no in-flight object exists + scalar cfg-mirror on subsystem state FORBIDDEN + tools/check_per_core_registry_integrity.py Check 7 CI + /accounting-audit + /registry-fit-audit
+sister_classes: [18, 23, 24, 25, 26, 28, 29]
 ---
 
 ## Class 27 — Single-value cache flattens per-instance distinction (subsystem state mirrors cfg as a scalar)

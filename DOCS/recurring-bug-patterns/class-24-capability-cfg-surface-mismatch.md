@@ -4,6 +4,12 @@ class_id: 24
 title: Capability-cfg surface mismatch (ML pipeline supports it; operator can't see / configure / verify it)
 parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-18
+surface_tags: [cfg-flow, ml-inference, gui-thread, registry]
+severity: high
+recurrence_count: 3
+first_instance: v5.13.4
+closure_mechanism: universal cfg registry + bitmap dispatcher (v5.15.5.F.4c) so new capability = single FOREACH_CFG_FIELD row with cfg parser + Settings render + stamp tag + per-core override auto-flow + FOREACH_BANDIT_ALGORITHM 5-state expansion with metadata-driven dispatch tables (v5.15.5.F.4d) + Cfg↔ML surface-alignment audit rule + /ml-audit at sub-ship close
+sister_classes: [11, 18, 21, 23, 25, 27]
 ---
 
 ## Class 24 — Capability-cfg surface mismatch (ML pipeline supports it; operator can't see / configure / verify it)

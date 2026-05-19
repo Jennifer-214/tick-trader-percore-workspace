@@ -35,6 +35,18 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 
 ### TECH_DEBT-003 — `verify_model_stamp` parser refactor to data-driven dispatch ✅ CLOSED v5.15.0
 
+```yaml
+id: TECH_DEBT-003
+title: verify_model_stamp parser refactor to data-driven dispatch
+severity: low
+surface_tags: [parser, wire-format, ml-inference, registry]
+trigger: sub-ship-v5.15.0
+status: closed
+opened: 2026-05-09
+closed: 2026-05-12
+related_specs: [DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md]
+```
+
 - **Created:** 2026-05-09 by v5.14.2.E.3 (first noted in v5.14.1 post-mortem)
 - **Severity:** LOW
 - **Surface:** `ML_Headers/ModelInference.hpp` `verify_model_stamp` function
@@ -46,6 +58,18 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 
 ### TECH_DEBT-004 — Dual-tau cfg field naming clarity ✅ CLOSED v5.14.9.D
 
+```yaml
+id: TECH_DEBT-004
+title: Dual-tau cfg field naming clarity
+severity: low
+surface_tags: [cfg-flow, ml-inference]
+trigger: sub-ship-v5.14.9.D
+status: closed
+opened: 2026-05-09
+closed: 2026-05-10
+related_specs: []
+```
+
 - **Created:** 2026-05-09 by v5.14.2.E.3 (originally PARITY-006; reclassified as TECH_DEBT since not a parity issue)
 - **Severity:** LOW
 - **Surface:** `ControllerConfig.hpp` cfg fields `confidence_freshness_tau` (legacy IC) + `confidence_freshness_tau_secs` (composite confidence; v5.14.1)
@@ -56,6 +80,18 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 ---
 
 ### TECH_DEBT-005 — Single-zoo hot-swap strict-mode failure handling unification ✅ CLOSED v5.15.4
+
+```yaml
+id: TECH_DEBT-005
+title: Single-zoo hot-swap strict-mode failure handling unification
+severity: low
+surface_tags: [ml-inference, slow-path, concurrency]
+trigger: sub-ship-v5.15.4
+status: closed
+opened: 2026-05-09
+closed: 2026-05-12
+related_specs: [DESIGN_SPECS/feature-patterns/shadow-load-state-transition-pattern.md]
+```
 
 - **Created:** 2026-05-09 by v5.14.2.E.3 (surfaced during v5.14.2.E.1 design)
 - **Severity:** LOW
@@ -76,6 +112,18 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 ---
 
 ### TECH_DEBT-006 — `FOREACH_STAMP_BOUND_MODEL_CONST` registry for architectural fields ✅ CLOSED v5.14.8
+
+```yaml
+id: TECH_DEBT-006
+title: FOREACH_STAMP_BOUND_MODEL_CONST registry for architectural fields
+severity: low
+surface_tags: [registry, wire-format, ml-inference]
+trigger: sub-ship-v5.14.8
+status: closed
+opened: 2026-05-09
+closed: 2026-05-09
+related_specs: [DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md, DESIGN_SPECS/wire-format-patterns/pre-post-cfg-registry-split-for-emit-order-preservation.md, DESIGN_SPECS/framework-patterns/autopopulate-pattern-for-production-caller-class.md, DESIGN_SPECS/framework-patterns/bitmap-flag-api.md]
+```
 
 - **Created:** 2026-05-09 by v5.14.2.E.3 (during v5.14.2.E.2.B design)
 - **Severity:** LOW
@@ -99,6 +147,18 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 
 ### TECH_DEBT-010 — FOREACH_CALIB_LOG_COL registry for calibration log CSV columns ✅ CLOSED v5.14.10.D
 
+```yaml
+id: TECH_DEBT-010
+title: FOREACH_CALIB_LOG_COL registry for calibration log CSV columns
+severity: low
+surface_tags: [registry, wire-format, oms-drainer]
+trigger: sub-ship-v5.14.10.D
+status: closed
+opened: 2026-05-09
+closed: 2026-05-10
+related_specs: [DESIGN_SPECS/framework-patterns/calibration-log-column-registry.md]
+```
+
 - **Created:** 2026-05-09 by v5.14.8 scope decision (Interpretation B; deferred N-site pattern audit)
 - **Severity:** LOW (small N currently; CSV columns relatively stable; pattern still recurring)
 - **Surface:** Calibration log CSV writer (`CoreFrameworks/CalibrationLog.hpp` or similar), reader/parser (post-process tooling), header definition
@@ -112,6 +172,18 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 ---
 
 ### TECH_DEBT-013 — Bit-packed boolean flags (BIT_FLAG storage class) for byte-per-flag patterns across codebase ✅ CLOSED v5.14.9
+
+```yaml
+id: TECH_DEBT-013
+title: Bit-packed boolean flags (BIT_FLAG storage class) for byte-per-flag patterns across codebase
+severity: medium
+surface_tags: [bitmap-packed, registry, cfg-flow]
+trigger: sub-ship-v5.14.9
+status: closed
+opened: 2026-05-09
+closed: 2026-05-10
+related_specs: [DESIGN_SPECS/framework-patterns/heterogeneous-registry-pattern.md, DESIGN_SPECS/framework-patterns/bitmap-flag-api.md]
+```
 
 - **Created:** 2026-05-09 by v5.14.8.B FOREACH_FAILURE_MODE design discussion (operator question: "couldnt we track each one using a single bit since theyre basically 1 or 0?")
 - **Severity:** MEDIUM (recurring inefficiency; data-oriented design alignment opportunity; aligns with CLAUDE.md item 1 Portfolio uint16_t bitmap pattern)
@@ -147,6 +219,18 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 
 ### TECH_DEBT-014 — ModelHandle migration to FOREACH_STAMP_BOUND_MODEL_CONST X-macro generation ✅ CLOSED v5.15.0
 
+```yaml
+id: TECH_DEBT-014
+title: ModelHandle migration to FOREACH_STAMP_BOUND_MODEL_CONST X-macro generation
+severity: low
+surface_tags: [registry, ml-inference, wire-format, bitmap-packed]
+trigger: sub-ship-v5.15.0
+status: closed
+opened: 2026-05-09
+closed: 2026-05-12
+related_specs: [DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md]
+```
+
 - **Created:** 2026-05-09 by v5.14.8.A.merged.2 (deferred during Option 1 unification scope)
 - **Severity:** LOW
 - **Surface:** `ML_Headers/ModelInference.hpp` ModelHandle struct
@@ -157,6 +241,18 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 ---
 
 ### TECH_DEBT-015 — FOREACH_FEATURE 7-col extension (max_staleness_minutes) + Features_PackAll stale-feature wiring ✅ CLOSED v5.14.9.E
+
+```yaml
+id: TECH_DEBT-015
+title: FOREACH_FEATURE 7-col extension (max_staleness_minutes) + Features_PackAll stale-feature wiring
+severity: low
+surface_tags: [registry, ml-inference, bitmap-packed]
+trigger: sub-ship-v5.14.9.E
+status: closed
+opened: 2026-05-09
+closed: 2026-05-10
+related_specs: []
+```
 
 - **Created:** 2026-05-09 by v5.14.8.E (stale-feature gating scope split)
 - **Severity:** LOW
@@ -175,6 +271,18 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 
 ### TECH_DEBT-017 — Direct-int cfg-flag cohort migration to FOREACH_ML_CFG_FLAG (ridge_within_horizon / ridge_across_horizons / exit_blender_mode / ridge_online_corr) ✅ CLOSED v5.14.11.C
 
+```yaml
+id: TECH_DEBT-017
+title: Direct-int cfg-flag cohort migration to FOREACH_ML_CFG_FLAG (ridge cohort)
+severity: low
+surface_tags: [cfg-flow, registry, ml-inference, bitmap-packed]
+trigger: sub-ship-v5.14.11.C
+status: closed
+opened: 2026-05-11
+closed: 2026-05-11
+related_specs: [DESIGN_SPECS/refactor-patterns/cfg-flag-eligibility-criteria.md, DESIGN_SPECS/framework-patterns/heterogeneous-registry-pattern.md]
+```
+
 - **Created:** 2026-05-11 by /readiness Check 16 + /dod-audit HIGH-1 finding during v5.14.11 pre-coding gate
 - **Severity:** LOW (cosmetic / discipline; no behavior or perf impact)
 - **Surface:** `ControllerConfig.hpp` (3 direct `int` cfg fields prior to .C: `ridge_within_horizon`, `ridge_across_horizons`, `exit_blender_mode`); `ML_Headers/MlCfgFlagRegistry.hpp` (already housing 7 ML/confidence flags pre-.C); `CoreFrameworks/SlowPathGateRegistry.hpp` (cached gate predicates); `ML_Headers/StampBoundCfgRegistry.hpp` (stamp-binding entries for ridge_within + ridge_across + exit_blender + ridge_lambda + ridge_cost_penalty + ridge_min_ic_floor); `Strategies/StrategyParameters.hpp` (buy + exit Ridge dispatch sites + their fallback paths)
@@ -187,6 +295,18 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 ---
 
 ### TECH_DEBT-019 — Rejected monolithic FOREACH_ENGINE_CFG_FLAG registry (design rationale preservation)
+
+```yaml
+id: TECH_DEBT-019
+title: Rejected monolithic FOREACH_ENGINE_CFG_FLAG registry (design rationale preservation)
+severity: low
+surface_tags: [registry, cfg-flow]
+trigger: explicit-operator
+status: closed
+opened: 2026-05-10
+closed: 2026-05-10
+related_specs: [DESIGN_SPECS/framework-patterns/heterogeneous-registry-pattern.md]
+```
 
 - **Created:** 2026-05-10 by v5.14.9.F Option C decomposition (post-/dod-audit auto-write per CLAUDE.local.md contract)
 - **Severity:** N/A (NOT-A-BUG; rationale-preservation entry)
@@ -207,6 +327,18 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 ---
 
 ### TECH_DEBT-023 — `lat_enabled` is NOT cfg-flag-eligible (rationale preservation)
+
+```yaml
+id: TECH_DEBT-023
+title: lat_enabled is NOT cfg-flag-eligible (rationale preservation)
+severity: low
+surface_tags: [hot-path, cfg-flow]
+trigger: explicit-operator
+status: closed
+opened: 2026-05-10
+closed: 2026-05-10
+related_specs: [DESIGN_SPECS/framework-patterns/heterogeneous-registry-pattern.md]
+```
 
 - **Created:** 2026-05-10 by v5.14.9.F step 0 verification (caught audit subagent misread; cfg-flag eligibility criteria need explicit doc to prevent recurrence)
 - **Severity:** N/A (NOT-A-BUG; rationale-preservation entry to prevent future re-litigation)
@@ -246,6 +378,18 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 
 ### TECH_DEBT-024 — `breakeven_on_profit` dormant cfg field ✅ CLOSED v5.15.2
 
+```yaml
+id: TECH_DEBT-024
+title: breakeven_on_profit dormant cfg field
+severity: low
+surface_tags: [cfg-flow, slow-path]
+trigger: sub-ship-v5.15.2
+status: closed
+opened: 2026-05-10
+closed: 2026-05-12
+related_specs: []
+```
+
 - **Created:** 2026-05-10 by v5.14.9.F step 0 inventory
 - **Severity:** LOW (operator-facing dormant feature; no functional impact)
 - **Surface:** `CoreFrameworks/ControllerConfig.hpp` declaration + parser; FOREACH_LIFECYCLE_CFG_FLAG bitmap entry
@@ -257,6 +401,18 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 ---
 
 ### TECH_DEBT-027 — Locale pinning gap in `Bandit_SaveJSON` (LC_NUMERIC drift risk)
+
+```yaml
+id: TECH_DEBT-027
+title: Locale pinning gap in Bandit_SaveJSON (LC_NUMERIC drift risk)
+severity: medium
+surface_tags: [wire-format, ml-inference]
+trigger: sub-ship-v5.14.10.C
+status: closed
+opened: 2026-05-10
+closed: 2026-05-10
+related_specs: [DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md]
+```
 
 - **Created:** 2026-05-10 by /dod-audit run on v5.14.10-bayesian-thompson-bandit plan
 - **Severity:** MEDIUM
@@ -272,6 +428,18 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 
 ### TECH_DEBT-028 — Bool-as-uint8_t PerCoreSnap fields migrated to state_flags bitmap ✅ CLOSED v5.15.1
 
+```yaml
+id: TECH_DEBT-028
+title: Bool-as-uint8_t PerCoreSnap fields migrated to state_flags bitmap
+severity: low
+surface_tags: [gui-thread, bitmap-packed, registry]
+trigger: sub-ship-v5.15.1
+status: closed
+opened: 2026-05-10
+closed: 2026-05-12
+related_specs: [DESIGN_SPECS/framework-patterns/bitmap-flag-api.md]
+```
+
 - **Created:** 2026-05-10 by /merge-scan re-audit on v5.14.10 amended plan (finding N4)
 - **Severity:** LOW (cosmetic; no functional impact; no parity risk)
 - **Surface:** PerCoreSnap struct fields in `DataStream/EngineTUI.hpp`
@@ -281,6 +449,18 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 ---
 
 ### TECH_DEBT-033 — `/readiness` skill wider-build verification check ✅ CLOSED v5.15.2
+
+```yaml
+id: TECH_DEBT-033
+title: /readiness skill wider-build verification check
+severity: medium
+surface_tags: [ci-tooling, test-infrastructure]
+trigger: sub-ship-v5.15.2.D
+status: closed
+opened: 2026-05-12
+closed: 2026-05-12
+related_specs: []
+```
 
 - **Created:** 2026-05-12 by v5.14.post1 patch (train_model_worker_fn migration gap)
 - **Severity:** MEDIUM (discipline gap; missed sites in mechanical migration sweeps)
@@ -299,6 +479,18 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 ---
 
 ### TECH_DEBT-037 — Cfg-derived inference_cfg_* fields live in FOREACH_STAMP_BOUND_MODEL_CONST, not FOREACH_STAMP_BOUND_CFG (taxonomy drift)
+
+```yaml
+id: TECH_DEBT-037
+title: Cfg-derived inference_cfg_* fields live in FOREACH_STAMP_BOUND_MODEL_CONST, not FOREACH_STAMP_BOUND_CFG (taxonomy drift)
+severity: low
+surface_tags: [registry, wire-format, ml-inference, cfg-flow]
+trigger: sub-ship-v5.15.5.A.7
+status: closed
+opened: 2026-05-12
+closed: 2026-05-12
+related_specs: [DESIGN_SPECS/framework-patterns/autopopulate-pattern-for-production-caller-class.md]
+```
 
 - **Created:** 2026-05-12 by v5.15.3.A.1 helper extraction
 - **Severity:** LOW (manual population works; just taxonomic asymmetry)
@@ -361,6 +553,18 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 
 ### TECH_DEBT-040 — FOREACH_SESSION_PHASE cfg-side registry for 4 session_*_mult cfg fields
 
+```yaml
+id: TECH_DEBT-040
+title: FOREACH_SESSION_PHASE cfg-side registry for 4 session_*_mult cfg fields
+severity: low
+surface_tags: [registry, cfg-flow, slow-path]
+trigger: sub-ship-v5.15.5.B.5
+status: closed
+opened: 2026-05-12
+closed: 2026-05-13
+related_specs: [DESIGN_SPECS/refactor-patterns/cfg-flag-eligibility-criteria.md]
+```
+
 - **Created:** 2026-05-12 by v5.15.5.B audit (.B.5 surfaced consumer-side branchless conversion; cfg-side cohort registry deferred)
 - **Severity:** LOW (4-instance cohort; semantically bounded; cfg-side refactor independent of consumer-side branchless dispatch)
 - **Surface:**
@@ -378,6 +582,18 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 
 ### TECH_DEBT-082 — `.F.5` 3 unmigrated fields per-core eligibility audit (`confidence_ic_floor`, `lazy_rebuild_price_threshold_pct`, `exit_threshold`)
 
+```yaml
+id: TECH_DEBT-082
+title: .F.5 3 unmigrated fields per-core eligibility audit (confidence_ic_floor, lazy_rebuild_price_threshold_pct, exit_threshold)
+severity: medium
+surface_tags: [cfg-flow, registry, parser]
+trigger: sub-ship-v5.15.5.F.4d
+status: closed
+opened: 2026-05-16
+closed: 2026-05-16
+related_specs: [DESIGN_SPECS/refactor-patterns/cfg-flag-eligibility-criteria.md]
+```
+
 - **Created:** 2026-05-16 (backfill per `.F.4d` pre-coding subplan verification audit; `.F.5` SKETCH plan listed 13 fields for per-core override; 2 bandit/thompson absorbed by `.F.4d` Thread B; 9 of remaining 11 found in `FOREACH_PER_CORE_CFG_FIELD` at HEAD; **3 still in legacy flat-struct form** at `CoreFrameworks/ControllerConfig.hpp` with manual parser cases)
 - **Severity:** LOW-MED (eligibility decision; audit + categorize before migration; one outcome may legitimately be "stay GLOBAL")
 - **Surface:** `CoreFrameworks/ControllerConfig.hpp` lines 770 (`lazy_rebuild_price_threshold_pct`), 788 (`exit_threshold`), 970 (`confidence_ic_floor`) — struct fields declared flat. Parser cases at :2360, :2368, :2720 (manual `strcmp` + `atof` blocks). Not enrolled in `FOREACH_PER_CORE_CFG_FIELD` or `FOREACH_GLOBAL_CFG_FIELD` at HEAD.
@@ -391,6 +607,18 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 ---
 
 ### TECH_DEBT-083 — IWYU hygiene sweep: 8 headers use `uintN_t` without direct `<cstdint>` / `<stdint.h>` include
+
+```yaml
+id: TECH_DEBT-083
+title: IWYU hygiene sweep — 8 headers use uintN_t without direct <cstdint> / <stdint.h> include
+severity: low
+surface_tags: [ml-inference]
+trigger: sub-ship-v5.15.5.F.4d
+status: closed
+opened: 2026-05-16
+closed: 2026-05-16
+related_specs: []
+```
 
 - **Created:** 2026-05-16 (surfaced during `.F.4d` Step 1.C coding when removing an unused `<cstdint>` include from `ML_Headers/bandit_dispatch_table.hpp` exposed a transitive-include chain dependency; 2 chain-breakers — `CoreFrameworks/ParseFast.hpp` + `ML_Headers/BanditLearning.hpp` — fixed inline; 8 others remain latent)
 - **Severity:** LOW (latent IWYU gap; not breaking current build because of transitive include chains in canonical use; would break if include order changes OR if a new header is added before the transitive cstdint-pull lands)
@@ -414,6 +642,18 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 
 ### TECH_DEBT-084 — Full symmetric rename of `thompson_bandits` → `buy_thompson_bandits` + FOREACH_BANDIT_SIDE auto-gen across all 6 per-side symbol families
 
+```yaml
+id: TECH_DEBT-084
+title: Full symmetric rename of thompson_bandits → buy_thompson_bandits + FOREACH_BANDIT_SIDE auto-gen across all 6 per-side symbol families
+severity: low
+surface_tags: [registry, ml-inference, wire-format]
+trigger: sub-ship-v5.15.5.F.4d
+status: closed
+opened: 2026-05-16
+closed: 2026-05-16
+related_specs: [DESIGN_SPECS/framework-patterns/sink-fn-pointer-for-optional-side-effect-pattern.md]
+```
+
 - **Created:** 2026-05-16 during `.F.4d` Step 1.D Pattern 5 sink-fn-pointer design (this session) — explicit design decision to HAND-MIRROR exit-side rather than full FOREACH_BANDIT_SIDE auto-gen now, to avoid a cascade rename of existing `thompson_bandits` field across ~50 call sites. Captured as future cleanup so the design intent isn't lost.
 - **Severity:** LOW (design-quality hygiene; current hand-mirror works correctly; future addition of a 3rd side — per-symbol? per-strategy? — would need 4× hand-writing per fn family without this cleanup)
 - **Surface:** rename `EnsembleModelZoo<F>::thompson_bandits` → `buy_thompson_bandits` + `thompson_update_fn` → `buy_thompson_update_fn` + `last_predicted_thompson_arm` → `last_predicted_buy_thompson_arm` + `MASK_EZOO_THOMPSON_READY` → `MASK_EZOO_BUY_THOMPSON_READY` + `EnsembleModelZoo_InitThompsonBandits` → `EnsembleModelZoo_InitBuyThompsonBandits` (+ symmetric for `_Save`/`_Load`/`_State` JSON paths). All ~50 call sites + persistence file paths + test fixtures + GUI display references migrate.
@@ -436,6 +676,18 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 ---
 
 ### TECH_DEBT-086 — `.F.4d` doc residual: RECURRING_BUG_PATTERNS amendments + DESIGN_PHILOSOPHY § 2 H15-H20 narrative + DESIGN_SPECS README catalog verification
+
+```yaml
+id: TECH_DEBT-086
+title: .F.4d doc residual — RECURRING_BUG_PATTERNS amendments + DESIGN_PHILOSOPHY § 2 H15-H20 narrative + DESIGN_SPECS README catalog verification
+severity: low
+surface_tags: []
+trigger: sub-ship-v5.15.5.F.4d.1
+status: closed
+opened: 2026-05-16
+closed: 2026-05-16
+related_specs: []
+```
 
 - **Created:** 2026-05-16 (at v5.15.5.F.4d.1 planning consult — Decision 2 lock: bundle as TECH_DEBT-086 + fold into `.F.4d.1.D` ship close auto-writes; Option B separate doc-only mini-ship rejected as MVP-shaped per `feedback_no_mvp_for_plumbing_only_for_unknown_unknowns`)
 - **Severity:** LOW (doc-residual; no code-functional impact). **Cost-to-defer IS real** though: `/bug-check` accuracy degrades without Class 30 in RECURRING_BUG_PATTERNS registry (next OMS sibling-array enrollment drift goes uncaught); cold-pickup orientation drifts without H15-H20 narrative in DESIGN_PHILOSOPHY § 2; `/handoff` skill load coverage misses 4 Thread A specs without catalog verification.
@@ -470,6 +722,18 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 
 ### TECH_DEBT-108 — `double` STORAGE_T in FOREACH_PER_CORE_CFG_FIELD (H4 violation candidate) — CLOSED (verified compliant)
 
+```yaml
+id: TECH_DEBT-108
+title: double STORAGE_T in FOREACH_PER_CORE_CFG_FIELD (H4 violation candidate) — verified compliant
+severity: medium
+surface_tags: [cfg-flow, registry, ml-inference, ci-tooling]
+trigger: sub-ship-v5.15.5.F.4d.1.B.3
+status: closed
+opened: 2026-05-18
+closed: 2026-05-18
+related_specs: [DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md]
+```
+
 - **Created:** 2026-05-18 (surfaced by NEW CI tool `tools/check_storage_t_coverage.py` at `.B.3` mid-coding META program landing)
 - **Closed:** 2026-05-18 (same-day investigation; both rows verified compliant with H4 "display-only OK" exemption)
 - **Severity:** MED (downgraded to N-A after investigation)
@@ -489,6 +753,18 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 ---
 
 ### TECH_DEBT-109 — Skill SKILL.md drift audit (pragmatic triage executed; CLOSED)
+
+```yaml
+id: TECH_DEBT-109
+title: Skill SKILL.md drift audit (pragmatic triage executed)
+severity: low
+surface_tags: [ci-tooling]
+trigger: sub-ship-v5.15.5.F.4d.1.B.3
+status: closed
+opened: 2026-05-18
+closed: 2026-05-18
+related_specs: []
+```
 
 - **Created:** 2026-05-18 (deferred from META program at `.B.3` mid-coding per scope-bounded landing)
 - **Refined scope 2026-05-18:** initial estimate "24 skills × hardcoded refs each" was based on raw grep count (250+ refs across 17 skills). Sampling 3 skills (/readiness 75 refs, /bug-check 6 refs, /dust 5 refs) revealed **majority of refs are LEGITIMATE WORKED EXAMPLES** (postmortem context, "added after vX.Y" annotations, "first canonical at vN" markers). These set discipline context for future readers — REMOVING them loses information.
@@ -520,6 +796,18 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 ---
 
 ### TECH_DEBT-112 — Skill structural audit closure (categorical-triggers-over-hardcoded-refs application)
+
+```yaml
+id: TECH_DEBT-112
+title: Skill structural audit closure (categorical-triggers-over-hardcoded-refs application)
+severity: medium
+surface_tags: [ci-tooling, registry]
+trigger: sub-ship-v5.15.5.F.4d.1.B.3
+status: closed
+opened: 2026-05-18
+closed: 2026-05-18
+related_specs: [DESIGN_SPECS/doc-disciplines/categorical-triggers-in-always-loaded-docs.md]
+```
 
 - **Created:** 2026-05-18 (concurrent with codification of `DESIGN_SPECS/doc-disciplines/categorical-triggers-in-always-loaded-docs.md` v1.0 DRAFT + memory rule `feedback_categorical_triggers_over_hardcoded_refs.md` at v5.15.5.F.4d.1.B.3 doc-layer refresh)
 - **Severity:** MEDIUM (always-loaded SKILL.md content drift; categorical-list duplication invisibly accumulated)

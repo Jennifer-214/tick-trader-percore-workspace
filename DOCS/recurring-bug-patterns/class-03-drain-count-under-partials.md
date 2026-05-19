@@ -4,6 +4,12 @@ class_id: 3
 title: Drain count under partials
 parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-18
+surface_tags: [oms-drainer, live-trading]
+severity: blocker
+recurrence_count: 1
+first_instance: v5.4.1
+closure_mechanism: rename core_id parameter to slot_id + static_assert that submit_queues sized for MAX_PORTFOLIO_POSITIONS not MAX_EXECUTION_CORES + regression test at controller_test.cpp v5.4.1.B2
+sister_classes: []
 ---
 
 ## Class 3 — Drain count under partials

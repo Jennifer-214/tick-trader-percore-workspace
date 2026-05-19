@@ -4,6 +4,12 @@ class_id: 15
 title: Function signature drift between plan and canonical typedef
 parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-18
+surface_tags: [registry, ml-inference, training]
+severity: high
+recurrence_count: 1
+first_instance: v5.14.5
+closure_mechanism: /trace-deps Step 3 signature-drift audit comparing plan signatures against canonical typedefs + CLAUDE_INTEGRATION.md recipe always citing canonical typedef line + plan-template discipline (paste typedef verbatim in plan)
+sister_classes: [14, 16]
 ---
 
 ## Class 15 — Function signature drift between plan and canonical typedef

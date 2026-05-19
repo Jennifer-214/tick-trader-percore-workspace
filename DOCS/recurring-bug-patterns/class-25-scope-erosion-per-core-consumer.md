@@ -4,6 +4,12 @@ class_id: 25
 title: Scope-erosion in per-core consumer function (registry says per-core; consumer reads from wrong scope)
 parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-18
+surface_tags: [cfg-flow, slow-path, hot-path, oms-drainer]
+severity: high
+recurrence_count: 2
+first_instance: v5.15.5.F.4c.3
+closure_mechanism: per-core consumer fns take const PerCoreCfg<F>* single-param (NEVER const ControllerConfig<F>*); two-param convenience sigs FORBIDDEN + genuine globals caller-resolved as scalar args + cfg-scope-discipline.md + /dod-audit + /bug-check grep signatures + documented exemption list
+sister_classes: [18, 23, 24, 26, 27]
 ---
 
 ## Class 25 — Scope-erosion in per-core consumer function (registry says per-core; consumer reads from wrong scope)

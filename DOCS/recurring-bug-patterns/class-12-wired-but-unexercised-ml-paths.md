@@ -4,6 +4,12 @@ class_id: 12
 title: Wired-but-unexercised ML paths (v5.9 sprint)
 parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-18
+surface_tags: [ml-inference, live-trading, training, cfg-flow]
+severity: high
+recurrence_count: 6
+first_instance: v5.4.x
+closure_mechanism: snapshot tests (v5.9.2a) catching function-body changes that preserve X-macro structure + 3-tier strict-mode (v5.9.3a refuse/warn-with-surface/silent-forbidden) + distinct PerCoreSnap fields per failure mode + /readiness Check 14 X-macro variant selection audit + /ml-audit pipeline walk
+sister_classes: [1, 18, 24]
 ---
 
 ## Class 12 — Wired-but-unexercised ML paths (v5.9 sprint)

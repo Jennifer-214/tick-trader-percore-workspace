@@ -4,6 +4,12 @@ class_id: 13
 title: Worker-thread struct extended without updating snap-capture-before-free block
 parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-18
+surface_tags: [training, gui-thread]
+severity: high
+recurrence_count: 3
+first_instance: v5.9.5b
+closure_mechanism: snap-capture invariant (worker captures every struct field to stack local before free(args)) + click-handler population invariant (every malloc-site populates every field) + /parity-check Section L production-caller field-population audit + /bug-check skill (v5.14) mechanizing detection greps
+sister_classes: [4, 18]
 ---
 
 ## Class 13 — Worker-thread struct extended without updating snap-capture-before-free block

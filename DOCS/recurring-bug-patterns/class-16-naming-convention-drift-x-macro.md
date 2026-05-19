@@ -4,6 +4,12 @@ class_id: 16
 title: Naming convention drift breaks X-macro dispatcher
 parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-18
+surface_tags: [registry, ml-inference]
+severity: high
+recurrence_count: 1
+first_instance: v5.14.5
+closure_mechanism: /trace-deps Step 4 naming-convention audit verifying plan functions use registry-expected prefix + per-registry canonical docs (FEATURE_INTERFACE.md, TARGET_INTERFACE.md) stating prefix + plan-template requirement to paste X-macro expansion line verbatim
+sister_classes: [14, 15, 23]
 ---
 
 ## Class 16 — Naming convention drift breaks X-macro dispatcher

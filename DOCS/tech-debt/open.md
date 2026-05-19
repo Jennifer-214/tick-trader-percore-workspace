@@ -27,6 +27,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-001 — Replace `tools/stamp_model.sh` bash CLI with thin C++ wrapper binary
 
+```yaml
+id: TECH_DEBT-001
+title: Replace tools/stamp_model.sh bash CLI with thin C++ wrapper binary
+severity: medium
+surface_tags: [cross-tool, wire-format, ml-inference]
+trigger: recurrence-count-2
+status: open
+opened: 2026-05-09
+related_specs: [DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-pattern.md]
+```
+
 - **Created:** 2026-05-09 by v5.14.2.E.3 (initial population; debt accrued since v5.10.0a.G.2)
 - **Severity:** MEDIUM
 - **Surface:** `tools/stamp_model.sh` (operator-side bash CLI; ~382 LOC of shell)
@@ -68,6 +79,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-002 — Centralized engine `ControllerEventLoop` removal
 
+```yaml
+id: TECH_DEBT-002
+title: Centralized engine ControllerEventLoop removal
+severity: low
+surface_tags: [slow-path, boot-time]
+trigger: next-maintenance-window
+status: open
+opened: 2026-05-09
+related_specs: []
+```
+
 - **Created:** 2026-05-09 by v5.14.2.E.3
 - **Severity:** LOW
 - **Surface:** `CoreFrameworks/ControllerEventLoop.hpp` + boot dispatch
@@ -85,6 +107,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-007 — Empirically verify regime_trend_strength + regime_vol_zscore add information vs existing features
+
+```yaml
+id: TECH_DEBT-007
+title: Empirically verify regime_trend_strength + regime_vol_zscore add information vs existing features
+severity: low
+surface_tags: [ml-inference, training]
+trigger: explicit-operator
+status: open
+opened: 2026-05-09
+related_specs: []
+```
 
 - **Created:** 2026-05-09 by v5.14.5.B (mid-coding audit follow-up; Path C decision)
 - **Severity:** LOW
@@ -109,6 +142,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-008 — Maker order MVP (v5.14.7) deferred indefinitely (no consistent order book data source)
+
+```yaml
+id: TECH_DEBT-008
+title: Maker order MVP deferred indefinitely (no consistent order book data source)
+severity: medium
+surface_tags: [live-trading, oms-drainer, backtest]
+trigger: explicit-operator
+status: open
+opened: 2026-05-09
+related_specs: []
+```
 
 - **Created:** 2026-05-09 by v5.14.6 close (initial decision pre-v5.14.8)
 - **Status changed:** 2026-05-09 (post-v5.14.8 close) → **DEFERRED-INDEFINITE**. Caramel's framing: "permanently defer this, im not sure when ill ever get a consistent source for orderbook data."
@@ -136,6 +180,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-009 — FOREACH_CFG_FIELD registry for non-stamp-bound cfg fields (boolean subset CLOSED v5.14.9.F.4; KIND_DOUBLE/_PCT subset CLOSED v5.15.5.F.4b)
 
+```yaml
+id: TECH_DEBT-009
+title: FOREACH_CFG_FIELD registry for non-stamp-bound cfg fields (partial close, residual phases queued)
+severity: low
+surface_tags: [registry, cfg-flow, parser, gui-thread]
+trigger: sub-ship-.F.4c-.F.4e
+status: open
+opened: 2026-05-09
+related_specs: [DESIGN_SPECS/framework-patterns/universal-cfg-field-registry-pattern.md, DESIGN_SPECS/framework-patterns/heterogeneous-registry-pattern.md, DESIGN_SPECS/framework-patterns/type-trait-dispatch-via-tt-namespace.md]
+```
+
 - **Created:** 2026-05-09 by v5.14.8 scope decision (Interpretation B; deferred N-site pattern audit)
 - **Severity:** MEDIUM → LOW → LOW (boolean + KIND_DOUBLE/_PCT subsets closed; KIND_INT/_BOOL/_STRING remain as future work; descriptor schema locked at .F.4b — remaining migration is mechanical row additions)
 - **Surface:** `CoreFrameworks/ControllerConfig.hpp` (struct), parser body inline in `ControllerConfig_Load<F>` template function, `GUI/SettingsPanel.hpp` field_defs[] (operator-facing render), `engine.cfg.example` (cfg.example doc — generation deferred to .F.4d)
@@ -157,6 +212,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-031 — MetricsLog FOREACH registry refactor (multi-writer row-shape mismatch)
 
+```yaml
+id: TECH_DEBT-031
+title: MetricsLog FOREACH registry refactor (multi-writer row-shape mismatch)
+severity: low
+surface_tags: [registry, wire-format]
+trigger: recurrence-count-3
+status: open
+opened: 2026-05-10
+related_specs: [DESIGN_SPECS/framework-patterns/calibration-log-column-registry.md]
+```
+
 - **Created:** 2026-05-10 by v5.14.10.F scope-cap decision (ShardedTradeLog migration shipped via FOREACH_TRADE_LOG_COL; MetricsLog deferred due to writer-shape heterogeneity)
 - **Severity:** LOW (cosmetic; existing 2-writer pattern works; pattern would help future column additions but not blocking)
 - **Surface:** `DataStream/MetricsLog.hpp` — 27-column CSV with 2 writers producing DIFFERENT row shapes:
@@ -177,6 +243,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-030 — cfg=2 dual-mode calibration log telemetry columns (deferred from v5.14.10.D)
 
+```yaml
+id: TECH_DEBT-030
+title: cfg=2 dual-mode calibration log telemetry columns
+severity: low
+surface_tags: [oms-drainer, ml-inference, wire-format, registry]
+trigger: explicit-operator
+status: open
+opened: 2026-05-10
+related_specs: [DESIGN_SPECS/framework-patterns/calibration-log-column-registry.md]
+```
+
 - **Created:** 2026-05-10 by v5.14.10.D scope-cap decision (FOREACH_CALIB_LOG_COL refactor shipped; cfg=2-specific columns deferred for cross-component plumbing)
 - **Severity:** LOW (operator-facing diagnostic feature; cfg=2 dispatch ships in v5.14.10.B; calibration log columns visualize the A/B comparison offline)
 - **Surface:** `DataStream/CalibLogColRegistry.hpp` FOREACH_CALIB_LOG_COL registry; `CoreFrameworks/OrderManager.hpp` HandleFill calibration log row emit; `CoreFrameworks/OrderManager.hpp` OMS state per-slot fields for predict-time → fill-time data flow
@@ -190,6 +267,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-011 — FOREACH_PER_CORE_SNAP_FIELD registry for general visible-state snapshot fields
+
+```yaml
+id: TECH_DEBT-011
+title: FOREACH_PER_CORE_SNAP_FIELD registry for general visible-state snapshot fields
+severity: medium
+surface_tags: [gui-thread, registry, slow-path]
+trigger: recurrence-count-5
+status: open
+opened: 2026-05-09
+related_specs: []
+```
 
 - **Created:** 2026-05-09 by v5.14.8 scope decision (Interpretation B; deferred N-site pattern audit)
 - **Severity:** MEDIUM (large N: ~30+ visible-state fields; recurring class but performance-sensitive)
@@ -208,6 +296,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-012 — FOREACH_OMS_STATE registry for OrderManager state fields
 
+```yaml
+id: TECH_DEBT-012
+title: FOREACH_OMS_STATE registry for OrderManager state fields
+severity: medium
+surface_tags: [oms-drainer, registry, wire-format]
+trigger: recurrence-count-3
+status: open
+opened: 2026-05-09
+related_specs: []
+```
+
 - **Created:** 2026-05-09 by v5.14.8 scope decision (Interpretation B; deferred N-site pattern audit)
 - **Severity:** MEDIUM (recurring pattern; performance-CRITICAL surface — drainer thread reads OMS state every cycle)
 - **Surface:** `CoreFrameworks/OrderManager.hpp` (OrderManagerState struct + Init), drainer thread reads, snapshot save/load
@@ -221,6 +320,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-018 — Codify `/precoding-audit` Layer 1 orchestrator skill
+
+```yaml
+id: TECH_DEBT-018
+title: Codify /precoding-audit Layer 1 orchestrator skill
+severity: low
+surface_tags: [ci-tooling]
+trigger: recurrence-count-5
+status: open
+opened: 2026-05-10
+related_specs: []
+```
 
 - **Created:** 2026-05-10 by v5.14.9.D (post-test-strength-audit ship discussion)
 - **Severity:** LOW (workflow improvement; manual dispatch already works)
@@ -247,6 +357,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-020 — Per-core override SELECT macro factoring (BITMAP_SELECT)
+
+```yaml
+id: TECH_DEBT-020
+title: Per-core override SELECT macro factoring (BITMAP_SELECT)
+severity: low
+surface_tags: [bitmap-packed, registry, cfg-flow]
+trigger: recurrence-count-6
+status: open
+opened: 2026-05-10
+related_specs: [DESIGN_SPECS/framework-patterns/bitmap-flag-api.md]
+```
 
 - **Created:** 2026-05-10 by v5.14.9.F.6 design (/dod-audit MEDIUM.1 finding)
 - **Severity:** LOW (micro-opt; defer until threshold met)
@@ -280,6 +401,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-021 — Post-paper-test profiling: domain bitmap collapse OR further split decisions
 
+```yaml
+id: TECH_DEBT-021
+title: Post-paper-test profiling — domain bitmap collapse OR further split decisions
+severity: low
+surface_tags: [bitmap-packed, cfg-flow, slow-path, paper-test]
+trigger: paper-test
+status: open
+opened: 2026-05-10
+related_specs: [DESIGN_SPECS/framework-patterns/heterogeneous-registry-pattern.md]
+```
+
 - **Created:** 2026-05-10 by v5.14.9.F Option C decomposition (/dod-audit MEDIUM.2 finding + .I scope plan)
 - **Severity:** LOW (profiling-driven optimization; depends on paper-test signal)
 - **Surface:** ControllerConfig 5 domain bitmap fields (oms_cfg_flags + gate_cfg_flags + risk_cfg_flags + ml_cfg_flags + ops_cfg_flags); FOREACH_<DOMAIN>_CFG_FLAG registries
@@ -301,6 +433,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-022 — Engine.cfg parser perfect-hash / trie dispatch
 
+```yaml
+id: TECH_DEBT-022
+title: Engine.cfg parser perfect-hash / trie dispatch
+severity: low
+surface_tags: [parser, boot-time, cfg-flow]
+trigger: next-maintenance-window
+status: open
+opened: 2026-05-10
+related_specs: []
+```
+
 - **Created:** 2026-05-10 by v5.14.9.F.4 design (/dod-audit LOW finding — not blocking but flagged for awareness)
 - **Severity:** LOW (boot-only path; not latency-critical)
 - **Surface:** `CoreFrameworks/ControllerConfigParser.hpp` parse_csv_engine_config function
@@ -314,6 +457,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-025 — Convert DESIGN_SPECS docs to invocable skills (long-horizon idea)
+
+```yaml
+id: TECH_DEBT-025
+title: Convert DESIGN_SPECS docs to invocable skills (long-horizon idea)
+severity: low
+surface_tags: [ci-tooling]
+trigger: explicit-operator
+status: open
+opened: 2026-05-10
+related_specs: []
+```
 
 - **Created:** 2026-05-10 by v5.14.9.I post-mortem closure (Caramel suggestion)
 - **Severity:** LOW (workflow ergonomics, not architecture)
@@ -329,6 +483,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-026 — Per-core override of `bandit_algorithm` (per-core A/B testing)
 
+```yaml
+id: TECH_DEBT-026
+title: Per-core override of bandit_algorithm (per-core A/B testing)
+severity: low
+surface_tags: [cfg-flow, ml-inference, slow-path]
+trigger: explicit-operator
+status: open
+opened: 2026-05-10
+related_specs: [DESIGN_SPECS/framework-patterns/per-bit-per-core-override-pattern.md]
+```
+
 - **Created:** 2026-05-10 by /dod-audit run on v5.14.10-bayesian-thompson-bandit plan
 - **Severity:** LOW
 - **Surface:** `Strategies/StrategyParameters.hpp` ML_BuildParameters bandit dispatch (post-v5.14.10 introduction); `CoreFrameworks/PerCoreOverride.hpp` (per-bit-per-core override domains)
@@ -342,6 +507,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-029 — Source file length reduction (large headers harm maintainability)
+
+```yaml
+id: TECH_DEBT-029
+title: Source file length reduction (large headers harm maintainability)
+severity: low
+surface_tags: [test-infrastructure]
+trigger: next-maintenance-window
+status: open
+opened: 2026-05-10
+related_specs: []
+```
 
 - **Created:** 2026-05-10 by Caramel musing during v5.14.10.0 PerCoreSnap layout work
 - **Severity:** LOW (cosmetic / maintainability; no behavior or perf impact)
@@ -364,6 +540,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-032 — CLAUDE.md context-management cleanup (trim items 19-24 + handoff-skill-managed context loading)
 
+```yaml
+id: TECH_DEBT-032
+title: CLAUDE.md context-management cleanup (trim items 19-24 + handoff-skill-managed context loading)
+severity: medium
+surface_tags: []
+trigger: next-maintenance-window
+status: open
+opened: 2026-05-11
+related_specs: []
+```
+
 - **Created:** 2026-05-11 by Caramel observation during v5.14.11 plan-synthesis CLAUDE.md item 25 addition
 - **Severity:** MEDIUM (maintainability + per-session context efficiency; no functional impact)
 - **Surface:** `CLAUDE.md` (always-loaded into every Claude Code session); reference docs `DOCS/CLAUDE_INTEGRATION.md` + `DOCS/CLAUDE_INVARIANTS.md` + `DOCS/CLAUDE_ML_INVARIANTS.md` + `DOCS/CLAUDE_REVIEW.md` + `DOCS/CLAUDE_FOXML_SUITE.md` (split-load on-demand); handoff skill spec at `.claude/skills/handoff/SKILL.md`
@@ -380,6 +567,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-034 — FOREACH_CLI_MODE registry + batch mode CLI infrastructure + per-run logging structure (deferred from v5.15.3)
+
+```yaml
+id: TECH_DEBT-034
+title: FOREACH_CLI_MODE registry + batch mode CLI infrastructure + per-run logging structure
+severity: low
+surface_tags: [registry, training, ci-tooling, gui-thread]
+trigger: explicit-operator
+status: open
+opened: 2026-05-12
+related_specs: []
+```
 
 - **Created:** 2026-05-12 by v5.15.3 plan-synthesis (post-audit reframe;
   speculative scope cut to focus v5.15.3 on root-cause structural fix)
@@ -422,6 +620,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-035 — Engine-side state-exposure protocol + DoubleBufferedAtomic<T> template extraction (deferred from v5.15.4)
+
+```yaml
+id: TECH_DEBT-035
+title: Engine-side state-exposure protocol + DoubleBufferedAtomic<T> template extraction
+severity: low
+surface_tags: [concurrency, gui-thread]
+trigger: explicit-operator
+status: open
+opened: 2026-05-12
+related_specs: []
+```
 
 - **Created:** 2026-05-12 by v5.15.4 plan-synthesis (post-audit reframe;
   DoubleBufferedAtomic<T> template extract premature because HotSwap
@@ -470,6 +679,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-036 — Architectural-field AUTOPOPULATE redesign (registry tuple restructure)
 
+```yaml
+id: TECH_DEBT-036
+title: Architectural-field AUTOPOPULATE redesign (registry tuple restructure)
+severity: low
+surface_tags: [registry, wire-format, ml-inference]
+trigger: recurrence-count-5
+status: open
+opened: 2026-05-12
+related_specs: []
+```
+
 - **Created:** 2026-05-12 by v5.15.3.A PARITY-022 discovery
 - **Severity:** LOW (no active issue; macro is unused; latent bug
   quarantined at v5.15.3.A)
@@ -510,6 +730,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-038 — FOREACH_BITMAP_WIDTH X-macro registry deferred (BITMAP_BIT/POPCOUNT/FIRST families)
+
+```yaml
+id: TECH_DEBT-038
+title: FOREACH_BITMAP_WIDTH X-macro registry deferred (BITMAP_BIT/POPCOUNT/FIRST families)
+severity: low
+surface_tags: [registry, bitmap-packed]
+trigger: recurrence-count-4
+status: open
+opened: 2026-05-12
+related_specs: []
+```
 
 - **Created:** 2026-05-12 by v5.15.5.A.1 design discussion (operator-
   posed: "would this benefit from a registry?")
@@ -562,6 +793,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-039 — ConfidenceScorer_UpdateAndMark CLOCK_REALTIME residual (drift-history wall-clock dependency)
 
+```yaml
+id: TECH_DEBT-039
+title: ConfidenceScorer_UpdateAndMark CLOCK_REALTIME residual (drift-history wall-clock dependency)
+severity: low
+surface_tags: [oms-drainer, ml-inference, slow-path]
+trigger: explicit-operator
+status: open
+opened: 2026-05-12
+related_specs: []
+```
+
 - **Created:** 2026-05-12 by /merge-scan during v5.15.5.B pre-coding audit (Finding 2 residual)
 - **Severity:** LOW (operationally negligible; per-fill cadence not per-cycle; wall-clock is semantically appropriate for drift-history's age-anchoring)
 - **Surface:** `CoreFrameworks/ControllerEventLoop.hpp:1368` — `ConfidenceScorer_UpdateAndMark` call site does its OWN `clock_gettime(CLOCK_REALTIME, &ts)` inside drift-history sampling path
@@ -576,6 +818,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-041 — Multi-bit state encoding codebase audit + remaining candidate applications
+
+```yaml
+id: TECH_DEBT-041
+title: Multi-bit state encoding codebase audit + remaining candidate applications
+severity: medium
+surface_tags: [bitmap-packed, slow-path, registry]
+trigger: explicit-operator
+status: open
+opened: 2026-05-13
+related_specs: [DESIGN_SPECS/refactor-patterns/multi-bit-state-encoding-pattern.md]
+```
 
 - **Created:** 2026-05-13 by v5.15.5.C.2.1 close (first application shipped; codebase audit deferred)
 - **Severity:** MEDIUM (~120-150 bytes savable across EventLoopState + per-cycle branchless dispatch wins; bounded scope; design substrate already in place via `DESIGN_SPECS/refactor-patterns/multi-bit-state-encoding-pattern.md` + first application `MemHeaders/OmsExitPredictorMetaRegistry.hpp`)
@@ -604,6 +857,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-042 — Registry-driven multi-bit slot overlap static_asserts (OmsStateFlagRegistry hybrid layout)
 
+```yaml
+id: TECH_DEBT-042
+title: Registry-driven multi-bit slot overlap static_asserts (OmsStateFlagRegistry hybrid layout)
+severity: medium
+surface_tags: [registry, bitmap-packed, oms-drainer]
+trigger: recurrence-count-2
+status: open
+opened: 2026-05-13
+related_specs: [DESIGN_SPECS/refactor-patterns/multi-bit-state-encoding-pattern.md]
+```
+
 - **Created:** 2026-05-13 by /dod-audit MEDIUM-1 on commit `d410525` (v5.15.5.C.3 Phase 3b checkpoint)
 - **Severity:** MEDIUM
 - **Surface:** `MemHeaders/OmsStateFlagRegistry.hpp:190-209`
@@ -617,6 +881,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-043 — OmsExitPredictorMetaRegistry custom OMS_META_* duplicates generic MBS_* primitives
+
+```yaml
+id: TECH_DEBT-043
+title: OmsExitPredictorMetaRegistry custom OMS_META_* duplicates generic MBS_* primitives
+severity: low
+surface_tags: [oms-drainer, bitmap-packed, registry]
+trigger: explicit-operator
+status: open
+opened: 2026-05-13
+related_specs: [DESIGN_SPECS/refactor-patterns/multi-bit-state-encoding-pattern.md]
+```
 
 - **Created:** 2026-05-13 by /dod-audit LOW-1 on commit `d410525` (v5.15.5.C.3 Phase 3b checkpoint)
 - **Severity:** LOW
@@ -632,6 +907,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-044 — OMS_PROJECT_INIT_BIT / RESET_BIT use if/else; branchless mask-select for consistency with item 18(a)
 
+```yaml
+id: TECH_DEBT-044
+title: OMS_PROJECT_INIT_BIT / RESET_BIT use if/else; branchless mask-select for consistency
+severity: low
+surface_tags: [oms-drainer, boot-time]
+trigger: recurrence-count-2
+status: open
+opened: 2026-05-13
+related_specs: [DESIGN_SPECS/refactor-patterns/latency-vs-cache-decision-framework.md]
+```
+
 - **Created:** 2026-05-13 by /dod-audit LOW-2 on commit `d410525` (v5.15.5.C.3 Phase 3b checkpoint)
 - **Severity:** LOW
 - **Surface:** `MemHeaders/OmsFieldRegistry.hpp:371-375` (OMS_PROJECT_INIT_BIT) + `:410-414` (OMS_PROJECT_RESET_DO_RESET_BIT)
@@ -645,6 +931,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-045 — Phase 7.B runtime bench gate integration (template-dispatch wrappers + N instrumented sites + TUI surface)
+
+```yaml
+id: TECH_DEBT-045
+title: Phase 7.B runtime bench gate integration (template-dispatch wrappers + N instrumented sites + TUI surface)
+severity: low
+surface_tags: [oms-drainer, ci-tooling, gui-thread]
+trigger: explicit-operator
+status: open
+opened: 2026-05-13
+related_specs: [DESIGN_SPECS/feature-patterns/runtime-toggleable-bench-gate-pattern.md]
+```
 
 - **Created:** 2026-05-13 by v5.15.5.C.3 Phase 7.A close (cfg + LatencyHistogram substrate shipped; integration deferred to focused follow-up)
 - **Severity:** LOW (operator-facing feature; substrate complete; integration is mechanical wiring + TUI display)
@@ -674,6 +971,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-046 — Fast-path companion accessor pattern (`_Fast` suffix for canonical runtime parameter) codification deferred to 2nd application
 
+```yaml
+id: TECH_DEBT-046
+title: Fast-path companion accessor pattern (_Fast suffix for canonical runtime parameter) codification
+severity: low
+surface_tags: [ml-inference, slow-path]
+trigger: recurrence-count-2
+status: open
+opened: 2026-05-13
+related_specs: [DESIGN_SPECS/meta-disciplines/pattern-codification-lifecycle.md]
+```
+
 - **Created:** 2026-05-13 by v5.15.5.D close (first application shipped as `BookImbHistory_MeanShortFast`; codification deferred per pattern-codification-lifecycle.md Stage 0 "Skip when pattern is ONE-OFF" rule)
 - **Severity:** LOW (no bug; pattern documentation gap; cohort migration on 2nd application closes the gap)
 - **Surface:**
@@ -692,6 +1000,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-049 — AoS time-series pattern codification deferred to 2nd application
+
+```yaml
+id: TECH_DEBT-049
+title: AoS time-series pattern codification deferred to 2nd application
+severity: low
+surface_tags: [ml-inference, slow-path]
+trigger: recurrence-count-2
+status: open
+opened: 2026-05-13
+related_specs: [DESIGN_SPECS/meta-disciplines/pattern-codification-lifecycle.md, DESIGN_SPECS/refactor-patterns/latency-vs-cache-decision-framework.md]
+```
 
 - **Created:** 2026-05-13 by v5.15.5.E.B close (first application shipped as DriftHistory AoS DriftSample interleave; codification deferred per pattern-codification-lifecycle.md Stage 0 "Skip when pattern is ONE-OFF" rule)
 - **Severity:** LOW (no bug; pattern documentation gap; cohort migration on 2nd application closes the gap)
@@ -713,6 +1032,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-050 — controller.cfg integration into universal cfg field registry deferred to v5.15.6
 
+```yaml
+id: TECH_DEBT-050
+title: controller.cfg integration into universal cfg field registry deferred to v5.15.6
+severity: medium
+surface_tags: [cfg-flow, gui-thread, registry]
+trigger: sub-ship-v5.15.6.A
+status: open
+opened: 2026-05-14
+related_specs: [DESIGN_SPECS/framework-patterns/categorical-tag-applicability-pattern.md]
+```
+
 - **Created:** 2026-05-14 by v5.15.5.F.4 planning (universal cfg field registry sprint scope cap)
 - **Severity:** MEDIUM (operator-visible — controller.cfg currently requires manual text edit)
 - **Surface:** `controller.cfg` + corresponding ControllerCfg struct + foxml_suite Settings tab
@@ -726,6 +1056,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-051 — secrets.cfg integration with IS_SECRET metadata deferred to v5.15.6
+
+```yaml
+id: TECH_DEBT-051
+title: secrets.cfg integration with IS_SECRET metadata deferred to v5.15.6
+severity: medium
+surface_tags: [cfg-flow, gui-thread, live-trading, registry]
+trigger: sub-ship-v5.15.6.B
+status: open
+opened: 2026-05-14
+related_specs: [DESIGN_SPECS/framework-patterns/universal-cfg-field-registry-pattern.md]
+```
 
 - **Created:** 2026-05-14 by v5.15.5.F.4 planning
 - **Severity:** MEDIUM (operator-visible + security-critical — secrets currently require manual text edit + no UX safeguards)
@@ -741,6 +1082,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-052 — Training cfg integration deferred to v5.15.6
 
+```yaml
+id: TECH_DEBT-052
+title: Training cfg integration deferred to v5.15.6
+severity: medium
+surface_tags: [training, cfg-flow, gui-thread, registry]
+trigger: sub-ship-v5.15.6.C
+status: open
+opened: 2026-05-14
+related_specs: [DESIGN_SPECS/framework-patterns/universal-cfg-field-registry-pattern.md]
+```
+
 - **Created:** 2026-05-14 by v5.15.5.F.4 planning
 - **Severity:** MEDIUM (operator-visible — training params currently scattered between foxml_suite Training panel + Python scripts)
 - **Surface:** training cfg (xgb hyperparameters + training pipeline params) + TrainingCfg struct + foxml_suite Training panel
@@ -754,6 +1106,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-053 — Phase 2 cfg struct unification (merge cfg structs into one) deferred to v5.16+
+
+```yaml
+id: TECH_DEBT-053
+title: Phase 2 cfg struct unification (merge cfg structs into one) deferred to v5.16+
+severity: low
+surface_tags: [cfg-flow, registry]
+trigger: explicit-operator
+status: open
+opened: 2026-05-14
+related_specs: []
+```
 
 - **Created:** 2026-05-14 by v5.15.5.F.4 planning
 - **Severity:** LOW (architectural cleanup; Phase 1 GUI unification at v5.15.5.F.4 + v5.15.6 covers operator UX needs)
@@ -769,6 +1132,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-054 — Regime + risk-mode + feature categorical rollout deferred to v5.16+
 
+```yaml
+id: TECH_DEBT-054
+title: Regime + risk-mode + feature categorical rollout deferred to v5.16+
+severity: low
+surface_tags: [cfg-flow, registry, gui-thread, ml-inference]
+trigger: explicit-operator
+status: open
+opened: 2026-05-14
+related_specs: [DESIGN_SPECS/framework-patterns/categorical-tag-applicability-pattern.md]
+```
+
 - **Created:** 2026-05-14 by v5.15.5.F.4 planning
 - **Severity:** LOW (operator-visible — additional category dimensions provide finer-grained UX filtering)
 - **Surface:** CfgFieldDescriptor's `applies_to_regime_cat` / `applies_to_risk_cat` columns (defaulted to `_CAT_ALL` at v5.15.5.F.4); FOREACH_REGIME + FOREACH_RISK_MODE registries; FOREACH_FEATURE for feature categorical
@@ -782,6 +1156,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-055 — ResolvedCoreCfg AVX-512 batch-load + prefetch + delta-cache deferred to v5.16+
+
+```yaml
+id: TECH_DEBT-055
+title: ResolvedCoreCfg AVX-512 batch-load + prefetch + delta-cache deferred to v5.16+
+severity: low
+surface_tags: [slow-path, cfg-flow]
+trigger: paper-test
+status: open
+opened: 2026-05-14
+related_specs: [DESIGN_SPECS/refactor-patterns/slow-path-cfg-resolution-cache-pattern.md]
+```
 
 - **Created:** 2026-05-14 by v5.15.5.F.4 planning (.F.4e ship logs these as Future Work paths)
 - **Severity:** LOW (performance optimization stack on top of `.F.4e` resolution cache substrate; activation deferred until measurement shows need)
@@ -800,6 +1185,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-056 — Codebase-wide bitpacking + branchless API audit (Caramel's later-review sweep)
 
+```yaml
+id: TECH_DEBT-056
+title: Codebase-wide bitpacking + branchless API audit
+severity: low
+surface_tags: [bitmap-packed, slow-path, registry]
+trigger: explicit-operator
+status: open
+opened: 2026-05-14
+related_specs: [DESIGN_SPECS/refactor-patterns/multi-bit-state-encoding-pattern.md, DESIGN_SPECS/framework-patterns/bitmap-flag-api.md]
+```
+
 - **Created:** 2026-05-14 by v5.15.5.F.4d planning (Caramel's explicit ask post-Option-D-locked)
 - **Severity:** LOW (hygiene; not blocking; DOD discipline reinforcement)
 - **Surface:** entire codebase — any struct with ≥2 adjacent `uint8_t state_<N>` fields (where each represents enum ≤4 values); any dispatch endpoint using `if (override.X) { use override } else { use default }` shape instead of branchless mask compute
@@ -816,6 +1212,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-057 — Migrate ~15 unmigrated registries to FOREACH_REGISTRY meta-registry
 
+```yaml
+id: TECH_DEBT-057
+title: Migrate ~15 unmigrated registries to FOREACH_REGISTRY meta-registry
+severity: low
+surface_tags: [registry]
+trigger: next-maintenance-window
+status: open
+opened: 2026-05-14
+related_specs: [DESIGN_SPECS/framework-patterns/meta-registry-pattern-for-codebase-registry-discipline.md]
+```
+
 - **Created:** 2026-05-14 by v5.15.5.F.4d planning
 - **Severity:** LOW (each migration is a 1-line PR; primarily discoverability + CI cross-check benefit)
 - **Surface:** ~15 X-macro registries that aren't yet declared in `CoreFrameworks/RegistryRoster.hpp` `FOREACH_REGISTRY` at .F.4d initial ship. Examples: FOREACH_SHALT, FOREACH_DEGRADATION_CURVE, FOREACH_BANDIT_ALGORITHM, FOREACH_BARRIER_BLEND_MODE, FOREACH_SLOW_PATH_GATE, 5 FOREACH_*_CFG_FLAG bitmap registries, FOREACH_CFG_DERIVED_INFERENCE_CFG, FOREACH_STAMP_BOUND_MODEL_CONST_PRE_CFG/_POST_CFG, FOREACH_FEATURE, FOREACH_REGIME, etc.
@@ -829,6 +1236,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-058 — REGISTRY_TOPOLOGY.md auto-generation Python script
+
+```yaml
+id: TECH_DEBT-058
+title: REGISTRY_TOPOLOGY.md auto-generation Python script
+severity: low
+surface_tags: [ci-tooling, registry]
+trigger: recurrence-count-25
+status: open
+opened: 2026-05-14
+related_specs: [DESIGN_SPECS/framework-patterns/meta-registry-pattern-for-codebase-registry-discipline.md]
+```
 
 - **Created:** 2026-05-14 by v5.15.5.F.4d planning
 - **Severity:** LOW (manual REGISTRY_TOPOLOGY.md ships at .F.4d; auto-gen is hygiene improvement)
@@ -844,6 +1262,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-059 — stamp-vs-runtime-drift-detection-registry.md wide variant DEPRECATION (post-.F.4d ship)
 
+```yaml
+id: TECH_DEBT-059
+title: stamp-vs-runtime-drift-detection-registry.md wide variant DEPRECATION
+severity: low
+surface_tags: [registry, wire-format]
+trigger: sub-ship-.F.4d
+status: open
+opened: 2026-05-14
+related_specs: [DESIGN_SPECS/framework-patterns/sidecar-override-pattern-for-registry-auto-flows.md]
+```
+
 - **Created:** 2026-05-14 by v5.15.5.F.4d planning
 - **Severity:** LOW (DESIGN_SPEC update; documents the pattern's evolution post-.F.4d superseding by sidecar pattern)
 - **Surface:** `workspace/DESIGN_SPECS/framework-patterns/stamp-vs-runtime-drift-detection-registry.md` § "Wide variant (FOREACH_CFG_DRIFT_CHECK — 10-col tuple, multi-axis Y3, ack-aware)"
@@ -858,6 +1287,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-064 — Headless operation option (deferred 2026-05-14 — considered, GUI stays primary for now)
 
+```yaml
+id: TECH_DEBT-064
+title: Headless operation option
+severity: low
+surface_tags: [gui-thread, ci-tooling]
+trigger: explicit-operator
+status: open
+opened: 2026-05-14
+related_specs: []
+```
+
 - **Created:** 2026-05-14 by v5.15.5.F.4c session — Caramel considered prioritizing headless operation; decided GUI remains primary for now; metadata-bit hooks (TECH_DEBT-066, 067) kept as future optionality.
 - **Severity:** LOW (deferral doc; captures option not commitment)
 - **Surface:** `engine` binary (existing ANSI TUI) + future CLI subcommands (TECH_DEBT-066) + structured log output (TECH_DEBT-065/067)
@@ -871,6 +1311,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-065 — JSON-structured log format for engine status snapshots
+
+```yaml
+id: TECH_DEBT-065
+title: JSON-structured log format for engine status snapshots
+severity: medium
+surface_tags: [wire-format, slow-path, gui-thread]
+trigger: sub-ship-.F.4-close
+status: open
+opened: 2026-05-14
+related_specs: []
+```
 
 - **Created:** 2026-05-14 by v5.15.5.F.4c session (operator UX considerations conversation)
 - **Severity:** LOW-MEDIUM (foundational headless observability feature)
@@ -892,6 +1343,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-066 — `engine` CLI subcommands for headless operator workflow
 
+```yaml
+id: TECH_DEBT-066
+title: engine CLI subcommands for headless operator workflow
+severity: high
+surface_tags: [cross-tool, cfg-flow, live-trading]
+trigger: explicit-operator
+status: open
+opened: 2026-05-14
+related_specs: []
+```
+
 - **Created:** 2026-05-14 by v5.15.5.F.4c session (operator UX considerations conversation)
 - **Severity:** HIGH (load-bearing for headless transition; replaces `.F.4e`'s original "5 GUI metadata bits" scope)
 - **Surface:** NEW `engine` main() argument dispatch + 4-6 CLI subcommand handlers; consume derived filters from `.F.4d` framework
@@ -911,6 +1373,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-067 — Per-core + per-path structured log emit (TUI + log granularity)
+
+```yaml
+id: TECH_DEBT-067
+title: Per-core + per-path structured log emit (TUI + log granularity)
+severity: medium
+surface_tags: [wire-format, slow-path, hot-path, gui-thread, producer, oms-drainer]
+trigger: sub-ship-.F.4-close
+status: open
+opened: 2026-05-14
+related_specs: []
+```
 
 - **Created:** 2026-05-14 by v5.15.5.F.4c session (operator UX considerations conversation) (Caramel's explicit Q2)
 - **Severity:** MEDIUM (operator observability granularity for production debugging)
@@ -932,6 +1405,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-068 — ML-side enum X-macro registries (ml_backend / regime_model_backend / confidence_ic_variant / csv_sort_check_mode / reconcile_mode / ensemble_blend_mode)
 
+```yaml
+id: TECH_DEBT-068
+title: ML-side enum X-macro registries (6 cohort)
+severity: medium
+surface_tags: [registry, ml-inference, cfg-flow]
+trigger: sub-ship-.F.4-close
+status: open
+opened: 2026-05-14
+related_specs: [DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md, DESIGN_SPECS/framework-patterns/universal-registry-bitmap-dispatcher-pattern.md]
+```
+
 - **Created:** 2026-05-14 by v5.15.5.F.4c session (cfg field audit identified these as currently-open-ended ints; operator flagged as important follow-up)
 - **Severity:** MEDIUM (operator-UX quality; not blocking; enables INT_ENUM promotion + warn-on-invalid + label-token parsing)
 - **Surface:** create X-macro registries with `_FromString` / `_ToString` / `<NAME>_LABELS[]` per `BanditAlgorithmRegistry.hpp` / `BarrierBlendModeRegistry.hpp` / `ConfidenceScore.hpp::FOREACH_DEGRADATION_CURVE` precedent:
@@ -951,6 +1435,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-069 — Codebase-wide registry-table `static const` → `inline constexpr` promotion sweep
+
+```yaml
+id: TECH_DEBT-069
+title: Codebase-wide registry-table static const → inline constexpr promotion sweep
+severity: low
+surface_tags: [registry, boot-time]
+trigger: sub-ship-v5.15.5.F.6
+status: open
+opened: 2026-05-14
+related_specs: []
+```
 
 - **Created:** 2026-05-14 by v5.15.5.F.4c session (`g_cfg_field_descriptors[]` constexpr promotion at `.F.4c` validated the pattern; sweep extends to peer registries)
 - **Severity:** LOW (mechanical optimization; not blocking; quality-of-implementation)
@@ -973,6 +1468,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-070 — Compile-time SubmitCommand required-field enforcement (C++17 friend-scope wall)
 
+```yaml
+id: TECH_DEBT-070
+title: Compile-time SubmitCommand required-field enforcement (C++17 friend-scope wall)
+severity: low
+surface_tags: [oms-drainer, test-infrastructure]
+trigger: sub-ship-cpp20-upgrade
+status: open
+opened: 2026-05-15
+related_specs: []
+```
+
 - **Created:** 2026-05-15 by v5.15.5.F.4c.3 WIP2d-1.B.1 (option-A `private` default ctor + `friend` access for known producers failed under C++17 friend-scope rules at controller_test scope).
 - **Severity:** LOW (current runtime guard works; structural enforcement is "better discipline" not "fixes broken behavior").
 - **Surface:** `CoreFrameworks/SubmitCommand.hpp` POD struct + required-field ctor `SubmitCommand(core_id, order_type, qty, intended_price, fee_rate, ...)`. Today: BOTH the default ctor (for SPSC ring slot init) AND the required-field ctor are `public`; the default ctor is named `SubmitCommand{}` and produces a zero-init slot. A caller that forgets to overwrite fields before push silently sends a zero-init command. Runtime guard: ShardedLiveSafety_PreSubmitGate validates per-field non-zero invariants and rejects malformed commands; the rejection logs filename+line.
@@ -987,6 +1493,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-071 — Portfolio_OpenSlot / CloseSlot + TradeLog_Record* mask-param refactor (Pattern 5 alternative)
 
+```yaml
+id: TECH_DEBT-071
+title: Portfolio_OpenSlot / CloseSlot + TradeLog_Record* mask-param refactor (Pattern 5 alternative)
+severity: low
+surface_tags: [oms-drainer, slow-path]
+trigger: paper-test
+status: open
+opened: 2026-05-15
+related_specs: [DESIGN_SPECS/framework-patterns/sink-fn-pointer-for-optional-side-effect-pattern.md, DESIGN_SPECS/refactor-patterns/branchless-dispatch-discipline.md]
+```
+
 - **Created:** 2026-05-15 by v5.15.5.F.4c.3 WIP2d-1.B.1 (during architectural decision for trade_log + calibration_log emit branch elimination; option B "mask params at call sites" considered but rejected in favor of option C "Pattern 5 sink-fn-pointer").
 - **Severity:** LOW (Pattern 5 sink-fn-pointer is already deployed; this is an alternative shape to evaluate post-paper-test).
 - **Surface:** `CoreFrameworks/Portfolio.hpp::Portfolio_OpenSlot / Portfolio_CloseSlot` + `CoreFrameworks/TradeLog.hpp::TradeLog_RecordEntry / TradeLog_RecordExit`. Today: Pattern 5 sink-fn-pointer dispatches via `on_entry_fill_emit / on_exit_fill_emit / on_exit_calibration` fn-pointer fields in OmsState, with `noop_fill_emit` as default and `real_*` attached at boot when log paths are configured.
@@ -1000,6 +1517,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-072 — Reconcile_ApplyMissedFills exchange-fee-from-source corner case (fully-released Orders fall back to cores[0])
+
+```yaml
+id: TECH_DEBT-072
+title: Reconcile_ApplyMissedFills exchange-fee-from-source corner case (fully-released Orders fall back to cores[0])
+severity: medium
+surface_tags: [live-trading, oms-drainer]
+trigger: sub-ship-live-readiness
+status: open
+opened: 2026-05-15
+related_specs: [DESIGN_SPECS/refactor-patterns/cfg-scope-discipline.md]
+```
 
 - **Created:** 2026-05-15 by v5.15.5.F.4c.3 WIP2d-1.B.1 (during Reconcile branchless bitmap-search closure; surfaced as a corner case the synth-binding can't fully resolve).
 - **Severity:** MEDIUM (correctness; rare path — only fires when exchange reports a missed fill for an Order whose in-flight slot has been fully released before reconciliation runs).
@@ -1017,6 +1545,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-073 — C++20 upgrade ship (post-v5.15 umbrella)
 
+```yaml
+id: TECH_DEBT-073
+title: C++20 upgrade ship (post-v5.15 umbrella)
+severity: medium
+surface_tags: [boot-time, ci-tooling, test-infrastructure]
+trigger: sub-ship-v5.16
+status: open
+opened: 2026-05-15
+related_specs: []
+```
+
 - **Created:** 2026-05-15 by v5.15.5.F.4c.3 WIP2d-1.B.1 (deferred C++17→C++20 upgrade after C++17 friend-scope wall on SubmitCommand option A; multiple downstream tech debt items depend on C++20 features).
 - **Severity:** MEDIUM (infrastructure upgrade; unlocks several deferred items + new branchless patterns; not blocking immediate work but unlocks structural-enforcement options not expressible in C++17).
 - **Surface:** entire codebase — build flags (`-std=c++20`), compiler version pin (gcc 12+), `<bit>` header replaces `__builtin_*` intrinsic usage, `[[likely]]`/`[[unlikely]]` annotations replace `__builtin_expect`, `concepts` enable compile-time required-field enforcement, designated-init for clearer struct construction, `<source_location>` for richer assert messages, `consteval` for compile-time-guaranteed evaluation (vs constexpr's "could be runtime"), 3-way comparison operator `<=>` for byte-equivalence contexts (H10/H12 sites).
@@ -1030,6 +1569,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-074 — Future `DOCS/DATA_FLOW.md` doc (proposed during .F.4c.4 planning; defer to post-v5.15 umbrella close)
+
+```yaml
+id: TECH_DEBT-074
+title: Future DOCS/DATA_FLOW.md doc
+severity: low
+surface_tags: []
+trigger: sub-ship-post-v5.15
+status: open
+opened: 2026-05-16
+related_specs: []
+```
 
 - **Created:** 2026-05-16 by v5.15.5.F.4c.4 fresh-context audit session (Decision 13 in decisions-capture bridge doc — Caramel proposed function map / data flow graph during planning).
 - **Severity:** LOW (documentation enhancement; operator onboarding + cold-pickup quality).
@@ -1056,6 +1606,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-076 — `.F.4c.3` deferred WIP2d-1.B.2/B.3/B.4 — ControllerEventLoop + EngineSharded + Backtest wrapper migrations
 
+```yaml
+id: TECH_DEBT-076
+title: .F.4c.3 deferred WIP2d-1.B.2/B.3/B.4 — ControllerEventLoop + EngineSharded + Backtest wrapper migrations
+severity: medium
+surface_tags: [slow-path, cfg-flow, backtest]
+trigger: sub-ship-.F.4f
+status: open
+opened: 2026-05-16
+related_specs: [DESIGN_SPECS/refactor-patterns/cfg-scope-discipline.md]
+```
+
 - **Created:** 2026-05-16 (backfill per `.F.4d` pre-coding verification audit; `.F.4c.3` ship shipped ~60% of original subplan scope and postmortem was silent on this deferred phase)
 - **Severity:** MEDIUM (cleanup discipline; not blocking new framework work)
 - **Surface:** ControllerEventLoop wrapper sites (per-core slice param threading; complete the single-param consumer sig discipline established at WIP2c.0/2c.2); EngineSharded boot default paths; Backtest path equivalents. Specific sites enumerated in the original `.F.4c.3` subplan body (Steps 4-7 region).
@@ -1069,6 +1630,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-077 — `.F.4c.3` deferred WIP2e — A2 bitmap-bool migration (28 KIND_BOOL flat rows → domain bitmaps)
+
+```yaml
+id: TECH_DEBT-077
+title: .F.4c.3 deferred WIP2e — A2 bitmap-bool migration (28 KIND_BOOL flat rows → domain bitmaps)
+severity: medium
+surface_tags: [bitmap-packed, cfg-flow, registry]
+trigger: sub-ship-.F.4f
+status: open
+opened: 2026-05-16
+related_specs: [DESIGN_SPECS/framework-patterns/bitmap-flag-api.md, DESIGN_SPECS/framework-patterns/universal-registry-bitmap-dispatcher-pattern.md, DESIGN_SPECS/refactor-patterns/cfg-flag-eligibility-criteria.md]
+```
 
 - **Created:** 2026-05-16 (backfill per `.F.4d` pre-coding verification audit)
 - **Severity:** MEDIUM (cohort-harmonization discipline; partial coverage today)
@@ -1084,6 +1656,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-078 — `.F.4c.3` deferred WIP2f — Legacy `PerCoreOverrides<F>` + `ControllerConfig_ResolveForCore` + `core_overrides[16]` deletion
 
+```yaml
+id: TECH_DEBT-078
+title: .F.4c.3 deferred WIP2f — Legacy PerCoreOverrides<F> + ControllerConfig_ResolveForCore + core_overrides[16] deletion
+severity: high
+surface_tags: [cfg-flow, registry]
+trigger: sub-ship-.F.4f
+status: open
+opened: 2026-05-16
+related_specs: [DESIGN_SPECS/refactor-patterns/cfg-scope-discipline.md]
+```
+
 - **Created:** 2026-05-16 (backfill per `.F.4d` pre-coding verification audit)
 - **Severity:** MEDIUM-HIGH (transitional infrastructure should not persist long-term; can confuse contributors)
 - **Surface:** `CoreFrameworks/ControllerConfig.hpp` — `PerCoreOverrides<F>` struct definition (~255) + `ControllerConfig_ResolveForCore` function (~1404) + `core_overrides[16]` field on ControllerConfig + all caller sites still using `ResolveForCore` resolution path.
@@ -1097,6 +1680,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-079 — `.F.4c.3` deferred WIP2g/h — Atomic flag-day (89 flat field declarations + ~414 test fixture migrations + 9 band-aid call removals)
+
+```yaml
+id: TECH_DEBT-079
+title: .F.4c.3 deferred WIP2g/h — Atomic flag-day (89 flat field declarations + ~414 test fixture migrations + 9 band-aid call removals)
+severity: high
+surface_tags: [cfg-flow, test-infrastructure, registry]
+trigger: sub-ship-.F.4f
+status: open
+opened: 2026-05-16
+related_specs: []
+```
 
 - **Created:** 2026-05-16 (backfill per `.F.4d` pre-coding verification audit)
 - **Severity:** HIGH (largest deferred scope from `.F.4c.3`; ~414 test fixture writes still target legacy flat fields; transitional infrastructure persists)
@@ -1112,6 +1706,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-080 — `.F.4c.3` deferred `[core N]` section parser syntax (operator-facing cfg syntax)
 
+```yaml
+id: TECH_DEBT-080
+title: .F.4c.3 deferred [core N] section parser syntax (operator-facing cfg syntax)
+severity: medium
+surface_tags: [parser, cfg-flow]
+trigger: sub-ship-.F.4f
+status: open
+opened: 2026-05-16
+related_specs: [DESIGN_SPECS/refactor-patterns/cfg-scope-discipline.md]
+```
+
 - **Created:** 2026-05-16 (backfill per `.F.4d` pre-coding verification audit)
 - **Severity:** MEDIUM (operator UX improvement; current flat-prefix syntax works but verbose)
 - **Surface:** `CoreFrameworks/ControllerConfigParser.hpp` parser; `engine.cfg` example documentation. In-code comment at `ControllerConfig.hpp:2097` explicitly says "Future ship .F.4c.3 Step 3 introduces [core N] section parser".
@@ -1125,6 +1730,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-075 — HP_REFACTOR.md O1-O6 bridge entry (cache-audit observations; profile-driven deferral)
+
+```yaml
+id: TECH_DEBT-075
+title: HP_REFACTOR.md O1-O6 bridge entry (cache-audit observations; profile-driven deferral)
+severity: low
+surface_tags: [hot-path, slow-path, oms-drainer, ml-inference]
+trigger: paper-test
+status: open
+opened: 2026-05-16
+related_specs: [DESIGN_SPECS/refactor-patterns/branchless-dispatch-discipline.md]
+```
 
 - **Created:** 2026-05-16 by v5.15.5.F.4d merged ship planning (Option G decision session; auto-write contract gap closed — `tick-trader-percore-workspace/DOCS/HP_REFACTOR.md` had deferred observations O1-O6 but no TECH_DEBT bridge entry per the auto-write contract on `feedback_no_defer_for_effort` discipline).
 - **Severity:** LOW-MED (cache layout optimization; profile-driven; not blocking)
@@ -1146,6 +1762,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-081 — `.F.4c.3.A` deferred symbol-axis full migration (KIND_STRING + multi-symbol DataStream + ~9 BinanceConfig.symbol consumer migration)
 
+```yaml
+id: TECH_DEBT-081
+title: .F.4c.3.A deferred symbol-axis full migration (KIND_STRING + multi-symbol DataStream + ~9 BinanceConfig.symbol consumer migration)
+severity: medium
+surface_tags: [cfg-flow, producer, parser, registry]
+trigger: sub-ship-.F.4e
+status: open
+opened: 2026-05-16
+related_specs: [DESIGN_SPECS/refactor-patterns/cfg-scope-discipline.md]
+```
+
 - **Created:** 2026-05-16 (backfill per `.F.4d` pre-coding subplan verification audit; `.F.4c.3.A` plan body self-marked PARTIAL but residual deferred work was not in TECH_DEBT ledger — invisible to `/readiness` Check 25)
 - **Severity:** MEDIUM (canonical-shape discipline; symbol axis is single-symbol today via `BinanceConfig.symbol`; per-core symbol heterogeneity is a multi-symbol DataStream extension that depends on `.F.4e` KIND_STRING infrastructure)
 - **Surface:** `DataStream/BinanceCrypto.hpp:64` (`BinanceConfig.symbol` global) + `CoreFrameworks/EngineSharded.hpp` (~9 consumer sites that read `BinanceConfig.symbol`) + per-core stamp body (symbol-axis-aware stamp emit) + Backtest path (symbol-aware load). Specific sites enumerated in `.F.4c.3.A` partial-stage subplan body.
@@ -1159,6 +1786,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-085 — Thread A FULL framework consolidation (DerivedFilterFramework + 24-row migration + sidecar override + bit-packed inventory + CI 9-12 + Layer 5b + ML_CFG_FLAG sig migration + v5.14 fixture regression)
+
+```yaml
+id: TECH_DEBT-085
+title: Thread A FULL framework consolidation (DerivedFilterFramework + 24-row migration + sidecar override + bit-packed inventory + CI 9-12 + Layer 5b + ML_CFG_FLAG sig migration + v5.14 fixture regression)
+severity: medium
+surface_tags: [registry, wire-format, cfg-flow, ml-inference, bitmap-packed, ci-tooling]
+trigger: sub-ship-.F.4d.1
+status: open
+opened: 2026-05-16
+related_specs: [DESIGN_SPECS/framework-patterns/metadata-bit-driven-derived-filter-framework.md, DESIGN_SPECS/framework-patterns/sidecar-override-pattern-for-registry-auto-flows.md, DESIGN_SPECS/framework-patterns/meta-registry-pattern-for-codebase-registry-discipline.md, DESIGN_SPECS/framework-patterns/framework-composition-overview.md]
+```
 
 - **Created:** 2026-05-16 (at v5.15.5.F.4d MERGED ship close — Thread A FULL closure deferred per scope reality audit; foundation landed this ship (H15-H20 codified + 4 Thread A DESIGN_SPECs Stage 3 ACTIVE + STAMP_BOUND_CFG_DERIVED metadata bit (bit 13) reserved + FOREACH_BANDIT_SIDE enrolled in FOREACH_REGISTRY + CLAUDE.md item 31 codified))
 - **Severity:** MED (framework consolidation; closes Class 21 at derived-filter surface + Class 18 at meta-Class-18 level; load-bearing for future cfg field additions becoming 1-row mechanical at source registry)
@@ -1184,6 +1822,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-087 — Consumer-existence enforcement for FOREACH_METADATA_BIT rows
 
+```yaml
+id: TECH_DEBT-087
+title: Consumer-existence enforcement for FOREACH_METADATA_BIT rows
+severity: low
+surface_tags: [ci-tooling, registry, cfg-flow]
+trigger: sub-ship-.F.4e
+status: open
+opened: 2026-05-16
+related_specs: [DESIGN_SPECS/framework-patterns/composed-filter-mask-pattern.md]
+```
+
 - **Created:** 2026-05-16 (at v5.15.5.F.4d.1.A pre-coding audit gate consult — Gap 2 from `plan_checks/2026-05-16-v5.15.5.F.4d.1-tech-debt-audit-findings.md`)
 - **Severity:** LOW-MED (silent dead-infrastructure risk; not blocking; surfaces as orphan `.rodata` mask + tooltip-says-feature-exists-but-no-behavior class)
 - **Surface:** NEW `tools/check_metadata_bit_consumer_coverage.py` (~80 LOC sister to existing `tools/check_meta_registry.py` + `tools/check_per_core_registry_integrity.py`); CI integration via `build.sh` pre-build invocation
@@ -1197,6 +1846,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-088 — `.F.4e` consumer verification gate
+
+```yaml
+id: TECH_DEBT-088
+title: .F.4e consumer verification gate
+severity: low
+surface_tags: [ci-tooling, registry, gui-thread]
+trigger: sub-ship-.F.4e
+status: open
+opened: 2026-05-16
+related_specs: [DESIGN_SPECS/framework-patterns/composed-filter-mask-pattern.md]
+```
 
 - **Created:** 2026-05-16 (at v5.15.5.F.4d.1.A pre-coding audit gate consult — Gap 3 from `plan_checks/2026-05-16-v5.15.5.F.4d.1-tech-debt-audit-findings.md`)
 - **Severity:** LOW (planning-time reminder; mechanical verification at ship-close cadence; ~5 min effort)
@@ -1212,6 +1872,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-089 — DESIGN_SPECS spec-vs-code drift audit cadence
 
+```yaml
+id: TECH_DEBT-089
+title: DESIGN_SPECS spec-vs-code drift audit cadence
+severity: medium
+surface_tags: [ci-tooling]
+trigger: sub-ship-.F.4f
+status: open
+opened: 2026-05-16
+related_specs: [DESIGN_SPECS/meta-disciplines/pattern-codification-lifecycle.md]
+```
+
 - **Created:** 2026-05-16 (at v5.15.5.F.4d.1.A pre-coding audit gate consult — Gap 4 META from `plan_checks/2026-05-16-v5.15.5.F.4d.1-tech-debt-audit-findings.md`)
 - **Severity:** MED (this is the META-class — how we got into Path γ situation in the first place; spec-vs-code drift causes plan-time mechanism mistakes that audit catches but should be caught at spec-write time)
 - **Surface:** All `tick-trader-percore-workspace/DESIGN_SPECS/*.md` files (~72 patterns at HEAD; ~25-30 Stage 2 DRAFT / Stage 3 ACTIVE specs are most at-risk; INVARIANT specs are stable; older specs land naturally aligned with code they describe)
@@ -1225,6 +1896,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-090 — Categorical applicability mask precomputation (`applies_to_*_cat` cohorts)
+
+```yaml
+id: TECH_DEBT-090
+title: Categorical applicability mask precomputation (applies_to_*_cat cohorts)
+severity: medium
+surface_tags: [cfg-flow, registry, gui-thread, slow-path, bitmap-packed]
+trigger: sub-ship-.F.4f
+status: open
+opened: 2026-05-16
+related_specs: [DESIGN_SPECS/framework-patterns/composed-filter-mask-pattern.md, DESIGN_SPECS/framework-patterns/categorical-tag-applicability-pattern.md]
+```
 
 - **Created:** 2026-05-16 (at v5.15.5.F.4d.1.A pre-coding audit gate consult — Path γ sister-cohort retrofit candidate from `plan_checks/2026-05-16-v5.15.5.F.4d.1-tech-debt-audit-findings.md`)
 - **Severity:** MED (latent latency cost — categorical gating currently does per-row AND at consumer sites; precomputed masks eliminate per-row branching; aligned with H7 + H20 branchless discipline for slow-path consumers; sister to Path γ at `.A`)
@@ -1240,6 +1922,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-091 — Plan-context drift detection cadence (sister Class 18 mirror prevention at planning surface)
 
+```yaml
+id: TECH_DEBT-091
+title: Plan-context drift detection cadence (sister Class 18 mirror prevention at planning surface)
+severity: medium
+surface_tags: [ci-tooling]
+trigger: sub-ship-.F.4f
+status: open
+opened: 2026-05-17
+related_specs: [DESIGN_SPECS/meta-disciplines/pattern-codification-lifecycle.md]
+```
+
 - **Created:** 2026-05-17 (at v5.15.5.F.4d.1.A Path γ+ v2 triage — Finding 5 from `plan_checks/2026-05-16-v5.15.5.F.4d.1-tech-debt-audit-findings.md` + plan-context-sweep audit recommendation)
 - **Severity:** MED (recurrence prevention discipline; without it, future spec amendments will accumulate stale plan body references — same shape Path γ caught at `.A`/`.B`/`.D` body residuals)
 - **Surface:** Process discipline + possible `/plan-context-sweep` skill enhancement to auto-fire after Stage 3 ACTIVE spec amendment
@@ -1253,6 +1946,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-093 — `.B.2` deferral: `gap_acceptable_threshold` manual cfg storage cleanup (decl/default/parser)
+
+```yaml
+id: TECH_DEBT-093
+title: .B.2 deferral — gap_acceptable_threshold manual cfg storage cleanup (decl/default/parser)
+severity: low
+surface_tags: [cfg-flow, parser, registry]
+trigger: sub-ship-.B.3
+status: open
+opened: 2026-05-17
+related_specs: [DESIGN_SPECS/refactor-patterns/cfg-scope-discipline.md]
+```
 
 - **Created:** 2026-05-17 (at `v5.15.5.F.4d.1.B.2` ship close per Caramel accountability pushback — "are we actually going to do the things you're deferring")
 - **Severity:** LOW (no behavioral defect at HEAD; registry row added at `.B.2` provides descriptor + metadata bit + GUI auto-render; manual decl/default/parser stays but produces correct values)
@@ -1269,6 +1973,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-094 — `.B.2` deferral: 4 retroactive `.A.7` + bandit_blend_ratio bit-add + inf struct unification (5 fields)
 
+```yaml
+id: TECH_DEBT-094
+title: .B.2 deferral — 4 retroactive .A.7 + bandit_blend_ratio bit-add + inf struct unification (5 fields)
+severity: medium
+surface_tags: [registry, ml-inference, wire-format, cfg-flow]
+trigger: sub-ship-.B.3
+status: open
+opened: 2026-05-17
+related_specs: []
+```
+
 - **Created:** 2026-05-17 (at `v5.15.5.F.4d.1.B.2` ship close per Caramel accountability pushback)
 - **Severity:** MED (5 STAMP_BOUND-eligible fields cannot be framework-walked at `.B.2`; PARITY-024 retroactive scope partially open)
 - **Surface:** `CoreFrameworks/CfgFieldRegistry.hpp:524-528 + :637` (5 master rows: `ml_tp_pct`, `ml_sl_pct`, `barrier_blend_mode`, `bandit_blend_ratio` — locate; `per_horizon_barrier_blend` in FOREACH_ML_CFG_FLAG at `MlCfgFlagRegistry.hpp:64`) — bit-add. Plus `StampInferenceCfgInputs` + `ModelStampResult` struct-gen at `ML_Headers/ModelInference.hpp:1199 + 1643` — inf struct unification (eliminate `inf.inference_cfg_<name>` prefix OR add unprefixed sister fields).
@@ -1283,6 +1998,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-095 — `.B.2` deferral: ModelInference struct-gen migrations (3 sites)
+
+```yaml
+id: TECH_DEBT-095
+title: .B.2 deferral — ModelInference struct-gen migrations (3 sites)
+severity: high
+surface_tags: [registry, ml-inference, wire-format, parser]
+trigger: sub-ship-.B.3
+status: open
+opened: 2026-05-17
+related_specs: []
+```
 
 - **Created:** 2026-05-17 (at `v5.15.5.F.4d.1.B.2` ship close per Caramel accountability pushback)
 - **Severity:** MED-HIGH (production stamp emit path; coupled with legacy registry deletion)
@@ -1299,6 +2025,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-096 — `.B.2` deferral: Production canonical body emit migration (ModelInference.hpp:1788)
 
+```yaml
+id: TECH_DEBT-096
+title: .B.2 deferral — Production canonical body emit migration (ModelInference.hpp:1788)
+severity: high
+surface_tags: [registry, ml-inference, wire-format]
+trigger: sub-ship-.B.3
+status: open
+opened: 2026-05-17
+related_specs: [DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md]
+```
+
 - **Created:** 2026-05-17 (at `v5.15.5.F.4d.1.B.2` ship close per Caramel accountability pushback)
 - **Severity:** HIGH (production wire-format path; coupled with stamp_format_version bump TECH_DEBT-099)
 - **Surface:** `ML_Headers/ModelInference.hpp:1788` — `FOREACH_STAMP_BOUND_CFG(X)` walker emits canonical body bytes for HMAC chain
@@ -1313,6 +2050,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-097 — `.B.2` deferral: StampHelper.hpp:156 STAMP_CFG_AUTOPOPULATE migration
+
+```yaml
+id: TECH_DEBT-097
+title: .B.2 deferral — StampHelper.hpp:156 STAMP_CFG_AUTOPOPULATE migration
+severity: medium
+surface_tags: [registry, wire-format, ml-inference]
+trigger: sub-ship-.B.3
+status: open
+opened: 2026-05-17
+related_specs: []
+```
 
 - **Created:** 2026-05-17 (at `v5.15.5.F.4d.1.B.2` ship close per Caramel accountability pushback)
 - **Severity:** MED (legacy struct-field population path; cleanup after `.B.3` inf struct unification)
@@ -1329,6 +2077,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-098 — `.B.2` deferral: CoreModelZoo.hpp:243 drift walker migration (with framework reason-buffer extension)
 
+```yaml
+id: TECH_DEBT-098
+title: .B.2 deferral — CoreModelZoo.hpp:243 drift walker migration (with framework reason-buffer extension)
+severity: medium
+surface_tags: [registry, ml-inference, wire-format]
+trigger: sub-ship-.B.3
+status: open
+opened: 2026-05-17
+related_specs: []
+```
+
 - **Created:** 2026-05-17 (at `v5.15.5.F.4d.1.B.2` ship close per Caramel accountability pushback)
 - **Severity:** MED (drift-check semantics + operator-visible error message preservation)
 - **Surface:** `ML_Headers/CoreModelZoo.hpp:243` — custom drift walker over FOREACH_STAMP_BOUND_CFG sets `sr.inference_cfg_drift_count` + `sr.reason` (first drift produces operator-visible error message)
@@ -1343,6 +2102,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-099 — `.B.2` deferral: stamp_format_version 5 sub-steps (extract + bounds check + bump + fixture test + DESIGN_SPEC amendment)
+
+```yaml
+id: TECH_DEBT-099
+title: .B.2 deferral — stamp_format_version 5 sub-steps (extract + bounds check + bump + fixture test + DESIGN_SPEC amendment)
+severity: high
+surface_tags: [wire-format, ml-inference, parser, test-infrastructure]
+trigger: sub-ship-.B.3
+status: open
+opened: 2026-05-17
+related_specs: [DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md]
+```
 
 - **Created:** 2026-05-17 (at `v5.15.5.F.4d.1.B.2` ship close per Caramel accountability pushback)
 - **Severity:** HIGH (wire-format compatibility signaling; first canonical use of stamp_format_version bump procedure)
@@ -1364,6 +2134,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-100 — `.B.2` deferral: per_horizon_barrier_blend ML_CFG_FLAG STAMP_BOUND_CFG_DERIVED bit-add
 
+```yaml
+id: TECH_DEBT-100
+title: .B.2 deferral — per_horizon_barrier_blend ML_CFG_FLAG STAMP_BOUND_CFG_DERIVED bit-add
+severity: low
+surface_tags: [registry, ml-inference, cfg-flow]
+trigger: sub-ship-.B.3
+status: open
+opened: 2026-05-17
+related_specs: []
+```
+
 - **Created:** 2026-05-17 (at `v5.15.5.F.4d.1.B.2` ship close per Caramel accountability pushback)
 - **Severity:** LOW-MED (1 specific field; same structural root cause as TECH_DEBT-094)
 - **Surface:** `ML_Headers/MlCfgFlagRegistry.hpp:64` — `PER_HORIZON_BARRIER_BLEND` row metadata_flags column (currently `0`; revert to `CfgFieldDescriptor::STAMP_BOUND_CFG_DERIVED` once inf struct unification lands)
@@ -1379,6 +2160,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-110 — `tools/stamp_model.sh` deprecation shim deletion target (Phase L retention)
 
+```yaml
+id: TECH_DEBT-110
+title: tools/stamp_model.sh deprecation shim deletion target (Phase L retention)
+severity: low
+surface_tags: [cross-tool]
+trigger: explicit-operator
+status: open
+opened: 2026-05-18
+related_specs: [DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-pattern.md]
+```
+
 - **Created:** 2026-05-18 (deferred from `.B.3` Phase L per `framework-driven-cli-binary-pattern.md` v1.1 § Deprecation shim discipline)
 - **Severity:** LOW (1 file; 1-line shim; operator workflow continuity concern)
 - **Surface:** `tools/stamp_model.sh` (1-line `exec` redirect to `build/stamp_model_cli "$@"` introduced at `.B.3` Phase L L5 sub-step)
@@ -1393,6 +2185,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-111 — CI defense-in-depth: `tools/check_cli_flag_drift.py` (anti-pattern enforcement for X-macro auto-gen CLI flag table)
+
+```yaml
+id: TECH_DEBT-111
+title: CI defense-in-depth — tools/check_cli_flag_drift.py (anti-pattern enforcement for X-macro auto-gen CLI flag table)
+severity: low
+surface_tags: [ci-tooling, cross-tool, registry]
+trigger: recurrence-count-2
+status: open
+opened: 2026-05-18
+related_specs: [DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-pattern.md, DESIGN_SPECS/framework-patterns/registry-coverage-ci-check-pattern.md]
+```
 
 - **Created:** 2026-05-18 (deferred from `.B.3` Phase L per `framework-driven-cli-binary-pattern.md` v1.1 § Audit detection)
 - **Severity:** LOW (defense-in-depth; X-macro discipline is enforced by code review at 1st canonical scale)
@@ -1412,6 +2215,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-116 — TECH_DEBT.md split (file-size discipline application)
+
+```yaml
+id: TECH_DEBT-116
+title: TECH_DEBT.md split (file-size discipline application)
+severity: medium
+surface_tags: []
+trigger: next-maintenance-window
+status: open
+opened: 2026-05-18
+related_specs: [DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md]
+```
 
 - **Created:** 2026-05-18 (codified at `.B.3` ship close after `feedback_file_size_split_discipline.md` codification)
 - **Severity:** MEDIUM (file currently navigable but at 2013 lines exceeds 2000-line hard threshold per `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md`)
@@ -1433,6 +2247,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-117 — RECURRING_BUG_PATTERNS.md split (file-size discipline application)
 
+```yaml
+id: TECH_DEBT-117
+title: RECURRING_BUG_PATTERNS.md split (file-size discipline application)
+severity: medium
+surface_tags: []
+trigger: next-maintenance-window
+status: open
+opened: 2026-05-18
+related_specs: [DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md, DESIGN_SPECS/ledger-templates/ledger-entry-templates.md]
+```
+
 - **Created:** 2026-05-18 (codified at `.B.3` ship close)
 - **Severity:** MEDIUM (2198 lines, 32 classes — exceeds 2000-line hard threshold)
 - **Surface:** `DOCS/RECURRING_BUG_PATTERNS.md`
@@ -1449,6 +2274,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-118 — /readiness SKILL.md split (file-size discipline application)
+
+```yaml
+id: TECH_DEBT-118
+title: /readiness SKILL.md split (file-size discipline application)
+severity: medium
+surface_tags: [ci-tooling]
+trigger: next-maintenance-window
+status: open
+opened: 2026-05-18
+related_specs: [DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md]
+```
 
 - **Created:** 2026-05-18 (codified at `.B.3` ship close)
 - **Severity:** MEDIUM (1674 lines — exceeds 1500-line SKILL.md hard threshold)
@@ -1468,6 +2304,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ### TECH_DEBT-113 — DESIGN_SPECS + plans/ subdivision (folder restructure deferred)
 
+```yaml
+id: TECH_DEBT-113
+title: DESIGN_SPECS + plans/ subdivision (folder restructure deferred)
+severity: low
+surface_tags: []
+trigger: next-maintenance-window
+status: open
+opened: 2026-05-18
+related_specs: [DESIGN_SPECS/doc-disciplines/categorical-triggers-in-always-loaded-docs.md]
+```
+
 - **Created:** 2026-05-18 (deferred at `.B.3` doc-layer refresh per Caramel's framing: "at some point we may need to add subdivided folders for design specs and stuff, and plans, since current is kind of bloated and there are some things that are kind of just shoved in places")
 - **Severity:** LOW (organizational maintenance; no functional impact)
 - **Surface:** `DESIGN_SPECS/` (~80+ specs flat) + `plans/v5.15-live-readiness/subplans/` (many sub-plans flat) + `plans/v5.15-live-readiness/handoffs/` (many handoffs flat)
@@ -1485,6 +2332,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-114 — `tests/controller_test.cpp` test file split (domain-aligned sub-files)
+
+```yaml
+id: TECH_DEBT-114
+title: tests/controller_test.cpp test file split (domain-aligned sub-files)
+severity: medium
+surface_tags: [test-infrastructure]
+trigger: next-maintenance-window
+status: open
+opened: 2026-05-18
+related_specs: []
+```
 
 - **Created:** 2026-05-18 (codified at doc-layer refresh ship — moved out of CLAUDE.md Test file size discipline TODO sentence to proper TECH_DEBT entry per `feedback_claude_md_guidelines_not_stuff_to_do.md`)
 - **Severity:** MEDIUM (compile-time + test-navigation + merge-conflict surface area; 3118 tests at risk during any refactor)
@@ -1507,6 +2365,17 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 ---
 
 ### TECH_DEBT-115 — Institutional memory rollout (phased doc-system architecture)
+
+```yaml
+id: TECH_DEBT-115
+title: Institutional memory rollout (phased doc-system architecture)
+severity: medium
+surface_tags: [ci-tooling, registry]
+trigger: sub-ship-.C
+status: open
+opened: 2026-05-18
+related_specs: [DESIGN_SPECS/doc-disciplines/categorical-triggers-in-always-loaded-docs.md, DESIGN_SPECS/meta-disciplines/doc-frontmatter-convention.md, DESIGN_SPECS/meta-disciplines/doc-tag-vocabulary.md, DESIGN_SPECS/ledger-templates/ledger-entry-templates.md]
+```
 
 - **Created:** 2026-05-18 (v5.15.5.F.4d.1.B.3 doc-layer refresh — codified after Caramel surfaced institutional-memory architecture vision: "this is basically becoming institutional memory, and i wanna design a system that i never have to think about again that just works based on types and tags, and is searchable by grep, and well organized")
 - **Severity:** MEDIUM (foundational doc-system architecture; cumulative drift if not addressed becomes blocker over 2-3 sprints)

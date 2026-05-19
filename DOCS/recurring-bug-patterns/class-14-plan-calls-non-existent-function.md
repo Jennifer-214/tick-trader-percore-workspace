@@ -4,6 +4,12 @@ class_id: 14
 title: Plan calls a function or struct field that doesn't exist
 parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-18
+surface_tags: [registry, cfg-flow]
+severity: high
+recurrence_count: 5
+first_instance: v5.14.4
+closure_mechanism: /trace-deps skill (plan-time grep-walk of every callee + struct-field reference; reports PASS/GAP) + /readiness Check 19 (6-step grep procedural; ship-blocking) + Integration Matrix cross-ship dependency edges verified by /plan-check + Phase 0 sub-tag pattern for pre-req infra + delete-stale-body when amending (don't preserve-with-notice)
+sister_classes: [15, 16, 17, 18, 23]
 ---
 
 ## Class 14 — Plan calls a function or struct field that doesn't exist

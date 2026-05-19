@@ -4,6 +4,12 @@ class_id: 20
 title: Bitmap field without overflow guard (silent-truncation)
 parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-18
+surface_tags: [bitmap-packed, registry]
+severity: high
+recurrence_count: 1
+first_instance: v5.15.5.F.4
+closure_mechanism: co-located static_assert(FOREACH_X_COUNT_VALUE <= sizeof(X_flags_type) * 8) at every FOREACH_X declaration + type-upgrade decision tree (uint8 -> uint16 -> uint32 -> uint64 -> split or multi-bit pack) + /dod-audit extension detecting registries lacking paired static_assert
+sister_classes: [18]
 ---
 
 ## Class 20 — Bitmap field without overflow guard (silent-truncation)

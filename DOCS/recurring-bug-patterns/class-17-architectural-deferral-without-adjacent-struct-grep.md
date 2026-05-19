@@ -4,6 +4,12 @@ class_id: 17
 title: Architectural deferral made without grepping adjacent struct fields
 parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-18
+surface_tags: [ml-inference, slow-path]
+severity: medium
+recurrence_count: 1
+first_instance: v5.14.5
+closure_mechanism: /trace-deps Step 5 (2-hop adjacent-struct walk before accepting deferral with "missing data X" rationale; look for *_buf[]/*_history[]/running_*/head/count markers) + plan-template "Adjacent structs walked + Why none provide the data" deferral block + CLAUDE.local.md boundary-stable-refactor memory
+sister_classes: [14, 18]
 ---
 
 ## Class 17 — Architectural deferral made without grepping adjacent struct fields

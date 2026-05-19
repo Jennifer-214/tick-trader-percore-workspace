@@ -4,6 +4,12 @@ class_id: 28
 title: Branchy SP/HP dispatch when branchless feasible (variance injection in determinism-prioritizing path)
 parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-18
+surface_tags: [hot-path, slow-path, oms-drainer, producer]
+severity: high
+recurrence_count: 7
+first_instance: v5.15.5.F.4c.3
+closure_mechanism: 5-pattern branchless toolkit (Pattern 1 fn pointer table + Pattern 2 2D state×type table + Pattern 3 mask-select / bitmap-search via ctz + Pattern 4 pre-resolution at decision time + Pattern 5 sink-fn-pointer for optional side effects) + branchless-dispatch-discipline.md + H20 hard invariant + /hft-audit branchless-opportunity scan + documented exemptions (boot-time / __builtin_expect rare / if constexpr / genuine binary predicate)
+sister_classes: [14, 18, 27, 29]
 ---
 
 ## Class 28 — Branchy SP/HP dispatch when branchless feasible (variance injection in determinism-prioritizing path)

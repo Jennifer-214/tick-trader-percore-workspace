@@ -4,6 +4,12 @@ class_id: 19
 title: Hardcoded instance names in applicability gating (Class 18 at predicate-condition level)
 parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-18
+surface_tags: [cfg-flow, slow-path, gui-thread, live-trading]
+severity: high
+recurrence_count: 1
+first_instance: v5.15.5.F.4b
+closure_mechanism: categorical-tag applicability pattern (instances declare capability categories like STRAT_CAT_USES_BANDIT; consumers gate on bitmap intersection) + CI consistency tests (no-orphan-categories / no-orphan-cfg-fields / dependency-coherence) + /dod-audit extension flagging hardcoded instance-name gating
+sister_classes: [14, 18, 21]
 ---
 
 ## Class 19 — Hardcoded instance names in applicability gating (Class 18 at predicate-condition level)

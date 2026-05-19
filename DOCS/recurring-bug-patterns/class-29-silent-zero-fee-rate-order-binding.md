@@ -4,6 +4,12 @@ class_id: 29
 title: Silent zero-fee-rate from Order missing pre-resolution binding
 parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-18
+surface_tags: [oms-drainer, fixed-point-math, backtest, live-trading]
+severity: high
+recurrence_count: 1
+first_instance: v5.15.5.F.4c.3
+closure_mechanism: 3-barrier closure (Barrier 1 MASK_ORDER_PRE_RESOLVED bit in Order::flags_packed widened uint16->uint32; Barrier 2 TT_ASSERT_PRE_RESOLVED_BOUND runtime warn at HandleFill entry; Barrier 3 construction-site survey w/ Order_BindPreResolved immediately after Order_Init) + /accounting-audit + /parity-check pre-resolved gate + CI Check 8 static scan
+sister_classes: [14, 18, 27, 28]
 ---
 
 ## Class 29 — Silent zero-fee-rate from Order missing pre-resolution binding

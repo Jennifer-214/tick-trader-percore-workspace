@@ -4,6 +4,12 @@ class_id: 30
 title: Sibling array on subsystem state created without registry enrollment
 parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-18
+surface_tags: [registry, oms-drainer, ci-tooling]
+severity: medium
+recurrence_count: 1
+first_instance: v5.15.5.F.4d
+closure_mechanism: 3-barrier closure (Barrier 1 enroll last_exit_fee[_i] + bandit_reward_bps[_i] in FOREACH_OMS_PER_SLOT_FIELD; Barrier 2 tools/check_oms_per_slot_registry_integrity.py Check 8 CI scan + exemption registry; Barrier 3 registry-coverage-ci-check-pattern.md codification) + /dod-audit codebase-wide FOREACH_<X>_PER_SLOT_FIELD coverage scan + /registry-fit-audit
+sister_classes: [14, 18, 21, 27, 28, 29]
 ---
 
 ## Class 30 — Sibling array on subsystem state created without registry enrollment

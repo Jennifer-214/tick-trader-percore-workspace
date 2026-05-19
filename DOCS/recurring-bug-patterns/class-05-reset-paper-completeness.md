@@ -4,6 +4,12 @@ class_id: 5
 title: Reset Paper completeness
 parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-18
+surface_tags: [boot-time, paper-test, registry]
+severity: high
+recurrence_count: 2
+first_instance: v4.7.26
+closure_mechanism: X-macro / struct-zero-clear pattern for reset handler so field-adds auto-flow + property test asserting post-Reset every CoreContext field equals Init-time default
+sister_classes: [4, 11]
 ---
 
 ## Class 5 — Reset Paper completeness

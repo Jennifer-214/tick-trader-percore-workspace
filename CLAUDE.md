@@ -492,14 +492,14 @@ Skills group by concern. Read each skill's `claude-skills/<name>/SKILL.md` for i
 
 | Concern | Skills |
 |---|---|
-| **Pre-coding plan verification** | `/readiness` (28-check pass) + `/precoding-audit-gate` (orchestrator firing parallel audits) |
-| **SHAPE audits (design-layer)** | `/parity-check` (train↔serve identity; wire byte preservation) + `/trace-deps` (dependency chains) + `/merge-scan` (reuse opportunities) + `/dod-audit` (DESIGN_SPECS pattern application) |
-| **IMPLEMENTATION-DETAIL audits (code-layer)** | `/blindspot-scan` (12-category implementation taxonomy; fires after SHAPE returns GREEN/YELLOW per `DESIGN_PHILOSOPHY.md` § 11.5) |
-| **DOMAIN audits** | `/accounting-audit` (OMS / fee / P&L) + `/hft-audit` (universal HFT principles) + `/ml-audit` (ML pipeline) + `/registry-fit-audit` (registry misapplication) |
-| **Anti-pattern scans** | `/bug-check` (RECURRING_BUG_PATTERNS instances) + `/anti-spaghetti` (codebase-wide structural sweep) + `/dust` (generic cleanup) + `/test-strength-audit` (test-weakening regression) |
-| **Post-coding** | `/ship` (build verify + version bump + commit + tag + push) + `/post-ship-audit` (retrospective) + `/latency-track` (HOT_PATH_CHANGELOG draft) |
-| **Workflow** | `/handoff` (self-contained pickup prompt) + `/plan-draft` (scaffold future-oriented plan body) + `/sync-workspace` (mirror to workspace backup) |
-| **Recurrence** | `/loop` (recurring task on interval) + `/schedule` (remote-agent cron) |
+| **Pre-coding plan verification** | `/precoding-audit-gate` + `/readiness` |
+| **SHAPE audits (design-layer)** | `/dod-audit` + `/merge-scan` + `/parity-check` + `/trace-deps` |
+| **IMPLEMENTATION-DETAIL audits** | `/blindspot-scan` |
+| **DOMAIN audits** | `/accounting-audit` + `/hft-audit` + `/ml-audit` + `/registry-fit-audit` |
+| **Anti-pattern scans** | `/anti-spaghetti` + `/bug-check` + `/dead-code-trace` + `/dust` + `/metadata-audit` + `/test-strength-audit` |
+| **Post-coding** | `/latency-track` + `/post-ship-audit` + `/ship` |
+| **Workflow** | `/dependency-chain-trace` + `/find` + `/finding-analyzer` + `/foxlib-promotion` + `/handoff` + `/index-rebuild` + `/patch-planner` + `/plan-check` + `/plan-context-sweep` + `/sync-models` + `/sync-workspace` |
+| **Scaffolding** | `/doc-create` + `/plan-draft` + `/strategy-template` |
 
 Audit-driven discipline: HIGH-RISK ships fire `/precoding-audit-gate` (SHAPE) + `/blindspot-scan` (IMPLEMENTATION-DETAIL) in parallel before coding. Per-ship cycle: audit → consult → update plan → implement → ship → postmortem. See `DESIGN_PHILOSOPHY.md` § 11 + § 11.5 + `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md` + `DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md`.
 

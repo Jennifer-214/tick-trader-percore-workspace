@@ -4,6 +4,12 @@ class_id: 7
 title: Threading topology violations (audited clean post-v5.4.x)
 parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-18
+surface_tags: [hot-path, slow-path, oms-drainer]
+severity: blocker
+recurrence_count: 0
+first_instance: v4.7.x
+closure_mechanism: ./build.sh tsan clean-run on synthetic mode as durable validation + distinguish "multi-writer field" from "concurrent multi-writer" via mode/cadence/topology gating
+sister_classes: []
 ---
 
 ## Class 7 — Threading topology violations (audited clean post-v5.4.x)

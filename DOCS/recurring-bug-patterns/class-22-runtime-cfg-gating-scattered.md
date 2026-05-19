@@ -4,6 +4,12 @@ class_id: 22
 title: Runtime cfg gating scattered in code paths (instead of registry)
 parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-18
+surface_tags: [cfg-flow, registry, gui-thread]
+severity: medium
+recurrence_count: 1
+first_instance: v5.15.5.F.4
+closure_mechanism: requires_cfg column in CfgFieldDescriptor naming gating cfg condition as string expression + centralized predicate evaluation in GUI render walk + CI test that every requires_cfg expression is reachable + non-contradictory + /dod-audit extension flagging scattered identical if-checks as requires_cfg migration candidates
+sister_classes: [19, 21]
 ---
 
 ## Class 22 — Runtime cfg gating scattered in code paths (instead of registry)

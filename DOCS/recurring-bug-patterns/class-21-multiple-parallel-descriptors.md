@@ -4,6 +4,12 @@ class_id: 21
 title: Multiple parallel descriptors for similar surfaces (cross-file drift)
 parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-18
+surface_tags: [cfg-flow, registry]
+severity: high
+recurrence_count: 2
+first_instance: v5.15.5.F.4
+closure_mechanism: single descriptor + discriminator pattern (one CfgFieldDescriptor type + lives_in_struct enum routing to underlying struct) + extension points (metadata bitmap, Kind enum, sidecar tables for sparse per-entry data) + sidecar-override-pattern-for-registry-auto-flows for custom-semantics cases + /merge-scan flagging parallel descriptors with >=70% field overlap + H18 hard invariant
+sister_classes: [18, 19, 22, 24, 30]
 ---
 
 ## Class 21 — Multiple parallel descriptors for similar surfaces (cross-file drift)

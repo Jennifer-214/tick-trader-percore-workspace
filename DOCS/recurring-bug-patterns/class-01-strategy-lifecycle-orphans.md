@@ -4,6 +4,12 @@ class_id: 1
 title: Strategy lifecycle orphans
 parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-18
+surface_tags: [slow-path, live-trading]
+severity: high
+recurrence_count: 1
+first_instance: v5.4.0
+closure_mechanism: tools/calls_graph_diff.sh pre-merge + /readiness Check 13 strategy lifecycle completeness + DOCS/STRATEGY_INTERFACE.md canonical 5-stage spec
+sister_classes: [2, 11]
 ---
 
 ## Class 1 — Strategy lifecycle orphans

@@ -4,6 +4,12 @@ class_id: 4
 title: Snapshot save/load asymmetry
 parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-18
+surface_tags: [boot-time, wire-format]
+severity: high
+recurrence_count: 2
+first_instance: v5.4.3
+closure_mechanism: SHARDED_SNAPSHOT_VERSION bump per CoreContext-field-add + /readiness "should this be persisted?" explicit answer requirement
+sister_classes: [6]
 ---
 
 ## Class 4 — Snapshot save/load asymmetry

@@ -4,6 +4,12 @@ class_id: 23
 title: Type-erased typed-field write via reinterpret_cast through char* offset
 parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-18
+surface_tags: [cfg-flow, registry, parser, fixed-point-math]
+severity: blocker
+recurrence_count: 1
+first_instance: v5.15.5.F.4b
+closure_mechanism: 3-barrier structural fix (Barrier 1 API surface no void*+offset entry point; Barrier 2 X-macro extractor chokepoint with cfg->name real-field access; Barrier 3 compile-time type-family static_assert in tt::cfg_*_field dispatcher) + H13 hard invariant + /dod-audit + /bug-check registry-driven scan
+sister_classes: [11, 14, 16, 18, 21, 25, 27]
 ---
 
 ## Class 23 — Type-erased typed-field write via reinterpret_cast through char* offset

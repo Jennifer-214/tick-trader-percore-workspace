@@ -462,6 +462,29 @@ Don't confuse "vacuous PASS" tests with "tests not exercising the code". The wal
 
 Don't expose "Multi-consumer registry" as a public API. The discipline is: ONE master + many private consumer macros. External callers see only the consumer macros (e.g., `STAMP_CFG_POPULATE_FROM_DERIVED`); they don't see or touch master registry directly.
 
+### Emit-side source-of-truth discipline: cfg vs caller-supplied inf (NEW v1.3)
+
+When migrating a CONSUMER from caller-supplied input struct (e.g., `inf` populated by caller) to cfg-driven framework call, the **semantic source-of-truth shifts** in a way that's easy to miss:
+
+- **Pre-migration (caller-inf-driven):** Stamp body captures whatever the CALLER populated in `inf` before invoking the emit. Tests can set `inf.ridge_lambda = 0.15` directly; stamp emits `0.15`.
+- **Post-migration (cfg-driven):** Stamp body captures whatever's in `cfg` at emit time (via `populate_stamp_cfg_from_derived` walker). Tests must set `cfg.ridge_lambda = FPN_FromDouble<64>(0.15)`; stamp emits whatever framework's tt::cfg_emit_field renders from cfg.ridge_lambda.
+
+**This is THE CORRECT semantic per cfg-derived-consumer framework discipline** — cfg IS the canonical source of truth for derived fields; consumers walk cfg, not inf. But existing tests that pre-populated inf as a shortcut become broken under migration.
+
+**Migration discipline at consumer-switch ship:**
+
+1. **Identify tests that set inf-fields directly** for migrated consumers. Grep: `inf.<name> = ...` for any field flagged STAMP_BOUND_CFG_DERIVED.
+2. **Migrate test setup from inf → cfg** for each: replace `inf.<name> = value` with `cfg.<name> = value` (with FPN_FromDouble<64> wrap for FPN<F> types).
+3. **Consolidate via extensibility test pattern** (§ above) — replace explicit per-field test enumeration with X-macro walker that auto-validates all flagged rows. Sister benefit: future flagged-row additions auto-include in extensibility test.
+
+**Why this matters at coding time:** Step 1.6.4 (production canonical body emit migration at `ModelInference.hpp:~1817`) flips this semantic for the stamp body's cfg-derived fields. Tests that pre-set inf for flagged fields will silently pass (no compile error) but their assertions will check stale inf values vs cfg-at-emit-time values — false-positive test pass. Catch via:
+
+- Pre-migration build: tests that fail on cfg/inf type mismatch after struct-gen (TYPE-SENSITIVE Pillar B8 issue — 27 instances at .B.3 WIP-checkpoint 6)
+- Post-migration runtime: test failures where expected values diverge from cfg defaults
+- Extensibility test pattern: replaces brittle per-field tests with registry-driven walker
+
+**Sister patterns that follow this discipline:** `wire-format-byte-preservation-discipline.md` Layer 5b structural invariants (verifies emit shape independent of caller-supplied input).
+
 ---
 
 ## Pattern lifecycle (per `pattern-codification-lifecycle.md`)

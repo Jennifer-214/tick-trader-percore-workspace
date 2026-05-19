@@ -200,7 +200,7 @@ Print sweep report location + verdict + per-plan amendment summary.
 | Skill | Scope | Relationship |
 |---|---|---|
 | `/precoding-audit-gate` | Full 5-audit fire against ONE plan | Sister Layer 1 orchestrator (heavier scope per plan; single plan target) |
-| `/bug-check` | Single bug class scan against codebase OR plans (NEW post-extension) | LAYER 2 child fired per-plan by this orchestrator |
+| `/bug-check` | Single bug class scan against codebase OR plans | LAYER 2 child fired per-plan by this orchestrator |
 | `/trace-deps` | Plan-vs-code function existence | LAYER 2 child fired per-plan |
 | `/handoff` | Pickup prompt generation | Sister Layer 1; `/handoff` may invoke this skill as part of pre-pickup verification |
 | `/readiness` | Plan completeness 28-check | Orthogonal — `/readiness` is single-plan deep verify; this skill is multi-plan shallow sweep |

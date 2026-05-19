@@ -6,7 +6,7 @@ description: Scan existing registries (FOREACH_* macros catalogued in FOREACH_RE
 # /registry-fit-audit — Registry-fit audit per framework-selection criteria
 
 > **Stage 0 preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
-> - § 11 Framework-selection criteria (NEW at v5.15.5.F.4c.3) — when to reach for a registry vs principle + audit + delete
+> - § 11 Framework-selection criteria — when to reach for a registry vs principle + audit + delete
 > - § 1.5 Framework-driven extensibility meta-principle — when frameworks are justified
 >
 > **Stage 0 preload** (workspace/DESIGN_SPECS/):
@@ -19,7 +19,7 @@ description: Scan existing registries (FOREACH_* macros catalogued in FOREACH_RE
 
 ## What this does
 
-Walks the codebase-wide registry catalog (`FOREACH_REGISTRY` meta-registry at `CoreFrameworks/MetaRegistry.hpp`) and evaluates each registered registry against the framework-selection criteria codified at `.F.4c.3`. The meta-principle:
+Walks the codebase-wide registry catalog (`FOREACH_REGISTRY` meta-registry at `CoreFrameworks/MetaRegistry.hpp`) and evaluates each registered registry against the framework-selection criteria (DESIGN_PHILOSOPHY § 11). The meta-principle:
 
 > **Registries optimize for ADDING MORE of a pattern. When the right answer is to STOP HAVING the pattern, a principle + audit + delete is better than a registry.**
 
@@ -37,7 +37,7 @@ Output is a structured findings report with a per-registry verdict. NOT actual e
 This skill accepts scope as first positional arg per `DESIGN_SPECS/audit-scope-taxonomy.md`. Registry-fit-audit has a registry-specific interpretation of scope:
 
 - `current` (default when no scope specified) — recently added or modified registries (per git log since branch base)
-- `wide` — full sweep across all FOREACH_* macros in `FOREACH_REGISTRY` meta-registry (~62 registries at .F.4c.3)
+- `wide` — full sweep across all FOREACH_* macros enrolled in `FOREACH_REGISTRY` meta-registry
 - `scoped <glob>` — file/dir glob (e.g., `/registry-fit-audit scoped CoreFrameworks/Cfg*`)
 - `module:<name>` — named module per `MODULE_MAP.md` registry; audits registries declared in that module
 - `registry:<NAME>` — focused audit of one registry (e.g., `/registry-fit-audit registry:FOREACH_OMS_CFG_CACHE`) — legacy invocation shape preserved
@@ -147,6 +147,6 @@ Spawn an Explore subagent. The subagent:
 - `DESIGN_SPECS/pattern-codification-lifecycle.md` — staging discipline; registries at Stage 1-2 are NOT mature targets
 - `DESIGN_SPECS/meta-registry-pattern-for-codebase-registry-discipline.md` — the meta-registry walked by this audit
 - `DESIGN_SPECS/x-macro-registry-with-presence-dispatch.md` — base registry pattern
-- `CoreFrameworks/MetaRegistry.hpp` — `FOREACH_REGISTRY` codebase catalog (62 entries at .F.4c.3)
+- `CoreFrameworks/MetaRegistry.hpp` — `FOREACH_REGISTRY` codebase catalog
 - `tools/check_meta_registry.py` — CI that keeps the meta-registry in sync (different concern; not fit-audit)
 - CLAUDE.md item 31 — framework discipline meta-principle (codified)

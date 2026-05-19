@@ -5,7 +5,7 @@ description: Audit the tick-trader-percore codebase for cleanup candidates — r
 
 # /dust — Codebase audit (non-destructive)
 
-> **Post-2026-05-14 enhancement — uniform parameter + preload contract:**
+> **Uniform parameter + preload contract:**
 >
 > **Optional invocation args:**
 > - `<scope_path>` — file_path_glob to scope cleanup scan; default = full codebase sweep

@@ -71,7 +71,7 @@ Fire AFTER `/precoding-audit-gate` returns GREEN-or-YELLOW-with-amendments and B
 
 ```
 # Full 12-pillar scan for a struct-gen-migration ship:
-/blindspot-scan plans/v5.15-live-readiness/subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md
+/blindspot-scan plans/<sprint-dir>/subplans/<plan>.md
 
 # Narrow scan for a wire-format ship (B1+B12 focus):
 /blindspot-scan plans/<sprint>/subplans/<plan>.md B1,B12

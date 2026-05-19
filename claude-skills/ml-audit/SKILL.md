@@ -5,7 +5,7 @@ description: Walk the ML pipeline (feature compute → model load → inference 
 
 # /ml-audit — ML pipeline structural audit
 
-> **Post-2026-05-14 enhancement — uniform parameter + preload contract:**
+> **Uniform parameter + preload contract:**
 >
 > **Optional invocation args:**
 > - `<scope_path>` — file_path_glob to scope; default = full ML pipeline sweep

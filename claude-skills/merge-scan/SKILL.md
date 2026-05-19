@@ -5,7 +5,7 @@ description: Scan the codebase + in-flight plans for reuse-merge opportunities �
 
 # /merge-scan — Reuse + sharing opportunity audit
 
-> **Post-2026-05-14 enhancement — uniform parameter + preload contract:**
+> **Uniform parameter + preload contract:**
 >
 > **Optional invocation args:**
 > - `<scope_path>` — plan path or code subsystem to focus reuse-merge scan; default = full sweep

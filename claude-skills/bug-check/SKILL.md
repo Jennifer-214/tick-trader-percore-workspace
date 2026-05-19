@@ -4,11 +4,11 @@ description: Scan the codebase for instances of known recurring bug patterns cat
 
 # /bug-check — Scan codebase for known bug class instances
 
-> **Post-2026-05-14 enhancement — uniform parameter + preload contract:**
+> **Uniform parameter + preload contract:**
 >
 > **Optional invocation args** (already parameterized — see Invocation section below):
 > - `[class_N | surface_<tag>]` — focus on one class or one surface
-> - `[plans]` — extend scan to plans/**/*.md (NEW post-v5.15.5.F.4b — see Step 3 plan scope extension)
+> - `[plans]` — extend scan to plans/**/*.md (catches stale code samples that would reintroduce just-closed bug classes; see Invocation section "plans" scope)
 >
 > **Stage 0 DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
 > - § 3 (Hard Invariants) — H1-H13 are anti-pattern boundaries
@@ -78,7 +78,7 @@ consumer reads from it).
 
 ## Scope (per audit-scope-taxonomy.md)
 
-This skill accepts scope as first positional arg per `DESIGN_SPECS/audit-scope-taxonomy.md` (NEW v5.15.5.F.4c.3 WIP2d-1.B.0d):
+This skill accepts scope as first positional arg per `DESIGN_SPECS/audit-scope-taxonomy.md`:
 
 - `current` (default when no scope specified) — scan recent edits + touched files for known bug class instances
 - `wide` — full codebase scan across all Class N entries in RECURRING_BUG_PATTERNS.md; HIGH context cost; recommended quarterly + after new Class N codification
@@ -86,7 +86,7 @@ This skill accepts scope as first positional arg per `DESIGN_SPECS/audit-scope-t
 - `module:<name>` — named module per MODULE_MAP.md registry; iterative module-by-module bug-class scans
 - `class_N` (legacy invocation) — focused single-class scan
 - `surface_<tag>` (legacy invocation) — surface-tag-filtered scan
-- `plans` (legacy invocation) — extend scan to plans/**/*.md (post-v5.15.5.F.4b)
+- `plans` (legacy invocation) — extend scan to plans/**/*.md
 
 **Most appropriate scope shapes for /bug-check:** `current` (during active work), `class_N` (post-new-class-codification sweep), `module:<name>` (iterative module audits), `wide` (quarterly).
 
@@ -113,13 +113,13 @@ Surface vocabulary (per RECURRING_BUG_PATTERNS.md):
 - `boot` — initialization, snapshot load, model load
 - `plan-time` — pre-coding plan audits (delegated to /trace-deps)
 - `audited-clean` — historically-cleared category (delegated skip)
-- `plans` — **NEW (post-v5.15.5.F.4b)** scan plans/**/*.md for anti-pattern
+- `plans` — scan plans/**/*.md for anti-pattern
   CODE SAMPLES that would reintroduce a just-closed bug class. Use after
-  structural-fix ship lands (e.g., post-.F.4b: `/bug-check plans` to verify
+  structural-fix ship lands (e.g., `/bug-check plans` to verify
   queued sub-plans don't have void*+offset+reinterpret_cast samples). Also
   invoked indirectly by `/plan-context-sweep` orchestrator.
 
-**Scope expansion (v5.15.5.F.4b+):** Detection greps run by default against
+**Scope expansion:** Detection greps run by default against
 `CoreFrameworks/`, `ML_Headers/`, `Strategies/`, `DataStream/`, `Backtest/`,
 `MemHeaders/`, `FixedPoint/`, `GUI/`, `tests/` (codebase). Adding `plans` to
 invocation extends targets to include `plans/**/*.md` (workspace-symlinked).

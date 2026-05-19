@@ -212,7 +212,7 @@ git remote get-url origin
 
 ### Stage 8.5 — Auto-write contracts (post-push, pre-report)
 
-**NEW (post-2026-05-14).** Per CLAUDE.local.md auto-write contracts, certain ship change-types REQUIRE corresponding ledger updates. The skill detects change-type from staged diff + commit message + recent context, then drafts + offers each entry for operator review (NOT auto-commits — operator confirms).
+Per CLAUDE.local.md auto-write contracts, certain ship change-types REQUIRE corresponding ledger updates. The skill detects change-type from staged diff + commit message + recent context, then drafts + offers each entry for operator review (NOT auto-commits — operator confirms).
 
 **Change-type detection:**
 
@@ -279,7 +279,7 @@ Next: <auto-suggest based on plan or audit findings — e.g. "Phase 2
 
 ### Stage 10 — Optional: chain to `/handoff`
 
-**NEW (post-2026-05-14).** Skill ends with optional chain offer:
+Skill ends with optional chain offer:
 
 ```
 Generate handoff prompt for next sub-ship in queue? [y/N]

@@ -4,7 +4,7 @@ description: Anti-regression audit for test weakening. Scans git diffs (working 
 
 # /test-strength-audit — Anti-regression scan for test weakening
 
-> **Post-2026-05-14 enhancement — uniform parameter + preload contract:**
+> **Uniform parameter + preload contract:**
 >
 > **Required invocation args:**
 > - `<diff_range>` — git diff range

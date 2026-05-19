@@ -70,9 +70,9 @@ return an error. /handoff is only invoked from main session.
 
 ### Stage 1.5 — Capture in-flight task state (TaskList serialization)
 
-**NEW (set 2026-05-15 per operator request after `.F.4c.3` Step 2 partial handoff — without explicit TaskList capture, fresh-session pickup loses track of the multi-step plan progress; in-flight tasks must be recreated from memory which drifts).**
+Without explicit TaskList capture, fresh-session pickup loses track of the multi-step plan progress; in-flight tasks must be recreated from memory which drifts.
 
-**Additional dynamic-load contracts (set 2026-05-15 at WIP2d-1.B.0c):**
+**Additional dynamic-load contracts:**
 
 When composing the handoff body, scan the in-flight plan + recent commits for surface indicators and pre-load matching DESIGN_SPECS bodies + skill references:
 
@@ -82,7 +82,7 @@ When composing the handoff body, scan the in-flight plan + recent commits for su
 | New registry introduction OR cache-on-subsystem-state | `decision-time-data-binding-pattern.md` § Framework-selection criteria + `/registry-fit-audit` skill reference + DESIGN_PHILOSOPHY § 1.5 Framework-selection criteria sub-section |
 | `cfg.cores[c]` reads or per-core registry work | `cfg-scope-discipline.md` + RECURRING_BUG_PATTERNS Class 25 + Class 26 + Class 27 |
 | ML cfg fields (ridge_*, thompson_*, confidence_*, bandit_*) | `cfg-scope-discipline.md` + decision-time-data-binding-pattern.md (ConfidenceScorer / ThompsonBandit state are Class 27 target subsystems) + `/accounting-audit` |
-| ImGui widget / Settings panel | (no new dynamic load at .F.4c.3; existing widget-ID discipline applies) |
+| ImGui widget / Settings panel | (no new dynamic load required; existing widget-ID discipline applies) |
 
 These cross-references go into the generated handoff Step 3 (DESIGN_SPECS pattern check) + Step 4 (design philosophy reminders) sections, so the fresh-session pickup has the relevant principle context loaded before code reads start.
 
@@ -181,14 +181,14 @@ each invocation pulls current state.
 | `tick-trader-percore-workspace/DOCS/TECH_DEBT.md` | Open entries; filter to ones in ship's surface area |
 | `tick-trader-percore-workspace/DOCS/PARITY_ISSUES.md` | Open parity findings (cross-ref to ship surface) |
 | `tick-trader-percore-workspace/DOCS/LANDMINES.md` | Operational landmines (e.g., XGBoost+libgomp pthread races); read before any segfault/race/parallelism debugging |
-| `tick-trader-percore-workspace/DOCS/DESIGN_PHILOSOPHY.md` | **NEW (post-2026-05-14 refactor).** Thematic narrative + 4-tier discipline (HARD / STRONG / SOFT / PROCESS) + cross-reference index. Match plan keywords to family sections (§ 3 Hard Invariants / § 4 Latency / § 5 Determinism / § 6 Concurrency / § 7 Structural-fix / § 8 Failure observability / § 9 Architectural primitives / § 10 Operator UX / § 11 Process discipline) + cite specific § N rows in generated prompt's Step 4. |
+| `tick-trader-percore-workspace/DOCS/DESIGN_PHILOSOPHY.md` | Thematic narrative + 4-tier discipline (HARD / STRONG / SOFT / PROCESS) + cross-reference index. Match plan keywords to family sections (§ 3 Hard Invariants / § 4 Latency / § 5 Determinism / § 6 Concurrency / § 7 Structural-fix / § 8 Failure observability / § 9 Architectural primitives / § 10 Operator UX / § 11 Process discipline) + cite specific § N rows in generated prompt's Step 4. |
 | `plans/<sprint-dir>/MASTER.md` | Sprint context; ship's position in sub-tag sequence |
 | `<plan-path>` (resolved) | Ship's stated scope; stale-claim audit target |
 | `plans/<sprint-dir>/postmortems/` | Most-recent sub-ship postmortem (lessons that may apply) |
-| `CLAUDE.local.md` Current Sprint State Tracker section | **NEW (post-2026-05-14).** Most-recent ship + next-ship + sprint-wide invariants in force + open architectural decisions. Embed as snapshot in generated prompt for cold-pickup-time drift detection. |
+| `CLAUDE.local.md` Current Sprint State Tracker section | Most-recent ship + next-ship + sprint-wide invariants in force + open architectural decisions. Embed as snapshot in generated prompt for cold-pickup-time drift detection. |
 
-**CLAUDE.local.md as index (post-2026-05-14 condense):** the file is
-~190 lines of pointer-based index, NOT a 800-line philosophy dump.
+**CLAUDE.local.md as index:** the file is
+a pointer-based index, NOT a long philosophy dump.
 For each going-forward rule named in CLAUDE.local.md that overlaps
 the ship's surface, follow its DESIGN_SPECS pointer + load that body
 into context. This ensures the generated prompt's Step 3 "design check
@@ -197,7 +197,7 @@ future session needs, not just names.
 
 ### Stage 2.5 — Verify-on-write (anti-staleness fire)
 
-**NEW (post-2026-05-14; addresses observed drift between handoff prompt and reality at cold-pickup time per `feedback_compaction_degrades_treat_handoffs_as_hints`).**
+Addresses observed drift between handoff prompt and reality at cold-pickup time per `feedback_compaction_degrades_treat_handoffs_as_hints`.
 
 Before composing the handoff prompt, run `/readiness <plan-path>` AT GENERATION TIME against the target plan. Capture findings:
 

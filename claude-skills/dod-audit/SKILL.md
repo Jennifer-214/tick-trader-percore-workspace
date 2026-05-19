@@ -4,7 +4,7 @@ description: Data-oriented-design audit. Walks DESIGN_SPECS pattern catalog dyna
 
 # /dod-audit — Data-oriented-design pattern audit
 
-> **Post-2026-05-14 enhancement — uniform parameter + preload contract:**
+> **Uniform parameter + preload contract:**
 >
 > **Optional invocation args** (mirrors /precoding-audit-gate signature):
 > - `<scope_path>` — file path (plan or code file) to scope the scan; default = full codebase sweep
@@ -65,8 +65,8 @@ RECURRING_BUG_PATTERNS.md or FOREACH_FEATURE registry-as-source-of-truth.
 | /parity-check | Train↔serve identity | Orthogonal — different audit dimension |
 | /latency-track | Latency-critical addition tracking | Sister — /latency-track = "you added this; document the cost"; /dod-audit = "you should apply this pattern; the cost would be lower" |
 | /patch-planner | Generates fix blueprints from findings | Downstream — /dod-audit FINDS, /patch-planner BLUEPRINTS |
-| /accounting-audit | Class 27 cfg-mirror caches + accounting / money tracking surface | **Composes** — /dod-audit findings touching accounting paths defer the Class 27 + accounting-specific verdicts here (NEW v5.15.5.F.4c.3) |
-| /registry-fit-audit | Registry-fit per framework-selection criteria (registry vs principle+sweep) | **Composes** — when /dod-audit finding suggests "this registry shape is wrong" OR "should this be a registry at all?", defer verdict to /registry-fit-audit (NEW v5.15.5.F.4c.3). /dod-audit identifies pattern application gaps; /registry-fit-audit decides whether the proposed pattern (registry) is the right shape. |
+| /accounting-audit | Class 27 cfg-mirror caches + accounting / money tracking surface | **Composes** — /dod-audit findings touching accounting paths defer the Class 27 + accounting-specific verdicts here |
+| /registry-fit-audit | Registry-fit per framework-selection criteria (registry vs principle+sweep) | **Composes** — when /dod-audit finding suggests "this registry shape is wrong" OR "should this be a registry at all?", defer verdict to /registry-fit-audit. /dod-audit identifies pattern application gaps; /registry-fit-audit decides whether the proposed pattern (registry) is the right shape. |
 
 ## When to use
 
@@ -114,7 +114,7 @@ This skill accepts scope as first positional arg per `DESIGN_SPECS/audit-scope-t
 - `/dod-audit current` — fast feedback during active coding
 - `/dod-audit module:OMS` — deep pattern-application audit of OMS module
 - `/dod-audit wide` — quarterly full sweep across DESIGN_SPECS catalog
-- `/dod-audit plan plans/v5.15-live-readiness/subplans/<plan>.md` — pre-coding plan check
+- `/dod-audit plan plans/<sprint-dir>/subplans/<plan>.md` — pre-coding plan check
 - `/dod-audit pattern decision-time-data-binding-pattern` — focused single-pattern scan
 
 ## Execution model (per SKILLS_HIERARCHY.md)
@@ -428,7 +428,7 @@ Convention: `<surface>` is:
 - `codebase` for full sweep
 - the basename of the audited path (e.g., `OrderManager`) for
   subsystem scope
-- the plan's stem (e.g., `v5.14.9-soft-risk-degradation-ladder`) for
+- the plan's stem (e.g., `<sprint>-<topic>` from the plan filename) for
   plan-mode
 
 Output format:

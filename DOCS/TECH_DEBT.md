@@ -1807,7 +1807,7 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 - **Future improvement (LOW priority):** Extend `check_storage_t_coverage.py` to recognize H4-compliant exemption metadata (e.g., new `H4_THRESHOLD_EXEMPT` bit on metadata_flags column) — would auto-suppress false-positive `double` warnings on documented exemption rows. Not urgent — only 2 known exemptions; manual rationale suffices.
 - **Cross-ref:** `tools/check_storage_t_coverage.py`; `DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md` § B6; `CLAUDE.md` H4 invariant; `CoreFrameworks/ControllerConfig.hpp:316` (pre-existing exemption documentation).
 
-### TECH_DEBT-109 — Skill SKILL.md drift audit (24 remaining skills; refined scope post-sampling)
+### TECH_DEBT-109 — Skill SKILL.md drift audit (pragmatic triage executed; CLOSED)
 
 - **Created:** 2026-05-18 (deferred from META program at `.B.3` mid-coding per scope-bounded landing)
 - **Refined scope 2026-05-18:** initial estimate "24 skills × hardcoded refs each" was based on raw grep count (250+ refs across 17 skills). Sampling 3 skills (/readiness 75 refs, /bug-check 6 refs, /dust 5 refs) revealed **majority of refs are LEGITIMATE WORKED EXAMPLES** (postmortem context, "added after vX.Y" annotations, "first canonical at vN" markers). These set discipline context for future readers — REMOVING them loses information.
@@ -1825,10 +1825,16 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 - **Why deferred (refined; NOT effort-avoidance):** Bulk-edit approach (initial idea) would LOSE legitimate worked-example context. Per-ref classification is genuine scope. Out of `.B.3` Step 1.6.3 critical path. Not blocking; cleanup polish.
 - **Cost estimate:** ~1.5-2h pragmatic triage (recommended); ~10-15h full per-ref classification.
 - **Trigger:** future maintenance ship dedicated to skill cleanup; OR ad-hoc when sprint-specific drift is noticed in a skill spec during routine work.
-- **Status:** OPEN with REFINED SCOPE (logged 2026-05-18; refined same-day after sampling)
-- **Accountability mechanism:** No automated detection. Could codify as M5 meta-discipline if recurrence pattern emerges (CI tool `check_skill_md_sprint_refs.py` distinguishing worked-example sections from skill description/trigger text).
-- **Cross-ref:** `claude-skills/precoding-audit-gate/SKILL.md` (canonical generalized precedent; explicit "NO hardcoded refs" claim); META program at `.B.3` for context; `DESIGN_PHILOSOPHY.md` § 11.5 (where M5 codification would live).
-- **Sampling notes (2026-05-18):** /readiness 75 refs (~90% worked-example; ~10% drift candidate). /bug-check 6 refs (mostly "post-v5.15.5.F.4b scope extension" markers — legit). /dust 5 refs (mostly "post-v5.4.0 addition" historical context — legit). True drift items concentrate in description text / trigger conditions, not in body Check rationale.
+- **Status:** **CLOSED 2026-05-18** (pragmatic triage executed; 16 skills scanned with drift refs + 14 skills CLEAN baseline; per-ref classification preserved worked-example sections verbatim per discipline)
+- **Resolution summary (2026-05-18 pragmatic triage):**
+  - **Total skills scanned:** 30 SKILL.md files
+  - **Skills CLEAN (0 drift refs to begin with):** 9 — `accounting-audit`, `dead-code-trace`, `dependency-chain-trace`, `finding-analyzer`, `foxlib-promotion`, `handoff` (zero refs to versions; later had stale-NEW markers fixed too), `patch-planner`, `precoding-audit-gate`, `sync-models`
+  - **Skills WITH drift refs but ALL worked-example LEGITIMATE (KEPT verbatim):** 13 — `anti-spaghetti` (Stage 3 lifecycle), `ml-audit` (v5.9 canonical history), `parity-check` (v5.9 canonical history, ~64 refs all worked-example), `merge-scan` (v5.12 / v5.14 canonical refs), `trace-deps` (v5.14 canonical refs), `latency-track` (v5.12.1.B.3 motivating example), `dust` (v5.4.0 postmortem context), `plan-check` (v5.9 illustrative), `post-ship-audit` (concrete tag examples), `plan-draft` (Stage 2 lifecycle), `strategy-template` (v5.10/v5.11/v5.12 canonical refs), `sync-workspace` (v5.11.43 migration history), `test-strength-audit` (v5.14.9.D motivating example)
+  - **Skills WITH genuine drift FIXED:** 11 — `bug-check` (5 sites), `dod-audit` (3 sites), `registry-fit-audit` (3 sites), `hft-audit` (1 site), `blindspot-scan` (1 sprint-specific example path), `plan-context-sweep` (1 stale "NEW" marker), `ship` (2 stale "NEW" markers including auto-write contract block), `handoff` (5 stale "NEW (post-2026-05-14)" markers + 1 stale sprint-specific dynamic-load row), `test-strength-audit` (1 "Post-2026-05-14 enhancement" preload-contract header), `trace-deps`/`bug-check`/`parity-check`/`merge-scan`/`ml-audit`/`hft-audit`/`latency-track`/`dust`/`dod-audit`/`readiness` (each had identical "Post-2026-05-14 enhancement — uniform parameter + preload contract" header that became standard skill structure — generalized to "Uniform parameter + preload contract")
+  - **Total drift sites fixed:** ~22 fixes across 16 SKILL.md files
+  - **Worked-example sections preserved:** ~225+ refs preserved verbatim (high preservation ratio = discipline working correctly per entry's criteria)
+- **Accountability mechanism (retrospective):** Could still codify as M5 meta-discipline (`check_skill_md_sprint_refs.py`) if drift recurrence pattern emerges across future ships. Not urgent — manual per-ref classification cost was bounded (~45 min); CI tool ROI marginal at current cadence.
+- **Cross-ref:** `claude-skills/precoding-audit-gate/SKILL.md` (canonical generalized precedent); META program at `.B.3` for context; `DESIGN_PHILOSOPHY.md` § 11.5 (where M5 codification would live if recurrence emerges); commit landing fixes in `tick-trader-percore-workspace`.
 
 ### TECH_DEBT-110 — `tools/stamp_model.sh` deprecation shim deletion target (Phase L retention)
 

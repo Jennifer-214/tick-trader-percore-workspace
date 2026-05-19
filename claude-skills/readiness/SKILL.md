@@ -5,7 +5,7 @@ description: Verify a plan before coding starts. Reads a plan file, walks the 10
 
 # /readiness — Plan verification (pre-coding gate)
 
-> **Post-2026-05-14 enhancement — uniform parameter + preload contract:**
+> **Uniform parameter + preload contract:**
 >
 > **Required invocation args:**
 > - `<plan_path>` — sub-ship plan to verify

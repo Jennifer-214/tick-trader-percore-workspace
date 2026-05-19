@@ -5,7 +5,7 @@ description: Comprehensive train↔serve identity audit. Walks every train-serve
 
 # /parity-check — Train↔serve identity audit
 
-> **Post-2026-05-14 enhancement — uniform parameter + preload contract:**
+> **Uniform parameter + preload contract:**
 >
 > **Optional invocation args** (mirrors /precoding-audit-gate signature):
 > - `<scope_path>` — plan path or specific code surface; default = full codebase sweep

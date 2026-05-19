@@ -5,7 +5,7 @@ description: Systematically sweeps the codebase for deep architectural flaws, ha
 
 # /hft-audit — Deep Architectural & HFT Codebase Audit
 
-> **Post-2026-05-14 enhancement — uniform parameter + preload contract:**
+> **Uniform parameter + preload contract:**
 >
 > **Optional invocation args:**
 > - `<scope_path>` — file_path_glob to scope to subsystem; default = full sweep
@@ -70,7 +70,7 @@ The agent should spawn a `codebase_investigator` subagent. The subagent must exe
 ### 2. The Deep Sweep (Search Vectors)
 Run heuristic investigations across the following specific HFT attack vectors:
 - **Data-Oriented Design (DOD):** Look for unaligned structs (not padded to 64 bytes), L1 cache straddling, and False Sharing across heavily contended `std::atomic` variables.
-- **Branchless dispatch opportunity scan (NEW v5.15.5.F.4c.3 WIP2d-1.B.0d):** Look for if/else if chains + switch statements on runtime enum values in SP/HP/drainer code that should be converted to fn pointer table (Pattern 1) or 2D state×type dispatch table (Pattern 2) per `DESIGN_SPECS/branchless-dispatch-discipline.md`. Flag candidates as Class 28 (per `DOCS/RECURRING_BUG_PATTERNS.md`). Detection patterns:
+- **Branchless dispatch opportunity scan:** Look for if/else if chains + switch statements on runtime enum values in SP/HP/drainer code that should be converted to fn pointer table (Pattern 1) or 2D state×type dispatch table (Pattern 2) per `DESIGN_SPECS/branchless-dispatch-discipline.md`. Flag candidates as Class 28 (per `DOCS/RECURRING_BUG_PATTERNS.md`). Detection patterns:
    - `if (X == ENUM_VAL) { ... } else if (X == OTHER_ENUM) { ... }` chains dispatching on runtime enum
    - `switch (X) { case ENUM_VAL: ...; case OTHER_ENUM: ... }` in CoreFrameworks/ / ML_Headers/ / Strategies/ / Backtest/ SP/HP paths
    - `cond ? value_a : value_b` ternaries that BOTH SIDES load from memory (causes both loads to be issued; if both target the SAME cache line, no extra cost; if DIFFERENT lines, branchless pre-resolution is the win — see `decision-time-data-binding-pattern.md`)

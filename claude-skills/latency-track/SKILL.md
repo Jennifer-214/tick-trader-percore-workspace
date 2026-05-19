@@ -5,7 +5,7 @@ description: Audit recent edits / pending commits for changes to latency-critica
 
 # /latency-track — Latency-additions audit + draft changelog entries
 
-> **Post-2026-05-14 enhancement — uniform parameter + preload contract:**
+> **Uniform parameter + preload contract:**
 >
 > **Required invocation args:**
 > - `<diff_range>` — git diff range

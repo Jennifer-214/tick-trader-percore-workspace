@@ -257,7 +257,18 @@ Auto-write proposals (review + confirm each before commit-amend):
 [4] RECURRING_BUG_PATTERNS — no new class detected — skip
 [5] DESIGN_PHILOSOPHY cross-link — no structural-fix indicators — skip
 [6] Decoupling-roadmap — no GUI ↔ runtime touch — skip
+[7] /index-rebuild — N frontmatter docs changed this ship; regenerate CLAUDE.md skill table + DESIGN_SPECS/README.md + TAG_INDEX.md — Y/n/skip?
 ```
+
+**Stage 8.5 — `/index-rebuild` auto-fire (post-refresh discipline)**
+
+If any doc with YAML frontmatter (DESIGN_SPECS/ / claude-skills/*/SKILL.md / DOCS/tech-debt/ / DOCS/recurring-bug-patterns/) was created or modified this ship, fire `/index-rebuild` to regenerate canonical indexes from current frontmatter state. This catches:
+- New skills not yet in CLAUDE.md "Skill suite" table
+- New DESIGN_SPECS not yet in DESIGN_SPECS/README.md catalog
+- Stage promotions (2-draft → 3-first-canonical) not reflected
+- New tags in vocabulary not reflected in TAG_INDEX.md
+
+Implementation: `python3 /home/caramel/code/FoxML_Trader_v2/tools/rebuild_doc_indexes.py` (runs all targets). Output regenerated indexes get committed as part of ship commit (or follow-up amend). See `DESIGN_SPECS/doc-disciplines/categorical-triggers-in-always-loaded-docs.md` for the underlying drift discipline; `tools/check_doc_metadata.py` verifies frontmatter validity post-rebuild.
 
 For each accepted proposal, the skill performs the Edit + amends the ship commit (or creates a follow-up commit if amend would invalidate the tag — typically amend is fine because the tag is a separate operation).
 

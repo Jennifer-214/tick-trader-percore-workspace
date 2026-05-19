@@ -1,18 +1,19 @@
 ---
 type: framework-pattern
 stage: 5-claude-md
-version: 1.0
+version: 1.1
 established: 2026-05-13
+last_amended: 2026-05-19
 tags: [framework-discipline, structural-fix, pattern-codification]
 surface: [registry, cfg-flow, gui-thread, parser, wire-format]
-sister_specs: [framework-composition-overview.md, metadata-bit-driven-derived-filter-framework.md, sidecar-override-pattern-for-registry-auto-flows.md, cfg-derived-consumer-framework.md, type-trait-dispatch-via-tt-namespace.md, manual-fields-inventory-pattern.md, categorical-tag-applicability-pattern.md, meta-registry-pattern-for-codebase-registry-discipline.md]
+sister_specs: [framework-composition-overview.md, metadata-bit-driven-derived-filter-framework.md, sidecar-override-pattern-for-registry-auto-flows.md, cfg-derived-consumer-framework.md, type-trait-dispatch-via-tt-namespace.md, manual-fields-inventory-pattern.md, categorical-tag-applicability-pattern.md, meta-registry-pattern-for-codebase-registry-discipline.md, autopopulate-pattern-for-production-caller-class.md]
 applies_at_skills: []
 ---
 
 # Universal cfg field registry pattern — one registry, all consumers
 
 **Established:** 2026-05-13 (v5.15.5.F.4 sprint — pre-implementation draft)
-**Status:** DRAFT v1.0 (pre-coding spec; promotes to ACTIVE after .F.4b ships)
+**Status:** **ACTIVE v1.1** (v1.1 amendment 2026-05-19 at `.B.3` Phase K — adds NEW § "Registry default precedence over manual defaults" codifying discipline + TECH_DEBT-107 47-globals sweep as Stage 3 first canonical application; sister § to existing Adding-a-new-cfg-field + Implementation-checklist sections). v1.0 promoted ACTIVE after `.F.4b` shipped.
 **Cross-references:**
 - Parent: `heterogeneous-registry-pattern.md` (SCOPE COLUMN vs DOMAIN SPLIT framework; this is SCOPE COLUMN with `Kind` as dispatch axis)
 - Sister: `autopopulate-pattern-for-production-caller-class.md` (the AUTOPOPULATE companions emit consumer code from registry)
@@ -317,6 +318,78 @@ Additional guards:
 - Single cfg field added to plug a one-off bug. (Registry overhead requires ≥3 entries per CLAUDE.md item 13 threshold.)
 - Cfg fields with truly per-field bespoke parse logic (e.g., regex-driven). Either generalize the parse logic or special-case at the registry consumer.
 - Cfg fields with INDIRECT storage (e.g., computed-from-N-other-fields). These belong in `Cfg_PostLoadSetup`, not the registry.
+
+---
+
+## Registry default precedence over manual defaults (NEW v1.1; 2026-05-19)
+
+**Discipline:** Once a registry row declares a default value via its payload column (`DBL(default, clamp_min, clamp_max)` / `INT(default, ...)` / `BOOL(default)` / `ENUM*(...)` / `STR(default)`), that registry default is the **single source of truth** for the field's default. Manual default values in the cfg struct body (e.g., `cfg.X = 128;` initialization lines OR struct member default-initializer `int X = 128;`) are **FORBIDDEN** once the registry has a default column. Sister to the single-source-of-truth principles already applied at the parser / save / GUI panel / drift-check / per-core-override surfaces.
+
+### Why
+
+| Drift class | Pre-discipline | Post-discipline |
+|---|---|---|
+| Registry-vs-manual default desync | Two sources of truth; manual silently shadows registry; future cfg changes require synchronous edits at both sites | Registry default propagates via `FOREACH_*_CFG_FIELD(EMIT_DEFAULT)` X-macro walker; no manual override to drift |
+| Adding a new cfg field | Pick default once in registry + AGAIN at struct init site | Pick default once in registry; struct init auto-gens |
+| Changing an existing default | Two-site edit (registry + manual) with audit risk that one site missed | One-site edit (registry only); X-macro walker propagates |
+| Default values that vary per build flag / per environment | Often handled in manual init (registry has only static default) | Either: (a) registry payload uses static default + post-init applies env override at known site, OR (b) keep manual init for that specific row + document rationale at memory file |
+
+### Mechanism
+
+**Per-core surface (H17-locked):** `PerCoreCfg<F>` auto-generates struct fields from `FOREACH_PER_CORE_CFG_FIELD`. Default propagation via `EMIT_PER_CORE_DEFAULT` X-macro walker runs at boot in `Cfg_Init()`. Manual per-core defaults already FORBIDDEN at this surface per H17 invariant.
+
+**Global surface (Path α 12-col cascade at v5.15.5.F.4d.1.B.3):** `FOREACH_GLOBAL_CFG_FIELD` migrated from 11-col → 12-col with `STORAGE_T` column added. Sister mechanism `FOREACH_GLOBAL_CFG_FIELD(EMIT_GLOBAL_CFG_DEFAULT)` runs at boot to populate global cfg from registry defaults. Manual init in `ControllerConfig.hpp` body runs AFTER the X-macro walker, silently shadowing registry defaults — **this is the drift surface this discipline closes**.
+
+### Resolution procedure for existing manual defaults
+
+For each existing manual default in `ControllerConfig.hpp` body:
+
+1. **Identify registry default** for the field (from payload column at corresponding `FOREACH_*_CFG_FIELD` row)
+2. **Compare to manual default** at struct init site
+3. **Three cases:**
+   - **MATCH** → delete manual default; X-macro walker default propagates safely (no behavior change)
+   - **DIFFER** → operator decision per case-by-case:
+     - **(a)** Update registry default to match manual + delete manual (registry becomes canonical; aligns with discipline)
+     - **(b)** Keep manual + document rationale at `~/.claude/projects/.../memory/feedback_registry_default_exemption_<field>.md` memory file (e.g., `warmup_ticks` registry=0 vs manual=128 — operational reason: warmup requires non-zero default OR registry default 0 is correct + manual is stale)
+     - **(c)** Neither (a)/(b) fits → propose new design (rare; e.g., env-var-driven default)
+   - **MISSING-IN-REGISTRY** → add registry row OR document why field bypasses registry discipline
+
+### Sister patterns
+
+- **`autopopulate-pattern-for-production-caller-class.md`** — defaults are one of the AUTOPOPULATE consumers; same N-site → 1-site closure shape
+- **`metadata-bit-driven-derived-filter-framework.md`** § Option E — registry consumer X-macro walker as canonical mechanism
+- **`x-macro-registry-with-presence-dispatch.md`** § Y3 dispatch — `EMIT_DEFAULT_IF_<KIND>` token-paste presence-dispatch idiom for per-Kind default emission
+- **`structural-fix-preferred-decision-framework.md`** — 47 instances = >> 4-instance threshold for STRUCTURAL FIX MANDATORY; manual-default-vs-registry-default is a recurring drift class
+
+### TECH_DEBT closure
+
+**TECH_DEBT-107** OPENED+CLOSED at v5.15.5.F.4d.1.B.3 Phase K (~3-4h). Sweep all 47 FOREACH_GLOBAL_CFG_FIELD rows; per-row resolution per procedure above. Post-sweep: registry IS canonical for all 47 globals; documented exemptions live at memory files (not body of `ControllerConfig.hpp`).
+
+### Audit detection
+
+For `/dod-audit` to detect missed applications:
+
+```bash
+# Find manual default initializers in ControllerConfig.hpp that have registry rows:
+rg -n '^\s*[a-zA-Z_]+\s*=\s*[0-9]+' CoreFrameworks/ControllerConfig.hpp | \
+    while read site; do
+        field=$(echo "$site" | grep -oE '[a-zA-Z_]+\s*=' | sed 's/\s*=//')
+        if rg -q "FOREACH_GLOBAL_CFG_FIELD.*\b$field\b" CoreFrameworks/CfgFieldRegistry.hpp; then
+            echo "MISSED APPLICATION: $field has both registry default + manual default at $site"
+        fi
+    done
+```
+
+When `/dod-audit` flags MISSED — recommend per-row resolution procedure above OR memory exemption.
+
+### False-positive surface
+
+- **Env-var-driven defaults** at known boot sites (NOT a drift class; registry default + boot-time env override is correct pattern; documented at boot init code)
+- **Path α cascade pending** for a specific cfg surface — if `FOREACH_<DOMAIN>_CFG_FIELD` doesn't yet have STORAGE_T column + auto-gen walker, manual defaults are temporarily REQUIRED (track as TECH_DEBT for Path α completion at that surface)
+
+### Compile-time enforcement (future-proofing)
+
+When all 47 manual globals are reconciled, ADD `static_assert(0 == manual_default_count_in_controller_config_body)` via codegen check OR `tools/check_manual_default_drift.py` CI tool (LOW priority; codify after sweep verifies discipline holds in practice).
 
 ---
 

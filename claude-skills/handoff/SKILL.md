@@ -435,7 +435,31 @@ If no in-flight tasks at handoff write: "No active task list — fresh-session p
 ## Paste this prompt into a fresh Claude Code session to start <ship-tag>
 
 ```
+---
+type: handoff
+ship_tag: <ship-tag>
+plan_type: refactor | feature | live-readiness | hotfix
+sprint_end_goal: <one-line statement from sprint MASTER plan>
+ship_end_goal: <one-line statement from sub-plan body>
+predecessor_handoff: <path or null>
+required_reading: [CLAUDE.md, CLAUDE.local.md, MEMORY.md, plan-body, sprint-MASTER]
+coding_status: planning-complete | mid-coding-checkpoint-N | post-ship-postmortem
+---
+
 I'm picking up <ship-tag> (<ship-title>) for the <sprint-name> sprint.
+
+**Sprint end goal:** <sprint-end-goal from sprint MASTER plan; e.g., "make the codebase more maintainable for future development">
+
+**Ship end goal:** <1-sentence: what this ship CLOSES / DELIVERS; e.g., "close cfg-derived consumer drift via FOREACH_<COHORT>(BASE_X) meta-walker">
+
+**Plan type:** <refactor | feature | live-readiness | hotfix> — drives acceptance criteria sections per `DESIGN_SPECS/future-oriented-plan-template.md` § Ship type.
+
+**Required reading BEFORE planning** (load in parallel):
+- `CLAUDE.md § Design philosophy + priorities` (NEW 2026-05-18 — End state + DOD + Priority gradients + Doc layer separation)
+- `CLAUDE.md § How to find anything` (search guide; metadata-driven retrieval)
+- This handoff (entire doc)
+- Plan body (cited above)
+
 This is a fresh context window; do NOT trust any prior-session memory
 — verify everything against current code.
 
@@ -545,21 +569,7 @@ Don't write code until the matched-pattern docs are read + integration plan arti
 
 **Going-forward rules + feedback entries (dynamically injected from CLAUDE.local.md + memory):**
 
-<inject going-forward rules + relevant feedback entries dynamically>
-- **Defer is last-ditch, never effort-avoidance.** Implement properly the first time. Smaller-scope recommendations consistently underperform "do it right now" instinct per `feedback_no_defer_for_effort` memory.
-- **Structural fix > direct patch for recurring bug classes.** If the ship has any "same pattern at multiple sites" shape, use X-macro registry / helper extraction with compile-time enforcement.
-- **No MVP for plumbing/refactor work.** MVP framing is reserved for genuinely-new features with unknown unknowns. Pattern-application work ships the full documented design.
-- **Boundary-stable refactors preferred over wide cascades.** Keep public boundary types unchanged + isolate behavior inside.
-- **Hot path UNTOUCHED.** Hot path target ≤500ns p99. Add work to slow path only.
-- **Branchless mask compute > switch on enum on slow path** (per CLAUDE.md item 18). Prefer template-bool dispatch or fn-pointer table over switch.
-- **Reuse-audit before adding new code** (per CLAUDE.md item 16). Scan for existing functions / shared state / conversion paths.
-- **Latency-additions get tracked** (per CLAUDE.md item 17). Log new slow-path / drainer / parser cost in `DOCS/HOT_PATH_CHANGELOG.md` with cost estimate + branchless analysis.
-- **Replay determinism is sacred.** Any RNG must use seeded mt19937_64 or equivalent with saved state. Never `std::random_device` in production paths.
-- **Bump Version.hpp on every ship.** Each `vX.Y.Z` tag must include a Version.hpp bump in the same commit.
-- **Don't use AskUserQuestion modal boxes.** Present options inline as text; Caramel wants full conversation scrollable.
-- **Evaluate options on robustness + latency + design philosophy, NOT time.** Time is essentially never the deciding factor.
-- **After pre-coding audits, ALWAYS consult before coding.** Present findings + list potential fixes + iterate with Caramel. Do NOT auto-proceed.
-- **Address Caramel as Caramel / she / her** in conversation. Persisted docs can keep "operator" for general-collaborator audiences.
+<inject going-forward rules + relevant feedback entries dynamically from CLAUDE.local.md + memory/MEMORY.md indexes>; do NOT hardcode specific rule bodies — they're the index source. Sample rules to inject based on plan's surface tags: defer-discipline, structural-fix, boundary-stable, hot-path-discipline, branchless-on-slow-path, reuse-audit, latency-additions-tracked, replay-determinism, bump-Version.hpp-on-ship, no-AskUserQuestion, evaluate-on-robustness-not-time, consult-on-audit-findings, address-Caramel-as-Caramel.
 
 ## Step 5 — TECH_DEBT items in surface area
 

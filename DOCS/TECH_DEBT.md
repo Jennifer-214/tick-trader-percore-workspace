@@ -1865,3 +1865,149 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 - **Status:** OPEN with explicit trigger (created 2026-05-18 at Phase L planning).
 - **Accountability mechanism:** Cross-ref in `DESIGN_SPECS/framework-driven-cli-binary-pattern.md` v1.1 Pattern lifecycle § Stage 6 (tooling enforcement); future sub-ship adding 2nd canonical references TECH_DEBT-111 in scope.
 - **Cross-ref:** `DESIGN_SPECS/framework-driven-cli-binary-pattern.md` v1.1 § Audit detection + § Pattern lifecycle Stage 6; `DESIGN_SPECS/registry-coverage-ci-check-pattern.md` Shape B (anti-pattern enforcement); `tools/check_struct_field_uniqueness.py` (sister CI tool precedent); `feedback_framework_layer_payoff_diminishing_returns.md`.
+
+### TECH_DEBT-112 — Skill structural audit closure (categorical-triggers-over-hardcoded-refs application)
+
+- **Created:** 2026-05-18 (concurrent with codification of `DESIGN_SPECS/categorical-triggers-in-always-loaded-docs.md` v1.0 DRAFT + memory rule `feedback_categorical_triggers_over_hardcoded_refs.md` at v5.15.5.F.4d.1.B.3 doc-layer refresh)
+- **Severity:** MEDIUM (always-loaded SKILL.md content drift; categorical-list duplication invisibly accumulated)
+- **Surface:** 22 of 30 SKILL.md files at `claude-skills/<skill>/SKILL.md` carry ~50 C-bucket hardcoded refs (canonical-list duplication, line-range refs, sprint version markers in trigger bodies)
+- **Sister:** TECH_DEBT-109 (skill SKILL.md drift triage; sprint-phrasing-level closure — addressed worked-example drift). This entry addresses the STRUCTURAL layer below.
+- **What's being closed at this entry's ship:** Apply C-bucket conversions per structural skill audit findings — defer-to-registry pattern (`FOREACH_STAMP_BOUND_CFG_DERIVED` / `DOCS/HOT_PATH_CHANGELOG.md` cadence tier / `DOCS/CLAUDE_ML_INVARIANTS.md` / `CoreFrameworks/MetaRegistry.hpp` FOREACH_REGISTRY) replacing inline canonical-list duplication. Inline application during `.B.3` doc-layer refresh ship close.
+- **Audit findings reference:** Background-Agent structural audit fired 2026-05-18 against 30 SKILL.md files. Findings: A KEEP ~200+ catalog refs; B KEEP-WITH-FRAMING ~80+ worked examples; C CONVERT ~50 actionable hardcoded refs.
+- **Top conversion clusters:**
+  1. Stamp-bound cfg field enumeration → defer to `FOREACH_STAMP_BOUND_CFG_DERIVED` (skills: `/parity-check`, `/readiness` Check 16, `/handoff` Stage 1.5)
+  2. Hot-path file enumeration → defer to `DOCS/HOT_PATH_CHANGELOG.md` cadence tier (skills: `/ship`, `/latency-track`, `/readiness` Check 23)
+  3. Architectural-sprint guards → defer to `DOCS/CLAUDE_ML_INVARIANTS.md` / `INVARIANTS_MAP.md` (skills: `/ml-audit`, `/parity-check` Section L)
+  4. Line-range refs → remove parentheticals (skill: `/strategy-template`)
+  5. Specific sprint markers in trigger bodies → CLAUDE.md item ref / H invariant ref (skills: `/dod-audit` section headers, `/plan-check` example)
+- **Status:** APPLIED at `.B.3` doc-layer refresh ship close (Background-Agent applies conversions; this entry CLOSED at ship-close commit)
+- **Follow-up entry:** TECH_DEBT-112-followup-A — periodic skill audit cadence (quarterly + post-codification sweep) per `DESIGN_SPECS/categorical-triggers-in-always-loaded-docs.md` § Audit cadence
+- **Cross-ref:** `DESIGN_SPECS/categorical-triggers-in-always-loaded-docs.md` v1.0 DRAFT (canonical discipline body); `feedback_categorical_triggers_over_hardcoded_refs.md` (going-forward rule); `feedback_claude_md_guidelines_not_stuff_to_do.md` (companion doc-layer separation); TECH_DEBT-109 (predecessor sprint-phrasing-level closure); `feedback_iteration_spiral_signals_audit_meta_gap.md` (Caramel's recognition signal — "instead of generalized stuff we made hardcoded references, which is why we're having so many issues finding stuff").
+
+### TECH_DEBT-113 — DESIGN_SPECS + plans/ subdivision (folder restructure deferred)
+
+- **Created:** 2026-05-18 (deferred at `.B.3` doc-layer refresh per Caramel's framing: "at some point we may need to add subdivided folders for design specs and stuff, and plans, since current is kind of bloated and there are some things that are kind of just shoved in places")
+- **Severity:** LOW (organizational maintenance; no functional impact)
+- **Surface:** `DESIGN_SPECS/` (~80+ specs flat) + `plans/v5.15-live-readiness/subplans/` (many sub-plans flat) + `plans/v5.15-live-readiness/handoffs/` (many handoffs flat)
+- **What's deferred:** Subdivide flat directories into concern-grouped subfolders:
+  - `DESIGN_SPECS/` subdivisions: `framework-discipline/`, `audit-methodology/`, `wire-format/`, `data-oriented-design/`, `concurrency/`, `process-discipline/`, `plan-templates/` — assignment per `DESIGN_SPECS/README.md` tags
+  - `plans/<sprint>/subplans/` subdivisions: by sub-ship version prefix (`.F.4d/`, `.F.4c/`, etc.) OR by sub-ship phase
+  - `plans/<sprint>/handoffs/` subdivisions: by sub-ship version prefix
+- **Why deferred (NOT effort-avoidance):** Sub-ship cycle currently active (`.B.3` Phase L coding queued); folder restructure with ~100 file moves is high-disruption (breaks cross-refs; requires path-update sweep). Worth doing as a dedicated maintenance ship between sub-ships, with rollback anchor and bulk sed-based cross-ref update.
+- **Cost estimate:** ~2-3h focused work (~100 file moves + cross-ref `rg` sweep + verify all DESIGN_SPECS cross-refs resolve + verify all skill SKILL.md `DESIGN_SPECS/<name>.md` refs resolve + commit + tag).
+- **Trigger:** Between-sub-ship maintenance window after `.B.3` ships AND before next major sub-ship enters in-flight. Operator-flagged ready when sub-ship cadence stabilizes.
+- **Status:** OPEN with explicit trigger (created 2026-05-18 at doc-layer refresh planning).
+- **Accountability mechanism:** Cross-ref in CLAUDE.local.md going-forward rule "Doc layer separation" mentions TECH_DEBT-113 as deferred folder restructure surface.
+- **Cross-ref:** `DESIGN_SPECS/categorical-triggers-in-always-loaded-docs.md` (sister doc-layer discipline that doesn't require folder restructure); `DESIGN_SPECS/README.md` tag organization (categorization basis for subdivision); `feedback_no_defer_for_effort.md` (this defer is rational — sub-ship cycle priority, not effort-avoidance).
+
+### TECH_DEBT-114 — `tests/controller_test.cpp` test file split (domain-aligned sub-files)
+
+- **Created:** 2026-05-18 (codified at doc-layer refresh ship — moved out of CLAUDE.md Test file size discipline TODO sentence to proper TECH_DEBT entry per `feedback_claude_md_guidelines_not_stuff_to_do.md`)
+- **Severity:** MEDIUM (compile-time + test-navigation + merge-conflict surface area; 3118 tests at risk during any refactor)
+- **Surface:** `tests/controller_test.cpp` (~25k lines + 3118 tests); CLAUDE.md "Test file size discipline" rule (>5k lines OR >100 sections must split BEFORE adding more)
+- **Sister:** TECH_DEBT-029 (Source file length reduction — analog SOURCE-side discipline for header/non-test files; same maintenance-overhead class)
+- **What's deferred:** Split `controller_test.cpp` into domain-aligned sub-files:
+  - `controller_test_engine.cpp` (engine + sharded path)
+  - `controller_test_features.cpp` (cfg + feature + parser)
+  - `controller_test_stamps.cpp` (stamp body + parity)
+  - `controller_test_ml.cpp` (ML feature + inference + scaler)
+  - `controller_test_misc.cpp` (catch-all)
+  - Helpers extract to `tests/test_common.hpp`
+- **Why deferred (NOT effort-avoidance):** 3118 tests at risk warrants focused effort with rollback anchor. Multiple sessions have queued this; deferred each cycle because of in-flight sub-ship priority. The deferral is rational — test-split-without-rollback risks all-tests-broken at a critical sprint phase. Per `feedback_no_defer_for_effort.md` — this is the legitimate-defer category (effort-bounded by safety, not effort-avoidance).
+- **Cost estimate:** ~4-6h focused work (file splits + helper extraction + verify all tests still GREEN at each split + dedicated rollback anchor + ship close).
+- **Trigger:** Between-sub-ship maintenance window OR when next operator-flagged "must add tests but file too big" event surfaces.
+- **Status:** OPEN with explicit trigger (created 2026-05-18 at doc-layer refresh planning; moved from inline CLAUDE.md TODO sentence per doc-layer-separation discipline).
+- **Accountability mechanism:** CLAUDE.md Test file size discipline rule now points at TECH_DEBT-114 (this entry) as the trigger ledger for the queued split.
+- **Cross-ref:** TECH_DEBT-029 (source-file analog); CLAUDE.md "Test file size discipline" rule; `feedback_no_defer_for_effort.md` (legitimate-defer category); `feedback_claude_md_guidelines_not_stuff_to_do.md` (this entry is the proper home for the deferred work, not CLAUDE.md inline TODO).
+
+### TECH_DEBT-115 — Institutional memory rollout (phased doc-system architecture)
+
+- **Created:** 2026-05-18 (v5.15.5.F.4d.1.B.3 doc-layer refresh — codified after Caramel surfaced institutional-memory architecture vision: "this is basically becoming institutional memory, and i wanna design a system that i never have to think about again that just works based on types and tags, and is searchable by grep, and well organized")
+- **Severity:** MEDIUM (foundational doc-system architecture; cumulative drift if not addressed becomes blocker over 2-3 sprints)
+- **Surface:** all 80+ DESIGN_SPECS + 30 SKILL.md + TECH_DEBT/PARITY ledger entries + plans + memory rules + CLAUDE.md/CLAUDE.local.md
+- **Sister:** TECH_DEBT-112 (skill structural audit — predecessor; addressed sprint-phrasing-level drift); TECH_DEBT-113 (folder subdivision — pairs with this); TECH_DEBT-109 (skill SKILL.md drift triage — earlier predecessor)
+
+#### Phase 1 — Stage 2 DRAFTs landed (this sprint at `.B.3` doc-layer refresh ship close)
+
+Status: **APPLIED** at `.B.3` ship close 2026-05-18.
+
+- **CLAUDE.md additions:** Design philosophy + priorities section / How to find anything section / Latency budget table / Memory budget table / Concurrency model summary
+- **CLAUDE.local.md amendments:** 4 stale pointers fixed / "Recent" wording rot fixed / 3 going-forward rules added (doc-layer separation / plans have end goals / categorical triggers > hardcoded refs) / 1 more queued (frontmatter discipline)
+- **NEW DESIGN_SPECS (Stage 2 DRAFT v1.0):**
+  - `categorical-triggers-in-always-loaded-docs.md` — doc-discipline; 3-bucket audit rubric
+  - `sprint-master-plan-template.md` — plan-template for sprint MASTER
+  - `doc-tag-vocabulary.md` — canonical CONCERN/SURFACE/LIFECYCLE tag index
+  - `doc-frontmatter-convention.md` — universal YAML frontmatter discipline
+  - `design-spec-template.md` — type-aware DESIGN_SPEC template
+  - `postmortem-template.md` — type-aware postmortem template
+  - `cache-line-discipline.md` — DOD codification sketch
+  - `concurrency-model-summary.md` — thread architecture codification sketch
+  - `audit-report-format.md` — audit skill output standardization sketch
+- **NEW memory rules:** `feedback_claude_md_guidelines_not_stuff_to_do.md` / `feedback_plans_have_explicit_end_goal.md` / `feedback_categorical_triggers_over_hardcoded_refs.md` / `feedback_metadata_audit_quarterly.md`
+- **Skill audit closure (TECH_DEBT-112):** 39 conversions across 22 SKILL.md files (Agent-applied)
+- **Plan template amendment:** `future-oriented-plan-template.md` v1.1 → v1.2 (Ship end goal + plan type metadata)
+
+#### Phase 2 — `.C` candidate ship (institutional-memory first-canonical)
+
+Status: **OPEN** with explicit trigger.
+
+- **Trigger:** between-sub-ship maintenance window after `.B.3` ships AND before next major sub-ship enters in-flight. Operator-flagged ready when sub-ship cadence stabilizes.
+- **Scope:**
+  - Promote Stage 2 DRAFT DESIGN_SPECS to Stage 3 first canonical: 5-10 high-traffic specs get frontmatter applied
+  - CI tool `check_doc_metadata.py` lands — validates frontmatter at commit time
+  - NEW `/doc-create` skill — type-aware doc scaffolding
+  - NEW `/find` skill — natural language → metadata-filtered grep
+  - DESIGN_SPECS folder subdivision (pairs with TECH_DEBT-113): `refactor-patterns/`, `framework-patterns/`, `audit-methodologies/`, `data-disciplines/`, `concurrency-patterns/`, `wire-format-patterns/`, `doc-disciplines/`, `meta-disciplines/`, `plan-templates/`, `ledger-templates/`
+  - DOCS/ARCHITECTURE.md refresh per Caramel's data-flow reference request (2026-05-18) — `type: architecture-overview` doc with ASCII data flow + pointers to canonical sources (CODE_MAP / CLAUDE_INVARIANTS / HOT_PATH_CHANGELOG)
+- **Cost estimate:** ~6-8h focused (folder restructure ~2-3h; CI tool ~2-3h; skill creation ~2-3h; per-spec frontmatter migration ~30-60 min for 5-10 specs)
+- **Acceptance criteria:**
+  - All Stage 2 DRAFT specs have frontmatter per `doc-frontmatter-convention.md`
+  - CI tool catches frontmatter drift at commit time
+  - `/doc-create` scaffolds new specs from `design-spec-template.md`
+  - `/find` returns metadata-filtered results
+  - Folder subdivision reflects `type:` frontmatter (CI tool verifies)
+
+#### Phase 3 — `.D` candidate ship (cohort migration)
+
+Status: **OPEN** with explicit trigger.
+
+- **Trigger:** `.C` ship landed; 5-10 specs validated with new frontmatter; ready to migrate cohort.
+- **Scope:**
+  - All 80+ DESIGN_SPECS migrate to frontmatter (Stage 4 cohort)
+  - All 30 SKILL.md files get frontmatter (CLAUDE.md skill suite auto-generates)
+  - All TECH_DEBT entries migrate to YAML frontmatter shape
+  - All PARITY_ISSUES entries migrate to YAML frontmatter
+  - All RECURRING_BUG_PATTERNS Class N entries migrate to YAML frontmatter
+  - NEW `/index-rebuild` skill — regenerates CLAUDE.md skill suite table + DESIGN_SPECS/README + tag-index snapshot from frontmatter
+  - NEW `/metadata-audit` skill — periodic audit (singleton tags / broken sister-doc links / Stage 2 DRAFTs older than N sprints / etc.)
+- **Cost estimate:** ~12-20h focused (most files need frontmatter; mostly mechanical sed-based migration; verify each batch)
+- **Acceptance criteria:**
+  - 100% of cross-referenced docs have frontmatter
+  - `/index-rebuild` regenerates canonical indexes
+  - `/metadata-audit` reports zero high-severity findings (or all flagged + accepted)
+
+#### Phase 4 — `.E` candidate ship (cadence-locked)
+
+Status: **OPEN** with explicit trigger.
+
+- **Trigger:** `.D` ship landed; cohort migration verified; ready to lock periodic cadence.
+- **Scope:**
+  - `/metadata-audit` quarterly cadence locked (sister to `/anti-spaghetti` quarterly cadence)
+  - `/index-rebuild` fires at sprint-close mechanically
+  - CI tool `check_doc_metadata.py` enforced at every commit
+  - DESIGN_SPECS lifecycle stage `6-cadence-locked` applied to specs that have proven institutional-memory load-bearing for ≥2 sprints
+- **Cost estimate:** ~2-4h (skill cadence locking + CI integration verification)
+- **Acceptance criteria:**
+  - Periodic audits fire mechanically
+  - Drift detection runs at commit time
+  - System maintains itself; new doc creation uses canonical templates by default
+
+#### Auto-write contracts triggered by this entry
+
+- DESIGN_SPECS frontmatter migration → updates each spec's frontmatter + bumps version
+- `/index-rebuild` auto-fires at sprint-close
+- `/metadata-audit` auto-fires quarterly
+- Each phase ship close → status flip in this entry (`open` → `in-flight` → `closed`)
+
+- **Status:** PHASE 1 APPLIED; PHASE 2-4 OPEN with explicit triggers.
+- **Cross-ref:** `DESIGN_SPECS/categorical-triggers-in-always-loaded-docs.md` / `DESIGN_SPECS/doc-frontmatter-convention.md` / `DESIGN_SPECS/doc-tag-vocabulary.md` / `DESIGN_SPECS/design-spec-template.md` / `DESIGN_SPECS/postmortem-template.md` / `DESIGN_SPECS/cache-line-discipline.md` / `DESIGN_SPECS/concurrency-model-summary.md` / `DESIGN_SPECS/audit-report-format.md` / `feedback_claude_md_guidelines_not_stuff_to_do.md` / `feedback_plans_have_explicit_end_goal.md` / `feedback_categorical_triggers_over_hardcoded_refs.md` / `feedback_metadata_audit_quarterly.md` / TECH_DEBT-112 (predecessor) / TECH_DEBT-113 (folder subdivision pairs) / CLAUDE.md § How to find anything (Stage 5 promotion already landed).

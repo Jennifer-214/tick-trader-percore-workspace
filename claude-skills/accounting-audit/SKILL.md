@@ -66,7 +66,7 @@ Spawn an Explore subagent. The subagent walks the standard 10-category checklist
 
 ### 10-category checklist
 
-1. **Class 27 instances (scalar cfg-mirror)** — scan designated subsystem state types (OrderManagerState, ConfidenceScorerState, PortfolioControllerState, ThompsonBandit state) for scalar fields that mirror cfg field names. Each is a candidate for pre-resolve onto in-flight object (Order/Position/Event) OR registry-driven per-instance cache (FOREACH_<SUBSYS>_CFG_CACHE fallback). CI Check 7 (`tools/check_per_core_registry_integrity.py`) catches new instances; this audit catches existing ones + edge-case patterns.
+1. **Class 27 instances (scalar cfg-mirror)** — scan designated subsystem state types (per `DESIGN_SPECS/decision-time-data-binding-pattern.md` § Class 27 target subsystems) for scalar fields that mirror cfg field names. Each is a candidate for pre-resolve onto in-flight object (Order/Position/Event) OR registry-driven per-instance cache (FOREACH_<SUBSYS>_CFG_CACHE fallback). The CI check that enforces Class 27 prevention (currently `tools/check_per_core_registry_integrity.py` Check 7) catches new instances; this audit catches existing ones + edge-case patterns.
 
 2. **Per-core / per-instance fee_rate + commission indexing** — every fee/commission read MUST resolve to the relevant instance (per-core via `cfg.cores[c]` or pre-resolved on in-flight object). Flag global `cfg.fee_rate_*` reads at sites that have per-instance context available.
 
@@ -80,7 +80,7 @@ Spawn an Explore subagent. The subagent walks the standard 10-category checklist
 
 7. **Backtest ↔ live accounting parity** — `BacktestSharded` accounting paths MUST produce byte-equivalent fees/P&L/balance to live engine given identical fill stream. Flag silent divergences (e.g., backtest uses static cfg.fee_rate, live uses dynamic per-core).
 
-8. **PortfolioController vs OMS accounting consistency** — legacy `PortfolioController` (single_core) + sharded OMS maintain separate accounting state. The sanity invariant `total_fees == total_maker_fees + total_taker_fees` (OrderManager.hpp:281) must hold across both paths.
+8. **PortfolioController vs OMS accounting consistency** — legacy `PortfolioController` (single_core) + sharded OMS maintain separate accounting state. The cohort's accounting struct must enforce sanity invariant `total_fees == total_maker_fees + total_taker_fees` across both paths.
 
 9. **`static const T = cfg.X` HAZARD** — function-local static caches of cfg-derived values freeze first value forever; no sync path. Class 27 fn-local variant. Always-flag regardless of subsystem (grep: `static\s+const\s+\w+\s+\w+\s*=\s*\w*FPN_ToDouble\s*\(\s*cfg\.\w`).
 

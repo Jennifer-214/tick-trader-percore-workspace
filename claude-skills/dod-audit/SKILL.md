@@ -335,7 +335,7 @@ False-positive filter: true one-off bugs (pattern won't recur) get
 direct patch. Only fires when bug class history shows ≥2 recurrences
 OR plan explicitly identifies "we'll need to patch this again."
 
-#### 3i. Math kernel constant-iter + branchless (v5.14.11.B.5+)
+#### 3i. Math kernel constant-iter + branchless (CLAUDE.md H11)
 
 Detection signatures:
 - Math kernel inner reduction loop with VARIABLE upper bound that
@@ -359,7 +359,7 @@ False-positive filter: outer loops with per-call-stable bounds
 cleanly. Only flag INNER reductions with bounds that vary across
 outer-loop iterations within a single call.
 
-#### 3j. Struct byte-equivalence padding (v5.14.11.B.5+)
+#### 3j. Struct byte-equivalence padding (CLAUDE.md H12)
 
 Detection signatures:
 - Struct with implicit padding (sizeof(T) > sum_of_member_sizes(T))

@@ -60,12 +60,10 @@ origin (validated standing instruction from filesystem-crash incident
    - Confirm the bump makes sense (5.9.0d → 5.9.0e or 5.9.1, not
      5.9.0d → 6.0.0).
 
-4. **Hot-path touch detection.** If diff touches any of:
-   `CoreFrameworks/ExecutionCore.hpp`, `Strategies/StrategyParameters.hpp`
-   (BG_/SG_Evaluate dispatcher), `MemHeaders/PoolAllocator.hpp` (hot
-   path), then **prompt for explicit confirmation** that the change
-   is branchless and benchmarked. The user's standing rule (CLAUDE.md)
-   is hot path p99 ≤500ns.
+4. **Hot-path touch detection.** If diff touches files tagged hot path
+   per `DOCS/HOT_PATH_CHANGELOG.md` cadence tier, then **prompt for
+   explicit confirmation** that the change is branchless and benchmarked.
+   The user's standing rule (CLAUDE.md) is hot path p99 ≤500ns.
 
 5. **Memory / invariants check.** Diff lists touched files. If any
    listed file is in `tests/INVARIANTS_MAP.md` or `DOCS/CLAUDE_INVARIANTS.md`,
@@ -161,9 +159,9 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 Theme generation rules:
 - If user passed `<theme>`, use it verbatim
 - If commit closes an audit finding (V5_X_AUDIT-#N), include the ID
-- If commit is a sub-letter polish ship (5.9.0d), say "Phase X polish"
+- If commit is a sub-letter polish ship (e.g., `vX.Y.Za`), say "Phase X polish"
   or specific theme
-- If commit is a major-version bump (5.10.0), summarize the sprint
+- If commit is a major-version bump (`vX.Y.0`), summarize the sprint
 
 Auto-derive theme by inspecting:
 - `git diff --staged --stat` (which files dominate)

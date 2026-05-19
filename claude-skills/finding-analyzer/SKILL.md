@@ -11,13 +11,13 @@ This skill acts as an **Analysis Orchestrator**. Instead of relying purely on th
 
 ## When to use
 
-- When you pull an item off the `MASTER_SORTED_BACKLOG.md` and need to fully understand its implications before writing code.
+- When you pull an item off the audit backlog (e.g., `GEMINI_FINDINGS/MASTER_SORTED_BACKLOG.md`) and need to fully understand its implications before writing code.
 - To mathematically prove the latency impact of a bug.
 - To automatically map out every file you will need to touch to fix the issue.
 
 ## Invocation
 
-- `/finding-analyzer <finding_id>` — Analyzes a specific finding from the master backlog.
+- `/finding-analyzer <finding_id>` — Analyzes a specific finding from the audit backlog (e.g., `GEMINI_FINDINGS/MASTER_SORTED_BACKLOG.md`).
 - `/finding-analyzer "<description>"` — Analyzes a newly discovered ad-hoc bug or vulnerability.
 
 ## Execution Steps

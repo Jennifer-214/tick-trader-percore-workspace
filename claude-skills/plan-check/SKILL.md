@@ -131,21 +131,8 @@ proceeding.
 
 ### 2. Per-sub-plan: lightweight /readiness
 
-For EACH sub-plan, run the standard `/readiness` checklist (the 17
-checks from `.claude/skills/readiness/SKILL.md`):
-
-- 10-item baseline (hot path, train-serve, surface area, lifecycle,
-  back-compat, multi-thread, tests, docs, forward-maintenance,
-  rollback)
-- Architectural sprint guards (Checks 11-14)
-- ML hardening checks (Checks 15-17)
-- Drift audit (8 sub-categories)
-- Hardening checks (atomic writes, locale pinning, GUI render-thread
-  blocking, failure telemetry, resource cleanup, cancellation,
-  cross-platform)
-- Propagation checks (cfg → parser/example/CHANGELOG/CLAUDE.md)
-- Behavior-change-via-default check
-- Pragmatic-but-ugly patterns
+For EACH sub-plan, run the full `/readiness` checklist (currently
+28+ checks; consult `/readiness` SKILL.md for canonical list).
 
 Report per sub-plan: PASS / FIXED / GAP / DRIFT-RISK / DEFERRED /
 ACCEPTED counts + the punch list of must-fix items.
@@ -190,9 +177,10 @@ Walk every invariant claimed in the master ("Hot path UNTOUCHED",
 "`MODEL_FORMAT_VERSION` only bumps when X", etc.). For each plan,
 verify the planned changes don't violate.
 
-If a plan VIOLATES an invariant deliberately (e.g., v5.10.0b bumps
-MODEL_FORMAT_VERSION), the master must explicitly DOCUMENT the
-violation as deliberate. Otherwise = INVARIANT BREACH.
+If a plan VIOLATES an invariant deliberately (e.g., bumps
+MODEL_FORMAT_VERSION as part of a major migration), the master must
+explicitly DOCUMENT the violation as deliberate. Otherwise = INVARIANT
+BREACH.
 
 #### 3.e — Dependency edge validation
 

@@ -1,7 +1,7 @@
 # Future-oriented plan template
 
 **Established:** 2026-05-17 (v5.15.5.F.4d.1.B.1 planning — codified during conversation about "format plans for future-oriented solutions going forward" + "find optimal solution to reduce future headaches")
-**Status:** **Stage 3 ACTIVE v1.1** (promoted from Stage 2 DRAFT at `v5.15.5.F.4d.1.B.1` ship close 2026-05-17; first canonical reference = `.B.1` plan body v1.1 retrofit demonstrating "Canonical sister registries considered" + "Design space + future-oriented choice" sections; future new plans (`.B.2` full draft / `.F.4e` / etc.) use template from inception via `/plan-draft` skill)
+**Status:** **Stage 3 ACTIVE v1.2** (v1.0 → v1.1 promoted at `v5.15.5.F.4d.1.B.1` ship close 2026-05-17 with Canonical sister + Design space sections; v1.1 → v1.2 amended 2026-05-18 adding "Ship end goal + acceptance criteria" required section per `feedback_plans_have_explicit_end_goal.md` going-forward rule + companion `sprint-master-plan-template.md` DESIGN_SPEC; future new plans use template from inception via `/plan-draft` skill)
 **Tags:** plan-template, framework-discipline, future-oriented, pre-coding-gate, structural-fix; serves item 31 + canonical-sister-extension-discipline; composes with /readiness Check 29 + 30 + /anti-spaghetti + /precoding-audit-gate
 
 **Cross-references:**
@@ -45,6 +45,57 @@ This template encodes the discipline as a copy-paste skeleton. New plan bodies c
 ## Why this ship exists
 
 <2-4 paragraph problem statement. What triggered this ship; why now; what's the cost of NOT doing it; alternative ships considered + rejected.>
+
+---
+
+## Ship type + end goal + acceptance criteria
+
+(REQUIRED per `feedback_plans_have_explicit_end_goal.md` discipline. Codified 2026-05-18.)
+
+**Plan type metadata (REQUIRED):** one of:
+
+| Type | Trigger | Required acceptance criteria sections |
+|---|---|---|
+| `refactor` | Closing bug classes / framework consolidation / drift reduction / pattern codification | CLOSED bug classes + CLOSED TECH_DEBT + LANDED DESIGN_SPECs + hot-path-untouched verification |
+| `feature` | Adding new capability / new cfg flag / new GUI panel / new strategy / new ML feature | NEW capability delivered + NEW cfg flags + GUI render + fallback verified + paper-test sanity |
+| `live-readiness` | Paper-test gates / kill switch / recovery / OMS hardening / boot-time gate | Paper-test session results + live-trade safety gates + recovery scenario test |
+| `hotfix` | Closing specific bug / regression test addition / silent-failure surface | Bug reproducer GREEN + regression test added + sister-bug-class checked |
+| `mixed` | Combination (use sparingly; usually scope-check first) | Per-segment criteria as appropriate |
+
+**Ship end goal (1 sentence):** What does THIS ship CLOSE / DELIVER? Pattern shape: "<verb> <surface> via <mechanism>" — fill verb per plan type ("close" for refactor; "deliver" for feature; "harden" for live-readiness; "fix" for hotfix).
+
+**How this contributes to sprint MASTER goal:** Explicit tie-back to the sprint's umbrella end goal. (If no tie-back possible, scope-check — does this ship belong in this sprint? See `DESIGN_SPECS/sprint-master-plan-template.md`.)
+
+**Acceptance criteria (verifiable on ship close — fill applicable rows per plan type):**
+
+Universal (all plan types):
+- **Hot path verification:** UNTOUCHED (`tools/calls_graph_diff.sh` GREEN) OR TOUCHED (HOT_PATH_CHANGELOG entry added with measurement)
+- **5 binaries clean:** all build targets at sprint cadence
+- **Tests GREEN:** baseline maintained
+- **CI checks PASS:** all CI Check 1..N at sprint cadence
+- **Wire-format replay determinism:** cfg roundtrip byte-identical for affected fields (relevant `/parity-check` GREEN)
+
+`refactor`-specific:
+- **CLOSED bug classes:** Class <N>: <title> (`/bug-check class_<N>` CLEAN at ship close)
+- **CLOSED TECH_DEBT entries:** TECH_DEBT-<NNN>: <title> (status flip in ledger)
+- **LANDED DESIGN_SPECs:** Stage 2 DRAFT → Stage 3 first reference at this ship (`<spec-name>.md`)
+- **AMENDED DESIGN_SPECs:** <spec-name>.md v<old> → v<new>
+
+`feature`-specific:
+- **NEW capability delivered:** <capability name> + acceptance demo
+- **NEW cfg flags:** parser parses + GUI renders + tooltip present + per-core override emission (if applicable) + fallback verified
+- **NEW GUI panels (if applicable):** display ↔ execution invariant verified
+- **Paper-test sanity:** demo session shows feature operational without regression
+
+`live-readiness`-specific:
+- **Paper-test session results:** demonstrated kill switch + recovery + safety gates
+- **Live-trade safety gates:** boot gate verified; manual flatten verified; circuit breaker verified
+- **Recovery scenario test:** crash → restart → state correctly recovered
+
+`hotfix`-specific:
+- **Bug reproducer GREEN:** test that previously caught the bug now passes
+- **Regression test added:** new test prevents recurrence
+- **Sister-bug-class checked:** scan for related bug instances; either ALL fixed or new TECH_DEBT entry opened
 
 ---
 
@@ -213,7 +264,7 @@ For each NEW framework infrastructure proposed by this ship (X-macro registry / 
 ### For NEW plan body creation:
 
 1. **Copy template** to `subplans/<YYYY-MM-DD>-<version>-<name>.md`
-2. **Fill in each section** — required sections (Design space + Canonical sister + Bug classes + DESIGN_SPECs) cannot be skipped; verification at `/readiness` Check 29 + 30
+2. **Fill in each section** — required sections (Ship end goal + Design space + Canonical sister + Bug classes + DESIGN_SPECs) cannot be skipped; verification at `/readiness` Check 29 + 30 (+ Check 31 for End goal presence, post v1.2 amendment)
 3. **Pre-coding audit gate** fires after draft complete
 4. **Operator triage** of findings; plan body amended if needed
 5. **Pre-tag rollback anchor** created at Step 0; coding begins
@@ -221,10 +272,12 @@ For each NEW framework infrastructure proposed by this ship (X-macro registry / 
 ### For RETROFITTING existing plan body:
 
 Older plans may not have all required sections. At update time (per per-sub-ship cycle), retrofit:
+- Add "Ship end goal + acceptance criteria" section (v1.2 NEW required section per `feedback_plans_have_explicit_end_goal.md`)
 - Add "Design space + future-oriented choice" section (even if reconstructed from history)
 - Add "Canonical sister registries considered" section
 - Verify "Bug classes closed" + "DESIGN_SPECs landed" sections present
-- `.B.1` plan body v1.0 → v1.1 was the FIRST retrofit (2026-05-17)
+- `.B.1` plan body v1.0 → v1.1 was the FIRST retrofit (2026-05-17; Design space + Canonical sister)
+- v1.2 amendment (2026-05-18) added Ship end goal section; retrofit applied to in-flight `.B.3` plan body if missing
 
 ### For `/plan-draft` skill invocation:
 

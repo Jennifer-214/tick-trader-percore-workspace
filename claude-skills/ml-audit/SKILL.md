@@ -142,8 +142,9 @@ heading in the output.
 
 ### Section B — Feature pipeline
 - Verify every FeatureComputeCtx field is populated identically in
-  both live + backtest paths. Currently 2 fields (signals,
-  short_rolling) post v5.9.0a cleanup.
+  both live + backtest paths. Currently-defined fields per
+  `FeatureComputeCtx` struct definition (consult current source for
+  canonical set).
 - NaN/Inf handling (FPN_IsValidFinite + std::isnan/isinf two-layer
   guard at Features_PackAll, post-v5.9.0)
 - Feature scaling (mean-centering, unit-variance)
@@ -266,21 +267,10 @@ Same heuristics as /readiness:
 - New cfg default flipping behavior on upgrade (BREAKING-CHANGE
   unless explicitly justified)
 
-### v5.9 architectural sprint guards
+### Architectural-sprint guards
 
-After v5.9.0a → v5.9.0d, check that the following invariants are
-intact:
-
-- `FOREACH_FEATURE(X)` registry hash unchanged unless deliberate
-  retrain decision documented
-- `FeatureComputeCtx` struct shape: only `signals` + `short_rolling`
-  fields (the v5.9.0a aux-field cleanup)
-- `Features_PackAll` returns -1 on validation failure (post-v5.9.0)
-- `MODEL_FORMAT_VERSION` = 5 unchanged unless v5.9.3 standardization
-  has shipped (then = 6)
-- `stamp_format_version=1` field present in new stamps
-- `HEALTH_CRITICAL` / `HEALTH_WARN` levels emit at min_level=0
-- Engine header panel renders cfg path + tri-state core marker
+For each sprint guard recorded in the current `DOCS/CLAUDE_ML_INVARIANTS.md`
+/ `DOCS/PARITY_ISSUES.md` ledgers, verify the invariant holds at HEAD.
 
 ## Map-update suggestions (post-audit)
 

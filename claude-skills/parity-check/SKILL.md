@@ -174,11 +174,10 @@ The parity auditor (Layer 2 subagent):
      check (v5.9.2b) — catches major-version incompatibility
    - `acknowledge_cross_binary_version_drift` (v5.9.4) — minor-
      version + cadence WARN suppression
-   - Stamp body `inference_cfg_*` fields (v5.9.2b) — 9 cfg fields
-     stamp-bound: confidence_threshold_scale, barrier_gate_enabled,
-     confidence_hard_block_threshold, held_out_fraction,
-     freshness_tau, bandit_blend_ratio, fee_rate_maker,
-     fee_rate_taker, training_poll_interval
+   - Stamp body `inference_cfg_*` fields — walk current
+     `FOREACH_STAMP_BOUND_CFG_DERIVED` registry rows at
+     `MemHeaders/CfgGateRegistry.hpp`. Initial cohort (v5.9.2b +
+     v5.9.4a baseline) was 10 fields; current set may differ.
    - Stamp body `model_num_outputs` (v5.9.4a) — catches output
      dimension mismatch
    - 3-tier strict-mode behavior (v5.9.0b refused/warned/silent
@@ -302,11 +301,9 @@ These match the 2026-05-02 audit's structure (which led to v5.9.2c
   identical inputs (v5.8.8 round-trip test)
 
 ### Section F — Cfg parity (inference-affecting fields)
-Stamp-bound cfg fields (v5.9.2b + v5.9.4a):
-- confidence_threshold_scale, barrier_gate_enabled,
-  confidence_hard_block_threshold, held_out_fraction,
-  freshness_tau, bandit_blend_ratio, fee_rate_maker, fee_rate_taker,
-  training_poll_interval, model_num_outputs
+Stamp-bound cfg fields: walk current `FOREACH_STAMP_BOUND_CFG_DERIVED`
+registry rows at `MemHeaders/CfgGateRegistry.hpp`. Initial cohort
+(v5.9.2b + v5.9.4a baseline) was 10 fields; current set may differ.
 
 NOT stamp-bound (potential gaps):
 - Anything else that affects inference. Walk ControllerConfig.hpp
@@ -321,11 +318,9 @@ NOT stamp-bound (potential gaps):
   documentation-only; v5.10 candidate for fingerprint binding
 
 ### Section H — Threading + initialization
-- MLBuildContext fully populated in live (`EventLoop_RebuildAllParameters_PerCore`
-  at ~line 1800+) AND backtest (`BacktestSharded.hpp`)
-- ConfidenceScorer init at all 3 boot sites
-  (ControllerEventLoop.hpp:509, EngineSharded.hpp:834,
-  BacktestSharded.hpp:267)
+- MLBuildContext populated at every entry point (live + backtest cohort)
+- ConfidenceScorer init at all boot sites (current cohort surfaces via
+  `/dependency-chain-trace ConfidenceScorer_Init`)
 - All new struct fields zero-init'd (v5.9.1a discipline; verify
   Model_Init, EventLoopState_Init, TUI_CopySnapshotSharded
   populator)
@@ -337,11 +332,9 @@ NOT stamp-bound (potential gaps):
 - nthread=1 for reproducible XGBoost
 
 ### Section J — Observability surface coverage
-- Each silent-failure mode has a distinct PerCoreSnap field:
-  - ml_model_load_failed (v5.9.0b)
-  - ml_scaler_load_failed (v5.9.3a)
-  - ml_nan_feature_events / ml_nan_prediction_events (v5.9.0b)
-  - warmup_progress_pct (v5.9.1)
+- Each silent-failure mode has a distinct PerCoreSnap field (per
+  failure-mode-to-snap-field discipline); enumerate current rows from
+  PerCoreSnap struct
 - Each failure mode has a corresponding ML Status panel branch
 - Each failure mode has rate-limited CRITICAL log
   (Health_LogCriticalRateLimited)

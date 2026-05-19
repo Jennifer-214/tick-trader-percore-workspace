@@ -71,7 +71,7 @@ this skill's `git add -A` in the workspace picks up the changes.
 
 | Workspace dir | Purpose | Written by |
 |---|---|---|
-| `DESIGN_SPECS/` | Pattern catalog (19 docs as of v5.14.10; one .md per pattern + README index) | Authored as part of any sprint that solves a non-trivial design problem; cross-linked from postmortems |
+| `DESIGN_SPECS/` | Pattern catalog (count grows over sprints; one .md per pattern + README index) | Authored as part of any sprint that solves a non-trivial design problem; cross-linked from postmortems |
 | `configs/` | Operator-side cfg + secrets backups (engine.cfg / backtest.cfg / controller.cfg / secrets.cfg / .env*) | This skill (sync_if_newer block above) |
 | `*.backup` (workspace root) | Project-private memory overlays (CLAUDE.local.md.backup / GEMINI.md.backup / *.local.md backups) | This skill (sync_if_newer block above) |
 

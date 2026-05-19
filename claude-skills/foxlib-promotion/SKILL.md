@@ -14,9 +14,10 @@ helper, ConfidenceScorer, etc. — code with no project-specific
 includes or domain-specific names.
 
 Every few versions, generic primitives get written here that should
-land in FoxLIB but get forgotten. The last sync was tagged
-`v0.2.0 — sync from tick-trader-percore @ v4.7.18`. Anything generic
-written in v4.7.19+ is potentially un-promoted.
+land in FoxLIB but get forgotten. The last sync tag's commit message
+references the engine-version it synced from (auto-detected via
+procedure below). Anything generic written since that sync point
+is potentially un-promoted.
 
 This skill walks recent additions, scores genericity, deduplicates
 against existing FoxLIB headers, and produces a list of promotion
@@ -35,7 +36,7 @@ candidates each with: file, rationale, suggested FoxLIB path.
 LAST_SYNC=$(cd /home/caramel/code/FoxLIB && \
   git log --oneline | grep -m1 "sync from tick-trader-percore" | \
   awk '{for (i=1; i<=NF; i++) if ($i ~ /^@/) print substr($i,2)}')
-# Falls back to "v4.7.18" or whatever the last tag was; ask user if unclear
+# Falls back to last available tag if grep miss; ask user if unclear
 
 # 2. List files added or significantly modified since LAST_SYNC
 cd /home/caramel/code/tick-trader-percore

@@ -85,9 +85,9 @@ Read in order (the skill needs these to generate consistent code):
 - `Strategies/SimpleDip.hpp` — simplest reference
 - `Strategies/Momentum.hpp` — for regression variant
 - `Strategies/MLStrategy.hpp` — for ml variant
-- `Strategies/StrategyInterface.hpp` (lines 107-150) — FOREACH_STRATEGY
-- `Strategies/StrategyParameters.hpp` (line 1080-1170) — dispatch switch
-- `Strategies/StrategyLifecycle.hpp` (line 100-220) — state factory + adapt dispatch
+- `Strategies/StrategyInterface.hpp` — FOREACH_STRATEGY definition
+- `Strategies/StrategyParameters.hpp` — Strategy_BuildParameters dispatcher
+- `Strategies/StrategyLifecycle.hpp` — state factory + adapt dispatch
 - `CoreFrameworks/ControllerConfig.hpp` — cfg field locations
 
 ### Step 2 — Generate the strategy file
@@ -114,8 +114,8 @@ Then `sed` (or LLM equivalent) the placeholder tokens:
 
 These template files are AUTHORITATIVE — they have the correct
 function signatures + canonical includes for THIS codebase's
-current state (post-v5.11.49). Don't synthesize from memory; copy
-the template.
+current state (consult current Version.hpp). Don't synthesize from
+memory; copy the template.
 
 If the template file is missing on a clone (it's gitignored), it's
 in the workspace at:
@@ -186,7 +186,7 @@ compatibility).
 ### Step 4 — Add dispatch case
 
 Edit `Strategies/StrategyParameters.hpp` `Strategy_BuildParameters`
-switch (line ~1080). Add:
+switch. Add:
 
 ```cpp
 case STRATEGY_<NAME_UPPER>: {
@@ -202,11 +202,11 @@ Edit `Strategies/StrategyLifecycle.hpp` `Strategy_NewPerCore` and
 `Strategy_FreePerCore` switches. Pattern (replace `<NAME>` etc.):
 
 ```cpp
-// In Strategy_NewPerCore (around line 105):
+// In Strategy_NewPerCore:
 case STRATEGY_<NAME_UPPER>:
     return new <state_struct><F>{};
 
-// In Strategy_FreePerCore (around line 145):
+// In Strategy_FreePerCore:
 case STRATEGY_<NAME_UPPER>:
     delete (<state_struct><F> *)state;
     return;
@@ -214,16 +214,10 @@ case STRATEGY_<NAME_UPPER>:
 
 ### Step 6 — Add cfg defaults (optional)
 
-If the strategy needs cfg-tunable parameters, add to
-`CoreFrameworks/ControllerConfig.hpp`:
-
-1. Field declaration (around line 500-700, near similar strategy
-   fields): `FPN<F> <name>_threshold;`
-2. Default value (around line 1070-1100):
-   `cfg.<name>_threshold = FPN_FromDouble<F>(0.05);`
-3. Parser entry (around line 1500-1700):
-   `else if (strcmp(key, "<name>_threshold") == 0)
-        cfg.<name>_threshold = FPN_FromDouble<F>(parse_double_fast(val));`
+If the strategy needs cfg-tunable parameters, add cfg field via the
+canonical cfg-field registry pattern (currently `FOREACH_CFG_FIELD` in
+`CoreFrameworks/CfgFieldRegistry.hpp`); parser + GUI + tooltip
+auto-flow.
 
 If no cfg fields needed (simple strategy uses existing rolling stats
 only), skip this step.

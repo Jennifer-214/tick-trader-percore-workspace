@@ -734,11 +734,11 @@ Trigger keywords in plan: `FOREACH_FEATURE`, `ML_Compute_`,
 `Regime_ComputeSignals`, `RollingStats_Push`, `feature_matrix`,
 `Features_PackAll`. When any present, require the plan to:
 
-- Identify which v5.9.2a snapshot test will fail post-change.
-  Snapshot tests live at `tests/controller_test.cpp` v5.9.2a
-  EXTENSIBILITY block. Search for "Sub-area 1a" / "Sub-area 1b" /
-  "Sub-area 3" depending on what's changing (features, signals,
-  labels).
+- Identify which snapshot test will fail post-change.
+  Snapshot tests live at canonical snapshot location (currently
+  `tests/controller_test.cpp` EXTENSIBILITY block; consult current
+  location via grep for FOREACH_FEATURE / FOREACH_TARGET registry-hash
+  test blocks).
 - For each test that will fail, plan must specify EITHER:
   - **Bytewise-equivalent refactor** — change is provably
     output-identical; no snapshot update needed (verify by running
@@ -760,11 +760,8 @@ this check catches it at plan time.
 ### Check 16 — New cfg field with stamp-bearing → recipe doc update
 
 Trigger keywords: cfg field that affects ML inference. Specifically:
-fields stamped via `StampInferenceCfgInputs` in v5.9.2b
-(`confidence_threshold_scale`, `barrier_gate_enabled`,
-`confidence_hard_block_threshold`, `held_out_fraction`,
-`confidence_freshness_tau`, `bandit_blend_ratio`, `fee_rate_*`,
-`feature_scaler_present`, `scaler_sha256`).
+fields tagged STAMP_BOUND_CFG_DERIVED in the master cfg registry
+(walk current FOREACH_STAMP_BOUND_CFG cohort).
 
 When plan adds a new such field:
 
@@ -1136,11 +1133,9 @@ OMS drainer, or producer fan-out.
   item 17, this is required discipline.
 
 **Procedure:**
-1. **Identify path:** hot = ExecutionCore_Tick / BG_Evaluate / SG_Evaluate /
-   ExecutionCore / GateParameters / ParameterSlot. Slow = EventLoop_RebuildOneCore /
-   RollingStats_Push / Regime_ComputeSignals / ConfidenceScorer_* / Model_Predict /
-   FeatureStandardizer_Apply. OMS = OMS_DrainSubmit / OrderManager_Tick.
-   Producer = DataStream fan-out.
+1. **Identify path:** hot / slow / OMS drainer / producer fan-out —
+   consult `DOCS/HOT_PATH_CHANGELOG.md` cadence-tier classification for
+   the current canonical function set.
 2. **Verify analysis present:** path classification, cost estimate, branchless
    discussion if hot.
 3. **Verify HOT_PATH_CHANGELOG entry planned/included:**

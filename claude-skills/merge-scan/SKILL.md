@@ -167,17 +167,10 @@ where the new field truly duplicates an existing field's role.
 
 Walk currently-active master plan + sub-plans. For each plan that
 adds a function/field/cfg, check if another plan adds something
-adjacent. Examples to flag:
-- v5.12.1.A.3 (recovery refusal in BuildParameters caller) +
-  v5.12.1.B (publish_tick check in BuildParameters caller) — both
-  add slow-path gates above the same call. Could share entry/exit
-  pattern.
-- v5.12.3.A (composite-signal extractor in Model_Predict) +
-  v5.12.3.B (mixed-output normalizer in Model_Predict) +
-  v5.12.3.E (primary-handle cleanup in Model_Predict) — all three
-  ships modify the same function body. Sequence them so reads of
-  `m->backend`, `m->buy_class_idx`, `m->normalizer` happen in one
-  struct fetch.
+adjacent. Examples (canonical shape; check current in-flight plans
+for actual instances): adjacent plans adding gates above the same
+function body OR modifying the same function body in sequence —
+sequence them so struct reads cluster.
 
 ### 7. Branch-vs-branchless audit
 

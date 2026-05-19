@@ -63,7 +63,7 @@ This skill accepts scope as first positional arg per `DESIGN_SPECS/audit-scope-t
 
 Spawn an Explore subagent. The subagent:
 
-1. **Loads the meta-registry** — reads `FOREACH_REGISTRY` from `CoreFrameworks/MetaRegistry.hpp`. Enumerates the 62 registries with their LEVEL + PARENT metadata.
+1. **Loads the meta-registry** — reads `FOREACH_REGISTRY` from `CoreFrameworks/MetaRegistry.hpp`. Enumerates the registries (count varies — current at HEAD via `FOREACH_REGISTRY` row count) with their LEVEL + PARENT metadata.
 
 2. **For each registry, gathers fitness signals:**
    - **Entry count + growth history** — `grep -c "^\s*X("` against the macro body to get row count. Check git log for entries added over time (growth rate).

@@ -59,8 +59,8 @@ Find functions/lambdas where:
 - Lambda capture list > 12 items (real signal that the function is
   doing too many things and reaching too far)
 
-For this codebase, prime candidate is `EngineSharded_Run` and the
-nested lambdas inside it (`producer` thread, `fan_out`, `slow_paths[c]`).
+Prime candidates: any framework-level orchestrator fn (per cadence:
+producer / fan_out / per-core slow_paths) with deeply-nested lambdas.
 
 Output: `file:line function_name lines=N nesting=M captures=K`.
 
@@ -121,12 +121,8 @@ serialize/deserialize sites. When new fields are added without
 updating snapshot persist, the result is "zombie behavior on restart"
 — state restored partially, mismatched fields default-init silently.
 
-Compare:
-- `ExecutionCore<F>` fields ↔ `ShardedSnapshotPersist::write_core` /
-  `read_core` field list
-- `CoreContext<F>` fields ↔ `ShardedSnapshotPersist::write_context` /
-  `read_context` (if exists)
-- `OrderManagerState<F>` fields ↔ snapshot if persisted
+Compare: each persisted struct's field set ↔ its serialize/deserialize
+pair (e.g., per-core ExecutionCore + OrderManager state + CoreContext).
 
 Find fields present in the struct but missing in serializer (or vice
 versa). Output: `ExecutionCore<F>::live_tp_b — in struct (line X) but
@@ -139,12 +135,9 @@ Walk the recent commits (last 30 commits) and count file touches per
 commit message keyword. If a feature category consistently touches 5+
 files, flag the pattern + propose a factoring.
 
-Existing factorings (don't re-flag):
-- `PER_CORE_OVERRIDE_FIELDS` X-macro for per-core cfg overrides
-- `PER_CORE_OVERRIDE_INT_FIELDS` X-macro for INT cfg overrides
-- `EventLoop_*OneCore` helpers for per-core slow-path work
-- `EventLoop_UpdateRollingStateOneCore` helper for cadence pushes
-- `STRATEGY_*` constants + dispatcher case in `StrategyParameters.hpp`
+Existing factorings — consult `CoreFrameworks/MetaRegistry.hpp`
+FOREACH_REGISTRY for current canonical X-macro registries; don't
+re-flag rows already in meta-registry.
 
 Categories worth scanning for new patterns:
 - New cfg field — usually 6+ touches: `ControllerConfig.hpp` (struct +
@@ -162,20 +155,8 @@ proposed factoring`.
 
 ### 6. Load-bearing assumptions not enforced
 
-CLAUDE.md "Safety Invariants" section documents rules. Scan for the
-invariant phrases and check whether each has a test or assertion in
-code:
-
-| Invariant | Where verified |
-|---|---|
-| `take_profit_pct >= 3 × fee_rate` | boot warn in v5.1.3 ✓ |
-| Position TP > entry > SL | partial check in adjust functions |
-| Snapshot re-activation | controller_test ✓ |
-| Snapshot tick-counter drift | guard in EngineSharded ✓ |
-| Per-core data-plane single-writer | structural (single thread per slow_state) ✓ |
-| Confidence loop single-update site | tests in controller_test |
-| Maker/taker fee accuracy | sanity check `total = maker + taker` |
-| OMS submit funneling | tests v4.7.37 ✓ |
+Walk `DOCS/CLAUDE_INVARIANTS.md` current invariant rows; scan for
+each invariant phrase + check whether each has a test or assertion.
 
 Output: list of invariants with NO direct test or assertion in the
 codebase. These are at risk of silent regression.

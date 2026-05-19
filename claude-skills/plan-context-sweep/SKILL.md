@@ -22,8 +22,9 @@ modify plans (operator decides amendments). Output is a sweep report at
 
 - **After structural-fix ship lands** — primary use case. Just-closed bug
   class might still appear as code samples in queued plans drafted pre-fix.
-  Example: v5.15.5.F.4b shipped Class 23 fix → fire this skill to verify
-  .F.4c through .F.4i don't have void*+offset+reinterpret_cast samples.
+  Example: after any structural Class N fix lands → fire this skill to
+  verify queued downstream sub-ships don't have anti-pattern code samples
+  for the same class.
 - **After API surface change** — function rename / signature change in a
   shipped ship; downstream plans may reference the old API. Fire to detect.
 - **Sprint pivot** — operator priority shift; verify queued plans still

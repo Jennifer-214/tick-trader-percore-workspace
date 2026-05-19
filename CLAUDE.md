@@ -10,6 +10,155 @@ When trade-offs conflict, name which wins + why per `DOCS/DESIGN_PHILOSOPHY.md` 
 
 For sprint state, going-forward rules, and operator-collaboration discipline, see `CLAUDE.local.md` (private overlay) + `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/MEMORY.md`.
 
+## Design philosophy + priorities
+
+Headline summary of design principles + priority gradients. Deep discussion + WHY context + worked examples lives in `DOCS/DESIGN_PHILOSOPHY.md` (master settings portal; 14 sections + § 11.5 meta-discipline registry). Load DESIGN_PHILOSOPHY when designing rather than implementing, or when a 1-liner here isn't enough — every principle below has an inline `→ § N` cross-ref to the deep-dive.
+
+### End state (vision)
+
+Continuously evolving open-source per-core sharded HFT trading platform; AGPL public repo; quality bar set by hedge-fund-visibility expectations. Trajectory:
+
+- **Current** = v5.X professionalization phase. Codebase transitioned from MVP to professional infrastructure; framework-driven extensibility, audit-driven discipline, structural-fix-over-patch are the deliverables. Active sprint goal: *make the codebase more maintainable for future development* (current sprint state lives in `CLAUDE.local.md` § Current sprint state).
+- **Near-term** = decoupled runtime/viewer architecture (`plans/_future/2026-05-12-decoupling-endgoal-roadmap.md`). Engine runs headless as systemd service; multiple viewers attach concurrently; cmdline-invocable training; per-run dirs with tailable artifacts.
+- **Long-horizon** = framework-driven addition of strategies/features/markets stays 1-row-in-registry. New ML features, new bandit algos, new regime variants, new symbols — all add via single registry row + framework auto-flow.
+
+→ DESIGN_PHILOSOPHY § 1 (priority order + conflict resolution) + § 1.5 (framework discipline meta-principle).
+
+### Core principle: Data-Oriented Design (DOD)
+
+Layout determines performance. Layout by ACCESS PATTERN, not LOGICAL GROUPING. Functions consuming whole structs → fields grouped by call pattern (hot reads / hot writes / cold init / cross-thread). `alignas(64)` cross-thread fields (H6).
+
+**Bit-packing ideal.** Hand-written `BITMAP_*` + `MBS_*` (multi-bit state) accessors over `uint{8,16,32,64}_t` storage — never C++ bitfield syntax (`name : N`). Layout/signedness/packing-order are implementation-defined, which conflicts with wire byte preservation + SIMD parity + memcmp identity (H9/H10/H12/H14).
+
+**Cache-aware.** Hot-path + slow-path state SHOULD fit L1d (32-64KB typical). Working-set placement matters; cluster cohort-accessed fields adjacent. Cold-init can sprawl; hot loops cannot.
+
+**False-sharing prevention.** Cross-thread fields written by one thread + read by another → `alignas(64)` padding to avoid cache-line ping-pong. Producer→drainer SPSC queues, slow→hot seqlock cfg → all aligned.
+
+→ DESIGN_PHILOSOPHY § 3 (Data-oriented design family) + § 6 (Concurrency family — false-sharing discipline).
+→ DESIGN_SPECS/multi-bit-state-encoding-pattern.md (K-state encoding for K=2..16).
+→ DESIGN_SPECS/bitmap-overflow-protection-discipline.md (mandatory static_assert for BITMAP_* paired counts).
+
+### Priority gradients (prefer X over Y when both work)
+
+When two options both compile + both run, the gradient resolves the choice. These are NOT absolute (Hard Invariants H1-H20 are absolute) — they're how to think about borderline trade-offs.
+
+**Performance:**
+- Branchless > branched for data-dependent dispatch on hot/slow/drainer/producer paths (H7 hot-path strict; H20 generalizes). Hand-wave "branch predictor handles it" is anti-pattern (Class 28). → § 4 (latency cost) + DESIGN_SPECS/branchless-dispatch-discipline.md.
+- `FPN<F=64>` > `double` on accounting paths; never `float` on hot/slow path math (H4). → § 5 (determinism).
+- Bit-packed slots > byte-per-bool (H14 + MBS_* encoding). Memory bandwidth + cache footprint compound.
+- `alignas(64)` cross-thread + cluster by access pattern > flat struct (H6). → § 3.
+- L1d-cache-resident hot-path state > out-of-cache scatter. Working-set discipline applies to per-core slow_state + hot ExecutionCore params.
+- SIMD with bytewise-identical scalar fallback > SIMD-only (H10). → § 5.
+
+**Maintenance:**
+- Structural fix > one-time patch when bug class can recur. → § 7 + DESIGN_SPECS/structural-fix-preferred-decision-framework.md.
+- Framework-driven (X-macro registry + auto-flow) > ad-hoc per-instance code when recurrence foreseeable. → § 1.5 + DESIGN_SPECS/pattern-codification-lifecycle.md.
+- Auto-flowing registry > manual N-site sync (H15-H19 codify mandatory registry discipline). → § 7.
+- `tt::` type-trait dispatch > `reinterpret_cast` punning (H13). Class 23 closure. → DESIGN_SPECS/type-trait-dispatch-via-tt-namespace.md.
+- Compile-time enforcement (static_assert / CI Check) > runtime check / convention.
+- Categorical triggers > hardcoded refs in always-loaded content (CLAUDE.md / CLAUDE.local.md / MEMORY.md / SKILL.md). → DESIGN_SPECS/categorical-triggers-in-always-loaded-docs.md.
+- Boundary-stable refactor > wide cascade across ≥4 files.
+
+**Determinism:**
+- Wire byte preservation always for HMAC-signed bodies (H9). → § 5 + DESIGN_SPECS/wire-format-byte-preservation-discipline.md.
+- Single-source-of-truth emit (sidecar override per H18) > parallel mirror registry. Class 21 closure.
+- Constant-iter math + branchless within reductions (H11).
+- Locale pinning at emit (`tt::format_double_canonical`).
+
+**Design discipline:**
+- Plan-right > plan-fast. Planning IS the hard part; indecisiveness during planning is a feature. → memory/feedback_plan_right_not_fast.md.
+- Future-oriented > current-convenience when easier-future trade-off sharp. → memory/feedback_auto_pick_future_oriented.md.
+- Audit-driven > debug-driven. SHAPE audits (`/precoding-audit-gate`) + IMPLEMENTATION-DETAIL audits (`/blindspot-scan`) before coding HIGH-RISK ships. → § 11 + § 11.5 (M1-M4 meta-disciplines).
+- Best-software > smallest-effort. Public AGPL + hedge-fund visibility = exacting quality bar. → memory/feedback_motivated_collaborator_for_caramel.md.
+- Proportionate response > first-sufficient on audit findings. → memory/feedback_proportionate_response_to_audit_findings.md.
+- 4-pillar self-audit before surfacing recommendations (DESIGN_SPECS check / anti-pattern check / operator-impact / novel-alternative). → memory/feedback_audit_own_proposals_with_same_rigor.md.
+
+→ DESIGN_PHILOSOPHY § 11 (process discipline) + § 11.5 (meta-disciplines M1-M4) for the audit-driven framework + worked examples.
+
+### Latency budgets
+
+| Path | p50 | p99 | p99.99 | Source |
+|---|---|---|---|---|
+| Hot path tick → trade decision | ~100ns | **≤500ns** | ≤2μs | H8 (ship blocker if violated) |
+| Hot path BG_Evaluate alone | <50ns | <200ns | — | per-gate budget within hot path |
+| Slow path rebuild cycle | — | **≤100μs** | — | H8 (ship blocker if violated) |
+| Drainer cycle (OMS_DrainSubmit + OrderManager_Tick) | <5μs | ≤10μs | — | per-tick drainer cadence |
+| Producer fan_out per tick | <100ns | ≤200ns | — | per-tick parser+replicate budget |
+| Async (Binance WS / DepthRecorder / Notify) | — | <100μs | — | non-trading-path tolerance |
+| GUI frame budget | 16.7ms | — | — | 60Hz target (H3 thread isolation) |
+| Boot warm-restart | <2s | ≤5s | — | recovery scenario (live-readiness) |
+| Stamp emit (HMAC-signed) | — | <50μs | — | wire-format byte preservation gate |
+
+Hot path is BRANCHLESS (H7); branch mispredicts cost 30-100ns real-world per `DESIGN_PHILOSOPHY.md` § 4 — eliminating them is the budget mechanism. → § 4 (latency cost framework).
+
+### Memory budgets
+
+| Surface | Budget | Reason |
+|---|---|---|
+| Hot path working set | ≤L1d (32-64KB typical) | Stay cache-resident; eviction kills p99 |
+| Per-core slow_state | ≤64KB | Comfortable L1d+L2; per-core isolation |
+| Cross-thread cfg (seqlock cached) | ≤single cache line per param group | False-sharing prevention (H6) |
+| SPSC ring depth | `Limits.hpp:MAX_RING_*` | Bounded; backpressure detectable |
+| Order pool | `Limits.hpp:MAX_ORDERS` | Bounded; bitmap-packed (H1 no heap) |
+| Per-core ML feature window | `Limits.hpp:ML_WINDOW_MAX` | Bounded ring buffer |
+| Bitmap structures (portfolio / flags) | uint64_t typical | H14 — never C++ bitfield syntax |
+| Stack frames on hot path | <few KB | No deep recursion / large stack-alloc |
+
+L1d working-set discipline: hot path SHOULD fit in single core's L1d (32-64KB). Verify via perf counters when uncertain. → DESIGN_SPECS/cache-line-discipline.md (Stage 2 DRAFT).
+
+### Concurrency model summary
+
+Thread architecture:
+
+```
+PRODUCER (1)              DRAINER (1)         PER-CORE CONSUMERS (N=2..16)
+─────────────             ──────────          ──────────────────────────────
+Binance WS                OMS_DrainSubmit     SLOW thread (1 per core)
+  ├─ parse tick    ──┐    OrderManager_Tick   ├─ EventLoop_UpdateRollingState
+  ├─ ema_price    ──┤    DrainPostFill       ├─ Regime_Classify
+  ├─ fan_out:      ──┘─→ SPSC ring          ├─ Strategy rebuild
+  │   for c in N: │                          ├─ ExecutionCore_SetParameters
+  │     push(c)   │                          │   (seqlock → HOT)
+  └─ GUI publish  │                          ├─ TimeExitOneCore
+                  │                          └─ TrailingSLRatchet
+                  ↓
+              SPSC ring → HOT thread (1 per core)
+                          ├─ BG_Evaluate (branchless)
+                          ├─ SG_Evaluate ×2
+                          └─ push TradeEvent (rare branch)
+```
+
+**Sync primitives (H1-H3):**
+- **SPSC rings:** producer↔consumer + slow↔hot params + post-fill events. Lock-free; bounded; align-padded.
+- **Seqlock:** slow→hot cfg parameter handoff. No mutex per H3.
+- **Atomic flags:** cross-thread state (kill_switch / recovery_until_us / flatten_pending). Acquire/release semantics.
+- **`alignas(64)` discipline:** every cross-thread field gets cache-line padding (H6). Cluster by access pattern (hot reads / hot writes / cold init / cross-thread).
+
+**Anti-patterns (NEVER):**
+- `std::mutex` / `condition_variable` / `sleep_for` / `pthread_rwlock` anywhere (H3)
+- Pointer-sharing between GUI thread and HP/SP threads (file-mediated + reload-signal instead)
+- C++ bitfield syntax in cross-thread structs (H14 — layout/signedness/packing-order implementation-defined)
+
+**False-sharing prevention:** cross-thread struct fields padded to cache-line boundaries; producer-written + consumer-read fields in separate cache lines. → DESIGN_SPECS/concurrency-model-summary.md + DESIGN_SPECS/cache-line-discipline.md (Stage 2 DRAFT).
+
+### Doc layer separation
+
+| Layer | Lives in | Auto-loaded? | Content type |
+|---|---|---|---|
+| Orientation + invariants + priority headlines | `CLAUDE.md` (this file) | YES | TIMELESS — guidelines + index |
+| Deep discussion + WHY + worked examples | `DOCS/DESIGN_PHILOSOPHY.md` | NO (load on demand) | TIMELESS — depth |
+| Reusable pattern bodies | `DESIGN_SPECS/<name>.md` (80+) | NO | TIMELESS — recipes |
+| Anti-pattern instances + detection | `DOCS/RECURRING_BUG_PATTERNS.md` | NO (loaded by `/bug-check`) | TIMELESS — catalog |
+| Operator-collaboration rules | `memory/` (via MEMORY.md index) | YES | TIMELESS — preferences |
+| Sprint state + going-forward rule index | `CLAUDE.local.md` (private overlay) | YES | TIMELESS index + EPHEMERAL pointer to in-flight |
+| In-flight ship plans + handoffs | `plans/<sprint>/` (gitignored) | NO (load on demand) | EPHEMERAL — current work |
+| Auto-write ledgers | `DOCS/TECH_DEBT.md` + `PARITY_ISSUES.md` + `FEATURE_LOOKUP.md` | NO | EPHEMERAL — accumulating |
+
+**Rule:** Always-loaded docs (`CLAUDE.md` + `CLAUDE.local.md` + `MEMORY.md` + `SKILL.md` files) = GUIDELINES + INDEX (timeless; "how to think"). On-demand docs (plans/, ledgers, handoffs) = IN-FLIGHT WORK (ephemeral; "what to do this sprint"). NEVER put TODO content or sprint-version-specific phrasing in always-loaded docs — track in TECH_DEBT or plans instead. Drift sentinels: "queued as v5.X.Y sub-ship", "(NEW post-v5.X.Y)", specific TECH_DEBT-NNN in trigger bodies that should be categorical pattern triggers.
+
+→ DESIGN_PHILOSOPHY § 0 (purpose hierarchy) + § 13 (cross-reference index).
+→ DESIGN_SPECS/categorical-triggers-in-always-loaded-docs.md (the discipline).
+
 ## Overview
 
 Tick-level crypto HFT trading engine in C++. Per-core risk-sharded hot
@@ -145,9 +294,105 @@ split BEFORE adding more tests. Categories should be domain-aligned:
 `controller_test_engine.cpp` / `_features.cpp` / `_stamps.cpp` /
 `_ml.cpp` / `_misc.cpp`. Helpers extract into `tests/test_common.hpp`.
 
-The actual split is queued as a v5.11.35 sub-ship (deferred from
-multiple sessions because 3118 tests at risk warrants a focused
-effort with rollback anchor).
+Test split is queued as a focused effort (3118 tests at risk warrants
+rollback anchor + dedicated ship); tracking lives in TECH_DEBT (sister
+TECH_DEBT-029 covers the source-side analog for header/non-test files).
+
+## How to find anything (search guide)
+
+Doc system is institutional memory + type-tag driven + greppable. Retrieval recipes below. Tag vocabulary lives at `DESIGN_SPECS/doc-tag-vocabulary.md` (CONCERN + SURFACE + LIFECYCLE axes); frontmatter discipline at `DESIGN_SPECS/doc-frontmatter-convention.md`.
+
+### By type
+```
+rg "^type: refactor-pattern" DESIGN_SPECS/    # refactor patterns
+rg "^type: framework-pattern" DESIGN_SPECS/   # framework infrastructure
+rg "^type: audit-methodology" DESIGN_SPECS/   # audit shapes (M1-Mn family)
+rg "^type: data-discipline" DESIGN_SPECS/     # DOD / cache / alignment specs
+rg "^type: concurrency-pattern" DESIGN_SPECS/ # thread / sync / SPSC / seqlock
+rg "^type: wire-format-pattern" DESIGN_SPECS/ # byte preservation / HMAC / locale
+rg "^type: meta-discipline" DESIGN_SPECS/     # audit-methodology-gap (M-codes)
+rg "^type: plan-template" DESIGN_SPECS/       # MASTER / sub-plan / handoff / postmortem
+rg "^type: ledger-template" DESIGN_SPECS/     # TECH_DEBT / PARITY / FEATURE entry shape
+```
+
+### By tag (concern axis — what doc is ABOUT)
+```
+rg "^tags:.*\bframework-discipline\b"
+rg "^tags:.*\baudit-methodology\b"
+rg "^tags:.*\bdata-oriented-design\b"
+rg "^tags:.*\bconcurrency\b"
+rg "^tags:.*\bwire-format\b"
+rg "^tags:.*\bdoc-discipline\b"
+```
+
+### By surface (what doc TOUCHES)
+```
+rg "^surface:.*\bhot-path\b"        # ExecutionCore / BG_Evaluate / SG_Evaluate
+rg "^surface:.*\bslow-path\b"       # slow_state / Regime / RebuildOneCore
+rg "^surface:.*\boms-drainer\b"     # OMS_DrainSubmit / OrderManager_Tick
+rg "^surface:.*\bregistry\b"        # X-macro registries / FOREACH_*
+rg "^surface:.*\bml-inference\b"    # model predict / scaler / ConfidenceScorer
+rg "^surface:.*\bwire-format\b"     # HMAC bodies / stamps / snapshots
+rg "^surface:.*\blive-trading\b"    # kill switch / paper-test / circuit breaker
+rg "^surface:.*\bboot-time\b"       # warm-restart / recovery / boot-gate
+```
+
+### By catalog ID (use word-boundary `\b` for short IDs)
+```
+rg "\bClass 18\b"                   # anti-pattern Class N
+rg "\bH13\b"                        # hard invariant H N
+rg "\bM4\b"                         # meta-discipline M N
+rg "TECH_DEBT-112"                  # ledger entry
+rg "PARITY-009"                     # parity ledger entry
+```
+
+### By severity / status (ledger queries)
+```
+rg "^severity: high" DOCS/TECH_DEBT.md      # high-severity deferrals
+rg "^status: open" DOCS/TECH_DEBT.md        # open TECH_DEBT
+rg "^status: in-flight" DOCS/TECH_DEBT.md   # being addressed this sprint
+rg "^surface_tags:.*\bregistry\b" DOCS/TECH_DEBT.md
+```
+
+### By lifecycle stage (promotion-readiness)
+```
+rg "^stage: 2-draft" DESIGN_SPECS/          # awaiting first canonical reference
+rg "^stage: 3-first-canonical" DESIGN_SPECS/ # first canonical landed
+rg "^stage: 4-cohort" DESIGN_SPECS/         # ≥2 applications; promotion candidate
+rg "^stage: 5-claude-md" DESIGN_SPECS/      # promoted to CLAUDE.md item
+rg "^stage: 6-cadence-locked" DESIGN_SPECS/ # periodic audit + CI enforcement
+```
+
+### By cross-ref (related docs)
+```
+rg "sister_specs:.*\bcategorical-triggers-in-always-loaded-docs\b"
+rg "sister_docs:.*\b<doc-name>\b"
+rg "applies_at_skills:.*\b/readiness\b"
+```
+
+### Helper skills (when grep is awkward)
+- `/find <natural language>` (Stage 1 problem — skill queued at `.C` candidate ship) — fuzzy search over metadata
+- `/doc-create <type>` (queued) — type-aware doc scaffolding using current canonical template
+- `/index-rebuild` (queued) — regenerate CLAUDE.md tables + READMEs from frontmatter
+- `/metadata-audit` (queued) — periodic audit: missing frontmatter / undefined tags / broken sister-doc links / Stage 2 DRAFTs older than N sprints
+
+### Filesystem layout (where each type lives)
+
+| Doc type | Location | Naming convention |
+|---|---|---|
+| Pattern bodies | `DESIGN_SPECS/<name>.md` | kebab-case + `<concept>-<discipline>` |
+| Plan bodies | `plans/<sprint>/subplans/<YYYY-MM-DD>-<version>-<name>.md` | date + version + name |
+| Handoffs | `plans/<sprint>/handoffs/<YYYY-MM-DD>-<version>-<purpose>-handoff.md` | date + version + purpose |
+| Postmortems | `plans/<sprint>/postmortems/<YYYY-MM-DD>-<version>-postmortem.md` | date + version |
+| Audit reports | `plans/<sprint>/plan_checks/<date>-<audit>-<scope>.md` | date + audit-name + scope |
+| Sprint MASTER | `plans/<sprint>/MASTER.md` | (singular per sprint) |
+| Memory rules | `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/<name>.md` | `feedback_*` / `user_*` / `project_*` / `reference_*` |
+| Always-loaded orientation | `CLAUDE.md` + `CLAUDE.local.md` + `MEMORY.md` | singular files |
+| On-demand orientation | `DOCS/CLAUDE_*.md` + `DOCS/DESIGN_PHILOSOPHY.md` | per concern |
+| Auto-write ledgers | `DOCS/TECH_DEBT.md` + `PARITY_ISSUES.md` + `FEATURE_LOOKUP.md` + `HOT_PATH_CHANGELOG.md` + `LANDMINES.md` | singular per concern |
+| Bug class catalog | `DOCS/RECURRING_BUG_PATTERNS.md` | singular |
+
+Read this section once + you know how to find ANYTHING in the doc system without prior knowledge of "where stuff is."
 
 ## Reference Docs (portal hierarchy — read on demand)
 

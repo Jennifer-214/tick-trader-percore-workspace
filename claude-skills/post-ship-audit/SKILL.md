@@ -68,8 +68,8 @@ Recommended: pass BOTH ship-tag AND plan-path together (e.g., `/post-ship-audit 
 - `/post-ship-audit current` — audit uncommitted changes + current branch commits since base (use for mid-implementation pauses)
 
 **Examples:**
-- `/post-ship-audit v5.15.5.F.4c.3` — audit the .F.4c.3 ship
-- `/post-ship-audit v5.15.5.F.4c.3 plans/v5.15-live-readiness/subplans/2026-05-15-v5.15.5.F.4c.3-global-vs-per-core-registry-split.md` — full audit + plan alignment
+- `/post-ship-audit <ship-tag>` — audit a specific ship
+- `/post-ship-audit <ship-tag> <plan-path>` — full audit + plan alignment
 - `/post-ship-audit current plans/...subplan.md` — mid-implementation pause check
 
 ## Workflow
@@ -118,7 +118,7 @@ For each plan claim, verify the IMPLEMENTATION actually achieved it:
 | "Applies Pattern X (e.g., 2D dispatch table)" | Grep for the pattern's signature in shipped code. Is it actually present? Is it applied where the plan said? |
 | "Migrates N sites" | Count migrated sites vs N claimed. Any leftover unmigrated sites? |
 | "Deletes M legacy fields" | Verify fields are GONE from struct definition. CI Check 7 reports 0 exemptions for those names? |
-| "Section C zeros at this ship" | Verify Section C row count matches expected. Any TRANSITIONAL entries remaining? |
+| <plan claims `Section X zeros / cohort migrates / class closes` at ship> | Verify current registry/cohort has expected row count post-migration. Any TRANSITIONAL entries remaining? |
 | "Uses branchless dispatch" | Grep for if/else if + switch in shipped code. Each one classified per discipline matrix? |
 | "Hot path bytewise-identical" | `tools/calls_graph_diff.sh` confirms hot path unchanged |
 | "Layer 5b hash recomputed" | Verify stamp body fixture present + hash constant updated |

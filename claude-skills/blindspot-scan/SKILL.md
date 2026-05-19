@@ -119,12 +119,7 @@ LAYER 2 (this skill, inside Explore subagent):
 
 1. Read plan body; extract IN-scope steps (Step 0 / Step 0.5 / Step 1.x / etc.)
 2. Read current engine `Version.hpp` + `git log -5 --oneline` to determine HEAD state vs plan body assumptions
-3. Identify currently-flagged STAMP_BOUND_CFG_DERIVED fields via:
-   ```
-   grep STAMP_BOUND_CFG_DERIVED CoreFrameworks/CfgFieldRegistry.hpp
-   grep STAMP_BOUND_CFG_DERIVED ML_Headers/MlCfgFlagRegistry.hpp
-   grep STAMP_BOUND_CFG_DERIVED CoreFrameworks/GateCfgFlagRegistry.hpp
-   ```
+3. Identify currently-flagged metadata-bit derived filter cohorts: for any metadata-bit derived filter, grep its `<BIT_NAME>` against the registries enumerated in its `FOREACH_DERIVED_FILTER` row
 4. For each in-scope Step, identify which pillars to fire (per "When to fire" trigger criteria)
 
 ### Stage 2 — Per-pillar walk

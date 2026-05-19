@@ -228,7 +228,7 @@ Generate a structured markdown report:
 ## When to use
 
 - Pre-coding for a structural fix that changes a value's shape or semantics (verify blast radius before designing)
-- Post-coding to verify cohort migration completeness (e.g., post-B.1, trace `Order::pre_resolved.fee_rate` to confirm all sites read from new source)
+- Post-coding to verify cohort migration completeness (e.g., post-cohort-migration ship, trace the migrated symbol cohort to confirm all sites read from the new source)
 - Class 27 / Class 28 close verification (trace the migrated symbol; confirm no stragglers)
 - Debugging cross-thread data flow issues (which writer wrote what was read?)
 - Cohort discovery for a planned sweep (trace `cfg.cores[c].fee_rate_maker` + cohort to find sibling fields)

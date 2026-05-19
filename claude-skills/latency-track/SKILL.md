@@ -94,28 +94,21 @@ Resolve the operator's arg into a git diff:
 For each changed file, classify by latency tier:
 
 **Hot path (per-tick, target p99 ≤ 500 ns):**
-- `CoreFrameworks/ExecutionCore.hpp` — `ExecutionCore_Tick`, inlined BG/SG_Evaluate
-- `CoreFrameworks/GateParameters.hpp` — struct layout (read every tick)
-- `CoreFrameworks/ParameterSlot.hpp` — read every tick from hot path
-- `FixedPoint/FixedPointN.hpp` — FPN ops in hot path
-- `CoreFrameworks/SPSCRing.hpp` — TryPush/TryPop on hot path
+- Files containing functions tagged `// HOT PATH` or appearing in the
+  inlined dispatch chain (e.g., `ExecutionCore_Tick → BG/SG_Evaluate`).
+  Consult `DOCS/HOT_PATH_CHANGELOG.md` cadence-tier classification for
+  the current canonical set.
 
 **Producer fan_out (per-WS-tick, ~50-1000/sec):**
-- `CoreFrameworks/EngineSharded.hpp` `fan_out` lambda (~line 1476-1600 in v5.12.1)
-- `DataStream/BinanceCrypto.hpp` parser callbacks
+- Files containing producer fan_out body + parser callbacks. Consult
+  `DOCS/HOT_PATH_CHANGELOG.md` cadence tier.
 
 **Slow path (per poll cycle, target p99 ≤ 100 μs):**
-- `CoreFrameworks/ControllerEventLoop.hpp` — `RebuildOneCore`, `TimeExitOneCore`,
-  `TrailingSLRatchetOneCore`, `CheckWsStaleness`
-- `Strategies/StrategyParameters.hpp` — `Strategy_BuildParameters` dispatcher
-  + each `*_BuildParameters` body
-- `ML_Headers/RollingStats.hpp` — `RollingStats_Push`
-- `ML_Headers/FlowFeatures.hpp` — `FlowState_Push`
-- `Strategies/RegimeDetector.hpp` — `Regime_ComputeSignals`, `Regime_Classify`
-- `ML_Headers/FeatureRegistry.hpp` — `Features_PackAll`
-- `ML_Headers/ConfidenceScore.hpp` — `ConfidenceScorer_*`
-- `ML_Headers/BanditLearning.hpp` — `Bandit_Update`, `Bandit_GetProbabilities`
-- `ML_Headers/ModelInference.hpp` — `Model_Predict`
+- Files containing slow-path functions per cadence: rebuild/exit/ratchet
+  helpers, strategy build-parameters bodies, rolling/flow push, regime
+  compute, feature pack, confidence scorer, bandit, model predict.
+  Consult `DOCS/CODE_MAP.md` slow-path section + `DOCS/HOT_PATH_CHANGELOG.md`
+  cadence tier for the current canonical set.
 
 **Cold path (init/shutdown/once-per-run, no budget):**
 - Init functions, snapshot persist/load, GUI panels (rendered ≤ 60 Hz)

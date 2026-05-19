@@ -19,7 +19,7 @@ Takes one or more findings from the codebase audit backlog and performs a rigoro
 
 ## When to use
 
-- Before executing any code changes for issues listed in `MASTER_SORTED_BACKLOG.md`.
+- Before executing any code changes for issues listed in audit backlog (e.g., `GEMINI_FINDINGS/MASTER_SORTED_BACKLOG.md`).
 - When transitioning from the "Auditing" phase to the "Execution" phase.
 - To thoroughly document the "why" and "how" of a complex concurrency or cache-alignment fix.
 

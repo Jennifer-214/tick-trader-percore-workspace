@@ -190,9 +190,10 @@ Cross-reference the callee location against the
 "deprecated / legacy" file list:
 
 ```bash
-# Plans should NOT call these post-v5.0+:
-grep -l "deprecated\|legacy" CoreFrameworks/PortfolioController.hpp \
-    CoreFrameworks/SingleCoreEngine.hpp 2>/dev/null
+# Plans should NOT call deprecated paths. Scan for deprecated-tagged
+# files via header docstring comments OR consult current deprecated-path
+# list (e.g., per CLAUDE.md `Legacy single_core LIVE is deprecated` doc):
+grep -rln "deprecated\|legacy" --include='*.hpp' CoreFrameworks/ 2>/dev/null
 ```
 
 If a plan call resolves to a deprecated file → flag DRIFT-RISK.

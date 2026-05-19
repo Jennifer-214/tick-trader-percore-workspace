@@ -42,7 +42,7 @@ Full state body lives at `plans/v5.15-live-readiness/MASTER.md` + the in-flight 
 | Field | Value |
 |---|---|
 | Sprint | `v5.15-live-readiness` — see `plans/v5.15-live-readiness/MASTER.md` for full sprint state, ship pipeline, deferrals, post-paper-test work |
-| In-flight ship | **`v5.15.5.F.4d.1.B.3`** (Legacy empty-out) — handoff at `plans/v5.15-live-readiness/handoffs/2026-05-18-v5.15.5.F.4d.1.B.3-step-1.6.3-coding-handoff.md`; plan body at `subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md` |
+| In-flight ship | **`v5.15.5.F.4d.1.B.3`** (Legacy empty-out + Phase L cross-tool decoupling) — handoff at `plans/v5.15-live-readiness/handoffs/2026-05-18-v5.15.5.F.4d.1.B.3-phase-l-coding-handoff.md` (post-amendment Phase L coding-ready; supersedes Step 1.6.3 + Step 1.6.5 handoffs which were sub-step-scoped); plan body at `subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md` v1.15 |
 | Recent meta-discipline codifications | M1+M2+M3 codified at v1.10 of `.B.3` plan body; **M4** (implementation-detail blind-spot taxonomy) codified at v1.11 mid-coding (2026-05-18). All 4 cross-ref'd at `DOCS/DESIGN_PHILOSOPHY.md` § 11.5 |
 | Recent anti-pattern codifications | See `DOCS/RECURRING_BUG_PATTERNS.md` for full Class catalog (currently Class 1-30 + Class 31 + Class 32 NEW codified at `.B.3` ship close) |
 | Sprint-wide invariant | `CfgFieldDescriptor` schema LOCKED at `.F.4b` (Kind enum is GUI metadata only — NEVER drives storage; H13 + H14 consolidated) |

@@ -40,4 +40,4 @@ Plan bodies introducing any new framework infrastructure (FOREACH_X(X) new regis
 - [[project_anti_spaghetti_audit_cadence]] (periodic audit catches drift over time)
 - [[feedback_consult_on_audit_findings]] (audit gate findings always trigger consult)
 
-**Codified at:** 2026-05-17 (v5.15.5.F.4d.1.B.1 planning); `DESIGN_SPECS/canonical-sister-extension-discipline.md` Stage 2 DRAFT → Stage 3 first reference at `.B.1` ship; `/readiness` Check 29 amendment.
+**Codified at:** 2026-05-17 (v5.15.5.F.4d.1.B.1 planning); `DESIGN_SPECS/meta-disciplines/canonical-sister-extension-discipline.md` Stage 2 DRAFT → Stage 3 first reference at `.B.1` ship; `/readiness` Check 29 amendment.

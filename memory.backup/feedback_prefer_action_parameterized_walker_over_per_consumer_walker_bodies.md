@@ -61,8 +61,8 @@ Structural fix via action-parameterized meta-walker prevents the bug class. The 
 
 **Cross-references:**
 
-- `DESIGN_SPECS/cfg-derived-consumer-framework.md` v1.2 — canonical doc for the pattern (§ "Action-parameterized meta-walker for cohort consumer template fns")
-- `DESIGN_SPECS/canonical-sister-extension-discipline.md` § INLINE MERGE — proportionate-response option C (FOLD into canonical sister); meta-walker absorbs the "FOLD" shape at consumer cohort level
-- `DESIGN_SPECS/autopopulate-pattern-for-production-caller-class.md` — parent pattern (production-caller class extinction); meta-walker is the multi-consumer-cohort extension at the walker-family level
-- `DESIGN_SPECS/x-macro-registry-with-presence-dispatch.md` § Y3 dispatch — token-paste-by-name dispatch mechanism; meta-walker uses Y3-shape token-paste for per-scope X-macro dispatch
+- `DESIGN_SPECS/framework-patterns/cfg-derived-consumer-framework.md` v1.2 — canonical doc for the pattern (§ "Action-parameterized meta-walker for cohort consumer template fns")
+- `DESIGN_SPECS/meta-disciplines/canonical-sister-extension-discipline.md` § INLINE MERGE — proportionate-response option C (FOLD into canonical sister); meta-walker absorbs the "FOLD" shape at consumer cohort level
+- `DESIGN_SPECS/framework-patterns/autopopulate-pattern-for-production-caller-class.md` — parent pattern (production-caller class extinction); meta-walker is the multi-consumer-cohort extension at the walker-family level
+- `DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md` § Y3 dispatch — token-paste-by-name dispatch mechanism; meta-walker uses Y3-shape token-paste for per-scope X-macro dispatch
 - v5.14.2.E.1 PostLoadSetup precedent — Class 18/21 closure at boot/backtest/hot-swap surfaces with same shape (single source of truth + many consumer views + compile-time enforcement)

@@ -19,11 +19,11 @@ These are technical hooks and patterns extracted from the repository, ready to b
 | # | Topic | Draft Link | Context Files | Status |
 | :--- | :--- | :--- | :--- | :--- |
 | 1 | **Extreme HFT Invariants** | `posts/2026-05-13-extreme-invariants.md` | `DOCS/GEMINI.md` | DRAFTED |
-| 2 | **Zero-Allocation Boot** | `posts/2026-05-15-zero-allocation-boot.md` | `DESIGN_SPECS/aggressive-memory-reduction-techniques.md` | DRAFTED |
+| 2 | **Zero-Allocation Boot** | `posts/2026-05-15-zero-allocation-boot.md` | `DESIGN_SPECS/data-disciplines/aggressive-memory-reduction-techniques.md` | DRAFTED |
 | 3 | **Branchless Hot Path** | `posts/2026-05-18-branchless-hot-path.md` | `CoreFrameworks/ExecutionCore.hpp` | DRAFTED |
 | 4 | **The "No Sleep" Policy** | `posts/2026-05-21-no-sleep-policy.md` | `DOCS/LATENCY_OPTIMIZATION_AUDIT.md` | DRAFTED |
 | 5 | **Fixed-Point Determinism** | `posts/2026-05-24-fixed-point-determinism.md` | `FixedPointN.hpp` | DRAFTED |
-| 6 | **AVX-512 Determinism** | `posts/2026-05-27-avx-512-determinism.md` | `DESIGN_SPECS/avx512-byte-determinism-pattern.md` | DRAFTED |
+| 6 | **AVX-512 Determinism** | `posts/2026-05-27-avx-512-determinism.md` | `DESIGN_SPECS/wire-format-patterns/avx512-byte-determinism-pattern.md` | DRAFTED |
 | 7 | **Cache Layout Discipline** | `posts/2026-05-30-cache-discipline.md` | `DESIGN_SPECS/cache-layout...` | DRAFTED |
 | 8 | **X-Macro Registries** | `posts/2026-06-02-x-macro-registries.md` | `DESIGN_SPECS/x-macro...` | DRAFTED |
 | 9 | **Branchless Math Kernels** | `posts/2026-06-05-branchless-math-kernels.md` | `DESIGN_SPECS/branchless-math...` | DRAFTED |

@@ -35,7 +35,7 @@ Periodic codebase-wide `/anti-spaghetti` audit fires on the following cadence:
 - [[feedback_plans_cite_sister_registry_inspection]] (plan body documentation discipline)
 - [[feedback_consult_on_audit_findings]] (findings always trigger consult)
 
-**Codified at:** 2026-05-17 (v5.15.5.F.4d.1.B.1 planning); `DESIGN_SPECS/canonical-sister-extension-discipline.md` + `claude-skills/anti-spaghetti/SKILL.md`.
+**Codified at:** 2026-05-17 (v5.15.5.F.4d.1.B.1 planning); `DESIGN_SPECS/meta-disciplines/canonical-sister-extension-discipline.md` + `claude-skills/anti-spaghetti/SKILL.md`.
 
 **Cadence schedule:**
 - 2026-05-17: 1st canonical run (Batch 2 audit at `.B` planning) — found 3-way triplet CRITICAL + CoreCtx INIT/RESET/SUMMARY HIGH + 6 MEDs KEEP

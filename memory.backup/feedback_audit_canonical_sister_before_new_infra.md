@@ -35,4 +35,4 @@ Before proposing any new framework infrastructure — X-macro registry, metadata
 - [[feedback_overengineering_boundary_when_future_easier]] (pick harder when future easier — extending canonical is harder now / much easier forever)
 - [[feedback_structural_fix_for_recurring_class]] (closes Class 14/18/21 structurally)
 
-**Codified at:** 2026-05-17 (v5.15.5.F.4d.1.B.1 planning); `DESIGN_SPECS/canonical-sister-extension-discipline.md` Stage 2 DRAFT → Stage 3 first reference at `.B.1` ship.
+**Codified at:** 2026-05-17 (v5.15.5.F.4d.1.B.1 planning); `DESIGN_SPECS/meta-disciplines/canonical-sister-extension-discipline.md` Stage 2 DRAFT → Stage 3 first reference at `.B.1` ship.

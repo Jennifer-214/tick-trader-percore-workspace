@@ -7,7 +7,7 @@ metadata:
   originSessionId: e52d563e-1fb7-4ce4-ac68-6b9fa4608fec
 ---
 
-New plan body drafts MUST use the canonical `DESIGN_SPECS/future-oriented-plan-template.md` shape. Required sections:
+New plan body drafts MUST use the canonical `DESIGN_SPECS/plan-templates/future-oriented-plan-template.md` shape. Required sections:
 
 1. **Header** with predecessor / pre-tag rollback anchor / sub-master / audit reports paths
 2. **Why this ship exists** — problem statement
@@ -26,7 +26,7 @@ New plan body drafts MUST use the canonical `DESIGN_SPECS/future-oriented-plan-t
 
 **How to apply:**
 - Trigger: any NEW plan body being drafted (sub-master sub-ship OR standalone ship OR STUB→ACTIVE promotion OR retrofit during per-sub-ship cycle)
-- Action: copy `DESIGN_SPECS/future-oriented-plan-template.md` template into new plan body file OR fire `/plan-draft` skill to scaffold
+- Action: copy `DESIGN_SPECS/plan-templates/future-oriented-plan-template.md` template into new plan body file OR fire `/plan-draft` skill to scaffold
 - Required sections present + filled before pre-coding audit gate fires
 - `/readiness` Check 29 (Canonical sister registries considered section present) + Check 30 (Design space + future-oriented choice section present with ≥2 options) verify mechanically
 - Pre-coding audit gate ship-blocker if required sections missing or each section is "no analysis done"
@@ -43,4 +43,4 @@ New plan body drafts MUST use the canonical `DESIGN_SPECS/future-oriented-plan-t
 - [[feedback_structural_fix_for_recurring_class]] (the discipline the Bug classes section encodes)
 - [[feedback_sub_plan_sidecar_files_for_substantial_sections]] (sidecar files for substantial implementation sections)
 
-**Codified at:** 2026-05-17 (v5.15.5.F.4d.1.B.1 planning per Caramel's request "format plans for future-oriented solutions going forward + make something to assist with that guardrail"); `DESIGN_SPECS/future-oriented-plan-template.md` Stage 2 DRAFT → Stage 3 first reference at `.B.1` v1.1 retrofit; `/plan-draft` skill Stage 2 DRAFT at `claude-skills/plan-draft/SKILL.md`; `/readiness` Check 29 + 30 amendments.
+**Codified at:** 2026-05-17 (v5.15.5.F.4d.1.B.1 planning per Caramel's request "format plans for future-oriented solutions going forward + make something to assist with that guardrail"); `DESIGN_SPECS/plan-templates/future-oriented-plan-template.md` Stage 2 DRAFT → Stage 3 first reference at `.B.1` v1.1 retrofit; `/plan-draft` skill Stage 2 DRAFT at `claude-skills/plan-draft/SKILL.md`; `/readiness` Check 29 + 30 amendments.

@@ -465,7 +465,7 @@ without it (per-core path leaves core idle if ML required).
 - Pinned `LC_NUMERIC=C` (matches engine in-process emit; HMAC byte preservation).
 - Engine-downgrade hazard: v2-formatted stamps from `.B.3+` CLI don't load on `.B.2` engine; forward-compat OK, backward-compat requires Decision F parser back-compat at `.B.3+`.
 
-**Related:** DESIGN_SPECS/framework-driven-cli-binary-pattern.md v1.1 (Stage 2 DRAFT; Stage 3 first canonical at this binary); DESIGN_SPECS/cfg-derived-consumer-framework.md v1.3 (extensibility test pattern); TECH_DEBT-110 (shim deletion target); TECH_DEBT-111 (CI defense-in-depth: tools/check_cli_flag_drift.py at 2nd canonical).
+**Related:** DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-pattern.md v1.1 (Stage 2 DRAFT; Stage 3 first canonical at this binary); DESIGN_SPECS/framework-patterns/cfg-derived-consumer-framework.md v1.3 (extensibility test pattern); TECH_DEBT-110 (shim deletion target); TECH_DEBT-111 (CI defense-in-depth: tools/check_cli_flag_drift.py at 2nd canonical).
 
 ---
 
@@ -911,7 +911,7 @@ When something seems wrong, check these in order:
 
 **Gotchas:** Phase 7.A is SUBSTRATE only. Flag flip has no observable effect TODAY. Phase 7.B integration tracked as `TECH_DEBT-045`.
 
-**Related:** `MemHeaders/LatencyHistogram.hpp` (primitive), `ControllerConfig.hpp` (cfg field + parser), `DESIGN_SPECS/runtime-toggleable-bench-gate-pattern.md` (full design + 7 composition options), TECH_DEBT-045 (Phase 7.B trigger ledger).
+**Related:** `MemHeaders/LatencyHistogram.hpp` (primitive), `ControllerConfig.hpp` (cfg field + parser), `DESIGN_SPECS/feature-patterns/runtime-toggleable-bench-gate-pattern.md` (full design + 7 composition options), TECH_DEBT-045 (Phase 7.B trigger ledger).
 
 ---
 
@@ -974,16 +974,16 @@ cfg dump.
   minor display precision shift (always RICHER decimals, not poorer).
 - **The 3-barrier structural fix means NEVER use** `*reinterpret_cast<T*>((char*)cfg + offset) = v`
   style dispatch. See `DOCS/RECURRING_BUG_PATTERNS.md` Class 23 +
-  `DESIGN_SPECS/type-trait-dispatch-via-tt-namespace.md` for canonical antidote.
+  `DESIGN_SPECS/framework-patterns/type-trait-dispatch-via-tt-namespace.md` for canonical antidote.
 
 **Related:**
 - `CoreFrameworks/CfgFieldRegistry.hpp` (registry + descriptor + bitmap overflow asserts)
 - `CoreFrameworks/CfgFieldDispatch.hpp` (tt:: parse + save with locale pinning)
 - `Strategies/StrategyCategories.hpp` + `Strategies/OpModeCategories.hpp` (categorical applicability enums)
-- `DESIGN_SPECS/universal-cfg-field-registry-pattern.md` (full pattern spec)
-- `DESIGN_SPECS/type-trait-dispatch-via-tt-namespace.md` (3-barrier antidote)
-- `DESIGN_SPECS/categorical-tag-applicability-pattern.md` (applies_to_*_cat columns)
-- `DESIGN_SPECS/registry-tuple-as-single-source-of-truth.md` (12-col Option D)
+- `DESIGN_SPECS/framework-patterns/universal-cfg-field-registry-pattern.md` (full pattern spec)
+- `DESIGN_SPECS/framework-patterns/type-trait-dispatch-via-tt-namespace.md` (3-barrier antidote)
+- `DESIGN_SPECS/framework-patterns/categorical-tag-applicability-pattern.md` (applies_to_*_cat columns)
+- `DESIGN_SPECS/framework-patterns/registry-tuple-as-single-source-of-truth.md` (12-col Option D)
 - `DOCS/RECURRING_BUG_PATTERNS.md` Class 23 (3-barrier structural fix), Class 14 (plan-API-drift 4th recurrence)
 - CLAUDE.md item 23 (type-trait dispatch), item 19 (structural fix preferred), item 13 (X-macro registry)
 - CLAUDE.local.md going-forward rule "Type-trait dispatch via tt:: namespace" (2026-05-14)
@@ -1022,7 +1022,7 @@ cfg dump.
 - Constexpr promotion sweep per TECH_DEBT-069 (operator-directed timing: end of `.F` umbrella)
 
 **Related (.F.4c-specific):**
-- `DESIGN_SPECS/universal-registry-bitmap-dispatcher-pattern.md` (NEW; Stage 2 DRAFT v1.0) — codifies the pattern; first canonical application is this ship; future applications outlined for stamp emit / drift check / CLI subcommands / per-core observability
+- `DESIGN_SPECS/framework-patterns/universal-registry-bitmap-dispatcher-pattern.md` (NEW; Stage 2 DRAFT v1.0) — codifies the pattern; first canonical application is this ship; future applications outlined for stamp emit / drift check / CLI subcommands / per-core observability
 - CLAUDE.md item 31 (Framework-driven extensibility meta-principle); H14 (manual bit-packing only — codified this ship)
 - CLAUDE.local.md going-forward rule "GUI ↔ HP/SP thread isolation" (codified this ship)
 - TECH_DEBT-063 (field_defs[] elimination — progressed 80% → 95% at `.F.4c`; closes at `.F.4e`)
@@ -1090,9 +1090,9 @@ cfg dump.
 - `subplans/2026-05-16-v5.15.5.F.4d-merged-framework-bandit-thompson.md` (plan body)
 - `subplans/2026-05-16-v5.15.5.F.4d-merged-framework-bandit-thompson-examples.md` (sidecar examples)
 - `postmortems/2026-05-16-v5.15.5.F.4d-merged-postmortem.md`
-- `DESIGN_SPECS/decision-time-data-binding-pattern.md` Stage 3 amendment v1.2 (Order::flags_packed bandit context bits 17-25 5th canonical)
-- `DESIGN_SPECS/sink-fn-pointer-for-optional-side-effect-pattern.md` Pattern 5 (Thompson_Update branchless wire; noop/real sink fns)
-- `DESIGN_SPECS/branchless-dispatch-discipline.md` Pattern 1 (g_buy/g_exit_reward_dispatch auto-derived fn-pointer table) + Class 28 6 cmov sites
+- `DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md` Stage 3 amendment v1.2 (Order::flags_packed bandit context bits 17-25 5th canonical)
+- `DESIGN_SPECS/framework-patterns/sink-fn-pointer-for-optional-side-effect-pattern.md` Pattern 5 (Thompson_Update branchless wire; noop/real sink fns)
+- `DESIGN_SPECS/refactor-patterns/branchless-dispatch-discipline.md` Pattern 1 (g_buy/g_exit_reward_dispatch auto-derived fn-pointer table) + Class 28 6 cmov sites
 - CLAUDE.md H15-H20 (codified at .F.4d) + item 31 (framework-driven extensibility meta-principle)
 - TECH_DEBT-082/-083/-084 (closed at .F.4d) + TECH_DEBT-085 (Thread A FULL residual; .F.4d.1 dedicated ship)
 

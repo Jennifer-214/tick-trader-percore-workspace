@@ -1,3 +1,14 @@
+---
+type: refactor-pattern
+stage: 5-claude-md
+version: 1.0
+established: 2026-05-15
+tags: [structural-fix, framework-discipline, latency-discipline]
+surface: [oms-drainer, slow-path, hot-path, cfg-flow]
+sister_specs: [slow-path-cfg-resolution-cache-pattern.md, structural-fix-preferred-decision-framework.md]
+applies_at_skills: []
+---
+
 # Decision-time data binding pattern
 
 **Established:** 2026-05-15 (v5.15.5.F.4c.3 WIP2d-1.B.0c)

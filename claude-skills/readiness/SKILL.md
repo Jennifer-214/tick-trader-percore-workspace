@@ -1,6 +1,13 @@
 ---
 name: readiness
 description: Verify a plan before coding starts. Reads a plan file, walks the 10-item checklist from DOCS/CLAUDE_REVIEW.md, and grep-verifies each claimed dependency / file / function exists in the current codebase. Outputs PASS/FIXED/GAP/DEFERRED/ACCEPTED per item plus a punch list of unstated gaps.
+type: skill
+concern: pre-coding-gate
+audit_cadence: per-ship
+tags: [audit-methodology, framework-discipline, plan-template, doc-discipline]
+surface: [registry, cfg-flow, wire-format]
+sister_skills: [/precoding-audit-gate, /parity-check, /trace-deps, /merge-scan, /dod-audit, /blindspot-scan, /plan-check]
+loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/README.md, DESIGN_SPECS/cfg-flag-eligibility-criteria.md, DESIGN_SPECS/x-macro-registry-with-presence-dispatch.md, DESIGN_SPECS/wire-format-byte-preservation-discipline.md, DESIGN_SPECS/structural-fix-preferred-decision-framework.md, DOCS/RECURRING_BUG_PATTERNS.md]
 ---
 
 # /readiness — Plan verification (pre-coding gate)

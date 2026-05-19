@@ -1,3 +1,14 @@
+---
+type: wire-format-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-09
+tags: [wire-format, framework-discipline, structural-fix]
+surface: [registry, wire-format]
+sister_specs: [wire-format-byte-preservation-discipline.md, wire-format-canonical-body-invariants-helper.md, universal-cfg-field-registry-pattern.md]
+applies_at_skills: [/parity-check]
+---
+
 # PRE/POST registry split for canonical emit order preservation
 
 **Established:** 2026-05-09 (v5.14.8.A.merged.4)

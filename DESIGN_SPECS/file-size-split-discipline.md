@@ -1,0 +1,233 @@
+---
+type: doc-discipline
+stage: 2-draft
+version: 1.0
+established: 2026-05-18
+tags: [doc-discipline, structural-fix, pattern-codification]
+surface: []
+sister_specs: [doc-frontmatter-convention.md, ledger-entry-templates.md, categorical-triggers-in-always-loaded-docs.md]
+applies_at_skills: [/metadata-audit, /ship]
+---
+
+# File-size split discipline
+
+**Established:** 2026-05-18 (v5.15.5.F.4d.1.B.3 doc-layer refresh — codified after Caramel surfaced "if file X becomes greater than Y, split it up and add an index entry")
+**Status:** Stage 2 DRAFT v1.0 — Stage 3 first canonical applies when first mega-file split lands (TECH_DEBT-116 / -117 / -118 queued)
+
+Generalizes the existing test-file-size discipline (CLAUDE.md `Test file size discipline` rule + TECH_DEBT-029 source-file analog) to ALL files. When file size crosses threshold, split + create index entry.
+
+---
+
+## Thresholds by file type
+
+| File type | Soft warning | Hard threshold | Action at threshold |
+|---|---|---|---|
+| ALWAYS-LOADED docs (CLAUDE.md / CLAUDE.local.md / MEMORY.md) | 400 lines | 600 lines | Extract sections to on-demand reference docs |
+| Test files (`tests/*.cpp`) | 3000 lines OR 60 sections | 5000 lines OR 100 sections | Split into domain-aligned sub-files (per CLAUDE.md existing rule) |
+| Source headers (`*.hpp` / `*.h`) | 1000 lines | 1500 lines | Split into decl/parser/defaults/validate sub-files (per TECH_DEBT-029) |
+| Source bodies (`*.cpp` / `*.c`) | 1500 lines | 2000 lines | Split by concern (per TECH_DEBT-029) |
+| Ledger files (TECH_DEBT.md / PARITY_ISSUES.md / RECURRING_BUG_PATTERNS.md / FEATURE_LOOKUP.md / HOT_PATH_CHANGELOG.md / LANDMINES.md) | 1500 lines | 2000 lines | Split into per-cohort or per-entry files + ledger becomes INDEX |
+| SKILL.md files | 1000 lines | 1500 lines | Extract per-section sidecar files; SKILL.md keeps invocation + section index |
+| DESIGN_SPECS | 800 lines | 1200 lines | Extract worked-example sidecar (`<spec-name>-examples.md`); main spec keeps body + cross-refs |
+| Plan body docs | 800 lines | 1200 lines | Extract code-sample sidecar (`<plan-name>-examples.md`) per existing convention |
+| Memory rules | 300 lines | 500 lines | Memory rules SHOULD be terse — if exceeding, consider whether the rule is doing too much |
+
+---
+
+## Split + index pattern
+
+When file exceeds hard threshold:
+
+1. **Identify split criteria** — by cohort / by status / by domain / by date / by concern
+2. **Create sub-files** — one per split segment; each retains canonical content
+3. **Convert original file to INDEX** — single doc lists all sub-files with brief description + cross-ref
+4. **Update cross-references** — `rg` sweep across codebase for refs to original file; update to point at sub-file
+5. **Add `splits_into:` frontmatter field** to original (index) file pointing at sub-files
+6. **Add `parent_index:` frontmatter field** to each sub-file pointing back to index
+
+---
+
+## Index file shape (after split)
+
+```markdown
+---
+type: <original type>
+splits_into: [<sub-file paths>]
+total_entries_at_split: N
+split_date: YYYY-MM-DD
+split_criteria: by-status | by-cohort | by-domain | by-concern | by-date
+---
+
+# <Original title> (INDEX)
+
+This file was split at <date> because size exceeded <type> hard threshold (<lines> lines).
+Content is now in sub-files; this doc serves as INDEX.
+
+## Sub-files
+
+| Sub-file | Coverage | Entry count |
+|---|---|---|
+| <path> | <brief: what this sub-file contains> | N |
+| ... | ... | ... |
+
+## Cross-reference shape
+
+When referring to entries: cite the canonical ID (TECH_DEBT-NNN / Class N / etc.) — the index dispatches to the right sub-file automatically via `rg`.
+
+Example:
+- `rg "id: TECH_DEBT-115" DOCS/tech-debt/` — finds the right sub-file
+- Sub-files can be discovered via `splits_into:` frontmatter on this index
+
+## Migration history
+
+- <YYYY-MM-DD>: Split from monolithic <original-path> (N entries; N lines)
+- Future splits: when sub-file exceeds threshold, sub-split + amend this index
+```
+
+---
+
+## Sub-file shape (after split)
+
+```markdown
+---
+type: <original type sub-variant>
+parent_index: <path to index>
+covers: <what this sub-file owns; e.g., "open entries" or "registry-cohort entries">
+established: YYYY-MM-DD
+---
+
+# <Sub-title>
+
+<entries / content for this sub-file>
+```
+
+---
+
+## Auto-flow at sprint close
+
+`/metadata-audit` skill (queued at `.C` candidate ship) reports any file exceeding threshold. `/ship` skill amends suggest split before adding more entries to mega-files.
+
+CI tool `check_doc_metadata.py` can flag file-size violations at commit time (sister to TECH_DEBT-114 test file split discipline enforcement).
+
+---
+
+## Examples (canonical)
+
+### TECH_DEBT.md split candidate (queued at TECH_DEBT-116)
+
+Current: 2013 lines, ~115 entries, monolithic. Exceeds 2000-line ledger threshold.
+
+Proposed split criteria: by-status
+- `DOCS/tech-debt/open.md` — status: open
+- `DOCS/tech-debt/in-flight.md` — status: in-flight
+- `DOCS/tech-debt/closed.md` — status: closed (archival)
+- `DOCS/TECH_DEBT.md` — INDEX (`splits_into:` frontmatter; brief table of contents)
+
+OR by-cohort (alternative):
+- `DOCS/tech-debt/registry-discipline/` — entries tagged surface:registry
+- `DOCS/tech-debt/wire-format/` — entries tagged surface:wire-format
+- etc. — per-surface
+
+Decision deferred to TECH_DEBT-116 ship: which split criteria works best for retrieval workflow.
+
+### RECURRING_BUG_PATTERNS.md split candidate (queued at TECH_DEBT-117)
+
+Current: 2198 lines, 32 classes, monolithic. Exceeds 2000-line ledger threshold.
+
+Proposed split criteria: per-class file
+- `DOCS/recurring-bug-patterns/class-01-name.md` through `class-32-name.md`
+- `DOCS/RECURRING_BUG_PATTERNS.md` — INDEX with class-table + cross-refs
+
+### /readiness SKILL.md split candidate (queued at TECH_DEBT-118)
+
+Current: 1674 lines, 30+ checks. Exceeds 1500-line SKILL.md threshold.
+
+Proposed split criteria: per-check sidecar files
+- `claude-skills/readiness/SKILL.md` (~300 lines) — invocation + check index
+- `claude-skills/readiness/checks/check-01.md` through `check-NN.md`
+
+---
+
+## Trade-offs + when to apply
+
+### Apply when:
+- File crosses hard threshold
+- Operator-flagged "this file is hard to navigate"
+- `/metadata-audit` reports file-size violation
+- Adding new entries would push over threshold (split BEFORE adding)
+
+### Skip when:
+- File is monolithic by design (single CANONICAL reference like `Limits.hpp` or `Version.hpp`)
+- File is auto-generated (split happens at generation, not at file level)
+- Split would create more cross-ref overhead than current monolithic state (rare; usually false economy)
+
+### Cost:
+- Initial split: 2-4h per mega-file (depending on cross-ref count + cohort criteria decision)
+- Ongoing maintenance: minimal once split (sub-files stay smaller; index updates trivial)
+
+### Win:
+- Faster navigation
+- Reduced load-time when only sub-section needed
+- Drift reduction (sub-files easier to keep current than monoliths)
+- Token budget improvement (less context burn per load)
+
+---
+
+## Lessons / gotchas
+
+### Cross-ref breakage is the dominant risk
+
+Splitting a file BREAKS all cross-refs that point at it. `rg <original-path>` sweep BEFORE split + sed-based update DURING split + verification AFTER are mandatory.
+
+CI tool `check_doc_metadata.py` validates `sister_specs:` paths exist post-split.
+
+### Index file becomes the canonical "where to look"
+
+After split, ALL external refs should point at the INDEX. Sub-files reference each other via `parent_index:` frontmatter; external refs traverse via INDEX.
+
+This avoids the problem where some external refs point at sub-file directly + others point at index = confusion.
+
+### Don't split prematurely
+
+Soft warning threshold is HINT, not requirement. Hard threshold is MANDATORY. Between soft + hard is judgment call: if file is still navigable, don't split.
+
+### Sub-split when sub-files grow
+
+If a sub-file exceeds threshold post-split, sub-split again. Index file's `splits_into:` frontmatter grows recursively. Sister to filesystem hierarchy growth.
+
+### Choose split criteria carefully
+
+Wrong criteria = split makes retrieval HARDER. Examples:
+- Split by date in active ledger = forces users to know date of entry; bad
+- Split by status in ledger = easy retrieval ("show open / show closed"); good
+- Split by cohort (surface tag) = enables `rg` filtering; good
+
+---
+
+## Pattern lifecycle
+
+- **Stage 1 (problem identification):** Caramel surfaced 2026-05-18 — "maybe split up things that become mega files to have an index and like 'if file X becomes greater than Y, split it up and add an index entry'"
+- **Stage 2 (DESIGN_SPEC draft):** THIS DOC (2026-05-18)
+- **Stage 3 (first canonical):** first mega-file split at TECH_DEBT-116/-117/-118 sub-ships
+- **Stage 4 (cohort migration):** all mega-files surfaced by `/metadata-audit` get split
+- **Stage 5 (CLAUDE.md promotion):** when threshold rules are load-bearing (currently in this doc; could promote to CLAUDE.md if multiple file types reach threshold)
+- **Stage 6 (cadence-locked):** CI tool catches file-size violations at commit time
+
+---
+
+## Cross-references
+
+- Sister: `doc-frontmatter-convention.md` (frontmatter discipline; this spec extends with `splits_into:` / `parent_index:`)
+- Sister: `ledger-entry-templates.md` (per-entry templates; this spec governs when ledgers themselves get split)
+- Sister: `categorical-triggers-in-always-loaded-docs.md` (always-loaded discipline; mega-files violate "fits in context")
+- Sister: CLAUDE.md `Test file size discipline` rule (sister rule for tests)
+- TECH_DEBT-029 (source file length sister — header/non-test files)
+- TECH_DEBT-114 (test file split queued — applies this discipline to tests/controller_test.cpp)
+- TECH_DEBT-116 (TECH_DEBT.md split queued — applies this discipline)
+- TECH_DEBT-117 (RECURRING_BUG_PATTERNS.md split queued)
+- TECH_DEBT-118 (/readiness SKILL.md split queued)
+- Memory: `feedback_file_size_split_discipline.md` (going-forward rule — queued)
+
+---
+
+**End of file-size-split-discipline v1.0 DRAFT.** Stage 3 first canonical at TECH_DEBT-116/-117/-118 ship close.

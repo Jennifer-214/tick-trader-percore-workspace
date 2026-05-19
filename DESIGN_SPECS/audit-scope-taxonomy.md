@@ -1,3 +1,14 @@
+---
+type: audit-methodology
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-15
+tags: [audit-methodology, meta-discipline, framework-discipline]
+surface: [registry]
+sister_specs: [audit-driven-pre-coding-gate.md, implementation-layer-blindspot-taxonomy.md]
+applies_at_skills: [/parity-check, /trace-deps, /readiness, /merge-scan, /dod-audit, /bug-check, /blindspot-scan, /anti-spaghetti]
+---
+
 # Audit scope taxonomy (5 shapes for situation-dependent audit invocation)
 
 **Established:** 2026-05-15 (v5.15.5.F.4c.3 WIP2d-1.B.0d — codified after Caramel call-out that "comprehensive vs focused" is too coarse; large codebase needs situation-dependent scope spectrum to manage context budget + give appropriate depth per pass).

@@ -1,3 +1,14 @@
+---
+type: plan-template
+stage: 2-draft
+version: 1.0
+established: 2026-05-18
+tags: [plan-template, doc-discipline, framework-discipline]
+surface: []
+sister_specs: [future-oriented-plan-template.md, pattern-codification-lifecycle.md, audit-driven-pre-coding-gate.md]
+applies_at_skills: [/plan-draft]
+---
+
 # Sprint MASTER plan template
 
 **Established:** 2026-05-18 (v5.15.5.F.4d.1.B.3 doc-layer refresh — codified after Caramel surfaced that plans rely on ship-name to convey purpose, which fails for cold-pickup; sister to sub-plan template at `future-oriented-plan-template.md`)

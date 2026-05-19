@@ -1,6 +1,13 @@
 ---
 name: dust
 description: Audit the tick-trader-percore codebase for cleanup candidates — rotting comments, oversized functions, copy-paste patterns, dead code, multi-site change leaks. Output is a ranked punch list, NOT actual edits. User decides which items to pick up.
+type: skill
+concern: anti-pattern-scan
+audit_cadence: ad-hoc
+tags: [audit-methodology, structural-fix]
+surface: [registry]
+sister_skills: [/dead-code-trace, /merge-scan, /anti-spaghetti, /bug-check]
+loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md]
 ---
 
 # /dust — Codebase audit (non-destructive)

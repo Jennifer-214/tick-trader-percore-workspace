@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-10
+tags: [framework-discipline, structural-fix]
+surface: [registry, slow-path, hot-path]
+sister_specs: [x-macro-registry-with-presence-dispatch.md, autopopulate-pattern-for-production-caller-class.md, display-execution-invariant-registry-pattern.md]
+applies_at_skills: []
+---
+
 # Slow-path gate registry pattern (FOREACH_SLOW_PATH_GATE + AUTOPOPULATE)
 
 **Established:** 2026-05-10 (v5.14.9.B.0)

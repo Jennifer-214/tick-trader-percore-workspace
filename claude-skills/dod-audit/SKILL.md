@@ -1,5 +1,12 @@
 ---
 description: Data-oriented-design audit. Walks DESIGN_SPECS pattern catalog dynamically and scans current code OR a plan file for missed pattern applications (cache alignment, branchless dispatch, bit-packing, bitmap dispatchers, X-macro registries, BITMAP_* API reuse, false sharing). Cross-references each finding to the relevant DESIGN_SPECS doc. Distinct from /hft-audit (generic HFT principles) — this skill knows OUR specific pattern library and flags missed applications. Output is a structured findings report, NOT actual edits — operator reviews + decides which to triage.
+type: skill
+concern: shape-audit
+audit_cadence: ad-hoc
+tags: [data-oriented-design, framework-discipline, pattern-codification, structural-fix, branchless-discipline]
+surface: [hot-path, slow-path, registry, bitmap-packed, wire-format]
+sister_skills: [/hft-audit, /merge-scan, /bug-check, /readiness, /registry-fit-audit, /accounting-audit, /precoding-audit-gate]
+loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/README.md]
 ---
 
 # /dod-audit — Data-oriented-design pattern audit

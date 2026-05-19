@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-10
+tags: [framework-discipline, pattern-codification]
+surface: [registry]
+sister_specs: [x-macro-registry-with-presence-dispatch.md, registry-tuple-as-single-source-of-truth.md, categorical-tag-applicability-pattern.md]
+applies_at_skills: []
+---
+
 # Heterogeneous registry pattern — scope column vs domain split
 
 **Established:** 2026-05-10 (v5.14.9.F sprint, pre-field-test draft)

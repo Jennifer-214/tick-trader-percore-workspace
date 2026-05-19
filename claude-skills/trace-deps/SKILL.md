@@ -1,3 +1,15 @@
+---
+name: trace-deps
+description: /trace-deps — dependency-chain audit for new plan code
+type: skill
+concern: shape-audit
+audit_cadence: per-ship
+tags: [audit-methodology, structural-fix, framework-discipline]
+surface: [registry, cfg-flow]
+sister_skills: [/readiness, /parity-check, /merge-scan, /dod-audit, /precoding-audit-gate, /dependency-chain-trace]
+loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/structural-fix-preferred-decision-framework.md]
+---
+
 # /trace-deps — dependency-chain audit for new plan code
 
 > **Uniform parameter + preload contract:**

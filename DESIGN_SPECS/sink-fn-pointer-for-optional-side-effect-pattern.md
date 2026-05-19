@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-15
+tags: [framework-discipline, branchless-discipline]
+surface: [hot-path, slow-path]
+sister_specs: [template-deferred-dependency-injection.md, branchless-dispatch-discipline.md]
+applies_at_skills: []
+---
+
 # Sink-fn-pointer for optional side-effect pattern
 
 **Established:** 2026-05-15 (v5.15.5.F.4c.3 WIP2d-1.B.1 r-6 phase 2)

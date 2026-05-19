@@ -1,6 +1,13 @@
 ---
 name: precoding-audit-gate
 description: Layer-1 orchestrator for pre-coding audit gate. Fires multiple audit skills (parity-check + trace-deps + readiness + merge-scan + dod-audit) in parallel via general-purpose subagents against a target plan. Synthesizes convergent findings into one report. Returns GREEN/YELLOW/RED verdict + per-finding triage list. Dynamic parameterization — takes plan_path + audit_set + focus_keywords; auto-derives focus from plan content (predecessor/successor metadata + pattern matches in body). NO hardcoded TECH_DEBT references; NO hardcoded sprint refs. Honors consult-before-coding — returns synthesis for operator review; never auto-proceeds.
+type: skill
+concern: pre-coding-gate
+audit_cadence: per-ship
+tags: [audit-methodology, framework-discipline, operator-collaboration]
+surface: [registry, cfg-flow, wire-format, hot-path, slow-path]
+sister_skills: [/readiness, /parity-check, /trace-deps, /merge-scan, /dod-audit, /blindspot-scan, /accounting-audit, /hft-audit, /registry-fit-audit]
+loads_dynamically: [DESIGN_SPECS/audit-scope-taxonomy.md, DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md, DOCS/DESIGN_PHILOSOPHY.md]
 ---
 
 # /precoding-audit-gate — Layer 1 orchestrator for parallel audit fire

@@ -1,3 +1,14 @@
+---
+type: refactor-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-11
+tags: [fixed-point-math, latency-discipline]
+surface: [slow-path, ml-inference]
+sister_specs: [branchless-math-kernel-pattern.md, generic-ring-buffer-template-pattern.md]
+applies_at_skills: []
+---
+
 # Sliding-window online statistics pattern (sum-of-squares form)
 
 **Established:** 2026-05-11 (v5.14.11.A — RidgeBlender correlation matrix; first application)

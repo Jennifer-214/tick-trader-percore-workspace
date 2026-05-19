@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-14
+tags: [framework-discipline, data-oriented-design, branchless-discipline, structural-fix]
+surface: [registry, bitmap-packed, hot-path, gui-thread]
+sister_specs: [bitmap-flag-api.md, enum-mode-flags-bitmap-lookup-pattern.md, registry-bitmap-set-discipline.md, composed-filter-mask-pattern.md, x-macro-registry-with-presence-dispatch.md]
+applies_at_skills: []
+---
+
 # Universal registry bitmap dispatcher pattern
 
 **Established:** 2026-05-14 (v5.15.5.F.4c — first canonical application: cfg field GUI walker)

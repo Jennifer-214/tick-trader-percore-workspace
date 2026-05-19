@@ -1,6 +1,13 @@
 ---
 name: accounting-audit
 description: Scan accounting / money tracking paths for silent-correctness hazards — Class 27 scalar cfg-mirror caches, per-core fee/commission indexing gaps, slippage / fee floor cross-path inconsistency, float/double in accounting paths (H4), lossy FPN_ToDouble conversions, position/balance update atomicity, backtest↔live accounting parity. Output is a severity-classified findings report, NOT actual edits. Operator triages.
+type: skill
+concern: domain-audit
+audit_cadence: ad-hoc
+tags: [fixed-point-math, structural-fix, failure-observability]
+surface: [oms-drainer, hot-path, slow-path, backtest, live-trading, wire-format]
+sister_skills: [/parity-check, /hft-audit, /dod-audit, /bug-check, /ml-audit]
+loads_dynamically: [DESIGN_SPECS/decision-time-data-binding-pattern.md, DESIGN_SPECS/cfg-scope-discipline.md, DESIGN_SPECS/cache-layout-discipline-for-hot-side-structs.md, DESIGN_SPECS/postloadsetup-registry-pattern.md, DOCS/DESIGN_PHILOSOPHY.md]
 ---
 
 # /accounting-audit — Accounting / money-tracking path audit

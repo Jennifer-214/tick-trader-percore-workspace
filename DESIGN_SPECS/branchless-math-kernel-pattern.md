@@ -1,3 +1,14 @@
+---
+type: refactor-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-11
+tags: [branchless-discipline, latency-discipline, fixed-point-math]
+surface: [hot-path, slow-path, ml-inference]
+sister_specs: [branchless-dispatch-discipline.md, struct-padding-determinism-pattern.md, avx512-byte-determinism-pattern.md]
+applies_at_skills: []
+---
+
 # Branchless math kernel pattern (constant-iter inner reductions + zero-invariant)
 
 **Established:** 2026-05-11 (v5.14.11.B — Cholesky_Solve canonical first reference)

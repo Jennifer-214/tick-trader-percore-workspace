@@ -1,3 +1,14 @@
+---
+type: concurrency-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-13
+tags: [concurrency, data-oriented-design, latency-discipline]
+surface: [hot-path, oms-drainer]
+sister_specs: [cache-layout-discipline-for-hot-side-structs.md, cache-line-discipline.md, cross-thread-snapshot-publish-cluster-isolation.md, raii-destructor-with-cluster-reorg-interaction.md]
+applies_at_skills: []
+---
+
 # SPSC ring embedded in hot struct — cluster discipline (preventing the "ring head shares a line with the preceding field" gotcha)
 
 **Established:** 2026-05-13 (codification triggered by v5.15.5.C.1 audit of `OrderManagerState` — first hot-side struct in this codebase that embeds N `SPSCRing<T, K>` fields and required cluster discipline beyond the ring's internal alignas)

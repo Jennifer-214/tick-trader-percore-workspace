@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-13
+tags: [framework-discipline, structural-fix, data-oriented-design]
+surface: [registry, bitmap-packed, hot-path]
+sister_specs: [persisted-struct-with-ephemeral-field-coexistence-pattern.md, x-macro-registry-with-presence-dispatch.md, multi-bit-state-encoding-pattern.md]
+applies_at_skills: []
+---
+
 # Slot-state FOREACH registry with explicit storage-kind routing
 
 **Established:** 2026-05-13 (v5.15.5.C.4 pre-coding consult)

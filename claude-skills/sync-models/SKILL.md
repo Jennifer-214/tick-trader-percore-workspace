@@ -1,3 +1,15 @@
+---
+name: sync-models
+description: /sync-models — back up trained models off-machine
+type: skill
+concern: workflow
+audit_cadence: ad-hoc
+tags: [doc-discipline, operator-collaboration]
+surface: [training, ml-inference]
+sister_skills: [/sync-workspace, /ship]
+loads_dynamically: []
+---
+
 # /sync-models — back up trained models off-machine
 
 ## What this does

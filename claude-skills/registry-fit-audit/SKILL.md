@@ -1,6 +1,13 @@
 ---
 name: registry-fit-audit
 description: Scan existing registries (FOREACH_* macros catalogued in FOREACH_REGISTRY meta-registry) for misapplication per the framework-selection criteria. Surfaces registries where principle+sweep would be better, cache registries where pre-resolution applies, registries with <3 entries that haven't grown, registries with wildly different per-row shapes (forced uniformity), dead/abandoned registries, registries that should be split or merged. Output is a per-registry verdict (KEEP / RECONSIDER / DEPRECATE / SPLIT / MERGE) with rationale. NOT actual edits.
+type: skill
+concern: domain-audit
+audit_cadence: ad-hoc
+tags: [framework-discipline, pattern-codification, structural-fix]
+surface: [registry]
+sister_skills: [/dod-audit, /anti-spaghetti, /merge-scan, /precoding-audit-gate]
+loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/decision-time-data-binding-pattern.md, DESIGN_SPECS/pattern-codification-lifecycle.md, DESIGN_SPECS/meta-registry-pattern-for-codebase-registry-discipline.md, DESIGN_SPECS/x-macro-registry-with-presence-dispatch.md]
 ---
 
 # /registry-fit-audit — Registry-fit audit per framework-selection criteria

@@ -1,163 +1,191 @@
-# Architecture
+---
+type: architecture-overview
+stage: 5-claude-md
+version: 2.0
+established: 2026-05-18 (refreshed from v1 legacy single-core)
+tags: [data-oriented-design, concurrency, framework-discipline]
+surface: [hot-path, slow-path, oms-drainer, producer, registry, wire-format, ml-inference, cfg-flow, gui-thread, training, paper-test, live-trading, backtest, boot-time]
+sister_specs: [concurrency-model-summary.md, cache-line-discipline.md, branchless-dispatch-discipline.md]
+applies_at_skills: [/handoff, /readiness, /precoding-audit-gate]
+---
 
-## Overview
+# Architecture (per-core sharded HFT engine)
 
-Tick-level crypto trading engine. Regime-adaptive strategy switching between mean reversion and momentum. Branchless fixed-point arithmetic on the hot path. Connects to Binance websocket for live market data, paper trades with simulated fills. Optional multicore TUI (engine core 0, display core 1).
+Tick-level crypto HFT trading platform in C++. Per-core risk-sharded hot path (40-400ns p99); branchless fixed-point math; X-macro registries for multi-site additions; bitmap-packed portfolio + flags.
 
-## Data Flow
+This doc is the high-level orientation. Per-component detail lives in canonical sources cross-referenced below.
 
-```
-[Binance WSS] -> [TLS Socket] -> [WebSocket Frame Parser] -> [JSON Parser]
-                                                                    |
-                                                             [FPN_FromString]
-                                                                    |
-                                                              [DataStream<F>]
-                                                                    |
-                  +---------------------+---------------------------+
-                  |                     |                           |
-             [BuyGate]          [PositionExitGate]         [PortfolioController]
-          (direction-aware)    (bitmap walk, TP/SL)              |
-                  |                     |              +----------+-----------+
-             [OrderPool]          [ExitBuffer]         |                     |
-                  |                     |         [RegimeDetector]    [Strategy Dispatch]
-                  +---------------------+         RANGING/TRENDING    MR or Momentum
-                                        |         /VOLATILE           Adapt+BuySignal
-                                 [Trade Decision]                    +ExitAdjust
-                                        |
-                            [TradeLog CSV + MetricsLog + TUI]
-```
+---
 
-## Event Loop (main.cpp)
-
-Multicore by default (engine core 0, TUI core 1). One iteration:
-
-1. `BinanceStream_Poll()` — checks SSL_pending first, then poll() on socket
-2. **Burst drain** — read ALL buffered frames. Exit gates run on every intermediate price
-3. **TUI input** — handle q/p/r/s commands (shared functions: Unpause, CycleRegime, HotReload)
-4. **Session lifecycle** — wind-down and reconnect checks
-5. **Engine tick** — BuyGate -> PositionExitGate -> PortfolioController_Tick
-6. **Metrics logging** — regime changes, strategy switches, fills logged to CSV
-7. **TUI snapshot** — every 10 ticks, copy state to double-buffered snapshot
-
-## Hot Path (every tick, p50 ~950ns)
-
-All branchless except unavoidable bitmap loops:
-
-| Function | Description | Cost |
-|---|---|---|
-| BuyGate | direction-aware price/volume check (0=below, 1=above) | ~80ns |
-| PositionExitGate | bitmap walk, per-position TP/SL | ~130ns/pos |
-| Fill consumption | pool -> portfolio, strategy-aware TP/SL sizing | ~750ns avg, ~4μs on fill |
-
-## Slow Path (every poll_interval ticks, ~25μs)
-
-1. Drain exit buffer, log sells with full context (strategy, regime, fees)
-2. Time-based exit: close positions held too long with low gain
-3. Update rolling stats (128-tick short + 512-tick long windows)
-4. **Regime detection**: classify market as RANGING, TRENDING, or VOLATILE
-5. **Position adjustment**: modify TP/SL on existing positions if regime changed
-6. **Strategy dispatch**: run active strategy's Adapt + ExitAdjust + BuySignal
-7. Compute unrealized P&L (net of estimated exit fees)
-8. VOLATILE regime: pause buying (set buy_conds to zero)
-
-## Regime Detection
-
-Classifies market state from rolling statistics:
-
-| Regime | Condition | Strategy | Action |
-|--------|-----------|----------|--------|
-| RANGING | low slope OR low R² | Mean Reversion | Buy dips below avg |
-| TRENDING | high slope AND high R² | Momentum | Buy breakouts above avg |
-| VOLATILE | high stddev AND low R² | (paused) | No new entries |
-
-- Hysteresis: proposed regime must hold N slow-path cycles before switching
-- Cold start: stays RANGING until 64+ rolling samples available
-- Position adjustment on switch: MR→momentum widens TP/tightens SL; reverse for momentum→MR
-
-## Strategy System
-
-Each strategy implements 4 functions + state struct:
+## Component overview
 
 ```
-PREFIX_Init()       — set initial buy conditions from rolling stats
-PREFIX_Adapt()      — P&L regression feedback, idle squeeze
-PREFIX_BuySignal()  — compute buy gate conditions + gate_direction
-PREFIX_ExitAdjust() — trailing TP/SL logic
+┌─────────────────────────────────────────────────────────────────────┐
+│                    GLOBAL THREADS (1 each)                          │
+├─────────────────────────────────────────────────────────────────────┤
+│ PRODUCER (1):  Binance WS parse → ema_price replication →           │
+│                fan_out to N per-core SPSC rings → GUI publish       │
+│ DRAINER  (1):  OMS_DrainSubmit → OrderManager_Tick → DrainPostFill  │
+│ ASYNC    (N):  Binance order API / Notify worker / Recorders / GUI  │
+└─────────────────────────────────────────────────────────────────────┘
+                                  │
+                                  │ SPSC ring per core
+                                  ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                PER-CORE CONSUMERS (N = 2..16; default 4)            │
+├─────────────────────────────────────────────────────────────────────┤
+│  HOT thread (1 per core; ≤500ns p99; branchless):                   │
+│    ExecutionCore_Tick → BG_Evaluate → SG_Evaluate ×2 →              │
+│    push TradeEvent (rare branch)                                    │
+│                                                                     │
+│  SLOW thread (1 per core; ≤100μs p99; every poll_interval ticks):   │
+│    EventLoop_UpdateRollingStateOneCore → Regime_Classify →          │
+│    Strategy rebuild → ExecutionCore_SetParameters (seqlock to hot)  │
+│    → TimeExitOneCore → TrailingSLRatchetOneCore                     │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
-Dispatch via `switch(strategy_id)`. Both strategies initialized at warmup.
-Adding strategy #3: new header + dispatch case + unpause case + config fields.
+Each core = self-contained strategy unit (slow + hot pthread pair).
+Sharded is production. Legacy single_core LIVE is deprecated (warned at boot).
+Legacy backtest is gone — `Backtest_Run` wraps `BacktestSharded_Run`.
 
-### Shared Functions (PortfolioController.hpp)
+---
 
-Eliminate duplication between multicore and single-threaded paths:
-- `PortfolioController_HotReload()` — config reload
-- `PortfolioController_Unpause()` — dispatch to active strategy
-- `PortfolioController_CycleRegime()` — manual regime cycle for testing
-
-## Logging
-
-### Trade Log (`{symbol}_order_history.csv`)
-Every buy/sell with: tick, price, qty, entry, delta%, exit reason, TP, SL,
-buy gate conditions, stddev, avg, balance, fees, spacing, gate distance, strategy, regime.
-
-### Metrics Log (`{symbol}_metrics.csv`)
-Every slow-path cycle: full engine state snapshot. Events: REGIME_CHANGE, STRATEGY_SWITCH, FILL.
-Append mode — survives restarts.
-
-### Snapshot (`portfolio.snapshot`, v5)
-Binary state persistence: positions, entry_ticks, entry_strategy, strategy_id,
-regime state, MR + momentum adaptive values, balance, realized P&L.
-Backward compatible with v4.
-
-## Network Stack (DataStream/BinanceCrypto.hpp)
-
-Six layers, all in one header: TCP -> TLS (OpenSSL) -> WebSocket -> Ping/Pong -> JSON -> FPN.
-
-## Session Lifecycle (24-hour cycle)
+## Data flow (tick → decision)
 
 ```
-CONNECT -> WARMUP (128 ticks, ~43s) -> ACTIVE -> WIND DOWN (5 min) -> CLOSE ALL -> RECONNECT
+[Binance WSS] → [TLS Socket] → [WebSocket frame] → [simdjson parse]
+                                                          │
+                                                  [tt::parse_double_fast]
+                                                          │
+                                                          ▼
+                                              [Producer fan_out]  ← ema_price replicate
+                                                          │
+                            ┌────────────┬────────────────┼────────────┬────────────┐
+                            │            │                │            │            │
+                       SPSC ring[0]  ring[1]            ring[2]     ring[3]      ...ring[N]
+                            │            │                │            │            │
+                            ▼            ▼                ▼            ▼            ▼
+                      [Core 0 HOT] [Core 1 HOT]    [Core 2 HOT] [Core 3 HOT]   ...
+                            │
+                            ├─ BG_Evaluate (buy gate; branchless)
+                            ├─ SG_Evaluate (sell gate; per leg A+B; branchless)
+                            └─ push TradeEvent → drainer ring
+                                                          │
+                                                          ▼
+                                                  [DRAINER thread]
+                                                          │
+                                                  OMS_DrainSubmit
+                                                          │
+                                                  OrderManager_Tick
+                                                          │
+                                                  DrainPostFill ← (live: BinanceOrderAPI)
+                                                          │
+                                                          ▼
+                                                  [Per-core slow] ← post-fill events
+                                                  EventLoop_UpdateRollingState
+                                                  Regime_Classify
+                                                  Strategy rebuild
+                                                  ExecutionCore_SetParameters (seqlock)
+                                                          │
+                                                          ▼
+                                              (next tick reads new params)
 ```
 
-## File Map
+---
 
-```
-CoreFrameworks/
-  OrderGates.hpp           BuyGate (direction-aware), SellGate
-  Portfolio.hpp            Position storage, ExitGate, bitmap ops, snapshot format
-  PortfolioController.hpp  Tick function, dispatch, shared functions, snapshot v5
-  ControllerConfig.hpp     Config struct, parser, defaults
+## Sub-system pointers (canonical sources)
 
-Strategies/
-  StrategyInterface.hpp    Strategy contract + enum definitions
-  MeanReversion.hpp        Buy dips, stddev-scaled offset, P&L adaptation
-  Momentum.hpp             Buy breakouts, trend-following, tighter SL
-  RegimeDetector.hpp       Market classification + position adjustment
+| Concern | Canonical source |
+|---|---|
+| Hot path discipline + cadence tiers | `DOCS/HOT_PATH_CHANGELOG.md` |
+| Code map (per-file responsibilities) | `DOCS/CODE_MAP.md` |
+| Hard invariants H1-H20 | `CLAUDE.md § Hard Invariants` table |
+| Coding rules + 11 strict invariants | `DOCS/STRATEGY_AND_CODING_RULES.md` (private) |
+| Per-component invariants | `DOCS/CLAUDE_INVARIANTS.md` |
+| ML pipeline invariants | `DOCS/CLAUDE_ML_INVARIANTS.md` |
+| Thread architecture + sync primitives | `DESIGN_SPECS/concurrency-model-summary.md` |
+| Cache layout + alignment discipline | `DESIGN_SPECS/cache-line-discipline.md` |
+| Branchless dispatch discipline | `DESIGN_SPECS/branchless-dispatch-discipline.md` |
+| Wire-format byte preservation | `DESIGN_SPECS/wire-format-byte-preservation-discipline.md` |
+| X-macro registry pattern | `DESIGN_SPECS/x-macro-registry-with-presence-dispatch.md` |
+| Meta-registry topology | `DESIGN_SPECS/meta-registry-pattern-for-codebase-registry-discipline.md` |
+| Bug class catalog | `DOCS/RECURRING_BUG_PATTERNS.md` |
+| Decoupling roadmap (long-horizon) | `plans/_future/2026-05-12-decoupling-endgoal-roadmap.md` |
 
-DataStream/
-  BinanceCrypto.hpp        WebSocket stream (TCP/TLS/WS/JSON)
-  BinanceOrderAPI.hpp      REST order execution (HMAC-SHA256, market orders)
-  EngineTUI.hpp            Terminal dashboard, multicore snapshot
-  TradeLog.hpp             CSV logger + ring buffer
-  MetricsLog.hpp           Slow-path diagnostics CSV
-  FauxFIX.hpp              FIX protocol parser (mock data)
+---
 
-FixedPoint/
-  FixedPointN.hpp          Arbitrary-width fixed-point arithmetic
-  FixedPoint64.hpp         Static 128-bit FP (experimental)
+## Per-component highlights
 
-ML_Headers/
-  RollingStats.hpp         Price/volume moving avg, stddev, slope
-  LinearRegression3X.hpp   3-sample rolling regression
-  ROR_regressor.hpp        Slope-of-slopes (second derivative)
+### CoreFrameworks/
+ExecutionCore (hot-path tick dispatcher) / OrderGates / Portfolio (bitmap-packed) / ControllerEventLoop (slow-path orchestrator) / EngineSharded (producer + per-core thread spawning) / OMS (drainer thread) / CfgFieldRegistry + CfgFieldDispatch (X-macro auto-flow) / **MetaRegistry** (H15 enforcement).
 
-tests/
-  controller_test.cpp      134 assertions
-  integration_test.cpp     Full pipeline test
-  binance_test.cpp         Live data integration test
+### Strategies/
+RegimeDetector (RANGING / TRENDING / VOLATILE / MILD_TREND with hysteresis) / MeanReversion / Momentum / SimpleDip / EmaCross / MLStrategy / StrategyParameters (X-macro dispatcher) / StrategyInterface / StrategyCategories + OpModeCategories (categorical applicability gates).
 
-main.cpp                   Engine entry point, event loop
-engine.cfg                 Annotated configuration
-Makefile                   Build targets: make, make profile, make test
-```
+### DataStream/
+BinanceCrypto (WSS tick stream) / Depth (orderbook stream) / DepthReplayState / DepthRecorder / TickRecorder / BinanceOrderAPI (live REST) / EngineTUI (text dashboard).
+
+### FixedPoint/
+`FPN<F=64>` = 24-byte 4096-bit fixed-point. `is_FPN_v` type trait. NEVER `float`/`double` on accounting paths (H4).
+
+### MemHeaders/
+PoolAllocator (bitmap order pool) / BuddyAllocator / BitmapMacros / FailureModeRegistry / CfgGateRegistry (FOREACH_STAMP_BOUND_DERIVED_COHORT meta-walker).
+
+### ML_Headers/
+RollingStats / ROR_regressor / ConfidenceScore / ModelInference (XGBoost) / FlowFeatures / StampBoundCfgRegistry / StampBoundModelConstRegistry / FeatureRegistry (FOREACH_FEATURE) / FeatureStandardizer (scaler).
+
+### GUI/
+Dear ImGui native (SDL2 + OpenGL3): FoxmlTheme / DashboardPanels / ChartPanel / CandleAccumulator / TradeReader / SettingsPanel / TradeHistoryPanel / LogViewerPanel / GuiThread.
+
+### Backtest/
+`Backtest_Run` wrapper + `BacktestSharded_Run` / BacktestPanels / LabelFunctions / HeldOutSplit / ValidationSplit / Walk-Forward / Held-Out gates.
+
+### tests/
+`controller_test.cpp` (3118 tests; queued split per TECH_DEBT-114) / `parity_harness.cpp` / `depth_recorder_test.cpp`.
+
+---
+
+## Hard invariants (NEVER break — full table at CLAUDE.md § Hard Invariants)
+
+H1 no heap alloc / H2 no virtual on hot path / H3 no mutex anywhere / H4 FPN<F> on accounting paths / H5 no scalar JSON / H6 alignas(64) cross-thread / H7 hot path branchless / H8 ≤500ns hot p99 + ≤100μs slow p99 / H9 wire byte preservation / H10 SIMD scalar fallback / H11 constant-iter math / H12 padding fields default-init / H13 tt:: dispatch (no reinterpret_cast) / H14 NO C++ bitfield syntax (hand-written BITMAP_*/MBS_*) / H15 FOREACH_REGISTRY enrollment / H16 metadata-bit derived-filter / H17 cfg struct auto-gen / H18 sidecar override / H19 meta-registry topology / H20 branchless on SP/HP.
+
+---
+
+## Build summary
+
+- `./build.sh test` — engine + controller_test
+- `./build.sh gui` — engine_gui + foxml_suite (SDL2+OpenGL3+ImGui)
+- `./build.sh suite` — same + XGBoost
+- `./build.sh tsan` / `asan` — sanitizer builds
+- Flags: `-DLATENCY_PROFILING=ON` / `-DLATENCY_LITE=ON` / `-DBUSY_POLL=ON` / `-DUSE_NATIVE_128=ON`
+
+5 binaries clean = ship gate (engine + engine_gui + foxml_suite + controller_test + parity_harness).
+
+---
+
+## End state / trajectory
+
+See CLAUDE.md § Design philosophy + priorities for the end-state vision:
+- **Current** = v5.X professionalization phase (framework-driven extensibility, audit-driven discipline)
+- **Near-term** = v6.0 decoupled runtime/viewer (per `plans/_future/2026-05-12-decoupling-endgoal-roadmap.md`)
+- **Long-horizon** = framework-driven extensibility (1-row-in-registry adds for new strategies/features/markets)
+
+---
+
+## Cross-references
+
+- `CLAUDE.md` (always-loaded orientation; Design philosophy + Hard invariants + How to find anything)
+- `DOCS/DESIGN_PHILOSOPHY.md` (deep WHY discussion; 14 sections + § 11.5 meta-disciplines)
+- `DOCS/CODE_MAP.md` (per-file responsibilities)
+- `DOCS/HOT_PATH_CHANGELOG.md` (hot path cadence tier classification)
+- `DOCS/STRATEGY_AND_CODING_RULES.md` (private; 11 strict invariants)
+- `DESIGN_SPECS/concurrency-model-summary.md` (thread architecture detail)
+- `DESIGN_SPECS/cache-line-discipline.md` (DOD layout discipline detail)
+- `DESIGN_SPECS/branchless-dispatch-discipline.md` (Class 28 + H20 detail)
+- `plans/_future/2026-05-12-decoupling-endgoal-roadmap.md` (long-horizon roadmap)
+
+---
+
+**Refreshed:** 2026-05-18 from v1 legacy single-core description (was stale: described `PortfolioController_Tick` + 134-test era).
+**Refresh trigger:** Caramel's institutional-memory architecture push at v5.15.5.F.4d.1.B.3 doc-layer refresh; companion to `concurrency-model-summary.md` Stage 2 DRAFT.

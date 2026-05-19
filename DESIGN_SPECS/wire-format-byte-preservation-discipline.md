@@ -1,3 +1,14 @@
+---
+type: wire-format-pattern
+stage: 5-claude-md
+version: 1.0
+established: 2026-05-09
+tags: [wire-format, framework-discipline, structural-fix, cross-tool-decoupling]
+surface: [wire-format, ml-inference, parser, cross-tool]
+sister_specs: [wire-format-canonical-body-invariants-helper.md, struct-padding-determinism-pattern.md, avx512-byte-determinism-pattern.md, framework-driven-cli-binary-pattern.md, autopopulate-pattern-for-production-caller-class.md, pre-post-cfg-registry-split-for-emit-order-preservation.md]
+applies_at_skills: [/parity-check]
+---
+
 # Wire-format byte-preservation discipline (HMAC chain protection)
 
 **Established:** 2026-05-09 (v5.14.8 sprint)

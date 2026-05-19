@@ -1,3 +1,14 @@
+---
+type: data-discipline
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-13
+tags: [data-oriented-design, latency-discipline]
+surface: [hot-path, slow-path]
+sister_specs: [cache-layout-discipline-for-hot-side-structs.md, cache-line-discipline.md, function-struct-alignment-for-single-mov-access.md]
+applies_at_skills: []
+---
+
 # Hot-side array-element alignment for sparse-access struct arrays
 
 **Established:** 2026-05-13 (v5.15.5.C.5)

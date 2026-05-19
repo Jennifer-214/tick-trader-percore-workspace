@@ -1,3 +1,14 @@
+---
+type: data-discipline
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-10
+tags: [data-oriented-design, branchless-discipline]
+surface: [hot-path, bitmap-packed]
+sister_specs: [bitmap-flag-api.md, per-bit-per-core-override-pattern.md, transient-aggregation-bitmap-pattern.md]
+applies_at_skills: []
+---
+
 # Partner-core bitmap pattern (per-core boolean → 1-bit-per-core bitmap)
 
 **Established:** 2026-05-10 (v5.14.9.G — `partner_pending_bitmap`)

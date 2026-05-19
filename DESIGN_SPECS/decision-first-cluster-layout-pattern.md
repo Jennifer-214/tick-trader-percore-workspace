@@ -1,3 +1,14 @@
+---
+type: data-discipline
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-12
+tags: [data-oriented-design, latency-discipline]
+surface: [hot-path, slow-path]
+sister_specs: [cache-layout-discipline-for-hot-side-structs.md, cache-line-discipline.md, per-snapshot-cluster-layout-pattern.md, function-struct-alignment-for-single-mov-access.md]
+applies_at_skills: []
+---
+
 # Decision-first cluster layout pattern (intra-cluster field ordering for access-temporal sequence + cache prefetcher friendliness)
 
 **Established:** 2026-05-12 (codification of an implicit pattern field-validated across 3 codebase surfaces; v5.15.5.B.1 first explicit reference application)

@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-13
+tags: [framework-discipline, structural-fix, wire-format]
+surface: [registry, wire-format]
+sister_specs: [slot-state-foreach-registry-with-storage-routing.md, x-macro-registry-with-presence-dispatch.md, heterogeneous-registry-pattern.md]
+applies_at_skills: []
+---
+
 # Persisted-struct-with-ephemeral-field coexistence (FOREACH with PERSIST_KIND column)
 
 **Established:** 2026-05-13 (v5.15.5.C.4 pre-coding consult; emerged from "should Position grow `exit_fill_price + is_maker` or do these live on a sibling OMS array?" decision)

@@ -1,6 +1,13 @@
 ---
 name: post-ship-audit
 description: Post-ship retrospective audit. After a ship commits, runs a 2nd-pass review to catch hand-waves + optimization gaps + discipline drift + STRUCTURAL GAPS where implementation falls short of plan intent or DESIGN_SPECS expectations. Takes ship tag + plan path; identifies files-changed via git diff; runs targeted audits scoped to the ship's surface; compares actual shipped code against plan body claims + referenced DESIGN_SPECS; produces postmortem doc with severity-classified findings + optimization recommendations + triage. Encodes the kind of mid-stream catches an engaged operator makes (e.g., "shouldn't this be branchless?" "did we actually close the class structurally or just patch the symptom?") as systematic post-ship review.
+type: skill
+concern: post-coding
+audit_cadence: per-ship
+tags: [audit-methodology, structural-fix, branchless-discipline, pattern-codification]
+surface: [registry, hot-path, slow-path, oms-drainer]
+sister_skills: [/precoding-audit-gate, /hft-audit, /dod-audit, /bug-check, /accounting-audit, /registry-fit-audit]
+loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/audit-scope-taxonomy.md, DESIGN_SPECS/branchless-dispatch-discipline.md, DESIGN_SPECS/decision-time-data-binding-pattern.md, DESIGN_SPECS/pattern-codification-lifecycle.md]
 ---
 
 # /post-ship-audit — Post-ship retrospective + structural-gap audit

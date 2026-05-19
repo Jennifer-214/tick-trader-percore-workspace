@@ -1,3 +1,14 @@
+---
+type: concurrency-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-13
+tags: [concurrency, structural-fix, latency-discipline]
+surface: [oms-drainer, slow-path]
+sister_specs: [cross-thread-snapshot-publish-cluster-isolation.md, decision-time-data-binding-pattern.md, persisted-struct-with-ephemeral-field-coexistence-pattern.md]
+applies_at_skills: []
+---
+
 # Phase-separated drainer for safe cross-temporal derives
 
 **Established:** 2026-05-13 (v5.15.5.C.4 pre-coding consult; emerged from two failed derive attempts D2.C + D2.D in the FillRecord-as-snapshot anti-pattern analysis)

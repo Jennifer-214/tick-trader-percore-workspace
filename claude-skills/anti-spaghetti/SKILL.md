@@ -1,3 +1,15 @@
+---
+name: anti-spaghetti
+description: /anti-spaghetti — Structural codebase audit for parallel-infrastructure anti-patterns
+type: skill
+concern: anti-pattern-scan
+audit_cadence: quarterly
+tags: [framework-discipline, structural-fix, audit-methodology, pattern-codification]
+surface: [registry, cfg-flow, hot-path, slow-path]
+sister_skills: [/bug-check, /dod-audit, /merge-scan, /dust, /registry-fit-audit]
+loads_dynamically: [DESIGN_SPECS/README.md, DOCS/RECURRING_BUG_PATTERNS.md]
+---
+
 # /anti-spaghetti — Structural codebase audit for parallel-infrastructure anti-patterns
 
 **Established:** 2026-05-17 (v5.15.5.F.4d.1.B planning — codified during deep design conversation when Caramel asked "is this codebase becoming spaghetti?")

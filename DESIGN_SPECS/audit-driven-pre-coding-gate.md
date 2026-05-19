@@ -1,3 +1,14 @@
+---
+type: audit-methodology
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-09
+tags: [audit-methodology, framework-discipline, meta-discipline]
+surface: [registry]
+sister_specs: [implementation-layer-blindspot-taxonomy.md, audit-scope-taxonomy.md]
+applies_at_skills: [/precoding-audit-gate, /parity-check, /trace-deps, /readiness, /merge-scan, /dod-audit, /blindspot-scan]
+---
+
 # Audit-driven pre-coding gate (multi-skill parallel pass)
 
 **Established:** 2026-05-09 (v5.14.8 sprint)

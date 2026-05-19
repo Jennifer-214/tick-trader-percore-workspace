@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-09
+tags: [framework-discipline, structural-fix]
+surface: [registry, wire-format]
+sister_specs: [autopopulate-from-arity-macro-family.md, x-macro-registry-with-presence-dispatch.md, wire-format-byte-preservation-discipline.md]
+applies_at_skills: [/parity-check]
+---
+
 # Auto-populate pattern for production-caller field-population class
 
 **Established:** 2026-05-09 (v5.14.1.E.E.B + v5.14.8.A.merged)

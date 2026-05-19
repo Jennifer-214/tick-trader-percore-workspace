@@ -1,3 +1,14 @@
+---
+type: refactor-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-10
+tags: [data-oriented-design, branchless-discipline]
+surface: [hot-path, slow-path, bitmap-packed]
+sister_specs: [bitmap-flag-api.md, partner-core-bitmap-pattern.md, composed-filter-mask-pattern.md, registry-bitmap-set-discipline.md]
+applies_at_skills: []
+---
+
 # Transient aggregation bitmap pattern (local-scope summary bitmap with headroom)
 
 **Established:** 2026-05-10 (v5.14.9.H — ShardedSnapshot scaler_summary_flags)

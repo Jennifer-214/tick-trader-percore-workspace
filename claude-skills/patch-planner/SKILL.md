@@ -1,6 +1,13 @@
 ---
 name: patch-planner
 description: Analyzes items from the GEMINI_FINDINGS backlog and generates comprehensive, HFT-compliant patching blueprints. Details root causes, traces dependencies, evaluates latency/ML-parity impact, and proposes strict DOD/branchless C++ fixes. Does NOT edit code directly.
+type: skill
+concern: workflow
+audit_cadence: ad-hoc
+tags: [audit-methodology, data-oriented-design, branchless-discipline, fixed-point-math]
+surface: [hot-path, slow-path, oms-drainer, ml-inference]
+sister_skills: [/finding-analyzer, /trace-deps, /dod-audit, /hft-audit, /parity-check]
+loads_dynamically: []
 ---
 
 # /patch-planner — Deep Vulnerability Analysis & Fix Generation

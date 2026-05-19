@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-15
+tags: [framework-discipline, structural-fix, pattern-codification]
+surface: [registry]
+sister_specs: [registry-coverage-ci-check-pattern.md, cross-walker-struct-field-uniqueness-discipline.md, universal-cfg-field-registry-pattern.md, sidecar-override-pattern-for-registry-auto-flows.md]
+applies_at_skills: []
+---
+
 # Manual fields inventory pattern — documented exemptions for registry-driven struct generation
 
 **Stage:** Stage 3 ACTIVE v1.0 (first canonical application landed at v5.15.5.F.4c.3 WIP2d-0.B; engine commit `4154009`)

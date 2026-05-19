@@ -1,3 +1,14 @@
+---
+type: refactor-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-13
+tags: [latency-discipline, data-oriented-design, structural-fix]
+surface: [slow-path, cfg-flow]
+sister_specs: [decision-time-data-binding-pattern.md, cache-layout-discipline-for-hot-side-structs.md, cache-line-discipline.md]
+applies_at_skills: []
+---
+
 # Slow-path cfg resolution cache pattern — hoist scattered reads to cache-line-aligned struct
 
 **Established:** 2026-05-13 (v5.15.5.F.4 sprint — pre-implementation draft)

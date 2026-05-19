@@ -1,6 +1,13 @@
 ---
 name: plan-check
 description: Audit a multi-plan sprint (master plan + sub-plans) for cohesion before coding. Combines /readiness on each sub-plan + /parity-check for surfaces touched + cross-plan integration matrix verification + dependency-edge validation. Output is a unified GREEN/YELLOW/RED verdict with per-plan + per-conflict findings. Catches the class of bugs where plan A's deliverables silently break plan B's assumptions, before any code is written.
+type: skill
+concern: workflow
+audit_cadence: ad-hoc
+tags: [audit-methodology, plan-template, doc-discipline]
+surface: []
+sister_skills: [/readiness, /precoding-audit-gate, /parity-check, /plan-context-sweep]
+loads_dynamically: []
 ---
 
 # /plan-check — Multi-plan sprint cohesion audit

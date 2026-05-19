@@ -1,3 +1,14 @@
+---
+type: refactor-pattern
+stage: 5-claude-md
+version: 1.1
+established: 2026-05-13
+tags: [data-oriented-design, branchless-discipline, structural-fix]
+surface: [bitmap-packed, hot-path]
+sister_specs: [bitmap-flag-api.md, registry-bitmap-set-discipline.md, aggressive-memory-reduction-techniques.md, multi-state-dispatch-with-per-state-update-metadata.md]
+applies_at_skills: []
+---
+
 # Multi-bit state encoding + branchless inference API
 
 **Established:** 2026-05-13 (post-v5.15.5.C.2); **v1.1 Path γ+ v2 canonical count correction (2026-05-17)**

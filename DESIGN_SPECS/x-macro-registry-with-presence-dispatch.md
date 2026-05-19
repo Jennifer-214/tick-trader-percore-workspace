@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 5-claude-md
+version: 1.0
+established: 2026-05-09
+tags: [framework-discipline, structural-fix, branchless-discipline]
+surface: [registry]
+sister_specs: [registry-tuple-as-single-source-of-truth.md, heterogeneous-registry-pattern.md, autopopulate-pattern-for-production-caller-class.md, universal-registry-bitmap-dispatcher-pattern.md, multi-state-dispatch-with-per-state-update-metadata.md]
+applies_at_skills: [/dod-audit]
+---
+
 # X-macro registry with presence dispatch for partial-mirror struct generation
 
 **Established:** 2026-05-09 (v5.14.8.A.0.b + A.merged)

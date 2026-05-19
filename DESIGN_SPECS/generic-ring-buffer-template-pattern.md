@@ -1,3 +1,14 @@
+---
+type: refactor-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-13
+tags: [framework-discipline, structural-fix]
+surface: [hot-path, slow-path]
+sister_specs: [sliding-window-online-statistics-pattern.md, spsc-ring-embedded-in-hot-struct-cluster-discipline.md, template-deferred-dependency-injection.md]
+applies_at_skills: []
+---
+
 # Generic ring-buffer template pattern
 
 **Established:** 2026-05-13 (v5.15.5.E.C — RollingIC + RollingRMSE Class-18 mirror closure)

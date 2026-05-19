@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-09
+tags: [framework-discipline, wire-format, structural-fix]
+surface: [registry, wire-format, ml-inference]
+sister_specs: [wire-format-byte-preservation-discipline.md, metadata-bit-driven-derived-filter-framework.md, x-macro-registry-with-presence-dispatch.md]
+applies_at_skills: [/parity-check]
+---
+
 # Stamp-vs-runtime drift detection registry pattern
 
 **Established:** 2026-05-09 (FOREACH_ARCH_FIELD_DRIFT at v5.15.1; PROMOTED to DESIGN_SPEC 2026-05-12 at v5.15.5.A.7 with 2nd application)

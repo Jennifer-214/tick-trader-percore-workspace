@@ -1,6 +1,13 @@
 ---
 name: dead-code-trace
 description: Systematically audit the codebase for unreferenced functions, obsolete files, and legacy paths. Executes a multi-stage trace to PROVE code is truly dead before proposing removal. Outputs a structured removal plan, NOT direct edits.
+type: skill
+concern: anti-pattern-scan
+audit_cadence: ad-hoc
+tags: [audit-methodology, structural-fix]
+surface: [registry, ci-tooling, test-infrastructure]
+sister_skills: [/dust, /merge-scan, /anti-spaghetti]
+loads_dynamically: []
 ---
 
 # /dead-code-trace — Dead code identification and proof-of-obsolescence

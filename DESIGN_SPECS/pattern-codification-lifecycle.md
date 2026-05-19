@@ -1,3 +1,14 @@
+---
+type: meta-discipline
+stage: 5-claude-md
+version: 1.0
+established: 2026-05-11
+tags: [meta-discipline, pattern-codification, doc-discipline, framework-discipline]
+surface: [registry]
+sister_specs: [structural-fix-preferred-decision-framework.md, audit-driven-pre-coding-gate.md, doc-frontmatter-convention.md, doc-tag-vocabulary.md, canonical-sister-extension-discipline.md]
+applies_at_skills: []
+---
+
 # Pattern codification lifecycle (audit → DESIGN_SPEC → invariant → enforcement → cohort migration)
 
 **Established:** 2026-05-11 (v5.14.11.B mega-bundle — meta-pattern emerged from end-to-end codification of `branchless-math-kernel-pattern.md` + `struct-padding-determinism-pattern.md`)

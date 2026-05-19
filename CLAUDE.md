@@ -296,7 +296,35 @@ split BEFORE adding more tests. Categories should be domain-aligned:
 
 Test split is queued as a focused effort (3118 tests at risk warrants
 rollback anchor + dedicated ship); tracking lives in TECH_DEBT (sister
-TECH_DEBT-029 covers the source-side analog for header/non-test files).
+TECH_DEBT-029 covers the source-side analog for header/non-test files;
+TECH_DEBT-114 tracks this specific test split).
+
+### File-size split discipline (generalized; added 2026-05-18)
+
+Test file size rule above generalizes to ALL files. Thresholds per
+file type at `DESIGN_SPECS/file-size-split-discipline.md`:
+
+| File type | Hard threshold |
+|---|---|
+| Always-loaded docs (CLAUDE.md / CLAUDE.local.md / MEMORY.md) | 600 lines |
+| Tests | 5000 lines / 100 sections (above) |
+| Source headers (`.hpp`) | 1500 lines (TECH_DEBT-029 sister) |
+| Source bodies (`.cpp`) | 2000 lines |
+| Ledger files (TECH_DEBT / RBP / PARITY / FEATURE / HOT_PATH / LANDMINES) | 2000 lines |
+| SKILL.md | 1500 lines |
+| DESIGN_SPECS | 1200 lines |
+| Plan body docs | 1200 lines (use `<plan-name>-examples.md` sidecar) |
+| Memory rules | 500 lines (terseness expected) |
+
+**Split + index pattern:** at threshold, split into sub-files; convert
+original to INDEX file with `splits_into:` frontmatter; sub-files get
+`parent_index:` frontmatter; `rg`-sweep all external cross-refs to
+point at INDEX (not sub-files).
+
+Specific mega-file splits queued: TECH_DEBT-116 (TECH_DEBT.md @ 2013
+lines) / TECH_DEBT-117 (RECURRING_BUG_PATTERNS.md @ 2198 lines) /
+TECH_DEBT-118 (/readiness SKILL.md @ 1674 lines). Each warrants
+dedicated sub-ship with rollback anchor + sed-based cross-ref sweep.
 
 ## How to find anything (search guide)
 

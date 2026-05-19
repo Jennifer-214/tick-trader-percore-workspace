@@ -1,3 +1,14 @@
+---
+type: feature-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-12
+tags: [framework-discipline, structural-fix, concurrency]
+surface: [ml-inference, slow-path, training]
+sister_specs: [per-horizon-barrier-blending-with-shadow-mode.md]
+applies_at_skills: []
+---
+
 # Shadow-load state transition pattern (ACTIVE v1.0)
 
 **Date opened:** 2026-05-12 (v5.15.4 plan-time)

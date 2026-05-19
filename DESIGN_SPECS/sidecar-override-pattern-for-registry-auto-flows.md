@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 5-claude-md
+version: 1.1
+established: 2026-05-14
+tags: [framework-discipline, structural-fix, pattern-codification]
+surface: [registry, cfg-flow]
+sister_specs: [metadata-bit-driven-derived-filter-framework.md, manual-fields-inventory-pattern.md, universal-cfg-field-registry-pattern.md, cfg-derived-consumer-framework.md, framework-composition-overview.md, meta-registry-pattern-for-codebase-registry-discipline.md]
+applies_at_skills: []
+---
+
 # Sidecar override pattern for registry auto-flows
 
 **Established:** 2026-05-14 (v5.15.5.F.4d planning); **v1.1 Path γ+ v2 status correction (2026-05-17)**

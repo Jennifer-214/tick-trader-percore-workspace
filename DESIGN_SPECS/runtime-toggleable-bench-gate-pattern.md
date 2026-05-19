@@ -1,3 +1,14 @@
+---
+type: feature-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-13
+tags: [latency-discipline, framework-discipline]
+surface: [hot-path, slow-path, ci-tooling]
+sister_specs: [universal-cfg-field-registry-pattern.md]
+applies_at_skills: []
+---
+
 # Runtime-toggleable bench gate pattern
 
 **Established:** 2026-05-13 (pre-v5.15.5.C.3)

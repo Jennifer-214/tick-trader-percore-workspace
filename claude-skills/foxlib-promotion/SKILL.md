@@ -1,6 +1,13 @@
 ---
 name: foxlib-promotion
 description: Identify generic primitives in tick-trader-percore that are candidates for promotion to FoxLIB (the public reusable library at ~/code/FoxLIB). Scans recent additions, filters by genericity heuristics, cross-checks against FoxLIB's existing headers to avoid duplication, and outputs a punch-list of promotion candidates with rationale.
+type: skill
+concern: workflow
+audit_cadence: ad-hoc
+tags: [doc-discipline, structural-fix]
+surface: []
+sister_skills: [/merge-scan, /dod-audit]
+loads_dynamically: []
 ---
 
 # /foxlib-promotion — find what should land in FoxLIB next

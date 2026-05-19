@@ -1,3 +1,14 @@
+---
+type: refactor-pattern
+stage: 2-draft
+version: 1.0
+established: 2026-05-18
+tags: [framework-discipline, structural-fix]
+surface: [registry, wire-format]
+sister_specs: [registry-coverage-ci-check-pattern.md, manual-fields-inventory-pattern.md, meta-registry-pattern-for-codebase-registry-discipline.md]
+applies_at_skills: []
+---
+
 # Cross-walker struct-field uniqueness discipline
 
 **Stage:** Stage 2 DRAFT v1.0 (drafted 2026-05-18 at `.B.3` Step 1.6.3 mid-coding after collision discovery between FOREACH_STAMP_BOUND_MODEL_CONST and master FOREACH_GLOBAL_CFG_FIELD on ModelStampResult)

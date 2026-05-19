@@ -1,3 +1,14 @@
+---
+type: refactor-pattern
+stage: 5-claude-md
+version: 1.0
+established: 2026-05-12
+tags: [latency-discipline, data-oriented-design]
+surface: [hot-path, slow-path]
+sister_specs: [cache-layout-discipline-for-hot-side-structs.md, cache-line-discipline.md, decision-first-cluster-layout-pattern.md, branchless-dispatch-discipline.md]
+applies_at_skills: []
+---
+
 # Latency-vs-Cache Decision Framework
 
 **Status:** generalized engineering principle (formalized 2026-05-12

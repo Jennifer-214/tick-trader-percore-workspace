@@ -1,6 +1,13 @@
 ---
 name: latency-track
 description: Audit recent edits / pending commits for changes to latency-critical code (hot path, producer fan_out, slow-path body). For each touched site, emit a draft HOT_PATH_CHANGELOG.md entry with cost estimate, branchless analysis, and optimization notes. Output is review-and-paste, NOT actual edits to the changelog. Pairs with CLAUDE.md item 16 (reuse-audit) and the /merge-scan codebase sweep — /merge-scan looks for SHARING opportunities; /latency-track tracks ADDITIONS.
+type: skill
+concern: post-coding
+audit_cadence: per-ship
+tags: [latency-discipline, ledger-discipline]
+surface: [hot-path, slow-path, producer, oms-drainer]
+sister_skills: [/merge-scan, /hft-audit, /ship]
+loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md]
 ---
 
 # /latency-track — Latency-additions audit + draft changelog entries

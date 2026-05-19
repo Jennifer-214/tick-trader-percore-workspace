@@ -1,3 +1,14 @@
+---
+type: wire-format-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-07
+tags: [wire-format, fixed-point-math, structural-fix]
+surface: [hot-path, slow-path, wire-format]
+sister_specs: [wire-format-byte-preservation-discipline.md, branchless-math-kernel-pattern.md]
+applies_at_skills: [/parity-check]
+---
+
 # AVX-512 byte-determinism pattern (cross-binary replay-determinism for SIMD kernels)
 
 **Established:** 2026-05-07 (v5.11.7 first application; v5.14.11.B promotes to first-class DESIGN_SPEC after 2nd application)

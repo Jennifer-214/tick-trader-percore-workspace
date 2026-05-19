@@ -1,3 +1,15 @@
+---
+name: plan-draft
+description: /plan-draft — Scaffold a future-oriented plan body from canonical template
+type: skill
+concern: scaffolding
+audit_cadence: ad-hoc
+tags: [plan-template, doc-discipline, framework-discipline, pattern-codification]
+surface: []
+sister_skills: [/handoff, /readiness, /precoding-audit-gate]
+loads_dynamically: [DESIGN_SPECS/future-oriented-plan-template.md]
+---
+
 # /plan-draft — Scaffold a future-oriented plan body from canonical template
 
 **Established:** 2026-05-17 (v5.15.5.F.4d.1.B.1 planning — codified as automation companion to `future-oriented-plan-template.md` per Caramel's request "make something to assist with that guardrail" for future-oriented plan creation)

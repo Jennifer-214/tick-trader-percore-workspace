@@ -1,5 +1,12 @@
 ---
 description: Anti-regression audit for test weakening. Scans git diffs (working tree, staged, or commit range) for assertion-weakening patterns that hide drift — `==` → `>=` count weakenings without justification, `sr.valid == 1` → weaker format checks, deletion of `check(...)` lines without redundancy/obsolescence justification, empty assertions like `check("foo", true)`. Output is a structured findings report with severity-classified items, NOT actual edits — operator reviews + decides which to triage. Pairs with /test-deletion-justification commit-message convention. Distinct from /dod-audit (pattern application) + /bug-check (recurring bug class scan): /test-strength-audit is specifically about test SPECIFICATION integrity over time.
+type: skill
+concern: anti-pattern-scan
+audit_cadence: per-ship
+tags: [audit-methodology, failure-observability]
+surface: [test-infrastructure]
+sister_skills: [/dod-audit, /bug-check, /post-ship-audit]
+loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md]
 ---
 
 # /test-strength-audit — Anti-regression scan for test weakening

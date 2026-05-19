@@ -1,6 +1,13 @@
 ---
 name: dependency-chain-trace
 description: Trace a specific symbol or data path through every site that touches it across the codebase. NOT a point-scan — a flow trace. Outputs a graph of read/write sites, lifecycle classification (thread + cadence + type), cohort siblings, and blast-radius assessment. Use for pre-coding scope understanding, post-coding migration verification, cohort discovery, debugging, and class-27/class-28 close verification. Skill is `chain:<symbol>` shape per audit-scope-taxonomy.md.
+type: skill
+concern: workflow
+audit_cadence: ad-hoc
+tags: [audit-methodology, structural-fix, concurrency]
+surface: [registry, cfg-flow, hot-path, slow-path]
+sister_skills: [/hft-audit, /bug-check, /dod-audit, /trace-deps]
+loads_dynamically: [DESIGN_SPECS/audit-scope-taxonomy.md, DESIGN_SPECS/cfg-scope-discipline.md, DESIGN_SPECS/decision-time-data-binding-pattern.md, DESIGN_SPECS/branchless-dispatch-discipline.md, DOCS/DESIGN_PHILOSOPHY.md]
 ---
 
 # /dependency-chain-trace — Symbol / data-path flow audit

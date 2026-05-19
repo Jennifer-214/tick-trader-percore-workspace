@@ -1,6 +1,13 @@
 ---
 name: ml-audit
 description: Walk the ML pipeline (feature compute → model load → inference → display) systematically looking for silent failure modes and train-serve parity gaps. Output is a structured findings report with severity-classified items, NOT actual edits. User decides which items to pick up.
+type: skill
+concern: domain-audit
+audit_cadence: per-ship
+tags: [failure-observability, wire-format, framework-discipline]
+surface: [ml-inference, training, cfg-flow, wire-format]
+sister_skills: [/parity-check, /accounting-audit, /readiness, /dod-audit]
+loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md]
 ---
 
 # /ml-audit — ML pipeline structural audit

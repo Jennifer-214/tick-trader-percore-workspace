@@ -1884,6 +1884,55 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
 - **Follow-up entry:** TECH_DEBT-112-followup-A — periodic skill audit cadence (quarterly + post-codification sweep) per `DESIGN_SPECS/categorical-triggers-in-always-loaded-docs.md` § Audit cadence
 - **Cross-ref:** `DESIGN_SPECS/categorical-triggers-in-always-loaded-docs.md` v1.0 DRAFT (canonical discipline body); `feedback_categorical_triggers_over_hardcoded_refs.md` (going-forward rule); `feedback_claude_md_guidelines_not_stuff_to_do.md` (companion doc-layer separation); TECH_DEBT-109 (predecessor sprint-phrasing-level closure); `feedback_iteration_spiral_signals_audit_meta_gap.md` (Caramel's recognition signal — "instead of generalized stuff we made hardcoded references, which is why we're having so many issues finding stuff").
 
+### TECH_DEBT-116 — TECH_DEBT.md split (file-size discipline application)
+
+- **Created:** 2026-05-18 (codified at `.B.3` ship close after `feedback_file_size_split_discipline.md` codification)
+- **Severity:** MEDIUM (file currently navigable but at 2013 lines exceeds 2000-line hard threshold per `DESIGN_SPECS/file-size-split-discipline.md`)
+- **Surface:** `DOCS/TECH_DEBT.md` (currently 2013 lines, ~115 entries)
+- **What's deferred:** Split TECH_DEBT.md per file-size-split-discipline pattern:
+  - **Recommended split criteria:** by-status (most useful for retrieval workflow)
+    - `DOCS/tech-debt/open.md` — status: open (currently in-flight or queued)
+    - `DOCS/tech-debt/in-flight.md` — status: being addressed this sprint
+    - `DOCS/tech-debt/closed.md` — status: closed (archival; majority of entries)
+    - `DOCS/TECH_DEBT.md` — INDEX with `splits_into:` frontmatter + table of contents
+  - **Alternative criteria:** by-surface (cohort-aligned; `DOCS/tech-debt/registry-discipline/`, `DOCS/tech-debt/wire-format/`, etc.) — defer decision to ship-planning phase
+- **Why deferred (NOT effort-avoidance):** TECH_DEBT entries are heavily cross-referenced (>50 cross-refs to TECH_DEBT-NNN across DESIGN_SPECS / skills / CLAUDE.md / CLAUDE.local.md / memory rules). Split + sed-based cross-ref update warrants dedicated ship with rollback anchor + verification per batch. Same risk class as TECH_DEBT-113 (folder subdivision).
+- **Cost estimate:** ~2-3h focused (decide split criteria + extract entries + build INDEX + sed-sweep cross-refs + verify with `check_doc_metadata.py`)
+- **Trigger:** dedicated maintenance ship between sub-ships (alongside TECH_DEBT-113 folder subdivision OR independently)
+- **Status:** OPEN with explicit trigger (created 2026-05-18 at doc-layer refresh ship close)
+- **Cross-ref:** `DESIGN_SPECS/file-size-split-discipline.md` (the discipline); TECH_DEBT-113 (sister folder subdivision); `feedback_file_size_split_discipline.md` (going-forward rule).
+
+### TECH_DEBT-117 — RECURRING_BUG_PATTERNS.md split (file-size discipline application)
+
+- **Created:** 2026-05-18 (codified at `.B.3` ship close)
+- **Severity:** MEDIUM (2198 lines, 32 classes — exceeds 2000-line hard threshold)
+- **Surface:** `DOCS/RECURRING_BUG_PATTERNS.md`
+- **What's deferred:** Split per file-size-split-discipline pattern:
+  - **Recommended split criteria:** per-class file
+    - `DOCS/recurring-bug-patterns/class-01-<name>.md` through `class-32-<name>.md`
+    - `DOCS/RECURRING_BUG_PATTERNS.md` — INDEX with class catalog table + cross-refs
+- **Why deferred (NOT effort-avoidance):** Class N references span entire codebase (>200 cross-refs in DESIGN_SPECS / skills / plan bodies / memory). Sed-sweep risk identical to TECH_DEBT-116. Warrants dedicated ship.
+- **Cost estimate:** ~2-3h focused (per-class file extraction + INDEX build + sed sweep + verify)
+- **Trigger:** alongside TECH_DEBT-116 maintenance ship OR independently
+- **Status:** OPEN with explicit trigger
+- **Cross-ref:** `DESIGN_SPECS/file-size-split-discipline.md`; TECH_DEBT-116 (sister ledger split); `DESIGN_SPECS/ledger-entry-templates.md` § Bug Class entry (per-entry template).
+
+### TECH_DEBT-118 — /readiness SKILL.md split (file-size discipline application)
+
+- **Created:** 2026-05-18 (codified at `.B.3` ship close)
+- **Severity:** MEDIUM (1674 lines — exceeds 1500-line SKILL.md hard threshold)
+- **Surface:** `claude-skills/readiness/SKILL.md`
+- **What's deferred:** Split per file-size-split-discipline pattern:
+  - **Recommended split criteria:** per-check sidecar files
+    - `claude-skills/readiness/SKILL.md` (~300 lines) — invocation + check INDEX
+    - `claude-skills/readiness/checks/check-01-<topic>.md` through `check-NN-<topic>.md` (one file per check)
+  - Skill spec keeps the orchestration logic + invocation + index of checks; each check's detail body extracts to sidecar
+- **Why deferred (NOT effort-avoidance):** Check N references appear in plan body audits (`/readiness Check 25` etc.). Extraction + INDEX shape needs care to preserve cross-ref retrievability.
+- **Cost estimate:** ~2-3h focused (extract per-check bodies + build INDEX + verify Check N grep-retrievable)
+- **Trigger:** dedicated maintenance ship; can land independently of TECH_DEBT-116/-117 since SKILL is operationally separate from ledgers
+- **Status:** OPEN with explicit trigger
+- **Cross-ref:** `DESIGN_SPECS/file-size-split-discipline.md`; sister TECH_DEBT-116/-117 (ledger splits at same discipline).
+
 ### TECH_DEBT-113 — DESIGN_SPECS + plans/ subdivision (folder restructure deferred)
 
 - **Created:** 2026-05-18 (deferred at `.B.3` doc-layer refresh per Caramel's framing: "at some point we may need to add subdivided folders for design specs and stuff, and plans, since current is kind of bloated and there are some things that are kind of just shoved in places")

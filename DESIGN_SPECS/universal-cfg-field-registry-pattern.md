@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 5-claude-md
+version: 1.0
+established: 2026-05-13
+tags: [framework-discipline, structural-fix, pattern-codification]
+surface: [registry, cfg-flow, gui-thread, parser, wire-format]
+sister_specs: [framework-composition-overview.md, metadata-bit-driven-derived-filter-framework.md, sidecar-override-pattern-for-registry-auto-flows.md, cfg-derived-consumer-framework.md, type-trait-dispatch-via-tt-namespace.md, manual-fields-inventory-pattern.md, categorical-tag-applicability-pattern.md, meta-registry-pattern-for-codebase-registry-discipline.md]
+applies_at_skills: []
+---
+
 # Universal cfg field registry pattern — one registry, all consumers
 
 **Established:** 2026-05-13 (v5.15.5.F.4 sprint — pre-implementation draft)

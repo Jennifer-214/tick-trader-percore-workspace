@@ -1,3 +1,14 @@
+---
+type: architecture-overview
+stage: 5-claude-md
+version: 1.0
+established: 2026-05-09
+tags: [doc-discipline, pattern-codification, framework-discipline]
+surface: []
+sister_specs: [doc-frontmatter-convention.md, doc-tag-vocabulary.md, pattern-codification-lifecycle.md, design-spec-template.md]
+applies_at_skills: []
+---
+
 # DESIGN_SPECS — reusable architectural pattern reference library
 
 **Established 2026-05-09 (mid v5.14.8 sprint).** Workspace-private. Each doc captures ONE solved design problem so future ships can reuse the pattern without re-deriving.

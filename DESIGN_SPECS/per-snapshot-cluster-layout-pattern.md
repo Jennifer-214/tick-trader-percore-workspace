@@ -1,3 +1,14 @@
+---
+type: data-discipline
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-10
+tags: [data-oriented-design, concurrency, latency-discipline]
+surface: [slow-path, gui-thread]
+sister_specs: [cache-layout-discipline-for-hot-side-structs.md, cache-line-discipline.md, decision-first-cluster-layout-pattern.md, cross-thread-snapshot-publish-cluster-isolation.md]
+applies_at_skills: []
+---
+
 # Per-snapshot cluster layout pattern (alignas(64) clusters by concern)
 
 **Established:** 2026-05-10 (v5.14.10.0 — first systematic application to PerCoreSnap bandit telemetry)

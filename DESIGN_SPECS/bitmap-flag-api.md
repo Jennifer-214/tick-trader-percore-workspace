@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 5-claude-md
+version: 1.0
+established: 2026-05-09
+tags: [framework-discipline, data-oriented-design, branchless-discipline, structural-fix]
+surface: [hot-path, bitmap-packed, registry]
+sister_specs: [bitmap-overflow-protection-discipline.md, multi-bit-state-encoding-pattern.md, registry-bitmap-set-discipline.md, universal-registry-bitmap-dispatcher-pattern.md]
+applies_at_skills: []
+---
+
 # Bitmap flag API (BITMAP_* macros) — reusable bit-packed flag accessors
 
 **Established:** 2026-05-09 (v5.14.8.A.0.b.1)

@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 5-claude-md
+version: 1.0
+established: 2026-05-10
+tags: [framework-discipline, structural-fix, pattern-codification]
+surface: [registry]
+sister_specs: [x-macro-registry-with-presence-dispatch.md, heterogeneous-registry-pattern.md, calibration-log-column-registry.md, curve-registry-pattern.md]
+applies_at_skills: []
+---
+
 # Registry tuple as single source of truth (5-col tuple expansion — Option D)
 
 **Established:** 2026-05-10 (v5.14.9.F.5 — "Option D" decision)

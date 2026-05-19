@@ -1,3 +1,14 @@
+---
+type: feature-pattern
+stage: 2-draft
+version: 1.0
+established: 2026-05-12
+tags: [framework-discipline, structural-fix]
+surface: [ml-inference, slow-path, training]
+sister_specs: [shadow-load-state-transition-pattern.md]
+applies_at_skills: []
+---
+
 # Per-Horizon Barrier Blending with Shadow Mode
 
 **Status:** v5.15.5 design (in development 2026-05-12).

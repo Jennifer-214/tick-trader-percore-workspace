@@ -1,6 +1,13 @@
 ---
 name: plan-context-sweep
 description: Light-weight orchestrator that fires /bug-check (against plans/) + /trace-deps in parallel against ALL queued plans in a sprint. Use case — after structural-fix ship lands, sweep all downstream plans for stale code samples that would reintroduce just-closed bug class. Returns plan-by-plan amendment recommendations. Lighter variant of /precoding-audit-gate (2 audits vs 5; sweeps all queued plans vs single plan focus). Dynamic parameterization — sprint_path (default = current sprint via Version.hpp) + bug_class_focus (optional; e.g., "Class 23" to focus sweep on specific anti-pattern). NO hardcoded sprint/version refs.
+type: skill
+concern: workflow
+audit_cadence: post-codification
+tags: [audit-methodology, structural-fix, plan-template]
+surface: []
+sister_skills: [/bug-check, /trace-deps, /precoding-audit-gate, /plan-check]
+loads_dynamically: [DOCS/RECURRING_BUG_PATTERNS.md]
 ---
 
 # /plan-context-sweep — Sweep queued plans for stale samples post-structural-fix

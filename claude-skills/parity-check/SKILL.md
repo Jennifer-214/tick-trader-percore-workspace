@@ -1,6 +1,13 @@
 ---
 name: parity-check
 description: Comprehensive train↔serve identity audit. Walks every train-serve handoff surface (features, labels, scaler, stamp body fields, cfg, threading, build flags) systematically looking for parity drift. Distinct from /ml-audit — /parity-check is specifically about whether the trainer's view and the engine's view of "same input → same output" remain bytewise-identical. Output is a severity-classified findings report, NOT actual edits.
+type: skill
+concern: shape-audit
+audit_cadence: per-ship
+tags: [wire-format, framework-discipline, audit-methodology]
+surface: [ml-inference, training, wire-format, parser, cfg-flow]
+sister_skills: [/ml-audit, /trace-deps, /readiness, /precoding-audit-gate]
+loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/wire-format-byte-preservation-discipline.md, DESIGN_SPECS/autopopulate-pattern-for-production-caller-class.md, DESIGN_SPECS/x-macro-registry-with-presence-dispatch.md]
 ---
 
 # /parity-check — Train↔serve identity audit

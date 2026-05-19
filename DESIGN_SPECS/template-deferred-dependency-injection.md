@@ -1,3 +1,14 @@
+---
+type: refactor-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-09
+tags: [framework-discipline, structural-fix]
+surface: [oms-drainer, slow-path]
+sister_specs: [orchestration-helper-with-pod-args-pattern.md, sink-fn-pointer-for-optional-side-effect-pattern.md, generic-ring-buffer-template-pattern.md]
+applies_at_skills: []
+---
+
 # Template-deferred dependency injection (logic header preserves I/O-free boundary)
 
 **Established:** 2026-05-09 (v5.14.4.B; multi-mode reconciliation `Reconcile_AutoCancelStale`)

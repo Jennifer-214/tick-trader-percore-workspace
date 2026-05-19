@@ -1,3 +1,14 @@
+---
+type: wire-format-pattern
+stage: 5-claude-md
+version: 1.0
+established: 2026-05-11
+tags: [wire-format, data-oriented-design, fixed-point-math]
+surface: [wire-format]
+sister_specs: [wire-format-byte-preservation-discipline.md, struct-padding-determinism-pattern.md, branchless-math-kernel-pattern.md]
+applies_at_skills: [/parity-check]
+---
+
 # Struct padding determinism pattern (explicit zero-init padding fields)
 
 **Established:** 2026-05-11 (v5.14.11.B — FPN<F=64> canonical first reference)

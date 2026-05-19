@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-09
+tags: [framework-discipline, structural-fix]
+surface: [registry, boot-time]
+sister_specs: [x-macro-registry-with-presence-dispatch.md, autopopulate-pattern-for-production-caller-class.md, autopopulate-from-arity-macro-family.md]
+applies_at_skills: []
+---
+
 # PostLoadSetup registry pattern (FOREACH_<DOMAIN>_POST_LOAD — auto-flow init/load steps to N call sites)
 
 **Established:** 2026-05-09 (v5.14.2.E.1 — FOREACH_ENSEMBLE_POST_LOAD; PARITY-009/010/011/012 closure)

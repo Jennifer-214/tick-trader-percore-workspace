@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-16
+tags: [framework-discipline, branchless-discipline, structural-fix]
+surface: [registry, bitmap-packed]
+sister_specs: [metadata-bit-driven-derived-filter-framework.md, registry-bitmap-set-discipline.md, universal-registry-bitmap-dispatcher-pattern.md]
+applies_at_skills: []
+---
+
 # Composed filter mask pattern
 
 **Established:** 2026-05-16 (v5.15.5.F.4d.1.A planning — extracted retroactively during Path γ structural redesign)

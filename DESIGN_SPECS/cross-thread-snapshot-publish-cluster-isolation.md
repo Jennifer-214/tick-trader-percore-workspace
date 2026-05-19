@@ -1,3 +1,14 @@
+---
+type: concurrency-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-12
+tags: [concurrency, data-oriented-design, latency-discipline]
+surface: [hot-path, slow-path]
+sister_specs: [cache-layout-discipline-for-hot-side-structs.md, cache-line-discipline.md, per-snapshot-cluster-layout-pattern.md, decision-first-cluster-layout-pattern.md]
+applies_at_skills: []
+---
+
 # Cross-thread snapshot-publish cluster isolation (alignas(64) clusters for live-state atomics read by snapshot publisher)
 
 **Established:** 2026-05-12 (codification of an implicit isolation pattern; v5.15.5.B.2 first explicit reference application)

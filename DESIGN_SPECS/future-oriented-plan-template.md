@@ -1,3 +1,14 @@
+---
+type: plan-template
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-17
+tags: [plan-template, doc-discipline, pattern-codification]
+surface: []
+sister_specs: [sprint-master-plan-template.md, audit-driven-pre-coding-gate.md, structural-fix-preferred-decision-framework.md, canonical-sister-extension-discipline.md, pattern-codification-lifecycle.md]
+applies_at_skills: [/readiness, /plan-draft]
+---
+
 # Future-oriented plan template
 
 **Established:** 2026-05-17 (v5.15.5.F.4d.1.B.1 planning — codified during conversation about "format plans for future-oriented solutions going forward" + "find optimal solution to reduce future headaches")

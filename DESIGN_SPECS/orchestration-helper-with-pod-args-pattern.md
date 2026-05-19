@@ -1,3 +1,14 @@
+---
+type: refactor-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-12
+tags: [framework-discipline, structural-fix]
+surface: [registry, wire-format]
+sister_specs: [template-deferred-dependency-injection.md, autopopulate-pattern-for-production-caller-class.md]
+applies_at_skills: []
+---
+
 # Orchestration helper with POD args pattern
 
 **Status:** SHIPPED v5.15.3.A.1 (first application: `tt::Stamp_AssembleAndEmit<F>`)

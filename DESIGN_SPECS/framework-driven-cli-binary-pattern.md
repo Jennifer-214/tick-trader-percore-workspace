@@ -1,3 +1,14 @@
+---
+type: refactor-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-18
+tags: [cross-tool-decoupling, structural-fix, framework-discipline, wire-format]
+surface: [cross-tool, wire-format, ci-tooling]
+sister_specs: [wire-format-byte-preservation-discipline.md, canonical-sister-extension-discipline.md, structural-fix-preferred-decision-framework.md]
+applies_at_skills: []
+---
+
 # Framework-driven CLI binary pattern (thin C++ wrapper over engine framework)
 
 **Established:** 2026-05-18 (v5.15.5.F.4d.1.B.3 Phase L planning — codified during deep design conversation after `feedback_audit_canonical_sister_before_new_infra` + `feedback_motivated_collaborator_for_caramel` + `feedback_no_defer_for_effort` triangulated on the cross-tool seam at `tools/stamp_model.sh`)

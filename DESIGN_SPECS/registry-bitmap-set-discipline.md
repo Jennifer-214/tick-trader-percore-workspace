@@ -1,3 +1,14 @@
+---
+type: refactor-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-13
+tags: [structural-fix, framework-discipline, data-oriented-design]
+surface: [registry, bitmap-packed, hot-path]
+sister_specs: [bitmap-flag-api.md, universal-registry-bitmap-dispatcher-pattern.md, composed-filter-mask-pattern.md, multi-bit-state-encoding-pattern.md]
+applies_at_skills: []
+---
+
 # Registry-bitmap SET discipline (anti-pattern recognition + structural fixes)
 
 **Established:** 2026-05-13 (v5.15.5.F.3 — surfaced during paper-test as 2 confirmed instances of the same anti-pattern class)

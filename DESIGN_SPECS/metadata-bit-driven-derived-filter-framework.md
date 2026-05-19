@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 4-cohort
+version: 1.2
+established: 2026-05-14
+tags: [framework-discipline, structural-fix, pattern-codification]
+surface: [registry, cfg-flow, wire-format]
+sister_specs: [universal-cfg-field-registry-pattern.md, sidecar-override-pattern-for-registry-auto-flows.md, composed-filter-mask-pattern.md, cfg-derived-consumer-framework.md, framework-composition-overview.md, meta-registry-pattern-for-codebase-registry-discipline.md]
+applies_at_skills: []
+---
+
 # Metadata-bit-driven derived filter framework
 
 **Established:** 2026-05-14 (v5.15.5.F.4d planning); **v1.2 Path γ correction in progress at v5.15.5.F.4d.1.A planning 2026-05-16**

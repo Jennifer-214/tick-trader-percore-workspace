@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-12
+tags: [framework-discipline, structural-fix]
+surface: [registry, gui-thread, hot-path]
+sister_specs: [x-macro-registry-with-presence-dispatch.md, slow-path-gate-registry-pattern.md, registry-coverage-ci-check-pattern.md]
+applies_at_skills: []
+---
+
 # Display↔Execution Invariant registry pattern (structural enforcement of the cardinal "every hot-path predicate term has a GUI surface" rule)
 
 **Established:** 2026-05-12 (codification of structural enforcement for FoxML_Trader_v2 `DOCS/EXECUTION_DISPLAY_INVARIANTS.md`; v5.15.5.B.4 first reference application via FOREACH_GATE_DIAG)

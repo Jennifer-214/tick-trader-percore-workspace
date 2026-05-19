@@ -1,3 +1,14 @@
+---
+type: refactor-pattern
+stage: 5-claude-md
+version: 1.0
+established: 2026-05-15
+tags: [branchless-discipline, latency-discipline, structural-fix]
+surface: [hot-path, slow-path, oms-drainer, producer]
+sister_specs: [branchless-math-kernel-pattern.md, latency-vs-cache-decision-framework.md]
+applies_at_skills: []
+---
+
 # Branchless dispatch discipline (SP/HP data-dependent dispatch)
 
 **Established:** 2026-05-15 (v5.15.5.F.4c.3 WIP2d-1.B.0d — codified after a hand-wave audit caught Stage 1 dispatch decisions in the OMS HandleFill that defaulted to "branch is fine because predictor handles it" thinking, contrary to the codebase's deterministic-latency premise).

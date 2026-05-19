@@ -1,6 +1,13 @@
 ---
 name: merge-scan
 description: Scan the codebase + in-flight plans for reuse-merge opportunities — repeated atomic loads, redundant clock_gettime calls, duplicated cfg accesses, parallel function bodies that could share a helper, state fields that could be reused vs adding new ones. Output is a ranked punch list of merge candidates with proposed unifications, NOT actual edits. User decides which to act on. Pairs with CLAUDE.md item 16 (reuse-audit principle) and the per-plan check in /readiness item 18.
+type: skill
+concern: shape-audit
+audit_cadence: ad-hoc
+tags: [latency-discipline, structural-fix, framework-discipline]
+surface: [hot-path, slow-path, oms-drainer, registry]
+sister_skills: [/dust, /foxlib-promotion, /latency-track, /dod-audit, /readiness]
+loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md]
 ---
 
 # /merge-scan — Reuse + sharing opportunity audit

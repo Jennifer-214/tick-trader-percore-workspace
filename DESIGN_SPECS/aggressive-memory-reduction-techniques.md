@@ -1,3 +1,14 @@
+---
+type: data-discipline
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-13
+tags: [data-oriented-design, structural-fix, framework-discipline]
+surface: [bitmap-packed, hot-path]
+sister_specs: [bitmap-flag-api.md, multi-bit-state-encoding-pattern.md, function-struct-alignment-for-single-mov-access.md, slot-state-foreach-registry-with-storage-routing.md, struct-padding-determinism-pattern.md, latency-vs-cache-decision-framework.md]
+applies_at_skills: []
+---
+
 # Aggressive memory-reduction techniques (cursed but safe)
 
 **Established:** 2026-05-13 (v5.15.5.C.4 pre-coding consult; "cursed bit-packing techniques we can use safely")

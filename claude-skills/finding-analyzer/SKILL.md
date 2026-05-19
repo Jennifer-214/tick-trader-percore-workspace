@@ -1,6 +1,13 @@
 ---
 name: finding-analyzer
 description: Orchestrates a deep-dive vulnerability analysis by systematically chaining existing workspace skills (/trace-deps, /latency-track, /parity-check). Produces an exhaustive, multi-dimensional report covering the why, what, where, blast radius, and impact for any codebase finding.
+type: skill
+concern: workflow
+audit_cadence: ad-hoc
+tags: [audit-methodology, latency-discipline]
+surface: [hot-path, slow-path, registry]
+sister_skills: [/trace-deps, /latency-track, /parity-check, /ml-audit, /patch-planner]
+loads_dynamically: []
 ---
 
 # /finding-analyzer — Deep Vulnerability Analysis Orchestrator

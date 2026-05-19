@@ -1,3 +1,14 @@
+---
+type: refactor-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-13
+tags: [framework-discipline, structural-fix]
+surface: [parser, cfg-flow, bitmap-packed]
+sister_specs: [universal-cfg-field-registry-pattern.md, cfg-section-parser-state-machine.md, bitmap-flag-api.md]
+applies_at_skills: []
+---
+
 # Post-parse normalize with explicit-key bitmap pattern
 
 **Status:** SHIPPED v5.15.4.A (first application: `ControllerConfig_NormalizeForMode<F>`)

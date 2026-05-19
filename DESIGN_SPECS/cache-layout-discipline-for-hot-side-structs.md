@@ -1,3 +1,14 @@
+---
+type: data-discipline
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-12
+tags: [data-oriented-design, latency-discipline, concurrency]
+surface: [hot-path, slow-path]
+sister_specs: [cache-line-discipline.md, decision-first-cluster-layout-pattern.md, latency-vs-cache-decision-framework.md, per-snapshot-cluster-layout-pattern.md, cross-thread-snapshot-publish-cluster-isolation.md]
+applies_at_skills: []
+---
+
 # Cache-Layout Discipline for Hot-Side Structs
 
 **Status:** generalized pattern (formalized 2026-05-12 during v5.15.5

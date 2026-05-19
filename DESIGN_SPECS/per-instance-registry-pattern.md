@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 2-draft
+version: 1.0
+established: 2026-05-15
+tags: [framework-discipline, structural-fix]
+surface: [registry]
+sister_specs: [x-macro-registry-with-presence-dispatch.md, categorical-tag-applicability-pattern.md, heterogeneous-registry-pattern.md]
+applies_at_skills: []
+---
+
 # Per-instance registry pattern
 
 **Stage:** Stage 2 DRAFT v1.0 (drafted ahead of first canonical application at v5.15.5.F.4c.3)

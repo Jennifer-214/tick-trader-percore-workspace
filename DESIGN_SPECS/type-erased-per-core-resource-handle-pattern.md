@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-16
+tags: [framework-discipline, concurrency, structural-fix]
+surface: [registry, slow-path]
+sister_specs: [type-trait-dispatch-via-tt-namespace.md, per-instance-registry-pattern.md]
+applies_at_skills: []
+---
+
 # Type-erased per-core resource handle pattern
 
 **Established:** 2026-05-16 (v5.15.5.F.4d.1 planning; codified at the moment of 3rd canonical application landing per `pattern-codification-lifecycle.md` Stage 2 DRAFT threshold met)

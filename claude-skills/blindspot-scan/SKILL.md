@@ -1,6 +1,13 @@
 ---
 name: blindspot-scan
 description: Implementation-layer blind-spot audit. Fires AFTER /precoding-audit-gate SHAPE/SCOPE/CONSUMER audits return GREEN-or-YELLOW, BEFORE substantive coding starts. Walks the 12-category implementation-detail blind-spot taxonomy (DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md) against a target plan + current code state. Produces per-category verdict (GUARDED-BY-BUILD / SILENT-RISK / IRRELEVANT / N-A) + concrete punch-list of pre-coding amendments. Honors consult-before-coding — returns synthesis for operator review; never auto-proceeds. Distinct from SHAPE audits (/parity-check / /trace-deps / /readiness / etc.) which catch design-layer concerns.
+type: skill
+concern: impl-detail-audit
+audit_cadence: ad-hoc
+tags: [audit-methodology, meta-discipline, framework-discipline]
+surface: [registry, wire-format, cfg-flow]
+sister_skills: [/precoding-audit-gate, /parity-check, /trace-deps, /readiness, /dod-audit]
+loads_dynamically: [DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md, DESIGN_SPECS/wire-format-byte-preservation-discipline.md, CoreFrameworks/CfgFieldRegistry.hpp, CoreFrameworks/CfgFieldDispatch.hpp]
 ---
 
 # /blindspot-scan — Implementation-detail audit for pre-coding readiness

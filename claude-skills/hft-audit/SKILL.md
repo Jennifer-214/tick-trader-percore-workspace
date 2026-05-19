@@ -1,6 +1,13 @@
 ---
 name: hft-audit
 description: Systematically sweeps the codebase for deep architectural flaws, hardware-level bottlenecks, and HFT invariant violations. Focuses on cache alignment, branchless design, lock-free concurrency, and fixed-point math edge cases. Outputs new findings to the master backlog.
+type: skill
+concern: domain-audit
+audit_cadence: quarterly
+tags: [latency-discipline, data-oriented-design, concurrency, branchless-discipline]
+surface: [hot-path, slow-path, oms-drainer, producer, registry]
+sister_skills: [/dod-audit, /accounting-audit, /merge-scan, /latency-track]
+loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/branchless-dispatch-discipline.md, DESIGN_SPECS/decision-time-data-binding-pattern.md]
 ---
 
 # /hft-audit — Deep Architectural & HFT Codebase Audit

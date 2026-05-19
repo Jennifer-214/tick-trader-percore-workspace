@@ -1,6 +1,13 @@
 ---
 name: strategy-template
 description: Scaffold a new trading strategy with all 5 lifecycle stages wired correctly + FOREACH_STRATEGY X-macro registry entry + STRATEGY_<NAME> enum + dispatch + tests + GUI panel hook. Variants for static-rule strategies (like SimpleDip), regression-driven (like Momentum), and online-learning (Bandit-Exp3). Designed for local-AI usage — no cloud dependency.
+type: skill
+concern: scaffolding
+audit_cadence: ad-hoc
+tags: [framework-discipline, structural-fix]
+surface: [registry, ml-inference, gui-thread, test-infrastructure]
+sister_skills: [/plan-draft]
+loads_dynamically: []
 ---
 
 # /strategy-template — Scaffold a new strategy end-to-end

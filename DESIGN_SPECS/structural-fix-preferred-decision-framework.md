@@ -1,3 +1,14 @@
+---
+type: meta-discipline
+stage: 5-claude-md
+version: 1.0
+established: 2026-05-09
+tags: [meta-discipline, structural-fix, pattern-codification, framework-discipline]
+surface: []
+sister_specs: [pattern-codification-lifecycle.md, canonical-sister-extension-discipline.md, audit-driven-pre-coding-gate.md, framework-driven-cli-binary-pattern.md]
+applies_at_skills: [/trace-deps, /readiness]
+---
+
 # Structural fix preferred — decision framework
 
 **Established:** 2026-05-09 (formalized; in practice since v5.14.1.B.3)

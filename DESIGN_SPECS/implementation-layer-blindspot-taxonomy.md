@@ -1,3 +1,14 @@
+---
+type: meta-discipline
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-18
+tags: [meta-discipline, audit-methodology, framework-discipline]
+surface: [registry]
+sister_specs: [audit-driven-pre-coding-gate.md, audit-scope-taxonomy.md, wire-format-byte-preservation-discipline.md]
+applies_at_skills: [/blindspot-scan, /precoding-audit-gate]
+---
+
 # Implementation-layer blind-spot taxonomy
 
 **Stage:** Stage 2 DRAFT v1.0 (drafted 2026-05-18 at v5.15.5.F.4d.1.B.3 mid-coding after operator surfaced 12 blind spots that 3 audit batches missed)

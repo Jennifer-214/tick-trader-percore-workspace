@@ -1,3 +1,14 @@
+---
+type: data-discipline
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-13
+tags: [data-oriented-design, concurrency]
+surface: [oms-drainer, slow-path]
+sister_specs: [cache-layout-discipline-for-hot-side-structs.md, decision-first-cluster-layout-pattern.md, spsc-ring-embedded-in-hot-struct-cluster-discipline.md]
+applies_at_skills: []
+---
+
 # RAII destructor with cluster reorg interaction (when can you reorganize the fields of a struct that has a destructor?)
 
 **Established:** 2026-05-13 (codification triggered by v5.15.5.C.1 audit of OrderManagerState — first cluster-reorg of a struct in this codebase that has a non-trivial RAII destructor)

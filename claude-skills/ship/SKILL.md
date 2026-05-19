@@ -1,6 +1,13 @@
 ---
 name: ship
 description: Run the post-coding ship ritual — build verify, calls_graph_diff orphan check, version bump, commit with structured message, tag, push branch + tag. Captures the discipline Jenny has been doing manually after every v5.x.X subship.
+type: skill
+concern: post-coding
+audit_cadence: per-ship
+tags: [doc-discipline, operator-collaboration, ledger-discipline]
+surface: [ci-tooling]
+sister_skills: [/post-ship-audit, /latency-track, /sync-workspace]
+loads_dynamically: []
 ---
 
 # /ship — Post-coding ship ritual

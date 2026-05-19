@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 3-first-canonical
+version: 1.1
+established: 2026-05-14
+tags: [framework-discipline, pattern-codification, doc-discipline]
+surface: [registry, cfg-flow, wire-format]
+sister_specs: [universal-cfg-field-registry-pattern.md, metadata-bit-driven-derived-filter-framework.md, sidecar-override-pattern-for-registry-auto-flows.md, cfg-derived-consumer-framework.md, meta-registry-pattern-for-codebase-registry-discipline.md]
+applies_at_skills: []
+---
+
 # Framework composition overview — cfg infrastructure at v5.15.5.F.4d
 
 **Established:** 2026-05-14 (v5.15.5.F.4d planning); **v1.1 Path γ correction in progress at v5.15.5.F.4d.1.A planning 2026-05-16**

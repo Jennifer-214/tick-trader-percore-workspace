@@ -1,3 +1,14 @@
+---
+type: wire-format-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-16
+tags: [wire-format, framework-discipline, structural-fix]
+surface: [wire-format, ml-inference]
+sister_specs: [wire-format-byte-preservation-discipline.md, struct-padding-determinism-pattern.md, autopopulate-pattern-for-production-caller-class.md]
+applies_at_skills: [/parity-check]
+---
+
 # Wire-format canonical body invariants helper
 
 **Established:** 2026-05-16 (v5.15.5.F.4d.1.A planning — codified during Path γ structural redesign as reusable extraction of Option F structural invariants from `wire-format-byte-preservation-discipline.md` § 5b)

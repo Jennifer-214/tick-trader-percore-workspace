@@ -1,3 +1,14 @@
+---
+type: refactor-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-10
+tags: [framework-discipline, structural-fix, pattern-codification]
+surface: [cfg-flow]
+sister_specs: [universal-cfg-field-registry-pattern.md, categorical-tag-applicability-pattern.md, cfg-scope-discipline.md]
+applies_at_skills: []
+---
+
 # Cfg-flag eligibility criteria — when a boolean is a cfg-flag candidate (and when it's not)
 
 **Established:** 2026-05-10 (v5.14.9.F step 0 — `lat_enabled` rejection)

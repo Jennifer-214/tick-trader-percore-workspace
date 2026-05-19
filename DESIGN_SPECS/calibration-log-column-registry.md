@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-10
+tags: [framework-discipline, wire-format, structural-fix]
+surface: [registry, wire-format]
+sister_specs: [registry-tuple-as-single-source-of-truth.md, wire-format-byte-preservation-discipline.md, curve-registry-pattern.md, x-macro-registry-with-presence-dispatch.md]
+applies_at_skills: []
+---
+
 # Calibration log column registry pattern (FOREACH_<LOGNAME>_COL — auto-generated CSV header + row)
 
 **Established:** 2026-05-10 (v5.14.10.D — FOREACH_CALIB_LOG_COL refactor of OrderManager_HandleFill calibration log writer)

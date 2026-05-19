@@ -1,3 +1,14 @@
+---
+type: refactor-pattern
+stage: 5-claude-md
+version: 1.0
+established: 2026-05-14
+tags: [framework-discipline, data-oriented-design, structural-fix]
+surface: [bitmap-packed, registry, ci-tooling]
+sister_specs: [bitmap-flag-api.md, registry-coverage-ci-check-pattern.md]
+applies_at_skills: []
+---
+
 # Bitmap overflow protection discipline — compile-time guard for registry-paired bitmaps
 
 **Established:** 2026-05-14 (v5.15.5.F.4 sprint)

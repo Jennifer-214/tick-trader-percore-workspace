@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 5-claude-md
+version: 1.0
+established: 2026-05-14
+tags: [framework-discipline, structural-fix, branchless-discipline]
+surface: [registry, cfg-flow, wire-format]
+sister_specs: [universal-cfg-field-registry-pattern.md, type-erased-per-core-resource-handle-pattern.md, x-macro-registry-with-presence-dispatch.md]
+applies_at_skills: []
+---
+
 # Type-trait dispatch via tt:: namespace — registry-driven typed-field access without type erasure
 
 **Established:** 2026-05-14 (v5.15.5.F.4b pre-coding audit; pattern formalized from the precedent at `tt::stamp_parse_field<T>` v5.14.8.A.merged)

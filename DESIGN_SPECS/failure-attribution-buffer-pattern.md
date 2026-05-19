@@ -1,3 +1,14 @@
+---
+type: refactor-pattern
+stage: 2-draft
+version: 1.0
+established: 2026-05-17
+tags: [failure-observability, structural-fix, framework-discipline]
+surface: [hot-path, slow-path, oms-drainer]
+sister_specs: [registry-bitmap-set-discipline.md, transient-aggregation-bitmap-pattern.md]
+applies_at_skills: []
+---
+
 # Failure-attribution buffer pattern
 
 **Established:** 2026-05-17 (v5.15.5.F.4d.1.B.3 planning — codified Stage 2 DRAFT after `.B.3` audit-cycle codebase scan surfaced 3 existing canonical applications across distinct subsystems; first canonical reference at `.B.3` ship close)

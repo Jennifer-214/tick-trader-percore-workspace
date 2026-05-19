@@ -1,3 +1,14 @@
+---
+type: wire-format-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-10
+tags: [wire-format, fixed-point-math]
+surface: [backtest, ml-inference, training]
+sister_specs: [wire-format-byte-preservation-discipline.md, avx512-byte-determinism-pattern.md]
+applies_at_skills: []
+---
+
 # PRNG choice for replay-determinism use
 
 **Established:** 2026-05-10 (v5.14.10.A; Bayesian Thompson sampling bandit)

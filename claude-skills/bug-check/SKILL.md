@@ -1,5 +1,12 @@
 ---
 description: Scan the codebase for instances of known recurring bug patterns catalogued in DOCS/RECURRING_BUG_PATTERNS.md. Reports per-class CLEAN / KNOWN-N / NEW-N with file:line citations. Registry-driven — adding a new bug class to the doc auto-includes it in the next /bug-check run, no skill spec edit needed. Distinct from /dust (generic cleanup), /dead-code-trace (unreferenced fns), /hft-audit (universal HFT principles), /ml-audit (ML pipeline structure), /trace-deps (plan-time audits): /bug-check is OUR codebase's specific recurring bug history. Output is a structured findings report, NOT actual edits — operator reviews + decides which to triage.
+type: skill
+concern: anti-pattern-scan
+audit_cadence: ad-hoc
+tags: [audit-methodology, structural-fix, framework-discipline]
+surface: [registry, hot-path, slow-path, oms-drainer, cfg-flow]
+sister_skills: [/dust, /dead-code-trace, /hft-audit, /ml-audit, /trace-deps, /dod-audit, /plan-context-sweep]
+loads_dynamically: [DOCS/RECURRING_BUG_PATTERNS.md, DOCS/DESIGN_PHILOSOPHY.md]
 ---
 
 # /bug-check — Scan codebase for known bug class instances

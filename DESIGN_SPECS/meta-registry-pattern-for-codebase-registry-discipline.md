@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 5-claude-md
+version: 1.1
+established: 2026-05-14
+tags: [framework-discipline, structural-fix, meta-discipline, pattern-codification]
+surface: [registry, ci-tooling]
+sister_specs: [registry-coverage-ci-check-pattern.md, framework-composition-overview.md, sidecar-override-pattern-for-registry-auto-flows.md, metadata-bit-driven-derived-filter-framework.md]
+applies_at_skills: [/registry-fit-audit]
+---
+
 # Meta-registry pattern for codebase-wide registry discipline
 
 **Established:** 2026-05-14 (v5.15.5.F.4d planning — DRAFT v1.0); **v1.1 Path γ+ v2 status + schema correction (2026-05-17)**

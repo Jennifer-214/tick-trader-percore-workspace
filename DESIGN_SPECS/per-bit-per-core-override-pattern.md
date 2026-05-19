@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-10
+tags: [framework-discipline, branchless-discipline, data-oriented-design]
+surface: [hot-path, bitmap-packed, cfg-flow]
+sister_specs: [partner-core-bitmap-pattern.md, bitmap-flag-api.md, universal-cfg-field-registry-pattern.md]
+applies_at_skills: []
+---
+
 # Per-bit per-core override pattern (branchless bit-select on bitmap fields)
 
 **Established:** 2026-05-10 (v5.14.9.F.6 — `PER_CORE_OVERRIDE_BITMAP_DOMAINS`)

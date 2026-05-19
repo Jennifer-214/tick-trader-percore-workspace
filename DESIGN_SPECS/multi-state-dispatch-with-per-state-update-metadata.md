@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-16
+tags: [framework-discipline, branchless-discipline, structural-fix]
+surface: [registry, hot-path]
+sister_specs: [dual-axis-y3-dispatch-pattern.md, multi-bit-state-encoding-pattern.md, x-macro-registry-with-presence-dispatch.md]
+applies_at_skills: []
+---
+
 # Multi-state dispatch with per-state update metadata
 
 **Stage:** Stage 2 DRAFT v1.0 → Stage 3 ACTIVE v1.0 at v5.15.5.F.4d ship close

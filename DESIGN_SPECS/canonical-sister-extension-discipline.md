@@ -1,3 +1,14 @@
+---
+type: meta-discipline
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-17
+tags: [meta-discipline, framework-discipline, pattern-codification, operator-collaboration]
+surface: [registry]
+sister_specs: [structural-fix-preferred-decision-framework.md, pattern-codification-lifecycle.md, audit-driven-pre-coding-gate.md]
+applies_at_skills: [/readiness, /anti-spaghetti, /precoding-audit-gate]
+---
+
 # Canonical sister extension discipline
 
 **Established:** 2026-05-17 (v5.15.5.F.4d.1.B planning — codified during deep design conversation after Path γ-class structural critique #2 was caught at pre-coding audit gate; sister codification to `feedback_audit_canonical_sister_before_new_infra.md` + `feedback_plans_cite_sister_registry_inspection.md` memory files + `/anti-spaghetti` skill)

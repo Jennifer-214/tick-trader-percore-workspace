@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-16
+tags: [framework-discipline, structural-fix, pattern-codification]
+surface: [registry, ci-tooling, test-infrastructure]
+sister_specs: [meta-registry-pattern-for-codebase-registry-discipline.md, manual-fields-inventory-pattern.md, cross-walker-struct-field-uniqueness-discipline.md, bitmap-overflow-protection-discipline.md]
+applies_at_skills: []
+---
+
 # Registry coverage CI check pattern
 
 **Established:** 2026-05-16 (v5.15.5.F.4c.4 — retroactive extraction from 3 canonical applications)

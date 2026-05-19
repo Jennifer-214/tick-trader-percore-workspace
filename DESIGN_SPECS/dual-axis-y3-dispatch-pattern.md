@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-12
+tags: [framework-discipline, branchless-discipline]
+surface: [registry, hot-path]
+sister_specs: [x-macro-registry-with-presence-dispatch.md, multi-state-dispatch-with-per-state-update-metadata.md, dual-axis-y3-dispatch-pattern.md]
+applies_at_skills: []
+---
+
 # Dual-axis Y3 dispatch pattern (multi-dimensional registry dispatch via independent token-paste axes)
 
 **Established:** 2026-05-12 (v5.15.5.A.7)

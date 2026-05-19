@@ -1,3 +1,14 @@
+---
+type: refactor-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-13
+tags: [latency-discipline, data-oriented-design]
+surface: [hot-path, slow-path]
+sister_specs: [cache-layout-discipline-for-hot-side-structs.md, latency-vs-cache-decision-framework.md, decision-first-cluster-layout-pattern.md]
+applies_at_skills: []
+---
+
 # Loop fusion pattern (consolidate multi-pass iterations over shared data for cache + bandwidth)
 
 **Established:** 2026-05-13 (codification post v5.15.5.B.8 ShardedSnapshot 4-walk → 1-walk consolidation; first explicit reference application)

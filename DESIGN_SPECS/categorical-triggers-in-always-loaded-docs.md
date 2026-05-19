@@ -1,3 +1,14 @@
+---
+type: doc-discipline
+stage: 2-draft
+version: 1.0
+established: 2026-05-18
+tags: [doc-discipline, framework-discipline, structural-fix, meta-discipline]
+surface: []
+sister_specs: [pattern-codification-lifecycle.md, structural-fix-preferred-decision-framework.md, wire-format-byte-preservation-discipline.md, doc-frontmatter-convention.md, doc-tag-vocabulary.md]
+applies_at_skills: []
+---
+
 # Categorical triggers in always-loaded docs
 
 **Established:** 2026-05-18 (v5.15.5.F.4d.1.B.3 doc-layer refresh — codified after Caramel surfaced that hardcoded refs in skills/docs were the root cause of finding-issues; structural skill audit found ~50 sites across 22 skills duplicating canonical lists)

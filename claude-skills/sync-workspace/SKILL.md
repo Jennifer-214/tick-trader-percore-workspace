@@ -1,6 +1,13 @@
 ---
 name: sync-workspace
 description: Push the gitignored workspace repo (plans + claude-skills) to its private GitHub remote. Detects what changed since last push, generates a sensible commit message, commits + pushes. Run on-demand whenever you want an off-machine backup checkpoint.
+type: skill
+concern: workflow
+audit_cadence: ad-hoc
+tags: [doc-discipline, operator-collaboration]
+surface: []
+sister_skills: [/ship]
+loads_dynamically: []
 ---
 
 # /sync-workspace — back up plans + skills off-machine

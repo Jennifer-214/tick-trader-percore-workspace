@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-17
+tags: [framework-discipline, structural-fix, pattern-codification]
+surface: [registry, cfg-flow, wire-format]
+sister_specs: [universal-cfg-field-registry-pattern.md, metadata-bit-driven-derived-filter-framework.md, canonical-sister-extension-discipline.md, sidecar-override-pattern-for-registry-auto-flows.md]
+applies_at_skills: []
+---
+
 # Cfg-derived consumer framework
 
 **Established:** 2026-05-17 (v5.15.5.F.4d.1.B planning — codified as the master pattern doc for cfg-derived behavior; landed alongside `canonical-sister-extension-discipline.md` after Batch 1+2 pre-coding audit gate identified the 3-way triplet `FOREACH_CFG_DERIVED_INFERENCE_CFG × FOREACH_CFG_DRIFT_CHECK × FOREACH_STAMP_BOUND_CFG` consolidation opportunity)

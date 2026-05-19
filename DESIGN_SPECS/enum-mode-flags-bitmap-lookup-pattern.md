@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-12
+tags: [framework-discipline, data-oriented-design, branchless-discipline]
+surface: [registry, bitmap-packed, hot-path]
+sister_specs: [universal-registry-bitmap-dispatcher-pattern.md, x-macro-registry-with-presence-dispatch.md, bitmap-flag-api.md]
+applies_at_skills: []
+---
+
 # Enum Mode-Flags Bitmap Lookup Pattern
 
 **Status:** ACTIVE (formalized 2026-05-12; first application v5.15.5.A.1

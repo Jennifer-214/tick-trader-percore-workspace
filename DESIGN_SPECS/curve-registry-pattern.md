@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-10
+tags: [framework-discipline, branchless-discipline]
+surface: [registry, slow-path]
+sister_specs: [calibration-log-column-registry.md, x-macro-registry-with-presence-dispatch.md, registry-tuple-as-single-source-of-truth.md]
+applies_at_skills: []
+---
+
 # Curve registry pattern (FOREACH_<DOMAIN>_CURVE — named compute fns chosen by enum)
 
 **Established:** 2026-05-10 (v5.14.9.A — FOREACH_DEGRADATION_CURVE)

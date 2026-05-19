@@ -1,3 +1,14 @@
+---
+type: framework-pattern
+stage: 3-first-canonical
+version: 1.0
+established: 2026-05-14
+tags: [framework-discipline, structural-fix, pattern-codification]
+surface: [registry, cfg-flow]
+sister_specs: [universal-cfg-field-registry-pattern.md, metadata-bit-driven-derived-filter-framework.md, doc-tag-vocabulary.md]
+applies_at_skills: []
+---
+
 # Categorical tag applicability pattern — instance × category × consumer
 
 **Established:** 2026-05-14 (v5.15.5.F.4 sprint — pre-implementation draft)

@@ -1,3 +1,14 @@
+---
+type: refactor-pattern
+stage: 2-draft
+version: 1.0
+established: 2026-05-15
+tags: [framework-discipline, structural-fix]
+surface: [cfg-flow, parser]
+sister_specs: [universal-cfg-field-registry-pattern.md, cfg-flag-eligibility-criteria.md, cfg-section-parser-state-machine.md]
+applies_at_skills: []
+---
+
 # Cfg scope discipline
 
 **Stage:** Stage 2 DRAFT v1.0 (drafted ahead of first canonical application at v5.15.5.F.4c.3)

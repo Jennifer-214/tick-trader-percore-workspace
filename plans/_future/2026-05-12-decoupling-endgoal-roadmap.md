@@ -512,6 +512,83 @@ struct boundary that the decoupling sprint will read across.
 
 ---
 
+### v5.15.5.F.4d.1.B.3 Phase L — `tools/stamp_model_cli.cpp` replaces `tools/stamp_model.sh` (POSITIONING: ⬆️⬆️⬆️ STRONGLY POSITIVE; first framework-driven CLI binary)
+
+**Date:** 2026-05-18 (PLANNED at v1.14 plan body amendment; SHIPS at `.B.3` tag)
+
+**Shipped (planned):** NEW `tools/stamp_model_cli.cpp` framework-driven C++ CLI binary
+replaces `tools/stamp_model.sh` (716 lines of bash; 6+ cross-tool sync events documented
+in script header across v5.2.3 / v5.8.8 / v5.9.3b / v5.9.4a / v5.9.5c / v5.11.18a + `.B.3`).
+Thin wrapper (~150-200 LOC) over `stamp_write_for_model` framework API; CLI flag
+interface matches bash for operator workflow continuity (per
+`feedback_surface_operator_migration_path_proactively`); deprecation shim at
+`tools/stamp_model.sh` (1-line `exec` redirect) preserves invocation patterns during
+retention period (TECH_DEBT-110 tracks shim deletion). Closes Class 18 + 19 + 21 + 22
+at cross-tool surface via structural elimination (drift impossible by construction).
+NEW DESIGN_SPEC `framework-driven-cli-binary-pattern.md` Stage 2 DRAFT at workspace;
+Stage 3 first canonical reference = this binary.
+
+**Change:** Bash script (mirror of engine wire emit logic) → C++ CLI binary (uses
+engine framework API directly). Cross-tool seam structurally eliminated for stamp
+model workflow.
+
+**Decoupling positioning:**
+
+- **First canonical of `framework-driven-cli-binary-pattern.md`.** Pattern provides
+  structural elimination for cross-tool surfaces that mirror engine wire emit. The
+  pattern is reusable for FUTURE cross-tool surfaces (e.g., schema migration CLI;
+  per-core override emission CLI; per-core overlay-bytes consumer if needed). Each
+  future cross-tool surface that fits the pattern can apply structurally instead of
+  accumulating Layer 7 discipline overhead.
+
+- **"Training entry points" axis advanced** — Phase L is a precedent for the
+  FOREACH_CLI_MODE registry's eventual instantiation. `tools/stamp_model_cli.cpp`
+  is the SECOND C++ tool in `tools/` (after `compare_scalers.cpp`) + first
+  framework-driven C++ tool. The build-system pattern (CMake target alongside
+  engine/engine_gui/foxml_suite) generalizes for FUTURE CLI binaries — e.g.,
+  `tools/dump_stamp_schema_cli.cpp` (planned for decoupling sprint per v5.15.0
+  breadcrumb).
+
+- **Cross-tool wire-format mirror eliminated for stamp body surface.** Layer 7
+  discipline (cross-tool emit-site enumeration) is OBVIATED at this specific surface.
+  Future wire-format changes (SOFT or HARD version bumps) propagate through
+  framework to CLI automatically; no cross-tool sync work. **Reduces decoupling-sprint
+  work** — viewer-side stamp consumer can rely on stable engine-side wire emit
+  without worrying about bash-side drift causing forward/backward compat issues.
+
+- **Decoupling-friendly CLI invocation pattern.** The C++ CLI is invokable via
+  `execv` (matches FOREACH_CLI_MODE pattern); a future GUI viewer can spawn the CLI
+  as a child process for offline stamp signing without coupling to engine runtime.
+  Builds on the v5.15.3 "Training entry points" decoupling vector.
+
+- **Wire format byte preservation inherited from framework.** CLI uses
+  `populate_stamp_cfg_from_derived` via `stamp_write_for_model` — same locale pin
+  (LC_NUMERIC=C), same %.17g precision, same tt::cfg_emit_field<T> path. **HMAC chain
+  byte-identical** between engine in-process emit and CLI emit by construction.
+  Viewer-side HMAC verification works against both sources without distinction.
+
+**Pattern established:** "Framework-driven CLI binary replaces bash mirror." Reusable
+for ANY future cross-tool surface where the engine has a single-source-of-truth API
+(stamp body / snapshot body / scaler body / model overlay body / etc.). Sister to the
+v5.15.3 FOREACH_CLI_MODE registry pattern (which decouples training entry points; this
+pattern decouples cross-tool wire emit).
+
+**Anti-breadcrumbs:** none. Phase L is purely additive at the cross-tool surface
+(replaces bash with C++; preserves operator flag interface via deprecation shim;
+preserves wire format byte-for-byte; HMAC chain verifies bash-stamped legacy models
+on engine via Decision F SOFT compat parser).
+
+**Cross-references:**
+- `DESIGN_SPECS/framework-driven-cli-binary-pattern.md` (NEW Stage 2 DRAFT)
+- `DESIGN_SPECS/wire-format-byte-preservation-discipline.md` § Layer 7 (cross-tool
+  emit-site enumeration discipline — Phase L OBVIATES Layer 7 at this specific
+  surface)
+- `subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md` Decision G + Step 1.6.8'
+- `feedback_no_defer_for_effort.md` (caught my initial `.B.4`-split-as-deferral)
+- `feedback_motivated_collaborator_for_caramel.md` (best-software discipline)
+
+---
+
 ## Pre-decoupling readiness checklist
 
 Updated after each ship's breadcrumb is added. When all checked, the

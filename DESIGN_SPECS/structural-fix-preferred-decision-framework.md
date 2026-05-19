@@ -181,6 +181,15 @@ The framework can be MISAPPLIED. Anti-patterns:
 - NEW DESIGN_SPEC: `phase-separated-drainer-for-safe-cross-temporal-derives.md`
 - Pattern composition: enables `aggressive-memory-reduction-techniques.md` Technique 4 (derive vs store) for fields that previously failed safety check; reduces `slot-state-foreach-registry-with-storage-routing.md` FOREACH_FILL_RECORD_FIELD registry to a smaller set of entries
 
+### v5.15.5.F.4d.1.B.3 Phase L — `tools/stamp_model_cli.cpp` framework-driven CLI binary (NEW Stage 2 DRAFT spec; cross-tool elimination structural-fix mechanism category)
+
+- Recurrence count: 6+ events at `tools/stamp_model.sh` documented in script header (v5.2.3 / v5.8.8 / v5.9.3b / v5.9.4a / v5.9.5c / v5.11.18a + the `.B.3` batch); well over the 4× mandatory threshold
+- Decision: structural fix + new pattern via NEW DESIGN_SPEC `framework-driven-cli-binary-pattern.md` Stage 2 DRAFT v1.1. Replaces `tools/stamp_model.sh` bash mirror with thin C++ CLI binary that calls `stamp_write_for_model` framework API directly + X-macro auto-gen of CLI flag table from FOREACH_*_CFG_FIELD walkers
+- Pattern: Thin C++ wrapper + X-macro auto-gen longopts[] + value-receiver struct + parse dispatch via existing tt::cfg_parse_field + extensibility test pattern (X-macro walker validates all flagged rows round-trip byte-identical); deprecation shim at bash script preserves operator workflow during retention period
+- Outcome: Class 18/19/21/22 STRUCTURALLY ELIMINATED at WIRE EMIT layer + CLI INTERFACE layer + TEST layer. Adding a new cfg field with stamp-binding post-Phase-L = 1 row in master FOREACH_PER_CORE_CFG_FIELD → framework auto-flows wire emit + CLI flag + parse + extensibility test validation. Zero manual cross-tool sync work.
+- **NEW STRUCTURAL-FIX MECHANISM CATEGORY: cross-tool elimination via framework-driven CLI binary** — sister to compile-time `static_assert` + helper-extraction + AUTOPOPULATE companion macro + CI tooling categories. This category specifically eliminates the cross-tool seam where a bash script mirrors engine wire emit / cfg parsing / schema. Pattern composes with existing AUTOPOPULATE + X-macro registry + Y3 dispatch patterns; no new framework infrastructure required.
+- Sister discipline: `wire-format-byte-preservation-discipline.md` § Layer 7 (codifies cross-tool sync DISCIPLINE; Phase L pattern provides STRUCTURAL ELIMINATION at framework-driven surfaces). Layer 7 still applies for non-framework-driven cross-tool surfaces (e.g., bash diagnostic tools without C++ equivalent).
+
 ### v5.15.5.F.4c.4 — registry-coverage-ci-check-pattern.md (NEW Stage 3 ACTIVE spec; CI tooling structural-fix mechanism category)
 
 - Recurrence count: 5 across bug-class shapes that share the "field added without registry/coverage enforcement" pattern at meta-layer — Class 18 (mirror-incomplete) + Class 19 (hardcoded enum names) + Class 21 (parallel descriptors) + Class 27 (scalar cfg-mirror) + Class 30 NEW (sibling array without registry enrollment)

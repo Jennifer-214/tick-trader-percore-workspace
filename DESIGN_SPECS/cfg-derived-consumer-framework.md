@@ -1,7 +1,7 @@
 # Cfg-derived consumer framework
 
 **Established:** 2026-05-17 (v5.15.5.F.4d.1.B planning — codified as the master pattern doc for cfg-derived behavior; landed alongside `canonical-sister-extension-discipline.md` after Batch 1+2 pre-coding audit gate identified the 3-way triplet `FOREACH_CFG_DERIVED_INFERENCE_CFG × FOREACH_CFG_DRIFT_CHECK × FOREACH_STAMP_BOUND_CFG` consolidation opportunity)
-**Status:** **Stage 3 ACTIVE v1.1** (promoted from Stage 2 DRAFT at `v5.15.5.F.4d.1.B.1` ship close 2026-05-17; first canonical = NEW `MemHeaders/CfgGateRegistry.hpp` + 3 derived-filter consumer template fns + tt:: dispatch quartet → septet extension; walker iterates 0 rows at `.B.1` post-Step-6 vacuous-PASS tests; full activation at `.B.2` cohort migration when STAMP_BOUND_CFG_DERIVED bit flagged on 24+ source rows)
+**Status:** **Stage 3 ACTIVE v1.3** (v1.3 amends pre-coding at `v5.15.5.F.4d.1.B.3` Phase L v1.15 amendment 2026-05-18 — adds canonical "Extensibility test pattern for cohort consumers" section codifying X-macro test walker discipline. Pattern is REGISTRY-AGNOSTIC; applies to ANY cfg-derived consumer cohort. Stage 3 first canonical reference at Phase L's L4 extensibility test at `tests/controller_test.cpp` — replaces v5.14.1.B.3.E manual 17-field test block as Class 21 closure at TEST LAYER. Sister spec: `framework-driven-cli-binary-pattern.md` v1.1 § 5.2 (1st application). v1.2 → v1.3) (v1.2 added canonical "Action-parameterized meta-walker for cohort consumer template fns" section + clarified "Adding a new consumer concern" walker dichotomy at Phase L Step 1.6.5b. v1.1 → v1.2.) (v1.1 Stage 3 ACTIVE promoted at `.B.1` ship close 2026-05-17 = first canonical reference; full cohort activation at `.B.2` cohort migration.)
 **Tags:** framework-discipline, master-pattern, cfg-infrastructure, registry-driven, future-easier; serves H15 + H17 + H18 + H19 + item 31; composes with metadata-bit-driven-derived-filter-framework + sidecar-override-pattern + tt:: dispatch via tt:: namespace + autopopulate-pattern-for-production-caller-class
 
 **Cross-references:**
@@ -152,15 +152,212 @@ This is the "never worry about this again" shape for cfg fields with derived beh
 
 ## Adding a new consumer concern (the discipline this framework produces)
 
-**Step 1.** Define a new consumer macro that walks via `CFG_FIELD_FOR_EACH_SET_BIT(g_*_cfg_<bit>_mask.words, idx, { ... })` for the relevant metadata bit.
+**Walker dichotomy decision** (v1.2 clarification): two canonical walker shapes exist; pick by consumer's value-extraction needs:
 
-**Step 2.** Per-row, look up gate via `FOREACH_CFG_GATE` sidecar (default if absent).
+- **(W1) FOREACH-X-macro walker with `if constexpr (meta & BIT)` filter inside X-macro body** — use when consumer needs **compile-time field-name access** (`cfg.<name>`, `inf.<name>`, `handle.<name>` direct member access; tt:: type-trait dispatch with T deduced from destination field). This is the canonical shape for production value-extraction consumers (parser / emit / drift-check / populate). Class 23 avoidance: runtime offset access is forbidden per H13; compile-time name access requires X-macro walker semantics.
+- **(W2) `CFG_FIELD_FOR_EACH_SET_BIT(g_*_cfg_<bit>_mask.words, idx, { ... })` precomputed-mask walker** — use when consumer needs only **runtime idx + descriptor access** (GUI render walk reading descriptor metadata; observability / diagnostic walks; synthetic-emit test cases). Branchless TZCNT iteration over `.rodata` mask; production-canonical at `GUI/SettingsPanel.hpp:1100,1136`.
 
-**Step 3.** Per-row, dispatch value extraction via `tt::` namespace (add new `tt::cfg_<verb>_field<T>` helper if a new value-extraction shape is needed).
+Most cfg-derived consumer template fns are W1 (need compile-time name access for tt:: dispatch over `cfg.<name>`). Most GUI / observability consumers are W2.
 
-**Step 4.** Enroll the new consumer macro in `FOREACH_REGISTRY` meta-registry per H15 + H19.
+---
 
-**That's it.** Adding a new consumer concern (e.g., a new GUI surface, new diagnostic output, new stamp variant) doesn't touch master registry rows. It doesn't touch existing consumer macros. It doesn't risk drift.
+### Single consumer concern — W1 shape (single-registry walker)
+
+**Step 1.** Inside the consumer template fn, define X-macro with `if constexpr ((meta) & <BIT>) != 0` filter + per-row action body referencing `cfg.<name>` / `inf.<name>` etc.
+
+**Step 2.** Invoke `FOREACH_<REGISTRY>(X_<consumer>)` to expand the walker.
+
+**Step 3.** `#undef` the X-macro at end of fn body (scope hygiene).
+
+**Step 4.** Per-row, look up gate via `FOREACH_CFG_GATE` sidecar (default if absent).
+
+**Step 5.** Per-row, dispatch value extraction via `tt::` namespace (add new `tt::cfg_<verb>_field<T>` helper if a new value-extraction shape is needed).
+
+**Step 6.** Enroll the new consumer macro in `FOREACH_REGISTRY` meta-registry per H15 + H19.
+
+---
+
+### Multi-consumer cohort sharing a registry family — action-parameterized meta-walker (v1.2 canonical)
+
+When **≥2 sister consumer template fns walk the SAME registry cohort** with different per-row actions (e.g., populate / emit / drift / parse over the same N registries with same metadata-bit filter), the per-consumer-per-registry walker shape is **prone to sister-consumer drift**: each consumer must remember to add a walker for EVERY registry in the cohort; missing one causes silent stamp-binding / wire-emit / drift-check / parser gaps (Class 21 instance at consumer template fn level).
+
+**Structural fix: action-parameterized meta-walker.** A meta-macro takes a BASE token + expands to N FOREACH invocations with token-pasted X-macro names. Each consumer defines N X-macros following the `BASE##_<SCOPE>` naming convention; meta-macro dispatches each FOREACH walker to its scope-specific X-macro.
+
+**Drift impossibility by construction:**
+- Consumer **cannot** silently skip a registry. The meta-macro expands to N walker invocations unconditionally.
+- The N X-macros must exist by naming convention. Missing one = compile error at FOREACH expansion site (preprocessor fails on undefined identifier in macro body).
+- The X-macros themselves can be no-op for legitimate skip-cases (consumer documents rationale via comment) — but the skip is EXPLICITLY VISIBLE.
+
+#### Pattern shape (concrete)
+
+```cpp
+// In the cfg-derived-consumer header (e.g., MemHeaders/CfgGateRegistry.hpp):
+
+// Meta-walker — single source of truth for the cohort's registry coverage.
+// Consumer passes BASE token; meta-macro expands to N FOREACH invocations
+// with token-pasted X-macro names (BASE##_<SCOPE>).
+#define FOREACH_<COHORT>_COHORT(BASE_X)                  \
+    FOREACH_<R1>(BASE_X##_<S1>)                          \
+    FOREACH_<R2>(BASE_X##_<S2>)                          \
+    /* ... one per registry in the cohort ... */         \
+    FOREACH_<RN>(BASE_X##_<SN>)
+```
+
+#### Per-consumer X-macro family (function-scope for local context)
+
+```cpp
+template <unsigned F, typename DestT>
+inline void <consumer>_<verb>(DestT& dst, const ControllerConfig<F>& cfg) {
+    (void)dst; (void)cfg;
+
+    #define X_<consumer>_<S1>(/* registry-R1 X-macro signature */) \
+        if constexpr (((meta) & BIT) != 0) {                       \
+            /* per-row action referencing cfg.name / dst.name */    \
+        }
+    /* ... one per registry in the cohort ... */
+    #define X_<consumer>_<SN>(/* registry-RN X-macro signature */) \
+        if constexpr (((meta) & BIT) != 0) {                       \
+            /* per-row action */                                    \
+        }
+
+    FOREACH_<COHORT>_COHORT(X_<consumer>)
+
+    #undef X_<consumer>_<S1>
+    /* ... one #undef per X-macro for scope hygiene ... */
+    #undef X_<consumer>_<SN>
+}
+```
+
+#### Per-consumer X-macro family (file-scope for unconditional struct-gen)
+
+Sister meta-walker for struct-field declarations (unconditional; no metadata filter):
+
+```cpp
+// File-scope X-macros (no consumer-local context needed for struct field decl):
+#define _<STRUCT_PREFIX>_<S1>(/* registry-R1 X-macro signature */) \
+    uint8_t has_##name; STORAGE_T name;
+/* ... one per scope ... */
+
+// Sister meta-walker invocation at struct scope:
+#define <STRUCT>_DERIVED_FIELDS_AUTO_GEN() \
+    FOREACH_<COHORT>_COHORT(_<STRUCT_PREFIX>)
+```
+
+The unconditional sibling (struct-gen) uses the SAME meta-walker as the filtered consumer template fns — new registry added to the cohort meta-walker auto-extends BOTH struct-gen AND all consumer template fns.
+
+#### Recognition trigger
+
+Recognition: ≥2 consumer template fns walking the same registry cohort with different per-row actions. Drift signal: one consumer walks N of K registries; sister walks M of K (M ≠ N) at HEAD — even if both started symmetric, incremental ship-by-ship registry additions tend to drift coverage.
+
+#### When to use which shape
+
+| Shape | When |
+|---|---|
+| W1 (FOREACH-X-macro walker; single FOREACH per consumer fn) | Single consumer, single registry; no sister consumers projected |
+| W2 (CFG_FIELD_FOR_EACH_SET_BIT) | Runtime idx access sufficient (GUI / observability); no compile-time field-name access needed |
+| **Action-parameterized meta-walker** | **≥2 sister consumer template fns over a shared registry cohort with compile-time field-name access requirement** |
+
+#### Enrollment in FOREACH_REGISTRY
+
+Meta-walker is itself an X-macro registry entry (no rows of its own; dispatches to underlying data registries). Enroll at H15 + H19 as Level 1 meta-walker with parent FOREACH_REGISTRY (sister to FOREACH_PER_CORE_DOMAIN_BITMAP pattern; meta-walker over derived cohort rather than over per-core domain bitmap members).
+
+---
+
+**That's it.** Adding a new consumer concern (e.g., a new GUI surface, new diagnostic output, new stamp variant) doesn't touch master registry rows. It doesn't touch existing consumer macros. It doesn't risk drift. Adding a NEW REGISTRY to the cohort = ONE row in the meta-walker; ALL N existing consumers + struct-gen auto-extend at next compile.
+
+---
+
+## Extensibility test pattern for cohort consumers (NEW v1.3)
+
+The cfg-derived consumer framework has a complementary **test recurrence vector** that the v1.1/v1.2 sections don't address: the test code that validates per-field round-trip (e.g., "set ridge_lambda=0.15 + emit stamp + parse back + assert sr.ridge_lambda matches") historically enumerates each field explicitly. **That's Class 21 (multiple parallel descriptors) at the TEST LAYER** — the test enumeration is itself a parallel descriptor of the registry. Adding a new flagged row requires manual sync of the test enumeration; forgetting → silent runtime failure (e.g., new STORAGE_T edge case in `tt::cfg_emit_field<T>` that breaks round-trip; FPN precision issue at specific value ranges; missing has_* parsing).
+
+**Concrete instance at HEAD pre-v1.3:** `tests/controller_test.cpp` v5.14.1.B.3.E section enumerates 17 flagged rows with explicit per-field assertions. Each new STAMP_BOUND_CFG_DERIVED-flagged row requires manual sync of this block.
+
+**Structural fix codified v1.3:** X-macro walker validates round-trip per row.
+
+### The pattern (concrete shape)
+
+```cpp
+// Helper: deterministic synthetic value per field (FNV-1a hash of field name → value):
+template <typename T>
+T synthetic_value_for_field(const char* field_name) {
+    uint64_t h = tt::fnv1a_64(field_name, strlen(field_name));
+    if constexpr (is_FPN_v<T>) {
+        return FPN_FromDouble<64>((double)(h % 1000) / 1000.0 + 0.001);
+    } else if constexpr (std::is_integral_v<T>) {
+        return T((h % 100) + 1);
+    } else if constexpr (std::is_same_v<T, bool>) {
+        return (h & 1) != 0;
+    }
+    /* extend per STORAGE_T set */
+}
+
+// Helper: type-aware equality (FPN_ToDouble where applicable; bit-exact otherwise):
+template <typename T>
+bool values_equal_for_test(const T& a, const T& b) {
+    if constexpr (is_FPN_v<T>) {
+        return FPN_ToDouble(a) == FPN_ToDouble(b);
+    } else {
+        return a == b;
+    }
+}
+
+// Extensibility test (X-macro walker):
+SECTION("extensibility: <cohort name> round-trip per flagged row");
+{
+    ControllerConfig<64> cfg = ControllerConfig_Default<64>();
+
+    // Walk all flagged rows; synthesize value per row; set cfg field.
+    #define X_SYNTH_POPULATE(STORAGE_T, KIND_TOKEN, name, ...) \
+        if constexpr (((meta) & CfgFieldDescriptor::<BIT>) != 0) { \
+            cfg.name = synthetic_value_for_field<STORAGE_T>(#name); \
+        }
+    FOREACH_<REGISTRY>(X_SYNTH_POPULATE)
+    #undef X_SYNTH_POPULATE
+
+    // Set cohort gate bits so all flagged rows pass emit_when filter
+    /* ... cfg.ml_cfg_flags = MASK_*; cfg.bandit_algorithm = N; etc. ... */
+
+    // Run consumer (stamp emit + parse cycle, or whatever the consumer's round-trip is)
+    /* ... */
+
+    // Validate per-row round-trip byte-identity
+    #define X_VALIDATE_ROUNDTRIP(STORAGE_T, KIND_TOKEN, name, ...) \
+        if constexpr (((meta) & CfgFieldDescriptor::<BIT>) != 0) { \
+            check("extensibility: " #name " has_*=1", result.has_##name == 1); \
+            check("extensibility: " #name " round-trips byte-identical", \
+                  values_equal_for_test(result.name, cfg.name)); \
+        }
+    FOREACH_<REGISTRY>(X_VALIDATE_ROUNDTRIP)
+    #undef X_VALIDATE_ROUNDTRIP
+}
+```
+
+### Why this is structural (not discipline)
+
+- **Adding a new flagged row** = X-macro walker auto-includes it in the test
+- **Adding a new STORAGE_T** = `synthetic_value_for_field<T>` static_asserts unreachable; compile-time catch
+- **Test failure** = specific row's round-trip is broken; bisect via per-row check messages
+
+The test ENFORCES the framework invariant "every flagged row round-trips byte-identical via emit→parse cycle." Adding ANY new flagged row that fails this invariant = test FAILS at CI; operator never sees the bug.
+
+### When to apply
+
+- **Apply** when a cfg-derived consumer cohort has ≥3 rows + value-round-trip is a load-bearing invariant (stamp body / wire format / cross-process serialization)
+- **Apply** when manual enumeration of test code is itself a recurring drift surface (audit catches stale enumeration)
+- **Skip** when consumer has ≤2 rows + low growth pressure (manual test fine; X-macro overhead exceeds benefit)
+- **Skip** when round-trip is NOT a load-bearing invariant (consumer doesn't have parse-side complement; emit-only)
+
+### Sister patterns + canonical applications
+
+- **Stage 3 first canonical at v5.15.5.F.4d.1.B.3 Phase L** (`tests/controller_test.cpp` extensibility test for STAMP_BOUND_CFG_DERIVED cohort) — replaces v5.14.1.B.3.E manual 17-field block
+- **Sister pattern at framework-driven-cli-binary-pattern.md v1.1 § 5.2** — same X-macro walker discipline applied at CLI binary's test layer
+- **Future canonical:** FOREACH_STAMP_BOUND_MODEL_CONST cohort extensibility test (defer to next ship that warrants it; pattern applies registry-agnostic)
+
+### Cost vs win
+
+- **Cost:** ~50-80 LOC per cohort (one-time; X-macro walker + synthetic_value helpers + validation block)
+- **Win:** Class 21 closure at TEST LAYER; adding new flagged row = automatic test coverage; STORAGE_T edge cases caught at compile time via static_assert; precision/serialization regressions caught at CI time
 
 ---
 

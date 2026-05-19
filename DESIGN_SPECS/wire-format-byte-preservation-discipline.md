@@ -347,6 +347,17 @@ The version literal (e.g., `stamp_format_version=N`) is duplicated in C++ header
 - `/parity-check` Section E amendment — scan `tools/*.sh` + cross-process emit sites when wire-format change proposed; report per-file site counts + per-pattern site counts + disposition per site
 - `future-oriented-plan-template.md` amendment — wire-format-changing plans MUST include "Cross-tool emit-site enumeration" section with per-file + per-pattern + per-site disposition
 
+**Structural elimination at framework-driven surfaces (NEW 2026-05-18 v5.15.5.F.4d.1.B.3 Phase L):**
+
+For cross-tool surfaces that CAN use the engine framework (i.e., where the cross-tool surface emits wire format that the engine has a single-source-of-truth API for, like `stamp_write_for_model`), Layer 7 discipline is OBVIATED at that specific surface via the **framework-driven CLI binary pattern**. See `framework-driven-cli-binary-pattern.md` Stage 2 DRAFT (Stage 3 first canonical at `.B.3` Phase L = `tools/stamp_model_cli.cpp` replacing `tools/stamp_model.sh` after 6+ cross-tool sync recurrence events). The structural fix: replace the bash script with a thin C++ CLI binary that calls the framework API directly. CLI uses framework; doesn't mirror it; **drift impossible by construction**. Adding a new cfg field with stamp-binding post-Phase-L = 1 row in master FOREACH_PER_CORE_CFG_FIELD → framework auto-flows → CLI inherits for free → zero cross-tool sync work.
+
+**Layer 7 still applies for:**
+- Cross-tool surfaces WITHOUT a framework-driven C++ equivalent (e.g., bash diagnostic tools that read/parse engine output without emitting wire format)
+- Cross-tool surfaces where the workflow can't accommodate a C++ binary (e.g., shell-script-only operator environments; CI/CD pipelines with bash-only requirements)
+- Cross-tool surfaces during the TRANSITION period from bash to C++ CLI (deprecation shim window per `framework-driven-cli-binary-pattern.md` § Deprecation shim discipline)
+
+Apply the framework-driven pattern when recurrence count ≥ 3 + engine framework provides the relevant API + operator workflow can use a C++ binary. Apply Layer 7 discipline (per-site enumeration + cross-reference comments) when those conditions don't hold.
+
 ### Pattern lifecycle for Layer 7
 
 - **Stage 1 (problem identification):** v1.9 RE-SWEEP caught CRIT-RESWEEP-1 (version literal) + HIGH-RESWEEP-1 (orphan key) — Meta-gap M2 surfaced

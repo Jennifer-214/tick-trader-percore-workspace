@@ -280,6 +280,19 @@ The canonical end-state is: ONE master registry with metadata bits + sidecars; M
 
 ---
 
+## Sibling pattern at cross-tool surface (NEW 2026-05-18 v5.15.5.F.4d.1.B.3 Phase L v1.15)
+
+The canonical sister discipline applies at SPATIAL (parallel infrastructure when canonical sister exists) + TEMPORAL (sister sig migration as cohort discipline) axes. **Cross-tool axis is the third application:** bash scripts mirror engine wire emit / engine cfg parsers / engine schema descriptors — these are also "parallel infrastructure when canonical sister exists" at the cross-tool layer. The structural-fix sibling is `framework-driven-cli-binary-pattern.md` (NEW Stage 2 DRAFT v1.1 at v5.15.5.F.4d.1.B.3 Phase L). Sister to Layer 7 (`wire-format-byte-preservation-discipline.md` § Layer 7 — codifies cross-tool sync DISCIPLINE) — Phase L pattern provides STRUCTURAL ELIMINATION at framework-driven cross-tool surfaces; Layer 7 still applies for non-framework-driven cross-tool surfaces.
+
+**Trigger for cross-tool axis canonical sister extension:** when proposing/discovering a bash script that mirrors engine wire emit OR engine cfg parsing OR engine schema descriptors:
+1. Check recurrence count via `git log --follow tools/<script>.sh | wc -l`
+2. If recurrence ≥ 3 AND engine framework has the relevant API → STRUCTURAL FIX via `framework-driven-cli-binary-pattern.md` (replace bash with thin C++ CLI binary using framework directly)
+3. If recurrence < 3 OR no framework API → Layer 7 cross-tool emit-site enumeration discipline applies
+
+Stage 3 first canonical: `tools/stamp_model_cli.cpp` replaces `tools/stamp_model.sh` at `.B.3` Phase L (6+ recurrence events).
+
+---
+
 ## Cross-references
 
 - Sister: `metadata-bit-driven-derived-filter-framework.md` v1.3+ (where this discipline applies for cfg-derived consumer)

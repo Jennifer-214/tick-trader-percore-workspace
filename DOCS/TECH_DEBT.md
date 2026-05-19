@@ -1834,7 +1834,7 @@ The v5.15.5.F.4 sprint structurally closes 7 recurring drift classes via the uni
   - **Total drift sites fixed:** ~22 fixes across 16 SKILL.md files
   - **Worked-example sections preserved:** ~225+ refs preserved verbatim (high preservation ratio = discipline working correctly per entry's criteria)
 - **Accountability mechanism (retrospective):** Could still codify as M5 meta-discipline (`check_skill_md_sprint_refs.py`) if drift recurrence pattern emerges across future ships. Not urgent — manual per-ref classification cost was bounded (~45 min); CI tool ROI marginal at current cadence.
-- **Cross-ref:** `claude-skills/precoding-audit-gate/SKILL.md` (canonical generalized precedent); META program at `.B.3` for context; `DESIGN_PHILOSOPHY.md` § 11.5 (where M5 codification would live if recurrence emerges); commit landing fixes in `tick-trader-percore-workspace`.
+- **Cross-ref:** `claude-skills/precoding-audit-gate/SKILL.md` (canonical generalized precedent); META program at `.B.3` for context; `DESIGN_PHILOSOPHY.md` § 11.5 (where M5 codification would live if recurrence emerges); workspace commit `4c7aed6` (TECH_DEBT-109 CLOSED 2026-05-18).
 
 ### TECH_DEBT-110 — `tools/stamp_model.sh` deprecation shim deletion target (Phase L retention)
 

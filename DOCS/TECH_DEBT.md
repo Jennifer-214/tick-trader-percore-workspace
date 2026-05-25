@@ -195,6 +195,7 @@ A finding that exists only in a transient audit report or chat memory gets re-di
 | TECH_DEBT-115 | PHASE 1 APPLIED; PHASE 2-4 OPEN | `DOCS/tech-debt/open.md` |
 | TECH_DEBT-116 | OPEN with explicit trigger | `DOCS/tech-debt/open.md` |
 | TECH_DEBT-117 | OPEN with explicit trigger | `DOCS/tech-debt/open.md` |
+| TECH_DEBT-107 | PARTIAL CLOSED at v5.15.5.F.4d.1.B.3 (12 MATCH closed; 16 DIFFER pending per-row decision) | `DOCS/tech-debt/open.md` |
 | TECH_DEBT-118 | OPEN with explicit trigger | `DOCS/tech-debt/open.md` |
 | TECH_DEBT-119 | OPEN (in-flight at .B.4 start) | `DOCS/tech-debt/open.md` |
 | TECH_DEBT-120 | OPEN | `DOCS/tech-debt/open.md` |

@@ -2466,3 +2466,77 @@ Status: **OPEN** with explicit trigger.
 
 - **Status:** PHASE 1 APPLIED; PHASE 2-4 OPEN with explicit triggers.
 - **Cross-ref:** `DESIGN_SPECS/doc-disciplines/categorical-triggers-in-always-loaded-docs.md` / `DESIGN_SPECS/meta-disciplines/doc-frontmatter-convention.md` / `DESIGN_SPECS/meta-disciplines/doc-tag-vocabulary.md` / `DESIGN_SPECS/plan-templates/design-spec-template.md` / `DESIGN_SPECS/plan-templates/postmortem-template.md` / `DESIGN_SPECS/data-disciplines/cache-line-discipline.md` / `DESIGN_SPECS/concurrency-patterns/concurrency-model-summary.md` / `DESIGN_SPECS/audit-methodologies/audit-report-format.md` / `feedback_claude_md_guidelines_not_stuff_to_do.md` / `feedback_plans_have_explicit_end_goal.md` / `feedback_categorical_triggers_over_hardcoded_refs.md` / `feedback_metadata_audit_quarterly.md` / TECH_DEBT-112 (predecessor) / TECH_DEBT-113 (folder subdivision pairs) / CLAUDE.md § How to find anything (Stage 5 promotion already landed).
+
+### TECH_DEBT-119 — Extract EngineCommon_BootPerCore + EngineCommon_SlowPathCycleOneCore shared helpers (closes 4 train-serve CRITs + 3 HIGHs structurally)
+
+- **Created:** 2026-05-24 by `v5.15.5.F.4d.1.B.3` WIP-8 audit cycle (ML↔LIVE structural sweep)
+- **Severity:** HIGH (structural fix that closes 4 critical train-serve breaks per PARITY-026/027/028/029 + 3 HIGH drifts per PARITY-030/031 + TECH_DEBT-120 + B2 arch parity)
+- **Surface:** `CoreFrameworks/EngineSharded.hpp` boot block (~lines 670-1160) + `Backtest/BacktestSharded.hpp` boot block (~lines 180-420) + `ShardedBacktestDriver.hpp:189-397` slow-path body; NEW header `CoreFrameworks/EngineCommon.hpp`
+- **What's deferred:** Structural extract of shared per-core boot work + per-core slow-path cycle body into shared helpers callable from both EngineSharded_Run + BacktestSharded_Run. Mirror discipline currently relies on `"Mirrors EngineSharded_Run lines X-Y"` comments (15+ explicit citations in BacktestSharded.hpp) — drift accumulates per-patch (PARITY-026/027/028/029/030/031 are direct evidence drift HAS happened).
+- **Why deferred (not effort-avoidance):** NOT effort-deferred. Audit surfaced 4 CRITs + 3 HIGHs on 2026-05-24 mid-`.B.3` ship. Per `feedback_proportionate_response_to_audit_findings` Option D ARCHITECT (justified because 1 refactor closes 7 findings simultaneously). Per `feedback_motivated_collaborator_for_caramel` + `feedback_plan_right_not_fast` — gets dedicated `.B.4` sub-ship with full audit-driven pre-coding cycle, NOT folded into `.B.3` close. Hotfix for PARITY-026 (kill_switch) may land separately as 5-LOC mirror-the-backtest patch ahead of `.B.4` structural close.
+- **Cost estimate:** ~2-3 days focused; ~200-400 LOC (NEW EngineCommon.hpp + 2 callsite delegations + per-call-site differences via cfg flags / nullable state); MED-HIGH risk (touches both boot paths); EXPLICIT audit gate via /precoding-audit-gate + /blindspot-scan per `.B.4` plan body
+- **Trigger:** `.B.3` ship-close hands off to `.B.4`; or earlier if Caramel picks hotfix PARITY-026 standalone
+- **Status:** OPEN (in-flight at `.B.4` start)
+- **Cross-ref:** PARITY-026 (kill_switch dead) / PARITY-027 (exit-model submit) / PARITY-028 (BindCompositeCfg) / PARITY-029 (Strategy_InitPerCore) / PARITY-030 (BNB fee) / PARITY-031 (per-core regime) / TECH_DEBT-120 (B2 arch parity coverage) / `DESIGN_SPECS/meta-disciplines/structural-fix-preferred-decision-framework.md` / NEW `DESIGN_SPECS/refactor-patterns/shared-helper-extract-for-train-serve-mirror-close.md` DRAFT v0.1 at .B.4 plan-body / NEW `DESIGN_SPECS/meta-disciplines/train-serve-execution-layer-parity.md` DRAFT v0.1 (M5 codification) / `plans/v5.15-live-readiness/plan_checks/2026-05-24-train-serve-asymmetry-sweep.md`
+
+### TECH_DEBT-120 — parity_harness extension for engine_arch=per_core_slow path coverage (live-arch untested)
+
+- **Created:** 2026-05-24 by `v5.15.5.F.4d.1.B.3` WIP-8 audit cycle
+- **Severity:** HIGH (architectural arch-asymmetry; production runs untested code path relative to training)
+- **Surface:** `tests/parity_harness.cpp` (currently tests `engine_mode=single_core` vs `sharded` — BOTH centralized arch); NEW test for `engine_arch=per_core_slow` vs `centralized`
+- **What's deferred:** Add third sweep in existing parity_harness.cpp (or NEW `tests/train_serve_parity_harness.cpp` binary) to explicitly test `engine_arch=per_core_slow` path. Today's harness validates legacy-vs-modern backtest only; NO test exercises the LIVE-default per-core-slow lambda body at EngineSharded:3036-3320.
+- **Why deferred (not effort-avoidance):** Test infrastructure work belongs in `.F.5.C` training-harness-1:1-with-live-execution scope per ROADMAP. `.B.4` EngineCommon extract (TECH_DEBT-119) closes the structural mirror (helpers shared → byte-identical by construction); `.F.5.C` adds explicit regression guard. Two-step close per `feedback_proportionate_response_to_audit_findings`.
+- **Cost estimate:** ~4-6h (synthetic-data wrapper around EngineSharded that doesn't require Binance WS + explicit per_core_slow sweep + assertion on decision-output identity)
+- **Trigger:** `.F.5.C` plan body draft; or earlier if a `.B.4`-scope regression surfaces
+- **Status:** OPEN
+- **Cross-ref:** TECH_DEBT-119 (closes the structural mirror; this entry closes the test gap) / sister to TECH_DEBT-122 (parity_harness inadequate naming) / `plans/v5.15-live-readiness/plan_checks/2026-05-24-train-serve-asymmetry-sweep.md` finding B2
+
+### TECH_DEBT-121 — Live engine bandit_state_prior_path cfg field (transfer-learning asymmetry with backtest)
+
+- **Created:** 2026-05-24 by `v5.15.5.F.4d.1.B.3` WIP-8 audit cycle
+- **Severity:** MEDIUM (rare operator path — surfaces on first transfer-learning attempt to live)
+- **Surface:** `CoreFrameworks/ControllerConfig.hpp` (new cfg field row) + `EnsembleModelZoo_PostLoadSetup` (override block); cross-ref `Backtest/BacktestEngine.hpp:205` `bandit_state_prior_path[400]`
+- **What's deferred:** Live engine has NO cfg field to specify an explicit bandit state prior path; backtest has `bandit_state_prior_path` as backtest-only operator-explicit override. Operator transfer-learns bandit weights at backtest training; ships to production; live boot ignores the prior + starts from per-bundle default.
+- **Why deferred (not effort-avoidance):** Operator-facing cfg surface addition belongs in `.F.5.A` ML framework parity scope per ROADMAP (audit-driven scope sizing at `.F.4f` close). Add cfg row + parser + PostLoadSetup hook. NOT urgent because transfer-learning is rare operator workflow.
+- **Cost estimate:** ~2-3h (1 row in FOREACH_GLOBAL_CFG_FIELD + parser + PostLoadSetup override block + tests)
+- **Trigger:** `.F.5.A` plan body draft; or earlier if operator surfaces transfer-learning-to-live workflow
+- **Status:** OPEN
+- **Cross-ref:** `plans/v5.15-live-readiness/plan_checks/2026-05-24-train-serve-asymmetry-sweep.md` finding B5 / `Backtest/BacktestEngine.hpp:205`
+
+### TECH_DEBT-122 — parity_harness.cpp doesn't actually test backtest↔live parity (misleading name; false confidence)
+
+- **Created:** 2026-05-24 by `v5.15.5.F.4d.1.B.3` WIP-8 audit cycle
+- **Severity:** MEDIUM (operator believes parity_harness validates train↔serve; it doesn't; findings PARITY-026 to -031 all evade the harness)
+- **Surface:** `tests/parity_harness.cpp:8-23`
+- **What's deferred:** Rename or extend parity_harness. Current harness tests `engine_mode=single_core` vs `sharded` (BOTH consume Backtest_Run — training-side only). No EngineSharded_Run invocation. No live-path coverage. Either:
+  (a) RENAME to `tests/backtest_engine_parity_harness.cpp` to accurately reflect scope + add NEW `tests/train_serve_parity_harness.cpp` for true train↔serve coverage; OR
+  (b) EXTEND existing harness to add EngineSharded_Run invocation as third sweep
+- **Why deferred (not effort-avoidance):** Sister to TECH_DEBT-120; both close at `.F.5.C` training-harness-1:1-with-live-execution. Per ROADMAP `.F.5.C` is the explicit home.
+- **Cost estimate:** ~3-5h (depending on (a)/(b) choice + synthetic-data wrapper for EngineSharded)
+- **Trigger:** `.F.5.C` plan body draft
+- **Status:** OPEN
+- **Cross-ref:** TECH_DEBT-120 (sister; closes per_core_slow arch test gap) / `plans/v5.15-live-readiness/plan_checks/2026-05-24-train-serve-asymmetry-sweep.md` finding C2
+
+### TECH_DEBT-123 — foxml_suite cfg-source-of-truth structural fix (lives_in_struct-aware parser dispatch)
+
+- **Created:** 2026-05-24 by `v5.15.5.F.4d.1.B.3` WIP-8 audit cycle (foxml_suite cfg-source-of-truth audit)
+- **Severity:** HIGH (operator-visible cfg drift + dead routing metadata; affects every operator using foxml_suite for backtest training)
+- **Surface:** `foxml_suite.cpp:293-311` (boot cfg seed) / `Backtest/BacktestPanels.hpp` (RunControl + Optimizer + RunHistory cfg paths) / `GUI/SettingsPanel.hpp` (no `lives_in_struct` filtering) / `CoreFrameworks/CfgFieldRegistry.hpp:163-166` (STRUCT_BACKTEST_CFG/CONTROLLER_CFG/SECRETS_CFG/TRAINING_CFG enum — dormant; zero consumers gate by `lives_in_struct`)
+- **What's deferred:** Implement `lives_in_struct`-aware parser dispatch so backtest.cfg becomes a thin sidecar with only BACKTEST_CFG-tagged fields, NOT a full engine.cfg clone. Today: `backtest.cfg` is byte-for-byte first-boot copy of `engine.cfg`; idempotent-skip on subsequent boots; the two files drift silently. Phase F structurally encoded this drift into stamp HMAC body (stamp_emit reads `results->config_used` from backtest.cfg; live engine reads engine.cfg). Routing enum exists but ZERO consumers; dead metadata accumulating.
+- **Why deferred (not effort-avoidance):** Already queued at `v5.15.6.A/B/C` cfg unification follow-on per `plans/_future/2026-05-14-v5.15.6-master-cfg-surface-unification-followon.md`. Sub-ship `.A` covers controller.cfg; `.B` covers secrets.cfg; `.C` covers training.cfg. STRUCT_BACKTEST_CFG (the foxml_suite-specific surface) is implied by the design but explicit binding for the operator-visible cfg drift symptom needs explicit scope addition to one of `.A/.B/.C` or as `.D`. Sister to B4 finding (applies_to_op_mode_cat dormant — same dormant-metadata pattern).
+- **Cost estimate:** ~2-3 days focused per cfg-file sub-ship; ~250-350 LOC each per template at `plans/v5.15-live-readiness/subplans/2026-05-14-v5.15.5.F.4i-backtest-cfg-integration.md`
+- **Trigger:** `v5.15.6.A` plan body draft kickoff (post-`.F.4f` close)
+- **Status:** OPEN
+- **Cross-ref:** TECH_DEBT-050/051/052 (predecessor cfg unification entries) / TECH_DEBT-053 (Phase 2 cfg struct unification) / `plans/_future/2026-05-14-v5.15.6-master-cfg-surface-unification-followon.md` / `plans/v5.15-live-readiness/plan_checks/2026-05-24-train-serve-asymmetry-sweep.md` finding B4 (sibling dormant-metadata gap) / `plans/_future/2026-05-12-decoupling-endgoal-roadmap.md` (foxml_suite refactor positioning)
+
+### TECH_DEBT-124 — Cross-tool stamp-emit CI guard (defensive; prevents Path C resurrection)
+
+- **Created:** 2026-05-24 by `v5.15.5.F.4d.1.B.3` WIP-8 audit cycle (/parity-check finding MED-1)
+- **Severity:** LOW (defensive only; no current violation; Path C deletion verified clean)
+- **Surface:** NEW `tools/check_no_cross_tool_stamp_emit.py` (sister to `tools/check_per_core_registry_integrity.py` shape)
+- **What's deferred:** Add CI check that rejects any new file under `tools/` or `scripts/` that emits `stamp_format_version=` or HMAC-stamp bytes. Currently `find tools/ scripts/ -name "*.sh" -o "*.py"` shows ZERO files emit stamp bytes — Path C deletion verified the cross-tool surface is eliminated. Only `Stamp_AssembleAndEmit` → `stamp_write_for_model` chain emits. Layer 7 cross-tool surface effectively closed. The defensive guard prevents a future contributor reintroducing `tools/stamp_*.sh` (resurrecting the surface).
+- **Why deferred (not effort-avoidance):** Defensive guard against low-probability future regression. Not blocking any current work. Per `wire-format-byte-preservation-discipline.md` Layer 7 discipline still active for non-framework-driven cross-tool surfaces (preserved correctly today via Path C narrative).
+- **Cost estimate:** ~1h (sister Python tool + add to CI sweep + test fixture)
+- **Trigger:** `.F.5.A` ML framework parity ship close (consolidate with other CI tools) OR earlier if any cross-tool stamp emit surfaces
+- **Status:** OPEN (DEFERRED-INDEFINITE acceptable per low-recurrence-risk shape)
+- **Cross-ref:** `DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md` Layer 7 / `tools/check_per_core_registry_integrity.py` (sister shape) / `plans/v5.15-live-readiness/plan_checks/2026-05-24-train-serve-asymmetry-sweep.md` finding MED-1

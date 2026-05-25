@@ -196,6 +196,12 @@ A finding that exists only in a transient audit report or chat memory gets re-di
 | TECH_DEBT-116 | OPEN with explicit trigger | `DOCS/tech-debt/open.md` |
 | TECH_DEBT-117 | OPEN with explicit trigger | `DOCS/tech-debt/open.md` |
 | TECH_DEBT-118 | OPEN with explicit trigger | `DOCS/tech-debt/open.md` |
+| TECH_DEBT-119 | OPEN (in-flight at .B.4 start) | `DOCS/tech-debt/open.md` |
+| TECH_DEBT-120 | OPEN | `DOCS/tech-debt/open.md` |
+| TECH_DEBT-121 | OPEN | `DOCS/tech-debt/open.md` |
+| TECH_DEBT-122 | OPEN | `DOCS/tech-debt/open.md` |
+| TECH_DEBT-123 | OPEN | `DOCS/tech-debt/open.md` |
+| TECH_DEBT-124 | OPEN (DEFERRED-INDEFINITE acceptable) | `DOCS/tech-debt/open.md` |
 
 ## Migration history
 

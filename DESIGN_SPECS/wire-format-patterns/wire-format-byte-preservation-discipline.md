@@ -1,8 +1,9 @@
 ---
 type: wire-format-pattern
 stage: 5-claude-md
-version: 1.0
+version: 1.1
 established: 2026-05-09
+last_amended: 2026-05-19
 tags: [wire-format, framework-discipline, structural-fix, cross-tool-decoupling]
 surface: [wire-format, ml-inference, parser, cross-tool]
 sister_specs: [wire-format-canonical-body-invariants-helper.md, struct-padding-determinism-pattern.md, avx512-byte-determinism-pattern.md, framework-driven-cli-binary-pattern.md, autopopulate-pattern-for-production-caller-class.md, pre-post-cfg-registry-split-for-emit-order-preservation.md]
@@ -311,6 +312,84 @@ if (STAMP_HAS(r, field_X)) {
 ```
 
 Surface G means: legacy stamps (without new fields) load with `has_*=0` defaults; new code skips checks for absent fields. Forward-compat without version bump.
+
+### Layer 6b: SOFT version bump procedure (parser dual-recognition + emit single-version)
+
+**Established 2026-05-19** (codified during Phase F coding when wire-format change required version-level back-compat for a cohort of field renames). Sister to Layer 6 — Layer 6 handles per-FIELD forward-compat; Layer 6b handles per-VERSION backward-compat.
+
+**When SOFT vs HARD bump:**
+
+| Change shape | Bump | Parser semantics |
+|---|---|---|
+| Add field (Surface G) | NO bump | Parser ignores unknown keys (forward-compat) |
+| Rename key (sister registry consolidation) | SOFT | Parser dual-recognizes OLD + NEW keys → same target field |
+| Add format-string variant (e.g., `%g` → `%.17g`) | SOFT | Parser handles both via `parse_double_fast` (locale-immune) |
+| Delete field (no replacement) | HARD | Parser refuses OLD-version stamps with explicit error |
+| Change cryptographic invariant (HMAC algo, signature shape) | HARD | Old version unsupportable |
+
+SOFT bump preserves operator workflow continuity — no manual re-emit required. HARD bump requires operator action.
+
+**Procedure (5 steps):**
+
+1. **Extract version literal to named constant** at the engine emit site:
+   ```cpp
+   static constexpr uint32_t STAMP_FORMAT_VERSION_CURRENT = 1;  // bump at step 3
+   static constexpr uint32_t MAX_SUPPORTED_STAMP_FORMAT_VERSION = 2;  // upper bound
+   ```
+   Replaces hardcoded `"stamp_format_version=1\n"` literal. Single source of truth for emit version + parser bounds.
+
+2. **Add parser bounds check + dual-recognition setup**:
+   ```cpp
+   else if (strcmp(key, "stamp_format_version") == 0) {
+       r.stamp_format_version = atoi(val);
+       if ((uint32_t)r.stamp_format_version > MAX_SUPPORTED_STAMP_FORMAT_VERSION) {
+           r.error_code = STAMP_ERR_VERSION_TOO_NEW;
+       }
+   }
+   ```
+   Bounds check rejects FUTURE versions (forward-incompatible); accepts ALL `[1, MAX]` inclusive.
+
+3. **Bump `STAMP_FORMAT_VERSION_CURRENT`** (e.g., 1 → 2). Emit produces NEW version only; old version stamps continue parsing via Step 4.
+
+4. **Per-key back-compat layer** for renamed wire keys via closed-set X-macro:
+   ```cpp
+   #define FOREACH_LEGACY_PREFIXED_KEY(X) \
+       X(inference_cfg_bandit_algorithm,   bandit_algorithm) \
+       /* ... per (legacy_key, current_key) pair ... */
+
+   // In parser body, BEFORE framework dispatch:
+   #define X(legacy_key, current_key) \
+       else if (strcmp(key, #legacy_key) == 0) { \
+           /* Translate legacy key → current key; framework dispatch handles per-type parse */ \
+           PARSE_STAMP_CFG_TO_DERIVED(r, #current_key, val); \
+       }
+   FOREACH_LEGACY_PREFIXED_KEY(X)
+   #undef X
+   ```
+   Closed-set X-macro is the deprecation surface — when legacy stamps eliminated in production, delete the X-macro block + track via TECH_DEBT.
+
+5. **Test fixture: hand-written old-version canonical body bytes**:
+   - Compile-time string literal containing OLD canonical body (OLD key names + OLD version literal)
+   - HMAC computed in-process at test time via known test secret (no binary fixture file)
+   - LOAD test verifies (a) parser accepts old version, (b) cfg fields populated correctly from legacy keys, (c) drift check fires correctly comparing legacy stamp against current cfg
+   - Sister to Layer 4 round-trip + Layer 5b structural invariants
+
+**Eventual deprecation procedure (when legacy stamps eliminated in production):**
+
+1. Audit operator workflow for OLD-version stamps in active use
+2. If clean: delete `FOREACH_LEGACY_PREFIXED_KEY(X)` block + parser dispatch
+3. Keep OLD-version test fixture as regression guard against accidental re-introduction
+4. Close TECH_DEBT entry tracking the back-compat layer
+
+**Anti-pattern caught (WORKED EXAMPLE, v5.15.5.F.4d.1.B.3 Phase F):**
+
+When the cfg-derived cohort consumer framework consolidated wire-key prefixes (`inference_cfg_<name>` → `<name>` for 15 fields), HARD bumping would have forced every operator to re-train + re-stamp 15+ models on the same day. SOFT bump preserves workflow continuity: legacy stamps continue loading; new emits use unprefixed keys; operator retrains on natural cadence.
+
+**Sister patterns:**
+
+- `framework-driven-cli-binary-pattern.md` — CLI binary emits NEW version only; framework call inherits the constant; cross-tool emit + engine emit stay in sync via shared header
+- Layer 6 Surface G — per-field forward-compat (this layer is the per-version backward-compat counterpart)
+- Layer 7 cross-tool emit-site enumeration — version literal sync across cross-tool emit sites; structurally eliminated at framework-driven CLI binary surfaces
 
 ### Layer 7: Cross-tool emit-site enumeration discipline
 

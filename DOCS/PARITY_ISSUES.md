@@ -1157,6 +1157,169 @@ related_specs: [DESIGN_SPECS/framework-patterns/autopopulate-pattern-for-product
 - **Status:** ✅ **CLOSED 2026-05-13 via v5.15.5.C.3.1 fixup commit `1c593a5`** — same finding surfaced concurrently by `/dod-audit` HIGH-1 (both audits cross-flagged the identical Class-18 mirror gap). Fix applied: deleted the 5-line `BITMAP_SET/CLR(MASK_OMS_STATE_PARTIAL_EXIT_ENABLED)` block at `Backtest/BacktestSharded.hpp:197-201`; replaced with a 5-line comment cross-referencing Finding A's structural-fix discipline + the canonical SET site via `OMS_INIT_AUTOPOPULATE`. Both audits independently verified identical fix scope. Build clean (3052/3052 tests passing post-fix). Documented in commit message body.
 - **Workaround:** N/A (production behavior was always correct; this was structural cleanup to prevent future drift).
 
+### PARITY-026 — Live engine never calls EventLoopState_ConfigureKillSwitch (kill_switch dead in production)
+
+```yaml
+id: PARITY-026
+title: Live engine never calls EventLoopState_ConfigureKillSwitch (kill_switch dead in production)
+surface_tags: [engine-sharded-boot, kill-switch, live-safety, class-18-mirror, train-serve-asymmetry]
+severity: critical
+parity_axis: live↔backtest (live missing the call)
+status: open
+detected_at: v5.15.5.F.4d.1.B.3 WIP-8 (2026-05-24 audit cycle)
+target_close: v5.15.5.F.4d.1.B.4 (NEW; train-serve-execution-layer-parity sub-ship) OR earlier hotfix
+related_specs: [DESIGN_SPECS/meta-disciplines/structural-fix-preferred-decision-framework.md, DESIGN_SPECS/meta-disciplines/train-serve-execution-layer-parity.md (DRAFT v0.1 at .B.4)]
+```
+
+- **Found:** 2026-05-24 via ML↔LIVE structural sweep agent. Full report: `plans/v5.15-live-readiness/plan_checks/2026-05-24-train-serve-asymmetry-sweep.md`
+- **Severity:** CRITICAL — live-mode safety primitive non-functional; sprint named `v5.15-LIVE-READINESS`; shipping to paper-test session with dead kill_switch = opposite of sprint goal; worst-case silent unbounded loss
+- **Class:** Class 18 mirror at execution layer (sister site to PARITY-025; same shape as PARITY-002/003/004/005/008-012 closed via AUTOPOPULATE / PostLoadSetup in prior sprints)
+- **Site(s):**
+  - Live (BROKEN): `CoreFrameworks/EngineSharded.hpp:742` — calls ONLY `EventLoopState_Init(&state, &oms)`; NO `EventLoopState_ConfigureKillSwitch` follows
+  - Backtest (CORRECT): `Backtest/BacktestSharded.hpp:217-221` — `if (BITMAP_IS_SET(cfg.risk_cfg_flags, MASK_RISK_CFG_KILL_SWITCH_ENABLED)) EventLoopState_ConfigureKillSwitch(&state, 0, cfg.kill_switch_drawdown_pct);`
+  - Eval body: `CoreFrameworks/ControllerEventLoop.hpp:3300-3314` — early-returns when `ks_min_balance == 0 && ks_max_drawdown_pct == 0`. Both stay zero-init.
+- **Symptom:** Operator sets `kill_switch_enabled=1, kill_switch_drawdown_pct=5.0` in `engine.cfg`. Backtest replays trip the switch correctly; live trading runs IGNORE both fields → no drawdown protection in production.
+- **Root cause:** When the sharded path was built, the boot block didn't include `EventLoopState_ConfigureKillSwitch`. Backtest got the call right; live never got it. Sister to PARITY-028 + PARITY-029 — three sister Class 18 mirror instances at the same boot surface.
+- **Fix path:** Add `EventLoopState_ConfigureKillSwitch` call to `EngineSharded_Run` boot right next to `:742` `EventLoopState_Init` — mirror the backtest discipline. Better: extract `EngineCommon_BootPerCore(cfg, core_idx, state, oms)` shared helper called from BOTH sites (closes A1+A2+A3+A4+B1+B2+B3 simultaneously per TECH_DEBT-119).
+- **Target ship:** `v5.15.5.F.4d.1.B.4` OR earlier hotfix (~5-LOC patch).
+- **Status:** OPEN
+- **Workaround:** Operator MUST monitor drawdown manually in live trading until fix lands. Live mode without kill_switch is not safe for unattended trading.
+
+### PARITY-027 — Backtest has no ML exit-prediction submit path (use_exit_model=1 train-serve break)
+
+```yaml
+id: PARITY-027
+title: Backtest has no ML exit-prediction submit path (use_exit_model train-serve break)
+surface_tags: [backtest-slow-path, exit-model-ml-inference, oms-drainer, class-18-mirror, train-serve-asymmetry]
+severity: critical
+parity_axis: live↔backtest (backtest missing the dispatch)
+status: open
+detected_at: v5.15.5.F.4d.1.B.3 WIP-8 (2026-05-24 audit cycle)
+target_close: v5.15.5.F.4d.1.B.4
+related_specs: [DESIGN_SPECS/refactor-patterns/shared-helper-extract-for-train-serve-mirror-close.md (DRAFT v0.1 at .B.4)]
+```
+
+- **Found:** 2026-05-24 ML↔LIVE structural sweep
+- **Severity:** CRITICAL — silent train-serve break for `use_exit_model=1` users; trained model never sees early-exit pattern in backtest equity curve; bandit reward attribution for exit predictor learns from live with zero training-time signal
+- **Class:** Class 18 mirror — dispatch only on live side
+- **Site(s):**
+  - Live (~85 LOC): `CoreFrameworks/EngineSharded.hpp:3142-3227` — `MASK_ML_CFG_USE_EXIT_MODEL` + `last_exit_prediction > exit_threshold` → `OMS_PushExitForSlot` MARKET_SELL + `last_exit_predicted_bitmap` set for v5.13.4 bandit reward attribution
+  - Backtest: `Backtest/BacktestSharded.hpp` + `CoreFrameworks/ShardedBacktestDriver.hpp:189-397` — ZERO hits for `use_exit_model|last_exit_prediction|OMS_PushExitForSlot|MASK_ML_CFG_USE_EXIT_MODEL`
+- **Symptom:** When `use_exit_model=1`, backtest exits via TP/SL/time-exit only; live additionally fires ML exit predictions. Live performance diverges from backtest projection; models systematically under-estimate exit-predictor value.
+- **Root cause:** Exit-model dispatch added live-only; backtest mirror never written. Distinct from PARITY-010 (covered exit-bandit INIT state parity); this is the DISPATCH parity gap.
+- **Fix path:** Extract `EventLoop_ExitPredictionSubmitOneCore(state, oms, cfg, c, price_d)` shared helper called from BOTH `EngineSharded:3142` AND `ShardedBacktest_RunTick` slow-path block. ~40 LOC extract + 5 LOC each callsite. Folds into TECH_DEBT-119 C1 EngineCommon structural extract.
+- **Target ship:** `v5.15.5.F.4d.1.B.4`
+- **Status:** OPEN
+- **Workaround:** Operator should disable `use_exit_model` (set `MASK_ML_CFG_USE_EXIT_MODEL=0`) until fix lands, OR accept that backtest equity curves systematically diverge from live for any model trained with this flag enabled.
+
+### PARITY-028 — ConfidenceScorer_BindCompositeCfg + RollingTurnover_Init missing in backtest (composite confidence drift)
+
+```yaml
+id: PARITY-028
+title: ConfidenceScorer_BindCompositeCfg + RollingTurnover_Init missing in backtest
+surface_tags: [backtest-boot, confidence-scoring, class-18-mirror, train-serve-asymmetry]
+severity: critical
+parity_axis: live↔backtest (backtest missing 2 calls)
+status: open
+detected_at: v5.15.5.F.4d.1.B.3 WIP-8 (2026-05-24 audit cycle)
+target_close: v5.15.5.F.4d.1.B.4
+related_specs: [PARITY-003 (sister; live side was closed at v5.14.1.B.1 but backtest mirror never enforced)]
+```
+
+- **Found:** 2026-05-24 ML↔LIVE structural sweep
+- **Severity:** CRITICAL — silent train-serve drift on composite-confidence configs (new feature path; growing surface)
+- **Class:** Class 18 mirror — sister to PARITY-003 (closed live side; didn't enforce backtest mirror)
+- **Site(s):**
+  - Live (CORRECT): `CoreFrameworks/EngineSharded.hpp:1125-1140` — calls `ConfidenceScorer_Init` + `ConfidenceScorer_BindCompositeCfg` + `RollingTurnover_Init` per-core with cfg values (`confidence_freshness_tau_secs`, `confidence_capacity_target_dollars`, `confidence_capacity_kappa`, `confidence_rmse_baseline`, `confidence_turnover_window`, `confidence_turnover_topk`)
+  - Backtest (BROKEN): `Backtest/BacktestSharded.hpp:408-411` — calls only `ConfidenceScorer_Init`; `BindCompositeCfg` + `RollingTurnover_Init` ABSENT
+- **Symptom:** With `confidence_composite_enabled=1`, live uses composite freshness/capacity/RMSE blend; backtest scorer falls back to legacy product mode + EventLoopState_Init defaults (100/3). Training labels + features collected with one composite shape; serving emits a different shape. Bandit_blend_ratio + confidence-gated submission decisions diverge.
+- **Root cause:** PARITY-003 fix at v5.14.1.B.1 patched live side only. Sister to PARITY-026 + PARITY-029 — three sister Class 18 mirrors at the same boot surface (`EngineSharded.hpp:1125-1154`).
+- **Fix path:** 10-LOC copy from `EngineSharded:1130-1140` to `BacktestSharded:411`. Better: extract `Confidence_BindFromCfg(scorer, turnover, cfg, core_idx)` shared helper. Folds into TECH_DEBT-119 C1.
+- **Target ship:** `v5.15.5.F.4d.1.B.4`
+- **Status:** OPEN
+- **Workaround:** Operator should set `confidence_composite_enabled=0` (legacy product mode) until fix lands; composite confidence configs are not safe to train-then-deploy with current backtest path.
+
+### PARITY-029 — Strategy_InitPerCore never called in backtest (pre-v5.4 F7 bug never closed on backtest side)
+
+```yaml
+id: PARITY-029
+title: Strategy_InitPerCore never called in backtest (pre-v5.4 F7 bug alive on backtest)
+surface_tags: [backtest-boot, strategy-lifecycle, class-18-mirror, train-serve-asymmetry, training-data-contamination]
+severity: critical
+parity_axis: live↔backtest (backtest missing the call)
+status: open
+detected_at: v5.15.5.F.4d.1.B.3 WIP-8 (2026-05-24 audit cycle)
+target_close: v5.15.5.F.4d.1.B.4
+related_specs: [postmortem F7 (v5.4.0; live side fix); DESIGN_SPECS/meta-disciplines/structural-fix-preferred-decision-framework.md]
+```
+
+- **Found:** 2026-05-24 ML↔LIVE structural sweep
+- **Severity:** CRITICAL — silent training data contamination affecting ALL stateful strategies; broken since v5.4 (~14 months); every model trained on backtest data since then has training data contamination
+- **Class:** Class 18 mirror — F7 postmortem fix patched live side only
+- **Site(s):**
+  - Live (CORRECT): `CoreFrameworks/EngineSharded.hpp:1154` — `tt::Strategy_InitPerCore(&state, i, state.cores[i].strategy_id, &state.cores[i].slow_state->rolling_short, &cfg)` (v5.4.0 Phase 1.3 fix per postmortem F7)
+  - Backtest (BROKEN): `Backtest/BacktestSharded.hpp` — ZERO hits for `Strategy_InitPerCore`. Backtest started with the F7 bug; live got fixed; backtest still has it.
+- **Symptom:** Strategies with per-core state structs (MeanReversion stateful, Momentum with state, MLStrategy bandit context) train with garbage initial state on first slow-path cycle. Convergence eventually happens after `min_warmup_samples`, but feature/label rows captured pre-convergence pollute training. Live correctly initializes per-core state on boot.
+- **Root cause:** F7 postmortem fix only patched the live side. Sister to PARITY-026 + PARITY-028 — three sister Class 18 mirrors at the same boot surface.
+- **Fix path:** 5-LOC add matching `tt::Strategy_InitPerCore` call in `BacktestSharded:411`. Folds into TECH_DEBT-119 C1.
+- **Target ship:** `v5.15.5.F.4d.1.B.4`
+- **Status:** OPEN
+- **Workaround:** Operator should be aware that any model trained on backtest data since v5.4 may carry pre-convergence stateful-strategy data contamination. Models trained with stateless strategies (SimpleDip, EmaCross) are unaffected. Increasing `min_warmup_samples` is a partial mitigation.
+
+### PARITY-030 — BNB fee discount applied LIVE-only (33% backtest fee inflation; train-serve cost drift)
+
+```yaml
+id: PARITY-030
+title: BNB fee discount applied LIVE-only (backtest pays 33% higher fees than live)
+surface_tags: [backtest-boot, fee-model, train-serve-asymmetry, cost-parity]
+severity: high
+parity_axis: live↔backtest (backtest missing the discount)
+status: open
+detected_at: v5.15.5.F.4d.1.B.3 WIP-8 (2026-05-24 audit cycle)
+target_close: v5.15.5.F.4d.1.B.4
+related_specs: []
+```
+
+- **Found:** 2026-05-24 ML↔LIVE structural sweep
+- **Severity:** HIGH — silent train-serve cost drift on real cfg flag (`pay_fees_in_bnb=1`); models trained with inflated costs bias toward conservative entry thresholds; live execution actually pays 0.75x fees → models leave alpha on table
+- **Class:** Class 18 mirror at boot surface
+- **Site(s):**
+  - Live: `CoreFrameworks/EngineSharded.hpp:690-699` — `cfg.pay_fees_in_bnb` multiplies `cfg.cores[c].fee_rate_maker/_taker` by 0.75 per-core at boot
+  - Backtest: ZERO hits for `pay_fees_in_bnb|bnb_factor`. Backtest uses raw `cfg.fee_rate_*` per core.
+- **Symptom:** Equity curves systematically diverge for users with `pay_fees_in_bnb=1` — backtest projects lower returns than live actually achieves; operator may dismiss this as "live is doing better" without recognizing the cost-model parity break.
+- **Root cause:** BNB fee discount feature added live-only; backtest mirror not implemented at addition time.
+- **Fix path:** Copy per-core multiply block to `BacktestSharded:215` (before existing kill-switch block). Better: extract `Cfg_ApplyBnbDiscount(&cfg)` shared helper. Folds into TECH_DEBT-119 C1.
+- **Target ship:** `v5.15.5.F.4d.1.B.4`
+- **Status:** OPEN
+- **Workaround:** Operator should be aware that backtest results with `pay_fees_in_bnb=1` are pessimistic vs live execution by ~33% of fee load.
+
+### PARITY-031 — Per-core regime divergence at backtest feature collect (N→1 collapse)
+
+```yaml
+id: PARITY-031
+title: Backtest collapses N per-core regime states to 1 at feature compute (live serves N per-core)
+surface_tags: [backtest-feature-compute, regime-detection, per-core-state, train-serve-asymmetry]
+severity: high
+parity_axis: live↔backtest (backtest collapses N→1)
+status: open
+detected_at: v5.15.5.F.4d.1.B.3 WIP-8 (2026-05-24 audit cycle)
+target_close: v5.15.5.F.4d.1.B.4
+related_specs: []
+```
+
+- **Found:** 2026-05-24 ML↔LIVE structural sweep
+- **Severity:** HIGH — silent train-serve drift on per-core-regime-aware cfg shapes; affects ANY operator using per-core `regime_hysteresis` overrides
+- **Class:** DIVERGENT FIELDS asymmetry (single-state vs per-core-state)
+- **Site(s):**
+  - Live: `CoreFrameworks/ControllerEventLoop.hpp:2641` — `ml_ctx.current_regime_id = state->cores[slot].regime_state.current_regime` (per-core regime state per inference call)
+  - Backtest: `Backtest/BacktestSharded.hpp:541-548` allocates SINGLE `fc_ctx.regime_state` (not per-core); `:612` collapses N→1 via `ctx.current_regime = fc->regime_state.current_regime`
+- **Symptom:** Per-core configs with different `regime_hysteresis` train features with ONE collapsed regime; live serves N separate regimes. `regime_class_onehot` + downstream regime-context features systematically drift between training matrix + serve-time inference.
+- **Root cause:** Backtest feature-compute path was simplified to single regime state for simplicity; per-core regime overrides feature came later but never extended backtest collection.
+- **Fix path:** Make `fc_ctx.regime_state` `[MAX_EXECUTION_CORES]`; per-core collection per slot. ~30 LOC. Folds into TECH_DEBT-119 C1.
+- **Target ship:** `v5.15.5.F.4d.1.B.4`
+- **Status:** OPEN
+- **Workaround:** Operator should avoid per-core `regime_hysteresis` overrides (use same value across all cores) until fix lands.
+
 ---
 
 ## Audit log

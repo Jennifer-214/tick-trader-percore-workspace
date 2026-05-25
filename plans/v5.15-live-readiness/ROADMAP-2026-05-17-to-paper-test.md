@@ -54,6 +54,22 @@ Cfg-derived consumer framework structural close. Eliminates parallel-registry-dr
 - ~4-6h focused; MED risk
 - Skeleton at subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md
 
+### `.F.4d.1.B.4` (NEW; QUEUED 2026-05-24 post-train-serve-asymmetry-sweep)
+- Train-serve execution-layer parity structural fix: extract `EngineCommon_BootPerCore` + `EngineCommon_SlowPathCycleOneCore` shared helpers in NEW `CoreFrameworks/EngineCommon.hpp`; closes 4 CRIT (PARITY-026 kill_switch dead in live; PARITY-027 backtest no ML exit-prediction; PARITY-028 backtest no BindCompositeCfg; PARITY-029 backtest no Strategy_InitPerCore F7 bug) + 3 HIGH (PARITY-030 BNB fee; PARITY-031 per-core regime collapse; B2 OneCore/AllCores arch mirror) by 1 boundary-stable structural refactor
+- M5 meta-discipline codification at ship close (NEW DESIGN_SPECS train-serve-execution-layer-parity.md + shared-helper-extract-for-train-serve-mirror-close.md from Stage 2 → Stage 3 first canonical; § 11.5 amend; NEW skill `/train-serve-asymmetry-sweep <layer>`; NEW /readiness Check 40)
+- TECH_DEBT-119 closes by structural-fix at ship close
+- ~2-3 days focused; MED-HIGH risk (touches both boot paths + slow-path-cycle body); requires full `/precoding-audit-gate` + `/blindspot-scan` fire pre-coding
+- Optional: PARITY-026 kill_switch standalone hotfix lands earlier as 5-LOC mirror-the-backtest patch (operator decision pending)
+- Plan body draft target: subplans/2026-05-24-v5.15.5.F.4d.1.B.4-train-serve-execution-layer-parity.md (drafting; Caramel reviews before coding)
+- Audit capture: plan_checks/2026-05-24-train-serve-asymmetry-sweep.md (4 CRIT + 3 HIGH + 2 MED findings; M5 meta-discipline first canonical)
+
+### `.F.4d.1.B.4-followup` (POST-`.B.4` AUDIT CADENCE; rolling)
+- 6-layer train-serve asymmetry sweep cadence per `plan_checks/2026-05-24-future-asymmetry-sweep-cadence.md`
+- ~1 layer per week post-`.B.4` ship close: OMS (HIGH) / GUI panel parallelism (MED-HIGH) / Boot init triple-entry (MED) / Logging-observability (MED) / Stamp body PRE_CFG-POST_CFG model-state cohort (MED) / DataStream parsing (LOW-MED)
+- Findings auto-write PARITY + TECH_DEBT entries per [[feedback_consult_on_audit_findings]] auto-write contract
+- Sub-ship scoping per layer's blast radius (may absorb into `.F.5.X` or spawn `.F.4d.1.B.5+`)
+- Sister to quarterly `/anti-spaghetti` cadence per [[project_anti_spaghetti_audit_cadence]]
+
 ### `.F.4d.1.C` (QUEUED)
 - Sidecar override + bit-packed inventory: FOREACH_DRIFT_OVERRIDE sparse sidecar + DriftOverride + RegistryRosterEntry + ManualFieldInventoryEntry (multi-bit-state-encoding canonicals 6/7/8)
 - Sister to `.B.1`'s FOREACH_CFG_GATE — gate-type vs severity-type sidecar

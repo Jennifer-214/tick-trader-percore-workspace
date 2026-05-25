@@ -1,13 +1,25 @@
 ---
 type: refactor-pattern
-stage: 3-first-canonical
-version: 1.0
+stage: 2-draft
+version: 1.1
 established: 2026-05-18
+last_amended: 2026-05-24
 tags: [cross-tool-decoupling, structural-fix, framework-discipline, wire-format]
 surface: [cross-tool, wire-format, ci-tooling]
 sister_specs: [wire-format-byte-preservation-discipline.md, canonical-sister-extension-discipline.md, structural-fix-preferred-decision-framework.md]
 applies_at_skills: []
 ---
+
+> **Pattern status update (2026-05-24)**: Phase L first-canonical-application at v5.15.5.F.4d.1.B.3
+> REVERTED. Reason: foxml_suite already stamps models in-process via
+> `Backtest_RunFullValidation → Stamp_AssembleAndEmit` (cfg.auto_stamp_on_held_out_completion).
+> Operator workflow doesn't require CLI binary for common case; bash CLI was edge-case-only
+> infrastructure. Per `feedback_overengineering_boundary_when_future_easier` + YAGNI — pattern
+> retained as DESIGN_SPEC; first canonical deferred to v5.16+ cmdline-invocable training when
+> decoupling endgoal needs a true headless CLI (per `plans/_future/2026-05-12-decoupling-endgoal-roadmap.md`).
+> Sister DELETED: `tools/stamp_model.sh` bash CLI + `tools/stamp_model_cli.cpp` C++ binary (no
+> mirror; no maintenance burden; operator workflow via foxml_suite GUI button — queued for
+> foxml_suite consolidation sub-sprint per `project_foxml_suite_refactor_queued`).
 
 # Framework-driven CLI binary pattern (thin C++ wrapper over engine framework)
 

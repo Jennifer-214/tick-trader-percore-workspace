@@ -6,8 +6,8 @@ version: 0.1
 established: 2026-05-24
 first_canonical_target: v5.15.5.F.4d.1.B.4 ship close
 description: Audit-methodology M5 — train-serve parity walk at boot + slow-path-cycle layer (distinct from M1 cfg/stamp surface parity)
-tags: [audit-methodology, train-serve-parity, execution-layer, class-18-mirror, meta-discipline]
-surface: [engine-sharded-boot, slow-path-cycle, oms-drainer, ml-inference-dispatch]
+tags: [audit-methodology, meta-discipline, structural-fix]
+surface: [boot-time, slow-path, oms-drainer, ml-inference, backtest]
 sister_specs:
   - structural-fix-preferred-decision-framework.md
   - canonical-sister-extension-discipline.md

@@ -6,8 +6,8 @@ version: 0.1
 established: 2026-05-24
 first_canonical_target: v5.15.5.F.4d.1.B.4 ship close (EngineCommon_BootPerCore + EngineCommon_SlowPathCycleOneCore)
 description: Pattern for closing Class 18 train-serve mirror clusters by extracting shared helpers callable from both EngineSharded + BacktestSharded
-tags: [refactor-pattern, train-serve-parity, class-18-mirror, structural-fix, shared-helper-extract]
-surface: [engine-sharded-boot, backtest-sharded-boot, slow-path-cycle, execution-layer]
+tags: [structural-fix, framework-discipline]
+surface: [boot-time, slow-path, backtest]
 sister_specs:
   - train-serve-execution-layer-parity.md (the M5 audit discipline that surfaces the candidates)
   - structural-fix-preferred-decision-framework.md

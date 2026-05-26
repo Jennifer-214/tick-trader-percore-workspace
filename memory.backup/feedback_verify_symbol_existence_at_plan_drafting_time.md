@@ -51,6 +51,21 @@ Three sister disciplines all map to the same root principle: **comprehensive gre
 
 **Coding-time fallback:** even with planning-time verification, ALSO run comprehensive grep at Phase A audit gate (sister to Step A.4 enumeration). Catches drift between plan body lock + coding start.
 
+## Stage 6 structural enforcement (v5.15.5.F.4d.1.B.4 — extended scope)
+
+B-Plus CI tool at `tools/check_plan_body_symbol_existence.py` (M7 Stage 6 first canonical) now enforces BOTH passes structurally at COMMIT layer:
+
+1. **Symbol existence** (since v0.1 starter at v5.15.5.F.4d.1.B.4 WIP-5; v0.2 production-ready at WIP-6): compile-time verification of cited C++ symbols in ```cpp code blocks (Class 14 closure)
+2. **Line-anchor accuracy** (v0.3 extension at WIP-10 post-Phase-C.1 verification gate): fuzzy-match verification of `<file>:<line>` and `<file>:<start>-<end>` citations against actual file content at cited line ranges (line-drift closure)
+
+Line-anchor mode: parses plan body for `<path>:<line>` / `<path>:<start>-<end>` patterns; extracts surrounding plan body identifiers (CamelCase_snake_case fn names + ALL_CAPS constants + backtick-quoted member access); verifies identifiers appear within cited range (PASS) or within ±50 fuzzy window (DRIFT/DRIFT-FAR) or anywhere in file (NOTFOUND). OOB (cite > file lines) + MISSING (file not found) are blocking exit codes; DRIFT is non-blocking warning.
+
+**Why landed at WIP-10:** v5.15.5.F.4d.1.B.4 Phase C.1+C.2 boot migration shifted EngineSharded.hpp line numbers by ~380 LOC; plan body cites pointed at pre-shift positions; original B-Plus (symbol-only) didn't catch (symbols still exist, just at different lines); `/trace-deps` manual audit caught at WIP-9 pre-coding gate. Per `feedback_no_defer_for_effort` + `feedback_structural_fix_for_recurring_class` — extended the tool inline (~150 LOC Python addition) instead of opening a TECH_DEBT for future ship. Mechanical extensions to existing CI tools qualify as inline fix; reserve TECH_DEBT for scope requiring dedicated future ship.
+
+**Pre-commit hook + /readiness Check 32** invoke both verification passes. CLI: `python3 tools/check_plan_body_symbol_existence.py <plan>.md` (line-anchor mode always-on; `--show-drift` to print drift details; `--no-verify-anchors` to skip line-anchor pass). Bypass via `SKIP_PLAN_BODY_CHECK=1 git commit` (use sparingly per existing discipline).
+
+**Tool limit (known MVP):** Line-anchor identifier extraction uses 4 regex patterns (CamelCase_snake_case + ALL_CAPS + backtick member access + backtick fn call). Cites whose surrounding plan body context lacks matched identifiers SKIP verification (no useful comparison). Extending patterns when surface-area justifies. v1.7.4 lambda body cite `EngineSharded.hpp:3044-3311` was missed by the MVP (context was "extract from lambda body" with no CamelCase_snake_case symbols near the cite) — `/trace-deps` manual audit still complements. Going-forward rule: B-Plus line-anchor mode is FIRST PASS; `/trace-deps` still mandatory at post-substantive-amendment audit gates for the cases B-Plus skips.
+
 **Sister to compaction-degradation rule:** [[feedback_compaction_degrades_treat_handoffs_as_hints]] — handoffs lose precision (sigs, paths, counts, asymmetry depth). Plan bodies inherit handoff precision when drafted in compacted sessions. This rule is the COUNTERMEASURE: always re-verify cited symbols against current code, especially when plan body is drafted in late session.
 
 **Sister to iteration-spiral rule:** [[feedback_iteration_spiral_signals_audit_meta_gap]] — 5 amendment cycles at `.B.4` for `OrderManager_RegisterCore` drift would have been compressed to 1 cycle if v1.0 had grepped for the cited symbol. This rule is the META-GAP CLOSURE.

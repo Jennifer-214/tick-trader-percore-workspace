@@ -48,16 +48,41 @@ Extract:
 
 ### Stage 3: Load required reading dynamically
 
-Read each cited file via Read tool. Always-loaded baseline (read regardless of citation):
+Read each cited file via Read tool.
+
+**Stage 3.1 — Always-loaded baseline** (read regardless of citation):
 - `/home/caramel/code/FoxML_Trader_v2/CLAUDE.md`
 - `/home/caramel/code/FoxML_Trader_v2/CLAUDE.local.md`
 - `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/MEMORY.md`
 
-Then dynamically loaded per handoff "Critical pickup-time reads" section + cited files in body.
-
+**Stage 3.2 — Handoff-cited reads** (load each file from "Critical pickup-time reads" section):
 Per-file action: Read → confirm file exists + content non-empty → log to internal "loaded files" list.
-
 If any cited file MISSING at HEAD: WARN — handoff may reference stale path.
+
+**Stage 3.3 — CLAUDE.local.md trigger-required reads** (auto-load based on plan surface; per `CLAUDE.local.md § Required reading before performance-sensitive code` table):
+
+Detect plan body surface keywords; auto-load matching trigger docs even if not explicitly cited:
+
+| Plan body contains keyword | Auto-load |
+|---|---|
+| `slow-path` / `slow_path` / `BG_Evaluate` / `SG_Evaluate` / `hot path` / `OMS_Drain` / `parsing` / `ML inference` / `strategy` | `DOCS/STRATEGY_AND_CODING_RULES.md` (11 strict invariants H1-H20) |
+| `latency` / `optimization` / `regression` / `perf` / `cycle` | `DOCS/LATENCY_OPTIMIZATION_AUDIT.md` (13 parts) |
+| `hot path` / `slow path` / `latency-impacting` / `per-tick` / `BG_Evaluate` / `producer` / `drainer` | `plans/_cross-cutting/2026-05-06-latency-path-discipline.md` (7 architectural rules) |
+| `audit_tier: HIGH-RISK` OR cold-pickup OR designing-non-trivial | `DOCS/DESIGN_PHILOSOPHY.md` (master settings portal; 14 sections + § 11.5 M1-M7 registry) |
+
+**Stage 3.4 — In-flight plan body extract surface auto-load** (read engine source files cited in plan body's Phase B/C/D Steps):
+
+Scan plan body for `<source-file>.hpp:<line>-<line>` extract references. Auto-load each referenced engine source file (full file or relevant line range). Common surfaces:
+- `EngineSharded.hpp` (per_core_slow lambda body extraction)
+- `ControllerEventLoop.hpp` (sister consumer patterns)
+- `SlowPathGateRegistry.hpp` (FOREACH_SLOW_PATH_GATE + AUTOPOPULATE macros)
+- `BinanceDepth.hpp` (`BookSnapshot<F>` sister-canonical reuse)
+- `ExecutionCore.hpp` (hot path)
+- `OrderManager.hpp` (drainer)
+
+**Stage 3.5 — Memory file cross-ref auto-load**:
+
+Memory files referenced in plan body / handoff doc / decision log via `[[name]]` or `feedback_*` / `user_*` / `project_*` / `reference_*` patterns auto-load (these are typically already loaded via MEMORY.md auto-load; this is verification).
 
 ### Stage 4: Verify git state matches handoff claims
 

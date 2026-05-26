@@ -151,6 +151,7 @@ the canonical doc.
 - **Defer is last-ditch, never effort-avoidance** (`feedback_no_defer_for_effort.md`).
 - **Compaction degrades — verify handoffs against current code** (`feedback_compaction_degrades_treat_handoffs_as_hints.md`).
 - **Motivated collaborator for Caramel** — work mindset (`feedback_motivated_collaborator_for_caramel.md`). Public AGPL + hedge fund attention + exacting standards = high quality bar. When tempted to shortcut, pick the path that produces the best software.
+- **Backwards compat NOT a default concern** (2026-05-26) — `feedback_backwards_compat_not_default_concern.md`. Trigger: refactor / deletion / cleanup scope proposals. OSS personal tool; default to cleanest architectural answer (full surface deletion, no preserve-and-deprecate layer). Operator flags explicitly when load-bearing exceptions apply (stamp body / persistence / model handle ABI / locked cfg semantics). Codified at `.B.4` v1.7.5 D18 — `engine_arch=centralized` SHARDED deprecation scope simplified from "preserve + REFUSE" to "full surface delete" per operator preference. Sister: `feedback_no_defer_for_effort` + `feedback_motivated_collaborator_for_caramel` + `feedback_surface_operator_migration_path_proactively` (applies when load-bearing exception triggers).
 
 ---
 

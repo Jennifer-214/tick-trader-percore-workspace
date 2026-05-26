@@ -36,3 +36,22 @@ bumping Version.hpp — string stayed at "5.10.0e". Caught at v5.11.17
 in-flight (operator screenshotted the boot banner). Fixed in v5.11.17
 commit by jumping straight to "5.11.17" instead of trying to backfill
 intermediate values.
+
+## Sister discipline: rename plans when ship order diverges from plan numbering
+
+(Folded 2026-05-26 from former `feedback_rename_plans_to_match_ship_order.md`.)
+
+When the ORDER of shipping diverges from the plan filename's PHASE numbering
+(e.g., plan `phase-3` ships before plan `phase-2`, OR plan was authored as
+`vX.Y.5` but actually ships as `vX.Y.7` due to inserted intermediate ships),
+**rename the plan file** so its name + the ship's git tag stay monotonic.
+
+DO NOT rename `Version.hpp` to match — Version.hpp follows the tag (above).
+
+Rationale: plan file naming becomes the persistent record of ship sequence;
+divergence makes plan archeology painful ("phase 3 plan but it was actually
+the 7th ship?"). Rename keeps `ls plans/<sprint>/subplans/ | sort` reflective
+of actual shipping order.
+
+This rule co-locates with version-bump discipline since both are about
+"ship metadata consistency at the moment of tagging."

@@ -66,6 +66,37 @@ Line-anchor mode: parses plan body for `<path>:<line>` / `<path>:<start>-<end>` 
 
 **Tool limit (known MVP):** Line-anchor identifier extraction uses 4 regex patterns (CamelCase_snake_case + ALL_CAPS + backtick member access + backtick fn call). Cites whose surrounding plan body context lacks matched identifiers SKIP verification (no useful comparison). Extending patterns when surface-area justifies. v1.7.4 lambda body cite `EngineSharded.hpp:3044-3311` was missed by the MVP (context was "extract from lambda body" with no CamelCase_snake_case symbols near the cite) — `/trace-deps` manual audit still complements. Going-forward rule: B-Plus line-anchor mode is FIRST PASS; `/trace-deps` still mandatory at post-substantive-amendment audit gates for the cases B-Plus skips.
 
+## v0.4 deletion-target consumer-enumeration helper (added v5.15.5.F.4d.1.B.4 v1.7.5 WIP-12)
+
+**Third extension to B-Plus CI tool** (sister to v0.2 symbol-existence + v0.3 line-anchor):
+- **v0.4 generator mode** (MVP): `--gen-deletion-cohort PATTERN` CLI flag — runs comprehensive `rg <pattern>` over engine + workspace production code; classifies each match per **deletion-kind heuristic** (operator-facing-doc / stale-comment / log-string / version-history-comment / GUI-gating / test-surface / cohort-wrapper / DELETE-with-body / UNCONDITIONALIZE-body / enum-constant / cfg-field-row / archived-changelog LEAVE / current-changelog historical-row LEAVE / etc.); prints structured enumeration in **leaves-first ordering** per B14 multi-surface deletion ordering pillar (operator-facing docs first → stale comments → log strings → GUI gating → tests → cohort-wrappers → centralized branches → unconditionalize boot-spawn gate → cfg-field-row last). Excludes archived changelogs by default per [[feedback_archived_changelog_preservation_discipline]]. `--csv` flag for ready-to-paste enumeration into plan body Phase A.6.5.c CSV artifact; `--include-workspace` for cross-repo enumeration; `--include-archived` for inspection (NOT deletion target).
+
+- **v0.5 verifier mode** (POST-MVP if Class 33 surfaces post-MVP): scan plan body for declared deletion patterns + counts; verify against actual grep; pre-commit hook integration. Queued per [[feedback_framework_layer_payoff_diminishing_returns]] — do not over-build at first canonical; generator mode is the immediate value-add; verifier mode is sister extension only if recurrence observed.
+
+**Why landed at WIP-12:** v5.15.5.F.4d.1.B.4 v1.7.5 amendment cycle surfaced Class 33 (consumer-enumeration undercount on deletion) NEW catalog entry with 2 ship-level instances (v1.4 N5 missed Regime_Classify write site + v1.7.5 17-files/81-occurrences cohort undercount vs v1.7.4 D17 "8 branches + 3 wrappers" framing). Per [[feedback_no_defer_for_effort]] + [[feedback_structural_fix_for_recurring_class]] — extend tool inline at point-of-recurrence (M7 Stage 6 cadence-locked trigger met: ≥3 canonicals = v0.2 + v0.3 + v0.4).
+
+**Closes Class 33 at OPERATOR-USE layer:** operator runs `--gen-deletion-cohort` at plan-drafting time → comprehensive enumeration with classification → pastes into plan body Phase A.6.5.c CSV artifact + Phase C deletion-step enumeration → mechanical cohort completeness verified at planning layer. Sister to v0.2 + v0.3 closing Class 14 at COMMIT layer.
+
+**Usage example:**
+```bash
+# Generate deletion-cohort enumeration for engine_arch removal
+python3 tools/check_plan_body_symbol_existence.py --gen-deletion-cohort 'engine_arch|ENGINE_ARCH_'
+
+# Or in CSV format for plan_checks artifact
+python3 tools/check_plan_body_symbol_existence.py --gen-deletion-cohort 'engine_arch|ENGINE_ARCH_' --csv \
+  > plan_checks/2026-05-26-B4-engine-arch-deletion-enumeration.csv
+```
+
+**Output structure:** TOTAL count + per-classification counts + per-match details sorted by deletion-kind (leaves-first ordering). Operator reviews + pastes into plan body deletion enumeration per B14 + sister disciplines.
+
+**Sister memories:**
+- [[feedback_multi_surface_deletion_ordering_discipline]] — B14 pillar; v0.4 leaves-first classification ordering matches this discipline
+- [[feedback_unconditionalization_latent_assumption_audit]] — B15 pillar; v0.4 classifies UNCONDITIONALIZE-body sites specifically (per B15 verification trigger)
+- [[feedback_operator_facing_doc_cohort_at_cfg_deletion]] — operator-facing-doc kind specifically; v0.4 classifies these sites
+- [[feedback_archived_changelog_preservation_discipline]] — archived-changelog LEAVE kind; v0.4 excludes by default per discipline
+
+**M7 Stage 6 cadence-locked promotion:** B-Plus v0.4 = 3rd canonical M7 application (sister to v0.2 + v0.3); per `pattern-codification-lifecycle.md` Stage 6 trigger met (≥3 canonicals + CI enforcement = stable). DESIGN_SPECS `structural-enforcement-when-memory-insufficient.md` frontmatter `stage:` field updates from `3-first-canonical` to `6-cadence-locked` at Phase D ship close.
+
 **Sister to compaction-degradation rule:** [[feedback_compaction_degrades_treat_handoffs_as_hints]] — handoffs lose precision (sigs, paths, counts, asymmetry depth). Plan bodies inherit handoff precision when drafted in compacted sessions. This rule is the COUNTERMEASURE: always re-verify cited symbols against current code, especially when plan body is drafted in late session.
 
 **Sister to iteration-spiral rule:** [[feedback_iteration_spiral_signals_audit_meta_gap]] — 5 amendment cycles at `.B.4` for `OrderManager_RegisterCore` drift would have been compressed to 1 cycle if v1.0 had grepped for the cited symbol. This rule is the META-GAP CLOSURE.

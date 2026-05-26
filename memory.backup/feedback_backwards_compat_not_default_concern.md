@@ -97,3 +97,40 @@ The exceptions list above (stamp body / persistence / model handle / locked cfg 
 - DO NOT delete without explicit operator approval
 
 For everything else: default to clean deletion. Operator will flag explicitly if a specific case needs preservation.
+
+## REFINEMENT — Migration impact section REQUIRED even when backwards compat NOT preserved (added 2026-05-26 PM at `.B.4` v1.7.5 WIP-12)
+
+**The going-forward rule above tells you NOT to pad with preserve-and-deprecate by default. The REFINEMENT clarifies:** even when backwards compat is NOT preserved (clean deletion preferred), the plan body's **Operator migration impact section is STILL REQUIRED**. The section captures REASONING + CATEGORIZATION — not a preservation commitment.
+
+**Why the apparent tension:** sister rule `feedback_surface_operator_migration_path_proactively` says "surface operator migration path proactively on breaking changes". Reading sister rule literally → "operator migration path = preserve-and-deprecate" → conflicts with this rule's "no preservation by default". The refinement resolves:
+
+- **Migration impact SECTION** = doc surface that articulates the REASONING + categorization (who's affected; what happens post-deletion; sister-architectural preservation surface if any). Section is ALWAYS required.
+- **Migration PATH** = the actual implementation (preserve-and-deprecate / REFUSE handler / migration warning / shim). Path is OPTIONAL per this rule (operator flags when load-bearing exception applies).
+
+The two are DIFFERENT artifacts. The SECTION captures the deletion's operator-impact for plan-body honesty; the PATH is the implementation decision per this rule's exceptions list.
+
+**Worked example:** `.B.4` v1.7.5 — `engine_arch=centralized` SHARDED mode deprecation (Decision I full surface deletion):
+
+| Required artifact | Present? | Rationale |
+|---|---|---|
+| Operator migration impact section in plan body | YES (REQUIRED per refinement) | Articulates `engine_arch=per_core_slow` users unaffected + `engine_arch=centralized` users migrate to legacy single_core LIVE binary (sister-architectural preservation surface per Canonical sister registries considered section) |
+| Preserve-and-deprecate REFUSE handler at boot | NO (NOT required per this rule + operator stance) | OSS personal tool; cfg parser handles unknown keys conventionally; operator flagged "no backwards compat required" |
+| Migration shim / cfg field alias | NO (NOT required) | Clean deletion preferred per this rule |
+| CHANGELOG.md NEW row at ship close | YES (required per `feedback_categorical_triggers_over_hardcoded_refs` auto-write contract) | Records deletion + sister-architectural preservation surface for future operators reading version history |
+
+**How to recognize:** if surfacing a deletion-class scope without an Operator migration impact section in plan body, that's a CRITICAL GAP per /readiness G1 — even when the deletion follows this rule's "no preservation by default" stance. The SECTION is independent of the PATH decision.
+
+**Sister discipline catch from this REFINEMENT:** during `.B.4` v1.7.5 pre-amendment audit gate, /readiness CRITICAL G1 surfaced Operator migration impact section MISSING from v1.7.4 plan body despite D18 decision "backwards compat NOT a default concern". Initial reading: "if no preservation, no migration impact needed". REFINEMENT clarified: section captures REASONING, not commitment. Section landed at v1.7.5 amendment cycle with categorization per the worked example above.
+
+**Sister memories:**
+- [[feedback_surface_operator_migration_path_proactively]] — sister rule; this refinement clarifies their interaction (section ALWAYS required; path optional per exceptions list)
+- [[feedback_operator_facing_doc_cohort_at_cfg_deletion]] — sister at cohort-enumeration layer (operator-facing doc surfaces enumerated in deletion cohort even when no preservation surface)
+- [[feedback_categorical_triggers_over_hardcoded_refs]] — auto-write contract requires CHANGELOG.md NEW row at every ship close
+
+## When this REFINEMENT applies (added 2026-05-26 PM)
+
+Per `feedback_categorical_triggers_over_hardcoded_refs`:
+
+- Any deletion-class scope in plan body (cfg field removal / API surface removal / cohort wrapper deletion / centralized-arch deprecation / etc.)
+- Any plan body amendment where Operator migration impact section is MISSING despite breaking change (even if backwards compat NOT preserved per this rule)
+- /readiness G1 CRITICAL trigger fires when Operator migration impact section MISSING — sister gate to this REFINEMENT

@@ -70,6 +70,25 @@ Cfg-derived consumer framework structural close. Eliminates parallel-registry-dr
 - Sub-ship scoping per layer's blast radius (may absorb into `.F.5.X` or spawn `.F.4d.1.B.5+`)
 - Sister to quarterly `/anti-spaghetti` cadence per [[project_anti_spaghetti_audit_cadence]]
 
+### `.F.4d.1.B.5` through `.B.11` — file-size discipline maintenance umbrella (NEW; QUEUED 2026-05-25)
+
+**Sibling umbrella to Thread A framework consolidation; closes TECH_DEBT-029 + TECH_DEBT-114 structurally.** Plan body: `subplans/2026-05-25-v5.15.5.F.4d.1.B-file-size-maintenance.md` (umbrella) + per-ship plan bodies for `.B.5` through `.B.11`. Codifies subfolder split pattern as Stage 3 first canonical at `.B.6` (NEW addition to `file-size-split-discipline.md` v1.0 → v1.1).
+
+| Ship | Surface | Effort | Risk | Closes |
+|---|---|---|---|---|
+| `.B.5` | `controller_test.cpp` domain split (5 sub-files; multi-binary CMakeLists) | ~1-2d | HIGH (3,208 tests) | TECH_DEBT-114 |
+| `.B.6` | `EngineSharded.hpp` subfolder split (`EngineSharded/{Run,Async,HotSwap,Boot}.hpp`) — **first canonical of subfolder pattern** | ~1d | LOW-MED (first canonical) | TECH_DEBT-029 PARTIAL (1 of 9); NEW TECH_DEBT-125 (pattern anchor) |
+| `.B.7` | `BacktestPanels.hpp` panel-per-file subfolder split (biggest header at 6,376 lines) | ~1-1.5d | LOW-MED | TECH_DEBT-029 PARTIAL (2 of 9) |
+| `.B.8` | CoreFrameworks bundle: `ControllerEventLoop.hpp` + `ControllerConfig.hpp` subfolder splits | ~1.5-2d | LOW-MED | TECH_DEBT-029 PARTIAL (4 of 9) |
+| `.B.9` | ML + Backtest bundle: `CoreModelZoo.hpp` + `BacktestEngine.hpp` subfolder splits | ~1.5-2d | LOW-MED | TECH_DEBT-029 PARTIAL (6 of 9) |
+| `.B.10` | GUI + Frameworks bundle: `DashboardPanels.hpp` + `PortfolioController.hpp` + `EngineTUI.hpp` subfolder splits + **marginal-4 TRIM evaluation** (OrderManager / SettingsPanel / StrategyParameters / ModelInference) | ~1.5-2d | LOW-MED | **TECH_DEBT-029 FULL CLOSE** |
+| `.B.11` | `workspace/DOCS/tech-debt/open.md` re-split by-cohort + **NEW Class 34 codification** (file-size threshold violations) + umbrella postmortem | ~0.5d | LOW | Umbrella close |
+
+**Total maintenance umbrella effort:** ~7-12 days focused across 7 ships.
+**Acceptance:** Zero source files over hard threshold at umbrella close.
+**Sequencing:** Strict serial per per-sub-ship audit-update-implement-ship cycle.
+**Pattern source:** `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md` v1.1 (subfolder shape codified at `.B.6` ship close).
+
 ### `.F.4d.1.C` (QUEUED)
 - Sidecar override + bit-packed inventory: FOREACH_DRIFT_OVERRIDE sparse sidecar + DriftOverride + RegistryRosterEntry + ManualFieldInventoryEntry (multi-bit-state-encoding canonicals 6/7/8)
 - Sister to `.B.1`'s FOREACH_CFG_GATE — gate-type vs severity-type sidecar

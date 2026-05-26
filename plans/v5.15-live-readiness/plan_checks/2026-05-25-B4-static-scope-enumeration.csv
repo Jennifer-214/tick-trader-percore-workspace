@@ -1,0 +1,63 @@
+line,type,name,purpose,classification
+# ============================================================================
+# .B.4 Phase A Step A.5 — EngineSharded_Run function-scope static enumeration
+# Engine HEAD: 64e7101 (Version.hpp 5.15.5.F.4d.1.B.3)
+# Source:      /home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded.hpp
+# Scope:       inside EngineSharded_Run body (lines 379..3793)
+# Method:      `grep -n '^[[:space:]]*static' EngineSharded.hpp` filtered by Run body range
+# Convention:  Decision G discipline — function-scope statics STAY in caller (process-lifetime; thread-shared semantics)
+# ============================================================================
+#
+# ---- Boot region statics (declared before/during boot loop) ----
+525,BinanceStream,bs,WebSocket stream state — static so producer thread can reach it,STAY_IN_CALLER
+573,BinanceAdapterState,g_sharded_binance_adapter,Binance REST adapter — owns worker thread pool (1-4 BinanceOrderAPI),STAY_IN_CALLER
+710,ShardedTradeLog,g_sharded_trade_log,Trade CSV log handle (M5 persistence sink),STAY_IN_CALLER
+731,tt::InitArena,g_init_arena,MAP_POPULATE mmap arena (8MB) — process-lifetime; held by InitArena_Global() ptr,STAY_IN_CALLER
+767,BinanceUserDataState,g_user_data,User data WebSocket state (real-time fills) — own WS thread,STAY_IN_CALLER
+794,NotifyState,g_notify_state,Notify worker thread state (operational alerts),STAY_IN_CALLER
+795,NotifyCommandState,g_notify_cmd_state,Notify command-backend state (popen template str),STAY_IN_CALLER
+826,TickRecorder,g_tick_rec,Raw market tick CSV recorder (M5 persistence sink),STAY_IN_CALLER
+834,DepthRecorder,g_depth_rec,Depth (orderbook) CSV recorder (M5 persistence sink),STAY_IN_CALLER
+835,DepthSharedState<F>,g_depth_shared,Depth feed shared state — double-buffered active_idx,STAY_IN_CALLER
+836,pthread_t,g_depth_tid,Depth thread id — held for shutdown semantics (M5 threading observability),STAY_IN_CALLER
+861,ReconciliationLoopState<F>,g_reconciler,Reconciler thread state (periodic exchange balance check),STAY_IN_CALLER
+877,SPSCRing<Tick<F>>,tick_rings[MAX_EXECUTION_CORES],Per-core hot-path SPSC ring (producer→hot path),STAY_IN_CALLER
+878,ExecutionCore<F>,cores[MAX_EXECUTION_CORES],Per-core hot-path state (~66KB × 16 = 1MB; can't stack-alloc),STAY_IN_CALLER
+#
+# ---- GUI region statics ----
+1392,TUISharedState,g_shared,GUI ↔ engine shared state (double-buffered TUISnapshot + control flags),STAY_IN_CALLER
+1414,CandleAccumulator,g_candle_acc,Per-second candle aggregator for chart panel (60-sec lookback),STAY_IN_CALLER
+#
+# ---- Loop-scope counters/cache statics (per-process one-shot OR rate-limit state) ----
+1861,int,save_counter,Snapshot save throttle (every 1024 slow-path cycles; centralized arch),STAY_IN_CALLER
+2000,uint64_t,prev_ring_full,OMS log ring_full_spins prior-value cache (first-non-zero WARN one-shot),STAY_IN_CALLER
+2001,uint64_t,prev_realloc_failed,OMS log writer realloc-failed prior-value cache (first-non-zero CRITICAL one-shot),STAY_IN_CALLER
+2028,uint64_t,prev_log_drops,OMS log full-drops prior-value cache (first-non-zero CRITICAL one-shot),STAY_IN_CALLER
+3201,uint64_t,s_arm_log_us[16],Per-core (0..15) exit-bandit-arm out-of-range CRITICAL log throttle (60s rate-limit),STAY_IN_CALLER
+#
+# ============================================================================
+# SUMMARY
+#
+# Total function-scope statics in EngineSharded_Run body: 21
+#
+# Classification breakdown:
+#  - STAY_IN_CALLER         : 21 (100% per Decision G discipline)
+#  - MOVE_TO_HELPER         : 0
+#  - REFACTOR_TO_STATE_STRUCT: 0
+#
+# Plan body claim ("~30 statics in EngineSharded_Run body") + /dod-audit v1.2 claim (30) are STALE.
+# Actual count is 21 at HEAD 64e7101. Discrepancy:
+#  - Plan v1.0 / dod-audit v1.2 estimates may have included statics from inner lambdas (per_core_slow
+#    thread bodies, fan_out lambda, drainer lambda) which are NOT in EngineSharded_Run direct scope.
+#  - File-scope statics (lines 106-127 — g_engine_sharded_shutdown / g_sharded_order_lat /
+#    g_engine_sharded_gui_quit_ptr / helpers) are NOT in Run scope and don't count.
+#
+# Recommend: plan body v1.5 amendment to update Step A.5 expected static count from "~30" to "21
+# function-scope statics in EngineSharded_Run body" (drift catch per feedback_compaction_degrades).
+#
+# Decision G discipline verification:
+#  - Every static has process-lifetime + thread-shared OR rate-limit-cache semantics
+#  - None are pure scratch variables (would be locals if so)
+#  - Each helper body (BootGlobal / BootPerCore) MUST NOT define new statics (enforced by signature
+#    + caller-scope ownership; helpers can ACCEPT &-references to caller statics but not OWN them)
+# ============================================================================

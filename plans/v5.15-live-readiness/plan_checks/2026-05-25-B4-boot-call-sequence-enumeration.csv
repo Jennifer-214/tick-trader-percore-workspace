@@ -1,0 +1,110 @@
+section,live_line,backtest_line,function,helper_target,rationale_or_drift
+# ============================================================================
+# .B.4 Phase A Step A.4 — Per-core boot call sequence enumeration
+# Engine HEAD: 64e7101 (Version.hpp 5.15.5.F.4d.1.B.3)
+# Live ref:    /home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded.hpp
+# Backtest:    /home/caramel/code/FoxML_Trader_v2/Backtest/BacktestSharded.hpp
+# Boundary:    live boot region = EngineSharded.hpp:379-1383 (Run signature → LiveReadiness_Verify return)
+#              backtest boot   = BacktestSharded.hpp:104-418 (Run signature → per-core loop close)
+# Convention:  N/A = call not present; DRIFT = call present in only one side; STAYS_IN_CALLER per Decision G/B/M5
+# ============================================================================
+#
+# ---- GLOBAL_PRE_LOOP : one-shot global init (BEFORE per-core boot loop) ----
+GLOBAL_PRE_LOOP,384,N/A,g_engine_sharded_shutdown=0 + signal handlers (std::signal SIGINT/SIGTERM),STAYS_IN_CALLER,M5 false-positive surface — process-signal-handler install is LIVE-only by design (backtest single-threaded synchronous; no signal handler needed)
+GLOBAL_PRE_LOOP,389,N/A,LatencyHistogram_Reset(BENCH gate),STAYS_IN_CALLER,LIVE-only build-time conditional (constexpr BENCH); backtest doesn't measure drainer latency
+GLOBAL_PRE_LOOP,405,N/A,Health_LogConfigure,STAYS_IN_CALLER,LIVE-only — backtest writes via stderr; HealthLog disabled per hermetic semantics
+GLOBAL_PRE_LOOP,426-457,N/A,risk_degradation_curve REFUSE gate (curve + composite_enabled cross-check),STAYS_IN_CALLER,LIVE-only boot REFUSE gate (refuse to start engine); backtest tolerates same cfg without REFUSE since no capital at risk. DEFER to TECH_DEBT or out of scope.
+GLOBAL_PRE_LOOP,472-520,N/A,hardcoded_strategy boot guard (live REFUSE vs paper WARN),STAYS_IN_CALLER,LIVE-only — gated on cfg.use_real_money + acknowledge_hardcoded_strategy_in_live. Backtest doesn't have these semantics.
+GLOBAL_PRE_LOOP,525 (static),N/A,BinanceStream bs declaration,STAYS_IN_CALLER,Decision G static-scope discipline — function-scope static; thread-shared semantics (producer reads bs)
+GLOBAL_PRE_LOOP,530,N/A,BinanceStream_Init,STAYS_IN_CALLER,LIVE-only — backtest doesn't init Binance WS; reads HistoricalTick CSVs instead
+GLOBAL_PRE_LOOP,549,143,Sharded_ValidatePartialExitCfg(&cfg),STAYS_IN_CALLER,Sister to ApplyBnbDiscount in shape (non-const cfg ONE-SHOT pre-loop helper); already extracted as own helper at PortfolioController.hpp — caller-scope discipline preserved
+GLOBAL_PRE_LOOP,573 (static),N/A,BinanceAdapterState g_sharded_binance_adapter,STAYS_IN_CALLER,Decision G — LIVE-only static; spawns BinanceAdapter worker thread (M5 threading observability)
+GLOBAL_PRE_LOOP,586-593,N/A,BinanceAdapter_Init + LoadSecrets,STAYS_IN_CALLER,LIVE-only — gated on cfg.use_real_money
+GLOBAL_PRE_LOOP,617,N/A,ShardedOrderLatency_Reset(&g_sharded_order_lat),STAYS_IN_CALLER,LIVE-only — measures REST submit latency vs Binance; backtest has no REST
+GLOBAL_PRE_LOOP,619,N/A,EngineSharded_CalibrateTscGhz,STAYS_IN_CALLER,LIVE-only — TSC calibration for hot-path latency display; backtest single-thread; no rdtsc bracket
+GLOBAL_PRE_LOOP,622-624,223-225,num_cores clamp [1, MAX_EXECUTION_CORES],STAYS_IN_CALLER,Trivial 2-line arithmetic; same shape both sides; not worth helper extract
+GLOBAL_PRE_LOOP,640,N/A,EngineSharded_OrphanRecovery,STAYS_IN_CALLER,LIVE-only — BTC orphan recovery refuses to start with unknown exchange state; backtest is hermetic
+GLOBAL_PRE_LOOP,660,N/A,BinanceAdapter_Get<F>(&g_sharded_binance_adapter) → exchange_adapter,STAYS_IN_CALLER,LIVE-only — backtest passes empty_adapter{} value-init at :159
+GLOBAL_PRE_LOOP,671,186,OrderManager_Init,STAYS_IN_CALLER,Per BootGlobal scope but signature DIFFERS (live: live_trading=1; backtest: 0 + extra event_log_mode + event_log_path args). Both call same fn; the args asymmetry isn't a drift surface — both reflect their mode. Leave at caller.
+GLOBAL_PRE_LOOP,678,N/A,OrderManager_OpenCalibrationLog,STAYS_IN_CALLER,M5 false-positive surface — persistence-sink (LIVE-only by design; backtest doesn't emit calibration log)
+GLOBAL_PRE_LOOP,690-699,N/A,BNB cfg mutation (cfg.cores[c].fee_rate_* *= 0.75),ApplyBnbDiscount,DRIFT (PARITY-030) — LIVE only; closes by-construction by both sides calling EngineCommon_ApplyBnbDiscount(cfg) once at the same point in boot
+GLOBAL_PRE_LOOP,710 (static),N/A,ShardedTradeLog g_sharded_trade_log,STAYS_IN_CALLER,Decision G + M5 — persistence-sink static (LIVE-only)
+GLOBAL_PRE_LOOP,711,N/A,ShardedTradeLog_Init,STAYS_IN_CALLER,M5 persistence-sink (LIVE-only)
+GLOBAL_PRE_LOOP,712,N/A,oms.trade_log = &g_sharded_trade_log,STAYS_IN_CALLER,M5 persistence-sink wire (LIVE-only)
+GLOBAL_PRE_LOOP,716-717,N/A,oms.on_entry_fill_emit / on_exit_fill_emit = &tt::real_on_entry/exit_fill_emit<F>,STAYS_IN_CALLER,M5 persistence-sink (LIVE-only — backtest leaves at default noop)
+GLOBAL_PRE_LOOP,731 (static),N/A,tt::InitArena g_init_arena,STAYS_IN_CALLER,Decision G — function-scope static (MAP_POPULATE mmap; process-lifetime)
+GLOBAL_PRE_LOOP,738,N/A,InitArena_Create(8MB) + arena_extra_flags,STAYS_IN_CALLER,Decision G — owns the static g_init_arena; can't extract without breaking lifetime. Backtest currently does NOT use InitArena (acceptable: backtest is hermetic; per-run heap freshness is intended).
+GLOBAL_PRE_LOOP,739,N/A,tt::InitArena_Global() = &g_init_arena,STAYS_IN_CALLER,Decision G — sets process-wide pointer to function-scope static
+GLOBAL_PRE_LOOP,742,198,EventLoopState_Init(&state, &oms),BootGlobal,MATCH — both sides call identically; legitimate BootGlobal candidate
+GLOBAL_PRE_LOOP,749-753,217-221,EventLoopState_ConfigureKillSwitch (with MASK_RISK_CFG_KILL_SWITCH_ENABLED gate),BootGlobal,MATCH (PARITY-026 closed by .B.3 hotfix at :749). Both sides now identical. BootGlobal candidate.
+GLOBAL_PRE_LOOP,760-762,210-212,Regime_Init(state.cores[i].regime_state) loop over MAX_EXECUTION_CORES,BootGlobal,MATCH — both call Regime_Init in identical loop after EventLoopState_ConfigureKillSwitch. BootGlobal candidate (it's a loop but its global one-shot semantic; pre-loop init).
+GLOBAL_PRE_LOOP,767 (static),N/A,BinanceUserDataState g_user_data,STAYS_IN_CALLER,Decision G + LIVE-only (user-data WS thread spawn)
+GLOBAL_PRE_LOOP,775-784,N/A,BinanceUserData_Init + _Start,STAYS_IN_CALLER,LIVE-only — user-data WebSocket fill stream
+GLOBAL_PRE_LOOP,794-795 (static),N/A,NotifyState g_notify_state + NotifyCommandState g_notify_cmd_state,STAYS_IN_CALLER,Decision G + LIVE-only (Notify worker thread)
+GLOBAL_PRE_LOOP,796-822,N/A,NotifyState_Init (when MASK_OPS_CFG_NOTIFY_ENABLED),STAYS_IN_CALLER,M5 threading observability — spawns Notify worker thread; LIVE-only
+GLOBAL_PRE_LOOP,826 (static),N/A,TickRecorder g_tick_rec,STAYS_IN_CALLER,Decision G + M5 persistence-sink (raw market CSV)
+GLOBAL_PRE_LOOP,827,N/A,TickRecorder_Init,STAYS_IN_CALLER,M5 persistence-sink (LIVE-only)
+GLOBAL_PRE_LOOP,834-836 (statics),N/A,DepthRecorder g_depth_rec + DepthSharedState<F> g_depth_shared + pthread_t g_depth_tid,STAYS_IN_CALLER,Decision G + M5 threading observability (depth feed thread spawn)
+GLOBAL_PRE_LOOP,837,N/A,DepthRecorder_Init,STAYS_IN_CALLER,M5 persistence-sink
+GLOBAL_PRE_LOOP,839-857,N/A,DepthStream_Init + pthread_create depth_thread_fn (when MASK_GATE_CFG_DEPTH_ENABLED),STAYS_IN_CALLER,M5 threading observability — LIVE-only (backtest uses DepthReplayState from CSV)
+GLOBAL_PRE_LOOP,861 (static),N/A,ReconciliationLoopState<F> g_reconciler,STAYS_IN_CALLER,Decision G + LIVE-only (reconciler thread)
+GLOBAL_PRE_LOOP,862-873,N/A,ReconciliationLoop_Init + _Start,STAYS_IN_CALLER,M5 threading observability — LIVE-only reconciler
+GLOBAL_PRE_LOOP,877-878 (statics),228-229,SPSCRing<Tick<F>> tick_rings[MAX_EXECUTION_CORES] + ExecutionCore<F> cores[MAX_EXECUTION_CORES],STAYS_IN_CALLER,Decision G — function-scope static (66KB ExecutionCore × 16 cores; can't stack-alloc)
+GLOBAL_PRE_LOOP,891,N/A,FPN<F> ema_price = FPN_Zero<F>(),STAYS_IN_CALLER,Function-scope local FPN var (not a static) — backtest's ema_price IS at :436 as static (different lifecycle: backtest needs static to survive multi-run-per-process suite reuse). DIFFERENT shape; intentional.
+GLOBAL_PRE_LOOP,894-896,463-465,ema_alpha computation (cfg.gate_ema_alpha or fallback FPN<F>(0.1)),STAYS_IN_CALLER,Identical arithmetic both sides; trivial; not worth extract
+GLOBAL_PRE_LOOP,898-906,234-238,Per-core risk computation (total_balance + default_risk + default_per_core),STAYS_IN_CALLER,Pre-loop computation; identical both sides; can stay
+#
+# ---- PER_CORE_LOOP : per-core boot work (called N times) ----
+# Live loop: 908..1177 (~270 lines body; nested per-strategy=ML branch ~lines 931-1152)
+# Backtest loop: 251..418 (~167 lines body; nested per-strategy=ML branch ~lines 273-402)
+#
+PER_CORE_LOOP,909,252,SPSCRing_Init(&tick_rings[i]),BootPerCore,MATCH — both sides identical; BootPerCore candidate
+PER_CORE_LOOP,910,253,ExecutionCore_Init(&cores[i] uint16_t(i) &tick_rings[i]),BootPerCore,MATCH — BootPerCore candidate
+PER_CORE_LOOP,911-914,255-256,EventLoopState_RegisterCore(&state &cores[i] FPN_Zero × 3),BootPerCore,MATCH — BootPerCore candidate (signature identical 4 args)
+PER_CORE_LOOP,915-920,258-263,Per-core risk balance computation (default_per_core OR cfg.core_risk_pct[i] override),BootPerCore,MATCH — identical arithmetic both sides; BootPerCore candidate (depends on cfg + total_balance precomputed at caller)
+PER_CORE_LOOP,921-923,264-266,EventLoopState_SetCoreStrategy(&state i cfg.core_strategies[i] core_balance),BootPerCore,MATCH — BootPerCore candidate
+PER_CORE_LOOP,931 (branch start),273 (branch start),"if (cfg.core_strategies[i] == STRATEGY_ML) { ... }",BootPerCore,Both sides branch identically; full ML branch body lives inside BootPerCore
+PER_CORE_LOOP,941-942,N/A (uses ml_zoos[i]),aligned_alloc(64 CoreModelZoo<F>) → zoo_ptr,BootPerCore,DIFFERS by allocation strategy — live heap-allocs (zoo_ptr); backtest uses static ml_zoos[i]. ACCEPTABLE divergence (per /parity-check final-final § Decision F live-only Phase 8 hot-swap semantic). Both sides reach the same loaded-state outcome.
+PER_CORE_LOOP,949,278,CoreModelZoo_Init,BootPerCore,MATCH — both call same fn
+PER_CORE_LOOP,952-953,N/A (uses ml_ensemble_zoos[i]),aligned_alloc(64 EnsembleModelZoo<F>) → ezoo_ptr,BootPerCore,DIFFERS by allocation strategy — same as zoo_ptr above (live heap; backtest static). ACCEPTABLE.
+PER_CORE_LOOP,962,281,EnsembleModelZoo_Init,BootPerCore,MATCH — both call same fn
+PER_CORE_LOOP,963,282,backend = cfg.ml_backend ? cfg.ml_backend : MODEL_BACKEND_XGBOOST,BootPerCore,MATCH — trivial computation
+PER_CORE_LOOP,966-1002,284-312,"if (cfg.core_model_dir[i][0]) CoreModelZoo_LoadFromDir(...) else legacy CoreModelZoo_LoadLegacy fallback",BootPerCore,MATCH — semantically identical 3-resolution-path (core_model_dir → core_model_path → ml_model_path). Live LIVE-specific args (expected_feature_mask + cfg_ptr) vs backtest no-args ARE asymmetry; absorbed inside BootPerCore.
+PER_CORE_LOOP,1004-1023,313-326,if (loaded) state.cores[i].model_handle = zoo_ptr + CoreModelZoo_PostLoadSetup + strict-mode unload,BootPerCore,MATCH — same control flow + same PostLoadSetup call. BootPerCore candidate.
+PER_CORE_LOOP,1044-1083,332-370,EnsembleModelZoo_AutoDetectFromDir + ezoo->primary_role_name logging + EnsembleModelZoo_PostLoadSetup,BootPerCore,MATCH — both sides walk same code path. Live additionally wires oms.ezoo_refs[i] + oms.core_cfg_refs[i] at :1078-1079; backtest does NOT (those refs are LIVE-only — used in real_on_exit_calibration; backtest has noop sink). ACCEPTABLE divergence.
+PER_CORE_LOOP,1078-1079,N/A,oms.ezoo_refs[i] = (void*)ezoo_ptr + oms.core_cfg_refs[i] = (const void*)&cfg.cores[i],STAYS_IN_CALLER (live),M5 persistence-sink wire — LIVE-only (used for calibration log emit at fill time; backtest leaves at nullptr/noop)
+PER_CORE_LOOP,1085-1095,N/A,if (!loaded && !ensemble_loaded) CORE_STATE_FLAG_SET(MODEL_LOAD_FAILED),BootPerCore,MATCH (backtest has no equivalent SET here — but backtest also doesn't track MODEL_LOAD_FAILED display state since suite re-runs; ACCEPTABLE asymmetry).
+PER_CORE_LOOP,1102-1126,380-401,if (loaded && cfg.core_model_dir[i][0]) CoreModelZoo_ValidateAgainstCfg + FeatureOverlay_PostLoadVerify,BootPerCore,MATCH (PARITY-012 was closed at v5.14.2.E.1; both sides call ValidateAgainstCfg now). BootPerCore candidate.
+PER_CORE_LOOP,1136-1138,408-410,ConfidenceScorer_Init(&state.cores[i].confidence cfg.cores[i].confidence_window CONFIDENCE_FRESHNESS_TAU_DEFAULT),BootPerCore,MATCH — both sides identical args. BootPerCore candidate.
+PER_CORE_LOOP,1141-1146,N/A,ConfidenceScorer_BindCompositeCfg(&state.cores[i].confidence MASK_ML_CFG_CONFIDENCE_COMPOSITE_ENABLED + 4 cfg.cores[i] knobs),BootPerCore,DRIFT (PARITY-028) — LIVE only; backtest missing. Closes by-construction via BootPerCore extract (both sides call helper once per ML core).
+PER_CORE_LOOP,1149-1151,N/A,RollingTurnover_Init(&state.cores[i].turnover cfg.cores[i].confidence_turnover_window confidence_turnover_topk),BootPerCore,DRIFT (PARITY-028 sister) — LIVE only; backtest missing. Closes by-construction via BootPerCore extract.
+PER_CORE_LOOP,1164-1168,N/A,if (state.cores[i].strategy_id != STRATEGY_NONE) Strategy_InitPerCore(&state i strategy_id &rolling_short &cfg),BootPerCore,DRIFT (PARITY-029) — LIVE only; backtest missing for ALL strategies (this was Pre-v5.4 F7 bug). Closes by-construction via BootPerCore extract.
+PER_CORE_LOOP,1173,417,ExecutionCore_SetPermission(&cores[i] 0),BootPerCore,MATCH — both sides identical; warmup-permission discipline. BootPerCore candidate.
+PER_CORE_LOOP,1176,N/A,CoreLatencyStats_Enable(&cores[i].latency_stats),STAYS_IN_CALLER,M5 threading observability — LIVE-only (rdtsc latency display; backtest single-thread)
+#
+# ---- POST_PER_CORE_LOOP : continued (snapshot load + normalize + readiness gate; backtest doesn't have these in boot region) ----
+POST_PER_CORE_LOOP,1190-1336,N/A,ShardedSnapshot_Load (paper) OR live reconciliation block (Reconcile_Decide + 3-mode dispatch),STAYS_IN_CALLER,LIVE-only — backtest is hermetic; doesn't snapshot. Reconcile dispatch is LIVE-only.
+POST_PER_CORE_LOOP,1358,N/A,ControllerConfig_NormalizeForMode<F>(cfg),STAYS_IN_CALLER,LIVE-only — auto-tighten trading_mode=LIVE safety defaults; backtest mode passthrough
+POST_PER_CORE_LOOP,1375,N/A,LiveReadiness_Verify<F>(cfg state) (REFUSES boot when trading_mode=LIVE),STAYS_IN_CALLER,LIVE-only — pre-flight checklist with REFUSE/WARN dispatch
+#
+# ============================================================================
+# SUMMARY (verify counts at Phase B Step B audit time):
+#
+# GLOBAL_PRE_LOOP rows         : 44 (incl 6 static decls + ~38 calls)
+# PER_CORE_LOOP rows           : 24
+# POST_PER_CORE_LOOP rows      : 3 (LIVE-only)
+# TOTAL                        : ~71 lines of CSV (incl headers)
+#
+# Helper classifications:
+#  - BootGlobal           : 3 calls (EventLoopState_Init + ConfigureKillSwitch + Regime_Init loop)
+#  - ApplyBnbDiscount     : 1 call (cfg mutation; non-const; closes PARITY-030)
+#  - BootPerCore          : ~15 calls (per-core init + ML branch full body; closes PARITY-027/028/029)
+#  - STAYS_IN_CALLER      : ~30 calls (Decision G statics + LIVE-only + M5 persistence/threading)
+#  - DRIFT (closed by extract): 4 (BNB + BindCompositeCfg + RollingTurnover_Init + Strategy_InitPerCore)
+#  - DIFFERS-acceptable    : 2 (aligned_alloc vs ml_zoos[] static; ezoo_refs LIVE-only wire)
+#
+# Phase B Step B helper bodies cover:
+#  - ApplyBnbDiscount : :690-699 (live; mirror to backtest)
+#  - BootGlobal       : :742-762 (live; backtest :198-212)
+#  - BootPerCore      : :909-1176 (live; backtest :252-418) — note PARITY-027/028/029 closure brings backtest TO live's per-core init richness
+# ============================================================================

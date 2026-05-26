@@ -67,6 +67,23 @@ rg -l "inference_cfg_bandit_blend_ratio" | xargs sed -i 's/inference_cfg_bandit_
 
 **Sister memory:** [[feedback-avoid-substring-replace-all-on-member-access]] — substring danger only; full-token names like `inference_cfg_<name>` are safe.
 
+**Extension to STRUCT-MEMBER deletion (v1.4 N5 + v1.5 codification at `.B.4`):**
+
+Discipline applies not just to X-macro REGISTRY-ROW deletion, but to ANY STRUCT-MEMBER deletion with multiple consumers. Worked example from `.B.4` v1.4:
+
+Plan body Decision F proposed deleting `fc_ctx.regime_state` struct member at `BacktestSharded.hpp` (PARITY-031 closure). v1.2 + v1.3 drafted deletion enumeration with 2 consumer sites (`:541-548` field allocation + `:612` read site). Missed `:607` `Regime_Classify(&fc->regime_state, &sig, fc->cfg)` WRITE site. Comprehensive grep at v1.4 final /parity-check re-audit caught it: `rg "fc_ctx\.regime_state|fc->regime_state" Backtest/` returns 3 sites, not 2. Plan body amended at v1.4 to add :607 deletion + post-delete grep verification gate.
+
+**Pattern recognition:** struct members + X-macro registry rows are BOTH auto-generated coupling surfaces. Consumer enumeration discipline applies uniformly:
+
+| Surface | Consumer enumeration grep |
+|---|---|
+| X-macro registry row | `rg "<field_name>\|STAMP_HAS\([^,]*,\s*<field_name>\)" -g '*.hpp' -g '*.cpp'` |
+| Struct member (direct access) | `rg "\.<member>\b\|->\s*<member>\b" -g '*.hpp' -g '*.cpp'` |
+| Struct member (via reference/pointer) | Same + variable-name grep if widely aliased |
+| Function-pointer struct field | grep direct access + grep callsites that pass the struct |
+
+**Sister memory:** [[feedback_verify_symbol_existence_at_plan_drafting_time]] — codified at same `.B.4` v1.5 cycle (sister discipline; THIS rule is consumer side; sister rule is symbol-existence side).
+
 **Trade-off vs trying to enumerate every site in plan body:**
 
 Apply this procedure-based discipline ONLY when consumer sites exceed ~30. Below ~30 sites, explicit enumeration in plan body is more readable + serves as coding checklist. Above ~30, procedure-based + post-coding grep-verify is more honest about scope.

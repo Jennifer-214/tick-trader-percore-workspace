@@ -1,0 +1,204 @@
+Base directory for this skill: /home/caramel/code/tick-trader-percore-workspace/claude-skills/close-session
+
+# /close-session — End-of-session ritual orchestrator (SENDER side; sister to /accept-handoff)
+
+## Why this skill exists
+
+End-of-session cleanup is multi-step + memory-driven discipline that has proven to drift at boundaries: even with `/handoff` SKILL.md spec calling out Stage 1.8 (`/capture-audit --deep` pre-write gate) + Stage 2.5 (`/readiness` verify-on-write) as load-bearing, sessions skip them under context-budget pressure, leaving codification gaps that operator pushback catches later.
+
+Codified `2026-05-26` after 3-observation pattern at `v5.15.5.F.4d.1.B.4` v1.7.5 transition cycle:
+
+1. **TECH_DEBT-vs-inline-fix scope drift** — B-Plus line-anchor extension initially proposed as TECH_DEBT entry; operator caught via "let's go ahead and fix this" (per `feedback_no_defer_for_effort`).
+2. **D18 backwards-compat scope simplification** — engine_arch deletion initially scoped with preserve-and-deprecate surfaces; operator caught via "im not too concerned about backwards compat tbh" (which became NEW memory `feedback_backwards_compat_not_default_concern`).
+3. **D18 memory-file codification gap** — D18 decision captured in decision log + handoff doc but NOT formalized as standalone memory + going-forward rule; operator caught via "are you sure we arnt forgetting anything".
+
+Each pushback was a step the session-close ritual SHOULD have caught earlier. Per M7 (`structural-enforcement-when-memory-insufficient.md`): when memory codification + skill-spec discipline proves insufficient at observation, escalate to structural enforcement. `/close-session` is that structural enforcement at the session-close surface.
+
+## What this skill does (sequential stages)
+
+### Stage 1 — Pre-flight context load
+
+1. Detect active sprint via `Version.hpp` (sister to `/handoff` Stage 1)
+2. Detect in-flight plan body via glob: `plans/<active-sprint>/subplans/*<ship-tag>*.md`
+3. Read sprint MASTER + plan body frontmatter for state context
+4. Detect engine + workspace HEAD SHAs + working tree status
+5. Read most recent handoff doc (if any) — establishes baseline for drift detection
+
+### Stage 2 — `/capture-audit --deep` pre-close gate
+
+Invoke `/capture-audit --deep` via Skill tool. The 10-check drift verification surfaces:
+
+- (1) `MEMORY.md` index sync — every memory file has an index entry
+- (2) Plan body frontmatter completeness (`audit_tier:` + `decision_log:` + `sister_specs:`)
+- (3) Decision log artifact existence at expected path
+- (4) Sentinel matching (`<!-- D/C/F: <id> --> + <!-- STATUS: <state> -->` in plan body)
+- (5) Handoff doc currency (PENDING items vs git log; stale claims)
+- (6) Stage 6 promotion candidates per M7 escalation criteria
+- (7) DESIGN_SPECS Stage 2→3 promotion eligibility
+- (8) Skill-in-CLAUDE.md-suite linkage (every NEW skill cross-referenced)
+- (9) Memory→DESIGN_SPECS sister cross-ref completeness (every NEW memory pairs with a spec OR explicitly is operator-collaboration-only)
+- (10) `CLAUDE.local.md` going-forward rules currency (recent operator preferences captured)
+
+### Stage 3 — Operator triage + fix iteration
+
+For each `/capture-audit` finding:
+
+- **HIGH severity**: BLOCK — surface to operator + apply fix inline
+- **MED severity**: WARN — surface + operator decides (fix now / defer with rationale / dismiss)
+- **LOW + INFO**: document in close-out report; usually defer
+
+Common findings + their fixes:
+- "D-N captured in decision log but no memory file" → write NEW memory file + MEMORY.md index entry + CLAUDE.local.md going-forward rule
+- "Plan body frontmatter missing audit_tier" → amend frontmatter
+- "Skill mentioned in commit but not in CLAUDE.md suite table" → amend CLAUDE.md
+- "Memory amended but description in MEMORY.md index is stale" → update index
+- "Handoff doc cites paths that don't exist" → fix paths or remove stale citations
+
+### Stage 4 — Re-fire `/capture-audit --deep` (verify clean)
+
+After applying fixes, fire `/capture-audit --deep` again to verify CLEAN. Loop back to Stage 3 if findings remain.
+
+Exit condition: `/capture-audit --deep` returns CLEAN OR operator explicitly accepts remaining findings (e.g., known-deferred-to-Phase-D items).
+
+### Stage 5 — `/readiness` against in-flight plan body (planning-state ships only)
+
+If close is at a planning-state boundary (vs post-coding mid-ship checkpoint), fire `/readiness <plan-path>` to verify plan body still GREEN. Skip for code-state close (where plan body amendment is done; just need to capture state).
+
+Detection heuristic: if plan body version has bumped since last close OR substantive decisions landed since last close, fire `/readiness`.
+
+### Stage 6 — `/handoff` (compose + write handoff doc)
+
+Invoke `/handoff <ship-tag>` via Skill tool. `/handoff` internally runs its own Stages 1.5-4.5 + writes the doc to workspace path:
+`plans/<sprint>/handoffs/<YYYY-MM-DD>-<ship-tag>-<descriptor>-handoff.md`
+
+If `/handoff` errors (e.g., plan body has substantial gaps): HALT and surface to operator.
+
+### Stage 7 — `/sync-workspace` (push everything)
+
+Invoke `/sync-workspace` via Skill tool. Pushes:
+- Plans (decision log + plan body + handoff doc + plan_checks audit synthesis docs)
+- Memory backups
+- CLAUDE.local.md backup
+- Any other gitignored workspace-mirrored content
+
+If push fails (auth / merge conflict / etc.): surface to operator. Don't retry blindly.
+
+### Stage 8 — Final close-out report
+
+Print structured report:
+
+```
+=== /close-session REPORT for <ship-tag> ===
+
+Pre-flight state:
+  Engine HEAD: <sha> (N commits ahead of origin per per-ship-close-push workflow)
+  Workspace HEAD: <sha> (pushed)
+  Tests: <count>/0
+
+Stages executed:
+  ✅ /capture-audit --deep (first pass)  — N findings
+  ✅ Triage + fix iteration             — N findings addressed
+  ✅ /capture-audit --deep (verify)     — CLEAN
+  ✅ /readiness (if planning close)    — <verdict>
+  ✅ /handoff                           — written to <path>
+  ✅ /sync-workspace                    — pushed to <remote>
+
+Handoff doc:
+  Path: plans/<sprint>/handoffs/<filename>.md
+  Pickup command: /accept-handoff <path>
+
+What landed this close:
+  NEW memories: <list>
+  Amended docs: <list>
+  Decision log entries: <D-IDs / C-IDs / F-IDs>
+  Codifications: <list>
+
+Authoritative next-session entry:
+  /accept-handoff <full-path-to-handoff-doc>
+```
+
+## Invocation
+
+- `/close-session` — auto-resolve active sprint + in-flight ship via `Version.hpp`
+- `/close-session <ship-tag>` — explicit ship tag if ambiguous
+- `/close-session <ship-tag> --no-handoff` — skip Stage 6 if no handoff needed (e.g., quick checkpoint sync without session pickup)
+- `/close-session <ship-tag> --planning-state` — fire Stage 5 `/readiness` (default skip if at code-state checkpoint)
+- `/close-session --dry-run` — Stages 1-4 only (audit + triage); skip handoff + push
+
+## Execution model (Layer 1 orchestrator)
+
+ONE-WAY HIERARCHY. Compose by REFERENCE (invoke sub-skills via Skill tool); never spawn sub-agents.
+
+```
+LAYER 1: ORCHESTRATION
+  - Main session invokes /close-session
+  - /close-session invokes sub-skills via Skill tool
+
+LAYER 2: COMPOSED SKILLS
+  - /capture-audit (Stage 2 + 4)
+  - /readiness    (Stage 5; conditional)
+  - /handoff      (Stage 6)
+  - /sync-workspace (Stage 7)
+```
+
+If reading this spec inside an Explore subagent: return error. `/close-session` is only invoked from main session because it orchestrates handoff writing + workspace push (mutating effects).
+
+## Sister disciplines
+
+- `/accept-handoff` — RECEIVER side of handoff cycle; this skill is SENDER side
+- `/handoff` — composes the handoff doc (invoked at Stage 6)
+- `/capture-audit` — drift check (invoked at Stage 2 + Stage 4)
+- `/sync-workspace` — push to remote (invoked at Stage 7)
+- `/readiness` — plan body verification (invoked at Stage 5 conditionally)
+
+Together: `/close-session` + `/accept-handoff` close the multi-session pickup loop. Both layers structurally enforce discipline that memory codification + manual ritual proved insufficient.
+
+## Anti-patterns this prevents
+
+- **"I composed the handoff doc but skipped formal /capture-audit"** — Stage 2 enforces; can't skip without explicit `--no-capture-audit` flag
+- **Decision log entry captured but memory file missing** — Stage 2 Check 9 catches; Stage 3 triages
+- **Skill mentioned in commits but not in CLAUDE.md suite table** — Stage 2 Check 8 catches
+- **Plan body amendments not captured in handoff doc** — Stage 6 `/handoff` reads current plan body state, includes amendments
+- **Workspace push forgotten after handoff write** — Stage 7 enforces
+- **Operator-pushback-catches-gap recurrence pattern** — structural enforcement prevents recurrence
+
+## When NOT to use
+
+- Mid-coding (use `/sync-workspace` for quick checkpoint push instead; full close ritual is overkill)
+- After single-file bug fix (no codification work; no handoff needed; just `/sync-workspace`)
+- After `/accept-handoff` just ran (already in fresh state; nothing to close)
+- For doc-only edits without decision-log entries (use `/sync-workspace` directly)
+
+## When TO use
+
+- End of substantial work session that landed N WIP-checkpoints
+- After substantive amendment cycle that codified NEW memories / decisions / commitments
+- Before handing off mid-ship work to fresh session (compaction event / day boundary)
+- After ship close + before opening next ship in pipeline
+- When operator asks "are you sure we aren't forgetting anything" — `/close-session` is the structural answer to that question
+
+## Future enhancements
+
+- Auto-detect "planning state" vs "code state" boundary for Stage 5 default
+- Composite mode that also runs `/post-ship-audit` if closing post-ship (ship just tagged)
+- Configurable check list (`--check-list <list>` to skip specific Stage 2 checks)
+- Integration with `/plan-context-sweep` for cross-plan codification verification
+
+## Pattern provenance
+
+Codified `2026-05-26` at `v5.15.5.F.4d.1.B.4` v1.7.5 transition cycle close. 3-observation pattern of operator pushback catching codification gaps that memory + skill-spec discipline didn't prevent.
+
+Per `feedback_structural_enforcement_when_memory_insufficient` (M7) + `feedback_motivated_collaborator_for_caramel`: when the system relies on operator-pushback to catch gaps, the system has a structural-enforcement gap. `/close-session` closes that gap at the session-close surface.
+
+Sister codification: `/accept-handoff` (codified same cycle for the RECEIVER side of the loop; M7 first-canonical Stage 6 application).
+
+## Cross-references
+
+- `DOCS/DESIGN_PHILOSOPHY.md` § 11.5 (meta-discipline registry; M7 parent)
+- `DESIGN_SPECS/meta-disciplines/structural-enforcement-when-memory-insufficient.md` (M7 first canonical)
+- `claude-skills/accept-handoff/SKILL.md` (sister; receiver side)
+- `claude-skills/handoff/SKILL.md` (composed at Stage 6)
+- `claude-skills/capture-audit/SKILL.md` (composed at Stage 2 + 4)
+- `claude-skills/sync-workspace/SKILL.md` (composed at Stage 7)
+- `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/feedback_session_decision_log_discipline.md` (sister memory)
+- `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/feedback_structural_enforcement_when_memory_insufficient.md` (M7 trigger memory)

@@ -581,7 +581,7 @@ Match `DOCS/CLAUDE_REVIEW.md`:
 
 Per `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md`, per-check bodies extracted to sidecar files at `claude-skills/readiness/checks/`. SKILL.md keeps invocation + orchestration; sidecars hold check-specific body. Each sidecar carries the canonical `Check N` identifier in its title; external cross-refs of the form `/readiness Check N` resolve via `rg "Check N" claude-skills/readiness/checks/` without further translation.
 
-Numbered checks are explicit additions on top of the 10-item checklist embedded in `## Pass structure` step 3 (items 1-10) and the cold-pickup C.1-C.10 enumeration. The numbered Check series picks up at 11 (v5.4.0 onward); gaps in the numbering (32-35) are intentional and reserved.
+Numbered checks are explicit additions on top of the 10-item checklist embedded in `## Pass structure` step 3 (items 1-10) and the cold-pickup C.1-C.10 enumeration. The numbered Check series picks up at 11 (v5.4.0 onward); gap at 35 is intentional and reserved.
 
 | Check N | Title | Provenance | Sidecar |
 |---|---|---|---|
@@ -606,6 +606,9 @@ Numbered checks are explicit additions on top of the 10-item checklist embedded 
 | 29 | Mechanical citation drift discipline | v5.14.10+ | `checks/check-29-mechanical-citation-drift-discipline.md` |
 | 30 | Predicate-contract-changed audit | v5.14.10+ | `checks/check-30-predicate-contract-changed-audit.md` |
 | 31 | Wider-build verification at last sprint close | v5.15.2+ (TECH_DEBT-033 closure) | `checks/check-31-wider-build-verification.md` |
+| 32 | Plan-body symbol-existence verification (B-Plus CI tool) | v5.15.5.F.4d.1.B.4+ (Class 14 Stage 6 enforcement) | `checks/check-32-plan-body-symbol-existence-verification.md` |
+| 33 | Body-content arg enumeration completeness (M6 META) | v5.15.5.F.4d.1.B.4+ (M6 codification) | `checks/check-33-body-content-arg-enumeration.md` |
+| 34 | Audit tier declared in plan frontmatter + scope match | v5.15.5.F.4d.1.B.4+ (tiered-audit codification) | `checks/check-34-audit-tier-declaration-and-scope-match.md` |
 | 36 | Sister-registry parity verification | meta-discipline M1 | `checks/check-36-sister-registry-parity-verification.md` |
 | 37 | Transitional state coexistence budget | meta-discipline M4 / Pillar B3 | `checks/check-37-transitional-state-coexistence-budget.md` |
 | 38 | Include topology cycle risk | meta-discipline M4 / Pillar B7 | `checks/check-38-include-topology-cycle-risk.md` |
@@ -622,4 +625,5 @@ Numbered checks are explicit additions on top of the 10-item checklist embedded 
 - **DESIGN_SPECS + test-spec integrity (Checks 27-28):** pattern application gate via /dod-audit; test-weakening anti-regression via /test-strength-audit.
 - **Citation drift + contract extensions (Checks 29-30):** file:line refs go stale across sprint boundaries; predicate contract extensions break test fixtures.
 - **Wider-build verification (Check 31):** test-target-only sprint close hides GUI/sanitizer compile errors.
+- **Plan-body integrity (Checks 32-34):** Class 14 fabrication compile-time enforcement (Check 32 CI tool); M6 body-content arg enumeration at helper extract (Check 33); tiered-audit declaration in plan frontmatter for scope-appropriate audit cadence (Check 34).
 - **Meta-discipline (Checks 36-40):** M1 sister-registry parity / M4 implementation-layer blind-spot taxonomy (transitional-state budget B3, include topology B7, wire-format row order B12, cross-walker struct-field uniqueness B13).

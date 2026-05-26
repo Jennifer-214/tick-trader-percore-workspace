@@ -481,6 +481,7 @@ Each entry: GENERAL task → where to start. For sprint-specific phasing of cfg-
 | Plan a non-trivial change | `/readiness` skill + `DOCS/CLAUDE_REVIEW.md` checklist + new plan body uses `DESIGN_SPECS/plan-templates/future-oriented-plan-template.md` |
 | Audit a plan before coding | `/precoding-audit-gate` (orchestrator) → SHAPE audits in parallel + (`/blindspot-scan` if struct-gen / type unification / cross-registry consumer / wire-format ordering migration) |
 | Audit existing code for anti-patterns | `/bug-check` (against RECURRING_BUG_PATTERNS classes) + `/dod-audit` (against DESIGN_SPECS catalog) + `/anti-spaghetti` (codebase-wide structural sweep) |
+| Verify plan body code samples compile (Class 14 fabrication catch) | `python3 tools/check_plan_body_symbol_existence.py <plan>.md` — B-Plus CI tool; runs as pre-commit hook (install via `tools/install-git-hooks.sh`); /readiness Check 32 invokes |
 | Track a new bug class | Add to `DOCS/RECURRING_BUG_PATTERNS.md` (auto-included in `/bug-check`); include "False-positive surface" subsection per M3 discipline |
 | Track a new meta-discipline (audit-methodology gap) | Codify per `DESIGN_PHILOSOPHY.md` § 11.5 procedure (NEW DESIGN_SPEC + skill amendment + `/readiness` Check + memory + CI tool if mechanical) |
 | Ship a sub-ship | `/ship` skill (build verify + version bump + commit + tag + push) |

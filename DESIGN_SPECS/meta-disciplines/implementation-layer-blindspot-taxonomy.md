@@ -300,6 +300,43 @@ Each category gets: **Definition** / **Detection mechanism** / **Loud vs silent*
 
 ---
 
+### B14 — Multi-surface deletion ordering (NEW v5.15.5.F.4d.1.B.4 v1.7.5 WIP-12; Stage 2 DRAFT → Stage 3 first-canonical at Phase D)
+
+**Definition:** When deleting a feature/cfg/symbol spanning ≥3 files with compile-time interdependencies, sites must be sequenced per **leaves-first ordering** (operator-facing docs first → stale comments → log strings → version-history-comments → GUI gating → tests → cohort wrappers → centralized branches → unconditionalize boot-spawn gate → cfg field surface last). Without leaves-first ordering, wrong order → mid-WIP compile-fail (LOUD failure mode but high rework cost: rebuild 6 dirs × N retries until ordering converges).
+
+**Detection mechanism:**
+- For each deletion target in plan body, run B-Plus v0.4 `--gen-deletion-cohort PATTERN` (operator-facing planning helper at COMMIT layer; sister to v0.3 line-anchor)
+- Classify each match per **deletion-kind heuristic**: operator-facing-doc / stale-comment / log-string / version-history-comment / GUI-gating / test-surface / cohort-wrapper / DELETE-with-body / UNCONDITIONALIZE-body / enum-constant / cfg-field-row / archived-changelog (LEAVE) / current-changelog (historical-row LEAVE)
+- Emit per-WIP ordering punch-list per leaves-first sequencing (sites with no compile dependency first; sites consumed by others last)
+- Per H17 framework discipline: cfg-field-row deletion LAST (auto-removes cfg field declaration + parser entry via FOREACH_CFG_FIELD walker)
+
+**Loud vs silent:** LOUD (compile failure mid-WIP if wrong order). HIGH rework cost; cohort size determines impact (51-site cohort = 30-60 min × N retries).
+
+**Worked example:** `.B.4` v1.7.5 WIP-14 — `engine_arch` cfg field deletion (17 files / 81 occurrences cohort) via 12-step leaves-first ordering: (1) pre-deletion verification gates; (2-4) operator-doc + stale-comment + log-string deletion; (5) GUI gating per-site classification + delete; (6) TUISnapshot field + TUI_PopulateTopology fn signature + caller updates atomically; (7) test surface deletion; (8) sister wrapper cohort delete per Class 18 prevention; (9) negated centralized-arch branches delete; (10) unconditionalize boot-spawn gate (B15 verification first); (11) cfg field surface deletion (enum constants + cfg field + parser; LAST per H17); (12) post-deletion verification.
+
+**Detection guard:** `/blindspot-scan B14` audit at pre-coding gate when plan body proposes feature deletion spanning ≥3 files. Sister to B-Plus v0.4 generator mode (mechanical classification) + `/readiness` Check 35 sidecar (audit-time enforcement). Sister memory `feedback_multi_surface_deletion_ordering_discipline.md` (Stage 3 codification at WIP-12).
+
+---
+
+### B15 — Unconditionalization latent assumption shift (NEW v5.15.5.F.4d.1.B.4 v1.7.5 WIP-12; Stage 2 DRAFT — 1st instance only; Stage 3 promotion conditional on 2nd canonical surfacing per `feedback_proactive_novel_alternative_consideration`)
+
+**Definition:** When removing cfg-gate via "always-true" simplification (e.g., `if (cfg.X == VALUE)` → unconditional because VALUE is the only surviving value post-feature-deletion), latent per-arch/per-mode assumptions inside the formerly-gated block become unconditional silently. Any assumption that was load-bearing for the OTHER cohort (the no-longer-existent one) silently fails — execution proceeds with assumption violated.
+
+**Detection mechanism:**
+- Identify UNCONDITIONALIZE-body kind sites via B-Plus v0.4 `--gen-deletion-cohort` classification (`UNCONDITIONALIZE-body (positive gate per B15 pillar; verify latent assumptions)`)
+- For each site, enumerate latent assumptions inside the formerly-gated block (what does the body assume about the cfg value; what other code paths exist for the alternate cfg value; per-cohort initialization/cleanup/state-management dependencies)
+- Verify latent assumptions are NOT load-bearing for the no-longer-existent cohort
+- If cfg value being deleted entirely: alternate cohort no longer exists → assumptions unconditional safely
+- If cfg value being merged into default: alternate cohort still exists → assumptions may need preservation via different transformation
+
+**Loud vs silent:** SILENT — latent assumption broken silently post-deletion; not caught by compile. HIGH detection cost (debugging time hours-to-days depending on production observability).
+
+**Worked example:** `.B.4` v1.7.5 WIP-14 — `engine_arch=per_core_slow` boot-spawn gate at `EngineSharded.hpp:2484`. PRE-DELETION: `if (cfg.engine_arch == ENGINE_ARCH_PER_CORE_SLOW) { ...spawn-per-core-threads... }`. POST-DELETION unconditionalized. B15 verification enumerates latent assumptions: `slow_threads[]` allocated (yes; sized for MAX_EXECUTION_CORES) / `args[]` initialized (yes; per-core context in caller) / `slow_path_thread_fn` exists + handles per-core dispatch (yes) / `pthread_create` succeeds (load-bearing per H1; caller-side error handling). VERDICT: UNCONDITIONALIZATION SAFE — all assumptions hold unconditionally post-deletion since `engine_arch=centralized` cohort being deleted entirely.
+
+**Detection guard:** `/blindspot-scan B15` audit at pre-coding gate when plan body proposes UNCONDITIONALIZE-body kind sites. Sister to B-Plus v0.4 generator mode (mechanical classification flags UNCONDITIONALIZE-body kind) + `/readiness` Check 36 sidecar (audit-time enforcement). Sister memory `feedback_unconditionalization_latent_assumption_audit.md` (Stage 3 codification at WIP-12; Stage 3 first-canonical promotion DEFERRED to 2nd canonical per 2-instance threshold).
+
+---
+
 ## Composition with sister skills
 
 - **`/precoding-audit-gate`** — orchestrator; can include `/blindspot-scan` in audit_set (extended)

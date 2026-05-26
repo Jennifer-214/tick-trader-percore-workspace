@@ -67,8 +67,11 @@ Content is now in per-class sub-files; this doc serves as INDEX.
 | 28 | Branchy SP/HP dispatch when branchless feasible (variance injection in determinism-prioritizing path) | SP/HP/drainer/producer dispatch | HIGH | `DOCS/recurring-bug-patterns/class-28-branchy-sp-hp-dispatch.md` |
 | 29 | Silent zero-fee-rate from Order missing pre-resolution binding | Order construction sites | HIGH | `DOCS/recurring-bug-patterns/class-29-silent-zero-fee-rate-order-binding.md` |
 | 30 | Sibling array on subsystem state created without registry enrollment | subsystem-state struct ↔ canonical registry | LATENT | `DOCS/recurring-bug-patterns/class-30-sibling-array-without-registry-enrollment.md` |
+| 31 | Hardcoded refs in always-loaded docs accumulate canonical-list duplication that drifts past sprint cycles | ci-tooling + registry (doc-system layer) | MEDIUM | `DOCS/recurring-bug-patterns/class-31-hardcoded-refs-in-always-loaded-docs.md` |
+| 32 | Mega-file accumulation past size threshold without split discipline | source-headers + test-files + ledger-files | MEDIUM | `DOCS/recurring-bug-patterns/class-32-mega-file-accumulation-without-split-discipline.md` |
+| 33 | Consumer-enumeration undercount on deletion (sister to Class 14 fabricated-symbols, flipped) | plan-time + registry + deletion-cohort | HIGH | `DOCS/recurring-bug-patterns/class-33-consumer-enumeration-undercount-on-deletion.md` |
 
-Note on numbering: Class 26 is referenced in Class 27's body as a sister concept (global consumer reading per-core field) but does not have its own canonical entry yet. Classes 31 and 32 are cited from CLAUDE.local.md sprint state but have not yet been codified into their own files; they should be added as sub-files (e.g., `class-31-<name>.md`, `class-32-<name>.md`) and listed in the table above when codified.
+Note on numbering: Class 26 is referenced in Class 27's body as a sister concept (global consumer reading per-core field) but does not have its own canonical entry yet. Classes 31 + 32 codified at workspace path 2026-05-19; Class 33 codified at workspace path 2026-05-26 at `.B.4` v1.7.5 WIP-12 per pattern-codification-lifecycle.md Stage 2 Recurrence trigger (≥2-instance threshold met). All Class sub-files live at workspace `tick-trader-percore-workspace/DOCS/recurring-bug-patterns/class-NN-*.md` per file-size-split-discipline.md Stage 3 first canonical landed at v5.15.5.F.4d.1.B.3 2026-05-18.
 
 ## Cross-reference shape
 

@@ -1310,15 +1310,53 @@ related_specs: []
 - **Found:** 2026-05-24 ML↔LIVE structural sweep
 - **Severity:** HIGH — silent train-serve drift on per-core-regime-aware cfg shapes; affects ANY operator using per-core `regime_hysteresis` overrides
 - **Class:** DIVERGENT FIELDS asymmetry (single-state vs per-core-state)
-- **Site(s):**
-  - Live: `CoreFrameworks/ControllerEventLoop.hpp:2641` — `ml_ctx.current_regime_id = state->cores[slot].regime_state.current_regime` (per-core regime state per inference call)
-  - Backtest: `Backtest/BacktestSharded.hpp:541-548` allocates SINGLE `fc_ctx.regime_state` (not per-core); `:612` collapses N→1 via `ctx.current_regime = fc->regime_state.current_regime`
+- **Site(s) (v1.7.5 LINE-NUMBER CORRECTION 2026-05-26 PM per HEAD `e0acb65` post-C.1+C.2+C.3 line shifts; sister to GAP-COHORT-3 4th-consumer addition from v1.7.5 pre-amendment /trace-deps audit):**
+  - Live: `CoreFrameworks/ControllerEventLoop.hpp:2641` — `ml_ctx.current_regime_id = state->cores[slot].regime_state.current_regime` (per-core regime state per inference call) [unchanged]
+  - Backtest (4 consumers; was 3 pre-v1.7.5):
+    - `:423` — allocates SINGLE `fc_ctx.regime_state` (not per-core; was `:541-548` pre-C.1 shift)
+    - `:430` — `Regime_Init(&fc_ctx.regime_state, (int)cfg.regime_hysteresis)` (4th consumer; **NEW v1.7.5 enumeration**; was MISSED in pre-v1.7.5 enumeration — sister to v1.4 N5 anti-pattern that B-Plus v0.4 deletion-target consumer-enumeration check closes structurally)
+    - `:489` — `Regime_Classify(&fc->regime_state, &sig, fc->cfg)` (write site; was `:607` pre-C.1 shift)
+    - `:494` — `ctx.current_regime = fc->regime_state.current_regime` (collapse N→1 read; was `:612` pre-C.1 shift)
 - **Symptom:** Per-core configs with different `regime_hysteresis` train features with ONE collapsed regime; live serves N separate regimes. `regime_class_onehot` + downstream regime-context features systematically drift between training matrix + serve-time inference.
 - **Root cause:** Backtest feature-compute path was simplified to single regime state for simplicity; per-core regime overrides feature came later but never extended backtest collection.
-- **Fix path:** Make `fc_ctx.regime_state` `[MAX_EXECUTION_CORES]`; per-core collection per slot. ~30 LOC. Folds into TECH_DEBT-119 C1.
+- **Fix path:** Phase C.4.5 closure per v1.7.5 amendment — DELETE all 4 consumers + ADD `ctx.current_regime = state.cores[BACKTEST_REGIME_SAMPLE_CORE].regime_state.current_regime` (per `EngineCommon.hpp` v1.3 named constant). Per-core regime state populated inside `EngineCommon_SlowPathCycleOneCore` body LANDED at WIP-11 LIVE; same body via SlowPathCycleAllCores populates BACKTEST at WIP-13. ~22-25 LOC delta. Folds into TECH_DEBT-119 C1.
 - **Target ship:** `v5.15.5.F.4d.1.B.4`
-- **Status:** OPEN
+- **Status:** OPEN — closes at WIP-15 (Phase C.4.5 in v1.7.5 plan body amendment)
 - **Workaround:** Operator should avoid per-core `regime_hysteresis` overrides (use same value across all cores) until fix lands.
+
+---
+
+### PARITY-032 — Backtest BREAKEVEN_ON_PROFIT bitmap-gated dispatch missing (live serves; closed at v5.15.5.F.4d.1.B.4 WIP-11)
+
+```yaml
+id: PARITY-032
+title: Backtest path missing BREAKEVEN_ON_PROFIT lifecycle-bitmap-gated SL ratchet (live serves via per-core slow-path dispatch)
+surface_tags: [slow-path, backtest, lifecycle-cfg-flags, breakeven-on-profit, train-serve-asymmetry]
+severity: medium
+parity_axis: live↔backtest (backtest missing dispatch)
+status: closed
+detected_at: v5.15.5.F.4d.1.B.4 Phase A audit cycle (2026-05-24)
+closed_at: v5.15.5.F.4d.1.B.4 WIP-11 (2026-05-26; engine commit e0acb65; LIVE slow-path migration to EngineCommon_SlowPathCycleOneCore body via D1-B FOREACH_SLOW_PATH_GATE BREAKEVEN_ON_PROFIT cached-gate dispatch); BACKTEST mirror closes by-construction at WIP-13 (Phase C.4 BACKTEST migration to same EngineCommon_SlowPathCycleAllCores call)
+related_specs:
+  - DESIGN_SPECS/refactor-patterns/slow-path-gate-registry-pattern.md (Stage 3 first-canonical 2026-05-10/v5.14.9.B.0; D1-B applies cache pattern to breakeven for first time)
+  - DESIGN_SPECS/refactor-patterns/branchless-dispatch-discipline.md (H20; D1-B sister-instance per cached-gate pattern, NOT new Class 28 hand-wave)
+  - DESIGN_SPECS/meta-disciplines/train-serve-execution-layer-parity.md (M5; this ship is first canonical)
+```
+
+- **Found:** 2026-05-24 v5.15.5.F.4d.1.B.4 Phase A audit cycle (during EngineCommon helper-extract surface enumeration); decision log F8 + D1-B
+- **Severity:** MED — silent train-serve drift on operators with `MASK_LIFECYCLE_CFG_BREAKEVEN_ON_PROFIT` SET in `cfg.lifecycle_cfg_flags`; backtest projections systematically miss the breakeven SL ratchet that live executes; affects backtest fidelity for operators tuning breakeven-based exits
+- **Class:** Class 18 sister mirror (live serves via per-core slow-path dispatch; backtest missing equivalent dispatch); also addresses Class 28 by NOT introducing new branch (D1-B sister-instance per H20 branchless-dispatch-discipline via cached-gate pattern)
+- **Site(s):**
+  - Live (LANDED at WIP-11 engine commit `e0acb65`): `CoreFrameworks/EngineCommon.hpp` `EngineCommon_SlowPathCycleOneCore` body invokes `EventLoop_BreakevenOnProfitOneCore` between TrailingSLRatchet + TRAIL_SL bracket, gated via `BITMAP_IS_SET(state.global_gate_state.flags, MASK_BREAKEVEN_ON_PROFIT)` (cached per FOREACH_SLOW_PATH_GATE BREAKEVEN_ON_PROFIT row scope=ENGINE_WIDE + AUTOPOPULATE_ENGINE_WIDE at body entry)
+  - Backtest (LANDS at WIP-13): same `EngineCommon_SlowPathCycleAllCores` body via Phase C.4 BACKTEST migration — by-construction closure
+  - Pre-`.B.4` LIVE site: `CoreFrameworks/ControllerEventLoop.hpp:3796-3804` `EventLoop_BreakevenOnProfit` wrapper called from centralized-arch trio (DELETED as cohort at WIP-14 per Class 18 cohort wrapper deletion rationale)
+- **Symptom:** Pre-`.B.4`: operators running backtest with `MASK_LIFECYCLE_CFG_BREAKEVEN_ON_PROFIT` SET saw no breakeven SL ratchet in simulation; live execution applied it; backtest underestimated win-rate + overestimated drawdown for breakeven-positive trades.
+- **Root cause:** v5.14.9.B.0 introduced FOREACH_SLOW_PATH_GATE registry pattern as first-canonical structural-fix for slow-path-gated dispatch; BREAKEVEN_ON_PROFIT was added as cfg flag but never enrolled in registry (manual wrapper only). Sister to Class 18 mirror — backtest path never extended to match live wrapper add.
+- **Fix path:** Phase B.3a + WIP-7 added BREAKEVEN_ON_PROFIT row to FOREACH_SLOW_PATH_GATE registry; WIP-11 LIVE slow-path migration moved dispatch into EngineCommon_SlowPathCycleOneCore body with cached-gate predicate; WIP-13 BACKTEST migration via Phase C.4 EngineCommon_SlowPathCycleAllCores call closes mirror by-construction; WIP-14 deletes ControllerEventLoop.hpp:3796-3804 wrapper as part of Class 18 cohort wrapper deletion. STRUCTURAL CLOSURE — class 18 mirror replaced by single-source-of-truth dispatch in EngineCommon.
+- **Target ship:** `v5.15.5.F.4d.1.B.4`
+- **Status:** CLOSED (LIVE LANDED at WIP-11 engine commit `e0acb65`; BACKTEST mirror closes by-construction at WIP-13 Phase C.4 migration; wrapper deletion at WIP-14 closes Class 18 cohort)
+- **Verification:** parity_harness regression at WIP-15 Phase C.6 with `MASK_LIFECYCLE_CFG_BREAKEVEN_ON_PROFIT` cohort tests live↔backtest dispatch byte-for-byte identical
+- **NEW canonical for catalog:** First application of slow-path-gate-registry-pattern to BREAKEVEN_ON_PROFIT lifecycle cfg flag; sister to MASK_LAZY_REBUILD_ACTIVE (canonical at ControllerEventLoop.hpp:2344) + MASK_WS_FLATTEN_ACTIVE (canonical at :3558) ENGINE_WIDE scope precedents.
 
 ---
 

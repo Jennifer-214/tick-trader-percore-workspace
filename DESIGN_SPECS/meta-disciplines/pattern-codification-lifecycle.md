@@ -137,6 +137,26 @@ Wire the pattern's `## Audit detection` signatures into the appropriate skill(s)
 
 **v5.14.11.B.5 example:** Added /dod-audit baseline check categories 3i (math kernel branches) + 3j (struct padding); updated /readiness Check 27 cross-ref count.
 
+**Stage 6 CADENCE-LOCKED criteria (added v5.15.5.F.4d.1.B.4 v1.7.5 WIP-12 per M7 Stage 5 → Stage 6 promotion):**
+
+When a Stage 6 enforcement reaches **≥3 canonical applications + sustained CI tool / pre-commit hook in production**, it qualifies for CADENCE-LOCKED status. The pattern is structurally stable; tooling enforcement is automatic; recurrence at the codified surface is structurally prevented.
+
+**M7 (structural-enforcement-when-memory-insufficient) Stage 6 CADENCE-LOCKED at `.B.4` ship close:**
+
+| Canonical | When | Tool | Surface |
+|---|---|---|---|
+| **1st** (v0.2 symbol-existence) | v5.15.5.F.4d.1.B.4 WIP-6 | `tools/check_plan_body_symbol_existence.py` v0.2 + pre-commit hook | Class 14 fabricated-symbol detection at COMMIT layer |
+| **2nd** (v0.3 line-anchor) | v5.15.5.F.4d.1.B.4 WIP-10 | Same tool v0.3 extension (line-anchor mode) | Line-anchor accuracy verification at COMMIT layer |
+| **3rd** (v0.4 deletion-target consumer-enumeration) | v5.15.5.F.4d.1.B.4 WIP-12 | Same tool v0.4 extension (`--gen-deletion-cohort` generator mode) | Class 33 consumer-enumeration-undercount-on-deletion at OPERATOR-USE layer (sister to v0.2/v0.3 at COMMIT layer) |
+
+3 canonical applications across 3 distinct surfaces (symbol existence + line-range accuracy + deletion-cohort enumeration) within single ship cycle; tool sustained in production with pre-commit hook + sister memory `feedback_verify_symbol_existence_at_plan_drafting_time.md` Stage 6 extended-scope documentation across all 3 modes. Meets CADENCE-LOCKED criteria — DESIGN_SPECS `structural-enforcement-when-memory-insufficient.md` frontmatter `stage:` field updates from `3-first-canonical` to `6-cadence-locked` at Phase D ship close.
+
+**Cadence-locked implications:**
+- M7 codification considered stable; future Stage 6 escalations USE M7 process without re-deriving (sister to "Anti-pattern catalog Class N codification" stability)
+- Quarterly /metadata-audit verifies M7 codification still load-bearing (sister to /metadata-audit quarterly audit cadence)
+- Sister memory + DESIGN_SPECS + tool maintained as part of M7's cadence-locked surface
+- New M7 applications (e.g., M8+ if surfaces) follow same Stage progression but use cadence-locked M7 process
+
 ### Stage 7: Wider audit + cohort migration
 
 Audit OTHER scopes for the same bug class:

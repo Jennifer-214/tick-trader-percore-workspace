@@ -195,7 +195,7 @@ Before writing the handoff doc, fire `/capture-audit --deep` to verify no decisi
 
 ```
 - MEMORY.md index sync check
-- Plan body frontmatter completeness (audit_tier + sister_specs)
+- Plan body frontmatter completeness (audit_tier + sister_specs + deletion_scope)
 - Decision-log artifact existence + sentinel matching
 - Stage 6 promotion candidates per M7
 - Skill-in-CLAUDE.md-suite linkage
@@ -206,6 +206,16 @@ If findings present:
 - MED/LOW: include findings in handoff doc under "Drift items to address at pickup" section + proceed
 
 Per `feedback_structural_enforcement_when_memory_insufficient` (M7) + `feedback_session_decision_log_discipline`: handoff writer is the structural-capture surface; pre-write verification closes the "I forgot to capture X" failure mode.
+
+**NEW v5.15.5.F.4d.1.B.4 v1.7.5 WIP-12 — `deletion_scope:` frontmatter field:**
+
+Handoff doc frontmatter MUST declare `deletion_scope:` field when in-flight plan body proposes deletion-class scope. Values:
+
+- `none` — no deletion-class scope (most ships); receiver-side /accept-handoff doesn't fire deletion-class audits
+- `minor` — single-file or trivial deletion (no B14 audit needed; standard pre-coding gate sufficient)
+- `major` — feature/cfg/symbol deletion spanning ≥3 files with compile-time interdependencies (B14 multi-surface deletion ordering audit REQUIRED at pre-coding gate; B-Plus v0.4 `--gen-deletion-cohort PATTERN` mechanizes; sister B15 audit fires if UNCONDITIONALIZE-body kind sites present per generator classification)
+
+Receiver-side /accept-handoff Stage 4 reads `deletion_scope:` field + auto-fires `/blindspot-scan B14`/`B15` audits at pre-coding gate when `major`. Sister: `feedback_multi_surface_deletion_ordering_discipline` + `feedback_unconditionalization_latent_assumption_audit` + `feedback_operator_facing_doc_cohort_at_cfg_deletion` + /readiness Check 41/42/43 sidecars + /precoding-audit-gate deletion-class auto-fire (sister Stage 1 auto-derived focus keyword).
 
 ### Stage 2 — Read source docs (DYNAMIC catalog ingestion)
 

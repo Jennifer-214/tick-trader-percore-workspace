@@ -66,12 +66,21 @@ Fire AFTER `/precoding-audit-gate` returns GREEN-or-YELLOW-with-amendments and B
 - `pillars` (OPTIONAL; default = `all`) — comma-separated subset of pillars to audit. Use to narrow scope when only specific risks apply:
   ```
   pillars := all | <pillar>[,<pillar>]...
-  pillar  := B1 | B2 | B3 | B4 | B5 | B6 | B7 | B8 | B9 | B10 | B11 | B12
+  pillar  := B1 | B2 | B3 | B4 | B5 | B6 | B7 | B8 | B9 | B10 | B11 | B12 | B13 | B14 | B15
+  # B13 = cross-walker struct-field uniqueness (existing pillar)
+  # B14 = multi-surface deletion ordering (NEW v5.15.5.F.4d.1.B.4 v1.7.5 WIP-12; Stage 2 DRAFT;
+  #       sister memory feedback_multi_surface_deletion_ordering_discipline; sister Check 41;
+  #       fires when plan body proposes feature deletion spanning ≥3 files)
+  # B15 = unconditionalization latent assumption shift (NEW v5.15.5.F.4d.1.B.4 v1.7.5 WIP-12;
+  #       Stage 2 DRAFT — 1st instance only; sister memory feedback_unconditionalization_latent_assumption_audit;
+  #       sister Check 42; fires when plan body proposes UNCONDITIONALIZE-body kind sites per
+  #       B-Plus v0.4 generator classification)
   ```
   Examples:
-  - `all` — full 12-category scan (default)
+  - `all` — full 15-pillar scan (default; updated v5.15.5.F.4d.1.B.4 v1.7.5 to include B13/B14/B15)
   - `B1,B2,B7,B11` — narrow to type-change + collision + include + template-context
   - `B8,B12` — narrow to consumer classification + row order (sister-skill-amendment dependencies)
+  - `B14,B15` — narrow to deletion-class disciplines (multi-surface deletion ordering + unconditionalization latent assumption; sister to B-Plus v0.4 `--gen-deletion-cohort` mechanical classification)
 - `target_step` (OPTIONAL) — specific Step in plan body to focus on (e.g., `Step 1.6.3`). Defaults to all IN-scope steps.
 
 **Examples:**

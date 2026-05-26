@@ -172,6 +172,7 @@ LAYER 3: FORBIDDEN
    - "registry" / "FOREACH_" / "X-macro" → emphasize /trace-deps + /merge-scan
    - "slow path" / "hot path" / "latency" → emphasize /merge-scan + /dod-audit
    - "categorical" / "applies_to" / "lives_in_struct" → emphasize /dod-audit + /readiness
+   - **NEW v5.15.5.F.4d.1.B.4 v1.7.5 WIP-12 — deletion-class auto-fire:** "DELETE" / "REMOVE" / "deprecate" / "full surface deletion" / "cohort delete" keyword in plan body AND `audit_tier: HIGH-RISK` frontmatter → auto-add `blindspot` to `audit_set` (forces /blindspot-scan B14 multi-surface deletion ordering + B15 unconditionalization latent assumption pillar walk; sister to existing struct-gen migration auto-fire). Sister: `feedback_multi_surface_deletion_ordering_discipline` + `feedback_unconditionalization_latent_assumption_audit` + /readiness Check 41/42 sidecars.
 4. Parse `audit_set` (default all 5); intersect with auto-derived
    recommended set; if operator narrowed, honor narrowing
 5. Compose focus_keywords from explicit args + auto-derived keywords

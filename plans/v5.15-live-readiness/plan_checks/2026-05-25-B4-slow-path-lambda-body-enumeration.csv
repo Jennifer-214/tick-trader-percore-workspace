@@ -1,0 +1,116 @@
+section,live_line,helper_target_or_stays_in_caller,function_or_variable,classification_rationale,signature_arg_needed
+# ============================================================================
+# .B.4 Phase B Step B.3 — Per-core slow-path lambda body enumeration
+# Engine HEAD: 64e7101 (Version.hpp 5.15.5.F.4d.1.B.3)
+# Live ref:    /home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded.hpp
+# Lambda capture list (line :2751-2753):
+#   [c, sp_cpu, &state, &oms, &cores, &cfg, &ticks_produced, &last_price, &last_volume, &paper_reset_in_progress]
+# Lambda body span: :2754-:3313 (cycle work :3044-:3311 — body to extract; pre-cycle prelude :2754-:3043 stays in caller)
+# Boundary:    extracted body = LIVE :3044-:3311 (post #endif from USE_IMGUI_GUI hot-swap block)
+# Convention:  STAYS_IN_CALLER per Decision G/B/M5; HELPER_ARG = lambda capture/local needed as signature arg
+# ============================================================================
+#
+# ---- PRELUDE (stays in caller; the per_core_slow thread body) ----
+PRELUDE,2754-2758,STAYS_IN_CALLER,EngineSharded_PinThread(sp_cpu),M5 threading observability — LIVE-only thread pinning,N/A
+PRELUDE,2762-2765,STAYS_IN_CALLER,ControllerConfig_ResolveForCore(cfg c) -> slow_path_interval,Per-core poll interval resolution — read at thread start NOT per-cycle; LIVE-only (backtest uses cfg.poll_interval globally),N/A
+PRELUDE,2766-2772,STAYS_IN_CALLER,fprintf debug log (slow-path-N poll_interval log),M5 threading observability — LIVE-only stderr,N/A
+PRELUDE,2776-2780,STAYS_IN_CALLER,CoreLatencyStats_Enable(slow_path_latency + breakdown[SP_SECTION_COUNT]),M5 threading observability — LIVE-only (rdtsc latency display; backtest single-thread),N/A
+PRELUDE,2781,STAYS_IN_CALLER,uint64_t last_seen_tick = 0,LIVE-only loop-local; thread-scope variable for cadence gate (only used in caller while-loop),N/A
+#
+# ---- PER_CYCLE_PRELUDE (stays in caller; per-cycle preconditions BEFORE body) ----
+PER_CYCLE_PRELUDE,2785-2791,STAYS_IN_CALLER,USE_IMGUI_GUI gated: g_shared.paused_engines_mask & (1<<c) -> yield,Decision G — LIVE-only static (g_shared); thread-pause coordination,N/A
+PER_CYCLE_PRELUDE,2793-2798,STAYS_IN_CALLER,paper_reset_in_progress.load() -> yield,Lambda capture LIVE-only atomic; thread-coordination for paper reset,N/A
+PER_CYCLE_PRELUDE,2800-2807,STAYS_IN_CALLER,now_tick = ticks_produced.load() + cadence gate (now_tick - last_seen_tick < slow_path_interval),Lambda capture + thread-loop cadence; cycle entry timing,N/A
+PER_CYCLE_PRELUDE,2808,STAYS_IN_CALLER,sp_telemetry.state.store(0 RELAXED),M5 threading observability — LIVE-only (per-thread state-machine display),N/A
+PER_CYCLE_PRELUDE,2812-2816,STAYS_IN_CALLER,_sp_t0 = __rdtsc() + _sec_t_other_start = _sp_t0,M5 threading observability — LIVE-only (rdtsc bracketing for latency stats),N/A
+PER_CYCLE_PRELUDE,2822,STAYS_IN_CALLER,if (state.cores[c].strategy_id == STRATEGY_NONE) continue,LIVE-only early-exit; backtest centralized arch never iterates STRATEGY_NONE cores at this layer — runs through SlowPathCycleAllCores wrapper which can skip,N/A
+PER_CYCLE_PRELUDE,2828-3042,STAYS_IN_CALLER,USE_IMGUI_GUI gated: per-core swap-pending pickup (strategy hot-swap + model hot-swap shadow-load + validators),Decision G LIVE-only (g_shared.swap_strategy_requested + g_shared.swap_model_path_requested statics); HotSwap_ShadowLoad_{Ensemble,SingleZoo}; LIVE-only hot-swap mechanism not present in backtest,N/A
+#
+# ============================================================================
+# === HELPER BODY: EngineCommon_SlowPathCycleOneCore (LIVE :3044-:3311) ===
+# === ALL ROWS BELOW THIS LINE MIGRATE INTO THE HELPER ===
+# ============================================================================
+#
+# ---- M2.B AUTOPOPULATE_ENGINE_WIDE (NEW per v1.7 amendment; closes PARITY-032 + caches MASK_BREAKEVEN_ON_PROFIT) ----
+HELPER_NEW,N/A (new entry-point),HELPER,SLOW_PATH_GATE_AUTOPOPULATE_ENGINE_WIDE(state.global_gate_state cfg),M2.B amendment — must fire at helper entry to cache MASK_BREAKEVEN_ON_PROFIT bit BEFORE breakeven body call; sister to existing :2335 + :3555 invocation pattern; uses ENGINE_WIDE scope (state.global_gate_state NOT state.cores[c].gate_state per v1.7.1 D1-B CRITICAL fix),N/A (uses cfg + state args)
+#
+# ---- BODY SECTION 1: Read shared market state (depth snapshot) ----
+HELPER_BODY,3044-3049,HELPER,Comment block (Read shared market state semantic),Migrate comments to preserve operator voice,N/A
+HELPER_BODY,3050-3051,HELPER,FPN<F> book_imb + double book_spread_d + double book_mid_d (local vars init Zero),Local arithmetic — initialized to FPN_Zero/0.0,N/A (local)
+HELPER_BODY,3052-3058,HELPER + STAY_IN_CALLER(g_depth_shared),"if (BITMAP_IS_SET(cfg.gate_cfg_flags MASK_GATE_CFG_DEPTH_ENABLED)) { read g_depth_shared.snapshots[active] }",CRITICAL FINDING — g_depth_shared is LIVE-only function-scope static (EngineSharded.hpp:835); BackTest uses DepthReplayState (CSV-driven) which differs entirely. Helper signature MUST accept a DepthSnapshot bundle from caller to abstract over LIVE-static vs BACKTEST-DepthReplayState source.,book_imb + book_spread_d + book_mid_d (or DepthSnapshot bundle)
+HELPER_BODY,3060-3065,HELPER,"int book_imbalance_blocked = 0; if (DEPTH_ENABLED && !FPN_IsZero(cfg.min_book_imbalance)) {...}",Local arithmetic from cfg + helper-arg book_imb,N/A (computed in helper)
+#
+# ---- BODY SECTION 2: mtm_price + clock + slow_state pointer ----
+HELPER_BODY,3067-3068,HELPER,"price_d = last_price.load() + volume_d = last_volume.load()","Lambda captures (LIVE atomics). BACKTEST passes tick.price + tick.volume directly. Helper signature passes price + volume as args; LIVE caller pre-loads atomics; BACKTEST caller forwards tick values.","price_d (signature) + volume_d (signature) — BOTH NEEDED per finding 1 (last_volume missing from plan v1.7.2)"
+HELPER_BODY,3070-3071,HELPER,mtm_price = (price_d > 0.0) ? FPN_FromDouble<F>(price_d) : FPN_Zero<F>(),Local arithmetic from helper-arg price,N/A (local)
+HELPER_BODY,3073-3075,HELPER,rebuild_ts_us = system_clock::now() microseconds,DIFFERS per arch — LIVE reads system_clock; BACKTEST uses tick.timestamp_us (deterministic). Helper signature MUST accept ts_us as arg; caller provides arch-appropriate value. v1.7.2 plan body MATCHES on `ts_us` arg.,ts_us (signature; ALREADY PLANNED v1.7.2)
+HELPER_BODY,3079,HELPER,auto* sst = state.cores[c].slow_state,Read from state directly (helper has state ref),N/A (read state.cores[c])
+HELPER_BODY,3080,HELPER,FPN<F> vol = (volume_d > 0.0) ? FPN_FromDouble<F>(volume_d) : FPN_Zero<F>(),Local arithmetic from helper-arg volume_d,N/A (local)
+HELPER_BODY,3081-3082,HELPER,FPN<F> bs = DEPTH_ENABLED ? FPN_FromDouble<F>(book_spread_d) : FPN_Zero<F>(),Local arithmetic from helper-arg book_spread_d,N/A (local)
+#
+# ---- BODY SECTION 3: EventLoop_UpdateRollingStateOneCore ----
+HELPER_BODY,3083-3089,HELPER,"EventLoop_UpdateRollingStateOneCore(&state c mtm_price vol rebuild_ts_us 0 book_imb_or_zero bs depth_enabled)","CRITICAL FINDING #1 — callee signature requires VOLUME (FPN<F> vol arg). Plan body v1.7.2 6-arg signature (cfg c state oms price ts_us) DOES NOT pass volume → SILENT FAIL would have UpdateRollingStateOneCore receive uninitialized/zeroed volume → all volume-derived features (signed_vol via FlowState_Push + LargeTradeState_Push + Cumdelta) DRIFT. MUST add `volume` to helper signature.",volume (signature; MISSING FROM v1.7.2)
+#
+# ---- BODY SECTION 4: rdtsc bracket sample (sec_t_rebuild_start) ----
+HELPER_BODY,3093-3096,HELPER + STAY_IN_CALLER(_sec_t_other_start),"_sec_t_rebuild_start = __rdtsc(); CoreLatencyStats_Sample(slow_path_breakdown[SP_SECTION_ROLLING] delta now)","M5 threading observability — LIVE-only telemetry. BUT used as IN/OUT timing markers between sections inside helper body. CHOICE: (a) keep telemetry INSIDE helper as LIVE-only #ifdef gated; or (b) extract telemetry to caller (lose per-section timing). PROPOSED: (a) — telemetry stays in helper body since per-section timing is intrinsic to the cycle; backtest pays ~5ns per __rdtsc (negligible). NEEDS DECISION.",N/A (telemetry internal)
+#
+# ---- BODY SECTION 5: EventLoop_RebuildOneCore (regime + strategy rebuild) ----
+HELPER_BODY,3098-3115,HELPER,"EventLoop_RebuildOneCore(&state c &sst->rolling_short &cfg ... rebuild_ts_us &book_imb_or_null ... book_spread_d book_mid_d book_imbalance_blocked rebuild_ts_us)","Callee signature: 20 args (helper has all from sst + cfg + helper-args; book_imb/book_spread_d/book_mid_d come from BODY SECTION 1 → helper-args). Note: ts_us passed TWICE (timestamp_us + now_us per clock-hoist).",N/A (uses cfg + state + helper-args)
+HELPER_BODY,3118-3121,HELPER,"_sec_t_push_start = __rdtsc(); CoreLatencyStats_Sample(slow_path_breakdown[SP_SECTION_REBUILD])",Telemetry per BODY SECTION 4 note — stays inline,N/A
+#
+# ---- BODY SECTION 6: Push pending_params via seqlock (was inside PushParameters wrapper; inline for per-core path) ----
+HELPER_BODY,3127-3137,HELPER,"if (CORE_STATE_FLAG_IS_SET(state.cores[c] DIRTY)) { ExecutionCore_SetParameters(core pending_params pp_now_tick); }","CRITICAL FINDING #2 — pp_now_tick = ticks_produced.load() (lambda capture). For seqlock publish_tick discipline (v5.12.1.B.2 — hot-path staleness gate sees fresh tick stamp). BACKTEST equivalent: pp_now_tick = tick_index (already in ShardedBacktest_RunTick scope). Helper signature MUST accept pp_now_tick (or fold into ts_us if semantically equivalent — but ts_us is microseconds; pp_now_tick is tick count → DIFFERENT semantics; MUST be distinct args).",pp_now_tick (signature; MISSING FROM v1.7.2)
+HELPER_BODY,3140-3143,HELPER,"_sec_t_te_start = __rdtsc(); CoreLatencyStats_Sample(slow_path_breakdown[SP_SECTION_PUSH])",Telemetry per BODY SECTION 4 note,N/A
+#
+# ---- BODY SECTION 7: ML sell-side exit-prediction submit (v5.13.0.B) ----
+HELPER_BODY,3145-3238,HELPER,"if (USE_EXIT_MODEL && last_exit_prediction > exit_threshold && price_d > 0.01) { build my_mask from oms.oms_state_flags; iterate active_bitmap & my_mask; mark last_exit_predicted_bitmap; bandit-arm validation + clamp + meta-pack; OMS_PushExitForSlot }","All reads from cfg + state + oms (helper has all three refs). price_d from helper-arg. EnsembleModelZoo<F>* ezoo_b = state.cores[c].ensemble_handle. Contains static uint64_t s_arm_log_us[16] (per-core rate-limit log throttle; v1.7 P-B/B11 decision: LEGACY STATIC migrates WITH the body to helper; preservation of existing semantic).",N/A (uses cfg state oms + helper-arg price_d)
+HELPER_BODY,3201,HELPER (static migrates with body),"static uint64_t s_arm_log_us[16] = {0}","v1.7 B11/P-B explicit decision — legacy static migrates with extracted body; NOT a new static; preserves existing rate-limit semantic. Health_LogCriticalRateLimited consumer uses this for per-core log throttle.",N/A (static inside fn body)
+#
+# ---- BODY SECTION 8: TimeExitOneCore (per-core force-close on max_hold_ticks) ----
+HELPER_BODY,3240-3244,HELPER,"if (cfg.cores[c].max_hold_ticks > 0 && price_d > 0.01) { EventLoop_TimeExitOneCore(&state &oms cfg now_tick price_d c); }","CRITICAL FINDING #3 — callee TimeExitOneCore needs `now_tick` (uint64_t tick counter; distinct from ts_us microseconds — TimeExitOneCore compares against state.cores[c].last_entry_tick which is also tick count). BACKTEST equivalent: now_tick = (uint64_t)tick_index. Plan v1.7.2 ts_us is microseconds NOT tick count. MUST add now_tick to helper signature (or fold with pp_now_tick from FINDING #2 — they appear semantically identical).",now_tick (signature; MISSING FROM v1.7.2 — SAME as pp_now_tick from FINDING #2)
+HELPER_BODY,3246-3249,HELPER,"_sec_t_tsl_start = __rdtsc(); CoreLatencyStats_Sample(slow_path_breakdown[SP_SECTION_TIME_EXIT])",Telemetry per BODY SECTION 4 note,N/A
+#
+# ---- BODY SECTION 9: TrailingSLRatchetOneCore (per-core SL trail ratchet on price gain) ----
+HELPER_BODY,3251-3257,HELPER,"if (cfg.cores[c].sl_trail_mult > 0 && cfg.cores[c].tp_hold_score > 0 && !FPN_IsZero(sst->rolling_short.price_stddev) && price_d > 0.01) { EventLoop_TrailingSLRatchetOneCore(&state cfg sst->rolling_short price_d c); }","Callee signature: (state cfg rolling_short price c). All present via helper-args (state cfg) + state.cores[c].slow_state.rolling_short. price_d from helper-arg.",N/A (reads state.cores[c].slow_state + cfg + helper-arg price_d)
+HELPER_BODY,3262-3265,HELPER,"_sec_t_tail = __rdtsc(); CoreLatencyStats_Sample(slow_path_breakdown[SP_SECTION_TRAIL_SL])",Telemetry per BODY SECTION 4 note,N/A
+#
+# ---- BODY SECTION 9.5: NEW — EventLoop_BreakevenOnProfitOneCore fold-in (PARITY-032 closure per v1.7 H3) ----
+HELPER_NEW,N/A (NEW fold-in),HELPER,"if (BITMAP_IS_SET(state.global_gate_state.flags MASK_BREAKEVEN_ON_PROFIT) && price_d > 0.01) { EventLoop_BreakevenOnProfitOneCore(&state cfg price_d c); }","v1.7.1 D1-B CRITICAL fix — reads state.global_gate_state.flags NOT state.cores[c].gate_state.flags (PER_CORE struct doesn't have this bit; ENGINE_WIDE struct does). MASK_BREAKEVEN_ON_PROFIT cached via AUTOPOPULATE_ENGINE_WIDE at helper entry (M2.B). Closes PARITY-032: per_core_slow arch DOES NOT fire breakeven pre-`.B.4`; only centralized + backtest do. Cost: ~5ns gate-check fast-path; ~50-200ns when bit set + position open. Within 100μs slow-path budget.",N/A (uses state cfg + helper-arg price_d)
+#
+# ---- BODY SECTION 10: Warmup permission grant (per-core check) ----
+HELPER_BODY,3267-3273,HELPER,"min_samples = cfg.min_warmup_samples > 0 ? cfg.min_warmup_samples : 64; if (sst->rolling_short.count >= min_samples && state.cores[c].strategy_id != STRATEGY_NONE) { ExecutionCore_SetPermission(&cores[c] 1); }","CRITICAL FINDING #4 — references `cores[c]` (lambda capture: ExecutionCore<F> cores[MAX_EXECUTION_CORES]). NOT accessible via state OR cfg — `cores` is a separate array on the EngineSharded stack scope. Two resolution paths: (a) state.cores[c].core is a stored ExecutionCore<F>* pointer (set at boot via EventLoopState_RegisterCore); read via &state.cores[c].core deref — already in helper scope; or (b) pass cores[] array as helper arg.",Use state.cores[c].core (already present); no new sig arg needed (preferred)
+#
+# ---- BODY SECTION 11: rdtsc close + final telemetry sample ----
+HELPER_BODY,3275-3278,HELPER,"_sp_t1 = __rdtsc(); CoreLatencyStats_Sample(slow_path_latency delta now)","M5 threading observability — LIVE-only top-level slow-path latency sample. PER BODY SECTION 4 NOTE: stays inline; backtest absorbs ~5ns overhead.",N/A
+#
+# ---- BODY SECTION 12: sp_telemetry.last_tick_us + cycles_total + CheckWsStaleness ----
+HELPER_BODY,3290-3297,HELPER,"state.cores[c].sp_telemetry.last_tick_us.store(rebuild_ts_us); state.cores[c].sp_telemetry.cycles_total.fetch_add(1); EventLoop_CheckWsStaleness(&state cfg price_d rebuild_ts_us);","CheckWsStaleness signature: (state* cfg& current_price now_us). All present via helper-args. sp_telemetry per-core writes are part of cycle bookkeeping — stays in helper. CheckWsStaleness is called from BOTH live + backtest per ShardedBacktestDriver:329-334 (parity); helper invocation preserves both sides.",N/A (uses state cfg + helper-arg price_d + helper-arg ts_us)
+#
+# ============================================================================
+# === LAMBDA POST-BODY (stays in caller; thread loop closes) ===
+# ============================================================================
+POST_BODY,3312,STAYS_IN_CALLER,fprintf(stderr [slow-path-N] thread exiting),M5 threading observability — LIVE-only thread-exit log (after while-loop exits),N/A
+#
+# ============================================================================
+# SUMMARY (counts at v1.7.3 Phase B Step B.3 audit time):
+#
+# PRELUDE rows                 : 5 (LIVE thread setup; STAYS_IN_CALLER)
+# PER_CYCLE_PRELUDE rows       : 7 (cadence/pause/swap — STAYS_IN_CALLER; LIVE-only hot-swap blocks)
+# HELPER_NEW rows              : 2 (NEW per v1.7 amendments — M2.B AUTOPOPULATE entry + BreakevenOnProfit fold)
+# HELPER_BODY rows             : 22 (EXTRACTED cycle body)
+# POST_BODY rows               : 1 (thread-exit log; STAYS_IN_CALLER)
+# TOTAL                        : 37 (incl headers)
+#
+# CRITICAL FINDINGS (4 new args beyond v1.7.2's 6-arg signature):
+#   FINDING #1 — `volume` missing (UpdateRollingStateOneCore needs FPN<F> vol arg)
+#   FINDING #2 — `pp_now_tick` missing (ExecutionCore_SetParameters seqlock publish_tick)
+#   FINDING #3 — `now_tick` missing (TimeExitOneCore needs tick-counter arg)
+#   FINDING #4 — `book_imb + book_spread_d + book_mid_d` (DepthSnapshot bundle) missing — sourced from LIVE-only g_depth_shared static; abstract via helper-args
+#
+# UNIFICATION OPPORTUNITY: FINDING #2 (pp_now_tick) + FINDING #3 (now_tick) appear semantically identical
+# (both are tick-counter values; LIVE uses ticks_produced.load(); BACKTEST uses (uint64_t)tick_index).
+# COLLAPSE: 1 arg `now_tick` serves both purposes. Net signature add = 3 args (volume + now_tick + depth bundle).
+#
+# v1.7.2 6-arg signature → REVISED 9-arg signature OR 7-arg with DepthSnapshot bundle.
+# See synthesis report for full recommendation.
+# ============================================================================

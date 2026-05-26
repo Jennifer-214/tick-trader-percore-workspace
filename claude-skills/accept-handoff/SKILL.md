@@ -99,9 +99,13 @@ git rev-parse HEAD  # compare against workspace HEAD claimed in handoff
 ```
 
 Discrepancies:
-- HEAD drift (handoff claimed SHA X but HEAD is now SHA Y): WARN — handoff may be stale; verify intervening commits via `git log <X>..<Y>`
+- HEAD drift (handoff claimed SHA X but HEAD is now SHA Y): walk intervening commits via `git log <X>..<Y> --oneline`
+  - If ALL intervening commits are handoff doc / reading-list / ADDENDUM updates (self-referential refresh): ACCEPTABLE — silently note "N self-referential handoff refresh commits since handoff anchor SHA"; do NOT warn
+  - If ANY intervening commit modifies substantive code / plan body / skill SKILL.md / DESIGN_SPECS / TECH_DEBT / PARITY_ISSUES: WARN — handoff may be stale beyond self-refresh; verify intent before pickup
+  - Handoff doc itself uses "at or after `<SHA>`" framing for workspace HEAD anchor (chicken-and-egg of self-referential handoff doc refreshes)
 - Branch mismatch: BLOCK — wrong branch; pickup unsafe
 - Working tree dirty when handoff said clean (or vice versa): WARN — verify intent
+- Engine forward-drift (engine HEAD ahead of handoff claim): typically means a ship landed since handoff write; investigate via `git log <claimed-sha>..HEAD --stat`
 
 ### Stage 5: Invoke /capture-audit --deep
 

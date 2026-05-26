@@ -151,6 +151,27 @@ if [ -d "$CLAUDE_MEMORY_DIR" ]; then
     done
 fi
 
+# Pre-commit /capture-audit gate (added 2026-05-26)
+# Per `feedback_structural_enforcement_when_memory_insufficient` (M7) +
+# `feedback_session_decision_log_discipline`: mechanical drift check at sync-time
+# catches decision-capture gaps that memory codification alone would miss.
+if command -v claude >/dev/null 2>&1 || [ -x "$HOME/.claude/skills/capture-audit/SKILL.md" ]; then
+    echo "[sync] Firing /capture-audit --quick (M7 pre-commit drift check)..."
+    # Invocation form: in Claude Code session, /capture-audit is invoked via Skill tool.
+    # When running outside Claude Code, the operator should manually run:
+    #   /capture-audit --quick
+    # before this script. Set CAPTURE_AUDIT_PASSED=1 to confirm + skip warning.
+    if [ "${CAPTURE_AUDIT_PASSED:-0}" != "1" ]; then
+        echo "[sync] WARN: /capture-audit not auto-invoked in this shell context"
+        echo "[sync]       Inside Claude Code session: invoke /capture-audit --quick before /sync-workspace"
+        echo "[sync]       Set CAPTURE_AUDIT_STRICT=1 to BLOCK; CAPTURE_AUDIT_PASSED=1 to confirm + suppress"
+        if [ "${CAPTURE_AUDIT_STRICT:-0}" = "1" ]; then
+            echo "[sync] BLOCKING per CAPTURE_AUDIT_STRICT=1"
+            exit 1
+        fi
+    fi
+fi
+
 # Are there changes?
 if git diff --quiet && git diff --cached --quiet && [ -z "$(git status --porcelain)" ]; then
     echo "[sync] workspace clean — nothing to push"

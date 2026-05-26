@@ -173,6 +173,40 @@ Parse the plan body's Steps section for Step identifiers + cross-reference to co
 
 Visualizes ship progress at a glance + makes "where to start" unambiguous for fresh-session pickup. For single-session ships where everything is PENDING, the table is still useful as a checklist.
 
+### Stage 1.8 — Decision log writer + /capture-audit pre-write gate (added 2026-05-26)
+
+**Decision log capture** (sister to TaskList capture at Stage 1.5):
+
+If planning cycle exceeded 3 amendments (detected via plan body version history at Stage 1.6) OR session spans multiple days, write/update session decision log at:
+`plans/<sprint>/decision-logs/<plan-name-stem>-v<X.Y.Z>.md`
+
+Template at `claude-skills/capture-audit/decision-log-template.md`. Sections:
+- **Decisions** (operator-decided actions; capture from conversation + plan body amendments)
+- **Commitments** (claude-said-will-do; capture from response history)
+- **Discoveries** (new findings surfaced this cycle; capture from audit reports)
+- **Drift watch** (auto-populated by /capture-audit Check 4 from sentinel markers)
+- **Cycle close summary** (filled at next plan body version bump)
+
+Cite the decision log in the generated handoff doc under "Required reading files" so receiver session loads it.
+
+**Pre-write /capture-audit gate:**
+
+Before writing the handoff doc, fire `/capture-audit --deep` to verify no decision-capture drift since last commit:
+
+```
+- MEMORY.md index sync check
+- Plan body frontmatter completeness (audit_tier + sister_specs)
+- Decision-log artifact existence + sentinel matching
+- Stage 6 promotion candidates per M7
+- Skill-in-CLAUDE.md-suite linkage
+```
+
+If findings present:
+- HIGH severity: ABORT handoff write; surface findings to operator + require fix before re-invocation
+- MED/LOW: include findings in handoff doc under "Drift items to address at pickup" section + proceed
+
+Per `feedback_structural_enforcement_when_memory_insufficient` (M7) + `feedback_session_decision_log_discipline`: handoff writer is the structural-capture surface; pre-write verification closes the "I forgot to capture X" failure mode.
+
 ### Stage 2 — Read source docs (DYNAMIC catalog ingestion)
 
 Read these dynamically (NOT hardcoded). The skill's value is freshness:
@@ -470,9 +504,32 @@ I'm picking up <ship-tag> (<ship-title>) for the <sprint-name> sprint.
 This is a fresh context window; do NOT trust any prior-session memory
 — verify everything against current code.
 
-## Step 0 — orient + verify state (MANDATORY — BEFORE planning anything)
+## Step 0 — Run /accept-handoff (RECOMMENDED — automates Step 0.1-0.7 below)
 
-**This Step 0 is NOT optional. Drift between handoff write time + cold-pickup time is the most common source of session-restart confusion. Verify EVERY claim explicitly.**
+**ONE COMMAND replaces manual pickup ritual.** Per `feedback_structural_enforcement_when_memory_insufficient` (M7), the receiver-side handoff verification is structurally enforced by the `/accept-handoff` skill rather than relying on manual discipline.
+
+```
+/accept-handoff <path-to-this-handoff-doc>
+```
+
+This invocation does ALL of the following automatically:
+
+1. Parses this handoff doc; loads every cited file (CLAUDE.md, CLAUDE.local.md, MEMORY.md, plan body, sister plans, predecessor handoff, all "Critical pickup-time reads")
+2. Verifies engine + workspace git state matches handoff claims (HEAD SHAs / branch / clean-vs-dirty)
+3. Runs `/capture-audit --deep` to verify NO decision-capture drift since handoff written (PENDING items still PENDING? new commits not reflected? Stage 6 promotion candidates surfaced?)
+4. Runs `/readiness` against the in-flight plan body cited above
+5. Recreates TaskList from the "TaskList state at handoff write" section below
+6. Reads always-loaded baseline (CLAUDE.md + CLAUDE.local.md + MEMORY.md)
+7. Outputs PICKUP-READY status + concrete "your immediate next action is X" instruction
+
+If `/accept-handoff` returns CLEAN: proceed to coding per the concrete next action.
+If `/accept-handoff` returns BLOCK findings: address them before continuing.
+
+**Skip /accept-handoff ONLY if** you need to manually pace through each verification step (rare; use Step 0.1-0.7 below for that). For typical pickup, /accept-handoff is faster, more reliable, and structurally enforced.
+
+## Step 0.1-0.7 (Manual pickup; use ONLY if /accept-handoff unavailable or you have specific reason to manually pace) — orient + verify state
+
+**This Step 0.x is NOT optional if skipping /accept-handoff. Drift between handoff write time + cold-pickup time is the most common source of session-restart confusion. Verify EVERY claim explicitly.**
 
 1. **SHA-diff trigger check** — compare current state to handoff anchor-tag at top of this prompt:
    - `cat /home/caramel/code/FoxML_Trader_v2/Version.hpp` — must match anchor-tag's "Version.hpp:" value

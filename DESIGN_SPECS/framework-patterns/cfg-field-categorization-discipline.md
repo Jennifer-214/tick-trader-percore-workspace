@@ -1,8 +1,9 @@
 ---
 type: framework-pattern
-stage: 2-draft
-version: 1.0
+stage: 3-first-canonical
+version: 1.1
 established: 2026-05-27
+promoted_to_stage_3: 2026-05-27
 tags: [framework-discipline, cfg-flow, registry-discipline, dod, h17-h14]
 surface: [cfg-flow, registry, slow-path]
 sister_specs:
@@ -12,12 +13,12 @@ sister_specs:
   - manual-fields-inventory-pattern.md
   - decision-time-data-binding-pattern.md
 applies_at_skills: [/readiness, /precoding-audit-gate, /dod-audit, /bug-check]
-first_canonical_application: v5.15.5.F.4d.1.B.4 v1.7.6 (Phase Cx-cfg-cohort closure of 11 worked instances)
+first_canonical_application: v5.15.5.F.4d.1.B.4 v1.7.6 Phase Cx-cfg-cohort (11 worked instances; promoted Stage 2→3 at .B.4 ship close per canonical pattern-codification-lifecycle.md Stage 3 = first canonical landed)
 ---
 
 # cfg-field-categorization-discipline
 
-**Stage 2 DRAFT v1.0** — codified 2026-05-27 at v5.15.5.F.4d.1.B.4 v1.7.6 Phase Cx-cfg-cohort closure. Promotes to **Stage 3 first-canonical** at ship close (Phase D bookkeeping) with the v1.7.6 cycle's 11-worked-instance closure as canonical reference. Sister to existing `universal-cfg-field-registry-pattern.md` § Registry default precedence v1.1 + `cfg-derived-consumer-framework.md` + `cfg-scope-discipline.md` + `manual-fields-inventory-pattern.md`.
+**Stage 3 first-canonical v1.1** — codified 2026-05-27 at v5.15.5.F.4d.1.B.4 v1.7.6 Phase Cx-cfg-cohort closure; promoted Stage 2→3 at .B.4 ship close per canonical pattern-codification-lifecycle.md (Stage 3 = first canonical reference landed; v1.7.6 cycle's 11-worked-instance closure IS the first canonical). Sister to existing `universal-cfg-field-registry-pattern.md` § Registry default precedence v1.1 + `cfg-derived-consumer-framework.md` + `cfg-scope-discipline.md` + `manual-fields-inventory-pattern.md`.
 
 ## Problem statement
 
@@ -162,9 +163,9 @@ Apply DOD discipline checks at cfg field row-add time:
 ## Codification lifecycle
 
 - **Stage 1 RECOGNITION:** 2026-05-27 — Phase Cx-cfg-cohort surface analysis revealed 11+ Class 26 instances + 2 H14 violations cohort
-- **Stage 2 DRAFT:** This doc (v1.0; 2026-05-27)
-- **Stage 3 first-canonical:** Phase D ship close (v5.15.5.F.4d.1.B.4) — this ship's 11-worked-instance closure = the canonical reference
-- **Stage 4 cohort:** Future cycles applying decision tree at new cfg field row-add; CI Check 8 catches violations mechanically; /readiness Check 44 catches at plan-time
+- **Stage 2 DRAFT:** Initial codification at v5.15.5.F.4d.1.B.4 v1.7.6 (v1.0; 2026-05-27)
+- **Stage 3 first-canonical:** v5.15.5.F.4d.1.B.4 ship close 2026-05-27 (v1.1) — 11-worked-instance closure landed; promoted at Phase D bookkeeping per canonical pattern-codification-lifecycle.md (Stage 3 = first canonical reference)
+- **Stage 4 cohort:** Pending 2nd cohort application at future cfg field row-add / re-categorization migration; CI Check 8 catches violations mechanically; /readiness Check 44 catches at plan-time
 - **Stage 5 CLAUDE.md:** Promote to CLAUDE.md "How to..." table once ≥2 codebase applications + DESIGN_SPEC mature
 - **Stage 6 cadence-locked:** Future M7 escalation candidate if categorization-error recurs DESPITE codified discipline; structural enforcement via runtime check / pre-tool-call audit
 

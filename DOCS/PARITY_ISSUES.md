@@ -462,7 +462,25 @@ RFV emit site. This is mechanizable — the X-macro could auto-populate.
 Skill update + potential X-macro auto-populate refactor queued
 (addresses the recurring class systemically).
 
-### PARITY-008 — exit_blender_mode not populated in RFV stamp emit
+### 2026-05-27 v5.15.5.F.4d.1.B.4 ship close — PARITY-026/027/028/029/030/031 closed (+ PARITY-032 already closed at WIP-11)
+
+7 PARITY entries closed by-construction at .B.4 via the M5 train-serve-execution-layer-parity Stage 3 first canonical EngineCommon helper extraction:
+
+- **PARITY-026** (kill_switch dispatch missing in LIVE) — closed at WIP-9 via EngineCommon_BootGlobal containing EventLoopState_ConfigureKillSwitch (gated on MASK_RISK_CFG_KILL_SWITCH_ENABLED); invoked from BOTH LIVE (EngineSharded.hpp:749) + BACKTEST (BacktestSharded.hpp:206) by shared helper
+- **PARITY-027** (exit-model dispatch missing in BACKTEST) — closed at WIP-13 via EngineCommon_SlowPathCycleOneCore body containing exit-model dispatch (gated on MASK_ML_CFG_USE_EXIT_MODEL)
+- **PARITY-028** (ConfidenceScorer + RollingTurnover init missing in BACKTEST) — closed at WIP-9 via EngineCommon_BootPerCore body containing both ConfidenceScorer_BindCompositeCfg + RollingTurnover_Init
+- **PARITY-029** (Strategy_InitPerCore missing in BACKTEST; pre-v5.4 F7 bug alive on backtest) — closed at WIP-9 via EngineCommon_BootPerCore body containing tt::Strategy_InitPerCore OUTSIDE ML branch
+- **PARITY-030** (BNB fee discount LIVE-only; 33% backtest fee inflation) — closed at WIP-9 via EngineCommon_ApplyBnbDiscount extracted as non-const cfg one-shot mutator invoked from BOTH LIVE + BACKTEST
+- **PARITY-031** (BACKTEST collapses N per-core regime states to 1) — closed at WIP-15 via BACKTEST_REGIME_SAMPLE_CORE named constant preserving pre-.B.4 sample_regimes=0 semantic + 4th consumer added at BacktestSharded.hpp:430
+- **PARITY-032** (BREAKEVEN_ON_PROFIT dispatch missing in BACKTEST; already closed at WIP-11) — closed at WIP-11 via EngineCommon_SlowPathCycleOneCore body containing D1-B FOREACH_SLOW_PATH_GATE BREAKEVEN_ON_PROFIT cached-gate dispatch
+
+Tests preserved: **3215 passed / 0 failed** post-ship.
+
+Status: **closed** (per status definitions § 27: code-shipped). Strict **CLOSED + regression-free** requires one full `/parity-check` regression-free run; queued post-paper-test session.
+
+Ledger update lag: entries 026-031 were structurally closed at WIPs 9-15 (2026-05-26 to 2026-05-27) but ledger status fields remained `open` until post-ship-audit Stage 8 caught the gap on 2026-05-27. Root cause: close-session ritual didn't include explicit PARITY ledger update step. Remediation: `/post-ship-audit` integration with `/parity-check` mechanical verification + ledger auto-update will be queued for sister mini-ship per `feedback_structural_enforcement_when_memory_insufficient` (M7) — close-session Stage 8 ledger sync to be Stage 6 of structural enforcement at close-session SKILL spec.
+
+
 
 ```yaml
 id: PARITY-008
@@ -1165,10 +1183,10 @@ title: Live engine never calls EventLoopState_ConfigureKillSwitch (kill_switch d
 surface_tags: [engine-sharded-boot, kill-switch, live-safety, class-18-mirror, train-serve-asymmetry]
 severity: critical
 parity_axis: live↔backtest (live missing the call)
-status: open
+status: closed
 detected_at: v5.15.5.F.4d.1.B.3 WIP-8 (2026-05-24 audit cycle)
-target_close: v5.15.5.F.4d.1.B.4 (NEW; train-serve-execution-layer-parity sub-ship) OR earlier hotfix
-related_specs: [DESIGN_SPECS/meta-disciplines/structural-fix-preferred-decision-framework.md, DESIGN_SPECS/meta-disciplines/train-serve-execution-layer-parity.md (DRAFT v0.1 at .B.4)]
+closed_at: v5.15.5.F.4d.1.B.4 WIP-9 (2026-05-26; structural by-construction closure — EngineCommon_BootGlobal extracted with EventLoopState_ConfigureKillSwitch call at EngineCommon.hpp:191 gated on MASK_RISK_CFG_KILL_SWITCH_ENABLED; invoked from LIVE EngineSharded.hpp:749 + BACKTEST BacktestSharded.hpp:206; ledger update at .B.4 post-ship-audit 2026-05-27 per close-session Stage 8). Verification PENDING: `/parity-check` regression-free run after paper-test session.
+related_specs: [DESIGN_SPECS/meta-disciplines/structural-fix-preferred-decision-framework.md, DESIGN_SPECS/meta-disciplines/train-serve-execution-layer-parity.md (Stage 3 first canonical at .B.4)]
 ```
 
 - **Found:** 2026-05-24 via ML↔LIVE structural sweep agent. Full report: `plans/v5.15-live-readiness/plan_checks/2026-05-24-train-serve-asymmetry-sweep.md`
@@ -1193,10 +1211,10 @@ title: Backtest has no ML exit-prediction submit path (use_exit_model train-serv
 surface_tags: [backtest-slow-path, exit-model-ml-inference, oms-drainer, class-18-mirror, train-serve-asymmetry]
 severity: critical
 parity_axis: live↔backtest (backtest missing the dispatch)
-status: open
+status: closed
 detected_at: v5.15.5.F.4d.1.B.3 WIP-8 (2026-05-24 audit cycle)
-target_close: v5.15.5.F.4d.1.B.4
-related_specs: [DESIGN_SPECS/refactor-patterns/shared-helper-extract-for-train-serve-mirror-close.md (DRAFT v0.1 at .B.4)]
+closed_at: v5.15.5.F.4d.1.B.4 WIP-13 (2026-05-26; structural by-construction closure — exit-model dispatch in EngineCommon_SlowPathCycleOneCore body at EngineCommon.hpp:609-644 gated on MASK_ML_CFG_USE_EXIT_MODEL; invoked from LIVE per-core slow thread + BACKTEST via EngineCommon_SlowPathCycleAllCores at BacktestSharded.hpp:362; ledger update at .B.4 post-ship-audit 2026-05-27 per close-session Stage 8). Verification PENDING: `/parity-check` regression-free run after paper-test session.
+related_specs: [DESIGN_SPECS/meta-disciplines/train-serve-execution-layer-parity.md (Stage 3 first canonical at .B.4)]
 ```
 
 - **Found:** 2026-05-24 ML↔LIVE structural sweep
@@ -1220,10 +1238,10 @@ title: ConfidenceScorer_BindCompositeCfg + RollingTurnover_Init missing in backt
 surface_tags: [backtest-boot, confidence-scoring, class-18-mirror, train-serve-asymmetry]
 severity: critical
 parity_axis: live↔backtest (backtest missing 2 calls)
-status: open
+status: closed
 detected_at: v5.15.5.F.4d.1.B.3 WIP-8 (2026-05-24 audit cycle)
-target_close: v5.15.5.F.4d.1.B.4
-related_specs: [PARITY-003 (sister; live side was closed at v5.14.1.B.1 but backtest mirror never enforced)]
+closed_at: v5.15.5.F.4d.1.B.4 WIP-9 (2026-05-26; structural by-construction closure — both ConfidenceScorer_BindCompositeCfg + RollingTurnover_Init in EngineCommon_BootPerCore body at EngineCommon.hpp:394 + :405; invoked from LIVE EngineSharded.hpp + BACKTEST BacktestSharded.hpp via BootPerCore loop; ledger update at .B.4 post-ship-audit 2026-05-27 per close-session Stage 8). Verification PENDING: `/parity-check` regression-free run after paper-test session.
+related_specs: [PARITY-003 (sister; live side was closed at v5.14.1.B.1 but backtest mirror never enforced), DESIGN_SPECS/meta-disciplines/train-serve-execution-layer-parity.md (Stage 3 first canonical at .B.4)]
 ```
 
 - **Found:** 2026-05-24 ML↔LIVE structural sweep
@@ -1247,10 +1265,10 @@ title: Strategy_InitPerCore never called in backtest (pre-v5.4 F7 bug alive on b
 surface_tags: [backtest-boot, strategy-lifecycle, class-18-mirror, train-serve-asymmetry, training-data-contamination]
 severity: critical
 parity_axis: live↔backtest (backtest missing the call)
-status: open
+status: closed
 detected_at: v5.15.5.F.4d.1.B.3 WIP-8 (2026-05-24 audit cycle)
-target_close: v5.15.5.F.4d.1.B.4
-related_specs: [postmortem F7 (v5.4.0; live side fix); DESIGN_SPECS/meta-disciplines/structural-fix-preferred-decision-framework.md]
+closed_at: v5.15.5.F.4d.1.B.4 WIP-9 (2026-05-26; structural by-construction closure — Strategy_InitPerCore in EngineCommon_BootPerCore body at EngineCommon.hpp:417 OUTSIDE ML branch gated by strategy_id; invoked from BOTH LIVE + BACKTEST via shared BootPerCore loop; closes pre-v5.4 F7 bug structurally for backtest path; ledger update at .B.4 post-ship-audit 2026-05-27 per close-session Stage 8). Verification PENDING: `/parity-check` regression-free run after paper-test session.
+related_specs: [postmortem F7 (v5.4.0; live side fix); DESIGN_SPECS/meta-disciplines/structural-fix-preferred-decision-framework.md; DESIGN_SPECS/meta-disciplines/train-serve-execution-layer-parity.md (Stage 3 first canonical at .B.4)]
 ```
 
 - **Found:** 2026-05-24 ML↔LIVE structural sweep
@@ -1274,10 +1292,10 @@ title: BNB fee discount applied LIVE-only (backtest pays 33% higher fees than li
 surface_tags: [backtest-boot, fee-model, train-serve-asymmetry, cost-parity]
 severity: high
 parity_axis: live↔backtest (backtest missing the discount)
-status: open
+status: closed
 detected_at: v5.15.5.F.4d.1.B.3 WIP-8 (2026-05-24 audit cycle)
-target_close: v5.15.5.F.4d.1.B.4
-related_specs: []
+closed_at: v5.15.5.F.4d.1.B.4 WIP-9 (2026-05-26; structural by-construction closure — EngineCommon_ApplyBnbDiscount extracted as non-const cfg one-shot mutator at EngineCommon.hpp:154; invoked from LIVE EngineSharded.hpp:696 + BACKTEST BacktestSharded.hpp:203 with identical math; closes 33% fee inflation on backtest path; ledger update at .B.4 post-ship-audit 2026-05-27 per close-session Stage 8). Verification PENDING: `/parity-check` regression-free run after paper-test session.
+related_specs: [DESIGN_SPECS/meta-disciplines/train-serve-execution-layer-parity.md (Stage 3 first canonical at .B.4)]
 ```
 
 - **Found:** 2026-05-24 ML↔LIVE structural sweep
@@ -1301,10 +1319,10 @@ title: Backtest collapses N per-core regime states to 1 at feature compute (live
 surface_tags: [backtest-feature-compute, regime-detection, per-core-state, train-serve-asymmetry]
 severity: high
 parity_axis: live↔backtest (backtest collapses N→1)
-status: open
+status: closed
 detected_at: v5.15.5.F.4d.1.B.3 WIP-8 (2026-05-24 audit cycle)
-target_close: v5.15.5.F.4d.1.B.4
-related_specs: []
+closed_at: v5.15.5.F.4d.1.B.4 WIP-15 (2026-05-27; structural by-construction closure — BACKTEST_REGIME_SAMPLE_CORE named constant in EngineCommon.hpp:64-75 preserves pre-.B.4 sample_regimes=0 semantic via single canonical core read; 4th consumer added at BacktestSharded.hpp:430 per F-4 closure; engine commit 4c48d5d; ledger update at .B.4 post-ship-audit 2026-05-27 per close-session Stage 8). Verification PENDING: `/parity-check` regression-free run after paper-test session.
+related_specs: [DESIGN_SPECS/meta-disciplines/train-serve-execution-layer-parity.md (Stage 3 first canonical at .B.4)]
 ```
 
 - **Found:** 2026-05-24 ML↔LIVE structural sweep

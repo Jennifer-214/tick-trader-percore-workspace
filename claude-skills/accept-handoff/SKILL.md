@@ -107,6 +107,36 @@ Discrepancies:
 - Working tree dirty when handoff said clean (or vice versa): WARN — verify intent
 - Engine forward-drift (engine HEAD ahead of handoff claim): typically means a ship landed since handoff write; investigate via `git log <claimed-sha>..HEAD --stat`
 
+### Stage 4.5: Verify predecessor ship artifact claims (added 2026-05-27)
+
+Sister to /handoff Stage 2.8 (sender enumeration) + /handoff template Step 1.4 (manual receiver verification). Where Stage 4 confirms current git state matches handoff anchor, Stage 4.5 confirms PREDECESSOR ship's claimed artifacts actually landed cleanly.
+
+**Why this exists:** Predecessor ship close ritual can leave artifacts incomplete (memory file written but MEMORY.md not indexed; DESIGN_SPECS Stage promotion frontmatter not bumped; TECH_DEBT entry not moved from `open.md` to `closed.md` despite narrative claiming closure; PARITY entry status flag still `open` despite cited closure). A receiver picking up the next ship is the natural overlapping-check surface — overlapping checks at different phases catch drift single-check phases miss.
+
+Parse the handoff body's `## What landed at <predecessor-tag> ship close (PREDECESSOR CONTEXT)` section. For each cited artifact claim, run the corresponding verify command:
+
+| Artifact claim type | Verify command | Pass criterion |
+|---|---|---|
+| Predecessor tag exists | `git tag --list <predecessor-tag>` | Exact match returned |
+| Predecessor tag GPG-signed | `git tag --verify <predecessor-tag>` | Signature valid (skip if signing not configured) |
+| CHANGELOG.md row landed | `rg "^### <predecessor-tag>" DOCS/CHANGELOG.md` | Returns ≥1 match |
+| Postmortem file exists | `ls <postmortem-path>` | File exists |
+| TECH_DEBT closures moved | For each `TECH_DEBT-N` claimed closed: `rg "id: TECH_DEBT-N" tick-trader-percore-workspace/DOCS/tech-debt/closed.md` AND `rg "id: TECH_DEBT-N" tick-trader-percore-workspace/DOCS/tech-debt/open.md` | First matches; second NO match |
+| PARITY closures marked | For each `PARITY-NNN` claimed closed: `rg -A3 "^id: PARITY-NNN" tick-trader-percore-workspace/DOCS/PARITY_ISSUES.md` | Shows `status: closed` |
+| DESIGN_SPECS Stage promotions | For each cited Stage X→Y: `grep "^stage:" tick-trader-percore-workspace/DESIGN_SPECS/<path>.md` | Shows promoted stage |
+| NEW memory files exist + indexed | For each cited: file exists at `memory/<name>.md` AND `grep <name>.md MEMORY.md` returns match | Both succeed |
+| NEW going-forward rules in CLAUDE.local.md | For each rule: `grep -A2 "<rule-title>" CLAUDE.local.md` | Returns match in "Going-forward rules (index)" section |
+| Version.hpp matches predecessor | `cat Version.hpp` (engine repo) | String matches predecessor-tag's claimed value at its ship close |
+
+**Output classification:**
+- ALL claims verified → CLEAN; proceed to Stage 5
+- 1-2 LOW-severity failures (e.g., GPG-verify warning) → WARN; surface to operator; proceed to Stage 5
+- ≥3 failures OR any HIGH-severity (TECH_DEBT-claimed-CLOSED still in `open.md`; cited memory file missing) → BLOCK; require operator triage before proceeding
+
+**This step is OVERLAPPING with `/capture-audit` Check 1 (MEMORY.md sync) + Check 7 (DESIGN_SPECS promotion) + Check 8 (skill linkage) by design.** Stage 4.5 catches predecessor incompleteness BEFORE Stage 5 fires `/capture-audit --deep`; Stage 5 then catches drift since handoff write. Defense-in-depth at the handoff seam.
+
+**If handoff body lacks a "What landed at <predecessor-tag>" section** (older handoffs predating /handoff Stage 2.8 codification): skip Stage 4.5 entirely; surface advisory note ("predecessor-context section missing; cannot verify predecessor claims mechanically") so receiver knows to verify manually.
+
 ### Stage 5: Invoke /capture-audit --deep
 
 Run `/capture-audit --deep --since <handoff-write-commit>` to verify no decision-capture drift since handoff written. If findings:

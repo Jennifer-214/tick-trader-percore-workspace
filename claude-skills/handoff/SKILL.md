@@ -314,6 +314,29 @@ This makes mid-ship discipline codification visible across sessions — fresh-se
 
 If no DESIGN_SPEC amendments since pre-tag, omit this section entirely.
 
+### Stage 2.8 — Enumerate predecessor ship verification checklist (added 2026-05-27)
+
+Sister to Stage 2.7 (mid-session DESIGN_SPECS amendments). Where 2.7 captures what landed THIS ship, 2.8 makes the PREDECESSOR ship's claims mechanically verifiable at receiver-side pickup.
+
+**Why this exists:** Predecessor ship close ritual can leave artifacts incomplete (memory file written but MEMORY.md not indexed; DESIGN_SPECS Stage promotion frontmatter not bumped; TECH_DEBT entry not moved from open.md to closed.md; etc.). A receiver picking up the next ship is the natural overlapping-check surface to catch predecessor incompleteness — they'll be reading these artifacts to plan their own ship and can mechanically verify each claim in the handoff body's "What landed at <predecessor-tag> ship close" section.
+
+This overlap between Step 1 (current state verify) + Step 1.4 (predecessor verify; NEW) + Step 1.5/1.6 (in-flight ship verify) + Step 0 /accept-handoff is intentional. Overlapping checks across phases catch drift that single checks miss.
+
+For each artifact claim cited in the handoff body's predecessor-context section, ensure the citation is concrete enough for receiver-side mechanical verification. Required citation format per claim:
+
+- **Tag name + date** — exact git tag string + ISO date
+- **Test count baseline** — exact pass count at ship close
+- **TECH_DEBT closures** — list of `TECH_DEBT-NNN` IDs
+- **PARITY closures** — list of `PARITY-NNN` IDs
+- **DESIGN_SPECS Stage promotions** — `<spec-filename> Stage X → Stage Y` per row
+- **Class catalog amendments** — `Class N recurrence_count A→B` per row
+- **NEW DESIGN_SPECS landed** — full file paths (workspace-prefixed; the DESIGN_SPECS dir is workspace-only, not symlinked into engine repo)
+- **NEW memories** — full file paths (`~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/<name>.md`)
+- **NEW going-forward rules** — title + date as cited in CLAUDE.local.md `Going-forward rules (index)` section
+- **Version.hpp value** — exact string at predecessor ship close
+
+These are enumerated in the handoff body's `## What landed at <predecessor-tag> ship close (PREDECESSOR CONTEXT)` section. Stage 2.8 of /handoff ensures the citation discipline is followed; Step 1.4 of the generated prompt enables the receiver to verify mechanically.
+
 ### Stage 3 — Scan plan for DESIGN_SPECS pattern symptoms
 
 Read the plan body + extract pattern symptoms. For each pattern in
@@ -503,7 +526,7 @@ I'm picking up <ship-tag> (<ship-title>) for the <sprint-name> sprint.
 
 **Ship end goal:** <1-sentence: what this ship CLOSES / DELIVERS; e.g., "close cfg-derived consumer drift via FOREACH_<COHORT>(BASE_X) meta-walker">
 
-**Plan type:** <refactor | feature | live-readiness | hotfix> — drives acceptance criteria sections per `DESIGN_SPECS/plan-templates/future-oriented-plan-template.md` § Ship type.
+**Plan type:** <refactor | feature | live-readiness | hotfix> — drives acceptance criteria sections per `tick-trader-percore-workspace/DESIGN_SPECS/plan-templates/future-oriented-plan-template.md` § Ship type.
 
 **Required reading BEFORE planning** (load in parallel):
 - `CLAUDE.md § Design philosophy + priorities` (NEW 2026-05-18 — End state + DOD + Priority gradients + Doc layer separation)
@@ -549,6 +572,33 @@ If `/accept-handoff` returns BLOCK findings: address them before continuing.
    - `./build/controller_test 2>&1 | tail -3` — test count must be ≥ anchor-tag's "Test count baseline:"
 
    **If ANY value diverges from the handoff anchor-tag**: a ship landed between handoff write + this pickup. This handoff's claims may be stale. STOP planning; investigate the divergence first by reading `git log <anchor-sha>..HEAD` to understand what changed; verify each claim in this handoff body against current state before proceeding.
+
+1.4. **Predecessor ship verification (NEW 2026-05-27)** — mechanically verify each artifact claim in this handoff body's `## What landed at <predecessor-tag> ship close (PREDECESSOR CONTEXT)` section. Sister to Step 1 (CURRENT state) + Step 1.5 (IN-FLIGHT ship state) — this step covers PREDECESSOR claims. Overlapping checks across phases catch drift single-check phases miss.
+
+   For each cited predecessor artifact, run the corresponding verify command:
+
+   | Artifact claim | Verify command | Pass criterion |
+   |---|---|---|
+   | Predecessor tag exists | `git tag --list <predecessor-tag>` | Exact match |
+   | Predecessor tag GPG-signed | `git tag --verify <predecessor-tag>` | Signature valid |
+   | CHANGELOG.md row landed | `rg "^### <predecessor-tag>" DOCS/CHANGELOG.md` | Returns 1 match |
+   | Postmortem file exists | `ls plans/<sprint>/postmortems/<date>-<predecessor-tag>-postmortem.md` | File exists |
+   | TECH_DEBT closures actually moved | For each `TECH_DEBT-N` closure cited: `rg "id: TECH_DEBT-N" tick-trader-percore-workspace/DOCS/tech-debt/closed.md` AND `rg "id: TECH_DEBT-N" tick-trader-percore-workspace/DOCS/tech-debt/open.md` | First returns match; second returns NO match |
+   | PARITY closures marked closed | For each `PARITY-NNN`: `rg -A3 "^id: PARITY-NNN" tick-trader-percore-workspace/DOCS/PARITY_ISSUES.md` | Shows `status: closed` |
+   | DESIGN_SPECS Stage promotions | For each cited Stage X→Y: `grep "^stage:" tick-trader-percore-workspace/DESIGN_SPECS/<path>.md` | Shows promoted stage |
+   | NEW memory files exist + indexed | For each cited memory: `ls ~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/<name>.md` AND `grep <name>.md ~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/MEMORY.md` | Both succeed |
+   | NEW going-forward rules cited | For each rule: `grep -A2 "<rule-title>" CLAUDE.local.md` | Returns match in "Going-forward rules (index)" section |
+   | Version.hpp matches predecessor | `cat Version.hpp` (engine repo) | String matches predecessor-tag's claimed Version.hpp value at the time of its ship close |
+
+   **If ANY predecessor claim fails verification:** the predecessor ship close ritual was incomplete OR an intervening commit reverted/moved the artifact. Common failure modes:
+   - Memory file written but MEMORY.md index never updated → orphan memory
+   - DESIGN_SPECS amendment landed but `stage:` frontmatter not bumped to match the cited promotion
+   - TECH_DEBT entry not moved from `open.md` to `closed.md` despite ship narrative claiming closure
+   - PARITY entry status flag still `open` despite cited closure
+
+   For each failure: investigate via `git log --all <commit-author>..HEAD -- <path>` to find when the artifact was last touched; fix immediately if it's a close-ritual gap (NOT defer per `feedback_no_defer_for_effort`); re-run /capture-audit --deep to verify CLEAN before continuing to Step 1.5.
+
+   **This step is OVERLAPPING with `/capture-audit` Check 1 (MEMORY.md sync) + Check 7 (DESIGN_SPECS promotion) + Check 8 (skill linkage) by design.** Overlapping checks at different phases catch drift the other might miss — defense in depth at handoff seam.
 
 1.5. **Multi-session ship anchor check (NEW)** — if this is a multi-session ship (handoff "Ship state across sessions" section lists WIP-checkpoint commits), verify those anchors are still in the log:
    - `git log <pre-tag>..HEAD --oneline --grep='WIP-checkpoint'` — should match handoff's listed WIP-checkpoint commits
@@ -600,7 +650,7 @@ Run `/readiness <plan-path>` and address every GAP / stale-reference finding. Co
 
 ## Step 2 — pre-coding audit gate (multi-skill parallel)
 
-Per `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md`, fire the gate when ship has 2+ of: closes recurring bug class structurally, touches wire format, adds 5+ new fields/functions/cfg entries, refactors fn used at 5+ sites, picks up work from previous (possibly compacted) session.
+Per `tick-trader-percore-workspace/DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md`, fire the gate when ship has 2+ of: closes recurring bug class structurally, touches wire format, adds 5+ new fields/functions/cfg entries, refactors fn used at 5+ sites, picks up work from previous (possibly compacted) session.
 
 <conditionally-included if ship qualifies>
 
@@ -620,17 +670,17 @@ Per `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md`, fire the
 11. Wire-format ordering change (master registry order differs from legacy walker emit order)
 12. SHAPE audits returned GREEN/YELLOW after 3+ iterations on same plan (inflection signal)
 
-`/blindspot-scan` walks the 12-category implementation-detail taxonomy at `DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md` (per `DOCS/DESIGN_PHILOSOPHY.md` § 11.5 meta-discipline M4). SHAPE audits answer "is design right?"; IMPLEMENTATION-DETAIL answers "will code compile/run without surprise?" — both layers needed.
+`/blindspot-scan` walks the 12-category implementation-detail taxonomy at `tick-trader-percore-workspace/DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md` (per `DOCS/DESIGN_PHILOSOPHY.md` § 11.5 meta-discipline M4). SHAPE audits answer "is design right?"; IMPLEMENTATION-DETAIL answers "will code compile/run without surprise?" — both layers needed.
 
 After all reports return, synthesize convergent findings to `plans/plan_checks/<date>-<ship-tag>-fresh-audits-synthesis.md`. THEN consult Caramel before coding. Do NOT auto-proceed even if findings look addressable (per CLAUDE.local.md feedback_consult_on_audit_findings memory).
 </conditionally-included>
 
 ## Step 3 — design check against pattern library
 
-Required reading (DESIGN_SPECS catalog):
-- `DESIGN_SPECS/README.md` (full 16-pattern catalog + "I need to..." quick discovery)
+Required reading (DESIGN_SPECS catalog — workspace-only, NOT symlinked into engine repo; cite workspace path explicitly):
+- `tick-trader-percore-workspace/DESIGN_SPECS/README.md` (full pattern catalog + "I need to..." quick discovery)
 <for each pattern matched in Stage 3 above:>
-- `DESIGN_SPECS/<pattern>.md` — <reason it matched the plan>
+- `tick-trader-percore-workspace/DESIGN_SPECS/<pattern>.md` — <reason it matched the plan>
 </for>
 
 Don't write code until the matched-pattern docs are read + integration plan articulated.
@@ -700,7 +750,7 @@ Before declaring <ship-tag> shipped:
 
 <ship-specific value statement — what's the value of this ship?>
 
-If you find yourself writing complex plumbing, stop — check `DESIGN_SPECS/README.md` "I need to..." section. There's almost certainly a pattern that applies.
+If you find yourself writing complex plumbing, stop — check `tick-trader-percore-workspace/DESIGN_SPECS/README.md` "I need to..." section. There's almost certainly a pattern that applies.
 
 Good luck. Caramel will iterate with you on findings before coding.
 ```
@@ -717,12 +767,12 @@ Good luck. Caramel will iterate with you on findings before coding.
 
 ## Quick links
 
-- Sprint MASTER: <link>
-- This ship's plan: <link>
-- Latest postmortem: <link>
-- DESIGN_SPECS catalog: <link>
-- Latency rules: <link>
-- Coding invariants: <link>
+- Sprint MASTER: <link to plans/<sprint>/MASTER.md (workspace path)>
+- This ship's plan: <link to plans/<sprint>/subplans/<plan>.md (workspace path)>
+- Latest postmortem: <link to plans/<sprint>/postmortems/<latest>.md (workspace path)>
+- DESIGN_SPECS catalog: `tick-trader-percore-workspace/DESIGN_SPECS/README.md`
+- Latency rules: `plans/_cross-cutting/2026-05-06-latency-path-discipline.md` (workspace path; symlinked from engine)
+- Coding invariants: `DOCS/STRATEGY_AND_CODING_RULES.md` (engine repo; private)
 ```
 
 ### Stage 6 — Write to disk

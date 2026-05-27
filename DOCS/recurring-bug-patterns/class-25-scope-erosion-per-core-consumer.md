@@ -6,7 +6,7 @@ parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-18
 surface_tags: [cfg-flow, slow-path, hot-path, oms-drainer]
 severity: high
-recurrence_count: 2
+recurrence_count: 3
 first_instance: v5.15.5.F.4c.3
 closure_mechanism: per-core consumer fns take const PerCoreCfg<F>* single-param (NEVER const ControllerConfig<F>*); two-param convenience sigs FORBIDDEN + genuine globals caller-resolved as scalar args + cfg-scope-discipline.md + /dod-audit + /bug-check grep signatures + documented exemption list
 sister_classes: [18, 23, 24, 26, 27]
@@ -88,6 +88,12 @@ Documented exemptions (false-positives):
 ### .F.4d sweep extension (2026-05-16)
 
 Sweep extended to OMS consumer surface at `v5.15.5.F.4d` MERGED. `PerCoreCfg<F>*` single-param sig threaded through reward-attribution path: `TickRewardsFromLookback` + `TradeCloseReward` + `ControllerEventLoop` exit-side. Same discipline as `.F.4c.3` WIP2c.2 first canonical — per-core consumer functions take `const PerCoreCfg<F>*` only; full `ControllerConfig` pointer never reaches per-core execution code. Two-param convenience sigs (`const ControllerConfig<F>*, const PerCoreCfg<F>*`) remain FORBIDDEN.
+
+### v5.15.5.F.4d.1.B.4 v1.7.6 sweep extension (2026-05-27 Cx-B closure; CONFIRMED RECURRING)
+
+3rd instance closes: `EngineCommon.hpp:618` exit_threshold consumer at slow-path per-core scope reading `cfg.exit_threshold` (global form) instead of `cfg.cores[c].exit_threshold` (per-core form). VALUE-EQUIVALENT currently (walker propagation makes all per-core values uniform; no operational drift) BUT scope-discipline cosmetic fix prevents future bugs when per-core override syntax adds. Migrated to per-core read at WIP-16 atomic commit `b8bba2b`. Discipline reinforcement: per-core consumer scope ALWAYS reads `cfg.cores[c].X` even when value-equivalent at current state — future-proofs against per-core override syntax addition (PER_CORE_OVERRIDE_INT_FIELDS expansion).
+
+**CONFIRMED RECURRING threshold met** per `pattern-codification-lifecycle.md` Stage 2→3 promotion: 3 instances across 3 distinct ships (`.F.4c.3` first canonical + `.F.4d` OMS sweep extension + `.F.4d.1.B.4` exit_threshold). Discipline-installation transition: memory + audit + DESIGN_SPEC + closure framework all complete; Class 25 recurrence prevented structurally at per-core consumer function signature surface.
 
 ### Related classes
 

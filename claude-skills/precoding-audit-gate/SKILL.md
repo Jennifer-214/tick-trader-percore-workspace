@@ -38,6 +38,14 @@ audit-driven pre-coding gate):
 - Picking up work from a compaction-degraded handoff (per
   `feedback_compaction_degrades_treat_handoffs_as_hints`)
 - Sprint pivots (operator priority shift; new pattern emerges from prior ship)
+- **Substantive plan amendment mid-cycle** (architectural decision shift /
+  scope reframing / categorization change / framework-pattern application
+  question) — re-fire against amended scope BEFORE coding starts. Sister to
+  feedback_iteration_spiral_signals_audit_meta_gap (3+ amendment cycles =
+  audit-methodology-gap signal) + feedback_operator_pushback_as_audit_signal
+  (operator "are you sure?" → STOP do code analysis). Codified at v5.15.5.F.4d.1.B.4
+  v1.7.6 mid-cycle after Path 1 → Path 2 → Path 2 v3 → Path 2 v4 flip-flopping
+  proved planning-time audit re-fire missing as structural enforcement.
 
 **Skip when:** routine pattern-application (new cfg field row in registry
 that's already locked), pure additive work (new test entries with no
@@ -235,22 +243,43 @@ RETURN SYNTHESIS (under <word_cap> words):
 All subagents fire **in parallel** via single tool-use message with
 multiple `Agent` calls. NOT sequential.
 
-### Stage 4 — Synthesize convergent findings
+### Stage 4 — Synthesize convergent findings + DESIGN_SPECS cross-ref (M7 sister; codified v5.15.5.F.4d.1.B.4 v1.7.6)
 
-After all subagents return, orchestrator writes a synthesis doc:
+After all subagents return, orchestrator performs SYNTHESIS with explicit DESIGN_SPECS cross-reference (structural enforcement of `feedback_audit_canonical_sister_before_new_infra` at synthesis-stage planning surface; M7 4th canonical structural enforcement candidate per `meta-disciplines/structural-enforcement-when-memory-insufficient.md`).
 
-`plans/plan_checks/<YYYY-MM-DD>-<plan-shortname>-fresh-audits-synthesis.md`
+Synthesis steps:
 
-Synthesis structure:
+1. **Collect audit findings** — extract per-audit verdicts + findings tables
+2. **DESIGN_SPECS cross-ref grep** — for each finding category, search canonical sister patterns in `DESIGN_SPECS/`:
+   - Grep `DESIGN_SPECS/framework-patterns/` for existing pattern that addresses finding
+   - Grep `DESIGN_SPECS/refactor-patterns/` for existing refactor closure pattern
+   - Grep `DESIGN_SPECS/meta-disciplines/` for codified meta-discipline addressing finding shape
+   - Grep memory files at `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/` for operator-collaboration rules
+3. **Cfg field categorization 5-question mechanical verify** (for any cfg-field-touching plan; per `framework-patterns/cfg-field-categorization-discipline.md` decision tree):
+   - What macro family is the field in? (FOREACH_PER_CORE / FOREACH_GLOBAL / FOREACH_*_CFG_FLAG / OVERRIDE_INT_FIELDS)
+   - Does the field have a global manual struct field? (yes = load-bearing for walker propagation; no = NO_FLAT_FIELD candidate)
+   - What's the walker behavior at this row? (NO_FLAT_FIELD skip vs EMIT_PER_CORE_COPY propagation)
+   - What consumer reads exist + scope of each? (`cfg.X` global / `cfg.cores[c].X` per-core / `core_cfg->X` per-core resolved)
+   - Does the field have per-core override syntax? (PER_CORE_OVERRIDE_INT_FIELDS macro membership)
+4. **Identify existing infrastructure** — explicitly enumerate canonical sisters that address findings BEFORE proposing new infrastructure
+5. **Flag NEW infrastructure proposals** with rationale — if existing infrastructure addresses, REJECT new proposal; if no canonical sister exists, surface as NEW infrastructure candidate with explicit justification
+6. **Write synthesis doc** at `plans/plan_checks/<YYYY-MM-DD>-<plan-shortname>-fresh-audits-synthesis.md`
+
+Synthesis structure (extended at v1.7.6):
 1. **Per-audit verdict table** — single-row summary per audit
 2. **Combined verdict** — GREEN if all GREEN; YELLOW if any YELLOW; RED if any RED
-3. **Critical findings (CRITICAL)** — convergent across audits OR ship-blocking design errors
-4. **High findings (HIGH)** — should resolve before coding; ~30 min plan edit each
-5. **Medium findings (MED)** — Step 0 polish during coding; not blocking
-6. **Low findings (LOW)** — notes / future-work
-7. **Cold-pickup completeness verdict** — would a fresh session lose >30 min re-deriving context?
-8. **Recommended plan amendment list (ordered)** — concrete fixes with effort estimates
-9. **Recommendations for path forward** — full amend / partial amend / scope-reduce / proceed
+3. **DESIGN_SPECS cross-ref findings** — per-finding canonical sister citations OR NEW infrastructure justification
+4. **Critical findings (CRITICAL)** — convergent across audits OR ship-blocking design errors
+5. **High findings (HIGH)** — should resolve before coding; ~30 min plan edit each
+6. **Medium findings (MED)** — Step 0 polish during coding; not blocking
+7. **Low findings (LOW)** — notes / future-work
+8. **Cold-pickup completeness verdict** — would a fresh session lose >30 min re-deriving context?
+9. **Recommended plan amendment list (ordered)** — concrete fixes with effort estimates + DESIGN_SPECS citations
+10. **Recommendations for path forward** — full amend / partial amend / scope-reduce / proceed
+11. **Anti-pattern verdict** — list of Class N anti-patterns this scope closes (Class 25/26/27/33 etc. with recurrence_count updates)
+12. **M7 escalation check** — if findings reveal codified-memory-insufficient pattern (3+ recurrent violations of codified rule at same surface), flag for future Stage 6 cadence-locked promotion
+
+**Why this Stage 4 extension exists:** Codified at v5.15.5.F.4d.1.B.4 v1.7.6 cycle 2026-05-27. v1.7.6 Path 1 framing error was caught by operator pushback AFTER plan body amendment because synthesis stage didn't cross-ref existing canonical patterns (NO_FLAT_FIELD pattern existed at `CfgFieldRegistry.hpp:682` strategy row but plan body proposed misapplication). Memory-only discipline (`feedback_audit_canonical_sister_before_new_infra`) insufficient at synthesis-stage planning surface; structural enforcement via Stage 4 procedure addresses gap.
 
 ### Stage 5 — Return verdict to operator
 

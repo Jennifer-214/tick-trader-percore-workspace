@@ -76,61 +76,83 @@ Three nested options; increasing scope. Each option includes the prior.
 
 **Effort:** ~1-2 days focused.
 
-### Option B — Hybrid (market events global; operator/policy events per-core)
+### Option B — Hybrid (market events global; operator/policy events per-core) — **REJECTED 2026-05-27**
 
-**Scope:** Option A + extend to other operator/policy-driven events.
+**Operator reasoning:** "the per core drainer just straight up seems to win tbh, when you lay it out like that, like not even hybrid just per core is functionally better right?"
+
+Hybrid was originally proposed as a "safer middle ground" between Option A (scoped) and Option C (full). On reflection it's an **awkward middle**: more complexity than Option A (introduces dual event-flow paths), less win than Option C (still has global drainer thread = doesn't eliminate the bottleneck or get full cache locality). The dual-path mental model ("market events here; operator events there") is harder to reason about than either "all global" (current) or "all per-core" (Option C).
+
+**Verdict:** Skip Option B. If we go beyond Option A, go directly to Option C.
+
+(Original Option B content preserved below for historical context.)
+
+~~Scope: Option A + extend to other operator/policy-driven events. Global drainer keeps OMS_DrainSubmit + OrderManager_Tick + DrainPostFill; per-core slow-path absorbs drain_manual_closes + kill switch eval + time exit eval + trailing SL ratchet. "Close all" cross-core events coordinated via global flag.~~
+
+### Option C — Full per-core drainer architecture (TARGET ARCHITECTURE)
+
+**Status:** OPERATOR-PREFERRED eventual target per 2026-05-27 reasoning. Mental model "each core owns everything about its positions, end to end" is unambiguously cleaner than current global drainer OR hybrid.
+
+**Scope:** Eliminate central drainer entirely; fold all drainer responsibilities into per-core slow-path threads. Replace drainer with NEW API serialization infrastructure.
 
 **Mechanism:**
-- **Global drainer** keeps:
-  - `OMS_DrainSubmit` — order submission to exchange (single thread = single API client serialization)
-  - `OrderManager_Tick` — fill notification processing (exchange-driven)
-  - `DrainPostFill` — post-fill bookkeeping (tight coupling to fill arrival)
-- **Per-core slow-path** absorbs:
-  - `drain_manual_closes` (Option A)
-  - Kill switch evaluation (already mostly per-core via `state.cores[c].kill_state`)
-  - Time exit evaluation (already per-core via `state.cores[c].time_exit_state`)
-  - Trailing SL ratchet (already per-core)
-  - "Close all" cross-core events: coordinated via a global flag that all per-cores poll
+
+```
+Current architecture                  Option C target architecture
+────────────────────                  ────────────────────────────
+Producer (1)    → fans out ticks      Producer (1)        → fans out ticks (unchanged)
+Drainer (1)     → owns order flow     [DRAINER ELIMINATED]
+                                      API client thread (NEW) → consumes MPSC from N cores;
+                                                                  serializes to Binance (rate-limit safe)
+                                      Fill router thread (NEW) → reads Binance user-data WS;
+                                                                  routes fills to per-core SPSC
+                                                                  (by order_id → core mapping)
+Per-core slow-path (N)  → strategy    Per-core slow-path (N)  → owns ENTIRE position lifecycle:
+                                                                strategy + order build + fill consume +
+                                                                manual close + kill switch + post-fill
+Per-core hot (N)        → BG/SG eval  Per-core hot (N)        → unchanged
+```
 
 **Pros (Option A +):**
-- Cleaner mental model: "global drainer = events FROM market"; "per-core slow-path = events FROM operator/policy"
-- Most operator-initiated work runs on the core that owns the position (full cache locality win)
-- Drainer thread load drops substantially (only handles market events)
+- **Maximum cache locality** (no central thread iterating all cores; each core's L1 only holds own state)
+- **Maximum pipeline parallelism** (N cores fully independent for entire position lifecycle)
+- **NUMA-perfect** (each core's threads + data on local socket; per-core API queue slots too)
+- **Drainer thread eliminated entirely** → one less context-switch source; one less single-point-of-contention
+- **Scales naturally with N** (no central-thread-bottleneck; adding cores adds throughput proportionally)
+- **Cleanest mental model**: "each core owns position lifecycle"; no special-case dispatch logic
+- **Future-extensible**: adding per-core features (per-core risk profile, per-core latency budgets, per-core kill-switch policy) becomes trivial because the threading model already supports core-isolated state
 
-**Cons (Option A +):**
-- "Close all" cross-core coordination needs care (flag + per-core poll OR explicit cross-core message bus)
-- Operator may notice slightly different latency profile depending on event type
-- More architectural complexity (two event-flow paths instead of one)
+**Cons (Option B +; the REAL cost of Option C):**
 
-**Effort:** ~3-5 days focused.
+The big cost is NEW infrastructure for API client serialization, not just "delete the drainer":
 
-### Option C — Full per-core drainer architecture (most ambitious)
+1. **API client thread is NEW** (replaces drainer's `OMS_DrainSubmit` role). Binance has rate limits + connection limits → single connection serialized via MPSC queue is the safe pattern. This thread:
+   - Consumes order-submit requests from a NEW MPSC queue (N producers = N cores)
+   - Serializes calls to Binance REST API (rate-limit safe)
+   - Returns submit-ack via per-core SPSC queue (acks → per-core slow-path)
 
-**Scope:** Eliminate central drainer entirely; fold all drainer responsibilities into per-core slow-path threads.
+2. **Fill router thread is NEW** (replaces drainer's `OrderManager_Tick` role). Receives fill notifications from Binance user-data WS + routes each to the correct core's SPSC queue based on `order_id → core` mapping (need to maintain this mapping; small struct per active order).
 
-**Mechanism:**
-- Each core's slow-path thread becomes its own mini-drainer for its own positions
-- Single API client (Binance REST/WS) becomes threadsafe-serialized via a NEW lock-free MPSC queue (multi-producer = N cores; single-consumer = API client thread)
-- Per-core slow-path: builds order requests → enqueues to API-client-MPSC → API client serializes to exchange + returns fill notifications via per-core SPSC
-- Fill notifications: exchange → API client thread → routes back to specific core's per-core SPSC for that core's slow-path to process
+3. **MPSC queue is NEW infrastructure** (lock-free; multi-producer single-consumer). FoxLIB has SPSC primitives but not MPSC currently — need to design + test under contention scenarios.
 
-**Pros (Option B +):**
-- Maximum cache locality (no central thread iterating all cores)
-- Maximum pipeline parallelism (N cores fully independent)
-- NUMA-perfect (each core's threads + data on local socket)
-- Drainer thread eliminated entirely → one less context-switch source
-- Scales naturally with N (no central-thread-bottleneck)
-- Removes the "drainer-as-single-owner-of-order-flow" invariant constraint
+4. **Cross-core "close all" / "halt all" events** need a coordinated rollout mechanism (currently trivial via drainer). Options: per-core poll a global flag (simple; small overhead) OR explicit cross-core message via MPSC (cleaner; more infrastructure).
 
-**Cons (Option B +):**
-- Significant architectural rework: producer/drainer/slow-path/hot threading model changes substantially
-- API client serialization queue is NEW infrastructure (lock-free MPSC; must be tested)
-- Per-core slow-path threads gain more work (may need cadence tuning)
-- Tests + code that assume central drainer need wholesale rework
-- Rate-limit handling across N cores requires coordination (current single-thread is simple)
-- Cross-core "halt all" / "close all" events need coordinated rollout
+5. **Test + code rework**: any test that assumes central drainer needs adjustment. Significant test-side scope.
 
-**Effort:** ~1-2 weeks focused (largest scope; multi-ship architectural rework).
+6. **Per-core slow-path threads gain more work** — may need cadence tuning (currently 8 Hz slow-path cycle; might need to be more frequent if absorbing drainer's responsibilities).
+
+7. **Rate-limit handling across N cores** — currently trivial (1 thread = 1 rate-limit budget). With N producers via MPSC, need backpressure / rate-aware enqueue (don't let one core's high-frequency submits starve others).
+
+**Effort:** ~1-2 weeks focused (multi-ship architectural rework). Possibly split across 3-4 ships in a dedicated sub-sprint:
+- Ship 1: NEW MPSC queue primitive in FoxLIB + tests
+- Ship 2: API client thread + fill router thread + per-core SPSC queues (new threading; drainer still exists in parallel for fallback)
+- Ship 3: Per-core slow-path absorbs drainer responsibilities (one event class at a time; manual closes first, then fills, then post-fill)
+- Ship 4: Drainer thread deletion + cross-core "close all" coordination + cleanup
+
+**Prerequisites (must land first):**
+- Paper-test session throughput data showing drainer-thread bottleneck (data-driven justification)
+- File-size discipline closure (.B.5-.B.11) — cleaner foundation for the rework
+- Decoupling roadmap stability — runtime/viewer split priority + may interact with Option C
+- FoxLIB MPSC primitive landed (could be done independently as a foundation ship)
 
 ---
 

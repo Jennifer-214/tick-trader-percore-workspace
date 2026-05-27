@@ -1,0 +1,7 @@
+lambda_name,start_line,end_line,captures_by_ref,captures_by_value,total_args,bench_referenced,target_subfile,merge_note,notes
+fan_out,1303,1868,"num_cores, seq, ticks_produced, last_price, last_volume, cfg, state, oms, slow_path_counter, ema_price, paper_reset_in_progress, topo_hot_cpu, topo_slow_cpu, topo_poll_interval","slow_path_interval, tsc_ghz, topo_producer_cpu, topo_drainer_cpu, topo_nproc, live_trading",20,false,Async.hpp,,LARGEST LAMBDA (566 LOC; 14 by-ref + 6 by-value = 20 args; explicit param: price_d/volume_d/ts_us/is_buyer_maker)
+copy_file,1757,1769,,,0,false,Async.hpp,,(INNER HELPER; 12 LOC capture-free; nested in fan_out paper-reset archive block; may stay inline or hoist)
+drain_with_submit,1970,2114,"state, oms, ticks_produced, cfg",,4,false,Async.hpp,,(145 LOC; 4 by-ref args; return type int; processes event ring per core)
+drain_post_fill,2126,2140,"state, oms, cfg",,3,false,SlowPath.hpp,,(14 LOC; 3 by-ref args; calls EventLoop_DrainPostFill with cfg params)
+drain_manual_closes,2155,2217,"state, oms, cfg, last_price, shared_ptr",,5,false,SlowPath.hpp,"merged with NO-OP variant per Decision H",(62 LOC LIVE; 5 by-ref including nullable TUISharedState* for #ifdef gate; slot walker with partial-exit logic)
+drain_manual_closes,2221,2221,,,0,false,SlowPath.hpp,"merged with LIVE variant per Decision H",(1 LOC NO-OP; empty lambda []() {} gated by #ifdef USE_IMGUI_GUI; merged into single GLOBAL helper at Phase B.4)

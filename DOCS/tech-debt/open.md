@@ -2615,3 +2615,32 @@ sister_debt: TECH_DEBT-114 (PARTIAL_CLOSURE at .B.5)
 - **Trigger:** Operator-prioritization OR when test additions get blocked by file size. The Phase A CSV + WIP-B1 helper extract remain available as a head-start whenever the work is picked up.
 - **Status:** OPEN.
 - **Cross-ref:** TECH_DEBT-114 (PARTIAL_CLOSURE; sister); Phase A CSV; `feedback_no_defer_for_effort.md` (this is operator-prioritized defer, not effort-avoidance); `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md` (parent pattern).
+
+### TECH_DEBT-129 — Per-core drainer architecture exploration
+
+```yaml
+id: TECH_DEBT-129
+title: Per-core drainer architecture exploration (cache locality + pipeline parallelism)
+severity: low
+surface_tags: [drainer, threading, cache-locality, dod-architecture]
+trigger: post-paper-test-session OR drainer-thread profiling shows bottleneck
+status: open
+opened: 2026-05-27
+related_specs: []
+sister_debt: TECH_DEBT-029 (file-size discipline; per-core drainer would touch EngineSharded.hpp Async.hpp + SlowPath.hpp post-.B.6 split)
+```
+
+- **Created:** 2026-05-27 at v5.15.5.F.4d.1.B.6 planning during operator-driven architectural exploration. Operator interested specifically in cache locality wins ("cache locality would be the bigger win here, it would give more room to work with").
+- **Severity:** LOW (exploration; not blocking). Could become MEDIUM if paper-test session shows drainer-thread bottleneck.
+- **Surface:** Drainer thread (currently single; processes all order-flow events for all cores) + per-core slow-path threads (already exist).
+- **Future-roadmap doc:** `plans/_future/2026-05-27-percore-drainer-architecture.md` (created at this TECH_DEBT open)
+- **What's queued:** Three nested architectural options (Option A → C; increasing scope):
+  - **Option A (scoped):** Per-core `drain_manual_closes` only — GUI close events routed to specific core's slow-path queue
+  - **Option B (hybrid):** Global drainer keeps market-driven events (fills/post-fill); per-core handles operator/policy-driven events (manual close, kill switch, time exit)
+  - **Option C (full):** Per-core drainer architecture — fold all drainer responsibilities into per-core slow-path threads; eliminate central drainer; single API client serialized via threadsafe queue
+- **Headline win (per operator):** Cache locality — each core touches ONLY its own `state.cores[c]` cluster (perfect L1 locality vs current sequential walk across all cores). Other wins: pipeline parallelism (N cores process events in parallel), NUMA-aware (per-core threads pinned), latency win for GUI responsiveness, backpressure isolation, removes single-thread-bottleneck risk.
+- **Cost estimate:** Option A ~1-2 days; Option B ~3-5 days; Option C ~1-2 weeks (largest because central drainer's API-client integration requires threadsafe serialization layer).
+- **Prerequisites:** Paper-test session throughput data showing whether global drainer is actual bottleneck. Decoupling roadmap stability (runtime/viewer split per `plans/_future/2026-05-12-decoupling-endgoal-roadmap.md`).
+- **Trigger:** post-paper-test-session (data-driven decision) OR drainer-thread profiling shows >50% CPU during normal ops OR multi-core latency p99 > slow-path budget.
+- **Status:** OPEN with explicit trigger (architectural exploration; not immediate priority).
+- **Cross-ref:** future-roadmap doc has full pro/con analysis + nested options; `decoupling-endgoal-roadmap.md` (sister architectural-exploration doc); CLAUDE.md § Concurrency model (current architecture diagram).

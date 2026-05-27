@@ -82,3 +82,9 @@ Per feedback_categorical_triggers_over_hardcoded_refs:
 - Any cfg field re-categorization migration
 - Any plan body proposing cfg field changes
 - Any audit catching "wrong categorization" pattern
+
+## DESIGN_SPECS sister
+
+- `framework-patterns/cfg-field-categorization-discipline.md` (NEW Stage 2 DRAFT at v5.15.5.F.4d.1.B.4 v1.7.6) — canonical decision tree + 5-step migration + DOD audit + worked examples; this memory is the consumer-pattern verification sub-discipline
+- `framework-patterns/universal-cfg-field-registry-pattern.md` — parent registry pattern
+- `meta-disciplines/structural-enforcement-when-memory-insufficient.md` (M7) — CI Check 8 mechanical sidecar enforces this at COMMIT layer; /readiness Check 44 enforces at plan-time

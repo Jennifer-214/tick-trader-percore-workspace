@@ -142,11 +142,27 @@ The big cost is NEW infrastructure for API client serialization, not just "delet
 
 7. **Rate-limit handling across N cores** — currently trivial (1 thread = 1 rate-limit budget). With N producers via MPSC, need backpressure / rate-aware enqueue (don't let one core's high-frequency submits starve others).
 
-**Effort:** ~1-2 weeks focused (multi-ship architectural rework). Possibly split across 3-4 ships in a dedicated sub-sprint:
-- Ship 1: NEW MPSC queue primitive in FoxLIB + tests
-- Ship 2: API client thread + fill router thread + per-core SPSC queues (new threading; drainer still exists in parallel for fallback)
-- Ship 3: Per-core slow-path absorbs drainer responsibilities (one event class at a time; manual closes first, then fills, then post-fill)
-- Ship 4: Drainer thread deletion + cross-core "close all" coordination + cleanup
+**Effort (HONEST re-estimate 2026-05-27 PM per operator pushback "are you sure the per core drainer is a huge change?"):** ~5-10 days focused work, NOT 1-2 weeks as initially claimed. The initial "multi-week" estimate was over-cautious; honest component breakdown:
+
+| Component | Honest estimate |
+|---|---|
+| MPSC queue primitive in FoxLIB (Vyukov bounded; well-known pattern) | 1-2 days |
+| API client thread (mostly moves existing drainer OMS_DrainSubmit code) | 1-2 days |
+| Fill router thread (Binance WS → per-core SPSC by order_id → core mapping) | 1-2 days |
+| Per-core slow-path absorbs drainer responsibilities (code exists; execution context shifts) | 2-3 days |
+| Cross-core "close all" coordination (shared flag; simple) | ~half day |
+| Test rework (unknown depth of drainer-test coupling; biggest variable) | 1-3 days |
+| Drainer thread deletion + cleanup | ~1 day |
+
+**Total: ~5-10 days focused** (closer to 5-7 if test coupling is shallow; closer to 10 if deep).
+
+Suggested 3-ship split (smaller per-ship; easier to verify):
+
+- **Ship 1 — Foundation**: MPSC primitive in FoxLIB + tests; new thread infrastructure (API client + fill router) running in PARALLEL with existing drainer for safety fallback
+- **Ship 2 — Migration**: Per-core slow-path absorbs drainer responsibilities one event class at a time (manual closes first, then fills, then post-fill)
+- **Ship 3 — Cleanup**: Drainer thread deletion + cross-core "close all" coordination + final test pass
+
+**The real risk isn't scope size — it's that paper-test throughput data doesn't exist yet** to validate whether this architectural shift produces measurable improvement. Premature architectural optimization without throughput data could deliver an elegant refactor with zero observable production benefit. Trigger remains: post-paper-test session profiling.
 
 **Prerequisites (must land first):**
 - Paper-test session throughput data showing drainer-thread bottleneck (data-driven justification)
@@ -214,7 +230,7 @@ Until then: GLOBAL drainer is the production design. `.B.6` subfolder split move
 | Stay with current global | 0h | none | baseline | none |
 | Option A: per-core manual closes | ~1-2 days | LOW (additive; doesn't break existing) | MED (GUI events only) | Small (1 new queue per core) |
 | Option B: hybrid market/operator | ~3-5 days | MED-HIGH (re-org of slow-path responsibilities) | HIGH (most events on owning core) | Medium (per-core queues + cross-core coord for "close all") |
-| Option C: full per-core drainer | ~1-2 weeks | HIGH (architectural rework; many files; new MPSC infrastructure) | MAXIMUM | Large (drainer thread eliminated; API client serialization layer) |
+| Option C: full per-core drainer | ~5-10 days (revised down from 1-2 weeks) | HIGH (architectural rework; new MPSC infrastructure; touches threading model) | MAXIMUM | Medium-Large (drainer thread eliminated; API client serialization layer; ~3 ships) |
 
 ---
 

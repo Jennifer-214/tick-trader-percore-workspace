@@ -1,18 +1,19 @@
 ---
 type: doc-discipline
-stage: 2-draft
-version: 1.0
+stage: 3-first-canonical
+version: 1.3
 established: 2026-05-18
+last_amended: 2026-05-27
 tags: [doc-discipline, structural-fix, pattern-codification]
 surface: []
-sister_specs: [doc-frontmatter-convention.md, ledger-entry-templates.md, categorical-triggers-in-always-loaded-docs.md]
+sister_specs: [doc-frontmatter-convention.md, ledger-entry-templates.md, categorical-triggers-in-always-loaded-docs.md, cpp17-inline-variable-for-header-shared-state.md, single-source-of-truth-discipline.md]
 applies_at_skills: [/metadata-audit, /ship]
 ---
 
 # File-size split discipline
 
 **Established:** 2026-05-18 (v5.15.5.F.4d.1.B.3 doc-layer refresh — codified after Caramel surfaced "if file X becomes greater than Y, split it up and add an index entry")
-**Status:** Stage 2 DRAFT v1.0 — Stage 3 first canonical applies when first mega-file split lands (TECH_DEBT-116 / -117 / -118 queued)
+**Status:** Stage 3 FIRST CANONICAL v1.3 — code-LOC counting methodology amendment + subfolder split pattern Stage 3 first canonical citation added at v5.15.5.F.4d.1.B.6 ship close (2026-05-27)
 
 Generalizes the existing test-file-size discipline (CLAUDE.md `Test file size discipline` rule + TECH_DEBT-029 source-file analog) to ALL files. When file size crosses threshold, split + create index entry.
 
@@ -170,6 +171,46 @@ Proposed split criteria: per-check sidecar files
 - `claude-skills/readiness/SKILL.md` (~300 lines) — invocation + check index
 - `claude-skills/readiness/checks/check-01.md` through `check-NN.md`
 
+### EngineSharded.hpp subfolder split (FIRST CANONICAL subfolder pattern; v5.15.5.F.4d.1.B.6; 2026-05-27)
+
+**Surface:** `CoreFrameworks/EngineSharded.hpp` — monolithic header at 3,202 total lines (well above 1500-line source-header threshold).
+
+**Split criteria:** by concern — subfolder + INDEX-shim pattern (first canonical of the subfolder split shape; sister to per-status / per-class / per-cohort criteria already covered above).
+
+**Pre-split:**
+- `CoreFrameworks/EngineSharded.hpp` — 3,202 lines monolithic (boot + slow-path + async/drainer + run loop intermixed)
+
+**Post-split:**
+- `CoreFrameworks/EngineSharded.hpp` — 96 total / 5 code-lines (INDEX SHIM; `#include`s the 4 sub-files; preserves external API surface)
+- `CoreFrameworks/EngineSharded/Boot.hpp` — 67 total / 12 code (signal handlers + globals + boot setup)
+- `CoreFrameworks/EngineSharded/SlowPath.hpp` — 188 total / 78 code (per-core slow-path thread body)
+- `CoreFrameworks/EngineSharded/Async.hpp` — 905 total / 460 code (drainer + fan-out + manual-close + post-fill hoisted lambdas)
+- `CoreFrameworks/EngineSharded/Run.hpp` — 2,436 total / 1,406 code (engine run loop — under 1500-line threshold per code-LOC counting methodology above)
+
+**Why subfolder (not flat split):** All 4 sub-files are tightly cohesive (boot → spawns threads that body lives in slow-path/async/run; subfolder GROUPING signals that to maintainers). Flat split (`EngineSharded_Boot.hpp` + `EngineSharded_SlowPath.hpp` + ...) loses the visual grouping cue.
+
+**INDEX shim pattern:**
+```cpp
+// CoreFrameworks/EngineSharded.hpp — INDEX shim post-split
+#pragma once
+#include "EngineSharded/Boot.hpp"      // signal handlers + globals
+#include "EngineSharded/SlowPath.hpp"  // per-core slow-path body
+#include "EngineSharded/Async.hpp"     // drainer + fan-out + post-fill
+#include "EngineSharded/Run.hpp"       // engine run loop
+// External callers continue to #include "CoreFrameworks/EngineSharded.hpp"
+// 30 external caller files: ZERO bypass-shim found
+```
+
+**Composes with sister disciplines:**
+- `cpp17-inline-variable-for-header-shared-state.md` — 2 globals migrated `static` → `inline volatile sig_atomic_t` to preserve cross-TU shared storage post-split (`g_engine_sharded_shutdown` + `g_engine_sharded_gui_quit_ptr`)
+- `single-source-of-truth-discipline.md` — Decision H merge of `drain_manual_closes` LIVE + NO-OP into single function (1 function + `#ifdef` body vs 2 functions with identical signatures)
+- 5 lambdas hoisted from monolithic header into named functions: `fan_out` (25-arg signature; block-scope statics enumerated + passed explicitly per `feedback_enumerate_helper_signature_args_before_extract` M6); `drain_with_submit`; `drain_post_fill`; `drain_manual_closes` (single merged function per Decision H)
+
+**Lessons:**
+- **Code-LOC vs total-LOC threshold counting matters** — initial proposal split Run.hpp further (2,436 total → ~1,500 each sub-sub-file); actual code-LOC was 1,406 (already under threshold). Reverted. See "Threshold counting methodology" above.
+- **Sub-files inherit `parent_index:` frontmatter convention** — `CoreFrameworks/EngineSharded.hpp` is the INDEX; sub-files point back via header comments (frontmatter not applicable to `.hpp` source headers, but consumer pointer-back convention preserved via header banner comments)
+- **External cross-refs continue to point at INDEX** — 30 external caller `#include`s of `CoreFrameworks/EngineSharded.hpp` ALL still work (zero bypass shim found); sub-files only accessed via INDEX
+
 ---
 
 ## Trade-offs + when to apply
@@ -232,7 +273,7 @@ Wrong criteria = split makes retrieval HARDER. Examples:
 
 - **Stage 1 (problem identification):** Caramel surfaced 2026-05-18 — "maybe split up things that become mega files to have an index and like 'if file X becomes greater than Y, split it up and add an index entry'"
 - **Stage 2 (DESIGN_SPEC draft):** THIS DOC (2026-05-18)
-- **Stage 3 (first canonical):** first mega-file split at TECH_DEBT-116/-117/-118 sub-ships
+- **Stage 3 (first canonical):** TECH_DEBT-116/-117/-118 ledger splits 2026-05-18 (per-class / per-status criteria); EngineSharded.hpp subfolder split 2026-05-27 (subfolder + INDEX-shim subcriterion — first canonical of subfolder split shape per v5.15.5.F.4d.1.B.6)
 - **Stage 4 (cohort migration):** all mega-files surfaced by `/metadata-audit` get split
 - **Stage 5 (CLAUDE.md promotion):** when threshold rules are load-bearing (currently in this doc; could promote to CLAUDE.md if multiple file types reach threshold)
 - **Stage 6 (cadence-locked):** CI tool catches file-size violations at commit time
@@ -254,4 +295,4 @@ Wrong criteria = split makes retrieval HARDER. Examples:
 
 ---
 
-**End of file-size-split-discipline v1.0 DRAFT.** Stage 3 first canonical at TECH_DEBT-116/-117/-118 ship close.
+**End of file-size-split-discipline v1.3 STAGE 3 FIRST CANONICAL.** Subfolder split pattern first canonical landed at v5.15.5.F.4d.1.B.6 ship close (EngineSharded.hpp 3,202 → 96 INDEX + 4 sub-files); cohort migration continues at queued `.B.7+` ships per file-size discipline maintenance umbrella.

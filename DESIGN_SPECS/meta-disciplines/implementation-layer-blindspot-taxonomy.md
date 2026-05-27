@@ -1,16 +1,18 @@
 ---
 type: meta-discipline
 stage: 3-first-canonical
-version: 1.2
+version: 1.3
 established: 2026-05-18
 last_amended: 2026-05-27
 tags: [meta-discipline, audit-methodology, framework-discipline]
-surface: [registry]
-sister_specs: [audit-driven-pre-coding-gate.md, audit-scope-taxonomy.md, wire-format-byte-preservation-discipline.md, cfg-field-categorization-discipline.md]
+surface: [registry, header-split]
+sister_specs: [audit-driven-pre-coding-gate.md, audit-scope-taxonomy.md, wire-format-byte-preservation-discipline.md, cfg-field-categorization-discipline.md, cpp17-inline-variable-for-header-shared-state.md, file-size-split-discipline.md]
 applies_at_skills: [/blindspot-scan, /precoding-audit-gate]
 pillars:
   - B14: multi-surface-deletion-ordering (Stage 3 first canonical at v5.15.5.F.4d.1.B.4 WIP-14b — 51-site engine_arch=centralized deletion)
   - B15: unconditionalization-latent-assumption-audit (Stage 2 DRAFT 1st instance at v5.15.5.F.4d.1.B.4)
+  - B17: forward-decl-namespace-shadow (Stage 2 DRAFT 1st-instance at v5.15.5.F.4d.1.B.6 Phase B.3 SlowPath.hpp + Phase B.2 Async.hpp; sister to Class 34)
+  - B18: block-scope-statics-inaccessible-from-hoisted-fns (Stage 2 DRAFT 1st-instance at v5.15.5.F.4d.1.B.6 Phase B.2 fan_out hoist; sister to Class 35)
 ---
 
 # Implementation-layer blind-spot taxonomy
@@ -338,6 +340,50 @@ Each category gets: **Definition** / **Detection mechanism** / **Loud vs silent*
 **Worked example:** `.B.4` v1.7.5 WIP-14 — `engine_arch=per_core_slow` boot-spawn gate at `EngineSharded.hpp:2484`. PRE-DELETION: `if (cfg.engine_arch == ENGINE_ARCH_PER_CORE_SLOW) { ...spawn-per-core-threads... }`. POST-DELETION unconditionalized. B15 verification enumerates latent assumptions: `slow_threads[]` allocated (yes; sized for MAX_EXECUTION_CORES) / `args[]` initialized (yes; per-core context in caller) / `slow_path_thread_fn` exists + handles per-core dispatch (yes) / `pthread_create` succeeds (load-bearing per H1; caller-side error handling). VERDICT: UNCONDITIONALIZATION SAFE — all assumptions hold unconditionally post-deletion since `engine_arch=centralized` cohort being deleted entirely.
 
 **Detection guard:** `/blindspot-scan B15` audit at pre-coding gate when plan body proposes UNCONDITIONALIZE-body kind sites. Sister to B-Plus v0.4 generator mode (mechanical classification flags UNCONDITIONALIZE-body kind) + `/readiness` Check 36 sidecar (audit-time enforcement). Sister memory `feedback_unconditionalization_latent_assumption_audit.md` (Stage 3 codification at WIP-12; Stage 3 first-canonical promotion DEFERRED to 2nd canonical per 2-instance threshold).
+
+---
+
+### B17 — Forward-decl inside namespace shadows global type from `<chrono>` / standard headers (NEW v5.15.5.F.4d.1.B.6 Phase E; Stage 2 DRAFT — promotes to Stage 3 at 2nd canonical sister-application beyond Phase B.3 + Phase B.2)
+
+**Definition:** Monolithic-header decomposition / subfolder split work places forward declarations INSIDE the project namespace (`namespace tt { ... }`) for types that live at global scope OR in `std::`. C++ name resolution makes `tt::X` a DISTINCT type from `::X` even when X is otherwise undefined; the forward-decl-inside-namespace creates a NEW shadow type. Compile failure surfaces only when the sub-file is consumed by a TU that tries to call methods on the shadowed type ("no member named 'X' in scope" or "incomplete type 'tt::Y'").
+
+**Detection mechanism:**
+- For each sub-file emerging from header extraction, enumerate forward declarations inside `namespace tt { ... }` blocks
+- For each forward-decl, classify:
+  - **Intentional `tt::X`** (canonical type in `tt` namespace; e.g., `tt::FPN<F>`) — KEEP
+  - **Sister namespace types** (legitimately `tt::`-scoped; e.g., `tt::ConfidenceScorer`) — KEEP
+  - **Re-export aliases** (`namespace tt { using ::SomeGlobalType; }`) — KEEP
+  - **Shadow risk** (type X defined at global scope or in `std::`; forward-decl creates shadow type tt::X) — FIX (move to global scope OR `#include` the proper header)
+- Emit per-sub-file forward-decl audit
+- For shadow risks, prefer `#include <header>` over global forward-decl when type is in standard library (avoids the same Class 34 surface for future maintainers)
+
+**Loud vs silent:** LOUD (compile failure with "no member named 'X' in scope" or "incomplete type" diagnostic). HIGH rework cost for monolithic-header decomposition work (5-15 min per occurrence × N retries until ordering converges).
+
+**Worked example:** v5.15.5.F.4d.1.B.6 Phase B (EngineSharded monolithic header subfolder split). 2 sites surfaced:
+- Phase B.3 SlowPath.hpp: `namespace tt { class steady_clock; }` shadowed `std::chrono::steady_clock`; resolution = `#include <chrono>` at top of header
+- Phase B.2 Async.hpp: `namespace tt { class CandleAccumulator; }` shadowed global `::CandleAccumulator`; resolution = move forward-decl to GLOBAL scope above namespace block
+
+**Detection guard:** `/blindspot-scan B17` audit at pre-coding gate when plan body proposes header extraction or subfolder split from monolithic header. Sister to Class 34 + sister memory `feedback_forward_decl_at_global_scope_not_namespace.md` (Stage 2 codification at `.B.6` Phase E ship close).
+
+---
+
+### B18 — Block-scope statics inaccessible from hoisted header functions (NEW v5.15.5.F.4d.1.B.6 Phase E; Stage 2 DRAFT — promotes to Stage 3 at 2nd canonical sister-application beyond Phase B.2 fan_out hoist)
+
+**Definition:** Lambda or inline function body extracted from a monolithic header into a named function in a different file/namespace references block-scope `static` variables that were declared INSIDE the original enclosing function/scope. When the lambda is hoisted to a different scope, those block-scope statics are inaccessible. Compile failure surfaces as "undeclared identifier" errors for each block-scope static missed.
+
+**Detection mechanism:**
+- For each lambda being hoisted into a named function, enumerate ALL `static` declarations inside the enclosing function/scope (block-scope statics)
+- For each block-scope static, classify:
+  - Used by lambda body (read or write) → MUST be passed as explicit fn arg
+  - Used only outside lambda → ignore (stays in enclosing scope)
+- Emit comprehensive enumeration as CSV artifact (per [feedback_enumerate_helper_signature_args_before_extract.md] M6 sister discipline)
+- Hoisted function signature includes ALL enumerated block-scope statics as pointer args (for mutable statics) or by-value args (for read-only)
+
+**Loud vs silent:** LOUD (compile failure with "undeclared identifier" for each block-scope static missed). HIGH rework cost when N statics missed (N rebuild iterations until convergence; 6-static fan_out instance required 2 attempts).
+
+**Worked example:** v5.15.5.F.4d.1.B.6 Phase B.2 (Async.hpp `fan_out` lambda hoist from monolithic `EngineSharded.hpp`). Producer-thread block had 6 block-scope statics for accounting + cadence tracking (fan_out_call_count + fan_out_dropped_total + last_fan_out_ts + fan_out_log_cadence_ns + last_log_emit_ts + fan_out_warmup_count). Initial hoist signature took 19 args; failed with 6 "undeclared identifier" errors. Resolution: comprehensive enumeration via grep; pass each block-scope static as explicit pointer arg; final hoisted signature = 25 args (19 domain + 6 block-scope statics).
+
+**Detection guard:** `/blindspot-scan B18` audit at pre-coding gate when plan body proposes lambda hoist or function extraction from monolithic header. Sister to Class 35 + sister memory `feedback_enumerate_block_scope_statics_before_hoist.md` (Stage 2 codification at `.B.6` Phase E ship close). Composes with M6 parent discipline (`feedback_enumerate_helper_signature_args_before_extract.md`) — block-scope statics are sister sub-category of comprehensive arg enumeration.
 
 ---
 

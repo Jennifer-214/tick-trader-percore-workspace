@@ -512,29 +512,38 @@ related_specs: [DESIGN_SPECS/framework-patterns/per-bit-per-core-override-patter
 id: TECH_DEBT-029
 title: Source file length reduction (large headers harm maintainability)
 severity: low
-surface_tags: [test-infrastructure]
+surface_tags: [test-infrastructure, source-headers, file-size-discipline]
 trigger: next-maintenance-window
-status: open
+status: partial-closure
 opened: 2026-05-10
-related_specs: []
+partial_closed_at: v5.15.5.F.4d.1.B.6
+last_amended: 2026-05-27
+related_specs: [DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md]
 ```
 
 - **Created:** 2026-05-10 by Caramel musing during v5.14.10.0 PerCoreSnap layout work
 - **Severity:** LOW (cosmetic / maintainability; no behavior or perf impact)
-- **Surface:** Large single-file headers in the codebase. Inventory snapshot 2026-05-10 (refreshed 2026-05-13 post-v5.15.5.B umbrella):
-  - `CoreFrameworks/ControllerEventLoop.hpp` — **post-v5.15.5.B GREW to 3640 lines (up from 3550 pre-.B; net +90 LOC). Pre-ship estimate of ~3800 was over-cautious; .B.7 AUTOPOPULATE absorbed ~145 LOC of EventLoopState_Init body into a 1-line registry-driven call but the .B.1 H/W/C cluster reorg comments + .B.2 sibling-struct/cluster definitions + .B.3 bitmap field comments etc. added ~235 LOC of structural documentation + cluster anchors. Net +90 LOC is one-time tech-debt closure investment.** Contents unchanged: EventLoopState + CoreContext + CoreSlowState definitions + Init/Free + RegisterCore + OnEvent + DrainEvents + RebuildAllParameters + UpdateRollingStateOneCore + RebuildOneCore + TimeExitOneCore + TrailingSLRatchetOneCore + helpers.
-  - `CoreFrameworks/ControllerConfig.hpp` — 2727 lines (was largest as of 2026-05-10; cfg declarations + parser + defaults + validation)
-  - `ML_Headers/CoreModelZoo.hpp` — 2239 lines (CoreModelZoo + EnsembleModelZoo + bandit + ridge state + persistence)
-  - `Strategies/StrategyParameters.hpp` — 1693 lines (ML_BuildParameters + dispatch + ridge override + composite confidence)
-  - `DataStream/EngineTUI.hpp` — 1382 lines (TUI infrastructure + TUISnapshot + PerCoreSnap)
-  - `tests/controller_test.cpp` — ~16k lines (already covered by CLAUDE.md test file size discipline section)
+- **Status amendment 2026-05-27 (post-`.B.6` close + code-LOC methodology re-analysis):** OPEN → PARTIAL_CLOSURE. 1 of 6 split candidates structurally closed at `.B.6`; 6 files DROPPED from queue per code-LOC re-analysis (already under threshold by code-LOC methodology); remaining 4 candidates queued for `.B.7-.B.9`.
+- **CLOSED at .B.6 (1 candidate):**
+  - **`CoreFrameworks/EngineSharded.hpp`** (3,202 → 96-line INDEX SHIM + 4 subfolder sub-files) — `.B.6` first canonical of subfolder split + INDEX-shim pattern per `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md` v1.3. Sub-files: Boot.hpp (67/12 code) + SlowPath.hpp (188/78 code) + Async.hpp (905/460 code) + Run.hpp (2,436/1,406 code; under threshold per code-LOC counting).
+- **DROPPED from split queue 2026-05-27 (6 files; under threshold by code-LOC; previously listed in inventory based on total-lines miscount):** ControllerConfig.hpp / EngineTUI.hpp / ModelInference.hpp / StrategyParameters.hpp / SettingsPanel.cpp / OrderManager.hpp.
+- **Remaining split candidates (queued at .B.7-.B.9):**
+  - **`Backtest/BacktestPanels.hpp`** (`.B.7`)
+  - **`CoreFrameworks/ControllerEventLoop.hpp`** (`.B.8`)
+  - **`ML_Headers/CoreModelZoo.hpp`** (`.B.8`)
+  - **`Backtest/BacktestEngine.hpp`** (`.B.8`)
+  - **`GUI/DashboardPanels.hpp`** (`.B.9`)
+  - **`Backtest/PortfolioController.hpp`** (`.B.9`)
+- **Surface (pre-`.B.6` inventory snapshot 2026-05-10; refreshed 2026-05-13 post-v5.15.5.B umbrella; re-classified 2026-05-27 per code-LOC methodology):**
+  - `CoreFrameworks/ControllerEventLoop.hpp` — post-v5.15.5.B 3640 lines (queued for `.B.8`)
+  - `tests/controller_test.cpp` — ~16k lines (covered by CLAUDE.md test file size discipline section; PARTIAL_CLOSURE at `.B.5` via TECH_DEBT-114 PARTIAL_CLOSURE + TECH_DEBT-127 full split queued)
 - **Class:** Same maintenance-overhead class as the test file size discipline already in CLAUDE.md (test files > 5k lines must split BEFORE adding more tests). This entry surfaces the SOURCE-side analog for non-test files. Headers above 1500-2000 lines slow IDE navigation, increase merge-conflict surface, and discourage related-concern grouping (developers append to end-of-file rather than locating the relevant section).
-- **What's deferred:** Establish a SOURCE file size discipline analog to CLAUDE.md's test file discipline (e.g., "any source file > 1500 lines OR > 50 logical sections must be split BEFORE adding more"). When triggered, split candidate files into focused sub-files by concern (e.g., `ControllerConfig.hpp` → `ControllerConfigDecl.hpp` + `ControllerConfigParser.hpp` + `ControllerConfigDefaults.hpp` + `ControllerConfigValidate.hpp`).
-- **Why deferred (not effort-avoidance):** File splits are HIGH-RISK refactors (every consumer's `#include` chain shifts; build dependency graph re-evaluates; sometimes circular-include headaches surface). Each split warrants its own focused ship with rollback anchor + comprehensive build verification. Doing it ad-hoc during feature ships is risky. Better as dedicated refactor sub-ship per file (e.g., v5.X.Y "ControllerConfig.hpp → 4-file split").
-- **Cost estimate:** ~2-4h per file split (audit consumers + plan boundary + edit + build verify + test). Total inventory above: ~10-20h to address all candidate files.
-- **Trigger:** Address (a) when a specific file makes a feature ship genuinely awkward (e.g., 6+ developer hours lost to "where is X in this 2700-line file?"), OR (b) before a major refactor of one of the candidate files that would significantly increase its size further, OR (c) operator-driven cleanup sprint focused on maintainability.
-- **Status:** OPEN
-- **Cross-ref:** CLAUDE.md "Test file size discipline (added v5.11.35)" section (test-side analog; this entry is the source-side counterpart); v5.14.10.0 PerCoreSnap layout work (occasion for the musing).
+- **What's deferred (post-`.B.6` PARTIAL_CLOSURE):** Source-file-size discipline GENERALIZED at `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md` (now Stage 3 first canonical at v5.15.5.F.4d.1.B.6; subfolder + INDEX-shim pattern is the canonical mechanism). Remaining 4 candidate splits queued at `.B.7-.B.9` per `subplans/2026-05-25-v5.15.5.F.4d.1.B-file-size-maintenance.md` umbrella. Each future split uses code-LOC counting (per [[feedback_count_code_loc_not_total_lines]]) + INDEX-shim pattern (subfolder split when natural seam by concern) + cpp17-inline-variable migration if shared header globals surface (per [[feedback_cpp17_inline_variable_for_shared_state_across_tus]]).
+- **Why deferred (not effort-avoidance) — POST-`.B.6` framing:** Subfolder + INDEX-shim pattern + code-LOC counting + sister disciplines (cpp17-inline / SSoT / forward-decl-at-global / block-scope-statics enumeration) all codified at `.B.6` ship close as Stage 3 first canonical. Remaining splits at `.B.7-.B.9` apply established pattern to new candidates per file-size-maintenance umbrella plan; not novel work; mechanical extension of the canonical.
+- **Cost estimate:** ~2-4h per file split (audit consumers + plan boundary + edit + build verify + test). Remaining 4 candidates: ~8-16h focused work. Less than original ~10-20h estimate because subfolder-pattern + INDEX-shim is now established + sister disciplines reduce per-split rebuild cycles.
+- **Trigger:** Continue applying at `.B.7-.B.9` umbrella ships per `subplans/2026-05-25-v5.15.5.F.4d.1.B-file-size-maintenance.md` schedule.
+- **Status:** PARTIAL_CLOSURE (1 of 6 in active queue at `.B.6`; 6 DROPPED from queue per code-LOC re-analysis; 4 remaining queued at `.B.7-.B.9`)
+- **Cross-ref:** CLAUDE.md "Test file size discipline (added v5.11.35)" section (test-side analog; sister); v5.14.10.0 PerCoreSnap layout work (occasion for the original musing); `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md` v1.3 (Stage 3 first canonical at `.B.6`); `DESIGN_SPECS/data-disciplines/cpp17-inline-variable-for-header-shared-state.md` (sister discipline at same surface); `DESIGN_SPECS/meta-disciplines/single-source-of-truth-discipline.md` (sister discipline at same surface); RECURRING_BUG_PATTERNS Class 34 + Class 35 (sister anti-patterns surfaced at `.B.6` header-extract work); `subplans/2026-05-25-v5.15.5.F.4d.1.B-file-size-maintenance.md` umbrella plan; `subplans/2026-05-27-v5.15.5.F.4d.1.B.6-enginesharded-subfolder-split.md` first canonical worked instance.
 
 ---
 
@@ -2644,3 +2653,70 @@ sister_debt: TECH_DEBT-029 (file-size discipline; per-core drainer would touch E
 - **Trigger:** post-paper-test-session (data-driven decision) OR drainer-thread profiling shows >50% CPU during normal ops OR multi-core latency p99 > slow-path budget.
 - **Status:** OPEN with explicit trigger (architectural exploration; not immediate priority).
 - **Cross-ref:** future-roadmap doc has full pro/con analysis + nested options; `decoupling-endgoal-roadmap.md` (sister architectural-exploration doc); CLAUDE.md § Concurrency model (current architecture diagram).
+
+### TECH_DEBT-130 — Defensive nullptr guards in EngineSharded/Async.hpp fan_out body (runtime-dead under USE_IMGUI_GUI build)
+
+```yaml
+id: TECH_DEBT-130
+title: 4 defensive nullptr guards in EngineSharded/Async.hpp fan_out body — runtime-dead under USE_IMGUI_GUI build
+severity: low
+surface_tags: [async-drainer, branch-density, micro-optimization, post-paper-test]
+trigger: post-paper-test profiling shows fan_out variance
+status: open
+opened: 2026-05-27
+related_specs: [DESIGN_SPECS/refactor-patterns/branchless-dispatch-discipline.md]
+sister_debt: TECH_DEBT-029 (file-size discipline; sister at same Async.hpp surface)
+```
+
+- **Created:** 2026-05-27 at v5.15.5.F.4d.1.B.6 Phase C audit gate (4-agent verdict GREEN with 2 YELLOW/cosmetic findings logged for post-paper-test triage).
+- **Severity:** LOW (runtime-dead under USE_IMGUI_GUI build; branchless-dispatch discipline H20 sister; optional polish).
+- **Surface:** `CoreFrameworks/EngineSharded/Async.hpp` `fan_out` lambda body, 4 nullptr guard sites:
+  - Line 238: `if (gui_quit_ptr != nullptr)` — gui-thread signal check (always non-null under USE_IMGUI_GUI; null only in headless build path)
+  - Line 286: similar guard at parallel gating site
+  - Line 368: similar guard at parallel gating site
+  - Line 465: similar guard at parallel gating site
+- **Class:** Branchless-dispatch sister (H20). 4 defensive nullptr checks add 4 branch sites in producer-thread fan_out body. Under USE_IMGUI_GUI build, all 4 are runtime-dead (gui_quit_ptr is always non-null). Under headless build path (if reactivated post-paper-test), the guards are load-bearing.
+- **What's deferred:** Two optional polish paths:
+  1. **`__builtin_expect(ptr != nullptr, 1)` hint** — 1-line change per site; signals to compiler that null path is rare. Branch density unchanged but predicted-correctly-path optimization improves p99 marginally.
+  2. **Build-flag-gated body** — `#ifdef USE_IMGUI_GUI` wraps the guarded body without the check; `#else` keeps the guard. Removes 4 branches under GUI build entirely.
+- **Why deferred (not effort-avoidance):** Optional polish; not blocking. fan_out is in producer-thread (single-tick budget); 4 branches × 30-100ns mispredict cost is ≤0.4μs worst-case per tick, well below tick budget. Pure perf optimization fits future-headache-vs-optimization-scope-framework `defer` bucket (no anti-pattern instance survives; no class can recur).
+- **Cost estimate:** ~30-60 min (per option). Option 2 (build-flag gating) is preferred long-term per branchless-dispatch discipline.
+- **Trigger:** Address when (a) post-paper-test profiling shows fan_out variance impacting p99 (data-driven), OR (b) headless build path gets reactivated for v6.X decoupling work + fan_out is on a different latency budget, OR (c) /latency-track skill flags producer-fan-out variance during quarterly cadence.
+- **Status:** OPEN with explicit data-driven trigger (post-paper-test).
+- **Cross-ref:** v5.15.5.F.4d.1.B.6 Phase C 4-agent audit (YELLOW-1 finding logged); CLAUDE.md H20 (branchless dispatch preferred for SP/HP/drainer/producer); `DESIGN_SPECS/refactor-patterns/branchless-dispatch-discipline.md`; `feedback_future_headache_vs_optimization_scope_framework`.
+
+### TECH_DEBT-131 — Stale `EngineSharded.hpp:LINENO` comment refs in sibling files
+
+```yaml
+id: TECH_DEBT-131
+title: 7 stale `EngineSharded.hpp:LINENO` comment refs in sibling files (cosmetic; comments-only drift post-subfolder-split)
+severity: low
+surface_tags: [stale-comments, code-hygiene, post-refactor-residue, doc-discipline]
+trigger: next stale-comment audit OR /metadata-audit quarterly cadence
+status: open
+opened: 2026-05-27
+related_specs: []
+sister_debt: TECH_DEBT-029 (file-size discipline; sister at same `.B.6` subfolder-split surface)
+```
+
+- **Created:** 2026-05-27 at v5.15.5.F.4d.1.B.6 Phase C audit gate (4-agent verdict GREEN with 2 YELLOW/cosmetic findings logged).
+- **Severity:** LOW (cosmetic; comments-only drift; no behavior or build impact).
+- **Surface:** 7 stale `EngineSharded.hpp:LINENO` comment references in sibling files. Each cites a specific line in the pre-`.B.6`-split monolithic `EngineSharded.hpp` (now 3,202 → 96 INDEX shim; sub-files at `EngineSharded/Boot.hpp` / `SlowPath.hpp` / `Async.hpp` / `Run.hpp` contain the actual referenced code). Sites:
+  - `ML_Headers/EnsembleHotSwap.hpp:86` — references monolithic line
+  - `CoreFrameworks/EngineCommon.hpp:83` — references monolithic line
+  - `CoreFrameworks/EngineCommon.hpp:150` — references monolithic line
+  - `CoreFrameworks/EngineCommon.hpp:179` — references monolithic line
+  - `CoreFrameworks/ShardedSnapshotPersist.hpp:502` — references monolithic line
+  - `ML_Headers/CoreModelZoo.hpp:2879` — references monolithic line
+  - `ML_Headers/CoreModelZoo.hpp:2896` — references monolithic line
+  - `CoreFrameworks/ControllerEventLoop.hpp:3512` — references monolithic line
+- **Class:** Stale-comment drift class. Sister to Class 31 (hardcoded refs in always-loaded docs); same root cause (canonical-list duplication via inline reference vs registry/grep-driven retrieval), different surface (inline comments in sibling source files vs always-loaded docs).
+- **What's deferred:** Sweep + update each stale comment to point at correct sub-file:
+  - Either `CoreFrameworks/EngineSharded.hpp` (INDEX SHIM)
+  - Or specific sub-file (e.g., `CoreFrameworks/EngineSharded/Async.hpp:NNN`)
+  - Or REPLACE with categorical reference (e.g., "producer-thread fan_out body in EngineSharded module") per [[feedback_categorical_triggers_over_hardcoded_refs]] — preferable to line-anchored refs since sub-files will continue to grow
+- **Why deferred (not effort-avoidance):** Pure cosmetic; no behavior/build impact. Risk of breaking comments via mechanical sed is low but non-zero. Fits future-headache-vs-optimization-scope-framework `defer` bucket (anti-pattern instance is the stale comment itself — but it's NOT an instance of an unclosed bug class survivable past ship; the comments are residue from a NOW-closed `EngineSharded.hpp` monolith).
+- **Cost estimate:** ~30-45 min (mechanical sweep + manual review + sed-based update OR categorical-reference rewrite).
+- **Trigger:** Address when (a) next stale-comment audit fires, OR (b) /metadata-audit quarterly cadence catches the drift, OR (c) any of the sibling files is touched for unrelated work + comment update folds in naturally.
+- **Status:** OPEN with quarterly-cadence trigger.
+- **Cross-ref:** v5.15.5.F.4d.1.B.6 Phase C 4-agent audit (YELLOW-2 finding logged); RECURRING_BUG_PATTERNS Class 31 (sister at always-loaded-docs surface); `feedback_categorical_triggers_over_hardcoded_refs`; `feedback_metadata_audit_quarterly`.

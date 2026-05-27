@@ -17,7 +17,7 @@ Content is now in per-status sub-files; this doc serves as the INDEX + cross-ref
 
 | Sub-file | Coverage | Entry count |
 |---|---|---|
-| `DOCS/tech-debt/open.md` | Status: OPEN — actively deferred work with explicit triggers (also DEFERRED-INDEFINITE / OPEN — partially addressed / PARTIAL CLOSED with active scope / PHASE-N applied with subsequent phases OPEN) | 80 |
+| `DOCS/tech-debt/open.md` | Status: OPEN — actively deferred work with explicit triggers (also DEFERRED-INDEFINITE / OPEN — partially addressed / PARTIAL CLOSED with active scope / PHASE-N applied with subsequent phases OPEN) | 82 |
 | `DOCS/tech-debt/in-flight.md` | Status: IN-FLIGHT — being addressed in an active sub-ship | 2 |
 | `DOCS/tech-debt/closed.md` | Status: CLOSED — archival (includes NOT-A-BUG rationale-preservation entries and APPLIED at ship close) | 24 |
 

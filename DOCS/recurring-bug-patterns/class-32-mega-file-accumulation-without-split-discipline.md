@@ -6,8 +6,8 @@ parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-19
 surface_tags: [ci-tooling, registry, test-infrastructure]
 severity: medium
-recurrence_count: 4
-first_instance: 2026-05-18 (3 mega-files surfaced at v5.15.5.F.4d.1.B.3 — TECH_DEBT.md 2013 lines / RECURRING_BUG_PATTERNS.md 2198 lines / /readiness SKILL.md 1681 lines; pre-existing test file controller_test.cpp ~25k lines codified at v5.11.35)
+recurrence_count: 5
+first_instance: 2026-05-18 (3 mega-files surfaced at v5.15.5.F.4d.1.B.3 — TECH_DEBT.md 2013 lines / RECURRING_BUG_PATTERNS.md 2198 lines / /readiness SKILL.md 1681 lines; pre-existing test file controller_test.cpp ~25k lines codified at v5.11.35); EngineSharded.hpp 3,202 lines surfaced + structurally closed at v5.15.5.F.4d.1.B.6 (2026-05-27; subfolder + INDEX-shim pattern Stage 3 first canonical at file-size-split-discipline.md v1.3)
 closure_mechanism: file-size-split-discipline + per-type hard thresholds + INDEX dispatch pattern + /metadata-audit threshold violations report + tools/check_doc_metadata.py (sister CI tool checks frontmatter; file-size check can be added)
 sister_classes: [11, 18, 31]
 ---
@@ -85,6 +85,17 @@ Not all large files are Class 32:
   - RECURRING_BUG_PATTERNS.md 2198 → 80-line INDEX + 29 per-class sub-files — TECH_DEBT-117 closure
   - /readiness SKILL.md 1681 → 625 lines (orchestration + index) + 26 per-check sidecar files — TECH_DEBT-118 closure
   - Generalized discipline codified as `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md`
+
+- **v5.15.5.F.4d.1.B.6 (2026-05-27; 1 worked application of subfolder split pattern):**
+  - `CoreFrameworks/EngineSharded.hpp` 3,202 lines → 96-line INDEX SHIM + 4 sub-files in `CoreFrameworks/EngineSharded/` subfolder:
+    - `Boot.hpp` (67/12 code) — signal handlers + globals + boot setup
+    - `SlowPath.hpp` (188/78 code) — per-core slow-path thread body
+    - `Async.hpp` (905/460 code) — drainer + fan-out + manual-close + post-fill hoisted lambdas
+    - `Run.hpp` (2,436/1,406 code; UNDER threshold by code-LOC counting methodology v1.2)
+  - Subfolder split + INDEX-shim pattern documented as Stage 3 first canonical citation at file-size-split-discipline.md v1.3 (amended at this ship close)
+  - TECH_DEBT-029 status flipped OPEN → PARTIAL_CLOSURE (1 of 6 split candidates closed; ControllerEventLoop / CoreModelZoo / BacktestEngine / BacktestPanels remain at `.B.7-.B.9`)
+  - Composition with sister disciplines: `cpp17-inline-variable-for-header-shared-state.md` (4 globals `static` → `inline`) + `single-source-of-truth-discipline.md` (Decision H drain_manual_closes LIVE+NO-OP merge) + 5 lambdas hoisted with M6 body-content enumeration discipline
+  - NEW Class 34 (forward-decl namespace shadow) + NEW Class 35 (block-scope statics inaccessible from hoisted fns) surfaced during Phase B work; both codified at same ship close
 
 ## Sister classes
 

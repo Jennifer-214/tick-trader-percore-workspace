@@ -18,6 +18,30 @@ Generalizes the existing test-file-size discipline (CLAUDE.md `Test file size di
 
 ---
 
+## Threshold counting methodology (NEW 2026-05-27 PM)
+
+**Thresholds count ACTUAL CODE LOC, NOT total lines.** Exclude:
+- Comment-only lines (single-line `//` + block-comment lines `/*` / `*` / `*/`)
+- Blank lines
+- Lines containing ONLY closing braces `}` (debatable; usually included)
+
+**Rationale:** A heavily-documented file with rich cold-pickup context shouldn't be penalized vs a sparsely-documented one of the same code mass. Navigation cost + cognitive load track code-LOC; comments REDUCE cognitive load (more context per code line = better). Total-lines counting incentivizes stripping useful documentation to dodge the threshold, which is wrong.
+
+**Counting tool:** `grep -vE '^\s*(//|\*|/\*|$)' <file> | wc -l` (approximate; misses `/* ... */` block boundaries occasionally). For more precise counts: `cloc <file>` (if installed).
+
+**Worked example (the lesson that codified this discipline, 2026-05-27 PM):**
+
+At v5.15.5.F.4d.1.B.6 Phase B Step B.4.1, Run.hpp was 2,436 total lines (62% over 1,500 threshold by total-lines count). Operator approved Option A "full sub-split" based on total-lines metric. Agent executed ~30 min of work creating 5 Run/* sub-sub-files. THEN actual-code count surfaced:
+
+- Run.hpp pre-B.4.1: 2,436 total / **1,406 code** (58% comments+blanks)
+- Threshold by code-LOC: **already UNDER 1,500** ✓
+
+B.4.1 was reverted (commit 6323c17). Methodology lesson: COUNT CODE-LOC, NOT TOTAL-LINES. File-size-split-discipline.md amended this section.
+
+**Anti-pattern to avoid:** triggering split work based on `wc -l` (total-lines) without first computing code-LOC. Adds churn + LOC overhead (file headers + arg-list translations) for cosmetic threshold compliance with no real maintainability win.
+
+---
+
 ## Thresholds by file type
 
 | File type | Soft warning | Hard threshold | Action at threshold |

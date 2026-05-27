@@ -2339,9 +2339,10 @@ title: tests/controller_test.cpp test file split (domain-aligned sub-files)
 severity: medium
 surface_tags: [test-infrastructure]
 trigger: next-maintenance-window
-status: open
+status: partial-closure
 opened: 2026-05-18
-related_specs: []
+partial_closed_at: v5.15.5.F.4d.1.B.5 WIP-B1 (2026-05-27; shared infrastructure extract to tests/test_common.hpp landed; full domain split DEFERRED per operator directive "more concerned about actual code" — see TECH_DEBT-127 for follow-up)
+related_specs: [DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md]
 ```
 
 - **Created:** 2026-05-18 (codified at doc-layer refresh ship — moved out of CLAUDE.md Test file size discipline TODO sentence to proper TECH_DEBT entry per `feedback_claude_md_guidelines_not_stuff_to_do.md`)
@@ -2591,3 +2592,26 @@ Status: **OPEN** with explicit trigger.
 - **Trigger:** Sooner-rather-than-later per confirmed hedge-fund engagement. Candidate housekeeping ship after `.B.4` ships + paper-test session entry stabilizes. Options: standalone `v5.16-versioning-rework` micro-sprint OR fold into `v5.16.0.A` early ship if natural fit OR consolidate with `.B.12` umbrella close housekeeping. Should not slip past paper-test session entry given first-impression visibility risk.
 - **Status:** OPEN
 - **Cross-ref:** `Version.hpp` ENGINE_VERSION_STRING / `README.md` / `user_public_work_attracts_hedge_funds` memory (external visibility positioning) / `user_mvp_to_professional_transition` memory (project lifecycle phase) / SemVer 2.0.0 spec (https://semver.org/) for canonical pre-1.0 + alpha/beta conventions
+
+### TECH_DEBT-127 — Full controller_test.cpp domain-aligned split (sister to -114 PARTIAL_CLOSURE)
+
+```yaml
+id: TECH_DEBT-127
+title: Full controller_test.cpp domain-aligned split (9 sub-files; 287 sections)
+severity: medium
+surface_tags: [test-infrastructure, file-size-discipline]
+trigger: operator-prioritization OR test-additions blocked by file size
+status: open
+opened: 2026-05-27
+related_specs: [DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md]
+sister_debt: TECH_DEBT-114 (PARTIAL_CLOSURE at .B.5)
+```
+
+- **Created:** 2026-05-27 at v5.15.5.F.4d.1.B.5 PARTIAL_CLOSURE pivot. Operator directive ("more concerned about actual code") prioritized engine code work (`.B.6+`) over full test split.
+- **Severity:** MEDIUM (test infrastructure; engine semantics untouched; navigation cost only). Lower priority than engine code maintainability per operator framing.
+- **What's deferred:** Full domain-aligned split of `tests/controller_test.cpp` (currently 26,129 lines / 287 sections post-WIP-B1) into 9 sub-files per Phase A CSV mapping at `plans/v5.15-live-readiness/plan_checks/2026-05-27-v5.15.5.F.4d.1.B.5-section-to-domain-mapping.csv`. Sub-files: engine_boot / engine_oms / engine_position / features / stamps / ml_inference / ml_state / ml_training / misc. Extraction shape needs Python script with brace-matching for 261 inline main() `{...}` blocks (29 standalone test_*() functions are trivial; main() body sections are the complexity).
+- **What's already done (.B.5 WIP-B1):** Shared infrastructure extracted to `tests/test_common.hpp` (includes / counters / check() / static_asserts / FP / test_warmup_ctrl); `inline int` C++17 discipline established (counter shared across TUs when linked into umbrella binary; per-binary independent when sub-binaries are separate programs). controller_test.cpp 26,259 → 26,129 lines.
+- **Cost estimate:** ~5-15h focused work (Python brace-matching script + per-domain extraction + 9 sub-binary CMakeLists.txt targets + umbrella linking + verify counts at each step + dedicated rollback anchor).
+- **Trigger:** Operator-prioritization OR when test additions get blocked by file size. The Phase A CSV + WIP-B1 helper extract remain available as a head-start whenever the work is picked up.
+- **Status:** OPEN.
+- **Cross-ref:** TECH_DEBT-114 (PARTIAL_CLOSURE; sister); Phase A CSV; `feedback_no_defer_for_effort.md` (this is operator-prioritized defer, not effort-avoidance); `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md` (parent pattern).

@@ -1,12 +1,16 @@
 ---
 type: meta-discipline
 stage: 3-first-canonical
-version: 1.0
+version: 1.2
 established: 2026-05-18
+last_amended: 2026-05-27
 tags: [meta-discipline, audit-methodology, framework-discipline]
 surface: [registry]
-sister_specs: [audit-driven-pre-coding-gate.md, audit-scope-taxonomy.md, wire-format-byte-preservation-discipline.md]
+sister_specs: [audit-driven-pre-coding-gate.md, audit-scope-taxonomy.md, wire-format-byte-preservation-discipline.md, cfg-field-categorization-discipline.md]
 applies_at_skills: [/blindspot-scan, /precoding-audit-gate]
+pillars:
+  - B14: multi-surface-deletion-ordering (Stage 3 first canonical at v5.15.5.F.4d.1.B.4 WIP-14b — 51-site engine_arch=centralized deletion)
+  - B15: unconditionalization-latent-assumption-audit (Stage 2 DRAFT 1st instance at v5.15.5.F.4d.1.B.4)
 ---
 
 # Implementation-layer blind-spot taxonomy

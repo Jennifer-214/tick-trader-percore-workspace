@@ -1,10 +1,11 @@
 ---
 name: train-serve-execution-layer-parity
 type: meta-discipline
-stage: 2-draft
-version: 0.1
+stage: 3-first-canonical
+version: 1.0
 established: 2026-05-24
-first_canonical_target: v5.15.5.F.4d.1.B.4 ship close
+promoted_to_stage_3: 2026-05-27
+first_canonical_application: v5.15.5.F.4d.1.B.4 ship close (EngineCommon_BootPerCore + EngineCommon_SlowPathCycleOneCore + 3 sister helpers extracted; LIVE + BACKTEST + parity_harness share execution layer by construction; 7 PARITY entries 026-032 closed)
 description: Audit-methodology M5 — train-serve parity walk at boot + slow-path-cycle layer (distinct from M1 cfg/stamp surface parity)
 tags: [audit-methodology, meta-discipline, structural-fix]
 surface: [boot-time, slow-path, oms-drainer, ml-inference, backtest]

@@ -1096,3 +1096,31 @@ cfg dump.
 - CLAUDE.md H15-H20 (codified at .F.4d) + item 31 (framework-driven extensibility meta-principle)
 - TECH_DEBT-082/-083/-084 (closed at .F.4d) + TECH_DEBT-085 (Thread A FULL residual; .F.4d.1 dedicated ship)
 
+### engine_arch=centralized SHARDED mode DELETION (v5.15.5.F.4d.1.B.4)
+
+**What:** Full surface deletion of `engine_arch=centralized` SHARDED mode (51-site cohort delete at WIP-14b). Previously, sharded engine supported BOTH `per_core_slow` (default v5.0+) AND `centralized` (legacy variant); centralized SHARDED mode used same EngineSharded.hpp surface but with single centralized slow-path thread routing strategies to per-core hot paths.
+
+**Why deleted:** Architectural debt; per_core_slow has been default since v5.0+; centralized SHARDED had no operator demand AND was the source of multiple semantic-mismatch consumers reading per-core registry fields as if they were global (Class 26 antecedent surface). Sister to per-core slow_state ownership (v5.1.2+) which structurally made centralized-arch redundant.
+
+**Operator migration impact:** Operators with `engine_arch=centralized` in `engine.cfg` MUST migrate to `engine_arch=per_core_slow` (default; can omit the line entirely). Engine boot REFUSES startup if `engine_arch=centralized` detected post-`.B.4` per H17 framework discipline. Backwards compat NOT preserved per `feedback_backwards_compat_not_default_concern` (OSS personal tool; cleanest deletion preferred over preserve-and-deprecate). Operator-facing-doc cohort (README + DOCS/QUICKSTART.md + engine.cfg.example + DESIGN_SPECS sister mentions) all updated to remove `centralized` references at WIP-14a.
+
+**Where to verify:**
+- `CoreFrameworks/EngineSharded.hpp` — full SHARDED surface; only per_core_slow paths remain
+- `CoreFrameworks/CfgFieldRegistry.hpp` — `engine_arch` registry-only HAS_SIDE_EFFECT row preserves operator-facing parser (boot-time REFUSE on `centralized` value)
+- `engine.cfg.example` — only `engine_arch=per_core_slow` documented
+- `DOCS/CHANGELOG.md` — `.B.4` row documents 51-site cohort deletion
+
+**Paper-test sanity:** Boot engine with `engine_arch=centralized` set explicitly in cfg → engine REFUSES startup with clear "centralized SHARDED mode deleted at .B.4; migrate to per_core_slow" error message. Boot with `engine_arch=per_core_slow` OR no `engine_arch` line → boots normally (no behavior change).
+
+**Gotchas:**
+- LIVE legacy single_core (`engine_arch=single_core` ON by default for LIVE deprecated path) UNAFFECTED — separate codepath, distinct from centralized SHARDED. Single-core LIVE still warns at boot per pre-existing deprecation.
+- BACKTEST single_core UNAFFECTED — wrapper Backtest_Run dispatches to BacktestSharded_Run; centralized backtest code never existed.
+- B14 leaves-first ordering (1st canonical at WIP-14b) — deletion ordering matters when cross-file compile dependencies exist. See `DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md` § B14 pillar.
+
+**Related:**
+- `subplans/2026-05-24-v5.15.5.F.4d.1.B.4-train-serve-execution-layer-parity.md` v1.7.6 (plan body, Phase WIP-14a + WIP-14b)
+- `feedback_backwards_compat_not_default_concern.md` (operator preference codified)
+- `feedback_multi_surface_deletion_ordering_discipline.md` (B14 1st canonical)
+- `feedback_operator_facing_doc_cohort_at_cfg_deletion.md` (WIP-14a cohort sweep)
+- B-Plus v0.4 `--gen-deletion-cohort PATTERN` generator mode (M7 second canonical extension)
+

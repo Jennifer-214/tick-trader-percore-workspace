@@ -1,17 +1,23 @@
 ---
 type: meta-discipline
 stage: 3-first-canonical
-version: 1.0
+version: 1.2
 established: 2026-05-26
+last_amended: 2026-05-27
 tags: [meta-discipline, framework-discipline, structural-fix, doc-discipline]
 surface: [doc-pipeline, ci-tools, plan-discipline]
 sister_specs:
   - structural-fix-preferred-decision-framework.md
   - pattern-codification-lifecycle.md
   - implementation-layer-blindspot-taxonomy.md
+  - cfg-field-categorization-discipline.md
 audit_tier: framework-pattern
-applies_at_skills: [/readiness, /handoff, /sync-workspace, /capture-audit]
-first_canonical_application: v5.15.5.F.4d.1.B.4 (B-Plus CI tool for Class 14 fabricated-symbol detection)
+applies_at_skills: [/readiness, /handoff, /sync-workspace, /capture-audit, /precoding-audit-gate]
+canonical_applications:
+  - 1st (v5.15.5.F.4d.1.B.4 WIP-10 — B-Plus CI tool v0.3 line-anchor verification at COMMIT layer; Class 14 fabricated-symbol detection)
+  - 2nd (v5.15.5.F.4d.1.B.4 WIP-14b — B-Plus v0.4 --gen-deletion-cohort generator mode at OPERATOR-USE layer; B14 multi-surface deletion ordering mechanization)
+  - 3rd (v5.15.5.F.4d.1.B.4 WIP-16 — CI Check 8 5-question consumer-pattern verify mechanical sidecar at /capture-audit; Class 26 global-consumer-reading-per-core-field detection)
+  - 4th (v5.15.5.F.4d.1.B.4 v1.7.6 Phase Cx-J — /readiness Check 44 cfg field categorization plan-time verification sister to CI Check 8 commit-time)
 ---
 
 # Structural enforcement when memory codification proves insufficient (M7)

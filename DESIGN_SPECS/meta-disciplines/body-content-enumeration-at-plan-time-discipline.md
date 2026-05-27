@@ -1,8 +1,9 @@
 ---
 type: meta-discipline
-stage: 2-draft
-version: 1.0
+stage: 3-first-canonical
+version: 1.1
 established: 2026-05-26
+promoted_to_stage_3: 2026-05-27
 tags: [meta-discipline, plan-template, framework-discipline, doc-discipline]
 surface: [plan-pipeline, helper-extraction]
 sister_specs:
@@ -12,7 +13,7 @@ sister_specs:
   - structural-enforcement-when-memory-insufficient.md
 audit_tier: framework-pattern
 applies_at_skills: [/readiness, /capture-audit, /plan-draft]
-first_canonical_application: TBD — promotes to Stage 3 after second cohort application
+first_canonical_application: v5.15.5.F.4d.1.B.4 WIP-12 (EngineCommon_SlowPathCycleOneCore extract — body-content args enumerated at v1.7.3 helper-signature gate; HIGH-1 + N-6 sister-canonical reuse decisions captured pre-coding)
 ---
 
 # Body-content arg enumeration at plan-time discipline (M6)

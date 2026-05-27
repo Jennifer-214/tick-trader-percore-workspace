@@ -2,7 +2,7 @@
 
 **Auto-generated** by `tools/rebuild_doc_indexes.py`. Regenerate after adding/moving specs.
 
-Total: 93 specs across 11 types.
+Total: 94 specs across 11 types.
 
 Per-type catalog grouped by lifecycle stage. Cross-ref:
 - `doc-frontmatter-convention.md` (frontmatter schema)
@@ -35,7 +35,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/refactor-patterns/template-deferred-dependency-injection.md` | 3-first-canonical | framework-discipline, structural-fix | 3 |
 | `DESIGN_SPECS/refactor-patterns/transient-aggregation-bitmap-pattern.md` | 3-first-canonical | data-oriented-design, branchless-discipline | 4 |
 
-## framework-pattern (34 specs)
+## framework-pattern (35 specs)
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
@@ -45,6 +45,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/framework-patterns/calibration-log-column-registry.md` | 3-first-canonical | framework-discipline, wire-format, structural-fix | 4 |
 | `DESIGN_SPECS/framework-patterns/categorical-tag-applicability-pattern.md` | 3-first-canonical | framework-discipline, structural-fix, pattern-codification | 3 |
 | `DESIGN_SPECS/framework-patterns/cfg-derived-consumer-framework.md` | 3-first-canonical | framework-discipline, structural-fix, pattern-codification | 4 |
+| `DESIGN_SPECS/framework-patterns/cfg-field-categorization-discipline.md` | 2-draft | framework-discipline, structural-fix, pattern-codification | 4 |
 | `DESIGN_SPECS/framework-patterns/composed-filter-mask-pattern.md` | 3-first-canonical | framework-discipline, branchless-discipline, structural-fix | 3 |
 | `DESIGN_SPECS/framework-patterns/curve-registry-pattern.md` | 3-first-canonical | framework-discipline, branchless-discipline | 3 |
 | `DESIGN_SPECS/framework-patterns/display-execution-invariant-registry-pattern.md` | 3-first-canonical | framework-discipline, structural-fix | 3 |

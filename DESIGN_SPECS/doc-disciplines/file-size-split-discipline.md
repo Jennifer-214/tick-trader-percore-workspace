@@ -1,11 +1,11 @@
 ---
 type: doc-discipline
 stage: 3-first-canonical
-version: 1.3
+version: 1.4
 established: 2026-05-18
 last_amended: 2026-05-27
-tags: [doc-discipline, structural-fix, pattern-codification]
-surface: []
+tags: [doc-discipline, structural-fix, pattern-codification, wontfix-rationale]
+surface: [doc-pipeline]
 sister_specs: [doc-frontmatter-convention.md, ledger-entry-templates.md, categorical-triggers-in-always-loaded-docs.md, cpp17-inline-variable-for-header-shared-state.md, single-source-of-truth-discipline.md]
 applies_at_skills: [/metadata-audit, /ship]
 ---
@@ -13,7 +13,40 @@ applies_at_skills: [/metadata-audit, /ship]
 # File-size split discipline
 
 **Established:** 2026-05-18 (v5.15.5.F.4d.1.B.3 doc-layer refresh — codified after Caramel surfaced "if file X becomes greater than Y, split it up and add an index entry")
-**Status:** Stage 3 FIRST CANONICAL v1.3 — code-LOC counting methodology amendment + subfolder split pattern Stage 3 first canonical citation added at v5.15.5.F.4d.1.B.6 ship close (2026-05-27)
+**Status:** Stage 3 FIRST CANONICAL v1.4 — RESCOPED at v5.15.5.F.4d.1.B.7 per AI-driven solo workflow (operator C1 directive); test 5K rule retained; all other thresholds become guidelines not mandates; subfolder pattern (`.B.6` first canonical) stays Stage 3 frozen for future cohort use
+
+---
+
+## AI-driven workflow scoping (added v1.4, 2026-05-27)
+
+**Discipline applies SELECTIVELY in AI-driven solo workflow.** This scoping section captures the operator C1 decision 2026-05-27 to cancel the `.B.5-.B.11` file-size discipline maintenance umbrella + close TECH_DEBT-029/-114/-116/-117/-118 as `wontfix-per-ai-workflow`.
+
+**WHY the discipline was originally codified (2026-05-18):** human contributors navigating large files incur cognitive load; code review by contributors scales poorly on multi-thousand-line files; IDE/editor performance degrades on mega-files; mega-file accumulation produces Class 32 anti-pattern. These concerns motivated the universal threshold table.
+
+**WHY AI-driven workflow weakens the motivation:** the original motivations PRESUME human contributors. In a single-contributor AI-driven workflow (FoxML_Trader_v2 development pattern as of 2026-05-27):
+- Claude 1M context handles 6K-line files trivially via single Read tool call
+- AI doesn't experience "cognitive load" from large files the way humans do
+- Code review concern doesn't apply (single contributor)
+- IDE perf is irrelevant (Claude reads file content directly, not via interactive IDE)
+- Compile time UNCHANGED for header-only template code (subfolder split doesn't speed compile; only `.cpp` split would, and most code is `.hpp`)
+- Git diff scoping helps human reviewers; AI processes diffs differently (less scope-sensitive)
+
+**WHAT REMAINS load-bearing:**
+- **Test 5K rule RETAINED** — test infrastructure genuinely benefits from split: test binaries compile faster when split into domain-aligned units; test reliability concern (large test files harder to verify completeness); test parallel execution benefits from binary boundary; TECH_DEBT-127 stays OPEN as the test-reliability surface (sister to test 5K rule)
+- **Subfolder pattern stays Stage 3 FROZEN** — `.B.6` first canonical at EngineSharded subfolder split is preserved as institutional knowledge; pattern is validated + ready for application if/when human contributors join project OR if a specific file's complexity genuinely benefits from sub-file boundaries (operator-decided per-instance)
+- **Ledger 2K threshold reviewed inline at TECH_DEBT-116 closure** — TECH_DEBT.md @ 2013 lines is grep-driven access not navigation-driven; AI handles trivially; threshold not load-bearing
+- **RECURRING_BUG_PATTERNS.md split DONE incidentally** — closed as `done-incidentally` at TECH_DEBT-117 (file was split into per-class sub-files 2026-05-18 prep work; original intent already realized)
+
+**WHEN to revisit:** if (a) human contributors join the project, OR (b) AI tooling changes meaningfully (smaller context window, different file-reading patterns), OR (c) a specific file's complexity genuinely benefits from sub-file boundaries (operator-decided per-instance), reopen this discipline for that file/cohort. The subfolder pattern at `.B.6` is the canonical shape ready for application; the discipline body below (threshold table + split+index pattern) provides the mechanical procedure.
+
+**Cross-references:**
+- Operator C1 directive 2026-05-27 (this scoping codifies)
+- TECH_DEBT-029/-114/-116/-117/-118 closure at v5.15.5.F.4d.1.B.7 (all 5 closed; see `DOCS/tech-debt/open.md` for closure rationales + closure_at fields)
+- `.B.6` first canonical subfolder pattern (frozen institutional knowledge)
+- CLAUDE.md § File-size split discipline (scoped 2026-05-27 with pointer here)
+- CLAUDE.local.md going-forward rule "File-size split discipline" (amended 2026-05-27 with scoping)
+
+---
 
 Generalizes the existing test-file-size discipline (CLAUDE.md `Test file size discipline` rule + TECH_DEBT-029 source-file analog) to ALL files. When file size crosses threshold, split + create index entry.
 

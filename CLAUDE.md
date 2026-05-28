@@ -299,7 +299,9 @@ rollback anchor + dedicated ship); tracking lives in TECH_DEBT (sister
 TECH_DEBT-029 covers the source-side analog for header/non-test files;
 TECH_DEBT-114 tracks this specific test split).
 
-### File-size split discipline (generalized; added 2026-05-18)
+### File-size split discipline (generalized; added 2026-05-18; RESCOPED 2026-05-27)
+
+**RESCOPED 2026-05-27 per AI-driven solo workflow (operator C1 directive):** discipline applies SELECTIVELY. **Test 5K rule RETAINED** for test reliability concern (test infrastructure genuinely benefits from split). **Source/header/plan/SKILL/DESIGN_SPECS thresholds become guidelines, not mandates** — Claude 1M context handles 6K-line files trivially; no human code-review cognitive load concern in AI-driven solo workflow; compile time unchanged for header-only template code. The `.B.6` subfolder pattern (first canonical at `file-size-split-discipline.md` v1.4) stays Stage 3 frozen for any future cohort use (if human contributors join project OR AI tooling changes meaningfully). See CLAUDE.local.md going-forward rule + `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md` v1.4 § "AI-driven workflow scoping" for full rationale.
 
 Test file size rule above generalizes to ALL files. Thresholds per
 file type at `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md`:

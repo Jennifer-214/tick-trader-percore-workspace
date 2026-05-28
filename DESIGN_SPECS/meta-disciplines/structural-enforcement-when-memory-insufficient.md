@@ -5,7 +5,7 @@ version: 1.2
 established: 2026-05-26
 last_amended: 2026-05-27
 tags: [meta-discipline, framework-discipline, structural-fix, doc-discipline]
-surface: [doc-pipeline, ci-tools, plan-discipline]
+surface: [doc-pipeline, ci-tooling, plan-pipeline]
 sister_specs:
   - structural-fix-preferred-decision-framework.md
   - pattern-codification-lifecycle.md

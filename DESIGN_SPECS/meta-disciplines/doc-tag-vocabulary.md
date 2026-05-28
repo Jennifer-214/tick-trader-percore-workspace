@@ -50,6 +50,18 @@ CI tool `check_doc_metadata.py` (queued at `.C` candidate ship) validates every 
 | `failure-observability` | Silent-failure detection; PerCoreSnap field allocation; per-class observability fields |
 | `cross-tool-decoupling` | Framework-driven C++ CLI binaries replacing bash mirrors; wire format single-source-of-truth |
 | `decoupling-roadmap` | GUI ↔ runtime decoupling; headless engine + viewer architecture; long-horizon roadmap |
+| `ssot` | Single source of truth discipline; merge-vs-mirror reasoning; SSoT violations + closure |
+| `cpp17` | C++17-specific features + discipline (inline variables, if-constexpr, structured bindings) |
+| `header-only` | Header-only library convention; no `.cpp` definitions; template-heavy code |
+| `shared-state` | Cross-TU storage discipline; linker semantics; symbol visibility |
+| `linker-deduplication` | vague linkage; inline-variable dedup mechanism; ODR safety |
+| `mirror-prevention` | Class 18/21/26 family; mirror-incomplete + parallel-registry closures |
+| `code-loc-counting` | Threshold-counting methodology (code-LOC vs total-LOC; comment/blank exclusion) |
+| `inline-variable` | C++17 `inline` keyword on variables; sister to `header-only` |
+| `forward-decl-shadow` | Class 34 / B17; namespace-scope forward-decl shadowing global type |
+| `block-scope-statics` | Class 35 / B18; block-scope `static` vars inaccessible from hoisted header fns |
+| `subfolder-pattern` | File-size discipline subfolder split form (INDEX shim + sub-files) |
+| `wontfix-rationale` | Closure-without-action discipline; explicit deferral with rationale for non-action |
 
 ---
 
@@ -76,6 +88,13 @@ CI tool `check_doc_metadata.py` (queued at `.C` candidate ship) validates every 
 | `test-infrastructure` | controller_test / parity_harness / test fixtures / test_common.hpp |
 | `bitmap-packed` | uint{8,16,32,64}_t bit-packed slot structures + BITMAP_*/MBS_* accessors |
 | `cross-tool` | tools/*.sh + tools/*_cli.cpp binaries; cross-tool wire-format surfaces |
+| `doc-pipeline` | Doc-system generation / index / frontmatter discipline / metadata-audit surface |
+| `plan-pipeline` | Plan body drafting / sub-master / handoff / postmortem doc shape |
+| `handoff-pipeline` | Handoff doc creation + receiver-side verification (/handoff + /accept-handoff) |
+| `header-split` | File-size discipline subfolder split / INDEX shim / sub-file boundaries |
+| `helper-extraction` | Lambda hoisting / function extraction / shared-helper discipline (M5/M6 cohort) |
+| `session-pickup` | Fresh-context onboarding / required reading / drift-check / TaskList recreation |
+| `skill-pipeline` | claude-skills SKILL.md spec / pre-coding gate / sister-skill composition |
 
 ---
 

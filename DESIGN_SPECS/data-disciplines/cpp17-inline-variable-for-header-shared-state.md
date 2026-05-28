@@ -3,7 +3,7 @@ type: data-discipline
 stage: 3-first-canonical
 version: 1.0
 established: 2026-05-27
-tags: [data-discipline, cpp17, header-only, shared-state, linker-deduplication]
+tags: [cpp17, header-only, shared-state, linker-deduplication]
 surface: [boot-time, test-infrastructure]
 sister_specs: [file-size-split-discipline.md, cache-line-discipline.md]
 applies_at_skills: [/dod-audit, /blindspot-scan, /hft-audit]

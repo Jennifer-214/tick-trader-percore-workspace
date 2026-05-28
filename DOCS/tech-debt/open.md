@@ -513,10 +513,12 @@ id: TECH_DEBT-029
 title: Source file length reduction (large headers harm maintainability)
 severity: low
 surface_tags: [test-infrastructure, source-headers, file-size-discipline]
-trigger: next-maintenance-window
-status: partial-closure
+trigger: n/a (closed)
+status: wontfix-per-ai-workflow
 opened: 2026-05-10
 partial_closed_at: v5.15.5.F.4d.1.B.6
+closed_at: v5.15.5.F.4d.1.B.7
+closure_rationale: AI-driven solo workflow (per operator C1 directive 2026-05-27); test 5K rule retained for test-reliability; subfolder pattern Stage 3 frozen at file-size-split-discipline.md v1.4
 last_amended: 2026-05-27
 related_specs: [DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md]
 ```
@@ -2230,9 +2232,11 @@ id: TECH_DEBT-116
 title: TECH_DEBT.md split (file-size discipline application)
 severity: medium
 surface_tags: []
-trigger: next-maintenance-window
-status: open
+trigger: n/a (closed)
+status: wontfix-per-ai-workflow
 opened: 2026-05-18
+closed_at: v5.15.5.F.4d.1.B.7
+closure_rationale: AI-driven solo workflow (per operator C1 directive 2026-05-27); ledger 2000-line threshold reviewed inline — ledger access is grep-driven not navigation-driven; AI handles large ledgers trivially
 related_specs: [DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md]
 ```
 
@@ -2261,9 +2265,11 @@ id: TECH_DEBT-117
 title: RECURRING_BUG_PATTERNS.md split (file-size discipline application)
 severity: medium
 surface_tags: []
-trigger: next-maintenance-window
-status: open
+trigger: n/a (closed; already split incidentally pre-.B.7)
+status: done-incidentally
 opened: 2026-05-18
+closed_at: v5.15.5.F.4d.1.B.7
+closure_rationale: Done incidentally — RECURRING_BUG_PATTERNS.md was split into per-class sub-files at 2026-05-18 (see INDEX `splits_into:` frontmatter). Original intent already realized; closure is bookkeeping
 related_specs: [DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md, DESIGN_SPECS/ledger-templates/ledger-entry-templates.md]
 ```
 
@@ -2289,9 +2295,11 @@ id: TECH_DEBT-118
 title: /readiness SKILL.md split (file-size discipline application)
 severity: medium
 surface_tags: [ci-tooling]
-trigger: next-maintenance-window
-status: open
+trigger: n/a (closed)
+status: wontfix-per-ai-workflow
 opened: 2026-05-18
+closed_at: v5.15.5.F.4d.1.B.7
+closure_rationale: AI-driven solo workflow (per operator C1 directive 2026-05-27); SKILL.md is loaded on skill invocation; AI handles large SKILL.md trivially; if SKILL.md becomes load-bearing concern in future, split is mechanical
 related_specs: [DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md]
 ```
 
@@ -2347,10 +2355,12 @@ id: TECH_DEBT-114
 title: tests/controller_test.cpp test file split (domain-aligned sub-files)
 severity: medium
 surface_tags: [test-infrastructure]
-trigger: next-maintenance-window
-status: partial-closure
+trigger: n/a (closed; test 5K rule retained for reliability; TECH_DEBT-127 absorbs any test-reliability follow-up if needed)
+status: wontfix-per-ai-workflow
 opened: 2026-05-18
 partial_closed_at: v5.15.5.F.4d.1.B.5 WIP-B1 (2026-05-27; shared infrastructure extract to tests/test_common.hpp landed; full domain split DEFERRED per operator directive "more concerned about actual code" — see TECH_DEBT-127 for follow-up)
+closed_at: v5.15.5.F.4d.1.B.7
+closure_rationale: AI-driven solo workflow (per operator C1 directive 2026-05-27); test 5K rule retained explicitly for test-reliability concern — TECH_DEBT-127 stays open as the test-reliability surface; this entry's full-domain-split intent is dropped
 related_specs: [DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md]
 ```
 
@@ -2720,3 +2730,22 @@ sister_debt: TECH_DEBT-029 (file-size discipline; sister at same `.B.6` subfolde
 - **Trigger:** Address when (a) next stale-comment audit fires, OR (b) /metadata-audit quarterly cadence catches the drift, OR (c) any of the sibling files is touched for unrelated work + comment update folds in naturally.
 - **Status:** OPEN with quarterly-cadence trigger.
 - **Cross-ref:** v5.15.5.F.4d.1.B.6 Phase C 4-agent audit (YELLOW-2 finding logged); RECURRING_BUG_PATTERNS Class 31 (sister at always-loaded-docs surface); `feedback_categorical_triggers_over_hardcoded_refs`; `feedback_metadata_audit_quarterly`.
+
+**UPDATE 2026-05-27 at v5.15.5.F.4d.1.B.7 — operator-facing-doc cohort scope ADDED + CLOSED; status PARTIAL_CLOSURE:**
+
+Post-`.B.6` codebase-wide sweep (`/dust` + `/trace-deps`) surfaced ADDITIONAL stale `EngineSharded.hpp:LINENO` refs in operator-facing DOCS that were missed at `.B.6` close. Per `feedback_operator_facing_doc_cohort_at_cfg_deletion` (codified `.B.4`; should have applied at `.B.6` close but didn't — Class 33 recurrence). Cohort:
+
+- `DOCS/KNOWN_ISSUES.md:143` — Lambda capture warning ref (was `EngineSharded.hpp:2085` → updated to `EngineSharded/Async.hpp` fan_out body)
+- `DOCS/KNOWN_ISSUES.md:319` — CumDelta ref (was `EngineSharded.hpp:2663` → updated to `EngineSharded/SlowPath.hpp` slow-path body)
+- `DOCS/PARITY_ISSUES.md:544` — PARITY-009 boot ref (was `EngineSharded.hpp:1075-1240` → updated to `EngineSharded/Run.hpp` boot section)
+- `DOCS/PARITY_ISSUES.md:553` — PARITY-009 boot ref (was `EngineSharded.hpp:1157-1240` → updated)
+- `DOCS/PARITY_ISSUES.md:610` — PARITY-010 InitExitBandits + LoadExitBanditState (was `:1180` + `:1200` → updated)
+- `DOCS/PARITY_ISSUES.md:655` — PARITY-011 VerifyExpected (was `:1108-1131` + `:1114` → updated)
+- `DOCS/PARITY_ISSUES.md:697` — PARITY-012 ValidateAgainstCfg (was `:1229` → updated)
+- `DOCS/PARITY_ISSUES.md:798/803/810` — PARITY-015 ensemble snapshot publish (was `:646-694` already audit-flagged stale → updated to `ShardedSnapshot.hpp:677-694`)
+
+All 8 doc citations updated with post-`.B.6` sub-file annotation preserving original line refs for historical context (per `feedback_archived_changelog_preservation_discipline` + `feedback_categorical_triggers_over_hardcoded_refs`). Closed by amendment at `.B.7`.
+
+LEAVE per discipline: ~14 ARCHIVED + CLOSED-historical refs in `DOCS/CHANGELOG.md` historical rows + `DOCS/changelogs/2026-04-09-*` + closed PARITY entries (PARITY-003/-023/-025/-026/-027/-028/-029/-030 all `closed_at`) + bug-class historical citations (`class-03-drain-count-under-partials.md:38`).
+
+**Source-file cohort (original 8 sites) STILL OPEN — next stale-comment audit OR quarterly `/metadata-audit` triggers.** Status: PARTIAL_CLOSURE (operator-facing-doc cohort closed; source-file cohort pending). Sister to Class 33 recurrence (consumer-enumeration-undercount on deletion) — `.B.7` confirms the discipline applies to OPERATOR-FACING DOC SURFACES not just source-file consumers.

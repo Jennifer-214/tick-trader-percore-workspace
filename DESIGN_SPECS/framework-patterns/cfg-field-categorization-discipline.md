@@ -4,14 +4,9 @@ stage: 3-first-canonical
 version: 1.1
 established: 2026-05-27
 promoted_to_stage_3: 2026-05-27
-tags: [framework-discipline, cfg-flow, registry-discipline, dod, h17-h14]
+tags: [framework-discipline, data-oriented-design, structural-fix]
 surface: [cfg-flow, registry, slow-path]
-sister_specs:
-  - universal-cfg-field-registry-pattern.md
-  - cfg-derived-consumer-framework.md
-  - cfg-scope-discipline.md
-  - manual-fields-inventory-pattern.md
-  - decision-time-data-binding-pattern.md
+sister_specs: [universal-cfg-field-registry-pattern.md, cfg-derived-consumer-framework.md, cfg-scope-discipline.md, manual-fields-inventory-pattern.md, decision-time-data-binding-pattern.md]
 applies_at_skills: [/readiness, /precoding-audit-gate, /dod-audit, /bug-check]
 first_canonical_application: v5.15.5.F.4d.1.B.4 v1.7.6 Phase Cx-cfg-cohort (11 worked instances; promoted Stage 2→3 at .B.4 ship close per canonical pattern-codification-lifecycle.md Stage 3 = first canonical landed)
 ---

@@ -541,7 +541,7 @@ related_specs: [DESIGN_SPECS/framework-patterns/postloadsetup-registry-pattern.m
 ```
 
 - **Found:** 2026-05-09 by post-coding /parity-check + /merge-scan +
-  manual enumeration of `EngineSharded.hpp:1075-1240` boot block vs
+  manual enumeration of post-`.B.6` `EngineSharded/Run.hpp` boot section (pre-`.B.6` was `EngineSharded.hpp:1075-1240`) boot block vs
   `CoreFrameworks/EnsembleHotSwap.hpp:54-115` hot-swap helper.
 - **Severity:** **HIGH composite** — sub-gap F is CRITICAL on its own
   (bypasses inference_cfg drift detection that PARITY-002/003/004/005
@@ -550,7 +550,7 @@ related_specs: [DESIGN_SPECS/framework-patterns/postloadsetup-registry-pattern.m
   v5.9.5b production-caller field-population class but at the function-
   composition level instead of the field-population level.
 - **Sites:**
-  - Boot reference: `CoreFrameworks/EngineSharded.hpp:1157-1240`
+  - Boot reference: post-`.B.6` `CoreFrameworks/EngineSharded/Run.hpp` boot section (pre-`.B.6` was `EngineSharded.hpp:1157-1240`)
   - Backtest reference: `Backtest/BacktestSharded.hpp:316-359`
   - Hot-swap (NEW v5.14.2): `CoreFrameworks/EnsembleHotSwap.hpp:54-115`
 
@@ -607,7 +607,7 @@ related_specs: [DESIGN_SPECS/framework-patterns/postloadsetup-registry-pattern.m
 - **Class:** Class 18 (mirror data-flow incomplete).
 - **Sites:**
   - Backtest: `Backtest/BacktestSharded.hpp:316-359` (missing 2 calls)
-  - Boot reference: `CoreFrameworks/EngineSharded.hpp:1180` (InitExitBandits) + `:1200` (LoadExitBanditState)
+  - Boot reference: post-`.B.6` `CoreFrameworks/EngineSharded/Run.hpp` boot section — InitExitBandits + LoadExitBanditState calls (pre-`.B.6` was `EngineSharded.hpp:1180` + `:1200`)
 
 **Sub-gaps:**
 
@@ -652,7 +652,7 @@ related_specs: [DESIGN_SPECS/framework-patterns/postloadsetup-registry-pattern.m
 - **Severity:** MEDIUM (silent train-serve drift; subset of VerifyExpected's checks already covered by ValidateAgainstCfg, but unique checks like cadence + feature_format + num_classes are bypassed)
 - **Class:** Class 18 (mirror data-flow incomplete; same shape as PARITY-009).
 - **Sites:**
-  - Boot reference (single-zoo): `CoreFrameworks/EngineSharded.hpp:1108-1131` (calls VerifyExpected at :1114)
+  - Boot reference (single-zoo): post-`.B.6` `CoreFrameworks/EngineSharded/Run.hpp` boot section — calls VerifyExpected (pre-`.B.6` was `EngineSharded.hpp:1108-1131` with VerifyExpected at `:1114`)
   - Hot-swap (single-zoo, v5.10.0c): `CoreFrameworks/EngineSharded.hpp:~2796-2820` (calls Free + Init + LoadFromDir + ValidateAgainstCfg, but NOT VerifyExpected)
 
 **What's missing:** `CoreModelZoo_VerifyExpected(zoo, dir, ...)` — checks expected.cfg sidecar for:
@@ -694,7 +694,7 @@ related_specs: [DESIGN_SPECS/framework-patterns/postloadsetup-registry-pattern.m
 - **Severity:** MEDIUM (backtest replay-determinism: inference_cfg drift not detected during backtest validation)
 - **Class:** Class 18 (mirror data-flow incomplete).
 - **Sites:**
-  - Boot reference (single-zoo): `CoreFrameworks/EngineSharded.hpp:1229` (calls ValidateAgainstCfg)
+  - Boot reference (single-zoo): post-`.B.6` `CoreFrameworks/EngineSharded/Run.hpp` boot section — calls ValidateAgainstCfg (pre-`.B.6` was `EngineSharded.hpp:1229`)
   - Backtest (single-zoo): `Backtest/BacktestSharded.hpp:294` (calls VerifyExpected only; missing ValidateAgainstCfg)
 
 **What's missing:** `CoreModelZoo_ValidateAgainstCfg(zoo, ezoo, cfg, ...)` — checks 13 stamp-bound cfg fields (Ridge ×5 + composite ×5 + winsor ×2 + exit_blender ×1) for inference_cfg drift between training-time stamp body and serving-time live cfg.
@@ -795,19 +795,19 @@ related_specs: [DESIGN_SPECS/framework-patterns/display-execution-invariant-regi
 - **Found:** 2026-05-10 during v5.14.10 Thompson bandit pre-coding parity audit (no commit yet — plan-stage finding)
 - **Severity:** MEDIUM
   - CLAUDE.md item 12 invariant: every term in BG/SG_Evaluate (and in this case, ML_BuildParameters dispatch — slow-path predicate) must have a corresponding GUI surface
-  - Current Exp3 path has `ensemble_bandit_arm_probs` + `ensemble_n_updates_per_regime` snapshot fields populated at `CoreFrameworks/EngineSharded.hpp:646-694`
+  - Current Exp3 path has `ensemble_bandit_arm_probs` + `ensemble_n_updates_per_regime` snapshot fields populated at `CoreFrameworks/ShardedSnapshot.hpp:677-694` (audit-corrected post-`.B.6`; original cite of `EngineSharded.hpp:646-694` was already audit-flagged stale — actual snapshot publish writer lives in ShardedSnapshot.hpp)
   - Plan adds parallel ThompsonBanditState; proposes ZERO snapshot fields + ZERO ML Status panel branches → operator can't inspect Thompson posterior state
 - **Class:** Display↔execution invariant breach (v5.6.0 pattern); Class 18 sister (asymmetric snapshot coverage between Exp3 and Thompson)
 - **Site(s):**
   - Plan: `plans/v5.14-foxml-port-and-maker/subplans/2026-05-08-v5.14.10-bayesian-thompson-bandit.md` (entire file: zero "snapshot" / "panel" / "GUI" mentions per `grep -c`)
-  - Snapshot publish reference: `CoreFrameworks/EngineSharded.hpp:646-694` (where `ensemble_bandit_arm_probs[r]` is populated for Exp3; needs parallel Thompson section)
+  - Snapshot publish reference: `CoreFrameworks/ShardedSnapshot.hpp:677-694` (audit-corrected post-`.B.6`; original cite of `EngineSharded.hpp:646-694` was already audit-flagged stale — actual snapshot publish writer lives in ShardedSnapshot.hpp) (where `ensemble_bandit_arm_probs[r]` is populated for Exp3; needs parallel Thompson section)
   - Snapshot struct: `CoreFrameworks/ShardedSnapshot.hpp` (search `ensemble_bandit_arm_probs` for parallel additions)
   - ML_BuildParameters dispatch (the new "term"): `Strategies/StrategyParameters.hpp:887-1005`
 - **Symptom:** Operator paper-tests Thompson sampling, sees flat P&L, has NO panel surface to ask "is Thompson posterior actually diverging from uniform priors? Is mu_post moving? Are pulls evenly distributed across arms?" Must shell into the binary, dump bandit state via stderr fprintf. Worse: operator can't see which algorithm path is currently active without re-reading cfg (no "Bandit Algorithm: Exp3 / Thompson / Both" indicator). Same telemetry need that drove `ensemble_bandit_arm_probs` for the Exp3 path.
 - **Root cause:** Plan focuses on math + persistence; skips snapshot/panel propagation. Cfg=2 dual-mode telemetry mentioned at line 144 ("uses calibration log v5.13.0.B with new columns") but specifics not designed.
 - **Fix path:** v5.14.10.B amendment — add Step 7 "Snapshot + ML Status panel surface":
   - Snapshot fields: `thompson_bandit_active` (uint8); `thompson_bandit_chosen_arm[NUM_REGIMES]` (int8); `thompson_bandit_total_pulls_per_regime[NUM_REGIMES][N_ARMS]` (uint32); `thompson_bandit_mu_post_per_regime[NUM_REGIMES][N_ARMS]` (float)
-  - Populator extends EngineSharded.hpp:646-694 ensemble snapshot section
+  - Populator extends post-`.B.6` `CoreFrameworks/ShardedSnapshot.hpp:677-694` ensemble snapshot section (audit-corrected; pre-`.B.6` cite was `EngineSharded.hpp:646-694` — stale path)
   - ML Status panel: new "Bandit Algorithm: Exp3 | Thompson | Both" row; new per-regime per-arm table (mu_post, precision_post, total_pulls) when Thompson active
   - Cfg=2 telemetry: per-fill calibration log gains `exp3_chosen_arm_idx` + `thompson_chosen_arm_idx` columns
 - **Target ship:** v5.14.10.B (~60 min snapshot field + populator + panel branch + cfg=2 telemetry log columns)

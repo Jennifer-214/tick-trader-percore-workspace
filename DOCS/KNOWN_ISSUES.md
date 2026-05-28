@@ -140,7 +140,7 @@ bugs**:
 | `-Wstringop-overflow` "writing 1 byte into a region of size 0" at offset 1248576 | `tests/controller_test.cpp:5104` (writing through `EventLoopState`) | GCC constprop pass making bogus offset computations during inlining; tests pass at runtime |
 | Same pattern | `FauxFIX.hpp:286`, `SPSCRing.hpp:128`, `ControllerEventLoop.hpp:816` | Same constprop class; pre-existing since pre-v5.9 |
 | `-Waggressive-loop-optimizations` "iteration 5 invokes undefined behavior" | `TUIAnsi.hpp:824` | Pre-existing; loop bound analysis edge case |
-| Lambda capture warning at `EngineSharded.hpp:2085` | Capture of `cores` with non-automatic storage | Pre-existing; static-storage capture pattern |
+| Lambda capture warning in producer-thread fan_out body (post-`.B.6` at `EngineSharded/Async.hpp` fan_out; pre-`.B.6` was `EngineSharded.hpp:2085`) | Capture of `cores` with non-automatic storage | Pre-existing; static-storage capture pattern |
 
 These are **separate from** the v5.9.5a real overflow that was fixed
 (FeatureStandardizer Persist/Load — bug closed). The list above is
@@ -316,7 +316,7 @@ from it productively.
 **Root cause:** The v5.1.2 sharded slow-path scalar bus doesn't carry
 `is_buyer_maker`; `EventLoop_UpdateRollingStateOneCore` calls
 `RollingStats_Push` with `is_buyer_maker=0` hardcoded
-(`CoreFrameworks/EngineSharded.hpp:2663`). `CumDelta` and
+(post-`.B.6` at `CoreFrameworks/EngineSharded/SlowPath.hpp` slow-path body; pre-`.B.6` was `EngineSharded.hpp:2663`). `CumDelta` and
 `FlowState_Push` get the correct flag (line 1641, 1650-1652);
 RollingStats does NOT.
 

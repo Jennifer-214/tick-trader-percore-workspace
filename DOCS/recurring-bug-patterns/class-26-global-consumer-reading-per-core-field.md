@@ -6,7 +6,7 @@ parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-19
 surface_tags: [cfg-flow, slow-path, hot-path, oms-drainer, ml-inference]
 severity: high
-recurrence_count: 11
+recurrence_count: 13
 first_instance: v5.15.5.F.4c.3 (Class 27 codification surfaced sister)
 closure_mechanism: decision-time-data-binding-pattern (read from in-flight Order/Position/Event at decision time, not from cfg) + cfg-scope-discipline (per-core fields read via core_id index, never as a scalar) + tools/check_per_core_registry_integrity.py CI check
 sister_classes: [18, 24, 25, 27]
@@ -93,6 +93,10 @@ Not all scalar cfg access is Class 26:
 
 **Discipline-installation transition:** recurrence_count 1→11 hits MANDATORY structural fix threshold per `pattern-codification-lifecycle.md` Stage 3→4 promotion criteria. Closure mechanism: 4-category cfg field categorization decision tree at NEW `framework-patterns/cfg-field-categorization-discipline.md` Stage 2 DRAFT (PER_CORE_MODE_NO_FLAT_FIELD vs PER_CORE_FLAT_SYNC_PARAMETER vs GLOBAL_ONLY vs CFG-FLAG BITMAP BIT); 5-step re-categorization migration procedure; CI Check 8 + 5-question /consumer-pattern-verify mechanical check (M7 4th canonical structural enforcement). Sister to `feedback_cfg_field_categorization_at_registry_add_time` + `feedback_categorize_by_consumer_pattern_not_field_name` operator-collaboration memories codified at v1.7.6 cycle.
 
+- **v5.15.5.F.4d.1.B.7 (2026-05-27) — 2 NEW worked instances at drainer body (paired-access surface; Check 9 codification):** Pre-fix `CoreFrameworks/EngineSharded/Async.hpp:814` + `:853` (drainer-cycle `EngineSharded_Async_DrainWithSubmit` body). Both used `cfg.cores[i]` where `i` was the inner ring-pop counter (`for (int i = 0; i < MAX_EVENTS_PER_DRAIN_PER_CORE; ++i)` at Async.hpp:768), NOT the outer per-core slot variable (`for (int slot = 0; slot < state.registered_count; ++slot)` at Async.hpp:765). Silent miscalibration for per-core `partial_exit_pct` + `tp2_mult` when `core_overrides[slot]` not set; introduced at mechanical migration commit `ea08210` (.F.4c.3 WIP2d-1 Phase 2; `cfg.X` → `cfg.cores[i].X` substitution applied with wrong `i` symbol inside nested loop). Fix: `i` → `slot` at both sites. **Sister mechanical detection landed:** NEW Check 9 in `tools/check_per_core_registry_integrity.py` — paired-access mismatch detector flags `cfg.core_overrides[X]` + `cfg.cores[Y]` co-located within 5 lines where X != Y. Stage 6 escalation per M7 4th canonical (memory codification alone proved insufficient — recurrence at drainer body despite codified discipline; structural CI catches future instances at commit-time). Regression test at `tests/controller_test.cpp` "v5.15.5.F.4d.1.B.7 Class 26: drainer per-core cfg slot integrity" section (8 new assertions; 4 slots × 2 fields). Recurrence_count 11→13.
+
+  **Forward advisory (PARITY ledger DOCUMENTED-RISK entry at .B.7 close):** prior `partial_exit_pct` / `tp2_mult` calibration sweeps may have produced tainted results (operators tuned against silently-miscalibrated behavior). Forward-looking work fine post-fix; historical calibration values may warrant re-validation at next sweep cycle.
+
 ## Sister classes
 
 - **Class 27** (Single-value cache flattens per-instance) — structural pre-condition; cache has no per-instance dimension. Eliminating Class 27 sources eliminates many Class 26 sites by construction.
@@ -104,7 +108,7 @@ Not all scalar cfg access is Class 26:
 
 - `DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md` (closure mechanism)
 - `DESIGN_SPECS/refactor-patterns/cfg-scope-discipline.md` (per-core access discipline)
-- `tools/check_per_core_registry_integrity.py` Check 7 (CI enforcement; paired with Class 27)
+- `tools/check_per_core_registry_integrity.py` Check 7 + Check 9 (CI enforcement; Check 7 for Class 27 subsystem-state cfg-mirror scan + NEW Check 9 for Class 26 paired-access mismatch detection — `cfg.core_overrides[X]` + `cfg.cores[Y]` paired access with X != Y; added at v5.15.5.F.4d.1.B.7 per M7 4th canonical structural enforcement)
 - Class 27 sub-file (sister class with detailed structural-cache discussion)
 - `/accounting-audit` skill (scans for Class 26 + Class 27 instances in accounting paths)
 - `/registry-fit-audit` skill (scans for Class 26 + Class 27 instances at registry boundaries)

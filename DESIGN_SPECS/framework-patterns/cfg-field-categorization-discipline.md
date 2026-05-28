@@ -17,7 +17,7 @@ first_canonical_application: v5.15.5.F.4d.1.B.4 v1.7.6 Phase Cx-cfg-cohort (11 w
 
 ## Problem statement
 
-Cfg fields can be misplaced across registry categories (per-core vs global vs cfg-flag bitmap), creating parallel-mechanism shapes that violate single-source-of-truth + H17 STRONG framework discipline + H14 bit-packing discipline. The v5.15.5.F.4c migration cohort surfaced 11+ instances at v1.7.6 where field-name taxonomy reasoning produced wrong categorization decisions (Class 26 recurrence_count 1→11 at single ship). Discipline missing: explicit decision tree for cfg field placement + 5-step migration procedure for re-categorization + sister-pattern co-location verification.
+Cfg fields can be misplaced across registry categories (per-node vs global vs cfg-flag bitmap), creating parallel-mechanism shapes that violate single-source-of-truth + H17 STRONG framework discipline + H14 bit-packing discipline. The v5.15.5.F.4c migration cohort surfaced 11+ instances at v1.7.6 where field-name taxonomy reasoning produced wrong categorization decisions (Class 26 recurrence_count 1→11 at single ship). Discipline missing: explicit decision tree for cfg field placement + 5-step migration procedure for re-categorization + sister-pattern co-location verification.
 
 ## The 4 categories
 
@@ -25,9 +25,9 @@ When adding a new cfg field row to any FOREACH_*_CFG_FIELD registry, categorize 
 
 ### Category 1 — PER_CORE_MODE_NO_FLAT_FIELD
 
-**Definition:** Each core EXPLICITLY picks per-core value (no uniform default makes sense).
+**Definition:** Each core EXPLICITLY picks per-node value (no uniform default makes sense).
 
-**Pattern:** Row in `FOREACH_PER_CORE_CFG_FIELD` with `NO_FLAT_FIELD` bit set in meta column + entry in `FOREACH_PER_CORE_NO_FLAT_FIELD_SYNC` sister registry mapping per-core target field to legacy parallel-array source.
+**Pattern:** Row in `FOREACH_PER_CORE_CFG_FIELD` with `NO_FLAT_FIELD` bit set in meta column + entry in `FOREACH_PER_CORE_NO_FLAT_FIELD_SYNC` sister registry mapping per-node target field to legacy parallel-array source.
 
 **Operator UX:** No top-level cfg key; operator MUST use `core_<N>_<field>=value` for each core.
 
@@ -35,23 +35,23 @@ When adding a new cfg field row to any FOREACH_*_CFG_FIELD registry, categorize 
 
 ### Category 2 — PER_CORE_FLAT_SYNC_PARAMETER
 
-**Definition:** Operator wants uniform default + per-core override exception. Default for per-core registry rows WITHOUT NO_FLAT_FIELD bit.
+**Definition:** Operator wants uniform default + per-node override exception. Default for per-node registry rows WITHOUT NO_FLAT_FIELD bit.
 
 **Pattern:** Row in `FOREACH_PER_CORE_CFG_FIELD` without NO_FLAT_FIELD bit; manual global struct field declaration on `ControllerConfig<F>` (load-bearing for `EMIT_PER_CORE_COPY` walker propagation at `ControllerConfig.hpp:1432-1437`); walker auto-propagates `global cfg.X` → all `cfg.cores[c].X` post-parse.
 
-**Per-core override:** Requires `PER_CORE_OVERRIDE_INT_FIELDS` macro membership (only 3 fields currently: `poll_interval` + `risk_degradation_curve` + `barrier_blend_mode`). Operators using `core_<N>_<field>=value` syntax for fields NOT in this macro silently fail (parser doesn't recognize).
+**Per-node override:** Requires `PER_CORE_OVERRIDE_INT_FIELDS` macro membership (only 3 fields currently: `poll_interval` + `risk_degradation_curve` + `barrier_blend_mode`). Operators using `core_<N>_<field>=value` syntax for fields NOT in this macro silently fail (parser doesn't recognize).
 
-**Operator UX:** Operator sets `<field>=value` at top-level; walker propagates. Optional per-core override via `core_<N>_<field>=value` IF field is in PER_CORE_OVERRIDE_INT_FIELDS.
+**Operator UX:** Operator sets `<field>=value` at top-level; walker propagates. Optional per-node override via `core_<N>_<field>=value` IF field is in PER_CORE_OVERRIDE_INT_FIELDS.
 
 **Canonical example:** `regime_hysteresis` + `exit_threshold` (per-core PARAMETERS at v1.7.6 cycle; uniform default propagated via walker).
 
 ### Category 3 — GLOBAL_ONLY
 
-**Definition:** Engine-wide; no per-core variation supported architecturally.
+**Definition:** Engine-wide; no per-node variation supported architecturally.
 
 **Pattern:** Row in `FOREACH_GLOBAL_CFG_FIELD`; auto-generated struct field via `EMIT_GLOBAL_CFG_STRUCT_FIELD` walker at `ControllerConfig.hpp:1326`; auto-populated default via `EMIT_GLOBAL_CFG_DEFAULT` walker at `:1477`; parser auto-routed via `EMIT_GLOBAL_CFG_PARSER_CASE` walker at `:2103+`.
 
-**Operator UX:** Operator sets `<field>=value` at top-level. NO per-core override syntax (architecturally unsupported).
+**Operator UX:** Operator sets `<field>=value` at top-level. NO per-node override syntax (architecturally unsupported).
 
 **Canonical examples:** `pay_fees_in_bnb`, `num_execution_cores`, `kill_recovery_warmup` + `sl_cooldown_*` + `idle_reset_cycles` + `model_max_age_hours` + `lazy_rebuild_price_threshold_pct` (post-Phase Cx-D extension at v1.7.6).
 
@@ -80,7 +80,7 @@ For any new cfg field, answer in order:
    - YES → **Category 4 CFG-FLAG BITMAP BIT**. Pick appropriate domain (risk/gate/lifecycle/ml/ops); add to FOREACH_<DOMAIN>_CFG_FLAG with `<legacy_field>` column = operator-facing cfg key.
    - NO → continue to question 2.
 
-2. **Is the field engine-wide (no per-core variation makes sense architecturally)?**
+2. **Is the field engine-wide (no per-node variation makes sense architecturally)?**
    - YES → **Category 3 GLOBAL_ONLY**. Add to FOREACH_GLOBAL_CFG_FIELD.
    - NO → continue to question 3.
 
@@ -88,8 +88,8 @@ For any new cfg field, answer in order:
    - YES → **Category 1 PER_CORE_MODE_NO_FLAT_FIELD**. Add to FOREACH_PER_CORE_CFG_FIELD with NO_FLAT_FIELD bit + entry in FOREACH_PER_CORE_NO_FLAT_FIELD_SYNC.
    - NO → continue to question 4.
 
-4. **Does operator want uniform default + per-core override exception?**
-   - YES → **Category 2 PER_CORE_FLAT_SYNC_PARAMETER**. Add to FOREACH_PER_CORE_CFG_FIELD WITHOUT NO_FLAT_FIELD bit. If per-core override syntax needed, ALSO add to PER_CORE_OVERRIDE_INT_FIELDS.
+4. **Does operator want uniform default + per-node override exception?**
+   - YES → **Category 2 PER_CORE_FLAT_SYNC_PARAMETER**. Add to FOREACH_PER_CORE_CFG_FIELD WITHOUT NO_FLAT_FIELD bit. If per-node override syntax needed, ALSO add to PER_CORE_OVERRIDE_INT_FIELDS.
 
 ## 5-step re-categorization migration procedure
 
@@ -101,13 +101,13 @@ For each field being re-categorized:
 2. **ADD row in right-category registry** with operational manual init value as registry payload (per `universal-cfg-field-registry-pattern.md` § Registry default precedence v1.1 — operational defaults preserved as canonical)
 3. **DELETE/ADD manual struct field declaration per H17 status at target surface:**
    - Global surface H17 STRONG (FOREACH_GLOBAL_CFG_FIELD(EMIT_GLOBAL_CFG_STRUCT_FIELD) at ControllerConfig.hpp:1326 active): auto-gen IS active → DELETE manual decl when migrating TO FOREACH_GLOBAL_CFG_FIELD (else duplicate-member compile fail)
-   - Per-core surface H17 STRONG: auto-gen via FOREACH_PER_CORE_CFG_FIELD(EMIT_PER_CORE_CFG_STRUCT_FIELD); migrating TO per-core registry handles automatically
+   - Per-node surface H17 STRONG: auto-gen via FOREACH_PER_CORE_CFG_FIELD(EMIT_PER_CORE_CFG_STRUCT_FIELD); migrating TO per-node registry handles automatically
    - Cfg-flag bitmap: DELETE scalar manual struct field (bitmap bit replaces it)
-4. **DELETE manual init line** (auto-populates from registry default via `EMIT_GLOBAL_CFG_DEFAULT` walker OR `EMIT_PER_CORE_CFG_DEFAULT_GLOBAL_MIRROR` walker for per-core-stays OR `<DOMAIN>_CFG_FLAG_AUTOPOPULATE_FROM_*` macro for bitmap)
+4. **DELETE manual init line** (auto-populates from registry default via `EMIT_GLOBAL_CFG_DEFAULT` walker OR `EMIT_PER_CORE_CFG_DEFAULT_GLOBAL_MIRROR` walker for per-node-stays OR `<DOMAIN>_CFG_FLAG_AUTOPOPULATE_FROM_*` macro for bitmap)
 5. **UPDATE consumers if access pattern changes:**
    - PER_CORE → GLOBAL: consumers already read via global pointer; usually no change
    - PER_CORE → CFG-FLAG BITMAP: consumers change from `config->X` to `BITMAP_IS_SET(config->cfg_flags, MASK_*)`
-   - GLOBAL → PER_CORE: consumers add per-core scope; `cfg.X` → `cfg.cores[c].X`
+   - GLOBAL → PER_CORE: consumers add per-node scope; `cfg.X` → `cfg.cores[c].X`
 
 **Partial migration anti-pattern (FORBIDDEN):** Just step 1 (delete wrong-category row) leaves field in "orphan" state — declarations exist without registry coverage; defaults via manual init only; future contributor sees ambiguous pattern. WORSE than original.
 
@@ -136,7 +136,7 @@ Apply DOD discipline checks at cfg field row-add time:
 - `strategy` — sister to NO_FLAT_FIELD pattern landing site at WIP2d-1.B.0
 
 **Category 2 PER_CORE_FLAT_SYNC_PARAMETER examples (codified at v1.7.6):**
-- `regime_hysteresis` — operator sets `regime_hysteresis=15` top-level; walker propagates to all cores; consumers read per-core. Cx-A (cosmetic PortfolioController consumer migration to per-core)
+- `regime_hysteresis` — operator sets `regime_hysteresis=15` top-level; walker propagates to all cores; consumers read per-node. Cx-A (cosmetic PortfolioController consumer migration to per-node)
 - `exit_threshold` — same pattern. Cx-B (cosmetic Class 25 consumer fix at EngineCommon.hpp:618)
 
 **Category 3 GLOBAL_ONLY examples (re-categorized at v1.7.6):**
@@ -148,7 +148,7 @@ Apply DOD discipline checks at cfg field row-add time:
 
 ## Anti-patterns this prevents
 
-- **Parallel-mechanism shape** — per-core registry membership + global manual field WITHOUT walker propagation = silent per-core override syntax failure
+- **Parallel-mechanism shape** — per-node registry membership + global manual field WITHOUT walker propagation = silent per-node override syntax failure
 - **Field-name taxonomy categorization** — categorizing by field name pattern instead of conceptual nature + consumer pattern (sister to feedback_categorize_by_consumer_pattern_not_field_name)
 - **H14 BOOL-as-scalar** — BOOL semantic in uint32/int scalar instead of cfg-flag bitmap bit
 - **Sister-pattern split** — BOOL flag in scalar despite sister `MASK_*_ENABLED` existing in cfg-flag bitmap domain
@@ -168,19 +168,19 @@ Apply DOD discipline checks at cfg field row-add time:
 
 `tools/check_per_core_registry_integrity.py` extended with 5-question /consumer-pattern-verify mechanical check at COMMIT layer:
 
-- **Flag A:** per-core registry row with 0 per-core consumers in production code (catches "wrong registry membership; field is conceptually global")
-- **Flag B:** per-core consumer scope reading global cfg field where per-core registry row exists (catches Class 25 "consumer scope-erosion")
-- **Flag C:** per-core registry row WITHOUT NO_FLAT_FIELD bit + WITHOUT global manual struct field (catches walker compile-error candidate)
+- **Flag A:** per-node registry row with 0 per-node consumers in production code (catches "wrong registry membership; field is conceptually global")
+- **Flag B:** per-node consumer scope reading global cfg field where per-node registry row exists (catches Class 25 "consumer scope-erosion")
+- **Flag C:** per-node registry row WITHOUT NO_FLAT_FIELD bit + WITHOUT global manual struct field (catches walker compile-error candidate)
 
 Sister to existing Check 7 (Class 27 cache-structure discipline). M7 4th canonical structural enforcement application (sister to B-Plus v0.2 symbol-existence + v0.3 line-anchor + v0.4 deletion-cohort).
 
-**Consumer-side discipline amendment (v5.15.5.F.4d.1.B.8):** Consumer-side discipline check at registry-add-time should include sister verification that EXISTING consumer sites for a newly-per-core-migrated field are updated to use per-core slot. This is the preventive analog to Check 10 commit-time enforcement (Class 26 sub-shape B UNINDEXED-GLOBAL detection at per-core consumer sites). When a cfg field migrates from GLOBAL → per-core registry, the migration scope MUST include sweep of consumer sites that read the field UNINDEXED — failure to sweep produces silent Class 26 sub-shape B violations (audit-evidence: 4 HIGH instances at `.B.8` from `ea08210` mechanical migration cohort `.F.4c.3` WIP2d-1.B.1 that missed consumer-side sweep). Check 10 catches future regressions mechanically per `tools/check_per_core_registry_integrity.py` Check 10 invocation.
+**Consumer-side discipline amendment (v5.15.5.F.4d.1.B.8):** Consumer-side discipline check at registry-add-time should include sister verification that EXISTING consumer sites for a newly-per-node-migrated field are updated to use per-node slot. This is the preventive analog to Check 10 commit-time enforcement (Class 26 sub-shape B UNINDEXED-GLOBAL detection at per-node consumer sites). When a cfg field migrates from GLOBAL → per-node registry, the migration scope MUST include sweep of consumer sites that read the field UNINDEXED — failure to sweep produces silent Class 26 sub-shape B violations (audit-evidence: 4 HIGH instances at `.B.8` from `ea08210` mechanical migration cohort `.F.4c.3` WIP2d-1.B.1 that missed consumer-side sweep). Check 10 catches future regressions mechanically per `tools/check_per_core_registry_integrity.py` Check 10 invocation.
 
 ## Cross-references
 
 - `framework-patterns/universal-cfg-field-registry-pattern.md` § Registry default precedence v1.1 — resolution procedure for MATCH/DIFFER cases
 - `framework-patterns/cfg-derived-consumer-framework.md` — consumer-side discipline
-- `refactor-patterns/cfg-scope-discipline.md` — per-core consumer function signatures (Class 25 closure)
+- `refactor-patterns/cfg-scope-discipline.md` — per-node consumer function signatures (Class 25 closure)
 - `refactor-patterns/decision-time-data-binding-pattern.md` — Class 27 closure (sister to Class 26)
 - `framework-patterns/manual-fields-inventory-pattern.md` — vestigial manual field cleanup procedure
 - `meta-disciplines/structural-enforcement-when-memory-insufficient.md` — M7 framework (CI Check 8 is 4th canonical)

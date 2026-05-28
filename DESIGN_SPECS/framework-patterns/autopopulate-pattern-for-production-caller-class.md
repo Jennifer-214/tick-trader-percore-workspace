@@ -211,7 +211,7 @@ Both cfg-bound + architectural stamp body fields are now AUTOPOPULATE-driven. Fu
 - Registry: `MemHeaders/DisplayMetaRegistry.hpp` (dual: FOREACH_GATE_DIAG_PAIR + FOREACH_DISPLAY_META_FIELD)
 - Helper function: `CoreContextDisplayMeta_Init<F>(meta*)` (registry-driven init walk; templated)
 - Production caller: `EventLoopState_Init` (one call per slot: `CoreContextDisplayMeta_Init(&state->display_meta[i])`)
-- Closes: Display↔Execution Class-18 mirror for the per-core display-only fields (Variant of the AUTOPOPULATE pattern — uses a templated helper function as the registry-walk surface; macros use the helper)
+- Closes: Display↔Execution Class-18 mirror for the per-node display-only fields (Variant of the AUTOPOPULATE pattern — uses a templated helper function as the registry-walk surface; macros use the helper)
 
 ### Fourth application: CORE_CTX_INIT_AUTOPOPULATE + CORE_CTX_RESET_AUTOPOPULATE (v5.15.5.B.7) — FIRST MULTI-TARGET DISPATCH
 
@@ -219,7 +219,7 @@ Both cfg-bound + architectural stamp body fields are now AUTOPOPULATE-driven. Fu
 - Companion macros: `CORE_CTX_INIT_AUTOPOPULATE(state_ptr, i)` + `CORE_CTX_RESET_AUTOPOPULATE(state_ref, c)`
 - Templated helpers (per CLAUDE.md item 23): `tt::_core_ctx_init_value_fields<F>`, `tt::_core_ctx_reset_value_fields<F>`, `tt::_alloc_and_init_slow_state<F>`
 - Production callers: `EventLoopState_Init` (boot init via `CORE_CTX_INIT_AUTOPOPULATE`) + paper-reset path in `EngineSharded.hpp` (via `CORE_CTX_RESET_AUTOPOPULATE`)
-- Closes: 100% of the per-core init/reset Class-18 mirror — adding a new per-core field that needs init/reset is ONE row in the appropriate registry; future per-core "per-session counter" additions touch ONE row + the operator MUST consciously decide "does this reset between sessions?" at registry-add time
+- Closes: 100% of the per-node init/reset Class-18 mirror — adding a new per-node field that needs init/reset is ONE row in the appropriate registry; future per-node "per-session counter" additions touch ONE row + the operator MUST consciously decide "does this reset between sessions?" at registry-add time
 
 ### Fifth application: OMS_INIT_AUTOPOPULATE + OMS_RESET_AUTOPOPULATE (v5.15.5.C.3 Phase 3b) — MULTI-AXIS DISPATCH
 

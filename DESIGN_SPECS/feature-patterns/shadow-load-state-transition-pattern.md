@@ -226,7 +226,7 @@ When state struct T is small (~tens of bytes) and not cache-aware:
 - **Surface:** `CoreFrameworks/EngineSharded.hpp` ~line 2914 (single-zoo
   hot-swap dispatch)
 - **State:** `state.cores[c].model_handle` (CoreModelZoo<F>*)
-- **Reclamation:** Strategy A (per-core slow-path thread is sole owner)
+- **Reclamation:** Strategy A (per-node slow-path thread is sole owner)
 - **Validation:** model_verify_strict check on loaded handles
 - **Replaces:** in-place Free + Init + LoadFromDir at EngineSharded.hpp:2923-2924
 
@@ -234,7 +234,7 @@ When state struct T is small (~tens of bytes) and not cache-aware:
 - **Surface:** `CoreFrameworks/EngineSharded.hpp` ~line 2846 (ensemble
   hot-swap dispatch) + refactored `EnsembleHotSwap.hpp`
 - **State:** `state.cores[c].ensemble_handle` (EnsembleModelZoo<F>*)
-- **Reclamation:** Strategy A (per-core slow-path thread is sole owner)
+- **Reclamation:** Strategy A (per-node slow-path thread is sole owner)
 - **Validation:** sibling handle validity + EnsembleModelZoo_PostLoadSetup checks
 - **Replaces:** in-place Free + Init + LoadFromDir at EnsembleHotSwap.hpp:75-76
 
@@ -242,7 +242,7 @@ When state struct T is small (~tens of bytes) and not cache-aware:
 - **Scaler hot-swap** — separate from model swap; same shape
 - **cfg hot-reload** — would need RCU grace period (Strategy B) for
   cross-thread cfg read consistency
-- **Strategy hot-swap** — strategy assignment per-core could swap
+- **Strategy hot-swap** — strategy assignment per-node could swap
   without restart
 
 ---
@@ -278,7 +278,7 @@ When state struct T is small (~tens of bytes) and not cache-aware:
   for future mmap'd snapshot use case?
 - Deferred-free queue (Strategy C) — needed for v5.16+ viewer
   reconnection? Or is single-owner sufficient for current uses?
-- Per-core hot-swap parallelism — if N cores hot-swap simultaneously,
+- Per-node hot-swap parallelism — if N cores hot-swap simultaneously,
   do they share an aligned_alloc pool, or each malloc independently?
   (Probably independent for v5.15.4; revisit for high-frequency
   hot-swap workflows)

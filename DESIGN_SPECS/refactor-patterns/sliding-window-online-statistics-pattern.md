@@ -119,7 +119,7 @@ struct OnlineStatsState {
 };
 ```
 
-For N=8: ~584 bytes (sum_x = 64B + sum_xx = 512B + count = 8B). Fits one half of an L1d cache. Per-core only (no cross-thread access).
+For N=8: ~584 bytes (sum_x = 64B + sum_xx = 512B + count = 8B). Fits one half of an L1d cache. Per-node only (no cross-thread access).
 
 ### Update (when window not yet full: count < K)
 

@@ -130,11 +130,11 @@ The buffer (`T buf[K]`) inside SPSCRing is INTERNAL to the ring's layout. No nee
 
 `OrderManagerState<F>` embeds:
 - 3 result/ws_result/reconcile SPSCRings (drainer-only consumer side; producer is OrderManager_Submit caller — drainer thread itself in the funneled-submit invariant)
-- N (=16) per-core submit_queues SPSCRings (per-core producer = slow-path thread for core N; consumer = drainer thread)
+- N (=16) per-node submit_queues SPSCRings (per-node producer = slow-path thread for core N; consumer = drainer thread)
 
 Pre-`.C.1` layout (`OrderManager.hpp:152-418`):
 - The 3 result rings sit at lines 171-193 with NO explicit `alignas(64)` on their declarations. Pre-fields: `orders[16]` (4480 B; ends at offset 4480 + 0 = 4480; 4480 % 64 = 0 — accidentally aligned).
-- The per-core submit_queues at line 296 has implicit alignas via SPSCRing's internal but the preceding field is `_pad_pe[7]` (alignment padding).
+- The per-node submit_queues at line 296 has implicit alignas via SPSCRing's internal but the preceding field is `_pad_pe[7]` (alignment padding).
 - Cross-thread atomics scattered: `total_submitted/filled/rejected` at lines 370-372 sit between `event_log`'s end and `last_seen_trade_id` (boot scalar). `flatten_pending` + `recovery_until_us` at lines 337-344 sit between `kill_switch_tripped` (non-atomic) and `trade_log` (cold pointer).
 
 `.C.1` reorg (per this pattern):
@@ -219,7 +219,7 @@ The explicit `alignas(64)` on the embedded SPSCRing field is DOCUMENTATION + INT
 
 Adding `alignas(64)` twice (once on the enclosing field declaration AND inside the embedded type) doesn't double the padding — it just requests the same alignment. Idempotent. So adding explicit alignas at the enclosing struct level is safe even though SPSCRing already has it internally.
 
-### Per-core submit_queues array
+### Per-node submit_queues array
 
 When `SPSCRing<T, K> submit_queues[16]`, each element of the array is alignas(64) (since the array's element type carries the alignment). Each `submit_queues[i].head` is on its own cache line. **But** the LAST element's `submit_queues[15].buf[K-1]` may share its tail bytes with the field AFTER the array — which is fine for HOT-cluster discipline but worth noting if that subsequent field is cross-thread sensitive.
 

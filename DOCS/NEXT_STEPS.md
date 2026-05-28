@@ -28,7 +28,7 @@ docs.**
   - ⏳ v5.10.0e — drift detection + auto-retire
 - **Sprint C — v5.11+ deferred:** flexible; pick items as operator
   need surfaces. LLM operator helper, multi-symbol stamp binding,
-  per-core feature mask, scaler comparison tool, doc gaps.
+  per-node feature mask, scaler comparison tool, doc gaps.
 
 ## Working notes
 

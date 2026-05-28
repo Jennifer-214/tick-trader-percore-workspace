@@ -222,7 +222,7 @@ The framework macro `DERIVED_FILTER_DECLARE_WIRE_FORMAT(NAME, SOURCE_FOREACH, ME
 | I2 | Each line matches `<name>=<value>\n` pattern | Format-string drift; emit body bug |
 | I3 | Body contains no `,` decimal separator | Locale-pin Layer 2 leak (e.g., LC_NUMERIC=de_DE bug) |
 | I4 | Per-row name appears EXACTLY when bit set | Filter logic inverted; row silently skipped |
-| I5 | Per-core descriptors emit before global descriptors | Walker invocation order regression |
+| I5 | Per-node descriptors emit before global descriptors | Walker invocation order regression |
 
 Two-source variants (`WIRE_FORMAT_TWO_SOURCE`) extend invariants to bitmap-source rows. Domain-specific invariants (e.g., bitmap-bool ternary normalization for HMAC byte-equivalence) live in the consumer header (e.g., `StampBoundDerivedFilter.hpp`).
 

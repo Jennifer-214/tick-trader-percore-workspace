@@ -172,11 +172,11 @@ The framework can be MISAPPLIED. Anti-patterns:
 - Recurrence count: 2-3 sites mirrored (filename format string at 3 sites; dual-write block at 2 sites)
 - Decision: structural fix via two helper extractions, applied at audit time BEFORE commit
 - Helpers:
-  - `ShardedTradeLog_FormatPerCoreFilename(buf, n, symbol, c)` — single source of truth for the per-core filename pattern (used by `_Init`, `_Rotate`, and `EngineSharded_Run` archive copy)
-  - `ShardedTradeLog_WriteRow(log, core_id, row, n)` — single chokepoint for aggregate + per-core mirror dual-write (used by `RecordEntry` + `RecordExit`; closes "next consumer forgets per-core mirror" class for any future `RecordX`)
+  - `ShardedTradeLog_FormatPerCoreFilename(buf, n, symbol, c)` — single source of truth for the per-node filename pattern (used by `_Init`, `_Rotate`, and `EngineSharded_Run` archive copy)
+  - `ShardedTradeLog_WriteRow(log, core_id, row, n)` — single chokepoint for aggregate + per-node mirror dual-write (used by `RecordEntry` + `RecordExit`; closes "next consumer forgets per-node mirror" class for any future `RecordX`)
 - Pattern: prevents the recurrence class FROM FORMING — applied at first-mirror-detection (audit-time) rather than waiting for 3-4 documented recurrences
 - Lesson: when an audit (e.g., pre-commit /merge-scan or design-philosophy review) catches a 2-site mirror in NEW code, the structural fix is cheap (~30 min) and pays the same future-multiplier as later-detection. Apply at audit time; don't wait for the class to recur.
-- Outcome: Class 18 (mirror-incomplete) prevented for the per-core trade-log surface; future RecordX additions cannot drift
+- Outcome: Class 18 (mirror-incomplete) prevented for the per-node trade-log surface; future RecordX additions cannot drift
 
 ### v5.15.5.C.4 Phase F + G — Phase-separated drainer (closes transient-source-data class)
 
@@ -204,7 +204,7 @@ The framework can be MISAPPLIED. Anti-patterns:
 ### v5.15.5.F.4c.4 — registry-coverage-ci-check-pattern.md (NEW Stage 3 ACTIVE spec; CI tooling structural-fix mechanism category)
 
 - Recurrence count: 5 across bug-class shapes that share the "field added without registry/coverage enforcement" pattern at meta-layer — Class 18 (mirror-incomplete) + Class 19 (hardcoded enum names) + Class 21 (parallel descriptors) + Class 27 (scalar cfg-mirror) + Class 30 NEW (sibling array without registry enrollment)
-- Decision: structural fix via NEW DESIGN_SPEC retroactively extracted from 3 canonical applications (Check 2 per-core cfg coverage + Check 7 scalar cfg-mirror anti-pattern + Check 8 OmsState per-slot sibling coverage). Per-variant Stage tracking inside one spec body: Shape A (positive coverage) Stage 3 ACTIVE; Shape B (anti-pattern enforcement) Stage 2 DRAFT
+- Decision: structural fix via NEW DESIGN_SPEC retroactively extracted from 3 canonical applications (Check 2 per-node cfg coverage + Check 7 scalar cfg-mirror anti-pattern + Check 8 OmsState per-slot sibling coverage). Per-variant Stage tracking inside one spec body: Shape A (positive coverage) Stage 3 ACTIVE; Shape B (anti-pattern enforcement) Stage 2 DRAFT
 - Pattern: Python CI tool template + struct↔registry coverage check + explicit-exempt mechanism with rationale category + migration trigger
 - Outcome: bug class structurally cannot recur at field-add-discipline layer; future per-subsystem registries get matching CI check via template cloning
 - **NEW STRUCTURAL-FIX MECHANISM CATEGORY: CI tooling** — sister to compile-time `static_assert` (Class 14 `static_assert(FOREACH_X_COUNT <= sizeof(type)*8)` precedent) + helper-extraction (Class 18 PostLoadSetup precedent) + AUTOPOPULATE companion macro (Class 11 `STAMP_CFG_AUTOPOPULATE` precedent). Each mechanism enforces at a different layer; CI tooling enforces at PR/merge time with actionable error messages

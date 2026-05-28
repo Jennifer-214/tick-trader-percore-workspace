@@ -91,7 +91,7 @@ bump in `DOCS/changelogs/`.
 `EngineSharded_Init`. After that, the `ModelHandle` is read-only.
 No code path may modify the handle in flight.
 
-**Why:** ModelHandle is shared by all per-core threads via
+**Why:** ModelHandle is shared by all per-node threads via
 seqlock-protected MLBuildContext. Modifying it during live trading
 would race with hot-path reads.
 
@@ -106,14 +106,14 @@ Future hot-swap (v5.10+) requires seqlock-protected ModelHandle.
 NaN, or registry-hash mismatch in strict mode), the dispatcher
 falls through to `SimpleDip_BuildParameters`. This fall-through MUST
 emit a CRITICAL-level health log on each rebuild cycle (rate-limited
-per-core to once per minute).
+per-node to once per minute).
 
 **Why:** Pre-v5.9.0 the fall-through was silent — operator paper-soaks
 for hours not knowing ML never fired. Closes silent-degradation bug
 class.
 
 **How to apply:** New fall-through path → use
-`HealthLog_Critical_RateLimited(...)` with `last_log_time_us` per-core
+`HealthLog_Critical_RateLimited(...)` with `last_log_time_us` per-node
 gate. Test in EXTENSIBILITY block.
 
 ## Feature compute returns FPN_Zero on missing state (v5.8.1b)
@@ -180,7 +180,7 @@ tmp+rename pattern. New file-write workflows in the ML pipeline
 
 ## Cfg fields distinguish explicit-set vs defaulted (post-v5.9.0)
 
-**Rule:** Critical cfg fields (per-core strategy assignments,
+**Rule:** Critical cfg fields (per-node strategy assignments,
 held_out_stamp_secret, auto_stamp_on_held_out, model paths) MUST
 track an explicit-set bitmap during `ControllerConfig_Parse`. The
 TUI distinguishes "deliberate operator choice" from "defaulted

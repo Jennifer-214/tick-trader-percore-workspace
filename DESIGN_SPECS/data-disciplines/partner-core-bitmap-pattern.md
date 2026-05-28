@@ -9,23 +9,23 @@ sister_specs: [bitmap-flag-api.md, per-bit-per-core-override-pattern.md, transie
 applies_at_skills: []
 ---
 
-# Partner-core bitmap pattern (per-core boolean → 1-bit-per-core bitmap)
+# Partner-core bitmap pattern (per-node boolean → 1-bit-per-node bitmap)
 
 **Established:** 2026-05-10 (v5.14.9.G — `partner_pending_bitmap`)
 **Status:** ACTIVE
 **Cross-references:**
 - Parent: `bitmap-flag-api.md` (BITMAP_IS_SET / BITMAP_SET / BITMAP_CLR + BITMAP_BIT_U16)
-- Sister: `transient-aggregation-bitmap-pattern.md` (different scope: transient summary vs persistent per-core state)
+- Sister: `transient-aggregation-bitmap-pattern.md` (different scope: transient summary vs persistent per-node state)
 - First application: `CoreFrameworks/ControllerEventLoop.hpp:533` (`partner_pending_bitmap` on EventLoopState)
 - CLAUDE.md item 20 (bit-packed flag storage)
-- CLAUDE.md item 4 (per-core data plane)
+- CLAUDE.md item 4 (per-node data plane)
 - TECH_DEBT-013 (candidate 6)
 
 ---
 
 ## Problem statement
 
-A struct holds an ARRAY of per-core state — one entry per core, up to MAX_EXECUTION_CORES (typically 16). One of the per-core fields is a boolean:
+A struct holds an ARRAY of per-node state — one entry per core, up to MAX_EXECUTION_CORES (typically 16). One of the per-node fields is a boolean:
 
 ```cpp
 struct CoreContext { 
@@ -59,7 +59,7 @@ for (int c = 0; c < state->registered_count; c++) {
 
 1. 128 bytes for 1 logical bit per core — 1024× memory inefficiency.
 2. Engine-wide "any?" check is O(N) with N memory loads (cache-line ping-pong across cores).
-3. Per-core check accesses CoreContext (likely cached for that core's owning thread but not for cross-core read paths).
+3. Per-node check accesses CoreContext (likely cached for that core's owning thread but not for cross-core read paths).
 4. Alignment padding is wasted forever.
 
 ---
@@ -68,7 +68,7 @@ for (int c = 0; c < state->registered_count; c++) {
 
 ### Option A: Keep per-CoreContext uint8_t (current state — pre-.G)
 
-Already described above. Drift: each new per-core boolean adds another 8 bytes (or wedges into existing padding non-uniformly).
+Already described above. Drift: each new per-node boolean adds another 8 bytes (or wedges into existing padding non-uniformly).
 
 ### Option B (chosen): Single uint16_t with 1 bit per core, on EventLoopState
 
@@ -98,7 +98,7 @@ if (state->partner_pending_bitmap != 0) { ... }
 - Cache locality: one cache line holds all 16 cores' state. Any thread reading any core's state pays only 1 cache miss (instead of N).
 - Set/Clear/Test: all branchless (1-2 instructions each).
 
-### Option C: Per-core atomic flag bitmap (rejected for this use case)
+### Option C: Per-node atomic flag bitmap (rejected for this use case)
 
 If multiple threads could MUTATE different bits concurrently, atomic ops would be needed. For partner_pending, single-writer (slow-path thread per core; cross-core writes use OMS dispatch → also slow-path serialized). Atomic overhead unjustified.
 
@@ -191,23 +191,23 @@ The memory win is modest — but the cache-locality + branchless engine-wide que
 ## Trade-offs + when to apply
 
 ### Apply when:
-- A per-core struct holds a BOOLEAN field (1 byte + alignment padding)
+- A per-node struct holds a BOOLEAN field (1 byte + alignment padding)
 - Total cores ≤ 64 (fits a single uint64_t)
 - Engine-wide "any core?" / "count cores?" queries are useful
 - Single-writer-per-bit OR single-thread-coordinated writes (no concurrent multi-thread bit mutation)
 
 ### Skip when:
-- Per-core field is multi-byte (e.g., uint32_t / FPN — bitmap doesn't fit)
+- Per-node field is multi-byte (e.g., uint32_t / FPN — bitmap doesn't fit)
 - Concurrent multi-thread per-bit mutation (would need atomic; consider whether the design needs this complexity)
-- The per-core field is read EVERY hot-path tick (1-cycle access from owning core's cache is already optimal; bitmap doesn't speed up)
+- The per-node field is read EVERY hot-path tick (1-cycle access from owning core's cache is already optimal; bitmap doesn't speed up)
 
 ### Cost:
-- 2 bytes per bitmap (vs N bytes per per-core field × N cores)
-- ~Same instructions per per-core check (BITMAP_IS_SET ≈ direct uint8_t load + compare)
+- 2 bytes per bitmap (vs N bytes per per-node field × N cores)
+- ~Same instructions per per-node check (BITMAP_IS_SET ≈ direct uint8_t load + compare)
 - 1 migration effort: ~30 min (move field; update all read/write sites)
 
 ### Win:
-- 64× memory reduction for the per-core boolean (16 × 8 bytes → 2 bytes)
+- 64× memory reduction for the per-node boolean (16 × 8 bytes → 2 bytes)
 - Branchless engine-wide "any?" check (1 compare to 0 vs N-iteration loop)
 - Cache locality (16 cores in 1 cache line)
 - Set/Clear/Test all branchless
@@ -230,9 +230,9 @@ Memory: -126 bytes per EventLoopState.
 
 Any per-CoreContext boolean that's truly 1-bit:
 
-- `dirty` flag (per-core "rebuild needed")
-- `partner_resolved_ack` (per-core "ack pending")
-- Engine-wide gate-active flags per core (if a slow-path-gate cache wants per-core variants)
+- `dirty` flag (per-node "rebuild needed")
+- `partner_resolved_ack` (per-node "ack pending")
+- Engine-wide gate-active flags per core (if a slow-path-gate cache wants per-node variants)
 
 These haven't been migrated yet; they're individual decisions per-field (some may benefit from per-CoreContext locality for the OWNING core's reads).
 
@@ -242,11 +242,11 @@ These haven't been migrated yet; they're individual decisions per-field (some ma
 
 ### Cache-line implications: 1 line, all cores
 
-The bitmap is 2 bytes — fits in one cache line + ~62 bytes of other state. Cross-thread reads (e.g., GUI thread reading per-core state) hit one cache line; pre-migration would have hit N cache lines (one per core's CoreContext).
+The bitmap is 2 bytes — fits in one cache line + ~62 bytes of other state. Cross-thread reads (e.g., GUI thread reading per-node state) hit one cache line; pre-migration would have hit N cache lines (one per core's CoreContext).
 
 **Trade-off:** the OWNING core's reads might have been faster pre-migration (own core's CoreContext in L1). Post-migration, all cores' state lives in one cache line on EventLoopState — accessed via shared L2/L3. For boolean access at slow-path cadence (~100µs), this is negligible.
 
-**Don't migrate if** the per-core field is read EVERY HOT-PATH TICK by the owning core — then per-core local storage stays faster.
+**Don't migrate if** the per-node field is read EVERY HOT-PATH TICK by the owning core — then per-node local storage stays faster.
 
 ### Width selection: MAX_EXECUTION_CORES informs the type
 
@@ -311,9 +311,9 @@ Post-migration test: `EXPECT_TRUE(BITMAP_IS_SET(state->partner_pending_bitmap, B
 
 Update test assertions during migration; don't leave them reading the old field name.
 
-### Don't migrate per-core fields that are SHARED between owning core + GUI
+### Don't migrate per-node fields that are SHARED between owning core + GUI
 
-Per-core fields read by both the owning slow-path thread AND a GUI thread should stay per-CoreContext (owning core's L1 hit is preserved). Bitmap migration moves the field to EventLoopState — both threads now race for the shared cache line.
+Per-node fields read by both the owning slow-path thread AND a GUI thread should stay per-CoreContext (owning core's L1 hit is preserved). Bitmap migration moves the field to EventLoopState — both threads now race for the shared cache line.
 
 `partner_pending_bitmap` happens to be safe: it's set/cleared by slow-path thread; GUI reads via snapshot publish (not direct), so the bitmap-on-EventLoopState placement is fine.
 
@@ -325,8 +325,8 @@ For other candidates, verify the cross-thread read pattern before migrating.
 
 `/dod-audit` detects missed applications by:
 
-- Symptom: `uint8_t` field on per-core struct + alignment padding (`uint8_t _pad_X[7]`) that's just storing a boolean
-- Symptom: engine-wide "any core has X active?" loops iterating over per-core array
+- Symptom: `uint8_t` field on per-node struct + alignment padding (`uint8_t _pad_X[7]`) that's just storing a boolean
+- Symptom: engine-wide "any core has X active?" loops iterating over per-node array
 
 When detected → flag as `MISSED — partner-core-bitmap-pattern`. Recommended fix: migrate to single bitmap on the parent struct.
 
@@ -334,7 +334,7 @@ When detected → flag as `MISSED — partner-core-bitmap-pattern`. Recommended 
 
 ## Patterns NOT used here (and why)
 
-### Per-core local uint8_t with explicit padding
+### Per-node local uint8_t with explicit padding
 
 Original pattern. Wasteful (described above).
 
@@ -360,7 +360,7 @@ Verbose; compiler-dependent layout; doesn't generalize to dynamic core counts. u
 
 - `bitmap-flag-api.md` — BITMAP_IS_SET / BITMAP_SET / BITMAP_CLR / BITMAP_BIT_U16 / BITMAP_POPCOUNT_U16
 - `transient-aggregation-bitmap-pattern.md` — sister pattern (transient summary; different lifetime)
-- FoxML_Trader_v2 `CLAUDE.md` item 4 — per-core data plane
+- FoxML_Trader_v2 `CLAUDE.md` item 4 — per-node data plane
 - FoxML_Trader_v2 `CLAUDE.md` item 20 — bit-packed flag storage
 - FoxML_Trader_v2 `DOCS/TECH_DEBT.md` TECH_DEBT-013 — candidate inventory (this is candidate 6)
 - FoxML_Trader_v2 `CoreFrameworks/ControllerEventLoop.hpp:533` — reference implementation

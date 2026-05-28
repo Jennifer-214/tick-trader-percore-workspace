@@ -150,7 +150,7 @@ often computes thresholds as temp locals that aren't exposed for
 display. When a numeric is displayed:
 
 1. If the variable already exists as a slow-path output (in
-   `pending_params` / `cached_params` / per-core state): use it
+   `pending_params` / `cached_params` / per-node state): use it
    directly. ✅
 2. If it's a temp local in the controller: refactor to expose as a
    slow-path output field. New helper convention:

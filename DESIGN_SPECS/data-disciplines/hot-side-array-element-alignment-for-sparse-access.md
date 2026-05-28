@@ -29,7 +29,7 @@ applies_at_skills: []
 
 ## Problem statement
 
-Codebases that pack many struct instances into arrays (per-slot, per-core, per-record) frequently encounter a HIDDEN cache-line-straddle pattern:
+Codebases that pack many struct instances into arrays (per-slot, per-node, per-record) frequently encounter a HIDDEN cache-line-straddle pattern:
 
 1. Struct `T` lives in an array `T arr[N]`
 2. Hot path iterates `arr[]` via SPARSE access (bitmap-driven, indexed lookup; NOT linear scan)

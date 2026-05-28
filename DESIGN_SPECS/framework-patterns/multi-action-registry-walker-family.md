@@ -19,7 +19,7 @@ applies_at_skills: []
 
 ## Summary
 
-When N actions (parse / save / render / stamp emit / drift check / etc.) must be applied across M registries (global cfg / per-core cfg / future per-symbol / per-strategy / per-horizon), declare ONE walker template per action that's parameterized over the registry shape, then instantiate each action × registry combination at use sites. Adding a new registry axis = N new instantiations (mechanical); adding a new action = 1 new walker template (one-time work, then reused across all M registries).
+When N actions (parse / save / render / stamp emit / drift check / etc.) must be applied across M registries (global cfg / per-node cfg / future per-symbol / per-strategy / per-horizon), declare ONE walker template per action that's parameterized over the registry shape, then instantiate each action × registry combination at use sites. Adding a new registry axis = N new instantiations (mechanical); adding a new action = 1 new walker template (one-time work, then reused across all M registries).
 
 Without this pattern: N × M = N walker bodies authored manually per (action, registry) pair. With this pattern: N + M (per-axis registry instantiation is mechanical row-add; per-action walker is mechanical template instantiation).
 
@@ -133,7 +133,7 @@ Adding `FOREACH_PER_SYMBOL_CFG_FIELD` in the future = 1 new registry declaration
 
 ## Composition with other patterns
 
-- **`per-instance-registry-pattern.md`** — this family operates over per-instance registries. Per-instance axes (per-core, per-symbol, per-strategy, per-horizon) each get their own action-table instantiations.
+- **`per-instance-registry-pattern.md`** — this family operates over per-instance registries. Per-instance axes (per-node, per-symbol, per-strategy, per-horizon) each get their own action-table instantiations.
 - **`universal-cfg-field-registry-pattern.md`** — the registry shape this family walks (`CfgFieldDescriptor` rows).
 - **`universal-registry-bitmap-dispatcher-pattern.md`** — each action consumes the bitmap-dispatch primitive for filtering rows by metadata bit.
 - **`type-trait-dispatch-via-tt-namespace.md`** — action body dispatches via `tt::cfg_<action>_field<T>` typed primitives.
@@ -141,15 +141,15 @@ Adding `FOREACH_PER_SYMBOL_CFG_FIELD` in the future = 1 new registry declaration
 
 ## First canonical application — v5.15.5.F.4c.3
 
-5 actions × 2 registries (global + per-core) = 10 walker instantiations consumed via single template:
+5 actions × 2 registries (global + per-node) = 10 walker instantiations consumed via single template:
 
-| Action | Global registry | Per-core registry |
+| Action | Global registry | Per-node registry |
 |---|---|---|
 | PARSE | Cfg parser (lines before `[core N]`) | Cfg parser (lines inside `[core N]` section) |
 | SAVE | Cfg save (global section at top) | Cfg save (`[core N]` section per core) |
-| RENDER | Settings panel Global tab | Settings panel per-core tabs |
-| STAMP | Global STAMP_BOUND rows (if any after split) | Per-core STAMP_BOUND rows (per-core stamps) |
-| DRIFT | Global drift check (if any) | Per-core drift check (per-core stamp vs per-core cfg) |
+| RENDER | Settings panel Global tab | Settings panel per-node tabs |
+| STAMP | Global STAMP_BOUND rows (if any after split) | Per-node STAMP_BOUND rows (per-node stamps) |
+| DRIFT | Global drift check (if any) | Per-node drift check (per-node stamp vs per-node cfg) |
 
 LOC savings: 5 walker bodies × 2 registries = 10 bodies → 5 templates × 1 declaration + 2 X-macro instantiations = 7 source items. Net LOC: ~150 saved at `.F.4c.3`; ~500 saved per future axis (per-symbol / per-strategy / etc.).
 

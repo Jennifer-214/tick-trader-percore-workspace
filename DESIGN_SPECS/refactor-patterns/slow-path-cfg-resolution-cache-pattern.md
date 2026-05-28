@@ -17,10 +17,10 @@ applies_at_skills: []
 - Parent: `latency-vs-cache-decision-framework.md` (CLAUDE.md item 28; cycles vs cache misses cost math)
 - Parent: `cache-layout-discipline-for-hot-side-structs.md` (alignas(64) + HOT/WARM/COLD tiering)
 - Parent: `universal-cfg-field-registry-pattern.md` (cfg fields driving cache come from this registry)
-- Parent: `per-bit-per-core-override-pattern.md` (per-core override resolution semantics)
+- Parent: `per-bit-per-core-override-pattern.md` (per-node override resolution semantics)
 - Composes with: `multi-bit-state-encoding-pattern.md` (K-state cfg enum cohort packing; CLAUDE.md item 30)
 - Composes with: `avx512-byte-determinism-pattern.md` (potential AVX-512 batch-load of resolved struct; CLAUDE.md item 25)
-- Composes with: `bitmap-flag-api.md` (cfg-flag bitmaps already resolved per-core; this extends to scalars)
+- Composes with: `bitmap-flag-api.md` (cfg-flag bitmaps already resolved per-node; this extends to scalars)
 - CLAUDE.md item 16 (reuse-audit); item 18 (slow-path latency reduction priority); item 19 (structural fix)
 
 ---
@@ -32,7 +32,7 @@ Per slow-path cycle (`EventLoop_RebuildOneCore`), every core's slow-path body re
 - Direct: `cfg.bandit_blend_ratio`, `cfg.ml_buy_threshold`, `cfg.confidence_freshness_tau_secs`, etc. (~30 fields)
 - FP conversions: `FPN_FromDouble(cfg.X)` per read (~10 fields)
 - Bitmap extracts: `BITMAP_IS_SET(cfg.ml_cfg_flags, MASK_BANDIT_ENABLED)` (~12 bits across 5 bitmaps)
-- Per-core override resolutions: `core_X_override_set[i] ? core_X[i] : cfg.X` (~8 fields)
+- Per-node override resolutions: `core_X_override_set[i] ? core_X[i] : cfg.X` (~8 fields)
 
 Each read does NOT hit the same cache line. The Cfg struct is ~600 LOC of fields declared in DECLARATION ORDER (alphabetical / historical), not access-frequency order. Slow-path body reads scattered across ~12-18 cache lines per cycle.
 
@@ -63,7 +63,7 @@ Resolve all needed cfg fields ONCE at slow-path entry into a cache-line-aligned 
 
 Savings: **~100-400 ns per cycle per core warm, ~1-2 μs cold.** At 100 × 16: **~160-640 μs/sec warm, ~1.6-3.2 ms/sec cold.**
 
-Plus secondary wins: resolution happens at known entry point → branch predictor warm; per-core override resolution amortized to ONE branch per field instead of per-read.
+Plus secondary wins: resolution happens at known entry point → branch predictor warm; per-node override resolution amortized to ONE branch per field instead of per-read.
 
 ---
 
@@ -150,7 +150,7 @@ inline void ResolveCoreCfg(const Cfg* cfg, int core_idx, ResolvedCoreCfg<F>* res
 Per `latency-vs-cache-decision-framework.md` (CLAUDE.md item 28):
 
 - `core_X_override_set[i]` is BOOT-SET, never changes mid-session.
-- Branch predictor learns the per-core, per-field bit values in the first ~5 cycles; mispredict rate <1% steady-state.
+- Branch predictor learns the per-node, per-field bit values in the first ~5 cycles; mispredict rate <1% steady-state.
 - Branchy: `cmov` is 1-2 cycles when predicted; mispredict cost ~3-5 ns (~15 cycles).
 - Branchless mask-select: ~2-3 cycles always (cmov or AND-select).
 
@@ -165,7 +165,7 @@ Six K-state cfg enums currently stored as separate ints/uint8_t:
 | Field | States | Bits needed |
 |---|---|---|
 | `bandit_algorithm` | 2 (Exp3-IX / Thompson) | 1 |
-| `engine_arch` | 2 (Centralized / Per-Core) | 1 |
+| `engine_arch` | 2 (Centralized / Per-Node) | 1 |
 | `risk_degradation_curve` | 4 (OFF / LINEAR / EXP / STEP) | 2 |
 | `barrier_blend_mode` | 5 (LEGACY / BLEND / DOMINANT / SHADOW_A / SHADOW_B) | 3 |
 | `regime_state_current` | 4 (RANGING / TRENDING / VOLATILE / MILD_TREND) | 2 |
@@ -201,9 +201,9 @@ bool regime_calm = MBS_IN_SET(resolved->k_state_word, K_REGIME_CURR_MASK, K_REGI
 
 Branchless mask AND + cmp = 1-2 cycles. vs `switch (regime) case ...` = 3-10 cycles branchy. Net win for regime-class predicates.
 
-### Per-core override storage layout — AoS-by-core (cache locality fix)
+### Per-node override storage layout — AoS-by-core (cache locality fix)
 
-Currently the per-core override storage is structured as Struct-of-Arrays:
+Currently the per-node override storage is structured as Struct-of-Arrays:
 
 ```cpp
 struct Cfg {
@@ -255,7 +255,7 @@ Compose with item 30 inference API for mask compute.
 | Inefficiency | Before | After |
 |---|---|---|
 | Scattered cfg reads | 12-18 cache lines/cycle/core | 3 cache lines/cycle/core |
-| Per-core override SoA scatter | 8+ cache lines/resolution | 3 cache lines/resolution |
+| Per-node override SoA scatter | 8+ cache lines/resolution | 3 cache lines/resolution |
 | K-state enum byte-per-field | 6 × int = 24B | 1 × uint16_t = 2B |
 | Per-read override branch | 60 branches/cycle | 60 branches at resolve only |
 | Repeated FP conversion | FPN_FromDouble called every read | Converted once at resolve |
@@ -270,7 +270,7 @@ Compose with item 30 inference API for mask compute.
 
 - **Slow-path entry adds ~60-cycle resolution overhead per core per cycle.** vs ~600-1800 cycles of scattered cfg reads saved. **Net win: 10-30x.**
 - **ResolvedCoreCfg adds ~192 bytes per core × 16 cores = 3072 bytes of duplicated state.** Compared to ~2 MB of L1 budget per core: <1% L1 footprint.
-- **Per-core AoS re-layout requires touching cfg struct field declarations + parser + save/load.** Mitigated: registry-driven (this pattern's parent) makes the change mechanical.
+- **Per-node AoS re-layout requires touching cfg struct field declarations + parser + save/load.** Mitigated: registry-driven (this pattern's parent) makes the change mechanical.
 
 ### When NOT to apply this pattern
 
@@ -289,7 +289,7 @@ When implementing the resolved cache:
 3. **Implement ResolveCoreCfg(cfg, core_idx, resolved)** via AUTOPOPULATE macro walk.
 4. **Modify EventLoop_RebuildOneCore** to call ResolveCoreCfg at entry; downstream code reads `resolved->X` instead of `cfg->X`.
 5. **K-state cohort migration** (separate sub-ship — uses item 30 inference API).
-6. **Per-core override AoS-by-core re-layout** (separate sub-ship — touches cfg struct).
+6. **Per-node override AoS-by-core re-layout** (separate sub-ship — touches cfg struct).
 7. **Benchmark slow-path latency** before + after with perf record / cycle counters.
 8. **Verify byte-identical determinism** in backtest: same cfg + same ticks → same outputs.
 
@@ -326,6 +326,6 @@ Implement in 2-3 sub-ships:
 
 - **.F.4e (Phase 1):** Resolved struct + ResolveCoreCfg + slow-path body migration (read `resolved->X` instead of `cfg->X` everywhere in RebuildOneCore). Verify backtest determinism + measure cycle delta.
 - **.F.4f (Phase 2 — K-state cohort):** Pack the 6 K-state enums via item 30; convert switch-on-enum predicates to branchless mask AND. Verify backtest determinism.
-- **.F.4g (Phase 3 — AoS-by-core re-layout):** Re-layout per-core override storage from SoA to AoS-by-core. Touches cfg struct + parser + save/load. Verify backtest determinism + measure cache-miss delta via perf stat.
+- **.F.4g (Phase 3 — AoS-by-core re-layout):** Re-layout per-node override storage from SoA to AoS-by-core. Touches cfg struct + parser + save/load. Verify backtest determinism + measure cache-miss delta via perf stat.
 
 Each phase is independently testable; rollback anchor at each tag.

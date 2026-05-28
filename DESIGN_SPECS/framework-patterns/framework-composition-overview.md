@@ -243,7 +243,7 @@ Each framework handles ONE concern; together they extinguish 5 bug classes (Clas
    - Parser walks the new row (no manual parser edit)
    - Save walks the new row (no manual save edit)
    - GUI renders the new row (no manual field_defs[] edit)
-   - Per-core override storage auto-emits if PER_CORE_OK bit set
+   - Per-node override storage auto-emits if PER_CORE_OK bit set
    - Tooltip locked in tooltip snapshot hash (must run test + update hash if intentional change)
 3. **Net cost: 1 row + intentional tooltip hash update if applicable.**
 

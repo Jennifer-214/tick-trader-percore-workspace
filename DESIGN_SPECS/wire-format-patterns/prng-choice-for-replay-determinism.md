@@ -28,7 +28,7 @@ Replay-determinism is a load-bearing invariant in this codebase: paper-trade aud
 
 Standard library PRNG facilities are NOT all equivalent for replay-determinism:
 
-- `std::mt19937` / `std::mt19937_64` — algorithm IS fully specified by the C++ standard. Output bytes are deterministic across compilers AND libstdc++ versions when given identical seed + identical operation sequence. **Safe for replay-determinism.** BUT the state is large (312 × 64-bit words ~ 2.5KB per generator); persisting this across save/load cycles becomes awkward when many generators exist (e.g., per-regime × per-core).
+- `std::mt19937` / `std::mt19937_64` — algorithm IS fully specified by the C++ standard. Output bytes are deterministic across compilers AND libstdc++ versions when given identical seed + identical operation sequence. **Safe for replay-determinism.** BUT the state is large (312 × 64-bit words ~ 2.5KB per generator); persisting this across save/load cycles becomes awkward when many generators exist (e.g., per-regime × per-node).
 
 - `std::normal_distribution` / `std::uniform_int_distribution` / `std::shuffle` — algorithm is NOT specified by the C++ standard; libstdc++ implementation determines the byte output. Same seed + same input range on libstdc++ versions A and B can produce DIFFERENT samples. **UNSAFE for cross-binary replay-determinism.**
 
@@ -44,7 +44,7 @@ This is a **PRNG choice with two simultaneous constraints**: (1) algorithm fully
 
 **Pros:** mt19937_64 is C++-standardized → bytes deterministic. Box-Muller of two consecutive uint64_t outputs is portable math.
 
-**Cons:** 312-word state (2.5KB) per generator × N generators in a per-regime per-core fan-out → 12-50KB JSON. Save cycle becomes slow + complex; restore validation becomes brittle.
+**Cons:** 312-word state (2.5KB) per generator × N generators in a per-regime per-node fan-out → 12-50KB JSON. Save cycle becomes slow + complex; restore validation becomes brittle.
 
 ### Option B: Own splitmix64 PRNG + own Box-Muller
 
@@ -114,7 +114,7 @@ inline int splitmix_load(Splitmix64& rng, const char* json_value) {
 
 ### Seed scrambling for per-generator independence
 
-When using multiple Splitmix64 instances (e.g., per-regime per-core), each needs a distinct seed. Naive `seed = base_seed + index` can produce correlated initial outputs (splitmix64's first sample is `state ^ (state >> 31)`).
+When using multiple Splitmix64 instances (e.g., per-regime per-node), each needs a distinct seed. Naive `seed = base_seed + index` can produce correlated initial outputs (splitmix64's first sample is `state ^ (state >> 31)`).
 
 **Recipe:** scramble the seed through splitmix64 ONCE before storing as initial state.
 

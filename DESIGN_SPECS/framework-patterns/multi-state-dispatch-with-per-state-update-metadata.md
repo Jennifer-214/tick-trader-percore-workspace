@@ -21,7 +21,7 @@ applies_at_skills: []
 
 When an algorithm enum has N states whose behaviors *differ asymmetrically* — e.g., some states update one piece of state, others update a different piece, others update both — encode the per-state behavior in the X-macro registry row's METADATA COLUMNS, not in dispatch-site mask constants. Dispatch sites read the metadata; the masks, function-pointer tables, and slow-path-gate predicates are all auto-computed via X-macro reduction. Adding a new state row = 1 row change that defines the new state's complete behavior in-place + auto-extends every dispatch site that consumes the metadata.
 
-This is a specialization of `x-macro-registry-with-presence-dispatch.md` for the case where each row needs ROW-LOCAL declarative metadata about its dispatch behavior, not just an apply-fn pointer. Composes with `branchless-dispatch-discipline.md` Pattern 1 (auto-derived fn-pointer table), `sink-fn-pointer-for-optional-side-effect-pattern.md` Pattern 5 (per-state optional side-effect emit), and `cfg-scope-discipline.md` (per-core direct registration via `FOREACH_PER_CORE_CFG_FIELD`).
+This is a specialization of `x-macro-registry-with-presence-dispatch.md` for the case where each row needs ROW-LOCAL declarative metadata about its dispatch behavior, not just an apply-fn pointer. Composes with `branchless-dispatch-discipline.md` Pattern 1 (auto-derived fn-pointer table), `sink-fn-pointer-for-optional-side-effect-pattern.md` Pattern 5 (per-state optional side-effect emit), and `cfg-scope-discipline.md` (per-node direct registration via `FOREACH_PER_CORE_CFG_FIELD`).
 
 ## When to apply
 
@@ -215,9 +215,9 @@ The composition: metadata-driven dispatch (this spec) handles the STATE-conditio
 
 When per-state side effects DO differ semantically (e.g., one state's reward attribution emits to calibration log + another state's emits to a different log), the metadata can include a side-effect column (`emit_to_calib`, `emit_to_telemetry`) and the dispatch table at the emit site indexes by state into a Pattern 5 fn-pointer array auto-derived from the metadata column. Future side-effect axes = 1 metadata column added; emit table auto-extends.
 
-## Composition with `cfg-scope-discipline.md` per-core registry (direct, NOT override-mechanism)
+## Composition with `cfg-scope-discipline.md` per-node registry (direct, NOT override-mechanism)
 
-Per-core multi-state-dispatch enums (e.g., `bandit_algorithm` where different cores can run different bandit shapes) live as direct rows in `FOREACH_PER_CORE_CFG_FIELD` per `cfg-scope-discipline.md` § "Per-core default" rule. Each core's `cfg.cores[c].bandit_algorithm` is THE value for that core; no global default; no resolver; no inherit-sentinel.
+Per-node multi-state-dispatch enums (e.g., `bandit_algorithm` where different cores can run different bandit shapes) live as direct rows in `FOREACH_PER_CORE_CFG_FIELD` per `cfg-scope-discipline.md` § "Per-node default" rule. Each core's `cfg.cores[c].bandit_algorithm` is THE value for that core; no global default; no resolver; no inherit-sentinel.
 
 ```cpp
 // Per-core cfg row — bandit_algorithm lives in FOREACH_PER_CORE_CFG_FIELD per cfg-scope-discipline default
@@ -230,7 +230,7 @@ X(int, KIND_INT, bandit_algorithm, "Bandit Algorithm", "ML/Bandit",
     STRAT_CAT_ML, OP_MODE_CAT_ALL, REGIME_CAT_ALL, RISK_CAT_ALL, CfgFieldDescriptor::STRUCT_CFG)
 ```
 
-Consumer functions read per-core via single-param `const PerCoreCfg<F>*` sig (Class 25 prevention):
+Consumer functions read per-node via single-param `const PerCoreCfg<F>*` sig (Class 25 prevention):
 
 ```cpp
 // Per-core consumer reads core_cfg->bandit_algorithm; type-system rejects scope erosion
@@ -250,11 +250,11 @@ void SomePerCoreFn(const PerCoreCfg<F>* core_cfg, ...) {
     X(bandit_algorithm, int, BANDIT_ALGO_EXP3)   // NO
 ```
 
-The override mechanism's sentinel-for-inherit shape is a relic of the pre-`.F.4c.3` "global default + per-instance override" anti-pattern. Direct per-core registration eliminates the sentinel entirely (each core's value is explicit; no inherit-from-where question).
+The override mechanism's sentinel-for-inherit shape is a relic of the pre-`.F.4c.3` "global default + per-instance override" anti-pattern. Direct per-node registration eliminates the sentinel entirely (each core's value is explicit; no inherit-from-where question).
 
 ## Composition with STAMP_BOUND parity binding
 
-When the enum value is parity-relevant (training-time vs serve-time), tag the cfg field STAMP_BOUND. The derived filter framework (`.F.4d` series) automatically wires drift detection for the field; this pattern handles the per-state runtime semantics. The stamp body emits the engine-wide training-time cfg value (not per-core) — model carries its training-time mode; runtime drift check compares against current resolved per-core value.
+When the enum value is parity-relevant (training-time vs serve-time), tag the cfg field STAMP_BOUND. The derived filter framework (`.F.4d` series) automatically wires drift detection for the field; this pattern handles the per-state runtime semantics. The stamp body emits the engine-wide training-time cfg value (not per-node) — model carries its training-time mode; runtime drift check compares against current resolved per-node value.
 
 ## Composition with X_GEN_LABEL extern reuse (CLAUDE.md Class 19 prevention)
 
@@ -301,7 +301,7 @@ This is what "framework discipline meta-principle" (CLAUDE.md item 31) means in 
 - Auto-derived predicates: `MASK_THOMPSON_ACTIVE` (any thompson_up=1) + `MASK_BANDIT_SHADOW_LEARNING` (any exp3_up=1 AND thompson_up=1) — both via mask-extract from auto-computed masks
 - Pattern 1 fn-pointer dispatch tables: `g_buy_reward_dispatch<F>[5]` + `g_exit_reward_dispatch<F>[5]` — entries computed from metadata at compile time
 - Pattern 5 sink-fn-pointer composition: `ezoo->thompson_update_fn` (subsystem-gated noop-or-real for Thompson init guard). For calib emit path at the bandit/thompson canonical: **EXTEND existing `oms->on_exit_calibration` sink rather than adding parallel `ezoo->on_trade_close_calib_emit`** (per Anti-pattern 4 in `sink-fn-pointer-for-optional-side-effect-pattern.md` + plan body § F at `.F.4d`). The "Composes with Pattern 5" section above teaches the GENERIC parallel-sink variant; canonical applications check for existing sister sink first + prefer extension when available. Per-state branching ABSENT from callsites either way.
-- Per-core registration: `bandit_algorithm` row in `FOREACH_PER_CORE_CFG_FIELD` (per `cfg-scope-discipline.md` default-per-core rule); NO override mechanism
+- Per-node registration: `bandit_algorithm` row in `FOREACH_PER_CORE_CFG_FIELD` (per `cfg-scope-discipline.md` default-per-node rule); NO override mechanism
 
 Closes: Class 18 (mirror) + Class 19 (enum naming) + Class 24 (capability-cfg surface mismatch) + Class 28 (branchy SP/HP dispatch) recurrence risk for the bandit dispatch family.
 
@@ -318,8 +318,8 @@ Adoption order: codify-on-first-application (this ship); audit cohort eligibilit
 
 - **Hardcoded mask constants** at dispatch sites (the Class 18 shape this pattern fixes)
 - **Switch statements** dispatching on state value (works for 2-3 states; doesn't scale; reverses to mirror-incomplete on state addition)
-- **Per-state mutable globals** carrying behavior config (race-prone; doesn't compose with per-core)
-- **Sentinel enum values for "default" / "inherit"** when 0 is a valid state value (use direct per-core registration via `FOREACH_PER_CORE_CFG_FIELD` — no inherit-sentinel needed when each instance has its own explicit value)
+- **Per-state mutable globals** carrying behavior config (race-prone; doesn't compose with per-node)
+- **Sentinel enum values for "default" / "inherit"** when 0 is a valid state value (use direct per-node registration via `FOREACH_PER_CORE_CFG_FIELD` — no inherit-sentinel needed when each instance has its own explicit value)
 - **Extending the TRANSITIONAL `PerCoreOverrides<F>` mechanism with new scalar-override X-macros** (`cfg-scope-discipline.md` Anti-pattern 1; mechanism deletes at WIP2f; future scalar overrides must go through `FOREACH_PER_CORE_CFG_FIELD` direct)
 - **Hardcoding state-value checks in predicates** (`if (algo == 2)` instead of `(AUTO_MASK >> algo) & 1` — derive from auto-computed masks)
 
@@ -336,7 +336,7 @@ Populated at Stage 3 ACTIVE — shipped sites get file:line refs back-linked her
 - `x-macro-registry-with-presence-dispatch.md` — parent pattern this specializes
 - `branchless-dispatch-discipline.md` — Pattern 1 (auto-derived fn-pointer table composition); Class 28 prevention
 - `sink-fn-pointer-for-optional-side-effect-pattern.md` — Pattern 5 (per-state side-effect emit composition)
-- `cfg-scope-discipline.md` — per-core direct registration (avoids the override-mechanism anti-pattern)
+- `cfg-scope-discipline.md` — per-node direct registration (avoids the override-mechanism anti-pattern)
 - `multi-bit-state-encoding-pattern.md` — sister pattern for K-state encoding in single records (different scope: single-record state encoding vs. dispatch metadata)
 - `categorical-tag-applicability-pattern.md` — sister pattern for cfg-field categorical applicability (uses similar per-row metadata column approach)
 - `pattern-codification-lifecycle.md` — workflow this followed (Stage 2 DRAFT ahead of first canonical application)
@@ -346,4 +346,4 @@ Populated at Stage 3 ACTIVE — shipped sites get file:line refs back-linked her
 
 ---
 
-**Stage 2 DRAFT v1.0 → Stage 3 ACTIVE v1.0 — promoted 2026-05-16 at v5.15.5.F.4d ship close.** First canonical: bandit 5-state ghost-training dispatch (`FOREACH_BANDIT_ALGORITHM` with metadata columns) + Pattern 1 fn-pointer dispatch table composition (buy + exit) + Pattern 5 sink-fn-pointer composition (thompson_update + calib emit) + auto-derived slow-path-gate predicates + per-core direct registration via `FOREACH_PER_CORE_CFG_FIELD`. Closes Class 18 + Class 19 + Class 24 + Class 28 structurally for the bandit dispatch family.
+**Stage 2 DRAFT v1.0 → Stage 3 ACTIVE v1.0 — promoted 2026-05-16 at v5.15.5.F.4d ship close.** First canonical: bandit 5-state ghost-training dispatch (`FOREACH_BANDIT_ALGORITHM` with metadata columns) + Pattern 1 fn-pointer dispatch table composition (buy + exit) + Pattern 5 sink-fn-pointer composition (thompson_update + calib emit) + auto-derived slow-path-gate predicates + per-node direct registration via `FOREACH_PER_CORE_CFG_FIELD`. Closes Class 18 + Class 19 + Class 24 + Class 28 structurally for the bandit dispatch family.

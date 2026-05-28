@@ -101,7 +101,7 @@ for (int c = 0; c < num_cores; c++) {
 }
 ```
 
-`EngineSharded_Run` slow-path body (~line 3036-3320 per-core-slow lambda) becomes:
+`EngineSharded_Run` slow-path body (~line 3036-3320 per-node-slow lambda) becomes:
 
 ```cpp
 tt::EngineCommon_SlowPathCycleOneCore(cfg, c, &state, &oms, price, ts_us, nullptr);

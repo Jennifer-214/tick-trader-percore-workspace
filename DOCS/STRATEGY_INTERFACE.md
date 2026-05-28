@@ -70,7 +70,7 @@ design — see "skipped stages" below).
 
 ### 2. `Strategy_Adapt`
 
-**Cadence:** every slow-path cycle (every ~256 ticks by default; per-core
+**Cadence:** every slow-path cycle (every ~256 ticks by default; per-node
 override via `core_N_poll_interval`).
 
 **Purpose:** update strategy state from market signals (RollingStats,
@@ -359,7 +359,7 @@ DONE. ~3 sites total: file + X-macro line + GUI color.
 2. Implement all five lifecycle stages (or document skips)
 3. Add dispatcher entry in `Strategies/StrategyParameters.hpp`
 4. Add `STRATEGY_<NAME>` enum value
-5. Add per-core wiring in `Strategy_InitPerCore` / `_FreePerCore`
+5. Add per-node wiring in `Strategy_InitPerCore` / `_FreePerCore`
 6. Add tests covering each stage (Group A in `DOCS/v5.4-test-inventory.md`)
 7. Verify all four architectures (legacy, centralized, per_core_slow, backtest)
    call all five stages — run `tools/calls_graph_diff.sh` to confirm no

@@ -57,7 +57,7 @@ Every cfg field with derived behavior has 4 orthogonal axes:
 ### Axis A — Master registry (where the row lives)
 
 Already canonical at HEAD (`.F.4c.3`+):
-- `FOREACH_PER_CORE_CFG_FIELD` — per-core cfg state (in `PerCoreCfg<F>`)
+- `FOREACH_PER_CORE_CFG_FIELD` — per-node cfg state (in `PerCoreCfg<F>`)
 - `FOREACH_GLOBAL_CFG_FIELD` — global cfg state (in `ControllerConfig<F>`)
 - `FOREACH_ML_CFG_FLAG` — bitmap-resident bool fields (in `cfg.ml_cfg_flags`)
 
@@ -69,7 +69,7 @@ Already canonical at HEAD (`.F.4c.3`+):
 - `FOREACH_METADATA_BIT` — single source of truth for per-bit derived filter mask auto-generation
 - Bits at HEAD: STAMP_BOUND + HIDDEN_BY_DEFAULT + IS_SECRET + IS_BOOT_ONLY + AFFECTS_STAMP_PARITY + LOG_VALUE_FORBIDDEN + HAS_SIDE_EFFECT + WARN_ON_CLAMP + RESTART_REQUIRED + SAFETY_CRITICAL + DEPRECATED + STAMP_BOUND_CFG_DERIVED (added `.A`)
 
-**Adding a new behavior axis** = 1 row in `FOREACH_METADATA_BIT` + auto-generated per-bit + per-core sister masks via `cfg_compute_mask` at `CfgFieldRegistry.hpp:1064-1075`.
+**Adding a new behavior axis** = 1 row in `FOREACH_METADATA_BIT` + auto-generated per-bit + per-node sister masks via `cfg_compute_mask` at `CfgFieldRegistry.hpp:1064-1075`.
 
 ### Axis C — Gate sidecar (when the behavior applies per row)
 
@@ -270,7 +270,7 @@ Recognition: ≥2 consumer template fns walking the same registry cohort with di
 
 #### Enrollment in FOREACH_REGISTRY
 
-Meta-walker is itself an X-macro registry entry (no rows of its own; dispatches to underlying data registries). Enroll at H15 + H19 as Level 1 meta-walker with parent FOREACH_REGISTRY (sister to FOREACH_PER_CORE_DOMAIN_BITMAP pattern; meta-walker over derived cohort rather than over per-core domain bitmap members).
+Meta-walker is itself an X-macro registry entry (no rows of its own; dispatches to underlying data registries). Enroll at H15 + H19 as Level 1 meta-walker with parent FOREACH_REGISTRY (sister to FOREACH_PER_CORE_DOMAIN_BITMAP pattern; meta-walker over derived cohort rather than over per-node domain bitmap members).
 
 ---
 

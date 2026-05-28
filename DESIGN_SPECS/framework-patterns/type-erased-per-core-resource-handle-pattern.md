@@ -9,7 +9,7 @@ sister_specs: [type-trait-dispatch-via-tt-namespace.md, per-instance-registry-pa
 applies_at_skills: []
 ---
 
-# Type-erased per-core resource handle pattern
+# Type-erased per-node resource handle pattern
 
 **Established:** 2026-05-16 (v5.15.5.F.4d.1 planning; codified at the moment of 3rd canonical application landing per `pattern-codification-lifecycle.md` Stage 2 DRAFT threshold met)
 **Status:** **Stage 2 DRAFT v1.0** (3 canonical applications observed at `.F.4d` ship close; framework codification at the freshest moment per CLAUDE.md item 31 + `feedback_overengineering_boundary_when_future_easier` — pick harder now when future cohort migrations become 1-row mechanical against this reference)
@@ -19,7 +19,7 @@ applies_at_skills: []
 - Sister pattern: `decision-time-data-binding-pattern.md` (Pattern 4 — per-instance data flows with in-flight Order/Position carrier; this pattern is sister for cross-layer-but-not-per-fill state references)
 - Composes with: `framework-composition-overview.md` (cfg infra at `.F.4d` — void* fields on layer-X state pointing to layer-Y typed objects are part of the composition substrate)
 - Composes with: `cache-layout-discipline-for-hot-side-structs.md` (void* fields fit COLD cluster placement; populated at boot; read at consumer site infrequently)
-- Composes with: `meta-registry-pattern-for-codebase-registry-discipline.md` (engine-wide singleton state + per-core void* arrays indexed by `Order::core_id` mirrors meta-registry's parent-child indexing scheme)
+- Composes with: `meta-registry-pattern-for-codebase-registry-discipline.md` (engine-wide singleton state + per-node void* arrays indexed by `Order::core_id` mirrors meta-registry's parent-child indexing scheme)
 - Anti-pattern this prevents: Class 21 latent at cross-layer surfaces (would manifest as parallel typed-pointer descriptors per consumer subsystem)
 - Closes: "ad-hoc cross-layer crossings" — pre-codification, each new cross-layer reference invented its own mechanism (typed pointer + forward decl, OR templated layer-X, OR polymorphic base); framework discipline codifies the void*+cast choice + variant decision
 - Serves: **H1** (no virtual dispatch — void*+cast doesn't introduce vtable), **H6** (void* fields fit cluster placement discipline), **H17** (layer-X cfg struct stays independent of layer-Y type instantiation)
@@ -126,9 +126,9 @@ auto* core_cfg = static_cast<const PerCoreCfg<F>*>(oms->core_cfg_refs[pslot]);
 
 Two sub-variants exist based on the parent struct's ownership topology:
 
-### Variant A — Single void* on per-core context
+### Variant A — Single void* on per-node context
 
-When the **parent struct is itself per-core** (one instance per execution core in the engine state's `state.cores[]` array), the resource handle is a single void* field on the per-core member:
+When the **parent struct is itself per-node** (one instance per execution core in the engine state's `state.cores[]` array), the resource handle is a single void* field on the per-node member:
 
 ```cpp
 // CoreFrameworks/ControllerEventLoop.hpp — CoreContext<F> at ControllerEventLoop.hpp:279
@@ -149,11 +149,11 @@ if (ctx.ensemble_handle) {
 }
 ```
 
-**Use when:** parent struct's ownership topology is per-core; consumer always has per-core context (ctx, slow-state, etc.) in scope.
+**Use when:** parent struct's ownership topology is per-node; consumer always has per-node context (ctx, slow-state, etc.) in scope.
 
-### Variant B — Per-core void* array on engine-wide singleton state
+### Variant B — Per-node void* array on engine-wide singleton state
 
-When the **parent struct is engine-wide singleton** (single instance shared by all cores; not per-core), the resource handle is a **per-core array indexed by core_id**:
+When the **parent struct is engine-wide singleton** (single instance shared by all cores; not per-node), the resource handle is a **per-node array indexed by core_id**:
 
 ```cpp
 // CoreFrameworks/OrderManager.hpp — OrderManagerState<F> at OrderManager.hpp:624-625
@@ -181,16 +181,16 @@ auto* core_cfg = static_cast<const PerCoreCfg<F>*>(oms->core_cfg_refs[o->core_id
 
 Verify parent struct's ownership topology BEFORE writing code. The decision question:
 
-> *"Is the parent struct instantiated per-core (one in `state.cores[i].my_state`) OR engine-wide singleton (one in `state.my_state`)?"*
+> *"Is the parent struct instantiated per-node (one in `state.cores[i].my_state`) OR engine-wide singleton (one in `state.my_state`)?"*
 
 Variant choice falls out:
 
 | Parent struct topology | Variant | Example |
 |---|---|---|
-| Per-core member of `state.cores[]` | **Variant A** (single void*) | `state.cores[i].ensemble_handle` |
-| Engine-wide singleton state | **Variant B** (per-core void* array indexed by core_id) | `state.oms.ezoo_refs[core_id]` |
+| Per-node member of `state.cores[]` | **Variant A** (single void*) | `state.cores[i].ensemble_handle` |
+| Engine-wide singleton state | **Variant B** (per-node void* array indexed by core_id) | `state.oms.ezoo_refs[core_id]` |
 
-**Anti-pattern (caught at `.F.4d` § F):** assuming the parent struct is per-core when it's actually engine-wide singleton. Sidecar examples doc draft proposed `state.cores[i].oms.ezoo_ref` (Variant A shape) without verifying that `state.cores[i].oms` actually exists. It doesn't — OmsState is engine-wide singleton at `state.oms` (EngineSharded line 662). Correct design: Variant B (per-core array on engine-wide state). See "Lessons / gotchas" below for the codified discipline.
+**Anti-pattern (caught at `.F.4d` § F):** assuming the parent struct is per-node when it's actually engine-wide singleton. Sidecar examples doc draft proposed `state.cores[i].oms.ezoo_ref` (Variant A shape) without verifying that `state.cores[i].oms` actually exists. It doesn't — OmsState is engine-wide singleton at `state.oms` (EngineSharded line 662). Correct design: Variant B (per-node array on engine-wide state). See "Lessons / gotchas" below for the codified discipline.
 
 ---
 
@@ -209,9 +209,9 @@ Variant choice falls out:
 - Consumer site doesn't have the high-layer types in scope — fix the include path or refactor consumer; void* without a known cast target is just hiding a missing dependency
 
 ### Cost:
-- 1 field per resource per parent struct (8 bytes single void*, or 16×8=128 bytes per-core void* array)
+- 1 field per resource per parent struct (8 bytes single void*, or 16×8=128 bytes per-node void* array)
 - 1 cast at each consumer site (zero runtime cost — register reinterpret)
-- 1 wire site at boot (per-core loop assignment)
+- 1 wire site at boot (per-node loop assignment)
 - Type-safety obligation at consumer (cast must match boot-wire type; mismatch = silent UB)
 
 ### Win:
@@ -229,39 +229,39 @@ Variant choice falls out:
 ### Application 1 (PRE-EXISTING; canonical Variant A reference) — `void* ensemble_handle`
 
 - **File:** `CoreFrameworks/ControllerEventLoop.hpp:279`
-- **Declaration:** `void* ensemble_handle;` field on `CoreContext<F>` (per-core context)
+- **Declaration:** `void* ensemble_handle;` field on `CoreContext<F>` (per-node context)
 - **Established:** v5.10.0a.G.5 (multi-horizon ensemble path)
-- **Boot wire:** `CoreFrameworks/EngineSharded.hpp:1061` (`state.cores[i].ensemble_handle = ezoo_ptr;` inside per-core init loop)
+- **Boot wire:** `CoreFrameworks/EngineSharded.hpp:1061` (`state.cores[i].ensemble_handle = ezoo_ptr;` inside per-node init loop)
 - **Consumer cast sites:** `ControllerEventLoop.hpp:1688-1689 + 1730-1731 + 2640` (slow-path body); `HotSwap.hpp:94 + 174` (hot-swap path); `ShardedSnapshot.hpp:681 + 713` (snapshot path)
-- **Resource pointed-to:** `EnsembleModelZoo<F>*` (per-core ML ensemble state)
+- **Resource pointed-to:** `EnsembleModelZoo<F>*` (per-node ML ensemble state)
 - **Nullable semantics:** `nullptr` = single-zoo path (no ensemble); guards at consumer sites check before cast
 
 ### Application 2 (NEW at `.F.4d` § F; canonical Variant B reference) — `void* ezoo_refs[MAX_EXECUTION_CORES]`
 
 - **File:** `CoreFrameworks/OrderManager.hpp:624`
-- **Declaration:** `void* ezoo_refs[MAX_EXECUTION_CORES] = {nullptr};` per-core array on `OrderManagerState<F>` (engine-wide singleton)
+- **Declaration:** `void* ezoo_refs[MAX_EXECUTION_CORES] = {nullptr};` per-node array on `OrderManagerState<F>` (engine-wide singleton)
 - **Established:** v5.15.5.F.4d Step 7 § F (Pattern 5 path consolidation for calib log emit)
-- **Boot wire:** `CoreFrameworks/EngineSharded.hpp:1067` (`oms.ezoo_refs[i] = (void*)ezoo_ptr;` inside per-core init loop, alongside Application 1's per-core member wire)
+- **Boot wire:** `CoreFrameworks/EngineSharded.hpp:1067` (`oms.ezoo_refs[i] = (void*)ezoo_ptr;` inside per-node init loop, alongside Application 1's per-node member wire)
 - **Consumer cast site:** `OrderManager.hpp:707` (`real_on_exit_calibration` body; cast indexed by `o->core_id` aliased as `pslot`)
-- **Resource pointed-to:** `EnsembleModelZoo<F>*` (per-core; same resource pool as Application 1)
-- **Why TWO references to the same resource pool:** Application 1 lives on per-core CoreContext for slow-path access; Application 2 lives on engine-wide OmsState for drainer-side calib log emit. Both wire to same `ezoo_ptr` at same boot moment.
+- **Resource pointed-to:** `EnsembleModelZoo<F>*` (per-node; same resource pool as Application 1)
+- **Why TWO references to the same resource pool:** Application 1 lives on per-node CoreContext for slow-path access; Application 2 lives on engine-wide OmsState for drainer-side calib log emit. Both wire to same `ezoo_ptr` at same boot moment.
 
 ### Application 3 (NEW at `.F.4d` § F; canonical Variant B sister) — `const void* core_cfg_refs[MAX_EXECUTION_CORES]`
 
 - **File:** `CoreFrameworks/OrderManager.hpp:625`
-- **Declaration:** `const void* core_cfg_refs[MAX_EXECUTION_CORES] = {nullptr};` per-core array on `OrderManagerState<F>` (engine-wide singleton)
+- **Declaration:** `const void* core_cfg_refs[MAX_EXECUTION_CORES] = {nullptr};` per-node array on `OrderManagerState<F>` (engine-wide singleton)
 - **Established:** v5.15.5.F.4d Step 7 § F (Pattern 5 path consolidation, sister to ezoo_refs)
 - **Boot wire:** `CoreFrameworks/EngineSharded.hpp:1068` (`oms.core_cfg_refs[i] = (const void*)&cfg.cores[i];`)
 - **Consumer cast site:** `OrderManager.hpp:708` (`real_on_exit_calibration` body; cast to `const PerCoreCfg<F>*`)
-- **Resource pointed-to:** `const PerCoreCfg<F>*` (per-core cfg slice owned by `ControllerConfig<F>`)
+- **Resource pointed-to:** `const PerCoreCfg<F>*` (per-node cfg slice owned by `ControllerConfig<F>`)
 - **Const-correctness:** `const void*` declaration preserves the constness contract — consumer cannot mutate cfg through this pointer; matches `&cfg.cores[i]`'s const semantics.
 
 ### Future application catalog
 
 Likely future cohort members:
-- **Per-core regime classifier reference** on engine-wide state (when regime detector becomes per-core-with-engine-wide-aggregation)
-- **Per-core strategy reference** on engine-wide state (when strategy selection moves to engine-wide dispatch table)
-- **Per-core scaler reference** on engine-wide state (when feature scalers go per-core for cross-symbol experiments)
+- **Per-node regime classifier reference** on engine-wide state (when regime detector becomes per-node-with-engine-wide-aggregation)
+- **Per-node strategy reference** on engine-wide state (when strategy selection moves to engine-wide dispatch table)
+- **Per-node scaler reference** on engine-wide state (when feature scalers go per-node for cross-symbol experiments)
 
 Each would be **1 void* field + 1 boot-wire site + 1 cast site per consumer** — mechanical against this reference doc.
 
@@ -271,9 +271,9 @@ Each would be **1 void* field + 1 boot-wire site + 1 cast site per consumer** �
 
 ### § F architectural-correction lesson (codified at `.F.4d` ship close 2026-05-16)
 
-**Always verify parent struct's ownership topology BEFORE writing sidecar examples.** Original `.F.4d` sidecar F.1 examples doc proposed `state.cores[i].oms.ezoo_ref` (Variant A shape; single void* on per-core member). Coding revealed `state.cores[i].oms` doesn't exist — OmsState is engine-wide singleton at `state.oms` (EngineSharded line 662). Correction: Variant B (per-core arrays `ezoo_refs[MAX_EXECUTION_CORES]` + `core_cfg_refs[MAX_EXECUTION_CORES]` on shared OmsState; indexed by `Order::core_id` at consumer site).
+**Always verify parent struct's ownership topology BEFORE writing sidecar examples.** Original `.F.4d` sidecar F.1 examples doc proposed `state.cores[i].oms.ezoo_ref` (Variant A shape; single void* on per-node member). Coding revealed `state.cores[i].oms` doesn't exist — OmsState is engine-wide singleton at `state.oms` (EngineSharded line 662). Correction: Variant B (per-node arrays `ezoo_refs[MAX_EXECUTION_CORES]` + `core_cfg_refs[MAX_EXECUTION_CORES]` on shared OmsState; indexed by `Order::core_id` at consumer site).
 
-**Lesson generalizes to all sidecar examples that name a struct path** — `grep` target struct ownership before writing code samples that assume per-core-vs-engine-wide topology. Sister to `feedback_compaction_degrades_treat_handoffs_as_hints`: verify against actual code at HEAD before acting on claims.
+**Lesson generalizes to all sidecar examples that name a struct path** — `grep` target struct ownership before writing code samples that assume per-node-vs-engine-wide topology. Sister to `feedback_compaction_degrades_treat_handoffs_as_hints`: verify against actual code at HEAD before acting on claims.
 
 This lesson lands in CLAUDE.local.md going-forward rule "Sub-plan sidecar files for substantial sections" — sidecars should be checked against actual struct ownership at planning time, not discovered to be wrong at coding time.
 
@@ -281,7 +281,7 @@ This lesson lands in CLAUDE.local.md going-forward rule "Sub-plan sidecar files 
 
 void* fields are 8-byte aligned (16-byte slack with `alignas(64)` on parent struct). They fit naturally into **cold clusters** (boot-wired; read infrequently). Don't place void* arrays in HOT or PRODUCER WRITE clusters — they'd waste cache lines on data that's read once per consumer call.
 
-For Variant B (per-core array): the entire 128-byte array (16 cores × 8 bytes) is typically read sequentially when a consumer iterates cores; cache-line packing is incidental (~2 cache lines per array) but acceptable since consumers don't iterate this array per fill.
+For Variant B (per-node array): the entire 128-byte array (16 cores × 8 bytes) is typically read sequentially when a consumer iterates cores; cache-line packing is incidental (~2 cache lines per array) but acceptable since consumers don't iterate this array per fill.
 
 ### Type-safety obligation
 
@@ -295,15 +295,15 @@ void* + cast is a contract — the cast MUST match the boot-wire type. Mismatch 
 ### Nullable vs non-nullable per variant
 
 - **Variant A (single void*):** nullptr-checking at consumer is mandatory; `nullptr` = "feature not active for this core" (e.g., single-zoo cores have `ensemble_handle = nullptr`)
-- **Variant B (per-core array):** array slots default-init to nullptr; some slots may stay nullptr legitimately (cores without the feature); consumer checks per-slot before cast
+- **Variant B (per-node array):** array slots default-init to nullptr; some slots may stay nullptr legitimately (cores without the feature); consumer checks per-slot before cast
 
-### Per-core array size = MAX_EXECUTION_CORES (16)
+### Per-node array size = MAX_EXECUTION_CORES (16)
 
-`MAX_EXECUTION_CORES = 16` at `Limits.hpp:19`. The per-core array size is fixed at this cap; runtime active core count `<= 16` indexes into the array safely. Boot wire loop iterates `for (i = 0; i < cfg.execution_core_count; i++)` so cores past the active count stay nullptr-initialized.
+`MAX_EXECUTION_CORES = 16` at `Limits.hpp:19`. The per-node array size is fixed at this cap; runtime active core count `<= 16` indexes into the array safely. Boot wire loop iterates `for (i = 0; i < cfg.execution_core_count; i++)` so cores past the active count stay nullptr-initialized.
 
 ### Composition with decision-time-data-binding for per-fill access
 
-The pattern is for cross-layer state references (boot-wired; cast occasionally). For per-fill / per-tick access, use `decision-time-data-binding-pattern.md` Pattern 4 (pre-resolve onto in-flight Order/Position/Event carrier). Don't cast through a void* at hot-path budget — even 1 cycle for register reinterpret + 1 cache touch for the per-core array index is dispatch-cost in a tight loop.
+The pattern is for cross-layer state references (boot-wired; cast occasionally). For per-fill / per-tick access, use `decision-time-data-binding-pattern.md` Pattern 4 (pre-resolve onto in-flight Order/Position/Event carrier). Don't cast through a void* at hot-path budget — even 1 cycle for register reinterpret + 1 cache touch for the per-node array index is dispatch-cost in a tight loop.
 
 Sister case: at `.F.4d` Pattern 5 sink-fn dispatch, the consumer calls `real_on_exit_calibration` from the slow-side drainer (not hot path) — void* + cast fits the latency budget there.
 
@@ -330,7 +330,7 @@ Considered. Adds a wrapper layer with no extra type safety (the void* member is 
 - `decision-time-data-binding-pattern.md` — Pattern 4 (per-instance data flows with in-flight carrier; sister for per-fill access)
 - `framework-composition-overview.md` — `.F.4d` cfg infra composition; this pattern is part of the substrate enabling layer-X-state to reference layer-Y typed objects without inflating layer-X
 - `cache-layout-discipline-for-hot-side-structs.md` — void* fields fit cold cluster placement
-- `meta-registry-pattern-for-codebase-registry-discipline.md` — per-core void* arrays indexed by `Order::core_id` mirror meta-registry's parent-child indexing scheme
+- `meta-registry-pattern-for-codebase-registry-discipline.md` — per-node void* arrays indexed by `Order::core_id` mirror meta-registry's parent-child indexing scheme
 - `pattern-codification-lifecycle.md` — Stage 2 DRAFT this pattern is currently at
 - `DOCS/RECURRING_BUG_PATTERNS.md` — no codified class yet; if cross-layer crossings drift without this pattern's discipline, candidate Class 31 (cross-layer reference fragmentation)
 - CLAUDE.md item 31 (Framework-driven extensibility — meta-principle)

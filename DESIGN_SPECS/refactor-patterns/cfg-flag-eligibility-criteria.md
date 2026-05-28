@@ -57,9 +57,9 @@ The flag's value is determined by `engine.cfg` (operator config) at boot OR at c
 
 ### Criterion 2 — Engine-wide scope (NOT hot-path-per-tick runtime state)
 
-The flag describes a property of the ENGINE configuration, not per-tick / per-position runtime state. Per-core overrides are OK (those resolve to engine-wide-config-overridden-per-core, still cfg-driven).
+The flag describes a property of the ENGINE configuration, not per-tick / per-position runtime state. Per-node overrides are OK (those resolve to engine-wide-config-overridden-per-node, still cfg-driven).
 
-**Pass:** `confidence_enabled` (engine-wide cfg; per-core override supported).
+**Pass:** `confidence_enabled` (engine-wide cfg; per-node override supported).
 **Fail:** `Position.is_buyer_maker` (per-position runtime flag from fill event — use per-record bool or atomic flag).
 **Fail:** `OrderManager.has_pending_order` (per-OrderManager runtime state — use struct field).
 
@@ -115,7 +115,7 @@ If any fail → DOCUMENT in TECH_DEBT (eligibility rejection w/ rationale).
 ### `partial_exit_enabled` → MIGRATE to FOREACH_LIFECYCLE_CFG_FLAG
 
 1. Runtime-mutable: yes (operator sets in engine.cfg). ✓
-2. Engine-wide: yes (per-core override exists; resolves to cfg-driven). ✓
+2. Engine-wide: yes (per-node override exists; resolves to cfg-driven). ✓
 3. Hot-path cost: read on slow-path at dispatcher arm; ~1ns acceptable. ✓
 4. No compile-time elision benefit: operator must be able to toggle at runtime; can't elide. ✓
 5. Domain: LIFECYCLE (position exit mechanics). ✓
@@ -218,13 +218,13 @@ For RISK-domain flags, default is typically `ON` (safety-first). For OPS, defaul
 
 When migrating, preserve the existing default. The default isn't part of eligibility; it's part of migration mechanics.
 
-### Per-core override capability is criterion 2 ambiguity
+### Per-node override capability is criterion 2 ambiguity
 
-If a flag has per-core override (`core_0_kill_switch_enabled`), it still passes criterion 2 (engine-wide-with-per-core-override is still engine-config-driven, not per-tick runtime state). Per-bit per-core override is supported via `PER_CORE_OVERRIDE_BITMAP_DOMAINS` (see `per-bit-per-core-override-pattern.md`).
+If a flag has per-node override (`core_0_kill_switch_enabled`), it still passes criterion 2 (engine-wide-with-per-node-override is still engine-config-driven, not per-tick runtime state). Per-bit per-node override is supported via `PER_CORE_OVERRIDE_BITMAP_DOMAINS` (see `per-bit-per-core-override-pattern.md`).
 
 The distinguishing line:
-- Per-core OVERRIDE (cfg-driven; resolved at boot or cfg-reload) → still cfg-flag-eligible
-- Per-core / per-position RUNTIME STATE (changes per tick or per fill) → NOT cfg-flag-eligible (use struct field or atomic)
+- Per-node OVERRIDE (cfg-driven; resolved at boot or cfg-reload) → still cfg-flag-eligible
+- Per-node / per-position RUNTIME STATE (changes per tick or per fill) → NOT cfg-flag-eligible (use struct field or atomic)
 
 ### "Hot-path tolerant" is fuzzy — verify per use site
 
@@ -350,7 +350,7 @@ Tempting to have the auditor migrate flagged booleans automatically. But ~10-20%
 - `heterogeneous-registry-pattern.md` — DOMAIN SPLIT (which domain the migrated flag goes into)
 - `bitmap-flag-api.md` — BITMAP_IS_SET / BITMAP_SET (the runtime API used by migrated flags)
 - `audit-driven-pre-coding-gate.md` — where eligibility audits happen
-- `per-bit-per-core-override-pattern.md` — per-core override for migrated flags
+- `per-bit-per-core-override-pattern.md` — per-node override for migrated flags
 - FoxML_Trader_v2 `DOCS/TECH_DEBT.md` TECH_DEBT-023 — `lat_enabled` cautionary tale
 - FoxML_Trader_v2 `CLAUDE.md` item 18 — slow-path latency reduction (compile-time elision pattern)
 - FoxML_Trader_v2 `DOCS/CLAUDE_INVARIANTS.md` — hot/slow path discipline

@@ -132,7 +132,7 @@ FOREACH_METADATA_BIT(X_GEN_GLOBAL_MASK)
 #define CFG_FIELD_FOR_EACH_SET_BIT(mask, idx_var, body) ...
 ```
 
-Adding a new derived filter under Option E = **1 row in FOREACH_METADATA_BIT** + small consumer using CFG_FIELD_FOR_EACH_SET_BIT. Auto-generated masks live in `.rodata`. Live consumer at `GUI/SettingsPanel.hpp:1100,1136` (both global + per-core walkers in production GUI Settings panel).
+Adding a new derived filter under Option E = **1 row in FOREACH_METADATA_BIT** + small consumer using CFG_FIELD_FOR_EACH_SET_BIT. Auto-generated masks live in `.rodata`. Live consumer at `GUI/SettingsPanel.hpp:1100,1136` (both global + per-node walkers in production GUI Settings panel).
 
 The comment at `CfgFieldRegistry.hpp:1020-1022` literally states the framework discipline:
 > "Per CLAUDE.md framework discipline (item 31): adding a new metadata bit = 1 row in FOREACH_METADATA_BIT below; mask arrays auto-generate for BOTH registries via X-macro instantiation pass."

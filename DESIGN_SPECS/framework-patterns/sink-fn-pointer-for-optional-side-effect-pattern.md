@@ -175,7 +175,7 @@ The noop fn is the "stub" semantic — always-call + default no-op. Composes wit
 
 ### With per-instance-registry-pattern.md
 
-For multi-instance subsystems (per-core log, per-symbol log), fn-pointer becomes per-instance:
+For multi-instance subsystems (per-node log, per-symbol log), fn-pointer becomes per-instance:
 ```cpp
 struct PerCoreState {
     void (*on_fill_log)(...) = &noop_per_core_log<F>;  // per-core enable

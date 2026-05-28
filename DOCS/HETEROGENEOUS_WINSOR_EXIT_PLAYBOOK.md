@@ -134,7 +134,7 @@ verify_model_stamp compares stamp value vs runtime cfg:
 **Same applies to winsor cfg** (`winsor_pct_low/high`) from v5.14.1.D.
 
 If you train with `exit_blender_mode=0` and deploy with `=1` (or
-vice versa), drift fires. Per-core override (`core_N_winsor_pct_*`)
+vice versa), drift fires. Per-node override (`core_N_winsor_pct_*`)
 lets each core have its own training-time cfg snapshot for
 heterogeneous setups.
 

@@ -93,7 +93,7 @@ Each category gets: **Definition** / **Detection mechanism** / **Loud vs silent*
 
 ### B2 — Field-name collision across heterogeneous registries unifying into shared struct
 
-**Definition:** Unconditional struct-gen walks ≥2 registries with row-name (or row-legacy_field) extracted as struct field name. If any name appears in BOTH registries (per-core + global, or per-core + ml_cfg_flag, etc.), struct gets duplicate field declaration → compile error.
+**Definition:** Unconditional struct-gen walks ≥2 registries with row-name (or row-legacy_field) extracted as struct field name. If any name appears in BOTH registries (per-node + global, or per-node + ml_cfg_flag, etc.), struct gets duplicate field declaration → compile error.
 
 **Detection mechanism:**
 - Extract field-name set from each registry
@@ -103,7 +103,7 @@ Each category gets: **Definition** / **Detection mechanism** / **Loud vs silent*
 
 **Loud vs silent:** LOUD (compile failure). LOW-MED risk because most cfg fields have unique names by convention, but unification of 4+ registries makes collision more likely (>140 names to deconflict).
 
-**Worked example:** `.B.3` Step 1.6.3 4-walker unification across FOREACH_PER_CORE_CFG_FIELD (79 rows) + FOREACH_GLOBAL_CFG_FIELD (47 rows) + FOREACH_ML_CFG_FLAG (12 rows; legacy_field column) + FOREACH_GATE_CFG_FLAG (6 rows; legacy_field column) = 144 names. E.g., is `bandit_enabled` (ml_cfg_flag) unique vs per-core `bandit_blend_ratio`? Names ARE distinct, but uniqueness must be verified mechanically.
+**Worked example:** `.B.3` Step 1.6.3 4-walker unification across FOREACH_PER_CORE_CFG_FIELD (79 rows) + FOREACH_GLOBAL_CFG_FIELD (47 rows) + FOREACH_ML_CFG_FLAG (12 rows; legacy_field column) + FOREACH_GATE_CFG_FLAG (6 rows; legacy_field column) = 144 names. E.g., is `bandit_enabled` (ml_cfg_flag) unique vs per-node `bandit_blend_ratio`? Names ARE distinct, but uniqueness must be verified mechanically.
 
 **Detection guard:** `tools/check_field_name_uniqueness.py` CI tool (NEW at `.B.3` ship close). Runs in test target.
 
@@ -166,7 +166,7 @@ Each category gets: **Definition** / **Detection mechanism** / **Loud vs silent*
 **Definition:** Master registry adds a NEW STORAGE_T variant (e.g., `char[N]` for KIND_STRING). Consumer template `tt::cfg_*_field<T>` doesn't have a branch for the new variant → compile failure when X-macro walker hits the row.
 
 **Detection mechanism:**
-- Enumerate all STORAGE_T variants present in master registries (per-core + global)
+- Enumerate all STORAGE_T variants present in master registries (per-node + global)
 - For each variant, verify `tt::cfg_parse_field<T>` + `tt::cfg_emit_field<T>` + `tt::cfg_drift_compare<T>` + `tt::cfg_set_field<T>` have a covering branch
 - Emit: missing branch = coverage gap
 
@@ -300,7 +300,7 @@ Each category gets: **Definition** / **Detection mechanism** / **Loud vs silent*
 
 **Loud vs silent:** SILENT if both walkers happen to produce identical order; LOUD (invariants fire) if order differs and Step 1.7 invariants invocation lands. Late-detection cost = revert + reorder.
 
-**Worked example:** `.B.3` Step 1.6.4 — legacy FOREACH_STAMP_BOUND_CFG walker emits 27 keys in body order; master per-core registry emits same 27 keys in master declaration order. If orders differ, v2 wire format keys are reordered vs v1 → I1-I5 invariants fire OR HMAC verification fails for v2 stamps emitted with new walker compared to expected v1-derived stamps.
+**Worked example:** `.B.3` Step 1.6.4 — legacy FOREACH_STAMP_BOUND_CFG walker emits 27 keys in body order; master per-node registry emits same 27 keys in master declaration order. If orders differ, v2 wire format keys are reordered vs v1 → I1-I5 invariants fire OR HMAC verification fails for v2 stamps emitted with new walker compared to expected v1-derived stamps.
 
 **Detection guard:** `/parity-check` skill amendment — row-order parity check before Step 1.7 invariants invocation (NEW at `.B.3` ship close).
 
@@ -337,7 +337,7 @@ Each category gets: **Definition** / **Detection mechanism** / **Loud vs silent*
 
 **Loud vs silent:** SILENT — latent assumption broken silently post-deletion; not caught by compile. HIGH detection cost (debugging time hours-to-days depending on production observability).
 
-**Worked example:** `.B.4` v1.7.5 WIP-14 — `engine_arch=per_core_slow` boot-spawn gate at `EngineSharded.hpp:2484`. PRE-DELETION: `if (cfg.engine_arch == ENGINE_ARCH_PER_CORE_SLOW) { ...spawn-per-core-threads... }`. POST-DELETION unconditionalized. B15 verification enumerates latent assumptions: `slow_threads[]` allocated (yes; sized for MAX_EXECUTION_CORES) / `args[]` initialized (yes; per-core context in caller) / `slow_path_thread_fn` exists + handles per-core dispatch (yes) / `pthread_create` succeeds (load-bearing per H1; caller-side error handling). VERDICT: UNCONDITIONALIZATION SAFE — all assumptions hold unconditionally post-deletion since `engine_arch=centralized` cohort being deleted entirely.
+**Worked example:** `.B.4` v1.7.5 WIP-14 — `engine_arch=per_core_slow` boot-spawn gate at `EngineSharded.hpp:2484`. PRE-DELETION: `if (cfg.engine_arch == ENGINE_ARCH_PER_CORE_SLOW) { ...spawn-per-node-threads... }`. POST-DELETION unconditionalized. B15 verification enumerates latent assumptions: `slow_threads[]` allocated (yes; sized for MAX_EXECUTION_CORES) / `args[]` initialized (yes; per-node context in caller) / `slow_path_thread_fn` exists + handles per-node dispatch (yes) / `pthread_create` succeeds (load-bearing per H1; caller-side error handling). VERDICT: UNCONDITIONALIZATION SAFE — all assumptions hold unconditionally post-deletion since `engine_arch=centralized` cohort being deleted entirely.
 
 **Detection guard:** `/blindspot-scan B15` audit at pre-coding gate when plan body proposes UNCONDITIONALIZE-body kind sites. Sister to B-Plus v0.4 generator mode (mechanical classification flags UNCONDITIONALIZE-body kind) + `/readiness` Check 36 sidecar (audit-time enforcement). Sister memory `feedback_unconditionalization_latent_assumption_audit.md` (Stage 3 codification at WIP-12; Stage 3 first-canonical promotion DEFERRED to 2nd canonical per 2-instance threshold).
 

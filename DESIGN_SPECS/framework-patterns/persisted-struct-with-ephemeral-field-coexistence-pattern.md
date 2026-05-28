@@ -194,7 +194,7 @@ For an existing persisted struct (e.g., Position pre-v5.15.5.C.4):
 
 - **ShardedSnapshotPersist** (OMS state) — already uses FOREACH_OMS_FIELD with PERSIST_KIND column (v5.15.5.C.3 Phase 3b); this spec retroactively documents that as the first application of the pattern; v5.15.5.C.4 Position migration is the SECOND application
 - **FillRecord** — being eliminated entirely in v5.15.5.C.4 Phase K (no need for the pattern post-elimination)
-- **CoreContext** — could adopt for future per-core ephemeral state additions (currently mixed persistence states)
+- **CoreContext** — could adopt for future per-node ephemeral state additions (currently mixed persistence states)
 - **ParameterSlot** — seqlock-cached params; could adopt if ephemeral fields ever need to coexist
 - **OrderManagerState top-level** — beyond the OMS_FIELD registry, top-level state could adopt if more ephemeral coexistence questions arise
 

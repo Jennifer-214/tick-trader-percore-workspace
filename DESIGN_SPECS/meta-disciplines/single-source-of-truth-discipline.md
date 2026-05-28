@@ -84,7 +84,7 @@ If a "kept separate" decision is made without documentation, future maintainers 
 
 ## Worked example — `drain_manual_closes` LIVE + NO-OP merge (Decision H @ v5.15.5.F.4d.1.B.6 Phase B)
 
-**Surface:** Per-core drainer lambda `drain_manual_closes` extracted from monolithic `EngineSharded.hpp` into `CoreFrameworks/EngineSharded/Async.hpp` as part of subfolder split (Phase B).
+**Surface:** Per-node drainer lambda `drain_manual_closes` extracted from monolithic `EngineSharded.hpp` into `CoreFrameworks/EngineSharded/Async.hpp` as part of subfolder split (Phase B).
 
 **Pre-Decision-H proposal (REJECTED):** Hoist as TWO separate functions:
 ```cpp

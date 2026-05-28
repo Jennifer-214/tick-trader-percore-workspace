@@ -19,7 +19,7 @@ applies_at_skills: []
 - Sister: `autopopulate-pattern-for-production-caller-class.md` (the AUTOPOPULATE companions emit consumer code from registry)
 - Sister: `x-macro-registry-with-presence-dispatch.md` (Y3 dispatch mechanism)
 - Composes with: `slow-path-cfg-resolution-cache-pattern.md` (this registry feeds the resolution cache)
-- Composes with: `per-bit-per-core-override-pattern.md` (per-core override emission via PER_CORE_OK metadata flag)
+- Composes with: `per-bit-per-core-override-pattern.md` (per-node override emission via PER_CORE_OK metadata flag)
 - Composes with: `bitmap-flag-api.md` (metadata_flags is a bitmap)
 - CLAUDE.md item 13 (X-macro registry); item 16 (reuse-audit); item 19 (structural fix preferred); item 20 (BITMAP_*); item 21 (AUTOPOPULATE companion); item 22 (PRE/POST split); item 23 (tt:: type-trait dispatch)
 
@@ -37,10 +37,10 @@ This is the **Class-18 mirror pattern at function-composition level**: same cfg 
 | Cfg parser (`Config_Parse` or `CfgParser_HandleKV`) | Parse from text cfg file | parser_gap |
 | `SettingsPanel.hpp` field_defs[] | Render in GUI | panel_gap |
 | Cfg save/load (`Config_Save`, `Config_Load`) | Persist to disk | persist_gap |
-| Per-core override emission (`core_<name>[16]` + `core_<name>_override_set[16]`) | Per-core overrides | per_core_gap |
+| Per-node override emission (`core_<name>[16]` + `core_<name>_override_set[16]`) | Per-node overrides | per_core_gap |
 | Drift check (boot + hot-swap) | Stamp parity gate | stamp_drift_gap |
 
-Adding a cfg field requires synchronous edits at all 6 sites. Forgetting any one causes a SILENT GAP — field is parseable but invisible / not save-able / no per-core override / no drift check. Each of these classes has recurred 3+ times in the last 6 months.
+Adding a cfg field requires synchronous edits at all 6 sites. Forgetting any one causes a SILENT GAP — field is parseable but invisible / not save-able / no per-node override / no drift check. Each of these classes has recurred 3+ times in the last 6 months.
 
 This is the **AUTOPOPULATE-eligible recurring class** (CLAUDE.md item 21): single source of truth → all consumers derive → drift becomes impossible.
 
@@ -302,7 +302,7 @@ Additional guards:
 
 - **Future-flexibility for new Kinds.** Adding KIND_VEC3, KIND_ENUM_BITMAP, KIND_FPN_VEC: one tt:: specialization per Kind; no registry rewrites.
 - **GUI panel layout via metadata.** HIDDEN_BY_DEFAULT auto-collapses "Engine Diagnostics" section. RESTART_REQUIRED auto-badges. SAFETY_CRITICAL auto-prompts.
-- **Composition with per-core override pattern** (`per-bit-per-core-override-pattern.md`): PER_CORE_OK fields auto-emit override storage + branchless resolution.
+- **Composition with per-node override pattern** (`per-bit-per-core-override-pattern.md`): PER_CORE_OK fields auto-emit override storage + branchless resolution.
 - **Composition with slow-path cfg cache** (`slow-path-cfg-resolution-cache-pattern.md`): registry drives ResolvedCoreCfg field declarations + resolution body.
 
 ### Trade-offs
@@ -323,7 +323,7 @@ Additional guards:
 
 ## Registry default precedence over manual defaults (NEW v1.1; 2026-05-19)
 
-**Discipline:** Once a registry row declares a default value via its payload column (`DBL(default, clamp_min, clamp_max)` / `INT(default, ...)` / `BOOL(default)` / `ENUM*(...)` / `STR(default)`), that registry default is the **single source of truth** for the field's default. Manual default values in the cfg struct body (e.g., `cfg.X = 128;` initialization lines OR struct member default-initializer `int X = 128;`) are **FORBIDDEN** once the registry has a default column. Sister to the single-source-of-truth principles already applied at the parser / save / GUI panel / drift-check / per-core-override surfaces.
+**Discipline:** Once a registry row declares a default value via its payload column (`DBL(default, clamp_min, clamp_max)` / `INT(default, ...)` / `BOOL(default)` / `ENUM*(...)` / `STR(default)`), that registry default is the **single source of truth** for the field's default. Manual default values in the cfg struct body (e.g., `cfg.X = 128;` initialization lines OR struct member default-initializer `int X = 128;`) are **FORBIDDEN** once the registry has a default column. Sister to the single-source-of-truth principles already applied at the parser / save / GUI panel / drift-check / per-node-override surfaces.
 
 ### Why
 
@@ -336,7 +336,7 @@ Additional guards:
 
 ### Mechanism
 
-**Per-core surface (H17-locked):** `PerCoreCfg<F>` auto-generates struct fields from `FOREACH_PER_CORE_CFG_FIELD`. Default propagation via `EMIT_PER_CORE_DEFAULT` X-macro walker runs at boot in `Cfg_Init()`. Manual per-core defaults already FORBIDDEN at this surface per H17 invariant.
+**Per-node surface (H17-locked):** `PerCoreCfg<F>` auto-generates struct fields from `FOREACH_PER_CORE_CFG_FIELD`. Default propagation via `EMIT_PER_CORE_DEFAULT` X-macro walker runs at boot in `Cfg_Init()`. Manual per-node defaults already FORBIDDEN at this surface per H17 invariant.
 
 **Global surface (Path α 12-col cascade at v5.15.5.F.4d.1.B.3):** `FOREACH_GLOBAL_CFG_FIELD` migrated from 11-col → 12-col with `STORAGE_T` column added. Sister mechanism `FOREACH_GLOBAL_CFG_FIELD(EMIT_GLOBAL_CFG_DEFAULT)` runs at boot to populate global cfg from registry defaults. Manual init in `ControllerConfig.hpp` body runs AFTER the X-macro walker, silently shadowing registry defaults — **this is the drift surface this discipline closes**.
 
@@ -401,7 +401,7 @@ When migrating a cfg field FROM manual TO registry-driven:
 2. **Delete manual parser case** in CfgParser (if exists).
 3. **Delete manual SettingsPanel entry** (if exists).
 4. **Delete manual save/load line** (if exists).
-5. **Verify per-core override** auto-emits if PER_CORE_OK set (look for `core_<name>[16]` in generated header).
+5. **Verify per-node override** auto-emits if PER_CORE_OK set (look for `core_<name>[16]` in generated header).
 6. **Verify drift check** auto-emits if STAMP_BOUND set.
 7. **Build all 5 binaries** + run controller_test for registry parity.
 8. **Add to `cfg.example`** the new field with comment from tooltip (or auto-generate cfg.example from registry — see Future Work).
@@ -411,7 +411,7 @@ When ADDING a new cfg field:
 1. Pick the appropriate Kind.
 2. Choose metadata flags (PER_CORE_OK / RESTART_REQUIRED / SAFETY_CRITICAL / etc.).
 3. Add ONE registry row.
-4. Done — parser, panel, save, per-core override, drift check all auto-flow.
+4. Done — parser, panel, save, per-node override, drift check all auto-flow.
 
 ---
 
@@ -444,7 +444,7 @@ Updated scope (v5.15.5.F.4 + v5.15.6 split per "design upfront + ship in waves")
 - **.F.4d** — KIND_STRING + KIND_FILE_PATH + metadata-driven GUI features (HIDDEN_BY_DEFAULT collapse, RESTART_REQUIRED badge, SAFETY_CRITICAL modal, IS_SECRET password masking) + **cfg.example auto-gen** + **reverse drift CI script**
 - **.F.4e** — ResolvedCoreCfg struct + slow-path migration (slow-path-cfg-resolution-cache-pattern.md)
 - **.F.4f** — K-state enum cohort packing (item 30 multi-bit state encoding)
-- **.F.4g** — Per-core override AoS-by-core re-layout
+- **.F.4g** — Per-node override AoS-by-core re-layout
 - **.F.4h** — Strategy → category audit (Explore agent pass on Strategies/) + FOREACH_STRATEGY rework with category-mask column + populate `applies_to_strategy_cat` for all 213 registry rows + **bitmap-overflow audit pass** (per `bitmap-overflow-protection-discipline.md`) + add missing `static_assert` overflow guards across all bitmap registries
 - **.F.4i** — backtest.cfg + Training cfg integration: extend FOREACH_CFG_FIELD with rows from BacktestCfg + TrainingCfg structs; populate `lives_in_struct` + `applies_to_op_mode_cat`; Settings tab dispatches save to correct struct + filters render by current op-mode; per-struct cfg.example auto-gen
 

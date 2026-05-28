@@ -629,9 +629,9 @@ Extend `tests/wire_format_invariants.hpp` I1-I5 structural invariants to ALSO te
 | Workflow | Existing CLI? | Framework API? | Pattern applies? |
 |---|---|---|---|
 | Schema migration (cfg file upgrade between versions) | future need | `cfg_parse_*` framework | YES if recurrence count ≥ 3 |
-| Snapshot inspection / dump | `tools/calls_graph_diff.sh` (different concern) | per-core snapshot API | NO — diagnostic concern, not wire-format mirror |
+| Snapshot inspection / dump | `tools/calls_graph_diff.sh` (different concern) | per-node snapshot API | NO — diagnostic concern, not wire-format mirror |
 | Feature mask compute | `tools/validate_feature_mask.sh` | feature registry API | MAYBE — if recurrence accumulates |
-| Per-core override emission CLI | future need | per-core override emission framework | YES if recurrence count ≥ 3 |
+| Per-node override emission CLI | future need | per-node override emission framework | YES if recurrence count ≥ 3 |
 | Backtest CLI driver | foxml_suite (in-process) | `BacktestSharded_Run` | NO — workflow lives in suite GUI |
 
 Most cross-tool surfaces are DIAGNOSTIC (no wire-format mirror) and don't fit this pattern. The pattern applies specifically to cross-tool surfaces that PRODUCE wire format the engine consumes.
@@ -772,7 +772,7 @@ Considered: Python CI tool comparing bash wire keys vs C++ FOREACH_PER_CORE_CFG_
 
 - **Stage 3 (first canonical reference):** `.B.3` ship — `tools/stamp_model_cli.cpp` lands as the first canonical framework-driven CLI binary; replaces `tools/stamp_model.sh` (with deprecation shim); round-trip tests verify HMAC + byte-identical canonical body
 
-- **Stage 4 (subsequent applications):** future ships with cross-tool wire-format surfaces apply this pattern per the spec; ≥1 future canonical (e.g., schema migration CLI; per-core override emission CLI) justifies Stage 5
+- **Stage 4 (subsequent applications):** future ships with cross-tool wire-format surfaces apply this pattern per the spec; ≥1 future canonical (e.g., schema migration CLI; per-node override emission CLI) justifies Stage 5
 
 - **Stage 5 (CLAUDE.md item promotion):** after ≥2 canonical applications + pattern proves load-bearing for sprint planning, promote to CLAUDE.md item (e.g., item 32 "framework-driven CLI binaries for cross-tool surfaces; replaces bash scripts that mirror wire emit logic")
 

@@ -12,7 +12,7 @@ applies_at_skills: []
 # Heterogeneous registry pattern — scope column vs domain split
 
 **Established:** 2026-05-10 (v5.14.9.F sprint, pre-field-test draft)
-**Status:** ACTIVE v1.0 (field-tested through v5.14.9.F-.F.6 + .G + .H; 7 ships validated DOMAIN SPLIT + Y3 dispatch + cache-layout discipline + 5-col tuple expansion (Option D) + per-bit per-core override extension)
+**Status:** ACTIVE v1.0 (field-tested through v5.14.9.F-.F.6 + .G + .H; 7 ships validated DOMAIN SPLIT + Y3 dispatch + cache-layout discipline + 5-col tuple expansion (Option D) + per-bit per-node override extension)
 **Cross-references:**
 - `bitmap-flag-api.md` — bit-packed flag storage (BITMAP_*)
 - `x-macro-registry-with-presence-dispatch.md` — base X-macro pattern + presence column
@@ -35,7 +35,7 @@ Two approaches handle heterogeneity, with different trade-offs:
 
 **SCOPE COLUMN (Y3 dispatch):** keep entries in ONE registry; add a column indicating which dispatch handler applies. Generation logic varies per axis value via token-paste dispatch (`HANDLE_GEN_<MARKER>` macros). Y3 is the canonical implementation mechanism.
 
-**DOMAIN SPLIT (multi-registry):** split entries across N registries by axis value. Each registry has homogeneous entries; auto-flow infrastructure (struct gen, AUTOPOPULATE, parser, GUI, per-core override, slow-path cache) extends to all registries uniformly.
+**DOMAIN SPLIT (multi-registry):** split entries across N registries by axis value. Each registry has homogeneous entries; auto-flow infrastructure (struct gen, AUTOPOPULATE, parser, GUI, per-node override, slow-path cache) extends to all registries uniformly.
 
 Choosing the wrong shape leads to:
 - Column when split is correct → cluttered registry; per-entry generation logic differs unnecessarily; consumers must walk one registry but conditionally consume different subsets
@@ -196,14 +196,14 @@ DOMAIN SPLIT registries collect cfg booleans by semantic domain. But not every "
 For a boolean to qualify for a `FOREACH_<DOMAIN>_CFG_FLAG` registry, **ALL** of the following must hold:
 
 1. **Boot-frozen** — value loaded at startup from `engine.cfg`; not mutated at runtime
-2. **Engine-wide OR per-core-via-cfg-override** — not a per-core runtime atomic (those use ParameterSlot pattern instead)
+2. **Engine-wide OR per-node-via-cfg-override** — not a per-node runtime atomic (those use ParameterSlot pattern instead)
 3. **Hot-path-tolerant** — runtime read of bitmap bit (~1-2ns) is acceptable cost at every read site
 4. **No compile-time elision benefit** — the flag isn't a candidate for `template <bool>` + `if constexpr` elimination
 5. **Cfg-domain-coherent** — semantically belongs to one of the existing domains (LIFECYCLE / GATE / RISK / ML / OPS) or warrants a new domain
 
 If ANY of (1)-(4) fails, the boolean is NOT cfg-flag-eligible. Use a different mechanism:
 - (1) violated → use atomic on shared state struct (e.g., `kill_switch_tripped` is mutated; lives in mutable state, not cfg)
-- (2) violated → use ParameterSlot atomic (per-core hot-path-cached; e.g., `param_staleness_gate_enabled`)
+- (2) violated → use ParameterSlot atomic (per-node hot-path-cached; e.g., `param_staleness_gate_enabled`)
 - (3) violated → use pre-computed predicate cache or compile-time elision (e.g., latency profiling)
 - (4) violated → use `template <bool>` parameter (e.g., `lat_enabled`)
 
@@ -222,7 +222,7 @@ if constexpr (LAT_ENABLED) {                                    // Layer 1: comp
 
 Migrating `lat_enabled` to a cfg-flag bitmap would have:
 - Regressed hot-path ~1-2ns/tick **perpetually** in production builds (compile-time elision lost)
-- Lost per-core runtime mutability (operator GUI flips during a session)
+- Lost per-node runtime mutability (operator GUI flips during a session)
 - Violated CLAUDE.md item 18(a) (DEFAULT-OFF safety gates use compile-time elision)
 
 Caught during step 0 verification. Domain reframed from `OMS_CFG_FLAG` → `LIFECYCLE_CFG_FLAG`. See `DOCS/TECH_DEBT.md` TECH_DEBT-023 for full rationale-preservation entry.
@@ -422,7 +422,7 @@ HIGH.1 finding from /dod-audit on v5.14.9.F amendment surfaced this as a load-be
 - Domains have natural identity (cfg-flag domains, feature categories, strategy families)
 - Read cadences differ enough to warrant separate cache surfaces
 - Domain growth is asymmetric (one domain grows fast; others stable)
-- Consumers vary per domain (parser walks all; GUI walks per-tab; per-core override walks subset)
+- Consumers vary per domain (parser walks all; GUI walks per-tab; per-node override walks subset)
 - Bug class to extinguish is "scattered fields across struct without coherent grouping"
 
 ### Apply HYBRID (per-domain SPLIT with per-entry COLUMN) when:
@@ -439,7 +439,7 @@ HIGH.1 finding from /dod-audit on v5.14.9.F amendment surfaced this as a load-be
 - Consumer can iterate all entries with one loop
 
 **SPLIT cost:**
-- ~2-3h per new domain (registry header + AUTOPOPULATE + parser block + GUI tab + per-core override extension)
+- ~2-3h per new domain (registry header + AUTOPOPULATE + parser block + GUI tab + per-node override extension)
 - N registries to maintain
 - Pattern-repeated infrastructure (each domain has own AUTOPOPULATE; arguably good for clarity, bad for code size)
 - Consumer must walk N registries
@@ -543,7 +543,7 @@ HIGH.1 finding from /dod-audit on v5.14.9.F amendment surfaced this as a load-be
 **Lesson 2 — Step 0 inventory verification is load-bearing (v5.14.9.F LIFECYCLE reframe):**
 - Initial .F scope claimed migrating `partial_exit_enabled` + `lat_enabled` to oms_cfg_flags bitmap
 - Step 0 verification revealed `lat_enabled` is NOT a cfg field — it's a per-Tick template-elided atomic in `ExecutionCore_Tick_Impl<F, LAT_ENABLED>`
-- Migration would have regressed hot-path ~1-2ns/tick perpetually (compile-time elision lost) + lost per-core runtime mutability (operator GUI flip)
+- Migration would have regressed hot-path ~1-2ns/tick perpetually (compile-time elision lost) + lost per-node runtime mutability (operator GUI flip)
 - **Mitigation:** TECH_DEBT-023 codifies cfg-flag eligibility criteria (5 tests). Domain reframed OMS_CFG_FLAG → LIFECYCLE_CFG_FLAG mid-Step-0. Future audit subagents reference TECH_DEBT-023 when evaluating cfg-flag migration proposals.
 
 **Lesson 3 — AUTOPOPULATE_FROM_<arity> macro family stabilizes per-domain (v5.14.9.F + .F.1 + .F.2):**

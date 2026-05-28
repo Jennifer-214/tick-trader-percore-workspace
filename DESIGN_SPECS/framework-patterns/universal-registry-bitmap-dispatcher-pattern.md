@@ -337,7 +337,7 @@ The pattern generalizes to all subsystems with their own thread:
     - SettingsPanel API restructure to take `ControllerConfig<F>&` + `PerCoreOverrides&` directly
     - Bitmap walker replacing `EMIT_CFG_FIELD_DEF_FROM_REGISTRY` field_defs[] auto-extender
     - Section-grouping (track `desc.section` transitions during bitmap iteration)
-    - Per-core override path (consume `g_cfg_per_core_override_mask`)
+    - Per-node override path (consume `g_cfg_per_core_override_mask`)
     - Reset-to-defaults (consume `tt::cfg_assign_field<T>`)
     - Modified detection (consume `tt::cfg_diff_field<T>`)
     - KIND_STRING/_FILE_PATH bridge (parallel-array layer survives for these until `.F.4e`)
@@ -362,7 +362,7 @@ The bitmap dispatcher eliminates this indirection: SettingsPanel takes `Controll
 - **Stamp emit** (`.F.4d`): uses `g_cfg_stamp_bound_mask` + per-row emit fn table; replaces FOREACH_STAMP_BOUND_CFG manual emit
 - **Drift check** (`.F.4d`): uses STAMP_BOUND derived filter; replaces CfgDriftCheckRegistry manual walker
 - **CLI subcommands** (`.F.4e` per TECH_DEBT-066): consumes per-bit masks for `--list-cfg --filter=<bit>`; popcount stats for `--status --json`
-- **Structured log emit** (TECH_DEBT-065/067): per-core emit walker uses composed filter for "which fields to emit per snapshot"
+- **Structured log emit** (TECH_DEBT-065/067): per-node emit walker uses composed filter for "which fields to emit per snapshot"
 - **`.F.4d` `FOREACH_DERIVED_FILTER`** (meta-registry): layers named filters ON TOP of this dispatcher primitive
 - **`.F.4j` `FOREACH_BACKTEST_CFG_FIELD`** (via `lives_in_struct = STRUCT_BACKTEST_CFG`): backtest panel renders via per-struct walker
 - **v5.15.6.A `FOREACH_CONTROLLER_CFG_FIELD`** (via `lives_in_struct = STRUCT_CONTROLLER_CFG`): controller settings tab

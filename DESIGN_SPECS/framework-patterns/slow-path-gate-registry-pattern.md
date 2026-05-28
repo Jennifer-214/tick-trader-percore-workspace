@@ -41,7 +41,7 @@ if (cfg->ws_dead_time_flatten_enabled) { /* WS staleness flatten */ }
 
 1. **Inline cfg-field reads scatter across deep functions.** Per item 18(d) — "avoid sprinkling cfg-flag checks through deep functions; hoist to slow-path top + pass a small struct of resolved predicates." Each gate's predicate is computed at every check site, even though cfg is stable across a slow-path cycle.
 
-2. **Per-core override resolution is repeated.** Some gates (ladder, future) have per-core overrides (`core_N_*` cfg fields). Resolution logic `(override.X_set ? override.X : cfg.X)` is inline at each use site — N copies if N use sites read the same gate.
+2. **Per-node override resolution is repeated.** Some gates (ladder, future) have per-node overrides (`core_N_*` cfg fields). Resolution logic `(override.X_set ? override.X : cfg.X)` is inline at each use site — N copies if N use sites read the same gate.
 
 3. **No single source of truth for "what gates exist."** Adding a new gate touches: cfg field declaration, parser, default, engine.cfg.example, use site. /readiness Check 23 (latency accountability) can't auto-detect gate additions.
 
@@ -59,11 +59,11 @@ This is the same N-site bug class shape that `FOREACH_FAILURE_MODE` (v5.14.8.B) 
 
 **Option B: Per-gate atomic on ParameterSlot.** Hot-path-style; v5.12.1.B precedent (`param_staleness_gate_enabled`). Slow-path writes; hot-path reads. Right for hot-path gates; overkill for slow-path-only.
 
-**Option C: Single struct of resolved predicates, per-engine global.** All cores share. Simple but doesn't handle per-core overrides (ladder needs per-core resolution).
+**Option C: Single struct of resolved predicates, per-engine global.** All cores share. Simple but doesn't handle per-node overrides (ladder needs per-node resolution).
 
-**Option D: Per-core struct of resolved predicates.** Each core has its own cached gate state. Global gates have same value across cores; per-core gates have core-specific value. Memory cost: 16 cores × ~8 bools × 4 bytes (int) = 512 bytes total. Negligible.
+**Option D: Per-node struct of resolved predicates.** Each core has its own cached gate state. Global gates have same value across cores; per-node gates have core-specific value. Memory cost: 16 cores × ~8 bools × 4 bytes (int) = 512 bytes total. Negligible.
 
-**Decision: D.** Per-core struct on `CoreContext<F>` (per-core slow-path state). Per-core overrides handled naturally; global gates duplicate value (cheap). One cache surface; uniform access pattern.
+**Decision: D.** Per-node struct on `CoreContext<F>` (per-node slow-path state). Per-node overrides handled naturally; global gates duplicate value (cheap). One cache surface; uniform access pattern.
 
 ### Recompute cadence
 
@@ -77,15 +77,15 @@ This is the same N-site bug class shape that `FOREACH_FAILURE_MODE` (v5.14.8.B) 
 
 ### Hot-path gates
 
-**Option A: Force migration of `param_staleness_gate_enabled` to the new registry.** Hot path reads from per-core slow_state cache → adds a load to hot path. **Bad.**
+**Option A: Force migration of `param_staleness_gate_enabled` to the new registry.** Hot path reads from per-node slow_state cache → adds a load to hot path. **Bad.**
 
 **Option B: Hot-path gates stay outside this registry.** They keep their existing ParameterSlot-atomic caching (set by slow-path rebuild + read by hot path via flags bitmap). FOREACH_SLOW_PATH_GATE is for slow-path-only gates.
 
 **Decision: B.** Hot-path caching is its own pattern (atomic + seqlock). Don't conflate. Future ship may define `FOREACH_HOT_PATH_GATE` separately.
 
-### Per-core gate predicates
+### Per-node gate predicates
 
-**Option A: Predicate uses CORE-EFFECTIVE cfg (already-merged with per-core override).** AUTOPOPULATE caller pre-merges before evaluation.
+**Option A: Predicate uses CORE-EFFECTIVE cfg (already-merged with per-node override).** AUTOPOPULATE caller pre-merges before evaluation.
 
 **Option B: Predicate takes (cfg, override) pair; merge logic inline in predicate.**
 
@@ -93,7 +93,7 @@ This is the same N-site bug class shape that `FOREACH_FAILURE_MODE` (v5.14.8.B) 
 
 ## The pattern (concrete shape)
 
-### Per-core gate state struct (BIT-PACKED via BITMAP_* API)
+### Per-node gate state struct (BIT-PACKED via BITMAP_* API)
 
 ```cpp
 // Per-core slow-path gate state. Lives on CoreContext<F>.
@@ -130,7 +130,7 @@ FOREACH_SLOW_PATH_GATE(X_GEN_GATE_MASK)
 static_assert(GATE_COUNT <= 16, "SlowPathGateState uint16_t exhausted; expand to uint32_t");
 ```
 
-### Registry definition (5 per-core ML gates)
+### Registry definition (5 per-node ML gates)
 
 ```cpp
 // FOREACH_SLOW_PATH_GATE(X) — registry of cfg-toggleable slow-path gates
@@ -273,7 +273,7 @@ for (int c = 0; c < state->registered_count; ++c) {
 ### Win:
 
 - Single source of truth for cfg-toggleable slow-path gates
-- Per-core override resolution centralized (no inline `(override.X_set ? override.X : cfg.X)` at use sites)
+- Per-node override resolution centralized (no inline `(override.X_set ? override.X : cfg.X)` at use sites)
 - Adding a new gate = 1 registry row; ALL callers auto-pick-up
 - /readiness Check 23 (latency accountability) auto-detects via registry
 - /dod-audit Check 27 detects new gates that should fit the pattern
@@ -289,7 +289,7 @@ for (int c = 0; c < state->registered_count; ++c) {
 
 ### `param_staleness_gate_enabled` stays outside the registry
 
-Hot-path gate; cached in `cached_params.flags` bitmap (set by slow-path rebuild via ParameterSlot atomic store; read by hot path with seqlock semantics). Different mechanism from per-core bool cache. Keeping it separate avoids forcing slow_state load on hot path.
+Hot-path gate; cached in `cached_params.flags` bitmap (set by slow-path rebuild via ParameterSlot atomic store; read by hot path with seqlock semantics). Different mechanism from per-node bool cache. Keeping it separate avoids forcing slow_state load on hot path.
 
 Future ship may define `FOREACH_HOT_PATH_GATE` for hot-path gates if more accumulate. For now: only 1 hot-path gate; no registry justified.
 
@@ -303,9 +303,9 @@ When a future ship adds consumers, the consumer adds the gate to FOREACH_SLOW_PA
 
 The rebinding looks weird but is necessary so registry predicates can use bare `(cfg).X` syntax (consistent with STAMP_CFG_AUTOPOPULATE). The do-while ensures undef restoration. Alternative would be passing cfg/override as function-style macro args throughout (e.g., `FOREACH_SLOW_PATH_GATE(X, cfg_arg, override_arg)`), but that requires every X helper macro to accept the args — verbose.
 
-### Per-core override consistency check
+### Per-node override consistency check
 
-For per-core gates (ladder), the AUTOPOPULATE merge logic must match what the use site would compute. Verified: ladder predicate uses `((override).risk_degradation_curve_set ? (override).risk_degradation_curve : (cfg).risk_degradation_curve)` — same pattern as existing per-core resolution at `EngineSharded.hpp:1222-1224` for `tau_eff` (legacy field, soon-to-be-deleted).
+For per-node gates (ladder), the AUTOPOPULATE merge logic must match what the use site would compute. Verified: ladder predicate uses `((override).risk_degradation_curve_set ? (override).risk_degradation_curve : (cfg).risk_degradation_curve)` — same pattern as existing per-node resolution at `EngineSharded.hpp:1222-1224` for `tau_eff` (legacy field, soon-to-be-deleted).
 
 ### Recompute cost amortization
 
@@ -319,7 +319,7 @@ Several gates' cfg fields are already stamp-bound via FOREACH_STAMP_BOUND_CFG (c
 
 1. Define `SlowPathGateState` struct + `FOREACH_SLOW_PATH_GATE` registry in new header `CoreFrameworks/SlowPathGateRegistry.hpp`
 2. Define `SLOW_PATH_GATE_AUTOPOPULATE` companion macro in same header
-3. Add `SlowPathGateState gate_state` field to `CoreContext<F>` (per-core)
+3. Add `SlowPathGateState gate_state` field to `CoreContext<F>` (per-node)
 4. Add `gate_state` pointer to `MLBuildContext`
 5. Wire AUTOPOPULATE call at `EventLoop_RebuildOneCore` entry per core
 6. Migrate 6 existing use sites:
@@ -330,7 +330,7 @@ Several gates' cfg fields are already stamp-bound via FOREACH_STAMP_BOUND_CFG (c
    - `Strategies/StrategyParameters.hpp:908` — ridge_within_horizon
    - `Strategies/StrategyParameters.hpp:1106` — exit_blender_mode
 7. Add ladder gate use site (in v5.14.9.B; reads `mctx->gate_state->ladder_active`)
-8. Tests: per-gate predicate correctness + per-core override resolution + AUTOPOPULATE walk + count assertion
+8. Tests: per-gate predicate correctness + per-node override resolution + AUTOPOPULATE walk + count assertion
 
 Estimated effort: 8-10h (audit+design 2h, registry+AUTOPOPULATE 2h, migration 4-5h, tests 1-2h).
 

@@ -9,9 +9,9 @@ sister_specs: [concurrency-model-summary.md, cache-line-discipline.md, branchles
 applies_at_skills: [/handoff, /readiness, /precoding-audit-gate]
 ---
 
-# Architecture (per-core sharded HFT engine)
+# Architecture (per-node sharded HFT engine)
 
-Tick-level crypto HFT trading platform in C++. Per-core risk-sharded hot path (40-400ns p99); branchless fixed-point math; X-macro registries for multi-site additions; bitmap-packed portfolio + flags.
+Tick-level crypto HFT trading platform in C++. Per-node risk-sharded hot path (40-400ns p99); branchless fixed-point math; X-macro registries for multi-site additions; bitmap-packed portfolio + flags.
 
 This doc is the high-level orientation. Per-component detail lives in canonical sources cross-referenced below.
 
@@ -118,7 +118,7 @@ Legacy backtest is gone — `Backtest_Run` wraps `BacktestSharded_Run`.
 ## Per-component highlights
 
 ### CoreFrameworks/
-ExecutionCore (hot-path tick dispatcher) / OrderGates / Portfolio (bitmap-packed) / ControllerEventLoop (slow-path orchestrator) / EngineSharded (producer + per-core thread spawning) / OMS (drainer thread) / CfgFieldRegistry + CfgFieldDispatch (X-macro auto-flow) / **MetaRegistry** (H15 enforcement).
+ExecutionCore (hot-path tick dispatcher) / OrderGates / Portfolio (bitmap-packed) / ControllerEventLoop (slow-path orchestrator) / EngineSharded (producer + per-node thread spawning) / OMS (drainer thread) / CfgFieldRegistry + CfgFieldDispatch (X-macro auto-flow) / **MetaRegistry** (H15 enforcement).
 
 ### Strategies/
 RegimeDetector (RANGING / TRENDING / VOLATILE / MILD_TREND with hysteresis) / MeanReversion / Momentum / SimpleDip / EmaCross / MLStrategy / StrategyParameters (X-macro dispatcher) / StrategyInterface / StrategyCategories + OpModeCategories (categorical applicability gates).

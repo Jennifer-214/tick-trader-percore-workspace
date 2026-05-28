@@ -264,7 +264,7 @@ The boot-time dispatch picks ONE of FOUR template instantiations. `if constexpr`
 
 **Win:** richer instrumentation without paying for finest-grained always-on. Operator picks the granularity per session.
 
-### Composition 3 — Per-core bench enable (the extreme optimization)
+### Composition 3 — Per-node bench enable (the extreme optimization)
 
 References: `partner-core-bitmap-pattern.md` + `per-bit-per-core-override-pattern.md`
 
@@ -293,9 +293,9 @@ inline void OrderManager_Tick_PerCore(OrderManagerState<F>* oms, int core_id) {
 }
 ```
 
-**Win:** the operator can instrument core 5's tick latency for a 1-hour live measurement window WITHOUT slowing down cores 0-4, 6-15. When BENCH=false, the per-core check is also elided (zero cost). When BENCH=true, the per-core mask check is 1 cycle — strictly cheaper than the unconditional rdtsc bracket.
+**Win:** the operator can instrument core 5's tick latency for a 1-hour live measurement window WITHOUT slowing down cores 0-4, 6-15. When BENCH=false, the per-node check is also elided (zero cost). When BENCH=true, the per-node mask check is 1 cycle — strictly cheaper than the unconditional rdtsc bracket.
 
-**Extreme scenario:** profile a specific core in production without affecting trading on the others. Per-core isolation pattern + bench gate pattern compose to "production-cost on 15 cores + bench-cost on 1 core" simultaneously.
+**Extreme scenario:** profile a specific core in production without affecting trading on the others. Per-node isolation pattern + bench gate pattern compose to "production-cost on 15 cores + bench-cost on 1 core" simultaneously.
 
 ### Composition 4 — Cache-layout discipline on the histogram
 

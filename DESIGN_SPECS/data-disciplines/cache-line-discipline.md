@@ -64,7 +64,7 @@ struct alignas(64) SPSCRing_Consumer_Cache_Line {
 
 **Hot path target:** ≤32-64KB L1d-resident (CPU L1d cache size typical).
 
-**Per-core slow_state target:** ≤64KB (comfortable L1d + L2).
+**Per-node slow_state target:** ≤64KB (comfortable L1d + L2).
 
 **Why:** hot loops touching out-of-L1d data hit L2 (3-4x slower) or L3 (10x slower) — kills p99. Cache-resident hot path is THE budget mechanism.
 

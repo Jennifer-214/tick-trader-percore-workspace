@@ -241,7 +241,7 @@ threads + cores + DMA + GPU.
 on its own looks tiny against ~50 GB/s peak. But concurrent loads add up:
 
 - Producer fan-out on saturated markets: ~80 MB/s
-- Per-core slow-path rolling-window updates: ~5-10 MB/s × 16 cores = 80-160 MB/s
+- Per-node slow-path rolling-window updates: ~5-10 MB/s × 16 cores = 80-160 MB/s
 - ML inference (when active): ~50-100 MB/s on feature pack + model read
 - GUI snapshot publisher: ~6-26 MB/s depending on consolidation
 

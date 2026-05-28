@@ -16,7 +16,7 @@ Headline summary of design principles + priority gradients. Deep discussion + WH
 
 ### End state (vision)
 
-Continuously evolving open-source per-core sharded HFT trading platform; AGPL public repo; quality bar set by hedge-fund-visibility expectations. Trajectory:
+Continuously evolving open-source per-node sharded HFT trading platform; AGPL public repo; quality bar set by hedge-fund-visibility expectations. Trajectory:
 
 - **Current** = v5.X professionalization phase. Codebase transitioned from MVP to professional infrastructure; framework-driven extensibility, audit-driven discipline, structural-fix-over-patch are the deliverables. Active sprint goal: *make the codebase more maintainable for future development* (current sprint state lives in `CLAUDE.local.md` § Current sprint state).
 - **Near-term** = decoupled runtime/viewer architecture (`plans/_future/2026-05-12-decoupling-endgoal-roadmap.md`). Engine runs headless as systemd service; multiple viewers attach concurrently; cmdline-invocable training; per-run dirs with tailable artifacts.
@@ -47,7 +47,7 @@ When two options both compile + both run, the gradient resolves the choice. Thes
 - `FPN<F=64>` > `double` on accounting paths; never `float` on hot/slow path math (H4). → § 5 (determinism).
 - Bit-packed slots > byte-per-bool (H14 + MBS_* encoding). Memory bandwidth + cache footprint compound.
 - `alignas(64)` cross-thread + cluster by access pattern > flat struct (H6). → § 3.
-- L1d-cache-resident hot-path state > out-of-cache scatter. Working-set discipline applies to per-core slow_state + hot ExecutionCore params.
+- L1d-cache-resident hot-path state > out-of-cache scatter. Working-set discipline applies to per-node slow_state + hot ExecutionCore params.
 - SIMD with bytewise-identical scalar fallback > SIMD-only (H10). → § 5.
 
 **Maintenance:**
@@ -96,11 +96,11 @@ Hot path is BRANCHLESS (H7); branch mispredicts cost 30-100ns real-world per `DE
 | Surface | Budget | Reason |
 |---|---|---|
 | Hot path working set | ≤L1d (32-64KB typical) | Stay cache-resident; eviction kills p99 |
-| Per-core slow_state | ≤64KB | Comfortable L1d+L2; per-core isolation |
+| Per-node slow_state | ≤64KB | Comfortable L1d+L2; per-node isolation |
 | Cross-thread cfg (seqlock cached) | ≤single cache line per param group | False-sharing prevention (H6) |
 | SPSC ring depth | `Limits.hpp:MAX_RING_*` | Bounded; backpressure detectable |
 | Order pool | `Limits.hpp:MAX_ORDERS` | Bounded; bitmap-packed (H1 no heap) |
-| Per-core ML feature window | `Limits.hpp:ML_WINDOW_MAX` | Bounded ring buffer |
+| Per-node ML feature window | `Limits.hpp:ML_WINDOW_MAX` | Bounded ring buffer |
 | Bitmap structures (portfolio / flags) | uint64_t typical | H14 — never C++ bitfield syntax |
 | Stack frames on hot path | <few KB | No deep recursion / large stack-alloc |
 
@@ -161,11 +161,11 @@ Binance WS                OMS_DrainSubmit     SLOW thread (1 per core)
 
 ## Overview
 
-Tick-level crypto HFT trading engine in C++. Per-core risk-sharded hot
+Tick-level crypto HFT trading engine in C++. Per-node risk-sharded hot
 path (40-400ns p99); branchless fixed-point math (`FPN<F=64>` = 24B);
 X-macro registries for multi-site additions; bitmap-packed portfolio +
 flags. Single producer thread fans Binance ticks across SPSC rings →
-N per-core consumers (default 4, cap 16); each core = self-contained
+N per-node consumers (default 4, cap 16); each core = self-contained
 strategy unit (slow + hot pthread pair). Sharded is production. Legacy
 single_core LIVE is deprecated (warned at boot). Legacy backtest is
 gone — `Backtest_Run` wraps `BacktestSharded_Run`.
@@ -206,10 +206,10 @@ GLOBAL THREADS:
   Async:    Binance trade WS, depth WS, Tick/DepthRecorder, Notify worker, GUI
 ```
 
-- Per-core strategy (`core_N_strategy=simple_dip|momentum|ema_cross|ml`)
-- Per-core ML model (`core_N_model_path=...` or `core_N_model_dir=...`)
-- Per-core risk (`core_N_risk_pct=...`)
-- Per-core ConfidenceScorer (when STRATEGY_ML)
+- Per-node strategy (`core_N_strategy=simple_dip|momentum|ema_cross|ml`)
+- Per-node ML model (`core_N_model_path=...` or `core_N_model_dir=...`)
+- Per-node risk (`core_N_risk_pct=...`)
+- Per-node ConfidenceScorer (when STRATEGY_ML)
 - Per-core slow_state owns rolling/regime/flow data (v5.1.2+)
 - Partial exits (`partial_exit_enabled=1`): each core owns 2 slots (legs A+B); max cores = 8
 - `engine_arch=per_core_slow` (default v5.0+) | `centralized` (legacy)
@@ -280,7 +280,7 @@ Full discussion: `DOCS/DESIGN_PHILOSOPHY.md` § 2 + `DOCS/STRATEGY_AND_CODING_RU
 - Branchless: mask tricks `-(uint64_t)pass`, word-level mask-select
 - Inline comments explain WHY, not WHAT (well-named identifiers handle the WHAT)
 - **Preserve user's voice in existing comments when editing**
-- New cfg field of recognized Kind = 1 row in `FOREACH_CFG_FIELD` (`CoreFrameworks/CfgFieldRegistry.hpp`); parser + GUI render + tooltip + per-core override emission auto-flow
+- New cfg field of recognized Kind = 1 row in `FOREACH_CFG_FIELD` (`CoreFrameworks/CfgFieldRegistry.hpp`); parser + GUI render + tooltip + per-node override emission auto-flow
 
 ### File-size split discipline
 
@@ -365,7 +365,7 @@ If you can't find the answer at the layer you're looking at, go DOWN the hierarc
 | Hard invariants (full discussion of H1-H11 strict rules; private) | `DOCS/STRATEGY_AND_CODING_RULES.md` |
 | Latency optimization audit findings (13-part private audit) | `DOCS/LATENCY_OPTIMIZATION_AUDIT.md` |
 | Latency-path discipline (architectural rules + anti-pattern history) | `plans/_cross-cutting/2026-05-06-latency-path-discipline.md` |
-| Adding cfg field / GUI panel / strategy / ML feature / per-core override | `DOCS/CLAUDE_INTEGRATION.md` |
+| Adding cfg field / GUI panel / strategy / ML feature / per-node override | `DOCS/CLAUDE_INTEGRATION.md` |
 | Changing OMS / kill switch / snapshot / hot path / slow-path threading | `DOCS/CLAUDE_INVARIANTS.md` |
 | Touching FeatureRegistry / scaler / stamp / train→serve path | `DOCS/CLAUDE_ML_INVARIANTS.md` |
 | Planning a multi-day change | `DOCS/CLAUDE_REVIEW.md` |
@@ -383,7 +383,7 @@ Each entry: GENERAL task → where to start. For sprint-specific phasing of cfg-
 | Task | Where to start |
 |---|---|
 | Add a strategy | `/strategy-template` skill + `DOCS/CLAUDE_INTEGRATION.md` |
-| Add a cfg field | 1 row in master registry at `CoreFrameworks/CfgFieldRegistry.hpp` (parser + GUI render + tooltip + per-core override emission auto-flow per framework state — see `DESIGN_SPECS/framework-patterns/universal-cfg-field-registry-pattern.md` for current capabilities) |
+| Add a cfg field | 1 row in master registry at `CoreFrameworks/CfgFieldRegistry.hpp` (parser + GUI render + tooltip + per-node override emission auto-flow per framework state — see `DESIGN_SPECS/framework-patterns/universal-cfg-field-registry-pattern.md` for current capabilities) |
 | Add a STAMP_BOUND cfg field | Set `STAMP_BOUND_CFG_DERIVED` bit in master registry row's metadata column (drift check + Layer 5b hash + wire emit auto-flow per `DESIGN_SPECS/framework-patterns/metadata-bit-driven-derived-filter-framework.md`) |
 | Add a new derived filter (metadata-bit cohort) | 1 row in `FOREACH_DERIVED_FILTER` (framework auto-flow per `DESIGN_SPECS/framework-patterns/metadata-bit-driven-derived-filter-framework.md`) |
 | Add an ML feature | `ML_Headers/FeatureRegistry.hpp` + `DOCS/CLAUDE_ML_INVARIANTS.md` |

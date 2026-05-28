@@ -14,7 +14,7 @@ applies_at_skills: []
 **Stage:** Stage 3 ACTIVE v1.0 (first canonical application landed at v5.15.5.F.4c.3 WIP2d-0.B; engine commit `4154009`)
 **Promotes to:** stays Stage 3 ACTIVE; second canonical application at `.F.4d` extends pattern to global cfg surface (FOREACH_GLOBAL_CFG_FIELD + FOREACH_MANUAL_GLOBAL_FIELD)
 **Tags:** structural-fix, registry-driven, framework-discipline, build-failing-CI; closes "manual-field-bypass" class; serves H17; Stage 2 (DRAFT); 0 applications until .F.4c.3
-**Sister specs:** `per-instance-registry-pattern.md` (per-core registry framework that consumes this discipline's exemption inventory), `cfg-scope-discipline.md` (the scope decision discipline), `universal-cfg-field-registry-pattern.md` (parent pattern; this spec adds the EXEMPTION mechanism)
+**Sister specs:** `per-instance-registry-pattern.md` (per-node registry framework that consumes this discipline's exemption inventory), `cfg-scope-discipline.md` (the scope decision discipline), `universal-cfg-field-registry-pattern.md` (parent pattern; this spec adds the EXEMPTION mechanism)
 **Closes bug class:** parallel-array drift + manual-field-bypass (recurred at strategy + risk_pct cohort at WIP2c.1)
 
 ---
@@ -36,7 +36,7 @@ The structural fix is a **3-tier X-macro discipline + bidirectional CI cross-che
 - **CI enforcement** — build-failing script cross-checks across all 3 X-macros + inventory bidirectionally. Stray manual declarations in PerCoreCfg<F> or ControllerConfig parallel-array shape outside X-macros = BUILD ERROR.
 - **Inventory doc** — `MANUAL_FIELDS_INVENTORY.md` documents each exemption with type / rationale / migration_trigger / canonical_replacement (Section A = parallel arrays; Section B = runtime bitmap cluster references meta-registry rows).
 
-After the primitive lands, manual-field-bypass and parallel-array drift are UNEXPRESSIBLE — every per-core field flows through one of the two X-macros.
+After the primitive lands, manual-field-bypass and parallel-array drift are UNEXPRESSIBLE — every per-node field flows through one of the two X-macros.
 
 ## When to apply
 
@@ -230,7 +230,7 @@ struct ControllerConfig {
 ## Stage 3 promotion criteria
 
 - At least 2 canonical applications shipped (per CLAUDE.md item 19 recurrence-count discipline for pattern promotion)
-- First application: per-core surface at `.F.4c.3` (this ship)
+- First application: per-node surface at `.F.4c.3` (this ship)
 - Second application: global cfg surface at `.F.4d` (FOREACH_GLOBAL_CFG_FIELD X-macro struct gen + FOREACH_MANUAL_GLOBAL_FIELD inventory; same primitive applied to global fields)
 - After both applications land + Stage 3 promote: H17 codified as HARD invariant in DESIGN_PHILOSOPHY § 2 (currently STRONG at `.F.4c.3` per-core surface only)
 

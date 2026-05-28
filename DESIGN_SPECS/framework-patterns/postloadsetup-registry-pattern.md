@@ -116,7 +116,7 @@ Apply this pattern when ALL of the following hold:
 **Caller scope contract:** the X-macro expansion expects these variables in scope at the helper body:
 - `ezoo` — `EnsembleModelZoo<F>*` to the zoo being set up
 - `cfg` — `const ControllerConfig<F>&` (reference; for reading cfg fields)
-- `core_id` — `int` (which per-core slot is being initialized; for per-core overrides)
+- `core_id` — `int` (which per-node slot is being initialized; for per-node overrides)
 - `base_run_path` — `const char*` (where persistence sidecar files live)
 
 Document this contract IN-FILE adjacent to the registry. Future contributors will write registry entries that fail to compile in the caller scope without it.
@@ -272,8 +272,8 @@ Single-zoo sibling (v5.10+):
 
 | Candidate | Trigger to apply |
 |---|---|
-| Single-zoo (`CoreModelZoo`) — add more steps | When non-trivial single-zoo init logic emerges (e.g., per-core ML cfg validation, model-version drift checks). Single-zoo POST_LOAD already exists; just append. |
-| Per-core slow-path init | If `EventLoopCoreState_Init` accumulates 5+ steps; currently inline. Promote to `FOREACH_CORE_SLOW_PATH_INIT` when count threshold crossed. |
+| Single-zoo (`CoreModelZoo`) — add more steps | When non-trivial single-zoo init logic emerges (e.g., per-node ML cfg validation, model-version drift checks). Single-zoo POST_LOAD already exists; just append. |
+| Per-node slow-path init | If `EventLoopCoreState_Init` accumulates 5+ steps; currently inline. Promote to `FOREACH_CORE_SLOW_PATH_INIT` when count threshold crossed. |
 | Maker-side post-load (v6.0+) | When maker order MVP ships + has its own load discipline; mirror the ensemble pattern. |
 | Multi-symbol fan-out (v5.16+) | If multi-symbol introduces per-symbol setup steps; could be `FOREACH_SYMBOL_POST_LOAD`. |
 

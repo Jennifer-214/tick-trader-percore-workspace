@@ -110,7 +110,7 @@ The discipline applies to FILE-SCOPE / NAMESPACE-SCOPE / CLASS-STATIC variables 
 
 ### A5 — Don't use for hot-path state expecting cache locality
 
-`inline` puts shared state at a single global address. For cross-thread hot-path state that needs `alignas(64)` + per-core padding to prevent false-sharing, prefer SPSC ring / seqlock cached cfg / per-core slow_state arrays. `inline` is appropriate for COARSE shared state (shutdown flags / test counters / runtime config snapshots), not for hot-path per-core data structures.
+`inline` puts shared state at a single global address. For cross-thread hot-path state that needs `alignas(64)` + per-node padding to prevent false-sharing, prefer SPSC ring / seqlock cached cfg / per-node slow_state arrays. `inline` is appropriate for COARSE shared state (shutdown flags / test counters / runtime config snapshots), not for hot-path per-node data structures.
 
 ---
 
@@ -147,7 +147,7 @@ inline volatile sig_atomic_t g_engine_sharded_shutdown = 0;
 inline volatile sig_atomic_t* g_engine_sharded_gui_quit_ptr = nullptr;
 ```
 
-**Why inline:** Signal handler installed in one TU (e.g., the TU containing `main()` or `EngineSharded_Run`) writes the shutdown flag; slow-path threads polling for shutdown live in DIFFERENT TUs (the per-core slow-path TUs). All TUs must observe the SAME flag. The `inline` keyword guarantees one backing storage.
+**Why inline:** Signal handler installed in one TU (e.g., the TU containing `main()` or `EngineSharded_Run`) writes the shutdown flag; slow-path threads polling for shutdown live in DIFFERENT TUs (the per-node slow-path TUs). All TUs must observe the SAME flag. The `inline` keyword guarantees one backing storage.
 
 Originally (pre-`.B.6`), these globals were declared `static` in the monolithic header. The boot path + slow-path threads happened to compile into the SAME TU (via aggregation through EngineSharded.hpp), so `static` "worked" by accident — there was effectively only one TU after preprocessing. Subfolder split forced multi-TU compilation; `static` would have broken silently.
 

@@ -18,9 +18,9 @@ applies_at_skills: []
 - First consumer: `FOREACH_STAMP_BOUND_MODEL_CONST` has_flags (v5.14.8.A.merged)
 - Second consumer: `FOREACH_FAILURE_MODE` failure_flags (v5.14.8.B)
 - Pattern precedent: `Portfolio<uint16_t>` bitmap (CLAUDE.md item 1, FoxML_Trader_v2)
-- Sister pattern: `partner-core-bitmap-pattern.md` (per-core 1-bit-per-core variant)
+- Sister pattern: `partner-core-bitmap-pattern.md` (per-node 1-bit-per-node variant)
 - Sister pattern: `transient-aggregation-bitmap-pattern.md` (function-local summary bitmap variant)
-- Sister pattern: `per-bit-per-core-override-pattern.md` (per-bit per-core override on bitmap fields)
+- Sister pattern: `per-bit-per-core-override-pattern.md` (per-bit per-node override on bitmap fields)
 - Related: `bit-packed-storage-class-pattern.md` (TECH_DEBT-013 sweep candidates)
 
 ---
@@ -284,7 +284,7 @@ These predate BitmapMacros.hpp; future maintenance can migrate to use the API.
 | `PerCoreSnap` non-failure state flags | 3-5 | merge into existing or new state_flags | Next ship touching PerCoreSnap |
 | `FOREACH_FEATURE.enabled` (40 features) | 40 byte-per-flag | uint64_t enabled_bitmap | Next FeatureRegistry storage refactor |
 | `OrderManager.partial_exit_enabled` + `ExecutionCore.lat_enabled` | 2 | engine-wide uint16_t cfg_flags | Next ship adding 3+ engine-wide flags |
-| `ControllerEventLoop.partner_pending_active` | 1 per-core | merge into per-core flags | Next ship adding 2+ per-core flags |
+| `ControllerEventLoop.partner_pending_active` | 1 per-node | merge into per-node flags | Next ship adding 2+ per-node flags |
 | `ShardedSnapshot.any_scaler_present/_failed` | 2 | snapshot summary bitmap | Next ship touching snapshot serialization |
 
 ---
@@ -363,7 +363,7 @@ The BITMAP_* API is the base layer. v5.14.9 surfaced 4 distinct USE-SHAPES with 
 
 **Example:** `cfg.lifecycle_cfg_flags` (3 bits: partial_exit + 2 breakeven). Read via `BITMAP_IS_SET(cfg.lifecycle_cfg_flags, MASK_LIFECYCLE_CFG_PARTIAL_EXIT_ENABLED)`.
 
-### Variant 2: per-core bitmap (1 bit per core on a parent struct)
+### Variant 2: per-node bitmap (1 bit per core on a parent struct)
 
 **Shape:** uint16/32/64 on EventLoopState (or similar). Bit N = core N's boolean state. Lifetime: persistent across slow-path cycles; single-thread coordinated.
 
@@ -371,7 +371,7 @@ The BITMAP_* API is the base layer. v5.14.9 surfaced 4 distinct USE-SHAPES with 
 
 **Example:** `state->partner_pending_bitmap` (16 bits; one per core). Set via `BITMAP_SET(state->partner_pending_bitmap, BITMAP_BIT_U16(core_id))`.
 
-**Memory win:** 64× reduction vs per-core byte+padding storage.
+**Memory win:** 64× reduction vs per-node byte+padding storage.
 
 ### Variant 3: transient aggregation bitmap (function-local summary)
 
@@ -381,7 +381,7 @@ The BITMAP_* API is the base layer. v5.14.9 surfaced 4 distinct USE-SHAPES with 
 
 **Example:** `scaler_summary_flags` in ShardedSnapshot snap-publish loop. Aggregates 8 source booleans into 2-bit summary; 6 bits headroom for future flags.
 
-### Variant 4: per-bit per-core override on bitmap fields
+### Variant 4: per-bit per-node override on bitmap fields
 
 **Shape:** TWO uint8/16 per cfg domain on PerCoreOverrides: `<domain>_cfg_flags_override` (values) + `<domain>_cfg_flags_override_set` (mask of which bits are overridden). Branchless bit-select at resolution: `(set & values) | (~set & global)`.
 
@@ -399,13 +399,13 @@ The BITMAP_* API is the base layer. v5.14.9 surfaced 4 distinct USE-SHAPES with 
 
 ### Variant 6: per-struct decision-state bitmap (per-instance boolean cohort)
 
-**Shape:** uint8 (or wider) on a per-instance struct that holds a cohort of pure-boolean DECISION flags. Lifetime: per-struct-instance; single-writer per instance (per-core slow-path thread); no atomics within the per-instance write window. Registry-driven (`FOREACH_<CTX>_STATE_FLAG`); accessor macros `<CTX>_STATE_FLAG_{IS_SET,SET,CLR,TOGGLE}` mirror the snapshot-side `STATE_FLAG_*` ergonomics.
+**Shape:** uint8 (or wider) on a per-instance struct that holds a cohort of pure-boolean DECISION flags. Lifetime: per-struct-instance; single-writer per instance (per-node slow-path thread); no atomics within the per-instance write window. Registry-driven (`FOREACH_<CTX>_STATE_FLAG`); accessor macros `<CTX>_STATE_FLAG_{IS_SET,SET,CLR,TOGGLE}` mirror the snapshot-side `STATE_FLAG_*` ergonomics.
 
 **See:** `MemHeaders/CoreStateFlagRegistry.hpp` (canonical first reference).
 
 **Example:** `CoreContext.core_state_flags` (uint8_t; 5 bits used: DIRTY, KILL_TRIPPED, MODEL_LOAD_FAILED, CFG_DRIFT_STRICT_REFUSED, WARMUP_LOG_EMITTED; 3 bits headroom). Registry: `FOREACH_CORE_STATE_FLAG(X)` in `MemHeaders/CoreStateFlagRegistry.hpp`. Shipped v5.15.5.B.3. Memory win: 5 byte-per-flag fields + `_pad_kill[3]` alignment padding = 8 B/CoreContext × 16 cores = 128 B/EventLoopState → 1 byte × 16 cores = 16 B (saved ~112 B/EventLoopState).
 
-**Distinct from Variant 2 (per-core bitmap on parent struct):** Variant 2 stores ONE bit per core on the PARENT (e.g., `EventLoopState.partner_pending_bitmap` packs 16 cores into one uint16_t). Variant 6 stores MULTIPLE bits per instance on EACH instance (e.g., each `CoreContext` has its own `core_state_flags` uint8_t with 5+ bits used). Variant 2 packs cores; Variant 6 packs flags within a struct.
+**Distinct from Variant 2 (per-node bitmap on parent struct):** Variant 2 stores ONE bit per core on the PARENT (e.g., `EventLoopState.partner_pending_bitmap` packs 16 cores into one uint16_t). Variant 6 stores MULTIPLE bits per instance on EACH instance (e.g., each `CoreContext` has its own `core_state_flags` uint8_t with 5+ bits used). Variant 2 packs cores; Variant 6 packs flags within a struct.
 
 **Distinct from Variant 1 (engine-wide cfg-flag bitmap):** Variant 1 is engine-wide cfg (cfg-flag toggles persistent until reload). Variant 6 is per-instance runtime state (decision flags flipped during execution; e.g., DIRTY flipped per cycle).
 
@@ -414,13 +414,13 @@ The BITMAP_* API is the base layer. v5.14.9 surfaced 4 distinct USE-SHAPES with 
 | Need | Variant | Doc |
 |---|---|---|
 | Engine-wide cfg-flag toggles | 1 | `heterogeneous-registry-pattern.md` |
-| Per-core boolean state | 2 | `partner-core-bitmap-pattern.md` |
+| Per-node boolean state | 2 | `partner-core-bitmap-pattern.md` |
 | Function-local boolean aggregation | 3 | `transient-aggregation-bitmap-pattern.md` |
-| Per-core override on bitmap field | 4 | `per-bit-per-core-override-pattern.md` |
+| Per-node override on bitmap field | 4 | `per-bit-per-core-override-pattern.md` |
 | Registry parsed/emitted field presence | 5 | `x-macro-registry-with-presence-dispatch.md` |
 | Per-struct decision-state cohort (multi-bit per instance) | 6 | `MemHeaders/CoreStateFlagRegistry.hpp` (canonical first reference) |
 
-All variants use BITMAP_* primitives at the read/write sites. The differences are in SHAPE (one bitmap field on what struct? function-local? per-domain?) and LIFETIME (transient / persistent / per-core / engine-wide).
+All variants use BITMAP_* primitives at the read/write sites. The differences are in SHAPE (one bitmap field on what struct? function-local? per-domain?) and LIFETIME (transient / persistent / per-node / engine-wide).
 
 ---
 

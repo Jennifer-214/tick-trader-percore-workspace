@@ -115,7 +115,7 @@ Before designing the tuple, list every consumer + what it needs:
 | AUTOPOPULATE | NAME (bit position) |
 | GUI field_defs[] | NAME, legacy_field, display_label, section, doc |
 | engine.cfg.example | legacy_field, doc |
-| Per-core override declaration | NAME (bit position) |
+| Per-node override declaration | NAME (bit position) |
 | Drift check | NAME, legacy_field, doc |
 
 Union of needs: NAME, legacy_field, display_label, section, doc. → 5-col tuple.
@@ -261,7 +261,7 @@ static const FieldDef field_defs[] = {
 
 | Registry | Consumers using 5-col |
 |---|---|
-| FOREACH_LIFECYCLE_CFG_FLAG | enum, MASK, AUTOPOPULATE, parser, GUI, cfg.example, per-core override |
+| FOREACH_LIFECYCLE_CFG_FLAG | enum, MASK, AUTOPOPULATE, parser, GUI, cfg.example, per-node override |
 | FOREACH_GATE_CFG_FLAG | (same 7 consumers) |
 | FOREACH_ML_CFG_FLAG | (same 7) + stamp-binding (Y3 dispatch) |
 | FOREACH_RISK_CFG_FLAG | (same 7) |
@@ -276,7 +276,7 @@ GUI consumer: `GUI/SettingsPanel.hpp` deleted 14 manual entries; replaced with 5
 - `FOREACH_FEATURE` (v5.14.9.E): currently 7-col tuple (NAME + 6 columns); validates the principle.
 - `FOREACH_STAMP_BOUND_CFG` / `FOREACH_STAMP_BOUND_MODEL_CONST` (v5.14.8): 8-col / 9-col tuples; similar principle for stamp-body fields.
 - `FOREACH_FAILURE_MODE` (v5.14.8.B): 5-col with per-entry storage_class column.
-- **`FOREACH_CFG_FIELD` (v5.15.5.F.4 — universal cfg field registry; ~12-col tuple, largest Option D application to date):** consumers include parser, save/load, GUI Settings tab render, per-core override emission, drift check (via derived filter — `wire-format-byte-preservation-discipline.md`), `cfg.example` auto-gen, categorical applicability filtering (per `categorical-tag-applicability-pattern.md`), `lives_in_struct` parser routing across multiple cfg files (engine.cfg + backtest.cfg + controller.cfg + secrets.cfg + training cfg). Demonstrates Option D scaling to 213+ entries × 8+ consumers with no per-consumer manual lists. See `universal-cfg-field-registry-pattern.md`.
+- **`FOREACH_CFG_FIELD` (v5.15.5.F.4 — universal cfg field registry; ~12-col tuple, largest Option D application to date):** consumers include parser, save/load, GUI Settings tab render, per-node override emission, drift check (via derived filter — `wire-format-byte-preservation-discipline.md`), `cfg.example` auto-gen, categorical applicability filtering (per `categorical-tag-applicability-pattern.md`), `lives_in_struct` parser routing across multiple cfg files (engine.cfg + backtest.cfg + controller.cfg + secrets.cfg + training cfg). Demonstrates Option D scaling to 213+ entries × 8+ consumers with no per-consumer manual lists. See `universal-cfg-field-registry-pattern.md`.
 - Future: any registry with ≥3 consumers should default to Option D from the start.
 
 ---

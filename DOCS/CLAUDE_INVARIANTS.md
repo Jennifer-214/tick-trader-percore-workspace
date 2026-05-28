@@ -192,7 +192,7 @@ Single-writer per `state.cores[c].slow_state`:
 - **Per-cadence fields** (rolling stats, regime_ror, cumdelta, tick_rate,
   flow, large_trade, book_imb_history, spread_state):
   - `centralized`: producer iterates c=0..N via `EventLoop_UpdateRollingStateAllCores`.
-  - `per_core_slow`: per-core slow-path c writes its OWN slow_state via
+  - `per_core_slow`: per-node slow-path c writes its OWN slow_state via
     `EventLoop_UpdateRollingStateOneCore(state, c, ...)`.
   - backtest (single-thread): same helper, linear iteration.
 
@@ -209,7 +209,7 @@ v5.1.2. Reading via `state.cores[c].slow_state` is the only correct path.
 ## Lifecycle Bitmap Single-Writer (v5.0.3)
 
 `TUISharedState::paused_engines_mask` (uint16_t) controls per-engine
-slow-path pausing. GUI is sole writer per bit; per-core slow-path c is
+slow-path pausing. GUI is sole writer per bit; per-node slow-path c is
 single-reader of bit c only. No atomic ops needed beyond the volatile
 load. Slow-path checks at TOP of loop (before reset-paper park + cadence
 yield), sets `sp_state=3`, increments `sp_yield_count`, yields. Hot-path
@@ -238,7 +238,7 @@ GUI): ROLLING, REBUILD, PUSH, TIME_EXIT, TRAIL_SL. Bracket cost
 
 **OMS drainer** — `EngineSharded.hpp:drain_with_submit` maps event → slot via `Sharded_LegSlot(core_id, leg, partial_exit_enabled)`. Entry: split `intended_qty` by `cfg.partial_exit_pct` (A=`partial_pct`, B=`1-partial_pct`). Exit: read qty from leg's `portfolio.positions[slot].quantity`. `core_id` param to `OrderManager_Submit` is actual portfolio slot; `event.leg` propagates to `Order::leg`.
 
-Per-core counters (`last_entry_tick`, `last_entry_price`, `active_prediction`): updated only on **leg A** entry events (one trade = one stamp).
+Per-node counters (`last_entry_tick`, `last_entry_price`, `active_prediction`): updated only on **leg A** entry events (one trade = one stamp).
 
 `tp2_mult` defensive default: when 0 or `tp_pct=0`, `tp_pct_b = tp_pct` (effective no-op). Default cfg = 2.0.
 

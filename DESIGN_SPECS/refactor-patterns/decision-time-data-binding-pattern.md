@@ -28,7 +28,7 @@ applies_at_skills: []
 
 ## Problem statement
 
-Per-instance configuration values (per-core fee_rate, per-symbol slippage, per-horizon ML threshold, etc.) need to flow from cfg into per-fill / per-event / per-tick code paths. The naïve approach is to cache cfg values as scalar fields on subsystem state at boot, then read those scalars per fill / per event:
+Per-instance configuration values (per-node fee_rate, per-symbol slippage, per-horizon ML threshold, etc.) need to flow from cfg into per-fill / per-event / per-tick code paths. The naïve approach is to cache cfg values as scalar fields on subsystem state at boot, then read those scalars per fill / per event:
 
 ```cpp
 // FORBIDDEN — Class 27 anti-shape
@@ -128,7 +128,7 @@ OrderManager_SyncFromCfg(oms, cfg);  // populates from cfg.cores[c]
 
 - ✓ Fixes the immediate Class 27 instance for OMS fee_rate
 - ✗ Doesn't eliminate the CLASS — same shape needed for slippage_pct + ConfidenceScorer + etc.
-- ✗ Cache footprint grows (per-core arrays on every affected subsystem)
+- ✗ Cache footprint grows (per-node arrays on every affected subsystem)
 - ✗ Maintains a mirror — Class 18 adjacent (mirror-incomplete risk if cfg changes)
 - Verdict: tactical fix, not class closure
 
@@ -324,7 +324,7 @@ Codified in `DOCS/DESIGN_PHILOSOPHY.md` § 11 sub-section "Framework-selection c
 
 `DrainPostFillOneCore` was RECOMPUTING `exit_fee = exit_notional * cfg_lookup(fee_rate_maker_or_taker)` even though `HandleFill SELL` had ALREADY computed the authoritative `exit_fee` from `o->pre_resolved.fee_rate`. The recompute-from-cfg path loses authority over edge cases:
 
-- **Per-core variation**: post-Class 27 closure, cfg has per-core fee_rate. Recompute-from-cfg path got wrong fee for cross-core fills.
+- **Per-node variation**: post-Class 27 closure, cfg has per-node fee_rate. Recompute-from-cfg path got wrong fee for cross-core fills.
 - **Hot-swap timing**: if cfg reloads mid-trade (future hot-swap), recompute uses NEW cfg rate for OLD trade's accounting.
 - **Authority duplication**: 3-place compute (HandleFill BUY, HandleFill SELL, DrainPostFill) → drift risk.
 
@@ -357,12 +357,12 @@ This works for SCALAR cfg values that the in-flight object can carry: `effective
 Pattern 4 does NOT apply when the per-instance cfg value is a **dispatch-state enum** that selects a DIFFERENT consumer fn — e.g., `cfg.cores[c].bandit_algorithm` selects which bandit algorithm runs for core c's reward attribution. The bandit-algorithm choice happens BEFORE any in-flight Order is created (at slow-path-rebuild time when ML_BuildParameters runs); no Order to pre-resolve onto. The dispatch happens at reward-attribution time on the slow path with `cfg.cores[c].bandit_algorithm` in scope.
 
 The right shape for dispatch-state enums:
-- Cfg value lives in `FOREACH_PER_CORE_CFG_FIELD` per `cfg-scope-discipline.md` default-per-core rule
+- Cfg value lives in `FOREACH_PER_CORE_CFG_FIELD` per `cfg-scope-discipline.md` default-per-node rule
 - Consumer reads `core_cfg->bandit_algorithm` via single-param `const PerCoreCfg<F>*` sig (Class 25 prevention)
 - Dispatch via Pattern 1 fn-pointer table indexed by the enum value (per `branchless-dispatch-discipline.md`)
 - For multi-state asymmetric dispatch, compose with `multi-state-dispatch-with-per-state-update-metadata.md` (auto-derived dispatch table from row metadata)
 
-So: Pattern 4 for SCALAR per-instance values that flow forward with an in-flight object; Pattern 1 + multi-state-dispatch + cfg-scope-discipline for DISPATCH-STATE enums that select consumer behavior at slow-path-rebuild time. Distinct shapes; both branchless; both per-core via direct registration (no override mechanism).
+So: Pattern 4 for SCALAR per-instance values that flow forward with an in-flight object; Pattern 1 + multi-state-dispatch + cfg-scope-discipline for DISPATCH-STATE enums that select consumer behavior at slow-path-rebuild time. Distinct shapes; both branchless; both per-node via direct registration (no override mechanism).
 
 ---
 

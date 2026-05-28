@@ -157,7 +157,7 @@ inline constexpr double g_drift_custom_eps[] = {
 
 ### Sidecar registry declaration
 
-**Note on array shape (per C4 decision at `.F.4d` ship; see Option D above):** the `.F.4d` first canonical uses SPLIT sidecars per registry scope (`g_global_drift_overrides[FIELD_IDX_GLOBAL_END]` + `g_per_core_drift_overrides[FIELD_IDX_PER_CORE_END]`) because the cfg registry is split into global + per-core at `.F.4c`. Pedagogical code blocks below show a singular `g_drift_overrides[FIELD_IDX_END]` form for teaching clarity; production code should split per Option D.
+**Note on array shape (per C4 decision at `.F.4d` ship; see Option D above):** the `.F.4d` first canonical uses SPLIT sidecars per registry scope (`g_global_drift_overrides[FIELD_IDX_GLOBAL_END]` + `g_per_core_drift_overrides[FIELD_IDX_PER_CORE_END]`) because the cfg registry is split into global + per-node at `.F.4c`. Pedagogical code blocks below show a singular `g_drift_overrides[FIELD_IDX_END]` form for teaching clarity; production code should split per Option D.
 
 ```cpp
 // CoreFrameworks/CfgFieldDriftOverride.hpp

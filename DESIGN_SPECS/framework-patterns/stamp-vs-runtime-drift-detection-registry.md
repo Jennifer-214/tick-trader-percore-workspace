@@ -247,7 +247,7 @@ Both are needed for the train-serve parity surface to be fully load-bearing.
 
 - `FOREACH_SCALER_DRIFT_CHECK` — scaler binding integrity checks (currently 1 entry in ArchFieldDrift; could expand)
 - `FOREACH_BUILD_DRIFT_CHECK` — extends cross-binary checks to git-sha / dependency-version drift
-- `FOREACH_THREAD_DRIFT_CHECK` — per-core SCHED_FIFO / isolcpus consistency at boot
+- `FOREACH_THREAD_DRIFT_CHECK` — per-node SCHED_FIFO / isolcpus consistency at boot
 
 ---
 

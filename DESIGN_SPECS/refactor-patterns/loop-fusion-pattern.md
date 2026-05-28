@@ -214,7 +214,7 @@ if (state->registered_count > 0) {
 
 The pattern generalizes — any per-iteration workload with multiple consumers of the same data:
 
-- `EngineSharded.hpp` slow-path body — currently `EventLoop_UpdateRollingStateOneCore` + `RebuildOneCore` + `TimeExitOneCore` + `TrailingSLRatchetOneCore` are 4 separate per-core passes inside the slow-path tick. Each pulls slow_state + cores[c] into cache. Fusable IF the inter-pass data dependencies (rolling state writes → regime read → strategy dispatch → trail SL trail) can be re-checked for ordering.
+- `EngineSharded.hpp` slow-path body — currently `EventLoop_UpdateRollingStateOneCore` + `RebuildOneCore` + `TimeExitOneCore` + `TrailingSLRatchetOneCore` are 4 separate per-node passes inside the slow-path tick. Each pulls slow_state + cores[c] into cache. Fusable IF the inter-pass data dependencies (rolling state writes → regime read → strategy dispatch → trail SL trail) can be re-checked for ordering.
 - `Backtest/BacktestEngine.hpp` walk-forward per-fold loops (less critical; runs at startup, not periodic)
 - `ML_Headers/CoreModelZoo.hpp` ensemble-aware path's per-horizon walks (only relevant if multiple consumers of per-horizon data emerge)
 
@@ -237,7 +237,7 @@ The pattern generalizes — any per-iteration workload with multiple consumers o
 - One loop's body materially depends on a SHARED COMPUTATION COMPLETED across all `i` (e.g., a sum that's needed mid-walk — keep the separate pre-pass)
 - Loops use DIFFERENT iteration counts (e.g., Loop A iterates 0..16, Loop B iterates 0..N where N is computed mid-walk). Fusion would require careful gating; may not be worth the complexity.
 - The merged body would exceed reasonable readability (>500 LOC of body code accumulated). Consider EXTRACTING the consolidation work into a helper function instead.
-- One-shot / boot-only loops where bandwidth doesn't matter (e.g., struct field init at engine boot — `EventLoopState_Init` already has separate per-core init loops but they run ONCE per program lifetime, so fusion's bandwidth win is irrelevant).
+- One-shot / boot-only loops where bandwidth doesn't matter (e.g., struct field init at engine boot — `EventLoopState_Init` already has separate per-node init loops but they run ONCE per program lifetime, so fusion's bandwidth win is irrelevant).
 
 ### Cost:
 - ~30-50 LOC reshuffling per pair of fused loops (hoisting declarations + merging bodies + relocating post-loop computations)
@@ -287,7 +287,7 @@ Use the `print_layout_fingerprint()` style probe to confirm output fields are by
 
 ### Cross-thread cache invalidation interaction
 
-When the fused loop writes to `snap->per_core[i].state_flags` (single-writer per i), and a different thread (GUI) reads the same cache line at a different cadence, false sharing is a concern. `ND1` cluster isolation pattern + `alignas(64)` per-core fence boundaries on PerCoreSnap mitigate this — but verify the layout still places `state_flags` on a line that's NOT shared with cross-thread fields. The per-snapshot-cluster-layout-pattern.md cluster boundaries handle this for the .B.8 case.
+When the fused loop writes to `snap->per_core[i].state_flags` (single-writer per i), and a different thread (GUI) reads the same cache line at a different cadence, false sharing is a concern. `ND1` cluster isolation pattern + `alignas(64)` per-node fence boundaries on PerCoreSnap mitigate this — but verify the layout still places `state_flags` on a line that's NOT shared with cross-thread fields. The per-snapshot-cluster-layout-pattern.md cluster boundaries handle this for the .B.8 case.
 
 ### Compiler unroll interaction
 
@@ -308,7 +308,7 @@ For developers new to bandwidth-bound performance work:
 
 The trap: DRAM bandwidth is shared. A workload that burns 26 MB/s ON ITS OWN looks tiny vs the ~50 GB/s peak. But:
 - Saturated markets generate ~10-50 MB/s of WS tick traffic that the producer thread must fan out
-- Per-core slow-path rolling-window updates burn ~5-10 MB/s each × 16 cores = 80-160 MB/s
+- Per-node slow-path rolling-window updates burn ~5-10 MB/s each × 16 cores = 80-160 MB/s
 - ML inference (when active) burns another ~50-100 MB/s on feature pack + model read
 - Snapshot publisher's 26 MB/s competes with all of these
 
@@ -371,4 +371,4 @@ Different mechanism — minimize DRAM traffic by sharing pages between processes
 
 Pattern first applied explicitly in v5.15.5.B.8. The technique itself is well-established in compiler-optimization + HPC literature ("loop fusion" / "loop jamming") but this codebase had no prior named application until `.B.8` audit surface. Operator observation 2026-05-13 ("i didnt know that was a thing... we should save design specs for optimizing memory bandwidth") triggered codification.
 
-Re-evaluate when 2nd or 3rd application surfaces (likely candidate: slow-path body's 4 per-core passes if the inter-pass dependencies can be re-checked). Update reference table with each new application + cross-reference any new memory-bandwidth patterns discovered.
+Re-evaluate when 2nd or 3rd application surfaces (likely candidate: slow-path body's 4 per-node passes if the inter-pass dependencies can be re-checked). Update reference table with each new application + cross-reference any new memory-bandwidth patterns discovered.

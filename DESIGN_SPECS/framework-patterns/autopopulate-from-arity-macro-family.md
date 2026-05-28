@@ -257,7 +257,7 @@ All called from `ControllerConfig.hpp:1316-1343` after parser locals are populat
 
 ### Related: SLOW_PATH_GATE arity variants
 
-`SlowPathGateRegistry.hpp:209-218` defines `_PER_CORE` and `_ENGINE_WIDE` variants — same arity-family idea but axis = scope (per-core vs engine-wide) instead of arg count. Same principle: caller picks the right variant based on their context.
+`SlowPathGateRegistry.hpp:209-218` defines `_PER_CORE` and `_ENGINE_WIDE` variants — same arity-family idea but axis = scope (per-node vs engine-wide) instead of arg count. Same principle: caller picks the right variant based on their context.
 
 ---
 

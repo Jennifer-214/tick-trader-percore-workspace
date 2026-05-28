@@ -124,7 +124,7 @@ The codified scope taxonomy below addresses all four issues with 5 named scope s
 
 **When to use:**
 - Pre-coding: understand the FULL surface of a value before changing it (avoids Class 18 mirror-incomplete after edits)
-- Post-coding: verify ALL sites updated when a value's semantics changed (e.g., after migrating a cfg field to per-core)
+- Post-coding: verify ALL sites updated when a value's semantics changed (e.g., after migrating a cfg field to per-node)
 - Cohort discovery: find all sites that touch a value family (e.g., `fee_rate_*` cohort)
 - Debugging: trace where data was written, where it was read, identify mismatches
 - Class-27/Class-28 close verification: confirm all sites migrated; no stragglers

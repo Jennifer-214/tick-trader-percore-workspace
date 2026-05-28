@@ -194,11 +194,11 @@ check("<NAME> popcount", actual == expected);
 
 | # | Composed mask | Composition | Lines |
 |---|---|---|---|
-| 1 | `g_global_cfg_render_mask` + `g_per_core_cfg_render_mask` | `~(is_boot_only_mask \| hidden_by_default_mask)` | global at `:1167-1179`; per-core at `:1214-1226` |
-| 2 | `g_global_cfg_save_mask` + `g_per_core_cfg_save_mask` | `~has_side_effect_mask` | global at `:1181-1193`; per-core at `:1228-1240` |
-| 3 | `g_global_cfg_cli_explain_mask` + `g_per_core_cfg_cli_explain_mask` | `~(has_side_effect_mask \| hidden_by_default_mask)` | global at `:1197-1210`; per-core at `:1244-1257` |
+| 1 | `g_global_cfg_render_mask` + `g_per_core_cfg_render_mask` | `~(is_boot_only_mask \| hidden_by_default_mask)` | global at `:1167-1179`; per-node at `:1214-1226` |
+| 2 | `g_global_cfg_save_mask` + `g_per_core_cfg_save_mask` | `~has_side_effect_mask` | global at `:1181-1193`; per-node at `:1228-1240` |
+| 3 | `g_global_cfg_cli_explain_mask` + `g_per_core_cfg_cli_explain_mask` | `~(has_side_effect_mask \| hidden_by_default_mask)` | global at `:1197-1210`; per-node at `:1244-1257` |
 
-Live consumer: `GUI/SettingsPanel.hpp:1100, 1136` (render mask iteration; both global + per-core walkers).
+Live consumer: `GUI/SettingsPanel.hpp:1100, 1136` (render mask iteration; both global + per-node walkers).
 
 ### Sister single-bit applications (per `metadata-bit-driven-derived-filter-framework.md`)
 
@@ -219,7 +219,7 @@ Bits past `FIELD_IDX_END` in the final word must be masked off — else `cfg_fie
 
 ### Composition must use the SAME `FIELD_IDX_END` as parent
 
-If composing single-bit masks generated against `g_global_cfg_field_descriptors[FIELD_IDX_GLOBAL_END]`, composition output must also be sized to `FIELD_IDX_GLOBAL_END`. Cross-registry composition (global + per-core) doesn't make sense — different field index spaces.
+If composing single-bit masks generated against `g_global_cfg_field_descriptors[FIELD_IDX_GLOBAL_END]`, composition output must also be sized to `FIELD_IDX_GLOBAL_END`. Cross-registry composition (global + per-node) doesn't make sense — different field index spaces.
 
 ### Composition audit checklist is process discipline
 

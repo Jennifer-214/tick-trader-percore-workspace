@@ -28,7 +28,7 @@ shape), add a new Class entry (file).
 
 Read this doc before any architectural sprint, especially anything
 that mentions "split", "shard", "decouple", "extract", "centralize",
-or "per-core". Run each Class's detection script as a pre-coding
+or "per-node". Run each Class's detection script as a pre-coding
 gate.
 
 This file was split 2026-05-18 because size exceeded ledger hard threshold (2198 lines per `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md`).
@@ -63,7 +63,7 @@ Content is now in per-class sub-files; this doc serves as INDEX.
 | 22 | Runtime cfg gating scattered in code paths (instead of registry) | cfg gating consumers | MEDIUM | `DOCS/recurring-bug-patterns/class-22-runtime-cfg-gating-scattered.md` |
 | 23 | Type-erased typed-field write via reinterpret_cast through char* offset | registry-driven typed-field access | HIGH | `DOCS/recurring-bug-patterns/class-23-type-erased-typed-field-write.md` |
 | 24 | Capability-cfg surface mismatch (ML pipeline supports it; operator can't see / configure / verify it) | ml ↔ cfg surface | HIGH | `DOCS/recurring-bug-patterns/class-24-capability-cfg-surface-mismatch.md` |
-| 25 | Scope-erosion in per-core consumer function (registry says per-core; consumer reads from wrong scope) | per-core consumer execution | HIGH | `DOCS/recurring-bug-patterns/class-25-scope-erosion-per-core-consumer.md` |
+| 25 | Scope-erosion in per-node consumer function (registry says per-node; consumer reads from wrong scope) | per-node consumer execution | HIGH | `DOCS/recurring-bug-patterns/class-25-scope-erosion-per-core-consumer.md` |
 | 26 | Global consumer reading per-core field (semantic-mismatch deletion candidate; canonical at v5.15.5.F.4d.1.B.4 v1.7.6 with 11 instances; MANDATORY structural fix) | per-core registry consumers | HIGH | `DOCS/recurring-bug-patterns/class-26-global-consumer-reading-per-core-field.md` |
 | 27 | Single-value cache flattens per-instance distinction (subsystem state mirrors cfg as a scalar) | subsystem state caches | HIGH | `DOCS/recurring-bug-patterns/class-27-single-value-cache-flattens-per-instance.md` |
 | 28 | Branchy SP/HP dispatch when branchless feasible (variance injection in determinism-prioritizing path) | SP/HP/drainer/producer dispatch | HIGH | `DOCS/recurring-bug-patterns/class-28-branchy-sp-hp-dispatch.md` |
@@ -74,8 +74,9 @@ Content is now in per-class sub-files; this doc serves as INDEX.
 | 33 | Consumer-enumeration undercount on deletion (sister to Class 14 fabricated-symbols, flipped) | plan-time + registry + deletion-cohort | HIGH | `DOCS/recurring-bug-patterns/class-33-consumer-enumeration-undercount-on-deletion.md` |
 | 34 | Forward-decl inside namespace shadows global type from `<chrono>` / standard headers | header-split + namespace + forward-decl | MEDIUM | `DOCS/recurring-bug-patterns/class-34-forward-decl-namespace-shadow.md` |
 | 35 | Block-scope statics not accessible from hoisted header functions | header-split + lambda-hoisting + block-scope | HIGH | `DOCS/recurring-bug-patterns/class-35-block-scope-statics-not-accessible-from-hoisted-fns.md` |
+| 36 | Overlapping-span substitution corruption in bulk text-rewrite tooling | ci-tooling + bulk-rename + text-substitution | HIGH | `DOCS/recurring-bug-patterns/class-36-overlapping-span-substitution-corruption.md` |
 
-Note on numbering: Classes 31 + 32 codified at workspace path 2026-05-19; Class 33 codified at workspace path 2026-05-26 at `.B.4` v1.7.5 WIP-12; Class 26 promoted to MANDATORY structural fix status at workspace path 2026-05-27 at `.B.4` v1.7.6 with recurrence_count 11 (10 NEW worked instances from 9-field GLOBAL re-categorization cohort) per pattern-codification-lifecycle.md Stage 2 Recurrence trigger (≥2-instance threshold exceeded by 5x). Classes 34 + 35 codified at workspace path 2026-05-27 at v5.15.5.F.4d.1.B.6 Phase E ship close (monolithic-header subfolder split surface — Phase B.2 + Phase B.3 worked instances). Class 32 recurrence_count incremented 4 → 5 at same ship close (EngineSharded.hpp 3,202-line mega-file structurally closed). All Class sub-files live at workspace `tick-trader-percore-workspace/DOCS/recurring-bug-patterns/class-NN-*.md` per file-size-split-discipline.md Stage 3 first canonical landed at v5.15.5.F.4d.1.B.3 2026-05-18.
+Note on numbering: Classes 31 + 32 codified at workspace path 2026-05-19; Class 33 codified at workspace path 2026-05-26 at `.B.4` v1.7.5 WIP-12; Class 26 promoted to MANDATORY structural fix status at workspace path 2026-05-27 at `.B.4` v1.7.6 with recurrence_count 11 (10 NEW worked instances from 9-field GLOBAL re-categorization cohort) per pattern-codification-lifecycle.md Stage 2 Recurrence trigger (≥2-instance threshold exceeded by 5x). Classes 34 + 35 codified at workspace path 2026-05-27 at v5.15.5.F.4d.1.B.6 Phase E ship close (monolithic-header subfolder split surface — Phase B.2 + Phase B.3 worked instances). Class 32 recurrence_count incremented 4 → 5 at same ship close (EngineSharded.hpp 3,202-line mega-file structurally closed). Class 36 codified at workspace path 2026-05-28 at v5.15.5.F.4d.1.D.1 Phase A (overlapping-span substitution corruption + file-path-rename broken-links — both caught at apply-preview/post-write verification of the doc-rename tool; forward-relevant to `.E.1` Core→Node code rename — operator directive "create a log of this bug so we never reintroduce it"). All Class sub-files live at workspace `tick-trader-percore-workspace/DOCS/recurring-bug-patterns/class-NN-*.md` per file-size-split-discipline.md Stage 3 first canonical landed at v5.15.5.F.4d.1.B.3 2026-05-18.
 
 ## Cross-reference shape
 

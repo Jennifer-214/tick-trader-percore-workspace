@@ -18,7 +18,7 @@ applies_at_skills: []
 - Sister pattern: `bitmap-flag-api.md` (often used WITHIN clusters for compact boolean state)
 - Sister pattern: `heterogeneous-registry-pattern.md` (cluster-by-domain analog for cfg fields)
 - TECH_DEBT-011 (PerCoreSnap layout discipline; substantially closed by this pattern)
-- CLAUDE.md item 4 (data-oriented design: per-core arrays SoA for cache locality)
+- CLAUDE.md item 4 (data-oriented design: per-node arrays SoA for cache locality)
 - CLAUDE.md item 12 (display↔execution invariant: snapshots are display surface)
 - CLAUDE.md item 18 (slow-path latency reduction: cluster fields by access cadence)
 

@@ -14,7 +14,7 @@
 
 5. **Backward compat** — `SHARDED_SNAPSHOT_VERSION` bump = old refused. `MODEL_FORMAT_VERSION` bump = old models fail. Saved Runs forward-compat (additions OK). Cfg additions OK, removals break user cfgs.
 
-6. **Multi-threading correctness** — atomic vs not, SPSC ring producer/consumer, slow-path/hot-path on `GateParameters` uses seqlock. Backtest output reproducible. Single-writer rules per `state.cores[c].slow_state` (see Per-Core Data-Plane Single-Writer invariant).
+6. **Multi-threading correctness** — atomic vs not, SPSC ring producer/consumer, slow-path/hot-path on `GateParameters` uses seqlock. Backtest output reproducible. Single-writer rules per `state.cores[c].slow_state` (see Per-Node Data-Plane Single-Writer invariant).
 
 7. **Test coverage** — round-trip hammer test, edge cases (cold start, full window, wraparound, zero, uninit), runs in `controller_test`. Parity verification via `parity_harness` if touching feature collection.
 
@@ -37,7 +37,7 @@
 
 - Before any plan estimated > 1 day of work
 - Before merging a feature branch back to main
-- Before any architectural change (per-core / data plane / threading topology / OMS contract)
+- Before any architectural change (per-node / data plane / threading topology / OMS contract)
 - After a PR review surfaces a concern about one of the 10 items
 
 ## When to skip

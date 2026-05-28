@@ -19,7 +19,7 @@ applies_at_skills: []
 - `pattern-codification-lifecycle.md` — canonical example of retroactive recognition + umbrella unification at 3rd canonical
 - `meta-registry-pattern-for-codebase-registry-discipline.md` — orthogonal: H15 = registries enrolled in meta-registry; this = fields enrolled in registries
 - `decision-time-data-binding-pattern.md` — sibling-array variant delegates CI discipline here (Check 8 closes Class 30 via this spec)
-- `cfg-scope-discipline.md` — per-core cfg enrollment via Check 2 delegates here
+- `cfg-scope-discipline.md` — per-node cfg enrollment via Check 2 delegates here
 - `manual-fields-inventory-pattern.md` — exemption mechanism (Section C precedent)
 - `DOCS/RECURRING_BUG_PATTERNS.md` Class 18/19/21/27/30 — the bug classes this pattern's applications close
 - CLAUDE.md item 19 (structural fix preferred when bug class can recur)
@@ -38,10 +38,10 @@ The recurring failure mode: a contributor adds a NEW field to the struct that th
 
 | Bug class | Site | Manifestation |
 |---|---|---|
-| Class 18 (mirror-incomplete) | Per-core cfg fields added without `PerCoreCfg<F>` enrollment | Per-core override silently NULL; falls back to global cfg |
-| Class 19 (hardcoded enum names in gating) | Per-core capability not consulting `applies_to_*_cat` | Strategy capability checks drift from registry truth |
+| Class 18 (mirror-incomplete) | Per-node cfg fields added without `PerCoreCfg<F>` enrollment | Per-node override silently NULL; falls back to global cfg |
+| Class 19 (hardcoded enum names in gating) | Per-node capability not consulting `applies_to_*_cat` | Strategy capability checks drift from registry truth |
 | Class 21 (cross-file cfg surface mismatch) | Cfg field in non-default cfg file without `lives_in_struct` tag | Parallel descriptor proliferation |
-| Class 27 (scalar cfg-mirror cache) | Subsystem state caches cfg as scalar → per-instance flattening | Per-core fees collapse to core 0's value |
+| Class 27 (scalar cfg-mirror cache) | Subsystem state caches cfg as scalar → per-instance flattening | Per-node fees collapse to core 0's value |
 | Class 30 (sibling array without registry enrollment) | OmsState per-slot sibling array added but not in `FOREACH_OMS_PER_SLOT_FIELD` | AUTOPOPULATE silently skips the array; latent drift |
 
 All five classes share the same root cause: **framework discipline broke at the human-vigilance layer at field-add time.** Manual review missed the registry enrollment step. The fix-class shape is identical: CI tooling that enforces struct↔registry consistency at build/CI time, with explicit-exempt mechanism for legitimately-special cases.
@@ -166,7 +166,7 @@ Apply this pattern when ALL conditions hold:
 
 1. **Subsystem has a canonical X-macro registry** (e.g., `FOREACH_PER_CORE_CFG_FIELD`, `FOREACH_OMS_PER_SLOT_FIELD`, `FOREACH_OMS_FIELD`).
 2. **Registry rows expand via AUTOPOPULATE** OR **the registry asserts a discipline shape** (e.g., "no scalar cfg-mirror caches").
-3. **Struct field shape is identifiable via regex** (e.g., `\w+\[MAX_PORTFOLIO_POSITIONS\]` per-slot array, `[Ff]ee_rate\w*` for scalar cfg-mirror anti-pattern, `core_<F>` per-core field).
+3. **Struct field shape is identifiable via regex** (e.g., `\w+\[MAX_PORTFOLIO_POSITIONS\]` per-slot array, `[Ff]ee_rate\w*` for scalar cfg-mirror anti-pattern, `core_<F>` per-node field).
 4. **Bug class exists** with ≥1 historical instance OR projected forward-risk (cohort audit finds latent instances OR pattern is being structurally closed).
 
 If criteria 1-3 hold but 4 doesn't, **defer** — premature CI checks accumulate maintenance overhead without proportional value.
@@ -254,7 +254,7 @@ Reuse-by-copy-paste over a tool template is fine; ONE monolithic tool that handl
 
 ## Canonical applications (3 at extraction time)
 
-### Application 1 — Check 2: Per-core cfg field enrollment (Shape A)
+### Application 1 — Check 2: Per-node cfg field enrollment (Shape A)
 
 **Shipped:** v5.15.5.F.4c.3 (2026-05-15)
 **Target struct:** `PerCoreCfg<F>` (in `CoreFrameworks/PerCoreCfg.hpp`)
@@ -262,8 +262,8 @@ Reuse-by-copy-paste over a tool template is fine; ONE monolithic tool that handl
 **Field shape:** explicit per-cfg field on PerCoreCfg<F>
 **Tool:** `tools/check_per_core_registry_integrity.py` (Section A logic)
 **Closes:** Class 18 (mirror-incomplete) + Class 19 (hardcoded enum names) + Class 21 (cross-file cfg surface mismatch)
-**Exemption mechanism:** none — full coverage required (all per-core cfg fields must be enrolled; no exemptions)
-**Failure mode prevented:** per-core override silently NULL when caller code reads `core_cfg->X` for a field that's in `cfg.X` but not in PerCoreCfg<F>
+**Exemption mechanism:** none — full coverage required (all per-node cfg fields must be enrolled; no exemptions)
+**Failure mode prevented:** per-node override silently NULL when caller code reads `core_cfg->X` for a field that's in `cfg.X` but not in PerCoreCfg<F>
 
 ### Application 2 — Check 7: Scalar cfg-mirror anti-pattern enforcement (Shape B)
 
@@ -329,7 +329,7 @@ Reuse-by-copy-paste over a tool template is fine; ONE monolithic tool that handl
 
 - Grepping for `FOREACH_*(X)` X-macro registry definitions
 - For each registry, identifying the target struct (usually the struct whose fields appear in registry rows)
-- Comparing struct field shape (regex over `[MAX_PORTFOLIO_POSITIONS]` arrays / per-core fields / etc.) against registry contents
+- Comparing struct field shape (regex over `[MAX_PORTFOLIO_POSITIONS]` arrays / per-node fields / etc.) against registry contents
 - Flagging cases where struct fields exist that match the shape but aren't in the registry → candidate Shape A application
 - Cross-referencing closed bug classes (Class 27 etc.) for shape patterns → candidate Shape B application
 

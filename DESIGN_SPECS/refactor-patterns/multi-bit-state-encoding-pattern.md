@@ -34,7 +34,7 @@ Examples:
 - `OrderType` — 4-8 types (BUY/SELL/LIMIT_BUY/LIMIT_SELL/CANCELED/...). Stored as `uint8_t` = 8 bits. **Information content: 3 bits.** 5 bits wasted per order.
 - `TradeEventType` — 3 states (ENTRY/EXIT/COMBINED). Stored as `uint8_t` = 8 bits. **Information content: 2 bits.**
 
-Compounded over per-core / per-slot / per-order structs, this is hundreds of bytes of waste in HOT-cluster cache lines that would otherwise hold useful data.
+Compounded over per-node / per-slot / per-order structs, this is hundreds of bytes of waste in HOT-cluster cache lines that would otherwise hold useful data.
 
 Beyond memory waste, the per-state `switch` / `if-else` dispatch pattern at consumer sites is branch-predictor-unfriendly when state varies cycle-to-cycle, and can be replaced with branchless multi-bit primitives that compile to 1-2 cycle ops.
 
@@ -101,7 +101,7 @@ Take `regime` field out of CoreContext into a top-level cross-core packed array:
 uint64_t all_cores_regimes;  // 4 cores × 2 bits + padding
 ```
 
-Rejected per CLAUDE.md item 20 — bit-packing across records breaks per-record cache locality unless cross-record scan is the dominant access pattern. For regime, per-core access dominates (each slow-path cycle reads its own core's regime), so per-record packing wins.
+Rejected per CLAUDE.md item 20 — bit-packing across records breaks per-record cache locality unless cross-record scan is the dominant access pattern. For regime, per-node access dominates (each slow-path cycle reads its own core's regime), so per-record packing wins.
 
 ---
 
@@ -319,7 +319,7 @@ __m512i slot0  = _mm512_and_si512(packed, mask);
 // slot0 now holds 64 decoded "regime" values.
 ```
 
-When the consumer iterates over a packed array (e.g., per-cycle per-core decode of all packed slots), AVX-512 collapses 16-64 sequential decodes into a single SIMD op. Combine with the AVX-512 byte-determinism discipline (CLAUDE.md item 25) for replay-safety.
+When the consumer iterates over a packed array (e.g., per-cycle per-node decode of all packed slots), AVX-512 collapses 16-64 sequential decodes into a single SIMD op. Combine with the AVX-512 byte-determinism discipline (CLAUDE.md item 25) for replay-safety.
 
 ### Cross-slot multi-state queries (one-instruction predicates)
 
@@ -610,7 +610,7 @@ Found in the FoxML_Trader_v2 codebase as of 2026-05-13:
 
 1. **`rs_current` + `rs_proposed` on CoreContext** — 4 states each (REGIME_*) → 2 bits each. Pack into single uint8_t. Savings: 7 bytes per CoreContext × 16 cores = **112 bytes per EventLoopState**.
 
-2. **`strategy_id` on CoreContext (+ per-core slow-state)** — 4-5 strategies, headroom for 8 → 3 bits. Currently uint8_t. Modest savings, but enables branchless multi-strategy dispatch in slow-path body.
+2. **`strategy_id` on CoreContext (+ per-node slow-state)** — 4-5 strategies, headroom for 8 → 3 bits. Currently uint8_t. Modest savings, but enables branchless multi-strategy dispatch in slow-path body.
 
 3. **`OrderType` in Order<F>** — 4-8 types (BUY/SELL/LIMIT_*/CANCELED/...) → 3 bits. Currently uint8_t per Order. With Portfolio<uint16_t>'s 16 slots, packing the 16 OrderTypes saves at most 14 bytes; not worth the across-record cost per item 20 unless cross-order scan is dominant.
 
@@ -706,7 +706,7 @@ sliding-window-online-statistics-pattern (CLAUDE.md item 29).
 
 **Future application candidates** (cfg field audit at `.F.4d` may surface more):
 - `RegimeClassification` in CoreContext (4 states; 2 bits)
-- `strategy_id` in per-core slow-state (5-8 strategies; 3 bits)
+- `strategy_id` in per-node slow-state (5-8 strategies; 3 bits)
 - `OrderType` in Order<F> (4-8 types; 3 bits)
 - `TradeEventType` on TradeEvent<F> (3 states; 2 bits)
 - `OrderState` on Order<F> (5 states; 3 bits)

@@ -34,7 +34,7 @@ Wire-format derived filters (consumers walking a mask to emit a canonical body f
 - **I2**: every line matches `<name>=<value>\n` pattern (consistent kv format)
 - **I3**: body contains no `,` decimal separator (Layer 2 locale-pin enforcement — `uselocale(LC_NUMERIC=C)` per-thread per `ModelInference.hpp:1697` precedent)
 - **I4**: per-row name appears EXACTLY when mask bit set (no rows silently skipped or accidentally included)
-- **I5**: per-core descriptors emit before global descriptors (canonical ordering)
+- **I5**: per-node descriptors emit before global descriptors (canonical ordering)
 
 Plus domain-specific (varies per consumer):
 - **I6**: bitmap-resident bits emit as `0`/`1` only (HMAC byte-equivalence via `(get_cfg) ? 1 : 0` ternary normalization per v5.14.9.F.2)
@@ -120,7 +120,7 @@ run_wire_format_canonical_body_invariants(ctx);
 | I2 | Every line matches `<name>=<value>\n` pattern | Per-line `=` separator check (find `\n`; verify substring up to it contains `=`) |
 | I3 | Body contains no `,` decimal separator | `memchr(body, ',', len) == nullptr` (Layer 2 locale-pin verification) |
 | I4 | Per-row name appears EXACTLY when mask bit set | Iterate mask via `CFG_FIELD_FOR_EACH_SET_BIT`; per-bit verify `desc.cfg_field_name` substring presence in body |
-| I5 | Per-core descriptors emit before global descriptors | Find first occurrence of last per-core name; find first occurrence of first global name; assert `per_core_pos < global_pos` (or both `npos` if empty body) |
+| I5 | Per-node descriptors emit before global descriptors | Find first occurrence of last per-node name; find first occurrence of first global name; assert `per_core_pos < global_pos` (or both `npos` if empty body) |
 
 ### Domain-specific invariants (consumer-provided)
 
@@ -162,7 +162,7 @@ At first-application landing (`.A` empty body when zero rows have the metadata b
 - I2: vacuously true (no lines) ✓
 - I3: empty body has no `,` ✓
 - I4: vacuously true (no rows flagged) ✓
-- I5: vacuously true (no per-core, no global names) ✓
+- I5: vacuously true (no per-node, no global names) ✓
 
 As cohort migrates at `.B`, invariants exercise non-empty body. Same helper; no changes per cohort.
 

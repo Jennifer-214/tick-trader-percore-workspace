@@ -216,7 +216,7 @@ Proposed split criteria: per-check sidecar files
 **Post-split:**
 - `CoreFrameworks/EngineSharded.hpp` — 96 total / 5 code-lines (INDEX SHIM; `#include`s the 4 sub-files; preserves external API surface)
 - `CoreFrameworks/EngineSharded/Boot.hpp` — 67 total / 12 code (signal handlers + globals + boot setup)
-- `CoreFrameworks/EngineSharded/SlowPath.hpp` — 188 total / 78 code (per-core slow-path thread body)
+- `CoreFrameworks/EngineSharded/SlowPath.hpp` — 188 total / 78 code (per-node slow-path thread body)
 - `CoreFrameworks/EngineSharded/Async.hpp` — 905 total / 460 code (drainer + fan-out + manual-close + post-fill hoisted lambdas)
 - `CoreFrameworks/EngineSharded/Run.hpp` — 2,436 total / 1,406 code (engine run loop — under 1500-line threshold per code-LOC counting methodology above)
 

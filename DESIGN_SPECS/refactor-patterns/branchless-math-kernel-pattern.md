@@ -224,7 +224,7 @@ Verified byte-equivalent to v5.14.10's variable-iter scalar Cholesky (tests pass
 
 ### v5.14.11.B.3 — RidgeBlender_UpdateOnline (AVX-512 + constant-iter)
 
-`ML_Headers/RidgeBlender.hpp::RidgeBlender_UpdateOnline`. Uses uniform mask across 8 lanes; no `if` guards inside vectorized block. Outer loop iterates `n_models` (per-core-stable; branch predictor handles).
+`ML_Headers/RidgeBlender.hpp::RidgeBlender_UpdateOnline`. Uses uniform mask across 8 lanes; no `if` guards inside vectorized block. Outer loop iterates `n_models` (per-node-stable; branch predictor handles).
 
 ### v5.14.11.B.3 — RidgeBlender_BuildCorr (single-pass + constant-iter)
 

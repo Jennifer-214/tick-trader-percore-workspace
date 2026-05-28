@@ -77,7 +77,7 @@ CI tool `check_doc_metadata.py` (queued at `.C` candidate ship) validates every 
 | `registry` | X-macro registries / FOREACH_* walks / MetaRegistry enrollment |
 | `wire-format` | HMAC-signed bodies / stamps / snapshots / RunHistory emit |
 | `ml-inference` | Model prediction / FeatureStandardizer / scaler / ConfidenceScorer / drift checks |
-| `cfg-flow` | Cfg parser → ControllerConfig → per-core override → GUI render → stamp-binding |
+| `cfg-flow` | Cfg parser → ControllerConfig → per-node override → GUI render → stamp-binding |
 | `gui-thread` | ImGui / panels / TUISnapshot / GUI publish; SDL2 / OpenGL3 |
 | `training` | Backtest / train-time / model-zoo loading / WF / Held-Out |
 | `paper-test` | Simulated trading / paper-mode boot / sandboxed live path |

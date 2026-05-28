@@ -46,7 +46,7 @@ ASYNC (separate threads)        ├─ SG_Evaluate ×2
 
 ### SPSC rings (lock-free queues)
 
-- **Producer → per-core consumer:** tick events
+- **Producer → per-node consumer:** tick events
 - **Slow → hot:** params (seqlock; see below)
 - **Hot → drainer:** TradeEvent push
 - **Drainer → slow:** post-fill events
@@ -111,9 +111,9 @@ Per CLAUDE.local.md going-forward rule "GUI ↔ HP/SP thread isolation":
 
 See `universal-registry-bitmap-dispatcher-pattern.md` § GUI ↔ engine.
 
-### Per-core data-plane single-writer
+### Per-node data-plane single-writer
 
-Each core's slow_state has SINGLE writer (the per-core slow thread). Hot thread reads via seqlock. No cross-core writes to slow_state.
+Each core's slow_state has SINGLE writer (the per-node slow thread). Hot thread reads via seqlock. No cross-core writes to slow_state.
 
 ---
 
@@ -131,7 +131,7 @@ Each core's slow_state has SINGLE writer (the per-core slow thread). Hot thread 
 
 - **Stage 1 (problem):** discipline implicit; scattered across H1-H3 / H6 / CLAUDE.md Architecture diagram
 - **Stage 2 (DESIGN_SPEC draft):** THIS DOC (2026-05-18 sketch)
-- **Stage 3+ (first canonical / cohort / promotion):** matures at `.C`/`.D` ships — codify worked examples per sub-system (BinanceCrypto WS parser / OMS drainer / per-core slow_state / etc.)
+- **Stage 3+ (first canonical / cohort / promotion):** matures at `.C`/`.D` ships — codify worked examples per sub-system (BinanceCrypto WS parser / OMS drainer / per-node slow_state / etc.)
 
 ---
 

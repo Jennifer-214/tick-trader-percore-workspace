@@ -52,7 +52,7 @@ Function returns success/failure code. No attribution buffer. Caller decides UX 
 
 Function sets thread-local global on failure. Caller reads after call.
 
-**Rejected.** errno-style breaks under nested failure scenarios. Multi-failure (multi-field drift) loses info. Thread-local imposes coordination overhead under per-core sharding.
+**Rejected.** errno-style breaks under nested failure scenarios. Multi-failure (multi-field drift) loses info. Thread-local imposes coordination overhead under per-node sharding.
 
 ### Option C — Failure-record array (multi-failure)
 

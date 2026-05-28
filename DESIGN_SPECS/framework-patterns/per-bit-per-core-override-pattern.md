@@ -9,7 +9,7 @@ sister_specs: [partner-core-bitmap-pattern.md, bitmap-flag-api.md, universal-cfg
 applies_at_skills: []
 ---
 
-# Per-bit per-core override pattern (branchless bit-select on bitmap fields)
+# Per-bit per-node override pattern (branchless bit-select on bitmap fields)
 
 **Established:** 2026-05-10 (v5.14.9.F.6 — `PER_CORE_OVERRIDE_BITMAP_DOMAINS`)
 **Status:** ACTIVE
@@ -18,13 +18,13 @@ applies_at_skills: []
 - Sister: `heterogeneous-registry-pattern.md` (DOMAIN SPLIT — overrides per-domain)
 - First application: `CoreFrameworks/ControllerConfig.hpp:211-216` (`PER_CORE_OVERRIDE_BITMAP_DOMAINS`)
 - Resolve site: `CoreFrameworks/ControllerConfig.hpp:1194-1202` (branchless bit-select)
-- CLAUDE.md item 4 (per-core data plane) + item 12 (display↔execution invariant)
+- CLAUDE.md item 4 (per-node data plane) + item 12 (display↔execution invariant)
 
 ---
 
 ## Problem statement
 
-Per-core overrides for individual cfg fields (FPN, int) work via "is-set" sentinels:
+Per-node overrides for individual cfg fields (FPN, int) work via "is-set" sentinels:
 
 ```cpp
 // One field per override:
@@ -49,7 +49,7 @@ resolved.risk_pct = (ov.risk_pct != 0) ? ov.risk_pct : global.risk_pct;
 - Cost: 336 cfg.example entries + 336 parser branches + 336 GUI fields + 336 stamp-binding entries
 
 **The cfg-surface explosion is unsustainable.** What we want:
-- Per-core override capability for ANY bit in ANY domain
+- Per-node override capability for ANY bit in ANY domain
 - Single cfg-key pattern per domain (not per-bit)
 - Branchless resolution at boot
 - Compatible with `PER_CORE_OVERRIDE_BITMAP_DOMAINS` auto-flow (`bitmap-flag-api.md` companion)
@@ -64,7 +64,7 @@ resolved.risk_pct = (ov.risk_pct != 0) ? ov.risk_pct : global.risk_pct;
 
 **Rejected** — 21 bits × 16 cores = 336 cfg fields. Doesn't scale; parser overhead; engine.cfg.example bloat.
 
-### Option B: Per-core full bitmap, all-or-nothing override
+### Option B: Per-node full bitmap, all-or-nothing override
 
 ```cpp
 struct PerCoreOverrides {
@@ -230,14 +230,14 @@ For 5 domains × 21 bits = 105 conceptual "decisions", reduced to 5 × 4 = 20 in
 
 ### Apply when:
 - Bitmap field already exists (or is being introduced) for the cfg-flag domain
-- Per-core override capability is required
+- Per-node override capability is required
 - ≥2 bits in the domain (single-bit domain doesn't justify the doubled storage)
 - Bit-level override granularity matters (operator wants to override SOME bits, inherit others)
 
 ### Skip when:
 - Single-bit domain (use simple `is_overridden` sentinel + value)
 - All-or-nothing override semantics (use Option B; cheaper)
-- No per-core override capability needed (skip the entire pattern)
+- No per-node override capability needed (skip the entire pattern)
 
 ### Cost:
 - Storage: 2 bytes per uint8_t domain × N cores. For 5 domains × 16 cores = ~150 bytes for the override fields.
@@ -308,19 +308,19 @@ The whole-mask form (`core_0_risk_cfg_flags_override = 5`) is also accepted but 
 
 ### Tests must cover the inherit path
 
-A common test bug: tests set per-core override AND global to the same value, then assert resolved matches. The test passes even if the override mechanism is broken (because inheritance still gives the right answer).
+A common test bug: tests set per-node override AND global to the same value, then assert resolved matches. The test passes even if the override mechanism is broken (because inheritance still gives the right answer).
 
-**Test pattern:** set per-core override to value DIFFERENT from global, then assert resolved == override (not == global). Verifies override path works. Then test omission case (override_set=0); assert resolved == global. Verifies inheritance path.
+**Test pattern:** set per-node override to value DIFFERENT from global, then assert resolved == override (not == global). Verifies override path works. Then test omission case (override_set=0); assert resolved == global. Verifies inheritance path.
 
 ### Compatibility with stamp-binding
 
-If a cfg flag is stamp-bound (e.g., `confidence_composite_enabled` ∈ FOREACH_STAMP_BOUND_CFG via Y3 dispatch), the STAMP captures the RESOLVED per-core value, not the global. Drift detection compares resolved-at-train vs resolved-at-serve. Per-core override is transparent to stamp-binding.
+If a cfg flag is stamp-bound (e.g., `confidence_composite_enabled` ∈ FOREACH_STAMP_BOUND_CFG via Y3 dispatch), the STAMP captures the RESOLVED per-node value, not the global. Drift detection compares resolved-at-train vs resolved-at-serve. Per-node override is transparent to stamp-binding.
 
 See `heterogeneous-registry-pattern.md` HYBRID Form 3 for the stamp-binding integration.
 
 ### Don't try to fit non-bitmap overrides here
 
-This pattern is specific to BITMAP fields. Per-core overrides for FPN (`risk_pct`) or int (`poll_interval`) fields use the simpler "non-zero is override" sentinel (see `PER_CORE_OVERRIDE_FIELDS` + `PER_CORE_OVERRIDE_INT_FIELDS`).
+This pattern is specific to BITMAP fields. Per-node overrides for FPN (`risk_pct`) or int (`poll_interval`) fields use the simpler "non-zero is override" sentinel (see `PER_CORE_OVERRIDE_FIELDS` + `PER_CORE_OVERRIDE_INT_FIELDS`).
 
 Don't mix the patterns; the registry tuple shape differs.
 
@@ -349,7 +349,7 @@ vs. interleaving all values then all sets. Either works; grouping by domain matc
 - Symptom: per-bit cfg fields like `core_N_partial_exit_enabled`, `core_N_kill_switch_enabled` explicitly declared on PerCoreOverrides
 - Symptom: per-domain override resolution with explicit per-bit branches (`if (ov.kill_switch_set) resolved |= MASK_KILL_SWITCH`)
 
-When detected → flag as `MISSED — per-bit-per-core-override-pattern`. Recommended fix: migrate to bitmap override + override_set; resolve via branchless bit-select.
+When detected → flag as `MISSED — per-bit-per-node-override-pattern`. Recommended fix: migrate to bitmap override + override_set; resolve via branchless bit-select.
 
 ---
 
@@ -357,13 +357,13 @@ When detected → flag as `MISSED — per-bit-per-core-override-pattern`. Recomm
 
 ### Atomic per-bit override
 
-Per-core overrides resolve ONCE at boot (or cfg-reload). They're not concurrent state. Atomic ops would be overhead for no win.
+Per-node overrides resolve ONCE at boot (or cfg-reload). They're not concurrent state. Atomic ops would be overhead for no win.
 
 If overrides were live-toggleable at runtime (e.g., operator changes core_0_kill_switch_enabled while engine runs), atomic would be needed. Today: cfg-reload is the trigger, not runtime mutation.
 
-### Per-core override on cross-domain composite flag
+### Per-node override on cross-domain composite flag
 
-A flag like "`risk_active`" computed as AND across multiple domain flags: per-core override for the COMPUTED flag is wrong abstraction. Override the underlying flags individually; let the AND compute fresh per core.
+A flag like "`risk_active`" computed as AND across multiple domain flags: per-node override for the COMPUTED flag is wrong abstraction. Override the underlying flags individually; let the AND compute fresh per core.
 
 ### One mega-bitmap across all domains
 
@@ -375,8 +375,8 @@ Combine all 5 domains into one uint64_t. Loses domain ownership boundaries; one 
 
 - `bitmap-flag-api.md` — BITMAP_IS_SET reads transparent to override resolution
 - `heterogeneous-registry-pattern.md` — DOMAIN SPLIT registries
-- `cfg-flag-eligibility-criteria.md` — only flags that pass criteria 1+2 can have per-core overrides
+- `cfg-flag-eligibility-criteria.md` — only flags that pass criteria 1+2 can have per-node overrides
 - FoxML_Trader_v2 `CoreFrameworks/ControllerConfig.hpp:211-216` — registry definition
 - FoxML_Trader_v2 `CoreFrameworks/ControllerConfig.hpp:1194-1202` — resolve walk
-- FoxML_Trader_v2 `CLAUDE.md` item 4 (per-core data plane)
+- FoxML_Trader_v2 `CLAUDE.md` item 4 (per-node data plane)
 - FoxML_Trader_v2 `CLAUDE.md` item 12 (display↔execution invariant)

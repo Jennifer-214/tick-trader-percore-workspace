@@ -15,7 +15,7 @@ applies_at_skills: []
 **Status:** ACTIVE
 **Cross-references:**
 - Parent: `bitmap-flag-api.md` (BITMAP_IS_SET / MASK constants)
-- Sister: `partner-core-bitmap-pattern.md` (different scope: per-core bitmap vs aggregation bitmap)
+- Sister: `partner-core-bitmap-pattern.md` (different scope: per-node bitmap vs aggregation bitmap)
 - First application: `CoreFrameworks/ShardedSnapshot.hpp:615-645` (scaler_summary_flags)
 - CLAUDE.md item 20 (bit-packed flag storage)
 - TECH_DEBT-013 (candidate 7)
@@ -199,7 +199,7 @@ Aggregates 8 source booleans (4 scaler-present checks × 4 model roles, plus 4 s
 ### Adjacent / future candidates
 
 - Boot-time validation aggregation (cfg parser errors across N keys → summary)
-- Per-snapshot health summary (multiple per-core health checks → engine-wide summary)
+- Per-snapshot health summary (multiple per-node health checks → engine-wide summary)
 - Drift detection aggregation (multiple parity check results → ship-blocking summary)
 
 Any function that needs to AGGREGATE multiple booleans before deciding what to do is a candidate.
@@ -299,7 +299,7 @@ Compiler-dependent layout; harder to OR/AND multiple flags at once; less portabl
 ## Cross-references
 
 - `bitmap-flag-api.md` — BITMAP_IS_SET / BITMAP_SET / BITMAP_ANY (the reader/writer API)
-- `partner-core-bitmap-pattern.md` — sister pattern (per-core bitmap, different lifetime)
+- `partner-core-bitmap-pattern.md` — sister pattern (per-node bitmap, different lifetime)
 - FoxML_Trader_v2 `CLAUDE.md` item 20 — bit-packed flag storage (BITMAP_* API)
 - FoxML_Trader_v2 `DOCS/TECH_DEBT.md` TECH_DEBT-013 — candidate inventory (this is candidate 7)
 - FoxML_Trader_v2 `CoreFrameworks/ShardedSnapshot.hpp:615-645` — reference implementation

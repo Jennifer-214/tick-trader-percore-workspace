@@ -104,7 +104,7 @@ arm_names each = 5 × 400 ns = 2000 ns saved per regime-switch cycle.
 
 ## Rule 2 — Tight-pack frequently-accessed-together arrays into single cache lines
 
-**Pattern.** Per-item arrays (per-arm, per-horizon, per-core) accessed
+**Pattern.** Per-item arrays (per-arm, per-horizon, per-node) accessed
 together in a slow-path loop should fit in 1 cache line. 16 floats
 (64B) is the canonical size for "8 items × 2 fields each" tight-pack.
 
@@ -410,7 +410,7 @@ When reviewing or designing a struct that's touched per cycle:
 
 | Ship | Surface | Rules applied | Savings |
 |---|---|---|---|
-| v5.15.5.B.1 | CoreContext HOT/WARM/COLD reorg + explicit alignas(64) + 5 static_assert layout locks + CoreSlowState lazy_rebuild hoist | Rules 3 + 4 + 7 (+ ND3 first explicit ref) | per-core L1 footprint 35% → 14%; lazy-rebuild gate ~100 ns/cycle cold-cache saved on ~30-50% of cycles |
+| v5.15.5.B.1 | CoreContext HOT/WARM/COLD reorg + explicit alignas(64) + 5 static_assert layout locks + CoreSlowState lazy_rebuild hoist | Rules 3 + 4 + 7 (+ ND3 first explicit ref) | per-node L1 footprint 35% → 14%; lazy-rebuild gate ~100 ns/cycle cold-cache saved on ~30-50% of cycles |
 | v5.15.5.B.2 | CoreContextDisplayMeta extraction + SlowPathTelemetry / WsHeartbeatTelemetry alignas clusters (dual X-macro registries) | Rules 1 + 3 + 4 (+ ND1 + ND2 first refs) | CoreContext 17 KB → 7 KB / slot (-58%); ~96-288 µs/sec engine-wide saved on snapshot-publisher cross-thread invalidation |
 | v5.15.5.B.3 | CoreContext.core_state_flags bitmap (5 booleans + 3-byte pad eliminated) | Rule 5 | ~112 B per EventLoopState saved + branchless multi-flag check enabled |
 | v5.15.5.B.5 | SP_SECTION + SESSION_PHASE X-macro registries + branchless SESSION_BY_HOUR[24] table | Rules 4 + 8 | 4-way data-dependent mispredict class eliminated at 3 consumer sites |
@@ -455,12 +455,12 @@ order:
 | Surface | Current concerns | Estimated savings | Effort |
 |---|---|---|---|
 | `OrderManagerState` | Slot-level data accessed per drainer-tick; verify HOT/WARM/COLD tiers; pending_orders[] cache layout | Drainer-tick latency reduction | ~2-3h |
-| `EventLoopCoreState<F>` (per-core slow state) | Touched every slow-path cycle; needs Rule 4 audit; many fields accumulated | Slow-path cycle reduction | ~2-3h |
+| `EventLoopCoreState<F>` (per-node slow state) | Touched every slow-path cycle; needs Rule 4 audit; many fields accumulated | Slow-path cycle reduction | ~2-3h |
 | `RollingStats<F>` | Slow-path-push per tick (highest-frequency slow-side code); cache-line audit critical | Per-tick slow-path | ~1-2h |
 | `FlowFeatures<F>` | Per-cycle update + read; verify tight-pack of per-window stats | Slow-path cycle | ~1-2h |
 | `ConfidenceScorer<F>` | Per-cycle confidence computation; composite-mode multi-field access | Slow-path cycle | ~1h |
 | `RegimeSignals` | Per-cycle classifier output; Rule 1 candidate (display fields?) | Slow-path read | ~30min |
-| `CoreContext<F>` | Per-core shared state; cross-component access; Rule 4 candidate | Slow-path cycle | ~2h |
+| `CoreContext<F>` | Per-node shared state; cross-component access; Rule 4 candidate | Slow-path cycle | ~2h |
 
 Each surface gets the 8-rule checklist below (or a subset for cold
 structs).

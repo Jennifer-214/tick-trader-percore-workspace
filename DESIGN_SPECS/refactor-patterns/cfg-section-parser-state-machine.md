@@ -19,7 +19,7 @@ applies_at_skills: []
 
 ## Summary
 
-When a cfg file holds N per-instance registries' worth of rows (per-core trading config + per-symbol cfg + per-strategy cfg + ...) plus a global section, parse via an INI-style `[section name]` state machine. Lines before any section header parse against the global registry; lines inside `[<axis> <instance>]` headers parse against the per-instance registry of that axis. Unknown keys produce explicit ERRORS with migration hints (no silent fallback). The state machine is reusable across all per-instance axes — adding a new axis = 1 new section-header recognizer + parse-state value.
+When a cfg file holds N per-instance registries' worth of rows (per-node trading config + per-symbol cfg + per-strategy cfg + ...) plus a global section, parse via an INI-style `[section name]` state machine. Lines before any section header parse against the global registry; lines inside `[<axis> <instance>]` headers parse against the per-instance registry of that axis. Unknown keys produce explicit ERRORS with migration hints (no silent fallback). The state machine is reusable across all per-instance axes — adding a new axis = 1 new section-header recognizer + parse-state value.
 
 ## When to apply
 
@@ -189,7 +189,7 @@ take_profit_pct=2.5
 ```
 
 Error scenarios:
-- `take_profit_pct=3.0` BEFORE any `[core N]` header → ERROR with migration hint "take_profit_pct moved to per-core; place under [core 0] section. See CFG_SCOPE_MIGRATION_GUIDE.md."
+- `take_profit_pct=3.0` BEFORE any `[core N]` header → ERROR with migration hint "take_profit_pct moved to per-node; place under [core 0] section. See CFG_SCOPE_MIGRATION_GUIDE.md."
 - `num_execution_cores=4` INSIDE a `[core 0]` section → ERROR "num_execution_cores is global; place at top of file before any section header."
 - `[core 5]` with `num_execution_cores=4` → WARN + skip section ("core 5 cfg present but engine runs 4 cores; ignoring").
 - Duplicate `[core 0]` → ERROR ("section [core 0] already defined").

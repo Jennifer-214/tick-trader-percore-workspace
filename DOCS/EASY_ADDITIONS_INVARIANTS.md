@@ -369,7 +369,7 @@ BIT_FLAG when the next ship touches their surface:
 | `PerCoreSnap` non-failure state flags (`ml_scaler_present`, `ensemble_active`, etc.) | 3-5 | merge into `failure_flags` OR new `state_flags` uint16_t | TECH_DEBT-013; trigger: next ship touching PerCoreSnap |
 | `FOREACH_FEATURE.enabled` (40 features) | 40 byte-per-flag | uint64_t `enabled_bitmap` + `IS_FEATURE_ENABLED(i)` macro | TECH_DEBT-013; trigger: next FeatureRegistry storage refactor |
 | `OrderManager.partial_exit_enabled` + `ExecutionCore.lat_enabled` | 2 | engine-wide uint16_t `cfg_flags` | TECH_DEBT-013; trigger: next ship adding 3+ engine-wide flags |
-| `ControllerEventLoop.partner_pending_active` | 1 per-core | merge into per-core flags bitmap | TECH_DEBT-013; trigger: next ship adding 2+ per-core flags |
+| `ControllerEventLoop.partner_pending_active` | 1 per-node | merge into per-node flags bitmap | TECH_DEBT-013; trigger: next ship adding 2+ per-node flags |
 | `ShardedSnapshot.any_scaler_present` + `any_scaler_failed` | 2 | snapshot summary bitmap | TECH_DEBT-013; trigger: next ship touching snapshot serialization |
 | `Order.is_maker` / `is_buyer_maker` / `Tick.is_buyer_maker` | per-record | Standalone — KEEP byte-per-flag | Per-record storage; bit-packing across records adds indirection cost > savings |
 | `FeatureStandardizer.has_winsor_bounds` | 1 | could fold into scaler header bitmap | Low-priority (single flag); revisit when 3+ scaler-side flags exist |

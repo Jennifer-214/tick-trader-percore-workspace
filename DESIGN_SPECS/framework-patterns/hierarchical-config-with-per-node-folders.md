@@ -85,7 +85,7 @@ int ParseCfg_NodeFolder(const char* node_dir, NodeConfig<F>* out) {
 
 ### No template inheritance (per operator clarification)
 
-Original design considered strategy templates (e.g., `strategies/momentum.template.cfg`) with per-core overrides. Operator clarified: each per-node fully self-contained; no inheritance.
+Original design considered strategy templates (e.g., `strategies/momentum.template.cfg`) with per-node overrides. Operator clarified: each per-node fully self-contained; no inheritance.
 
 **Rationale:** templates introduce magic resolution; per-node deviation from "template default" surprising. Self-contained per-node is operator-clearer.
 

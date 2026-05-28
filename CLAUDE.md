@@ -282,101 +282,32 @@ Full discussion: `DOCS/DESIGN_PHILOSOPHY.md` § 2 + `DOCS/STRATEGY_AND_CODING_RU
 - **Preserve user's voice in existing comments when editing**
 - New cfg field of recognized Kind = 1 row in `FOREACH_CFG_FIELD` (`CoreFrameworks/CfgFieldRegistry.hpp`); parser + GUI render + tooltip + per-core override emission auto-flow
 
-### Test file size discipline (added v5.11.35)
+### File-size split discipline
 
-`tests/controller_test.cpp` is currently ~25k lines + 3118 tests.
-That's too big — slow to compile, hard to navigate, easy to break
-during refactors. The build system already supports multiple test
-binaries (`depth_recorder_test`, `parity_harness` are precedents).
-
-**Rule:** any test file > 5k lines OR > 100 test sections must be
-split BEFORE adding more tests. Categories should be domain-aligned:
-`controller_test_engine.cpp` / `_features.cpp` / `_stamps.cpp` /
-`_ml.cpp` / `_misc.cpp`. Helpers extract into `tests/test_common.hpp`.
-
-Test split is queued as a focused effort (3118 tests at risk warrants
-rollback anchor + dedicated ship); tracking lives in TECH_DEBT (sister
-TECH_DEBT-029 covers the source-side analog for header/non-test files;
-TECH_DEBT-114 tracks this specific test split).
-
-### File-size split discipline (generalized; added 2026-05-18; RESCOPED 2026-05-27)
-
-**RESCOPED 2026-05-27 per AI-driven solo workflow (operator C1 directive):** discipline applies SELECTIVELY. **Test 5K rule RETAINED** for test reliability concern (test infrastructure genuinely benefits from split). **Source/header/plan/SKILL/DESIGN_SPECS thresholds become guidelines, not mandates** — Claude 1M context handles 6K-line files trivially; no human code-review cognitive load concern in AI-driven solo workflow; compile time unchanged for header-only template code. The `.B.6` subfolder pattern (first canonical at `file-size-split-discipline.md` v1.4) stays Stage 3 frozen for any future cohort use (if human contributors join project OR AI tooling changes meaningfully). See CLAUDE.local.md going-forward rule + `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md` v1.4 § "AI-driven workflow scoping" for full rationale.
-
-Test file size rule above generalizes to ALL files. Thresholds per
-file type at `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md`:
-
-| File type | Hard threshold |
-|---|---|
-| Always-loaded docs (CLAUDE.md / CLAUDE.local.md / MEMORY.md) | 600 lines |
-| Tests | 5000 lines / 100 sections (above) |
-| Source headers (`.hpp`) | 1500 lines (TECH_DEBT-029 sister) |
-| Source bodies (`.cpp`) | 2000 lines |
-| Ledger files (TECH_DEBT / RBP / PARITY / FEATURE / HOT_PATH / LANDMINES) | 2000 lines |
-| SKILL.md | 1500 lines |
-| DESIGN_SPECS | 1200 lines |
-| Plan body docs | 1200 lines (use `<plan-name>-examples.md` sidecar) |
-| Memory rules | 500 lines (terseness expected) |
-
-**Split + index pattern:** at threshold, split into sub-files; convert
-original to INDEX file with `splits_into:` frontmatter; sub-files get
-`parent_index:` frontmatter; `rg`-sweep all external cross-refs to
-point at INDEX (not sub-files).
-
-Specific mega-file splits queued: TECH_DEBT-116 (TECH_DEBT.md @ 2013
-lines) / TECH_DEBT-117 (RECURRING_BUG_PATTERNS.md @ 2198 lines) /
-TECH_DEBT-118 (/readiness SKILL.md @ 1674 lines). Each warrants
-dedicated sub-ship with rollback anchor + sed-based cross-ref sweep.
+Per-file-type thresholds + AI-driven workflow scoping rationale at `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md`. Test 5K-line rule RETAINED (test-reliability concern; split test files via `controller_test_<domain>.cpp` per `tests/test_common.hpp` helper extraction); source / header / plan / SKILL / DESIGN_SPECS thresholds RESCOPED to guidelines per AI-driven solo workflow (`.B.7` C1 directive; AI 1M context handles 6K-line files trivially). Always-loaded docs (CLAUDE.md / CLAUDE.local.md / MEMORY.md) hard threshold = 600 lines. Specific file-size TECH_DEBT entries (-029/-114/-116/-117/-118) closed `wontfix-per-ai-workflow` at `.B.7` C1; per-class subfolder pattern Stage 3 frozen for future re-activation per `file-size-split-discipline.md` v1.4 § "AI-driven workflow scoping".
 
 ## How to find anything (search guide)
 
-Doc system is institutional memory + type-tag driven + greppable. Retrieval recipes below. Tag vocabulary lives at `DESIGN_SPECS/meta-disciplines/doc-tag-vocabulary.md` (CONCERN + SURFACE + LIFECYCLE axes); frontmatter discipline at `DESIGN_SPECS/meta-disciplines/doc-frontmatter-convention.md`.
+Doc system is institutional memory + type-tag driven + greppable. Top common queries below; full recipe catalog at `DESIGN_SPECS/meta-disciplines/doc-find-recipes.md` (queued via `/find` skill at `.C` candidate; manual `rg` for now). Tag vocabulary: `DESIGN_SPECS/meta-disciplines/doc-tag-vocabulary.md`. Frontmatter convention: `DESIGN_SPECS/meta-disciplines/doc-frontmatter-convention.md`.
 
-### By type
-```
-rg "^type: refactor-pattern" DESIGN_SPECS/    # refactor patterns
-rg "^type: framework-pattern" DESIGN_SPECS/   # framework infrastructure
-rg "^type: audit-methodology" DESIGN_SPECS/   # audit shapes (M1-Mn family)
-rg "^type: data-discipline" DESIGN_SPECS/     # DOD / cache / alignment specs
-rg "^type: concurrency-pattern" DESIGN_SPECS/ # thread / sync / SPSC / seqlock
-rg "^type: wire-format-pattern" DESIGN_SPECS/ # byte preservation / HMAC / locale
-rg "^type: meta-discipline" DESIGN_SPECS/     # audit-methodology-gap (M-codes)
-rg "^type: plan-template" DESIGN_SPECS/       # MASTER / sub-plan / handoff / postmortem
-rg "^type: ledger-template" DESIGN_SPECS/     # TECH_DEBT / PARITY / FEATURE entry shape
+**Top-3 most common queries:**
+
+```bash
+rg "^type: <doc-type>" DESIGN_SPECS/    # types: refactor-pattern, framework-pattern, meta-discipline,
+                                          # data-discipline, concurrency-pattern, wire-format-pattern,
+                                          # plan-template, ledger-template, audit-methodology
+rg "\bClass 18\b"                       # catalog ID (use \b for short IDs); also H13 / M4 / TECH_DEBT-112 / PARITY-009
+rg "^stage: 3-first-canonical" DESIGN_SPECS/   # promotion-readiness; stage: 2-draft / 4-cohort / 5-claude-md / 6-cadence-locked
 ```
 
-### By tag (concern axis — what doc is ABOUT)
-```
-rg "^tags:.*\bframework-discipline\b"
-rg "^tags:.*\baudit-methodology\b"
-rg "^tags:.*\bdata-oriented-design\b"
-rg "^tags:.*\bconcurrency\b"
-rg "^tags:.*\bwire-format\b"
-rg "^tags:.*\bdoc-discipline\b"
+**Tag/surface filters (when type filter too broad):**
+
+```bash
+rg "^tags:.*\b<concern>\b"              # concern axis: framework-discipline / audit-methodology / data-oriented-design / concurrency / wire-format / doc-discipline
+rg "^surface:.*\b<surface>\b"           # surface axis: hot-path / slow-path / oms-drainer / registry / ml-inference / live-trading / boot-time
 ```
 
-### By surface (what doc TOUCHES)
-```
-rg "^surface:.*\bhot-path\b"        # ExecutionCore / BG_Evaluate / SG_Evaluate
-rg "^surface:.*\bslow-path\b"       # slow_state / Regime / RebuildOneCore
-rg "^surface:.*\boms-drainer\b"     # OMS_DrainSubmit / OrderManager_Tick
-rg "^surface:.*\bregistry\b"        # X-macro registries / FOREACH_*
-rg "^surface:.*\bml-inference\b"    # model predict / scaler / ConfidenceScorer
-rg "^surface:.*\bwire-format\b"     # HMAC bodies / stamps / snapshots
-rg "^surface:.*\blive-trading\b"    # kill switch / paper-test / circuit breaker
-rg "^surface:.*\bboot-time\b"       # warm-restart / recovery / boot-gate
-```
-
-### By catalog ID (use word-boundary `\b` for short IDs)
-```
-rg "\bClass 18\b"                   # anti-pattern Class N
-rg "\bH13\b"                        # hard invariant H N
-rg "\bM4\b"                         # meta-discipline M N
-rg "TECH_DEBT-112"                  # ledger entry
-rg "PARITY-009"                     # parity ledger entry
-```
-
-### By severity / status (ledger queries)
+### Ledger / stage / cross-ref queries
 ```
 rg "^severity: high" DOCS/TECH_DEBT.md      # high-severity deferrals
 rg "^status: open" DOCS/TECH_DEBT.md        # open TECH_DEBT
@@ -400,29 +331,7 @@ rg "sister_docs:.*\b<doc-name>\b"
 rg "applies_at_skills:.*\b/readiness\b"
 ```
 
-### Helper skills (when grep is awkward)
-- `/find <natural language>` (Stage 1 problem — skill queued at `.C` candidate ship) — fuzzy search over metadata
-- `/doc-create <type>` (queued) — type-aware doc scaffolding using current canonical template
-- `/index-rebuild` (queued) — regenerate CLAUDE.md tables + READMEs from frontmatter
-- `/metadata-audit` (queued) — periodic audit: missing frontmatter / undefined tags / broken sister-doc links / Stage 2 DRAFTs older than N sprints
-
-### Filesystem layout (where each type lives)
-
-| Doc type | Location | Naming convention |
-|---|---|---|
-| Pattern bodies | `DESIGN_SPECS/<name>.md` | kebab-case + `<concept>-<discipline>` |
-| Plan bodies | `plans/<sprint>/subplans/<YYYY-MM-DD>-<version>-<name>.md` | date + version + name |
-| Handoffs | `plans/<sprint>/handoffs/<YYYY-MM-DD>-<version>-<purpose>-handoff.md` | date + version + purpose |
-| Postmortems | `plans/<sprint>/postmortems/<YYYY-MM-DD>-<version>-postmortem.md` | date + version |
-| Audit reports | `plans/<sprint>/plan_checks/<date>-<audit>-<scope>.md` | date + audit-name + scope |
-| Sprint MASTER | `plans/<sprint>/MASTER.md` | (singular per sprint) |
-| Memory rules | `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/<name>.md` | `feedback_*` / `user_*` / `project_*` / `reference_*` |
-| Always-loaded orientation | `CLAUDE.md` + `CLAUDE.local.md` + `MEMORY.md` | singular files |
-| On-demand orientation | `DOCS/CLAUDE_*.md` + `DOCS/DESIGN_PHILOSOPHY.md` | per concern |
-| Auto-write ledgers | `DOCS/TECH_DEBT.md` + `PARITY_ISSUES.md` + `FEATURE_LOOKUP.md` + `HOT_PATH_CHANGELOG.md` + `LANDMINES.md` | singular per concern |
-| Bug class catalog | `DOCS/RECURRING_BUG_PATTERNS.md` | singular |
-
-Read this section once + you know how to find ANYTHING in the doc system without prior knowledge of "where stuff is."
+Helper skills (queued; manual `rg` for now): `/find` / `/doc-create` / `/index-rebuild` / `/metadata-audit`. Filesystem layout for each doc type already covered in top filesystem-layout summary above; full naming-convention table at `DESIGN_SPECS/meta-disciplines/doc-find-recipes.md` (queued).
 
 ## Reference Docs (portal hierarchy — read on demand)
 

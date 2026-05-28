@@ -63,6 +63,30 @@ Not all enumeration mismatches are Class 33:
 
 ## Worked instances
 
+### Sub-shape: forward-promise auto-write drift (codified at v5.15.5.F.4d.1.D)
+
+**Surface:** Ledger-consumer enumeration at ship-close ritual. Ship close narrative (CHANGELOG row + postmortem + handoff doc) claims TECH_DEBT/PARITY/Class catalog amendments LANDED, but the actual ledger writes get missed — the "consumer" (ledger file) has fewer entries than the "enumerator" (ship narrative) claims.
+
+**Recurrence pattern:** Accumulated across `.B.3` → `.B.4` → `.B.6` → `.B.7` → `.B.8` → `.D` ship cycles — 8+ confirmed missed ledger writes:
+- `.B.7` claimed `-029/-114/-116/-117/-118` CLOSED as wontfix-per-ai-workflow; none written to closed.md
+- `.B.7` claimed `-132/-134` NEW+CLOSED; not written
+- `.B.7` claimed `-133/-135/-136` OPEN; not written
+- `.B.8` claimed `-138` NEW+CLOSED; not written
+- `.B.3` claimed `-107` NEW+CLOSED at v1.16 Phase K; not written
+- `.B.3` claimed `-105/-106` NEW at v1.16 close-out; not written
+- `.B.0/.B.1` claimed PARITY-024 CLOSED at cohort framework; status field stayed open
+- Class 18 catalog claimed `recurrence_count 7→8` at `.B.4`; catalog still at 6 until `.D`
+
+**Closure at `.D`:** All 8+ instances retroactively closed at `.D` Phase D ledger cleanup. NEW `tools/check_forward_promise_audit.py` Check 11 (24 sentinel patterns + 24 verifier functions; M7 7th canonical structural enforcement application) catches this class mechanically going forward at every ship close + handoff write + accept-handoff pickup.
+
+**Sister classes:** Class 14 (fabricated symbol — sister at SYMBOL layer; structural enforcement via B-Plus); Class 26 sub-shapes A/B (per-core paired-access drift — sister at per-core CODE layer; Check 9 + Check 10). Class 33's NEW sub-shape extends to the cross-DOC layer (CHANGELOG / postmortem / handoff / Class catalog → ledger consistency).
+
+**Cross-refs:** `feedback_forward_promise_auto_write_verification` (Stage 3 first canonical at .D); `structural-enforcement-when-memory-insufficient.md` v1.4 (7th canonical_applications entry); `canonical-sister-extension-discipline.md` v1.2 CI-tooling-surface axis 3rd canonical.
+
+---
+
+### Pre-`.D` original worked instances
+
 - **v1.4 amendment (2026-05-25):** Plan body for `.B.4` v1.4 listed consumer enumeration of `fc_ctx.regime_state` field at BacktestSharded.hpp:541-548 (allocation) + :612 (read). Missed `:607` `Regime_Classify(&fc->regime_state, ...)` write site. Caught by `/parity-check` re-audit after v1.4 amendment lock. N5 amendment extended enumeration to 3 consumers. **Meta-observation at v1.4:** extends `feedback_enumerate_consumers_before_registry_row_deletion` from registry-row deletion to struct-member deletion discipline; sister catch shape.
 
 - **v1.7.5 (2026-05-26 PM):** Plan body for `.B.4` v1.7.4 D17 listed cohort scope as "8 conditional branches at EngineSharded.hpp + 3 sister wrappers + cfg field + parser + TUISnapshot + GUI gating". Operator-directed `rg "engine_arch|ENGINE_ARCH_"` + `/trace-deps` + `/merge-scan` audits surfaced actual cohort: **17 files / 81 occurrences** spanning 9 code files + 4 operator-facing docs + 6 archived changelogs (LEAVE) + 3 stale comments. v1.7.5 amendment cycle expanded cohort enumeration via comprehensive surface sweep + codified B14 + B15 pillars + Class 33 NEW catalog entry + B-Plus v0.4 inline at WIP-12 per [[feedback_no_defer_for_effort]] + [[feedback_structural_fix_for_recurring_class]] M7 Stage 6 trigger.

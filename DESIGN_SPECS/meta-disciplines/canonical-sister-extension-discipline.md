@@ -1,12 +1,17 @@
 ---
 type: meta-discipline
 stage: 3-first-canonical
-version: 1.0
+version: 1.2
 established: 2026-05-17
-tags: [meta-discipline, framework-discipline, pattern-codification, operator-collaboration]
-surface: [registry]
-sister_specs: [structural-fix-preferred-decision-framework.md, pattern-codification-lifecycle.md, audit-driven-pre-coding-gate.md]
-applies_at_skills: [/readiness, /anti-spaghetti, /precoding-audit-gate]
+last_amended: 2026-05-28
+tags: [meta-discipline, framework-discipline, pattern-codification, operator-collaboration, ci-tooling-surface]
+surface: [registry, ci-tooling]
+sister_specs: [structural-fix-preferred-decision-framework.md, pattern-codification-lifecycle.md, audit-driven-pre-coding-gate.md, structural-enforcement-when-memory-insufficient.md, sister-cohort-amendment-completeness-discipline.md]
+applies_at_skills: [/readiness, /anti-spaghetti, /precoding-audit-gate, /capture-audit]
+ci_tooling_surface_canonicals:
+  - 1st (.B.7 Check 9 in check_per_core_registry_integrity.py — paired-access mismatch detector; per-core code layer)
+  - 2nd (.B.8 Check 10 in check_per_core_registry_integrity.py — UNINDEXED-GLOBAL detector; same per-core code layer; sister extension at same surface)
+  - 3rd (.D Check 11 in NEW check_forward_promise_audit.py — forward-promise auto-write verification at cross-doc layer; sister extension at DIFFERENT surface axis but same M7 canonical lineage; demonstrates the discipline applies across surface boundaries)
 ---
 
 # Canonical sister extension discipline

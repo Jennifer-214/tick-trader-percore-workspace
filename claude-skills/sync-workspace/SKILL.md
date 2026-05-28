@@ -156,17 +156,30 @@ fi
 # `feedback_session_decision_log_discipline`: mechanical drift check at sync-time
 # catches decision-capture gaps that memory codification alone would miss.
 if command -v claude >/dev/null 2>&1 || [ -x "$HOME/.claude/skills/capture-audit/SKILL.md" ]; then
-    echo "[sync] Firing /capture-audit --quick (M7 pre-commit drift check)..."
-    # Invocation form: in Claude Code session, /capture-audit is invoked via Skill tool.
-    # When running outside Claude Code, the operator should manually run:
-    #   /capture-audit --quick
-    # before this script. Set CAPTURE_AUDIT_PASSED=1 to confirm + skip warning.
-    if [ "${CAPTURE_AUDIT_PASSED:-0}" != "1" ]; then
-        echo "[sync] WARN: /capture-audit not auto-invoked in this shell context"
-        echo "[sync]       Inside Claude Code session: invoke /capture-audit --quick before /sync-workspace"
-        echo "[sync]       Set CAPTURE_AUDIT_STRICT=1 to BLOCK; CAPTURE_AUDIT_PASSED=1 to confirm + suppress"
+    # Deterministic invocation per .D Phase F.5 — replaces LLM-orchestrated /capture-audit
+    # Skill invocation with explicit Python tool call. Mechanical Check 11 detection at
+    # commit time per M7 (structural-enforcement-when-memory-insufficient).
+    FWD_TOOL="/home/caramel/code/FoxML_Trader_v2/tools/check_forward_promise_audit.py"
+    if [ -f "$FWD_TOOL" ]; then
+        echo "[sync] Firing Check 11 mechanical forward-promise verification..."
         if [ "${CAPTURE_AUDIT_STRICT:-0}" = "1" ]; then
-            echo "[sync] BLOCKING per CAPTURE_AUDIT_STRICT=1"
+            # STRICT mode: exit on HIGH findings
+            if ! python3 "$FWD_TOOL" --strict --since HEAD~5 2>&1; then
+                echo "[sync] BLOCKING per CAPTURE_AUDIT_STRICT=1 + Check 11 HIGH findings"
+                exit 1
+            fi
+        else
+            # Default: WARN mode (run for visibility; don't block)
+            python3 "$FWD_TOOL" --since HEAD~5 2>&1 | head -30 || true
+        fi
+    else
+        echo "[sync] WARN: check_forward_promise_audit.py not found at $FWD_TOOL; skipping Check 11"
+    fi
+    # Legacy preserved for env-var compat (will be retired post broader skill-tool integration sweep at .F):
+    if [ "${CAPTURE_AUDIT_PASSED:-0}" != "1" ]; then
+        echo "[sync] (Legacy LLM-orchestrated /capture-audit invocation skipped per F.5 deterministic-integration)"
+        if [ "${CAPTURE_AUDIT_STRICT:-0}" = "1" ]; then
+            : # Strict mode already handled above by Python tool directly
             exit 1
         fi
     fi

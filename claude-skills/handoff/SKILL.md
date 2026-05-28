@@ -189,9 +189,24 @@ Template at `claude-skills/capture-audit/decision-log-template.md`. Sections:
 
 Cite the decision log in the generated handoff doc under "Required reading files" so receiver session loads it.
 
-**Pre-write /capture-audit gate:**
+**Pre-write /capture-audit gate (deterministic invocation per .D Phase F.3):**
 
-Before writing the handoff doc, fire `/capture-audit --deep` to verify no decision-capture drift since last commit:
+Before writing the handoff doc, run the Check 11 forward-promise verification deterministically as a hard gate. If HIGH findings: BLOCK handoff write; resolve drift first.
+
+```bash
+# Deterministic invocation — replaces LLM-orchestrated /capture-audit Skill invocation:
+python3 /home/caramel/code/FoxML_Trader_v2/tools/check_forward_promise_audit.py \
+    --strict \
+    --since "${LAST_TAG:-HEAD~5}"
+
+# Exit code != 0 → BLOCK handoff write; address drift or # CHECK_11_EXEMPT marker
+# Sister to B-Plus pre-commit hook (Class 14 fabrication detection at commit time)
+# Sister to /capture-audit --deep invocation (full 11-check coverage; Check 11 is now mechanical)
+```
+
+The above MUST run before writing the handoff doc; LLM-orchestrated invocation can drift, miss the gate, or misinterpret output. Per `feedback_structural_enforcement_when_memory_insufficient` (M7), tool invocation replaces memory-driven discipline at this load-bearing surface.
+
+The deep gate ALSO verifies (sister checks beyond Check 11):
 
 ```
 - MEMORY.md index sync check

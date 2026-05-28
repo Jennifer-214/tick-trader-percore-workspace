@@ -1112,12 +1112,14 @@ related_specs: [DESIGN_SPECS/feature-patterns/shadow-load-state-transition-patte
 
 ```yaml
 id: PARITY-024
-title: Per-arm trained TP/SL barriers stamped at training but not consumed at serving; ml_tp_pct/ml_sl_pct Tier 1 promotion missing
+title: Per-arm trained TP/SL barriers stamped at training but not consumed at serving; ml_tp_pct/ml_sl_pct Tier 1 promotion missing (CLOSED at .B.3 via .A.7+.B.2+.B.3 cohort framework)
 surface_tags: [slow-path, ml-inference, cfg-flow, wire-format, registry]
 severity: high
 parity_axis: train↔serve
-status: open
+status: closed
 detected_at: v5.15.5 (2026-05-12)
+closed_at: v5.15.5.F.4d.1.B.3
+closure_rationale: Per-arm trained TP/SL barriers Tier 1 promotion landed via .A.7 + .B.2 + .B.3 cohort framework (per `.B.3` postmortem line 101); barrier-blend fields wired through engine-side cfg-derived consumer framework + per-horizon barrier-blending pattern. Ledger status flip was missed at `.B.3` ship close; retroactively flipped to closed at `v5.15.5.F.4d.1.D` Phase D.8 after Check 11 dogfood detection (sister to .B.8 + .D forward-promise retroactive ledger writes; same M7 surface).
 related_specs: [DESIGN_SPECS/feature-patterns/per-horizon-barrier-blending-with-shadow-mode.md, DESIGN_SPECS/framework-patterns/autopopulate-pattern-for-production-caller-class.md, DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md]
 ```
 

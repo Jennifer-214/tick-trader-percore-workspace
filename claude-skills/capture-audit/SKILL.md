@@ -149,6 +149,24 @@ For each promised auto-write found, verify it landed at the expected ledger loca
 - `--check 11` to run only this check
 - `--since <git-ref>` to scope to ships since reference
 
+**Canonical mechanical invocation (per .D Phase F.2 deterministic-integration; M7 7th canonical structural enforcement landing):**
+
+```bash
+# Direct deterministic invocation — replaces LLM-orchestrated logic interpretation:
+python3 /home/caramel/code/FoxML_Trader_v2/tools/check_forward_promise_audit.py \
+    --deep \
+    --since "${SINCE_REF:-HEAD~5}" \
+    ${STRICT:+--strict} \
+    ${JSON_OUT:+--json}
+```
+
+Sister to existing CI tool invocation patterns:
+- `tools/check_per_core_registry_integrity.py` (Check 9 + Check 10)
+- `tools/check_plan_body_symbol_existence.py` (B-Plus)
+- `tools/check_meta_registry.py` (registry coverage)
+
+LLM-orchestrated invocation (the legacy path before `.D` Phase F.2) had non-determinism risk: LLM could fail to invoke correct check, misinterpret output, forget to run at the right cadence. Replacing with explicit shell invocation locks the behavior + makes pre-commit hook integration trivial (sister to B-Plus shape).
+
 **Sister disciplines:**
 - `memory/feedback_forward_promise_auto_write_verification.md` (operator-collaboration rule)
 - `memory/feedback_structural_enforcement_when_memory_insufficient.md` (M7 parent; Check 11 IS structural enforcement)

@@ -2149,8 +2149,8 @@ related_specs: [DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-patte
 id: TECH_DEBT-111
 title: CI defense-in-depth — tools/check_cli_flag_drift.py (anti-pattern enforcement for X-macro auto-gen CLI flag table)
 severity: low
-surface_tags: [ci-tooling, cross-tool, registry]
-trigger: recurrence-count-2
+surface_tags: [ci-tooling, cross-tool, registry, ai-driven-workflow-scoped]
+trigger: v5.16-FOREACH_CLI_MODE-registry-first-canonical
 status: open
 opened: 2026-05-18
 related_specs: [DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-pattern.md, DESIGN_SPECS/framework-patterns/registry-coverage-ci-check-pattern.md]
@@ -2166,8 +2166,8 @@ related_specs: [DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-patte
   - Reports per-binary verdict + flag-count + collision-detection summary
 - **Why deferred (NOT effort-avoidance):** At 1st canonical framework-driven CLI binary (`.B.3` Phase L), X-macro discipline is enforced by code review + the audit gate. CI tool warranted when 2+ framework-driven CLI binaries exist (per `feedback_framework_layer_payoff_diminishing_returns` — pattern earns its place at 2+ applications). Premature CI tooling at 1 application = framework-layer scope creep.
 - **Cost estimate:** ~30-60 min (sister to existing `check_struct_field_uniqueness.py` template; ~150-200 LOC Python script).
-- **Trigger:** 2nd framework-driven CLI binary lands (candidate workflows: schema migration CLI; per-core override emission CLI; per-cohort offline validation CLI). At 2nd canonical, CI tool delivers structural-fix mechanism category (per `structural-fix-preferred-decision-framework.md` § "NEW STRUCTURAL-FIX MECHANISM CATEGORY: CI tooling").
-- **Status:** OPEN with explicit trigger (created 2026-05-18 at Phase L planning).
+- **Trigger:** v5.16+ alongside FOREACH_CLI_MODE registry first canonical (TECH_DEBT-034) — framework-driven-cli-binary-pattern Stage 4 cohort migration triggers warrant CI defense-in-depth at that surface. `.C` skip at v5.15 + Phase L revert at `.B.3` mean no current 2nd canonical surface; previous trigger ("2nd framework-driven CLI binary lands") was moot post-`.C` skip 2026-05-27 PM. UPDATED at `v5.15.5.F.4d.1.D` Phase D.3 per scope-reconciliation cycle.
+- **Status:** OPEN with explicit v5.16+ trigger (created 2026-05-18 at Phase L planning; trigger updated 2026-05-28 at `.D`).
 - **Accountability mechanism:** Cross-ref in `DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-pattern.md` v1.1 Pattern lifecycle § Stage 6 (tooling enforcement); future sub-ship adding 2nd canonical references TECH_DEBT-111 in scope.
 - **Cross-ref:** `DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-pattern.md` v1.1 § Audit detection + § Pattern lifecycle Stage 6; `DESIGN_SPECS/framework-patterns/registry-coverage-ci-check-pattern.md` Shape B (anti-pattern enforcement); `tools/check_struct_field_uniqueness.py` (sister CI tool precedent); `feedback_framework_layer_payoff_diminishing_returns.md`.
 
@@ -2203,36 +2203,6 @@ related_specs: [DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md]
 - **Trigger:** dedicated maintenance ship between sub-ships (alongside TECH_DEBT-113 folder subdivision OR independently)
 - **Status:** OPEN with explicit trigger (created 2026-05-18 at doc-layer refresh ship close)
 - **Cross-ref:** `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md` (the discipline); TECH_DEBT-113 (sister folder subdivision); `feedback_file_size_split_discipline.md` (going-forward rule).
-
----
-
-### TECH_DEBT-117 — RECURRING_BUG_PATTERNS.md split (file-size discipline application)
-
-```yaml
-id: TECH_DEBT-117
-title: RECURRING_BUG_PATTERNS.md split (file-size discipline application)
-severity: medium
-surface_tags: []
-trigger: n/a (closed; already split incidentally pre-.B.7)
-status: done-incidentally
-opened: 2026-05-18
-closed_at: v5.15.5.F.4d.1.B.7
-closure_rationale: Done incidentally — RECURRING_BUG_PATTERNS.md was split into per-class sub-files at 2026-05-18 (see INDEX `splits_into:` frontmatter). Original intent already realized; closure is bookkeeping
-related_specs: [DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md, DESIGN_SPECS/ledger-templates/ledger-entry-templates.md]
-```
-
-- **Created:** 2026-05-18 (codified at `.B.3` ship close)
-- **Severity:** MEDIUM (2198 lines, 32 classes — exceeds 2000-line hard threshold)
-- **Surface:** `DOCS/RECURRING_BUG_PATTERNS.md`
-- **What's deferred:** Split per file-size-split-discipline pattern:
-  - **Recommended split criteria:** per-class file
-    - `DOCS/recurring-bug-patterns/class-01-<name>.md` through `class-32-<name>.md`
-    - `DOCS/RECURRING_BUG_PATTERNS.md` — INDEX with class catalog table + cross-refs
-- **Why deferred (NOT effort-avoidance):** Class N references span entire codebase (>200 cross-refs in DESIGN_SPECS / skills / plan bodies / memory). Sed-sweep risk identical to TECH_DEBT-116. Warrants dedicated ship.
-- **Cost estimate:** ~2-3h focused (per-class file extraction + INDEX build + sed sweep + verify)
-- **Trigger:** alongside TECH_DEBT-116 maintenance ship OR independently
-- **Status:** OPEN with explicit trigger
-- **Cross-ref:** `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md`; TECH_DEBT-116 (sister ledger split); `DESIGN_SPECS/ledger-templates/ledger-entry-templates.md` § Bug Class entry (per-entry template).
 
 ---
 
@@ -2782,26 +2752,4 @@ related_specs: [DESIGN_SPECS/meta-disciplines/structural-enforcement-when-memory
 
 ---
 
-### TECH_DEBT-139 — /capture-audit Check 11 Python detection logic implementation
-
-```yaml
-id: TECH_DEBT-139
-title: /capture-audit Check 11 Python detection logic implementation (forward-promise auto-write verification mechanical enforcement)
-severity: medium
-surface_tags: [ci-tooling, capture-audit, forward-promise-verification, m7-stage-6]
-trigger: sub-ship-v5.15.5.F.4d.1.C-OR-D-sister-ship
-status: open
-opened: 2026-05-27
-related_specs: [DESIGN_SPECS/meta-disciplines/structural-enforcement-when-memory-insufficient.md]
-```
-
-- **Created:** 2026-05-27 (surfaced at `/accept-handoff` Stage 5 dogfood verification post-`.B.8` ship pickup; deferred from `.B.8` Phase H.2.c per token-budget pragmatism)
-- **Severity:** MED — without Python impl, Check 11 must be run manually via Bash greps; mechanical at-commit-time enforcement requires the impl
-- **Surface:** `claude-skills/capture-audit/SKILL.md` Check 11 (NEW codified at `.B.8` Phase H.2.c). SKILL.md documents: design + invocation contract + sentinel regex patterns (`forward advisory` / `DOCUMENTED-RISK entry at` / `Stage 6 escalation candidate at` / `auto-write at ship close:` / `queued for .X` / `deferred to .X`) + scan locations (`DOCS/recurring-bug-patterns/*.md` + `plans/<sprint>/postmortems/*.md` + `plans/<sprint>/subplans/*.md` close-out sections + `DESIGN_SPECS/**/*.md` Stage promotions) + verification mechanism + UNFULFILLED output format. **Python detection logic NOT yet implemented.**
-- **Class:** Stage 6 escalation candidate per M7 (`structural-enforcement-when-memory-insufficient.md`). Sister to existing Stage 6 tools: `tools/check_per_core_registry_integrity.py` Check 9 + Check 10 + `tools/check_plan_body_symbol_existence.py` (B-Plus v0.4). Same M7 surface as TECH_DEBT-136 (B-Plus v0.5).
-- **What's deferred:** Implement Check 11 Python detection logic. Estimated ~1-2h focused. Sentinel regex patterns + scan locations + per-sentinel verification + ledger-location grep + UNFULFILLED output already documented in SKILL.md. Implementation = mechanical Python from spec.
-- **Why deferred (not effort-avoidance):** Originally deferred at `.B.8` Phase H.2.c per token-budget pragmatism (focus on substantive bugfix cohort + sister-cohort catalog amendments + 3-cycle audit convergence). Per `feedback_forward_promise_auto_write_verification` dogfood: the discipline is the structural fix; Check 11 IS the mechanical enforcement.
-- **Dogfood evidence (this entry IS the dogfood result):** `.B.8` ship close claimed TECH_DEBT-138 NEW+CLOSED but entry never made it to ledger; `.B.7` ship close claimed -132/-134 NEW+CLOSED and -133/-135/-136 OPEN — none made it to ledger. Pattern: ship close ritual misses TECH_DEBT writes at commit time. `/accept-handoff` Stage 4.5 caught all 5 retroactively + this entry opened to track the structural enforcement deferral. Check 11 Python impl would catch this class mechanically at next-ship pickup OR at commit time via `/capture-audit --strict` pre-commit gate.
-- **Status:** **OPEN** — queued for `.D` CI tool consolidation ship (natural framework-lock surface; sister to existing `tools/check_per_core_registry_integrity.py`). UPDATED 2026-05-27 PM: `.C` slot collapsed at post-`.B.8` pickup re-scope (per `.C` per-core override emission CLI skip rationale — framework-driven-cli-binary-pattern Stage 4 cohort deferred to v5.16+ FOREACH_CLI_MODE per `.B.3` YAGNI revert + operator confirmation). Single closure surface = `.D`.
-- **Trigger:** Address at `.D` — consolidate with TECH_DEBT-105/106/111 into `tools/check_framework_consumer_invariants.py` (natural framework-lock surface; sister to existing CI tooling at `tools/check_per_core_registry_integrity.py` Check 9 + Check 10).
-- **Cross-ref:** `plans/v5.15-live-readiness/postmortems/2026-05-27-v5.15.5.F.4d.1.B.8-postmortem.md` § What went poorly #2; `feedback_forward_promise_auto_write_verification`; `feedback_structural_enforcement_when_memory_insufficient` (M7 parent); `claude-skills/capture-audit/SKILL.md` Check 11 (SKILL.md amendment); `/accept-handoff` Stage 5 dogfood verification (manual surfacing path); `plans/v5.15-live-readiness/capture-audit-reports/2026-05-27-accept-handoff.md` HIGH-2 finding source; TECH_DEBT-136 (sister B-Plus v0.5 — same M7 surface); TECH_DEBT-132/-134/-138 (the 3 closed entries this Check 11 would have caught mechanically); TECH_DEBT-133/-135/-136 (the 3 open entries this Check 11 would have caught mechanically).
+_(TECH_DEBT-139 moved to closed.md at v5.15.5.F.4d.1.D — Check 11 Python detection logic IMPLEMENTED as NEW `tools/check_forward_promise_audit.py`; M7 7th canonical structural enforcement application; see closed.md for full entry)_

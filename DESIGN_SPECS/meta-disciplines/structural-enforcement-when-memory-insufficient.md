@@ -1,9 +1,9 @@
 ---
 type: meta-discipline
 stage: 3-first-canonical
-version: 1.3
+version: 1.4
 established: 2026-05-26
-last_amended: 2026-05-27
+last_amended: 2026-05-28
 tags: [meta-discipline, framework-discipline, structural-fix, doc-discipline]
 surface: [doc-pipeline, ci-tooling, plan-pipeline]
 sister_specs:
@@ -22,6 +22,7 @@ canonical_applications:
   - 4th (v5.15.5.F.4d.1.B.4 v1.7.6 Phase Cx-J — /readiness Check 44 cfg field categorization plan-time verification sister to CI Check 8 commit-time)
   - 5th (v5.15.5.F.4d.1.B.7 — RETROACTIVE; Check 9 in tools/check_per_core_registry_integrity.py — paired-access mismatch detector for Class 26 sub-shape A; codification entry was implicit in `.B.7` ship close but never added to this list; added at `.B.8` per /readiness MED-2 + /blindspot-scan M7 forward-promise verification)
   - 6th (v5.15.5.F.4d.1.B.8 — Check 10 in tools/check_per_core_registry_integrity.py — UNINDEXED-GLOBAL detector for Class 26 sub-shape B; sister extension of Check 9 per canonical-sister-extension-discipline.md v1.1 CI-tooling-surface axis; sanity-verified via revert-detect-reapply on HIGH-1)
+  - 7th (v5.15.5.F.4d.1.D — Check 11 in NEW tools/check_forward_promise_audit.py — forward-promise auto-write verification across CHANGELOG + postmortems + handoffs + plan bodies + Class catalogs; 24 sentinel patterns + 24 verifier functions + ScanSpec dataclass + section parser + exemption mechanism; Class 33 sub-shape "forward-promise auto-write drift"; dogfood at Phase G surfaced 8+ accumulated drift instances across 6+ prior ships; structural enforcement closes the M7 surface that .B.8 codified the discipline for; sister extension at CI-tooling-surface axis per canonical-sister-extension-discipline.md v1.2 — same axis as Check 9 + Check 10 but at cross-doc layer not per-core code layer; deterministic skill-tool integration cohort at Phase F: pre-commit hook + 5 SKILL.md amendments (/capture-audit + /handoff + /close-session + /sync-workspace + /accept-handoff))
 ---
 
 # Structural enforcement when memory codification proves insufficient (M7)

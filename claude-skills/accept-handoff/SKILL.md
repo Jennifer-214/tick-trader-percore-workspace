@@ -137,11 +137,24 @@ Parse the handoff body's `## What landed at <predecessor-tag> ship close (PREDEC
 
 **If handoff body lacks a "What landed at <predecessor-tag>" section** (older handoffs predating /handoff Stage 2.8 codification): skip Stage 4.5 entirely; surface advisory note ("predecessor-context section missing; cannot verify predecessor claims mechanically") so receiver knows to verify manually.
 
-### Stage 5: Invoke /capture-audit --deep
+### Stage 5: Invoke /capture-audit --deep (deterministic invocation per .D Phase F.6)
 
-Run `/capture-audit --deep --since <handoff-write-commit>` to verify no decision-capture drift since handoff written. If findings:
-- HIGH severity: BLOCK; require fix before continuing
+Run Check 11 forward-promise verification mechanically as the hard gate:
+
+```bash
+python3 /home/caramel/code/FoxML_Trader_v2/tools/check_forward_promise_audit.py \
+    --deep \
+    --since "${HANDOFF_WRITE_COMMIT:-HEAD~5}"
+
+# Exit code != 0 → drift detected; classify per severity below
+```
+
+Severity classification:
+- HIGH severity findings: BLOCK; require fix before continuing
 - MED/LOW: WARN; surface for operator awareness
+- INFO: tracking only; informational
+
+Sister to /handoff Stage 1.8 + /close-session Stage 2/4 (same tool; mechanical at every handoff-related surface). LLM no longer orchestrates the detection — Python tool runs deterministically; LLM synthesizes findings narrative for operator review.
 
 ### Stage 6: Invoke /readiness against in-flight plan body
 

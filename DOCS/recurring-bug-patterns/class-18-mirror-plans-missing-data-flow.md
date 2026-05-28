@@ -6,7 +6,7 @@ parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-18
 surface_tags: [registry, ml-inference, backtest, boot-time]
 severity: high
-recurrence_count: 6
+recurrence_count: 8
 first_instance: v5.14.1.E.B
 closure_mechanism: /trace-deps Step 6 (data-flow + call-sequence enumeration walking source body; verify Y-side equivalent for every obj->field read + every function call) + /readiness Check 24 mirror-clause audit + plan-template "X data-flow inventory" section + X-macro registry extraction (PostLoadSetup helpers canonical at v5.14.2.E.1) + CLAUDE.md item 19 structural-fix-preferred
 sister_classes: [12, 14, 19, 21, 24, 25, 29, 30]

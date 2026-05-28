@@ -933,3 +933,241 @@ related_specs: [DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-patte
 - **Sister context (added 2026-05-27 PM):** `.C` per-core override emission CLI also SKIPPED at post-`.B.8` pickup re-scope per same YAGNI rationale + operator confirmation; framework-driven-cli-binary-pattern Stage 4 cohort migration deferred to v5.16+ FOREACH_CLI_MODE (TECH_DEBT-034). Pipeline collapsed `.C` slot; `.D` becomes immediate next-up.
 - **Retroactive ledger write:** This entry sat OPEN in ledger even though surface was DELETED at `.B.3` (2026-05-24). Retroactively closed at 2026-05-27 PM during `/accept-handoff` Stage 4.5 forward-promise verification dogfood cleanup + `.C` skip decision (sister cohort to TECH_DEBT-132/-133/-134/-135/-136/-138/-139 retroactive ledger writes same session per same M7 surface — ship-close ritual incompletely propagates to all expected destinations).
 - **Cross-ref:** `DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-pattern.md` v1.1 status update (canonical revert rationale); `plans/_future/2026-05-12-decoupling-endgoal-roadmap.md` "Training entry points" axis (v5.16+ FOREACH_CLI_MODE successor surface); TECH_DEBT-034 (FOREACH_CLI_MODE registry; future Stage 3 first canonical surface); CLAUDE.local.md going-forward rule "Framework-driven CLI binary pattern Stage 4 cohort migration deferred to v5.16+ FOREACH_CLI_MODE" (2026-05-27); CLAUDE.md item 19 (structural fix preferred when bug class can recur — applies here: YAGNI deletion eliminates the drift class by removing both implementations).
+
+---
+
+## .D Phase D retroactive ledger writes (cohort: forward-promise drift caught by Check 11 dogfood)
+
+The 8 entries below were retroactively written at v5.15.5.F.4d.1.D ship close after Check 11 Python detection (NEW at this ship) fired against `.B.3` → `.B.8` ship-close artifacts and surfaced accumulated forward-promise drift across 6+ ships. Each entry's closure narrative was already documented in CHANGELOG.md + postmortem narrative + handoff doc at the original ship close, but the `id: TECH_DEBT-NNN` ledger entry was missed at write-time. Check 11 mechanical detection at every subsequent ship close prevents this class going forward.
+
+Sister cohort to the 7 retroactive ledger writes at v5.15.5.F.4d.1.B.8 close-out (commit 237c970 — TECH_DEBT-132/-133/-134/-135/-136/-138 + TECH_DEBT-001 close-out at 858b385). Same M7 surface — ship-close ritual incompletely propagates to ledger.
+
+---
+
+### TECH_DEBT-029 — Source file length reduction (CLOSED at .B.7 C1 via AI-workflow reframe)
+
+```yaml
+id: TECH_DEBT-029
+title: Source file length reduction (wontfix-per-ai-workflow at .B.7 C1 close-out)
+severity: medium
+surface_tags: [code-organization, file-size, ai-driven-workflow-scoped]
+trigger: n/a (closed; wontfix-per-ai-workflow)
+status: wontfix-per-ai-workflow
+opened: 2026-05-09
+closed_at: v5.15.5.F.4d.1.B.7
+closure_rationale: AI-driven solo workflow (per operator C1 directive 2026-05-27); Claude 1M context handles 6K-line files trivially; no human code-review cognitive load concern; compile time unchanged for header-only template code
+related_specs: [DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md]
+```
+
+- **Created:** 2026-05-09 (initial population at v5.14 cycle; long-standing concern about per-file LOC growth)
+- **Severity:** MEDIUM (originally; downgraded to N/A post C1 close-out)
+- **Surface:** All source files exceeding typical-human-readable thresholds (multiple .hpp/.cpp files in 5K-10K LOC range)
+- **Closure rationale:** Per operator C1 directive 2026-05-27 (AI-driven solo workflow rethink): file-length discipline applies SELECTIVELY in AI-driven workflow. AI 1M context handles 6K-line files trivially; no human code-review cognitive load concern; compile time unchanged for header-only template code. Test 5K rule retained for test-reliability concern but source/header thresholds become guidelines not mandates. See `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md` v1.4 § "AI-driven workflow scoping" for full rationale.
+- **Sister cohort closures at .B.7 C1**: TECH_DEBT-114 (controller_test.cpp split) + TECH_DEBT-116 (TECH_DEBT.md split) + TECH_DEBT-117 (RBP.md split — done-incidentally) + TECH_DEBT-118 (/readiness SKILL.md split) all closed as wontfix-per-ai-workflow same ship.
+- **Status:** **CLOSED 2026-05-27** at `v5.15.5.F.4d.1.B.7` via C1 close-out
+- **Retroactive ledger write:** This entry was claimed CLOSED in `.B.7` CHANGELOG row + postmortem + handoff doc but missed `id: TECH_DEBT-029` yaml entry write at ship close. Retroactively written at `.D` Phase D after Check 11 dogfood detection.
+- **Cross-ref:** `plans/v5.15-live-readiness/postmortems/2026-05-27-v5.15.5.F.4d.1.B.7-postmortem.md` C1 close-out section; `.B.7` CHANGELOG row in `DOCS/CHANGELOG.md`; `feedback_count_code_loc_not_total_lines`; `file-size-split-discipline.md` v1.4 AI-driven workflow scoping; sister TECH_DEBT-133 (EngineSharded_Run mega-fn; DEFERRED-INDEFINITE per same workflow reframe); Check 11 mechanical drift detection at `.D` Phase B is the closure mechanism for THIS class of forward-promise drift.
+
+---
+
+### TECH_DEBT-105 — CI tool tools/check_sister_registry_sig_parity.py (M1 sister-registry parity verification)
+
+```yaml
+id: TECH_DEBT-105
+title: CI tool tools/check_sister_registry_sig_parity.py (M1 sister-registry parity verification)
+severity: low
+surface_tags: [ci-tooling, m1-sister-registry-parity]
+trigger: n/a (wontfix-per-ai-workflow)
+status: wontfix-per-ai-workflow
+opened: 2026-05-19 (retroactive write 2026-05-28)
+closed_at: v5.15.5.F.4d.1.D
+closure_rationale: AI-driven solo workflow (per operator C1 directive 2026-05-27); M1 sister-registry parity verification discipline already codified at DESIGN_SPECS level; manual application via /readiness Check 29 + audit-driven planning sufficient at current cohort scale; CI tool ROI marginal; re-evaluate at v5.16+ if cohort grows OR regression slips through manual application
+related_specs: [DESIGN_SPECS/meta-disciplines/sister-cohort-amendment-completeness-discipline.md, DESIGN_SPECS/meta-disciplines/canonical-sister-extension-discipline.md]
+```
+
+- **Created:** 2026-05-19 by `.B.3` v1.16 plan body close-out (claimed NEW at ship close but never written to ledger; retroactive open + close at `.D` Phase D.1)
+- **Severity:** LOW (defense-in-depth CI; manual discipline application is sufficient at current cohort scale)
+- **Surface:** Future Python CI script `tools/check_sister_registry_sig_parity.py` (would verify FOREACH_*_CFG_FIELD sister-registry signature parity)
+- **What was deferred (per .B.3 v1.16 original framing):** Build CI tool that enforces M1 sister-registry parity discipline mechanically. Trigger: "warranted when 3+ family members exist with shared consumer pattern".
+- **Closure rationale (.D Phase D.1):** Per operator C1 directive 2026-05-27 + AI-driven workflow reframe (sister to TECH_DEBT-029/-114/-116/-117/-118 file-length closures at `.B.7`). M1 discipline codified at `DESIGN_SPECS/meta-disciplines/sister-cohort-amendment-completeness-discipline.md` (Stage 3 first canonical at `.B.8`); manual application via `/readiness` Check 29 ("Plans introducing new registries cite existing sister registry inspection") + audit-driven planning at HIGH-RISK ship tier covers the verification surface. CI tool ROI marginal at current cohort scale (5 FOREACH_*_CFG_FIELD families); re-evaluate at v5.16+ if cohort grows OR regression slips through manual audit.
+- **Sister cohort:** TECH_DEBT-106 (M2 cross-tool emit-site enumeration CI; same wontfix rationale); TECH_DEBT-111 (CLI flag drift CI; trigger updated to v5.16+ FOREACH_CLI_MODE alignment); TECH_DEBT-139 (Check 11 forward-promise verification; ACTUALLY IMPLEMENTED at .D because dogfood evidence proved manual discipline insufficient at THIS surface specifically — sister CI tools at -105/-106/-111 surface DON'T have dogfood evidence yet).
+- **Status:** **CLOSED 2026-05-28** at `v5.15.5.F.4d.1.D` via AI-workflow reframe (sister to .B.7 C1 close-out pattern)
+- **Retroactive ledger write:** Entry was claimed NEW at `.B.3` v1.16 plan body close-out but missed ledger write. Retroactively written at `.D` Phase D.1 after Check 11 dogfood detection.
+- **Cross-ref:** `plans/v5.15-live-readiness/subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md` v1.16 close-out section line 418; `.B.3` ship CHANGELOG; sister wontfix entries -106/-111 (this same Phase D cohort); `feedback_framework_layer_payoff_diminishing_returns` (rationale for CI-tool-when-cohort-grows discipline); `DESIGN_SPECS/meta-disciplines/sister-cohort-amendment-completeness-discipline.md` (canonical M1 discipline doc).
+
+---
+
+### TECH_DEBT-106 — CI tool tools/check_cross_tool_emit_parity.py (M2 cross-tool emit-site enumeration)
+
+```yaml
+id: TECH_DEBT-106
+title: CI tool tools/check_cross_tool_emit_parity.py (M2 cross-tool emit-site enumeration)
+severity: low
+surface_tags: [ci-tooling, m2-cross-tool-emit, wire-format]
+trigger: n/a (wontfix-per-ai-workflow)
+status: wontfix-per-ai-workflow
+opened: 2026-05-19 (retroactive write 2026-05-28)
+closed_at: v5.15.5.F.4d.1.D
+closure_rationale: AI-driven solo workflow reframe; M2 cross-tool emit-site enumeration discipline codified at wire-format-byte-preservation-discipline.md Layer 7; cross-tool surfaces limited at v5.15 post .B.3 Phase L revert; manual /merge-scan + Layer 7 application sufficient; re-evaluate at v5.16+ FOREACH_CLI_MODE alignment
+related_specs: [DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md, DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-pattern.md]
+```
+
+- **Created:** 2026-05-19 by `.B.3` v1.16 plan body close-out (claimed NEW at ship close but never written to ledger; retroactive open + close at `.D` Phase D.2)
+- **Severity:** LOW (defense-in-depth CI; manual discipline application is sufficient at current cross-tool surface scale)
+- **Surface:** Future Python CI script `tools/check_cross_tool_emit_parity.py` (would verify cross-tool wire-emit surfaces don't drift from engine emit)
+- **What was deferred (per .B.3 v1.16 original framing):** Build CI tool that enforces M2 cross-tool emit-site enumeration discipline mechanically. Trigger: "warranted when 3+ cross-tool emit sites exist".
+- **Closure rationale (.D Phase D.2):** Same as TECH_DEBT-105 (AI-workflow reframe). M2 discipline codified at `wire-format-byte-preservation-discipline.md` Layer 7; manual application via `/merge-scan` audit + audit-driven planning at HIGH-RISK ship tier covers the verification surface. Cross-tool surfaces at v5.15 reduced post `.B.3` Phase L revert (`tools/stamp_model.sh` + `tools/stamp_model_cli.cpp` both DELETED); CI tool ROI marginal at current scale; re-evaluate at v5.16+ FOREACH_CLI_MODE alignment when cross-tool registry-driven approach lands.
+- **Status:** **CLOSED 2026-05-28** at `v5.15.5.F.4d.1.D` via AI-workflow reframe
+- **Retroactive ledger write:** Entry was claimed NEW at `.B.3` v1.16 plan body close-out but missed ledger write. Retroactively written at `.D` Phase D.2 after Check 11 dogfood detection.
+- **Cross-ref:** `plans/v5.15-live-readiness/subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md` v1.16 close-out section line 433; `.B.3` ship CHANGELOG; sister wontfix entries -105/-111 (this same Phase D cohort); `DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md` Layer 7 (canonical M2 discipline doc).
+
+---
+
+### TECH_DEBT-107 — 47-globals registry-default sweep (CLOSED at .B.3 v1.16 Phase K)
+
+```yaml
+id: TECH_DEBT-107
+title: 47-globals registry-default sweep (FOREACH_GLOBAL_CFG_FIELD registry-default vs manual default reconciliation)
+severity: low
+surface_tags: [cfg-flow, registry, framework-discipline]
+trigger: n/a (closed; opened+closed same ship)
+status: closed
+opened: 2026-05-19
+closed_at: v5.15.5.F.4d.1.B.3
+closure_rationale: Opened + closed same ship at .B.3 v1.16 Phase K (Steps 8.5 + 8.6) — 47-globals registry-default sweep audit performed; per-row registry-vs-manual default reconciled (delete redundant manuals OR update registry to match)
+related_specs: [DESIGN_SPECS/framework-patterns/universal-cfg-field-registry-pattern.md]
+```
+
+- **Created:** 2026-05-19 at `.B.3` v1.16 plan body (Phase K scope expansion per Caramel "lower future maintenance burden" directive)
+- **Severity:** LOW (registry-vs-manual default drift class; sister to universal-cfg-field-registry-pattern Registry default precedence v1.1 codification)
+- **Surface:** All 47 rows of `FOREACH_GLOBAL_CFG_FIELD` registry (audit registry-vs-manual default per row)
+- **Closure rationale:** Per `feedback_no_defer_for_effort` + Caramel "can we come to a solution where we dont need to defer anything" directive at `.B.3` v1.15 → v1.16 cycle: OPEN-AND-CLOSE same ship via Phase K Step 8.5 (extend `universal-cfg-field-registry-pattern.md` v1.0 → v1.1 with NEW § "Registry default precedence over manual defaults") + Phase K Step 8.6 (47-globals registry-default sweep — per-row decision: delete redundant manual OR update registry to match).
+- **Status:** **CLOSED 2026-05-19** at `v5.15.5.F.4d.1.B.3` via Phase K landing
+- **Retroactive ledger write:** Entry was claimed OPENED + CLOSED at `.B.3` v1.16 plan body Phase K but missed ledger write. Retroactively written at `.D` Phase D.3 after Check 11 dogfood detection.
+- **Cross-ref:** `plans/v5.15-live-readiness/subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md` v1.16 Phase K (Step 8.5 + 8.6); `DESIGN_SPECS/framework-patterns/universal-cfg-field-registry-pattern.md` v1.1 § "Registry default precedence over manual defaults"; CLAUDE.local.md going-forward rule "Registry default = single source of truth for cfg defaults" (2026-05-19).
+
+---
+
+### TECH_DEBT-114 — controller_test.cpp split (CLOSED at .B.7 C1 via AI-workflow reframe)
+
+```yaml
+id: TECH_DEBT-114
+title: controller_test.cpp split (wontfix-per-ai-workflow at .B.7 C1 close-out)
+severity: medium
+surface_tags: [test-organization, file-size, ai-driven-workflow-scoped]
+trigger: n/a (closed; wontfix-per-ai-workflow)
+status: wontfix-per-ai-workflow
+opened: 2026-05-13
+closed_at: v5.15.5.F.4d.1.B.7
+closure_rationale: AI-driven solo workflow reframe (sister to TECH_DEBT-029); controller_test.cpp at 26K lines navigable via grep + section markers; test-reliability NOT compromised at AI-workflow scale; TECH_DEBT-127 stays open as the actual test-reliability concern
+related_specs: [DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md]
+```
+
+- **Created:** 2026-05-13 at v5.15.5.F.4d.1.B.5 plan-body file-size umbrella scaffold
+- **Severity:** MEDIUM (originally; downgraded to N/A post C1 close-out)
+- **Surface:** `tests/controller_test.cpp` (currently ~26K lines; ~3239 test sections)
+- **Closure rationale:** Per operator C1 directive 2026-05-27 (AI-driven solo workflow rethink): test-file 5K rule retained as guideline but per-file split deferred indefinitely while AI workflow handles large file navigation reliably. Test reliability concern surface migrated to TECH_DEBT-127 (separate entry) which stays OPEN as the actual test-reliability surface. Sister cohort closures at .B.7 C1: -029/-116/-117/-118 + this entry.
+- **Status:** **CLOSED 2026-05-27** at `v5.15.5.F.4d.1.B.7` via C1 close-out
+- **Retroactive ledger write:** Entry was claimed CLOSED in `.B.7` CHANGELOG row + postmortem + handoff but missed `id: TECH_DEBT-114` yaml entry write at ship close. Retroactively written at `.D` Phase D.4 after Check 11 dogfood detection.
+- **Cross-ref:** `plans/v5.15-live-readiness/postmortems/2026-05-27-v5.15.5.F.4d.1.B.7-postmortem.md` C1 close-out section; `.B.7` CHANGELOG row; TECH_DEBT-127 (sister; test-reliability surface STAYS OPEN); `feedback_file_size_split_discipline` (AI-workflow scoping note).
+
+---
+
+### TECH_DEBT-116 — TECH_DEBT.md split (CLOSED at .B.7 C1 — done-incidentally)
+
+```yaml
+id: TECH_DEBT-116
+title: TECH_DEBT.md split (file-size discipline application — done-incidentally at .B.7)
+severity: medium
+surface_tags: [doc-organization, file-size, ai-driven-workflow-scoped]
+trigger: n/a (closed; wontfix-per-ai-workflow)
+status: wontfix-per-ai-workflow
+opened: 2026-05-18
+closed_at: v5.15.5.F.4d.1.B.7
+closure_rationale: AI-driven solo workflow reframe; TECH_DEBT.md split into open.md / in-flight.md / closed.md already happened at .B.3 prep (see DOCS/TECH_DEBT.md INDEX `splits_into:` frontmatter); intent already realized
+related_specs: [DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md]
+```
+
+- **Created:** 2026-05-18 at `.B.3` ship close (codified post-`feedback_file_size_split_discipline.md` codification)
+- **Severity:** MEDIUM (originally; downgraded — work already done incidentally)
+- **Surface:** `DOCS/TECH_DEBT.md` (now INDEX file; sub-files at `DOCS/tech-debt/{open,in-flight,closed}.md`)
+- **Closure rationale:** Split work already happened at `.B.3` prep (TECH_DEBT.md became INDEX with `splits_into:` frontmatter; sub-files contain entries by status). Original deferral was about future split work that already landed incidentally. Per .B.7 C1 close-out, formally marked wontfix-per-ai-workflow alongside sister cohort -029/-114/-117/-118.
+- **Status:** **CLOSED 2026-05-27** at `v5.15.5.F.4d.1.B.7` via C1 close-out (incidentally completed pre-`.B.7`)
+- **Retroactive ledger write:** Entry was claimed CLOSED in `.B.7` CHANGELOG + postmortem but missed `id: TECH_DEBT-116` yaml entry write. Retroactively written at `.D` Phase D.5 after Check 11 dogfood detection.
+- **Cross-ref:** `DOCS/TECH_DEBT.md` INDEX file (proof split happened); `.B.7` CHANGELOG row; sister TECH_DEBT-117 (RBP.md split done-incidentally; same shape; moved from open.md to closed.md at this `.D` ship); `feedback_file_size_split_discipline`.
+
+---
+
+### TECH_DEBT-118 — /readiness SKILL.md split (CLOSED at .B.7 C1 via AI-workflow reframe)
+
+```yaml
+id: TECH_DEBT-118
+title: /readiness SKILL.md split (wontfix-per-ai-workflow at .B.7 C1 close-out)
+severity: medium
+surface_tags: [skill-organization, file-size, ai-driven-workflow-scoped]
+trigger: n/a (closed; wontfix-per-ai-workflow)
+status: wontfix-per-ai-workflow
+opened: 2026-05-18
+closed_at: v5.15.5.F.4d.1.B.7
+closure_rationale: AI-driven solo workflow reframe; /readiness SKILL.md at 1674 lines navigable via section markers + skill body is reference doc not heavy compute; AI 1M context handles trivially
+related_specs: [DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md]
+```
+
+- **Created:** 2026-05-18 at `.B.3` ship close (codified post-`feedback_file_size_split_discipline.md` codification)
+- **Severity:** MEDIUM (originally; downgraded to N/A post C1 close-out)
+- **Surface:** `claude-skills/readiness/SKILL.md` (currently ~1674 lines; 30+ checks)
+- **Closure rationale:** Per operator C1 directive (AI-driven solo workflow rethink): SKILL.md 1500-line threshold reframed as guideline not mandate; AI workflow handles large skill files trivially. Sister cohort closures at .B.7 C1: -029/-114/-116/-117 + this entry.
+- **Status:** **CLOSED 2026-05-27** at `v5.15.5.F.4d.1.B.7` via C1 close-out
+- **Retroactive ledger write:** Entry was claimed CLOSED in `.B.7` CHANGELOG + postmortem but missed `id: TECH_DEBT-118` yaml entry write. Retroactively written at `.D` Phase D.6 after Check 11 dogfood detection.
+- **Cross-ref:** `.B.7` CHANGELOG row; sister entries -029/-114/-116/-117 (same Phase D retroactive cohort); `feedback_file_size_split_discipline` AI-workflow scoping note.
+
+---
+
+### TECH_DEBT-117 — RECURRING_BUG_PATTERNS.md split (CLOSED at .B.7 — done-incidentally; moved from open.md)
+
+```yaml
+id: TECH_DEBT-117
+title: RECURRING_BUG_PATTERNS.md split (file-size discipline application — done-incidentally at .B.7)
+severity: medium
+surface_tags: [doc-organization, file-size, ai-driven-workflow-scoped]
+trigger: n/a (closed; done-incidentally)
+status: done-incidentally
+opened: 2026-05-18
+closed_at: v5.15.5.F.4d.1.B.7
+closure_rationale: Done incidentally — RECURRING_BUG_PATTERNS.md was split into per-class sub-files at 2026-05-18 (see INDEX `splits_into:` frontmatter). Original intent already realized; closure is bookkeeping
+related_specs: [DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md, DESIGN_SPECS/ledger-templates/ledger-entry-templates.md]
+```
+
+- **Created:** 2026-05-18 (codified at `.B.3` ship close)
+- **Severity:** MEDIUM (2198 lines, 32 classes — exceeded 2000-line hard threshold; now done)
+- **Surface:** `DOCS/RECURRING_BUG_PATTERNS.md` (now INDEX file)
+- **Closure rationale:** Done incidentally — RECURRING_BUG_PATTERNS.md was split into per-class sub-files at 2026-05-18 (see INDEX `splits_into:` frontmatter). Per .B.7 C1 close-out, formally marked done-incidentally (distinct from sister -029/-114/-116/-118 wontfix-per-ai-workflow because the split actually happened, vs the wontfix entries which won't split per workflow reframe).
+- **Status:** **CLOSED 2026-05-27** at `v5.15.5.F.4d.1.B.7` (status: done-incidentally; moved from open.md to closed.md at `.D` Phase D.7)
+- **Retroactive ledger move:** Entry was in open.md per .B.7 C1 close-out claim but ledger move to closed.md was missed. Moved at `.D` Phase D.7 after Check 11 dogfood detection. Sister to -029/-114/-116/-118 wontfix-per-ai-workflow cohort (this is the 5th of 5 .B.7 C1 closures; -117 had different status — done-incidentally — but still needed ledger move).
+- **Cross-ref:** `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md`; sister cohort entries -029/-114/-116/-118 (this same Phase D retroactive batch); `feedback_file_size_split_discipline`; `DOCS/RECURRING_BUG_PATTERNS.md` INDEX file (proof split happened).
+
+---
+
+### TECH_DEBT-139 — /capture-audit Check 11 Python detection logic implementation (CLOSED at .D — IMPLEMENTED)
+
+```yaml
+id: TECH_DEBT-139
+title: /capture-audit Check 11 Python detection logic implementation (forward-promise auto-write verification mechanical enforcement) — IMPLEMENTED at .D
+severity: medium
+surface_tags: [ci-tooling, capture-audit, forward-promise-verification, m7-stage-6, m7-7th-canonical]
+trigger: n/a (closed; implemented)
+status: closed
+opened: 2026-05-27
+closed_at: v5.15.5.F.4d.1.D
+closure_rationale: Implemented at .D Phase B — NEW tools/check_forward_promise_audit.py (~800 LOC; 24 sentinel patterns; 24 verifier functions; ScanSpec dataclass; section parser; exemption mechanism; --since/--strict/--json/--include-archived modes). M7 7th canonical structural enforcement application. Dogfood at Phase G ship close verified Check 11 catches mechanical drift.
+related_specs: [DESIGN_SPECS/meta-disciplines/structural-enforcement-when-memory-insufficient.md, DESIGN_SPECS/meta-disciplines/canonical-sister-extension-discipline.md]
+```
+
+- **Created:** 2026-05-27 (surfaced at `/accept-handoff` Stage 5 dogfood verification post-`.B.8` ship pickup; SKILL.md amendment landed at `.B.8` Phase H.2.c; mechanical Python impl deferred per token-budget pragmatism)
+- **Severity:** MED (load-bearing: without Python impl, Check 11 must be run manually via Bash greps; mechanical at-commit-time enforcement requires the impl)
+- **Surface:** NEW `tools/check_forward_promise_audit.py` (the `.D` primary deliverable)
+- **Closure rationale:** Implemented at `.D` Phase B (~800 LOC tool with comprehensive sentinel + verifier coverage). M7 7th canonical structural enforcement application (sister to Check 9 + Check 10 in `check_per_core_registry_integrity.py` + B-Plus pre-commit hook + 3 other canonicals). Dogfood at Phase G ship close verified Check 11 catches mechanical drift across `.B.3` → `.B.8` ship-close artifacts (surfaced 8+ retroactive ledger writes in THIS same `.D` ship close — proving the discipline works as designed).
+- **Implementation details:** `tools/check_forward_promise_audit.py` lands at `.D` ship commit. Sister tools verified at HEAD: `check_per_core_registry_integrity.py` (Check 9 + Check 10), `check_plan_body_symbol_existence.py` (B-Plus). Sister discipline at `claude-skills/capture-audit/SKILL.md` Check 11 section (amended at `.B.8` Phase H.2.c; Python tool finally lands at `.D`).
+- **Dogfood result:** First Check 11 run at `.D` Phase B.5 smoke test surfaced 19 HIGH findings + 12 distinct claim+id forward-promise drift instances across 6+ prior ships. All 8 substantive retroactive writes landed at `.D` Phase D cohort closure. Sister to .B.8 commit 237c970 (7 retroactive ledger writes detected manually via /accept-handoff Stage 4.5 Bash-grep methodology — Check 11 Python now mechanizes that detection).
+- **Status:** **CLOSED 2026-05-28** at `v5.15.5.F.4d.1.D` via IMPLEMENTED (not deferred; structural enforcement landed)
+- **Cross-ref:** `plans/v5.15-live-readiness/postmortems/2026-05-27-v5.15.5.F.4d.1.B.8-postmortem.md` § What went poorly #2 (deferral rationale at .B.8); `plans/v5.15-live-readiness/subplans/2026-05-27-v5.15.5.F.4d.1.D-forward-promise-verification-ci.md` v1.1 (the .D plan body); `feedback_forward_promise_auto_write_verification` (Stage 3 first canonical at this ship); `feedback_structural_enforcement_when_memory_insufficient` (M7 parent; worked_examples extended); `claude-skills/capture-audit/SKILL.md` Check 11 spec; `tools/check_forward_promise_audit.py` (the deliverable); sister M7 7th canonical applications at Stage 6 escalation surface.

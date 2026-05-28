@@ -24,9 +24,23 @@ Each pushback was a step the session-close ritual SHOULD have caught earlier. Pe
 4. Detect engine + workspace HEAD SHAs + working tree status
 5. Read most recent handoff doc (if any) — establishes baseline for drift detection
 
-### Stage 2 — `/capture-audit --deep` pre-close gate
+### Stage 2 — `/capture-audit --deep` pre-close gate (deterministic invocation per .D Phase F.4)
 
-Invoke `/capture-audit --deep` via Skill tool. The 10-check drift verification surfaces:
+Run Check 11 forward-promise verification deterministically as the hard gate. If HIGH findings: surface for triage at Stage 3.
+
+```bash
+# Deterministic invocation — replaces LLM-orchestrated Skill invocation:
+python3 /home/caramel/code/FoxML_Trader_v2/tools/check_forward_promise_audit.py \
+    --deep \
+    --since "${LAST_TAG:-HEAD~5}"
+
+# Exit code != 0 → drift detected; proceed to Stage 3 triage
+# Sister to /handoff Stage 1.8 gate (same tool; same drift class)
+```
+
+The above replaces the prior LLM-orchestrated `/capture-audit --deep` invocation; LLM still synthesizes findings narrative + drives Stage 3 triage with operator, but the detection layer is now mechanical (per `feedback_structural_enforcement_when_memory_insufficient` M7 escalation).
+
+The deep gate's 11-check drift verification surfaces:
 
 - (1) `MEMORY.md` index sync — every memory file has an index entry
 - (2) Plan body frontmatter completeness (`audit_tier:` + `decision_log:` + `sister_specs:`)
@@ -54,9 +68,15 @@ Common findings + their fixes:
 - "Memory amended but description in MEMORY.md index is stale" → update index
 - "Handoff doc cites paths that don't exist" → fix paths or remove stale citations
 
-### Stage 4 — Re-fire `/capture-audit --deep` (verify clean)
+### Stage 4 — Re-fire `/capture-audit --deep` (verify clean; deterministic invocation per .D Phase F.4)
 
-After applying fixes, fire `/capture-audit --deep` again to verify CLEAN. Loop back to Stage 3 if findings remain.
+After applying fixes, re-run the mechanical detection to verify CLEAN:
+
+```bash
+python3 /home/caramel/code/FoxML_Trader_v2/tools/check_forward_promise_audit.py --strict
+```
+
+Exit code 0 → CLEAN; proceed to Stage 5. Exit code != 0 → loop back to Stage 3.
 
 Exit condition: `/capture-audit --deep` returns CLEAN OR operator explicitly accepts remaining findings (e.g., known-deferred-to-Phase-D items).
 

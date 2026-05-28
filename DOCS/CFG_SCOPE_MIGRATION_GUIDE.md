@@ -10,9 +10,9 @@
 
 `v5.15.5.F.4c.3` splits `engine.cfg` into two scopes:
 - **Global section** (top of file; no header) — system / training / recording / engine-wide mode / acknowledgments
-- **Per-core sections** (`[core N]` headers) — strategy / trading / ML / risk / regime / entry / exit (each core's cfg is authoritative; no inheritance from global)
+- **Per-node sections** (`[core N]` headers) — strategy / trading / ML / risk / regime / entry / exit (each core's cfg is authoritative; no inheritance from global)
 
-The previous "global default + per-core override" pattern is FORBIDDEN structurally. Each core sets ITS OWN trading parameters in its `[core N]` section. There's no inheritance fallback.
+The previous "global default + per-node override" pattern is FORBIDDEN structurally. Each core sets ITS OWN trading parameters in its `[core N]` section. There's no inheritance fallback.
 
 **Per Caramel's directive 2026-05-15: HARD BREAK of legacy cfg syntax.** No backward-compat shim. Operator rewrites `engine.cfg` once per this guide.
 
@@ -21,7 +21,7 @@ The previous "global default + per-core override" pattern is FORBIDDEN structura
 ## Why this matters
 
 - Each core's trading config is fully self-contained + visible in one section
-- Per-core asymmetric tuning becomes first-class (kill switches per core, ML hyperparameters per core, etc.)
+- Per-node asymmetric tuning becomes first-class (kill switches per core, ML hyperparameters per core, etc.)
 - "Did I miss exposing this knob?" failure mode (Class 24) dies structurally — every per-core knob is in the per-core registry by discipline
 - Future axes (per-symbol, per-strategy, per-horizon) compose cleanly on the same shape
 
@@ -35,12 +35,12 @@ The previous "global default + per-core override" pattern is FORBIDDEN structura
 cp engine.cfg engine.cfg.pre-v5.15.5.F.4c.3.bak
 ```
 
-### Step 2 — Identify global vs per-core knobs
+### Step 2 — Identify global vs per-node knobs
 
 Use the field classification table below. For each line in your current `engine.cfg`:
 
 - If the key is in the **Global** list → keep at top of new file
-- If the key is in the **Per-core** list → move under the appropriate `[core N]` section
+- If the key is in the **Per-node** list → move under the appropriate `[core N]` section
 - If the key has `core_N_` prefix → strip prefix, place under matching `[core N]` section
 
 ### Step 3 — Rewrite engine.cfg in new sectioned format
@@ -117,7 +117,7 @@ If cfg fails to load, the error messages name the offending key + suggested scop
 
 ---
 
-## Global vs Per-core field classification
+## Global vs Per-node field classification
 
 ### Global fields (~25-30)
 
@@ -154,7 +154,7 @@ If cfg fails to load, the error messages name the offending key + suggested scop
 - `acknowledge_hot_swap_with_open_positions`
 - `allow_cross_major_engine`
 
-### Per-core fields (~75-80, including kill switches + risk envelopes)
+### Per-node fields (~75-80, including kill switches + risk envelopes)
 
 **Strategy + Model**
 - `strategy`
@@ -189,7 +189,7 @@ If cfg fails to load, the error messages name the offending key + suggested scop
 - `barrier_blend_mode`
 - `exit_threshold`, `exit_bandit_lr`, `exit_signal_model_dir`
 
-**Risk envelope (per-core; previously global per Caramel 2026-05-15)**
+**Risk envelope (per-node; previously global per Caramel 2026-05-15)**
 - `kill_switch_daily_loss_pct`
 - `kill_switch_drawdown_pct`
 - `max_drawdown_pct`
@@ -201,13 +201,13 @@ If cfg fails to load, the error messages name the offending key + suggested scop
 - `partial_exit_pct`, `tp2_mult`, `breakeven_buffer_pct`
 - Gate recovery: `sl_cooldown_*`, `recovery_delay_secs`
 
-**Strategy-specific (per-core)**
+**Strategy-specific (per-node)**
 - `momentum_min_tp_margin_pct`, `momentum_min_r2`, `momentum_tp_mult`, `momentum_sl_mult`, `momentum_breakout_mult`, `momentum_require_last_win`
 - `simpledip_tp_pct`, `simpledip_sl_pct`
 - `mr_tp_pct`, `mr_sl_pct`
 - `emacross_tp_pct`, `emacross_sl_pct`, `emacross_dip_mult`, `emacross_crossover_min`, `emacross_trail_mult`
 
-**Cfg flag bits** (former `ml_cfg_flags` bitmap bits — now flat KIND_BOOL per-core rows per A2 hybrid migration)
+**Cfg flag bits** (former `ml_cfg_flags` bitmap bits — now flat KIND_BOOL per-node rows per A2 hybrid migration)
 - `ridge_within_horizon`, `ridge_across_horizons`
 - `confidence_composite_enabled`, `confidence_enabled`
 - `bandit_enabled`, `exit_bandit_enabled`
@@ -218,7 +218,7 @@ If cfg fails to load, the error messages name the offending key + suggested scop
 ### Stays manual at `.F.4c.3` (defer to `.F.4e` with KIND_STRING infra)
 
 - `symbol` — defer to `.F.4c.3.A` follow-up subplan after `.F.4e` ships
-- `core_horizon_list[]`, `core_ensemble_blend_mode[]`, `core_disabled_horizons[]` — string per-core overrides; migrate at `.F.4e`
+- `core_horizon_list[]`, `core_ensemble_blend_mode[]`, `core_disabled_horizons[]` — string per-node overrides; migrate at `.F.4e`
 
 ---
 
@@ -227,10 +227,10 @@ If cfg fails to load, the error messages name the offending key + suggested scop
 After rewriting `engine.cfg`:
 
 1. **Cfg loads** — engine starts without parser errors. Any errors name the offending key + suggested scope.
-2. **Settings panel populates** — open `engine_gui`; Global tab shows ~25-30 rows; each per-core tab (Engine 0 / Engine 1 / ...) shows ~75-80 rows.
+2. **Settings panel populates** — open `engine_gui`; Global tab shows ~25-30 rows; each per-node tab (Engine 0 / Engine 1 / ...) shows ~75-80 rows.
 3. **Paper-trade 60 seconds** — engine runs without crashing; no NaN feature events; no missing-field warnings.
 4. **Round-trip persistence** — change a value in Settings panel → restart engine → verify the change persisted in `engine.cfg`.
-5. **Per-core asymmetry verified** — set different `take_profit_pct` per core; verify each core uses its own value (check ML status panel or per-core trade log).
+5. **Per-node asymmetry verified** — set different `take_profit_pct` per core; verify each core uses its own value (check ML status panel or per-node trade log).
 
 ---
 
@@ -239,7 +239,7 @@ After rewriting `engine.cfg`:
 | Error message | Cause | Fix |
 |---|---|---|
 | `key 'take_profit_pct' is not valid at scope 'global'` | Trading key at top of file | Move under `[core 0]` (and other cores as needed) |
-| `key 'num_execution_cores' is not valid at scope 'per-core'` | Global key inside `[core N]` section | Move to top of file before any section header |
+| `key 'num_execution_cores' is not valid at scope 'per-node'` | Global key inside `[core N]` section | Move to top of file before any section header |
 | `section [core 0] already defined` | Two `[core 0]` sections | Merge into one; ensure each `[core N]` appears once |
 | `[core 5] cfg present but engine runs 4 cores; ignoring` | Section index >= num_execution_cores | Either remove the section OR bump `num_execution_cores` |
 | `unknown axis 'foo'` | Typo in section header (e.g., `[cor 0]`) | Fix axis name; only `[core N]` is supported at `.F.4c.3` |
@@ -248,9 +248,9 @@ After rewriting `engine.cfg`:
 
 ## Stamp + drift implications
 
-Each core's HMAC stamp now covers ITS per-core cfg (not a global cfg). At boot:
-- Per-core stamp file: `<core_N_model_dir>/cfg-core-<N>.stamp` (filename includes core idx to disambiguate when multiple cores share model_dir)
-- Drift check fires per core; per-core drift status published to model-health panel
+Each core's HMAC stamp now covers ITS per-node cfg (not a global cfg). At boot:
+- Per-node stamp file: `<core_N_model_dir>/cfg-core-<N>.stamp` (filename includes core idx to disambiguate when multiple cores share model_dir)
+- Drift check fires per core; per-node drift status published to model-health panel
 - v5.14-era stamps DO NOT load (`cfg_scope_split_version` field missing → explicit ERROR; operator retrains models post-`.F.4c.3`)
 
 ---

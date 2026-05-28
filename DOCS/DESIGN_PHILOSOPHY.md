@@ -206,7 +206,7 @@ different codebase.
 | H1 | No `malloc` / `new` / `std::vector` / `std::string` on hot/slow/drainer/parser paths | HARD | STRATEGY_AND_CODING_RULES Rule 1 |
 | H2 | No `virtual` functions / `std::function` / `std::shared_ptr` anywhere | HARD | STRATEGY_AND_CODING_RULES Rule 2 |
 | H3 | No `std::mutex` / `condition_variable` / `sleep_for` / `pthread_rwlock` anywhere | HARD | STRATEGY_AND_CODING_RULES Rule 3 |
-| H4 | `FPN<F=64>` for accounting math; NEVER `float`/`double` on accounting paths (display-only OK) | HARD | CLAUDE.md item 4 (per-core data plane); STRATEGY_AND_CODING_RULES |
+| H4 | `FPN<F=64>` for accounting math; NEVER `float`/`double` on accounting paths (display-only OK) | HARD | CLAUDE.md item 4 (per-node data plane); STRATEGY_AND_CODING_RULES |
 | H5 | No `atof` / `strstr` / scalar JSON in parser inner loops; use `simdjson` / `fast_float` / `parse_double_fast` | HARD | STRATEGY_AND_CODING_RULES Rule 6 |
 | H6 | Cross-thread fields get `alignas(64)` to isolate cache lines; no false sharing | HARD | STRATEGY_AND_CODING_RULES Rule 7; CLAUDE.md item 12 |
 | H7 | Hot path is BRANCHLESS for data-dependent dispatch (mask compute, cmov; per Rule 8 of latency-path-discipline) | HARD | latency-path-discipline.md Rule 8 |
@@ -428,7 +428,7 @@ under contention can stall the hot path for milliseconds (kernel wait
 - **`alignas(64) atomic<T>`** for single-byte cross-thread flags (e.g., `permission`, `kill_tripped`)
 - See STRATEGY_AND_CODING_RULES Rule 3 + latency-path-discipline.md Rule 7
 
-**HARD: Per-core data plane.** Each engine owns its rolling/regime/flow state. No shared state between cores on the slow path. Producer thread fans Binance ticks across SPSC rings to per-core consumers. See CLAUDE.md item 4.
+**HARD: Per-node data plane.** Each engine owns its rolling/regime/flow state. No shared state between cores on the slow path. Producer thread fans Binance ticks across SPSC rings to per-node consumers. See CLAUDE.md item 4.
 
 **HARD: OMS submit funneling.** The drainer thread is the SOLE caller of `OrderManager_Submit`. Any other code path that would submit goes through the drainer's MPSC submit queue. Single-writer = lock-free; multiple-writer = MPSC ring. See CLAUDE.md item 5.
 
@@ -851,7 +851,7 @@ If you can't find the answer at the layer you're looking at, go DOWN the hierarc
 
 Every codebase has design choices it says NO to. Naming them keeps focus.
 
-- **Multi-symbol portfolio management.** Single-symbol design. Adding multi-symbol would require fundamental rework of the per-core sharded model + portfolio bitmap + risk allocation. Defer indefinitely.
+- **Multi-symbol portfolio management.** Single-symbol design. Adding multi-symbol would require fundamental rework of the per-node sharded model + portfolio bitmap + risk allocation. Defer indefinitely.
 - **Maker order execution.** No consistent order-book data source today; TECH_DEBT-008 indefinite defer. Engine is taker-side only.
 - **Sub-millisecond fill confirmation.** Binance REST round-trip is ~50-200ms; we don't try to beat the network.
 - **Multi-tenant operator support.** Single-operator tooling (one paper-test session at a time; one cfg file).
@@ -860,7 +860,7 @@ Every codebase has design choices it says NO to. Naming them keeps focus.
 - **Web frontend / browser GUI.** Native ImGui via SDL2; no HTTP server, no JS frontend. Operator runs locally.
 - **Distributed deployment.** Single-process, single-machine. No cross-machine orchestration.
 - **Backtest performance optimization (subsecond per-day).** Backtest engine prioritizes train-serve parity over throughput; running multi-day backtests is acceptable.
-- **Exotic strategies requiring heavy state (deep RL, full order-book modeling).** Lightweight strategies (regression-driven, ML inference, fixed rules) only. Heavy state breaks the per-core sharding contract.
+- **Exotic strategies requiring heavy state (deep RL, full order-book modeling).** Lightweight strategies (regression-driven, ML inference, fixed rules) only. Heavy state breaks the per-node sharding contract.
 
 When operator priorities shift — e.g., a new revenue path requires
 multi-symbol — these explicit-NOs become explicit decision points,
@@ -878,7 +878,7 @@ for quick lookups when implementing or reviewing.
 | Portfolio bitmap | 1 | bitmap-flag-api.md | — |
 | Per-position TP/SL hot, portfolio slow | 2 | — | — |
 | Fill consumption every tick | 3 | — | — |
-| Per-core data plane | 4 | — | — |
+| Per-node data plane | 4 | — | — |
 | OMS submit funneling | 5 | — | — |
 | OneCore helpers | 6 | — | — |
 | Warmup observes before trading | 7 | — | — |
@@ -954,6 +954,47 @@ When operator priorities shift:
 1. Update section 12 (explicit NOs) to remove the item or add a new explicit-YES
 2. Update CLAUDE.md if the change affects always-on context
 3. Add a CLAUDE.local.md going-forward rule if the change has process implications
+
+---
+
+## 15. Glossary
+
+Canonical terminology source-of-truth for the post-`.E` architecture. All other docs cross-reference this section; never duplicate definitions. New terms introduced anywhere in the codebase MUST be added here.
+
+**Terminology-evolution note (codified `.D.1` 2026-05-28):** terminology evolved at `v5.15.5.F.4d.1.E.1` — `per-core`→`per-node`, `Core`→`Node`, drainer absorbed into per-node slow-path. **Pre-`.E.1` historical-record docs** (postmortems / handoffs / changelogs / the RECURRING_BUG_PATTERNS catalog / shipped plan bodies) use `per-core` accurately for their time and are NOT rewritten (rewriting would falsify the evolution record + break `.E.1`'s "rename Core→Node" narrative coherence). **Current + forward-looking docs** use `per-node`. This Glossary is the bridge: when reading older docs, `per-core` ≈ today's `per-node`. Code symbols (`CoreContext`, `MAX_CORES`, `state.cores`, `FOREACH_PER_CORE_CFG_FIELD`, cfg-field names) keep their `Core*` names in citations until `.E.1` renames the code itself. (Per `feedback_terminology_evolution_bridge_not_history_rewrite`.)
+
+**Scope of this Glossary:** DEPLOYMENT/ARCHITECTURE-level terms only. Runtime-level primitives (`seqlock`, `SPSC ring`, `BG_Evaluate`, `SG_Evaluate`, `FPN<F=64>`, `tt::` namespace, `OMS_DrainSubmit`, `Regime_Classify`, kill-switch lifecycle) belong in the operator-facing `DOCS/GLOSSARY.md` (lands at `.E.2`), not here.
+
+### Deployment hierarchy
+
+- **Deployment** — the engine instance (whole); one process; one systemd unit. Owns ≥1 cluster. Unit of operator start/stop/restart.
+- **Cluster** — per-exchange grouping within a deployment. Owns producer thread + exchange adapter + sub-account pool + rate budget + WS user-data connection + per-cluster credentials + market-hours enforcement. Failure-isolated (per-cluster kill flag halts only that cluster). One cluster = one exchange.
+- **Node** — logical trading unit within a cluster. Bound 1:1 to a sub-account. Owns slow + hot pthread pair on dedicated CPU resources (typically 2 CPU cores), its own strategy + ML model + risk params + portfolio slot. Per-node failure domain at the economic layer (exchange-enforced via sub-account isolation). (Was "core" pre-`.E.1`.)
+- **ExecutionCore** — runtime hot-path execution context WITHIN a Node; per-thread CPU-execution unit. The CPU-execution-context concept; distinct from "Node" (deployment unit). Canonical name PRESERVED (NOT renamed during Core→Node).
+- **CPU core** — hardware concept; physical processor core. References stay "CPU core" (never "node"). One Node typically uses 2 CPU cores.
+
+### Threading
+
+- **Producer thread** — one per cluster. Reads exchange WS feed; parses ticks; fans-out to per-node SPSC rings; replicates ema_price; publishes viewer state. (Was global single producer pre-`.E.1`.)
+- **Drainer thread** — DEPRECATED post-`.E.1`; absorbed into per-node slow-path. Pre-`.E.1` was the global thread running `OMS_DrainSubmit` + `OrderManager_Tick` + `DrainPostFill`.
+- **Aggregator** — single global thread; reads per-node state via seqlock; computes per-cluster + global totals; sets hierarchical kill flags. Read-only wrt per-node state (per-node writes; aggregator reads). Event-sourced per-fill atomic updates; periodic cycle = integrity verification only.
+- **Hot path** — per-node per-tick context; branchless (H7); ≤500ns p99 (H8). **Slow path** — per-node per-poll-interval context; ≤100μs p99 (H8).
+
+### Economic + isolation
+
+- **Sub-account** — exchange-enforced economic isolation unit; one Node bound 1:1 to one sub-account. Structurally stronger than virtual partition. Canonical isolation mode for exchanges supporting sub-accounts (Binance); virtual partition is the fallback (Alpaca/IBKR retail).
+- **Capital allocation** — cluster-level distribution across Nodes (`reserve_pct` + `max_per_node_pct`); aggregator enforces at submit time.
+
+### Build / runtime artifacts
+
+- **fox-engine** — headless engine binary (systemd service in production); state via mmap, commands via UDS. Replaces `engine_gui` (archived `.E.2`).
+- **fox-tui** — read-only notcurses viewer (reads mmap zero-copy). **fox-cli** — command sender via UDS. **foxml-train** — headless ML training CLI (replaces `foxml_suite`, archived `.E.2`).
+
+### Mode + version flags
+
+- **`mode = backtest | paper | live | shadow`** — per-node operating mode (4-state H14 MBS encoding).
+- **`topology.mode = dev | production`** — deployment-wide thread scheduling (dev OS-scheduled; production isolcpus + nohz_full + pinning). Same binaries.
+- **ENGINE_VERSION_STRING** — per-ship internal version (high-velocity). **SOFTWARE_VERSION_STRING** — platform milestone (coarse; starts `v0.1.0` for full `.E` end-game). Both HMAC-stamped.
 
 ---
 

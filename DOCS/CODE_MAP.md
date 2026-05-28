@@ -421,7 +421,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `TUI_PopulatePerCoreLatency` — line 1627
 - `TUI_PopulatePerCoreSlowPathLatency` — line 1674
 - `TUI_PopulateAdvancedTopology` — line 1712
-- `TUI_PopulateTopology` — line 1749 — poll_interval[i]    — per-core resolved poll cadence
+- `TUI_PopulateTopology` — line 1749 — poll_interval[i]    — per-node resolved poll cadence
 - `TUI_Render_Snapshot` — line 1787 — runs on TUI thread. reads only from snapshot (all doubles, no FPN).
 - `TUI_ReadKey` — line 1998
 
@@ -485,7 +485,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `ANSI_Section_Charts` — line 923
 - `ANSI_Section_Controls` — line 963
 - `ANSI_Section_Latency` — line 979
-- `ANSI_Section_PerCoreLatency` — line 1018 — per-core latency the moment they flip engine_mode=sharded.
+- `ANSI_Section_PerCoreLatency` — line 1018 — per-node latency the moment they flip engine_mode=sharded.
 - `ANSI_Section_RightPanel` — line 1058 — hidden on narrow terminals (< 100 columns)
 - `ANSI_Layout_Standard` — line 1119
 - `ANSI_Layout_Charts` — line 1165 — ANSI_Section_RightPanel(ab, s, h, w, start_time);

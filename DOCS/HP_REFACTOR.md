@@ -22,7 +22,7 @@ Per CLAUDE.md architecture + `latency-path-discipline.md`:
 | `BG_Evaluate` | `CoreFrameworks/ControllerEventLoop.hpp` | Per Binance tick | Branchless gate predicate compute; reads cached `GateParameters` via seqlock; mask-select dispatch |
 | `SG_Evaluate ×2` (entry + exit) | `CoreFrameworks/ControllerEventLoop.hpp` | Per tick × 2 strategies | Branchless gate decision; cmov dispatch |
 | `ExecutionCore_Tick` | `CoreFrameworks/ExecutionCore.hpp` | Per tick | Mask-AND gate check; branchless TradeEvent push (rare branch via `__builtin_expect`) |
-| `GateParameters` reads via `ParameterSlot` | `CoreFrameworks/ParameterSlot.hpp` | Per tick | Lock-free seqlock read of cached per-core params |
+| `GateParameters` reads via `ParameterSlot` | `CoreFrameworks/ParameterSlot.hpp` | Per tick | Lock-free seqlock read of cached per-node params |
 
 ### Hot-path invariants (per CLAUDE.md H7 + H8)
 

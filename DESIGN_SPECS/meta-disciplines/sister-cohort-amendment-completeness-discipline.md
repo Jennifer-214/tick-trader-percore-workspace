@@ -1,9 +1,10 @@
 ---
 type: meta-discipline
-stage: 2-draft
+stage: 3-first-canonical
 version: 1.0
 established: 2026-05-27
 last_amended: 2026-05-27
+promoted_to_stage_3: 2026-05-27 (at v5.15.5.F.4d.1.B.8 ship close per /capture-audit Check 7 promotion-eligibility surfacing; first canonical applications = Phase D Steps D.4/D.5/D.6 (Class 27/25 sister-catalog cross-ref amendments after Class 26 sub-shape B addition) + canonical-sister-extension-discipline.md v1.0→v1.1 CI-tooling-surface axis amendment + Phase H.2.d /dod-audit sister-skill amendment after /accounting-audit + /capture-audit codification — 4 distinct AMENDMENT-layer applications at single ship; Stage 4 cohort migration promotion deferred to 2nd canonical at next ship surface)
 tags: [meta-discipline, framework-discipline, doc-discipline, structural-fix, sister-cohort]
 surface: [doc-pipeline, plan-pipeline, ci-tooling, skill-pipeline]
 sister_specs:
@@ -126,8 +127,8 @@ Without sister-cohort enumeration, these drifts accumulate silently. Future read
 
 - **Stage 1 (problem identification):** v5.15.5.F.4d.1.B.8 v1.1 `/blindspot-scan` caught HIGH-3 finding (sister Class catalog amendments missed) → recognized as sister-cohort drift pattern at amendment layer
 - **Stage 2 (DESIGN_SPEC draft):** THIS DOC (2026-05-27 at v5.15.5.F.4d.1.B.8 Phase H.2.a)
-- **Stage 3 (first canonical reference):** v5.15.5.F.4d.1.B.8 Phase D Steps D.4/D.5/D.6 sister-catalog amendments + Phase H.2.d /dod-audit sister-skill amendment (single ship; two cohorts)
-- **Stage 4 (second canonical application):** next ship that amends sister-cohort artifacts (e.g., when a NEW Class catalog is added with sister cross-refs to existing classes)
+- **Stage 3 (first canonical reference) — LANDED AT v5.15.5.F.4d.1.B.8 SHIP CLOSE (2026-05-27 PM):** 4 distinct AMENDMENT-layer applications at single ship: Phase D Steps D.4/D.5 (Class 27 + Class 25 sister-catalog cross-ref amendments after Class 26 sub-shape B addition) + Phase D Step D.7 (canonical-sister-extension-discipline.md v1.0→v1.1 CI-tooling-surface axis amendment) + Phase H.2.d (/dod-audit sister-skill amendment after /accounting-audit + /capture-audit codification per /blindspot-scan v1.1 H-RECURSIVE-1 sister-skill cohort enumeration). Promoted Stage 2→Stage 3 at ship close per /capture-audit Check 7 surfacing.
+- **Stage 4 (second canonical application / cohort migration):** next ship that amends sister-cohort artifacts (e.g., when a NEW Class catalog is added with sister cross-refs to existing classes OR when a NEW DESIGN_SPEC is added requiring parallel sister-spec amendments)
 - **Stage 5+ (CLAUDE.md item promotion):** when 5+ ships apply the discipline AND it becomes load-bearing for sprint-wide amendment quality
 
 ## Cross-references

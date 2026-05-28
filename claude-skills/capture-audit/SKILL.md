@@ -154,7 +154,6 @@ For each promised auto-write found, verify it landed at the expected ledger loca
 ```bash
 # Direct deterministic invocation — replaces LLM-orchestrated logic interpretation:
 python3 /home/caramel/code/FoxML_Trader_v2/tools/check_forward_promise_audit.py \
-    --deep \
     --since "${SINCE_REF:-HEAD~5}" \
     ${STRICT:+--strict} \
     ${JSON_OUT:+--json}

@@ -143,7 +143,6 @@ Run Check 11 forward-promise verification mechanically as the hard gate:
 
 ```bash
 python3 /home/caramel/code/FoxML_Trader_v2/tools/check_forward_promise_audit.py \
-    --deep \
     --since "${HANDOFF_WRITE_COMMIT:-HEAD~5}"
 
 # Exit code != 0 → drift detected; classify per severity below

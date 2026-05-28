@@ -75,3 +75,4 @@
 - [Engine CLAUDE.md is a symlink to workspace](project_engine_clauder_md_is_symlink.md) — edits must target workspace path (harness can be unreliable with symlinks); also plans/ + .claude/skills/
 - [Anti-spaghetti audit on cadence](project_anti_spaghetti_audit_cadence.md) — quarterly + post-new-anti-pattern-codification sweep + ad-hoc; first canonical run 2026-05-17
 - [foxml_suite refactor queued for post-`.F.4d.1.D`](project_foxml_suite_refactor_queued.md) — needs PRODUCER-side framework treatment; fire `/ml-audit` scoped to foxml_suite
+- [E-series is vision convergence, not scope balloon](project_e_series_is_vision_convergence_not_scope_balloon.md) — v5.15.5.F.4d.1.E (9 sub-ships) is year-old destination architecture, not planning-day enthusiasm; do not auto-flag scope expansion

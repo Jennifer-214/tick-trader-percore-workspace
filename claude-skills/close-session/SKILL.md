@@ -31,7 +31,6 @@ Run Check 11 forward-promise verification deterministically as the hard gate. If
 ```bash
 # Deterministic invocation — replaces LLM-orchestrated Skill invocation:
 python3 /home/caramel/code/FoxML_Trader_v2/tools/check_forward_promise_audit.py \
-    --deep \
     --since "${LAST_TAG:-HEAD~5}"
 
 # Exit code != 0 → drift detected; proceed to Stage 3 triage

@@ -2749,3 +2749,111 @@ All 8 doc citations updated with post-`.B.6` sub-file annotation preserving orig
 LEAVE per discipline: ~14 ARCHIVED + CLOSED-historical refs in `DOCS/CHANGELOG.md` historical rows + `DOCS/changelogs/2026-04-09-*` + closed PARITY entries (PARITY-003/-023/-025/-026/-027/-028/-029/-030 all `closed_at`) + bug-class historical citations (`class-03-drain-count-under-partials.md:38`).
 
 **Source-file cohort (original 8 sites) STILL OPEN — next stale-comment audit OR quarterly `/metadata-audit` triggers.** Status: PARTIAL_CLOSURE (operator-facing-doc cohort closed; source-file cohort pending). Sister to Class 33 recurrence (consumer-enumeration-undercount on deletion) — `.B.7` confirms the discipline applies to OPERATOR-FACING DOC SURFACES not just source-file consumers.
+
+---
+
+### TECH_DEBT-133 — `EngineSharded_Run` mega-function deferred per code-LOC methodology
+
+```yaml
+id: TECH_DEBT-133
+title: EngineSharded_Run mega-function deferred per code-LOC methodology (sister to TECH_DEBT-029)
+severity: low
+surface_tags: [code-organization, file-size, sister-to-029, ai-driven-workflow-scoped]
+trigger: future-runtime-decoupling-OR-per-core-drainer-natural-extraction-surfaces
+status: open
+opened: 2026-05-27
+related_specs: [DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md]
+```
+
+- **Created:** 2026-05-27 (surfaced at `.B.6` Phase B.4.1 revert with code-LOC methodology codification; deferral confirmed at `.B.7` C1 close-out)
+- **Severity:** LOW
+- **Surface:** `CoreFrameworks/EngineSharded/Run.hpp` `EngineSharded_Run` function — 2,050 raw lines / 1,406 code-LOC (under file-size threshold per `file-size-split-discipline.md` v1.4 code-LOC methodology, but per-fn body is far over typical-fn limits)
+- **Class:** Function-level code organization (sister to TECH_DEBT-029 file-level closure as `wontfix-per-ai-workflow` at `.B.7`)
+- **What's deferred:** Function-level split into separate boot + slow-path-orchestrator helpers. Per `feedback_count_code_loc_not_total_lines` discipline + AI-driven workflow scoping (Claude 1M context handles 6K-line files trivially), no urgent compile/cognitive load.
+- **Why deferred (not effort-avoidance):** Per-fn-LOC limits are typical-human-readable concern; AI workflow doesn't have same cognitive ceiling. Sister to TECH_DEBT-029 (file-size discipline closed `wontfix-per-ai-workflow` at `.B.7` C1 close-out).
+- **Status:** **OPEN — DEFERRED-INDEFINITE.** Natural extraction surfaces will surface during `.E` per-core drainer rework OR future runtime-decoupling work (v6.X). Re-evaluate then.
+- **Trigger:** Address when (a) `.E` per-core drainer architecture (TECH_DEBT-129) creates natural extraction surfaces, OR (b) v6.X runtime-decoupling work fragments the file naturally, OR (c) human contributors join project + cognitive-load concern surfaces.
+- **Retroactive ledger write:** This entry was claimed OPEN-DEFERRED-INDEFINITE in `.B.6` postmortem + `.B.7` postmortem + multiple plan body amendment sections but missed ledger write at ship close. Retroactively written at 2026-05-27 PM during `/accept-handoff` Stage 4.5 forward-promise verification dogfood.
+- **Cross-ref:** TECH_DEBT-029 (sister; closed wontfix-per-ai-workflow at `.B.7`); TECH_DEBT-129 (sister `.E` per-core drainer architecture — natural extraction surface); `feedback_count_code_loc_not_total_lines`; `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md` v1.4 "AI-driven workflow scoping" section; `.B.6` postmortem (code-LOC methodology codification); `.E` per-core drainer scaffold at `subplans/2026-05-27-v5.15.5.F.4d.1.E-per-core-drainer-architecture-SCAFFOLD.md`.
+
+---
+
+### TECH_DEBT-135 — Class 11 `regime_names[]` hardcoded sibling-array (registry-fit-audit finding)
+
+```yaml
+id: TECH_DEBT-135
+title: Class 11 regime_names[] hardcoded sibling-array (registry-fit-audit finding)
+severity: medium
+surface_tags: [registry-fit, class-11, hardcoded-sibling-array, ml-pipeline, regime]
+trigger: sub-ship-v5.15.5.F.4d.1.F-professionalization-audit-sweep
+status: open
+opened: 2026-05-27
+related_specs: [DOCS/recurring-bug-patterns/class-11-hardcoded-sibling-array.md]
+```
+
+- **Created:** 2026-05-27 (surfaced at post-`.B.6` `/registry-fit-audit` codebase-wide sweep; queued at `.B.7` for `.F`)
+- **Severity:** MED
+- **Surface:** `regime_names[]` hardcoded array — manual N-site duplication; sister to candidate `FOREACH_REGIME` registry
+- **Class:** Class 11 (Hardcoded sibling-array — registry-fit candidate)
+- **What's deferred:** Migrate `regime_names[]` to `FOREACH_REGIME` registry walk + auto-flow per regime addition. Removes hardcoded duplication; new regime additions become 1-row registry edits.
+- **Why deferred (not effort-avoidance):** Out of `.B.7` scope-bound bugfix cohort + `.B.8` scope-bound accounting cohort. Natural triage at `.F` professionalization audit sweep where `/registry-fit-audit` re-fires against post-framework-lock codebase.
+- **Status:** **OPEN** — queued for `.F` triage. Likely fix-now fold at `.F` if `/registry-fit-audit` confirms.
+- **Trigger:** `.F` ship (`v5.15.5.F.4d.1.F` comprehensive professionalization audit sweep).
+- **Retroactive ledger write:** This entry was claimed OPEN-queued-for-`.F` in `.B.7` postmortem "Followup work" but missed ledger write at ship close. Retroactively written at 2026-05-27 PM during `/accept-handoff` Stage 4.5 forward-promise verification dogfood.
+- **Cross-ref:** `plans/v5.15-live-readiness/postmortems/2026-05-27-v5.15.5.F.4d.1.B.7-postmortem.md` "Followup work"; `.F` scaffold at `subplans/2026-05-27-v5.15.5.F.4d.1.F-professionalization-audit-sweep-SCAFFOLD.md`; `DOCS/recurring-bug-patterns/class-11-hardcoded-sibling-array.md`; `feedback_proactive_novel_alternative_consideration` (consider novel alternative at fix time — e.g., metadata-bit categorical tag pattern vs raw FOREACH).
+
+---
+
+### TECH_DEBT-136 — B-Plus v0.5 mechanical-migration audit (Stage 6 escalation candidate)
+
+```yaml
+id: TECH_DEBT-136
+title: B-Plus v0.5 mechanical-migration audit (Stage 6 M7 escalation candidate)
+severity: medium
+surface_tags: [ci-tooling, b-plus, mechanical-migration, m7-stage-6, class-14, class-26]
+trigger: sub-ship-v5.15.5.F.4d.1.F-professionalization-audit-sweep
+status: open
+opened: 2026-05-27
+related_specs: [DESIGN_SPECS/meta-disciplines/structural-enforcement-when-memory-insufficient.md]
+```
+
+- **Created:** 2026-05-27 (surfaced at post-`.B.6` `/bug-check` sweep + `.B.7` AI-introduced-bug pattern recognition; queued at `.B.7` for `.F`)
+- **Severity:** MED
+- **Surface:** `tools/check_plan_body_symbol_existence.py` (B-Plus CI tool; current version v0.4)
+- **Class:** Stage 6 escalation candidate per M7 (`structural-enforcement-when-memory-insufficient.md`). Sister to existing B-Plus v0.4 generator mode + `/capture-audit` Check 8 (cfg-field categorization mechanical sidecar).
+- **What's deferred:** Extend B-Plus to v0.5 with mechanical-migration audit feature. Catches AI-introduced bugs from mechanical substitutions:
+  - Class 14 (fabricated symbols in plan body code samples)
+  - Class 26 sub-shape A (wrong-index paired-access at mechanical migration cohorts — already caught by Check 9 in `check_per_core_registry_integrity.py`)
+  - Class 26 sub-shape B (UNINDEXED-GLOBAL — caught by Check 10)
+  - NEW: pre-coding plan-body-time detection of mechanical-migration substitution risk
+- **Why deferred (not effort-avoidance):** Out of `.B.7`/`.B.8` scope-bound cohort. Natural triage at `.F` audit ship where broader CI tooling consolidation happens (sister to `.D` framework consolidation).
+- **Status:** **OPEN** — queued for `.F` triage. Stage 6 escalation per M7 if `.F` audit confirms recurrence pattern.
+- **Trigger:** `.F` ship (`v5.15.5.F.4d.1.F` comprehensive professionalization audit sweep) OR earlier sister ship if AI-introduced-bug class recurs.
+- **Retroactive ledger write:** This entry was claimed OPEN-queued-for-`.F` in `.B.7` postmortem "Followup work" + `.B.8` postmortem cross-references but missed ledger write at ship close. Retroactively written at 2026-05-27 PM during `/accept-handoff` Stage 4.5 forward-promise verification dogfood.
+- **Cross-ref:** `plans/v5.15-live-readiness/postmortems/2026-05-27-v5.15.5.F.4d.1.B.7-postmortem.md` "Followup work"; `.F` scaffold; `feedback_structural_enforcement_when_memory_insufficient` (M7 parent); `tools/check_plan_body_symbol_existence.py` v0.4 (current version); TECH_DEBT-139 (sister Check 11 Python impl — same M7 surface; same trigger ship).
+
+---
+
+### TECH_DEBT-139 — /capture-audit Check 11 Python detection logic implementation
+
+```yaml
+id: TECH_DEBT-139
+title: /capture-audit Check 11 Python detection logic implementation (forward-promise auto-write verification mechanical enforcement)
+severity: medium
+surface_tags: [ci-tooling, capture-audit, forward-promise-verification, m7-stage-6]
+trigger: sub-ship-v5.15.5.F.4d.1.C-OR-D-sister-ship
+status: open
+opened: 2026-05-27
+related_specs: [DESIGN_SPECS/meta-disciplines/structural-enforcement-when-memory-insufficient.md]
+```
+
+- **Created:** 2026-05-27 (surfaced at `/accept-handoff` Stage 5 dogfood verification post-`.B.8` ship pickup; deferred from `.B.8` Phase H.2.c per token-budget pragmatism)
+- **Severity:** MED — without Python impl, Check 11 must be run manually via Bash greps; mechanical at-commit-time enforcement requires the impl
+- **Surface:** `claude-skills/capture-audit/SKILL.md` Check 11 (NEW codified at `.B.8` Phase H.2.c). SKILL.md documents: design + invocation contract + sentinel regex patterns (`forward advisory` / `DOCUMENTED-RISK entry at` / `Stage 6 escalation candidate at` / `auto-write at ship close:` / `queued for .X` / `deferred to .X`) + scan locations (`DOCS/recurring-bug-patterns/*.md` + `plans/<sprint>/postmortems/*.md` + `plans/<sprint>/subplans/*.md` close-out sections + `DESIGN_SPECS/**/*.md` Stage promotions) + verification mechanism + UNFULFILLED output format. **Python detection logic NOT yet implemented.**
+- **Class:** Stage 6 escalation candidate per M7 (`structural-enforcement-when-memory-insufficient.md`). Sister to existing Stage 6 tools: `tools/check_per_core_registry_integrity.py` Check 9 + Check 10 + `tools/check_plan_body_symbol_existence.py` (B-Plus v0.4). Same M7 surface as TECH_DEBT-136 (B-Plus v0.5).
+- **What's deferred:** Implement Check 11 Python detection logic. Estimated ~1-2h focused. Sentinel regex patterns + scan locations + per-sentinel verification + ledger-location grep + UNFULFILLED output already documented in SKILL.md. Implementation = mechanical Python from spec.
+- **Why deferred (not effort-avoidance):** Originally deferred at `.B.8` Phase H.2.c per token-budget pragmatism (focus on substantive bugfix cohort + sister-cohort catalog amendments + 3-cycle audit convergence). Per `feedback_forward_promise_auto_write_verification` dogfood: the discipline is the structural fix; Check 11 IS the mechanical enforcement.
+- **Dogfood evidence (this entry IS the dogfood result):** `.B.8` ship close claimed TECH_DEBT-138 NEW+CLOSED but entry never made it to ledger; `.B.7` ship close claimed -132/-134 NEW+CLOSED and -133/-135/-136 OPEN — none made it to ledger. Pattern: ship close ritual misses TECH_DEBT writes at commit time. `/accept-handoff` Stage 4.5 caught all 5 retroactively + this entry opened to track the structural enforcement deferral. Check 11 Python impl would catch this class mechanically at next-ship pickup OR at commit time via `/capture-audit --strict` pre-commit gate.
+- **Status:** **OPEN** — queued for `.C` per-core override emission CLI ship (sister cadence; both touch CI tool surface) OR `.D` CI tool consolidation ship (natural framework-lock surface; sister to existing `tools/check_per_core_registry_integrity.py`).
+- **Trigger:** Address at `.C` if sister-ship cadence aligns, OR `.D` (preferred — natural framework-lock surface; consolidate with TECH_DEBT-105/106/111 into `check_framework_consumer_invariants.py`).
+- **Cross-ref:** `plans/v5.15-live-readiness/postmortems/2026-05-27-v5.15.5.F.4d.1.B.8-postmortem.md` § What went poorly #2; `feedback_forward_promise_auto_write_verification`; `feedback_structural_enforcement_when_memory_insufficient` (M7 parent); `claude-skills/capture-audit/SKILL.md` Check 11 (SKILL.md amendment); `/accept-handoff` Stage 5 dogfood verification (manual surfacing path); `plans/v5.15-live-readiness/capture-audit-reports/2026-05-27-accept-handoff.md` HIGH-2 finding source; TECH_DEBT-136 (sister B-Plus v0.5 — same M7 surface); TECH_DEBT-132/-134/-138 (the 3 closed entries this Check 11 would have caught mechanically); TECH_DEBT-133/-135/-136 (the 3 open entries this Check 11 would have caught mechanically).

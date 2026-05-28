@@ -824,3 +824,82 @@ related_specs: [DESIGN_SPECS/doc-disciplines/categorical-triggers-in-always-load
 - **Status:** APPLIED at `.B.3` doc-layer refresh ship close (Background-Agent applies conversions; this entry CLOSED at ship-close commit)
 - **Follow-up entry:** TECH_DEBT-112-followup-A — periodic skill audit cadence (quarterly + post-codification sweep) per `DESIGN_SPECS/doc-disciplines/categorical-triggers-in-always-loaded-docs.md` § Audit cadence
 - **Cross-ref:** `DESIGN_SPECS/doc-disciplines/categorical-triggers-in-always-loaded-docs.md` v1.0 DRAFT (canonical discipline body); `feedback_categorical_triggers_over_hardcoded_refs.md` (going-forward rule); `feedback_claude_md_guidelines_not_stuff_to_do.md` (companion doc-layer separation); TECH_DEBT-109 (predecessor sprint-phrasing-level closure); `feedback_iteration_spiral_signals_audit_meta_gap.md` (Caramel's recognition signal — "instead of generalized stuff we made hardcoded references, which is why we're having so many issues finding stuff").
+
+---
+
+### TECH_DEBT-132 — 2 dead helpers post centralized SHARDED deletion (CLOSED at .B.7)
+
+```yaml
+id: TECH_DEBT-132
+title: 2 dead helpers EventLoop_UpdateRollingStateAllCores + EventLoop_RebuildAllParameters_PerCore (post centralized SHARDED full surface deletion at .B.4)
+severity: low
+surface_tags: [dead-code, slow-path, post-deletion-cleanup]
+trigger: sub-ship-v5.15.5.F.4d.1.B.7
+status: closed
+opened: 2026-05-27
+closed: 2026-05-27
+related_specs: []
+```
+
+- **Created:** 2026-05-27 (surfaced at post-`.B.6` codebase-wide `/dust` sweep; opened + closed same ship `.B.7`)
+- **Closed:** 2026-05-27 at `v5.15.5.F.4d.1.B.7`
+- **Severity:** LOW
+- **Surface:** `CoreFrameworks/ControllerEventLoop.hpp:2225` (`EventLoop_UpdateRollingStateAllCores`) + `:2259` (`EventLoop_RebuildAllParameters_PerCore`) — orphaned helpers post centralized SHARDED full surface deletion at `.B.4` WIP-14b 51-site cohort
+- **Resolution:** Both helpers DELETED at `.B.7` via clean removal; no remaining callers post centralized deletion cohort. Build clean; tests pass.
+- **Status:** **CLOSED 2026-05-27** at `v5.15.5.F.4d.1.B.7`
+- **Retroactive ledger write:** This entry was claimed NEW+CLOSED in `.B.7` CHANGELOG + postmortem but missed ledger write at ship close. Retroactively written at 2026-05-27 PM during `/accept-handoff` Stage 4.5 forward-promise verification dogfood (TECH_DEBT-139 mechanical Check 11 will catch this class going forward).
+- **Cross-ref:** `plans/v5.15-live-readiness/postmortems/2026-05-27-v5.15.5.F.4d.1.B.7-postmortem.md`; `.B.7` CHANGELOG row in `DOCS/CHANGELOG.md`; `.B.4` WIP-14b 51-site `engine_arch=centralized` SHARDED full surface deletion (parent context); TECH_DEBT-139 (the Check 11 Python impl that would have caught this drift mechanically).
+
+---
+
+### TECH_DEBT-134 — 5 stale "centralized arch" comments cleanup (CLOSED at .B.7)
+
+```yaml
+id: TECH_DEBT-134
+title: 5 stale "centralized arch" comments post centralized SHARDED deletion (sister to Class 31 stale-comment drift)
+severity: low
+surface_tags: [stale-comments, post-deletion-cleanup, doc-discipline]
+trigger: sub-ship-v5.15.5.F.4d.1.B.7
+status: closed
+opened: 2026-05-27
+closed: 2026-05-27
+related_specs: []
+```
+
+- **Created:** 2026-05-27 (surfaced at post-`.B.6` codebase-wide `/dust` sweep; opened + closed same ship `.B.7`)
+- **Closed:** 2026-05-27 at `v5.15.5.F.4d.1.B.7`
+- **Severity:** LOW
+- **Surface:** 5 inline-comment sites referencing centralized engine architecture post `.B.4` WIP-14b surface deletion:
+  - `CoreFrameworks/EngineCommon.hpp:12` + `:814`
+  - `CoreFrameworks/ControllerEventLoop.hpp:88` + `:95` + `:2169`
+- **Class:** Sister to Class 31 (hardcoded refs in always-loaded docs); same root cause (stale-comment drift post structural deletion), different surface (inline source comments vs always-loaded doc files)
+- **Resolution:** Comments updated/removed at `.B.7` ship per `feedback_archived_changelog_preservation_discipline` + `feedback_operator_facing_doc_cohort_at_cfg_deletion`.
+- **Status:** **CLOSED 2026-05-27** at `v5.15.5.F.4d.1.B.7`
+- **Retroactive ledger write:** This entry was claimed NEW+CLOSED in `.B.7` CHANGELOG + postmortem but missed ledger write at ship close. Retroactively written at 2026-05-27 PM during `/accept-handoff` Stage 4.5 forward-promise verification dogfood.
+- **Cross-ref:** `plans/v5.15-live-readiness/postmortems/2026-05-27-v5.15.5.F.4d.1.B.7-postmortem.md`; `.B.7` CHANGELOG row in `DOCS/CHANGELOG.md`; TECH_DEBT-131 PARTIAL_CLOSURE (sister doc-layer at operator-facing surfaces); TECH_DEBT-139 (Check 11 Python impl that would have caught this drift mechanically); Class 31 catalog (stale-comment drift class).
+
+---
+
+### TECH_DEBT-138 — Vestigial DrainerConstants.fee_rate_taker_d field deletion (CLOSED at .B.8)
+
+```yaml
+id: TECH_DEBT-138
+title: Vestigial DrainerConstants.fee_rate_taker_d field (Class 27 sub-instance post-.F.4c.3 WIP2d-1.B.1 cache deletion)
+severity: low
+surface_tags: [dead-state, class-27, post-cache-deletion, accounting, drainer]
+trigger: sub-ship-v5.15.5.F.4d.1.B.8
+status: closed
+opened: 2026-05-27
+closed: 2026-05-27
+related_specs: [DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md]
+```
+
+- **Created:** 2026-05-27 (surfaced at `.B.8` Phase A comprehensive cohort enumeration — classified LOW-1)
+- **Closed:** 2026-05-27 (same-ship deletion at `.B.8` Phase B LOW-1)
+- **Severity:** LOW
+- **Surface:** `MemHeaders/DrainerConstants.hpp` `fee_rate_taker_d` field — unread post `.F.4c.3` WIP2d-1.B.1 cache deletion (per-core decision-time data binding migrated fee_rate_taker onto Order via `o->pre_resolved.fee_rate`; cache state in DrainerConstants became vestigial)
+- **Class:** Class 27 sub-instance — single-value cache flattens per-instance; vestigial cache state post structural fix landed earlier
+- **Resolution:** Field DELETED at `.B.8` Phase B LOW-1 via B14 leaves-first ordering swap (deletion at leaf-of-dependency-graph: no remaining consumers post `.F.4c.3` migration). `sizeof(DrainerConstants)` 24→16; `alignof` 8→4; comment block updated at lines 18/67/77 documenting the cleanup. 5 binaries clean; tests pass.
+- **Status:** **CLOSED 2026-05-27** at `v5.15.5.F.4d.1.B.8`
+- **Retroactive ledger write:** This entry was claimed NEW+CLOSED in `.B.8` handoff + postmortem + CHANGELOG but missed ledger write at ship close. Retroactively written at 2026-05-27 PM during `/accept-handoff` Stage 4.5 forward-promise verification dogfood (sister to `.B.7` -132/-134 retroactive writes same session; same M7 surface).
+- **Cross-ref:** `plans/v5.15-live-readiness/postmortems/2026-05-27-v5.15.5.F.4d.1.B.8-postmortem.md` Phase B; `.B.8` CHANGELOG row; `.B.7` Class 26 ×2 closure (parent context — drainer surface accounting cohort); `decision-time-data-binding-pattern.md` (canonical pattern for per-core cfg consumer); TECH_DEBT-139 (Check 11 Python impl that would have caught this drift mechanically); `plans/v5.15-live-readiness/capture-audit-reports/2026-05-27-accept-handoff.md` HIGH-1.

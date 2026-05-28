@@ -71,7 +71,9 @@ Most bug classes plateau at Stage 3-5 because the discipline-installation works.
 | Bug class | Memory codified | Recurrence cycle | Structural enforcement landed | Tool |
 |---|---|---|---|---|
 | Class 14 (fabricated symbol) | v5.15.5.F.4d.1.B.3 v1.5 | .B.4 v1.7.3 → v1.7.4 (6 instances) | .B.4 v1.7.4 | `tools/check_plan_body_symbol_existence.py` + pre-commit hook |
-| (future) Class 18 (consumer drift) | enumerate-consumers-before-deletion | TBD | TBD | TBD |
+| Class 26 sub-shape A (paired-access mismatch) | feedback_categorize_by_consumer_pattern_not_field_name | .B.7 Async.hpp:814+853 hotfix | .B.7 | `tools/check_per_core_registry_integrity.py` Check 9 |
+| Class 26 sub-shape B (UNINDEXED-GLOBAL) | feedback_cfg_field_categorization_at_registry_add_time | .B.8 4 HIGH consumer-site fixes | .B.8 | `tools/check_per_core_registry_integrity.py` Check 10 |
+| Class 33 sub-shape (forward-promise auto-write drift) | feedback_forward_promise_auto_write_verification at .B.8 | .B.3→.B.4→.B.6→.B.7→.B.8→.D session (8+ instances across 6 ships caught at .D dogfood) | v5.15.5.F.4d.1.D | NEW `tools/check_forward_promise_audit.py` Check 11 + pre-commit hook extension + 5-skill integration cohort |
 | (future) Class 23 (type punning) | tt:: type-trait dispatch | (none yet) | (already at Stage 5 via 4-pillar audit) | CI Check |
 
 **Codification trigger (worked example for future):**

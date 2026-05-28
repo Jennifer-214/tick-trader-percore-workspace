@@ -65,6 +65,7 @@
 ## User profile
 
 - [Public technical work attracts hedge fund attention](user_public_work_attracts_hedge_funds.md) — FoxML_Trader_v2 public AGPL (10k clones) load-bearing for career angle; weight heavily on public/private decisions
+- [Address user as Caramel / she / her](feedback_address_user_as_caramel.md) — operator-preferred personal address in all communication (canonical body for long-cited going-forward rule)
 - [Deep design work has intrinsic value for Caramel](user_deep_design_work_intrinsic_value.md) — architectural conversations + DESIGN_SPECS replaced gaming; don't rush to ship when design depth IS the value
 - [ADHD + deferred-reward discipline](user_adhd_deferred_reward_discipline.md) — consciously practices deferred reward (planning) over dopamine (shipping); default to deeper option when engaged
 - [MVP→professional transition phase](user_mvp_to_professional_transition.md) — framework consolidation IS the deliberate work of professionalization phase, not a detour from features

@@ -8,7 +8,7 @@ surface_tags: [cfg-flow, slow-path, hot-path, oms-drainer]
 severity: high
 recurrence_count: 3
 first_instance: v5.15.5.F.4c.3
-closure_mechanism: per-core consumer fns take const PerCoreCfg<F>* single-param (NEVER const ControllerConfig<F>*); two-param convenience sigs FORBIDDEN + genuine globals caller-resolved as scalar args + cfg-scope-discipline.md + /dod-audit + /bug-check grep signatures + documented exemption list
+closure_mechanism: per-core consumer fns take const PerCoreCfg<F>* single-param (NEVER const ControllerConfig<F>*); two-param convenience sigs FORBIDDEN + genuine globals caller-resolved as scalar args + cfg-scope-discipline.md + /dod-audit + /bug-check grep signatures + documented exemption list + (v5.15.5.F.4d.1.B.8 amendment) CI Check 10 in tools/check_per_core_registry_integrity.py for Class 26 sub-shape B (UNINDEXED-GLOBAL at per-core consumer site) which is a specific instance of Class 25 scope erosion at the per-core consumer surface — consumer reads cfg.X UNINDEXED on per-core-with-global-sister field
 sister_classes: [18, 23, 24, 26, 27]
 ---
 

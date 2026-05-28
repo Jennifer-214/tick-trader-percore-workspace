@@ -1378,6 +1378,34 @@ related_specs:
 
 ---
 
+```yaml
+id: PARITY-033
+title: per-core fee_rate_taker historical calibration tainted-results advisory (Class 26 sub-shape A + B closure at .B.7+.B.8)
+surface_tags: [accounting, per-core-indexing, fee-floor, slow-path, historical-calibration, documented-risk]
+severity: documented-risk
+parity_axis: historical operator calibration vs post-fix execution
+status: open
+detected_at: v5.15.5.F.4d.1.B.8 (2026-05-27; retroactive closure of `.B.7` forward-promise that was never written)
+related_specs:
+  - DOCS/recurring-bug-patterns/class-26-global-consumer-reading-per-core-field.md § Sub-shapes (Class 26 sub-shapes A + B)
+  - DESIGN_SPECS/meta-disciplines/structural-enforcement-when-memory-insufficient.md v1.3 (Check 9 + Check 10 canonical_applications)
+  - tools/check_per_core_registry_integrity.py Check 9 (sub-shape A) + Check 10 (sub-shape B)
+  - memory/feedback_forward_promise_auto_write_verification.md (this entry retroactively closes `.B.7` forward-promise)
+```
+
+- **Found:** 2026-05-27 v5.15.5.F.4d.1.B.8 ship close per NEW `feedback_forward_promise_auto_write_verification` discipline (retroactively closes `.B.7` Class 26 catalog line 98 forward-promise that promised DOCUMENTED-RISK PARITY entry but was never written; sister to NEW `feedback_sister_cohort_amendment_completeness` discipline at AMENDMENT layer)
+- **Severity:** DOCUMENTED-RISK — no production bug post-fix (Class 26 sub-shape A closed at `.B.7` Async.hpp:814+853 + sub-shape B closed at `.B.8` ControllerEventLoop.hpp:3605+3670+3042 + StrategyLifecycle.hpp:272 + ShardedSnapshot.hpp:249); ADVISORY for historical operator calibration runs
+- **Class:** Class 26 sub-shape A (WRONG-INDEX paired-access; Check 9 catches mechanically) + Class 26 sub-shape B (UNINDEXED-GLOBAL at per-core consumer site; Check 10 catches mechanically)
+- **Symptom:** Operators using per-core fee_rate_taker calibration sweeps over `partial_exit_pct` / `tp2_mult` / SL settings PRIOR to `.B.7` (sub-shape A fixes) + `.B.8` (sub-shape B fixes) may have produced tainted results — calibrations tuned against silently-miscalibrated per-core fee_rate_taker behavior. Affected operators: any using per-core fee_rate_taker values DIFFERENT from each other AND running calibration sweeps over P&L-sensitive cfg fields (partial_exit_pct / tp2_mult / SL ratchet thresholds / breakeven thresholds / etc.).
+- **Root cause:** Class 26 silent realized-P&L drift introduced at `.F.4c.3` WIP2d-1.B.1 mechanical migration commit `ea08210` (per-core fee_rate migration missed sub-shape A WRONG-INDEX at Async.hpp drainer body + sub-shape B UNINDEXED-GLOBAL at slow-path fee-floor compute paths). Effect: per-core fee_rate_taker silently flattens to GLOBAL value (sub-shape A: wrong index into per-core array; sub-shape B: no array indexing at all). For operators with uniform per-core fee_rate_taker (== global default), bug INVISIBLE. For operators with DIFFERING per-core fee_rate_taker, calibration sweeps produced systematically wrong P&L estimates.
+- **Fix path:** Post-`.B.8`: per-core fee_rate_taker reads correctly per consumer site; Check 9 + Check 10 catch future regressions mechanically. Historical calibration runs (pre-`.B.7`+`.B.8`) may need re-validation.
+- **Closure trigger:** operator re-validation at next paper-test cycle OR operator decision that historical calibrations are acceptable (e.g., production runs used uniform per-core fee_rate_taker → bug never manifested in their data → no re-validation needed)
+- **Target ship:** N/A (advisory; closure trigger is operator-decided)
+- **Verification:** Class 26 catalog Worked Examples documents both sub-shapes A + B closures with exact line refs; Check 9 + Check 10 in `tools/check_per_core_registry_integrity.py` CI-enforce prevention; 16 NEW regression tests at `.B.8` Phase E verify per-core fee_rate_taker reads at all 4 HIGH consumer sites
+- **Sister to:** PARITY-026 (similar shape — live-safety hole at kill_switch closed at `.B.2.h1` hotfix; sister discipline of catching silent live-trading bugs at audit time)
+
+---
+
 ## Audit log
 
 - **2026-05-10** — `/parity-check` audit of v5.14.10 Thompson bandit plan (pre-coding gate). 3 new findings written: PARITY-013 (HIGH), PARITY-014 (HIGH), PARITY-015 (MEDIUM). Verdict: YELLOW (proceed with 4 plan amendments before scope-lock). Full audit report: `plans/plan_checks/parity-check-2026-05-10-v5.14.10-thompson-bandit.md`.

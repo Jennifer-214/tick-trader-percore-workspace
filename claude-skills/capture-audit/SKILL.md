@@ -108,6 +108,54 @@ For each entry in CLAUDE.local.md `## Going-forward rules (index)`:
 - Verify memory file referenced exists (if `feedback_*` cited)
 - Skill referenced exists (if `/skillname` cited)
 
+### Check 11: Forward-promised auto-write at prior ship close verification (NEW v5.15.5.F.4d.1.B.8)
+
+Per `feedback_forward_promise_auto_write_verification` — when a ship close promises an auto-write (PARITY entry / TECH_DEBT / catalog amendment / DESIGN_SPEC Stage promotion / Stage 6 escalation candidate / next-ship-deferred work), verify at next-ship-time that the promised auto-write actually landed at the expected ledger location.
+
+**Scope:** scan prior N ships (default: last 3 ships from `git log`) for forward-promise sentinels.
+
+**Sentinels (regex patterns):**
+- `forward advisory` / `Forward advisory`
+- `DOCUMENTED-RISK entry at \.[A-Z\d.]+ close`
+- `Stage 6 escalation candidate at \.[A-Z\d.]+`
+- `auto-write at ship close: `
+- `queued for \.[A-Z\d.]+`
+- `deferred to \.[A-Z\d.]+`
+- `promise.*landed.*at next.*ship`
+
+**Scan locations:**
+- `DOCS/recurring-bug-patterns/*.md` (Class catalog Worked Examples sections; e.g., `.B.7` Class 26 catalog line 98 promised DOCUMENTED-RISK PARITY entry)
+- `plans/<sprint>/postmortems/*.md` (postmortem cross-references + lessons captured sections)
+- `plans/<sprint>/subplans/*-postmortem.md` (per-ship postmortem cross-refs)
+- Plan body close-out sections within `plans/<sprint>/subplans/*.md`
+- `DESIGN_SPECS/**/*.md` Stage promotion forward-references
+
+**Verification per sentinel:**
+For each promised auto-write found, verify it landed at the expected ledger location:
+- `DOCUMENTED-RISK PARITY entry` → grep `DOCS/PARITY_ISSUES.md` for matching entry
+- `TECH_DEBT-NNN entry` → grep `DOCS/TECH_DEBT.md` / `DOCS/tech-debt/{open,closed,in-flight}.md` for entry
+- `Catalog amendment` → grep referenced catalog file for amendment
+- `Stage promotion` → grep DESIGN_SPECS frontmatter for promoted stage
+- `Stage 6 escalation` → grep `tools/check_*.py` for the new check OR `claude-skills/*/SKILL.md` for the skill amendment
+
+**Output:** list of UNFULFILLED forward-promises with:
+- Prior ship reference + sentinel location
+- Expected ledger location
+- Suggested closure path (retroactive landing at current ship OR explicit re-defer with rationale)
+
+**Invocation modes:**
+- Included in `--deep` mode (default for pre-handoff): runs Check 11 against last 3 ships
+- NOT in `--quick` mode (skipped for performance)
+- `--check 11` to run only this check
+- `--since <git-ref>` to scope to ships since reference
+
+**Sister disciplines:**
+- `memory/feedback_forward_promise_auto_write_verification.md` (operator-collaboration rule)
+- `memory/feedback_structural_enforcement_when_memory_insufficient.md` (M7 parent; Check 11 IS structural enforcement)
+- `DESIGN_SPECS/meta-disciplines/sister-cohort-amendment-completeness-discipline.md` (sister at AMENDMENT layer; both catch silent drift)
+
+**Worked example dogfood (NEW v5.15.5.F.4d.1.B.8 Phase G Step G.7):** fire Check 11 against `.B.8`'s OWN forward-promises (Stage 2 → 3 promotion candidates for `sister-cohort-amendment-completeness-discipline` + `forward-promise-auto-write-verification` disciplines + Check 11 self-verification at next-ship pickup) — verify each `.B.8` forward-promise tracked at expected ledger location OR documented as "deferred to next-ship-time per discipline". Ship codifying the discipline dogfoods the codified discipline.
+
 ## Invocation
 
 - `/capture-audit` — run all checks against current state; report findings; exit 0=clean / 1=findings (default WARN mode)

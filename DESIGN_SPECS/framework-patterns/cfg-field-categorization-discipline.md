@@ -174,6 +174,8 @@ Apply DOD discipline checks at cfg field row-add time:
 
 Sister to existing Check 7 (Class 27 cache-structure discipline). M7 4th canonical structural enforcement application (sister to B-Plus v0.2 symbol-existence + v0.3 line-anchor + v0.4 deletion-cohort).
 
+**Consumer-side discipline amendment (v5.15.5.F.4d.1.B.8):** Consumer-side discipline check at registry-add-time should include sister verification that EXISTING consumer sites for a newly-per-core-migrated field are updated to use per-core slot. This is the preventive analog to Check 10 commit-time enforcement (Class 26 sub-shape B UNINDEXED-GLOBAL detection at per-core consumer sites). When a cfg field migrates from GLOBAL → per-core registry, the migration scope MUST include sweep of consumer sites that read the field UNINDEXED — failure to sweep produces silent Class 26 sub-shape B violations (audit-evidence: 4 HIGH instances at `.B.8` from `ea08210` mechanical migration cohort `.F.4c.3` WIP2d-1.B.1 that missed consumer-side sweep). Check 10 catches future regressions mechanically per `tools/check_per_core_registry_integrity.py` Check 10 invocation.
+
 ## Cross-references
 
 - `framework-patterns/universal-cfg-field-registry-pattern.md` § Registry default precedence v1.1 — resolution procedure for MATCH/DIFFER cases

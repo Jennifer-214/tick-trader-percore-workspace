@@ -77,6 +77,12 @@ Spawn an Explore subagent. The subagent walks the standard 10-category checklist
 
 2. **Per-core / per-instance fee_rate + commission indexing** — every fee/commission read MUST resolve to the relevant instance (per-core via `cfg.cores[c]` or pre-resolved on in-flight object). Flag global `cfg.fee_rate_*` reads at sites that have per-instance context available.
 
+   **Class 26 sub-shape distinction (NEW v5.15.5.F.4d.1.B.8 amendment):** Class 26 has TWO sub-shapes documented at `DOCS/recurring-bug-patterns/class-26-global-consumer-reading-per-core-field.md § Sub-shapes`:
+   - **Sub-shape A (WRONG-INDEX paired-access)** — `cfg.core_overrides[X]` + `cfg.cores[Y]` paired access with X != Y; CI Check 9 catches mechanically per `tools/check_per_core_registry_integrity.py`
+   - **Sub-shape B (UNINDEXED-GLOBAL at per-core consumer site)** — `cfg.X` / `cfg->X` / `resolved_cfg.X` UNINDEXED on per-core-with-global-sister fields (fee_rate / fee_rate_taker / fee_rate_maker / slippage_pct); CI Check 10 catches mechanically (sister to Check 9; M7 6th canonical)
+
+   **When firing this audit:** distinguish sub-shape A vs B in findings; cite Check 9 / Check 10 respectively for mechanical detection. Findings format: `class_subshape: A` or `class_subshape: B`. Reference: `.B.7` Async.hpp:814+853 (sub-shape A); `.B.8` ControllerEventLoop.hpp:3605+3670+3042 + StrategyLifecycle.hpp:272 + ShardedSnapshot.hpp:249 (sub-shape B).
+
 3. **Slippage / fee floor consistency across paths** — slippage_pct, fee_floor_pct, slip + fee model MUST be byte-equivalent across slow-path / drainer / backtest. Flag divergence (e.g., backtest uses cfg.fee_rate while live uses oms->fee_rate_taker).
 
 4. **H4 enforcement (FPN<F> for accounting)** — scan accounting paths for `float` / `double` storage of monetary values. Display-only conversions OK; accounting STORAGE must be FPN<F>. Flag double-typed fields in Position, Order, balance/realized_pnl/fees, ConfidenceScorer reward updates with monetary semantics.

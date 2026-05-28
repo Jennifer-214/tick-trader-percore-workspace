@@ -1,0 +1,34 @@
+arg_name,type,purpose,derivation_source,default_or_fallback
+text,str,full file content of scanned source file,read_file(REPO_ROOT / rel_path) per Check 9 sister precedent,N/A (required)
+file_rel_path,str,relative path from repo root for finding citation,enumerated from CHECK_10_SCAN_FILES constant,N/A (required)
+per_core_field_names,set[str],set of per-core field names with GLOBAL sister; reads UNINDEXED on these = Class 26 sub-shape B,hardcoded from CHECK_10_PER_CORE_FIELDS_WITH_GLOBAL_SISTER constant (future: derive from FOREACH_PER_CORE_CFG_FIELD ∩ ControllerConfig<F> manual decl set),CHECK_10_PER_CORE_FIELDS_WITH_GLOBAL_SISTER constant (initial: fee_rate / fee_rate_taker / fee_rate_maker / slippage_pct)
+
+# Internal constants (module-level; not fn args):
+constant_name,type,purpose,initial_value,extension_policy
+CHECK_10_SCAN_FILES,list[str],per-core surface files to scan,16 files (CoreFrameworks/ControllerEventLoop + EngineSharded/* + EngineCommon + OrderManager + ShardedSnapshot + Strategies/* + Backtest/BacktestSharded + ShardedBacktestDriver),Operator extends as new per-core surface files land
+CHECK_10_PER_CORE_FIELDS_WITH_GLOBAL_SISTER,set[str],per-core fields with GLOBAL sister in ControllerConfig<F>; reads UNINDEXED at per-core consumer = Class 26 sub-shape B violation,4 fields (fee_rate / fee_rate_taker / fee_rate_maker / slippage_pct),Operator extends as new per-core-migrated fields land with global sisters
+CHECK_10_SECTION_D_EXEMPTIONS,set[tuple[str int]],legitimate UNINDEXED-GLOBAL reads at per-core consumer sites; (file_rel_path line_num) tuples,8 sites (5 LEGACY single_core + 3 DISPLAY KEEP-AS-GLOBAL),Operator extends per Section D in MANUAL_FIELDS_INVENTORY.md when new legitimate global-display sites land
+CHECK_10_BOOT_TIME_FN_NAME_PATTERNS,set[str],fn names containing these substrings excluded from Check 10 (boot/init/parse heuristic),4 patterns (Boot / Init / Default / Parse),Operator extends as new boot-time fn naming conventions surface
+
+# Detection algorithm:
+algorithm_step,description
+1. Read file via read_file(REPO_ROOT / rel_path),Standard file IO
+2. Strip macro definitions via strip_macro_definitions(text),Reuse existing helper; avoids X-macro callback false positives
+3. Build regex `\b(cfg|resolved_cfg)(\.|->)(<field-alt>)\b(?!\s*[\[.])`,Catches cfg.X / cfg->X / resolved_cfg.X UNINDEXED on per-core fields; excludes cfg.X[Y] indexed + cfg.X.subfield nested
+4. Track current enclosing fn name via simple regex on `inline ... fn_name(...)` patterns,Heuristic for Boot/Init/Parse/Default exclusion
+5. For each match: check exemption + boot-time exclusion,Section D exemption filter + fn-name heuristic
+6. Report findings as (file line container accessor field current_fn) tuples,Same shape as Check 9 paired-access output
+
+# Sanity verification (Phase C step C.4):
+sanity_step,description
+S1: revert HIGH-1 fix at ControllerEventLoop.hpp:3605 — change cfg.cores[core_id].fee_rate_taker back to cfg.fee_rate_taker,Verify Check 10 FAILS at exact line ref
+S2: re-apply HIGH-1 fix,Verify Check 10 PASSES
+S3: revert HIGH-4 fix at ControllerEventLoop.hpp:3042 — change resolved_cfg.cores[slot].fee_rate_taker back to resolved_cfg.fee_rate_taker,Verify Check 10 detects aliased per-core var (resolved_cfg.X form)
+S4: re-apply HIGH-4 fix,Verify Check 10 PASSES
+
+# Cross-references:
+# - Sister to Check 9 (paired-access mismatch detection) at tools/check_per_core_registry_integrity.py:614-637
+# - Check 9 sister fns: scan_check_9_violations (lines 420-449) + CHECK_9_SCAN_FILES (lines 405-415) + main() block
+# - Reuses helpers: extract_macro_body / parse_foreach_per_core_cfg_field / strip_macro_definitions / read_file
+# - M7 spec amendment at Phase D Step D.2: structural-enforcement-when-memory-insufficient.md canonical_applications adds Check 9 retroactive + Check 10
+# - Class 26 catalog amendment at Phase D Step D.1: recurrence 13→17 + NEW sub-shape B section + 4 Worked Examples + Check 10 cross-ref

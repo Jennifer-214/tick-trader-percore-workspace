@@ -1,0 +1,50 @@
+file,line,fn_or_scope,field_name,classification,rationale,phase_b_action
+CoreFrameworks/ControllerEventLoop.hpp,3605,EventLoop_TrailingSLRatchetOneCore,cfg.fee_rate_taker,REAL_CLASS_26,HIGH-1 audit-confirmed; core_id in scope at fn sig line 3585; sister-canonical at StrategyParameters.hpp:1762 uses core_cfg->fee_rate_taker (right shape),FIX cfg.fee_rate_taker → cfg.cores[core_id].fee_rate_taker
+CoreFrameworks/ControllerEventLoop.hpp,3606,EventLoop_TrailingSLRatchetOneCore,cfg.fee_rate,REAL_CLASS_26,HIGH-1 fallback sister to 3605; same fn scope,FIX cfg.fee_rate → cfg.cores[core_id].fee_rate
+CoreFrameworks/ControllerEventLoop.hpp,3670,EventLoop_BreakevenOnProfitOneCore,cfg.fee_rate_taker,REAL_CLASS_26,HIGH-2 audit-confirmed; core_id in scope; sibling block to HIGH-1,FIX cfg.fee_rate_taker → cfg.cores[core_id].fee_rate_taker
+CoreFrameworks/ControllerEventLoop.hpp,3671,EventLoop_BreakevenOnProfitOneCore,cfg.fee_rate,REAL_CLASS_26,HIGH-2 fallback sister to 3670,FIX cfg.fee_rate → cfg.cores[core_id].fee_rate
+Strategies/StrategyLifecycle.hpp,272,Strategy_WriteRatchetSL,cfg->fee_rate_taker,REAL_CLASS_26,HIGH-3 audit-confirmed; slot parameter; 5 callers verified all per-core: MeanReversion.hpp:613 + MLStrategy.hpp:314 + EmaCross.hpp:216 + Momentum.hpp:393 + ControllerEventLoop.hpp:2530,FIX cfg->fee_rate_taker → cfg->cores[slot].fee_rate_taker
+Strategies/StrategyLifecycle.hpp,273,Strategy_WriteRatchetSL,cfg->fee_rate,REAL_CLASS_26,HIGH-3 fallback sister to 272,FIX cfg->fee_rate → cfg->cores[slot].fee_rate
+CoreFrameworks/ControllerEventLoop.hpp,3042,EventLoop_RebuildOneCore (GUI diag),resolved_cfg.fee_rate_taker,REAL_CLASS_26,HIGH-4 audit-confirmed; slot from outer loop at line 2316 via ResolveForCore; resolved_cfg.fee_rate_taker is aliased GLOBAL (fee_rate_taker NOT in PER_CORE_OVERRIDE_FIELDS at ControllerConfig.hpp:119); sister at line 3061 correctly uses &resolved_cfg.cores[slot] proving right shape available,FIX resolved_cfg.fee_rate_taker → resolved_cfg.cores[slot].fee_rate_taker
+CoreFrameworks/ControllerEventLoop.hpp,3043,EventLoop_RebuildOneCore (GUI diag),resolved_cfg.fee_rate,REAL_CLASS_26,HIGH-4 fallback sister to 3042,FIX resolved_cfg.fee_rate → resolved_cfg.cores[slot].fee_rate
+CoreFrameworks/ShardedSnapshot.hpp,249,ShardedSnapshot_BuildTUISnapshot per-position loop,cfg->fee_rate,REAL_CLASS_26,MED-1 audit-confirmed; core_id_for_pos in scope at line 216; per-position TUI net_pnl uses GLOBAL fee_rate,FIX cfg->fee_rate → cfg->cores[core_id_for_pos].fee_rate_taker (with fee_rate fallback)
+CoreFrameworks/ShardedSnapshot.hpp,139,ShardedSnapshot_BuildTUISnapshot pre-loop headline,cfg->fee_rate,DISPLAY_KEEP_AS_GLOBAL,NEW v1.1 per /parity-check MED; engine-wide headline display OUTSIDE per-position loop; sister to lines 328-331,ADD inline comment KEEP-AS-GLOBAL Settings panel semantic
+CoreFrameworks/ShardedSnapshot.hpp,330,ShardedSnapshot_BuildTUISnapshot Settings panel,cfg->fee_rate,DISPLAY_KEEP_AS_GLOBAL,Settings panel operator-facing global display; per-core deviations surfaced via per_core_count panel line 339,ADD inline comment KEEP-AS-GLOBAL Settings panel semantic
+CoreFrameworks/ShardedSnapshot.hpp,331,ShardedSnapshot_BuildTUISnapshot Settings panel,cfg->slippage_pct,DISPLAY_KEEP_AS_GLOBAL,Settings panel operator-facing global display sister to 330,ADD inline comment KEEP-AS-GLOBAL Settings panel semantic
+MemHeaders/DrainerConstants.hpp,65,DrainerConstants struct field,fee_rate_taker_d field,DEAD_STATE_LOW_1,Vestigial Class 27 sub-instance post-.F.4c.3 WIP2d-1.B.1 cache deletion; UNREAD per audit + grep verify (0 production consumers),DELETE field + Init assignment + sizeof static_assert + _pad + comment update per B14 leaves-first ordering
+MemHeaders/DrainerConstants.hpp,100,DrainerConstants_Init,dc.fee_rate_taker_d assignment,DEAD_STATE_LOW_1,Sister to line 65 dead field; assignment to dead field,DELETE assignment per B14 step 3
+CoreFrameworks/ControllerConfig.hpp,1337-1340,Fee_Compute helper,cfg->fee_rate_maker/cfg->fee_rate_taker,NEW_PHASE_A_1_LOW_DEAD_HELPER,Fee_Compute() has UNINDEXED-GLOBAL pattern but ZERO callers across codebase (grep verified); actual fee accounting uses o->pre_resolved.fee_rate decision-time binding (Class 27 closure pattern); dead helper sister to TECH_DEBT-132 from .B.7,FOLD into LOW cohort — DELETE Fee_Compute() fn + open TECH_DEBT-139 NEW (OPEN+CLOSE same ship)
+Strategies/private/EmaCross.hpp,143,EmaCross_ExitAdjust legacy fn,cfg->fee_rate_taker,LEGACY_EXEMPT,Legacy single_core EmaCross_ExitAdjust path; caller is PortfolioController.hpp:906 (legacy single_core architecture); per audit Cat 8 LEGACY-KEEP verdict — legacy single_core has no per-core dimension; global is correct there,NO-OP (Section D exemption candidate)
+Strategies/private/EmaCross.hpp,144,EmaCross_ExitAdjust legacy fn,cfg->fee_rate,LEGACY_EXEMPT,Sister fallback to line 143,NO-OP (Section D exemption candidate)
+Strategies/RegimeDetector.hpp,760,RegimeDetector legacy fn,cfg->fee_rate,LEGACY_EXEMPT,Legacy single_core RegimeDetector path; not per-core consumer,NO-OP (Section D exemption candidate)
+Strategies/RegimeDetector.hpp,789,RegimeDetector legacy fn,cfg->fee_rate,LEGACY_EXEMPT,Same as 760 sister site,NO-OP (Section D exemption candidate)
+Strategies/RegimeDetector.hpp,808,RegimeDetector legacy fn,cfg->fee_rate,LEGACY_EXEMPT,Same as 760 sister site,NO-OP (Section D exemption candidate)
+CoreFrameworks/ControllerConfig.hpp,1494,cfg defaults,cfg.fee_rate default value assignment,BOOT_TIME_DEFAULT,Boot-time default initialization; pre-per-core,NO-OP
+CoreFrameworks/ControllerConfig.hpp,1498,cfg defaults,cfg.fee_rate_maker default,BOOT_TIME_DEFAULT,Sister to 1494,NO-OP
+CoreFrameworks/ControllerConfig.hpp,1499,cfg defaults,cfg.fee_rate_taker default,BOOT_TIME_DEFAULT,Sister to 1494,NO-OP
+CoreFrameworks/ControllerConfig.hpp,1628,cfg defaults,cfg.slippage_pct default,BOOT_TIME_DEFAULT,Sister to 1494,NO-OP
+CoreFrameworks/ControllerConfig.hpp,2225,parser,cfg.fee_rate_maker parser assignment,PARSE_TIME,Parser cfg-string-to-value path; not consumer,NO-OP
+CoreFrameworks/ControllerConfig.hpp,2230,parser,cfg.fee_rate_taker parser assignment,PARSE_TIME,Sister to 2225,NO-OP
+CoreFrameworks/ControllerConfig.hpp,3104+,Cfg_NormalizeFees post-parse fn,cfg.fee_rate / fee_rate_maker / fee_rate_taker,POST_PARSE_NORMALIZE,Post-parse normalize fn (legacy mode mirror); cfg.fee_rate → cfg.fee_rate_maker + cfg.fee_rate_taker for legacy 3-tier mode; not per-core consumer; correct as-is,NO-OP
+ML_Headers/CfgDriftCheckRegistry.hpp,275,FOREACH_DRIFT_CHECK X-macro row fee_rate_maker,h->fee_rate_maker vs cfg.fee_rate_maker,DRIFT_CHECK_X_MACRO,X-macro drift check row comparing handle vs cfg; comparing at training-time-frozen value vs runtime cfg; correct intent (drift check semantics need to know if cfg changed since training),NO-OP
+ML_Headers/CfgDriftCheckRegistry.hpp,279,FOREACH_DRIFT_CHECK X-macro row fee_rate_taker,h->fee_rate_taker vs cfg.fee_rate_taker,DRIFT_CHECK_X_MACRO,Sister to 275,NO-OP
+CoreFrameworks/Order.hpp,358,Order_BindPreResolved decision-time binding,o->pre_resolved.fee_rate = is_maker ? core_cfg.fee_rate_maker : core_cfg.fee_rate_taker,DECISION_TIME_BINDING_CORRECT,Decision-time data binding per Class 27 closure pattern; pre-resolves per-core fee_rate onto Order at submit; downstream consumers read from order; CORRECT shape,NO-OP
+CoreFrameworks/Order.hpp,359,sister,o->pre_resolved.fee_rate_maker,DECISION_TIME_BINDING_CORRECT,Sister to 358,NO-OP
+CoreFrameworks/Order.hpp,361,sister,o->pre_resolved.slippage_pct = core_cfg.slippage_pct,DECISION_TIME_BINDING_CORRECT,Sister to 358 for slippage_pct,NO-OP
+
+# Summary:
+# 9 REAL CLASS 26 UNINDEXED-GLOBAL findings (HIGH-1+2+3+4 + MED-1 + audit fallback rows) — FIX in Phase B
+# 3 DISPLAY KEEP-AS-GLOBAL (ShardedSnapshot.hpp 139/330/331) — ADD inline comments
+# 1 NEW PHASE-A-1 LOW dead helper Fee_Compute (ControllerConfig.hpp:1337-1340) — FOLD into LOW cohort; NEW TECH_DEBT-139 NEW
+# 1 DEAD_STATE LOW-1 (DrainerConstants.hpp dead field) — DELETE per B14 ordering
+# 5 LEGACY-EXEMPT (EmaCross.hpp:143-144 + RegimeDetector.hpp:760/789/808) — NO-OP; Section D exemption
+# 6 BOOT_TIME/PARSE_TIME/DRIFT_CHECK (ControllerConfig.hpp defaults/parser/normalize + CfgDriftCheckRegistry) — NO-OP
+# 3 DECISION_TIME_BINDING (Order.hpp 358/359/361) — NO-OP (correct shape; Class 27 closure)
+#
+# Phase A scope-lock recommendation:
+# - ALL 4 HIGH + 1 MED + 1 LOW from audit confirmed; Phase B applies these fixes per plan body
+# - NEW finding PHASE-A-1: Fee_Compute() dead helper — recommend FOLD into LOW cohort (TECH_DEBT-139 NEW OPEN+CLOSE same ship; sister to TECH_DEBT-132 from .B.7)
+# - 3 DISPLAY KEEP-AS-GLOBAL sites get inline comments per plan Phase B Step B.5
+# - 5 LEGACY-EXEMPT sites stay as-is per audit Cat 8 LEGACY-KEEP verdict; Section D exemption documentation
+# - NO additional Class 26 instances beyond audit findings — Phase A confirms scope correctly bounded
+# - MeanReversion Strategy_WriteRatchetSL actual call site verified at MeanReversion.hpp:613 (plan cites :561 forward-decl; actual is :613)

@@ -279,6 +279,12 @@ Cross-ref: `DESIGN_SPECS/framework-patterns/bitmap-flag-api.md` (base API + vari
 CLAUDE.md item 1 (Portfolio uint16_t bitmap), CLAUDE.md item 20 (BITMAP_* API),
 TECH_DEBT-013 (BIT_FLAG candidate inventory).
 
+**Class 26 sub-shape distinction at per-core surface (NEW v5.15.5.F.4d.1.B.8 amendment):** when /dod-audit findings touch per-core cfg surface, distinguish Class 26 sub-shapes per `DOCS/recurring-bug-patterns/class-26-global-consumer-reading-per-core-field.md § Sub-shapes`:
+- **Sub-shape A (WRONG-INDEX paired-access)** — `cfg.core_overrides[X]` + `cfg.cores[Y]` paired access with X != Y; CI Check 9 catches mechanically per `tools/check_per_core_registry_integrity.py`
+- **Sub-shape B (UNINDEXED-GLOBAL at per-core consumer site)** — `cfg.X` / `cfg->X` / `resolved_cfg.X` UNINDEXED on per-core-with-global-sister fields (fee_rate / fee_rate_taker / fee_rate_maker / slippage_pct); CI Check 10 catches mechanically (sister to Check 9; M7 6th canonical)
+
+Per /dod-audit findings citing per-core surface, cite Check 9 / Check 10 respectively for mechanical detection coverage. Sister-skill alignment with /accounting-audit category 2 (which has the same Class 26 sub-shape A/B distinction noted at v5.15.5.F.4d.1.B.8 Phase H.2.b). `/bug-check` auto-handled via RECURRING_BUG_PATTERNS dynamic read (no skill amendment needed; verified by /blindspot-scan v1.1 H-RECURSIVE-1 sister-skill cohort enumeration). `/ml-audit` + `/registry-fit-audit` + `/hft-audit` not in sister cohort (no Class 26 references per same enumeration).
+
 False-positive filter: ≥3 colocated bools required. Single bool flag
 is fine. Per-record vs cross-record awareness — DON'T flag per-Order
 bit-packing across all orders (item 20 trade-off section). Run

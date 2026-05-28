@@ -37,6 +37,12 @@ When cfg later becomes per-instance (`cfg.cores[c].fee_rate_maker`), the SCALAR 
 
 The class is distinct from Class 26 (global consumer reading per-core field): Class 26 is at READ TIME; Class 27 is at CACHE STRUCTURE — the cache itself has no per-instance dimension. Same root family ("subsystem-state mirror of per-instance cfg") but Class 27 is the structural pre-condition that makes Class 26 silent.
 
+**Class 26 sub-shape distinction (v5.15.5.F.4d.1.B.8 amendment):** Class 26 has TWO sub-shapes documented at the catalog (`class-26-global-consumer-reading-per-core-field.md` § Sub-shapes):
+- **Sub-shape A** (WRONG-INDEX paired-access; CI Check 9 catches) — `cfg.core_overrides[X]` + `cfg.cores[Y]` paired access with X != Y
+- **Sub-shape B** (UNINDEXED-GLOBAL at per-core consumer site; CI Check 10 catches) — `cfg.X` / `cfg->X` / `resolved_cfg.X` UNINDEXED on per-core-with-global-sister fields at per-core consumer sites
+
+Class 26 sub-shape B is the consumer-side analog of Class 27 — both fail to thread per-core context through but at DIFFERENT layers (Class 27 at cache structure; Class 26 sub-shape B at consumer read site). Class 27 closure (decision-time data binding) prevents Class 26 sub-shape B at fill-event sites by construction (consumer reads from in-flight Order, not cfg). Class 26 sub-shape B persists at slow-path strategy adapts where decision-time binding doesn't apply (consumer needs cfg directly; CI Check 10 catches mechanically).
+
 Concrete additional instance discovered: `static const double fee_rate_taker_d = FPN_ToDouble(cfg.fee_rate_taker);` at `EngineSharded.hpp:2469` — an even worse variant. The `static` caches at first lambda invocation, then NEVER refreshes. No sync path. Class 27 anti-pattern at the function-static level.
 
 ### Root cause

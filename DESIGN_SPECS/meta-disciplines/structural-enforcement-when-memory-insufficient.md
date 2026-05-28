@@ -1,7 +1,7 @@
 ---
 type: meta-discipline
 stage: 3-first-canonical
-version: 1.2
+version: 1.3
 established: 2026-05-26
 last_amended: 2026-05-27
 tags: [meta-discipline, framework-discipline, structural-fix, doc-discipline]
@@ -11,13 +11,17 @@ sister_specs:
   - pattern-codification-lifecycle.md
   - implementation-layer-blindspot-taxonomy.md
   - cfg-field-categorization-discipline.md
+  - canonical-sister-extension-discipline.md
+  - sister-cohort-amendment-completeness-discipline.md
 audit_tier: framework-pattern
 applies_at_skills: [/readiness, /handoff, /sync-workspace, /capture-audit, /precoding-audit-gate]
 canonical_applications:
   - 1st (v5.15.5.F.4d.1.B.4 WIP-10 — B-Plus CI tool v0.3 line-anchor verification at COMMIT layer; Class 14 fabricated-symbol detection)
   - 2nd (v5.15.5.F.4d.1.B.4 WIP-14b — B-Plus v0.4 --gen-deletion-cohort generator mode at OPERATOR-USE layer; B14 multi-surface deletion ordering mechanization)
-  - 3rd (v5.15.5.F.4d.1.B.4 WIP-16 — CI Check 8 5-question consumer-pattern verify mechanical sidecar at /capture-audit; Class 26 global-consumer-reading-per-core-field detection)
+  - 3rd (v5.15.5.F.4d.1.B.4 WIP-16 — CI Check 8 5-question consumer-pattern verify mechanical sidecar at /capture-audit; cfg field categorization at registry add time)
   - 4th (v5.15.5.F.4d.1.B.4 v1.7.6 Phase Cx-J — /readiness Check 44 cfg field categorization plan-time verification sister to CI Check 8 commit-time)
+  - 5th (v5.15.5.F.4d.1.B.7 — RETROACTIVE; Check 9 in tools/check_per_core_registry_integrity.py — paired-access mismatch detector for Class 26 sub-shape A; codification entry was implicit in `.B.7` ship close but never added to this list; added at `.B.8` per /readiness MED-2 + /blindspot-scan M7 forward-promise verification)
+  - 6th (v5.15.5.F.4d.1.B.8 — Check 10 in tools/check_per_core_registry_integrity.py — UNINDEXED-GLOBAL detector for Class 26 sub-shape B; sister extension of Check 9 per canonical-sister-extension-discipline.md v1.1 CI-tooling-surface axis; sanity-verified via revert-detect-reapply on HIGH-1)
 ---
 
 # Structural enforcement when memory codification proves insufficient (M7)

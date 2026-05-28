@@ -291,6 +291,25 @@ The canonical end-state is: ONE master registry with metadata bits + sidecars; M
 
 ---
 
+## CI-tooling-surface axis (NEW 2026-05-27 v5.15.5.F.4d.1.B.8)
+
+The canonical sister extension discipline applies at SPATIAL (parallel infrastructure when canonical sister exists) + TEMPORAL (sister sig migration as cohort discipline) + CROSS-TOOL (bash scripts mirroring engine wire emit) axes documented above. **CI-tooling-surface axis is the fourth application:** when extending a CI check tool to enforce a NEW bug class detection, audit for sister extensions to existing tools rather than building new tools.
+
+**Trigger for CI-tooling-surface axis canonical sister extension:** when proposing/discovering a NEW CI check for a bug class:
+1. Check if existing CI tool (`tools/check_<X>.py`) covers same surface family (per-core cfg discipline / wire-format byte preservation / metadata-bit framework / etc.)
+2. If sister tool exists + same surface family → **EXTEND existing tool with new check function** (sister-extension pattern; same CHECK_<N>_SCAN_FILES pattern + same scan_check_<N>_violations fn shape + same main() block pattern)
+3. If no sister tool OR different surface family → build new tool with rationale
+
+**Stage 3 first canonical:** Check 9 in `tools/check_per_core_registry_integrity.py` at `.B.7` (paired-access mismatch detector for Class 26 sub-shape A) — extended existing tool that already had Check 1-7 for per-core cfg discipline; same surface family (per-core cfg integrity); same patterns + helper reuse.
+
+**Stage 4 second canonical:** Check 10 in same tool at `.B.8` (UNINDEXED-GLOBAL detector for Class 26 sub-shape B) — sister extension of Check 9 (same tool / same surface family / different detection signature). Verified via 3-question test: (1) same conceptual surface (per-core cfg consumer discipline) → YES (2) extends existing CHECK_<N>_SCAN_FILES pattern → YES (3) same consumer behavior (CI fail on detection + Section D exemption list) → YES.
+
+**Lifecycle promotion:** Stage 2 DRAFT v1.0 → Stage 3 first canonical at `.B.7` Check 9 → Stage 4 second canonical at `.B.8` Check 10 → Stage 5+ CLAUDE.md item promotion candidate when 3+ CI-tooling-surface sister-extensions across multiple bug classes.
+
+**Sister discipline:** `sister-cohort-amendment-completeness-discipline.md` (NEW Stage 2 DRAFT at `.B.8`) — handles AMENDMENT layer (when amending a Class catalog / DESIGN_SPEC / ledger, enumerate sister-cohort artifacts requiring parallel amendments). canonical-sister-extension-discipline is at PRE-CODING / CREATION layer; sister-cohort-amendment-completeness-discipline is at AMENDMENT layer.
+
+---
+
 ## Sibling pattern at cross-tool surface (NEW 2026-05-18 v5.15.5.F.4d.1.B.3 Phase L v1.15)
 
 The canonical sister discipline applies at SPATIAL (parallel infrastructure when canonical sister exists) + TEMPORAL (sister sig migration as cohort discipline) axes. **Cross-tool axis is the third application:** bash scripts mirror engine wire emit / engine cfg parsers / engine schema descriptors — these are also "parallel infrastructure when canonical sister exists" at the cross-tool layer. The structural-fix sibling is `framework-driven-cli-binary-pattern.md` (NEW Stage 2 DRAFT v1.1 at v5.15.5.F.4d.1.B.3 Phase L). Sister to Layer 7 (`wire-format-byte-preservation-discipline.md` § Layer 7 — codifies cross-tool sync DISCIPLINE) — Phase L pattern provides STRUCTURAL ELIMINATION at framework-driven cross-tool surfaces; Layer 7 still applies for non-framework-driven cross-tool surfaces.

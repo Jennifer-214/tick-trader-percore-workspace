@@ -540,6 +540,20 @@ model workflow.
   per-core override emission CLI; per-core overlay-bytes consumer if needed). Each
   future cross-tool surface that fits the pattern can apply structurally instead of
   accumulating Layer 7 discipline overhead.
+  
+  **STATUS UPDATE 2026-05-24 / 2026-05-27 PM:** Phase L first canonical REVERTED
+  per YAGNI 2026-05-24 (foxml_suite already stamps models in-process; CLI was
+  edge-case-only infrastructure). Both `tools/stamp_model.sh` AND draft replacement
+  `tools/stamp_model_cli.cpp` DELETED. Pattern Stage 2 DRAFT retained as spec
+  body. `.C` per-core override emission CLI also SKIPPED at 2026-05-27 PM post-`.B.8`
+  pickup re-scope per same rationale + operator confirmation. Stage 4 cohort
+  migration deferred to v5.16+ FOREACH_CLI_MODE registry (TECH_DEBT-034) alignment
+  per "Training entry points" axis section below. Future cross-tool surfaces still
+  candidates for pattern application post-FOREACH_CLI_MODE landing. See
+  `DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-pattern.md` v1.1
+  § "Pattern status update (2026-05-24)" + CLAUDE.local.md going-forward rule
+  "Framework-driven CLI binary pattern Stage 4 cohort migration deferred to
+  v5.16+ FOREACH_CLI_MODE" (2026-05-27 PM) for canonical rationale.
 
 - **"Training entry points" axis advanced** — Phase L is a precedent for the
   FOREACH_CLI_MODE registry's eventual instantiation. `tools/stamp_model_cli.cpp`

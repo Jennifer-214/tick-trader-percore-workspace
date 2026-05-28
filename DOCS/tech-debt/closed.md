@@ -903,3 +903,33 @@ related_specs: [DESIGN_SPECS/refactor-patterns/decision-time-data-binding-patter
 - **Status:** **CLOSED 2026-05-27** at `v5.15.5.F.4d.1.B.8`
 - **Retroactive ledger write:** This entry was claimed NEW+CLOSED in `.B.8` handoff + postmortem + CHANGELOG but missed ledger write at ship close. Retroactively written at 2026-05-27 PM during `/accept-handoff` Stage 4.5 forward-promise verification dogfood (sister to `.B.7` -132/-134 retroactive writes same session; same M7 surface).
 - **Cross-ref:** `plans/v5.15-live-readiness/postmortems/2026-05-27-v5.15.5.F.4d.1.B.8-postmortem.md` Phase B; `.B.8` CHANGELOG row; `.B.7` Class 26 ×2 closure (parent context — drainer surface accounting cohort); `decision-time-data-binding-pattern.md` (canonical pattern for per-core cfg consumer); TECH_DEBT-139 (Check 11 Python impl that would have caught this drift mechanically); `plans/v5.15-live-readiness/capture-audit-reports/2026-05-27-accept-handoff.md` HIGH-1.
+
+---
+
+### TECH_DEBT-001 — Replace `tools/stamp_model.sh` bash CLI with thin C++ wrapper binary (CLOSED via surface deletion)
+
+```yaml
+id: TECH_DEBT-001
+title: Replace tools/stamp_model.sh bash CLI with thin C++ wrapper binary (CLOSED via surface deletion at .B.3 Phase L revert)
+severity: medium
+surface_tags: [cross-tool, wire-format, ml-inference, framework-driven-cli-binary-pattern]
+trigger: recurrence-count-2
+status: closed
+opened: 2026-05-09
+closed: 2026-05-24
+related_specs: [DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-pattern.md]
+```
+
+- **Created:** 2026-05-09 by v5.14.2.E.3 (initial population; debt accrued since v5.10.0a.G.2)
+- **Severity:** MEDIUM
+- **Surface:** `tools/stamp_model.sh` (operator-side bash CLI; ~382 LOC of shell) — DELETED at `.B.3` Phase L revert
+- **Class:** Same shape as v5.9.5b production-caller class — parallel implementation that drifts. Bash CLI duplicated the LOGIC of `stamp_write_for_model` (canonical body construction + HMAC computation + `.stamp` write) in shell, instead of CALLING the C++ function directly.
+- **Closure mechanism:** **Surface deletion (no replacement needed)** at `.B.3` Phase L revert (2026-05-24). Both `tools/stamp_model.sh` AND draft replacement `tools/stamp_model_cli.cpp` were DELETED per YAGNI rationale documented at `DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-pattern.md` v1.1 § "Pattern status update (2026-05-24)":
+  - foxml_suite already stamps models in-process via `Backtest_RunFullValidation → Stamp_AssembleAndEmit` (cfg.auto_stamp_on_held_out_completion)
+  - Operator workflow doesn't require CLI binary for common case
+  - Bash CLI was edge-case-only infrastructure
+  - Per `feedback_overengineering_boundary_when_future_easier` + YAGNI
+- **Status:** **CLOSED 2026-05-24** via surface deletion at `.B.3` Phase L revert. Bash CLI no longer exists; parallel implementation eliminated; no drift surface remains. framework-driven-cli-binary-pattern Stage 2 DRAFT retained as pattern body; Stage 3 first canonical deferred to v5.16+ cmdline-invocable training when decoupling endgoal needs a true headless CLI per `plans/_future/2026-05-12-decoupling-endgoal-roadmap.md` "Training entry points" axis.
+- **Sister context (added 2026-05-27 PM):** `.C` per-core override emission CLI also SKIPPED at post-`.B.8` pickup re-scope per same YAGNI rationale + operator confirmation; framework-driven-cli-binary-pattern Stage 4 cohort migration deferred to v5.16+ FOREACH_CLI_MODE (TECH_DEBT-034). Pipeline collapsed `.C` slot; `.D` becomes immediate next-up.
+- **Retroactive ledger write:** This entry sat OPEN in ledger even though surface was DELETED at `.B.3` (2026-05-24). Retroactively closed at 2026-05-27 PM during `/accept-handoff` Stage 4.5 forward-promise verification dogfood cleanup + `.C` skip decision (sister cohort to TECH_DEBT-132/-133/-134/-135/-136/-138/-139 retroactive ledger writes same session per same M7 surface — ship-close ritual incompletely propagates to all expected destinations).
+- **Cross-ref:** `DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-pattern.md` v1.1 status update (canonical revert rationale); `plans/_future/2026-05-12-decoupling-endgoal-roadmap.md` "Training entry points" axis (v5.16+ FOREACH_CLI_MODE successor surface); TECH_DEBT-034 (FOREACH_CLI_MODE registry; future Stage 3 first canonical surface); CLAUDE.local.md going-forward rule "Framework-driven CLI binary pattern Stage 4 cohort migration deferred to v5.16+ FOREACH_CLI_MODE" (2026-05-27); CLAUDE.md item 19 (structural fix preferred when bug class can recur — applies here: YAGNI deletion eliminates the drift class by removing both implementations).

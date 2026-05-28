@@ -25,58 +25,6 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ## Issues
 
-### TECH_DEBT-001 — Replace `tools/stamp_model.sh` bash CLI with thin C++ wrapper binary
-
-```yaml
-id: TECH_DEBT-001
-title: Replace tools/stamp_model.sh bash CLI with thin C++ wrapper binary
-severity: medium
-surface_tags: [cross-tool, wire-format, ml-inference]
-trigger: recurrence-count-2
-status: open
-opened: 2026-05-09
-related_specs: [DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-pattern.md]
-```
-
-- **Created:** 2026-05-09 by v5.14.2.E.3 (initial population; debt accrued since v5.10.0a.G.2)
-- **Severity:** MEDIUM
-- **Surface:** `tools/stamp_model.sh` (operator-side bash CLI; ~382 LOC of shell)
-- **Class:** Same shape as v5.9.5b production-caller class — parallel implementation that drifts. Bash CLI duplicates the LOGIC of `stamp_write_for_model` (canonical body construction + HMAC computation + `.stamp` write) in shell, instead of CALLING the C++ function directly.
-- **What's deferred:** Replace bash CLI with thin C++ wrapper binary `stamp_writer_cli` that:
-  1. Parses command-line args (model_path, secret, role, etc.)
-  2. Constructs `StampInferenceCfgInputs` from args
-  3. Calls `tt::stamp_write_for_model` (same code path as C++ suite Train Model)
-  4. Reports success/failure via exit code
-
-  This eliminates the parallel implementation. Single source of truth in C++. Adding a new stamp body field auto-flows through:
-  - C++ X-macro / manual emit code (already in place)
-  - C++ wrapper binary (one CLI flag added; calls existing function)
-  - Python trainers (call binary instead of bash CLI)
-- **Why this is better than "catch up bash":** Catching up bash CLI is recurring debt — every new stamp body field requires bash editing in lockstep. Replacing bash CLI eliminates the class. Same philosophy as STAMP_CFG_AUTOPOPULATE (eliminate the bug class structurally).
-- **Why deferred (not effort-avoidance):** Operator-edge tooling — most operators already use C++ suite Train Model button (which has full coverage). Bash CLI is for advanced users stamping Python-trained models outside the suite. The replacement requires:
-  - New CMakeLists.txt target for `stamp_writer_cli` binary
-  - ~150 LOC C++ wrapper (arg parse + StampInferenceCfgInputs build + call + result handling)
-  - Python trainer scripts updated to call binary instead of bash
-  - Documentation update (operator migration)
-  - Bash CLI eventually deletable
-
-  Cleaner long-term but requires C++ build for users who currently run the bash standalone. Defer because the C++ suite path is the primary recommended workflow.
-- **Cost estimate:** ~3-4h (vs ~2h for catch-up); ELIMINATES recurring class. LOW risk (additive binary; bash stays as deprecation path).
-- **Trigger:** Address when (a) operator reports CLI-stamped model rejected by engine due to missing field, OR (b) v5.X+ adds another stamp body field (would otherwise compound bash catch-up), OR (c) Python trainer scripts get refactored.
-- **Bash catch-up alternative (not recommended):** ~2h of mechanical bash editing for ~18 missing fields:
-  - v5.10.0a.G.2: `grid_member_count`, `grid_member_idx`
-  - v5.11.41: `label_lookahead_ticks`, `label_tp_pct`, `label_sl_pct`, `xgb_train_nthread`
-  - v5.14.1.B.3: 5 Ridge cfg fields, 5 composite cfg fields
-  - v5.14.1.D: 2 winsor cfg fields
-  - v5.14.1.E: `exit_blender_mode`
-  - v5.14.2.E.2.A: `ml_buy_threshold`, `gap_acceptable_threshold`
-  - v5.14.2.E.2.B: 4 architectural fields
-  Recurring debt class survives.
-- **Status:** OPEN
-- **Cross-ref:** v5.14.1 post-mortem; v5.14.2.E.2.B commit message; CLAUDE.md item 19 (structural fix > direct patch when bug class can recur) — applies here: replace bash CLI structurally vs catching up the parallel implementation.
-
----
-
 ### TECH_DEBT-002 — Centralized engine `ControllerEventLoop` removal
 
 ```yaml
@@ -2854,6 +2802,6 @@ related_specs: [DESIGN_SPECS/meta-disciplines/structural-enforcement-when-memory
 - **What's deferred:** Implement Check 11 Python detection logic. Estimated ~1-2h focused. Sentinel regex patterns + scan locations + per-sentinel verification + ledger-location grep + UNFULFILLED output already documented in SKILL.md. Implementation = mechanical Python from spec.
 - **Why deferred (not effort-avoidance):** Originally deferred at `.B.8` Phase H.2.c per token-budget pragmatism (focus on substantive bugfix cohort + sister-cohort catalog amendments + 3-cycle audit convergence). Per `feedback_forward_promise_auto_write_verification` dogfood: the discipline is the structural fix; Check 11 IS the mechanical enforcement.
 - **Dogfood evidence (this entry IS the dogfood result):** `.B.8` ship close claimed TECH_DEBT-138 NEW+CLOSED but entry never made it to ledger; `.B.7` ship close claimed -132/-134 NEW+CLOSED and -133/-135/-136 OPEN — none made it to ledger. Pattern: ship close ritual misses TECH_DEBT writes at commit time. `/accept-handoff` Stage 4.5 caught all 5 retroactively + this entry opened to track the structural enforcement deferral. Check 11 Python impl would catch this class mechanically at next-ship pickup OR at commit time via `/capture-audit --strict` pre-commit gate.
-- **Status:** **OPEN** — queued for `.C` per-core override emission CLI ship (sister cadence; both touch CI tool surface) OR `.D` CI tool consolidation ship (natural framework-lock surface; sister to existing `tools/check_per_core_registry_integrity.py`).
-- **Trigger:** Address at `.C` if sister-ship cadence aligns, OR `.D` (preferred — natural framework-lock surface; consolidate with TECH_DEBT-105/106/111 into `check_framework_consumer_invariants.py`).
+- **Status:** **OPEN** — queued for `.D` CI tool consolidation ship (natural framework-lock surface; sister to existing `tools/check_per_core_registry_integrity.py`). UPDATED 2026-05-27 PM: `.C` slot collapsed at post-`.B.8` pickup re-scope (per `.C` per-core override emission CLI skip rationale — framework-driven-cli-binary-pattern Stage 4 cohort deferred to v5.16+ FOREACH_CLI_MODE per `.B.3` YAGNI revert + operator confirmation). Single closure surface = `.D`.
+- **Trigger:** Address at `.D` — consolidate with TECH_DEBT-105/106/111 into `tools/check_framework_consumer_invariants.py` (natural framework-lock surface; sister to existing CI tooling at `tools/check_per_core_registry_integrity.py` Check 9 + Check 10).
 - **Cross-ref:** `plans/v5.15-live-readiness/postmortems/2026-05-27-v5.15.5.F.4d.1.B.8-postmortem.md` § What went poorly #2; `feedback_forward_promise_auto_write_verification`; `feedback_structural_enforcement_when_memory_insufficient` (M7 parent); `claude-skills/capture-audit/SKILL.md` Check 11 (SKILL.md amendment); `/accept-handoff` Stage 5 dogfood verification (manual surfacing path); `plans/v5.15-live-readiness/capture-audit-reports/2026-05-27-accept-handoff.md` HIGH-2 finding source; TECH_DEBT-136 (sister B-Plus v0.5 — same M7 surface); TECH_DEBT-132/-134/-138 (the 3 closed entries this Check 11 would have caught mechanically); TECH_DEBT-133/-135/-136 (the 3 open entries this Check 11 would have caught mechanically).

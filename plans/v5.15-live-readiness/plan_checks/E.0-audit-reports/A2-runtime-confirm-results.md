@@ -27,7 +27,7 @@ GENERIC (tested) vs NATIVE (shipped) `FPN_Sqrt<64>`, 24-byte raw output:
 - `sqrt(12345.678)` generic `de c5 5e 7b…` vs native `00 00 60 7b…`
 - `sqrt(0.25)`, `sqrt(100)` → IDENTICAL (perfect squares exact)
 
-Harness preserved as the D-71 determinism-gate kernel: `determinism-gate-seed-fp_sqrt_diff.cpp` (this dir). The gate = compile WITH/WITHOUT `USE_NATIVE_128` + byte-compare; this is its first concrete instance.
+Harness preserved as the D-71 determinism-gate kernel: `determinism-gate-seed-fp_sqrt_diff.cpp` (this dir). It is the **sqrt-scoped ±`USE_NATIVE_128` diagnostic** (what revealed F-056) — NOT the blanket standing gate (`FromDouble`/`ToDouble` legitimately differ by algorithm; the standing gate is F-057 tested==shipped + shipped-native-path cross-run/cross-binary determinism; see `.E.0.1` R1).
 
 ## Routing finding surfaced by A (operator-triage)
 
@@ -39,7 +39,7 @@ All net-gating findings confirmed (decisions ①=NR-sqrt + ②=golden-master set
 - **FP-determinism:** F-056 (NR sqrt under native) + F-057 (tests build `USE_NATIVE_128` → tested==shipped) + F-058 (`memcpy` not `*(__uint128_t*)`; UB couples it to F-056).
 - **Replay-determinism:** F-054 + F-055 (migrate `BacktestEngine`/`DepthReplayState` `strtod` → `tt::parse_double_fast`; the golden-master replays recorded ticks → its parser must be locale-immune; closes backtest↔live parse asymmetry too).
 - **F-059 → Net-1** (NOT Net-2): golden-master the real per-fill exit (option c; no reimplemented oracle) — becomes a CI characterization gate.
-- **Acceptance:** H10 determinism gate (build ±`USE_NATIVE_128`, byte-compare; preserved harness) flips RED→GREEN.
+- **Acceptance:** determinism gate = F-057 tested==shipped + shipped-native-path cross-run/cross-binary determinism + the sqrt-scoped ±`USE_NATIVE_128` diagnostic (preserved harness) RED→GREEN. NOT blanket all-ops native==generic (`FromDouble`/`ToDouble` differ by algorithm + are moot post-F-057; see `.E.0.1` R1).
 
 **NOT Net-2 (re-routed / deferred):**
 - **F-047 / live-bc-1** (CRIT) — does NOT gate the net. **OPERATOR DECISION (2026-05-29):** stays `.E.6` STRUCTURAL only (`FOREACH_EXCHANGE` host columns + boot same-property assert) — **NO tactical pre-fix.** Rationale: operator is not running real-money live before `.E` lands + post-`.E` bug-testing/paper-test; the structural fix + paper-test catch it in the natural workflow. A standalone tactical fix would be throwaway work on code `.E.1`/`.E.6` rewrites anyway.

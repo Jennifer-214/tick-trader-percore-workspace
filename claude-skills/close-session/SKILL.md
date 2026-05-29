@@ -104,6 +104,30 @@ If close is at a planning-state boundary (vs post-coding mid-ship checkpoint), f
 
 Detection heuristic: if plan body version has bumped since last close OR substantive decisions landed since last close, fire `/readiness`.
 
+### Stage 5.5 — Independent deliverable-completeness review [NEW v5.15.5.F.4d.1.E.0.2 / D-79]
+
+Verify the SESSION'S substantive deliverables ACTUALLY landed complete + coherent on disk — by INDEPENDENT eyes, not self-attestation. Distinct from Stage 2/4 (mechanical capture-audit drift) + Stage 4.5 (meta-error harvest): this is a CONTENT-completeness + cross-artifact-COHERENCE pass. It is the close-session analog of `/precoding-audit-gate` Stage 3.5 (the verification pass) — same anti-self-attestation principle: **the agent that BUILT the work is prone to confirming "I did X" from memory rather than verifying X landed; an agent with no stake reports only what's on disk.** Sister: `feedback_golden_master_over_reimplemented_oracle` (verify the real artifact) + the AR-1 verify-don't-assume discipline (meta-anti-pattern-index).
+
+**When to fire (heavier-default per D-77; light is earned):**
+- FIRE for substantial multi-artifact sessions — a subsystem/ship build, ≥~4 substantive new-or-amended artifacts, or any HIGH-RISK build.
+- SKIP trivial closes (single-file edit / doc-only-tiny / pure checkpoint sync) via `--no-review`; overhead exceeds value there.
+
+**Dimensions the reviewer checks** (each = a distinct failure mode a completeness-only pass misses):
+1. **Landed + substantive** — each claimed deliverable is present + real content, not a stub.
+2. **Coherent + fully propagated** — artifacts agree with each other AND each operator decision reached ALL its homes (decision-log + memory + MEMORY.md index + the skill/spec it governs + CLAUDE.local.md if a going-forward rule). A decision in the log but not wired into the skill it governs = half-landed. Complements `/capture-audit` Check 12 (mechanical stale-ref scan) with the judgment "did it fully land."
+3. **No fabrication** — no tool / symbol / file cited as runnable-or-real that doesn't exist on disk.
+4. **Edits were surgical** — the touched files' PRE-EXISTING + adjacent content is intact (an additive-looking edit can silently clobber a neighbor); *completeness checks new content arrived, this checks old content survived*. Includes the **WH-2 stale-index check**: no always-loaded index (MEMORY.md / sprint-state / MASTER) left pointing at superseded state.
+5. **Meets the bar** — deliverables satisfy the plan's OWN acceptance criteria, not merely exist (N/A if no acceptance-criteria'd plan).
+6. **Right side of the privacy boundary** — new/moved artifacts on the correct public-AGPL vs private-workspace side (a doc referencing private plans/handoffs must NOT land in the public tree).
+
+(Considered + deferred: *operator-decision fidelity* — do artifacts match what the operator ACTUALLY decided vs agent drift; partly covered by #2/#5; add when intent-drift recurs + the checklist can encode the operator directives.)
+
+**Procedure:**
+1. **Build the deliverable checklist from the session's ACTUAL changes** — `git diff` (engine + workspace) for touched files + the decision-log entries (D-N) added + NEW memories + plan amendments. Each becomes a checklist item with its expected content markers.
+2. **Spawn ONE independent reviewer** (general-purpose subagent) with: the checklist + file paths + skeptical criteria (content present + SUBSTANTIVE + complete + internally coherent; cite file:line; flag fabrications / stubs / cross-artifact incoherence). The reviewer has NO stake — it reports only what the files contain — and **does NOT fix anything**.
+3. **Reviewer returns** VERIFIED / PARTIAL / MISSING per item + a cross-coherence check + an overall verdict.
+4. **Triage** (like Stage 3): PARTIAL/MISSING → fix inline → re-verify the fixed items; VERIFIED → proceed. The result feeds the Stage 8 report.
+
 ### Stage 6 — `/handoff` (compose + write handoff doc)
 
 Invoke `/handoff <ship-tag>` via Skill tool. `/handoff` internally runs its own Stages 1.5-4.5 + writes the doc to workspace path:
@@ -138,6 +162,7 @@ Stages executed:
   ✅ Triage + fix iteration             — N findings addressed
   ✅ /capture-audit --deep (verify)     — CLEAN
   ✅ /readiness (if planning close)    — <verdict>
+  ✅ Independent review (Stage 5.5; if substantial) — <N> deliverables VERIFIED / <N> PARTIAL fixed
   ✅ /handoff                           — written to <path>
   ✅ /sync-workspace                    — pushed to <remote>
 
@@ -165,7 +190,7 @@ Authoritative next-session entry:
 
 ## Execution model (Layer 1 orchestrator)
 
-ONE-WAY HIERARCHY. Compose by REFERENCE (invoke sub-skills via Skill tool); never spawn sub-agents.
+ONE-WAY HIERARCHY. Compose sub-SKILLS by REFERENCE (invoke via Skill tool). The ONE exception that spawns a sub-AGENT is Stage 5.5 (independent deliverable-completeness review): its independence from the building agent IS the load-bearing property (anti-self-attestation), so it MUST be a separate agent, not self-review. No other stage spawns.
 
 ```
 LAYER 1: ORCHESTRATION
@@ -177,6 +202,9 @@ LAYER 2: COMPOSED SKILLS
   - /readiness    (Stage 5; conditional)
   - /handoff      (Stage 6)
   - /sync-workspace (Stage 7)
+
+LAYER 2 (spawned sub-agent — the one exception):
+  - independent reviewer (Stage 5.5; general-purpose; spawned for INDEPENDENCE, conditional per gating)
 ```
 
 If reading this spec inside an Explore subagent: return error. `/close-session` is only invoked from main session because it orchestrates handoff writing + workspace push (mutating effects).

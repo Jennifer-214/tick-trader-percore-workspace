@@ -222,13 +222,13 @@ thread running that section. Sections (append-only, indices stable for
 GUI): ROLLING, REBUILD, PUSH, TIME_EXIT, TRAIL_SL. Bracket cost
 ~10ns × 5 sections = ~50ns/cycle, < 1% of microsecond-scale slow-path.
 
-## Partial Exits — Two-Position-per-Core
+## Partial Exits — Two-Position-per-Node
 
-`cfg.partial_exit_enabled=1` → each core owns 2 slots:
-- core `c` → leg A in slot `2c`, leg B in slot `2c+1`
-- max cores = `MAX_PORTFOLIO_POSITIONS / 2 = 8` (validated via `Sharded_ValidatePartialExitCfg`)
+`cfg.partial_exit_enabled=1` → each node owns 2 slots:
+- node `c` → leg A in slot `2c`, leg B in slot `2c+1`
+- max nodes = `MAX_PORTFOLIO_POSITIONS / 2 = 8` (validated via `Sharded_ValidatePartialExitCfg`)
 
-`partial_exit_enabled=0` (default): core `c` → slot `c` (1:1), `2c+1` unused.
+`partial_exit_enabled=0` (default): node `c` → slot `c` (1:1), `2c+1` unused.
 
 `Sharded_LegSlot(core_id, leg, partial_enabled)` returns correct slot. `PARTIAL_LEG_A`/`PARTIAL_LEG_B` in `TradeEvent.hpp` (so `ExecutionCore_Tick` doesn't need EventLoop header).
 

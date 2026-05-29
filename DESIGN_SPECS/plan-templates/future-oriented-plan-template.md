@@ -217,6 +217,30 @@ For each NEW framework infrastructure proposed by this ship (X-macro registry / 
 
 ---
 
+## Tests changed
+
+Per `feedback_test_change_enumeration_per_plan_body` (M7 discipline). Required for plan bodies where the Coding sequence section touches files in `tests/`. `/readiness` Check 45 verifies the section exists + 3 sub-categories enumerated.
+
+### (a) Modified tests
+
+Tests whose existing assertions must be preserved but mechanically updated for new code shape (rename / signature change / struct field reorder). Enumerate per affected test:
+- `tests/<file>.cpp:<line-range>` — `<what test does>` — `<what mechanical change>` (e.g., `state.cores[i].field` → `state.nodes[i].field`)
+- ...
+
+### (b) Broken / replaced tests
+
+Tests that exercise now-deleted code paths. Either DELETE (with B14 deletion-cohort ordering rationale + Class 33 consumer-enumeration discipline) OR REPLACE with equivalent test against new code path. Per affected test:
+- `tests/<file>.cpp:<line-range>` — `<what test does>` — `DELETE` or `REPLACE: <new test description>`
+- ...
+
+### (c) NEW unit tests added
+
+Tests added for NEW functions / API surface introduced by this ship. Every NEW function should have a unit test verifying behavior given controlled inputs. Per NEW test:
+- `tests/unit/<file>.cpp:<test-name>` — verifies invariant: `<what>` — given inputs: `<X>` expects: `<Y>`
+- ...
+
+---
+
 ## Verification gate
 
 **Universal:** build GREEN; all 5 binaries clean; CI Check 1-N PASS; `/parity-check` GREEN; `/merge-scan` GREEN; `/bug-check` CLEAN (no new instances of closed classes).

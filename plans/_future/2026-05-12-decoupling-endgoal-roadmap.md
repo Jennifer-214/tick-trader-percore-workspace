@@ -1,7 +1,7 @@
 # Decoupling endgoal roadmap — runtime / viewer separation (PRIVATE living doc)
 
 **Date opened:** 2026-05-12 (v5.15 sprint kickoff session)
-**Status:** LIVING DOC. Accumulates per-ship breadcrumbs.
+**Status:** LIVING DOC → **CONVERGING at `v5.15.5.F.4d.1.E.2`** (reframed 2026-05-28 at `.D.1`; see "Status" section below). Accumulates per-ship breadcrumbs.
 **Predecessor / companion:** `plans/_future/2026-05-08-v6.0-CANDIDATE-headless-service-colo.md`
 (v6.0 colo architecture; this doc is the operational roadmap toward it,
 covering both engine + suite sides).
@@ -21,6 +21,20 @@ readiness checklist saying when we can proceed.
 
 **Where this doc lives.** Workspace-private (`plans/_future/` gitignore
 pattern). Auto-synced via `/sync-workspace`.
+
+---
+
+## Status (2026-05-28): converging at `.E.2`
+
+> **Reframing note (2026-05-28, `.D.1` doc sweep):** This document was drafted **2026-05-12** as future-vision when the codebase was still pre-`.E` per-core sharded with a monolithic `engine_gui` binary. The architecture described here **converged into the `.E` sub-sprint** at planning 2026-05-28 (per D-4, D-7, D-26, D-46). The "endgoal" framing below should now be read as **"lands at `v5.15.5.F.4d.1.E.2`"** — actively being built, not aspirational. The **original vision body is preserved below** (historical context — when the vision was first articulated + why decoupling matters); it uses the original 2026-05-12 working terminology (`per-core`, `engine_viewer`/`foxml_runtime` binary working-names) intentionally, bridged to the canonical post-`.E` vocabulary via `DOCS/DESIGN_PHILOSOPHY.md` § 15 Glossary.
+
+This roadmap's vision lands at the **`.E.2`** ship. Canonical references:
+- `.E.2` plan body: `plans/v5.15-live-readiness/subplans/2026-05-28-v5.15.5.F.4d.1.E.2-headless-configs-docs.md`
+- `E-MASTER-REFERENCE.md` (CLAUDE.md + DESIGN_PHILOSOPHY amendments + supporting docs at `.E.2`)
+- Decision log v2: D-4 (headless folded into `.E.2`) + D-7 (GUI focus reduced) + D-26 (GUI hard-deprecate at `.E.2`) + D-46 (documentation deliverables)
+- Canonical binary names (per DESIGN_PHILOSOPHY § 15): `fox-engine` / `fox-tui` / `fox-cli` / `foxml-train` — these supersede the `engine_viewer` / `foxml_runtime` / `foxml_viewer` working-names in the original diagram below.
+
+**What `.E` adds beyond the original vision:** the **multi-exchange substrate** (per-cluster scaling) that the 2026-05-12 doc didn't cover — the `.E` Cluster/Node/Deployment hierarchy wasn't yet decided.
 
 ---
 

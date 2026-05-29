@@ -387,6 +387,28 @@ Each category gets: **Definition** / **Detection mechanism** / **Loud vs silent*
 
 ---
 
+### B19 — Doc-sweep classification + cross-doc terminology drift (Stage 2 DRAFT at v5.15.5.F.4d.1.D.1)
+
+Multi-doc cross-cutting amendments (terminology sweeps; sister-cohort renames; vision/end-goal reshape) create blind-spots distinct from code-touching ship pillars. Sub-categories:
+
+1. **Doc-sweep classification correctness** — narrative vs code-citation vs historical vs transition-documentation; misclassification risks docs↔code divergence (over-rename) OR orphan terminology (under-rename).
+2. **Cross-doc transitive terminology drift** — direct token sweeps catch ~80%; transitive semantic refs ("see DESIGN_PHILOSOPHY's per-core framing" without a literal token) require manual spot-check.
+3. **Glossary SSoT integrity** — canonical glossary scope-boundary must be explicit (which concepts in glossary; which deferred elsewhere).
+4. **Pre-drafted content currency** — multi-cycle plan-body amendments propagate to N+ pre-drafted blocks (D-X entries / template body / SKILL.md amendments); drift risk if propagation tracking absent.
+5. **Sister-tool cohort completeness** — adding NEW CI tools triggers sister-cohort enumeration of existing tools that may need updates.
+6. **Transition-doc / catalog over-flagging (the dominant failure — v5.15.5.F.4d.1.D.1 pickup)** — a prose-token classifier flags `old→new` renames in docs that are *about* the rename, where the old token must STAY. Confirmed pervasive across THREE shapes: (a) transition-catalog tables (`Old name → Suggested new` rows; renaming corrupts the pair); (b) catalog/ledger title citations (Class 26 "Global consumer reading **per-core** field", TECH_DEBT-129 "**Per-core** drainer architecture" — preserved per DD-3); (c) accurate current-state claims ("Engine is *currently* per-core sharded for hot path") — renaming makes them false. Rename-PLANNING docs (the running-list + every `.E` plan body) are **bilingual-by-necessity** → a prose-token tool over-flags them wholesale.
+7. **Workspace-side rollback asymmetry** — git pre-tag reverts engine code; doesn't revert workspace memories/TaskList/audit-reports; document the asymmetry at any doc-sweep ship.
+
+**Worked example (v5.15.5.F.4d.1.D.1 doc sweep):** the bulk timeless-doc sweep (~525 conceptual renames) landed cleanly, but at Phase F the tool flagged 8 renames in `rename-candidates-running-list.md` + all 16 in `.E.0`/`.E.1`/`E-MASTER-REFERENCE` — **ALL verified LEAVE** per sub-category 6. The manual triage (heading rename in `CLAUDE_INVARIANTS.md` only; everything else LEAVE) was correct; the auto-apply would have corrupted citations + falsified current-state. **ESCALATION:** a prose-token tool is structurally unsafe for `.E.1`'s 5,000-site CODE rename — that needs symbol/AST-aware detection (see TECH_DEBT-142).
+
+**First canonical (Stage 3 promotion):** `v5.15.5.F.4d.1.D.1` doc-sweep ship; this ship IS the canonical application.
+
+**Sister:** Pillar B14 (multi-surface deletion ordering) — sister at deletion-class; B19 is sister at terminology-sweep class. RECURRING_BUG_PATTERNS Class 36 (bulk-rewrite-tooling hazards) is the bug-catalog sibling.
+
+**Detection signature:** any plan body declaring `ship_kind: doc system <X> sweep`, OR any cross-cutting amendment touching ≥5 DESIGN_SPECS / plan-body narrative bodies simultaneously, OR any rename driven by a prose-token tool over docs that *describe* the rename.
+
+---
+
 ## Composition with sister skills
 
 - **`/precoding-audit-gate`** — orchestrator; can include `/blindspot-scan` in audit_set (extended)

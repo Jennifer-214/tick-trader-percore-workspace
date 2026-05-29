@@ -283,8 +283,13 @@ All NEW specs that land across `.E` sub-sprint. Stage 2 DRAFT skeletons created 
 
 ## 7. NEW TECH_DEBT entries opened across `.E`
 
+> ⚠️ **`.E.1` RENAME-APPROACH CONSTRAINT (TECH_DEBT-142, opened `.D.1` 2026-05-28):** the `.D.1` prose-token doc-rename tool (`check_doc_rename_classification.py`) is **structurally unsafe for `.E.1`'s ~5,000-site CODE rename** — it over-flags transition-docs / citations / current-state claims (proven at `.D.1` Phase F; see B19 pillar + Class 36). `.E.1` MUST design its Core→Node rename around **symbol/AST-aware** tooling (clang-based or equivalent), NOT prose-token substitution.
+
 | Entry | Title | Source ship | Closure ship |
 |---|---|---|---|
+| **TECH_DEBT-142** (NEW `.D.1`) | **Doc-rename tool unsafe for `.E.1` code rename — needs symbol/AST tooling** | **`.D.1`** | **`.E.1`** |
+| TECH_DEBT-140 (NEW `.D.1`) | `engine_mode` vestigial cfg field | `.D.1` | `.E.0.1`/`.E.1` |
+| TECH_DEBT-141 (NEW `.D.1`) | `BacktestSharded_Run` → `Backtest_Run` unification | `.D.1` | `.E.1` |
 | TECH_DEBT-129 (existing) | Per-core drainer architecture | - | `.E.1` |
 | TECH_DEBT-135 (existing) | Class 11 regime_names sibling-array | - | `.E.1` (likely) |
 | TECH_DEBT-NEW-1 | TUI implementation | `.E.1` | `.E.2` |

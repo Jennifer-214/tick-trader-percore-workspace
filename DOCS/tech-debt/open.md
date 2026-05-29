@@ -2752,4 +2752,104 @@ related_specs: [DESIGN_SPECS/meta-disciplines/structural-enforcement-when-memory
 
 ---
 
+### TECH_DEBT-140 — `engine_mode` cfg field vestigial post-`single_core` deletion
+
+```yaml
+id: TECH_DEBT-140
+title: engine_mode cfg field vestigial post single_core deletion
+severity: low
+surface_tags: [cfg-flow, boot-time]
+trigger: .E.0.1-or-.E.1
+status: open
+opened: 2026-05-28
+related_specs: []
+```
+
+- **Created:** 2026-05-28 by v5.15.5.F.4d.1.D.1 (doc-sweep ship; surfaced via rename-candidates running-list entry 2)
+- **Severity:** LOW
+- **Surface:** `engine.cfg` `engine_mode` field (values `sharded | single_core`) + its parser/consumer
+- **What's deferred:** With the legacy `single_core` mode deleted at `.E.0.1`, only `sharded` remains — `engine_mode` becomes vestigial (one surviving value). Delete the field + its parse/consume sites once `single_core` is gone.
+- **Why deferred (not effort-avoidance):** `.D.1` is a doc-only sweep (no engine code); `single_core` deletion is `.E.0.1`/`.E.1` scope. Deleting `engine_mode` before `single_core` is gone would be premature.
+- **Cost estimate:** ~1h; LOW risk; folds into the `single_core` deletion cohort.
+- **Trigger:** `.E.0.1` precursor (legacy `single_core` delete) OR `.E.1` Foundation.
+- **Status:** OPEN
+- **Cross-ref:** `rename-candidates-running-list.md` entry 2; TECH_DEBT-002 (centralized `ControllerEventLoop` removal — sister legacy-path deletion).
+
+---
+
+### TECH_DEBT-141 — `BacktestSharded_Run` → `Backtest_Run` unification (Sharded qualifier dead weight)
+
+```yaml
+id: TECH_DEBT-141
+title: BacktestSharded_Run to Backtest_Run unification
+severity: low
+surface_tags: [backtest]
+trigger: .E.1
+status: open
+opened: 2026-05-28
+related_specs: []
+```
+
+- **Created:** 2026-05-28 by v5.15.5.F.4d.1.D.1 (surfaced via rename-candidates running-list entry 4)
+- **Severity:** LOW
+- **Surface:** `Backtest/` — `Backtest_Run` wrapper calling `BacktestSharded_Run`
+- **What's deferred:** With `single_core` gone, the "Sharded" qualifier is dead weight (only sharded backtest remains). Unify `Backtest_Run` + `BacktestSharded_Run` into one (drop the wrapper indirection).
+- **Why deferred (not effort-avoidance):** Code rename; `.D.1` is doc-only. Folds naturally into the `.E.1` Core→Node code-rename cohort.
+- **Cost estimate:** ~1h; LOW risk; mechanical.
+- **Trigger:** `.E.1` Foundation (alongside the Core→Node rename).
+- **Status:** OPEN
+- **Cross-ref:** `rename-candidates-running-list.md` entry 4; `.E.1` plan body.
+
+---
+
+### TECH_DEBT-142 — Doc-rename tool prose-token approach unsafe for `.E.1` CODE rename (needs symbol/AST-aware tooling)
+
+```yaml
+id: TECH_DEBT-142
+title: doc-rename tool prose-token approach unsafe for E.1 code rename
+severity: high
+surface_tags: [registry, boot-time]
+trigger: .E.1
+status: open
+opened: 2026-05-28
+related_specs: [meta-disciplines/implementation-layer-blindspot-taxonomy.md]
+```
+
+- **Created:** 2026-05-28 by v5.15.5.F.4d.1.D.1 (surfaced at Phase F — verified `.E`-plan + running-list rename auto-apply)
+- **Severity:** HIGH (load-bearing for `.E.1`'s ~5,000-site Core→Node rename correctness)
+- **Surface:** `tools/check_doc_rename_classification.py` (prose-token classifier) + `.E.1`'s code-rename approach
+- **What's deferred:** `.D.1`'s doc-rename tool matches `per-core`/`per_core` by prose token + `transition-documentation` heuristics. At Phase F it over-flagged renames in transition-docs (running-list `Old→New` catalog; `.E` plan bodies' Class 26 / TECH_DEBT-129 title citations; accurate "currently per-core" claims). For DOCS this was caught by manual triage (B19 pillar). But `.E.1`'s **CODE** rename (`state.cores`→`state.nodes`, `MAX_CORES`→`MAX_NODES`, `CoreContext`→`NodeContext`, `FOREACH_PER_CORE_CFG_FIELD`→`FOREACH_PER_NODE_CFG_FIELD`, `core_*` cfg fields) spans ~5,000 sites and CANNOT be hand-triaged at that scale. `.E.1` needs **symbol/AST-aware** rename tooling (clang-based or equivalent) — NOT prose-token substitution — plus transition-catalog recognition (`type: running-list` frontmatter, `Old name` columns, catalog-citation context) for the doc surfaces it touches.
+- **Why deferred (not effort-avoidance):** the tooling gap is specific to `.E.1`'s code-rename scope; building AST-aware tooling now (before `.E.1` plans the rename approach) would be premature. Captured so `.E.1`'s window designs the rename approach with this constraint up front.
+- **Cost estimate:** part of `.E.1` Foundation planning (rename-approach design); MEDIUM-HIGH (wrong tooling corrupts the codebase at scale).
+- **Trigger:** `.E.1` Foundation — rename-approach design (do NOT reuse the `.D.1` prose-token tool for code).
+- **Status:** OPEN
+- **Cross-ref:** B19 pillar (`implementation-layer-blindspot-taxonomy.md`); RECURRING_BUG_PATTERNS Class 36; `.E.1` plan body Core→Node rename section; `E-MASTER-REFERENCE.md` § 7; `feedback_terminology_evolution_bridge_not_history_rewrite`.
+
+---
+
+### TECH_DEBT-143 — Public `CHANGELOG.md` + `DOCS/changelogs/` stale for entire v5.12→v5.15 cycle (backfill)
+
+```yaml
+id: TECH_DEBT-143
+title: Public CHANGELOG stale for v5.12 to v5.15 cycle
+severity: medium
+surface_tags: [doc-discipline]
+trigger: .F-or-sprint-umbrella-close
+status: open
+opened: 2026-05-28
+related_specs: []
+```
+
+- **Created:** 2026-05-28 by v5.15.5.F.4d.1.D.1 (surfaced at Phase H ship-close; operator confirmed the public CHANGELOG had fallen out of workflow)
+- **Severity:** MEDIUM (public AGPL repo quality / hedge-fund-visibility surface per `user_public_work_attracts_hedge_funds`; not blocking; accumulating)
+- **Surface:** `DOCS/CHANGELOG.md` (elevator-pitch summary) + `DOCS/changelogs/<dated>.md` (detail files)
+- **What's deferred:** Both surfaces lapsed mid-May 2026 — CHANGELOG.md summary jumps from a lone floating `5.15.5.F.4d.1.B.7` row to `5.11.58`; dated detail files stop at `2026-05-02-v5.9-ml-hardening.md`. The ENTIRE `v5.12 → v5.15.5.F.4d.1` cycle (current sprint) is uncovered except the anomalous `.B.7` row (no matching detail file). During the sprint the per-ship record lived in workspace postmortems + decision logs + per-ship GPG tags (private). Backfill at a sensible granularity — summary rows per EXTERNAL milestone, NOT per internal sub-ship (there are dozens) + detail files where warranted.
+- **Why deferred (not effort-avoidance):** out of `.D.1` doc-sweep scope; substantial reconstruction; best done once the external version scheme is decided (the public CHANGELOG should track coarse external SemVer milestones, not high-velocity internal ship tags — which is partly WHY it fell behind).
+- **Cost estimate:** ~3-5h (reconstruct milestone rows from postmortems + git history); LOW risk; align with the external-versioning decision.
+- **Trigger:** `.F` professionalization sweep (public-facing polish pass) OR v5.15 sprint-umbrella close OR when TECH_DEBT-126 lands the external version scheme.
+- **Status:** OPEN
+- **Cross-ref:** **TECH_DEBT-126** (two-axis versioning — separate internal ship tag from external SemVer; CHANGELOG should track external milestones); `DOCS/changelogs/INDEX.md`; `feedback_motivated_collaborator_for_caramel` (public repo quality bar).
+
+---
+
 _(TECH_DEBT-139 moved to closed.md at v5.15.5.F.4d.1.D — Check 11 Python detection logic IMPLEMENTED as NEW `tools/check_forward_promise_audit.py`; M7 7th canonical structural enforcement application; see closed.md for full entry)_

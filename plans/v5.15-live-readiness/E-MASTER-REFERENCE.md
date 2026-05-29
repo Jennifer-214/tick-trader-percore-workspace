@@ -17,6 +17,7 @@ purpose: Single-point-of-access reference index for the entire .E sub-sprint tra
 .E.0 Pre-coding plan audit + verification    (NEW per D-59; precedes all coding; LOW-RISK; ~3-5d)
   ↓ blocks all subsequent
 .E.0.1 Pre-`.E.1` foundational-fix net (Net-2) (NEW per D-74; FP+replay determinism; HIGH-RISK; ~3-5d)
+.E.0.2 Meta-error-tracking subsystem           (NEW per D-76; catalog + cascade-audit + close-out harvest; MED; process-infra, no engine code — Phase-1, before pipeline)
   ↓ gates .E.1 (determinism + replay CI gates GREEN)
 .E.1 Foundation                              (HIGH-RISK; ~5-7d)
   ↓
@@ -47,6 +48,7 @@ purpose: Single-point-of-access reference index for the entire .E sub-sprint tra
 |---|---|---|
 | `.E.0` | `subplans/2026-05-28-v5.15.5.F.4d.1.E.0-precoding-plan-audit-verification.md` | DRAFTED v0.2 (Job A + Job B) |
 | `.E.0.1` | `subplans/2026-05-29-v5.15.5.F.4d.1.E.0.1-pre-E1-foundational-fix-net.md` | DRAFTED v0.1 (Net-2; 5 net-gating FP+replay fixes; gates `.E.1`) |
+| `.E.0.2` | `subplans/2026-05-29-v5.15.5.F.4d.1.E.0.2-meta-error-tracking-subsystem.md` | DRAFTED v0.1 (meta-error-tracking subsystem; D-76; build fresh, before pipeline) |
 | `.E.1` | `subplans/2026-05-28-v5.15.5.F.4d.1.E.1-foundation.md` | DRAFTED v0.1 (substantial; ~3600 lines; RED per dive — amendment-bound) |
 | `.E.2` | `subplans/2026-05-28-v5.15.5.F.4d.1.E.2-headless-configs-docs.md` | DRAFTED v0.1 |
 | `.E.3` | `subplans/2026-05-28-v5.15.5.F.4d.1.E.3-ws-api-persistent-connections.md` | DRAFTED v0.1 (substantial; ~2500 lines) |

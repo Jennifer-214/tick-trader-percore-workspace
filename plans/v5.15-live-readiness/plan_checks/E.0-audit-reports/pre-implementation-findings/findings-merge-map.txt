@@ -1,0 +1,29 @@
+# Eyes-on reconciliation of the colliding-id clusters (dedupe_findings.py --merge-map).
+# Each non-comment line = occurrences CONFIRMED (by reading the titles) to be the SAME finding.
+# Anything NOT listed stays a distinct entry — distinct findings hiding under a shared id are KEPT.
+# Lossless: every source occurrence is still cited under its canonical entry.
+# Format: <short-file>:<line> tokens, space-separated.  Created 2026-05-28 (.E.0 dedup).
+
+# --- fpmem cluster (fpmem-1..6 collided across E.1 + PRE-PAPER-TEST) ---
+E.1:35 E.1:65 PRE-PAPER-TEST:83                              # FPN_Sqrt<64> determinism: USE_NATIVE_128 IEEE-754 round-trip voids deterministic NR sqrt (H10)
+E.1:55 E.1:75 PRE-PAPER-TEST:300 PRE-PAPER-TEST:471          # strict-aliasing / misaligned __uint128_t pun in _to_fp64/_from_fp64 (accounting path UB)
+E.1:45 PRE-PAPER-TEST:73 PRE-PAPER-TEST:93 PRE-PAPER-TEST:103 PRE-PAPER-TEST:309   # FPN native path untested: tests omit USE_NATIVE_128 -> determinism test validates a never-shipped build
+# (kept distinct under fpmem-3..6: layout-static_assert PRE:281 / partial-native-spec PRE:290 /
+#  DivNoAssert-saturation PRE:319 / FromString-overflow PRE:497 / FPN_Negate-untested PRE:328 /
+#  ToDouble-dead-work E.1:269 / Mul-AddSat-saturation PRE:337 / InitArena-align PRE:480 /
+#  FP64_AddSat-dead-overwrite PRE:488 / IsValidFinite-recompute PRE:506 — all genuinely different bugs)
+
+# --- dsgui cluster (dsgui-1..5 collided across E.2 + PRE-PAPER-TEST + BACKLOG) ---
+E.2:15 E.2:74                                                # TradeReader parses sharded v3 trade log as legacy v1 format (writer<->reader mismatch)
+E.2:25 E.2:132                                               # CandleAccumulator takes pthread_mutex on producer fan_out (H3 + producer budget)
+BACKLOG-STANDALONE:150 E.2:103                               # DepthRecorder->DepthReplay round-trip / locale not tested end-to-end
+# (kept distinct: GUI-drain-elided E.2:35 / CandleAccumulator-zero-tests E.2:45 / Notify-cooldown PRE:35 /
+#  depth-top-only-asymmetry PRE:43 / locale-strtod PRE:53 / TickRecorder-zero-tests BACKLOG:34 /
+#  DepthRecorder-OpenFile-retry BACKLOG:142 / TradeReader-zero-tests E.2:94)
+
+# --- persist + live ---
+E.1:94 E.1:104 PRE-PAPER-TEST:182                            # paper-reset omits ExecutionCore reset -> zombie active flag blocks entries (Class 5)
+E.3:80 E.3:96                                                # last_request_ms vestigial; proactive-staleness-reconnect not implemented
+# (kept distinct: persist-9 snapshot-not-invalidated E.2:112 vs ratchet-not-in-wire PRE:462;
+#  live-12 rate-weight-not-throttled E.5:24 vs GetBalances-swaps-base/quote E.6:25;
+#  rf-1 cumdelta/flow train-serve divergence PRE:192 vs regime-ML-enrichment-dead PRE:202)

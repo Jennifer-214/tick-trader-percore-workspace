@@ -390,7 +390,7 @@ Each entry: GENERAL task → where to start. For sprint-specific phasing of cfg-
 | Add a SHALT code / halt reason / regime / strategy / bandit algo | Registry table per X-macro pattern (`DESIGN_PHILOSOPHY.md` § 7 + `DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md`) |
 | Add a stateful GUI panel | `DOCS/CLAUDE_INTEGRATION.md` § "GUI panels" + display↔execution invariant check |
 | Plan a non-trivial change | `/readiness` skill + `DOCS/CLAUDE_REVIEW.md` checklist + new plan body uses `DESIGN_SPECS/plan-templates/future-oriented-plan-template.md` |
-| Audit a plan before coding | `/precoding-audit-gate` (orchestrator) → SHAPE audits in parallel + (`/blindspot-scan` if struct-gen / type unification / cross-registry consumer / wire-format ordering migration) |
+| Audit a plan before coding | `/precoding-audit-gate` (orchestrator) → SHAPE audits in parallel + (`/blindspot-scan` if struct-gen / type unification / cross-registry consumer / wire-format ordering migration). For a plan inside a multi-ship sub-sprint trajectory with a findings backlog → `/plan-dive <plan>` (6-layer dive: composes the gate + `/bug-check` + findings-ingestion vs `CANONICAL-FINDINGS.md` + rolling-window seam) |
 | Amend an in-flight plan body (substantive — architectural decision shift / scope reframing / categorization change / framework-pattern application question) | `/precoding-audit-gate` RE-FIRE against amended scope BEFORE coding starts (per `feedback_tiered_audit_discipline_per_plan_scope` substantive-amendment trigger); synthesis Stage 4 cross-refs DESIGN_SPECS for canonical sister patterns before recommending new infrastructure (per `feedback_audit_canonical_sister_before_new_infra`); flip-flopping across path iterations IS the audit-methodology-gap signal per `feedback_iteration_spiral_signals_audit_meta_gap` |
 | Audit existing code for anti-patterns | `/bug-check` (against RECURRING_BUG_PATTERNS classes) + `/dod-audit` (against DESIGN_SPECS catalog) + `/anti-spaghetti` (codebase-wide structural sweep) |
 | Verify plan body code samples compile (Class 14 fabrication catch) | `python3 tools/check_plan_body_symbol_existence.py <plan>.md` — B-Plus CI tool; runs as pre-commit hook (install via `tools/install-git-hooks.sh`); /readiness Check 32 invokes |
@@ -406,7 +406,7 @@ Skills group by concern. Read each skill's `claude-skills/<name>/SKILL.md` for i
 
 | Concern | Skills |
 |---|---|
-| **Pre-coding plan verification** | `/precoding-audit-gate` + `/readiness` |
+| **Pre-coding plan verification** | `/precoding-audit-gate` + `/readiness` + `/plan-dive` (per-plan multi-layer rolling-window dive; composes the gate + findings-ingestion vs canonical index + seam) |
 | **SHAPE audits (design-layer)** | `/dod-audit` + `/merge-scan` + `/parity-check` + `/trace-deps` |
 | **IMPLEMENTATION-DETAIL audits** | `/blindspot-scan` |
 | **DOMAIN audits** | `/accounting-audit` + `/hft-audit` + `/ml-audit` + `/registry-fit-audit` |

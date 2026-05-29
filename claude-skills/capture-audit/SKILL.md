@@ -173,6 +173,26 @@ LLM-orchestrated invocation (the legacy path before `.D` Phase F.2) had non-dete
 
 **Worked example dogfood (NEW v5.15.5.F.4d.1.B.8 Phase G Step G.7):** fire Check 11 against `.B.8`'s OWN forward-promises (Stage 2 → 3 promotion candidates for `sister-cohort-amendment-completeness-discipline` + `forward-promise-auto-write-verification` disciplines + Check 11 self-verification at next-ship pickup) — verify each `.B.8` forward-promise tracked at expected ledger location OR documented as "deferred to next-ship-time per discipline". Ship codifying the discipline dogfoods the codified discipline.
 
+### Check 12: Amendment-cascade propagation (NEW v5.15.5.F.4d.1.E.0.2)
+
+Enforces **CP-1** (cascade-not-propagated) from the meta-anti-pattern-index — the mechanical member of the meta-error-tracking subsystem. When a decision / spec / definition is amended in ONE place, sibling docs that reference it can be left citing the stale form. This is the M7 mechanical escalation of `feedback_sister_cohort_amendment_completeness` (cascade-misses recurred at `.E.0.1` close → manual propagation; the gate-def change had to be cascaded to handoff/A2/D-74 by hand).
+
+**Detection (resolves Decision C from the `.E.0.2` plan):**
+1. **Diff-detect amended blocks** since the last sync/commit: changed `<!-- D/C/F: <id> -->` decision blocks (decision-logs), changed `## `/`### ` heading blocks (specs/plans), changed frontmatter `name:`/`version:`/`stage:` fields (DESIGN_SPECS).
+2. **Extract key terms** from each amended block: the decision ID, the spec `name:`, distinctive noun-phrases / renamed symbols / changed definitions.
+3. **Grep the corpus** (`plans/**`, `handoffs/**`, `decision-logs/**`, `memory/**`, `DESIGN_SPECS/**`) for those terms.
+4. **Flag refs in UN-amended files** — a reference to the amended term living in a file NOT touched by the same amendment → candidate stale-cascade.
+
+**False-positive surface (CP-1; load-bearing):** a term legitimately referenced in many places that does NOT need updating — a HISTORICAL-RECORD citation (postmortem / shipped-changelog / handoff describing the old state truthfully) must NOT be flagged. Distinguish "stale forward-looking reference" (update) from "truthful historical record" (preserve). Sister: `feedback_archived_changelog_preservation_discipline` + `feedback_terminology_evolution_bridge_not_history_rewrite`. Heuristic: refs in `postmortems/` / `changelogs/` / shipped-tag-dated docs default PRESERVE; refs in active plan bodies / current handoff / `CLAUDE*`/`MEMORY` default UPDATE-CANDIDATE.
+
+**Mechanization (per `.E.0.2` R2 — start semi-mechanical, mechanize incrementally):**
+- Semi-mechanical NOW: the check walks the git-diff → extract → grep → classify procedure above + flags candidates for operator review.
+- Full tool (CANDIDATE — **not yet built**): `tools/check_amendment_cascade.py` (diff-detect + term-extract + corpus-grep + historical-record filter); wire into `--deep` + pre-commit once built. **Do NOT cite a `python3 tools/check_amendment_cascade.py` invocation as runnable until the file exists** (per heavier-default verify-mechanically; no fabricated tool refs).
+
+**Reads:** the CP rows of `DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md`.
+
+**Invocation:** included in `--deep`; `--check 12` to run alone; `--since <ref>` to scope the diff window.
+
 ## Invocation
 
 - `/capture-audit` — run all checks against current state; report findings; exit 0=clean / 1=findings (default WARN mode)

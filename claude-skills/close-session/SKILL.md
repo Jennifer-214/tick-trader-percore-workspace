@@ -79,6 +79,25 @@ Exit code 0 → CLEAN; proceed to Stage 5. Exit code != 0 → loop back to Stage
 
 Exit condition: `/capture-audit --deep` returns CLEAN OR operator explicitly accepts remaining findings (e.g., known-deferred-to-Phase-D items).
 
+### Stage 4.5 — Meta-error harvest (structured reflection → meta-anti-pattern-index) [NEW v5.15.5.F.4d.1.E.0.2]
+
+The POPULATION mechanism for the meta-anti-pattern catalog (`DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md`). Unlike Stage 2/4 (mechanical drift greps), this stage is JUDGMENT-LADEN — a structured reflection, not a scan (meta-error detection can't be pure-grepped). Rationale: `feedback_operator_pushback_as_audit_signal` § generative dimension — the session's own pushbacks/errors are the highest-signal seed corpus (the `.E.0.1` seed cohort was 3/5 from one hour of pushback).
+
+**Reflection prompts (walk each; name the SHAPE, not the one-off fix):**
+1. **Audit-reasoning (AR):** Did I dismiss a risk / bound scope via a property over a set I didn't enumerate (AR-1)? Did a spec/gate-definition bake in a categorical claim ("all", "every", "always") without listing the set (AR-2)?
+2. **Cascade (CP):** Did a decision/spec/definition amendment this session need manual propagation to sibling docs (CP-1)? (If yes → it's also a Check 12 gap; note it.)
+3. **Workspace-hygiene (WH):** Did a memory link / index pointer / cross-ref drift (WH-1/WH-2)?
+4. **Planning (PL):** Did operator pushback surface a recurring planning shape (scope-flip, premature-defer, abstract-over-concrete) — not just a one-off correction?
+
+**For each RECURRING shape surfaced:**
+- Matches an existing catalog row → bump it + append a Source line (the new instance).
+- NEW + recurring → add a row per the index schema (ID category-prefix + Shape + home + Detection + Enforced-by + Source + false-positive surface).
+- One-off (not recurring, no pattern) → do NOT catalog (anti-ceremony per `.E.0.2` R3).
+
+**Write target:** `DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md` (the harvest is its WRITE path; Check 12 + the hardened gate are its READ paths). New/bumped rows land BEFORE Stage 6 `/handoff` (so the handoff reflects them) + Stage 7 `/sync-workspace` (so they're pushed).
+
+**Anti-ceremony guard:** if a close produces only trivial one-offs, write nothing — yield-as-signal (a quiet harvest = mature apparatus; a spike = a new meta-error class slipped in → M7 escalation).
+
 ### Stage 5 — `/readiness` against in-flight plan body (planning-state ships only)
 
 If close is at a planning-state boundary (vs post-coding mid-ship checkpoint), fire `/readiness <plan-path>` to verify plan body still GREEN. Skip for code-state close (where plan body amendment is done; just need to capture state).

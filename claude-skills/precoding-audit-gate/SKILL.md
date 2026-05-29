@@ -25,6 +25,18 @@ modify code. It does NOT auto-proceed past audit findings — operator
 review of synthesis is the load-bearing decision point per
 `feedback_consult_on_audit_findings` memory rule.
 
+## Audit posture: HEAVIER by default (D-77 / `.E.0.2` Piece 4)
+
+This gate defaults to the HEAVIER pass. The LIGHT pass is an EARNED exception, not the lazy default (refines `feedback_tiered_audit_discipline_per_plan_scope`). Empirical mandate: the majority of the existing codebase was light-pass-audited + the `.E.0` read-only audit surfaced 141 findings → light passes leak correctness errors at a material rate, and this engine runs real money (`feedback_heavier_default_audit_posture_for_capital`).
+
+**Decision rule — audit weight ∝ inverse deterministic coverage.** Decide heavy-vs-light by the touched surface's *deterministic* guard coverage (read it off the guard-coverage-matrix, `plans/<sprint>/E-guard-coverage-matrix.md`):
+- Surface is a guard-matrix **HOLE** (convention-only) → **HEAVY**: the LLM pass is the only guard there → full `audit_set` + Stage 3.5 quorum + verification pass.
+- Surface already has a Tier-1/2 **deterministic guard** (CI gate / `static_assert` / golden-master / determinism+replay) → **LIGHT** is earned: that guard is the real floor; the LLM pass is a sanity layer.
+
+**The gate consumes the meta corpus as checks.** It reads `DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md` (the META anti-pattern catalog) + the memory corpus (Classes 1-36 + M1-M7 + B14-B19 + `feedback_*`): mechanical rows (CP/WH) run in the deterministic pre-gate (Stage 2.5); reflection rows (AR-*) seed the verification pass (Stage 3.5). As the `/close-session` harvest grows the catalog, this gate auto-gains coverage — the memory→catalog→gate→harvest loop.
+
+**Calibration provenance (D-78):** this hardening is tuned against REAL ships — backward (mined `.D.1`/`.B.8` postmortems for missed-then-caught) + forward (`.E.0.1` as the live bench) — NOT designed against imagined gaps.
+
 ## When to fire
 
 Per CLAUDE.local.md going-forward rule "Suggest mid-sprint audits when
@@ -200,6 +212,19 @@ the subagent will need. Reads at invocation time (NOT cached):
 | Plan file | Full body |
 | Engine `Version.hpp` + `git log -5` | Current ship state for staleness detection |
 
+### Stage 2.5 — Deterministic pre-gate (mechanize-down; runs BEFORE any LLM agent) [NEW `.E.0.2`]
+
+Per the D-70 enforcement ladder + heavier-default posture: anything mechanizable is checked DETERMINISTICALLY first, so a finding never rests on a stochastic agent noticing it. Run as ground truth before Stage 3 spawns:
+
+1. **Python checkers** (exit-code authoritative):
+   - `python3 /home/caramel/code/FoxML_Trader_v2/tools/check_plan_body_symbol_existence.py <plan_path>` (Class 14 fabrication)
+   - `python3 /home/caramel/code/FoxML_Trader_v2/tools/check_plan_body_tests_section.py <plan_path>` (Check 45 — if the coding sequence touches `tests/`)
+   - `python3 /home/caramel/code/FoxML_Trader_v2/tools/check_forward_promise_audit.py --since <predecessor-tag>` (Check 11 forward-promise)
+2. **Mechanical catalog rows** — apply the CP/WH rows of `meta-anti-pattern-index.md` that have mechanical detection (CP-1 cascade via `/capture-audit` Check 12; WH-1 link-resolution; WH-2 index-pointer). (Full CP-1 mechanization tracked as `tools/check_amendment_cascade.py` — until built, run the Check-12 semi-mechanical procedure.)
+3. **Coverage read** — pull the touched surface's rows from the guard-coverage-matrix → decide per-lens HEAVY/LIGHT (the posture rule above) → set the effective `audit_set`.
+
+Stage-0 findings are ground truth handed to Stage 4 synthesis; the LLM agents (Stage 3) do NOT re-derive them — they focus on judgment-layer concerns. A Stage-0 HARD failure (fabricated symbol / missing tests-section) → surface immediately; don't spend LLM agents on a plan that fails the mechanical floor.
+
 ### Stage 3 — Spawn N subagents in parallel
 
 For each audit in resolved `audit_set`, spawn a general-purpose subagent
@@ -242,6 +267,16 @@ RETURN SYNTHESIS (under <word_cap> words):
 
 All subagents fire **in parallel** via single tool-use message with
 multiple `Agent` calls. NOT sequential.
+
+### Stage 3.5 — Quorum + verification/completeness-critic pass (HIGH-RISK) [NEW `.E.0.2`]
+
+The consistency layer — the answer to "same gate, different findings on reruns." For HIGH-RISK ships:
+
+1. **Quorum on the highest-risk dimension** (Decision D; default lean **k=2-of-3**): run the single most consequential lens (typically correctness/parity, or whichever covers the guard-matrix HOLE) as N=3 INDEPENDENT agents; a finding counts CONFIRMED only if ≥2 agree. Kills run-to-run variance on the part that matters most. (Tune k/N + dimension per ship; default 2-of-3 on correctness/parity.)
+2. **Verification pass** — one agent adversarially re-checks each CRITICAL/HIGH from Stage 3: real, or plausible-but-wrong? Default-skeptical. Seeded with the catalog's AR-* reflection prompts (AR-1 "is a risk dismissed over an un-enumerated set?"; AR-2 "does a claim quantify over an unlisted set?").
+3. **Completeness critic** — one agent asks "what surface did NO audit cover?" against the guard-matrix touched-surface rows → surfaces false-negatives a find-only gate can't.
+
+Confirmed findings (survived quorum + verification) + completeness gaps flow to Stage 4. This stage fires ONLY for HIGH-RISK (per the coverage-gated rule); LIGHT/MED ships skip it. Cost is bounded (`.E.0.2` R6): quorum on ONE dimension, not every lens; skipped for non-HIGH-RISK.
 
 ### Stage 4 — Synthesize convergent findings + DESIGN_SPECS cross-ref (M7 sister; codified v5.15.5.F.4d.1.B.4 v1.7.6)
 

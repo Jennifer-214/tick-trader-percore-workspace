@@ -122,6 +122,8 @@ Each rule = one-line trigger + canonical-doc pointer. Body (Why / How / worked e
 - **Proactive rename candidate surfacing** (2026-05-28) — `feedback_proactive_rename_candidate_surfacing.md`; running list. Throughout multi-ship restructures → FLAG renames as encountered; classify 4-tier; scan list at each planning gate.
 - **Terminology-evolution bridge, not history rewrite** (2026-05-28) — `feedback_terminology_evolution_bridge_not_history_rewrite.md`; DESIGN_PHILOSOPHY § 15 Glossary; Class 36. Architecture-wide rename → SWEEP forward-looking docs; PRESERVE historical-record; BRIDGE via glossary; code symbols defer to code-rename ship.
 - **Prose-token rename tools unsafe for code/transition-PLANNING docs (B19)** (2026-05-28) — B19 pillar; TECH_DEBT-142; Class 36. Code rename OR docs that *describe* a rename → AST/symbol-aware tooling, not prose-token (over-renames citations / current-state / transition-context).
+- **Golden-master over reimplemented oracle** (2026-05-29) — `feedback_golden_master_over_reimplemented_oracle.md`. Validating a path → freeze its REAL output + diff (golden-master/characterization); NEVER reimplement/stub an oracle (Class-18 mirror that drifts + lies). Lowest drift/failure risk; standing CI gate. Sister: single-source-of-truth + Class 18.
+- **Phased pre-rework correctness foundation + net-gating scoping** (2026-05-29) — `feedback_phased_pre_rework_correctness_foundation.md`; D-73. High-risk multi-ship restructure → phase the foundation (bedrock→lock-current→root-GREEN→sweep→gate); the no-reintroduction guarantee is the NET (CI/tests on current codebase) not audits; minimal pre-rework scope = net-gating findings only (what the net is meaningless without).
 
 ### Thread isolation between subsystems
 

@@ -64,10 +64,18 @@ v5.15.5.F.4d.1.B.4 v1.7.6 cycle 2026-05-27:
 
 If I had reactively flipped at step 5 (treated her question as "go opposite") without actual code analysis, would have ended up at a different wrong path.
 
+## Generative dimension — beyond corrective (added `.E.0.1` close 2026-05-29)
+
+Pushback that PERSISTS past "looks done" — a *sequence* of "are you sure / anything else / should we do 2-3 passes / does this cascade / is this a new class" — is not only **corrective** (catches the one instance); it is **generative**: it surfaces recurring META-shapes (reasoning / planning / workspace anti-patterns) worth *cataloging*, not just the single error. **The session's own pushback-surfaced errors are the highest-signal seed corpus for the meta-anti-pattern catalog (D-75).**
+
+Proof: at the `.E.0.1` close, **3 of the 5 D-75 seed entries** — `enumerate-set-before-categorical-claim`, `over-generalized-spec-definition`, `cascade-not-propagated` — came from ONE hour of past-"done" pushback (the R1 `FromDouble` catch → the cascade question → the meta-catalog question). The R1 pushback alone caught a real reasoning error (a risk dismissed via an unenumerated categorical claim) that every prior pass had missed.
+
+**Apply:** treat a multi-pass pushback sequence as a meta-error *mining* session — at close, ask "what recurring shapes did this session's pushbacks reveal?" and harvest them into the meta-catalog ([[feedback_enumerate_set_before_categorical_claim]] was the first such harvest). The foundation/taproot discipline ([[feedback_phased_pre_rework_correctness_foundation]]) applies to the PROCESS layer, not just code — process-soundness compounds the same way code-soundness does, which is *why* disproportionate patience with late-stage pushback pays off.
+
 ## Stage progression
 
 - Stage 1 RECOGNITION: 2026-05-27 codification
-- Stage 2 RECURRENCE: pending 2nd canonical instance for promotion threshold per pattern-codification-lifecycle.md
+- Stage 2 RECURRENCE: **MET** — 2nd+ canonical at `.E.0.1` close 2026-05-29 (R1 pushback caught the `FromDouble`/gate-def error; the multi-pass "are you sure / anything else / 2-3 passes" sequence surfaced 3 meta-catalog seeds + the generative dimension above). Promotion candidate per `pattern-codification-lifecycle.md`.
 
 ## When this rule applies
 

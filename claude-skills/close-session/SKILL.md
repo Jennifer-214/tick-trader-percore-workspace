@@ -108,9 +108,10 @@ Detection heuristic: if plan body version has bumped since last close OR substan
 
 Verify the SESSION'S substantive deliverables ACTUALLY landed complete + coherent on disk — by INDEPENDENT eyes, not self-attestation. Distinct from Stage 2/4 (mechanical capture-audit drift) + Stage 4.5 (meta-error harvest): this is a CONTENT-completeness + cross-artifact-COHERENCE pass. It is the close-session analog of `/precoding-audit-gate` Stage 3.5 (the verification pass) — same anti-self-attestation principle: **the agent that BUILT the work is prone to confirming "I did X" from memory rather than verifying X landed; an agent with no stake reports only what's on disk.** Sister: `feedback_golden_master_over_reimplemented_oracle` (verify the real artifact) + the AR-1 verify-don't-assume discipline (meta-anti-pattern-index).
 
-**When to fire (heavier-default per D-77; light is earned):**
-- FIRE for substantial multi-artifact sessions — a subsystem/ship build, ≥~4 substantive new-or-amended artifacts, or any HIGH-RISK build.
-- SKIP trivial closes (single-file edit / doc-only-tiny / pure checkpoint sync) via `--no-review`; overhead exceeds value there.
+**When to fire (heavier-default per D-77; NEVER agent-self-skipped — `feedback_never_skip_thoroughness_unless_explicit` / catalog PL-2):**
+- FIRE BY DEFAULT for any substantial multi-artifact session — a subsystem/ship build, ≥~4 substantive artifacts, or any HIGH-RISK build. The orchestrating agent does NOT self-skip it on a judgment that it's "redundant" or "already covered."
+- It fires on UN-reviewed work: a prior independent review of OTHER work this session does NOT excuse skipping the review of NEW work — close-out artifacts that land AFTER a build review still need their own pass (`.E.0.2` close caught this exact hole: skipped "because 2 reviews ran," but the harvest/memories/handoff were unreviewed).
+- SKIP ONLY on EXPLICIT operator instruction — the `--no-review` flag, or the operator stating "skip it." Trivial closes (single-file / doc-tiny / pure checkpoint) are the OPERATOR's call to skip, not the agent's.
 
 **Dimensions the reviewer checks** (each = a distinct failure mode a completeness-only pass misses):
 1. **Landed + substantive** — each claimed deliverable is present + real content, not a stub.

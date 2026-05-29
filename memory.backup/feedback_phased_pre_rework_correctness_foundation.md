@@ -1,5 +1,5 @@
 ---
-name: phased-pre-rework-correctness-foundation
+name: feedback_phased_pre_rework_correctness_foundation
 description: "Before a high-risk multi-ship restructure, lay the correctness foundation in phases; the minimal pre-rework engine-fix scope = what the verification NET is meaningless without (not the whole findings bucket)"
 metadata: 
   node_type: memory
@@ -17,4 +17,4 @@ Before a high-risk multi-ship restructure (e.g. a ~5,000-site rename + concurren
 
 **Why it matters (operator's taproot framing):** the pre-rework foundation is the load-bearing **taproot** — every later ship scaffolds off it, so its soundness (and its cracks) *compound*. "As sound as possible" has a SHAPE: (1) bulletproof the LOAD-BEARING dimensions (the net-gating invariants everything depends on); (2) DON'T gold-plate the rest (over-rooting adds mass, not strength — diminishing returns; the non-load-bearing cleanups grow with the tree, not the root); (3) the deepest soundness is *staying sound under growth* — the CI gates / net, not one-time correctness, so new load (a rename three ships later) can't silently crack the root. Disproportionate care at the foundation is correct, not over-investment.
 
-Surfaced `.E.0` 2026-05-29 (D-73/D-74). Sister: [[golden-master-over-reimplemented-oracle]] (the net's verification model); promotes to `meta-disciplines/audit-driven-sub-sprint-trajectory-verification.md` v1.1 + the D-70 enforcement-ladder/verifiability-triad spec.
+Surfaced `.E.0` 2026-05-29 (D-73/D-74). Sister: [[feedback_golden_master_over_reimplemented_oracle]] (the net's verification model); promotes to `meta-disciplines/audit-driven-sub-sprint-trajectory-verification.md` v1.1 + the D-70 enforcement-ladder/verifiability-triad spec.

@@ -26,6 +26,8 @@ When a new instance is found, add it under "Known instances" with
 the fix commit. When a new class emerges (>2 fixes of the same
 shape), add a new Class entry (file).
 
+**META sibling (2026-05-29):** this doc catalogs CODE anti-patterns. NON-code recurring errors — audit-reasoning, planning, workspace-hygiene, cascade-propagation — have their parallel catalog at `DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md` (aggregates M1-M7 + B14-B19 + workspace shapes). Code-half ↔ meta-half: `/bug-check` scans THIS; the `/close-session` harvest populates THAT.
+
 Read this doc before any architectural sprint, especially anything
 that mentions "split", "shard", "decouple", "extract", "centralize",
 or "per-core" / "per-node". Run each Class's detection script as a pre-coding

@@ -39,7 +39,7 @@ python3 /home/caramel/code/FoxML_Trader_v2/tools/check_forward_promise_audit.py 
 
 The above replaces the prior LLM-orchestrated `/capture-audit --deep` invocation; LLM still synthesizes findings narrative + drives Stage 3 triage with operator, but the detection layer is now mechanical (per `feedback_structural_enforcement_when_memory_insufficient` M7 escalation).
 
-The deep gate's 11-check drift verification surfaces:
+The deep gate's 12-check drift verification surfaces (Checks 1-10 enumerated below; Check 11 = forward-promise auto-write + Check 12 = amendment-cascade are detailed in the `/capture-audit` spec):
 
 - (1) `MEMORY.md` index sync — every memory file has an index entry
 - (2) Plan body frontmatter completeness (`audit_tier:` + `decision_log:` + `sister_specs:`)
@@ -261,6 +261,8 @@ Sister codification: `/accept-handoff` (codified same cycle for the RECEIVER sid
 ## Cross-references
 
 - `DOCS/DESIGN_PHILOSOPHY.md` § 11.5 (meta-discipline registry; M7 parent)
+- `DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md` (the META catalog Stage 4.5 harvest WRITES to)
+- `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/feedback_operator_pushback_as_audit_signal.md` (Stage 4.5 harvest rationale — § generative dimension) + `feedback_golden_master_over_reimplemented_oracle.md` (Stage 5.5 verify-the-real-artifact sister)
 - `DESIGN_SPECS/meta-disciplines/structural-enforcement-when-memory-insufficient.md` (M7 first canonical)
 - `claude-skills/accept-handoff/SKILL.md` (sister; receiver side)
 - `claude-skills/handoff/SKILL.md` (composed at Stage 6)

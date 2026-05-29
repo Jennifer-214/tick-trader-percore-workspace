@@ -52,6 +52,7 @@ When in doubt: err toward re-audit. Per `feedback_motivated_collaborator_for_car
 - [[audit-canonical-sister-before-new-infra]] — applies to AUDIT skill selection (extend /precoding-audit-gate to support tier-based dispatch vs invent new skill)
 - [[lead-with-architectural-merit-not-operator-tone]] — tier classification based on architectural merit (hot path? cross-cutting? framework-level?) not operator's stress level
 - [[enumerate-helper-signature-args-before-extract]] — sister M6 META-discipline (THIS rule codified concurrently at v1.7.3)
+- [[feedback_heavier_default_audit_posture_for_capital]] — **REFINES this rule** (2026-05-29; D-77): for money-bearing code the DEFAULT tier is raised; LIGHT is EARNED only where a Tier-1/2 deterministic guard already covers the surface (audit weight ∝ inverse deterministic coverage). Reverse-link to its refinement.
 
 **Structural enforcement at `.B.4` ship close (Phase D Step D.10.5 expanded scope):**
 

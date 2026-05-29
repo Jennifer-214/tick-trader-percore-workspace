@@ -198,7 +198,7 @@ Enforces **CP-1** (cascade-not-propagated) from the meta-anti-pattern-index — 
 - `/capture-audit` — run all checks against current state; report findings; exit 0=clean / 1=findings (default WARN mode)
 - `/capture-audit --strict` — BLOCK on findings (exit 1 even on WARN-level)
 - `/capture-audit --quick` — run Checks 1-3 only (~5 sec; default for pre-commit hook)
-- `/capture-audit --deep` — run all 10 checks (~30 sec; default for pre-handoff)
+- `/capture-audit --deep` — run all 12 checks (~30 sec; default for pre-handoff)
 - `/capture-audit --check N` — run only Check N (target specific concern)
 - `/capture-audit --since <git-ref>` — only check artifacts modified since reference
 
@@ -222,6 +222,8 @@ Output: structured drift report to stdout + optionally writes summary to `plans/
 ## Sister disciplines + cross-references
 
 - `memory/feedback_structural_enforcement_when_memory_insufficient.md` — parent M7 meta-discipline
+- `DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md` — the META catalog whose CP rows Check 12 READS (CP-1 cascade-not-propagated)
+- `memory/feedback_sister_cohort_amendment_completeness.md` — Check 12 is its M7 mechanical escalation
 - `memory/feedback_session_decision_log_discipline.md` — Layer 2 discipline (session decision log)
 - `DESIGN_SPECS/meta-disciplines/structural-enforcement-when-memory-insufficient.md` — M7 pattern body
 - `DESIGN_SPECS/meta-disciplines/pattern-codification-lifecycle.md` — 6-stage progression (Check 7 uses)

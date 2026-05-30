@@ -2453,6 +2453,19 @@ Status: **OPEN** with explicit trigger.
   - Drift detection runs at commit time
   - System maintains itself; new doc creation uses canonical templates by default
 
+#### Phase 2-3 MEMORY slice — OMITTED from the original cohort (surfaced 2026-05-29, `.E.0.x`)
+
+Status: **OPEN** — the gap this entry's own vision ("a system... based on types and tags, searchable by grep") was meant to close, but the cohort lists above **omit `memory/`**. Phase-2 `/doc-create` scope has no `memory` type/template; Phase-3 cohort-migration lists DESIGN_SPECS + SKILL.md + TECH_DEBT + PARITY + RECURRING_BUG_PATTERNS but **not the ~58 `memory/*.md` files**. Grounded 2026-05-29: **0/58 memories carry `tags:`/`sister_specs:` frontmatter** — all use the parallel inline-`[[links]]` + hand-maintained `MEMORY.md` index, *outside* the structured system. Memories are the lone doc-type outlier on every structural surface (template / frontmatter / `TAG_INDEX` / `check_doc_metadata` coverage).
+
+- **The memory slice (add to Phases 2-3):**
+  - **Template (Phase-2-class):** a memory template + `/doc-create memory` type (per the existing `doc-frontmatter-convention.md` `### memory/*.md` spec). The CREATION side — without it, new memories drift ad-hoc even post-migration.
+  - **Migration (Phase-3-class):** the ~58 `memory/*.md` → `tags:` + `sister_specs:` frontmatter (Stage-4 cohort, alongside the others).
+  - **Index/query:** memories into `TAG_INDEX` + `/find`.
+  - **Check (already-ready):** once memories carry `sister_specs:`, the EXISTING `check_doc_metadata --bidirectional` + broken-ref + tag-vocab checks cover them **for free** — no bespoke memory-link parser (canonical-sister: use the system you already built).
+- **M7 priority evidence:** the recurring **CP-1** (sister-link forward-vs-reverse asymmetry — recurred `.E.0.x` *despite* the catalog note) + **WH-1** (kebab-vs-filename `[[link]]` drift) meta-bugs are the COST of the memory-omission; they're caught only by judgment (operator prompt + `/capture-audit` Check 12 + the harvest) until the structured check covers memories. Planned-but-undone + recurring = M7 escalation → finish this slice. See `meta-anti-pattern-index.md` CP-1.
+- **Status-reconciliation note (WH-2):** Phase 2-3 *tooling* substantially landed since 2026-05-18 (`check_doc_metadata.py`, `/doc-create`, `/find`, `/index-rebuild`, `/metadata-audit`, folder subdivision, DESIGN_SPECS frontmatter all exist) — so the index-row "PHASE 2-4 OPEN" + per-phase statuses are STALE and due a reconciliation pass; **the memory slice is the principal unfinished part.**
+- **Cross-ref:** `meta-anti-pattern-index.md` CP-1/WH-1; `.E.0.x` capture (decision-log D-81..87); active task #14 (doc-hygiene cadence — the near-term actionable pointing here).
+
 #### Auto-write contracts triggered by this entry
 
 - DESIGN_SPECS frontmatter migration → updates each spec's frontmatter + bumps version

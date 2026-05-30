@@ -5,7 +5,7 @@ metadata:
   type: feedback
   originSessionId: 43a2b763-783f-4a6e-9b54-c3654977b44c
   tags: [operator-collaboration, audit-methodology]
-  sister_specs: [feedback_audit_canonical_sister_before_new_infra.md, feedback_audit_own_proposals_with_same_rigor.md, feedback_heavier_default_audit_posture_for_capital.md, feedback_implementation_detail_blindspot_recovery_via_taxonomy.md, feedback_plans_cite_sister_registry_inspection.md, feedback_sequential_audit_for_granular_operator_triage.md, feedback_test_change_enumeration_per_plan_body.md, project_anti_spaghetti_audit_cadence.md, user_public_work_attracts_hedge_funds.md]
+  sister_specs: [feedback_audit_canonical_sister_before_new_infra.md, feedback_audit_own_proposals_with_same_rigor.md, feedback_heavier_default_audit_posture_for_capital.md, feedback_implementation_detail_blindspot_recovery_via_taxonomy.md, feedback_plans_cite_sister_registry_inspection.md, feedback_sequential_audit_for_granular_operator_triage.md, feedback_test_change_enumeration_per_plan_body.md, project_anti_spaghetti_audit_cadence.md, user_public_work_attracts_hedge_funds.md, feedback_address_med_low_findings_not_just_high_crit.md]
 ---
 After running pre-coding checks (/trace-deps + /readiness + /parity-check
 + /merge-scan + /latency-track + any audit subagent), ALWAYS:

@@ -1,0 +1,67 @@
+# /dod-audit report — new-function designs (`.E.0.1`/`.E.0.3`) — 2026-05-30
+
+**Scope:** design-mode (Layer 2). Target: `subplans/2026-05-30-...E.0.1-new-function-designs.md` (D1-D4 DESIGNS, pre-implementation). Money-bearing → HEAVIER-default posture. Path calibration honored: boot/stamp-time/parse paths → H11+DOD apply, H7-strict-branchless does NOT.
+
+**Catalog ingested:** DESIGN_SPECS/* (wire-format-patterns/, framework-patterns/, data-disciplines/). Most-relevant sisters read in full: `struct-padding-determinism-pattern.md`, `wire-format-canonical-body-invariants-helper.md`, `wire-format-byte-preservation-discipline.md`, `registry-coverage-ci-check-pattern.md`.
+
+**Code verified against design claims:**
+- `Backtest/Fingerprint.hpp:174-200` — `Fingerprint_Compute<F>(hex_out, const void* cfg_ptr, int cfg_size, ...)`. **Line 180 `SHA256_Update(&s, cfg_ptr, cfg_size)` hashes RAW struct bytes** incl. padding. The line-179 comment "raw bytes — deterministic for same field values" is itself the phantom (F-076 confirmed verbatim).
+- Sole caller `Backtest/BacktestPanels.hpp:3157` passes `&results->config_used` / `sizeof(results->config_used)`. `config_used` IS `ControllerConfig<BACKTEST_FP>` (`BacktestEngine.hpp:269`).
+- `ControllerConfig.hpp:367-370` fee_rate bundle invariant — confirmed verbatim ("Backtest fingerprint hashes this field (NOT the new maker/taker fields)").
+- `char[]` cfg fields are FIXED-WIDTH (`ml_model_path[256]`, `held_out_stamp_secret[128]`, …) → trailing-garbage-after-NUL is real → length-prefix is correct.
+- `CfgFieldRegistry.hpp`: `FOREACH_GLOBAL_CFG_FIELD` = 55 X() rows; `FOREACH_PER_CORE_CFG_FIELD` = 88 (describes `cores[c]`, not flat). Flat scalar decls ≈148. **Design's "~55/200+ flat + 0 cores[]" reachability claim VERIFIED** — no single registry enumerates the hashable set.
+- `ParseFast.hpp` — `parse_double_fast` / `_n` / `parse_uint64_fast` / `parse_double_fast_advance` all exist; silent-0 semantic documented (lines 41-44); design's D2 baseline accurate.
+
+---
+
+## Per-design verdict
+
+### D1 — `Fingerprint_CanonicalizeConfig` — **REFINE** (shape SOUND; coverage-enforcement INSUFFICIENT)
+
+**DOD shape: SOUND.** Field-wise packed byte-stream into a caller buffer, one writer, fixed order = the correct canonical-serialization DOD shape. Length-prefixed strings (kills trailing-garbage class), raw FPN limbs not `ToDouble` (exact + deterministic — `ToDouble` would re-introduce the very F-056/R1 lossiness this sprint is removing; **strongly correct, keep**), explicit `cores[]` walk. `size_t`-returns-`off` → caller `SHA256(buf, off)` is clean. Bundle invariant (hash stored `fee_rate`, not derived maker/taker) preserved — **load-bearing, correct, MUST keep** (changing it breaks every legacy backtest fingerprint).
+
+**Canonical sister — EXTEND, do not author-new.** `struct-padding-determinism-pattern.md` (stage 5) is the SAME bug class (uninit padding → non-deterministic SHA) but its Option A (`_padding=0` field) is the *struct-resident* fix; the cfg here is too big/heterogeneous (148 fields, 256-byte path arrays you do NOT want fully hashed) for the padding-field approach → the **canonicalize-to-a-packed-stream** variant is the right sibling extension. **Action: add D1 as a Reference Implementation under `struct-padding-determinism-pattern.md` "Patterns NOT used here" → promote a new sibling section "Canonicalize-to-stream variant (when struct too large / has dead string tails)"**, cross-linked to `wire-format-byte-preservation-discipline.md` Layer 2 (locale) + Layer 5b (structural invariants). Net-new DESIGN_SPEC is NOT warranted (>50% overlap with the padding-determinism class; per `feedback_audit_canonical_sister_before_new_infra`).
+
+**The `static_assert(sizeof==EXPECTED)` sufficiency question — NO, insufficient. This is the report's headline finding.**
+- `sizeof` catches *size* changes (field added/removed/widened) but is **BLIND to a same-size field swap or reorder** (e.g., two `FPN<F>` fields transposed; an `int32_t a` renamed/repurposed to `int32_t b`; a field moved between the hashed-set and the skipped-set). The hand-written field list in the canonicalizer is a **new Class-18 mirror** of the struct definition — exactly the anti-pattern this sprint is closing elsewhere. A `sizeof` guard does not enforce the mirror.
+- **Concrete refinement (layered, cheapest-first):**
+  1. **Field-COUNT sentinel** in addition to sizeof — but a raw count is also swap-blind, so prefer:
+  2. **Offset sentinels for the load-bearing fields**: `static_assert(offsetof(ControllerConfig<64>, fee_rate)==EXPECTED_OFF_FEE && offsetof(...,symbol)==... && ...)` for the handful of bundle-invariant / string / FPN anchors. Catches reorder of the fields you actually care about; cheap; self-documenting.
+  3. **The real structural fix (cite `registry-coverage-ci-check-pattern.md`, stage 3, "closes Class 18"):** a CI check that the canonicalizer's field set == the struct's field set, with an **explicit exemption list** for deliberately-unhashed fields (runtime-only knobs, display caches). This is the *established* mechanism for "hand-list must not silently drift from struct" (sister to Check 2/7/8). Since the registry can't drive the hash (verified: only 55/148 flat fields enrolled), the coverage-CI is the correct compensating control — it makes the mirror **enforced** rather than vigilance-dependent. **Recommend: ship D1 with offset sentinels now (item 2) + open a TECH_DEBT/`.E.0.3` row for the coverage-CI (item 3)** per the heavier-default posture (D-77 — a money-bearing hand-list gets a guard, not a comment; this is itself the very "load-bearing invariant → guard not comment" meta-lesson item-8 of the parent plan codifies).
+- **Secondary DOD note:** `cap` is passed but the bounds `assert` is commented out (`/* assert(off+n<=cap) */`). For a stamp/lineage path a silent buffer overrun corrupts the hash AND smashes the stack. **Make it a real bounds check returning 0/`SIZE_MAX` on overflow** (boot/stamp-time → the branch cost is irrelevant; H7 does not apply). Size `buf` from a `static_assert`'d worst-case (Σ field sizes + per-string 4-byte prefix + Σ `MAX_CFG_STR`), mirroring `wire-format-byte-preservation-discipline.md` "Buffer size + truncation" gotcha.
+
+**Caller-rewire flag (not a design defect, but enumerate before coding):** the typed `const ControllerConfig<F>*` signature is reachable (config_used is that type) but `BacktestPanels.hpp:3157` currently calls through the **type-erased `void*`/`cfg_size`** path. The canonicalize swap must retype that call site (and any other `Fingerprint_Compute` caller — grep showed only the one). Per `feedback_enumerate_consumers_before_registry_row_deletion`, confirm `Fingerprint_Compute`'s generic `void*` contract isn't relied on elsewhere before narrowing.
+
+### D2 — `tt::parse_double_checked` / `parse_int_checked` — **SOUND** (one keep-both refinement)
+
+- **By-value `ParseD{double,bool}` / `ParseI<T>{T,bool}` return: DOD-CORRECT.** Trivially-copyable POD ≤16B → returns in register pair (SysV: RAX:RDX / XMM0+RAX), zero aliasing, no out-param store/reload. Strictly better than `bool + T* out` (which forces a memory round-trip + introduces a restrict-ambiguous pointer). Keep. (Mirrors the `from_chars` `{ptr,ec}` shape — idiomatic.)
+- **Templating on T (int32/64, uint32/64): RIGHT shape.** `from_chars` is already overloaded per integer type with built-in range+sign checking; one template body deduces correctly and the `(r.ptr==s+n)` full-consume check is uniform. No per-type duplication. Sound.
+- **`n` (explicit length) over NUL-terminated: CORRECT** for the parse-a-slice use (matches existing `parse_double_fast_n`/`_advance`); avoids a `strlen` rescan. Keep `n`.
+- **Keep-both vs deprecate `parse_double_fast`: KEEP BOTH (do not deprecate).** Distinct contracts: `_fast` = already-validated cursor, silent-0 acceptable, hot/producer parse paths (Binance WS decoder per the header); `_checked` = unvalidated input where silent-0 = money corruption. Deprecating `_fast` would force an error-branch onto validated hot-path call sites for no gain (and `_fast` lives nearer the 500ns budget). This matches the parent plan's own D-82 split: `_fast`=determinism-foundation primitive; `_checked`=correctness-foundation primitive. **Refinement: make `_checked` the documented default for ALL new/unvalidated parse sites; `_fast` retained for the enumerated validated-cursor set.** (Consider implementing `_fast` as `_checked(...).value` to collapse the duplicated `from_chars` body — SSoT per `single-source-of-truth-discipline.md` — only if it doesn't pessimize the hot path; verify, else leave separate.)
+- **`_checked_advance` (open q d):** YES — design it now for symmetry. The replay/backtest sites that F-054/55 move to `_advance` are exactly where a malformed CSV cell should be *detected*, not silently-0'd. A `parse_double_checked_advance(p, &p, &ok)` (or returning `{value, consumed, ok}`) belongs in the `.E.0.3` family so the replay loop can halt/skip on bad data rather than poison the golden. (`.E.0.1` keeps the silent `_advance` per D-82 freeze-current; `.E.0.3` adds the checked variant + paced migration.)
+
+### D3 — boot-pin placement — N/A to /dod-audit (placement, not a DOD-shaped fn)
+
+No DOD verdict. One cross-lens note for completeness: the binary-specific placement (headless = first line of `main`; GUI/suite = AFTER `SDL_Init`; tests NOT pinned) is a **correctness ordering**, not a layout concern — correctly out of this lens's scope and already flagged in the plan for a `LANDMINES.md` entry. No DOD pattern missed.
+
+### D4 — `check_locale_determinism.py` guard — **SOUND** (allowlist-as-committed-file is the right SSoT shape)
+
+- **Allowlist-as-committed-file (shrinking baseline) vs inline-pragma: COMMITTED FILE WINS** on SSoT/maintainability. One file = one queryable enumeration of the un-migrated set (`grep` answers "how many left"; the shrink is visible in `git log`/diff); a CI baseline is the established shape (sister to `tools/check_per_core_registry_integrity.py` KNOWN-PENDING). Inline pragmas scatter the truth across 194 sites → no single "how much debt remains" view, and a pragma is a *per-site exemption* (easy to add, invites permanence) vs a *central ledger* (visible, shrinking, reviewable). This also matches `feedback_close_the_class_vs_migrate_every_site` (D-84): the guard + shrinking allowlist IS the "close the class via a CI guard, migrate sites paced" mechanism — the committed file is that guard's state.
+- **Refinement:** the allowlist should key on **`file:symbol:line` (or a stable `file + nearby-token` hash)**, not bare counts, so a *new* `atof` can't sneak in by displacing a migrated one while the total stays ≤194 (same swap-blindness failure as D1's `sizeof`). And include a **monotonic-shrink assertion** (new size ≤ committed size) so the baseline can only ratchet down.
+- **pre-commit hook vs separate CI step (open q b):** **BOTH, tiered** — it's a compile-free grep (cheap) so it belongs in `tools/hooks/pre-commit` for fast local feedback (parent plan notes `.github/` is absent; pre-commit is the only standing gate today). When standing CI lands (the parent plan's A-bucket item-f), promote the same script to a CI step as the authoritative gate (pre-commit is bypassable via `--no-verify`; CI is not). Single script, two invocation points — SSoT.
+
+---
+
+## Missed DOD patterns / cross-cutting
+
+1. **Mirror-enforcement is the through-line.** D1 (`sizeof` vs field list) and D4 (count vs site-identity) share ONE blind spot: a **same-cardinality swap**. Both need *identity*-level sentinels (offsets / site-keys), not *size*-level. `registry-coverage-ci-check-pattern.md` is the canonical home for D1's structural fix; D4 already is a coverage-CI and just needs the keying refinement.
+2. **No `/dod-audit` pattern is mis-applied or forced.** None of D1-D4 is a hot-path struct, a branchless-dispatch candidate, a bit-packing candidate, or an X-macro registry candidate — the path calibration is correct; demanding any of those here would be cargo-cult (explicitly correct per the sidecar's own framing).
+3. **Branch-minimal opportunity (open q 4), honored within the no-cargo-cult bound:** none worth the obscurity. The parser error checks (`r.ec==errc{} && r.ptr==s+n`) are inherent + branch-predictor-friendly (well-formed = taken); the canonicalizer's `put` loop is straight-line memcpy. No bit-trick buys anything on a boot/stamp path; introducing one would trade clarity for zero measurable gain (anti-`feedback_evaluate_options_on_robustness_latency_design`).
+
+---
+
+## Verdict: **YELLOW**
+
+No CRITICAL design defect; the shapes are sound and the path calibration is right. **One HIGH item gates D1 implementation:** `static_assert(sizeof==EXPECTED)` is **NOT sufficient** field-coverage enforcement (swap-blind) — add offset sentinels for the load-bearing anchors now + a coverage-CI (`registry-coverage-ci-check-pattern.md`) as the structural close, and make the commented-out `cap` bounds check real. D4 needs site-identity keying + monotonic-shrink (MED). D2/D3 SOUND. Sister verdicts: **EXTEND** `struct-padding-determinism-pattern.md` (D1, canonicalize-to-stream variant) + `registry-coverage-ci-check-pattern.md` (D1 coverage CI); **no author-new DESIGN_SPEC warranted**. Keep-both `parse_double_fast`/`_checked`; add `_checked_advance` to the `.E.0.3` family.
+
+*(No TECH_DEBT auto-written — design-mode; operator triages which refinements fold into `.E.0.1` vs `.E.0.3`.)*

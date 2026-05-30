@@ -306,8 +306,10 @@ Synthesis structure (extended at v1.7.6):
 3. **DESIGN_SPECS cross-ref findings** — per-finding canonical sister citations OR NEW infrastructure justification
 4. **Critical findings (CRITICAL)** — convergent across audits OR ship-blocking design errors
 5. **High findings (HIGH)** — should resolve before coding; ~30 min plan edit each
-6. **Medium findings (MED)** — Step 0 polish during coding; not blocking
-7. **Low findings (LOW)** — notes / future-work
+6. **Medium findings (MED)** — addressed-as-found, NOT "skip because not blocking": fix in-ship when correctness-adjacent + the surface is already open, else fold-to-named-task or ledger with an ID + fix-home
+7. **Low findings (LOW)** — addressed-as-found, NOT "drop as notes/future-work": ledger with an ID + fix-home at minimum, or fix in-ship if cheap + adjacent
+
+**Disposition-completeness rule (per `feedback_address_med_low_findings_not_just_high_crit`, 2026-05-30):** EVERY finding at EVERY severity carries exactly one disposition — fix-in-ship / fold-to-named-task / ledger-with-ID-and-fix-home / document. None left severity-only. Severity gates urgency + sequencing, never whether-to-address; a bare "low, skip" is the anti-pattern (silently accrues tech debt under a severity label). The synthesis is incomplete until every CRITICAL→LOW row has a disposition column filled.
 8. **Cold-pickup completeness verdict** — would a fresh session lose >30 min re-deriving context?
 9. **Recommended plan amendment list (ordered)** — concrete fixes with effort estimates + DESIGN_SPECS citations
 10. **Recommendations for path forward** — full amend / partial amend / scope-reduce / proceed

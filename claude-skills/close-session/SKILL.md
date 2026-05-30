@@ -113,6 +113,8 @@ Verify the SESSION'S substantive deliverables ACTUALLY landed complete + coheren
 - It fires on UN-reviewed work: a prior independent review of OTHER work this session does NOT excuse skipping the review of NEW work — close-out artifacts that land AFTER a build review still need their own pass (`.E.0.2` close caught this exact hole: skipped "because 2 reviews ran," but the harvest/memories/handoff were unreviewed).
 - SKIP ONLY on EXPLICIT operator instruction — the `--no-review` flag, or the operator stating "skip it." Trivial closes (single-file / doc-tiny / pure checkpoint) are the OPERATOR's call to skip, not the agent's.
 
+**Executor mode (operator-selectable per `feedback_runtime_executor_mode_for_judgment_skills`; default `independent`):** `independent` = spawn the reviewer agent (default — the anti-self-attestation point); `self` = the orchestrator self-reviews inline (cheaper, NO independence — operator-EXPLICIT only); `both` = run self + independent and compare verdicts (max rigor / calibration). Surface as an inline `{independent | self | both}` choice when the operator is at the decision point; otherwise default `independent`.
+
 **Dimensions the reviewer checks** (each = a distinct failure mode a completeness-only pass misses):
 1. **Landed + substantive** — each claimed deliverable is present + real content, not a stub.
 2. **Coherent + fully propagated** — artifacts agree with each other AND each operator decision reached ALL its homes (decision-log + memory + MEMORY.md index + the skill/spec it governs + CLAUDE.local.md if a going-forward rule). A decision in the log but not wired into the skill it governs = half-landed. Complements `/capture-audit` Check 12 (mechanical stale-ref scan) with the judgment "did it fully land."

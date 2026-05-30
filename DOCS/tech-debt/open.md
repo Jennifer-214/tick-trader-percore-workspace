@@ -25,6 +25,64 @@ When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral can
 
 ## Issues
 
+### TECH_DEBT-144 — Codebase-wide integer-parse migration (111 `atoi`/`atol`/`strtol`/`strtoll`/`strtoul` sites)
+
+```yaml
+id: TECH_DEBT-144
+severity: LOW
+status: OPEN
+trigger: .F professionalization sweep / guard-tracked after the .E.0.3 tt:: parse primitive lands
+surface_tags: [parse, locale, h5-consistency, professionalization]
+```
+
+- **Created:** 2026-05-29 by v5.15.5.F.4d.1.E.0.1 hardened-gate audit (the 181-site `ato*`/`strto*` breadth enumeration).
+- **What's deferred:** the **111 base-10 integer-parse sites** are NOT locale-fragile (`LC_NUMERIC` only affects the float decimal separator), so they are NOT determinism/correctness-critical and NOT net-gating. Migrate to the `tt::` integer-parse primitive for SSoT/H5-consistency + minor perf, once `.E.0.3` builds it. The manifest CI guard tracks them as KNOWN-PENDING (shrinking).
+- **Why deferred (not effort-avoidance):** the class is *closed* by the `.E.0.3` primitive + guard (no new sites; existing tracked) per [[feedback_close_the_class_vs_migrate_every_site]]; this is the paced mechanical sweep, not a foundation requirement.
+- **Cross-ref:** decision-log D-84/D-87; PARITY-034 (the float-parse half, which IS locale-fragile).
+
+### TECH_DEBT-145 — F-107 calib/trade-log float emit not `LC_NUMERIC`-pinned
+
+```yaml
+id: TECH_DEBT-145
+severity: LOW-MEDIUM
+status: OPEN
+trigger: PRE-PAPER-TEST correctness mini-ship (TaskList #5)
+surface_tags: [locale, log-emit, determinism, output-only]
+```
+
+- **Created:** 2026-05-29 by v5.15.5.F.4d.1.E.0.1 hardened-gate audit (determinism-cluster sweep, finding F-107).
+- **What's deferred:** calib/trade-log CSV float emit should use the canonical locale-pinned emit (per-thread `uselocale` or the `.E.0.3` format primitive). **Output-only — does NOT feed the replay net/golden** → not net-gating → routed PRE-PAPER-TEST.
+- **Cross-ref:** decision-log D-87; PARITY-036 (the recorder-emit, which IS net-gating — distinct from these output-only logs).
+
+### TECH_DEBT-146 — Symbol `lot_step_size`/`qty_decimals` stored as `double`
+
+```yaml
+id: TECH_DEBT-146
+severity: LOW
+status: OPEN
+trigger: .E.0.3 review OR PRE-PAPER-TEST
+surface_tags: [accounting, symbol-precision, fpn, order-validation]
+```
+
+- **Created:** 2026-05-29 by v5.15.5.F.4d.1.E.0.1 hardened-gate audit (symbol-precision question).
+- **What's deferred:** `BinanceOrderAPI.hpp:76/80` stores `lot_step_size` as `double` + derives `qty_decimals`. For order-validation precision + consistency with the `.E.0.3` `string→FPN` direction, review whether it should be FPN/decimal-exact. Low-stakes (order validation, not core accounting).
+- **Cross-ref:** decision-log D-85.
+
+### TECH_DEBT-147 — True-decimal vs binary-FPN accounting representation (deferred design consideration)
+
+```yaml
+id: TECH_DEBT-147
+severity: LOW
+status: DEFERRED-INDEFINITE
+trigger: only if exact-decimal-semantics (regulatory/audit) is ever required
+surface_tags: [accounting, fpn, decimal-exactness, architecture]
+```
+
+- **Created:** 2026-05-29 by v5.15.5.F.4d.1.E.0.1 design discussion (the bit-packing / "perfect accuracy" thread).
+- **What's deferred:** `.E.0.3` chose **binary FPN-direct** (D-85: ~1e-19 precision ≫ crypto tick need; keeps the branchless-binary perf core). A true **decimal fixed-point** type (mantissa + base-10 scale) would give *exact* decimal semantics, but replaces the FPN<64> binary core engine-wide and loses the branchless-binary math perf. Honest CS point: binary fixed-point cannot represent a decimal fraction (e.g. `0.12`) exactly at any width.
+- **Why deferred:** binary FPN-direct is proportionate (1e-19 ≫ any need); true-decimal is over-correct (theoretical exactness not needed) at large cost. Namable if exact-decimal-semantics ever required.
+- **Cross-ref:** decision-log D-85; [[feedback_two_foundations_determinism_vs_correctness]].
+
 ### TECH_DEBT-002 — Centralized engine `ControllerEventLoop` removal
 
 ```yaml

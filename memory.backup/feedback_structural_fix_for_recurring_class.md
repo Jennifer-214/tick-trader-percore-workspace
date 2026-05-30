@@ -48,5 +48,6 @@ Option 2 → Option 3; bash CLI catch-up → C++ wrapper deferral).
 - `DOCS/TECH_DEBT.md` (deferred-items ledger)
 - `feedback_no_defer_for_effort.md` (sister: defer is last-ditch)
 - `feedback_reduce_touch_sites.md` (sister: boundary-stable refactor)
+- `feedback_close_the_class_vs_migrate_every_site.md` (sister: SPECIALIZES this — closing a class = the primitive + an enforcing CI guard; the guard then de-risks paced site-migration, so "close the class" ≠ "migrate every site now")
 - v5.14.1's STAMP_CFG_AUTOPOPULATE precedent (canonical example)
 - v5.14.2.E.1's PostLoadSetup helpers (canonical example)

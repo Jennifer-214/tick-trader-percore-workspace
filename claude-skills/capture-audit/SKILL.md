@@ -29,7 +29,9 @@ Memory + manual discipline + audit cycles miss this. CI-style mechanical check c
 
 ## What this skill checks (sequential)
 
-### Check 1: MEMORY.md index sync
+> **MECHANICAL checks are now TOOL-BACKED (D-112, 2026-05-30).** Checks 1, 4, 8 are run deterministically by `python3 tools/check_capture_audit.py` (index-sync / decision-sentinel-matching / skill→CLAUDE.md-linkage) — do NOT re-interpret them as prose. Check 1-frontmatter + 9 + 12(memory) → `python3 tools/check_doc_metadata.py --bidirectional --memories`. Check 11 → `python3 tools/check_forward_promise_audit.py`. Plan-body symbol existence → `check_plan_body_symbol_existence.py`. The ONE-SHOT aggregator that runs all of these is **`python3 tools/check_session_docs.sh`** (fired by `/close-session` Stage 2.0). Per `feedback_run_doc_ci_tools_first_never_hand_verify` — run the tool, never hand-verify. The remaining JUDGMENT checks (5 handoff-currency-vs-intent / 6 Stage-6 candidates / 7 promotion eligibility / 10 currency) stay agent-driven (can't be grepped). Task #12 (D-112) finishes wiring the rest.
+
+### Check 1: MEMORY.md index sync  [TOOL: `check_capture_audit.py --check 1`]
 
 For every `memory/feedback_*.md` / `user_*.md` / `project_*.md` / `reference_*.md`:
 - Has corresponding entry in `MEMORY.md` index
@@ -59,7 +61,7 @@ For current in-flight plan body version (extract from `**Status:** vX.Y.Z` line)
 - If missing: propose creation with template structure
 - If exists but stale (no entries since last plan body amendment): WARN
 
-### Check 4: Decision sentinel matching
+### Check 4: Decision sentinel matching  [TOOL: `check_capture_audit.py --check 4`]
 
 Grep plan body for `<!-- D: <id> -->` decision markers:
 - Each must have matching `<!-- STATUS: pending|landed|dropped|deferred -->` marker
@@ -87,7 +89,7 @@ For each `DESIGN_SPECS/**/*.md` with `stage: 2-draft`:
 - Check `first_canonical_application` field for landed reference (cross-check workspace git log)
 - If landed: propose Stage 2 → Stage 3 promotion at next ship close
 
-### Check 8: Skill-in-CLAUDE.md-suite linkage (recursive trust anchor)
+### Check 8: Skill-in-CLAUDE.md-suite linkage (recursive trust anchor)  [TOOL: `check_capture_audit.py --check 8`]
 
 For every `claude-skills/*/SKILL.md`:
 - Verify skill name appears in CLAUDE.md `## Skill suite` table

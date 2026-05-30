@@ -116,6 +116,21 @@ The auditor (Layer 2 subagent):
    **Skip Stage 0** only when the plan has NO architectural surface
    (doc-only, single-file bug fix, test addition).
 
+0.5. **Mechanical pre-pass (deterministic; run BEFORE the numbered checks — D-112/.E Session-4).**
+   Run the one-shot doc/plan CI sweep first — it deterministically covers the MECHANICAL
+   checks (Check 32 plan-body symbol-existence + Check 45 tests-section + forward-promise +
+   bidirectional+index memories + capture-audit-mechanical), so the LLM never re-derives them
+   by hand (per `feedback_run_doc_ci_tools_first_never_hand_verify` — run the tool, never eyeball):
+   ```bash
+   /home/caramel/code/FoxML_Trader_v2/tools/check_session_docs.sh   # exit 0 = mechanical floor clean
+   # plan-body-targeted: python3 .../tools/check_plan_body_symbol_existence.py <plan>  (Check 32)
+   #                     python3 .../tools/check_plan_body_tests_section.py <plan>      (Check 45)
+   ```
+   A HARD failure here (fabricated citation / orphan / one-way sister) is ground-truth → fix before
+   spending the LLM pass. The numbered Checks 11-44 are the JUDGMENT layer (plan-vs-code semantics,
+   grep-verification, sister-registry parity) — those stay agent-walked; the mechanical ones (32/45)
+   are satisfied by this pre-pass, not re-derived below.
+
 1. **Parses the plan** — extracts:
    - Phases / ships / version bumps mentioned
    - Files claimed to be touched (from "Files touched" sections, code

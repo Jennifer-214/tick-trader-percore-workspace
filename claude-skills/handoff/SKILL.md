@@ -191,9 +191,16 @@ Cite the decision log in the generated handoff doc under "Required reading files
 
 **Pre-write /capture-audit gate (deterministic invocation per .D Phase F.3):**
 
-Before writing the handoff doc, run the Check 11 forward-promise verification deterministically as a hard gate. If HIGH findings: BLOCK handoff write; resolve drift first.
+Before writing the handoff doc, run the deterministic mechanical floor as a hard gate. If HIGH findings: BLOCK handoff write; resolve drift first.
 
 ```bash
+# PREFERRED one-shot doc/plan sweep (D-112/.E Session-4): runs the WHOLE mechanical floor
+# (B-Plus + bidirectional+index memories + capture-audit-mechanical [index/sentinels/skill-linkage]
+#  + forward-promise + meta-registry) in one call — same floor /close-session Stage 2.0 + /accept-handoff
+#  Stage 5 fire. Exit 1 = HARD failure (citation / one-way sister / orphan) → BLOCK handoff write.
+/home/caramel/code/FoxML_Trader_v2/tools/check_session_docs.sh
+#
+# Granular equivalent (the individual checker, when targeting ONLY forward-promise):
 # Deterministic invocation — replaces LLM-orchestrated /capture-audit Skill invocation:
 python3 /home/caramel/code/FoxML_Trader_v2/tools/check_forward_promise_audit.py \
     --strict \

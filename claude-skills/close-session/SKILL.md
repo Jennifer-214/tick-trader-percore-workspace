@@ -24,9 +24,20 @@ Each pushback was a step the session-close ritual SHOULD have caught earlier. Pe
 4. Detect engine + workspace HEAD SHAs + working tree status
 5. Read most recent handoff doc (if any) — establishes baseline for drift detection
 
-### Stage 2 — `/capture-audit --deep` pre-close gate (deterministic invocation per .D Phase F.4)
+### Stage 2 — mechanical doc/plan CI sweep + forward-promise gate (deterministic; per .D Phase F.4 + .E Session-4)
 
-Run Check 11 forward-promise verification deterministically as the hard gate. If HIGH findings: surface for triage at Stage 3.
+**Stage 2.0 — the one-command doc/plan sweep (HARD gate; NEW v5.15.5.F.4d.1.E Session-4, 2026-05-30).** Run the aggregator FIRST — it is the SINGLE mechanical answer to "are the session's docs/plans clean?" (the recurring tiredness this stage removes). It runs every doc/plan CI tool in one shot: bidirectional+index memories check (the red-build catcher) + B-Plus plan-body symbol existence over session-modified workspace plan bodies (the broken-citation catcher) + forward-promise + meta-registry advisories.
+
+```bash
+# ONE command — replaces N hand-run checks (the structural fix for "I keep hand-verifying"):
+/home/caramel/code/FoxML_Trader_v2/tools/check_session_docs.sh
+# Exit 0 = all HARD checks pass. Exit 1 = a HARD check failed (citation error / one-way sister) → FIX before close.
+# --all-plans for a full sweep (slower). Bypass a single check via SKIP_BIDIR_CHECK / SKIP_PLAN_BODY_CHECK.
+```
+
+**Why this exists (the gap it closes):** plan bodies + memories live in the WORKSPACE repo (committed via `/sync-workspace`), but the engine pre-commit hook (B-Plus etc.) only fires in the ENGINE repo where `plans/` is gitignored → the engine hook NEVER gates workspace doc commits, and the bidirectional-memories check was in no hook at all. So a broken plan-body citation (`CoreFrameworks/` prefix dropped) and a one-way memory sister-link survived an entire session of hand-assertion at `.E` Session-4. This aggregator + its wiring here is the structural close (M7): the agent no longer relies on remembering to hand-run the tools. Per `feedback_run_doc_ci_tools_first_never_hand_verify`. Sister: the engine `tools/hooks/pre-commit` (same tools, engine-repo surface).
+
+**Stage 2.1 — Check 11 forward-promise** (deterministic hard gate; also inside the aggregator above, re-stated here for the LLM narrative + Stage 3 triage). If HIGH findings: surface for triage at Stage 3.
 
 ```bash
 # Deterministic invocation — replaces LLM-orchestrated Skill invocation:

@@ -137,11 +137,15 @@ Parse the handoff body's `## What landed at <predecessor-tag> ship close (PREDEC
 
 **If handoff body lacks a "What landed at <predecessor-tag>" section** (older handoffs predating /handoff Stage 2.8 codification): skip Stage 4.5 entirely; surface advisory note ("predecessor-context section missing; cannot verify predecessor claims mechanically") so receiver knows to verify manually.
 
-### Stage 5: Invoke /capture-audit --deep (deterministic invocation per .D Phase F.6)
+### Stage 5: Mechanical doc/plan CI sweep (deterministic; per .D Phase F.6 + D-112/.E Session-4)
 
-Run Check 11 forward-promise verification mechanically as the hard gate:
+Run the **one-shot aggregator** as the receiver-side mechanical gate — it runs every doc/plan CI tool in one invocation (bidirectional+index memories / B-Plus session plan bodies / capture-audit mechanical [index-sync + sentinels + skill-linkage] / forward-promise / meta-registry). This is the SAME mechanical floor `/close-session` Stage 2.0 fires (writer + receiver symmetric). Per `feedback_run_doc_ci_tools_first_never_hand_verify` — run the tool, never hand-verify.
 
 ```bash
+# ONE command (the receiver-side mechanical sweep — D-112 wiring):
+/home/caramel/code/FoxML_Trader_v2/tools/check_session_docs.sh
+# Exit 0 = all HARD checks pass. Exit 1 = HARD failure (citation error / one-way sister / orphan) → classify per severity below.
+# Includes Check 11 forward-promise; for the handoff-anchored window specifically:
 python3 /home/caramel/code/FoxML_Trader_v2/tools/check_forward_promise_audit.py \
     --since "${HANDOFF_WRITE_COMMIT:-HEAD~5}"
 

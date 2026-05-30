@@ -217,6 +217,7 @@ the subagent will need. Reads at invocation time (NOT cached):
 Per the D-70 enforcement ladder + heavier-default posture: anything mechanizable is checked DETERMINISTICALLY first, so a finding never rests on a stochastic agent noticing it. Run as ground truth before Stage 3 spawns:
 
 1. **Python checkers** (exit-code authoritative):
+   - **One-shot (preferred — D-112/.E Session-4):** `/home/caramel/code/FoxML_Trader_v2/tools/check_session_docs.sh` runs the WHOLE mechanical floor in one call (B-Plus symbol-existence + bidirectional+index memories + capture-audit-mechanical [index/sentinels/skill-linkage] + forward-promise + meta-registry). Use as the Stage-2.5 default; the granular checkers below target a single concern.
    - `python3 /home/caramel/code/FoxML_Trader_v2/tools/check_plan_body_symbol_existence.py <plan_path>` (Class 14 fabrication)
    - `python3 /home/caramel/code/FoxML_Trader_v2/tools/check_plan_body_tests_section.py <plan_path>` (Check 45 — if the coding sequence touches `tests/`)
    - `python3 /home/caramel/code/FoxML_Trader_v2/tools/check_forward_promise_audit.py --since <predecessor-tag>` (Check 11 forward-promise)

@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 37c74114-8590-473f-993e-3dcf0f784339
-  sister_specs: [feedback_iteration_spiral_signals_audit_meta_gap.md, feedback_audit_canonical_sister_before_new_infra.md, feedback_recheck_designspecs_on_pushback.md, feedback_lead_with_architectural_merit_not_operator_tone.md, feedback_motivated_collaborator_for_caramel.md, feedback_enumerate_set_before_categorical_claim.md, feedback_phased_pre_rework_correctness_foundation.md, feedback_categorize_by_consumer_pattern_not_field_name.md]
+  sister_specs: [feedback_iteration_spiral_signals_audit_meta_gap.md, feedback_audit_canonical_sister_before_new_infra.md, feedback_recheck_designspecs_on_pushback.md, feedback_lead_with_architectural_merit_not_operator_tone.md, feedback_motivated_collaborator_for_caramel.md, feedback_enumerate_set_before_categorical_claim.md, feedback_phased_pre_rework_correctness_foundation.md, feedback_categorize_by_consumer_pattern_not_field_name.md, feedback_run_doc_ci_tools_first_never_hand_verify.md]
   tags: [operator-collaboration, audit-methodology]
 ---
 

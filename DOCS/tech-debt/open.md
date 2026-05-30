@@ -104,27 +104,6 @@ related_specs: [meta-disciplines/single-source-of-truth-discipline.md]
 - **Cost estimate:** ~1-2h (thread the parsed value through `fan_out`'s signature instead of the doubles; verify the `Tick` ring payload); LOW risk (producer-side; determinism gate + replay test catch any regression).
 - **Cross-ref:** decision-log D-102; the numeric-foundation foundation doc § Blast radius (producer carry-through row); [[feedback_single_source_of_truth_discipline]]; sister to PARITY-036 (recorder-emit precision) + the `.E.0.1` replay-parse determinism work.
 
-### TECH_DEBT-150 — [CLOSED-SAME-SESSION; FALSE POSITIVE] `check_meta_registry.py` Check-2 missed `(BASE_X)`-param meta-walkers
-
-```yaml
-id: TECH_DEBT-150
-title: check_meta_registry.py regex matched only (X)-param macros -> false orphan for FOREACH_STAMP_BOUND_DERIVED_COHORT
-severity: low
-surface_tags: [registry, meta-registry, ci-check, h15]
-status: closed
-opened: 2026-05-30
-closed: 2026-05-30
-resolution: checker regex broadened; NOT real debt
-related_specs: [framework-patterns/meta-registry-pattern-for-codebase-registry-discipline.md]
-```
-
-- **Created + CLOSED:** 2026-05-30 (`.E` Session-4). **This was NOT real tech debt — a checker false-positive I mis-filed, then corrected (verify-don't-assume; `feedback_run_doc_ci_tools_first_never_hand_verify`).**
-- **What actually happened:** `check_meta_registry.py` Check 2 reported `FOREACH_STAMP_BOUND_DERIVED_COHORT` as "in FOREACH_REGISTRY but no #define." Investigation: the macro IS defined (`MemHeaders/CfgGateRegistry.hpp:227`) + used at 8 sites — but with param `(BASE_X)`, while the macro-finder regex (`tools/check_meta_registry.py:70`) matched only literal `(X)`. So a real, registered, used macro was a phantom orphan.
-- **Fix (landed this session):** broadened the regex `\(\s*X\s*\)` → `\(\s*\w+\s*\)` (any single-identifier param) so action-parameterized meta-walkers (`FOREACH_<COHORT>_COHORT(BASE_X)`) are seen. `check_meta_registry.py` now **EXIT 0** (Check 2 PASS: all 64 rows match a real #define; found 66 macros). Kept as a CLOSED record (not deleted) so the false-positive class is on file.
-- **Residual (genuinely pre-existing, NON-FATAL):** 2 Check-1 WARNs (`FOREACH_LEGACY_PREFIXED_KEY`, `FOREACH_STAMP_RESULT_FIELD_EXCLUSION` unregistered) — explicitly "NON-FATAL during transition" per the tool; not debt, transition state.
-- **Housekeeping:** relocate this CLOSED entry to `closed.md` at next maintenance pass.
-- **Cross-ref:** `tools/check_meta_registry.py:70` (the fixed regex); `MemHeaders/CfgGateRegistry.hpp:227`; CLAUDE.md H15.
-
 ### TECH_DEBT-002 — Centralized engine `ControllerEventLoop` removal
 
 ```yaml

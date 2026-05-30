@@ -1171,3 +1171,23 @@ related_specs: [DESIGN_SPECS/meta-disciplines/structural-enforcement-when-memory
 - **Dogfood result:** First Check 11 run at `.D` Phase B.5 smoke test surfaced 19 HIGH findings + 12 distinct claim+id forward-promise drift instances across 6+ prior ships. All 8 substantive retroactive writes landed at `.D` Phase D cohort closure. Sister to .B.8 commit 237c970 (7 retroactive ledger writes detected manually via /accept-handoff Stage 4.5 Bash-grep methodology — Check 11 Python now mechanizes that detection).
 - **Status:** **CLOSED 2026-05-28** at `v5.15.5.F.4d.1.D` via IMPLEMENTED (not deferred; structural enforcement landed)
 - **Cross-ref:** `plans/v5.15-live-readiness/postmortems/2026-05-27-v5.15.5.F.4d.1.B.8-postmortem.md` § What went poorly #2 (deferral rationale at .B.8); `plans/v5.15-live-readiness/subplans/2026-05-27-v5.15.5.F.4d.1.D-forward-promise-verification-ci.md` v1.1 (the .D plan body); `feedback_forward_promise_auto_write_verification` (Stage 3 first canonical at this ship); `feedback_structural_enforcement_when_memory_insufficient` (M7 parent; worked_examples extended); `claude-skills/capture-audit/SKILL.md` Check 11 spec; `tools/check_forward_promise_audit.py` (the deliverable); sister M7 7th canonical applications at Stage 6 escalation surface.
+
+### TECH_DEBT-150 — [FALSE POSITIVE] `check_meta_registry.py` Check-2 missed `(BASE_X)`-param meta-walkers (CLOSED at `.E` Session-4 — checker regex fix; relocated from open.md)
+
+```yaml
+id: TECH_DEBT-150
+title: check_meta_registry.py regex matched only (X)-param macros -> false orphan for FOREACH_STAMP_BOUND_DERIVED_COHORT
+severity: low
+surface_tags: [registry, meta-registry, ci-check, h15]
+status: closed
+opened: 2026-05-30
+closed: 2026-05-30
+resolution: checker regex broadened; NOT real debt
+related_specs: [framework-patterns/meta-registry-pattern-for-codebase-registry-discipline.md]
+```
+
+- **Created + CLOSED:** 2026-05-30 (`.E` Session-4). **NOT real tech debt — a checker false-positive I mis-filed, then corrected (verify-don't-assume; `feedback_run_doc_ci_tools_first_never_hand_verify`).** Relocated open.md → closed.md same session (no maintenance-pass deferral).
+- **What actually happened:** `check_meta_registry.py` Check 2 reported `FOREACH_STAMP_BOUND_DERIVED_COHORT` as "in FOREACH_REGISTRY but no #define." Investigation: the macro IS defined (`MemHeaders/CfgGateRegistry.hpp:227`) + used at 8 sites — but with param `(BASE_X)`, while the macro-finder regex (`tools/check_meta_registry.py:70`) matched only literal `(X)`. So a real, registered, used macro was a phantom orphan.
+- **Fix (landed this session):** broadened the regex `\(\s*X\s*\)` → `\(\s*\w+\s*\)` (any single-identifier param) so action-parameterized meta-walkers (`FOREACH_<COHORT>_COHORT(BASE_X)`) are seen. `check_meta_registry.py` now **EXIT 0** (Check 2 PASS: all 64 rows match a real #define; found 66 macros). Kept as a CLOSED record (not deleted) so the false-positive class is on file.
+- **Residual (genuinely pre-existing, NON-FATAL):** 2 Check-1 WARNs (`FOREACH_LEGACY_PREFIXED_KEY`, `FOREACH_STAMP_RESULT_FIELD_EXCLUSION` unregistered) — explicitly "NON-FATAL during transition" per the tool; not debt, transition state.
+- **Cross-ref:** `tools/check_meta_registry.py:70` (the fixed regex); `MemHeaders/CfgGateRegistry.hpp:227`; CLAUDE.md H15; decision-log D-114.

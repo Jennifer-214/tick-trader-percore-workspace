@@ -1,13 +1,13 @@
 ---
 name: accept-handoff
-description: Receiver-side handoff verification skill. Fresh-session pickup runs ONE command to load handoff doc + all cited reference files + run drift-check + recreate TaskList + verify git state matches handoff claims. Closes the "fresh session forgets to load required reading" failure mode. Sister to /handoff (writer side); both close the multi-session pickup loop. Output: PICKUP-READY status + concrete "your next action is X" instruction.
+description: Receiver-side handoff verification skill. Fresh-session pickup runs ONE command to load handoff doc + all cited reference files + run drift-check + recreate TaskList + verify git state matches handoff claims + reconcile decision-log status (decided vs open). Closes the "fresh session forgets to load required reading" failure mode. Sister to /handoff (writer side); both close the multi-session pickup loop. Output: PICKUP-READY status + concrete "your next action is X" instruction.
 type: skill
 concern: workflow
 audit_cadence: per-session-start
 tags: [doc-discipline, framework-discipline, operator-collaboration, meta-discipline]
 surface: [handoff-pipeline, session-pickup]
 sister_skills: [/handoff, /capture-audit, /readiness, /sync-workspace]
-loads_dynamically: [CLAUDE.md, CLAUDE.local.md, memory/MEMORY.md, DOCS/DESIGN_PHILOSOPHY.md, target-handoff.md, cited-reference-files, in-flight-plan-body.md]
+loads_dynamically: [CLAUDE.md, CLAUDE.local.md, memory/MEMORY.md, DOCS/DESIGN_PHILOSOPHY.md, target-handoff.md, cited-reference-files, in-flight-plan-body.md, decision-log.md]
 applies_meta_discipline: M7 (structural-enforcement-when-memory-insufficient)
 established: 2026-05-26
 first_canonical_application: post-.B.4 v1.7.4 handoff addendum cycle
@@ -137,6 +137,27 @@ Parse the handoff body's `## What landed at <predecessor-tag> ship close (PREDEC
 
 **If handoff body lacks a "What landed at <predecessor-tag>" section** (older handoffs predating /handoff Stage 2.8 codification): skip Stage 4.5 entirely; surface advisory note ("predecessor-context section missing; cannot verify predecessor claims mechanically") so receiver knows to verify manually.
 
+### Stage 4.6: Decision-log status reconciliation (added 2026-05-30 — decided-vs-open ground truth)
+
+Stages 4-4.5 verify git + artifacts but never surface the DECISION STATUS of the work being picked up. Without it, the receiver (or the composed `/readiness` auditor at Stage 6) can mistake an ALREADY-DECIDED item for an open blocker — especially when an in-flight plan's prose/frontmatter is STALE relative to the decision log. **Canonical failure (`.E` Session-4 pickup, 2026-05-30):** D-105 (rounding mode) was `<!-- STATUS: decided -->` in the log, but a stale foundation-doc frontmatter ("DRAFT pending 3 open decisions") + a `/readiness` subagent surfaced it as an "open blocker," and the receiver propagated it into the next-step framing. The decision sentinels are the SSoT (`feedback_session_decision_log_discipline`); this stage READS them so the receiver enters with an accurate decided/open map.
+
+**Locate the log:** handoff frontmatter `decision_log:` field (fallback: the in-flight plan's `decision_log:`). Neither present (older handoffs) → skip with advisory ("no decision log cited; decision status unverifiable mechanically").
+
+**Mechanical extraction (deterministic — run the grep; do NOT eyeball the log, per `feedback_run_doc_ci_tools_first_never_hand_verify`):**
+```bash
+rg -n "<!-- (D/C/F|STATUS):" "<decision_log_path>"
+```
+Pair each `<!-- D/C/F: D-NNN -->` with the following `<!-- STATUS: ... -->`; digest the decisions THIS handoff references (its `decision_log:` range / § core-decisions), STATUS text VERBATIM — the text carries nuance a bare decided/open flag loses (e.g. `decided (uniform-rounding incl. replay); rounding-MODE = research item` — later closed by a successor decision, so "decided-with-a-now-closed-subpart", not "open").
+
+**Judgment cross-check — the contradiction surface** (mechanical→grep; judgment→here, per `feedback_independence_for_judgment_not_mechanical`): scan the in-flight plan body + handoff narrative for any decision the prose treats as OPEN (`open decision` / `TBD` / `pending` / `unresolved` / `to resolve` / `pending the N open decisions`) that the log marks `decided` → flag **STALE-PLAN-PROSE drift** (the plan lying about its own decision state — the exact thing that misleads pickup; recommend a frontmatter/body fix). Flag the converse too (log `open` but plan treats as settled).
+
+**Output (feeds Stage 6 + Stage 8):**
+- A compact **Decision status** digest: DECIDED count + the genuinely-OPEN/PENDING ones listed EXPLICITLY — these are the ONLY items the receiver must still DECIDE (frequently empty = "decisions done; the next move is execution, not a choice").
+- STALE-PLAN-PROSE drift → WARN.
+- **Pass the genuinely-open list into the Stage-6 `/readiness` invocation** as context, so the composed auditor does NOT re-flag a `decided` item as an open blocker (closes the propagation path of the canonical failure).
+
+(Mechanical extraction may later fold into `tools/check_capture_audit.py` as a `--emit-decision-status` mode — sister to its Check 4 sentinel-MATCHING; the inline `rg` is the fast-path until then.)
+
 ### Stage 5: Mechanical doc/plan CI sweep (deterministic; per .D Phase F.6 + D-112/.E Session-4)
 
 Run the **one-shot aggregator** as the receiver-side mechanical gate — it runs every doc/plan CI tool in one invocation (bidirectional+index memories / B-Plus session plan bodies / capture-audit mechanical [index-sync + sentinels + skill-linkage] / forward-promise / meta-registry). This is the SAME mechanical floor `/close-session` Stage 2.0 fires (writer + receiver symmetric). Per `feedback_run_doc_ci_tools_first_never_hand_verify` — run the tool, never hand-verify.
@@ -195,6 +216,10 @@ Git state verification:
 Capture-audit:
   ✅/⚠️/❌ <N findings>; full report at plans/<sprint>/capture-audit-reports/<date>-accept-handoff.md
 
+Decision status (Stage 4.6, vs decision log):
+  ✅ <D> decided · ⚠️ <O> still OPEN: <explicit list, or "none — decisions done; next move is execution, not a choice">
+  ⚠️ STALE-PLAN-PROSE drift: <plan treats X as open but log marks it decided> (omit line if none)
+
 Readiness:
   ✅/⚠️/❌ <verdict>; <N findings>
 
@@ -240,6 +265,7 @@ If reading this spec inside an Explore subagent: return error. `/accept-handoff`
 - `/handoff` — writer side; this skill is the receiver side
 - `/capture-audit` — drift check; invoked at Stage 5
 - `/readiness` — plan body verification; invoked at Stage 6
+- `feedback_session_decision_log_discipline` — the `<!-- D/C/F -->` + `<!-- STATUS -->` sentinel SSoT that Stage 4.6 reads; `/capture-audit` Check 4 verifies the sentinels are PAIRED, Stage 4.6 USES them to inform the receiver (decided-vs-open)
 - `feedback_compaction_degrades_treat_handoffs_as_hints` — sister discipline (handoffs ARE hints; this skill structurally verifies them against current state)
 - `feedback_structural_enforcement_when_memory_insufficient` (M7) — parent meta-discipline
 - `structural-enforcement-when-memory-insufficient.md` — pattern body for Stage 6 escalation
@@ -252,6 +278,7 @@ If reading this spec inside an Explore subagent: return error. `/accept-handoff`
 - Fresh session jumps to coding without running /readiness (Stage 6 enforces)
 - TaskList lost between sessions (Stage 7 recreates from handoff capture)
 - Decision-capture drift accumulated mid-session (Stage 5 catches)
+- Receiver treats an ALREADY-DECIDED item as an open blocker — or trusts stale plan prose/frontmatter over the decision log (Stage 4.6 surfaces decision-log STATUS; canonical `.E` Session-4 D-105 failure)
 
 ## Future enhancements
 

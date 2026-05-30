@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: f7bb757d-2b7c-4ba6-9c4a-1c7d60bff493
+  sister_specs: [feedback_audit_canonical_sister_before_new_infra.md, feedback_enumerate_consumers_before_registry_row_deletion.md, feedback_archived_changelog_preservation_discipline.md, feedback_framework_layer_payoff_diminishing_returns.md, feedback_no_defer_for_effort.md, feedback_structural_fix_for_recurring_class.md, feedback_multi_surface_deletion_ordering_discipline.md, feedback_unconditionalization_latent_assumption_audit.md, feedback_operator_facing_doc_cohort_at_cfg_deletion.md, feedback_compaction_degrades_treat_handoffs_as_hints.md, feedback_iteration_spiral_signals_audit_meta_gap.md, feedback_enumerate_helper_signature_args_before_extract.md, feedback_structural_enforcement_when_memory_insufficient.md]
+  tags: [planning-discipline, audit-methodology]
 ---
 
 **When proposing structural change** (refactor / helper extract / registry consolidation / mirror close), plan body cites specific functions / symbols / file:line refs. **Verify EACH cited symbol EXISTS in current code via comprehensive grep BEFORE plan body finalizes** — fabricated/stale symbol names cause coding-time wasted cycles.

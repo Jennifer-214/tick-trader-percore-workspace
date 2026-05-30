@@ -145,6 +145,18 @@ done
 # (not pushed to public engine repo).
 CLAUDE_MEMORY_DIR="$HOME/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory"
 if [ -d "$CLAUDE_MEMORY_DIR" ]; then
+    # Canonicalize + validate memories BEFORE backup (D-89 / R6 self-heal).
+    # The harness re-serializes agent-Write'd memory frontmatter inline->block;
+    # the helper canonicalizes block->inline + re-derives/symmetrizes sisters from
+    # body [[links]], then the guard red-builds a one-way sister / broken ref /
+    # undefined tag (CP-1/WH-1). This is what makes the self-heal REAL, not aspirational.
+    ENGINE_TOOLS="/home/caramel/code/FoxML_Trader_v2/tools"
+    if [ -f "$ENGINE_TOOLS/migrate_memory_frontmatter.py" ]; then
+        python3 "$ENGINE_TOOLS/migrate_memory_frontmatter.py" --apply \
+            || echo "WARN: memory canonicalize had issues; continuing to backup"
+        python3 "$ENGINE_TOOLS/check_doc_metadata.py" --bidirectional --memories \
+            || echo "WARN: memory guard (CP-1/WH-1) flagged issues — review before trusting the backup"
+    fi
     mkdir -p memory.backup
     for mem_file in "$CLAUDE_MEMORY_DIR"/*.md; do
         [ -f "$mem_file" ] && sync_if_newer "$mem_file" "memory.backup/$(basename "$mem_file")"

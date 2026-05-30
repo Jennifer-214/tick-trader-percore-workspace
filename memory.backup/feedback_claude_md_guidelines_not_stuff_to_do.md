@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: b025c86a-fb34-4d41-a80b-15461b4ca5ff
+  sister_specs: [feedback_categorical_triggers_over_hardcoded_refs.md, feedback_plans_have_explicit_end_goal.md, feedback_archived_changelog_preservation_discipline.md, feedback_file_size_split_discipline.md, feedback_metadata_audit_quarterly.md]
+  tags: [doc-discipline]
 ---
 
 Always-loaded docs are GUIDELINES + INDEX (timeless content; "how to think about this codebase"); they are NOT a work queue. On-demand docs (plans/, ledgers, handoffs) carry the in-flight ephemeral work.

@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 23677810-15af-419a-bb0f-e89d723c198b
+  sister_specs: []
+  tags: [wire-format, structural-fix]
 ---
 
 When a parse function serves BOTH cfg-FILE context (operator types `15.0` meaning "15%") AND wire-context (stamp body has raw `0.15` fraction), KIND_DOUBLE_PCT-style display scaling MUST be context-aware OR the two parsers MUST be separate functions. Reusing one function across both contexts causes silent 100× round-trip drift in the wire context.

@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: phase-e-ship-close-v5.15.5.F.4d.1.B.6
+  sister_specs: [feedback_file_size_split_discipline.md, feedback_dont_measure_structural_work_by_loc.md]
+  tags: [code-loc-counting, doc-discipline]
 ---
 
 **When checking file-size thresholds (split discipline / function length / complexity audit), count ACTUAL CODE LOC.** Exclude:

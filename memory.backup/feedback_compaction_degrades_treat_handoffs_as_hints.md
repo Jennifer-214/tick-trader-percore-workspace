@@ -1,8 +1,11 @@
 ---
 name: Compaction degrades context — verify handoff prompts against current code state
 description: Earlier sessions with compaction lose precision; handoff prompts and prior audit reports from those sessions are HINTS not authority — always verify against current code before acting on them
-type: feedback
-originSessionId: 3f84971f-8154-47ea-a8b9-86f7fad2325d
+metadata:
+  type: feedback
+  originSessionId: 3f84971f-8154-47ea-a8b9-86f7fad2325d
+  tags: [session-continuity]
+  sister_specs: [feedback_forward_promise_auto_write_verification.md, feedback_verify_symbol_existence_at_plan_drafting_time.md]
 ---
 When picking up work from a session-handoff prompt (or any persisted context that was written by a previous session), treat it as a SUGGESTION not as authoritative truth. Always verify against the current code state before acting on it.
 

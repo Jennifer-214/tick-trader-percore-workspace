@@ -167,6 +167,7 @@ Each rule = one-line trigger + canonical-doc pointer. Body (Why / How / worked e
 - **Quarterly /metadata-audit cadence** (2026-05-18) — `feedback_metadata_audit_quarterly.md`. Quarterly + post-codification + operator-flagged.
 - **File-size split discipline** (2026-05-18; RESCOPED 2026-05-27) — `file-size-split-discipline.md` v1.4. SELECTIVE in AI-solo workflow: always-loaded docs 600 + tests 5K RETAINED; source/header/plan/SKILL/DESIGN_SPECS thresholds → guidelines.
 - **Registry default = SSoT for cfg defaults** (2026-05-19) — `universal-cfg-field-registry-pattern.md` § Registry-default precedence. New cfg field with registry default → manual struct initializer FORBIDDEN; per-row resolution at sweep (MATCH delete / DIFFER operator-decide).
+- **Memories are structured doc-system citizens** (2026-05-30) — `doc-frontmatter-convention.md` § memory/*.md (Stage 3); D-89. NEW memories use `/doc-create memory` (or the canonical schema directly: harness-native `name`/`description`/`metadata.type` PRESERVED + `metadata.tags` from `doc-tag-vocabulary` + unified `metadata.sister_specs`, nested under `metadata:`). Covered by `check_doc_metadata --bidirectional --memories` (one-way sister = red build; `/capture-audit` Check 12); `tools/migrate_memory_frontmatter.py` re-derives + symmetrizes sisters from body `[[links]]` at `/sync-workspace`. NEVER hand-write a bare old-format (no-tags) memory.
 
 ### Operator collaboration
 

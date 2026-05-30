@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 37c74114-8590-473f-993e-3dcf0f784339
+  sister_specs: [feedback_categorize_by_consumer_pattern_not_field_name.md, feedback_audit_canonical_sister_before_new_infra.md, feedback_no_defer_for_effort.md]
+  tags: [framework-discipline, structural-fix]
 ---
 
 **At cfg field row-add time, categorize by conceptual nature, not field-name taxonomy.** Decision tree:

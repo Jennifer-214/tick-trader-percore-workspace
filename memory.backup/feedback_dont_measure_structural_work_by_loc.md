@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: a9aecbe7-5117-4f87-98f9-7c2399e91a50
+  sister_specs: [feedback_count_code_loc_not_total_lines.md, feedback_plan_body_length_no_target_loc.md, user_adhd_deferred_reward_discipline.md, user_deep_design_work_intrinsic_value.md, user_mvp_to_professional_transition.md]
+  tags: [code-loc-counting, scope-discipline]
 ---
 
 LOC count is the WRONG metric for structural / pattern-building / refactor work. When summarizing such work to Caramel, lead with:

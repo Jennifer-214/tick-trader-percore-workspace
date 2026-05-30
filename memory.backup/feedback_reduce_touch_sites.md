@@ -1,8 +1,11 @@
 ---
 name: prefer boundary-stable refactors over wide cascades
 description: When refactoring a system whose behavior crosses a type/struct boundary, default to keeping the boundary types unchanged and pushing the change to one side; cascading through every consumer is the wrong shape unless explicitly required.
-type: feedback
-originSessionId: 70e3e1bb-6139-4191-82b6-b095689ca6d6
+metadata:
+  type: feedback
+  originSessionId: 70e3e1bb-6139-4191-82b6-b095689ca6d6
+  tags: [refactor-discipline, structural-fix]
+  sister_specs: []
 ---
 When refactoring a function or struct whose outputs feed many consumers
 (RegimeSignals fields, GUI panels, snapshots, FeatureRegistry, etc.),

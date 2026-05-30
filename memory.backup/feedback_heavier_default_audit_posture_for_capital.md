@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: c95ac2bd-d963-485c-b028-60d593bce711
+  sister_specs: [user_structure_is_correctness_risk_control_for_capital.md, feedback_tiered_audit_discipline_per_plan_scope.md, feedback_evaluate_options_on_robustness_latency_design_not_time.md, feedback_consult_on_audit_findings.md, feedback_guard_matrix_bounds_foundation_hardening.md, feedback_listen_and_execute_simply.md, feedback_never_skip_thoroughness_unless_explicit.md, feedback_runtime_executor_mode_for_judgment_skills.md]
+  tags: [audit-methodology, scope-discipline]
 ---
 
 Default to the **heavier** pre-coding + audit pass. The **lighter** pass is an EARNED exception — justified only when the touched surface already carries Tier-1/2 deterministic guard coverage (CI gate / `static_assert` / golden-master / determinism+replay gate). Decision rule: **audit weight ∝ inverse deterministic coverage** — heavy where the guard-coverage-matrix has a HOLE (the LLM pass is the only guard), light where a deterministic guard is already the floor.

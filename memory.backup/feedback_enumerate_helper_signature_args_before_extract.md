@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: fc2542a7-8662-4b21-a393-f1598d05e50b
+  sister_specs: [feedback_verify_symbol_existence_at_plan_drafting_time.md, feedback_enumerate_consumers_before_registry_row_deletion.md, feedback_audit_canonical_sister_before_new_infra.md, feedback_recheck_designspecs_on_pushback.md, feedback_audit_own_proposals_with_same_rigor.md, feedback_proportionate_response_to_audit_findings.md, feedback_proactive_novel_alternative_consideration.md, feedback_plan_right_not_fast.md, feedback_cpp17_inline_variable_for_shared_state_across_tus.md, feedback_enumerate_block_scope_statics_before_hoist.md, feedback_structural_enforcement_when_memory_insufficient.md, feedback_tiered_audit_discipline_per_plan_scope.md]
+  tags: [enumeration-discipline, refactor-discipline]
 ---
 
 When proposing helper extraction from an inline body OR lambda body, the helper SIGNATURE must enumerate EVERY input the body reads + EVERY output the body writes. Planning that specifies "extract this body into a helper" without per-callee parameter enumeration produces signatures that don't match what the body actually needs — surfaces as cascading "wait this needs more args" at coding time + risk of cryptic compile errors.

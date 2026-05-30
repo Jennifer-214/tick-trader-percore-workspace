@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: c95ac2bd-d963-485c-b028-60d593bce711
+  sister_specs: [feedback_sister_cohort_amendment_completeness.md, feedback_independence_for_judgment_not_mechanical.md]
+  tags: [session-continuity, doc-discipline]
 ---
 
 Editing a `claude-skills/<name>/SKILL.md` (adding a stage/check/capability)? Run this before "done" — the recurring miss is forward edits landing while the cohort updates drift:

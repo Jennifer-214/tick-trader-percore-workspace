@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: e0432c39-f2fb-4a6b-844b-d2ce99975ef0
+  sister_specs: [feedback_structural_fix_for_recurring_class.md, feedback_no_defer_for_effort.md, feedback_guard_matrix_bounds_foundation_hardening.md]
+  tags: [structural-fix, migration-discipline, scope-discipline]
 ---
 
 When a recurring bug class spans many sites (e.g. locale-fragile `atof`/`strtod`/`%f` across ~181 sites), the FOUNDATION deliverable is **closing the class structurally** — build the correct primitive + an **enforcing CI guard** (a new violation on a critical path = build error; existing sites tracked as a KNOWN-PENDING list that only shrinks). Once the primitive + guard exist, migrating the existing sites is **mechanical execution** the tooling (`dependency-chain-trace` + migrate-pattern) drives and the guard de-risks — safe to do now or pace.

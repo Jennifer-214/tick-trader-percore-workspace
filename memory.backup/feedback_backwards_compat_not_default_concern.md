@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 341a0b93-fa2a-4e53-9aff-936f93df9deb
+  sister_specs: [feedback_no_defer_for_effort.md, feedback_motivated_collaborator_for_caramel.md, feedback_surface_operator_migration_path_proactively.md, feedback_operator_facing_doc_cohort_at_cfg_deletion.md, feedback_categorical_triggers_over_hardcoded_refs.md]
+  tags: [scope-discipline, operator-collaboration]
 ---
 
 **Default stance on backwards compatibility:** when proposing refactor / deletion / cleanup scope, do NOT pad recommendations with backwards-compat-preserving surfaces by default. Default to the cleanest architectural answer (e.g., full surface deletion, no migration warning, no preserve-and-deprecate layer). Operator (Caramel) signals explicitly when backwards-compat matters.

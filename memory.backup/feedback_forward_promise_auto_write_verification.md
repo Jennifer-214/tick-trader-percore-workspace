@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 219ed0c3-e701-4643-ab2e-f475f7b60f64
+  sister_specs: [feedback_structural_enforcement_when_memory_insufficient.md, feedback_sister_cohort_amendment_completeness.md, feedback_compaction_degrades_treat_handoffs_as_hints.md]
+  tags: [session-continuity, ledger-discipline]
 ---
 
 When a ship close promises an auto-write — PARITY entry / TECH_DEBT entry / catalog amendment / DESIGN_SPEC Stage promotion / Stage 6 escalation candidate — verify at next-ship-time that the promised auto-write actually landed at the expected ledger location.

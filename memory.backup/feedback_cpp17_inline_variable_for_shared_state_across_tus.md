@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: phase-e-ship-close-v5.15.5.F.4d.1.B.6
+  sister_specs: [feedback_enumerate_helper_signature_args_before_extract.md, feedback_multi_surface_deletion_ordering_discipline.md, feedback_enumerate_block_scope_statics_before_hoist.md, feedback_forward_decl_at_global_scope_not_namespace.md, feedback_single_source_of_truth_discipline.md]
+  tags: [cpp17, inline-variable, header-only, shared-state]
 ---
 
 When a header-only global variable must share storage across translation units (TUs), declare it with C++17 `inline`. NEVER `static`. NEVER extern+define-in-cpp.

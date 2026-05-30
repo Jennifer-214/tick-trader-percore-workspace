@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: ba5429a9-2f65-4f8d-950c-3ae250973f24
+  sister_specs: [feedback_audit_canonical_sister_before_new_infra.md, feedback_audit_own_proposals_with_same_rigor.md, feedback_enumerate_helper_signature_args_before_extract.md]
+  tags: [audit-methodology]
 ---
 
 When proposing a design that applies existing patterns, ALSO evaluate whether a NOVEL design would fit better given the SPECIFIC purpose of THIS code.

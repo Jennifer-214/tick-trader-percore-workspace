@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: ba5429a9-2f65-4f8d-950c-3ae250973f24
+  sister_specs: [feedback_audit_own_proposals_with_same_rigor.md, feedback_recheck_designspecs_on_pushback.md, feedback_evaluate_options_on_robustness_latency_design_not_time.md, feedback_backwards_compat_not_default_concern.md, feedback_lead_with_architectural_merit_not_operator_tone.md, feedback_operator_facing_doc_cohort_at_cfg_deletion.md]
+  tags: [operator-collaboration, migration-discipline]
 ---
 
 When proposing any change with operator-visible impact — wire-format bump / stamp version change / cfg schema change / parser bounds tightening / file format evolution — surface the OPERATOR MIGRATION DIMENSION as a first-class evaluation axis, not an afterthought.

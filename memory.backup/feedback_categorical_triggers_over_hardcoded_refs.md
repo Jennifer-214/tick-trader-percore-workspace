@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: b025c86a-fb34-4d41-a80b-15461b4ca5ff
+  sister_specs: [feedback_claude_md_guidelines_not_stuff_to_do.md, feedback_structural_fix_for_recurring_class.md, feedback_enumerate_consumers_before_registry_row_deletion.md, feedback_archived_changelog_preservation_discipline.md, feedback_backwards_compat_not_default_concern.md, feedback_file_size_split_discipline.md, feedback_metadata_audit_quarterly.md, feedback_proactive_rename_candidate_surfacing.md, feedback_train_serve_execution_layer_meta_gap.md]
+  tags: [doc-discipline, meta-discipline]
 ---
 
 When writing always-loaded content (CLAUDE.md, CLAUDE.local.md, MEMORY.md, SKILL.md files), use categorical pattern triggers — not hardcoded refs to specific functions / files / TECH_DEBT entries / sprint versions.

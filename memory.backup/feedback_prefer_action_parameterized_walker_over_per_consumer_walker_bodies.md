@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: b025c86a-fb34-4d41-a80b-15461b4ca5ff
+  sister_specs: [feedback_structural_fix_for_recurring_class.md, feedback_audit_canonical_sister_before_new_infra.md, feedback_enumerate_consumers_before_registry_row_deletion.md, feedback_proportionate_response_to_audit_findings.md, feedback_framework_layer_payoff_diminishing_returns.md]
+  tags: [framework-discipline, refactor-discipline]
 ---
 
 When **≥2 consumer template fns walk the same registry cohort** with different per-row actions (e.g., populate / emit / drift-check / parse over the same N cfg registries with same metadata-bit filter), prefer **action-parameterized meta-walker** macro family over per-consumer per-registry walker bodies. The meta-walker is the single source of truth for cohort coverage; consumer can't omit a registry because the meta-macro expands to all N FOREACH invocations unconditionally + per-consumer X-macros must exist by `BASE##_<SCOPE>` naming convention for the meta-walker expansion to compile cleanly.

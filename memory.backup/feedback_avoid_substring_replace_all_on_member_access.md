@@ -1,8 +1,11 @@
 ---
 name: Avoid substring replace_all on member-access patterns
 description: replace_all on member access patterns like cfg.X can mangle ctrl->cfg.X by replacing the substring; use full-prefix patterns or accept the failed-edit signal
-type: feedback
-originSessionId: 532f69da-4245-44f3-92c9-acbb549b9570
+metadata:
+  type: feedback
+  originSessionId: 532f69da-4245-44f3-92c9-acbb549b9570
+  tags: [refactor-discipline]
+  sister_specs: [feedback_enumerate_consumers_before_registry_row_deletion.md, feedback_proactive_rename_candidate_surfacing.md]
 ---
 When migrating member-access patterns with Edit's `replace_all`, watch out: the substring may appear in nested access contexts (e.g., `ctrl->config.X` contains `config.X`).
 

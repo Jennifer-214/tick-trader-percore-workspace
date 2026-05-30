@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: e52d563e-1fb7-4ce4-ac68-6b9fa4608fec
+  sister_specs: [feedback_plans_cite_sister_registry_inspection.md, project_anti_spaghetti_audit_cadence.md, feedback_consult_on_audit_findings.md, feedback_overengineering_boundary_when_future_easier.md, feedback_structural_fix_for_recurring_class.md, feedback_categorize_by_consumer_pattern_not_field_name.md, feedback_cfg_field_categorization_at_registry_add_time.md, feedback_enumerate_consumers_before_registry_row_deletion.md, feedback_enumerate_helper_signature_args_before_extract.md, feedback_new_plans_use_future_oriented_template.md, feedback_operator_pushback_as_audit_signal.md, feedback_prefer_action_parameterized_walker_over_per_consumer_walker_bodies.md, feedback_proactive_novel_alternative_consideration.md, feedback_recheck_designspecs_on_pushback.md, feedback_single_source_of_truth_discipline.md, feedback_sister_cohort_amendment_completeness.md, feedback_test_change_enumeration_per_plan_body.md, feedback_tiered_audit_discipline_per_plan_scope.md, feedback_train_serve_execution_layer_meta_gap.md, feedback_verify_symbol_existence_at_plan_drafting_time.md]
+  tags: [audit-methodology, framework-discipline, structural-fix]
 ---
 
 Before proposing any new framework infrastructure — X-macro registry, metadata bit, dispatch table, sidecar registry, consumer macro, AUTOPOPULATE-style walker — audit the codebase for canonical sister patterns. If a sister exists with the same conceptual surface, EXTEND it; do not build parallel.

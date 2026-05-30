@@ -1,8 +1,11 @@
 ---
 name: At the overengineering boundary, weight future-work simplification heavily
 description: When a design choice is borderline overengineered today but makes future work substantially easier, Caramel picks the harder upfront work
-type: feedback
-originSessionId: 3f84971f-8154-47ea-a8b9-86f7fad2325d
+metadata:
+  type: feedback
+  originSessionId: 3f84971f-8154-47ea-a8b9-86f7fad2325d
+  tags: [scope-discipline]
+  sister_specs: [feedback_audit_canonical_sister_before_new_infra.md, feedback_future_headache_vs_optimization_scope_framework.md, project_e_series_is_vision_convergence_not_scope_balloon.md]
 ---
 When proposing architectural choices that are borderline overengineered for current scope, weight the future-work-simplification multiplier heavily. Caramel will pick the harder upfront work if the future payoff is large.
 

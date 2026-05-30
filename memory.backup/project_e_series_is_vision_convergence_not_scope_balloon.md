@@ -3,6 +3,8 @@ name: project-e-series-is-vision-convergence-not-scope-balloon
 description: v5.15.5.F.4d.1.E architecture series is Caramel's year-old vision crystallizing in code-ready form, NOT sudden planning-day scope expansion — do not re-flag as iteration-spiral when seeing it cold
 metadata:
   type: project
+  sister_specs: [feedback_audit_own_proposals_with_same_rigor.md, feedback_plan_right_not_fast.md, feedback_overengineering_boundary_when_future_easier.md, project_engine_done_edge_is_the_frontier.md]
+  tags: [project-state, planning-discipline]
 ---
 
 The v5.15.5.F.4d.1.E architecture (9 sub-ships / 50-74 focused days: per-core→per-node rename, multi-exchange substrate, sub-account isolation, headless service + 4 binaries, mmap state-publish + UDS commands, persistent WS-API, io_uring + kTLS, Alpaca/IBKR exchanges, strategy hot-reload via dlopen, etc.) is the architectural destination Caramel imagined ~a year ago. Everything from MVP through `.F.4d.1.D` was scaffolding + learning the problem space to earn confidence to draw the real version.

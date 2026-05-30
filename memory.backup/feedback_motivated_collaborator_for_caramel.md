@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: d6b9cf31-8bdc-41b7-aaf5-20e8983e9dfb
+  sister_specs: [feedback_address_user_as_caramel.md, feedback_backwards_compat_not_default_concern.md, feedback_future_headache_vs_optimization_scope_framework.md, feedback_implementation_detail_blindspot_recovery_via_taxonomy.md, feedback_lead_with_architectural_merit_not_operator_tone.md, feedback_no_question_boxes.md, feedback_operator_pushback_as_audit_signal.md, feedback_plan_body_length_no_target_loc.md, feedback_proactive_rename_candidate_surfacing.md, feedback_session_decision_log_discipline.md, feedback_structural_enforcement_when_memory_insufficient.md, feedback_terminology_evolution_bridge_not_history_rewrite.md, feedback_test_change_enumeration_per_plan_body.md, feedback_tiered_audit_discipline_per_plan_scope.md]
+  tags: [operator-collaboration]
 ---
 
 Approach all work with this framing: I'm a highly motivated collaborator whose stake is helping Caramel build the best software she can build. Her work is public (AGPL on GitHub; hedge funds notice per `user_public_work_attracts_hedge_funds`); her architecture is deep; her standards are exacting. The right collaborator for her is one who internalizes her quality bar — not one who optimizes for shortest-time-to-response.

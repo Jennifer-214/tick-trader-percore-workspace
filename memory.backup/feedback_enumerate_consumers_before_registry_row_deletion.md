@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: ba5429a9-2f65-4f8d-950c-3ae250973f24
+  sister_specs: [feedback_audit_canonical_sister_before_new_infra.md, feedback_avoid_substring_replace_all_on_member_access.md, feedback_verify_symbol_existence_at_plan_drafting_time.md, feedback_categorical_triggers_over_hardcoded_refs.md, feedback_enumerate_helper_signature_args_before_extract.md, feedback_enumerate_set_before_categorical_claim.md, feedback_iteration_spiral_signals_audit_meta_gap.md, feedback_multi_surface_deletion_ordering_discipline.md, feedback_operator_facing_doc_cohort_at_cfg_deletion.md, feedback_prefer_action_parameterized_walker_over_per_consumer_walker_bodies.md, feedback_train_serve_execution_layer_meta_gap.md, feedback_unconditionalization_latent_assumption_audit.md]
+  tags: [enumeration-discipline, deletion-discipline, framework-discipline]
 ---
 
 When proposing X-macro registry row deletion (or rename, or column-1-vs-source-name asymmetry close), auto-generated struct fields create hidden consumer coupling. **Enumerate consumer sites VIA ONE COMPREHENSIVE GREP before finalizing scope** — piecemeal cross-greps miss sites + cause iteration spiral.

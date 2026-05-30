@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: c95ac2bd-d963-485c-b028-60d593bce711
+  sister_specs: [feedback_structural_enforcement_when_memory_insufficient.md, feedback_golden_master_over_reimplemented_oracle.md, feedback_runtime_executor_mode_for_judgment_skills.md, feedback_skill_edit_cohort_checklist.md]
+  tags: [audit-methodology, meta-discipline]
 ---
 
 Pick the LEANEST executor that provides the independence a check actually needs:

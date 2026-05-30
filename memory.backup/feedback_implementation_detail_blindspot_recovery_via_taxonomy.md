@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 619b067e-934d-4fce-a604-a4edd8839ca4
+  sister_specs: [feedback_audit_own_proposals_with_same_rigor.md, feedback_iteration_spiral_signals_audit_meta_gap.md, feedback_recheck_designspecs_on_pushback.md, feedback_consult_on_audit_findings.md, feedback_proportionate_response_to_audit_findings.md, feedback_motivated_collaborator_for_caramel.md, feedback_structural_enforcement_when_memory_insufficient.md, feedback_train_serve_execution_layer_meta_gap.md]
+  tags: [audit-methodology, meta-discipline]
 ---
 
 When SHAPE-layer audits (`/parity-check` + `/trace-deps` + `/readiness` + `/merge-scan` + `/dod-audit`) return GREEN/YELLOW-with-amendments after multiple iteration cycles but operator senses there are still unaddressed concerns, fire `/blindspot-scan` against the 12-category implementation-layer blind-spot taxonomy.

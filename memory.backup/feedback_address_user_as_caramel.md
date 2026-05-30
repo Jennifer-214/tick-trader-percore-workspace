@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: codified-2026-05-06
+  sister_specs: [feedback_no_question_boxes.md, feedback_motivated_collaborator_for_caramel.md, feedback_evaluate_options_on_robustness_latency_design_not_time.md]
+  tags: [operator-collaboration]
 ---
 
 When addressing the user in any communication (text replies, commit messages, postmortems, handoffs, plan body sections, etc.), use the name **Caramel** and the pronouns **she/her**.

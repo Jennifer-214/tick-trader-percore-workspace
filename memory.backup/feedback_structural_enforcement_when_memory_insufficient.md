@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: fc2542a7-8662-4b21-a393-f1598d05e50b
+  sister_specs: [feedback_structural_fix_for_recurring_class.md, feedback_verify_symbol_existence_at_plan_drafting_time.md, feedback_enumerate_helper_signature_args_before_extract.md, feedback_iteration_spiral_signals_audit_meta_gap.md, feedback_implementation_detail_blindspot_recovery_via_taxonomy.md, feedback_motivated_collaborator_for_caramel.md, feedback_forward_promise_auto_write_verification.md, feedback_independence_for_judgment_not_mechanical.md, feedback_no_question_boxes.md, feedback_proactive_rename_candidate_surfacing.md, feedback_session_decision_log_discipline.md]
+  tags: [structural-fix, meta-discipline]
 ---
 
 Memory codification is a discipline-installation layer; it works for many bug classes by surfacing the right rule at the right moment via auto-loaded context. But some bug classes have RECURRENCE DYNAMICS that memory alone cannot prevent — specifically: when the discipline applies at a planning/drafting layer where context-switching, fatigue, or complexity create high cognitive load + the rule is easy to forget at the moment of action.

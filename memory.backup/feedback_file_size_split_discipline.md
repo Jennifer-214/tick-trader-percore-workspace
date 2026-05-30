@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: b025c86a-fb34-4d41-a80b-15461b4ca5ff
+  sister_specs: [feedback_claude_md_guidelines_not_stuff_to_do.md, feedback_categorical_triggers_over_hardcoded_refs.md, feedback_metadata_audit_quarterly.md, feedback_iteration_spiral_signals_audit_meta_gap.md, feedback_count_code_loc_not_total_lines.md, feedback_plan_body_length_no_target_loc.md]
+  tags: [doc-discipline, code-loc-counting]
 ---
 
 When a file exceeds its hard threshold, split into sub-files + convert original to INDEX. Generalizes the existing test-file-size discipline to ALL files (docs / sources / skills / ledgers).

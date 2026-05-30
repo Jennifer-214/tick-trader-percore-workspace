@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: f7bb757d-2b7c-4ba6-9c4a-1c7d60bff493
+  sister_specs: [feedback_enumerate_consumers_before_registry_row_deletion.md, feedback_unconditionalization_latent_assumption_audit.md, feedback_operator_facing_doc_cohort_at_cfg_deletion.md, feedback_archived_changelog_preservation_discipline.md, feedback_structural_fix_for_recurring_class.md, feedback_no_defer_for_effort.md, feedback_cpp17_inline_variable_for_shared_state_across_tus.md, feedback_test_change_enumeration_per_plan_body.md, feedback_verify_symbol_existence_at_plan_drafting_time.md]
+  tags: [deletion-discipline, enumeration-discipline]
 ---
 
 **When deleting a feature that spans multiple files** (cfg field removal / API surface removal / cohort wrapper deletion / centralized-arch deprecation), the deletion CAN'T be a single grep-and-delete. Each deletion site has compile-time interdependencies; wrong ordering → mid-WIP compile-fail.

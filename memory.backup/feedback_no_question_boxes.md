@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 37c74114-8590-473f-993e-3dcf0f784339
+  sister_specs: [feedback_structural_enforcement_when_memory_insufficient.md, feedback_motivated_collaborator_for_caramel.md, feedback_address_user_as_caramel.md, feedback_runtime_executor_mode_for_judgment_skills.md]
+  tags: [operator-collaboration]
 ---
 
 **Caramel prefers inline text presentation over AskUserQuestion modal boxes.** When surfacing options:

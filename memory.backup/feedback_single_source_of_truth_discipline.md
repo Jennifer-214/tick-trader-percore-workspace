@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: phase-e-ship-close-v5.15.5.F.4d.1.B.6
+  sister_specs: [feedback_structural_fix_for_recurring_class.md, feedback_audit_canonical_sister_before_new_infra.md, feedback_no_defer_for_effort.md, feedback_cpp17_inline_variable_for_shared_state_across_tus.md, feedback_terminology_evolution_bridge_not_history_rewrite.md, feedback_machine_portable_resolver_for_committed_tool_paths.md]
+  tags: [ssot, structural-fix]
 ---
 
 **Any fact, constant, struct definition, function body, or computation that exists in 2+ places in the codebase is a Single-Source-of-Truth (SSoT) violation candidate.** Default disposition is MERGE. The exception (keep separate) requires documented justification.

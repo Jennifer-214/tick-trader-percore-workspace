@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: user
   originSessionId: baa3c428-ac86-4363-afaa-4b0001a44131
+  sister_specs: [user_public_work_attracts_hedge_funds.md, feedback_dont_measure_structural_work_by_loc.md, feedback_evaluate_options_on_robustness_latency_design_not_time.md, user_adhd_deferred_reward_discipline.md, user_mvp_to_professional_transition.md, user_structure_is_correctness_risk_control_for_capital.md]
+  tags: [user-profile, operator-collaboration]
 ---
 
 Caramel shared 2026-05-15 that this kind of deep architectural work (DESIGN_SPECS, pattern codification, structural-fix design conversations, framework-selection meta-discussions) has replaced gaming + bad habits for her. The intrinsic engagement is part of why she's pushing the codebase to HFT-grade discipline as a solo dev.

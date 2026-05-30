@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 12254fb6-c7fd-4408-b0cc-0330cd24fc0f
+  sister_specs: [feedback_audit_canonical_sister_before_new_infra.md, feedback_proportionate_response_to_audit_findings.md, feedback_categorical_triggers_over_hardcoded_refs.md, feedback_iteration_spiral_signals_audit_meta_gap.md, feedback_implementation_detail_blindspot_recovery_via_taxonomy.md, feedback_enumerate_consumers_before_registry_row_deletion.md]
+  tags: [meta-discipline, audit-methodology, wire-format]
 ---
 
 When a HIGH-RISK ship touches boot code OR slow-path-cycle body (whether on EngineSharded side OR BacktestSharded side), the pre-coding audit gate MUST include a train-serve execution-layer parity walk. The cfg/stamp/wire-format audits ([[feedback_audit_canonical_sister_before_new_infra]] / `/parity-check` Section A-H) do NOT cover this layer.

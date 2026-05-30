@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: d6b9cf31-8bdc-41b7-aaf5-20e8983e9dfb
+  sister_specs: [feedback_enumerate_helper_signature_args_before_extract.md, feedback_iteration_spiral_signals_audit_meta_gap.md, feedback_lead_with_architectural_merit_not_operator_tone.md, feedback_plan_body_length_no_target_loc.md, feedback_plans_have_explicit_end_goal.md, feedback_recheck_designspecs_on_pushback.md, feedback_sequential_audit_for_granular_operator_triage.md, feedback_session_decision_log_discipline.md, feedback_tiered_audit_discipline_per_plan_scope.md, project_e_series_is_vision_convergence_not_scope_balloon.md]
+  tags: [planning-discipline, operator-collaboration]
 ---
 
 In the era of AI-assisted coding, the typing part is fast + mechanical. The human value-add concentrates in PLANNING:

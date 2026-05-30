@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: e52d563e-1fb7-4ce4-ac68-6b9fa4608fec
+  sister_specs: [feedback_audit_canonical_sister_before_new_infra.md, project_anti_spaghetti_audit_cadence.md, feedback_consult_on_audit_findings.md, feedback_new_plans_use_future_oriented_template.md]
+  tags: [framework-discipline, planning-discipline, audit-methodology]
 ---
 
 Plan bodies introducing any new framework infrastructure (FOREACH_X(X) new registry / new metadata bit row / new dispatch table / new sparse sidecar / new AUTOPOPULATE-style consumer macro) MUST include a "Canonical sister registries considered" section near the plan body header (typically in or adjacent to the Scope section). Each candidate sister gets:

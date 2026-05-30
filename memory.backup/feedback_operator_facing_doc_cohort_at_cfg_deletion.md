@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: f7bb757d-2b7c-4ba6-9c4a-1c7d60bff493
+  sister_specs: [feedback_enumerate_consumers_before_registry_row_deletion.md, feedback_multi_surface_deletion_ordering_discipline.md, feedback_archived_changelog_preservation_discipline.md, feedback_backwards_compat_not_default_concern.md, feedback_surface_operator_migration_path_proactively.md, feedback_verify_symbol_existence_at_plan_drafting_time.md]
+  tags: [deletion-discipline, doc-discipline]
 ---
 
 **When deleting a cfg field / operator-facing feature / surface**, code-side consumer enumeration (per `feedback_enumerate_consumers_before_registry_row_deletion`) catches `.cpp/.hpp` references. But OPERATOR-FACING DOC surfaces are typically MISSED — README examples, QUICKSTART tables, cfg.example sister docs, sister operator-onboarding files all reference the deleted surface and become stale post-deletion.

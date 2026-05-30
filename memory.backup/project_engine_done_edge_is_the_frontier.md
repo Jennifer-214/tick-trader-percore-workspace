@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: project
   originSessionId: ab5d402f-2ba7-43b9-9ae7-35187b313483
+  sister_specs: [project_e_series_is_vision_convergence_not_scope_balloon.md, feedback_framework_layer_payoff_diminishing_returns.md, user_mvp_to_professional_transition.md, user_structure_is_correctness_risk_control_for_capital.md]
+  tags: [project-state, meta-discipline]
 ---
 
 Per Caramel (2026-05-29): the engine **core works** — it trades, decides autonomously, and meets the hot-path timing budgets (≤500ns p99 etc.). That's a proven engineering result. But **engineering is an ONGOING problem, not a finished one** (operator's own correction): the `.E` platform rework (multi-exchange / headless / sub-accounts / io_uring) + what comes after is **real destination work** — see [[project_e_series_is_vision_convergence_not_scope_balloon]] — NOT "maintenance." **Engineering is PHASED, though** (operator's framing): it's currently in the **major-structural-change phase** (the `.E`/`.F` convergence to the destination architecture); past that inflection it shifts to **optimizations + extending features/capabilities** (incremental, not structural overhauls) — this transition IS the signal in [[feedback_framework_layer_payoff_diminishing_returns]] ("stop adding framework layers" = structural phase ending) + [[user_mvp_to_professional_transition]]. And the **end goal is a moldable SHAPE** — it solidifies structurally, then grows via optimization/extension + is reshaped by what Caramel learns; not a fixed finish line.

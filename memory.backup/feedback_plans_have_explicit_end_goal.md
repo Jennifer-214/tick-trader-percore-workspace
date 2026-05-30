@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: b025c86a-fb34-4d41-a80b-15461b4ca5ff
+  sister_specs: [feedback_new_plans_use_future_oriented_template.md, feedback_claude_md_guidelines_not_stuff_to_do.md, feedback_plan_right_not_fast.md]
+  tags: [planning-discipline]
 ---
 
 Every MASTER plan and sub-plan body must include an explicit "End goal" section. The discipline catches plans that drift into "implementation steps without a clear deliverable" — every plan should be answerable to the question "what does this ship CLOSE / DELIVER, and how do we verify?"

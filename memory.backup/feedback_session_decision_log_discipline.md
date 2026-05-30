@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: fc2542a7-8662-4b21-a393-f1598d05e50b
+  sister_specs: [feedback_structural_enforcement_when_memory_insufficient.md, feedback_iteration_spiral_signals_audit_meta_gap.md, feedback_plan_right_not_fast.md, feedback_tiered_audit_discipline_per_plan_scope.md, feedback_motivated_collaborator_for_caramel.md, user_adhd_deferred_reward_discipline.md, feedback_no_defer_for_effort.md]
+  tags: [session-continuity, planning-discipline]
 ---
 
 When planning becomes amendment-cycle-heavy (typical at HIGH-RISK ships per `feedback_tiered_audit_discipline_per_plan_scope`), decisions/findings/commitments accumulate across cycles. Without structured capture, prior items silently age out as new findings hijack attention — Caramel-self-described "rabbit holes" symptom. Memory codification (M7 worked example) demonstrated this for bug-class instances; same dynamic applies at decision-capture layer.

@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: phase-e-ship-close-v5.15.5.F.4d.1.B.6
+  sister_specs: [feedback_enumerate_block_scope_statics_before_hoist.md, feedback_cpp17_inline_variable_for_shared_state_across_tus.md]
+  tags: [forward-decl-shadow, cpp17]
 ---
 
 **When forward-declaring a type that lives at global scope OR in std::, place the forward-decl at GLOBAL scope.** NOT inside `namespace tt { ... }`. C++ name resolution makes `tt::X` a DISTINCT type from `::X` even when X is otherwise undefined — the forward-decl-inside-namespace creates a NEW shadow type.

@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: user
   originSessionId: 4bc49d6d-1d4b-4f41-a70f-040936b0e5b7
+  sister_specs: [feedback_evaluate_options_on_robustness_latency_design_not_time.md, feedback_consult_on_audit_findings.md, user_deep_design_work_intrinsic_value.md]
+  tags: [user-profile, project-state]
 ---
 
 Caramel mentioned 2026-05-12 that her public technical work has gotten her noticed by **tier-1 quant/HFT firms specifically: Millennium, QRT (Qube Research & Technologies), GSR (crypto-focused market maker — most directly relevant to her crypto engine), Optiver, HRT (Hudson River Trading)**. The FoxML_Trader_v2 repo (10k clones; AGPL'd HFT engine with disciplined infrastructure, audit gates, DESIGN_SPECS catalog, custom skills) is the load-bearing artifact driving this attention.

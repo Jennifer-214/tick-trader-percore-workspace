@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: e0432c39-f2fb-4a6b-844b-d2ce99975ef0
+  sister_specs: [feedback_phased_pre_rework_correctness_foundation.md, feedback_heavier_default_audit_posture_for_capital.md, feedback_close_the_class_vs_migrate_every_site.md]
+  tags: [audit-methodology, meta-discipline, scope-discipline]
 ---
 
 "You can't build an empire on sand" / "make the foundation solid first" is RIGHT, but it risks becoming a bottomless well — you can always harden more. The **guard-coverage-matrix** (`plans/<sprint>/E-guard-coverage-matrix.md`) is the **stop condition**: harden until every invariant the next phase *actually touches* is an ENFORCED row (Tier-1 `static_assert` / Tier-2 CI / Tier-3 test / golden), not a HOLE (convention-only) or TBD — then build. The floor only rises after (the ratchet); this is the *minimum* standing apparatus, not the ceiling.

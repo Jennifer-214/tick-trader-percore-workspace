@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: user
   originSessionId: baa3c428-ac86-4363-afaa-4b0001a44131
+  sister_specs: [user_deep_design_work_intrinsic_value.md, feedback_no_defer_for_effort.md, feedback_dont_measure_structural_work_by_loc.md, feedback_sequential_audit_for_granular_operator_triage.md, feedback_session_decision_log_discipline.md, user_mvp_to_professional_transition.md, user_structure_is_correctness_risk_control_for_capital.md]
+  tags: [user-profile, operator-collaboration]
 ---
 
 Caramel shared 2026-05-15 that she has ADHD and that delayed-gratification choices like "Phase 4 thorough planning before B.1 coding" are difficult for her — but she's actively choosing the deeper path when she recognizes it's working. Explicit framing: "planning and forethought > dopamine tbh, i have adhd so like, its difficult for me but this is probably the right choice given how successful im seeing it become."

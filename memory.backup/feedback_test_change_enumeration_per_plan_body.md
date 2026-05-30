@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: f8d1354c-702d-4ff6-b985-c90cafb1a1f2
+  sister_specs: [feedback_consult_on_audit_findings.md, feedback_motivated_collaborator_for_caramel.md, feedback_multi_surface_deletion_ordering_discipline.md, feedback_audit_canonical_sister_before_new_infra.md]
+  tags: [test-discipline, planning-discipline, enumeration-discipline]
 ---
 
 When a plan body's coding sequence touches code that has TESTS, the plan body MUST include a dedicated "Tests changed" section before coding starts. Three sub-categories with explicit enumeration:

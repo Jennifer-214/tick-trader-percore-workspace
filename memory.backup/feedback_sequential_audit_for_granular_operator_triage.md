@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: f8d1354c-702d-4ff6-b985-c90cafb1a1f2
+  sister_specs: [feedback_consult_on_audit_findings.md, feedback_plan_right_not_fast.md, feedback_evaluate_options_on_robustness_latency_design_not_time.md, user_adhd_deferred_reward_discipline.md]
+  tags: [audit-methodology, operator-collaboration]
 ---
 
 When firing a multi-target audit batch (multi-plan pre-coding gate, sub-sprint trajectory verification, cohort-wide retrospective audit), the default agent instinct is **parallel batch** — fire all N targets simultaneously to minimize wall-clock. Operator may prefer **sequential per-target** when granular triage matters more than wall-clock speed.

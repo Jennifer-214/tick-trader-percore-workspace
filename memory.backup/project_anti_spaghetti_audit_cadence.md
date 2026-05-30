@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: project
   originSessionId: e52d563e-1fb7-4ce4-ac68-6b9fa4608fec
+  sister_specs: [feedback_audit_canonical_sister_before_new_infra.md, feedback_plans_cite_sister_registry_inspection.md, feedback_consult_on_audit_findings.md, feedback_metadata_audit_quarterly.md]
+  tags: [audit-methodology, project-state]
 ---
 
 Periodic codebase-wide `/anti-spaghetti` audit fires on the following cadence:

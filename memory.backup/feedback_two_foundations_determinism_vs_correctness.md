@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: e0432c39-f2fb-4a6b-844b-d2ce99975ef0
+  sister_specs: [feedback_golden_master_over_reimplemented_oracle.md, feedback_phased_pre_rework_correctness_foundation.md]
+  tags: [audit-methodology, wire-format, meta-discipline]
 ---
 
 When hardening a foundation before a high-risk rework, separate two distinct properties:

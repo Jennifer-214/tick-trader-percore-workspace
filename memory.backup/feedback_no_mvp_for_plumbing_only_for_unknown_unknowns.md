@@ -1,8 +1,11 @@
 ---
 name: Don't ship MVP for plumbing/refactor work — only for genuinely new features with unknown unknowns
 description: in plumbing/refactor work where the design is documented, ship the full design; MVP/deferral is only appropriate for new features with external dependencies that gate validation (e.g., maker orders requiring orderbook data)
-type: feedback
-originSessionId: 532f69da-4245-44f3-92c9-acbb549b9570
+metadata:
+  type: feedback
+  originSessionId: 532f69da-4245-44f3-92c9-acbb549b9570
+  tags: [scope-discipline, planning-discipline]
+  sister_specs: []
 ---
 When considering "minimum-viable vs full-design" for an in-flight ship, the right framing is **what KIND of work this is**:
 

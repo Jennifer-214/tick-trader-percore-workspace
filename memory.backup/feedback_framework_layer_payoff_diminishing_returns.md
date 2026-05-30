@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: d6b9cf31-8bdc-41b7-aaf5-20e8983e9dfb
+  sister_specs: [feedback_future_headache_vs_optimization_scope_framework.md, feedback_prefer_action_parameterized_walker_over_per_consumer_walker_bodies.md, feedback_verify_symbol_existence_at_plan_drafting_time.md, project_engine_done_edge_is_the_frontier.md, user_structure_is_correctness_risk_control_for_capital.md]
+  tags: [framework-discipline, scope-discipline]
 ---
 
 Framework consolidation has diminishing returns. The maintainability gain curve is: transformative early (first registry eliminates 90 manual sites), then steep, then flattens (seventh layer eliminates 6 sites you can feel in your hands but not on the clock).

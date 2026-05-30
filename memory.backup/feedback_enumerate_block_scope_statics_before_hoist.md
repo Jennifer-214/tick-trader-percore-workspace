@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: phase-e-ship-close-v5.15.5.F.4d.1.B.6
+  sister_specs: [feedback_enumerate_helper_signature_args_before_extract.md, feedback_forward_decl_at_global_scope_not_namespace.md, feedback_cpp17_inline_variable_for_shared_state_across_tus.md]
+  tags: [enumeration-discipline, block-scope-statics, refactor-discipline]
 ---
 
 **When hoisting a lambda body or inline function from a monolithic header into a named function (different scope/file), enumerate ALL block-scope `static` variables in the original enclosing scope BEFORE writing the hoisted signature.** Pass each as explicit fn arg (pointer for mutable; by-value for read-only).

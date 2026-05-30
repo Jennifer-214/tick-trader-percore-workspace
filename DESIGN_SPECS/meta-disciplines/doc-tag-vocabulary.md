@@ -1,7 +1,7 @@
 ---
 type: meta-discipline
-stage: 2-draft
-version: 1.0
+stage: 3-first-canonical
+version: 1.1
 established: 2026-05-18
 tags: [doc-discipline, meta-discipline, framework-discipline]
 surface: [registry]
@@ -62,6 +62,16 @@ CI tool `check_doc_metadata.py` (queued at `.C` candidate ship) validates every 
 | `block-scope-statics` | Class 35 / B18; block-scope `static` vars inaccessible from hoisted header fns |
 | `subfolder-pattern` | File-size discipline subfolder split form (INDEX shim + sub-files) |
 | `wontfix-rationale` | Closure-without-action discipline; explicit deferral with rationale for non-action |
+| `planning-discipline` | How to plan — plan-body shaping, explicit end-goals, plan-right-over-fast, scope, drafting rigor (distinct from `plan-template` = template specs) |
+| `enumeration-discipline` | Enumerate-the-set-before-acting — consumers before deletion, members before a categorical claim, args before extract, statics before hoist |
+| `deletion-discipline` | Multi-surface deletion ordering, unconditionalization latent-assumption audit, operator-facing-doc cohort, leaves-first sequencing |
+| `scope-discipline` | Proportionate response, diminishing-returns inflection, future-headache-vs-optimization, over-engineering boundary, defer-vs-do-now |
+| `session-continuity` | Handoff / compaction / decision-log / capture-audit / sister-cohort + forward-promise propagation across sessions |
+| `test-discipline` | Test-change enumeration per plan, test-strength / anti-regression, characterization / golden-master test shape |
+| `migration-discipline` | Architecture-wide rename / terminology evolution, close-the-class-vs-migrate-every-site, archived-record preservation, proactive rename surfacing |
+| `refactor-discipline` | Boundary-stable refactors, reduce-touch-sites, action-parameterized walkers, safe substring/member-access edits |
+| `user-profile` | Who the operator is — working style, motivations, ADHD/deferred-reward, public-work stakes, structure-as-cognition |
+| `project-state` | Ongoing project facts not derivable from code/git — sprint trajectory, cadence conventions, repo quirks, queued work |
 
 ---
 

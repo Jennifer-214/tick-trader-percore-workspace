@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: project
   originSessionId: cde2db64-4da3-4d80-aeb6-00c06bcca15a
+  sister_specs: [feedback_machine_portable_resolver_for_committed_tool_paths.md]
+  tags: [project-state, doc-discipline]
 ---
 
 The engine repo's `CLAUDE.md` is a symlink:

@@ -21,7 +21,7 @@ Composes from `DESIGN_SPECS/meta-disciplines/doc-tag-vocabulary.md` (canonical t
 ## Invocation
 
 - `/find <query>` — natural-language query over doc system metadata
-- `/find <query> --paths <root>...` — limit search to specific roots (default: DESIGN_SPECS/ + claude-skills/ + DOCS/)
+- `/find <query> --paths <root>...` — limit search to specific roots (default: DESIGN_SPECS/ + claude-skills/ + DOCS/ + the memory dir `~/.claude/projects/<id>/memory/` — since D-89 memories carry `metadata.tags:` / `metadata.sister_specs:`, which the flat frontmatter parser greps as `tags:` / `sister_specs:`)
 - `/find <query> --type <type>` — filter by frontmatter type
 - `/find <query> --stage <stage>` — filter by lifecycle stage
 

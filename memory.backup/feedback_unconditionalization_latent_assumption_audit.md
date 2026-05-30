@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: f7bb757d-2b7c-4ba6-9c4a-1c7d60bff493
+  sister_specs: [feedback_multi_surface_deletion_ordering_discipline.md, feedback_enumerate_consumers_before_registry_row_deletion.md, feedback_structural_fix_for_recurring_class.md, feedback_no_defer_for_effort.md, feedback_verify_symbol_existence_at_plan_drafting_time.md]
+  tags: [deletion-discipline, audit-methodology]
 ---
 
 **When unconditionalizing a cfg-gated block** (removing `if (cfg.X == VALUE)` because the gate value becomes the only possibility post-feature-deletion), the block's BODY becomes unconditional. Any **latent assumption** inside the body that was load-bearing for the OTHER cohort (the no-longer-existent one) silently fails — execution proceeds with assumption violated.

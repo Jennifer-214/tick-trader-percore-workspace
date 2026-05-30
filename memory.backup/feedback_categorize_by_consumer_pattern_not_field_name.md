@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 37c74114-8590-473f-993e-3dcf0f784339
+  sister_specs: [feedback_cfg_field_categorization_at_registry_add_time.md, feedback_audit_canonical_sister_before_new_infra.md, feedback_operator_pushback_as_audit_signal.md, feedback_iteration_spiral_signals_audit_meta_gap.md]
+  tags: [framework-discipline, structural-fix]
 ---
 
 **Field-name taxonomy is NOT a substitute for consumer-pattern analysis when categorizing cfg fields.** Two fields with similar names can have entirely different correct categorizations based on:

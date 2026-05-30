@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: f8d1354c-702d-4ff6-b985-c90cafb1a1f2
+  sister_specs: [feedback_plan_right_not_fast.md, feedback_motivated_collaborator_for_caramel.md, feedback_dont_measure_structural_work_by_loc.md, feedback_file_size_split_discipline.md, feedback_evaluate_options_on_robustness_latency_design_not_time.md, feedback_terminology_evolution_bridge_not_history_rewrite.md]
+  tags: [planning-discipline, code-loc-counting]
 ---
 
 **Plan bodies are NOT measured by LOC.** As-much-detail-as-needed is the rule; arbitrary line counts (1200, 1500, etc.) are NOT acceptance criteria for plan length. Stop citing LOC as "good" or "under threshold" for plans.

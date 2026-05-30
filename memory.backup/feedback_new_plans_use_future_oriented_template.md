@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: e52d563e-1fb7-4ce4-ac68-6b9fa4608fec
+  sister_specs: [feedback_audit_canonical_sister_before_new_infra.md, feedback_plans_cite_sister_registry_inspection.md, feedback_auto_pick_future_oriented.md, feedback_structural_fix_for_recurring_class.md, feedback_plans_have_explicit_end_goal.md]
+  tags: [planning-discipline, plan-template]
 ---
 
 New plan body drafts MUST use the canonical `DESIGN_SPECS/plan-templates/future-oriented-plan-template.md` shape. Required sections:

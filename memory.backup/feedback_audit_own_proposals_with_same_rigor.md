@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: ba5429a9-2f65-4f8d-950c-3ae250973f24
+  sister_specs: [feedback_proactive_novel_alternative_consideration.md, feedback_consult_on_audit_findings.md, feedback_recheck_designspecs_on_pushback.md, feedback_surface_operator_migration_path_proactively.md, feedback_enumerate_helper_signature_args_before_extract.md, feedback_enumerate_set_before_categorical_claim.md, feedback_implementation_detail_blindspot_recovery_via_taxonomy.md, feedback_iteration_spiral_signals_audit_meta_gap.md, feedback_lead_with_architectural_merit_not_operator_tone.md, project_e_series_is_vision_convergence_not_scope_balloon.md]
+  tags: [audit-methodology, operator-collaboration]
 ---
 
 Before recommending any decision (auto-pick on design space; framework extension; new spec; refactor scope), apply the FULL audit discipline to my OWN proposal:

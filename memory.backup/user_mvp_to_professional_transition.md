@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: user
   originSessionId: 85ff424b-6357-4f2a-bf6f-b6121dc50524
+  sister_specs: [feedback_dont_measure_structural_work_by_loc.md, user_deep_design_work_intrinsic_value.md, user_adhd_deferred_reward_discipline.md, project_engine_done_edge_is_the_frontier.md, user_structure_is_correctness_risk_control_for_capital.md]
+  tags: [user-profile, project-state]
 ---
 
 Caramel built the v2 engine as a functional MVP first ("sprinted for an MVP that was functional"). The current phase is the deliberate professionalization / pruning phase — implementing guards, dev philosophy, and framework discipline. The motivation: she got tired of half-breaking updates, and is now encoding guards into the codebase so the bug patterns that cause those half-breaking updates can't recur.

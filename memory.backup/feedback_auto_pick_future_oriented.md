@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: ffe2a54a-a6de-4e19-903c-9879fc9a21e8
+  sister_specs: [feedback_new_plans_use_future_oriented_template.md]
+  tags: [planning-discipline, scope-discipline, operator-collaboration]
 ---
 
 At any design choice point, auto-pick the more future-oriented answer instead of punting the decision to the operator. Surface ONLY when (a) the future-vs-now trade-off is genuinely sharp (cost/risk/complexity asymmetry; e.g., Option C cleaner today for small N vs Option D scales better for larger N), OR (b) I don't have enough info to determine which IS more future-oriented (e.g., uncertain what `.F.4e+` will add). Never offer binary "your call" framing on decisions where future-orientation auto-decides.

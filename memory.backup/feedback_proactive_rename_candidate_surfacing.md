@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: f8d1354c-702d-4ff6-b985-c90cafb1a1f2
+  sister_specs: [feedback_motivated_collaborator_for_caramel.md, feedback_no_defer_for_effort.md, feedback_sister_cohort_amendment_completeness.md, feedback_avoid_substring_replace_all_on_member_access.md, feedback_structural_enforcement_when_memory_insufficient.md, feedback_categorical_triggers_over_hardcoded_refs.md, feedback_terminology_evolution_bridge_not_history_rewrite.md]
+  tags: [migration-discipline]
 ---
 
 During multi-ship architectural restructures (e.g., the `.E` sub-sprint with Cluster/Node/Deployment + multi-exchange + headless reshape), naming inconsistencies between old and new architecture accumulate confusion. Discipline: **PROACTIVELY surface rename candidates as encountered** — not just at planned rename ships.

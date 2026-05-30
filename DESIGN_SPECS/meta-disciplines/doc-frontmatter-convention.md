@@ -1,7 +1,7 @@
 ---
 type: meta-discipline
-stage: 2-draft
-version: 1.0
+stage: 3-first-canonical
+version: 1.1
 established: 2026-05-18
 tags: [doc-discipline, meta-discipline, framework-discipline]
 surface: [registry]
@@ -12,7 +12,7 @@ applies_at_skills: []
 # Universal YAML frontmatter convention
 
 **Established:** 2026-05-18 (v5.15.5.F.4d.1.B.3 doc-layer refresh — codified after Caramel surfaced institutional-memory architecture vision)
-**Status:** Stage 2 DRAFT v1.0 — Stage 3 first canonical queued at `.C` candidate ship (institutional-memory rollout per TECH_DEBT-115)
+**Status:** Stage 3 first-canonical v1.1 — landed `.E.0.4` (2026-05-29); the `### memory/*.md` schema goes first-canonical via the memory rollout (D-89 + TECH_DEBT-115)
 **Cross-references:**
 - Sister: `doc-tag-vocabulary.md` (the tag vocabulary this convention uses)
 - Sister: `categorical-triggers-in-always-loaded-docs.md` (companion doc-discipline)
@@ -74,11 +74,22 @@ loads_dynamically: [DESIGN_SPECS/file.md, memory/file.md]
 ```
 
 ### memory/*.md
+
+Memories use the **Claude Code harness-native** frontmatter (`name:` / `description:` / `metadata.type:` — the recall system reads these; never remove) PLUS doc-system fields nested **under `metadata:`** so they survive harness frontmatter rewrites (D-89). NOT the universal top-level `stage:`/`version:`/`surface:` block — a memory has no lifecycle stage.
+
 ```yaml
-type: feedback | user | project | reference
-applies_to: [planning, coding, audit, all]  # NEW field
-sister_memories: [memory_name_1, memory_name_2]
+name: <type>_<slug>                  # = filename stem; feedback_/user_/project_/reference_
+description: <one-line recall summary>    # harness recall relevance (load-bearing)
+metadata:
+  type: feedback | user | project | reference   # harness category (load-bearing)
+  tags: [<concern-tags per doc-tag-vocabulary.md>]
+  sister_specs: [<memory-filename | DESIGN_SPECS/path.md>, ...]   # unified: memory→memory AND memory→spec
 ```
+
+- `tags:` + `sister_specs:` nest under `metadata:` (harness-durable). `check_doc_metadata`'s flat frontmatter parser surfaces them as top-level, so they validate with no parser change.
+- `sister_specs:` is the SINGLE unified cross-link field (no separate `sister_memories:` — D-89 fork 2); resolved against BOTH the memory tree and `DESIGN_SPECS/`, bidirectional over both.
+- Template: `DESIGN_SPECS/plan-templates/memory-template.md` (via `/doc-create memory`).
+- Inline `[[filename]]` body links use the FILENAME form, not the `name:` slug (WH-1).
 
 ### DOCS/TECH_DEBT.md ENTRIES (per-entry frontmatter)
 ```yaml
@@ -252,7 +263,7 @@ CI tool verifies frontmatter `type:` matches enclosing folder (drift detection).
 
 - **Stage 1 (problem identification):** Caramel surfaced 2026-05-18 institutional-memory architecture vision
 - **Stage 2 (DESIGN_SPEC draft):** THIS DOC (2026-05-18)
-- **Stage 3 (first canonical):** queued at `.C` candidate ship — 5-10 high-traffic DESIGN_SPECS migrate
+- **Stage 3 (first canonical):** LANDED `.E.0.4` (2026-05-29) — 80+ DESIGN_SPECS carry frontmatter + the `### memory/*.md` schema first-canonical via the memory rollout (D-89)
 - **Stage 4 (cohort migration):** queued at `.D` candidate ship — 80+ DESIGN_SPECS + 30 SKILL.md + TECH_DEBT YAML
 - **Stage 5 (CLAUDE.md promotion):** ALREADY landed — CLAUDE.md § How to find anything references this convention
 - **Stage 6 (cadence-locked):** CI tool + `/metadata-audit` quarterly enforce

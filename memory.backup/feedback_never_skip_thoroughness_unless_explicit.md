@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: c95ac2bd-d963-485c-b028-60d593bce711
+  sister_specs: [feedback_heavier_default_audit_posture_for_capital.md, feedback_no_defer_for_effort.md, feedback_listen_and_execute_simply.md, feedback_runtime_executor_mode_for_judgment_skills.md]
+  tags: [audit-methodology, operator-collaboration]
 ---
 
 The skills are thorough for a purpose. **Default to RUNNING every thorough step (independent review / audit gate / blindspot-scan / readiness check). Skip ONLY when the operator EXPLICITLY says so (a flag, or a stated "skip X") — NEVER on the agent's own judgment that the step is redundant, already-covered, or trivial.**

@@ -1,8 +1,11 @@
 ---
 name: Bump Version.hpp on every ship
 description: Every tagged ship in FoxML_Trader_v2 must include a Version.hpp bump (MINOR/PATCH + STRING). Operator caught it slipping across v5.11.0 → v5.11.16.
-type: feedback
-originSessionId: eb96e5e5-7931-48ae-9510-0b0433c695bf
+metadata:
+  type: feedback
+  originSessionId: eb96e5e5-7931-48ae-9510-0b0433c695bf
+  tags: [project-state, ledger-discipline]
+  sister_specs: []
 ---
 Every ship that creates a `vX.Y.Z` git tag in `~/code/FoxML_Trader_v2`
 must bump `Version.hpp` in the SAME commit:

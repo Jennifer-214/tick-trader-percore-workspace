@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: f8d1354c-702d-4ff6-b985-c90cafb1a1f2
+  sister_specs: [feedback_archived_changelog_preservation_discipline.md, feedback_proactive_rename_candidate_surfacing.md, feedback_plan_body_length_no_target_loc.md, feedback_motivated_collaborator_for_caramel.md, feedback_single_source_of_truth_discipline.md]
+  tags: [migration-discipline, doc-discipline]
 ---
 
 When an architecture-wide terminology rename lands in a multi-year project (e.g., Core→Node / per-core→per-node at `.E.1`), the doc system splits into two populations that need OPPOSITE treatment:

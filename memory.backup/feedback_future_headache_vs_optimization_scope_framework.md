@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: ba5429a9-2f65-4f8d-950c-3ae250973f24
+  sister_specs: [feedback_no_defer_for_effort.md, feedback_motivated_collaborator_for_caramel.md, feedback_evaluate_options_on_robustness_latency_design_not_time.md, feedback_overengineering_boundary_when_future_easier.md, feedback_framework_layer_payoff_diminishing_returns.md]
+  tags: [scope-discipline, audit-methodology]
 ---
 
 When scope discoveries surface mid-ship (e.g., TECH_DEBT-104 surfaced ~5 surviving anti-pattern instances at model-state cohort during `.B.3` pre-coding verification), the right axis for include-vs-defer is:

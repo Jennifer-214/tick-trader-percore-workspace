@@ -7,7 +7,7 @@ audit_cadence: ad-hoc
 tags: [doc-discipline, plan-template]
 surface: []
 sister_skills: [/plan-draft, /find, /metadata-audit]
-loads_dynamically: [DESIGN_SPECS/plan-templates/design-spec-template.md, DESIGN_SPECS/plan-templates/postmortem-template.md, DESIGN_SPECS/plan-templates/sprint-master-plan-template.md, DESIGN_SPECS/plan-templates/future-oriented-plan-template.md, DESIGN_SPECS/ledger-templates/ledger-entry-templates.md, DESIGN_SPECS/meta-disciplines/doc-frontmatter-convention.md, DESIGN_SPECS/meta-disciplines/doc-tag-vocabulary.md]
+loads_dynamically: [DESIGN_SPECS/plan-templates/design-spec-template.md, DESIGN_SPECS/plan-templates/postmortem-template.md, DESIGN_SPECS/plan-templates/sprint-master-plan-template.md, DESIGN_SPECS/plan-templates/future-oriented-plan-template.md, DESIGN_SPECS/ledger-templates/ledger-entry-templates.md, DESIGN_SPECS/plan-templates/memory-template.md, DESIGN_SPECS/meta-disciplines/doc-frontmatter-convention.md, DESIGN_SPECS/meta-disciplines/doc-tag-vocabulary.md]
 ---
 
 # /doc-create — Type-aware doc scaffolding
@@ -53,7 +53,7 @@ Composes templates from `DESIGN_SPECS/`:
 | `feature-lookup` | `ledger-entry-templates.md § Feature lookup entry` | introduced-version / surface_tags |
 | `landmine` | `ledger-entry-templates.md § Landmine entry` | severity / debug_hours / root_cause |
 | `hot-path-changelog` | `ledger-entry-templates.md § Hot path changelog entry` | ship_tag / delta_ns / measurement_method |
-| `memory` | (memory file frontmatter) | memory-type (feedback/user/project/reference) / surface tags |
+| `memory` | `plan-templates/memory-template.md` | memory-type (feedback/user/project/reference) / concern tags / sister_specs |
 
 ## Execution model
 
@@ -110,6 +110,7 @@ Before writing:
 - Reference: `DESIGN_SPECS/plan-templates/sprint-master-plan-template.md` (MASTER plan)
 - Reference: `DESIGN_SPECS/plan-templates/future-oriented-plan-template.md` (sub-plan)
 - Reference: `DESIGN_SPECS/ledger-templates/ledger-entry-templates.md` (TECH_DEBT / Bug Class / PARITY entries)
+- Reference: `DESIGN_SPECS/plan-templates/memory-template.md` (memory scaffold — `/doc-create memory`; D-89 metadata-nested schema)
 - Reference: `DESIGN_SPECS/meta-disciplines/doc-frontmatter-convention.md` (frontmatter schema)
 - Reference: `DESIGN_SPECS/meta-disciplines/doc-tag-vocabulary.md` (canonical tags)
 - Sister skill: `/find` (queries metadata; this skill creates metadata)

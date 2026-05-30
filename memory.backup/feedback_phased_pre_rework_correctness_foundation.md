@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: a5882276-85a9-4550-a78d-e4ab42ed7eaf
+  tags: [audit-methodology, structural-fix, meta-discipline]
+  sister_specs: [feedback_golden_master_over_reimplemented_oracle.md, feedback_two_foundations_determinism_vs_correctness.md, feedback_guard_matrix_bounds_foundation_hardening.md, feedback_operator_pushback_as_audit_signal.md]
 ---
 
 Before a high-risk multi-ship restructure (e.g. a ~5,000-site rename + concurrency-model change), lay the correctness foundation in PHASES, and bound the pre-rework engine-fix scope **precisely**.

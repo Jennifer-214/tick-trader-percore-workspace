@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 23677810-15af-419a-bb0f-e89d723c198b
+  sister_specs: []
+  tags: [project-state, refactor-discipline]
 ---
 
 foxml_suite (the backtest + training GUI binary; built from build_suite/ with XGBoost) needs the same framework consolidation treatment that engine has been receiving through `.F.4d.1.B.*`. Current sprint scope (`.F.4d.1.*` + `.F.4e` + `.F.4f`) is engine-side primarily — Caramel surfaced 2026-05-23 that foxml_suite has only gotten CONSUMER-side migration (149-site sweep at `.B.3` Step 1.6.4 touched BacktestPanels.hpp reads of `inf.inference_cfg_<name>`), NOT producer-side framework discipline for its own cfg/state surfaces.

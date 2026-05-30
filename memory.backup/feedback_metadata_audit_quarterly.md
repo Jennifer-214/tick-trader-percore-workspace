@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: b025c86a-fb34-4d41-a80b-15461b4ca5ff
+  sister_specs: [project_anti_spaghetti_audit_cadence.md, feedback_categorical_triggers_over_hardcoded_refs.md, feedback_claude_md_guidelines_not_stuff_to_do.md, feedback_iteration_spiral_signals_audit_meta_gap.md, feedback_file_size_split_discipline.md]
+  tags: [audit-methodology, doc-discipline]
 ---
 
 Fire `/metadata-audit` skill on quarterly cadence (sister to `/anti-spaghetti` quarterly cadence per [[project-anti-spaghetti-audit-cadence]]). Catches doc-system drift mechanically: undefined tags / missing frontmatter / broken sister-doc links / Stage 2 DRAFTs older than N sprints / singleton tags.

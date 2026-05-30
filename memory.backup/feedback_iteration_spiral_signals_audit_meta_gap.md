@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: ba5429a9-2f65-4f8d-950c-3ae250973f24
+  sister_specs: [feedback_plan_right_not_fast.md, feedback_enumerate_consumers_before_registry_row_deletion.md, feedback_audit_own_proposals_with_same_rigor.md, feedback_recheck_designspecs_on_pushback.md, feedback_categorize_by_consumer_pattern_not_field_name.md, feedback_file_size_split_discipline.md, feedback_implementation_detail_blindspot_recovery_via_taxonomy.md, feedback_metadata_audit_quarterly.md, feedback_operator_pushback_as_audit_signal.md, feedback_session_decision_log_discipline.md, feedback_sister_cohort_amendment_completeness.md, feedback_structural_enforcement_when_memory_insufficient.md, feedback_tiered_audit_discipline_per_plan_scope.md, feedback_train_serve_execution_layer_meta_gap.md, feedback_verify_symbol_existence_at_plan_drafting_time.md]
+  tags: [audit-methodology, meta-discipline]
 ---
 
 When refining a plan body through audit-update-amend cycles, watch the SHAPE of findings across iterations:

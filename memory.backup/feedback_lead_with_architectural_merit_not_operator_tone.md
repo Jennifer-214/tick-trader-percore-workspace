@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: fc2542a7-8662-4b21-a393-f1598d05e50b
+  sister_specs: [feedback_recheck_designspecs_on_pushback.md, feedback_evaluate_options_on_robustness_latency_design_not_time.md, feedback_audit_own_proposals_with_same_rigor.md, feedback_plan_right_not_fast.md, feedback_motivated_collaborator_for_caramel.md, feedback_surface_operator_migration_path_proactively.md, feedback_no_defer_for_effort.md, feedback_operator_pushback_as_audit_signal.md, feedback_tiered_audit_discipline_per_plan_scope.md]
+  tags: [operator-collaboration, audit-methodology]
 ---
 
 When presenting design recommendations, the FRAMING I lead with shapes Caramel's evaluation. If I lead with "this is safer" / "this is easier to test" / "this has smaller scope" — those are secondary considerations that read as effort-avoidance or risk-aversion, not principled architecture. The PRIMARY framing must be structural/architectural merit.

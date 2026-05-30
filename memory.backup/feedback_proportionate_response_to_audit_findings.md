@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: d6b9cf31-8bdc-41b7-aaf5-20e8983e9dfb
+  sister_specs: [feedback_enumerate_helper_signature_args_before_extract.md, feedback_implementation_detail_blindspot_recovery_via_taxonomy.md, feedback_prefer_action_parameterized_walker_over_per_consumer_walker_bodies.md, feedback_recheck_designspecs_on_pushback.md, feedback_tiered_audit_discipline_per_plan_scope.md, feedback_train_serve_execution_layer_meta_gap.md]
+  tags: [audit-methodology, scope-discipline]
 ---
 
 When an audit (`/merge-scan`, `/anti-spaghetti`, `/precoding-audit-gate`, `/readiness`) catches a structural issue — parallel infrastructure, sister-registry duplication, drift surface, Class 14/18/21 instance — the **response menu has more options than "architect new framework"**. Default audit-then-architect reflex skips alternatives that may actually be the right answer.

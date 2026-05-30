@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: user
   originSessionId: ab5d402f-2ba7-43b9-9ae7-35187b313483
+  sister_specs: [user_adhd_deferred_reward_discipline.md, user_deep_design_work_intrinsic_value.md, user_mvp_to_professional_transition.md, feedback_framework_layer_payoff_diminishing_returns.md, feedback_heavier_default_audit_posture_for_capital.md, project_engine_done_edge_is_the_frontier.md]
+  tags: [user-profile, operator-collaboration]
 ---
 
 The heavy structure in this codebase (audit gates, parity checks, 20 hard invariants, ~290K lines of plans/DESIGN_SPECS/skills around ~47K LOC of engine) serves TWO ends, per Caramel's own framing — do NOT frame it as over-instrumentation or hobby craft:

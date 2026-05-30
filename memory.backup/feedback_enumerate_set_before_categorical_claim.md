@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: a5882276-85a9-4550-a78d-e4ab42ed7eaf
+  sister_specs: [feedback_audit_own_proposals_with_same_rigor.md, feedback_enumerate_consumers_before_registry_row_deletion.md, feedback_operator_pushback_as_audit_signal.md]
+  tags: [enumeration-discipline, audit-methodology]
 ---
 
 When you dismiss or bound a risk (or scope) by claiming a property holds over a SET — "the other X are exact-integer," "the rest are unaffected," "all remaining cases are safe/identical" — **enumerate the set's actual members and verify the property for each.** A categorical claim over an *unenumerated* set is a blind spot: it's exactly how a non-conforming member slips a real risk past the audit, dressed as "low likelihood."

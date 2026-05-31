@@ -58,6 +58,7 @@ Composes templates from `DESIGN_SPECS/`:
 ## Execution model
 
 1. Parse type + initial args
+1.5. **Cohort survey (M7 guard — D-120) — for a new DESIGN_SPEC:** grep the `type:` cohort first (`rg -l "^type: <type>" DESIGN_SPECS/`) + surface the existing siblings, so the author EXTENDS a canonical sister (or confirms genuinely-new) BEFORE scaffolding; pre-fill `sister_specs:` from the cohort. Closes the `canonical-sister-before-new-infra` lapse — a *codified* discipline that was violated even by an experienced pass at `.E` (added `audit-finding-kind-taxonomy.md` without surveying the cohort → missed `audit-report-format.md`); memory-insufficient → structural enforcement (M7).
 2. Load matching template from DESIGN_SPECS/
 3. Interactive prompt for required fields (validate tags against `doc-tag-vocabulary.md`)
 4. Substitute placeholders in template
@@ -86,6 +87,7 @@ Before writing:
 - `type:` is valid per `doc-frontmatter-convention.md`
 - `stage:` is one of 6 lifecycle values
 - `sister_specs:` paths exist (call `check_doc_metadata.py --paths <new-doc>` post-write)
+- **(new DESIGN_SPEC) the `type:` cohort was surveyed + siblings considered** (M7 guard, D-120) — prevents adding a parallel spec where a canonical sister should be extended
 
 ## Trade-offs + when to apply
 

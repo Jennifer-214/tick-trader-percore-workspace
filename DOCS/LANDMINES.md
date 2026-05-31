@@ -108,6 +108,22 @@ watching it actually work).
 
 ---
 
+## Landmine 3 — no warm-restart across the #11 numeric-core epoch (flatten before deploy) (set 2026-05-31, pre-#11 numeric-foundation)
+
+**Symptom:** after deploying the #11 decimal-money numeric-core ship (the binary→decimal `FixedPoint<RADIX,FRAC>` epoch), an engine restart that expects to RECOVER open positions from a snapshot silently recovers nothing (or refuses to start) — any positions/balance held at deploy time are lost.
+
+**Root cause:** the money repr change (`FPN<64>` binary → `<10,8>` decimal) changes `sizeof(FPN<F>)` + the raw byte layout of every money field. `ShardedSnapshotPersist.hpp` writes per-core money + `Position<F>` structs RAW via `fwrite` (magic + version gated, NOT HMAC). The epoch bumps `SHARDED_SNAPSHOT_VERSION` → the recovery path correctly REJECTS the old-version snapshot (by design — D-100 epoch boundary; the alternative, reading old bytes as decimal, would silently recover a corrupt balance, which is worse). But "correctly rejected" still means the pre-deploy state is unrecoverable.
+
+**Why there's no clean fix:** you cannot migrate the old snapshot forward — the point of the epoch is that the old binary money values are not bit-translatable to exact decimal (re-deriving them would reintroduce the imprecision). Version-reject is the correct, safe behavior; the mitigation is operational, not code.
+
+**Current mitigation (operational — MANDATORY at #11 deploy):** FLATTEN all open positions + drain to a clean flat state BEFORE deploying #11. Deploy onto a flat book. There is no warm-restart across this one epoch boundary. Normal warm-restart resumes working after the first post-#11 snapshot is written in the new format.
+
+**Future-Claude debugging hint:** a post-#11 restart recovers no positions / rejects the snapshot at boot → check whether the snapshot predates the #11 epoch (version < the #11 bump). If so this is EXPECTED (not a bug); the pre-#11 state is gone by design. Investigate as a bug only if the snapshot is already post-#11-format.
+
+**Reference:** decision-log D-100 (golden-epoch) + D-110 (the `ShardedSnapshotPersist` money surface) + D-117 (#11 phasing; P5 = persistence/recovery round-trip) · the #11 foundation plan acceptance (recovery round-trip + warm-restart test) · synthesis bite B-ζ.
+
+---
+
 ## How to add a new landmine
 
 When you encounter a non-obvious pitfall (segfault, race, parallelism

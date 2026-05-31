@@ -74,6 +74,10 @@ Even INLINE MERGE produces compile failures + CI failures when wrong; doesn't in
 - Doesn't mean "always present all options every time." For routine cases, recommendations are fine. For substantial structural decisions, present alternatives.
 - Doesn't mean "infinite planning." At some point planning concludes + execution starts. The "stop walking" moment per `feedback_framework_layer_payoff_diminishing_returns` is real — but it comes from "we've evaluated and have the right answer", not from "first option that's sufficient".
 
+## Finding-kind axis (names the shape the menu responds to)
+
+`audit-methodologies/audit-finding-kind-taxonomy.md` (D-116, 2026-05-31) tags each finding by KIND {mechanical | structural | design} — orthogonal to severity. The kind maps onto this menu: **mechanical → (A) INLINE MERGE**; **structural → (B) ACCEPT or (C) FOLD**; **design → (D) ARCHITECT / route-to-design-pass**. Kind names the *shape*; this menu picks the *response*; disposition records *where it lands*. Use the shorthand `<SEV>·<kind>[·wide]` when surfacing a finding so the menu choice is legible straight from the tag — and so operator + agent share one compact triage vocabulary.
+
 ## Sister memories
 
 - `feedback_plan_right_not_fast` — meta-discipline; this memory's "evaluate honestly not auto-pick" framing applies that meta to audit findings specifically

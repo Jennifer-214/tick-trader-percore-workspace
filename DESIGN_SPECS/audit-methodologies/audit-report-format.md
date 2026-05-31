@@ -5,7 +5,7 @@ version: 1.0
 established: 2026-05-18
 tags: [audit-methodology, doc-discipline, framework-discipline]
 surface: [test-infrastructure, ci-tooling]
-sister_specs: [audit-driven-pre-coding-gate.md, implementation-layer-blindspot-taxonomy.md, doc-frontmatter-convention.md]
+sister_specs: [audit-driven-pre-coding-gate.md, implementation-layer-blindspot-taxonomy.md, doc-frontmatter-convention.md, audit-finding-kind-taxonomy.md]
 applies_at_skills: [/precoding-audit-gate, /parity-check, /trace-deps, /merge-scan, /dod-audit, /blindspot-scan, /hft-audit, /ml-audit, /accounting-audit, /registry-fit-audit, /bug-check, /anti-spaghetti, /test-strength-audit, /post-ship-audit]
 ---
 
@@ -53,6 +53,7 @@ related_plan: <plan path or null>
    - **Expected**: <what discipline says>
    - **Fix**: <suggested action>
    - **Cross-ref**: <DESIGN_SPECS / Class N / H N / memory>
+   - **Kind**: <mechanical | structural | design>[·wide] — per `audit-finding-kind-taxonomy.md` (the per-finding work-type axis, orthogonal to severity; drives sequencing; shorthand `<SEV>·<kind>`)
 
 ### HIGH (YELLOW) — should address pre-coding
 1. <same shape>

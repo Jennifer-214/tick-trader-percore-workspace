@@ -53,9 +53,10 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/concurrency-patterns/structured-audit-log-pattern.md`
 
-### audit-methodology (53 files)
+### audit-methodology (57 files)
 
 - `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md`
+- `DESIGN_SPECS/audit-methodologies/audit-finding-kind-taxonomy.md`
 - `DESIGN_SPECS/audit-methodologies/audit-report-format.md`
 - `DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md`
 - `DESIGN_SPECS/meta-disciplines/audit-driven-sub-sprint-trajectory-verification.md`
@@ -80,6 +81,7 @@ This file is a snapshot for static browsing.
 - `claude-skills/readiness/SKILL.md`
 - `claude-skills/test-strength-audit/SKILL.md`
 - `claude-skills/trace-deps/SKILL.md`
+- `memory/feedback_address_med_low_findings_not_just_high_crit.md`
 - `memory/feedback_audit_canonical_sister_before_new_infra.md`
 - `memory/feedback_audit_own_proposals_with_same_rigor.md`
 - `memory/feedback_consult_on_audit_findings.md`
@@ -100,12 +102,14 @@ This file is a snapshot for static browsing.
 - `memory/feedback_proactive_novel_alternative_consideration.md`
 - `memory/feedback_proportionate_response_to_audit_findings.md`
 - `memory/feedback_recheck_designspecs_on_pushback.md`
+- `memory/feedback_run_doc_ci_tools_first_never_hand_verify.md`
 - `memory/feedback_runtime_executor_mode_for_judgment_skills.md`
 - `memory/feedback_sequential_audit_for_granular_operator_triage.md`
 - `memory/feedback_tiered_audit_discipline_per_plan_scope.md`
 - `memory/feedback_train_serve_execution_layer_meta_gap.md`
 - `memory/feedback_two_foundations_determinism_vs_correctness.md`
 - `memory/feedback_unconditionalization_latent_assumption_audit.md`
+- `memory/feedback_verify_every_enumerated_site_at_close.md`
 - `memory/feedback_verify_symbol_existence_at_plan_drafting_time.md`
 - `memory/project_anti_spaghetti_audit_cadence.md`
 
@@ -199,7 +203,7 @@ This file is a snapshot for static browsing.
 - `memory/feedback_file_size_split_discipline.md`
 - `memory/feedback_plan_body_length_no_target_loc.md`
 
-### concurrency (19 files)
+### concurrency (20 files)
 
 - `DESIGN_SPECS/concurrency-patterns/concurrency-model-summary.md`
 - `DESIGN_SPECS/concurrency-patterns/cross-thread-snapshot-publish-cluster-isolation.md`
@@ -214,6 +218,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/concurrency-patterns/userspace-tls-pattern.md`
 - `DESIGN_SPECS/data-disciplines/cache-layout-discipline-for-hot-side-structs.md`
 - `DESIGN_SPECS/data-disciplines/cache-line-discipline.md`
+- `DESIGN_SPECS/data-disciplines/locale-determinism-discipline.md`
 - `DESIGN_SPECS/data-disciplines/per-snapshot-cluster-layout-pattern.md`
 - `DESIGN_SPECS/data-disciplines/raii-destructor-with-cluster-reorg-interaction.md`
 - `DESIGN_SPECS/feature-patterns/shadow-load-state-transition-pattern.md`
@@ -325,6 +330,10 @@ This file is a snapshot for static browsing.
 ### deployment-mode (1 files)
 
 - `DESIGN_SPECS/framework-patterns/kernel-vs-userspace-networking-cfg-pattern.md`
+
+### determinism (1 files)
+
+- `DESIGN_SPECS/data-disciplines/locale-determinism-discipline.md`
 
 ### dev-mode (1 files)
 
@@ -445,6 +454,10 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/ibkr-fa-structure-pattern.md`
 
+### finding-triage (1 files)
+
+- `DESIGN_SPECS/audit-methodologies/audit-finding-kind-taxonomy.md`
+
 ### fix-protocol (1 files)
 
 - `DESIGN_SPECS/framework-patterns/fix-session-management-pattern.md`
@@ -463,7 +476,7 @@ This file is a snapshot for static browsing.
 
 - `memory/feedback_forward_decl_at_global_scope_not_namespace.md`
 
-### framework-discipline (128 files)
+### framework-discipline (131 files)
 
 - `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md`
 - `DESIGN_SPECS/audit-methodologies/audit-report-format.md`
@@ -588,11 +601,14 @@ This file is a snapshot for static browsing.
 - `memory/feedback_audit_canonical_sister_before_new_infra.md`
 - `memory/feedback_categorize_by_consumer_pattern_not_field_name.md`
 - `memory/feedback_cfg_field_categorization_at_registry_add_time.md`
+- `memory/feedback_defer_to_source_authority_for_external_semantics.md`
 - `memory/feedback_enumerate_consumers_before_registry_row_deletion.md`
 - `memory/feedback_framework_layer_payoff_diminishing_returns.md`
 - `memory/feedback_plans_cite_sister_registry_inspection.md`
 - `memory/feedback_prefer_action_parameterized_walker_over_per_consumer_walker_bodies.md`
+- `memory/feedback_run_doc_ci_tools_first_never_hand_verify.md`
 - `memory/feedback_structural_fix_for_recurring_class.md`
+- `memory/feedback_verify_every_enumerated_site_at_close.md`
 
 ### grace-period (1 files)
 
@@ -605,6 +621,14 @@ This file is a snapshot for static browsing.
 ### h13-compliance (1 files)
 
 - `DESIGN_SPECS/framework-patterns/exchange-adapter-tt-dispatch-pattern.md`
+
+### h5 (1 files)
+
+- `DESIGN_SPECS/data-disciplines/locale-determinism-discipline.md`
+
+### h9 (1 files)
+
+- `DESIGN_SPECS/data-disciplines/locale-determinism-discipline.md`
 
 ### hardware-required (1 files)
 
@@ -738,6 +762,10 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/per-node-paper-mode-flag-pattern.md`
 
+### locale (1 files)
+
+- `DESIGN_SPECS/data-disciplines/locale-determinism-discipline.md`
+
 ### market-data-fan-out (1 files)
 
 - `DESIGN_SPECS/framework-patterns/per-cluster-producer-pattern.md`
@@ -750,7 +778,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/per-node-paper-mode-flag-pattern.md`
 
-### meta-discipline (35 files)
+### meta-discipline (37 files)
 
 - `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md`
 - `DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md`
@@ -783,9 +811,11 @@ This file is a snapshot for static browsing.
 - `memory/feedback_independence_for_judgment_not_mechanical.md`
 - `memory/feedback_iteration_spiral_signals_audit_meta_gap.md`
 - `memory/feedback_phased_pre_rework_correctness_foundation.md`
+- `memory/feedback_run_doc_ci_tools_first_never_hand_verify.md`
 - `memory/feedback_structural_enforcement_when_memory_insufficient.md`
 - `memory/feedback_train_serve_execution_layer_meta_gap.md`
 - `memory/feedback_two_foundations_determinism_vs_correctness.md`
+- `memory/feedback_verify_every_enumerated_site_at_close.md`
 - `memory/project_engine_done_edge_is_the_frontier.md`
 
 ### meta-error-tracking (1 files)
@@ -910,6 +940,10 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/per-node-paper-mode-flag-pattern.md`
 
+### parsing (1 files)
+
+- `DESIGN_SPECS/data-disciplines/locale-determinism-discipline.md`
+
 ### pattern-codification (22 files)
 
 - `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md`
@@ -994,8 +1028,9 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/meta-disciplines/audit-driven-sub-sprint-trajectory-verification.md`
 
-### planning-discipline (12 files)
+### planning-discipline (13 files)
 
+- `memory/feedback_address_med_low_findings_not_just_high_crit.md`
 - `memory/feedback_auto_pick_future_oriented.md`
 - `memory/feedback_new_plans_use_future_oriented_template.md`
 - `memory/feedback_no_mvp_for_plumbing_only_for_unknown_unknowns.md`
@@ -1016,6 +1051,10 @@ This file is a snapshot for static browsing.
 ### pre-coding-gate (1 files)
 
 - `DESIGN_SPECS/meta-disciplines/audit-driven-sub-sprint-trajectory-verification.md`
+
+### process-state (1 files)
+
+- `DESIGN_SPECS/data-disciplines/locale-determinism-discipline.md`
 
 ### production-mode (1 files)
 
@@ -1086,8 +1125,10 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/kill-switch-hierarchical-pattern.md`
 
-### scope-discipline (14 files)
+### scope-discipline (16 files)
 
+- `DESIGN_SPECS/audit-methodologies/audit-finding-kind-taxonomy.md`
+- `memory/feedback_address_med_low_findings_not_just_high_crit.md`
 - `memory/feedback_auto_pick_future_oriented.md`
 - `memory/feedback_backwards_compat_not_default_concern.md`
 - `memory/feedback_close_the_class_vs_migrate_every_site.md`
@@ -1165,9 +1206,10 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/concurrency-patterns/spsc-vs-blackboard-selection-criteria.md`
 
-### ssot (4 files)
+### ssot (5 files)
 
 - `DESIGN_SPECS/meta-disciplines/single-source-of-truth-discipline.md`
+- `memory/feedback_defer_to_source_authority_for_external_semantics.md`
 - `memory/feedback_golden_master_over_reimplemented_oracle.md`
 - `memory/feedback_machine_portable_resolver_for_committed_tool_paths.md`
 - `memory/feedback_single_source_of_truth_discipline.md`
@@ -1352,8 +1394,9 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/concurrency-patterns/persistent-ws-connection-management-pattern.md`
 
-### wire-format (15 files)
+### wire-format (17 files)
 
+- `DESIGN_SPECS/data-disciplines/locale-determinism-discipline.md`
 - `DESIGN_SPECS/framework-patterns/calibration-log-column-registry.md`
 - `DESIGN_SPECS/framework-patterns/persisted-struct-with-ephemeral-field-coexistence-pattern.md`
 - `DESIGN_SPECS/framework-patterns/stamp-vs-runtime-drift-detection-registry.md`
@@ -1366,6 +1409,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/wire-format-patterns/wire-format-canonical-body-invariants-helper.md`
 - `claude-skills/ml-audit/SKILL.md`
 - `claude-skills/parity-check/SKILL.md`
+- `memory/feedback_defer_to_source_authority_for_external_semantics.md`
 - `memory/feedback_train_serve_execution_layer_meta_gap.md`
 - `memory/feedback_two_foundations_determinism_vs_correctness.md`
 - `memory/feedback_wire_context_vs_cfg_file_parser_separation.md`
@@ -1460,9 +1504,10 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/hierarchical-config-validation-pattern.md`
 - `DESIGN_SPECS/framework-patterns/kernel-vs-userspace-networking-cfg-pattern.md`
 
-### boot-time (4 files)
+### boot-time (5 files)
 
 - `DESIGN_SPECS/data-disciplines/cpp17-inline-variable-for-header-shared-state.md`
+- `DESIGN_SPECS/data-disciplines/locale-determinism-discipline.md`
 - `DESIGN_SPECS/framework-patterns/postloadsetup-registry-pattern.md`
 - `DESIGN_SPECS/meta-disciplines/train-serve-execution-layer-parity.md`
 - `DESIGN_SPECS/refactor-patterns/shared-helper-extract-for-train-serve-mirror-close.md`
@@ -1726,8 +1771,9 @@ This file is a snapshot for static browsing.
 
 - `claude-skills/capture-audit/SKILL.md`
 
-### ml-inference (14 files)
+### ml-inference (15 files)
 
+- `DESIGN_SPECS/data-disciplines/locale-determinism-discipline.md`
 - `DESIGN_SPECS/feature-patterns/per-horizon-barrier-blending-with-shadow-mode.md`
 - `DESIGN_SPECS/feature-patterns/shadow-load-state-transition-pattern.md`
 - `DESIGN_SPECS/framework-patterns/stamp-vs-runtime-drift-detection-registry.md`
@@ -1958,6 +2004,10 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/exchange-adapter-tt-dispatch-pattern.md`
 
+### replay (1 files)
+
+- `DESIGN_SPECS/data-disciplines/locale-determinism-discipline.md`
+
 ### risk-isolation (1 files)
 
 - `DESIGN_SPECS/framework-patterns/per-node-economic-isolation-pattern.md`
@@ -1981,7 +2031,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/meta-disciplines/sister-cohort-amendment-completeness-discipline.md`
 - `claude-skills/capture-audit/SKILL.md`
 
-### slow-path (44 files)
+### slow-path (45 files)
 
 - `DESIGN_SPECS/concurrency-patterns/concurrency-model-summary.md`
 - `DESIGN_SPECS/concurrency-patterns/cross-thread-snapshot-publish-cluster-isolation.md`
@@ -1991,6 +2041,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/data-disciplines/decision-first-cluster-layout-pattern.md`
 - `DESIGN_SPECS/data-disciplines/function-struct-alignment-for-single-mov-access.md`
 - `DESIGN_SPECS/data-disciplines/hot-side-array-element-alignment-for-sparse-access.md`
+- `DESIGN_SPECS/data-disciplines/locale-determinism-discipline.md`
 - `DESIGN_SPECS/data-disciplines/per-snapshot-cluster-layout-pattern.md`
 - `DESIGN_SPECS/data-disciplines/raii-destructor-with-cluster-reorg-interaction.md`
 - `DESIGN_SPECS/feature-patterns/per-horizon-barrier-blending-with-shadow-mode.md`
@@ -2123,8 +2174,9 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/meta-disciplines/gui-deprecation-decision-rationale.md`
 
-### wire-format (24 files)
+### wire-format (25 files)
 
+- `DESIGN_SPECS/data-disciplines/locale-determinism-discipline.md`
 - `DESIGN_SPECS/framework-patterns/autopopulate-pattern-for-production-caller-class.md`
 - `DESIGN_SPECS/framework-patterns/calibration-log-column-registry.md`
 - `DESIGN_SPECS/framework-patterns/cfg-derived-consumer-framework.md`

@@ -5,7 +5,7 @@ version: 1.0
 established: 2026-05-09
 tags: [audit-methodology, framework-discipline, meta-discipline]
 surface: [registry]
-sister_specs: [implementation-layer-blindspot-taxonomy.md, audit-scope-taxonomy.md]
+sister_specs: [implementation-layer-blindspot-taxonomy.md, audit-scope-taxonomy.md, audit-finding-kind-taxonomy.md]
 applies_at_skills: [/precoding-audit-gate, /parity-check, /trace-deps, /readiness, /merge-scan, /dod-audit, /blindspot-scan]
 ---
 

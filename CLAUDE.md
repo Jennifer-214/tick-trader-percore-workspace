@@ -406,14 +406,13 @@ Skills group by concern. Read each skill's `claude-skills/<name>/SKILL.md` for i
 
 | Concern | Skills |
 |---|---|
-| **Pre-coding plan verification** | `/precoding-audit-gate` + `/readiness` + `/plan-dive` (per-plan multi-layer rolling-window dive; composes the gate + findings-ingestion vs canonical index + seam) |
+| **Pre-coding plan verification** | `/precoding-audit-gate` + `/readiness` |
 | **SHAPE audits (design-layer)** | `/dod-audit` + `/merge-scan` + `/parity-check` + `/trace-deps` |
 | **IMPLEMENTATION-DETAIL audits** | `/blindspot-scan` |
 | **DOMAIN audits** | `/accounting-audit` + `/hft-audit` + `/ml-audit` + `/registry-fit-audit` |
 | **Anti-pattern scans** | `/anti-spaghetti` + `/bug-check` + `/dead-code-trace` + `/dust` + `/metadata-audit` + `/test-strength-audit` |
 | **Post-coding** | `/latency-track` + `/post-ship-audit` + `/ship` |
-| **Workflow** | `/dependency-chain-trace` + `/find` + `/finding-analyzer` + `/foxlib-promotion` + `/handoff` + `/index-rebuild` + `/patch-planner` + `/plan-check` + `/plan-context-sweep` + `/sync-models` + `/sync-workspace` |
-| **Capture + handoff discipline (M7 enforcement)** | `/capture-audit` (mechanical drift check — MEMORY.md sync / plan frontmatter / decision-log / sentinel matching / handoff currency / Stage 6 candidates / skill→CLAUDE.md linkage; runs as pre-commit + pre-handoff gate) + `/accept-handoff` (RECEIVER-side; loads handoff + cited files + runs /capture-audit + /readiness + recreates TaskList + outputs PICKUP-READY + concrete next action — ONE COMMAND for fresh-session pickup) + `/close-session` (SENDER-side meta-orchestrator; fires /capture-audit + operator triage + re-fires /capture-audit clean + /handoff + /sync-workspace + final close-out report — ONE COMMAND for session-close ritual; closes the "operator-pushback caught codification gap" failure mode per M7 structural enforcement) |
+| **Workflow** | `/accept-handoff` + `/capture-audit` + `/dependency-chain-trace` + `/find` + `/finding-analyzer` + `/foxlib-promotion` + `/handoff` + `/index-rebuild` + `/patch-planner` + `/plan-check` + `/plan-context-sweep` + `/plan-dive` + `/sync-models` + `/sync-workspace` |
 | **Scaffolding** | `/doc-create` + `/plan-draft` + `/strategy-template` |
 
 Audit-driven discipline: HIGH-RISK ships fire `/precoding-audit-gate` (SHAPE) + `/blindspot-scan` (IMPLEMENTATION-DETAIL) in parallel before coding. Per-ship cycle: audit → consult → update plan → implement → ship → postmortem. See `DESIGN_PHILOSOPHY.md` § 11 + § 11.5 + `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md` + `DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md`.

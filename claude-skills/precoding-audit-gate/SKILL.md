@@ -269,15 +269,15 @@ RETURN SYNTHESIS (under <word_cap> words):
 All subagents fire **in parallel** via single tool-use message with
 multiple `Agent` calls. NOT sequential.
 
-### Stage 3.5 — Quorum + verification/completeness-critic pass (HIGH-RISK) [NEW `.E.0.2`]
+### Stage 3.5 — Quorum + verification (HIGH-RISK) + completeness-critic (STANDING, all tiers) [quorum/verify `.E.0.2`; completeness-critic elevated to standing D-119]
 
 The consistency layer — the answer to "same gate, different findings on reruns." For HIGH-RISK ships:
 
 1. **Quorum on the highest-risk dimension** (Decision D; default lean **k=2-of-3**): run the single most consequential lens (typically correctness/parity, or whichever covers the guard-matrix HOLE) as N=3 INDEPENDENT agents; a finding counts CONFIRMED only if ≥2 agree. Kills run-to-run variance on the part that matters most. (Tune k/N + dimension per ship; default 2-of-3 on correctness/parity.)
 2. **Verification pass** — one agent adversarially re-checks each CRITICAL/HIGH from Stage 3: real, or plausible-but-wrong? Default-skeptical. Seeded with the catalog's AR-* reflection prompts (AR-1 "is a risk dismissed over an un-enumerated set?"; AR-2 "does a claim quantify over an unlisted set?").
-3. **Completeness critic** — one agent asks "what surface did NO audit cover?" against the guard-matrix touched-surface rows → surfaces false-negatives a find-only gate can't.
+3. **Completeness critic (STANDING — see below)** — one agent asks "what surface did NO audit cover?" against the guard-matrix touched-surface rows + an explicit EDGE checklist (the boundaries formal audits systematically miss because they sit outside the engine's core paths): **order-submit / quantization · logs + metrics + observability emit · GUI + display · deploy + operational (warm-restart / version-reject) · persistence + recovery · external-tooling consumers**. → surfaces false-negatives a find-only gate can't. (This is the SURFACE-COVERAGE axis of "what are we missing"; the CODE-DETAIL counterpart is `/blindspot-scan` / `implementation-layer-blindspot-taxonomy.md` — complementary, not duplicate.)
 
-Confirmed findings (survived quorum + verification) + completeness gaps flow to Stage 4. This stage fires ONLY for HIGH-RISK (per the coverage-gated rule); LIGHT/MED ships skip it. Cost is bounded (`.E.0.2` R6): quorum on ONE dimension, not every lens; skipped for non-HIGH-RISK.
+Confirmed findings (survived quorum + verification) + completeness gaps flow to Stage 4. **Steps 1-2 (quorum + verification) fire ONLY for HIGH-RISK** (expensive; coverage-gated; LIGHT/MED skip them). **Step 3 (completeness-critic) is STANDING — it runs on EVERY gate fire, regardless of tier** (D-119, 2026-05-31): it is one cheap agent, and uncovered-surface misses are tier-INDEPENDENT. Evidence — the #11 money-core gate: 7 formal audits all covered the engine money paths and ALL missed the edges; the completeness pass found 6 edge-bites, **6/6 grep-confirmed real** (B-α…B-ζ). Cost stays bounded (`.E.0.2` R6): quorum on ONE dimension; the completeness-critic is a single agent.
 
 ### Stage 4 — Synthesize convergent findings + DESIGN_SPECS cross-ref (M7 sister; codified v5.15.5.F.4d.1.B.4 v1.7.6)
 
@@ -311,6 +311,8 @@ Synthesis structure (extended at v1.7.6):
 7. **Low findings (LOW)** — addressed-as-found, NOT "drop as notes/future-work": ledger with an ID + fix-home at minimum, or fix in-ship if cheap + adjacent
 
 **Disposition-completeness rule (per `feedback_address_med_low_findings_not_just_high_crit`, 2026-05-30):** EVERY finding at EVERY severity carries exactly one disposition — fix-in-ship / fold-to-named-task / ledger-with-ID-and-fix-home / document. None left severity-only. Severity gates urgency + sequencing, never whether-to-address; a bare "low, skip" is the anti-pattern (silently accrues tech debt under a severity label). The synthesis is incomplete until every CRITICAL→LOW row has a disposition column filled.
+
+**Kind-tagging rule (per `audit-methodologies/audit-finding-kind-taxonomy.md`, D-116):** every finding ALSO carries a KIND {mechanical | structural | design} + a WIDESPREAD flag, written as the shorthand `<SEV>·<kind>[·wide]` (e.g. `CRIT·design`, `HIGH·structural·wide`) in a KIND column of the findings tables (items 4-7). Severity = urgency; kind = work-type — it partitions findings into ordered work-streams (**design → structural → mechanical**), so the KIND column IS the sequencing; widespread = needs-an-enumeration-sweep. Kind feeds the proportionate-response menu (mechanical→inline / structural→fold-or-accept / design→architect-or-design-pass). The synthesis is incomplete until every finding row carries its `<SEV>·<kind>` tag + disposition.
 8. **Cold-pickup completeness verdict** — would a fresh session lose >30 min re-deriving context?
 9. **Recommended plan amendment list (ordered)** — concrete fixes with effort estimates + DESIGN_SPECS citations
 10. **Recommendations for path forward** — full amend / partial amend / scope-reduce / proceed

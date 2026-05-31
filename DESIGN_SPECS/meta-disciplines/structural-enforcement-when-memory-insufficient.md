@@ -75,7 +75,7 @@ THIS DISCIPLINE governs the Stage 5 → Stage 6 escalation trigger.
 - **Stage 4 codification:** `/readiness` Check 32 (planned but pre-tool)
 - **Stage 5 codification:** 4-pillar audit checks symbol existence at audit time
 - **Recurrence at Stage 5:** v1.7.3 → v1.7.4 cycle introduced 6 NEW Class 14 fabrications (`current_book_imbalance` / `depth_enabled` / `current_spread` / `current_mid_price` / `tick.timestamp_us` / `FPN_IsZero(double)`)
-- **Stage 6 enforcement landed:** `tools/check_plan_body_symbol_existence.py` v0.2 + `.git/hooks/pre-commit` + `tools/install-git-hooks.sh`. Tool extracts ```cpp blocks, derives includes per symbol, wraps in templated test harness, compiles via g++. Real fabrications → FABRICATION exit code; caller-scope refs → HARNESS-ISSUE (informational).
+- **Stage 6 enforcement landed:** `tools/check_plan_body_symbol_existence.py` v0.2, fired by the tracked `.githooks/pre-commit` Check A (`core.hooksPath=.githooks`, no install step — consolidated .E.0.1; originally landed via `.git/hooks/pre-commit` + `tools/install-git-hooks.sh`, retired when that pattern proved git never ran the installed copy). Tool extracts ```cpp blocks, derives includes per symbol, wraps in templated test harness, compiles via g++. Real fabrications → FABRICATION exit code; caller-scope refs → HARNESS-ISSUE (informational).
 - **Outcome:** Tool catches all 6 fabrications + future instances deterministically; pre-commit hook blocks commits containing fabricated symbols.
 
 ### Stage 6 promotion: M6 (body-content arg enumeration) → /capture-audit skill

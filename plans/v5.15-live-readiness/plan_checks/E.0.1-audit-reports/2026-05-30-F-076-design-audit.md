@@ -3,7 +3,7 @@ type: design-audit
 ship: v5.15.5.F.4d.1.E.0.1
 finding: F-076 (config fingerprint determinism — the H12 byte-equivalence class)
 gate: new-function design-audit (/hft + /dod + H12 + determinism lenses) BEFORE coding
-status: DRAFT — for operator consult (3 open decisions)
+status: RESOLVED + SHIPPED .E.0.1 (2026-05-31) — Option A (zero-init ctor, ControllerConfig.hpp:371) chosen; the 3 open decisions decided (default-ctor / folded into the determinism net / StampT static_assert added at CfgFieldDispatch.hpp:475). NB: a SEPARATE agent-authored `has_unique_object_representations_v<ControllerConfig>` static_assert appeared staged mid-session — it was BROKEN (incomplete-type on instantiation) AND wrong-premise (the struct is PADDED), discarded at ship-close; the zero-init ctor is the guard for a padded struct. See postmortem.
 ---
 
 # F-076 design + design-audit — deterministic config fingerprint

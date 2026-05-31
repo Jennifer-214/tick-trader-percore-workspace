@@ -1435,7 +1435,7 @@ title: Fingerprint_Compute raw-byte SHA-256 over un-zero-init ControllerConfig p
 surface_tags: [ml-lineage, fingerprint, h9, h12, determinism, byte-equivalence]
 severity: high
 parity_axis: cross-run / cross-binary model-fingerprint reproducibility
-status: open
+status: closed
 detected_at: v5.15.5.F.4d.1.E.0.1 hardened-gate audit (2026-05-29)
 related_specs:
   - DESIGN_SPECS/wire-format-patterns/struct-padding-determinism-pattern.md (H12 — the spec to EXTEND for enforcement)
@@ -1447,6 +1447,7 @@ related_specs:
 - **Fix path:** `.E.0.3` — `Fingerprint_CanonicalizeConfig` field-wise into a zeroed buffer (strlen not sizeof for char[]; hash FPN limbs not via ToDouble; preserve the fee_rate-not-maker/taker bundle invariant at `ControllerConfig.hpp:369-370`) + a `static_assert(sizeof==EXPECTED)` coverage-sentinel. CONFIRMED an instance of a recurring H12 class (Class candidate; decision-log D-87).
 - **Target ship:** `.E.0.3` (or fold to Net-1 if it golden-masters the fingerprint).
 - **Cross-ref:** decision-log D-85/D-87; finding F-076; PARITY-036.
+- **Resolution (CLOSED, `.E.0.1` 2026-05-31):** fixed by the zero-init **constructor** `ControllerConfig() { memset(this,0,sizeof(*this)); }` (`ControllerConfig.hpp:371`, committed `4f6a4ec`) — the F-076 design audit chose this (Option A) over the field-wise canonicalize in the Fix-path above (Option B, REJECTED: over-engineered + Class-18-drift-prone on the mixed struct). The struct is padded (`alignas(64)` H6 fields); the ctor zeroes fields + padding at construction → raw hash deterministic for equal field VALUES. (`has_unique_object_representations` does NOT apply to a padded struct — that guard is StampT's, for padding-free `FPN`; a stray agent-authored static_assert asserting it was discarded at ship-close, see postmortem.) Verified: fresh clean build 3241/0 + the `controller_test` characterization checks. Folded into `.E.0.1` (was routed `.E.0.3`).
 
 ---
 
@@ -1456,7 +1457,7 @@ title: replay write∧read locale loop — recorder %.8f emit + strtod parse (lo
 surface_tags: [replay, recorder, locale, determinism, backtest-live-parity, lossy-emit]
 severity: high
 parity_axis: replay determinism (write∧read locale immunity) + backtest↔live parse symmetry
-status: open
+status: closed
 detected_at: v5.15.5.F.4d.1.E.0.1 hardened-gate audit (2026-05-29; completeness-critic)
 related_specs:
   - DataStream/TickRecorder.hpp:186 + DataStream/DepthRecorder.hpp:249 (the %.8f emit)
@@ -1468,6 +1469,7 @@ related_specs:
 - **Fix path:** `.E.0.1` — replay parse → `parse_double_fast` (F-054/55) + recorder emit → `to_chars` shortest-round-trip (locale-immune + kills the `%.8f` precision loss). `.E.0.3` — the raw-string-record end-goal (store bytes, defer parse) + the unified primitive.
 - **Target ship:** `.E.0.1` (parse + emit) + `.E.0.3` (raw-string end-goal).
 - **Cross-ref:** decision-log D-85/D-86; findings F-054/F-055; PARITY-034.
+- **Resolution (CLOSED, `.E.0.1` 2026-05-31):** the `.E.0.1`-scoped write∧read locale loop is closed — replay PARSE → `tt::parse_double_fast_advance` (F-054/55) + recorder EMIT → `std::to_chars` shortest-round-trip (locale-immune, kills the `%.8f` precision loss); committed `2c8830a`/`69f295e`, covered by the replay-locale gate + the determinism net (clean-build verified; gates GREEN). The `.E.0.3` raw-string-record end-goal (store bytes, defer parse) is a separate future enhancement, not this issue's open state.
 
 ---
 

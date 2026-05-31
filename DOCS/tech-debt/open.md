@@ -2973,3 +2973,31 @@ related_specs: [meta-disciplines/meta-anti-pattern-index.md]
 - **Trigger:** the `.E.1` guard-matrix review (apparatus-complete DoD item 5 — confirm semi-mechanical suffices for the rename surface, which it should) OR a CP-1 recurrence OUTSIDE the memory corpus that the manual procedure misses (an M7 signal to mechanize).
 - **Status:** OPEN
 - **Cross-ref:** `meta-anti-pattern-index.md` CP-1 row; `/capture-audit` Check 12; `/precoding-audit-gate` Stage-2.5; `feedback_sister_cohort_amendment_completeness`; `feedback_structural_enforcement_when_memory_insufficient` (M7).
+
+---
+
+### TECH_DEBT-151 — .E.0.6 deferred follow-ups: 3 CI-guard builds + codify tail (post-determinism-net)
+
+```yaml
+id: TECH_DEBT-151
+title: Deferred .E.0.6 follow-ups — orphan-guard (.E.1-prep) + tree-mutation guard + hang-class remainder + codify tail
+severity: medium
+surface_tags: [ci-tooling, audit-methodology, dead-code, session-continuity]
+trigger: .E.1-prep (orphan-guard) OR next codification pass (rest)
+status: open
+opened: 2026-05-31
+related_specs: [meta-disciplines/meta-anti-pattern-index.md, data-disciplines/locale-determinism-discipline.md]
+```
+
+- **Created:** 2026-05-31 by v5.15.5.F.4d.1.E.0.6 (the determinism-net ship close) — captured durably so the TaskList follow-ups survive session-close (TaskList #2/#8/#9/#10 + this close's handoff carry the same).
+- **Severity:** MEDIUM (no correctness gap in the shipped net; these HARDEN the apparatus + structurally close the broken-CI-guard theme).
+- **What's deferred (each = a TaskList item too):**
+  1. **#8 — standing CI orphan-guard (dead-code prevention), `.E.1`-prep.** Promote `calls_graph_diff.sh` (now fixed → rc=0) from `/ship`-time to a pre-commit Check H so a commit that orphans a function = red build. `.E.1`'s Core→Node rename + drainer absorption is a dead-code-GENERATING event → the guard must exist FIRST. Verify-by-injection (sister to `check_determinism_selftest.sh`).
+  2. **#9 — guard: flag un-attributed working-tree mutations** (the ROOT of the `.E.0.6` ship-close incident — a read-only `/readiness` subagent wrote+staged a broken static_assert via the Bash write-escape). Snapshot+compare `git status` after a read-only/audit subagent returns; flag any mutation. + a ship-close check for staged files outside the declared set.
+  3. **#10 — hang-class remainder.** Extend `exec </dev/null` to the other committed `tools/*.sh` (gen_code_map / validate_feature_mask — lower-risk, not in the commit-freeze path); codify the agent habit (redirect `< /dev/null` on detached/background bash). Core close (hook + det scripts + guard + LANDMINES Landmine 2) shipped in `.E.0.6`.
+  4. **#2 — codify tail.** `/post-ship-audit` AR-4 wiring (the negative-self-test as a standing pre-close step) + locale-spec sister-link reciprocation.
+- **Why deferred (not effort-avoidance):** the determinism net + its 3-guard close SHIPPED clean (`.E.0.6`); these are forward-hardening with natural homes (#8 at `.E.1`-prep; the rest at the next codification pass). Tracked in 4 places (TaskList, sprint-state, the handoff, here) so none evaporate.
+- **Cost estimate:** ~1-2h each guard (script + negative self-test + wiring); LOW risk (CI tooling; no engine code).
+- **Trigger:** `.E.1`-prep for #8; next codification/close pass for #9/#10/#2.
+- **Status:** OPEN
+- **Cross-ref:** `meta-anti-pattern-index.md` AR-4 (verification-by-proxy — the ship-close incident); `tools/check_determinism_selftest.sh` (the negative-self-test pattern these reuse); the `.E.0.6` postmortem.

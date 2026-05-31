@@ -70,6 +70,44 @@ but parity-safe.
 
 ---
 
+## Landmine 2 — detached-stdin hang: path-less `rg`/`grep` blocks forever (set 2026-05-31, v5.15.5.F.4d.1.E.0.1)
+
+**Symptom:** a shell command — often a git **pre-commit hook**, or a `run_in_background` / CI / cron /
+ssh-without-tty run — appears to "run" but never returns; sits at **0% CPU indefinitely** (observed: a
+backgrounded determinism gate slept ~15 min before anyone noticed). The SAME command run
+foreground/interactive is fine. It only hangs when **detached**.
+
+**Root cause:** a **path-less `rg PATTERN`** (or a standalone `grep PATTERN` not consuming a pipe) reads
+**stdin** when given no file/dir path. With a tty that's interactive; **detached**, stdin is an open fd
+that never sends EOF, so the command blocks on `read()` forever. A git hook hanging this way **freezes
+every commit**, silently.
+
+**Why the obvious fix is fragile:** patching the one offending `rg` to take an explicit path (`.` / a
+file) fixes *that* instance — but the rule "always pass a path" lived only in a **comment**
+(`check_locale_determinism.sh:21`), which is the Class-38 phantom-invariant (a comment is not a guard).
+One future path-less `rg` reopens it.
+
+**Proper fix (SHIPPED `.E.0.1`):** **`exec </dev/null`** at the top of `.githooks/pre-commit` + every
+detached-run determinism script (`check_determinism.sh`, `check_fp_determinism.sh`,
+`check_locale_determinism.sh`, `check_determinism_selftest.sh`). One line redirects the whole script's
+(and all its children's) stdin to `/dev/null` → any stdin-reader gets instant EOF instead of blocking.
+**Structural**, not per-`rg`: closes the class regardless of any script's path discipline. **Guard:**
+`check_determinism_selftest.sh` check (5) asserts each of those files retains its `</dev/null` redirect →
+flags removal (close the class with a guard, not a comment). Adversarially verified both ways: path-less
+`rg` under `exec </dev/null` returns instantly; the same `rg` fed a never-closing stdin hangs.
+
+**Future-Claude debugging hint:** a shell command (esp. in a hook / `run_in_background`) hangs at 0% CPU
+→ suspect a stdin-reader with no input; check for path-less `rg`/`grep`. Fix = `exec </dev/null` at the
+top of the script, or `< /dev/null` on the specific command. When YOU run a command detached, add
+`< /dev/null` so it can't hang on stdin.
+
+**Reference:** `74bd77b` (first instance: `check_locale_determinism.sh` rg paths + the comment) ·
+`.E.0.1` ship (the `exec </dev/null` structural close + guard) · RECURRING_BUG_PATTERNS Class 38
+(phantom-invariant — the comment-not-a-guard shape) · meta-anti-pattern AR-4 (a check trusted without
+watching it actually work).
+
+---
+
 ## How to add a new landmine
 
 When you encounter a non-obvious pitfall (segfault, race, parallelism

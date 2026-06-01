@@ -148,6 +148,7 @@ heading in the output.
 - Held-out lock token (entropy, friction-grade documentation)
 
 ### Section B — Feature pipeline
+- **Mechanical:** run `bash tools/validate_feature_mask.sh` (e2e feature-mask validation — deterministic; run it, don't eyeball the mask).
 - Verify every FeatureComputeCtx field is populated identically in
   both live + backtest paths. Currently-defined fields per
   `FeatureComputeCtx` struct definition (consult current source for

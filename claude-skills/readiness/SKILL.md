@@ -142,10 +142,11 @@ The auditor (Layer 2 subagent):
      ones that need verification)
 
 2. **Verifies the codebase** — for each claimed dependency:
-   - **FIRST: check `DOCS/CODE_MAP.md`** for the function/symbol. The
-     map is auto-generated via `tools/gen_code_map.sh` and lists every
-     `Pattern_FunctionName` with file:line. Hit = exists. Miss = it's
-     either renamed (try fuzzy match) or genuinely new.
+   - **FIRST: regen + check `DOCS/CODE_MAP.md`** — run `./tools/gen_code_map.sh`
+     (<5s, idempotent; CODE_MAP is a gitignored generated artifact, so regen-then-read
+     guarantees current — mechanical, NEVER trust a possibly-stale copy), then look up
+     the function/symbol. Lists every `Pattern_FunctionName` with file:line.
+     Hit = exists. Miss = renamed (try fuzzy match) or genuinely new.
    - Files: `ls -la <path>` to confirm exists (or that "create new"
      paths don't conflict with existing)
    - Functions (if not in CODE_MAP): `grep -nE "^inline.*<name>|^static.*<name>|^void <name>|^int <name>"` — but be careful:
@@ -159,9 +160,8 @@ The auditor (Layer 2 subagent):
      OR check `tests/INVARIANTS_MAP.md` if the change touches a known
      invariant (the map shows which test group covers each).
 
-   **CODE_MAP currency check**: if the most recent commit touching code
-   files is later than CODE_MAP.md's "Last regenerated" header, suggest
-   re-running `./tools/gen_code_map.sh` before relying on the map.
+   **CODE_MAP currency**: handled mechanically by the regen-first step above —
+   you always read a freshly-regenerated map; no "is it stale?" agent-judgment.
 
 3. **Walks the 10-item checklist** from `DOCS/CLAUDE_REVIEW.md`:
    1. Hot path purity — does any item touch `ExecutionCore_Tick` /

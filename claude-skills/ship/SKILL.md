@@ -119,15 +119,17 @@ Common false positives:
 If output is anything other than CLEAN, paste it to the user verbatim
 and ask: "accept this delta?" before proceeding.
 
-### Stage 4 — Optional: regen CODE_MAP
+### Stage 4 — Regen CODE_MAP (mechanical — ALWAYS; <5s, idempotent)
 
 ```bash
-# Get list of new Pattern_FunctionName functions
-git diff --staged --unified=0 | grep -E '^\+(static |inline |void |int |size_t |uint32_t )?\w+_\w+\(' | wc -l
+./tools/gen_code_map.sh   # CODE_MAP.md is .gitignore'd (generated artifact) — regen keeps the LOCAL copy current
 ```
 
-If > 0, run `./tools/gen_code_map.sh` and stage the resulting
-`DOCS/CODE_MAP.md`. Otherwise skip.
+ALWAYS regen — don't agent-judge "were functions added?" (that conditional
+skip is exactly what let `CODE_MAP.md` go stale for weeks). It's cheap +
+idempotent. CODE_MAP is generated (gitignored, not committed); the guarantee
+is "fresh-when-used", so the consuming skills (/readiness, /plan-check) also
+regen-on-use rather than trusting a possibly-stale copy.
 
 ### Stage 5 — Version bump
 
@@ -383,8 +385,9 @@ If the diff touches `ML_Headers/ModelInference.hpp` stamp body fields:
 
 - Verify `MODEL_FORMAT_VERSION` bumped (or `stamp_format_version`
   field updated)
-- Verify both bash (`tools/stamp_model.sh`) and in-process emitters
-  match
+- Verify the in-process stamp emitter is canonical (the bash
+  `tools/stamp_model.sh` CLI was DELETED at `.B.3`; stamping is in-process /
+  foxml_suite GUI auto-stamp now — no bash side to cross-check)
 - Verify the v5.8.8 regression test still passes
 
 HARD gate. Stamp/registry mismatch causes "model loaded but predicts

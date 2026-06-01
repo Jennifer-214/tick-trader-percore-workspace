@@ -304,8 +304,9 @@ These match the 2026-05-02 audit's structure (which led to v5.9.2c
 - Locale pinning (LC_NUMERIC=C in both bash + in-process)
 - Atomic stamp write (`.tmp + rename`)
 - Forward-compat parser tolerates unknown keys
-- Bash `tools/stamp_model.sh` produces identical canonical body for
-  identical inputs (v5.8.8 round-trip test)
+- The in-process stamp emitter produces identical canonical body for
+  identical inputs (v5.8.8 round-trip test; the `tools/stamp_model.sh` bash
+  CLI was DELETED at `.B.3` — stamping is in-process / foxml_suite GUI now)
 
 ### Section F — Cfg parity (inference-affecting fields)
 Stamp-bound cfg fields: walk current `FOREACH_STAMP_BOUND_CFG_DERIVED`

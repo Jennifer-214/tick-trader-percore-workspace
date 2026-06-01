@@ -106,6 +106,7 @@ Each claim becomes a verification target.
 
 Run focused audits ONLY on the ship's surface (per audit-scope-taxonomy.md):
 
+- **Mechanical (standing): `bash tools/check_determinism_selftest.sh`** — verify the determinism net still has TEETH (each gate goes RED on its injected regression + the real hook blocks a staged drift). Run on every ship; a net verified only by GREEN-on-clean is NOT verified. MANDATORY when the ship touched FP / locale / determinism tooling.
 - `/hft-audit module:<inferred-from-surface>` — Class 28 + cache layout + branchless opportunities in shipped files
 - `/dod-audit module:<surface>` — pattern application gaps
 - `/bug-check class_27 module:<surface>` + `/bug-check class_28 module:<surface>` — instances of newly-codified classes

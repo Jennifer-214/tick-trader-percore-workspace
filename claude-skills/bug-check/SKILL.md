@@ -168,6 +168,9 @@ file:line citations into a `known_set`.
 
 ### Step 3 — Run Detection greps
 
+**Mechanical scanners first (run the tool, don't hand-grep — agents miss instances):**
+- **Class 27 (scalar cfg-mirror caches):** `python3 tools/scan_class_27_full.py` — the dedicated full scanner; its output IS the Class-27 candidate list (supersedes the manual grep for this class).
+
 For each EXECUTABLE class:
 - Execute the bash block (within reason — sanitize against `rm`,
   destructive commands; if unclear, skip + flag for operator

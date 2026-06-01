@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 341a0b93-fa2a-4e53-9aff-936f93df9deb
-  sister_specs: [feedback_no_defer_for_effort.md, feedback_motivated_collaborator_for_caramel.md, feedback_surface_operator_migration_path_proactively.md, feedback_operator_facing_doc_cohort_at_cfg_deletion.md, feedback_categorical_triggers_over_hardcoded_refs.md]
+  sister_specs: [feedback_no_defer_for_effort.md, feedback_motivated_collaborator_for_caramel.md, feedback_surface_operator_migration_path_proactively.md, feedback_operator_facing_doc_cohort_at_cfg_deletion.md, feedback_categorical_triggers_over_hardcoded_refs.md, project_no_live_models_dev_test_only.md]
   tags: [scope-discipline, operator-collaboration]
 ---
 

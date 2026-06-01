@@ -3,7 +3,7 @@
 **Purpose:** save place before a TOOLS-AUDIT tangent so #11 context isn't lost. Resume #11 at "RESUME POINT" after the audit. Transient — delete once resumed.
 
 ## Where we are
-- Sprint `v5.15-live-readiness` · Ship **#11 numeric-foundation** (decimal money + unified `FixedPoint<RADIX,FRAC>` on a 16B two's-complement backend). Engine HEAD `3f415a0` (unchanged; NO engine code this session — all planning/capture/tooling).
+- Sprint `v5.15-live-readiness` · Ship **#11 numeric-foundation** (decimal money + unified `FixedPoint<RADIX,FRAC>` on a 16B two's-complement backend). Engine HEAD `e9244de` (the tooling commit — tools-foundation; predecessor `3f415a0`; no engine behavior change, no version bump; all planning/capture/tooling).
 - **Phase 0** of the close-out track. Task **#15** (gen_code_map / type-index tool) IN PROGRESS.
 
 ## Captured this session (Session 7)

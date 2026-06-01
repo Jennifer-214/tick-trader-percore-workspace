@@ -84,6 +84,7 @@
 - [Golden-master over reimplemented oracle](feedback_golden_master_over_reimplemented_oracle.md) — validate a path by freezing its REAL output + diffing (golden-master/characterization), NEVER a reimplemented/stub oracle (Class-18 mirror that drifts + lies); lowest drift/failure risk; standing CI gate; .E.0 D-74 F-059 choice over de-stub/separate-test
 - [Phased pre-rework correctness foundation + net-gating scoping](feedback_phased_pre_rework_correctness_foundation.md) — high-risk multi-ship restructure: phase the foundation (bedrock→lock-current→root-GREEN→sweep→gate); the no-reintroduction guarantee is the NET (CI/tests) NOT the audits; minimal pre-rework scope = what the net is meaningless without; .E.0 D-73
 - [Enumerate the set before a categorical risk-dismissal](feedback_enumerate_set_before_categorical_claim.md) — before dismissing a risk via a property over a SET ("the rest are exact/safe"), enumerate + verify each + name any non-conformer; a claim over an UNENUMERATED set is a blind spot; Class-33 at the risk/self-audit layer; .E.0.1 R1
+- [Ground design claims in real code](feedback_ground_design_in_real_code.md) — design talk: Read+cite file:line for EXISTING-code claims (don't reconstruct from memory / trust a transient system-note over disk); show framing+reuse for NEW code; NOT blanket "always"; throughput win ("more done"); verify-family specialization; #11 caught a 192-bit reconstruction error + an Execution-Plan overclaim
 
 ## User profile
 

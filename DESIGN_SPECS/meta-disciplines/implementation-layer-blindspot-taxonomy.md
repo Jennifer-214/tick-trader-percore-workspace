@@ -87,7 +87,7 @@ Each category gets: **Definition** / **Detection mechanism** / **Loud vs silent*
 
 **Worked example:** `.B.3` Step 1.6.3 unconditional struct-gen via Decision C Approach A. 27 currently-STAMP_BOUND_CFG_DERIVED-flagged fields (`ridge_lambda`, `thompson_mu_prior`, `bandit_blend_ratio`, etc.) shift from FOREACH_STAMP_BOUND_CFG declared types (often `double`) to master registry STORAGE_T (often `FPN<F>`). ~80 test fixture sites in `tests/controller_test.cpp` reference `sr.<field>` and compare against literal `double` values — must wrap in `FPN_ToDouble(...)` or add `operator==(FPN<F>, double)` for compile success.
 
-**Detection guard:** Pre-coding type-change diff via `/blindspot-scan` Pillar B1.
+**Detection guard:** Pre-coding type-change diff via `/blindspot-scan` Pillar B1. **+ MECHANICAL (2026-06-01, #11 16B core):** when the type-change introduces signed-overflow UB — two's-complement `abs(INT_MIN)` / `-INT_MIN` / mul-overflow, which NO compile error or memcmp surfaces — a **UBSan build lane** (`build.sh ubsan`, `-fsanitize=signed-integer-overflow,undefined -fno-sanitize-recover`) catches the WHOLE class at runtime. The compiler-sanitizer IS the guard (a grep can't enumerate UB sites); run the migrated core's tests + a `±INT_MIN` probe under it. The "mechanize the pillar" move — a blindspot sub-class that *can* be build-caught should be, not re-found by the LLM each scan.
 
 ---
 
@@ -174,7 +174,7 @@ Each category gets: **Definition** / **Detection mechanism** / **Loud vs silent*
 
 **Worked example:** `.B.3` Step 0.5c LANDED — `tt::cfg_parse_field<T>` extended with char[N] branch (no-op verified at HEAD since no current char[N] fields). At `.F.4e` future ship adding KIND_STRING, the branch is in place; static_assert at registry boot-time verifies all STORAGE_T variants are covered.
 
-**Detection guard:** `tools/check_storage_t_coverage.py` CI tool (NEW at `.B.3` ship close).
+**Detection guard:** `tools/check_storage_t_coverage.py` CI tool (NEW at `.B.3` ship close). **+ (2026-06-01, #11) — the SILENT sub-case:** the gap above is LOUD only when the new variant matches NO branch; when an OVER-BROAD trait (e.g. `is_FPN_v` matching both binary AND decimal) routes a new variant down the WRONG existing branch, it's SILENT (the `static_assert` passes). Fix that makes it build-loud: split the trait (`is_fp_binary_v`/`is_fp_decimal_v`) + exhaustive dispatcher `static_assert` + an `always_false` final-else, so a recognized-but-unhandled variant = COMPILE ERROR. Extend `check_storage_t_coverage.py` to assert both-branch coverage.
 
 ---
 

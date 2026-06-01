@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: a5882276-85a9-4550-a78d-e4ab42ed7eaf
-  sister_specs: [feedback_audit_own_proposals_with_same_rigor.md, feedback_enumerate_consumers_before_registry_row_deletion.md, feedback_operator_pushback_as_audit_signal.md, feedback_verify_every_enumerated_site_at_close.md]
+  sister_specs: [feedback_audit_own_proposals_with_same_rigor.md, feedback_enumerate_consumers_before_registry_row_deletion.md, feedback_operator_pushback_as_audit_signal.md, feedback_verify_every_enumerated_site_at_close.md, feedback_paste_tool_output_dont_summarize.md]
   tags: [enumeration-discipline, audit-methodology]
 ---
 

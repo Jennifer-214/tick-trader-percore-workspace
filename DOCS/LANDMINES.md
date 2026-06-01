@@ -124,6 +124,20 @@ watching it actually work).
 
 ---
 
+## Landmine 4 — `/tmp` is `noexec` on this box: freshly-compiled test binaries won't run from there (set 2026-06-01, #11 Ship-A proof scaffold)
+
+**Symptom:** compile a throwaway test/probe binary to `/tmp` (`g++ … -o /tmp/foo && /tmp/foo`) and the **run** fails with `permission denied: /tmp/foo` — even though the **compile succeeded**, the file is there, and it's `+x`. The SAME binary runs fine from the repo dir or `$HOME`. Looks like a permission bug; isn't.
+
+**Root cause:** this hardened Arch workstation mounts `/tmp` with **`noexec`** (security baseline). The kernel refuses `execve()` on any file under a `noexec` mount regardless of the file's own `+x` bit. It's an environment property, not a build/permission/chmod problem.
+
+**Current mitigation:** output ad-hoc test/probe binaries to an EXECUTABLE location — the repo root (`-o ./_tmpbin && ./_tmpbin; rm -f ./_tmpbin`) or `$HOME`, never `/tmp`. (The committed `.sh` gates already do this; this only bites interactive `g++ -o /tmp/…` one-liners.)
+
+**Future-Claude debugging hint:** `permission denied` when **executing** a freshly-compiled binary (NOT a compile error, NOT a missing-file error) → you almost certainly wrote it to `/tmp`. Recompile with `-o ./something` in the repo dir (or `$HOME`) and run from there. Confirm the mount with `findmnt /tmp` or `mount | grep ' /tmp '` (shows `noexec`).
+
+**Reference:** #11 Ship-A proof scaffold (`tools/ship_a_fp2_64_slice.cpp` + `tools/fp_value_equivalence_golden.cpp` compile+run, 2026-06-01) — first hit when the slice binary wouldn't run from `/tmp`; the Session-8 handoff carries the same warning inline for the slice recompile. Sub-`>1h` to diagnose, but environment-specific + recurring (every ad-hoc compile-test session), so it earns a durable entry over the per-session handoff.
+
+---
+
 ## How to add a new landmine
 
 When you encounter a non-obvious pitfall (segfault, race, parallelism

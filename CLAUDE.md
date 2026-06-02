@@ -2,6 +2,9 @@
 
 Always-loaded architectural orientation for this codebase. Stays GENERAL — sprint state + going-forward rules + memory live elsewhere (see Reference docs below).
 
+> [!IMPORTANT]
+> **Prime directive — correctness-first, safety-critical grade.** Capital-bearing HFT: hold it to the bar avionics / NASA flight software meets, NOT move-fast-break-stuff. **Correctness + planning beat speed, every time** — a wrong-but-fast answer on money/determinism code is a *loss*, not a next-sprint fixup. Planning IS the work; thoroughness fires by default; when execution flails, STOP and slow down rather than push harder. We are not running agile here. → `DOCS/DESIGN_PHILOSOPHY.md` § 0 (stance + cost-asymmetry why) + memory `user_correctness_first_not_ship_fast`.
+
 ## Purpose
 
 Claude assists with **planning + implementation of an HFT trading engine** in C++. The codebase prioritizes (in order): **latency** (sub-microsecond hot path) → **determinism** (cross-run / cross-binary / cross-locale byte equivalence) → **maintainability** (structural fix preferred when a bug class can recur) → **operator UX**.

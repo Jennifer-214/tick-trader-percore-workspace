@@ -32,6 +32,24 @@ Those are the source-of-truth; this doc is the synthesis.
 
 ---
 
+## 0. Prime directive — correctness-first (safety-critical grade) [HARD]
+
+**This stance sits ABOVE the priority gradient in § 1.** Before "latency vs determinism vs maintainability," before any pattern or tier, there is one rule: **this is capital-bearing HFT, held to the discipline of safety-critical software — avionics, NASA flight software, fly-by-wire — NOT "move fast and break things."**
+
+**Correctness and planning beat speed, every time, and the trade is not close:**
+- A wrong-but-fast answer on money / determinism / accounting code is a *loss of capital or a corrupted persisted invariant*, not a defect you patch next sprint. There is no "ship it and iterate" on the path that moves real money.
+- **Planning IS the work** (§ 11; `feedback_plan_right_not_fast`). The hard part is deciding *rightly*, not *quickly*; indecisiveness while planning is a feature, not a delay.
+- **Thoroughness fires BY DEFAULT** (`feedback_never_skip_thoroughness_unless_explicit`). Reviews, audits, verification are not optional accelerable steps — skipping one is how a silent error reaches capital. Skip is operator-explicit only, never agent-judgment.
+- **When execution FLAILS** — repeated failed attempts, thrashing, a tail of ever-smaller fixes — STOP, slow down, re-plan, ask. Flailing fast is still flailing.
+
+**Why HARD, not aspirational — the cost asymmetry IS the argument.** The downside of being slow is bounded (time). The downside of being wrong is unbounded (capital; a corrupted invariant; a Knight-Capital reactivation). When the downside is unbounded you do not optimize the bounded cost. This is *why* the codebase carries the apparatus it does — the determinism net, the audit gates, the Hard Invariants, the guard layer are the mechanical expression of "correctness is not negotiable." They are load-bearing, not ceremony.
+
+**How to apply:** default to the deliberate, planned, verified path; never trade correctness for velocity; surface decisions and ask rather than rush past them. This directive is FORMALIZED into the reusable `workspace-template` so every project in the ecosystem inherits it — correctness-first is the house style, not a per-project choice.
+
+**Cross-references:** `CLAUDE.md` Prime-directive callout (the always-loaded headline that guarantees this is never skipped) · § 1 (the priority order this sits above) · § 11 + § 11.5 (audit-driven process discipline) · memories `user_correctness_first_not_ship_fast` / `feedback_plan_right_not_fast` / `feedback_never_skip_thoroughness_unless_explicit` / `feedback_evaluate_options_on_robustness_latency_design_not_time`.
+
+---
+
 ## 1. What this codebase optimizes for (the foundational frame)
 
 A single-symbol HFT trading engine that:

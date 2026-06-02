@@ -2992,7 +2992,7 @@ related_specs: [meta-disciplines/meta-anti-pattern-index.md, data-disciplines/lo
 - **Created:** 2026-05-31 by v5.15.5.F.4d.1.E.0.6 (the determinism-net ship close) — captured durably so the TaskList follow-ups survive session-close (TaskList #2/#8/#9/#10 + this close's handoff carry the same).
 - **Severity:** MEDIUM (no correctness gap in the shipped net; these HARDEN the apparatus + structurally close the broken-CI-guard theme).
 - **What's deferred (each = a TaskList item too):**
-  1. **#8 — standing CI orphan-guard (dead-code prevention), `.E.1`-prep.** Promote `calls_graph_diff.sh` (now fixed → rc=0) from `/ship`-time to a pre-commit Check H so a commit that orphans a function = red build. `.E.1`'s Core→Node rename + drainer absorption is a dead-code-GENERATING event → the guard must exist FIRST. Verify-by-injection (sister to `check_determinism_selftest.sh`).
+  1. **#8 — standing CI orphan-guard (dead-code prevention), `.E.1`-prep.** Promote `calls_graph_diff.sh` (now fixed → rc=0) from `/ship`-time to a pre-commit **Check I** (Check H is now the `.E #11` identifier-retirement guard — its SISTER dead-code/Knight-Capital defense; Class 40 / H21 / `dead-code-and-identifier-retirement-discipline.md`) so a commit that orphans a function = red build. `.E.1`'s Core→Node rename + drainer absorption is a dead-code-GENERATING event → the guard must exist FIRST. Verify-by-injection (sister to `check_determinism_selftest.sh`).
   2. **#9 — guard: flag un-attributed working-tree mutations** (the ROOT of the `.E.0.6` ship-close incident — a read-only `/readiness` subagent wrote+staged a broken static_assert via the Bash write-escape). Snapshot+compare `git status` after a read-only/audit subagent returns; flag any mutation. + a ship-close check for staged files outside the declared set.
   3. **#10 — hang-class remainder.** Extend `exec </dev/null` to the other committed `tools/*.sh` (gen_code_map / validate_feature_mask — lower-risk, not in the commit-freeze path); codify the agent habit (redirect `< /dev/null` on detached/background bash). Core close (hook + det scripts + guard + LANDMINES Landmine 2) shipped in `.E.0.6`.
   4. **#2 — codify tail.** `/post-ship-audit` AR-4 wiring (the negative-self-test as a standing pre-close step) + locale-spec sister-link reciprocation.
@@ -3001,3 +3001,29 @@ related_specs: [meta-disciplines/meta-anti-pattern-index.md, data-disciplines/lo
 - **Trigger:** `.E.1`-prep for #8; next codification/close pass for #9/#10/#2.
 - **Status:** OPEN
 - **Cross-ref:** `meta-anti-pattern-index.md` AR-4 (verification-by-proxy — the ship-close incident); `tools/check_determinism_selftest.sh` (the negative-self-test pattern these reuse); the `.E.0.6` postmortem.
+
+### TECH_DEBT-152 — identifier-retirement guard: enroll bitmap bits + cfg-field name keys (coverage extension)
+
+```yaml
+id: TECH_DEBT-152
+title: check_identifier_retirement.py v1 covers VERSIONs + persisted enum CODES (20 identifiers); enroll bitmap bit-assignments + cfg-field name keys next
+severity: medium
+surface_tags: [ci-tooling, registry, wire-format, capital-safety, dead-code]
+trigger: next identifier-surface change (new persisted bit / cfg key) OR next codification pass
+status: open
+opened: 2026-06-02
+related_specs: [meta-disciplines/dead-code-and-identifier-retirement-discipline.md]
+sister_debt: TECH_DEBT-151 #8 (orphan-guard — sister dead-code/Knight-Capital pre-commit guard)
+```
+
+- **Created:** 2026-06-02 at v5.15.5.F.4d.1.E #11 dead-code/identifier-retirement codification (H21 + Class 40). The guard (`tools/check_identifier_retirement.py` + golden ledger + pre-commit Check H) shipped covering the highest-value surfaces; the rest is paced enrollment per `feedback_close_the_class_vs_migrate_every_site` (close the class via the primitive + guard; pace coverage).
+- **Severity:** MEDIUM (capital-safety guard with a KNOWN coverage gap — the uncovered identifiers could be reused without the guard catching it; the existing conventions [RESERVED/LEGACY_/OPTION C] + H21 discipline + code review cover the gap meanwhile).
+- **Covered now (v1, 20 identifiers):** 6 format/snapshot VERSIONs + `BanditAlgorithm`/`StrategyId`/`RegimeId` enum codes.
+- **Deferred enrollment (add a `SOURCES` row each in the tool):**
+  1. **Bitmap bit-assignments** — OMS state flags, Stamp `has_flags` bits, failure-mode flags, ML cfg flags, bandit update masks (bit-index → meaning is persisted/wire-visible).
+  2. **Cfg-field name keys** — `FOREACH_GLOBAL_CFG_FIELD` + `FOREACH_PER_CORE_CFG_FIELD` parse-keys (operators have old cfg files; a recycled key silently re-means).
+  3. **(optional) Layout-coupling golden** — struct-layout-fingerprint → version, IF the existing R1 `sizeof`/offset `static_assert`s prove insufficient at catching "version-must-bump-when-the-persisted-struct-changes."
+- **Cost estimate:** ~1-2h each surface (a `SOURCES` row + a parser branch if the format differs + `--update` the ledger). LOW risk (CI tooling; no engine code).
+- **Trigger:** next change to an un-enrolled identifier surface (enroll it then) OR next codification pass.
+- **Status:** OPEN (paced enrollment; the discipline + primitive are complete).
+- **Cross-ref:** `dead-code-and-identifier-retirement-discipline.md` (Mechanization § — the enrollment surface); CLAUDE.md H21; RECURRING_BUG_PATTERNS Class 40; TECH_DEBT-151 #8 (sister orphan-guard).

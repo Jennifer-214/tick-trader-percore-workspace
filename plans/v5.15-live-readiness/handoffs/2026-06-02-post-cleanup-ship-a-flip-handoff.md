@@ -9,7 +9,7 @@ ship_end_goal: "Ship A — compact FPN<64> 24B sign-mag → FixedPoint<2,64> 16B
 coding_status: op-library-complete + storage-flip-PENDING (unchanged) — but the repo was RESTRUCTURED this session (code-only-public); read the DELTA below
 predecessor_handoff: handoffs/2026-06-02-ship-a-storage-flip-handoff.md   # ← the FULL flip detail is here; still valid
 decision_log: plans/v5.15-live-readiness/decision-logs/v5.15.5.F.4d.1.E-architecture-v2.md (D-97..D-146; SSoT)
-engine_head: 052670d (feat/v5.15-live-readiness; PUSHED to origin 2026-06-02 — code-only-public tip is live; the flip op-library ends at 4efa8d3)
+engine_head: e33a702 (feat/v5.15-live-readiness; PUSHED to origin 2026-06-02 — code-only-public tip + slimmed self-contained public README live; the flip op-library ends at 4efa8d3. This session ALSO landed handoff-state-machine + DOCS-backup + public/private-boundary-sharpening — all orthogonal to the flip; the flip itself is UNCHANGED, resume at §3.)
 required_reading: [this doc, predecessor_handoff, plan-body, CLAUDE.md §0 prime-directive]
 pickup: /accept-handoff <this doc>
 ---

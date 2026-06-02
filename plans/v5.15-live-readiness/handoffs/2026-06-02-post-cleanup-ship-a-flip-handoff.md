@@ -8,7 +8,7 @@ ship_end_goal: "Ship A — compact FPN<64> 24B sign-mag → FixedPoint<2,64> 16B
 coding_status: op-library-complete + storage-flip-PENDING (unchanged) — but the repo was RESTRUCTURED this session (code-only-public); read the DELTA below
 predecessor_handoff: handoffs/2026-06-02-ship-a-storage-flip-handoff.md   # ← the FULL flip detail is here; still valid
 decision_log: plans/v5.15-live-readiness/decision-logs/v5.15.5.F.4d.1.E-architecture-v2.md (D-97..D-146; SSoT)
-engine_head: 052670d (feat/v5.15-live-readiness; LOCAL — NOT pushed; the flip op-library ends at 4efa8d3)
+engine_head: 052670d (feat/v5.15-live-readiness; PUSHED to origin 2026-06-02 — code-only-public tip is live; the flip op-library ends at 4efa8d3)
 required_reading: [this doc, predecessor_handoff, plan-body, CLAUDE.md §0 prime-directive]
 pickup: /accept-handoff <this doc>
 ---
@@ -21,7 +21,7 @@ is a thin DELTA on top of `handoffs/2026-06-02-ship-a-storage-flip-handoff.md` (
 what's different now.
 
 ## 1. State at pickup (verify — `/accept-handoff` does this)
-- **Engine HEAD `052670d`** (`feat/v5.15-live-readiness`, **LOCAL — not pushed**). On top of the flip
+- **Engine HEAD `052670d`** (`feat/v5.15-live-readiness`, **PUSHED to origin 2026-06-02**). On top of the flip
   op-library (`4efa8d3`) sit: the guard-hardening pass (`8438bbd`..`6c0e570`) + **this session's two
   spring-cleaning commits**: `9a22fb0` (tools/+tests/ → private) + `052670d` (code-only-public surface).
 - **Version.hpp** still `5.15.5.F.4d.1.E.0.6` (the flip hasn't tagged; STOP-before-money, D-130).
@@ -49,8 +49,9 @@ but it changed the repo's shape:
 5. **NEW correctness-first prime directive** (always-loaded) — CLAUDE.md top + DESIGN_PHILOSOPHY §0. The flip
    is capital-core: plan-before-code, consult before the tag, don't rush. (You already live this.)
 
-**Engine is NOT pushed.** The spring-cleaning commits are local on `feat/v5.15-live-readiness`. Pushing
-publishes the clean code-only surface — operator's call (outward-facing). Don't push without her go.
+**Engine IS pushed** (2026-06-02, operator go — `6c0e570..052670d` to `origin/feat/v5.15-live-readiness`).
+The public branch TIP is now code-only (tools/tests/DOCS/dev-apparatus removed from the tip; history still
+carries them — tip-clean, not history-scrubbed, which is the intent). The flip will be the NEXT engine push.
 
 ## 3. THE FLIP — the actual next work (full detail in the predecessor handoff)
 **Unchanged.** Resume at the predecessor handoff's §3 step 1: redefine `FPN<64>` → `FixedPoint<2,64>` (16B,
@@ -77,9 +78,9 @@ until step 8). Then A.5 rename → Ship B (decimal money).
 | #5 | pending (blocked by #1,#2) | SWAR parse (POST-#11) |
 | #6,#9-#13 | pending | Guard-hardening pass (H1/H3 forbidden-token · meta-registry · H16 · OMS cap · H7/H8 asm · legacy phantom) |
 | #7,#8 | completed | bounds static_asserts (dad6f19) · fee-desync guard (d2ee570) |
-| #14 | pending | Doc-budget M7 codification tail (file-size-split ext + going-forward rule + meta-anti-pattern row) |
+| #14 | completed | Doc-budget M7 codification tail — DONE (file-size-split byte-budget § + meta-anti-pattern WH-5 + 2 always-loaded triggers; workspace `96bde7b`) |
 | #15 | completed | **Code-only-public spring cleaning** (this session — tools+tests+everything private; build 3241/0; codified) |
-| #16 | pending | **Session wrap-up follow-ups** — sync (DONE: workspace 7b018fd + template d04e350 pushed) · doc-budget codify-tail · going-forward rule for the public/private law · template host-gitignore · CODE_OF_CONDUCT/BOUNTY privatization confirm · **push the engine branch** |
+| #16 | pending | **Session wrap-up follow-ups** — DONE: sync (workspace `96bde7b` + template `d04e350` pushed) · doc-budget codify-tail · public/private-law going-forward rule · **engine branch pushed** (`052670d`). REMAINING (next session, low-pri): template host-gitignore genericize · CODE_OF_CONDUCT/BOUNTY privatization confirm · migrate_memory_frontmatter `$FOXML_MEMORY_DIR`/.absolute() fix |
 
 ## 6. Operator norms
 Address Caramel as Caramel/she/her; no AskUserQuestion modals (inline); evaluate on robustness+latency+design

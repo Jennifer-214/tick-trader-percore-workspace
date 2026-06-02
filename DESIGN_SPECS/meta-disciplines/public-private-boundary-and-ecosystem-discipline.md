@@ -20,10 +20,16 @@ the v5.15 "spring cleaning" pass on `FoxML_Trader_v2`.
 
 ## The law
 
-> **A public project repo contains ONLY what someone needs to COMPILE (and run) the code.**
-> Source + build system + `LICENSE` + `README` (+ assets the README renders). **Everything
-> else is private** — tests, all dev/CI tooling, docs, experiments, benchmarks, runtime
-> state, and the operator's workflow apparatus.
+> **A public project repo contains ONLY what someone needs to COMPILE-AND-RUN the code.**
+> Source + build system + `LICENSE` + a **one-page `README`** (what it is · how to build · how to
+> run) (+ assets the README renders). **Everything else is private** — tests, all dev/CI tooling,
+> **ALL docs (including `CHANGELOG` + operator/usage/config manuals — depth never goes public)**,
+> experiments, benchmarks, runtime state, and the operator's workflow apparatus.
+
+**The discriminator:** *"compile + run the artifact"* → public. *"how it's built / operated-in-depth /
+maintained / reasoned-about"* → private. The public repo is the **artifact**, not a window into the
+workflow — so even a polished operator manual or CHANGELOG is private (it documents *operating*, not
+*compiling*). The one public doc is a one-page README; everything deeper lives in the private `DOCS/`.
 
 **Why (operator rationale):** the public repo is a clean *artifact*, not a window into the
 workflow. "People already saw *how* I work — that was useful; now they just get the code."
@@ -40,8 +46,8 @@ params) is *already* private. So the public/private line is NOT about secrecy �
 Engine source (`CoreFrameworks/` `Strategies/` `ML_Headers/` `FixedPoint/` `MemHeaders/`
 `DataStream/` `Backtest/` `GUI/` + `main.cpp` / `foxml_suite.cpp` / `Version.hpp` /
 `Limits.hpp` / `Licensing.hpp`) · build system (`CMakeLists.txt` `Makefile` `build.sh`
-`run.sh` `scripts/`) · `LICENSE` (legal, AGPL) · `README.md` · `assets/` (only if the README
-renders them) · `.gitignore`.
+`run.sh` `scripts/`) · `LICENSE` (legal, AGPL) · **one-page `README.md`** (compile-and-run only — all
+depth lives in the private `DOCS/`) · `assets/` (only if the README renders them) · `.gitignore`.
 
 ## What's PRIVATE (everything else)
 

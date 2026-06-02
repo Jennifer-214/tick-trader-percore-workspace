@@ -83,19 +83,37 @@ Standard 4KB OS pages lead to Translation Lookaside Buffer (TLB) misses, trigger
 Software optimization stops mattering if the hardware decides to sleep or interrupts fire unexpectedly.
 * **CPU Sleep States**: Disable deep C-states and P-states in the Linux boot parameters (`intel_idle.max_cstate=0`, `processor.max_cstate=0`) and use the `performance` CPU governor. Cores must never sleep.
 * **NUMA Architecture**: Guarantee memory locality. The thread, its memory allocations, and the NIC interrupts must all reside on the exact same NUMA node to prevent slow cross-socket QPI/UPI links.
+
+---
+
+## H16. Metadata Bit ↔ Derived Filter (Structural Completeness Invariant) — Codified v5.15.5.F.4d 2026-05-16
+
+Every bit in `CfgFieldDescriptor::MetadataFlag` enum (at `CoreFrameworks/CfgFieldRegistry.hpp:129-149`) MUST satisfy ONE of:
+1. **Have a derived filter row** in `FOREACH_DERIVED_FILTER` meta-registry (declaring the auto-flow consumer); OR
+2. **Have a documented exemption** with rationale in `MANUAL_FIELDS_INVENTORY.md` Section D or equivalent.
+
+* **Why**: A metadata bit without a derived filter is a SILENT FAILURE MODE — fields flagged with the bit accumulate, but no consumer walks them; the bit becomes vestigial. CI Check `test_metadata_bit_to_derived_filter_coverage` enforces by enumerating MetadataFlag enum entries + asserting each has a `FOREACH_DERIVED_FILTER` row OR an explicit-exempt entry.
+* **How**: Adding a new metadata bit = (a) bit allocation in enum (`1u << N`); (b) row in `FOREACH_METADATA_BIT` X-macro at `CfgFieldRegistry.hpp:1043+` for per-bit precomputed mask auto-generation; (c) row in `FOREACH_DERIVED_FILTER` at the meta-registry declaring consumer variant (GUI_ONLY / WIRE_FORMAT / WIRE_FORMAT_TWO_SOURCE) + locked-hash constant if wire-format.
+* **Anti-pattern**: adding a metadata bit + flagging fields with it + writing per-field walker code by hand. Fix: declare a `FOREACH_DERIVED_FILTER` row + use `DERIVED_FILTER_DECLARE_*` macro to auto-generate the walker.
+* **Cross-ref**: `DESIGN_SPECS/framework-patterns/metadata-bit-driven-derived-filter-framework.md` (canonical pattern body); `DESIGN_SPECS/framework-patterns/meta-registry-pattern-for-codebase-registry-discipline.md` (sister H15 + H19 invariants); CLAUDE.md table row H16.
+* **First canonical**: `STAMP_BOUND_CFG_DERIVED` metadata bit @ bit 13 + `FOREACH_DERIVED_FILTER` first row (STAMP_BOUND_CFG variant; WIRE_FORMAT_TWO_SOURCE). Codified at v5.15.5.F.4d ship close 2026-05-16.
+
+## H17. Cfg Struct Fields Auto-Generated From `FOREACH_CFG_FIELD` (Structural Integrity Invariant) — Codified v5.15.5.F.4d 2026-05-16
+
+`ControllerConfig<F>` cfg struct fields MUST be auto-generated from `FOREACH_PER_CORE_CFG_FIELD` + `FOREACH_GLOBAL_CFG_FIELD` X-macro registries (at `CoreFrameworks/CfgFieldRegistry.hpp`). NO manual cfg field declarations.
+
+* **Why**: Manual cfg field declarations drift from registry over time → Class 18 mirror-incomplete bug class. When parser / save / drift-check / GUI render code walks the registry but a field exists ONLY in the struct (not the registry), that field is invisible to all auto-flows. Discovered via paper-test surfacing at v5.15.5.F.4c.1 (`ml_buy_threshold` had registry row but missing STAMP_BOUND descriptor flag — auto-flows silently skipped it).
+* **How**: `PerCoreCfg<F>` struct body MUST contain ONLY `FOREACH_PER_CORE_CFG_FIELD` + `FOREACH_PER_CORE_DOMAIN_BITMAP` X-macro invocations (no manual field declarations); CI Check 2 (`tools/check_per_core_registry_integrity.py`) since v5.15.5.F.4c enforces. Same shape extends to `ControllerConfig<F>` body via `FOREACH_GLOBAL_CFG_FIELD` post-`.F.4d`.
+* **Anti-pattern**: adding a new cfg field as a manual struct field declaration ("just one quick addition"). Fix: add to FOREACH_*_CFG_FIELD X-macro instead — parser + save + drift-check + GUI render all auto-flow from registry row.
+* **Exception**: parallel arrays declared via `FOREACH_MANUAL_PER_CORE_FIELD` X-macro (Section A of MANUAL_FIELDS_INVENTORY.md; 12 entries; CI Check 3 enforces) — these are NOT cfg fields but per-node state arrays that need parallel slot allocation; tracked in a sister X-macro registry for the same single-source-of-truth discipline.
+* **Cross-ref**: `DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md`; `DESIGN_SPECS/framework-patterns/universal-registry-bitmap-dispatcher-pattern.md` (bitmap dispatcher framework canonical at `.F.4c`); CLAUDE.md table row H17.
+* **First canonical**: `FOREACH_PER_CORE_CFG_FIELD` at `.F.4c` (93 rows; PerCoreCfg<F> body now ONLY X-macro). H17 codified to make the discipline permanent at v5.15.5.F.4d ship close 2026-05-16.
+
+---
+
+## Note on numbering: H1-H14 + H20 in CLAUDE.md; H15/H18/H19 in CLAUDE.md; H16/H17 here (private overlay)
+
+The CLAUDE.md Hard Invariants table is the public-facing canonical list (always loaded; broad framework-discipline visibility). This private overlay extends with structural-detail invariants H16 + H17 (codified `.F.4d`) that benefit from the longer-form treatment available here (Why + How + Anti-pattern + Exception + Cross-ref + First canonical).
+
+The 11 numbered sections above (Memory Management / Dispatch & Polymorphism / Concurrency / etc.) predate the H<N> numbering convention and remain the canonical strict-invariant detail reference for the foundational HFT discipline. H15-H20 are additional metadata-discipline + framework-discipline invariants that compose ON TOP of the foundational 11.
 * **NIC Tuning**: Disable adaptive interrupt coalescing on the network interface (`ethtool -C eth0 rx-usecs 0 rx-frames 0`) to receive packets immediately.
-## 7. OS & Socket Hardening
-Network and system interfaces must never halt the engine unexpectedly.
-* **TCP Configuration**: Always configure SO_KEEPALIVE on persistent exchange connections.
-* **OpenSSL Polling**: OpenSSL socket reads must gracefully handle SSL_ERROR_WANT_READ instead of fatally dropping.
-* **Signals**: The engine must capture SIGPIPE, SIGINT, and SIGTERM to prevent immediate crashes without saving the portfolio snapshot.
-* **Memory Limits**: The engine MUST call mlockall(MCL_CURRENT | MCL_FUTURE) during initialization to prevent latency-inducing page faults.
-
-## 8. Hot Path I/O Constraints
-File I/O operations are strictly forbidden on the critical path.
-* **NO Blocking I/O**: fprintf, fflush, fopen, and system() are banned from hot threads (ExecutionCore, DataStream). All disk operations must be deferred to an asynchronous LogDrainer ring.
-
-## 9. Machine Learning Integrity
-Feature normalization and blending math must be resilient to market data anomalies.
-* **NaN Guards**: Never execute std::sort, matrix inversions (Cholesky), or Bandit renormalization without explicit NaN guards.
-* **Zero Variance**: Feature Standardizers must check for zero variance (constant inputs) to prevent division-by-zero during inference scaling.

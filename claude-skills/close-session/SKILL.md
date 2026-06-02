@@ -151,6 +151,14 @@ Verify the SESSION'S substantive deliverables ACTUALLY landed complete + coheren
 
 ### Stage 6 — `/handoff` (compose + write handoff doc)
 
+**Stage 6.0 — RESUME a deferred handoff if THIS work was a detour.** Before composing a fresh handoff, check whether the session's current `status: active` handoff carries a `defers: <parked>` field. If it does, this work was a *detour* that PARKED another work-line — so closing it means **resuming the parked one**, not writing a brand-new handoff:
+- flip `<parked>` from `status: deferred` → `status: active` (it becomes the next pickup),
+- flip the current (detour) handoff → `status: superseded` (it's done),
+- refresh the resumed handoff's `engine_head` / state lines if they drifted while the detour ran,
+- verify `tools/check_handoff_active_singleton.py` now reports exactly 1 active (the resumed one).
+
+Then SKIP the fresh-handoff write below — the resumed handoff IS the next-session entry. Otherwise (no `defers:`), proceed normally:
+
 Invoke `/handoff <ship-tag>` via Skill tool. `/handoff` internally runs its own Stages 1.5-4.5 + writes the doc to workspace path:
 `plans/<sprint>/handoffs/<YYYY-MM-DD>-<ship-tag>-<descriptor>-handoff.md`
 

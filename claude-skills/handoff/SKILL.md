@@ -811,6 +811,8 @@ grep -rl '^status: active' "$SPRINT_HANDOFFS"/*.md 2>/dev/null
 
 The new handoff's frontmatter carries `status: active` (Stage 5 template). The ≤1-active invariant is enforced mechanically by `tools/check_handoff_active_singleton.py` (HARD in `check_session_docs.sh`); if it ever reports >1, a prior flip was missed — fix before the new handoff is trusted. Discipline: `DESIGN_SPECS/meta-disciplines/handoff-active-state-machine.md`.
 
+**Stage 6.0b — DEFER instead of supersede when a *different* priority jumps the queue.** If this new handoff is for a different work-line while the current one is **paused, not replaced** (e.g. mid-flip but detouring to a cleanup ship), do NOT supersede the prior `active` — flip it to **`status: deferred`** (not `superseded`) + add `deferred_for: <this new handoff's filename>`, and give THIS handoff `defers: <the parked handoff's filename>`. The parked one is still owed; it RESUMES (`deferred → active`) when this detour's `/close-session` Stage 6.0 closes. **Supersede** = same work-line, old is dead; **defer** = different work-line, old is paused. The guard counts neither as active (≤1-active holds) but WARNS if a deferred handoff is ever left with 0 active (a forgotten park). See `handoff-active-state-machine.md` § Deferring.
+
 **ALWAYS write to the workspace path explicitly:**
 
 ```

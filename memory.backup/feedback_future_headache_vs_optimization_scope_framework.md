@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: ba5429a9-2f65-4f8d-950c-3ae250973f24
-  sister_specs: [feedback_no_defer_for_effort.md, feedback_motivated_collaborator_for_caramel.md, feedback_evaluate_options_on_robustness_latency_design_not_time.md, feedback_overengineering_boundary_when_future_easier.md, feedback_framework_layer_payoff_diminishing_returns.md]
+  sister_specs: [feedback_no_defer_for_effort.md, feedback_motivated_collaborator_for_caramel.md, feedback_evaluate_options_on_robustness_latency_design_not_time.md, feedback_overengineering_boundary_when_future_easier.md, feedback_framework_layer_payoff_diminishing_returns.md, feedback_opportunistic_tech_debt_closure.md]
   tags: [scope-discipline, audit-methodology]
 ---
 

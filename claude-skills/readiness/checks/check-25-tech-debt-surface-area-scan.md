@@ -22,6 +22,7 @@ ship's files-touched.
    - **Refresh entry** — update cost estimate / trigger / context if stale
    - **Defer with rationale** — confirm trigger isn't met; ship comment
      references the entry
+   - **Classify by subsumption (opportunistic closure, 2026-06-02):** of the matching entries, CLOSE the ones this ship SUBSUMES / trivially-completes (≈0 marginal cost — built the primitive / already in the surface); cross-link + leave-tracked the ones merely ADJACENT (a distinct deliverable + test + trigger). Discriminator = marginal-cost, NOT surface-adjacency. See `feedback_opportunistic_tech_debt_closure`.
 3. **DO NOT silently leave entries stale** (e.g., old cost estimate that
    no longer reflects current code).
 4. **Auto-write contract:** if Check 25 surfaces a NEW deferral candidate

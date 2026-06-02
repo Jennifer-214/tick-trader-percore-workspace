@@ -96,7 +96,7 @@ B.4.1 was reverted (commit 6323c17). Methodology lesson: COUNT CODE-LOC, NOT TOT
 
 - **Guard (mechanical, not a guideline):** `tools/check_always_loaded_budget.py` — HARD in `check_session_docs.sh`, teeth-proofed via `--selftest`, caps as SSoT in the tool, NEAR-band warning ≥90%. `.absolute()`-resolved so it works when symlinked from the private workspace (LANDMINE 5).
 - **Fix order — compress before split:** the bloat is usually a CONTRACT VIOLATION (index entries grown past their "≤1 line / ≤200 char" rule), not too-many-entries → **compress first** (zero info loss; detail lives in the canonical doc/memory body). Only when a genuinely-large entry-count can't fit is it time to **split** (e.g. `MEMORY.md` → hot index + an extended index loaded at `/accept-handoff`) — the guard's recurring NEAR/OVER is what tells you you've hit that point.
-- This is the **M7 structural close** of the "always-loaded doc silently truncates" class (meta-anti-pattern **WH-4**): convention-only compression RECURRED (`MEMORY.md` compressed 2026-05-26, over budget again 2026-06-02) → a standing guard replaces periodic manual trimming. The deeper rule: **guard the REAL limit (harness bytes), not a human proxy (line count)** — a guideline in the wrong unit is a hole.
+- This is the **M7 structural close** of the "always-loaded doc silently truncates" class (meta-anti-pattern **WH-6**): convention-only compression RECURRED (`MEMORY.md` compressed 2026-05-26, over budget again 2026-06-02) → a standing guard replaces periodic manual trimming. The deeper rule: **guard the REAL limit (harness bytes), not a human proxy (line count)** — a guideline in the wrong unit is a hole.
 
 ---
 

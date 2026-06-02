@@ -79,7 +79,7 @@ until step 8). Then A.5 rename → Ship B (decimal money).
 | #5 | pending (blocked by #1,#2) | SWAR parse (POST-#11) |
 | #6,#9-#13 | pending | Guard-hardening pass (H1/H3 forbidden-token · meta-registry · H16 · OMS cap · H7/H8 asm · legacy phantom) |
 | #7,#8 | completed | bounds static_asserts (dad6f19) · fee-desync guard (d2ee570) |
-| #14 | completed | Doc-budget M7 codification tail — DONE (file-size-split byte-budget § + meta-anti-pattern WH-5 + 2 always-loaded triggers; workspace `96bde7b`) |
+| #14 | completed | Doc-budget M7 codification tail — DONE (file-size-split byte-budget § + meta-anti-pattern WH-6 + 2 always-loaded triggers; workspace `96bde7b`) |
 | #15 | completed | **Code-only-public spring cleaning** (this session — tools+tests+everything private; build 3241/0; codified) |
 | #16 | pending | **Session wrap-up follow-ups** — DONE: sync (workspace `96bde7b` + template `d04e350` pushed) · doc-budget codify-tail · public/private-law going-forward rule · **engine branch pushed** (`052670d`). REMAINING (next session, low-pri): template host-gitignore genericize · CODE_OF_CONDUCT/BOUNTY privatization confirm · migrate_memory_frontmatter `$FOXML_MEMORY_DIR`/.absolute() fix |
 

@@ -8,7 +8,7 @@ ship_end_goal: "Ship A — compact the binary numeric core FPN<64> 24B sign-mag 
 coding_status: op-library-complete-and-committed + storage-flip-PENDING (the flip is the next, atomic, red-build-until-done phase)
 predecessor_handoff: handoffs/2026-06-01-session8-ship-a-integration-handoff.md
 decision_log: plans/v5.15-live-readiness/decision-logs/v5.15.5.F.4d.1.E-architecture-v2.md (D-97..D-146; SSoT; D-142..D-146 = Session-9)
-engine_head: c53e182 (feat/v5.15-live-readiness; PUSHED? verify — local commits this session, may be unpushed)
+engine_head: 4efa8d3 (feat/v5.15-live-readiness; PUSHED — branch backed off-machine; = c53e182 op-library + 4efa8d3 post-op-library hygiene)
 workspace_head: 3ac6dd0 (decision log D-142..146 + plan sync + readiness report)
 deletion_scope: none
 pickup: /accept-handoff <this doc>
@@ -19,8 +19,8 @@ pickup: /accept-handoff <this doc>
 **The hard part is DONE.** Sessions 8–9 built + PROVED the full 16B op library; this handoff is for the **atomic storage flip** — point `FPN<64>` at the 16B type and reconcile everything the build then enumerates, in one red→green pass. Best done with fresh, focused context (it's capital-core and red-build until complete).
 
 ## 1. State (verify at pickup — `/accept-handoff` does this)
-- **Engine HEAD `c53e182`** (`feat/v5.15-live-readiness`). 7 commits this session on anchor `575a31c`:
-  `6f50864` (16B type+traits+simple ops) · `b11949f` (native div+sqrt) · `2deb6d9` (release v0.3) · `fa760d3` (README) · `3f96a40` (conversions+double-rt transcendentals) · `e342828` (Exp/Sin/Cos+FromInt) · `c53e182` (branchless transcendentals + i128 primitives). **Verify pushed:** `git log origin/feat/v5.15-live-readiness..HEAD --oneline` (may be unpushed — push if so).
+- **Engine HEAD `4efa8d3`** (`feat/v5.15-live-readiness`). 8 commits this session on anchor `575a31c`:
+  `6f50864` (16B type+traits+simple ops) · `b11949f` (native div+sqrt) · `2deb6d9` (release v0.3) · `fa760d3` (README) · `3f96a40` (conversions+double-rt transcendentals) · `e342828` (Exp/Sin/Cos+FromInt) · `c53e182` (branchless transcendentals + i128 primitives) · `4efa8d3` (post-op-library hygiene — removed dead `fp2_to_mag_fpn`, refreshed slice-count comments). **Pushed** (branch backed off-machine; `git log origin/feat/v5.15-live-readiness..HEAD` is empty).
 - **Workspace HEAD `3ac6dd0`** (decision log D-142..146 + plan sync + the Session-9 readiness report).
 - Working tree: pre-existing untracked `.E.2` doc drafts + `build_probe/` (leave them — unrelated).
 - Baseline: `controller_test` **3241/0** throughout (the op-port is ADDITIVE — `FPN<64>` still 24B until the flip).

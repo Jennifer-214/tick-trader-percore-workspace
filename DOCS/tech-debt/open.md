@@ -3075,3 +3075,30 @@ sister_debt: TECH_DEBT-008 (Maker order MVP — the feature this gates)
 - **Trigger:** before enabling LIMIT orders (sister TECH_DEBT-008 Maker order MVP). The guard's loud-fail is the tripwire.
 - **Status:** OPEN (guarded; fix gated on LIMIT-order support).
 - **Cross-ref:** `OMS_GuardTakerBoundFeeBasis` (CoreFrameworks/OrderManager.hpp); TECH_DEBT-008 (the LIMIT/maker feature); 2026-06-02 guard-hardening pass.
+
+### TECH_DEBT-155 — guard-hardening pass: 6 pending H-invariant / capital enforcement guards
+
+```yaml
+id: TECH_DEBT-155
+title: Guard-hardening pass — close the 6 remaining enforcement holes from the H1-H21 + capital-path audit (2026-06-02)
+severity: medium
+surface_tags: [ci-tooling, capital-safety, hard-invariants, enforcement, hot-path]
+trigger: continue the guard-hardening pass next session (folded into the Ship-A storage-flip handoff)
+status: open
+opened: 2026-06-02
+related_specs: [meta-disciplines/dead-code-and-identifier-retirement-discipline.md]
+sister_debt: TECH_DEBT-154 (maker-fee rebind — a landed guard from the same pass)
+```
+
+- **Created:** 2026-06-02 — a 2-agent sweep (H1-H21 enforcement coverage + capital-path phantom/unguarded scan) found the enforcement-layer holes. **2 guards landed this session** (#7 bounds static_asserts `dad6f19`; #8 maker-fee `OMS_GuardTakerBoundFeeBasis` `d2ee570` + OrderEventLog `<cerrno>`); 6 remain. **Full findings + per-guard file:lines + approaches:** `plans/v5.15-live-readiness/plan_checks/2026-06-02-guard-coverage-audit-synthesis.md` (the durable capture — READ IT first).
+- **Severity:** MEDIUM (capital-safety hardening; the production sharded path is well-defended — these close enforcement-layer holes so regressions can't silently ship. High lifetime leverage per `feedback_guards_compound_enforcement_is_leverage`).
+- **The 6 pending (TaskList #6/#9/#10/#11/#12/#13):**
+  1. **#6 H1/H3 forbidden-token guard** — grep engine src for heap/lock tokens; comment-excluded; baseline shrink-never-grow; wire pre-commit.
+  2. **#9 meta-registry enforcement** — wire `check_meta_registry.py` → build.sh/pre-commit + flip to FATAL (closes H15/H19); reconcile CLAUDE.md's 3 FICTIONAL check names; wire orphan `check_storage_t_coverage.py` (H13).
+  3. **#10 H16 check** — MetadataFlag → `FOREACH_DERIVED_FILTER` coverage (no code exists today; CLAUDE.md claims a check that doesn't exist).
+  4. **#11 OMS submit qty/notional cap** — `OrderManager.hpp:901`; the closest LIVE Knight-Capital sibling (zero-price-divide saturates to MAX → max-size order). Needs a cap-value decision (cfg-driven vs hard ceiling).
+  5. **#12 H7/H8 asm branch-count gate** — standing `g++ -S` conditional-jump count on BG_Evaluate/SG_Evaluate; enforces H7 (branchless) + proxies H8 (the #1 invariant, zero gate today).
+  6. **#13 legacy BuyGate phantom + snapshot body CRC32** — both LOW (deprecated single-core path / paper-only snapshot).
+- **Trigger:** continue the pass next session (folded into the Ship-A storage-flip handoff — one pickup doc, per operator "I don't want 2 handoffs").
+- **Status:** OPEN (in-flight; 2/8 landed).
+- **Cross-ref:** the synthesis doc (full details); `feedback_guards_compound_enforcement_is_leverage`; CLAUDE.md H1-H21 table; the storage-flip handoff (carries the TaskList + the parallel-pass note).

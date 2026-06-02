@@ -8,8 +8,8 @@ ship_end_goal: "Ship A — compact the binary numeric core FPN<64> 24B sign-mag 
 coding_status: op-library-complete-and-committed + storage-flip-PENDING (the flip is the next, atomic, red-build-until-done phase)
 predecessor_handoff: handoffs/2026-06-01-session8-ship-a-integration-handoff.md
 decision_log: plans/v5.15-live-readiness/decision-logs/v5.15.5.F.4d.1.E-architecture-v2.md (D-97..D-146; SSoT; D-142..D-146 = Session-9)
-engine_head: 8182c43 (feat/v5.15-live-readiness; PUSHED. Ship-A op-library ends at 4efa8d3; the 2 commits on top — 8438bbd ledger+tool, 8182c43 pre-commit Check H — are a SEPARATE dead-code/identifier-retirement discipline ship [H21], NOT Ship-A code. The flip interacts with that guard — see step 5.)
-workspace_head: 3ac6dd0 (decision log D-142..146 + plan sync + readiness report)
+engine_head: d2ee570 (feat/v5.15-live-readiness; PUSHED. Ship-A op-library ends at 4efa8d3; the commits on top are a SEPARATE, PARALLEL guard-hardening pass [NOT Ship-A code]: 8438bbd/8182c43 = identifier-retirement H21 (Check H); dad6f19 = bounds static_asserts + OrderEventLog <cerrno>; d2ee570 = maker-fee desync guard. The flip interacts with these — see step 5 + §5.5.)
+workspace_head: f955e7a+ (decision log D-142..146; + the parallel guard-hardening pass — dead-code/identifier + opportunistic-closure + guards-compound codifications, the tech-debt automation, TECH_DEBT-152/153/154/155, the guard-coverage audit synthesis)
 deletion_scope: none
 pickup: /accept-handoff <this doc>
 ---
@@ -19,8 +19,8 @@ pickup: /accept-handoff <this doc>
 **The hard part is DONE.** Sessions 8–9 built + PROVED the full 16B op library; this handoff is for the **atomic storage flip** — point `FPN<64>` at the 16B type and reconcile everything the build then enumerates, in one red→green pass. Best done with fresh, focused context (it's capital-core and red-build until complete).
 
 ## 1. State (verify at pickup — `/accept-handoff` does this)
-- **Engine HEAD `8182c43`** (`feat/v5.15-live-readiness`). The Ship-A op-library is 8 commits on anchor `575a31c` (ending `4efa8d3`):
-  `6f50864` (16B type+traits+simple ops) · `b11949f` (native div+sqrt) · `2deb6d9` (release v0.3) · `fa760d3` (README) · `3f96a40` (conversions+double-rt transcendentals) · `e342828` (Exp/Sin/Cos+FromInt) · `c53e182` (branchless transcendentals + i128 primitives) · `4efa8d3` (post-op-library hygiene — removed dead `fp2_to_mag_fpn`, refreshed slice-count comments). **Pushed.** **+2 commits past `4efa8d3`** (`8438bbd` identifier-ledger+tool, `8182c43` pre-commit Check H) = the dead-code/identifier-retirement codification (H21) — a SEPARATE discipline ship, not Ship-A. The flip interacts with its guard (step 5).
+- **Engine HEAD `d2ee570`** (`feat/v5.15-live-readiness`). The Ship-A op-library is 8 commits on anchor `575a31c` (ending `4efa8d3`):
+  `6f50864` (16B type+traits+simple ops) · `b11949f` (native div+sqrt) · `2deb6d9` (release v0.3) · `fa760d3` (README) · `3f96a40` (conversions+double-rt transcendentals) · `e342828` (Exp/Sin/Cos+FromInt) · `c53e182` (branchless transcendentals + i128 primitives) · `4efa8d3` (post-op-library hygiene — removed dead `fp2_to_mag_fpn`, refreshed slice-count comments). **Pushed.** **+4 commits past `4efa8d3` = the PARALLEL guard-hardening pass** (NOT Ship-A code): `8438bbd`/`8182c43` identifier-retirement H21 (Check H) · `dad6f19` bounds static_asserts + OrderEventLog `<cerrno>` · `d2ee570` maker-fee desync guard. The flip interacts with these (step 5); the full pass + the 6 remaining guards are in **§5.5**.
 - **Workspace HEAD `3ac6dd0`** (decision log D-142..146 + plan sync + the Session-9 readiness report).
 - Working tree: pre-existing untracked `.E.2` doc drafts + `build_probe/` (leave them — unrelated).
 - Baseline: `controller_test` **3241/0** throughout (the op-port is ADDITIVE — `FPN<64>` still 24B until the flip).
@@ -69,6 +69,24 @@ pickup: /accept-handoff <this doc>
 | #3 | in_progress | Tools-discipline tail + gen_code_map skill-wiring |
 | #4 | pending | Codify .E.0.6 determinism-net tail (AR-4 + locale-sister) |
 | #5 | pending (blocked by #1,#2) | SWAR parse (POST-#11) |
+| #6 | pending | **Guard-hardening** — H1/H3 no-heap/no-locks forbidden-token CI guard (TECH_DEBT-155 / §5.5) |
+| #7 | completed | Guard: bounds static_asserts — LANDED `dad6f19` |
+| #8 | completed | Guard: maker/taker fee-desync (`OMS_GuardTakerBoundFeeBasis`) — LANDED `d2ee570`; real fix TECH_DEBT-154 |
+| #9 | pending | **Guard-hardening** — wire meta-registry enforcement (H15/H19) + fix CLAUDE.md doc-drift |
+| #10 | pending | **Guard-hardening** — H16 MetadataFlag→derived-filter coverage check |
+| #11 | pending | **Guard-hardening** — OMS submit qty/notional cap (closest LIVE Knight-Capital sibling; needs cap-value decision) |
+| #12 | pending | **Guard-hardening** — H7/H8 hot-path asm branch-count gate |
+| #13 | pending | **Guard-hardening** — legacy BuyGate phantom + snapshot body CRC32 |
+
+## 5.5 Parallel in-flight: capital-safety guard-hardening pass
+
+A SEPARATE workstream from the flip (same branch), run this session because the operator's *"guards compound over a lifetime"* instinct surfaced enforcement-layer gaps worth closing now. **Full findings + per-guard file:lines + approaches:** `plans/v5.15-live-readiness/plan_checks/2026-06-02-guard-coverage-audit-synthesis.md`. Tracked: **TECH_DEBT-155** (+ -152/-153/-154 siblings).
+
+- **Headline:** the production sharded capital path is WELL-DEFENDED (Knight-Capital risks already guarded). The gaps are enforcement-layer — convention-only invariants with no mechanical guard (the H21 shape).
+- **LANDED (2/8):** #7 bounds static_asserts (`dad6f19`); #8 maker-fee desync guard `OMS_GuardTakerBoundFeeBasis` (`d2ee570`) + OrderEventLog `<cerrno>`. Codified this pass: memories `feedback_guards_compound_enforcement_is_leverage` / `feedback_opportunistic_tech_debt_closure` / `feedback_design_once_maintain_forever`; the **tech-debt automation** `tools/check_tech_debt.py` (pre-commit **Check J** — surfaces overlapping OPEN debt on every commit, classify subsume/adjacent/defer); the dead-code/identifier-retirement discipline (**H21** + Class 40 + DESIGN_SPEC).
+- **PENDING (6):** #6 H1/H3 forbidden-token · #9 meta-registry enforcement + CLAUDE.md doc-fix (the doc names 3 CI checks that don't exist) · #10 H16 coverage · **#11 OMS qty/notional cap** (closest LIVE Knight-Capital sibling) · #12 H7/H8 asm branch-count gate · #13 legacy phantom + snapshot CRC32. Each spec'd in the synthesis.
+- **Pickup:** continue from the synthesis + TECH_DEBT-155 — the file:lines + approaches are captured, so NO loaded context needed. #11 needs a cap-value decision (cfg-driven vs hard ceiling); the rest are ready.
+- **Privacy:** the meta-tools relocation to the private workspace is DECIDED (meta-only boundary) + tracked TECH_DEBT-153 (its own dedicated pass; the build/test/CI-load-bearing tools stay public).
 
 ## 6. Operator norms
 Address Caramel as Caramel/she/her; no AskUserQuestion modals (inline); evaluate on robustness+latency+design not time; **consult before coding** (the flip is capital-core); branchless preferred (stable latencies — her explicit value); MED/LOW findings get a disposition; paste tool output don't summarize; **make-it-good-as-it-exists** for this foundational determinism-gated code (not make-it-exist-then-good). No live models (epoch/stamp/wire breaks free provided post-change determinism re-cert, D-131).

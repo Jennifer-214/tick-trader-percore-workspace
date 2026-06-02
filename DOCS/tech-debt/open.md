@@ -3053,3 +3053,25 @@ sister_debt: TECH_DEBT-029 (file-size discipline; same tools/ surface)
 - **Trigger:** dedicated tools-privacy cleanup pass — its own ship per sprint-sequencing; post-#11 OR next broad `tools/` touch.
 - **Status:** OPEN (decided meta-only; execution deferred per `feedback_opportunistic_tech_debt_closure` — ADJACENT, a distinct migration, not subsumed by #11).
 - **Cross-ref:** `claude-skills/` (already-private sister); `feedback_opportunistic_tech_debt_closure` (why deferred); CLAUDE.local.md privacy-boundary recap (update at migration).
+
+### TECH_DEBT-154 — re-resolve fee_rate from is_maker at fill time (maker/taker fee-desync; before LIMIT orders)
+
+```yaml
+id: TECH_DEBT-154
+title: Re-resolve pre_resolved.fee_rate from the final is_maker at fill time (the real fix behind the OMS_GuardTakerBoundFeeBasis dormant guard)
+severity: medium
+surface_tags: [oms-drainer, fees, accounting, capital, limit-orders]
+trigger: enabling LIMIT orders (any non-MARKET order type) — MUST land before
+status: open
+opened: 2026-06-02
+related_specs: []
+sister_debt: TECH_DEBT-008 (Maker order MVP — the feature this gates)
+```
+
+- **Created:** 2026-06-02, guard-hardening pass (capital-safety sweep). `pre_resolved.fee_rate` is bound at SUBMIT as TAKER (engine MARKET-only); `OrderManager_AccountMakerTakerFee` buckets the fee by `Order_GetIsMaker(o)` at fill. MARKET-only → they always agree (taker), so DORMANT — but a maker fill would be charged the taker rate yet bucketed as maker (a fee OVER-charge + wrong maker/taker P&L split).
+- **Severity:** MEDIUM (DORMANT — cannot fire while MARKET-only; live mis-charge the day LIMIT orders ship).
+- **Guard in place now:** `OMS_GuardTakerBoundFeeBasis(o)` at both fee call sites (handle_buy_fill / handle_sell_fill) — a never-taken-today `__builtin_expect`-rare branch that fails LOUD if a maker fill appears, so the desync cannot ship silently. The guard is NOT the fix; it FORCES it.
+- **The fix:** re-resolve `pre_resolved.fee_rate` from the final `is_maker` at fill time (plumb the maker fee-rate to the fill handler), so the charged amount AND the bucket follow the same basis. Remove the guard once done.
+- **Trigger:** before enabling LIMIT orders (sister TECH_DEBT-008 Maker order MVP). The guard's loud-fail is the tripwire.
+- **Status:** OPEN (guarded; fix gated on LIMIT-order support).
+- **Cross-ref:** `OMS_GuardTakerBoundFeeBasis` (CoreFrameworks/OrderManager.hpp); TECH_DEBT-008 (the LIMIT/maker feature); 2026-06-02 guard-hardening pass.

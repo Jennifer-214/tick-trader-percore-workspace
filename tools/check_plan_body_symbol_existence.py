@@ -52,7 +52,7 @@ from pathlib import Path
 # Machine-portable roots (per feedback_machine_portable_resolver_for_committed_tool_paths):
 # ENGINE derives from this file's location; WORKSPACE via env-override -> sibling-default ->
 # .exists()-guard. No $HOME hardcode in a committed public-AGPL tool (runs on any clone/PC).
-ENGINE = Path(os.environ.get("FOXML_ENGINE") or Path(__file__).resolve().parent.parent)
+ENGINE = Path(os.environ.get("FOXML_ENGINE") or Path(__file__).absolute().parent.parent)
 def _resolve_workspace_root():
     env = os.environ.get("FOXML_WORKSPACE")
     if env and Path(env).exists():

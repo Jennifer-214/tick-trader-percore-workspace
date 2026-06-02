@@ -32,7 +32,9 @@ import argparse
 import difflib
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).absolute().parent))  # .absolute() NOT .resolve(): tools/ is
+# symlinked from the private workspace; .resolve() follows it → imports the workspace-path copy whose
+# __file__ derives the WORKSPACE as repo root → memory dir unresolvable. See LANDMINES Landmine 5.
 from check_doc_metadata import _resolve_memory_dir  # SSoT for the memory-dir path
 
 LINK_RE = re.compile(r"\[\[([^\]]+)\]\]")

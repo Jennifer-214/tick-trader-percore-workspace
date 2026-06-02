@@ -63,7 +63,7 @@ from typing import Optional, Callable, List, Tuple
 # ENGINE_ROOT derives from this file's location; WORKSPACE_ROOT + MEMORY_DIR via
 # env-override -> derived-default -> .exists()-guard. No $HOME hardcode in a committed,
 # public-AGPL tool — runs on any clone / any PC / SSH-grid node.
-ENGINE_ROOT = Path(os.environ.get("FOXML_ENGINE") or Path(__file__).resolve().parent.parent)
+ENGINE_ROOT = Path(os.environ.get("FOXML_ENGINE") or Path(__file__).absolute().parent.parent)
 def _resolve_workspace_root():
     env = os.environ.get("FOXML_WORKSPACE")
     if env and Path(env).exists():

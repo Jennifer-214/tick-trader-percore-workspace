@@ -32,7 +32,10 @@ from pathlib import Path
 # ENGINE derives from this file's location (<engine>/tools/check_*.py); WORKSPACE via
 # env-override -> sibling-default -> .exists()-guard. No $HOME hardcode in a committed,
 # public-AGPL tool — runs on any clone / any PC / SSH-grid node.
-ENGINE = Path(os.environ.get("FOXML_ENGINE") or Path(__file__).resolve().parent.parent)
+ENGINE = Path(os.environ.get("FOXML_ENGINE") or Path(__file__).absolute().parent.parent)  # .absolute() NOT
+# .resolve(): tools/ is symlinked from the private workspace; .resolve() follows it → ENGINE becomes the
+# WORKSPACE → the memory-dir slug doesn't exist → the guard silently scans 0 memories (a vacuous green).
+# See LANDMINES Landmine 5.
 def _resolve_workspace_root():
     env = os.environ.get("FOXML_WORKSPACE")
     if env and Path(env).exists():

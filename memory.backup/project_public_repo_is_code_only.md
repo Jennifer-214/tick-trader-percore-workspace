@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 5a3e2327-0ab0-43ac-b92b-9fc591f00b51
+  sister_specs: [user_correctness_first_not_ship_fast.md]
+  tags: []
 ---
 
 Decided 2026-06-02 ("spring cleaning"): the PUBLIC `FoxML_Trader_v2` repo contains ONLY what's needed to **compile + run** the engine — source + build system (`build.sh`/`CMakeLists`/`Makefile`/`run.sh`/`scripts`) + `LICENSE` + a **one-page `README`** (what it is · how to build · how to run) + `assets`. **Everything else is private** (gitignore-in-place / workspace-symlinked): **ALL of `DOCS/`** (operator/usage/config manuals + `CHANGELOG` + architecture — *depth never goes public*), `tests/` `tools/` `claude-skills/` `.githooks/` `experiments/` `build_latency/` `OPS/` + runtime state + cfg examples. (`DOCS/` real files are workspace-backed + symlinked into the engine, exactly like `tools/` — completed 2026-06-02.)

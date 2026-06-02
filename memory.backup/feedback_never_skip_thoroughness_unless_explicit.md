@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: c95ac2bd-d963-485c-b028-60d593bce711
-  sister_specs: [feedback_heavier_default_audit_posture_for_capital.md, feedback_no_defer_for_effort.md, feedback_listen_and_execute_simply.md, feedback_runtime_executor_mode_for_judgment_skills.md]
+  sister_specs: [feedback_heavier_default_audit_posture_for_capital.md, feedback_no_defer_for_effort.md, feedback_listen_and_execute_simply.md, feedback_runtime_executor_mode_for_judgment_skills.md, user_correctness_first_not_ship_fast.md]
   tags: [audit-methodology, operator-collaboration]
 ---
 

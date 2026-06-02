@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: user
   originSessionId: baa3c428-ac86-4363-afaa-4b0001a44131
-  sister_specs: [user_deep_design_work_intrinsic_value.md, feedback_no_defer_for_effort.md, feedback_dont_measure_structural_work_by_loc.md, feedback_sequential_audit_for_granular_operator_triage.md, feedback_session_decision_log_discipline.md, user_mvp_to_professional_transition.md, user_structure_is_correctness_risk_control_for_capital.md]
+  sister_specs: [user_deep_design_work_intrinsic_value.md, feedback_no_defer_for_effort.md, feedback_dont_measure_structural_work_by_loc.md, feedback_sequential_audit_for_granular_operator_triage.md, feedback_session_decision_log_discipline.md, user_mvp_to_professional_transition.md, user_structure_is_correctness_risk_control_for_capital.md, user_correctness_first_not_ship_fast.md]
   tags: [user-profile, operator-collaboration]
 ---
 

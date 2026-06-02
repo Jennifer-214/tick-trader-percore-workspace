@@ -53,7 +53,7 @@ def _resolve_workspace():
 
 def _resolve_engine():
     # engine root = tools/.. (this file lives in <engine>/tools/)
-    return Path(__file__).resolve().parent.parent
+    return Path(__file__).absolute().parent.parent
 
 
 def _resolve_memory_dir():

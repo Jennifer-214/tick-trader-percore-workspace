@@ -1,7 +1,7 @@
 ---
 type: plan-template
 stage: 3-first-canonical
-version: 1.0
+version: 1.3
 established: 2026-05-17
 tags: [plan-template, doc-discipline, pattern-codification]
 surface: []
@@ -12,7 +12,7 @@ applies_at_skills: [/readiness, /plan-draft]
 # Future-oriented plan template
 
 **Established:** 2026-05-17 (v5.15.5.F.4d.1.B.1 planning — codified during conversation about "format plans for future-oriented solutions going forward" + "find optimal solution to reduce future headaches")
-**Status:** **Stage 3 ACTIVE v1.2** (v1.0 → v1.1 promoted at `v5.15.5.F.4d.1.B.1` ship close 2026-05-17 with Canonical sister + Design space sections; v1.1 → v1.2 amended 2026-05-18 adding "Ship end goal + acceptance criteria" required section per `feedback_plans_have_explicit_end_goal.md` going-forward rule + companion `sprint-master-plan-template.md` DESIGN_SPEC; future new plans use template from inception via `/plan-draft` skill)
+**Status:** **Stage 3 ACTIVE v1.2** (v1.0 → v1.1 promoted at `v5.15.5.F.4d.1.B.1` ship close 2026-05-17 with Canonical sister + Design space sections; v1.1 → v1.2 amended 2026-05-18 adding "Ship end goal + acceptance criteria" required section per `feedback_plans_have_explicit_end_goal.md` going-forward rule + companion `sprint-master-plan-template.md` DESIGN_SPEC; future new plans use template from inception via `/plan-draft` skill; v1.2 → v1.3 amended 2026-06-02 promoting the `.E` sub-sprint's proven decision-log integration + AMENDED-banner multi-session evolution pattern to canonical — "the `.E` template, working well" per operator)
 **Tags:** plan-template, framework-discipline, future-oriented, pre-coding-gate, structural-fix; serves item 31 + canonical-sister-extension-discipline; composes with /readiness Check 29 + 30 + /anti-spaghetti + /precoding-audit-gate
 
 **Cross-references:**
@@ -46,10 +46,29 @@ This template encodes the discipline as a copy-paste skeleton. New plan bodies c
 **Successor:** `<successor>` (<note about when this ships relative to current>)
 **Sub-master:** `<sub-master-path>` (if part of umbrella; else "n/a — standalone ship")
 **Status:** **DRAFT v1.0 (<date>)**
+**Decision log:** `<sprint>/decision-logs/<plan-stem>.md` (maintain per `feedback_session_decision_log_discipline` once the cycle exceeds ~3 amendments OR spans sessions; template at `claude-skills/capture-audit/decision-log-template.md`; cite `D-NNN` from it at decisions in this body)
 **Audit reports informing this plan body:**
 - `<plan_checks/...>`
 - ...
 **Pre-coding audit synthesis:** `<plan_checks/...-audit-synthesis.md>` (if applicable)
+
+---
+
+## Multi-session evolution (AMENDED banners + decision log) — the `.E` shape
+
+(For plans that span sessions / accumulate amendments. Proven over the `.E` sub-sprint, Sessions 3–9.)
+
+- **The decision log is the SSoT.** Maintain `<sprint>/decision-logs/<plan-stem>.md` (sequential `D-NNN`
+  prose entries + paired `<!-- D/C/F -->`/`<!-- STATUS -->` sentinels). Cite `D-NNN` in THIS body at each
+  decision — the log holds the rationale + alternatives-rejected; the body holds the current shape. `/capture-audit`
+  Check 3+4 keeps them in sync; `/accept-handoff` Stage 4.6 reads the STATUS text to tell the receiver decided-vs-open.
+- **AMENDED banners show evolution; don't rewrite history.** When a session amends the plan, PREPEND a banner —
+  `> **✅ AMENDED <date> (Session N) — <what this session folded / corrected / executed; the D-NNN range>.**` —
+  and PRESERVE prior banners as the record (per `feedback_terminology_evolution_bridge_not_history_rewrite`). The
+  frontmatter `status:` line carries the one-line current state; the banner trail carries the per-session history.
+- **Stale-prose guard.** When a decision lands or a target changes, fix the body prose THAT SAME SESSION — don't
+  let the body keep claiming a superseded value (e.g. "12/8/5" after the log corrected it to "13/9/6"); that
+  body-vs-log drift is exactly what `/accept-handoff` Stage 4.6 flags.
 
 ---
 

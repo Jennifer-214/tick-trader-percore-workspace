@@ -8,56 +8,69 @@ session_context: <brief-context-string>
 parent_handoff: handoffs/<date>-<ship>-<purpose>-handoff.md
 ---
 
-# Decision log — `<plan-body-name>` v<X.Y.Z>
+# Decision log — `<plan-body-name>`
 
-Tied to plan body version bump v<X.Y-1.Z> → v<X.Y.Z>. Captures decisions made, commitments taken, discoveries surfaced, and status of each.
+The SSoT for a multi-session sub-sprint's decisions. **Canonical shape (proven over the `.E` sub-sprint,
+Sessions 3–9, D-97..D-146): sequential PROSE entries with stable cross-referenceable `D-NNN` IDs + paired
+sentinels, organized into per-session addenda.** Prose, not tables — because each decision carries its
+rationale + the alternatives-considered-and-rejected + sister memory/DESIGN_SPECS links + file:line anchors,
+all of which table cells truncate. The log IS the institutional memory the next (cold) session reads, so
+write the nuance.
+
+Trigger (per `feedback_session_decision_log_discipline`): maintain a decision log when a planning cycle
+exceeds ~3 amendments OR spans multiple sessions.
 
 Used by:
-- `/capture-audit` (drift check; verifies status field present + matches state)
+- `/capture-audit` Check 3 + 4 (drift check — verifies the log exists + every `<!-- D/C/F -->` is paired with a `<!-- STATUS -->`)
+- `/accept-handoff` Stage 4.6 (decision-status reconciliation — reads STATUS to tell the receiver decided-vs-open; flags stale-plan-prose drift)
+- `/handoff` Stage 1.8 (next-session pickup; cited in the handoff's required reading)
 - `/post-ship-audit` (reflective postmortem at ship close)
-- `/handoff` (next-session pickup context)
-- `/sync-workspace` (pre-commit verification)
+- `/sync-workspace` + `/close-session` (pre-commit / pre-close verification via `tools/check_session_docs.sh`)
 
-## Decisions (operator-decided)
+## Entry format (the proven `.E` shape)
 
-| ID | Date | Decision | Rationale | Status |
-|---|---|---|---|---|
-| D1 | <date> | <what was decided> | <why> | PENDING / LANDED / DROPPED / DEFERRED |
-| D2 | <date> | ... | ... | ... |
+Decisions, commitments, AND findings are numbered in ONE sequential `D-NNN` series across the whole
+sub-sprint (D-1, D-2, … — never reset per-cycle; stable IDs survive sessions + cross-references). Each is a
+PROSE entry bracketed by two sentinels:
 
-Status options:
-- **PENDING** — decided but not yet acted on; should land within current cycle
-- **LANDED** — implementation/codification complete (cite commit SHA or artifact)
-- **DROPPED** — superseded or de-scoped; rationale required
-- **DEFERRED** — explicitly deferred to future ship/cycle; cite TECH_DEBT entry
+```
+<!-- D/C/F: D-NNN -->
+**D-NNN (<one-line title — what was decided / committed / found>).** <body: the decision + WHY + the
+alternatives considered-and-rejected + sister memories / DESIGN_SPECS links + any file:line anchors. As much
+context as the next-session cold-reader needs — this is the SSoT, not a summary.>
+<!-- STATUS: <verbose state — e.g. "decided/executed; landed at <sha>" / "decided; <sub-part> deferred to <ship>" /
+"in-progress — <what's pending>" / "superseded by D-MMM" / "decided (reconciliation); <what it corrects>"> -->
+```
 
-## Commitments (claude-said-will-do)
+- The `<!-- D/C/F: D-NNN -->` marker is the SAME for decisions, commitments, and findings (one series, one
+  matcher); the entry title + STATUS text carry the kind + the nuance.
+- `/capture-audit` Check 4 enforces that every `<!-- D/C/F: D-NNN -->` is FOLLOWED by a `<!-- STATUS: -->`
+  (paired). An unpaired marker is a red build.
+- The STATUS text is VERBATIM-meaningful — `/accept-handoff` Stage 4.6 reads it to tell the receiver
+  decided-vs-open, so write the nuance ("decided; rounding-MODE subpart was a research item, later closed by
+  D-MMM"), not a bare flag. A bare "decided" loses the sub-part history that misleads pickup.
 
-| ID | Date | Commitment | Triggered by | Status |
-|---|---|---|---|---|
-| C1 | <date> | <what I committed to> | <what prompt/decision> | PENDING / LANDED / DROPPED / DEFERRED |
-| C2 | <date> | ... | ... | ... |
+## Session addenda (multi-session organization)
 
-## Discoveries (new findings surfaced this cycle)
+The earliest foundational decisions sit at the top (pre-addenda). As the sub-sprint progresses, group new
+entries under per-session headers; each session's addendum opens with 1–2 lines of context (what the session
+did + the commits/artifacts it produced), then its `D-NNN` entries, and closes with an end marker:
 
-| ID | Date | Finding | Severity | Status |
-|---|---|---|---|---|
-| F1 | <date> | <what surfaced> | CRITICAL / HIGH / MED / LOW | OPEN / ADDRESSED / DEFERRED |
-| F2 | <date> | ... | ... | ... |
+```
+### Session N — <one-line session summary> (<YYYY-MM-DD>)
 
-## Drift watch (auto-populated by /capture-audit)
+<context: what this session did; commits on anchor <sha>; artifacts produced>
 
-Items proposed in this plan body but not yet status'd:
-- (none currently — populated when /capture-audit detects unmatched sentinel markers)
+<!-- D/C/F: D-NNN -->
+**D-NNN (...).** ...
+<!-- STATUS: ... -->
 
-## Cycle close summary (filled at next plan body version bump)
+End of Session N addendum.
+```
 
-- Decisions landed: <count> / <total>
-- Commitments landed: <count> / <total>
-- Discoveries addressed: <count> / <total>
-- Drift items resolved: <count>
-- Carry-forward to next version: <list>
+## Ship-close summary (filled at ship close)
 
-## Sentinel discipline
-
-Plan body should use `<!-- D: <id> -->` / `<!-- C: <id> -->` / `<!-- F: <id> -->` markers at decision/commitment/finding citations, paired with `<!-- STATUS: <state> -->` after each. `/capture-audit` Check 4 enforces marker matching.
+- Decisions decided/executed: <count> / <total>
+- Genuinely-open at close (carry-forward): <explicit list, or "none — decisions done; next move is execution">
+- Superseded / reconciled: <list, each citing the superseding D-NNN>
+- Codification slate written at close (memories / DESIGN_SPECS / catalog amendments): <list>

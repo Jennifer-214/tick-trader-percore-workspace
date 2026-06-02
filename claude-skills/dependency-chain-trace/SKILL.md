@@ -155,6 +155,13 @@ Output: cohort sibling list with overlap analysis (which functions touch BOTH th
 
 ### 7. Compute blast radius
 
+**Deterministic first-pass for TYPE symbols — run `gen_code_map`, don't hand-grep (D-134/D-136; tool-over-LLM-discovery, per `feedback_run_doc_ci_tools_first_never_hand_verify`):** when the traced symbol is a TYPE (or a field whose TYPE is changing — e.g. `FPN<64>` → 16B), the authoritative blast-radius set comes from the code-intelligence index, not eyeballed greps:
+- `tools/gen_code_map.sh --byte-context <T>` — the ENFORCEMENT-target sites: `sizeof(T)` + the `memcmp`/`SHA`/`fwrite`/`HMAC` ops where a layout change breaks byte-equivalence.
+- `tools/gen_code_map.sh --composition <T>` — structs byte-affected by `T` via TRANSITIVE containment.
+- the type→sites reverse-index (`--types`/`--aliases`) — every struct-field / param / return referencing `T`.
+
+**PASTE the tool output verbatim** into the report — do NOT hand-summarize (the relocation/blast set is a tool output, not a paragraph; `feedback_paste_tool_output_dont_summarize` — the canonical R1-under-count failure was a summarize-and-drop of exactly this set). The grep passes (steps 2–3) COMPLEMENT this for non-type symbols + caller-flow; `gen_code_map` is the authoritative enumerator for the type surface.
+
 If the primary symbol's shape, semantics, or location were to change, what breaks?
 - Direct compile-time dependencies (callers of changed function; readers of changed field type)
 - Wire-format dependencies (stamp body / drift check / persisted state)
@@ -242,6 +249,7 @@ Generate a structured markdown report:
 
 ## Cross-references
 
+- **Tool: `tools/gen_code_map.sh`** — the code-intelligence index. `--byte-context <T>` / `--composition <T>` / type→sites reverse-index are the DETERMINISTIC blast-radius enumerator for type symbols (step 7); `DOCS/CODE_MAP.md` is its function-map artifact. Wired here per D-134/D-136 (#25 skill-wiring).
 - `DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md` § 5 (`chain:<symbol>` shape definition)
 - `DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md` — relevant when tracing pre-resolved values
 - `DESIGN_SPECS/refactor-patterns/cfg-scope-discipline.md` — relevant when tracing cfg fields

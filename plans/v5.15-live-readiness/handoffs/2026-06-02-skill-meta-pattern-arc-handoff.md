@@ -51,7 +51,7 @@ X" → the canonical-sister + novel-alternative check.
 4. A **heuristic→skill routing map** (extend CLAUDE.md "How to…" into agent-triggers) + a memory rule ("input matches a skill heuristic → suggest/fire").
 5. `/second-opinion` skill OR a stage on `/readiness` ("is there something better / can we extend a spec?") — the canonical-sister + 4-pillar-self-audit + proactive-novel-alternative disciplines ARE its checklist.
 6. **Template propagation** of all of the above.
-7. **FINISH the deferred-state SKILL wiring** (the guard + specs landed this session; the skill wiring is owed): `/handoff --defer` (prior active → `deferred` not `superseded`, cross-ref) · `/accept-handoff` surface deferred handoffs at Stage 1 · `/close-session` RESUME step (deferred → active when the deferring work closes) · template.
+7. ✅ **DONE (2026-06-02) — deferred-state SKILL wiring complete + hands-off:** `/handoff` Stage 6.0b defer-branch (mark prior active → `deferred` + `deferred_for`/`defers` cross-refs) · `/accept-handoff` Stage 1 resolves active + SURFACES deferred (a park isn't silently forgotten) · `/close-session` Stage 6.0 RESUME (deferred → active on detour-close) · guard deferred-aware (warns deferred+0active) · all propagated to the template.
 8. **`.resolve`/vacuous-green codification (AR-4)**: codify "every guard ships a negative-self-test + fails loud on 0-items-when-the-tool-is-present" — the structural close of the vacuous-green that bit this session (`check_doc_metadata` silently scanned 0/100 memories). Add a fail-loud-on-empty to the memory guard + the landmine/meta-anti-pattern.
 
 ## What's DONE this session (the enabling pieces)

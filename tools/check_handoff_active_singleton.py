@@ -8,7 +8,9 @@ to one timestamp), so "the newest handoff" could silently become the wrong file.
 The fix is an EXPLICIT state field in each handoff's frontmatter:
 
     status: active       <- THE one live handoff (what /accept-handoff resolves to)
-    status: superseded   <- a prior handoff a newer one replaced
+    status: deferred     <- PARKED: a different priority jumped the queue; this one
+                            RESUMES (deferred -> active) when that work closes. NOT dead.
+    status: superseded   <- a prior handoff a newer one replaced (same work-line). Dead.
     (no status field)    <- legacy / untagged ≡ inactive (zero retrofit of history)
 
 The state transition is SUPERSEDE-ON-WRITE, not inactive-on-consume: the writer
@@ -73,6 +75,20 @@ def is_active(path: Path) -> bool:
     return bool(ACTIVE_RE.search(frontmatter(text)))
 
 
+# `status: deferred` = parked-will-resume (distinct from superseded = replaced-dead). Does
+# NOT count toward the ≤1-active cap; but a deferred handoff with NO active one means a parked
+# work-line was never resumed -> a (non-fatal) advisory so it isn't silently orphaned.
+DEFERRED_RE = re.compile(r'^status:\s*deferred\b', re.MULTILINE)
+
+
+def is_deferred(path: Path) -> bool:
+    try:
+        text = path.read_text(errors="replace")
+    except OSError:
+        return False
+    return bool(DEFERRED_RE.search(frontmatter(text)))
+
+
 def find_handoffs(plans: Path):
     """Every handoffs/*.md under plans/ (any depth), minus templates + READMEs.
 
@@ -97,6 +113,10 @@ def scan(plans: Path):
     return [h for h in find_handoffs(plans) if is_active(h)]
 
 
+def scan_deferred(plans: Path):
+    return [h for h in find_handoffs(plans) if is_deferred(h)]
+
+
 def run() -> int:
     root = repo_root()
     plans = plans_root(root)
@@ -104,18 +124,30 @@ def run() -> int:
         print(f"  ⏭  handoff-active singleton: plans/ not found at {plans} — skipped")
         return 0
     actives = scan(plans)
+    deferred = scan_deferred(plans)
     n = len(actives)
     if n == 0:
-        print("  ⚠️  handoff-active singleton: 0 handoffs tagged `status: active` "
-              "(sprint between handoffs, or none adopted the tag yet → /accept-handoff "
-              "falls back to mtime). Advisory; not failing.")
+        if deferred:
+            print(f"  ⚠️  handoff-active singleton: 0 active, but {len(deferred)} DEFERRED "
+                  "handoff(s) parked — resume one (deferred → active) when its blocker clears?")
+            for dpath in deferred:
+                try:
+                    rel = dpath.relative_to(plans)
+                except ValueError:
+                    rel = dpath
+                print(f"       parked: plans/{rel}")
+        else:
+            print("  ⚠️  handoff-active singleton: 0 handoffs tagged `status: active` "
+                  "(sprint between handoffs, or none adopted the tag yet → /accept-handoff "
+                  "falls back to mtime). Advisory; not failing.")
         return 0
     if n == 1:
         try:
             rel = actives[0].relative_to(plans)
         except ValueError:
             rel = actives[0]
-        print(f"  ✅ handoff-active singleton: exactly 1 active — plans/{rel}")
+        tail = f"  (+{len(deferred)} deferred parked)" if deferred else ""
+        print(f"  ✅ handoff-active singleton: exactly 1 active — plans/{rel}{tail}")
         return 0
     print(f"  ❌ handoff-active singleton: {n} handoffs are `status: active` — must be ≤1.")
     print("     (the writer flips the prior active → superseded when it writes a new one)")
@@ -143,11 +175,15 @@ def selftest() -> int:
             body += "---\n\nbody mentions status: active in prose (must NOT count)\n"
             (hd / name).write_text(body)
 
-        # superseded + untagged ≡ inactive → 0 active (must pass)
+        # superseded + untagged + deferred ≡ NOT active → 0 active (must pass)
         w("a-old.md", "superseded")
         w("b-legacy.md", None)
+        w("e-parked.md", "deferred")
         if scan(plans) != []:
-            print("SELFTEST FAIL: superseded/untagged (or body prose) counted as active")
+            print("SELFTEST FAIL: superseded/untagged/deferred (or body prose) counted as active")
+            ok = False
+        if len(scan_deferred(plans)) != 1:
+            print("SELFTEST FAIL: deferred handoff not detected by scan_deferred")
             ok = False
         # add the single live one → exactly 1
         w("c-live.md", "active")

@@ -26,8 +26,25 @@ States:
 | `status:` | meaning |
 |---|---|
 | `active` | THE one live handoff — what no-arg `/accept-handoff` picks up |
-| `superseded` | a prior handoff a newer one replaced (still readable; just not the entry point) |
+| `deferred` | **PARKED** — a different priority jumped the queue; this handoff RESUMES (`deferred → active`) when that work closes. NOT dead (distinct from `superseded`). |
+| `superseded` | a prior handoff a newer one replaced (same work-line). Dead — won't return. |
 | *(absent)* | legacy / untagged ≡ **inactive** — zero retrofit of pre-existing handoffs |
+
+### Deferring (park-and-resume) vs superseding (replace-and-discard)
+
+When a *different* priority jumps the queue (you're mid-flip but must detour to a cleanup
+ship), do NOT `superseded` the live handoff — that reads as "done/replaced." Mark it
+**`deferred`** (parked) and write the detour's handoff `active`. The flip is still owed; it
+RESUMES (`deferred → active`) when the detour closes.
+
+- **Defer:** live `active` → `deferred`; new detour handoff → `active`. Cross-ref with
+  `deferred_for:` (on the parked one) / `defers:` (on the active one) for traceability.
+- **Resume:** when the detour's work closes, its `/close-session` flips the parked handoff
+  `deferred → active` (and the detour's own → `superseded`).
+
+The guard keeps the ≤1-active invariant (deferred doesn't count) and ADDS one advisory:
+**deferred present + 0 active → warn** ("you parked something and never resumed it") — so a
+park can't be silently orphaned.
 
 ## Why (the failure it prevents)
 

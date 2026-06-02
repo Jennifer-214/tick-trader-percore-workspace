@@ -1,6 +1,7 @@
 ---
 type: handoff
-status: active   # the live handoff — no-arg /accept-handoff resolves here (≤1 active; check_handoff_active_singleton.py)
+status: deferred   # PARKED for the skill-meta-pattern arc; RESUME (deferred→active) when that arc closes
+deferred_for: 2026-06-02-skill-meta-pattern-arc-handoff.md   # the active detour that parked this
 ship_tag: "#11 Ship-A storage flip — RESUME after the code-only-public spring-cleaning session"
 plan_type: refactor (16B binary-core compaction)
 sprint: v5.15-live-readiness

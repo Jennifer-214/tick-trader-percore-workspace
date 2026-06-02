@@ -50,7 +50,7 @@ but it changed the repo's shape:
    if you add to any always-loaded doc during the flip, it may flag; trim if so.
 5. **NEW correctness-first prime directive** (always-loaded) — CLAUDE.md top + DESIGN_PHILOSOPHY §0. The flip
    is capital-core: plan-before-code, consult before the tag, don't rush. (You already live this.)
-6. **NEW — the skill-meta arc (parked-then-closed 2026-06-02)** — while THIS flip was parked, the skill system got an overhaul (workspace tip now `1aca11f`; **engine UNCHANGED, flip UNCHANGED**): all 39 skills now run a Stage-0 "consult institutional knowledge" stage + there's a new `/second-opinion` independent challenger. ORTHOGONAL to the flip — but you can lean on `/second-opinion` (challenge the flip plan before the tag) + the consult-stage during the capital-core work.
+6. **NEW — the skill-meta arc (parked-then-closed 2026-06-02)** — while THIS flip was parked, the skill system got an overhaul (in the workspace, this session; **engine UNCHANGED, flip UNCHANGED**): all 39 skills now run a Stage-0 "consult institutional knowledge" stage + there's a new `/second-opinion` independent challenger. ORTHOGONAL to the flip — but you can lean on `/second-opinion` (challenge the flip plan before the tag) + the consult-stage during the capital-core work.
 
 **Engine IS pushed** (2026-06-02, operator go — `6c0e570..052670d` to `origin/feat/v5.15-live-readiness`).
 The public branch TIP is now code-only (tools/tests/DOCS/dev-apparatus removed from the tip; history still

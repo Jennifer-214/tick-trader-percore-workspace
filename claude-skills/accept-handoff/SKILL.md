@@ -28,11 +28,16 @@ This is the same memory-only-discipline-insufficient pattern that M7 addresses �
 
 ### Stage 1: Locate handoff doc
 
-- If `<path>` arg given: use it
-- Else default: most recently modified file in `plans/<active-sprint>/handoffs/*.md`
-- If no handoff found: ERROR — sprint must have at least one handoff
+Resolution order — **explicit state first; mtime is only the transition-era fallback**:
 
-Active sprint = detected from `Version.hpp` per `/handoff` Stage 1.
+1. **`<path>` arg given** → use it (explicit always wins).
+2. **Else: the handoff whose frontmatter is `status: active`** (the live-pickup pointer; the writer keeps exactly one — supersede-on-write, per `/handoff` Stage 6.0). Scan `plans/<active-sprint>/handoffs/*.md` (defensively, all `plans/**/handoffs/`) for a frontmatter `status: active`:
+   - **exactly 1** → use it.
+   - **0 tagged** (legacy handoffs / none adopted the tag yet) → FALL BACK to most-recently-modified `*.md` (the old behavior; fine during the transition before handoffs carry the tag).
+   - **>1** → ERROR: the `status: active` singleton invariant is violated (`tools/check_handoff_active_singleton.py` should have caught it at the last sweep). Surface ALL actives; do NOT guess — operator picks the live one, then the stale ones get flipped to `superseded`.
+3. **No handoff found at all** → ERROR — sprint must have at least one handoff.
+
+Active sprint = detected from `Version.hpp` per `/handoff` Stage 1. Active-tag resolution is robust to filesystem **mtime resets** — a `git checkout`/`pull` can reset a whole batch of handoff mtimes to one timestamp (the exact fragility this replaces). Discipline: `DESIGN_SPECS/meta-disciplines/handoff-active-state-machine.md`.
 
 ### Stage 2: Parse handoff doc
 

@@ -86,12 +86,26 @@ def parse_frontmatter(path):
 
 def collect_skills():
     skills = {}
+    malformed = []
     for skill_md in SKILLS_DIR.rglob("SKILL.md"):
         fm = parse_frontmatter(skill_md)
         if not fm:
-            continue
+            # NEVER silently drop a skill. A SKILL.md with no YAML frontmatter would
+            # otherwise VANISH from CLAUDE.md + TAG_INDEX with no warning (close-session
+            # hit exactly this 2026-06-02 — a stray harness "Base directory for this skill:"
+            # preamble line clobbered its frontmatter, so it disappeared from the suite +
+            # re-broke capture-audit Check 8 every time this generator ran). Register it
+            # under the default concern so it stays in the index, and warn LOUD so it gets
+            # fixed. Same silent-drop class as the always-loaded-doc truncation guard (WH-5).
+            malformed.append(skill_md.parent.name)
+            fm = {"name": skill_md.parent.name,
+                  "description": "(MALFORMED — SKILL.md has no YAML frontmatter; fix it)"}
         skill_name = fm.get("name") or skill_md.parent.name
         skills[skill_name] = fm
+    if malformed:
+        print(f"  ⚠️  WARNING: {len(malformed)} skill(s) have NO YAML frontmatter — kept under the "
+              f"default concern so they are not dropped, but FIX their SKILL.md frontmatter: "
+              f"{', '.join(sorted(malformed))}")
     return skills
 
 

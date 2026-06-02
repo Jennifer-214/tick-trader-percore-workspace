@@ -136,6 +136,14 @@ else
     RESULTS+=("  ⏭  HARD  always-loaded doc budget (SKIP_DOC_BUDGET_CHECK=1)")
 fi
 
+# --- HARD 6: handoff-active singleton (≤1 `status: active` handoff — explicit-state resolution) ---
+if [ "${SKIP_HANDOFF_ACTIVE_CHECK:-0}" != "1" ]; then
+    run_hard "handoff-active singleton (≤1 status:active across plans/**/handoffs)" \
+        python3 "$REPO_ROOT/tools/check_handoff_active_singleton.py"
+else
+    RESULTS+=("  ⏭  HARD  handoff-active singleton (SKIP_HANDOFF_ACTIVE_CHECK=1)")
+fi
+
 # --- ADVISORY: forward-promise (MED/LOW backlog expected) ---
 run_advisory "forward-promise audit (--since HEAD~5)" \
     python3 "$REPO_ROOT/tools/check_forward_promise_audit.py" --since HEAD~5

@@ -2,7 +2,7 @@
 
 **Auto-generated** by `tools/rebuild_doc_indexes.py`. Regenerate after adding/moving specs.
 
-Total: 153 specs across 12 types.
+Total: 156 specs across 12 types.
 
 Per-type catalog grouped by lifecycle stage. Cross-ref:
 - `doc-frontmatter-convention.md` (frontmatter schema)
@@ -177,7 +177,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/doc-disciplines/categorical-triggers-in-always-loaded-docs.md` | 2-draft | doc-discipline, framework-discipline, structural-fix, +1 | 5 |
 | `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md` | 3-first-canonical | doc-discipline, structural-fix, pattern-codification, +1 | 5 |
 
-## meta-discipline (19 specs)
+## meta-discipline (22 specs)
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
@@ -186,14 +186,17 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/meta-disciplines/backwards-compat-not-default-concern.md` | 3-first-canonical | meta-discipline, backwards-compat, breaking-changes, +2 | 0 |
 | `DESIGN_SPECS/meta-disciplines/body-content-enumeration-at-plan-time-discipline.md` | 3-first-canonical | meta-discipline, plan-template, framework-discipline, +1 | 0 |
 | `DESIGN_SPECS/meta-disciplines/canonical-sister-extension-discipline.md` | 3-first-canonical | meta-discipline, framework-discipline, pattern-codification, +2 | 5 |
+| `DESIGN_SPECS/meta-disciplines/dead-code-and-identifier-retirement-discipline.md` | 5-claude-md | meta-discipline, structural-fix, framework-discipline, +1 | 4 |
 | `DESIGN_SPECS/meta-disciplines/doc-frontmatter-convention.md` | 3-first-canonical | doc-discipline, meta-discipline, framework-discipline | 3 |
 | `DESIGN_SPECS/meta-disciplines/doc-tag-vocabulary.md` | 3-first-canonical | doc-discipline, meta-discipline, framework-discipline | 3 |
 | `DESIGN_SPECS/meta-disciplines/gui-deprecation-decision-rationale.md` | 3-first-canonical | meta-discipline, gui-deprecation, power-user-design, +1 | 0 |
+| `DESIGN_SPECS/meta-disciplines/handoff-active-state-machine.md` | 3-first-canonical | handoff, workflow, doc-discipline, +3 | 3 |
 | `DESIGN_SPECS/meta-disciplines/headless-engine-viewer-split-pattern.md` | 3-first-canonical | meta-discipline, headless-service, viewer-split, +2 | 0 |
 | `DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md` | 3-first-canonical | meta-discipline, audit-methodology, framework-discipline | 7 |
 | `DESIGN_SPECS/meta-disciplines/iteration-spiral-signals-audit-meta-gap.md` | 3-first-canonical | audit-methodology, meta-discipline, iteration-spiral, +1 | 0 |
 | `DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md` | 3-first-canonical | meta-discipline, anti-pattern-index, audit-methodology, +3 | 0 |
 | `DESIGN_SPECS/meta-disciplines/pattern-codification-lifecycle.md` | 5-claude-md | meta-discipline, pattern-codification, doc-discipline, +1 | 5 |
+| `DESIGN_SPECS/meta-disciplines/public-private-boundary-and-ecosystem-discipline.md` | 3-first-canonical | privacy-boundary, ecosystem, workspace, +2 | 0 |
 | `DESIGN_SPECS/meta-disciplines/session-decision-log-discipline.md` | 3-first-canonical | meta-discipline, doc-discipline, plan-template, +1 | 0 |
 | `DESIGN_SPECS/meta-disciplines/single-source-of-truth-discipline.md` | 3-first-canonical | meta-discipline, ssot, refactor-discipline, +1 | 3 |
 | `DESIGN_SPECS/meta-disciplines/sister-cohort-amendment-completeness-discipline.md` | 3-first-canonical | meta-discipline, framework-discipline, doc-discipline, +2 | 0 |

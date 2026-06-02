@@ -1,5 +1,6 @@
 ---
 type: handoff
+status: active   # the live handoff — no-arg /accept-handoff resolves here (≤1 active; check_handoff_active_singleton.py)
 ship_tag: "#11 Ship-A storage flip — RESUME after the code-only-public spring-cleaning session"
 plan_type: refactor (16B binary-core compaction)
 sprint: v5.15-live-readiness

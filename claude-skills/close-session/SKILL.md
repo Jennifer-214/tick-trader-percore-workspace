@@ -1,4 +1,11 @@
-Base directory for this skill: /home/caramel/code/tick-trader-percore-workspace/claude-skills/close-session
+---
+name: close-session
+description: End-of-session ritual orchestrator (SENDER side; sister to /accept-handoff). Composes the mechanical doc/plan sweep + /capture-audit --deep + /readiness (conditional) + /handoff + /sync-workspace into one end-of-session close, so codification that drifts under context-budget pressure is captured deterministically.
+type: skill
+concern: workflow
+sister_skills: [/accept-handoff, /handoff, /capture-audit, /readiness, /sync-workspace]
+established: 2026-05-26
+---
 
 # /close-session — End-of-session ritual orchestrator (SENDER side; sister to /accept-handoff)
 

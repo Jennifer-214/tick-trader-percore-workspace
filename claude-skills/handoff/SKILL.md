@@ -533,6 +533,7 @@ If no in-flight tasks at handoff write: "No active task list — fresh-session p
 ```
 ---
 type: handoff
+status: active   # handoff state machine: active = THE one live handoff (what no-arg /accept-handoff resolves to) | superseded = a newer handoff replaced it. Stage 6 flips the prior active→superseded; ≤1 active enforced by check_handoff_active_singleton.py.
 ship_tag: <ship-tag>
 plan_type: refactor | feature | live-readiness | hotfix
 sprint_end_goal: <one-line statement from sprint MASTER plan>
@@ -798,6 +799,17 @@ Good luck. Caramel will iterate with you on findings before coding.
 ```
 
 ### Stage 6 — Write to disk
+
+**Stage 6.0 — Supersede the prior active handoff FIRST (handoff state machine).** Before writing the new handoff, flip the currently-`active` handoff (if any) to `superseded`, so AT MOST ONE handoff is ever `status: active`. That single active tag is the live-pickup pointer no-arg `/accept-handoff` resolves by — **supersede-on-WRITE, never inactive-on-consume**: a handoff must stay live across a dead session's re-pickup until a NEWER one supersedes it, so the transition fires when the replacement is WRITTEN, not when the old one is read. Mechanical:
+
+```bash
+SPRINT_HANDOFFS=/home/caramel/code/tick-trader-percore-workspace/plans/<sprint-dir>/handoffs
+# the current active (should be exactly one; untagged ≡ legacy/inactive, leave as-is):
+grep -rl '^status: active' "$SPRINT_HANDOFFS"/*.md 2>/dev/null
+# for each match (NOT _TEMPLATE*/README.md): Edit its frontmatter `status: active` -> `status: superseded`
+```
+
+The new handoff's frontmatter carries `status: active` (Stage 5 template). The ≤1-active invariant is enforced mechanically by `tools/check_handoff_active_singleton.py` (HARD in `check_session_docs.sh`); if it ever reports >1, a prior flip was missed — fix before the new handoff is trusted. Discipline: `DESIGN_SPECS/meta-disciplines/handoff-active-state-machine.md`.
 
 **ALWAYS write to the workspace path explicitly:**
 

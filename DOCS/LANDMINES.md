@@ -138,6 +138,36 @@ watching it actually work).
 
 ---
 
+## Landmine 5 — `Path(__file__).resolve()` follows symlinks → a tool in a symlinked workspace finds the WRONG repo root (set 2026-06-02, code-only-public spring cleaning)
+
+**Symptom:** after relocating `tools/` to the private workspace and symlinking it back into the engine (`engine/tools` → `../tick-trader-percore-workspace/tools`), `build.sh` ABORTS: `[per-core-cfg-CI] ERROR: file not found: <WORKSPACE>/CoreFrameworks/CfgFieldRegistry.hpp` — the tool hunts for ENGINE source under the WORKSPACE. The same tool ran fine before the move.
+
+**Root cause:** the tool computes `REPO_ROOT = Path(__file__).resolve().parent.parent`. `.resolve()` FOLLOWS symlinks → `__file__` resolves to the tool's REAL location (`workspace/tools/X.py`) → `REPO_ROOT` becomes the workspace, not the engine. Every tool that reads engine source AND derives its root from `__file__` breaks this way once it lives in a symlinked-in workspace (11 of them here).
+
+**Why the obvious fixes are traps:** gitignore-in-place (don't move it) is build-safe but loses the syncable-workspace goal; hardcoding the engine path works (private tools MAY hardcode) but isn't portable across machines.
+
+**Proper fix:** swap `.resolve()` → `.absolute()` — `.absolute()` makes the path absolute WITHOUT following symlinks, so `__file__` keeps the engine (symlink) path → `REPO_ROOT` = engine. For `.sh`: env-override `REPO_ROOT="${FOXML_ENGINE:-$(cd "$(dirname "$0")/.." && pwd)}"`. Matches the machine-portable-resolver pattern the already-portable tools use. Build-file references to the now-private dirs also need skip-if-absent guards (`[ -f tools/X ]` in build.sh; `if(EXISTS .../tests)` in CMakeLists) so a public clone still compiles.
+
+**Future-Claude debugging hint:** a tool "file not found"s ENGINE source under a WORKSPACE path → it used `__file__.resolve()` and now lives in the symlinked workspace. Grep `tools/*.py` for `__file__).resolve()` near `CoreFrameworks|ML_Headers|Strategies`; swap to `.absolute()`. Verify by running through the engine symlink path.
+
+**Reference:** code-only-public spring cleaning (2026-06-02) · `DESIGN_SPECS/meta-disciplines/public-private-boundary-and-ecosystem-discipline.md` · `feedback_machine_portable_resolver_for_committed_tool_paths`.
+
+---
+
+## Landmine 6 — zsh does NOT word-split unquoted vars in `for` loops (set 2026-06-02)
+
+**Symptom:** a Bash-tool loop `for f in $LIST; do mv "$f" …; done` (with `LIST="a b c"`) silently does nothing useful — it runs ONCE with `$f` = the whole `"a b c"` string. Counters increment past the failed ops, so it can falsely print `MOVED=3` while moving nothing. Bit the tools-privacy move TWICE.
+
+**Root cause:** the Bash tool runs **zsh**, and zsh (unlike bash) does NOT word-split unquoted parameter expansions in `for … in $VAR` — the whole string is one word.
+
+**Proper fix:** iterate in **Python** (`subprocess` for git/fs) for any list-of-items fan-out — deterministic, no shell-splitting surprises. In shell: `for f in ${=LIST}` (zsh split flag), a real array `arr=(a b c); for f in "${arr[@]}"`, or a literal in-loop list. (Separate sister glitch: coreutils briefly unresolvable — `command not found: mv` — so guard fan-out scripts with `command -v mv ln git >/dev/null || exit 1` to abort cleanly instead of half-applying.)
+
+**Future-Claude debugging hint:** a shell `for … in $VAR` "did nothing" but reported success → echo `$f` inside; if it's the whole list, that's zsh non-splitting. Prefer Python for file/git fan-out in this environment.
+
+**Reference:** code-only-public spring cleaning (2026-06-02) — two silent `MOVED=0` moves before diagnosis.
+
+---
+
 ## How to add a new landmine
 
 When you encounter a non-obvious pitfall (segfault, race, parallelism

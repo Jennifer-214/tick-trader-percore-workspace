@@ -3027,3 +3027,29 @@ sister_debt: TECH_DEBT-151 #8 (orphan-guard — sister dead-code/Knight-Capital 
 - **Trigger:** next change to an un-enrolled identifier surface (enroll it then) OR next codification pass.
 - **Status:** OPEN (paced enrollment; the discipline + primitive are complete).
 - **Cross-ref:** `dead-code-and-identifier-retirement-discipline.md` (Mechanization § — the enrollment surface); CLAUDE.md H21; RECURRING_BUG_PATTERNS Class 40; TECH_DEBT-151 #8 (sister orphan-guard).
+
+### TECH_DEBT-153 — relocate workflow/meta tools to private workspace (meta-only tools-privacy boundary)
+
+```yaml
+id: TECH_DEBT-153
+title: Move workflow/meta CI tools (check_*.py + the ledgers they own) from public engine tools/ to private workspace tools/ (symlinked); keep build/test/CI-load-bearing tools public
+severity: low
+surface_tags: [ci-tooling, privacy-boundary, workspace, repo-hygiene]
+trigger: dedicated tools-privacy cleanup pass (post-#11 OR next broad tools/ touch)
+status: open
+opened: 2026-06-02
+related_specs: []
+sister_debt: TECH_DEBT-029 (file-size discipline; same tools/ surface)
+```
+
+- **Created:** 2026-06-02 at v5.15.5.F.4d.1.E #11 — operator: "make the tools private + part of the workspace." Decided **meta-only** (the public build/test/CI data forced it).
+- **Severity:** LOW (boundary hygiene; no correctness/capital gap — the tools work where they are).
+- **The decided boundary** (discriminator = *does the PUBLIC build/test/CI path touch it?*):
+  - **STAY PUBLIC** (build-load-bearing; read engine code only; the engine's verifiable claims): the 5 proof/gen `.cpp` (`fp_determinism_golden`, `fp_value_equivalence_golden`, `ship_a_fp2_64_slice`, `compare_scalers`, `replay_locale_gate`), their `*_golden.txt`, `calls_graph_diff*_baseline.txt`, and any tool the build invokes (`check_per_core_registry_integrity.py` — `build.sh:273`; confirm exact `controller_test.cpp`/`CMakeLists.txt` refs at migration).
+  - **GO PRIVATE → workspace** (operator-process; most read the workspace): the doc/capture/tech-debt/identifier/plan-body `check_*.py` (`check_session_docs`, `check_doc_metadata`, `check_capture_audit`, `check_forward_promise_audit`, B-Plus, `check_tech_debt.py`, `check_identifier_retirement.py` + `identifier_ledger.txt`, `migrate_memory_frontmatter.py`, …). Sister to the already-private `claude-skills/`.
+- **WHY not "all private":** `build.sh` / `controller_test.cpp` / `CMakeLists.txt` reference `tools/`; symlinking ALL of `tools/` → workspace dangles for a public cloner → the public repo can't build/test (breaks the credibility/visibility angle). The proofs being public is a credibility ASSET, not debt.
+- **Mechanics:** move the private subset to workspace `tools/`; symlink so `REPO_ROOT/tools/X` resolves; gitignore in engine; `.githooks` resolves through the symlink unchanged. `git rm` the 3 already-pushed ones (`check_identifier_retirement.py` + ledger, `check_tech_debt.py`) going-forward (historical public commits stay; content not sensitive).
+- **Cost:** ~1-2h (move ~22 tools + symlinks + gitignore + verify the hook + headless public build still works). LOW risk.
+- **Trigger:** dedicated tools-privacy cleanup pass — its own ship per sprint-sequencing; post-#11 OR next broad `tools/` touch.
+- **Status:** OPEN (decided meta-only; execution deferred per `feedback_opportunistic_tech_debt_closure` — ADJACENT, a distinct migration, not subsumed by #11).
+- **Cross-ref:** `claude-skills/` (already-private sister); `feedback_opportunistic_tech_debt_closure` (why deferred); CLAUDE.local.md privacy-boundary recap (update at migration).

@@ -40,8 +40,12 @@ NEAR_FRAC = 0.90        # >=90% of cap -> advisory NEAR (trim soon, not yet fail
 
 
 def repo_root() -> Path:
-    # this file lives at <engine>/tools/check_always_loaded_budget.py
-    return Path(__file__).resolve().parent.parent
+    # this file lives at <repo>/tools/check_always_loaded_budget.py. Use .absolute() NOT
+    # .resolve(): the tool may live in a private workspace symlinked into the repo, and
+    # .resolve() would follow the symlink to the workspace + check the wrong CLAUDE.local.md.
+    # env override first for explicit control. See LANDMINES Landmine 5.
+    env = os.environ.get("FOXML_REPO_ROOT") or os.environ.get("FOXML_ENGINE")
+    return Path(env) if env else Path(__file__).absolute().parent.parent
 
 
 def resolve_memory_md(root: Path):

@@ -80,7 +80,7 @@ B.4.1 was reverted (commit 6323c17). Methodology lesson: COUNT CODE-LOC, NOT TOT
 
 | File type | Soft warning | Hard threshold | Action at threshold |
 |---|---|---|---|
-| ALWAYS-LOADED docs (CLAUDE.md / CLAUDE.local.md / MEMORY.md) | 400 lines | 600 lines | Extract sections to on-demand reference docs |
+| ALWAYS-LOADED docs (CLAUDE.md / CLAUDE.local.md / MEMORY.md) | 400 lines | **600 lines OR the harness BYTE cap — see below (binding)** | Compress index entries to their ≤1-line contract; extract sections to on-demand reference docs |
 | Test files (`tests/*.cpp`) | 3000 lines OR 60 sections | 5000 lines OR 100 sections | Split into domain-aligned sub-files (per CLAUDE.md existing rule) |
 | Source headers (`*.hpp` / `*.h`) | 1000 lines | 1500 lines | Split into decl/parser/defaults/validate sub-files (per TECH_DEBT-029) |
 | Source bodies (`*.cpp` / `*.c`) | 1500 lines | 2000 lines | Split by concern (per TECH_DEBT-029) |
@@ -89,6 +89,14 @@ B.4.1 was reverted (commit 6323c17). Methodology lesson: COUNT CODE-LOC, NOT TOT
 | DESIGN_SPECS | 800 lines | 1200 lines | Extract worked-example sidecar (`<spec-name>-examples.md`); main spec keeps body + cross-refs |
 | Plan body docs | 800 lines | 1200 lines | Extract code-sample sidecar (`<plan-name>-examples.md`) per existing convention |
 | Memory rules | 300 lines | 500 lines | Memory rules SHOULD be terse — if exceeding, consider whether the rule is doing too much |
+
+### Always-loaded docs: the BYTE budget is the binding ceiling (not the line count) — added 2026-06-02
+
+**The 600-line threshold above is a PROXY; the real ceiling is the harness's per-doc context-load BYTE budget** — `CLAUDE.md` / `CLAUDE.local.md` ≈ **40,000 bytes** each; `MEMORY.md` ≈ **24.4 KB**. Exceed it and the harness **silently TRUNCATES** the doc mid-file (observed 2026-06-02: `MEMORY.md` clipped — "Only part of it was loaded"), dropping load-bearing governance content with NO error. A doc can be UNDER 600 lines but OVER the byte cap (`CLAUDE.local.md` hit 42.3 KB at 229 lines — dense one-liners), **so the line count alone misses it.**
+
+- **Guard (mechanical, not a guideline):** `tools/check_always_loaded_budget.py` — HARD in `check_session_docs.sh`, teeth-proofed via `--selftest`, caps as SSoT in the tool, NEAR-band warning ≥90%. `.absolute()`-resolved so it works when symlinked from the private workspace (LANDMINE 5).
+- **Fix order — compress before split:** the bloat is usually a CONTRACT VIOLATION (index entries grown past their "≤1 line / ≤200 char" rule), not too-many-entries → **compress first** (zero info loss; detail lives in the canonical doc/memory body). Only when a genuinely-large entry-count can't fit is it time to **split** (e.g. `MEMORY.md` → hot index + an extended index loaded at `/accept-handoff`) — the guard's recurring NEAR/OVER is what tells you you've hit that point.
+- This is the **M7 structural close** of the "always-loaded doc silently truncates" class (meta-anti-pattern **WH-4**): convention-only compression RECURRED (`MEMORY.md` compressed 2026-05-26, over budget again 2026-06-02) → a standing guard replaces periodic manual trimming. The deeper rule: **guard the REAL limit (harness bytes), not a human proxy (line count)** — a guideline in the wrong unit is a hole.
 
 ---
 

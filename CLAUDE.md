@@ -418,7 +418,7 @@ Skills group by concern. Read each skill's `claude-skills/<name>/SKILL.md` for i
 | **DOMAIN audits** | `/accounting-audit` + `/hft-audit` + `/ml-audit` + `/registry-fit-audit` |
 | **Anti-pattern scans** | `/anti-spaghetti` + `/bug-check` + `/dead-code-trace` + `/dust` + `/metadata-audit` + `/test-strength-audit` |
 | **Post-coding** | `/latency-track` + `/post-ship-audit` + `/ship` |
-| **Workflow** | `/accept-handoff` + `/capture-audit` + `/dependency-chain-trace` + `/find` + `/finding-analyzer` + `/foxlib-promotion` + `/handoff` + `/index-rebuild` + `/patch-planner` + `/plan-check` + `/plan-context-sweep` + `/plan-dive` + `/sync-models` + `/sync-workspace` |
+| **Workflow** | `/accept-handoff` + `/capture-audit` + `/close-session` + `/dependency-chain-trace` + `/find` + `/finding-analyzer` + `/foxlib-promotion` + `/handoff` + `/index-rebuild` + `/patch-planner` + `/plan-check` + `/plan-context-sweep` + `/plan-dive` + `/sync-models` + `/sync-workspace` |
 | **Scaffolding** | `/doc-create` + `/plan-draft` + `/strategy-template` |
 
 Audit-driven discipline: HIGH-RISK ships fire `/precoding-audit-gate` (SHAPE) + `/blindspot-scan` (IMPLEMENTATION-DETAIL) in parallel before coding. Per-ship cycle: audit → consult → update plan → implement → ship → postmortem. See `DESIGN_PHILOSOPHY.md` § 11 + § 11.5 + `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md` + `DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md`.

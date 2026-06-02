@@ -3102,3 +3102,24 @@ sister_debt: TECH_DEBT-154 (maker-fee rebind — a landed guard from the same pa
 - **Trigger:** continue the pass next session (folded into the Ship-A storage-flip handoff — one pickup doc, per operator "I don't want 2 handoffs").
 - **Status:** OPEN (in-flight; 2/8 landed).
 - **Cross-ref:** the synthesis doc (full details); `feedback_guards_compound_enforcement_is_leverage`; CLAUDE.md H1-H21 table; the storage-flip handoff (carries the TaskList + the parallel-pass note).
+
+### TECH_DEBT-156 — branchless-compatible guard-log primitive ("custom print")
+
+```yaml
+id: TECH_DEBT-156
+title: A branchless-compatible guard-log primitive so side-effect guards (fprintf-on-condition) need no __builtin_expect branch
+severity: low
+surface_tags: [ci-tooling, hot-path, branchless, capital-safety]
+trigger: a guard needing a side-effect (log/flag) on a genuinely hot/branchless path, OR converting OMS_GuardTakerBoundFeeBasis on principle
+status: open
+opened: 2026-06-02
+related_specs: [refactor-patterns/branchless-dispatch-discipline.md]
+sister_debt: TECH_DEBT-154 (the maker-fee guard, which uses the __builtin_expect form today)
+```
+
+- **Created:** 2026-06-02 — operator: "we can create a custom print later i think, it may be worth." A conditional side effect (`if (cond) fprintf`) cannot be mask-selected branchless (no `mask & fprintf`); the codebase uses `__builtin_expect`-rare for these (H20 exception — the FILE*-null guards + `OMS_GuardTakerBoundFeeBasis`).
+- **Severity:** LOW — the `__builtin_expect` form is H20-sanctioned + never-taken-zero-variance for the current (drainer-path) guards. This is a principle/aesthetic enabler, NOT a correctness gap.
+- **What it enables:** future side-effect guards go fully branchless on their per-event path — accumulate the condition into a sticky flag branchlessly (`flag |= cond`), drain/report at a coarse cadence (the branchless-detect-then-rare-react pattern). Removes the per-event branch from guards on genuinely hot paths.
+- **Trigger:** a guard needing a side-effect on a HOT/branchless path (current guards are on the drainer = fine as-is), OR converting `OMS_GuardTakerBoundFeeBasis` on principle.
+- **Status:** OPEN (operator-floated; low priority).
+- **Cross-ref:** `OMS_GuardTakerBoundFeeBasis`; `branchless-dispatch-discipline.md` (H20 fprintf-exception); `feedback_guards_compound_enforcement_is_leverage`.

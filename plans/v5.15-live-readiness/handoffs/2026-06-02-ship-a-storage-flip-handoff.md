@@ -88,6 +88,8 @@ A SEPARATE workstream from the flip (same branch), run this session because the 
 - **Pickup:** continue from the synthesis + TECH_DEBT-155 — the file:lines + approaches are captured, so NO loaded context needed. #11 needs a cap-value decision (cfg-driven vs hard ceiling); the rest are ready.
 - **Privacy:** the meta-tools relocation to the private workspace is DECIDED (meta-only boundary) + tracked TECH_DEBT-153 (its own dedicated pass; the build/test/CI-load-bearing tools stay public).
 
+- **Unreviewed (pass deliverables):** the guard-hardening deliverables have NOT had an independent Stage-5.5 review — deferred at the compaction-near close (they don't need the loaded context). At pickup, `/accept-handoff` runs the deep capture-audit; optionally fire an independent deliverable review of the pass. The mechanical layer (doc-CI sweep CLEAN + both guard self-tests PASS + bidirectional clean) already verified coherence.
+
 ## 6. Operator norms
 Address Caramel as Caramel/she/her; no AskUserQuestion modals (inline); evaluate on robustness+latency+design not time; **consult before coding** (the flip is capital-core); branchless preferred (stable latencies — her explicit value); MED/LOW findings get a disposition; paste tool output don't summarize; **make-it-good-as-it-exists** for this foundational determinism-gated code (not make-it-exist-then-good). No live models (epoch/stamp/wire breaks free provided post-change determinism re-cert, D-131).
 

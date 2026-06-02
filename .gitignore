@@ -12,3 +12,7 @@
 # OS noise
 .DS_Store
 Thumbs.db
+
+# python artifacts (regenerated)
+__pycache__/
+*.pyc

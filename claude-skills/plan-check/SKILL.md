@@ -7,7 +7,13 @@ audit_cadence: ad-hoc
 tags: [audit-methodology, plan-template, doc-discipline]
 surface: []
 sister_skills: [/readiness, /precoding-audit-gate, /parity-check, /plan-context-sweep]
-loads_dynamically: []
+loads_dynamically: [DESIGN_SPECS/meta-disciplines/skill-knowledge-consultation-and-auto-routing.md]
+skill_kind: judgment
+associated_anti_patterns: [DOCS/RECURRING_BUG_PATTERNS.md, DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md]
+associated_decisions: [plans/<active-sprint>/decision-logs/]
+associated_postmortems: [plans/<active-sprint>/postmortems/]
+associated_ledgers: [DOCS/TECH_DEBT.md, DOCS/PARITY_ISSUES.md]
+trigger_heuristics: ["multi-plan sprint cohesion / does plan A break plan B -> suggest /plan-check"]
 ---
 
 # /plan-check — Multi-plan sprint cohesion audit
@@ -122,6 +128,16 @@ a row inside /plan-check. Inline the checklist; one subagent.
 ## Pass structure
 
 Spawn an Explore subagent. The subagent:
+
+### 0. Consult institutional knowledge (Stage 0)
+
+**Cold-context note:** the Explore subagent skips CLAUDE.md/MEMORY. FIRST load the rules (CLAUDE.md + CLAUDE.local.md + relevant MEMORY entries); THEN load the scoped slice (per this skill's `associated_*` frontmatter):
+- **Specs / anti-patterns** — patterns + bug/meta-anti-pattern classes for multi-plan cohesion (e.g. Class 18 mirror-incomplete, Class 21 parallel-descriptor).
+- **Canonical-sister** — does any sub-plan build NEW where a sister exists to EXTEND?
+- **Decisions** — has any cross-plan conflict already been DECIDED? Don't re-flag a decided item as a gap.
+- **Postmortems / ledgers** — what did past multi-ship sprints' postmortems warn about; what OPEN tech-debt / parity sits in the touched surfaces?
+
+Emit a short "what we already have" preamble that the cross-plan checks below must reckon with.
 
 ### 1. Parse the master plan
 

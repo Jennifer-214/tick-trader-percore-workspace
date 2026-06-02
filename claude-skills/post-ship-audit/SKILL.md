@@ -7,11 +7,19 @@ audit_cadence: per-ship
 tags: [audit-methodology, structural-fix, branchless-discipline, pattern-codification]
 surface: [registry, hot-path, slow-path, oms-drainer]
 sister_skills: [/precoding-audit-gate, /hft-audit, /dod-audit, /bug-check, /accounting-audit, /registry-fit-audit]
-loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md, DESIGN_SPECS/refactor-patterns/branchless-dispatch-discipline.md, DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md, DESIGN_SPECS/meta-disciplines/pattern-codification-lifecycle.md]
+loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md, DESIGN_SPECS/refactor-patterns/branchless-dispatch-discipline.md, DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md, DESIGN_SPECS/meta-disciplines/pattern-codification-lifecycle.md, DESIGN_SPECS/meta-disciplines/skill-knowledge-consultation-and-auto-routing.md]
+skill_kind: judgment
+associated_anti_patterns: [DOCS/RECURRING_BUG_PATTERNS.md, DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md]
+associated_decisions: [plans/<active-sprint>/decision-logs/]
+associated_postmortems: [plans/<active-sprint>/postmortems/]
+associated_ledgers: [DOCS/TECH_DEBT.md, DOCS/PARITY_ISSUES.md]
+trigger_heuristics: ["post-ship retrospective / did we close the class or patch the symptom -> suggest /post-ship-audit"]
 ---
 
 # /post-ship-audit — Post-ship retrospective + structural-gap audit
 
+> **Stage 0 — consult institutional knowledge** (per `skill-knowledge-consultation-and-auto-routing.md`): before judging, load this skill's `associated_*` slice (specs / anti-patterns / decisions / postmortems / ledgers) + run the canonical-sister check; if running as a cold Explore/Plan subagent, ensure CLAUDE.md/MEMORY are loaded first. Then the preloads:
+>
 > **Stage 0 preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
 > - § 4 (Latency cost framework) — real-world mispredict cost + branchless decision rules + H20 invariant
 > - § 7 (Structural-fix family) — structural-fix-preferred decision framework

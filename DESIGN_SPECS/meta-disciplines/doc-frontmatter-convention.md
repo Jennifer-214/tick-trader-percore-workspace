@@ -71,6 +71,17 @@ concern: pre-coding-gate | shape-audit | impl-detail-audit | domain-audit | anti
 audit_cadence: ad-hoc | per-ship | quarterly | post-codification
 sister_skills: [/skill1, /skill2]
 loads_dynamically: [DESIGN_SPECS/file.md, memory/file.md]
+
+# consult-stage + auto-routing fields (skill-knowledge-consultation-and-auto-routing.md). All OPTIONAL; mechanical skills omit them.
+skill_kind: judgment | mechanical          # judgment → runs Stage-0 consult + is SUGGESTed by the router; mechanical → skips Stage 0, may auto-FIRE
+consult_mode: scoped | broad               # OPTIONAL (default scoped). scoped (focused skills) = load your associated_* slice; broad (challengers / completeness — /second-opinion, /precoding-audit-gate) = range the FULL catalog (don't inherit the proposer's blind spots)
+associated_specs: [DESIGN_SPECS/file.md]   # specs Stage 0 consults; defaults to loads_dynamically if omitted (SSoT — don't restate the list)
+associated_anti_patterns: [DOCS/RECURRING_BUG_PATTERNS.md, DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md]
+associated_decisions: [plans/<sprint>/decision-logs/]    # "did we already decide this?"
+associated_postmortems: [plans/<sprint>/postmortems/]    # read when the ship resembles a past one
+associated_ledgers: [DOCS/TECH_DEBT.md, DOCS/PARITY_ISSUES.md]   # surface-scoped OPEN debt
+associated_refs: [DOCS/LANDMINES.md, FEATURE_LOOKUP.md]          # operational refs
+trigger_heuristics: ["<input pattern> -> suggest|fire"]          # Layer B: input match → SUGGEST (judgment) / FIRE (mechanical)
 ```
 
 ### memory/*.md

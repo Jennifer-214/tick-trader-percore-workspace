@@ -7,7 +7,13 @@ audit_cadence: ad-hoc
 tags: [latency-discipline, structural-fix, framework-discipline]
 surface: [hot-path, slow-path, oms-drainer, registry]
 sister_skills: [/dust, /foxlib-promotion, /latency-track, /dod-audit, /readiness]
-loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md]
+loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/meta-disciplines/skill-knowledge-consultation-and-auto-routing.md]
+skill_kind: judgment
+associated_anti_patterns: [DOCS/RECURRING_BUG_PATTERNS.md, DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md]
+associated_decisions: [plans/<active-sprint>/decision-logs/]
+associated_postmortems: [plans/<active-sprint>/postmortems/]
+associated_ledgers: [DOCS/TECH_DEBT.md, DOCS/PARITY_ISSUES.md]
+trigger_heuristics: ["reuse / dedup / shared-helper opportunity -> suggest /merge-scan"]
 ---
 
 # /merge-scan — Reuse + sharing opportunity audit
@@ -18,7 +24,9 @@ loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md]
 > - `<scope_path>` — plan path or code subsystem to focus reuse-merge scan; default = full sweep
 > - `[focus_keywords...]` — narrow scan focus (e.g., "atomic load" "clock_gettime" "cfg access")
 >
-> **Stage 0 DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
+> **Stage 0 — consult institutional knowledge** (per `skill-knowledge-consultation-and-auto-routing.md`): before judging, load this skill's `associated_*` slice (specs / anti-patterns / decisions / postmortems / ledgers) + run the canonical-sister check; if running as a cold Explore/Plan subagent, ensure CLAUDE.md/MEMORY are loaded first. Then the DESIGN_PHILOSOPHY preload:
+>
+> **DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
 > - § 4 (Latency cost framework) — reuse-audit principle; shared atomic loads / cfg accesses / conversions
 > - § 7 (Structural-fix family) — when reuse opportunity is registry-shaped, propose X-macro registry vs helper extraction
 >

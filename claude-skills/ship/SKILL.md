@@ -1,5 +1,7 @@
 ---
 name: ship
+skill_kind: mechanical
+trigger_heuristics: ["ready to ship / post-coding ship ritual -> suggest /ship (mutates: commit/tag/push)"]
 description: Run the post-coding ship ritual — build verify, calls_graph_diff orphan check, version bump, commit with structured message, tag, push branch + tag. Captures the discipline Jenny has been doing manually after every v5.x.X subship.
 type: skill
 concern: post-coding

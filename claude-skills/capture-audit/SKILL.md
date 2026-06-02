@@ -1,5 +1,7 @@
 ---
 name: capture-audit
+skill_kind: mechanical
+trigger_heuristics: ["verify decisions/memories/skills propagated -> fire /capture-audit (read-only drift check)"]
 description: Mechanical drift-check verifying that decisions/memories/skills/plan-amendments made in the current session have been propagated to all places they need to be. Catches "I decided X but never updated Y" failure mode. Runs as pre-commit gate (via /sync-workspace) + pre-handoff gate (via /handoff) + standalone. Fast (~30 sec). Checks MEMORY.md index sync, plan body frontmatter completeness (audit_tier + sister_specs), decision-log artifact existence + sentinel matching, handoff doc currency (PENDING items vs git log), Stage 6 promotion candidates, skill-in-CLAUDE.md-suite linkage, every NEW skill→memory→DESIGN_SPECS cross-ref completeness.
 type: skill
 concern: workflow

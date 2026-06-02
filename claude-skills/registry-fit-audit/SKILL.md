@@ -7,11 +7,19 @@ audit_cadence: ad-hoc
 tags: [framework-discipline, pattern-codification, structural-fix]
 surface: [registry]
 sister_skills: [/dod-audit, /anti-spaghetti, /merge-scan, /precoding-audit-gate]
-loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md, DESIGN_SPECS/meta-disciplines/pattern-codification-lifecycle.md, DESIGN_SPECS/framework-patterns/meta-registry-pattern-for-codebase-registry-discipline.md, DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md]
+loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md, DESIGN_SPECS/meta-disciplines/pattern-codification-lifecycle.md, DESIGN_SPECS/framework-patterns/meta-registry-pattern-for-codebase-registry-discipline.md, DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md, DESIGN_SPECS/meta-disciplines/skill-knowledge-consultation-and-auto-routing.md]
+skill_kind: judgment
+associated_anti_patterns: [DOCS/RECURRING_BUG_PATTERNS.md, DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md]
+associated_decisions: [plans/<active-sprint>/decision-logs/]
+associated_postmortems: [plans/<active-sprint>/postmortems/]
+associated_ledgers: [DOCS/TECH_DEBT.md, DOCS/PARITY_ISSUES.md]
+trigger_heuristics: ["registry misapplication / is this registry justified / split-merge-deprecate -> suggest /registry-fit-audit"]
 ---
 
 # /registry-fit-audit — Registry-fit audit per framework-selection criteria
 
+> **Stage 0 — consult institutional knowledge** (per `skill-knowledge-consultation-and-auto-routing.md`): before judging, load this skill's `associated_*` slice (specs / anti-patterns / decisions / postmortems / ledgers) + run the canonical-sister check; if running as a cold Explore/Plan subagent, ensure CLAUDE.md/MEMORY are loaded first. Then the preloads:
+>
 > **Stage 0 preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
 > - § 11 Framework-selection criteria — when to reach for a registry vs principle + audit + delete
 > - § 1.5 Framework-driven extensibility meta-principle — when frameworks are justified

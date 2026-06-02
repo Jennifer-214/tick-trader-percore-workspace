@@ -7,10 +7,18 @@ audit_cadence: ad-hoc
 tags: [audit-methodology, latency-discipline]
 surface: [hot-path, slow-path, registry]
 sister_skills: [/trace-deps, /latency-track, /parity-check, /ml-audit, /patch-planner]
-loads_dynamically: []
+loads_dynamically: [DESIGN_SPECS/meta-disciplines/skill-knowledge-consultation-and-auto-routing.md]
+skill_kind: judgment
+associated_anti_patterns: [DOCS/RECURRING_BUG_PATTERNS.md, DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md]
+associated_decisions: [plans/<active-sprint>/decision-logs/]
+associated_postmortems: [plans/<active-sprint>/postmortems/]
+associated_ledgers: [DOCS/TECH_DEBT.md, DOCS/PARITY_ISSUES.md]
+trigger_heuristics: ["deep-dive analysis of a finding / blast-radius + impact -> suggest /finding-analyzer"]
 ---
 
 # /finding-analyzer — Deep Vulnerability Analysis Orchestrator
+
+> **Stage 0 — consult institutional knowledge** (per `skill-knowledge-consultation-and-auto-routing.md`): before judging, load this skill's `associated_*` slice (specs / anti-patterns / decisions / postmortems / ledgers) + run the canonical-sister check; if running as a cold Explore/Plan subagent, ensure CLAUDE.md/MEMORY are loaded first.
 
 ## What this does
 

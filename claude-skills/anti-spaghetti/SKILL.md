@@ -7,10 +7,18 @@ audit_cadence: quarterly
 tags: [framework-discipline, structural-fix, audit-methodology, pattern-codification]
 surface: [registry, cfg-flow, hot-path, slow-path]
 sister_skills: [/bug-check, /dod-audit, /merge-scan, /dust, /registry-fit-audit]
-loads_dynamically: [DESIGN_SPECS/README.md, DOCS/RECURRING_BUG_PATTERNS.md]
+loads_dynamically: [DESIGN_SPECS/README.md, DOCS/RECURRING_BUG_PATTERNS.md, DESIGN_SPECS/meta-disciplines/skill-knowledge-consultation-and-auto-routing.md]
+skill_kind: judgment
+associated_anti_patterns: [DOCS/RECURRING_BUG_PATTERNS.md, DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md]
+associated_decisions: [plans/<active-sprint>/decision-logs/]
+associated_postmortems: [plans/<active-sprint>/postmortems/]
+associated_ledgers: [DOCS/TECH_DEBT.md, DOCS/PARITY_ISSUES.md]
+trigger_heuristics: ["is this becoming spaghetti / parallel-infrastructure structural audit -> suggest /anti-spaghetti"]
 ---
 
 # /anti-spaghetti — Structural codebase audit for parallel-infrastructure anti-patterns
+
+> **Stage 0 — consult institutional knowledge** (per `skill-knowledge-consultation-and-auto-routing.md`): before judging, load this skill's `associated_*` slice (specs / anti-patterns / decisions / postmortems / ledgers) + run the canonical-sister check; if running as a cold Explore/Plan subagent, ensure CLAUDE.md/MEMORY are loaded first.
 
 **Established:** 2026-05-17 (v5.15.5.F.4d.1.B planning — codified during deep design conversation when Caramel asked "is this codebase becoming spaghetti?")
 **Status:** **Stage 3 ACTIVE v1.1** (promoted from Stage 2 DRAFT at `v5.15.5.F.4d.1.B.1` ship close 2026-05-17; first canonical run at `.B` audit Batch 2 found 3-way triplet CRITICAL + CoreCtx HIGH + 6 MEDs KEEP; methodology retroactively validated; periodic cadence locked per `project_anti_spaghetti_audit_cadence` memory)

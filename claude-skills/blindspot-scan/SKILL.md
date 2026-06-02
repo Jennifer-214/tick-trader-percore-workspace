@@ -7,10 +7,18 @@ audit_cadence: ad-hoc
 tags: [audit-methodology, meta-discipline, framework-discipline]
 surface: [registry, wire-format, cfg-flow]
 sister_skills: [/precoding-audit-gate, /parity-check, /trace-deps, /readiness, /dod-audit]
-loads_dynamically: [DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md, DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md, CoreFrameworks/CfgFieldRegistry.hpp, CoreFrameworks/CfgFieldDispatch.hpp]
+loads_dynamically: [DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md, DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md, DESIGN_SPECS/meta-disciplines/skill-knowledge-consultation-and-auto-routing.md, CoreFrameworks/CfgFieldRegistry.hpp, CoreFrameworks/CfgFieldDispatch.hpp]
+skill_kind: judgment
+associated_anti_patterns: [DOCS/RECURRING_BUG_PATTERNS.md, DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md]
+associated_decisions: [plans/<active-sprint>/decision-logs/]
+associated_postmortems: [plans/<active-sprint>/postmortems/]
+associated_ledgers: [DOCS/TECH_DEBT.md, DOCS/PARITY_ISSUES.md]
+trigger_heuristics: ["impl-detail blind spots / type-cascade / field-collision -> suggest /blindspot-scan"]
 ---
 
 # /blindspot-scan — Implementation-detail audit for pre-coding readiness
+
+> **Stage 0 — consult institutional knowledge** (per `skill-knowledge-consultation-and-auto-routing.md`): before judging, load this skill's `associated_*` slice (specs / anti-patterns / decisions / postmortems / ledgers) + run the canonical-sister check; if running as a cold Explore/Plan subagent, ensure CLAUDE.md/MEMORY are loaded first.
 
 ## What this does
 

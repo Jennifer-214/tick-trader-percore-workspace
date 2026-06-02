@@ -1,5 +1,7 @@
 ---
 name: handoff
+skill_kind: mechanical
+trigger_heuristics: ["generate a handoff for a fresh context window -> suggest /handoff"]
 description: Generate a self-contained handoff prompt for opening a sub-ship in a fresh context window. Composes the 9-step pickup workflow (pre-flight verification → required reading → plan re-verification → pre-coding audit gate → DESIGN_SPECS pattern check → design philosophy reminders → TECH_DEBT items in surface area → filesystem conventions → sprint-close verification gate). Reads CLAUDE.local.md going-forward rules + DESIGN_SPECS/*.md catalog + auto-memory MEMORY.md + DOCS/TECH_DEBT.md dynamically so each prompt reflects current discipline. Output: /home/caramel/code/tick-trader-percore-workspace/plans/<sprint>/handoffs/<YYYY-MM-DD>-<ship>-handoff.md (WORKSPACE path explicitly, never engine-side symlink). Layer 1 orchestrator (compose-by-reference, NOT by-spawning).
 type: skill
 concern: workflow

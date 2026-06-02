@@ -7,11 +7,19 @@ audit_cadence: ad-hoc
 tags: [fixed-point-math, structural-fix, failure-observability]
 surface: [oms-drainer, hot-path, slow-path, backtest, live-trading, wire-format]
 sister_skills: [/parity-check, /hft-audit, /dod-audit, /bug-check, /ml-audit]
-loads_dynamically: [DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md, DESIGN_SPECS/refactor-patterns/cfg-scope-discipline.md, DESIGN_SPECS/data-disciplines/cache-layout-discipline-for-hot-side-structs.md, DESIGN_SPECS/framework-patterns/postloadsetup-registry-pattern.md, DOCS/DESIGN_PHILOSOPHY.md]
+loads_dynamically: [DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md, DESIGN_SPECS/refactor-patterns/cfg-scope-discipline.md, DESIGN_SPECS/data-disciplines/cache-layout-discipline-for-hot-side-structs.md, DESIGN_SPECS/framework-patterns/postloadsetup-registry-pattern.md, DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/meta-disciplines/skill-knowledge-consultation-and-auto-routing.md]
+skill_kind: judgment
+associated_anti_patterns: [DOCS/RECURRING_BUG_PATTERNS.md, DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md]
+associated_decisions: [plans/<active-sprint>/decision-logs/]
+associated_postmortems: [plans/<active-sprint>/postmortems/]
+associated_ledgers: [DOCS/TECH_DEBT.md, DOCS/PARITY_ISSUES.md]
+trigger_heuristics: ["accounting / money-path audit / fee / slippage / FPN / balance -> suggest /accounting-audit"]
 ---
 
 # /accounting-audit — Accounting / money-tracking path audit
 
+> **Stage 0 — consult institutional knowledge** (per `skill-knowledge-consultation-and-auto-routing.md`): before judging, load this skill's `associated_*` slice (specs / anti-patterns / decisions / postmortems / ledgers) + run the canonical-sister check; if running as a cold Explore/Plan subagent, ensure CLAUDE.md/MEMORY are loaded first. Then the preloads:
+>
 > **Stage 0 preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
 > - § 3 (Hard Invariants) — H4 (FPN<F> for accounting; never float/double) + H9 (wire-format byte preservation including stamp accounting fields)
 > - § 1.5 (Framework-driven extensibility meta-principle) — Class 27 + Class 24 closure rationale

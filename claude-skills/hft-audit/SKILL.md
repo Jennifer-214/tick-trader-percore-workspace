@@ -7,7 +7,13 @@ audit_cadence: quarterly
 tags: [latency-discipline, data-oriented-design, concurrency, branchless-discipline]
 surface: [hot-path, slow-path, oms-drainer, producer, registry]
 sister_skills: [/dod-audit, /accounting-audit, /merge-scan, /latency-track]
-loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/refactor-patterns/branchless-dispatch-discipline.md, DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md]
+loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/refactor-patterns/branchless-dispatch-discipline.md, DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md, DESIGN_SPECS/meta-disciplines/skill-knowledge-consultation-and-auto-routing.md]
+skill_kind: judgment
+associated_anti_patterns: [DOCS/RECURRING_BUG_PATTERNS.md, DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md]
+associated_decisions: [plans/<active-sprint>/decision-logs/]
+associated_postmortems: [plans/<active-sprint>/postmortems/]
+associated_ledgers: [DOCS/TECH_DEBT.md, DOCS/PARITY_ISSUES.md]
+trigger_heuristics: ["deep HFT/architecture audit / cache-align / branchless / lock-free / FPN edge -> suggest /hft-audit"]
 ---
 
 # /hft-audit — Deep Architectural & HFT Codebase Audit
@@ -18,7 +24,9 @@ loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/refactor-patterns/br
 > - `<scope_path>` — file_path_glob to scope to subsystem; default = full sweep
 > - `[focus_keywords...]` — narrow scan focus (e.g., "cache alignment" "branchless" "FPN edge case")
 >
-> **Stage 0 DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
+> **Stage 0 — consult institutional knowledge** (per `skill-knowledge-consultation-and-auto-routing.md`): before judging, load this skill's `associated_*` slice (specs / anti-patterns / decisions / postmortems / ledgers) + run the canonical-sister check; if running as a cold Explore/Plan subagent, ensure CLAUDE.md/MEMORY are loaded first. Then the DESIGN_PHILOSOPHY preload:
+>
+> **DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
 > - § 3 (Hard Invariants) — H1-H13 are universal HFT principles
 > - § 4 (Latency cost framework) — cycle/cache/branch costs anchor decisions
 > - § 6 (Concurrency family) — lock-free, atomics, cache-line discipline, no mutexes

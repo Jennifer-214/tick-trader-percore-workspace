@@ -1,5 +1,7 @@
 ---
 name: accept-handoff
+skill_kind: mechanical
+trigger_heuristics: ["fresh-session pickup / accept a handoff -> fire /accept-handoff (read + verify)"]
 description: Receiver-side handoff verification skill. Fresh-session pickup runs ONE command to load handoff doc + all cited reference files + run drift-check + recreate TaskList + verify git state matches handoff claims + reconcile decision-log status (decided vs open). Closes the "fresh session forgets to load required reading" failure mode. Sister to /handoff (writer side); both close the multi-session pickup loop. Output: PICKUP-READY status + concrete "your next action is X" instruction.
 type: skill
 concern: workflow

@@ -1,5 +1,7 @@
 ---
 name: close-session
+skill_kind: mechanical
+trigger_heuristics: ["ready to wrap up / end the session -> suggest /close-session"]
 description: End-of-session ritual orchestrator (SENDER side; sister to /accept-handoff). Composes the mechanical doc/plan sweep + /capture-audit --deep + /readiness (conditional) + /handoff + /sync-workspace into one end-of-session close, so codification that drifts under context-budget pressure is captured deterministically.
 type: skill
 concern: workflow

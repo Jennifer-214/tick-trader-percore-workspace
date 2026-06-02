@@ -1,5 +1,7 @@
 ---
 name: find
+skill_kind: mechanical
+trigger_heuristics: ["natural-language doc search -> fire /find (read-only)"]
 description: Natural-language metadata-filtered search over the doc system. Translates query into rg patterns against YAML frontmatter (type / tags / surface / stage / sister_specs). Composes from DESIGN_SPECS/meta-disciplines/doc-tag-vocabulary.md + doc-frontmatter-convention.md. Output: list of matching files with path + type + relevant tags + brief excerpt.
 type: skill
 concern: workflow

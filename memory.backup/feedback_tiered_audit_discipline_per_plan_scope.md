@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: fc2542a7-8662-4b21-a393-f1598d05e50b
-  sister_specs: [feedback_iteration_spiral_signals_audit_meta_gap.md, feedback_proportionate_response_to_audit_findings.md, feedback_plan_right_not_fast.md, feedback_no_defer_for_effort.md, feedback_motivated_collaborator_for_caramel.md, feedback_audit_canonical_sister_before_new_infra.md, feedback_lead_with_architectural_merit_not_operator_tone.md, feedback_enumerate_helper_signature_args_before_extract.md, feedback_heavier_default_audit_posture_for_capital.md, feedback_session_decision_log_discipline.md]
+  sister_specs: [feedback_iteration_spiral_signals_audit_meta_gap.md, feedback_proportionate_response_to_audit_findings.md, feedback_plan_right_not_fast.md, feedback_no_defer_for_effort.md, feedback_motivated_collaborator_for_caramel.md, feedback_audit_canonical_sister_before_new_infra.md, feedback_lead_with_architectural_merit_not_operator_tone.md, feedback_enumerate_helper_signature_args_before_extract.md, feedback_heavier_default_audit_posture_for_capital.md, feedback_session_decision_log_discipline.md, feedback_process_weight_by_surface_blast_radius.md]
   tags: [audit-methodology, planning-discipline]
 ---
 

@@ -7,7 +7,13 @@ audit_cadence: per-ship
 tags: [failure-observability, wire-format, framework-discipline]
 surface: [ml-inference, training, cfg-flow, wire-format]
 sister_skills: [/parity-check, /accounting-audit, /readiness, /dod-audit]
-loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md]
+loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/meta-disciplines/skill-knowledge-consultation-and-auto-routing.md]
+skill_kind: judgment
+associated_anti_patterns: [DOCS/RECURRING_BUG_PATTERNS.md, DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md]
+associated_decisions: [plans/<active-sprint>/decision-logs/]
+associated_postmortems: [plans/<active-sprint>/postmortems/]
+associated_ledgers: [DOCS/TECH_DEBT.md, DOCS/PARITY_ISSUES.md]
+trigger_heuristics: ["ML pipeline audit / feature-model-inference / train-serve gap -> suggest /ml-audit"]
 ---
 
 # /ml-audit — ML pipeline structural audit
@@ -18,7 +24,9 @@ loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md]
 > - `<scope_path>` — file_path_glob to scope; default = full ML pipeline sweep
 > - `[focus_keywords...]` — narrow scan focus (e.g., "feature pack" "scaler" "stamp body")
 >
-> **Stage 0 DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
+> **Stage 0 — consult institutional knowledge** (per `skill-knowledge-consultation-and-auto-routing.md`): before judging, load this skill's `associated_*` slice (specs / anti-patterns / decisions / postmortems / ledgers) + run the canonical-sister check; if running as a cold Explore/Plan subagent, ensure CLAUDE.md/MEMORY are loaded first. Then the DESIGN_PHILOSOPHY preload:
+>
+> **DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
 > - § 5 (Determinism family) — train-serve parity, NaN-free feature pack, stamp body byte preservation
 > - § 8 (Failure observability family) — failure flags, drift detection, audit hooks
 >

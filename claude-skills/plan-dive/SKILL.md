@@ -1,9 +1,18 @@
 ---
 name: plan-dive
+skill_kind: judgment
+loads_dynamically: [DESIGN_SPECS/meta-disciplines/skill-knowledge-consultation-and-auto-routing.md]
+associated_anti_patterns: [DOCS/RECURRING_BUG_PATTERNS.md, DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md]
+associated_decisions: [plans/<active-sprint>/decision-logs/]
+associated_postmortems: [plans/<active-sprint>/postmortems/]
+associated_ledgers: [DOCS/TECH_DEBT.md, DOCS/PARITY_ISSUES.md]
+trigger_heuristics: ["multi-layer per-plan correctness dive / rolling-window sub-sprint audit -> suggest /plan-dive"]
 description: Multi-layer per-plan correctness dive for a rolling-window sub-sprint audit. Runs ONE plan body through 6 layered lenses — mechanical/soundness (dedupe_findings + plan-body symbol-existence + tests-section + intent-match vs current decisions), design/SHAPE (composes /precoding-audit-gate), implementation-detail (/blindspot-scan), anti-pattern (/bug-check), findings-ingestion (plan vs its slice of the canonical deduped findings index), and seam (rolling-window inbound/outbound forward-promise + cross-ship-invariant verification) — then synthesizes ONE RED/YELLOW/GREEN verdict + a per-finding punch-list. COMPOSES existing audit skills (never re-implements them — canonical-sister discipline). Honors consult-before-coding — returns synthesis for operator triage; never auto-proceeds. Layer-1 orchestrator; one invocation per plan, fired sequentially across a sub-sprint per the rolling-window cadence.
 ---
 
 # /plan-dive — multi-layer rolling-window dive for ONE plan
+
+> **Stage 0 — consult institutional knowledge** (per `skill-knowledge-consultation-and-auto-routing.md`): before judging, load this skill's `associated_*` slice (specs / anti-patterns / decisions / postmortems / ledgers) + run the canonical-sister check; if running as a cold Explore/Plan subagent, ensure CLAUDE.md/MEMORY are loaded first.
 
 ## What this does + why
 

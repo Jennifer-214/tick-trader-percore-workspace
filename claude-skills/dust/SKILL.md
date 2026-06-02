@@ -7,7 +7,13 @@ audit_cadence: ad-hoc
 tags: [audit-methodology, structural-fix]
 surface: [registry]
 sister_skills: [/dead-code-trace, /merge-scan, /anti-spaghetti, /bug-check]
-loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md]
+loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/meta-disciplines/skill-knowledge-consultation-and-auto-routing.md]
+skill_kind: judgment
+associated_anti_patterns: [DOCS/RECURRING_BUG_PATTERNS.md, DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md]
+associated_decisions: [plans/<active-sprint>/decision-logs/]
+associated_postmortems: [plans/<active-sprint>/postmortems/]
+associated_ledgers: [DOCS/TECH_DEBT.md, DOCS/PARITY_ISSUES.md]
+trigger_heuristics: ["cleanup candidates / rotting comments / oversized fns / copy-paste -> suggest /dust"]
 ---
 
 # /dust — Codebase audit (non-destructive)
@@ -18,7 +24,9 @@ loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md]
 > - `<scope_path>` — file_path_glob to scope cleanup scan; default = full codebase sweep
 > - `[focus_keywords...]` — narrow scan focus (e.g., "rotting comments" "oversized fns" "copy-paste")
 >
-> **Stage 0 DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
+> **Stage 0 — consult institutional knowledge** (per `skill-knowledge-consultation-and-auto-routing.md`): before judging, load this skill's `associated_*` slice (specs / anti-patterns / decisions / postmortems / ledgers) + run the canonical-sister check; if running as a cold Explore/Plan subagent, ensure CLAUDE.md/MEMORY are loaded first. Then the DESIGN_PHILOSOPHY preload:
+>
+> **DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
 > - § 11 (Process discipline) — what NOT to leave behind; cleanup discipline; structural-fix-preferred over local patches when bug class can recur
 >
 > Cite § 11 in cleanup recommendations when item suggests structural fix vs surface cleanup.

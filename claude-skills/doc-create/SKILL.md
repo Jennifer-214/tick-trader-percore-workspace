@@ -7,10 +7,18 @@ audit_cadence: ad-hoc
 tags: [doc-discipline, plan-template]
 surface: []
 sister_skills: [/plan-draft, /find, /metadata-audit]
-loads_dynamically: [DESIGN_SPECS/plan-templates/design-spec-template.md, DESIGN_SPECS/plan-templates/postmortem-template.md, DESIGN_SPECS/plan-templates/sprint-master-plan-template.md, DESIGN_SPECS/plan-templates/future-oriented-plan-template.md, DESIGN_SPECS/ledger-templates/ledger-entry-templates.md, DESIGN_SPECS/plan-templates/memory-template.md, DESIGN_SPECS/meta-disciplines/doc-frontmatter-convention.md, DESIGN_SPECS/meta-disciplines/doc-tag-vocabulary.md]
+loads_dynamically: [DESIGN_SPECS/plan-templates/design-spec-template.md, DESIGN_SPECS/plan-templates/postmortem-template.md, DESIGN_SPECS/plan-templates/sprint-master-plan-template.md, DESIGN_SPECS/plan-templates/future-oriented-plan-template.md, DESIGN_SPECS/ledger-templates/ledger-entry-templates.md, DESIGN_SPECS/plan-templates/memory-template.md, DESIGN_SPECS/meta-disciplines/doc-frontmatter-convention.md, DESIGN_SPECS/meta-disciplines/doc-tag-vocabulary.md, DESIGN_SPECS/meta-disciplines/skill-knowledge-consultation-and-auto-routing.md]
+skill_kind: judgment
+associated_anti_patterns: [DOCS/RECURRING_BUG_PATTERNS.md, DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md]
+associated_decisions: [plans/<active-sprint>/decision-logs/]
+associated_postmortems: [plans/<active-sprint>/postmortems/]
+associated_ledgers: [DOCS/TECH_DEBT.md, DOCS/PARITY_ISSUES.md]
+trigger_heuristics: ["create a new doc / scaffold a DESIGN_SPEC / postmortem / ledger entry -> suggest /doc-create"]
 ---
 
 # /doc-create — Type-aware doc scaffolding
+
+> **Stage 0 — consult institutional knowledge** (per `skill-knowledge-consultation-and-auto-routing.md`): before scaffolding, load this skill's `associated_*` slice (specs / anti-patterns / decisions / postmortems / ledgers) + run the canonical-sister check (is there an existing artifact to EXTEND rather than scaffold new?); if running as a cold Explore/Plan subagent, ensure CLAUDE.md/MEMORY are loaded first.
 
 ## What this does
 

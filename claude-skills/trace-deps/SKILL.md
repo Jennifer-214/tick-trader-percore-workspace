@@ -7,7 +7,13 @@ audit_cadence: per-ship
 tags: [audit-methodology, structural-fix, framework-discipline]
 surface: [registry, cfg-flow]
 sister_skills: [/readiness, /parity-check, /merge-scan, /dod-audit, /precoding-audit-gate, /dependency-chain-trace]
-loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/meta-disciplines/structural-fix-preferred-decision-framework.md]
+loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/meta-disciplines/structural-fix-preferred-decision-framework.md, DESIGN_SPECS/meta-disciplines/skill-knowledge-consultation-and-auto-routing.md]
+skill_kind: judgment
+associated_anti_patterns: [DOCS/RECURRING_BUG_PATTERNS.md, DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md]
+associated_decisions: [plans/<active-sprint>/decision-logs/]
+associated_postmortems: [plans/<active-sprint>/postmortems/]
+associated_ledgers: [DOCS/TECH_DEBT.md, DOCS/PARITY_ISSUES.md]
+trigger_heuristics: ["verify plan code deps / chokepoint not bypassed -> suggest /trace-deps"]
 ---
 
 # /trace-deps — dependency-chain audit for new plan code
@@ -20,7 +26,9 @@ loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/meta-disciplines/str
 > **Optional invocation args:**
 > - `[focus_keywords...]` — narrow which dependencies to verify (e.g., "tt::cfg_parse_field" "ControllerConfig_Load")
 >
-> **Stage 0 DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
+> **Stage 0 — consult institutional knowledge** (per `skill-knowledge-consultation-and-auto-routing.md`): before judging, load this skill's `associated_*` slice (specs / anti-patterns / decisions / postmortems / ledgers) + run the canonical-sister check; if running as a cold Explore/Plan subagent, ensure CLAUDE.md/MEMORY are loaded first. Then the DESIGN_PHILOSOPHY preload:
+>
+> **DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
 > - § 7 (Structural-fix family) — verify chokepoint usage; verify X-macro extractor not bypassed
 > - § 11 (Process discipline) — boundary-stable refactors over wide cascades
 >

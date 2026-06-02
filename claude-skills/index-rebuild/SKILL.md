@@ -1,5 +1,7 @@
 ---
 name: index-rebuild
+skill_kind: mechanical
+trigger_heuristics: ["regenerate index files from frontmatter -> suggest /index-rebuild (rewrites indexes)"]
 description: Auto-regenerate index files (CLAUDE.md skill suite table / DESIGN_SPECS/README.md / DESIGN_SPECS/TAG_INDEX.md / etc.) from current frontmatter state. Walks all docs with frontmatter; aggregates by type/concern/tag/lifecycle; rewrites canonical index files. Eliminates manual maintenance of index drift.
 type: skill
 concern: workflow

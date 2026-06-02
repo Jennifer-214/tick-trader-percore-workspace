@@ -7,7 +7,13 @@ audit_cadence: per-ship
 tags: [wire-format, framework-discipline, audit-methodology]
 surface: [ml-inference, training, wire-format, parser, cfg-flow]
 sister_skills: [/ml-audit, /trace-deps, /readiness, /precoding-audit-gate]
-loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md, DESIGN_SPECS/framework-patterns/autopopulate-pattern-for-production-caller-class.md, DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md]
+loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md, DESIGN_SPECS/framework-patterns/autopopulate-pattern-for-production-caller-class.md, DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md, DESIGN_SPECS/meta-disciplines/skill-knowledge-consultation-and-auto-routing.md]
+skill_kind: judgment
+associated_anti_patterns: [DOCS/RECURRING_BUG_PATTERNS.md, DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md]
+associated_decisions: [plans/<active-sprint>/decision-logs/]
+associated_postmortems: [plans/<active-sprint>/postmortems/]
+associated_ledgers: [DOCS/TECH_DEBT.md, DOCS/PARITY_ISSUES.md]
+trigger_heuristics: ["train-serve parity / stamp body / same-input-same-output -> suggest /parity-check"]
 ---
 
 # /parity-check — Train↔serve identity audit
@@ -18,7 +24,9 @@ loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/wire-format-patterns
 > - `<scope_path>` — plan path or specific code surface; default = full codebase sweep
 > - `[focus_keywords...]` — narrow scan focus (e.g., "STAMP_BOUND" "Layer 5b" "scaler binding")
 >
-> **Stage 0 DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
+> **Stage 0 — consult institutional knowledge** (per `skill-knowledge-consultation-and-auto-routing.md`): before judging, load this skill's `associated_*` slice (specs / anti-patterns / decisions / postmortems / ledgers) + run the canonical-sister check; if running as a cold Explore/Plan subagent, ensure CLAUDE.md/MEMORY are loaded first. Then the DESIGN_PHILOSOPHY preload:
+>
+> **DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
 > - § 5 (Determinism family) — train-serve parity, wire format, FPN, struct padding, PRNG, AVX-512 byte-determinism, math kernel constant-iter
 > - § 7 (Structural-fix family) — AUTOPOPULATE production-caller class extinction; PRE/POST registry split
 >

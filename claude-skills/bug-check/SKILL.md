@@ -6,7 +6,13 @@ audit_cadence: ad-hoc
 tags: [audit-methodology, structural-fix, framework-discipline]
 surface: [registry, hot-path, slow-path, oms-drainer, cfg-flow]
 sister_skills: [/dust, /dead-code-trace, /hft-audit, /ml-audit, /trace-deps, /dod-audit, /plan-context-sweep]
-loads_dynamically: [DOCS/RECURRING_BUG_PATTERNS.md, DOCS/DESIGN_PHILOSOPHY.md]
+loads_dynamically: [DOCS/RECURRING_BUG_PATTERNS.md, DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/meta-disciplines/skill-knowledge-consultation-and-auto-routing.md]
+skill_kind: judgment
+associated_anti_patterns: [DOCS/RECURRING_BUG_PATTERNS.md, DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md]
+associated_decisions: [plans/<active-sprint>/decision-logs/]
+associated_postmortems: [plans/<active-sprint>/postmortems/]
+associated_ledgers: [DOCS/TECH_DEBT.md, DOCS/PARITY_ISSUES.md]
+trigger_heuristics: ["recurring bug-class scan / anti-pattern instances -> suggest /bug-check"]
 ---
 
 # /bug-check — Scan codebase for known bug class instances
@@ -17,7 +23,9 @@ loads_dynamically: [DOCS/RECURRING_BUG_PATTERNS.md, DOCS/DESIGN_PHILOSOPHY.md]
 > - `[class_N | surface_<tag>]` — focus on one class or one surface
 > - `[plans]` — extend scan to plans/**/*.md (catches stale code samples that would reintroduce just-closed bug classes; see Invocation section "plans" scope)
 >
-> **Stage 0 DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
+> **Stage 0 — consult institutional knowledge** (per `skill-knowledge-consultation-and-auto-routing.md`): before judging, load this skill's `associated_*` slice (specs / anti-patterns / decisions / postmortems / ledgers) + run the canonical-sister check; if running as a cold Explore/Plan subagent, ensure CLAUDE.md/MEMORY are loaded first. Then the DESIGN_PHILOSOPHY preload:
+>
+> **DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
 > - § 3 (Hard Invariants) — H1-H13 are anti-pattern boundaries
 > - Family § matched per detected Class N (e.g., Class 23 → § 3 H13 + § 7 Structural-fix; Class 18 → § 7; Class 14 → § 11 Process)
 >

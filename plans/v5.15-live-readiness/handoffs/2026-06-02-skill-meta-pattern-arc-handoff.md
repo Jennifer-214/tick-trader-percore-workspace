@@ -1,7 +1,7 @@
 ---
 type: handoff
-status: active
-defers: 2026-06-02-post-cleanup-ship-a-flip-handoff.md   # PARKED the flip to do this; RESTORE it (deferred→active) when this arc closes
+status: superseded   # skill-meta arc CLOSED 2026-06-02 — all 39 skills classified (29 judgment consult-stage + 10 mechanical routing); the parked flip RESUMED (deferred→active)
+defers: 2026-06-02-post-cleanup-ship-a-flip-handoff.md   # RESTORED to active at this arc's close
 ship_tag: "skill-meta-pattern arc — knowledge-consultation + auto-routing across skills (+ finish deferred-state wiring)"
 plan_type: feature (workflow/skill infrastructure)
 sprint: v5.15-live-readiness

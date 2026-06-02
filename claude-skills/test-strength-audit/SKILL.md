@@ -6,7 +6,13 @@ audit_cadence: per-ship
 tags: [audit-methodology, failure-observability]
 surface: [test-infrastructure]
 sister_skills: [/dod-audit, /bug-check, /post-ship-audit]
-loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md]
+loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/meta-disciplines/skill-knowledge-consultation-and-auto-routing.md]
+skill_kind: judgment
+associated_anti_patterns: [DOCS/RECURRING_BUG_PATTERNS.md, DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md]
+associated_decisions: [plans/<active-sprint>/decision-logs/]
+associated_postmortems: [plans/<active-sprint>/postmortems/]
+associated_ledgers: [DOCS/TECH_DEBT.md, DOCS/PARITY_ISSUES.md]
+trigger_heuristics: ["test weakening / assertion-weakening in a diff -> suggest /test-strength-audit"]
 ---
 
 # /test-strength-audit — Anti-regression scan for test weakening
@@ -19,7 +25,9 @@ loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md]
 > **Optional invocation args:**
 > - `[focus_keywords...]` — narrow which weakening patterns to emphasize
 >
-> **Stage 0 DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
+> **Stage 0 — consult institutional knowledge** (per `skill-knowledge-consultation-and-auto-routing.md`): before judging, load this skill's `associated_*` slice (specs / anti-patterns / decisions / postmortems / ledgers) + run the canonical-sister check; if running as a cold Explore/Plan subagent, ensure CLAUDE.md/MEMORY are loaded first. Then the DESIGN_PHILOSOPHY preload:
+>
+> **DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
 > - § 11 (Process discipline) — anti-regression discipline; test SPECIFICATION integrity over time
 >
 > Cite § 11 in finding descriptions.

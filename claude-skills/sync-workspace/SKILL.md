@@ -1,5 +1,7 @@
 ---
 name: sync-workspace
+skill_kind: mechanical
+trigger_heuristics: ["off-machine backup / checkpoint the workspace -> suggest /sync-workspace (pushes to remote)"]
 description: Push the gitignored workspace repo (plans + claude-skills) to its private GitHub remote. Detects what changed since last push, generates a sensible commit message, commits + pushes. Run on-demand whenever you want an off-machine backup checkpoint.
 type: skill
 concern: workflow

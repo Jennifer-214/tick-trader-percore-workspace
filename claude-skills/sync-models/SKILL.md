@@ -1,5 +1,7 @@
 ---
 name: sync-models
+skill_kind: mechanical
+trigger_heuristics: ["back up trained models off-machine -> suggest /sync-models (pushes to remote)"]
 description: /sync-models — back up trained models off-machine
 type: skill
 concern: workflow

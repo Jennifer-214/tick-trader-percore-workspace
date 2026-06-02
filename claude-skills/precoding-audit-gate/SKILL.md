@@ -6,11 +6,20 @@ concern: pre-coding-gate
 audit_cadence: per-ship
 tags: [audit-methodology, framework-discipline, operator-collaboration]
 surface: [registry, cfg-flow, wire-format, hot-path, slow-path]
-sister_skills: [/readiness, /parity-check, /trace-deps, /merge-scan, /dod-audit, /blindspot-scan, /accounting-audit, /hft-audit, /registry-fit-audit]
-loads_dynamically: [DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md, DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md, DOCS/DESIGN_PHILOSOPHY.md]
+sister_skills: [/readiness, /parity-check, /trace-deps, /merge-scan, /dod-audit, /blindspot-scan, /accounting-audit, /hft-audit, /registry-fit-audit, /second-opinion]
+loads_dynamically: [DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md, DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md, DESIGN_SPECS/meta-disciplines/skill-knowledge-consultation-and-auto-routing.md, DOCS/DESIGN_PHILOSOPHY.md]
+skill_kind: judgment
+consult_mode: broad   # Stage 3.5 completeness-critic ranges broadly; Stage 4 DESIGN_SPECS/memory cross-ref is the scoped half
+associated_anti_patterns: [DOCS/RECURRING_BUG_PATTERNS.md, DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md]
+associated_decisions: [plans/<active-sprint>/decision-logs/]
+associated_postmortems: [plans/<active-sprint>/postmortems/]
+associated_ledgers: [DOCS/TECH_DEBT.md, DOCS/PARITY_ISSUES.md]
+trigger_heuristics: ["about to code a non-trivial / HIGH-RISK ship -> SUGGEST /precoding-audit-gate"]
 ---
 
 # /precoding-audit-gate — Layer 1 orchestrator for parallel audit fire
+
+> **Consult-stage note** (per `skill-knowledge-consultation-and-auto-routing.md`): this skill's consult-stage IS its existing behavior — Stage 4 greps DESIGN_SPECS + memory for canonical sisters (scoped consult), and the Stage 3.5 **completeness-critic** ranges broadly for what no audit covered (broad consult). Spawned subagents are told *"read your SKILL.md FIRST"* + given a DESIGN_PHILOSOPHY preload, so each self-loads its `associated_*` slice — necessary because subagents start cold (DESIGN_SPECS / decisions / postmortems do NOT auto-load; CLAUDE.md + MEMORY do, for general-purpose agents).
 
 ## What this does
 

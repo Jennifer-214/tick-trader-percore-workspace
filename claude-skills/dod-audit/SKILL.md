@@ -6,7 +6,13 @@ audit_cadence: ad-hoc
 tags: [data-oriented-design, framework-discipline, pattern-codification, structural-fix, branchless-discipline]
 surface: [hot-path, slow-path, registry, bitmap-packed, wire-format]
 sister_skills: [/hft-audit, /merge-scan, /bug-check, /readiness, /registry-fit-audit, /accounting-audit, /precoding-audit-gate]
-loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/README.md]
+loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/README.md, DESIGN_SPECS/meta-disciplines/skill-knowledge-consultation-and-auto-routing.md]
+skill_kind: judgment
+associated_anti_patterns: [DOCS/RECURRING_BUG_PATTERNS.md, DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md]
+associated_decisions: [plans/<active-sprint>/decision-logs/]
+associated_postmortems: [plans/<active-sprint>/postmortems/]
+associated_ledgers: [DOCS/TECH_DEBT.md, DOCS/PARITY_ISSUES.md]
+trigger_heuristics: ["DOD pattern application / missed cache-align/branchless/bit-pack -> suggest /dod-audit"]
 ---
 
 # /dod-audit — Data-oriented-design pattern audit
@@ -17,7 +23,9 @@ loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/README.md]
 > - `<scope_path>` — file path (plan or code file) to scope the scan; default = full codebase sweep
 > - `[focus_keywords...]` — narrow scan focus (e.g., "cache layout" "bit-pack")
 >
-> **Stage 0 DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
+> **Stage 0 — consult institutional knowledge** (per `skill-knowledge-consultation-and-auto-routing.md`): before judging, load this skill's `associated_*` slice (specs / anti-patterns / decisions / postmortems / ledgers) + run the canonical-sister check; if running as a cold Explore/Plan subagent, ensure CLAUDE.md/MEMORY are loaded first. Then the DESIGN_PHILOSOPHY preload:
+>
+> **DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
 > - § 3 (Hard Invariants) — H6, H7, H10-H13 are pattern-applied
 > - § 4 (Latency cost framework) — cycles vs cache vs branch costs
 > - § 7 (Structural-fix family) — X-macro registries, AUTOPOPULATE, tt:: dispatch, 3-barrier design

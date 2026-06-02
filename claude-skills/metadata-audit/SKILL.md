@@ -1,5 +1,7 @@
 ---
 name: metadata-audit
+skill_kind: mechanical
+trigger_heuristics: ["doc-system metadata audit -> fire /metadata-audit (read-only + advisory)"]
 description: Quarterly cadence audit of doc-system metadata. Reports missing frontmatter / undefined tags / broken sister-doc links / stale Stage 2 DRAFTs / singleton tags / filesystem-path mismatches with type. Wraps tools/check_doc_metadata.py + adds advisory analysis. Sister to /anti-spaghetti quarterly cadence.
 type: skill
 concern: anti-pattern-scan

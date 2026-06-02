@@ -7,7 +7,13 @@ audit_cadence: per-ship
 tags: [latency-discipline, ledger-discipline]
 surface: [hot-path, slow-path, producer, oms-drainer]
 sister_skills: [/merge-scan, /hft-audit, /ship]
-loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md]
+loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/meta-disciplines/skill-knowledge-consultation-and-auto-routing.md]
+skill_kind: judgment
+associated_anti_patterns: [DOCS/RECURRING_BUG_PATTERNS.md, DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md]
+associated_decisions: [plans/<active-sprint>/decision-logs/]
+associated_postmortems: [plans/<active-sprint>/postmortems/]
+associated_ledgers: [DOCS/TECH_DEBT.md, DOCS/PARITY_ISSUES.md]
+trigger_heuristics: ["latency-critical edits audit / draft changelog entries -> suggest /latency-track"]
 ---
 
 # /latency-track — Latency-additions audit + draft changelog entries
@@ -20,7 +26,9 @@ loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md]
 > **Optional invocation args:**
 > - `[focus_keywords...]` — narrow which paths to emphasize
 >
-> **Stage 0 DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
+> **Stage 0 — consult institutional knowledge** (per `skill-knowledge-consultation-and-auto-routing.md`): before judging, load this skill's `associated_*` slice (specs / anti-patterns / decisions / postmortems / ledgers) + run the canonical-sister check; if running as a cold Explore/Plan subagent, ensure CLAUDE.md/MEMORY are loaded first. Then the DESIGN_PHILOSOPHY preload:
+>
+> **DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
 > - § 4 (Latency cost framework) — cycles vs cache vs branch costs; ROI table; reuse-audit principle (CLAUDE.md item 16); latency-additions tracked (item 17)
 >
 > Cite § 4 cost-table values in HOT_PATH_CHANGELOG drafts.

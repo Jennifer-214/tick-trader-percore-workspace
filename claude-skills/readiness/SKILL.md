@@ -7,7 +7,13 @@ audit_cadence: per-ship
 tags: [audit-methodology, framework-discipline, plan-template, doc-discipline]
 surface: [registry, cfg-flow, wire-format]
 sister_skills: [/precoding-audit-gate, /parity-check, /trace-deps, /merge-scan, /dod-audit, /blindspot-scan, /plan-check]
-loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/README.md, DESIGN_SPECS/refactor-patterns/cfg-flag-eligibility-criteria.md, DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md, DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md, DESIGN_SPECS/meta-disciplines/structural-fix-preferred-decision-framework.md, DOCS/RECURRING_BUG_PATTERNS.md]
+loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/README.md, DESIGN_SPECS/refactor-patterns/cfg-flag-eligibility-criteria.md, DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md, DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md, DESIGN_SPECS/meta-disciplines/structural-fix-preferred-decision-framework.md, DESIGN_SPECS/meta-disciplines/skill-knowledge-consultation-and-auto-routing.md, DOCS/RECURRING_BUG_PATTERNS.md]
+skill_kind: judgment
+associated_anti_patterns: [DOCS/RECURRING_BUG_PATTERNS.md, DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md]
+associated_decisions: [plans/<active-sprint>/decision-logs/]
+associated_postmortems: [plans/<active-sprint>/postmortems/]
+associated_ledgers: [DOCS/TECH_DEBT.md, DOCS/PARITY_ISSUES.md]
+trigger_heuristics: ["is this plan ready / ready to code -> suggest /readiness"]
 ---
 
 # /readiness — Plan verification (pre-coding gate)
@@ -20,11 +26,18 @@ loads_dynamically: [DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/README.md, DESIGN_SP
 > **Optional invocation args:**
 > - `[focus_keywords...]` — narrow which checks emphasize
 >
-> **Stage 0 DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
-> - § 11 (Process discipline) — cold-pickup completeness; verify-handoffs-against-current-code; consult-before-coding
-> - Family § matched per plan content keywords (cfg / hot path / SIMD / determinism etc.)
+> **Stage 0 — Consult institutional knowledge BEFORE verifying** (per `skill-knowledge-consultation-and-auto-routing.md`; consult only this skill's scoped slice, not everything):
 >
-> Cite specific § N rows in PASS/GAP findings.
+> *Cold-context: this skill's work runs in an Explore subagent (skips CLAUDE.md/MEMORY) when invoked directly — FIRST ensure the rules are loaded (CLAUDE.md + CLAUDE.local.md + relevant MEMORY), THEN load the scoped knowledge below. When spawned by `/precoding-audit-gate` as a general-purpose agent, the rules already auto-load.*
+> - **DESIGN_PHILOSOPHY** (workspace/DOCS/DESIGN_PHILOSOPHY.md): § 11 (Process discipline) — cold-pickup completeness; verify-handoffs-against-current-code; consult-before-coding. Family § matched per plan content keywords (cfg / hot path / SIMD / determinism etc.).
+> - **Specs** (`associated_specs` / `loads_dynamically`): what proven pattern already covers the plan's surface?
+> - **Anti-patterns** (`associated_anti_patterns`): which RECURRING_BUG_PATTERNS / meta-anti-pattern classes apply to the plan's surface?
+> - **Canonical-sister** (`canonical-sister-extension-discipline`): does the plan build NEW where a sister exists to EXTEND? Surface the menu (INLINE / ACCEPT / FOLD / ARCHITECT / NO-FOLD); don't auto-pick.
+> - **Decisions** (`associated_decisions`): did we ALREADY decide a point the plan reopens? Don't re-flag a `decided` item as an open gap (the D-105 fake-blocker shape).
+> - **Postmortems** (`associated_postmortems`): if this plan resembles a past ship, what did its postmortem warn about this shape?
+> - **Ledgers** (`associated_ledgers`): what OPEN TECH_DEBT / PARITY already exists in the plan's surface?
+>
+> Emit a short "what we already have" preamble before the checklist; later checks must reckon with it. Cite specific § N / Class N / D-N rows in PASS/GAP findings.
 
 ## What this does
 

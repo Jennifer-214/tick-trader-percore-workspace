@@ -7,10 +7,18 @@ audit_cadence: post-codification
 tags: [audit-methodology, structural-fix, plan-template]
 surface: []
 sister_skills: [/bug-check, /trace-deps, /precoding-audit-gate, /plan-check]
-loads_dynamically: [DOCS/RECURRING_BUG_PATTERNS.md]
+loads_dynamically: [DOCS/RECURRING_BUG_PATTERNS.md, DESIGN_SPECS/meta-disciplines/skill-knowledge-consultation-and-auto-routing.md]
+skill_kind: judgment
+associated_anti_patterns: [DOCS/RECURRING_BUG_PATTERNS.md, DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md]
+associated_decisions: [plans/<active-sprint>/decision-logs/]
+associated_postmortems: [plans/<active-sprint>/postmortems/]
+associated_ledgers: [DOCS/TECH_DEBT.md, DOCS/PARITY_ISSUES.md]
+trigger_heuristics: ["sweep queued plans for stale samples post-structural-fix -> suggest /plan-context-sweep"]
 ---
 
 # /plan-context-sweep — Sweep queued plans for stale samples post-structural-fix
+
+> **Stage 0 — consult institutional knowledge** (per `skill-knowledge-consultation-and-auto-routing.md`): before judging, load this skill's `associated_*` slice (specs / anti-patterns / decisions / postmortems / ledgers) + run the canonical-sister check; if running as a cold Explore/Plan subagent, ensure CLAUDE.md/MEMORY are loaded first.
 
 ## What this does
 

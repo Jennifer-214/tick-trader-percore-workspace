@@ -477,7 +477,7 @@ caller forgets the populator step. Direct-patching each instance is
 recurring debt; structural fix (compile-time enforcement, X-macro
 registry, single chokepoint) eliminates the bug CLASS — not just the
 instance. The decision framework: if a bug class has recurred 3+
-times, structural fix is the correct path even at higher upfront cost.
+times, structural fix is the correct path even at higher upfront cost. **The deliverable is the GUARD, not the patch** — a guard is permanent leverage (it protects the whole class against every future regression, forever, with no one thinking about it); over a capital-bearing system's lifetime the enforcement layer compounds harder than any single feature, so weigh a guard against its lifetime of silent saves, not its one-time cost (memory `feedback_guards_compound_enforcement_is_leverage`).
 
 ### Principles in this family
 

@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   tags: [operator-collaboration, scope-discipline, structural-fix]
-  sister_specs: [feedback_no_defer_for_effort.md, feedback_plan_right_not_fast.md, feedback_motivated_collaborator_for_caramel.md, feedback_no_mvp_for_plumbing_only_for_unknown_unknowns.md, feedback_heavier_default_audit_posture_for_capital.md, feedback_opportunistic_tech_debt_closure.md]
+  sister_specs: [feedback_no_defer_for_effort.md, feedback_plan_right_not_fast.md, feedback_motivated_collaborator_for_caramel.md, feedback_no_mvp_for_plumbing_only_for_unknown_unknowns.md, feedback_heavier_default_audit_posture_for_capital.md, feedback_opportunistic_tech_debt_closure.md, feedback_guards_compound_enforcement_is_leverage.md]
   originSessionId: 404732ed-f74c-4c1d-a12d-3dad513c1be2
 ---
 

@@ -5,7 +5,7 @@ metadata:
   type: feedback
   originSessionId: 43a2b763-783f-4a6e-9b54-c3654977b44c
   tags: [structural-fix, framework-discipline]
-  sister_specs: [feedback_audit_canonical_sister_before_new_infra.md, feedback_categorical_triggers_over_hardcoded_refs.md, feedback_close_the_class_vs_migrate_every_site.md, feedback_multi_surface_deletion_ordering_discipline.md, feedback_new_plans_use_future_oriented_template.md, feedback_prefer_action_parameterized_walker_over_per_consumer_walker_bodies.md, feedback_single_source_of_truth_discipline.md, feedback_structural_enforcement_when_memory_insufficient.md, feedback_unconditionalization_latent_assumption_audit.md, feedback_verify_symbol_existence_at_plan_drafting_time.md]
+  sister_specs: [feedback_audit_canonical_sister_before_new_infra.md, feedback_categorical_triggers_over_hardcoded_refs.md, feedback_close_the_class_vs_migrate_every_site.md, feedback_multi_surface_deletion_ordering_discipline.md, feedback_new_plans_use_future_oriented_template.md, feedback_prefer_action_parameterized_walker_over_per_consumer_walker_bodies.md, feedback_single_source_of_truth_discipline.md, feedback_structural_enforcement_when_memory_insufficient.md, feedback_unconditionalization_latent_assumption_audit.md, feedback_verify_symbol_existence_at_plan_drafting_time.md, feedback_guards_compound_enforcement_is_leverage.md]
 ---
 When `/parity-check`, `/merge-scan`, or any audit surfaces a recurring
 pattern (Class 18 mirror, parallel boot↔backtest↔hot-swap paths,

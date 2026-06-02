@@ -30,12 +30,13 @@ This is the same memory-only-discipline-insufficient pattern that M7 addresses �
 
 Resolution order — **explicit state first; mtime is only the transition-era fallback**:
 
-1. **`<path>` arg given** → use it (explicit always wins).
+1. **`<path>` arg given** → use it (explicit always wins — and this is how you resume a `deferred` / parked handoff directly, regardless of its status).
 2. **Else: the handoff whose frontmatter is `status: active`** (the live-pickup pointer; the writer keeps exactly one — supersede-on-write, per `/handoff` Stage 6.0). Scan `plans/<active-sprint>/handoffs/*.md` (defensively, all `plans/**/handoffs/`) for a frontmatter `status: active`:
-   - **exactly 1** → use it.
-   - **0 tagged** (legacy handoffs / none adopted the tag yet) → FALL BACK to most-recently-modified `*.md` (the old behavior; fine during the transition before handoffs carry the tag).
-   - **>1** → ERROR: the `status: active` singleton invariant is violated (`tools/check_handoff_active_singleton.py` should have caught it at the last sweep). Surface ALL actives; do NOT guess — operator picks the live one, then the stale ones get flipped to `superseded`.
-3. **No handoff found at all** → ERROR — sprint must have at least one handoff.
+   - **exactly 1** → use it. **Auto-prioritize it — do NOT ask the operator to choose.** It's the deliberate live pointer.
+   - **0 tagged** (legacy / none adopted the tag yet) → FALL BACK to most-recently-modified `*.md` (the old behavior; fine during the transition before handoffs carry the tag).
+   - **>1** → ERROR: the `status: active` singleton invariant is violated (`tools/check_handoff_active_singleton.py` should have caught it at the last sweep). Surface ALL actives; do NOT guess.
+3. **Surface (do NOT auto-pick) any `status: deferred` handoffs.** After resolving the active one, scan for `deferred` and print a one-line note: *"⏸ N parked (deferred): &lt;files&gt; — PAUSED because a different priority jumped the queue; resume one explicitly via `/accept-handoff &lt;path&gt;`, or it auto-resumes (deferred → active) when the current active work closes."* A deferred handoff is **never** auto-picked by no-arg, but the operator must SEE it so a park isn't forgotten. (If the guard reported "deferred + 0 active", that's the forgot-to-resume case — pick the deferred one explicitly, or promote it to `active`.)
+4. **No handoff found at all** → ERROR — sprint must have at least one handoff.
 
 Active sprint = detected from `Version.hpp` per `/handoff` Stage 1. Active-tag resolution is robust to filesystem **mtime resets** — a `git checkout`/`pull` can reset a whole batch of handoff mtimes to one timestamp (the exact fragility this replaces). Discipline: `DESIGN_SPECS/meta-disciplines/handoff-active-state-machine.md`.
 

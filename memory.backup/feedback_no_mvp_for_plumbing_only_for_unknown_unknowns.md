@@ -5,7 +5,7 @@ metadata:
   type: feedback
   originSessionId: 532f69da-4245-44f3-92c9-acbb549b9570
   tags: [scope-discipline, planning-discipline]
-  sister_specs: []
+  sister_specs: [feedback_design_once_maintain_forever.md]
 ---
 When considering "minimum-viable vs full-design" for an in-flight ship, the right framing is **what KIND of work this is**:
 

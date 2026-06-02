@@ -516,6 +516,13 @@ times, structural fix is the correct path even at higher upfront cost.
 - Structural fix templates (preference order): AUTOPOPULATE companion → single chokepoint function → accessor wrapper
 - See CLAUDE.md item 30; `registry-bitmap-set-discipline.md`
 
+**HARD: Dead-code elimination + identifier retirement (the Knight-Capital discipline; H21).**
+- Persistence/wire-visible identifiers — snapshot/format VERSION numbers + persisted/logged/wire-emitted enum CODES + persisted bitmap bits + cfg-field name keys — are APPEND-ONLY + IMMUTABLE. Never renumber, value-reuse, or silently drop one: old persisted state, an old wire/HMAC message, or an un-updated node carries the OLD meaning of a reused identifier and silently activates the wrong path. This is the Knight Capital failure mode ($440M / 45 min, 2012 — a dormant "Power Peg" flag reused while its dead code was still compiled in).
+- Retire by TOMBSTONE (RESERVED / LEGACY_ / DEPRECATED comment; keep the number), never reassign the slot — new meaning = new identifier. Reconciles with backwards-compat-not-default: delete the dead CODE cleanly, just never recycle the externally-visible SLOT (old state / an un-updated node still references it).
+- Remove dead code, don't leave it (prove-then-remove via `/dead-code-trace`; the compiler does NOT warn on unused `inline` helpers — they rot silently). A dead capital-path (strategy/gate/OMS/kill-switch) is removed, never merely `cfg`-disabled.
+- Mechanized: `tools/check_identifier_retirement.py` + golden identifier-ledger (pre-commit Check H + `/readiness` Check 46 + `/post-ship-audit` dead-code/identifier sweep). Codifies conventions already in informal use (`BanditAlgorithm` "OPTION C wire-byte preservation"; `RESERVED` bit anchors; `LEGACY_` versions).
+- See CLAUDE.md H21; `dead-code-and-identifier-retirement-discipline.md`; RECURRING_BUG_PATTERNS Class 40; § 5 (determinism — the persistence/wire angle).
+
 **PROCESS: Codify design principles in CLAUDE.md as patterns mature.**
 - Promote to CLAUDE.md once: ≥2 codebase applications OR DESIGN_SPECS doc exists, AND pattern is broad
 - Items 19-30 are the codified history of this lifecycle
@@ -528,7 +535,7 @@ times, structural fix is the correct path even at higher upfront cost.
 - ❌ Adding to a registry without updating its AUTOPOPULATE companion (silently breaks production callers)
 - ❌ Bypassing the X-macro extractor with hand-written if-chains (defeats the structural fix; reintroduces the drift class)
 
-**Cross-references:** CLAUDE.md items 13, 19, 21, 22, 23, 30; DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md, autopopulate-pattern-for-production-caller-class.md, autopopulate-from-arity-macro-family.md, pre-post-cfg-registry-split-for-emit-order-preservation.md, structural-fix-preferred-decision-framework.md, type-trait-dispatch-via-tt-namespace.md, registry-bitmap-set-discipline.md, pattern-codification-lifecycle.md; RECURRING_BUG_PATTERNS Class 11 (extensibility friction), Class 13 (snapshot mirror), Class 18 (mirror-incomplete), Class 23 (type-erased dispatch).
+**Cross-references:** CLAUDE.md items 13, 19, 21, 22, 23, 30; DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md, autopopulate-pattern-for-production-caller-class.md, autopopulate-from-arity-macro-family.md, pre-post-cfg-registry-split-for-emit-order-preservation.md, structural-fix-preferred-decision-framework.md, type-trait-dispatch-via-tt-namespace.md, registry-bitmap-set-discipline.md, dead-code-and-identifier-retirement-discipline.md, pattern-codification-lifecycle.md; RECURRING_BUG_PATTERNS Class 11 (extensibility friction), Class 13 (snapshot mirror), Class 18 (mirror-incomplete), Class 23 (type-erased dispatch), Class 40 (reactivatable dead code / repurposed persistence-ID).
 
 ---
 
@@ -738,6 +745,12 @@ recurring bug classes pre-coding, and keeps the audit infrastructure
 - MVP is for genuinely-new features with external dependencies (maker orders w/ orderbook)
 - Plumbing/pattern-application work ships the FULL DOCUMENTED DESIGN
 - See memory `feedback_no_mvp_for_plumbing_only_for_unknown_unknowns.md`
+
+**PROCESS: Single-cycle exist+good (design once, maintain forever).**
+- For foundational / interconnected / determinism-gated infrastructure where the requirement is KNOWN, take a piece exist→good within ONE cycle — don't ship "it exists" and defer "make it good" to a later cycle. Re-traversing capital/determinism-gated code re-opens the whole verification surface (re-prove, re-freeze goldens, re-audit); the cost of getting-it-good-now is far below the re-traversal cost.
+- This is NOT the common "make it exist, then make it good" — that advice is for exploratory product code with unknown-unknowns (MVP to discover the requirement). Often there is no exist-vs-good tradeoff at all (the Ship-A branchless ops were value-identical to the saturating ones — "good" fit inside "exists").
+- Scope guard: genuine unknown-unknowns still warrant an MVP probe (see "No MVP for plumbing" above).
+- See memory `feedback_design_once_maintain_forever.md` + `feedback_no_defer_for_effort.md`
 
 **PROCESS: Don't measure structural work by LOC.**
 - For pattern-building / refactor / class-closure work, lead with classes-closed + patterns-codified + future-work-becomes-mechanical

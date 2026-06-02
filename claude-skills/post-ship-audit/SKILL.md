@@ -168,6 +168,8 @@ Check for drift from established discipline:
 - New per-core consumer functions taking `const ControllerConfig<F>*` instead of `const PerCoreCfg<F>*` (Class 25 prevention)
 - New global cfg fields that should be per-core (cfg-scope-discipline.md)
 - New registries that should be principle + sweep instead (framework-selection criteria)
+- Dead code introduced this ship — run `/dead-code-trace` on the changed surface (the compiler does NOT warn on unused `inline` helpers); a dead capital-path is the dangerous form (Class 40 / H21 Rule 1 prevention)
+- Persisted/wire identifier renumbered, value-reused, or silently dropped — run `python3 tools/check_identifier_retirement.py` (Class 40 / H21 Rule 2 prevention; tombstone retired slots, never reassign)
 
 ## Output format
 

@@ -9,7 +9,7 @@ coding_status: op-library-complete-and-committed + storage-flip-PENDING (the fli
 predecessor_handoff: handoffs/2026-06-01-session8-ship-a-integration-handoff.md
 decision_log: plans/v5.15-live-readiness/decision-logs/v5.15.5.F.4d.1.E-architecture-v2.md (D-97..D-146; SSoT; D-142..D-146 = Session-9)
 engine_head: 6c0e570 (feat/v5.15-live-readiness; PUSHED. Ship-A op-library ends at 4efa8d3; the commits on top are a SEPARATE, PARALLEL guard-hardening pass [NOT Ship-A code]: 8438bbd/8182c43 = identifier-retirement H21 (Check H); dad6f19 = bounds static_asserts + OrderEventLog <cerrno>; d2ee570 = maker-fee desync guard; a095e27/6c0e570 = TOOLS.md enrollment + the 2 guard selftests. The flip interacts with these — see step 5 + §5.5.)
-workspace_head: f955e7a+ (decision log D-142..146; + the parallel guard-hardening pass — dead-code/identifier + opportunistic-closure + guards-compound codifications, the tech-debt automation, TECH_DEBT-152/153/154/155, the guard-coverage audit synthesis)
+workspace_head: 497dc3e (+ this currency commit) (decision log D-142..146; + the parallel guard-hardening pass — dead-code/identifier + opportunistic-closure + guards-compound codifications, the tech-debt automation, TECH_DEBT-152/153/154/155, the guard-coverage audit synthesis)
 deletion_scope: none
 pickup: /accept-handoff <this doc>
 ---

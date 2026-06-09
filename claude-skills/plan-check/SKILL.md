@@ -357,7 +357,7 @@ estimate exceeds the budget.
 
 ### Deliberate-vs-accidental invariant violation
 
-When a plan explicitly violates an invariant (e.g., FPN-e2e bumps
+When a plan explicitly violates an invariant (e.g., FPN_Binary-e2e bumps
 `MODEL_FORMAT_VERSION`), the master plan must DOCUMENT this as
 deliberate with rationale. Otherwise the violation is silent.
 **Format requirement:** master's "Architectural invariants" table

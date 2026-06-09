@@ -170,7 +170,7 @@ Each framework handles ONE concern; together they extinguish 5 bug classes (Clas
 | Framework | Role | DESIGN_SPEC |
 |---|---|---|
 | **Universal cfg field registry** | `FOREACH_CFG_FIELD` is single source of truth for all ~213 cfg fields; 12-col Option D tuple. Parent registry. | `universal-cfg-field-registry-pattern.md` |
-| **`tt::` type-trait dispatch** | 3-sister trio (`tt::cfg_parse_field<T>` + `tt::cfg_save_field<T>` + `tt::cfg_render_field<T>`); 3-barrier Class 23 prevention; destination-by-reference + T-deduced. Parser / save / render handle integer + FPN + array + string types uniformly. | `type-trait-dispatch-via-tt-namespace.md` |
+| **`tt::` type-trait dispatch** | 3-sister trio (`tt::cfg_parse_field<T>` + `tt::cfg_save_field<T>` + `tt::cfg_render_field<T>`); 3-barrier Class 23 prevention; destination-by-reference + T-deduced. Parser / save / render handle integer + FPN_Binary + array + string types uniformly. | `type-trait-dispatch-via-tt-namespace.md` |
 | **Metadata-bit-driven derived filter framework** | `FOREACH_DERIVED_FILTER` (Level-1 meta-registry); 3 variants (GUI-only / wire-format / wire-format-two-source); STAMP_BOUND first canonical application; Layer 5b hash lock for wire-format variants. | `metadata-bit-driven-derived-filter-framework.md` |
 | **Sidecar override pattern** | `FOREACH_DRIFT_OVERRIDE` sidecar over FOREACH_CFG_FIELD STAMP_BOUND derived filter; standard cases via AUTOPOPULATE + custom cases via 8-byte bit-packed override entries indexed by FIELD_IDX. Replaces wide-variant CfgDriftCheckRegistry. | `sidecar-override-pattern-for-registry-auto-flows.md` |
 | **Meta-registry-of-registries** | `FOREACH_REGISTRY` (Level-2 codebase-wide); LEVEL/PARENT tuple encodes topology; CI cross-check for H15 + H19. | `meta-registry-pattern-for-codebase-registry-discipline.md` |
@@ -189,7 +189,7 @@ Each framework handles ONE concern; together they extinguish 5 bug classes (Clas
 1. `ControllerConfig_Load<F>(filepath)` opens cfg file
 2. Per `key=value` line: registry walks `EMIT_CFG_PARSER_CASE(...)` macro expansion
 3. Each row dispatches `tt::cfg_parse_field<T>(cfg.<field_name>, desc, val)` — T deduced
-4. tt:: branches on type traits: FPN / float / array / unsigned int / signed int
+4. tt:: branches on type traits: FPN_Binary / float / array / unsigned int / signed int
 5. INT_ENUM rows also branch on `desc.kind == KIND_INT_ENUM` for string-token reverse-lookup + range-clamp
 6. Cfg struct fields auto-populated; manual parser branches deleted post-`.F.4d`
 

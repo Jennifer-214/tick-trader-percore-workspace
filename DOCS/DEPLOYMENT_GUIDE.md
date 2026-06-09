@@ -23,7 +23,7 @@ For terminology: see `DOCS/GLOSSARY.md`. For architecture: see `DOCS/ARCHITECTUR
 - **Network:** Low-latency to exchange (colocated ideal; commodity broadband OK)
 - **Storage:** 500GB+ SSD for state + audit logs + models
 - **Kernel:** Linux 5.6+ (recommend 6.0+); kTLS module loaded; isolcpus + nohz_full kernel params
-- **Hardware features:** SHA-NI (HMAC); AVX2 (FPN math); TSC (high-precision timing)
+- **Hardware features:** SHA-NI (HMAC); AVX2 (FPN_Binary math); TSC (high-precision timing)
 
 ### Dev (laptop)
 

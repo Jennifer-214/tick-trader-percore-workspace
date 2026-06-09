@@ -161,7 +161,7 @@ When a Stage 6 enforcement reaches **≥3 canonical applications + sustained CI 
 
 Audit OTHER scopes for the same bug class:
 - Different directories (e.g., `CoreFrameworks/` + `Strategies/` if Stage 1 audited `ML_Headers/`)
-- Different surfaces (e.g., struct padding in OTHER structs if Stage 1 fixed FPN)
+- Different surfaces (e.g., struct padding in OTHER structs if Stage 1 fixed FPN_Binary)
 - Apply the cohort-audit going-forward rule per finding
 
 **v5.14.11.B.6 example:** Wider engine audit of CoreFrameworks/+Strategies/ for math-kernel branches. Verdict: GREEN; no findings.
@@ -257,7 +257,7 @@ Codified 2 new patterns end-to-end:
 Sub-tag structure:
 - **.B.0** (Stage 1+2): ML_Headers/ audit + write 2 DESIGN_SPECS
 - **.B.1** (Stage 3): Cholesky_Solve constant-8 first reference
-- **.B.2** (Stage 3+4): FPN padding + ThompsonBanditState cohort migration
+- **.B.2** (Stage 3+4): FPN_Binary padding + ThompsonBanditState cohort migration
 - **.B.3** (Stage 4): UpdateOnline + BuildCorr AVX-512 second/third applications
 - **.B.4** (Stage 5): CLAUDE.md items 26+27 + catalog update
 - **.B.5** (Stage 6): /dod-audit + /readiness skill enforcement

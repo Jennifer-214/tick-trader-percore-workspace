@@ -168,7 +168,7 @@ For an existing persisted struct (e.g., Position pre-v5.15.5.C.4):
 
 - **Migration upfront cost** — manually-declared struct → registry-driven generation requires LOC investment (typically ~80-200 LOC for a struct with 8-12 fields).
 - **Indirection at debug time** — `gdb` shows the struct's generated fields, but the source declares them via FOREACH expansion. Document the registry header file as the source-of-truth.
-- **Type system complexity** — generic types in registry entries (e.g., FPN<F>) require careful templating in the EMIT macros. Use existing patterns from FOREACH_OMS_FIELD as reference.
+- **Type system complexity** — generic types in registry entries (e.g., FPN_Binary<F>) require careful templating in the EMIT macros. Use existing patterns from FOREACH_OMS_FIELD as reference.
 - **Bench gate verification** — Save/Load walk via registry should compile to the same instructions as manual fwrite/fread sequence; verify via `objdump -d` spot check.
 
 ### Risks

@@ -452,7 +452,7 @@ all 30 sites + add OrderPool_DestroyBacking + tests).
 
 ---
 
-## AVX-512 FPN primitives (FPN_Min/Max, Lemire divmod, asm AddSat)
+## AVX-512 FPN_Binary primitives (FPN_Min/Max, Lemire divmod, asm AddSat)
 
 **RE-EVALUATED 2026-05-07:** considered for shipping under v5.11.6.A;
 deferred again after honest assessment of impact vs effort.
@@ -492,15 +492,15 @@ deferred again after honest assessment of impact vs effort.
   whose p99 is dominated by OS interference (~1ms).
 - v5.11.6 (allocator eradication) and v5.11.7 (Bandit AVX-512) have
   bigger structural wins on the same time budget.
-- For showcase value: the existing branchless FPN<F> primitives + the
+- For showcase value: the existing branchless FPN_Binary<F> primitives + the
   reciprocal LUT + monotonic deque ARE the demonstration of
   hand-tuning. Adding AVX-512 vectorization on scalar call sites
   doesn't reinforce that story.
 
 **Re-trigger condition:**
-- Profiling shows FPN ops dominating slow-path p50 (not p99 — p99 is
+- Profiling shows FPN_Binary ops dominating slow-path p50 (not p99 — p99 is
   OS-bound).
-- Or: an array-parallel FPN workload emerges (e.g. multi-symbol
+- Or: an array-parallel FPN_Binary workload emerges (e.g. multi-symbol
   parallel regime classify, batch ML feature pack across N cores).
 
 ### Original (pre-2026-05-07) text follows for reference
@@ -511,7 +511,7 @@ AddSat. Identified in `LATENCY_OPTIMIZATION_AUDIT.md` Part 11.
 **Status:** deferred to v5.11 perf sprint per the v5.10.0b master
 plan. Partially shipped (FPN_Sqrt + FPN_Exp + FPN_Sin/Cos in 5.10.0b
 phases B.2.5.A/B/D/C). The remaining items are micro-perf wins for
-the FPN library.
+the FPN_Binary library.
 
 **Deferred to:** later v5.11 sub-phase OR v5.12 perf sprint.
 
@@ -645,7 +645,7 @@ labels at all.
    under some locale), shifting label thresholds. Re-run with
    `LC_NUMERIC=C` env var to control for this.
 3. **FPN end-to-end (v5.10.0b) round-trip** changed an internal
-   double→FPN conversion that affects label generation.
+   double→FPN_Binary conversion that affects label generation.
    `LabelFunctions.hpp` is FOREACH_TARGET-driven (v5.10.0d) — bisect
    to v5.10.0b vs v5.11.x to localize.
 4. **Test data quirk** — operator was using `test_case1.json` /
@@ -812,7 +812,7 @@ timestamp_us,core_id,strategy_id,event_type,price,...,trade_size
 The non-zero `trade_size = 0.00000199` (~$0.16 at $81060) is the
 giveaway — not literally 0, but ~1/10000 of slot 0/2's normal
 value. Suggests `allocated_balance` for slots 4+5 is small but
-non-zero (FPN precision noise or genuinely tiny).
+non-zero (FPN_Binary precision noise or genuinely tiny).
 
 `Sharded_LegSlot` (ControllerEventLoop.hpp:772) maps logical-core
 N + leg L to portfolio slot 2N+L when partial_exit_enabled=1. So
@@ -963,8 +963,8 @@ revealed it (by getting ASAN past the earlier crash).
   indicating in-progress).
 - Step 1: find the call site. `grep -rnE "FP64_Sqrt\(" --include="*.hpp"`
 - Step 2: most likely it's a stat that computes `sqrt(variance)` where
-  variance went slightly negative due to FPN accumulator drift
-  (an FPN<F=64> sum-of-squares minus square-of-sum can underflow
+  variance went slightly negative due to FPN_Binary accumulator drift
+  (an FPN_Binary<F=64> sum-of-squares minus square-of-sum can underflow
   by a tiny amount and become negative). Add a `fmax(0, value)`
   clamp before FP64_Sqrt.
 

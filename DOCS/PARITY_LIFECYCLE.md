@@ -40,7 +40,7 @@ requires snapshot update.
 | **Cfg `held_out_fraction`** | Held-out test set boundary changes | v5.9.2b will stamp-bind | None | YES — different held-out → different metric |
 | **Cfg `csv_sort_check_mode`** | Backtest input filtering only | v5.9.2c: validation mode | None — operational | NO — runtime-only, training-time only |
 | **`SHARDED_SNAPSHOT_VERSION` bump** | Engine refuses old snapshots | YES (snapshot version field) | None | Operator clears snapshot dir on upgrade |
-| **Build flag** (e.g. `-DUSE_NATIVE_128`) | FPN bit-representation changes | NO (not in stamp today) | None | YES if flag changes; document; future stamp may bind |
+| **Build flag** (e.g. `-DUSE_NATIVE_128`) | FPN_Binary bit-representation changes | NO (not in stamp today) | None | YES if flag changes; document; future stamp may bind |
 
 ## Common scenarios
 

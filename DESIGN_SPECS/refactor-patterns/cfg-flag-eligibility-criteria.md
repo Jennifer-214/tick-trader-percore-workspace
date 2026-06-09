@@ -296,7 +296,7 @@ Migrating ONE field of a 4-field cohort creates "1 in bitmap, 3 direct" inconsis
 3. **Pick the outcome:**
    - **All eligible** → migrate the cohort in the same ship (intra-family consistency)
    - **Mixed eligibility** → migrate the eligible subset; auto-write TECH_DEBT entry for ineligible siblings with per-sibling rejection rationale
-   - **None eligible** → document the family-wide rejection rationale in TECH_DEBT (e.g., "all `*_threshold` fields stay direct FPN because they're scalars, not booleans"); new field stays direct alongside siblings
+   - **None eligible** → document the family-wide rejection rationale in TECH_DEBT (e.g., "all `*_threshold` fields stay direct FPN_Binary because they're scalars, not booleans"); new field stays direct alongside siblings
 
 4. **Update FOREACH_STAMP_BOUND_CFG if any cohort member is stamp-bound.** Migrated boolean siblings flip emit_source from `DIRECT_FIELD` → `BITMAP_BIT` via Y3 dispatch. Preserves HMAC chain byte-for-byte via `BITMAP_IS_SET(...) ? 1 : 0` ternary normalization (per `wire-format-byte-preservation-discipline.md` + v5.14.10 postmortem Surprise 6).
 

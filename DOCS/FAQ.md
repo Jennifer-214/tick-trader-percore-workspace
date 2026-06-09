@@ -33,7 +33,7 @@ NO if you:
 
 - Branchless hot path (sub-microsecond decision latency)
 - Lock-free SPSC + seqlock primitives
-- Fixed-point math (FPN<F=64>; not float)
+- Fixed-point math (FPN_Binary<F=64>; not float)
 - Per-node CPU pinning + NUMA-aware
 - io_uring kernel-bypass I/O
 - Persistent WS-API connections (saves handshake per submit)

@@ -121,7 +121,7 @@ static void test_portfolio_pnl() {
     Portfolio_AddPosition(&port, FPN_FromDouble<FP>(-5.0), FPN_FromDouble<FP>(50.0));
 
     // at $110: long P&L = (110-100)*10 = 100, short P&L = (110-50)*(-5) = -300, total = -200
-    FPN<FP> price = FPN_FromDouble<FP>(110.0);
+    FPN_Binary<FP> price = FPN_FromDouble<FP>(110.0);
     double pnl = FPN_ToDouble(Portfolio_ComputePnL(&port, price));
     check("mixed P&L correct", fabs(pnl - (-200.0)) < 1.0);
 
@@ -140,7 +140,7 @@ static void test_consolidation() {
     Portfolio<FP> port;
     Portfolio_Init(&port);
 
-    FPN<FP> price = FPN_FromDouble<FP>(98.50);
+    FPN_Binary<FP> price = FPN_FromDouble<FP>(98.50);
 
     Portfolio_AddPosition(&port, FPN_FromDouble<FP>(100.0), price);
     check("first add", Portfolio_CountActive(&port) == 1);
@@ -156,13 +156,13 @@ static void test_consolidation() {
     check("still one position", Portfolio_CountActive(&port) == 1);
 
     // different price is a separate position
-    FPN<FP> price2 = FPN_FromDouble<FP>(99.00);
+    FPN_Binary<FP> price2 = FPN_FromDouble<FP>(99.00);
     Portfolio_AddPosition(&port, FPN_FromDouble<FP>(50.0), price2);
     check("different price = new position", Portfolio_CountActive(&port) == 2);
 
     // FPN_Equal determinism: same double -> same bits
-    FPN<FP> a = FPN_FromDouble<FP>(98.50);
-    FPN<FP> b = FPN_FromDouble<FP>(98.50);
+    FPN_Binary<FP> a = FPN_FromDouble<FP>(98.50);
+    FPN_Binary<FP> b = FPN_FromDouble<FP>(98.50);
     check("FPN_Equal deterministic", FPN_Equal(a, b));
 }
 
@@ -178,9 +178,9 @@ static void test_exit_gate() {
     ExitBuffer_Init(&buf);
 
     // add position: entry $100, TP $103, SL $98.50
-    FPN<FP> entry = FPN_FromDouble<FP>(100.0);
-    FPN<FP> tp    = FPN_FromDouble<FP>(103.0);
-    FPN<FP> sl    = FPN_FromDouble<FP>(98.50);
+    FPN_Binary<FP> entry = FPN_FromDouble<FP>(100.0);
+    FPN_Binary<FP> tp    = FPN_FromDouble<FP>(103.0);
+    FPN_Binary<FP> sl    = FPN_FromDouble<FP>(98.50);
     Portfolio_AddPositionWithExits(&port, FPN_FromDouble<FP>(10.0), entry, tp, sl);
 
     // price between TP and SL - no exit
@@ -370,8 +370,8 @@ static void test_warmup() {
 
     // feed 10 ticks with known prices around $100
     for (int i = 0; i < 10; i++) {
-        FPN<FP> price  = FPN_FromDouble<FP>(98.0 + (double)i * 0.5); // 98, 98.5, ..., 102.5
-        FPN<FP> volume = FPN_FromDouble<FP>(500.0 + (double)i * 10.0);
+        FPN_Binary<FP> price  = FPN_FromDouble<FP>(98.0 + (double)i * 0.5); // 98, 98.5, ..., 102.5
+        FPN_Binary<FP> volume = FPN_FromDouble<FP>(500.0 + (double)i * 10.0);
         PortfolioController_Tick(&ctrl, &pool, price, volume, &log);
     }
 
@@ -414,13 +414,13 @@ static void test_regression_feedback() {
 
     // warmup
     for (int i = 0; i < 10; i++) {
-        FPN<FP> price = FPN_FromDouble<FP>(100.0);
-        FPN<FP> vol   = FPN_FromDouble<FP>(500.0);
+        FPN_Binary<FP> price = FPN_FromDouble<FP>(100.0);
+        FPN_Binary<FP> vol   = FPN_FromDouble<FP>(500.0);
         PortfolioController_Tick(&ctrl, &pool, price, vol, &log);
     }
     check("warmup done", ctrl.state == CONTROLLER_ACTIVE);
 
-    FPN<FP> initial_price = ctrl.buy_conds.price;
+    FPN_Binary<FP> initial_price = ctrl.buy_conds.price;
 
     // feed ticks with positions that have clear uptrend P&L
     // simulate fills manually
@@ -432,8 +432,8 @@ static void test_regression_feedback() {
 
     // run many ticks with rising price (positions become increasingly profitable)
     for (int i = 0; i < 200; i++) {
-        FPN<FP> price = FPN_FromDouble<FP>(99.0 + (double)i * 0.01);
-        FPN<FP> vol   = FPN_FromDouble<FP>(500.0);
+        FPN_Binary<FP> price = FPN_FromDouble<FP>(99.0 + (double)i * 0.01);
+        FPN_Binary<FP> vol   = FPN_FromDouble<FP>(500.0);
         PortfolioController_Tick(&ctrl, &pool, price, vol, &log);
     }
 
@@ -516,7 +516,7 @@ static void test_branchless() {
         PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(100.0), FPN_FromDouble<FP>(500.0), &log);
     }
 
-    FPN<FP> initial_price = ctrl.buy_conds.price;
+    FPN_Binary<FP> initial_price = ctrl.buy_conds.price;
 
     // feed noisy data (should NOT shift because R^2 will be low)
     MockGeneratorConfig mc;
@@ -571,7 +571,7 @@ static void test_max_shift() {
         PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(100.0), FPN_FromDouble<FP>(500.0), &log);
     }
 
-    FPN<FP> initial = ctrl.mean_rev.buy_conds_initial.price;
+    FPN_Binary<FP> initial = ctrl.mean_rev.buy_conds_initial.price;
 
     // add positions and feed extreme trend
     for (int i = 0; i < 5; i++) {
@@ -581,7 +581,7 @@ static void test_max_shift() {
     }
 
     for (int i = 0; i < 500; i++) {
-        FPN<FP> price = FPN_FromDouble<FP>(100.0 + (double)i * 0.1);
+        FPN_Binary<FP> price = FPN_FromDouble<FP>(100.0 + (double)i * 0.1);
         PortfolioController_Tick(&ctrl, &pool, price, FPN_FromDouble<FP>(500.0), &log);
     }
 
@@ -773,8 +773,8 @@ static void test_stddev_offset() {
 
     // warmup with known prices around $100 with some spread
     for (int i = 0; i < 10; i++) {
-        FPN<FP> price  = FPN_FromDouble<FP>(98.0 + (double)i * 0.5);
-        FPN<FP> volume = FPN_FromDouble<FP>(500.0);
+        FPN_Binary<FP> price  = FPN_FromDouble<FP>(98.0 + (double)i * 0.5);
+        FPN_Binary<FP> volume = FPN_FromDouble<FP>(500.0);
         PortfolioController_Tick(&ctrl, &pool, price, volume, &log);
     }
     check("stddev: warmup done", ctrl.state == CONTROLLER_ACTIVE);
@@ -800,8 +800,8 @@ static void test_stddev_offset() {
     PortfolioController_Init(&ctrl2, cfg2);
 
     for (int i = 0; i < 10; i++) {
-        FPN<FP> price  = FPN_FromDouble<FP>(98.0 + (double)i * 0.5);
-        FPN<FP> volume = FPN_FromDouble<FP>(500.0);
+        FPN_Binary<FP> price  = FPN_FromDouble<FP>(98.0 + (double)i * 0.5);
+        FPN_Binary<FP> volume = FPN_FromDouble<FP>(500.0);
         PortfolioController_Tick(&ctrl2, &pool, price, volume, &log);
     }
 
@@ -849,7 +849,7 @@ static void test_stddev_adaptation() {
     }
 
     for (int i = 0; i < 200; i++) {
-        FPN<FP> price = FPN_FromDouble<FP>(99.0 + (double)i * 0.01);
+        FPN_Binary<FP> price = FPN_FromDouble<FP>(99.0 + (double)i * 0.01);
         PortfolioController_Tick(&ctrl, &pool, price, FPN_FromDouble<FP>(500.0), &log);
     }
 
@@ -888,14 +888,14 @@ static void test_multi_timeframe() {
 
     // warmup with rising prices (positive long slope)
     for (int i = 0; i < 10; i++) {
-        FPN<FP> price = FPN_FromDouble<FP>(100.0 + (double)i * 0.1);
+        FPN_Binary<FP> price = FPN_FromDouble<FP>(100.0 + (double)i * 0.1);
         PortfolioController_Tick(&ctrl, &pool, price, FPN_FromDouble<FP>(500.0), &log);
     }
     check("mt: warmup done", ctrl.state == CONTROLLER_ACTIVE);
 
     // run a few more ticks with rising prices to build long slope
     for (int i = 0; i < 20; i++) {
-        FPN<FP> price = FPN_FromDouble<FP>(101.0 + (double)i * 0.05);
+        FPN_Binary<FP> price = FPN_FromDouble<FP>(101.0 + (double)i * 0.05);
         PortfolioController_Tick(&ctrl, &pool, price, FPN_FromDouble<FP>(500.0), &log);
     }
 
@@ -905,7 +905,7 @@ static void test_multi_timeframe() {
 
     // now feed falling prices to create negative long slope
     for (int i = 0; i < 30; i++) {
-        FPN<FP> price = FPN_FromDouble<FP>(102.0 - (double)i * 0.2);
+        FPN_Binary<FP> price = FPN_FromDouble<FP>(102.0 - (double)i * 0.2);
         PortfolioController_Tick(&ctrl, &pool, price, FPN_FromDouble<FP>(500.0), &log);
     }
 
@@ -943,7 +943,7 @@ static void test_multi_timeframe_disabled() {
 
     // feed falling prices — with gate disabled, buys should still work
     for (int i = 0; i < 20; i++) {
-        FPN<FP> price = FPN_FromDouble<FP>(100.0 - (double)i * 0.1);
+        FPN_Binary<FP> price = FPN_FromDouble<FP>(100.0 - (double)i * 0.1);
         PortfolioController_Tick(&ctrl, &pool, price, FPN_FromDouble<FP>(500.0), &log);
     }
 
@@ -979,8 +979,8 @@ static void test_trailing_disabled() {
     }
 
     // add a position manually
-    FPN<FP> tp = FPN_FromDouble<FP>(103.0);
-    FPN<FP> sl = FPN_FromDouble<FP>(98.0);
+    FPN_Binary<FP> tp = FPN_FromDouble<FP>(103.0);
+    FPN_Binary<FP> sl = FPN_FromDouble<FP>(98.0);
     int slot = Portfolio_AddPositionWithExits(&ctrl.portfolio, FPN_FromDouble<FP>(10.0),
                                               FPN_FromDouble<FP>(100.0), tp, sl);
     ctrl.portfolio.positions[slot].original_tp = tp;
@@ -1027,9 +1027,9 @@ static void test_trailing_activates() {
     }
 
     // add a momentum position with TP at 103
-    FPN<FP> entry = FPN_FromDouble<FP>(100.0);
-    FPN<FP> tp = FPN_FromDouble<FP>(103.0);
-    FPN<FP> sl = FPN_FromDouble<FP>(97.0);
+    FPN_Binary<FP> entry = FPN_FromDouble<FP>(100.0);
+    FPN_Binary<FP> tp = FPN_FromDouble<FP>(103.0);
+    FPN_Binary<FP> sl = FPN_FromDouble<FP>(97.0);
     int slot = Portfolio_AddPositionWithExits(&ctrl.portfolio, FPN_FromDouble<FP>(10.0), entry, tp, sl);
     ctrl.portfolio.positions[slot].original_tp = tp;
     ctrl.portfolio.positions[slot].original_sl = sl;
@@ -1037,7 +1037,7 @@ static void test_trailing_activates() {
 
     // feed steadily rising prices above TP (strong clean trend → high SNR * R²)
     for (int i = 0; i < 50; i++) {
-        FPN<FP> price = FPN_FromDouble<FP>(104.0 + (double)i * 0.2);
+        FPN_Binary<FP> price = FPN_FromDouble<FP>(104.0 + (double)i * 0.2);
         PortfolioController_Tick(&ctrl, &pool, price, FPN_FromDouble<FP>(500.0), &log);
     }
 
@@ -1083,8 +1083,8 @@ static void test_trailing_ratchet() {
         PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(100.0), FPN_FromDouble<FP>(500.0), &log);
     }
 
-    FPN<FP> tp = FPN_FromDouble<FP>(103.0);
-    FPN<FP> sl = FPN_FromDouble<FP>(97.0);
+    FPN_Binary<FP> tp = FPN_FromDouble<FP>(103.0);
+    FPN_Binary<FP> sl = FPN_FromDouble<FP>(97.0);
     int slot = Portfolio_AddPositionWithExits(&ctrl.portfolio, FPN_FromDouble<FP>(10.0),
                                               FPN_FromDouble<FP>(100.0), tp, sl);
     ctrl.portfolio.positions[slot].original_tp = tp;
@@ -1092,14 +1092,14 @@ static void test_trailing_ratchet() {
 
     // phase 1: rising prices — TP should ratchet up
     for (int i = 0; i < 30; i++) {
-        FPN<FP> price = FPN_FromDouble<FP>(104.0 + (double)i * 0.3);
+        FPN_Binary<FP> price = FPN_FromDouble<FP>(104.0 + (double)i * 0.3);
         PortfolioController_Tick(&ctrl, &pool, price, FPN_FromDouble<FP>(500.0), &log);
     }
     double tp_after_rise = FPN_ToDouble(ctrl.portfolio.positions[slot].take_profit_price);
 
     // phase 2: slightly falling prices — TP should NOT decrease
     for (int i = 0; i < 10; i++) {
-        FPN<FP> price = FPN_FromDouble<FP>(112.0 - (double)i * 0.1);
+        FPN_Binary<FP> price = FPN_FromDouble<FP>(112.0 - (double)i * 0.1);
         PortfolioController_Tick(&ctrl, &pool, price, FPN_FromDouble<FP>(500.0), &log);
     }
     double tp_after_dip = FPN_ToDouble(ctrl.portfolio.positions[slot].take_profit_price);
@@ -1211,8 +1211,8 @@ static void test_slippage() {
         ctrl.state = CONTROLLER_ACTIVE;
 
         // manually add a position at $101 (simulating buy slippage already applied)
-        FPN<FP> entry_p = FPN_FromDouble<FP>(101.0);
-        FPN<FP> qty = FPN_FromDouble<FP>(1.0);
+        FPN_Binary<FP> entry_p = FPN_FromDouble<FP>(101.0);
+        FPN_Binary<FP> qty = FPN_FromDouble<FP>(1.0);
         Portfolio_AddPositionWithExits(&ctrl.portfolio, qty, entry_p,
             FPN_FromDouble<FP>(110.0), FPN_FromDouble<FP>(90.0));
 
@@ -1221,7 +1221,7 @@ static void test_slippage() {
                           &ctrl.exit_buf, 100);
         check("slippage sell: exit detected", ctrl.exit_buf.count == 1);
 
-        FPN<FP> pnl_before = ctrl.realized_pnl;
+        FPN_Binary<FP> pnl_before = ctrl.realized_pnl;
         PortfolioController_DrainExits(&ctrl);
 
         // exit at 110 with 1% slippage → effective exit = 110 - 110*0.01 = 108.90
@@ -1395,7 +1395,7 @@ inline void print_layout_fingerprint() {
     printf("offsetof CoreSlowState.us_at_last_rebuild      = %zu\n",
            offsetof(tt::CoreSlowState<64>, us_at_last_rebuild));
     printf("-- Sub-struct sizes --\n");
-    printf("FPN<64>                    %8zu B\n", sizeof(FPN<64>));
+    printf("FPN_Binary<64>                    %8zu B\n", sizeof(FPN_Binary<64>));
     printf("RollingStats<64,128>       %8zu B\n", sizeof(layout_probe::RS_128));
     printf("RollingStats<64,256>       %8zu B\n", sizeof(layout_probe::RS_256));
     printf("RollingStats<64,512>       %8zu B\n", sizeof(layout_probe::RS_512));
@@ -1444,10 +1444,10 @@ static void test_v5_15_5_F4b_cfg_field_dispatch() {
               memcmp(&di, &g, sizeof(di)) != 0);
     }
 
-    // === T1: FPN<F> dispatch — KIND_DOUBLE_PCT roundtrip ===
+    // === T1: FPN_Binary<F> dispatch — KIND_DOUBLE_PCT roundtrip ===
     // .F.4c.3 — take_profit_pct now lives in FOREACH_PER_CORE_CFG_FIELD.
     {
-        FPN<64> dst = FPN_FromDouble<64>(0.0);
+        FPN_Binary<64> dst = FPN_FromDouble<64>(0.0);
         tt::cfg_parse_field(dst, g_per_core_cfg_field_descriptors[FIELD_IDX_PER_CORE_take_profit_pct], "3.0");
         double parsed = FPN_ToDouble(dst);
         check("v5.15.5.F.4b: KIND_DOUBLE_PCT parse '3.0' → 0.03 (PCT /100 scaling)",
@@ -1456,7 +1456,7 @@ static void test_v5_15_5_F4b_cfg_field_dispatch() {
 
     // === T2: tt::cfg_save_field roundtrip — produces locale-independent output ===
     {
-        FPN<64> src = FPN_FromDouble<64>(0.0234);
+        FPN_Binary<64> src = FPN_FromDouble<64>(0.0234);
         char buf[64] = {0};
         int n = tt::cfg_save_field(src, g_per_core_cfg_field_descriptors[FIELD_IDX_PER_CORE_take_profit_pct], buf, sizeof(buf));
         check("v5.15.5.F.4b: KIND_DOUBLE_PCT save returns positive char count", n > 0);
@@ -1470,7 +1470,7 @@ static void test_v5_15_5_F4b_cfg_field_dispatch() {
     {
         const char* prev_locale = setlocale(LC_NUMERIC, NULL);
         setlocale(LC_NUMERIC, "de_DE.UTF-8");  // German locale uses ',' decimal
-        FPN<64> src = FPN_FromDouble<64>(0.0234);
+        FPN_Binary<64> src = FPN_FromDouble<64>(0.0234);
         char buf[64] = {0};
         tt::cfg_save_field(src, g_per_core_cfg_field_descriptors[FIELD_IDX_PER_CORE_take_profit_pct], buf, sizeof(buf));
         check("v5.15.5.F.4b: tt::cfg_save_field is locale-immune (de_DE → '2.34' not '2,34')",
@@ -1777,9 +1777,9 @@ int main() {
 
         // rolling max tracking
         RollingStats<FP> rs = RollingStats_Init<FP>();
-        FPN<FP> p = FPN_FromDouble<FP>(100.0);
+        FPN_Binary<FP> p = FPN_FromDouble<FP>(100.0);
         for (int i = 0; i < 10; i++) {
-            FPN<FP> v = FPN_FromDouble<FP>(1.0 + i * 0.5); // volumes: 1.0, 1.5, 2.0, ..., 5.5
+            FPN_Binary<FP> v = FPN_FromDouble<FP>(1.0 + i * 0.5); // volumes: 1.0, 1.5, 2.0, ..., 5.5
             RollingStats_Push(&rs, p, v);
         }
         double vmax = FPN_ToDouble(rs.volume_max);
@@ -1791,33 +1791,33 @@ int main() {
         cfg.spike_spacing_reduction = FPN_FromDouble<FP>(0.5);
 
         // ratio = current / max: 5.5 / 5.5 = 1.0 (not a spike)
-        FPN<FP> current_vol = FPN_FromDouble<FP>(5.5);
-        FPN<FP> ratio = FPN_DivNoAssert(current_vol, rs.volume_max);
+        FPN_Binary<FP> current_vol = FPN_FromDouble<FP>(5.5);
+        FPN_Binary<FP> ratio = FPN_DivNoAssert(current_vol, rs.volume_max);
         int is_spike = FPN_GreaterThanOrEqual(ratio, cfg.spike_threshold);
         check("spike: 1x max is not a spike", !is_spike);
 
         // ratio = 20.0 / 5.5 = 3.6x (IS a spike)
-        FPN<FP> big_vol = FPN_FromDouble<FP>(20.0);
-        FPN<FP> ratio2 = FPN_DivNoAssert(big_vol, rs.volume_max);
+        FPN_Binary<FP> big_vol = FPN_FromDouble<FP>(20.0);
+        FPN_Binary<FP> ratio2 = FPN_DivNoAssert(big_vol, rs.volume_max);
         int is_spike2 = FPN_GreaterThanOrEqual(ratio2, cfg.spike_threshold);
         check("spike: 3.6x max triggers spike", is_spike2);
 
         // spacing reduction: normal spacing vs spike spacing
-        FPN<FP> spacing = FPN_FromDouble<FP>(100.0);
-        FPN<FP> reduced = FPN_Mul(spacing, cfg.spike_spacing_reduction);
+        FPN_Binary<FP> spacing = FPN_FromDouble<FP>(100.0);
+        FPN_Binary<FP> reduced = FPN_Mul(spacing, cfg.spike_spacing_reduction);
         double reduced_d = FPN_ToDouble(reduced);
         check("spike: spacing reduced to 50%", fabs(reduced_d - 50.0) < 0.01);
 
         // branchless mask-select produces correct result
         __int128 spike_mask = -(__int128)(unsigned)is_spike2;   // all-ones when spike, else 0
-        FPN<FP> selected;
+        FPN_Binary<FP> selected;
         selected.v = (reduced.v & spike_mask) | (spacing.v & ~spike_mask);
         double sel_d = FPN_ToDouble(selected);
         check("spike: mask-select picks reduced spacing", fabs(sel_d - 50.0) < 0.01);
 
         // non-spike mask-select keeps original
         __int128 no_mask = -(__int128)(unsigned)is_spike; // is_spike = 0 → mask 0 → keeps spacing
-        FPN<FP> selected2;
+        FPN_Binary<FP> selected2;
         selected2.v = (reduced.v & no_mask) | (spacing.v & ~no_mask);
         double sel2_d = FPN_ToDouble(selected2);
         check("spike: mask-select keeps normal when no spike", fabs(sel2_d - 100.0) < 0.01);
@@ -1843,9 +1843,9 @@ int main() {
         TradeLog log; log.file = 0; log.trade_count = 0;
 
         // warmup with stable price to build stats
-        FPN<FP> vol = FPN_FromDouble<FP>(1.0);
+        FPN_Binary<FP> vol = FPN_FromDouble<FP>(1.0);
         for (uint64_t t = 0; t < 20; t++) {
-            FPN<FP> p = FPN_FromDouble<FP>(70000.0 + (t % 3) * 10.0);
+            FPN_Binary<FP> p = FPN_FromDouble<FP>(70000.0 + (t % 3) * 10.0);
             PortfolioController_Tick(&ctrl, &pool, p, vol, &log);
         }
         check("momentum: warmup done", ctrl.state == CONTROLLER_ACTIVE);
@@ -1903,8 +1903,8 @@ int main() {
         // manually create a position under MR
         ctrl.state = CONTROLLER_ACTIVE;
         ctrl.strategy_id = STRATEGY_MEAN_REVERSION;
-        FPN<FP> entry_p = FPN_FromDouble<FP>(70000.0);
-        FPN<FP> qty = FPN_FromDouble<FP>(0.01);
+        FPN_Binary<FP> entry_p = FPN_FromDouble<FP>(70000.0);
+        FPN_Binary<FP> qty = FPN_FromDouble<FP>(0.01);
         Portfolio_AddPosition(&ctrl.portfolio, qty, entry_p);
         int pidx = __builtin_ctz(ctrl.portfolio.active_bitmap);
         ctrl.portfolio.positions[pidx].take_profit_price = FPN_FromDouble<FP>(70500.0);
@@ -1969,8 +1969,8 @@ int main() {
         // drop price below SL to trigger exit
         // SL is ~98.5 (entry 100, 1.5% SL), price at 50 is well below
         // PositionExitGate runs on hot path, exit buffer drained on slow path
-        FPN<FP> drop_price = FPN_FromDouble<FP>(50.0);
-        FPN<FP> drop_vol = FPN_FromDouble<FP>(1.0);
+        FPN_Binary<FP> drop_price = FPN_FromDouble<FP>(50.0);
+        FPN_Binary<FP> drop_vol = FPN_FromDouble<FP>(1.0);
 
         // one tick: exit gate detects SL, controller drains it + sets cooldown
         PositionExitGate(&ctrl.portfolio, drop_price, &ctrl.exit_buf, 100);
@@ -2018,7 +2018,7 @@ int main() {
         }
 
         // trigger all 16 exits at once (price below all SLs)
-        FPN<FP> crash_price = FPN_FromDouble<FP>(50.0);
+        FPN_Binary<FP> crash_price = FPN_FromDouble<FP>(50.0);
         PositionExitGate(&port, crash_price, &ebuf, 1);
         check("exit_buf: count capped at 16", ebuf.count <= 16);
         check("exit_buf: all positions exited", port.active_bitmap == 0);
@@ -2135,8 +2135,8 @@ int main() {
         ctrl.rolling.price_avg    = FPN_FromDouble<FP>(70000.0);
 
         // add momentum position: entry $70000, TP $70500, SL $69500
-        FPN<FP> entry = FPN_FromDouble<FP>(70000.0);
-        FPN<FP> qty   = FPN_FromDouble<FP>(0.01);
+        FPN_Binary<FP> entry = FPN_FromDouble<FP>(70000.0);
+        FPN_Binary<FP> qty   = FPN_FromDouble<FP>(0.01);
         Portfolio_AddPosition(&ctrl.portfolio, qty, entry);
         int pidx = __builtin_ctz(ctrl.portfolio.active_bitmap);
         ctrl.portfolio.positions[pidx].take_profit_price = FPN_FromDouble<FP>(70500.0);
@@ -2188,8 +2188,8 @@ int main() {
         ctrl.rolling.price_avg    = FPN_FromDouble<FP>(70000.0);
 
         // add position with known TP/SL
-        FPN<FP> entry = FPN_FromDouble<FP>(70000.0);
-        FPN<FP> qty   = FPN_FromDouble<FP>(0.01);
+        FPN_Binary<FP> entry = FPN_FromDouble<FP>(70000.0);
+        FPN_Binary<FP> qty   = FPN_FromDouble<FP>(0.01);
         Portfolio_AddPosition(&ctrl.portfolio, qty, entry);
         int pidx = __builtin_ctz(ctrl.portfolio.active_bitmap);
         ctrl.portfolio.positions[pidx].take_profit_price = FPN_FromDouble<FP>(70500.0);
@@ -2252,8 +2252,8 @@ int main() {
         for (int t = 0; t < 4; t++) {
             // reset position each time
             ctrl.portfolio.active_bitmap = 0;
-            FPN<FP> entry = FPN_FromDouble<FP>(70000.0);
-            FPN<FP> qty   = FPN_FromDouble<FP>(0.01);
+            FPN_Binary<FP> entry = FPN_FromDouble<FP>(70000.0);
+            FPN_Binary<FP> qty   = FPN_FromDouble<FP>(0.01);
             Portfolio_AddPosition(&ctrl.portfolio, qty, entry);
             int pidx = __builtin_ctz(ctrl.portfolio.active_bitmap);
             ctrl.portfolio.positions[pidx].take_profit_price = FPN_FromDouble<FP>(70500.0);
@@ -2335,8 +2335,8 @@ int main() {
         RollingStats<FP> rolling;
         memset(&rolling, 0, sizeof(rolling));
 
-        FPN<FP> entry = FPN_FromDouble<FP>(70000.0);
-        FPN<FP> stddev = FPN_FromDouble<FP>(50.0);
+        FPN_Binary<FP> entry = FPN_FromDouble<FP>(70000.0);
+        FPN_Binary<FP> stddev = FPN_FromDouble<FP>(50.0);
         rolling.price_stddev = stddev;
 
         // transitions to test
@@ -2360,9 +2360,9 @@ int main() {
 
         for (int t = 0; t < 5; t++) {
             Portfolio_Init(&portfolio);
-            FPN<FP> tp = FPN_AddSat(entry, FPN_FromDouble<FP>(300.0));
-            FPN<FP> sl = FPN_SubSat(entry, FPN_FromDouble<FP>(150.0));
-            FPN<FP> qty = FPN_FromDouble<FP>(0.01);
+            FPN_Binary<FP> tp = FPN_AddSat(entry, FPN_FromDouble<FP>(300.0));
+            FPN_Binary<FP> sl = FPN_SubSat(entry, FPN_FromDouble<FP>(150.0));
+            FPN_Binary<FP> qty = FPN_FromDouble<FP>(0.01);
             int slot = Portfolio_AddPositionWithExits(&portfolio, qty, entry, tp, sl, FPN_Zero<FP>());
 
             uint8_t entry_strat[16] = {};
@@ -2411,12 +2411,12 @@ int main() {
 
         // test danger score math: simulate precomputed thresholds
         // avg=100, stddev=10 → warn=70 (3σ below), crash=40 (6σ below)
-        FPN<FP> avg = FPN_FromDouble<FP>(100.0);
-        FPN<FP> sd = FPN_FromDouble<FP>(10.0);
-        FPN<FP> warn = FPN_SubSat(avg, FPN_Mul(sd, cfg.danger_warn_stddevs));  // 100-30=70
-        FPN<FP> crash = FPN_SubSat(avg, FPN_Mul(sd, cfg.danger_crash_stddevs)); // 100-60=40
-        FPN<FP> range = FPN_SubSat(warn, crash);  // 70-40=30
-        FPN<FP> range_inv = FPN_DivNoAssert(FPN_FromDouble<FP>(1.0), range);
+        FPN_Binary<FP> avg = FPN_FromDouble<FP>(100.0);
+        FPN_Binary<FP> sd = FPN_FromDouble<FP>(10.0);
+        FPN_Binary<FP> warn = FPN_SubSat(avg, FPN_Mul(sd, cfg.danger_warn_stddevs));  // 100-30=70
+        FPN_Binary<FP> crash = FPN_SubSat(avg, FPN_Mul(sd, cfg.danger_crash_stddevs)); // 100-60=40
+        FPN_Binary<FP> range = FPN_SubSat(warn, crash);  // 70-40=30
+        FPN_Binary<FP> range_inv = FPN_DivNoAssert(FPN_FromDouble<FP>(1.0), range);
 
         check("danger: warn threshold ~70.0",
               fabs(FPN_ToDouble(warn) - 70.0) < 0.01);
@@ -2425,24 +2425,24 @@ int main() {
 
         // price at 100 (safe): score should be 0
         {
-            FPN<FP> price = FPN_FromDouble<FP>(100.0);
-            FPN<FP> depth = FPN_SubSat(warn, price); // 70 - 100 = 0 (saturated)
-            FPN<FP> raw = FPN_Mul(depth, range_inv);
-            FPN<FP> zero = FPN_Zero<FP>();
-            FPN<FP> one = FPN_FromDouble<FP>(1.0);
-            FPN<FP> score = FPN_Min(FPN_Max(raw, zero), one);
+            FPN_Binary<FP> price = FPN_FromDouble<FP>(100.0);
+            FPN_Binary<FP> depth = FPN_SubSat(warn, price); // 70 - 100 = 0 (saturated)
+            FPN_Binary<FP> raw = FPN_Mul(depth, range_inv);
+            FPN_Binary<FP> zero = FPN_Zero<FP>();
+            FPN_Binary<FP> one = FPN_FromDouble<FP>(1.0);
+            FPN_Binary<FP> score = FPN_Min(FPN_Max(raw, zero), one);
             check("danger: price=100 (safe) → score=0",
                   FPN_ToDouble(score) < 0.01);
         }
 
         // price at 55 (in danger zone, halfway): score should be ~0.5
         {
-            FPN<FP> price = FPN_FromDouble<FP>(55.0);
-            FPN<FP> depth = FPN_SubSat(warn, price); // 70 - 55 = 15
-            FPN<FP> raw = FPN_Mul(depth, range_inv); // 15/30 = 0.5
-            FPN<FP> zero = FPN_Zero<FP>();
-            FPN<FP> one = FPN_FromDouble<FP>(1.0);
-            FPN<FP> score = FPN_Min(FPN_Max(raw, zero), one);
+            FPN_Binary<FP> price = FPN_FromDouble<FP>(55.0);
+            FPN_Binary<FP> depth = FPN_SubSat(warn, price); // 70 - 55 = 15
+            FPN_Binary<FP> raw = FPN_Mul(depth, range_inv); // 15/30 = 0.5
+            FPN_Binary<FP> zero = FPN_Zero<FP>();
+            FPN_Binary<FP> one = FPN_FromDouble<FP>(1.0);
+            FPN_Binary<FP> score = FPN_Min(FPN_Max(raw, zero), one);
             double sv = FPN_ToDouble(score);
             check("danger: price=55 (mid-zone) → score~0.5",
                   sv > 0.4 && sv < 0.6);
@@ -2450,33 +2450,33 @@ int main() {
 
         // price at 30 (below crash): score should be clamped to 1.0
         {
-            FPN<FP> price = FPN_FromDouble<FP>(30.0);
-            FPN<FP> depth = FPN_SubSat(warn, price); // 70 - 30 = 40
-            FPN<FP> raw = FPN_Mul(depth, range_inv); // 40/30 = 1.33
-            FPN<FP> zero = FPN_Zero<FP>();
-            FPN<FP> one = FPN_FromDouble<FP>(1.0);
-            FPN<FP> score = FPN_Min(FPN_Max(raw, zero), one);
+            FPN_Binary<FP> price = FPN_FromDouble<FP>(30.0);
+            FPN_Binary<FP> depth = FPN_SubSat(warn, price); // 70 - 30 = 40
+            FPN_Binary<FP> raw = FPN_Mul(depth, range_inv); // 40/30 = 1.33
+            FPN_Binary<FP> zero = FPN_Zero<FP>();
+            FPN_Binary<FP> one = FPN_FromDouble<FP>(1.0);
+            FPN_Binary<FP> score = FPN_Min(FPN_Max(raw, zero), one);
             check("danger: price=30 (crash) → score=1.0",
                   fabs(FPN_ToDouble(score) - 1.0) < 0.01);
         }
 
         // gate scaling: score=0.5 should halve the gate price
         {
-            FPN<FP> gate = FPN_FromDouble<FP>(68000.0);
-            FPN<FP> score = FPN_FromDouble<FP>(0.5);
-            FPN<FP> one = FPN_FromDouble<FP>(1.0);
-            FPN<FP> scale = FPN_SubSat(one, score); // 0.5
-            FPN<FP> scaled_gate = FPN_Mul(gate, scale);
+            FPN_Binary<FP> gate = FPN_FromDouble<FP>(68000.0);
+            FPN_Binary<FP> score = FPN_FromDouble<FP>(0.5);
+            FPN_Binary<FP> one = FPN_FromDouble<FP>(1.0);
+            FPN_Binary<FP> scale = FPN_SubSat(one, score); // 0.5
+            FPN_Binary<FP> scaled_gate = FPN_Mul(gate, scale);
             check("danger: gate scaling at score=0.5 → ~$34000",
                   fabs(FPN_ToDouble(scaled_gate) - 34000.0) < 1.0);
         }
 
         // gate scaling: score=1.0 should zero the gate
         {
-            FPN<FP> gate = FPN_FromDouble<FP>(68000.0);
-            FPN<FP> one = FPN_FromDouble<FP>(1.0);
-            FPN<FP> scale = FPN_SubSat(one, one); // 0
-            FPN<FP> scaled_gate = FPN_Mul(gate, scale);
+            FPN_Binary<FP> gate = FPN_FromDouble<FP>(68000.0);
+            FPN_Binary<FP> one = FPN_FromDouble<FP>(1.0);
+            FPN_Binary<FP> scale = FPN_SubSat(one, one); // 0
+            FPN_Binary<FP> scaled_gate = FPN_Mul(gate, scale);
             check("danger: gate scaling at score=1.0 → $0",
                   FPN_ToDouble(scaled_gate) < 0.01);
         }
@@ -2489,22 +2489,22 @@ int main() {
     {
         // verify offset capture: if EMA=68000 and gate_price=67950 (dir=0, buy below)
         // offset should be 50 (distance from EMA to gate)
-        FPN<FP> ema = FPN_FromDouble<FP>(68000.0);
-        FPN<FP> gate_price = FPN_FromDouble<FP>(67950.0);
-        FPN<FP> offset = FPN_SubSat(ema, gate_price); // 50
+        FPN_Binary<FP> ema = FPN_FromDouble<FP>(68000.0);
+        FPN_Binary<FP> gate_price = FPN_FromDouble<FP>(67950.0);
+        FPN_Binary<FP> offset = FPN_SubSat(ema, gate_price); // 50
         check("gate offset: EMA=68000, gate=67950 → offset=50",
               fabs(FPN_ToDouble(offset) - 50.0) < 0.01);
 
         // verify live gate recompute: if EMA rises to 68500, gate should be 68450
-        FPN<FP> new_ema = FPN_FromDouble<FP>(68500.0);
-        FPN<FP> live_gate = FPN_SubSat(new_ema, offset);
+        FPN_Binary<FP> new_ema = FPN_FromDouble<FP>(68500.0);
+        FPN_Binary<FP> live_gate = FPN_SubSat(new_ema, offset);
         check("gate offset: EMA rises to 68500 → gate=68450",
               fabs(FPN_ToDouble(live_gate) - 68450.0) < 0.01);
 
         // verify momentum direction (dir=1, buy above)
-        FPN<FP> mom_gate = FPN_FromDouble<FP>(68100.0);
-        FPN<FP> mom_offset = FPN_SubSat(mom_gate, ema); // 100
-        FPN<FP> mom_live = FPN_AddSat(new_ema, mom_offset); // 68600
+        FPN_Binary<FP> mom_gate = FPN_FromDouble<FP>(68100.0);
+        FPN_Binary<FP> mom_offset = FPN_SubSat(mom_gate, ema); // 100
+        FPN_Binary<FP> mom_live = FPN_AddSat(new_ema, mom_offset); // 68600
         check("gate offset: momentum dir=1, EMA rises → gate=68600",
               fabs(FPN_ToDouble(mom_live) - 68600.0) < 0.01);
     }
@@ -2778,9 +2778,9 @@ int main() {
     }
 
     //======================================================================================================
-    // FPN EXIT GATE COMPARISON
+    // FPN_Binary EXIT GATE COMPARISON
     //======================================================================================================
-    printf("\n--- FPN EXIT GATE COMPARISON ---\n");
+    printf("\n--- FPN_Binary EXIT GATE COMPARISON ---\n");
     {
         Portfolio<FP> port = {};
         Portfolio_Init(&port);
@@ -2788,9 +2788,9 @@ int main() {
         ExitBuffer_Init(&ebuf);
 
         // add position: entry=100, TP=105, SL=95
-        FPN<FP> entry = FPN_FromDouble<FP>(100.0);
-        FPN<FP> tp = FPN_FromDouble<FP>(105.0);
-        FPN<FP> sl = FPN_FromDouble<FP>(95.0);
+        FPN_Binary<FP> entry = FPN_FromDouble<FP>(100.0);
+        FPN_Binary<FP> tp = FPN_FromDouble<FP>(105.0);
+        FPN_Binary<FP> sl = FPN_FromDouble<FP>(95.0);
         Portfolio_AddPositionWithExits(&port, FPN_FromDouble<FP>(1.0), entry, tp, sl);
 
         // price at 94 (below SL) — must trigger exit
@@ -2821,13 +2821,13 @@ int main() {
               port.active_bitmap != 0);
 
         // test tight boundary: SL=95.001, price=95.0005 (just below SL)
-        // this exercises middle FPN words — the old 2-word comparison could miss this
+        // this exercises middle FPN_Binary words — the old 2-word comparison could miss this
         ExitBuffer_Init(&ebuf);
         Portfolio_Init(&port);
-        FPN<FP> tight_sl = FPN_FromDouble<FP>(95.001);
-        FPN<FP> tight_tp = FPN_FromDouble<FP>(105.0);
+        FPN_Binary<FP> tight_sl = FPN_FromDouble<FP>(95.001);
+        FPN_Binary<FP> tight_tp = FPN_FromDouble<FP>(105.0);
         Portfolio_AddPositionWithExits(&port, FPN_FromDouble<FP>(1.0), entry, tight_tp, tight_sl);
-        FPN<FP> just_below = FPN_FromDouble<FP>(95.0005);
+        FPN_Binary<FP> just_below = FPN_FromDouble<FP>(95.0005);
         PositionExitGate(&port, just_below, &ebuf, 4);
         check("exit gate: tight SL boundary triggers correctly",
               ebuf.count == 1);
@@ -2836,7 +2836,7 @@ int main() {
         ExitBuffer_Init(&ebuf);
         Portfolio_Init(&port);
         Portfolio_AddPositionWithExits(&port, FPN_FromDouble<FP>(1.0), entry, tight_tp, tight_sl);
-        FPN<FP> just_above = FPN_FromDouble<FP>(95.0015);
+        FPN_Binary<FP> just_above = FPN_FromDouble<FP>(95.0015);
         PositionExitGate(&port, just_above, &ebuf, 5);
         check("exit gate: price just above SL does not trigger",
               ebuf.count == 0);
@@ -2875,12 +2875,12 @@ int main() {
             double bal_before = FPN_ToDouble(ctrl.balance);
 
             // manually create a fill at $66,000
-            FPN<FP> fill_price = FPN_FromDouble<FP>(66000.0);
-            FPN<FP> risk = FPN_Mul(ctrl.balance, cfg.risk_pct);
-            FPN<FP> qty = FPN_DivNoAssert(risk, fill_price);
-            FPN<FP> cost = FPN_Mul(fill_price, qty);
-            FPN<FP> fee = FPN_Mul(cost, cfg.fee_rate);
-            FPN<FP> total = FPN_AddSat(cost, fee);
+            FPN_Binary<FP> fill_price = FPN_FromDouble<FP>(66000.0);
+            FPN_Binary<FP> risk = FPN_Mul(ctrl.balance, cfg.risk_pct);
+            FPN_Binary<FP> qty = FPN_DivNoAssert(risk, fill_price);
+            FPN_Binary<FP> cost = FPN_Mul(fill_price, qty);
+            FPN_Binary<FP> fee = FPN_Mul(cost, cfg.fee_rate);
+            FPN_Binary<FP> total = FPN_AddSat(cost, fee);
 
             // simulate fill
             Portfolio_AddPositionWithExits(&ctrl.portfolio, qty, fill_price,
@@ -2895,8 +2895,8 @@ int main() {
                   fabs(deducted - expected_deduction) < 0.01);
 
             // verify equity = balance + position value ≈ starting
-            FPN<FP> pv = Portfolio_ComputeValue(&ctrl.portfolio, fill_price);
-            FPN<FP> equity = FPN_AddSat(ctrl.balance, pv);
+            FPN_Binary<FP> pv = Portfolio_ComputeValue(&ctrl.portfolio, fill_price);
+            FPN_Binary<FP> equity = FPN_AddSat(ctrl.balance, pv);
             double eq = FPN_ToDouble(equity);
             check("buy equity: balance + position ≈ starting - entry fee",
                   fabs(eq - (starting - FPN_ToDouble(fee))) < 0.01);
@@ -2905,10 +2905,10 @@ int main() {
                    bal_before, bal_after, deducted, FPN_ToDouble(pv), eq);
 
             // TEST 2: sell at TP — balance fully restored
-            FPN<FP> exit_price = FPN_FromDouble<FP>(68000.0);
-            FPN<FP> gross = FPN_Mul(exit_price, qty);
-            FPN<FP> exit_fee = FPN_Mul(gross, cfg.fee_rate);
-            FPN<FP> net = FPN_SubSat(gross, exit_fee);
+            FPN_Binary<FP> exit_price = FPN_FromDouble<FP>(68000.0);
+            FPN_Binary<FP> gross = FPN_Mul(exit_price, qty);
+            FPN_Binary<FP> exit_fee = FPN_Mul(gross, cfg.fee_rate);
+            FPN_Binary<FP> net = FPN_SubSat(gross, exit_fee);
             ctrl.balance = FPN_AddSat(ctrl.balance, net);
             ctrl.portfolio.active_bitmap = 0;  // clear position
 
@@ -2939,36 +2939,36 @@ int main() {
             test_warmup_ctrl(&ctrl, &pool, &log, 66000.0, 500.0);
 
             // open position at $66,000
-            FPN<FP> fill_price = FPN_FromDouble<FP>(66000.0);
-            FPN<FP> risk = FPN_Mul(ctrl.balance, cfg.risk_pct);
-            FPN<FP> qty = FPN_DivNoAssert(risk, fill_price);
-            FPN<FP> cost = FPN_Mul(fill_price, qty);
-            FPN<FP> fee = FPN_Mul(cost, cfg.fee_rate);
-            FPN<FP> total_cost = FPN_AddSat(cost, fee);
+            FPN_Binary<FP> fill_price = FPN_FromDouble<FP>(66000.0);
+            FPN_Binary<FP> risk = FPN_Mul(ctrl.balance, cfg.risk_pct);
+            FPN_Binary<FP> qty = FPN_DivNoAssert(risk, fill_price);
+            FPN_Binary<FP> cost = FPN_Mul(fill_price, qty);
+            FPN_Binary<FP> fee = FPN_Mul(cost, cfg.fee_rate);
+            FPN_Binary<FP> total_cost = FPN_AddSat(cost, fee);
             Portfolio_AddPositionWithExits(&ctrl.portfolio, qty, fill_price,
                 FPN_FromDouble<FP>(68000.0), FPN_FromDouble<FP>(65000.0), fee);
             ctrl.balance = FPN_SubSat(ctrl.balance, total_cost);
 
             // check equity at entry price
-            FPN<FP> pv1 = Portfolio_ComputeValue(&ctrl.portfolio, fill_price);
-            FPN<FP> eq1 = FPN_AddSat(ctrl.balance, pv1);
+            FPN_Binary<FP> pv1 = Portfolio_ComputeValue(&ctrl.portfolio, fill_price);
+            FPN_Binary<FP> eq1 = FPN_AddSat(ctrl.balance, pv1);
             double entry_eq = FPN_ToDouble(eq1);
             check("open pos equity at entry price ≈ starting - fee",
                   fabs(entry_eq - (starting - FPN_ToDouble(fee))) < 0.01);
 
             // check equity at higher price ($67,000)
-            FPN<FP> high = FPN_FromDouble<FP>(67000.0);
-            FPN<FP> pv2 = Portfolio_ComputeValue(&ctrl.portfolio, high);
-            FPN<FP> eq2 = FPN_AddSat(ctrl.balance, pv2);
+            FPN_Binary<FP> high = FPN_FromDouble<FP>(67000.0);
+            FPN_Binary<FP> pv2 = Portfolio_ComputeValue(&ctrl.portfolio, high);
+            FPN_Binary<FP> eq2 = FPN_AddSat(ctrl.balance, pv2);
             double high_eq = FPN_ToDouble(eq2);
             double expected_gain = 1000.0 * FPN_ToDouble(qty);  // $1000 price move × qty
             check("open pos equity at +$1000 reflects unrealized gain",
                   fabs(high_eq - entry_eq - expected_gain) < 0.01);
 
             // check equity at lower price ($65,000) — should NOT trigger kill on 3% threshold
-            FPN<FP> low = FPN_FromDouble<FP>(65000.0);
-            FPN<FP> pv3 = Portfolio_ComputeValue(&ctrl.portfolio, low);
-            FPN<FP> eq3 = FPN_AddSat(ctrl.balance, pv3);
+            FPN_Binary<FP> low = FPN_FromDouble<FP>(65000.0);
+            FPN_Binary<FP> pv3 = Portfolio_ComputeValue(&ctrl.portfolio, low);
+            FPN_Binary<FP> eq3 = FPN_AddSat(ctrl.balance, pv3);
             double low_eq = FPN_ToDouble(eq3);
             double pct_drop = (starting - low_eq) / starting * 100.0;
             check("open pos equity at -$1000: drop < 3% (no false kill)",
@@ -3055,17 +3055,17 @@ int main() {
         ctrl.state = CONTROLLER_ACTIVE;
 
         // manually add a position: entry $100, qty 1.0, TP $105, SL $95
-        FPN<FP> entry = FPN_FromDouble<FP>(100.0);
-        FPN<FP> qty = FPN_FromDouble<FP>(1.0);
-        FPN<FP> tp = FPN_FromDouble<FP>(105.0);
-        FPN<FP> sl = FPN_FromDouble<FP>(95.0);
+        FPN_Binary<FP> entry = FPN_FromDouble<FP>(100.0);
+        FPN_Binary<FP> qty = FPN_FromDouble<FP>(1.0);
+        FPN_Binary<FP> tp = FPN_FromDouble<FP>(105.0);
+        FPN_Binary<FP> sl = FPN_FromDouble<FP>(95.0);
         Portfolio_AddPositionWithExits(&ctrl.portfolio, qty, entry, tp, sl);
         ctrl.balance = FPN_FromDouble<FP>(9900.0); // $100 deducted for position
 
         // equity before exit: balance + position_value = 9900 + 105 = 10005 (at TP price)
-        FPN<FP> price_at_tp = FPN_FromDouble<FP>(105.0);
-        FPN<FP> pv_before = Portfolio_ComputeValue(&ctrl.portfolio, price_at_tp);
-        FPN<FP> equity_before = FPN_AddSat(ctrl.balance, pv_before);
+        FPN_Binary<FP> price_at_tp = FPN_FromDouble<FP>(105.0);
+        FPN_Binary<FP> pv_before = Portfolio_ComputeValue(&ctrl.portfolio, price_at_tp);
+        FPN_Binary<FP> equity_before = FPN_AddSat(ctrl.balance, pv_before);
 
         // trigger exit gate — clears bitmap, writes to exit buffer
         PositionExitGate(&ctrl.portfolio, price_at_tp, &ctrl.exit_buf, 1);
@@ -3073,17 +3073,17 @@ int main() {
         check("equity gap: bitmap cleared", ctrl.portfolio.active_bitmap == 0);
 
         // portfolio value is now 0 (position cleared from bitmap)
-        FPN<FP> pv_after = Portfolio_ComputeValue(&ctrl.portfolio, price_at_tp);
+        FPN_Binary<FP> pv_after = Portfolio_ComputeValue(&ctrl.portfolio, price_at_tp);
         check("equity gap: portfolio value is zero after exit gate",
               FPN_IsZero(pv_after));
 
         // naive equity (the bug): balance + pv = 9900 + 0 = 9900 — $105 phantom crash
-        FPN<FP> naive_equity = FPN_AddSat(ctrl.balance, pv_after);
+        FPN_Binary<FP> naive_equity = FPN_AddSat(ctrl.balance, pv_after);
 
         // correct equity: balance + pv + pending proceeds
-        FPN<FP> pending = ExitBuffer_PendingProceeds(&ctrl.exit_buf,
+        FPN_Binary<FP> pending = ExitBuffer_PendingProceeds(&ctrl.exit_buf,
                                                       cfg.fee_rate, cfg.slippage_pct);
-        FPN<FP> correct_equity = FPN_AddSat(FPN_AddSat(ctrl.balance, pv_after), pending);
+        FPN_Binary<FP> correct_equity = FPN_AddSat(FPN_AddSat(ctrl.balance, pv_after), pending);
 
         // pending should be close to gross - fees: 105 * 1.0 - 105 * 1.0 * 0.001 = 104.895
         double pending_d = FPN_ToDouble(pending);
@@ -3123,14 +3123,14 @@ int main() {
         ctrl.rolling.price_stddev = FPN_FromDouble<FP>(50.0);
 
         // add position: entry $100, qty 0.5, small gross profit
-        FPN<FP> entry = FPN_FromDouble<FP>(100.0);
-        FPN<FP> qty = FPN_FromDouble<FP>(0.5);
+        FPN_Binary<FP> entry = FPN_FromDouble<FP>(100.0);
+        FPN_Binary<FP> qty = FPN_FromDouble<FP>(0.5);
         Portfolio_AddPositionWithExits(&ctrl.portfolio, qty, entry,
             FPN_FromDouble<FP>(101.0), FPN_FromDouble<FP>(95.0));
         ctrl.portfolio.positions[0].entry_fee = FPN_FromDouble<FP>(0.50); // $0.50 entry fee
 
         // helper: build ExitRecord from position slot (slot is still valid in tests)
-        auto make_rec = [](Portfolio<FP> *p, int slot, FPN<FP> exit_price, uint64_t tick, int reason) {
+        auto make_rec = [](Portfolio<FP> *p, int slot, FPN_Binary<FP> exit_price, uint64_t tick, int reason) {
             ExitRecord<FP> rec;
             rec.position_index = slot;
             rec.exit_price = exit_price;
@@ -3191,9 +3191,9 @@ int main() {
         // setup: position at $66000, wide TP from momentum (stddev × 3 = $30 at σ=10)
         Portfolio<FP> port = {};
         Portfolio_Init(&port);
-        FPN<FP> entry = FPN_FromDouble<FP>(66000.0);
-        FPN<FP> wide_tp = FPN_FromDouble<FP>(66500.0);  // $500 above entry (momentum)
-        FPN<FP> sl = FPN_FromDouble<FP>(65800.0);
+        FPN_Binary<FP> entry = FPN_FromDouble<FP>(66000.0);
+        FPN_Binary<FP> wide_tp = FPN_FromDouble<FP>(66500.0);  // $500 above entry (momentum)
+        FPN_Binary<FP> sl = FPN_FromDouble<FP>(65800.0);
         Portfolio_AddPositionWithExits(&port, FPN_FromDouble<FP>(0.05), entry, wide_tp, sl);
 
         // rolling stats with VERY low stddev (simulates volatility crash after fill)
@@ -3259,8 +3259,8 @@ int main() {
         PortfolioController_Init(&ctrl, cfg);
 
         // position A at slot 0: entry $100, qty 1.0, TP $110, SL $90
-        FPN<FP> entry_a = FPN_FromDouble<FP>(100.0);
-        FPN<FP> qty_a = FPN_FromDouble<FP>(1.0);
+        FPN_Binary<FP> entry_a = FPN_FromDouble<FP>(100.0);
+        FPN_Binary<FP> qty_a = FPN_FromDouble<FP>(1.0);
         Portfolio_AddPositionWithExits(&ctrl.portfolio, qty_a, entry_a,
             FPN_FromDouble<FP>(110.0), FPN_FromDouble<FP>(90.0));
         ctrl.portfolio.positions[0].entry_fee = FPN_FromDouble<FP>(0.10);
@@ -3278,8 +3278,8 @@ int main() {
               fabs(FPN_ToDouble(ctrl.exit_buf.records[0].quantity) - 1.0) < 0.01);
 
         // NOW: position B fills into slot 0 (overwrites slot data)
-        FPN<FP> entry_b = FPN_FromDouble<FP>(200.0);
-        FPN<FP> qty_b = FPN_FromDouble<FP>(0.5);
+        FPN_Binary<FP> entry_b = FPN_FromDouble<FP>(200.0);
+        FPN_Binary<FP> qty_b = FPN_FromDouble<FP>(0.5);
         Portfolio_AddPositionWithExits(&ctrl.portfolio, qty_b, entry_b,
             FPN_FromDouble<FP>(220.0), FPN_FromDouble<FP>(180.0));
         ctrl.portfolio.positions[0].entry_fee = FPN_FromDouble<FP>(0.20);
@@ -3289,7 +3289,7 @@ int main() {
               fabs(FPN_ToDouble(ctrl.portfolio.positions[0].entry_price) - 200.0) < 0.01);
 
         // PendingProceeds must use A's quantity (1.0), not B's (0.5)
-        FPN<FP> pending = ExitBuffer_PendingProceeds(&ctrl.exit_buf,
+        FPN_Binary<FP> pending = ExitBuffer_PendingProceeds(&ctrl.exit_buf,
                                                       cfg.fee_rate, cfg.slippage_pct);
         double pending_d = FPN_ToDouble(pending);
         // A exited at $90, qty 1.0: gross=$90, fee=$0.09, net=$89.91
@@ -4799,7 +4799,7 @@ int main() {
         // Sanity: ring is zero-initialized
         check("v5.14.1.E init: exit_reward_ring[0].predict_call = 0",
               ezoo.exit_reward_ring[0].predict_call == 0);
-        // Sanity: identity correlation matrix (corr_matrix is double[][], not FPN)
+        // Sanity: identity correlation matrix (corr_matrix is double[][], not FPN_Binary)
         check("v5.14.1.E init: exit_ridge_state.corr_matrix is identity",
               fabs(ezoo.exit_ridge_state.corr_matrix[0][0] - 1.0) < 1e-9);
     }
@@ -5054,10 +5054,10 @@ int main() {
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
         cfg.fee_rate_maker = FPN_FromDouble<FP>(0.00075);
         cfg.fee_rate_taker = FPN_FromDouble<FP>(0.00100);
-        FPN<FP> notional = FPN_FromDouble<FP>(1000.0);
+        FPN_Binary<FP> notional = FPN_FromDouble<FP>(1000.0);
 
-        FPN<FP> fee_maker = Fee_Compute(&cfg, notional, /*is_maker=*/1);
-        FPN<FP> fee_taker = Fee_Compute(&cfg, notional, /*is_maker=*/0);
+        FPN_Binary<FP> fee_maker = Fee_Compute(&cfg, notional, /*is_maker=*/1);
+        FPN_Binary<FP> fee_taker = Fee_Compute(&cfg, notional, /*is_maker=*/0);
 
         check("Fee_Compute is_maker=1 → 1000 * 0.075% = 0.75",
               fabs(FPN_ToDouble(fee_maker) - 0.75) < 1e-4);
@@ -5195,8 +5195,8 @@ int main() {
               FPN_ToDouble(ctrl.total_taker_fees) == 0.0);
 
         // Drive a synthetic exit (RecordExit increments taker counter — TP/SL = market sell)
-        FPN<FP> entry = FPN_FromDouble<FP>(100.0);
-        FPN<FP> qty   = FPN_FromDouble<FP>(1.0);
+        FPN_Binary<FP> entry = FPN_FromDouble<FP>(100.0);
+        FPN_Binary<FP> qty   = FPN_FromDouble<FP>(1.0);
         Portfolio_AddPositionWithExits(&ctrl.portfolio, qty, entry,
             FPN_FromDouble<FP>(110.0), FPN_FromDouble<FP>(90.0));
         ctrl.portfolio.positions[0].entry_fee = FPN_FromDouble<FP>(0.10);
@@ -5637,7 +5637,7 @@ int main() {
             // current_value = 1000 + 0 + (-200) = 800
             // peak still 1000, dd = 200/1000 = 20% (over 10% threshold)
             // drop = $200 > $5 floor → trip
-            FPN<64> mtm = FPN_FromDouble<64>(40000.0);
+            FPN_Binary<64> mtm = FPN_FromDouble<64>(40000.0);
             tt::EventLoop_RebuildAllParameters(&r->state, &rolling, &cfg, (const RollingStats<64, 512>*)nullptr, nullptr, nullptr, &mtm);
             check("MTM: -$200 unrealized trips kill (no realized)",
                   CORE_STATE_FLAG_IS_SET(r->state.cores[0], KILL_TRIPPED));
@@ -5654,7 +5654,7 @@ int main() {
                 FPN_FromDouble<64>(60500.0), FPN_FromDouble<64>(59000.0),
                 FPN_Zero<64>());
             // Big unrealized loss but MTM is off — kill should NOT fire
-            FPN<64> mtm = FPN_FromDouble<64>(30000.0);  // -$300 unrealized
+            FPN_Binary<64> mtm = FPN_FromDouble<64>(30000.0);  // -$300 unrealized
             tt::EventLoop_RebuildAllParameters(&r->state, &rolling, &cfg, (const RollingStats<64, 512>*)nullptr, nullptr, nullptr, &mtm);
             check("MTM disabled: unrealized loss alone doesn't trip",
                   !CORE_STATE_FLAG_IS_SET(r->state.cores[0], KILL_TRIPPED));
@@ -6891,7 +6891,7 @@ e3_skip_load:;
         }
 
         // Case 1: book_imbalance=0.05 (below 0.10 threshold) → BLOCKED set
-        FPN<64> low_imb  = FPN_FromDouble<64>(0.05);
+        FPN_Binary<64> low_imb  = FPN_FromDouble<64>(0.05);
         EventLoop_RebuildAllParameters(
             &state, &rolling, &cfg,
             /* rolling_long  */ (const RollingStats<64, 512>*)nullptr,
@@ -6910,7 +6910,7 @@ e3_skip_load:;
               state.cores[0].halt_reason == HALT_IMBALANCE);
 
         // Case 2: book_imbalance=0.20 (above 0.10 threshold) → NOT blocked
-        FPN<64> high_imb = FPN_FromDouble<64>(0.20);
+        FPN_Binary<64> high_imb = FPN_FromDouble<64>(0.20);
         EventLoop_RebuildAllParameters(
             &state, &rolling, &cfg,
             (const RollingStats<64, 512>*)nullptr,
@@ -6994,7 +6994,7 @@ e3_skip_load:;
     // of running short_sum) must produce bit-identical output to
     // BookImbHistory_MeanShort(64) (O(K) walk) across warm-up (count < K)
     // and steady-state (count > K) phases. FPN_Add associativity for
-    // book imbalance magnitudes (|x| ≤ 1; sum ≤ 64 ≪ FPN<64>'s ±2^63 range)
+    // book imbalance magnitudes (|x| ≤ 1; sum ≤ 64 ≪ FPN_Binary<64>'s ±2^63 range)
     // verified analytically; this test locks the contract. Pattern:
     // sliding-window-online-statistics-pattern.md Multi-window variant.
     printf("\n--- v5.15.5.D.B: BookImbHistory MeanShortFast bytewise parity ---\n");
@@ -7014,12 +7014,12 @@ e3_skip_load:;
         for (int i = 0; i < 200; ++i) {
             double sign  = (i % 3 == 0) ? -1.0 : ((i % 3 == 1) ? 1.0 : 0.0);
             double mag   = (double)((i * 17 + 13) % 100) / 100.0;
-            FPN<64> samp = FPN_FromDouble<64>(sign * mag);
+            FPN_Binary<64> samp = FPN_FromDouble<64>(sign * mag);
 
             BookImbHistory_Push(&h, samp);
 
-            FPN<64> walked = BookImbHistory_MeanShort(&h, 64);
-            FPN<64> fast   = BookImbHistory_MeanShortFast(&h);
+            FPN_Binary<64> walked = BookImbHistory_MeanShort(&h, 64);
+            FPN_Binary<64> fast   = BookImbHistory_MeanShortFast(&h);
 
             bool eq = (walked.v == fast.v);   // Ship-A 16B: .v IS the whole value (no words/sign/padding)
             if (eq) parity_pass++;
@@ -7296,9 +7296,9 @@ e3_skip_load:;
         // Mirror drainer's per-core slot iteration (Async.hpp:765+ outer for-slot loop):
         for (int slot = 0; slot < cfg.num_execution_cores; ++slot) {
             const auto& ov_slot = cfg.core_overrides[slot];
-            FPN<64> partial_pct_eff = !FPN_IsZero(ov_slot.partial_exit_pct)
+            FPN_Binary<64> partial_pct_eff = !FPN_IsZero(ov_slot.partial_exit_pct)
                 ? ov_slot.partial_exit_pct : cfg.cores[slot].partial_exit_pct;  // post-fix Async.hpp:814
-            FPN<64> tp2_mult_eff = !FPN_IsZero(ov_slot.tp2_mult)
+            FPN_Binary<64> tp2_mult_eff = !FPN_IsZero(ov_slot.tp2_mult)
                 ? ov_slot.tp2_mult : cfg.cores[slot].tp2_mult;  // post-fix Async.hpp:853
 
             double expected_pct = 0.10 * (slot + 1);
@@ -7370,7 +7370,7 @@ e3_skip_load:;
             // Post-fix HIGH-3 StrategyLifecycle pattern
             // (mirrors Strategy_WriteRatchetSL shared helper; ptr access via cfg->)
             const auto* cfg_p = &cfg;
-            FPN<64> fee_taker_sl = !FPN_IsZero(cfg_p->cores[core_id].fee_rate_taker)
+            FPN_Binary<64> fee_taker_sl = !FPN_IsZero(cfg_p->cores[core_id].fee_rate_taker)
                 ? cfg_p->cores[core_id].fee_rate_taker
                 : cfg_p->cores[core_id].fee_rate;
             double fee_taker_sl_d = FPN_ToDouble(fee_taker_sl);
@@ -7384,7 +7384,7 @@ e3_skip_load:;
             // (mirrors EventLoop_RebuildOneCore display capture; ControllerConfig_ResolveForCore
             // produces stack-local copy; per-core fields still accessible via resolved_cfg.cores[slot])
             ControllerConfig<64> resolved_cfg = ControllerConfig_ResolveForCore(cfg, core_id);
-            FPN<64> fee_taker_rc = !FPN_IsZero(resolved_cfg.cores[core_id].fee_rate_taker)
+            FPN_Binary<64> fee_taker_rc = !FPN_IsZero(resolved_cfg.cores[core_id].fee_rate_taker)
                 ? resolved_cfg.cores[core_id].fee_rate_taker
                 : resolved_cfg.cores[core_id].fee_rate;
             double fee_taker_rc_d = FPN_ToDouble(fee_taker_rc);
@@ -9674,7 +9674,7 @@ e3_skip_load:;
         // SHARDED_SNAPSHOT_VERSION bumped from 3 to 4 for the CoreContext
         // strategy_state addition. Hardcoded check to catch accidental
         // reverts.
-        check("v5.15.5.C.3: SHARDED_SNAPSHOT_VERSION is 9 (v5.4.0=4, v5.4.3=5, v5.4.4=6, v5.11.65=7, v5.15.5.C.3=8, Ship-A 16B FPN=9: embedded FPN-struct byte layouts changed)",
+        check("v5.15.5.C.3: SHARDED_SNAPSHOT_VERSION is 9 (v5.4.0=4, v5.4.3=5, v5.4.4=6, v5.11.65=7, v5.15.5.C.3=8, Ship-A 16B FPN_Binary=9: embedded FPN_Binary-struct byte layouts changed)",
               SHARDED_SNAPSHOT_VERSION == 9u);
     }
     {
@@ -9804,8 +9804,8 @@ e3_skip_load:;
         RollingStats<FP, 128> rolling = RollingStats_Init<FP, 128>();
         // Seed rolling with a price scan so price_max is meaningful
         for (int i = 0; i < 64; ++i) {
-            FPN<FP> p = FPN_FromDouble<FP>(50000.0 + (double)i * 10.0);
-            FPN<FP> v = FPN_FromDouble<FP>(1.0);
+            FPN_Binary<FP> p = FPN_FromDouble<FP>(50000.0 + (double)i * 10.0);
+            FPN_Binary<FP> v = FPN_FromDouble<FP>(1.0);
             RollingStats_Push(&rolling, p, v);
         }
 
@@ -9840,8 +9840,8 @@ e3_skip_load:;
         // routes it to SimpleDip. Verify the cast happens correctly.
         RollingStats<FP, 128> rolling = RollingStats_Init<FP, 128>();
         for (int i = 0; i < 64; ++i) {
-            FPN<FP> p = FPN_FromDouble<FP>(60000.0 + (double)i * 5.0);
-            FPN<FP> v = FPN_FromDouble<FP>(2.0);
+            FPN_Binary<FP> p = FPN_FromDouble<FP>(60000.0 + (double)i * 5.0);
+            FPN_Binary<FP> v = FPN_FromDouble<FP>(2.0);
             RollingStats_Push(&rolling, p, v);
         }
 
@@ -9965,8 +9965,8 @@ e3_skip_load:;
                                       (RollingStats<FP, 512>*)nullptr,
                                       nullptr, &mr);
         // Compute expected: avg - avg*0.010
-        FPN<FP> avg = rolling.price_avg;
-        FPN<FP> expected = FPN_Sub(avg, FPN_Mul(avg, mr.live_offset_pct));
+        FPN_Binary<FP> avg = rolling.price_avg;
+        FPN_Binary<FP> expected = FPN_Sub(avg, FPN_Mul(avg, mr.live_offset_pct));
         check("v5.4.0p2.2: dispatcher routes strategy_state to MR (uses live_offset)",
               FPN_Equal(out.bg_price_threshold, expected));
     }
@@ -9979,10 +9979,10 @@ e3_skip_load:;
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
         cfg.fee_rate_taker = FPN_FromDouble<FP>(0.001);  // 10 bps
         cfg.fee_rate       = cfg.fee_rate_taker;
-        FPN<FP> entry = FPN_FromDouble<FP>(50000.0);
-        // Floor ≈ entry * (1 - 3*0.001) ≈ 49850 (FPN precision: 49849.x..49850.x)
-        // Use a tolerance check to avoid double→FPN rounding mismatches.
-        FPN<FP> proposal_above = FPN_FromDouble<FP>(49950.0);
+        FPN_Binary<FP> entry = FPN_FromDouble<FP>(50000.0);
+        // Floor ≈ entry * (1 - 3*0.001) ≈ 49850 (FPN_Binary precision: 49849.x..49850.x)
+        // Use a tolerance check to avoid double→FPN_Binary rounding mismatches.
+        FPN_Binary<FP> proposal_above = FPN_FromDouble<FP>(49950.0);
         bool wrote = tt::Strategy_WriteRatchetSL(&state, 0, proposal_above, entry, &cfg);
         double stored_d = FPN_ToDouble(state.cores[0].pending_params.ratchet_sl);
         check("v5.4.0p2.2: WriteRatchetSL accepts above-floor proposal and caps",
@@ -9992,9 +9992,9 @@ e3_skip_load:;
 
         // Lower proposal (well below current cap) is a no-op since
         // ratchet_sl is now the cap value (~49850).
-        FPN<FP> lower_proposal = FPN_FromDouble<FP>(49000.0);
+        FPN_Binary<FP> lower_proposal = FPN_FromDouble<FP>(49000.0);
         CORE_STATE_FLAG_CLR(state.cores[0], DIRTY);
-        FPN<FP> ratchet_before = state.cores[0].pending_params.ratchet_sl;
+        FPN_Binary<FP> ratchet_before = state.cores[0].pending_params.ratchet_sl;
         bool wrote2 = tt::Strategy_WriteRatchetSL(&state, 0, lower_proposal, entry, &cfg);
         check("v5.4.0p2.2: WriteRatchetSL is max-only (lower proposal ignored)",
               !wrote2 && FPN_Equal(state.cores[0].pending_params.ratchet_sl, ratchet_before));
@@ -10091,8 +10091,8 @@ e3_skip_load:;
                                       (RollingStats<FP, 512>*)nullptr,
                                       nullptr, &mom);
         // Expected: avg + stddev * 2.5
-        FPN<FP> expected_breakout = FPN_Mul(rolling.price_stddev, mom.live_breakout_mult);
-        FPN<FP> expected = FPN_Add(rolling.price_avg, expected_breakout);
+        FPN_Binary<FP> expected_breakout = FPN_Mul(rolling.price_stddev, mom.live_breakout_mult);
+        FPN_Binary<FP> expected = FPN_Add(rolling.price_avg, expected_breakout);
         check("v5.4.0p2.3: dispatcher routes state to Momentum (stddev*breakout_mult)",
               FPN_Equal(out.bg_price_threshold, expected));
         check("v5.4.0p2.3: Momentum BuildParameters sets BUY_ABOVE flag",
@@ -10152,18 +10152,18 @@ e3_skip_load:;
         }
         tt::Strategy_InitPerCore(&state, 0, STRATEGY_EMA_CROSS, &rolling, &cfg);
         auto* es = static_cast<EmaCrossState<FP>*>(state.cores[0].strategy_state);
-        FPN<FP> prev_seed = es->prev_ema;
+        FPN_Binary<FP> prev_seed = es->prev_ema;
         check("v5.4.0p2.4: Init seeds prev_ema from rolling",
               FPN_Equal(prev_seed, rolling.price_avg));
 
-        FPN<FP> ema_now = FPN_FromDouble<FP>(50500.0);
+        FPN_Binary<FP> ema_now = FPN_FromDouble<FP>(50500.0);
         tt::Strategy_AdaptPerCore(&state, 0, STRATEGY_EMA_CROSS,
                                    FPN_FromDouble<FP>(50000.0),
                                    FPN_Zero<FP>(), 0, &cfg, &ema_now);
         check("v5.4.0p2.4: AdaptPerCore updates prev_ema to ema_now",
               FPN_Equal(es->prev_ema, ema_now));
         // last_ema_slope should equal ema_now - prev_seed
-        FPN<FP> expected_slope = FPN_Sub(ema_now, prev_seed);
+        FPN_Binary<FP> expected_slope = FPN_Sub(ema_now, prev_seed);
         check("v5.4.0p2.4: AdaptPerCore computes ema_slope = now - prev",
               FPN_Equal(es->last_ema_slope, expected_slope));
 
@@ -10237,7 +10237,7 @@ e3_skip_load:;
         state.oms->portfolio.positions[0].entry_price = FPN_FromDouble<FP>(50000.0);
         state.oms->portfolio.positions[0].original_tp = FPN_FromDouble<FP>(50500.0);
 
-        FPN<FP> ratchet_before = state.cores[0].pending_params.ratchet_sl;
+        FPN_Binary<FP> ratchet_before = state.cores[0].pending_params.ratchet_sl;
         tt::Strategy_ExitAdjustPerCore(&state, 0, STRATEGY_ML,
                                         FPN_FromDouble<FP>(51000.0), &rolling, &cfg);
         check("v5.4.0p2.5: ML ExitAdjust skips when R² < 0.5",
@@ -10373,7 +10373,7 @@ e3_skip_load:;
               !FPN_IsZero(baseline.bg_price_threshold));
         check("v5.5.0p8: defaults off — trade_size populated",
               !FPN_IsZero(baseline.trade_size));
-        FPN<FP> baseline_size = baseline.trade_size;
+        FPN_Binary<FP> baseline_size = baseline.trade_size;
 
         // VolScaler enabled — trade_size should shrink under high rel vol.
         BITMAP_SET(cfg.ml_cfg_flags, MASK_ML_CFG_FOXML_VOL_SCALING_ENABLED);
@@ -10786,7 +10786,7 @@ e3_skip_load:;
         // FPN_FromDouble<64> in the new path; this test catches any
         // precision divergence vs the legacy direct (float)double cast.
         RegimeSignals<64> sig{};
-        // 0-9 (FPN<F> from signals)
+        // 0-9 (FPN_Binary<F> from signals)
         sig.short_slope         = FPN_FromDouble<64>(0.0042);
         sig.short_r2            = FPN_FromDouble<64>(0.78);
         sig.short_variance      = FPN_FromDouble<64>(0.000123);
@@ -10797,25 +10797,25 @@ e3_skip_load:;
         sig.ror_slope           = FPN_FromDouble<64>(-0.0001);
         sig.volume_slope        = FPN_FromDouble<64>(0.005);
         sig.volume_delta        = FPN_FromDouble<64>(0.013);
-        // 10 (FPN<F>)
+        // 10 (FPN_Binary<F>)
         sig.ema_sma_spread      = FPN_FromDouble<64>(0.0033);
         // 15 (int → cast to double in compute)
         sig.ema_above_sma       = 1;
-        // 16-18 (FPN<F>)
+        // 16-18 (FPN_Binary<F>)
         sig.mid_slope           = FPN_FromDouble<64>(0.0027);
         sig.mid_r2              = FPN_FromDouble<64>(0.61);
         sig.cumdelta            = FPN_FromDouble<64>(-0.42);
         // 19-20 (double — FPN_FromDouble round-trip)
         sig.hour_sin            = 0.7071;
         sig.hour_cos            = -0.3827;
-        // 21 (FPN<F>)
+        // 21 (FPN_Binary<F>)
         sig.vol_regime_ratio    = FPN_FromDouble<64>(1.85);
         // 22 (double)
         sig.tick_rate_z         = 1.23;
-        // 23-24 (FPN<F>)
+        // 23-24 (FPN_Binary<F>)
         sig.dist_to_high        = FPN_FromDouble<64>(0.0042);
         sig.dist_to_low         = FPN_FromDouble<64>(0.0089);
-        // 25-27 (FPN<F>)
+        // 25-27 (FPN_Binary<F>)
         sig.book_imb_mean_short = FPN_FromDouble<64>(0.15);
         sig.book_imb_mean_long  = FPN_FromDouble<64>(0.08);
         sig.book_imb_drift      = FPN_FromDouble<64>(0.07);
@@ -10880,7 +10880,7 @@ e3_skip_load:;
               equiv);
 
         // MODEL_FORMAT_VERSION bumped 4 → 5 in v5.8.1a; bumped 5 → 6 in
-        // v5.10.0b for FPN-end-to-end slow path (the bit-level math shift
+        // v5.10.0b for FPN_Binary-end-to-end slow path (the bit-level math shift
         // requires retraining; old v5 stamps refuse to load).
         check("v5.10.0b: MODEL_FORMAT_VERSION == 6", MODEL_FORMAT_VERSION == 6);
 
@@ -11380,12 +11380,12 @@ e3_skip_load:;
         check("v5.9.0: Features_PackAll baseline returns NUM_REGISTERED_FEATURES on valid input",
               n_valid == (int)NUM_REGISTERED_FEATURES);
 
-        // FPN-side guard: corrupt one signal field with a value larger than
+        // FPN_Binary-side guard: corrupt one signal field with a value larger than
         // the FPN_IsValidFinite threshold (1e15). FPN_IsValidFinite should
         // catch it before the float conversion.
         sig.short_slope = FPN_FromDouble<64>(1e16);
         int n_fpn_garbage = Features_PackAll(&ctx, buf);
-        check("v5.9.0: Features_PackAll returns -1 on FPN out-of-range (FPN_IsValidFinite catches)",
+        check("v5.9.0: Features_PackAll returns -1 on FPN_Binary out-of-range (FPN_IsValidFinite catches)",
               n_fpn_garbage < 0);
         sig.short_slope = FPN_FromDouble<64>(0.0042);  // restore
 
@@ -12153,7 +12153,7 @@ e3_skip_load:;
         // === Sub-area 1a: Features_PackAll snapshot ===
         // 30 of 34 features are direct passthrough from ctx->signals;
         // 4 (FEATURE_VWAP_DEV..VOLUME_AVG) read ctx->short_rolling.
-        // Expected output = (float)FPN_ToDouble(input) for FPN fields,
+        // Expected output = (float)FPN_ToDouble(input) for FPN_Binary fields,
         // or (float)input for double fields.
         {
             RegimeSignals<64> signals = {};
@@ -13217,8 +13217,8 @@ e3_skip_load:;
                 //   Backtest_RunFullValidation):
                 StampInferenceCfgInputs inf = {};
                 STAMP_SET(inf, inference_cfg);
-                // v5.15.5.F.4d.1.B.3 Phase F — inf fields now FPN<64> via cfg-derived auto-gen;
-                // direct FPN<64> → FPN<64> assignment (was FPN_ToDouble unwrap to double for old `double` inf field).
+                // v5.15.5.F.4d.1.B.3 Phase F — inf fields now FPN_Binary<64> via cfg-derived auto-gen;
+                // direct FPN_Binary<64> → FPN_Binary<64> assignment (was FPN_ToDouble unwrap to double for old `double` inf field).
                 inf.confidence_threshold_scale = cfg.confidence_threshold_scale;
                 inf.barrier_gate_enabled = BITMAP_IS_SET(cfg.gate_cfg_flags, MASK_GATE_CFG_BARRIER_GATE_ENABLED) ? 1 : 0;
                 inf.confidence_hard_block_threshold = cfg.confidence_hard_block_threshold;
@@ -14192,34 +14192,34 @@ e3_skip_load:;
         // FPN_FromDouble<F>((double)int) can introduce across compilers / -O
         // levels. For small integers (indices, counts, precomputed sums) the
         // pure-integer path is bytewise-deterministic across builds.
-        // v5.10.0b.1 prerequisite for the FPN-end-to-end conversion.
+        // v5.10.0b.1 prerequisite for the FPN_Binary-end-to-end conversion.
 
         // Round-trip basic values
-        FPN<64> z = FPN_FromInt<64>(0);
+        FPN_Binary<64> z = FPN_FromInt<64>(0);
         check("v5.10.0b.1: FPN_FromInt(0) zero magnitude",
               FPN_IsZero(z));
 
-        FPN<64> one = FPN_FromInt<64>(1);
+        FPN_Binary<64> one = FPN_FromInt<64>(1);
         check("v5.10.0b.1: FPN_FromInt(1) round-trips to double",
               FPN_ToDouble(one) == 1.0 && one.v > 0);
 
-        FPN<64> neg = FPN_FromInt<64>(-42);
+        FPN_Binary<64> neg = FPN_FromInt<64>(-42);
         check("v5.10.0b.1: FPN_FromInt(-42) preserves sign + magnitude",
               FPN_ToDouble(neg) == -42.0 && neg.v < 0);
 
-        // Field-equal helper. Ship-A 16B FPN: the value IS the whole struct
+        // Field-equal helper. Ship-A 16B FPN_Binary: the value IS the whole struct
         // (bare __int128 v, no words/sign/padding) — so .v equality is exact byte-equality.
-        auto fpn_field_eq = [](const FPN<64>& a, const FPN<64>& b) -> bool {
+        auto fpn_field_eq = [](const FPN_Binary<64>& a, const FPN_Binary<64>& b) -> bool {
             return a.v == b.v;
         };
 
         // Field-equal with FromDouble for small ints (indices / counts).
         // For i < 2^53, double exactly represents i, so FromInt and
-        // FromDouble must produce identical FPN values.
+        // FromDouble must produce identical FPN_Binary values.
         bool int_dbl_match_all = true;
         for (int i = 0; i < 128; i++) {
-            FPN<64> via_int = FPN_FromInt<64>(i);
-            FPN<64> via_dbl = FPN_FromDouble<64>((double)i);
+            FPN_Binary<64> via_int = FPN_FromInt<64>(i);
+            FPN_Binary<64> via_dbl = FPN_FromDouble<64>((double)i);
             if (!fpn_field_eq(via_int, via_dbl)) {
                 printf("  [v5.10.0b.1 DIAG] i=%d FromInt != FromDouble (sign or w[])\n", i);
                 int_dbl_match_all = false;
@@ -14236,10 +14236,10 @@ e3_skip_load:;
             int64_t n_l = (int64_t)n;
             int64_t sum_x_int  = n_l * (n_l - 1) / 2;
             int64_t sum_x2_int = n_l * (n_l - 1) * (2 * n_l - 1) / 6;
-            FPN<64> via_int  = FPN_FromInt<64>(sum_x_int);
-            FPN<64> via_dbl  = FPN_FromDouble<64>((double)n * (double)(n - 1) / 2.0);
-            FPN<64> via_int2 = FPN_FromInt<64>(sum_x2_int);
-            FPN<64> via_dbl2 = FPN_FromDouble<64>((double)n * (double)(n - 1) * (double)(2 * n - 1) / 6.0);
+            FPN_Binary<64> via_int  = FPN_FromInt<64>(sum_x_int);
+            FPN_Binary<64> via_dbl  = FPN_FromDouble<64>((double)n * (double)(n - 1) / 2.0);
+            FPN_Binary<64> via_int2 = FPN_FromInt<64>(sum_x2_int);
+            FPN_Binary<64> via_dbl2 = FPN_FromDouble<64>((double)n * (double)(n - 1) * (double)(2 * n - 1) / 6.0);
             if (!fpn_field_eq(via_int, via_dbl) || !fpn_field_eq(via_int2, via_dbl2)) {
                 printf("  [v5.10.0b.1 DIAG] n=%d sum_x or sum_x2 diverges\n", n);
                 sumx_match_all = false;
@@ -14250,16 +14250,16 @@ e3_skip_load:;
               sumx_match_all);
 
         // Boundary: large positive + INT64_MIN safety (no UB)
-        FPN<64> big = FPN_FromInt<64>(1234567890LL);
+        FPN_Binary<64> big = FPN_FromInt<64>(1234567890LL);
         check("v5.10.0b.1: FPN_FromInt(1234567890) round-trips",
               FPN_ToDouble(big) == 1234567890.0 && big.v > 0);
     }
 
-    printf("\n--- EXTENSIBILITY: v5.10.0b.2.5.A — FPN-native Newton-Raphson sqrt ---\n");
+    printf("\n--- EXTENSIBILITY: v5.10.0b.2.5.A — FPN_Binary-native Newton-Raphson sqrt ---\n");
     {
         // Theory: FPN_Sqrt was a stub round-tripping through IEEE-754 sqrt
         // (FPN_FromDouble(sqrt(FPN_ToDouble(value)))). Replaced with pure
-        // integer Newton-Raphson on FPN bit-scan seed → bytewise-deterministic
+        // integer Newton-Raphson on FPN_Binary bit-scan seed → bytewise-deterministic
         // across compilers / -O levels / FMA support. Required by FlowFeatures
         // z-score conversion (B.2.5.C).
 
@@ -14268,12 +14268,12 @@ e3_skip_load:;
               FPN_IsZero(FPN_Sqrt(FPN_Zero<64>())));
 
         // Edge: sqrt(neg) = 0 (graceful; old stub would assert)
-        FPN<64> neg = FPN_FromInt<64>(-4);
+        FPN_Binary<64> neg = FPN_FromInt<64>(-4);
         check("v5.10.0b.2.5.A: sqrt(negative) = 0 (graceful)",
               FPN_IsZero(FPN_Sqrt(neg)));
 
         // Perfect squares: sqrt(4) = 2, sqrt(100) = 10, sqrt(10000) = 100
-        auto sqrt_close = [](double expected, FPN<64> v, double rel_eps) -> bool {
+        auto sqrt_close = [](double expected, FPN_Binary<64> v, double rel_eps) -> bool {
             double got = FPN_ToDouble(FPN_Sqrt(v));
             double err = (got - expected) / expected;
             if (err < 0) err = -err;
@@ -14301,22 +14301,22 @@ e3_skip_load:;
               sqrt_close(sqrt(123456789.0), FPN_FromInt<64>(123456789LL), 1e-10));
 
         // Determinism: same input → same output bytes (run twice, field-equal)
-        FPN<64> two = FPN_FromInt<64>(2);
-        FPN<64> r1  = FPN_Sqrt(two);
-        FPN<64> r2  = FPN_Sqrt(two);
+        FPN_Binary<64> two = FPN_FromInt<64>(2);
+        FPN_Binary<64> r1  = FPN_Sqrt(two);
+        FPN_Binary<64> r2  = FPN_Sqrt(two);
         bool det = (r1.v == r2.v);   // Ship-A 16B: bytewise-equal ⇔ .v-equal
         check("v5.10.0b.2.5.A: sqrt(x) is deterministic (bytewise-equal repeat)",
               det);
     }
 
-    printf("\n--- EXTENSIBILITY: v5.10.0b.2.5.B — FPN-native Taylor exp ---\n");
+    printf("\n--- EXTENSIBILITY: v5.10.0b.2.5.B — FPN_Binary-native Taylor exp ---\n");
     {
         // Theory: FPN_Exp was a stub round-tripping through IEEE-754 exp.
         // Replaced with range reduction (x = k*ln(2) + r) + Taylor on r.
         // 2^k is a bit-shift; exp(r) for |r| < ln(2)/2 converges in 9 terms.
         // Required by FlowFeatures EWMA decay (B.2.5.C).
 
-        auto exp_close = [](double expected, FPN<64> v, double rel_eps) -> bool {
+        auto exp_close = [](double expected, FPN_Binary<64> v, double rel_eps) -> bool {
             double got = FPN_ToDouble(FPN_Exp(v));
             if (expected == 0.0) return got < rel_eps;  // absolute for ~0
             double err = (got - expected) / expected;
@@ -14337,44 +14337,44 @@ e3_skip_load:;
               exp_close(exp(2.0), FPN_FromInt<64>(2), 1e-9));
 
         // Negative inputs (the EWMA decay use case): exp(-1) ≈ 0.368
-        FPN<64> neg_one = FPN_FromInt<64>(-1);
+        FPN_Binary<64> neg_one = FPN_FromInt<64>(-1);
         check("v5.10.0b.2.5.B: exp(-1) ≈ 1/e",
               exp_close(1.0/M_E, neg_one, 1e-9));
 
         // EWMA decay range: exp(-0.1) ≈ 0.905, exp(-0.5) ≈ 0.607
         // Use FPN_FromDouble directly for fractional inputs (those are
         // bytewise-stable IEEE-754 literals)
-        FPN<64> neg_half = FPN_FromDouble<64>(-0.5);
+        FPN_Binary<64> neg_half = FPN_FromDouble<64>(-0.5);
         check("v5.10.0b.2.5.B: exp(-0.5) ≈ 0.6065",
               exp_close(exp(-0.5), neg_half, 1e-9));
 
         // Larger negative: exp(-5) ≈ 6.74e-3
-        FPN<64> neg_five = FPN_FromInt<64>(-5);
+        FPN_Binary<64> neg_five = FPN_FromInt<64>(-5);
         check("v5.10.0b.2.5.B: exp(-5) ≈ 6.74e-3",
               exp_close(exp(-5.0), neg_five, 1e-9));
 
         // Far negative: exp(-10) ≈ 4.54e-5
-        FPN<64> neg_ten = FPN_FromInt<64>(-10);
+        FPN_Binary<64> neg_ten = FPN_FromInt<64>(-10);
         check("v5.10.0b.2.5.B: exp(-10) ≈ 4.54e-5",
               exp_close(exp(-10.0), neg_ten, 1e-8));
 
         // Determinism: same input → same output bytes
-        FPN<64> input = FPN_FromInt<64>(-3);
-        FPN<64> r1 = FPN_Exp(input);
-        FPN<64> r2 = FPN_Exp(input);
+        FPN_Binary<64> input = FPN_FromInt<64>(-3);
+        FPN_Binary<64> r1 = FPN_Exp(input);
+        FPN_Binary<64> r2 = FPN_Exp(input);
         bool det = (r1.v == r2.v);   // Ship-A 16B: bytewise-equal ⇔ .v-equal
         check("v5.10.0b.2.5.B: exp(x) is deterministic (bytewise-equal repeat)",
               det);
 
         // Identity check: exp(a) * exp(b) ≈ exp(a + b)
-        // Use FPN values, multiply, compare to FPN_Exp(sum)
-        FPN<64> a = FPN_FromDouble<64>(-1.5);
-        FPN<64> b = FPN_FromDouble<64>(-2.3);
-        FPN<64> sum = FPN_Add(a, b);
-        FPN<64> exp_a = FPN_Exp(a);
-        FPN<64> exp_b = FPN_Exp(b);
-        FPN<64> exp_sum = FPN_Exp(sum);
-        FPN<64> product = FPN_Mul(exp_a, exp_b);
+        // Use FPN_Binary values, multiply, compare to FPN_Exp(sum)
+        FPN_Binary<64> a = FPN_FromDouble<64>(-1.5);
+        FPN_Binary<64> b = FPN_FromDouble<64>(-2.3);
+        FPN_Binary<64> sum = FPN_Add(a, b);
+        FPN_Binary<64> exp_a = FPN_Exp(a);
+        FPN_Binary<64> exp_b = FPN_Exp(b);
+        FPN_Binary<64> exp_sum = FPN_Exp(sum);
+        FPN_Binary<64> product = FPN_Mul(exp_a, exp_b);
         double diff = FPN_ToDouble(FPN_Sub(product, exp_sum));
         if (diff < 0) diff = -diff;
         double scale = FPN_ToDouble(exp_sum);
@@ -14382,7 +14382,7 @@ e3_skip_load:;
               diff / scale < 1e-8);
     }
 
-    printf("\n--- EXTENSIBILITY: v5.10.0b.2.5.D — FPN-native Taylor sin/cos ---\n");
+    printf("\n--- EXTENSIBILITY: v5.10.0b.2.5.D — FPN_Binary-native Taylor sin/cos ---\n");
     {
         // Theory: FPN_Sin/Cos were stubs round-tripping through IEEE-754.
         // Replaced with range reduction to [0, π/2] + 8-term Taylor on x²
@@ -14390,74 +14390,74 @@ e3_skip_load:;
         // FPN_Cos(x) = FPN_Sin(x + π/2). Required by RegimeDetector
         // hour_sin/hour_cos (sin(2π·hour/24) cyclical hour encoding).
 
-        auto sincos_close = [](double expected, FPN<64> got, double abs_eps) -> bool {
+        auto sincos_close = [](double expected, FPN_Binary<64> got, double abs_eps) -> bool {
             double v = FPN_ToDouble(got);
             double err = v - expected;
             if (err < 0) err = -err;
             return err < abs_eps;
         };
 
-        FPN<64> zero = FPN_Zero<64>();
+        FPN_Binary<64> zero = FPN_Zero<64>();
         check("v5.10.0b.2.5.D: sin(0) = 0",
               sincos_close(0.0, FPN_Sin(zero), 1e-12));
         check("v5.10.0b.2.5.D: cos(0) = 1",
               sincos_close(1.0, FPN_Cos(zero), 1e-9));
 
         // π/2 → sin = 1, cos = 0
-        FPN<64> hpi = FPN_FromDouble<64>(1.5707963267948966);
+        FPN_Binary<64> hpi = FPN_FromDouble<64>(1.5707963267948966);
         check("v5.10.0b.2.5.D: sin(π/2) ≈ 1",
               sincos_close(1.0, FPN_Sin(hpi), 1e-9));
         check("v5.10.0b.2.5.D: cos(π/2) ≈ 0",
               sincos_close(0.0, FPN_Cos(hpi), 1e-9));
 
         // π → sin = 0, cos = -1
-        FPN<64> pi_v = FPN_FromDouble<64>(3.141592653589793);
+        FPN_Binary<64> pi_v = FPN_FromDouble<64>(3.141592653589793);
         check("v5.10.0b.2.5.D: sin(π) ≈ 0",
               sincos_close(0.0, FPN_Sin(pi_v), 1e-9));
         check("v5.10.0b.2.5.D: cos(π) ≈ -1",
               sincos_close(-1.0, FPN_Cos(pi_v), 1e-9));
 
         // 3π/2 → sin = -1, cos = 0 (range reduction past π)
-        FPN<64> three_hpi = FPN_FromDouble<64>(4.71238898038469);
+        FPN_Binary<64> three_hpi = FPN_FromDouble<64>(4.71238898038469);
         check("v5.10.0b.2.5.D: sin(3π/2) ≈ -1 (range-reduces past π)",
               sincos_close(-1.0, FPN_Sin(three_hpi), 1e-9));
         check("v5.10.0b.2.5.D: cos(3π/2) ≈ 0",
               sincos_close(0.0, FPN_Cos(three_hpi), 1e-9));
 
         // Negative input: sin(-π/4) = -sin(π/4) ≈ -0.707
-        FPN<64> neg_qpi = FPN_FromDouble<64>(-0.7853981633974483);
+        FPN_Binary<64> neg_qpi = FPN_FromDouble<64>(-0.7853981633974483);
         check("v5.10.0b.2.5.D: sin(-π/4) ≈ -0.7071",
               sincos_close(-sin(0.7853981633974483), FPN_Sin(neg_qpi), 1e-9));
         check("v5.10.0b.2.5.D: cos(-π/4) ≈ 0.7071 (cos is even)",
               sincos_close(cos(0.7853981633974483), FPN_Cos(neg_qpi), 1e-9));
 
         // Period: sin(x + 2π) = sin(x); spot-check at 5π
-        FPN<64> five_pi = FPN_FromDouble<64>(15.707963267948966);
+        FPN_Binary<64> five_pi = FPN_FromDouble<64>(15.707963267948966);
         check("v5.10.0b.2.5.D: sin(5π) ≈ 0 (huge range reduction)",
               sincos_close(0.0, FPN_Sin(five_pi), 1e-7));
 
         // Pythagorean identity: sin²(x) + cos²(x) = 1
-        FPN<64> x_test = FPN_FromDouble<64>(1.234);
-        FPN<64> sx = FPN_Sin(x_test);
-        FPN<64> cx = FPN_Cos(x_test);
-        FPN<64> id = FPN_Add(FPN_Mul(sx, sx), FPN_Mul(cx, cx));
+        FPN_Binary<64> x_test = FPN_FromDouble<64>(1.234);
+        FPN_Binary<64> sx = FPN_Sin(x_test);
+        FPN_Binary<64> cx = FPN_Cos(x_test);
+        FPN_Binary<64> id = FPN_Add(FPN_Mul(sx, sx), FPN_Mul(cx, cx));
         check("v5.10.0b.2.5.D: sin²(1.234) + cos²(1.234) ≈ 1",
               sincos_close(1.0, id, 1e-9));
 
         // Hour encoding (use case): sin(2π·6/24) = sin(π/2) = 1
-        FPN<64> hour_6 = FPN_FromDouble<64>(2.0 * 3.141592653589793 * 6.0 / 24.0);
+        FPN_Binary<64> hour_6 = FPN_FromDouble<64>(2.0 * 3.141592653589793 * 6.0 / 24.0);
         check("v5.10.0b.2.5.D: sin(2π·6/24) ≈ 1 (hour-of-day cyclical encoding)",
               sincos_close(1.0, FPN_Sin(hour_6), 1e-9));
 
         // Determinism
-        FPN<64> r1 = FPN_Sin(x_test);
-        FPN<64> r2 = FPN_Sin(x_test);
+        FPN_Binary<64> r1 = FPN_Sin(x_test);
+        FPN_Binary<64> r2 = FPN_Sin(x_test);
         bool det = (r1.v == r2.v);   // Ship-A 16B: bytewise-equal ⇔ .v-equal
         check("v5.10.0b.2.5.D: sin(x) is deterministic (bytewise-equal repeat)",
               det);
     }
 
-    printf("\n--- EXTENSIBILITY: v5.10.0b.2.5.C — FlowFeatures internal FPN math ---\n");
+    printf("\n--- EXTENSIBILITY: v5.10.0b.2.5.C — FlowFeatures internal FPN_Binary math ---\n");
     {
         // Theory: FlowState_Push, LargeTradeState_ZScore, SpreadState_ZScore
         // now compute decay/sqrt via FPN_Exp/FPN_Sqrt internally — bytewise-
@@ -14514,7 +14514,7 @@ e3_skip_load:;
             LargeTradeState_Push(&lt1, FPN_FromDouble<64>(s));
             LargeTradeState_Push(&lt2, FPN_FromDouble<64>(s));
         }
-        FPN<64> probe = FPN_FromDouble<64>(13.5);
+        FPN_Binary<64> probe = FPN_FromDouble<64>(13.5);
         double z1 = LargeTradeState_ZScore(&lt1, probe);
         double z2 = LargeTradeState_ZScore(&lt2, probe);
         check("v5.10.0b.2.5.C: LargeTradeState_ZScore bytewise-deterministic",
@@ -14562,7 +14562,7 @@ e3_skip_load:;
         // Cyclical encoding for hour 0..23 — verify sin² + cos² ≈ 1 for each
         bool all_unit_circle = true;
         for (int h = 0; h < 24; h++) {
-            FPN<64> arg = FPN_FromDouble<64>(TAU * (double)h / 24.0);
+            FPN_Binary<64> arg = FPN_FromDouble<64>(TAU * (double)h / 24.0);
             double s = FPN_ToDouble(FPN_Sin(arg));
             double c = FPN_ToDouble(FPN_Cos(arg));
             double mag = s*s + c*c;
@@ -14577,7 +14577,7 @@ e3_skip_load:;
 
         // Determinism: two computations of the same hour give bytewise-equal
         // double output (the contract the conversion is buying)
-        FPN<64> arg = FPN_FromDouble<64>(TAU * 13.5 / 24.0);
+        FPN_Binary<64> arg = FPN_FromDouble<64>(TAU * 13.5 / 24.0);
         double s1 = FPN_ToDouble(FPN_Sin(arg));
         double s2 = FPN_ToDouble(FPN_Sin(arg));
         double c1 = FPN_ToDouble(FPN_Cos(arg));
@@ -14833,22 +14833,22 @@ e3_skip_load:;
               !FPN_IsZero(lut.values[128]));
 
         // === Test 2: LUT[2] is exactly 0.5 (power-of-2 reciprocal is exact) ===
-        FPN<FP> half = FPN_FromDouble<FP>(0.5);
-        check("v5.11.2.A: LUT[2] == FPN(0.5) bytewise (power-of-2 exact)",
+        FPN_Binary<FP> half = FPN_FromDouble<FP>(0.5);
+        check("v5.11.2.A: LUT[2] == FPN_Binary(0.5) bytewise (power-of-2 exact)",
               lut.values[2].v == half.v);
 
         // === Test 3: LUT[128] is exactly 1/128 (power-of-2) ===
-        FPN<FP> recip128 = FPN_FromDouble<FP>(1.0 / 128.0);
-        check("v5.11.2.A: LUT[128] == FPN(1/128) bytewise (power-of-2 exact)",
+        FPN_Binary<FP> recip128 = FPN_FromDouble<FP>(1.0 / 128.0);
+        check("v5.11.2.A: LUT[128] == FPN_Binary(1/128) bytewise (power-of-2 exact)",
               lut.values[128].v == recip128.v);
 
         // === Test 4: For power-of-2 n, FPN_Mul(sum, LUT[n]) == FPN_DivNoAssert(sum, n) bytewise ===
         // (Audit's claim; verifies no drift for the steady-state case n=W.)
-        FPN<FP> sum = FPN_FromDouble<FP>(12345.6789);
+        FPN_Binary<FP> sum = FPN_FromDouble<FP>(12345.6789);
         for (int n_test : {2, 4, 8, 16, 32, 64, 128}) {
-            FPN<FP> n_fp = FPN_FromInt<FP>((int64_t)n_test);
-            FPN<FP> via_div = FPN_DivNoAssert(sum, n_fp);
-            FPN<FP> via_mul = FPN_Mul(sum, lut.values[n_test]);
+            FPN_Binary<FP> n_fp = FPN_FromInt<FP>((int64_t)n_test);
+            FPN_Binary<FP> via_div = FPN_DivNoAssert(sum, n_fp);
+            FPN_Binary<FP> via_mul = FPN_Mul(sum, lut.values[n_test]);
             char msg[128];
             snprintf(msg, sizeof(msg),
                 "v5.11.2.A: FPN_Mul(LUT[%d]) == FPN_DivNoAssert (power-of-2)", n_test);
@@ -14861,9 +14861,9 @@ e3_skip_load:;
         // drift should be < 1e-10 of the result. This is the actual contract
         // the engine relies on (downstream consumers truncate to ~1e-7 anyway).
         for (int n_test : {3, 5, 6, 7, 9, 10, 11, 13, 100}) {
-            FPN<FP> n_fp = FPN_FromInt<FP>((int64_t)n_test);
-            FPN<FP> via_div = FPN_DivNoAssert(sum, n_fp);
-            FPN<FP> via_mul = FPN_Mul(sum, lut.values[n_test]);
+            FPN_Binary<FP> n_fp = FPN_FromInt<FP>((int64_t)n_test);
+            FPN_Binary<FP> via_div = FPN_DivNoAssert(sum, n_fp);
+            FPN_Binary<FP> via_mul = FPN_Mul(sum, lut.values[n_test]);
             double via_div_d = FPN_ToDouble(via_div);
             double via_mul_d = FPN_ToDouble(via_mul);
             double rel_drift = (via_div_d != 0.0)
@@ -14898,7 +14898,7 @@ e3_skip_load:;
         // Cache-line discipline (mirror of static_assert at the type level)
         check("v5.11.2.B: head offset is 64B-aligned (W=128)",
               (offsetof(RS128, head) % 64) == 0);
-        check("v5.11.2.B: head past 4-output-line cluster (W=128; Ship-A 16B FPN, was 5 lines)",
+        check("v5.11.2.B: head past 4-output-line cluster (W=128; Ship-A 16B FPN_Binary, was 5 lines)",
               offsetof(RS128, head) >= 64 * 4);
         // Layout up to head is W-independent (outputs come first)
         check("v5.11.2.B: head offset same across W=128/256",
@@ -14910,15 +14910,15 @@ e3_skip_load:;
         // Output cluster sits at the very front (line 0)
         check("v5.11.2.B: price_avg at offset 0 (struct head)",
               offsetof(RS128, price_avg) == 0);
-        // Outputs occupy lines 0-3 (Ship-A 16B FPN; was 0-4) — last output `vwap_deviation` < line 4 boundary
+        // Outputs occupy lines 0-3 (Ship-A 16B FPN_Binary; was 0-4) — last output `vwap_deviation` < line 4 boundary
         check("v5.11.2.B: vwap_deviation in cache lines 0-3 (output cluster)",
               offsetof(RS128, vwap_deviation) < 64 * 4);
 
         // Functional correctness — Push still computes valid outputs after reorder
         RS128 rolling = RollingStats_Init<FP, 128>();
         for (int i = 0; i < 16; ++i) {
-            FPN<FP> p = FPN_FromDouble<FP>(100.0 + i * 0.5);
-            FPN<FP> v = FPN_FromDouble<FP>(1.0);
+            FPN_Binary<FP> p = FPN_FromDouble<FP>(100.0 + i * 0.5);
+            FPN_Binary<FP> v = FPN_FromDouble<FP>(1.0);
             RollingStats_Push(&rolling, p, v, /*is_buyer_maker=*/0);
         }
         check("v5.11.2.B: post-reorder count populated",
@@ -14939,7 +14939,7 @@ e3_skip_load:;
         // Verification strategy: push a sequence of (price, volume) samples
         // and at each step recompute the same sums by brute-force scan over
         // the ring buffer's currently-valid window. The running sums must
-        // match the brute-force result exactly (FPN integer math is
+        // match the brute-force result exactly (FPN_Binary integer math is
         // associative so order doesn't matter).
         //
         // Min/max from deque must equal min/max from a linear scan.
@@ -14952,7 +14952,7 @@ e3_skip_load:;
         constexpr unsigned WTEST = 8;  // small W so we hit eviction quickly
 
         auto brute_sum_y = [](const RollingStats<FP, WTEST>& rs) {
-            FPN<FP> s = FPN_Zero<FP>();
+            FPN_Binary<FP> s = FPN_Zero<FP>();
             int n = rs.count;
             for (int i = 0; i < n; ++i) {
                 int idx = (rs.head - n + i + (int)WTEST) & ((int)WTEST - 1);
@@ -14961,17 +14961,17 @@ e3_skip_load:;
             return s;
         };
         auto brute_sum_y2 = [](const RollingStats<FP, WTEST>& rs) {
-            FPN<FP> s = FPN_Zero<FP>();
+            FPN_Binary<FP> s = FPN_Zero<FP>();
             int n = rs.count;
             for (int i = 0; i < n; ++i) {
                 int idx = (rs.head - n + i + (int)WTEST) & ((int)WTEST - 1);
-                FPN<FP> p = rs.price_buf[idx];
+                FPN_Binary<FP> p = rs.price_buf[idx];
                 s = FPN_AddSat(s, FPN_Mul(p, p));
             }
             return s;
         };
         auto brute_sum_xy = [](const RollingStats<FP, WTEST>& rs) {
-            FPN<FP> s = FPN_Zero<FP>();
+            FPN_Binary<FP> s = FPN_Zero<FP>();
             int n = rs.count;
             for (int i = 0; i < n; ++i) {
                 int idx = (rs.head - n + i + (int)WTEST) & ((int)WTEST - 1);
@@ -14982,7 +14982,7 @@ e3_skip_load:;
         auto brute_min = [](const RollingStats<FP, WTEST>& rs) {
             int n = rs.count;
             int idx0 = (rs.head - n + (int)WTEST) & ((int)WTEST - 1);
-            FPN<FP> m = rs.price_buf[idx0];
+            FPN_Binary<FP> m = rs.price_buf[idx0];
             for (int i = 1; i < n; ++i) {
                 int idx = (rs.head - n + i + (int)WTEST) & ((int)WTEST - 1);
                 m = FPN_Min(m, rs.price_buf[idx]);
@@ -14992,7 +14992,7 @@ e3_skip_load:;
         auto brute_max = [](const RollingStats<FP, WTEST>& rs) {
             int n = rs.count;
             int idx0 = (rs.head - n + (int)WTEST) & ((int)WTEST - 1);
-            FPN<FP> m = rs.price_buf[idx0];
+            FPN_Binary<FP> m = rs.price_buf[idx0];
             for (int i = 1; i < n; ++i) {
                 int idx = (rs.head - n + i + (int)WTEST) & ((int)WTEST - 1);
                 m = FPN_Max(m, rs.price_buf[idx]);
@@ -15075,15 +15075,15 @@ e3_skip_load:;
 
         // --- Test 5: FPN_BlendOnMask correctness (Rule 8 helper) ---
         {
-            FPN<FP> a = FPN_FromDouble<FP>(42.0);
-            FPN<FP> b = FPN_FromDouble<FP>(-17.5);
+            FPN_Binary<FP> a = FPN_FromDouble<FP>(42.0);
+            FPN_Binary<FP> b = FPN_FromDouble<FP>(-17.5);
             check("v5.11.2.C: FPN_BlendOnMask(a, b, all-1s) == a",
                   FPN_Equal(FPN_BlendOnMask(a, b, (uint64_t)-1), a));
             check("v5.11.2.C: FPN_BlendOnMask(a, b, 0) == b",
                   FPN_Equal(FPN_BlendOnMask(a, b, (uint64_t)0),  b));
             // Sign-bit blending: a is positive, b is negative → blend preserves
-            FPN<FP> blend_a = FPN_BlendOnMask(a, b, (uint64_t)-1);
-            FPN<FP> blend_b = FPN_BlendOnMask(a, b, (uint64_t)0);
+            FPN_Binary<FP> blend_a = FPN_BlendOnMask(a, b, (uint64_t)-1);
+            FPN_Binary<FP> blend_b = FPN_BlendOnMask(a, b, (uint64_t)0);
             check("v5.11.2.C: FPN_BlendOnMask preserves positive sign (a path)",
                   (blend_a.v < 0) == (a.v < 0));
             check("v5.11.2.C: FPN_BlendOnMask preserves negative sign (b path)",
@@ -16276,10 +16276,10 @@ e3_skip_load:;
         // Replaced with bit-by-bit 192-by-128 schoolbook long division on
         // the integer pipeline. Result is bytewise-deterministic AND more
         // precise than the prior IEEE-754 path. Tested through the public
-        // FPN<64> API which dispatches to FP64_DivNoAssert via the F=64
+        // FPN_Binary<64> API which dispatches to FP64_DivNoAssert via the F=64
         // specialization (FixedPointN.hpp:1162-1163).
 
-        auto fdiv_close = [](double expected, FPN<64> q, double rel_eps) -> bool {
+        auto fdiv_close = [](double expected, FPN_Binary<64> q, double rel_eps) -> bool {
             double got = FPN_ToDouble(q);
             if (expected == 0.0) return fabs(got) < rel_eps;
             double err = (got - expected) / expected;
@@ -16287,9 +16287,9 @@ e3_skip_load:;
             return err < rel_eps;
         };
 
-        FPN<64> one = FPN_FromDouble<64>(1.0);
-        FPN<64> two = FPN_FromDouble<64>(2.0);
-        FPN<64> four = FPN_FromDouble<64>(4.0);
+        FPN_Binary<64> one = FPN_FromDouble<64>(1.0);
+        FPN_Binary<64> two = FPN_FromDouble<64>(2.0);
+        FPN_Binary<64> four = FPN_FromDouble<64>(4.0);
         check("v5.10.0b.3: 1/1 = 1",
               fdiv_close(1.0, FPN_DivNoAssert(one, one), 1e-15));
         check("v5.10.0b.3: 4/2 = 2",
@@ -16297,23 +16297,23 @@ e3_skip_load:;
         check("v5.10.0b.3: 1/2 = 0.5 (exact)",
               fdiv_close(0.5, FPN_DivNoAssert(one, two), 1e-15));
 
-        FPN<64> three = FPN_FromDouble<64>(3.0);
+        FPN_Binary<64> three = FPN_FromDouble<64>(3.0);
         check("v5.10.0b.3: 1/3 ≈ 0.3333... within 1e-15",
               fdiv_close(1.0/3.0, FPN_DivNoAssert(one, three), 1e-15));
-        FPN<64> seven = FPN_FromDouble<64>(7.0);
-        FPN<64> ten = FPN_FromDouble<64>(10.0);
+        FPN_Binary<64> seven = FPN_FromDouble<64>(7.0);
+        FPN_Binary<64> ten = FPN_FromDouble<64>(10.0);
         check("v5.10.0b.3: 7/10 = 0.7 within 1e-15",
               fdiv_close(0.7, FPN_DivNoAssert(seven, ten), 1e-15));
 
         // Trading-relevant magnitudes: 70000 / 1.5 ≈ 46666.67
-        FPN<64> price = FPN_FromDouble<64>(70000.0);
-        FPN<64> small = FPN_FromDouble<64>(1.5);
+        FPN_Binary<64> price = FPN_FromDouble<64>(70000.0);
+        FPN_Binary<64> small = FPN_FromDouble<64>(1.5);
         check("v5.10.0b.3: 70000/1.5 ≈ 46666.67",
               fdiv_close(70000.0/1.5, FPN_DivNoAssert(price, small), 1e-12));
 
         // Sign handling
-        FPN<64> neg_eight = FPN_FromDouble<64>(-8.0);
-        FPN<64> neg_two   = FPN_FromDouble<64>(-2.0);
+        FPN_Binary<64> neg_eight = FPN_FromDouble<64>(-8.0);
+        FPN_Binary<64> neg_two   = FPN_FromDouble<64>(-2.0);
         check("v5.10.0b.3: (-8)/4 = -2",
               fdiv_close(-2.0, FPN_DivNoAssert(neg_eight, four), 1e-15));
         check("v5.10.0b.3: (-8)/(-2) = 4",
@@ -16321,20 +16321,20 @@ e3_skip_load:;
         check("v5.10.0b.3: 8/(-2) = -4",
               fdiv_close(-4.0, FPN_DivNoAssert(FPN_FromDouble<64>(8.0), neg_two), 1e-15));
 
-        // Determinism: same input → same FPN bytes
-        FPN<64> d1 = FPN_DivNoAssert(price, small);
-        FPN<64> d2 = FPN_DivNoAssert(price, small);
+        // Determinism: same input → same FPN_Binary bytes
+        FPN_Binary<64> d1 = FPN_DivNoAssert(price, small);
+        FPN_Binary<64> d2 = FPN_DivNoAssert(price, small);
         bool det = (d1.v == d2.v);   // Ship-A 16B: bytewise-equal ⇔ .v-equal
         check("v5.10.0b.3: divide is bytewise-deterministic (repeat)",
               det);
 
         // Edge: very small / very large (near-zero result).
-        // FPN<64> has 64 fractional bits → 1 ULP at result 1e-12 is
+        // FPN_Binary<64> has 64 fractional bits → 1 ULP at result 1e-12 is
         // ~5e-8 relative (= 2^-64 / 1e-12). Loosen to 1e-7 since the
         // quantization, not the algorithm, dominates here.
-        FPN<64> tiny = FPN_FromDouble<64>(1e-6);
-        FPN<64> huge = FPN_FromDouble<64>(1e6);
-        check("v5.10.0b.3: 1e-6 / 1e6 ≈ 1e-12 (FPN<64> quantization-bounded)",
+        FPN_Binary<64> tiny = FPN_FromDouble<64>(1e-6);
+        FPN_Binary<64> huge = FPN_FromDouble<64>(1e6);
+        check("v5.10.0b.3: 1e-6 / 1e6 ≈ 1e-12 (FPN_Binary<64> quantization-bounded)",
               fdiv_close(1e-12, FPN_DivNoAssert(tiny, huge), 1e-7));
     }
 
@@ -17123,7 +17123,7 @@ e3_skip_load:;
     {
         // v5.11.19 (2026-05-07): BinanceCrypto's per-tick ingestion path
         // pre-fix called BOTH FPN_FromString<F>(s) AND tt::parse_double_fast(s)
-        // on the same price/qty strings — once for the FPN engine value, once
+        // on the same price/qty strings — once for the FPN_Binary engine value, once
         // for the TUI display double. v5.11.19 derives the TUI double from
         // FPN_ToDouble(fpn) instead, saving a parse + eliminating the parity
         // hazard of two parsers rounding differently.
@@ -17147,11 +17147,11 @@ e3_skip_load:;
         const int n_strings = sizeof(test_strings) / sizeof(*test_strings);
         int matches = 0;
         for (int i = 0; i < n_strings; ++i) {
-            FPN<FP> fpn = FPN_FromString<FP>(test_strings[i]);
+            FPN_Binary<FP> fpn = FPN_FromString<FP>(test_strings[i]);
             double via_fpn = FPN_ToDouble(fpn);
             double via_parse = tt::parse_double_fast(test_strings[i]);
-            // Allow tiny FP rounding (1 ULP) — FPN<64> stores 4096 fractional
-            // bits internally so the precision difference is the FPN→double
+            // Allow tiny FP rounding (1 ULP) — FPN_Binary<64> stores 4096 fractional
+            // bits internally so the precision difference is the FPN_Binary→double
             // conversion at the boundary, not the input parse. For typical
             // crypto-tick strings (8 decimal digits) the round-trip is exact.
             double diff = via_fpn - via_parse;
@@ -18182,13 +18182,13 @@ e3_skip_load:;
               std::fabs(FPN_ToDouble(cfg.lazy_rebuild_price_threshold_pct)
                         - 0.0005) < 1e-9);
 
-        // === Test 2: FPN abs via sign-bit clear (used by lazy predicate) ===
-        FPN<64> a = FPN_FromDouble<64>(100.5);
-        FPN<64> b = FPN_FromDouble<64>(101.0);
-        FPN<64> delta = FPN_Sub(a, b);  // negative
+        // === Test 2: FPN_Binary abs via sign-bit clear (used by lazy predicate) ===
+        FPN_Binary<64> a = FPN_FromDouble<64>(100.5);
+        FPN_Binary<64> b = FPN_FromDouble<64>(101.0);
+        FPN_Binary<64> delta = FPN_Sub(a, b);  // negative
         check("v5.12.2.B: FPN_Sub(100.5, 101.0) sign == 1 (negative)",
               delta.v < 0);
-        FPN<64> abs_delta = FPN_Abs(delta);
+        FPN_Binary<64> abs_delta = FPN_Abs(delta);
         check("v5.12.2.B: |delta| via FPN_Abs → magnitude same (delta<0 ⇒ |delta| == -delta)",
               abs_delta.v == FPN_Negate(delta).v);
         check("v5.12.2.B: |delta| is non-negative",
@@ -18196,16 +18196,16 @@ e3_skip_load:;
 
         // === Test 3: relative delta math at threshold boundary ===
         // |100.5 - 101.0| / 101.0 ≈ 0.00495 > 0.0005 → would trigger rebuild
-        FPN<64> rel = FPN_DivNoAssert(abs_delta, b);
+        FPN_Binary<64> rel = FPN_DivNoAssert(abs_delta, b);
         check("v5.12.2.B: rel_delta(100.5, 101.0) > 0.0005 threshold",
               FPN_GreaterThan(rel, cfg.lazy_rebuild_price_threshold_pct));
 
         // === Test 4: small price change → below threshold ===
         // 100.04 vs 100.0 → rel_delta = 0.0004 < 0.0005 threshold → SKIP
-        FPN<64> p1 = FPN_FromDouble<64>(100.0);
-        FPN<64> p2 = FPN_FromDouble<64>(100.04);
-        FPN<64> small_delta = FPN_Abs(FPN_Sub(p2, p1));  // abs
-        FPN<64> small_rel = FPN_DivNoAssert(small_delta, p1);
+        FPN_Binary<64> p1 = FPN_FromDouble<64>(100.0);
+        FPN_Binary<64> p2 = FPN_FromDouble<64>(100.04);
+        FPN_Binary<64> small_delta = FPN_Abs(FPN_Sub(p2, p1));  // abs
+        FPN_Binary<64> small_rel = FPN_DivNoAssert(small_delta, p1);
         check("v5.12.2.B: small price delta (0.04%) below 0.05% threshold",
               !FPN_GreaterThan(small_rel, cfg.lazy_rebuild_price_threshold_pct));
     }
@@ -19714,7 +19714,7 @@ e3_skip_load:;
 
         // x = 0.5 → 0.5 (in-range identity)
         sig.short_slope = FPN_FromDouble<64>(0.5);
-        FPN<64> result = ML_Compute_RegimeTrendStrength(&ctx);
+        FPN_Binary<64> result = ML_Compute_RegimeTrendStrength(&ctx);
         check("v5.14.5.B: RegimeTrendStrength(x=0.5) ~= 0.5",
               std::abs(FPN_ToDouble(result) - 0.5) < 1e-6);
 
@@ -19751,7 +19751,7 @@ e3_skip_load:;
         // short_var=long_var → 0 (no z-score)
         sig.short_variance = FPN_FromDouble<64>(4.0);
         sig.long_variance  = FPN_FromDouble<64>(4.0);
-        FPN<64> result = ML_Compute_RegimeVolZscore(&ctx);
+        FPN_Binary<64> result = ML_Compute_RegimeVolZscore(&ctx);
         check("v5.14.5.B: RegimeVolZscore(equal) ~= 0",
               std::abs(FPN_ToDouble(result)) < 1e-6);
 
@@ -19784,7 +19784,7 @@ e3_skip_load:;
 
         // current_regime=1 → 1
         ctx.current_regime = 1;
-        FPN<64> result = ML_Compute_RegimeClassOneHot(&ctx);
+        FPN_Binary<64> result = ML_Compute_RegimeClassOneHot(&ctx);
         check("v5.14.5.B: RegimeClassOneHot(1) = 1",
               std::abs(FPN_ToDouble(result) - 1.0) < 1e-6);
 
@@ -19900,7 +19900,7 @@ e3_skip_load:;
         }
         FeatureComputeCtx<64> ctx{};
         ctx.short_rolling = &rs;
-        FPN<64> result = ML_Compute_FracDiffPrice_d05(&ctx);
+        FPN_Binary<64> result = ML_Compute_FracDiffPrice_d05(&ctx);
         // Verify it computed something finite (not 0 since count >= 50).
         double r = FPN_ToDouble(result);
         check("v5.14.5.C: FracDiff_d05 on constant price computes finite",
@@ -19922,9 +19922,9 @@ e3_skip_load:;
         }
         FeatureComputeCtx<64> ctx{};
         ctx.short_rolling = &rs;
-        FPN<64> r04 = ML_Compute_FracDiffPrice_d04(&ctx);
-        FPN<64> r05 = ML_Compute_FracDiffPrice_d05(&ctx);
-        FPN<64> r06 = ML_Compute_FracDiffPrice_d06(&ctx);
+        FPN_Binary<64> r04 = ML_Compute_FracDiffPrice_d04(&ctx);
+        FPN_Binary<64> r05 = ML_Compute_FracDiffPrice_d05(&ctx);
+        FPN_Binary<64> r06 = ML_Compute_FracDiffPrice_d06(&ctx);
         check("v5.14.5.C: ramp → FracDiff_d04 finite",
               std::isfinite(FPN_ToDouble(r04)));
         check("v5.14.5.C: ramp → FracDiff_d05 finite",
@@ -19933,13 +19933,13 @@ e3_skip_load:;
               std::isfinite(FPN_ToDouble(r06)));
     }
     {
-        // Replay determinism: same input → same output bytewise (FPN
+        // Replay determinism: same input → same output bytewise (FPN_Binary
         // arithmetic is deterministic; verifies no shared mutable state).
         RollingStats<64> rs1 = RollingStats_Init<64>();
         RollingStats<64> rs2 = RollingStats_Init<64>();
         for (int i = 0; i < 60; i++) {
-            FPN<64> p = FPN_FromDouble<64>(100.0 + (i % 7) * 0.3);
-            FPN<64> v = FPN_FromDouble<64>(1.0 + (i % 5) * 0.2);
+            FPN_Binary<64> p = FPN_FromDouble<64>(100.0 + (i % 7) * 0.3);
+            FPN_Binary<64> v = FPN_FromDouble<64>(1.0 + (i % 5) * 0.2);
             RollingStats_Push(&rs1, p, v, 0);
             RollingStats_Push(&rs2, p, v, 0);
         }
@@ -19947,9 +19947,9 @@ e3_skip_load:;
         ctx1.short_rolling = &rs1;
         FeatureComputeCtx<64> ctx2{};
         ctx2.short_rolling = &rs2;
-        FPN<64> r1 = ML_Compute_FracDiffPrice_d05(&ctx1);
-        FPN<64> r2 = ML_Compute_FracDiffPrice_d05(&ctx2);
-        // FPN<64> wraps a 4096-bit int internally — bytewise equality
+        FPN_Binary<64> r1 = ML_Compute_FracDiffPrice_d05(&ctx1);
+        FPN_Binary<64> r2 = ML_Compute_FracDiffPrice_d05(&ctx2);
+        // FPN_Binary<64> wraps a 4096-bit int internally — bytewise equality
         // is exact (no float rounding).
         check("v5.14.5.C: same input → bytewise identical FracDiff",
               memcmp(&r1, &r2, sizeof(r1)) == 0);
@@ -21855,7 +21855,7 @@ e3_skip_load:;
         cfg.cores[0].fee_rate_maker = FPN_FromDouble<64>(0.001);
         cfg.cores[0].fee_rate_taker = FPN_FromDouble<64>(0.001);
         EngineCommon_ApplyBnbDiscount(cfg);
-        // 0.001 * 0.75 = 0.00075 (exactly representable in F=64 FPN)
+        // 0.001 * 0.75 = 0.00075 (exactly representable in F=64 FPN_Binary)
         check("v5.15.5.F.4d.1.B.4: ApplyBnbDiscount pay_fees_in_bnb=1 reduces core[0] fee_rate_maker",
               FPN_ToDouble(cfg.cores[0].fee_rate_maker) < 0.001);
         check("v5.15.5.F.4d.1.B.4: ApplyBnbDiscount pay_fees_in_bnb=1 reduces core[0] fee_rate_taker",
@@ -21867,7 +21867,7 @@ e3_skip_load:;
         // (default cfg path; preserves pre-.B.4 fee_rate_* values verbatim)
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
         cfg.pay_fees_in_bnb = 0;
-        FPN<64> baseline_maker = FPN_FromDouble<64>(0.001);
+        FPN_Binary<64> baseline_maker = FPN_FromDouble<64>(0.001);
         cfg.cores[0].fee_rate_maker = baseline_maker;
         EngineCommon_ApplyBnbDiscount(cfg);
         // Compare via FPN_ToDouble for tolerant exact-match (F=64 represents
@@ -24397,36 +24397,36 @@ e3_skip_load:;
               diag_one);
     }
 
-    // === v5.14.11.B.2 — FPN + ThompsonBanditState padding determinism ===
+    // === v5.14.11.B.2 — FPN_Binary + ThompsonBanditState padding determinism ===
     // Pattern: DESIGN_SPECS/struct-padding-determinism-pattern.md
     // Both structs got explicit `int32_t _padding = 0;` fields in .B.2 to
     // eliminate UB padding bytes in memcmp / SHA-256 / wire-format contexts.
 
-    printf("\n--- v5.14.11.B.2: FPN + ThompsonBanditState padding determinism ---\n");
+    printf("\n--- v5.14.11.B.2: FPN_Binary + ThompsonBanditState padding determinism ---\n");
 
     {
-        // FPN<F=64> bytewise-identity: two FPN_Zero<64> values must be
+        // FPN_Binary<F=64> bytewise-identity: two FPN_Zero<64> values must be
         // bytewise identical (Ship-A 16B: bare __int128 v — no padding to differ).
-        FPN<64> a = FPN_Zero<64>();
-        FPN<64> b = FPN_Zero<64>();
+        FPN_Binary<64> a = FPN_Zero<64>();
+        FPN_Binary<64> b = FPN_Zero<64>();
         check("v5.14.11.B.2: FPN_Zero<64> produces bytewise-identical struct",
               memcmp(&a, &b, sizeof(a)) == 0);
 
         // Struct size invariant — Ship-A 16B: bare __int128 v (no words/sign/padding).
-        static_assert(sizeof(FPN<64>) == 16,
-                      "FPN<F=64> struct size must be 16 bytes (bare __int128 v; Ship-A 16B two's-comp, was 24)");
-        check("v5.14.11.B.2: sizeof(FPN<64>) == 16 (Ship-A 16B struct size invariant)",
-              sizeof(FPN<64>) == 16);
+        static_assert(sizeof(FPN_Binary<64>) == 16,
+                      "FPN_Binary<F=64> struct size must be 16 bytes (bare __int128 v; Ship-A 16B two's-comp, was 24)");
+        check("v5.14.11.B.2: sizeof(FPN_Binary<64>) == 16 (Ship-A 16B struct size invariant)",
+              sizeof(FPN_Binary<64>) == 16);
 
-        // FPN values from same double bytewise-identical (test that FracDiff
+        // FPN_Binary values from same double bytewise-identical (test that FracDiff
         // regression class is structurally eliminated).
-        FPN<64> c = FPN_FromDouble<64>(3.14159);
-        FPN<64> d = FPN_FromDouble<64>(3.14159);
+        FPN_Binary<64> c = FPN_FromDouble<64>(3.14159);
+        FPN_Binary<64> d = FPN_FromDouble<64>(3.14159);
         check("v5.14.11.B.2: FPN_FromDouble<64>(same input) bytewise-identical (FracDiff regression class extinct)",
               memcmp(&c, &d, sizeof(c)) == 0);
     }
 
-    // === Ship-A 16B FPN acceptance: R2 saturate-not-wrap + D-144 version-monotonic ===
+    // === Ship-A 16B FPN_Binary acceptance: R2 saturate-not-wrap + D-144 version-monotonic ===
     {
         // R2 (max-magnitude saturate, NOT wrap): the 16B FPN_Mul<64> preserves the branchless
         // of_mask saturate-on-overflow (FixedPointN.hpp fp2_mul) — the load-bearing property that
@@ -24434,13 +24434,13 @@ e3_skip_load:;
         // 2^127-magnitude range saturates to the bounded max, never wraps to a garbage small value.
         // Two ~2^40 values multiply to ~1e24 >> the ~2^63 representable max -> must saturate.
         const __int128 MAXMAG = (__int128)(((unsigned __int128)1 << 127) - 1);   // +2^127-1
-        FPN<64> big = FPN_FromDouble<64>(1.0e12);                                  // value ~2^40
+        FPN_Binary<64> big = FPN_FromDouble<64>(1.0e12);                                  // value ~2^40
         check("Ship-A R2: FPN_Mul<64> saturates to +MAX on 16B overflow (not wrap)",
               FPN_Mul<64>(big, big).v == MAXMAG);
         check("Ship-A R2: FPN_Mul<64> saturates to -MAX on 16B overflow (not wrap)",
               FPN_Mul<64>(big, FPN_Negate<64>(big)).v == -MAXMAG);
 
-        // D-144 (layout-coupled version monotonicity): the 16B FPN layout invalidates every old
+        // D-144 (layout-coupled version monotonicity): the 16B FPN_Binary layout invalidates every old
         // snapshot, so the 3 snapshot VERSIONs must strictly exceed their pre-16B values (12/8/5)
         // -> reached the post-16B 13/9/6. An un-bumped version would silently load a 24B snapshot
         // into the 16B engine (the H21 epoch-reject failure mode). >= keeps it forward-compatible
@@ -24448,7 +24448,7 @@ e3_skip_load:;
         static_assert(CONTROLLER_SNAPSHOT_VERSION >= 13 && SHARDED_SNAPSHOT_VERSION >= 9u
                           && PORTFOLIO_SNAPSHOT_VERSION >= 6,
                       "Ship-A D-144: snapshot versions must be >= post-16B 13/9/6 (strictly past pre-16B "
-                      "12/8/5); the 16B FPN layout change invalidates old snapshots (H21 epoch reject)");
+                      "12/8/5); the 16B FPN_Binary layout change invalidates old snapshots (H21 epoch reject)");
         check("Ship-A D-144: snapshot versions strictly increased past pre-16B 12/8/5 (>= 13/9/6)",
               CONTROLLER_SNAPSHOT_VERSION >= 13 && SHARDED_SNAPSHOT_VERSION >= 9u
                   && PORTFOLIO_SNAPSHOT_VERSION >= 6);
@@ -24458,7 +24458,7 @@ e3_skip_load:;
         // compute in UNSIGNED space + saturate INT_MIN -> +MAX (branchless, D-147). This checks the
         // saturate VALUE; under `build.sh ubsan` (-fsanitize=signed-integer-overflow) the whole 16B
         // core — these included — must run abort-free (the B1 signed-overflow-class gate).
-        FPN<64> int_min; int_min.v = (__int128)((unsigned __int128)1 << 127);     // -2^127 (FP2_64_MIN)
+        FPN_Binary<64> int_min; int_min.v = (__int128)((unsigned __int128)1 << 127);     // -2^127 (FP2_64_MIN)
         check("Ship-A D-147: FPN_Negate<64>(INT_MIN) saturates to +MAX (UB-free)",
               FPN_Negate<64>(int_min).v == MAXMAG);
         check("Ship-A D-147: FPN_Abs<64>(INT_MIN) saturates to +MAX (UB-free)",
@@ -25501,7 +25501,7 @@ e3_skip_load:;
                 check("v5.15.5.C.3 Phase 4: per-core JSON has strategy_id field", has_strat);
                 check("v5.15.5.C.3 Phase 4: per-core JSON has entries counter",   has_entries);
                 check("v5.15.5.C.3 Phase 4: per-core JSON has exits counter",     has_exits);
-                check("v5.15.5.C.3 Phase 4: per-core JSON has realized FPN value", has_realized);
+                check("v5.15.5.C.3 Phase 4: per-core JSON has realized FPN_Binary value", has_realized);
             }
         }
 
@@ -26093,13 +26093,13 @@ e3_skip_load:;
         // T4: tt::cfg_populate_inf_field — gate=true populates + sets has bit
         // ---------------------------------------------------------------------------------
         {
-            FPN<64> cfg_src = FPN_FromDouble<64>(42.5);
-            FPN<64> inf_dst = FPN_FromDouble<64>(0.0);
+            FPN_Binary<64> cfg_src = FPN_FromDouble<64>(42.5);
+            FPN_Binary<64> inf_dst = FPN_FromDouble<64>(0.0);
             uint8_t inf_has_dst = 0;
             tt::cfg_populate_inf_field(cfg_src, inf_dst, inf_has_dst, /*gate*/true);
-            // FPN<F> compared via memcmp (no operator== defined; bit-exact equality on integer limbs)
+            // FPN_Binary<F> compared via memcmp (no operator== defined; bit-exact equality on integer limbs)
             check("v5.15.5.F.4d.1.B.1: tt::cfg_populate_inf_field gate=true → inf_dst = cfg_src",
-                  memcmp(&inf_dst, &cfg_src, sizeof(FPN<64>)) == 0);
+                  memcmp(&inf_dst, &cfg_src, sizeof(FPN_Binary<64>)) == 0);
             check("v5.15.5.F.4d.1.B.1: tt::cfg_populate_inf_field gate=true → inf_has_dst = 1",
                   inf_has_dst == 1);
         }
@@ -26108,8 +26108,8 @@ e3_skip_load:;
         // T5: tt::cfg_populate_inf_field — gate=false zeros inf + clears has bit (Q3.G)
         // ---------------------------------------------------------------------------------
         {
-            FPN<64> cfg_src = FPN_FromDouble<64>(42.5);
-            FPN<64> inf_dst = FPN_FromDouble<64>(99.0);  // sentinel
+            FPN_Binary<64> cfg_src = FPN_FromDouble<64>(42.5);
+            FPN_Binary<64> inf_dst = FPN_FromDouble<64>(99.0);  // sentinel
             uint8_t inf_has_dst = 99;
             tt::cfg_populate_inf_field(cfg_src, inf_dst, inf_has_dst, /*gate*/false);
             check("v5.15.5.F.4d.1.B.1: tt::cfg_populate_inf_field gate=false → inf_dst zeroed (Q3.G)",
@@ -26122,9 +26122,9 @@ e3_skip_load:;
         // T6: tt::cfg_drift_compare — same value → false (no drift)
         // ---------------------------------------------------------------------------------
         {
-            FPN<64> a = FPN_FromDouble<64>(42.5);
-            FPN<64> b = FPN_FromDouble<64>(42.5);
-            check("v5.15.5.F.4d.1.B.1: tt::cfg_drift_compare same FPN<F> → false (no drift)",
+            FPN_Binary<64> a = FPN_FromDouble<64>(42.5);
+            FPN_Binary<64> b = FPN_FromDouble<64>(42.5);
+            check("v5.15.5.F.4d.1.B.1: tt::cfg_drift_compare same FPN_Binary<F> → false (no drift)",
                   tt::cfg_drift_compare(a, b) == false);
         }
 
@@ -26132,9 +26132,9 @@ e3_skip_load:;
         // T7: tt::cfg_drift_compare — different value → true (drift detected)
         // ---------------------------------------------------------------------------------
         {
-            FPN<64> a = FPN_FromDouble<64>(42.5);
-            FPN<64> b = FPN_FromDouble<64>(99.0);
-            check("v5.15.5.F.4d.1.B.1: tt::cfg_drift_compare different FPN<F> → true (drift)",
+            FPN_Binary<64> a = FPN_FromDouble<64>(42.5);
+            FPN_Binary<64> b = FPN_FromDouble<64>(99.0);
+            check("v5.15.5.F.4d.1.B.1: tt::cfg_drift_compare different FPN_Binary<F> → true (drift)",
                   tt::cfg_drift_compare(a, b) == true);
         }
 
@@ -26216,25 +26216,25 @@ e3_skip_load:;
     // =====================================================================================
     // Per /test-strength-audit discipline + feedback_motivated_collaborator_for_caramel:
     // verify cohort migration CORRECTNESS (not just structural shape). Tests cohort gate
-    // predicates under various cfg states + FPN<F> primitive operators + Winsor invariant.
+    // predicates under various cfg states + FPN_Binary<F> primitive operators + Winsor invariant.
     printf("\n--- v5.15.5.F.4d.1.B.2 Step 9: cohort migration correctness ---\n");
 
     {
-        // T-FPN1: FPN<F> operator== identity
-        FPN<64> a = FPN_FromDouble<64>(3.14);
-        FPN<64> b = FPN_FromDouble<64>(3.14);
-        check("v5.15.5.F.4d.1.B.2 FPN<F> operator== same value true", a == b);
-        check("v5.15.5.F.4d.1.B.2 FPN<F> operator!= same value false", !(a != b));
+        // T-FPN1: FPN_Binary<F> operator== identity
+        FPN_Binary<64> a = FPN_FromDouble<64>(3.14);
+        FPN_Binary<64> b = FPN_FromDouble<64>(3.14);
+        check("v5.15.5.F.4d.1.B.2 FPN_Binary<F> operator== same value true", a == b);
+        check("v5.15.5.F.4d.1.B.2 FPN_Binary<F> operator!= same value false", !(a != b));
     }
     {
-        // T-FPN2: FPN<F> operator< ordering
-        FPN<64> small_val = FPN_FromDouble<64>(0.1);
-        FPN<64> big_val   = FPN_FromDouble<64>(0.9);
-        check("v5.15.5.F.4d.1.B.2 FPN<F> operator< correct ordering",  small_val < big_val);
-        check("v5.15.5.F.4d.1.B.2 FPN<F> operator<= reflexive",        small_val <= small_val);
-        check("v5.15.5.F.4d.1.B.2 FPN<F> operator> correct ordering",  big_val > small_val);
-        check("v5.15.5.F.4d.1.B.2 FPN<F> operator>= reflexive",        big_val >= big_val);
-        check("v5.15.5.F.4d.1.B.2 FPN<F> operator< asymmetry",         !(big_val < small_val));
+        // T-FPN2: FPN_Binary<F> operator< ordering
+        FPN_Binary<64> small_val = FPN_FromDouble<64>(0.1);
+        FPN_Binary<64> big_val   = FPN_FromDouble<64>(0.9);
+        check("v5.15.5.F.4d.1.B.2 FPN_Binary<F> operator< correct ordering",  small_val < big_val);
+        check("v5.15.5.F.4d.1.B.2 FPN_Binary<F> operator<= reflexive",        small_val <= small_val);
+        check("v5.15.5.F.4d.1.B.2 FPN_Binary<F> operator> correct ordering",  big_val > small_val);
+        check("v5.15.5.F.4d.1.B.2 FPN_Binary<F> operator>= reflexive",        big_val >= big_val);
+        check("v5.15.5.F.4d.1.B.2 FPN_Binary<F> operator< asymmetry",         !(big_val < small_val));
     }
     {
         // T-COHORT1: Bandit cohort gate fires only when bandit_algorithm != 0
@@ -26303,13 +26303,13 @@ e3_skip_load:;
         // T-WINSOR1: Winsor cross-field invariant catches inverted bounds
         // Synthesize a cfg with low >= high; the validation logic at ControllerConfig_ParseFile
         // should detect this. We can't easily call the parser inline, but we can verify the
-        // FPN<F>-native compare works as expected (the underlying primitive).
-        FPN<64> bad_low  = FPN_FromDouble<64>(0.6);
-        FPN<64> bad_high = FPN_FromDouble<64>(0.4);
+        // FPN_Binary<F>-native compare works as expected (the underlying primitive).
+        FPN_Binary<64> bad_low  = FPN_FromDouble<64>(0.6);
+        FPN_Binary<64> bad_high = FPN_FromDouble<64>(0.4);
         check("v5.15.5.F.4d.1.B.2 Winsor invariant: low > high → !(low < high) detected",
               !(bad_low < bad_high));
-        FPN<64> good_low  = FPN_FromDouble<64>(0.005);
-        FPN<64> good_high = FPN_FromDouble<64>(0.995);
+        FPN_Binary<64> good_low  = FPN_FromDouble<64>(0.005);
+        FPN_Binary<64> good_high = FPN_FromDouble<64>(0.995);
         check("v5.15.5.F.4d.1.B.2 Winsor invariant: good bounds → (low < high) passes",
               good_low < good_high);
     }

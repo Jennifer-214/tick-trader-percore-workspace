@@ -244,7 +244,7 @@ Post-v5.15.5.B.2: clustered into `WsHeartbeatTelemetry ws_telemetry;` with align
 
 ### Implicit precedent 1 — `ParameterSlot<F>` seqlock (v5.11.3)
 
-The seqlock pattern at `GateParameters.hpp` already isolates the seqlock's `sequence` atomic + FPN data block in a contiguous structure. Pattern is INTRA-STRUCT cross-thread isolation; this DESIGN_SPEC documents the LIVE-STATE-EMBEDDED-CLUSTER variant.
+The seqlock pattern at `GateParameters.hpp` already isolates the seqlock's `sequence` atomic + FPN_Binary data block in a contiguous structure. Pattern is INTRA-STRUCT cross-thread isolation; this DESIGN_SPEC documents the LIVE-STATE-EMBEDDED-CLUSTER variant.
 
 ### Implicit precedent 2 — `ExecutionCore.permission` (v5.11.1.5)
 

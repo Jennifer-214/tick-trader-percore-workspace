@@ -39,11 +39,11 @@ template <> void dispatch_parse<KIND_DOUBLE>(void* dst_base, size_t offset, cons
 }
 ```
 
-This SILENTLY CORRUPTS when the actual field type at `(dst_base + offset)` differs from the assumed pun type. Concrete failure: punning a `double` write through an `FPN<F>` field address (16 bytes; a bare two's-complement `__int128 v`) writes 8 bytes of mantissa+exponent into the low half of the FPN's `__int128 v`, leaving the high 64 bits stale. Subsequent FPN arithmetic operates on corrupt state → silent precision loss → backtest determinism breaks → train-serve parity breaks. The bug is undetectable by load+compare-back roundtrip tests that only inspect the trivial-type subset.
+This SILENTLY CORRUPTS when the actual field type at `(dst_base + offset)` differs from the assumed pun type. Concrete failure: punning a `double` write through an `FPN_Binary<F>` field address (16 bytes; a bare two's-complement `__int128 v`) writes 8 bytes of mantissa+exponent into the low half of the FPN_Binary's `__int128 v`, leaving the high 64 bits stale. Subsequent FPN_Binary arithmetic operates on corrupt state → silent precision loss → backtest determinism breaks → train-serve parity breaks. The bug is undetectable by load+compare-back roundtrip tests that only inspect the trivial-type subset.
 
 The recurring class behind this anti-shape: **type erasure at registry dispatch time**. The registry knows the entry NAME but the dispatcher manipulates the destination via opaque address+offset. Type safety is left to the macro-author's discipline ("make sure Kind matches the actual field type"). When discipline slips — and it WILL slip — the failure is silent.
 
-**The structural fix:** dispatch on the destination type T directly. Pass the field BY REFERENCE; let template deduction determine T; use `if constexpr` branches keyed on type traits (`is_FPN_v<T>`, `std::is_array_v<T>`, `std::is_floating_point_v<T>`, etc.). The Kind enum stays as METADATA only (drives GUI presentation: slider range, format string, percentage suffix) — never used to choose how the value is stored.
+**The structural fix:** dispatch on the destination type T directly. Pass the field BY REFERENCE; let template deduction determine T; use `if constexpr` branches keyed on type traits (`is_fp_binary_v<T>`, `std::is_array_v<T>`, `std::is_floating_point_v<T>`, etc.). The Kind enum stays as METADATA only (drives GUI presentation: slider range, format string, percentage suffix) — never used to choose how the value is stored.
 
 This pattern makes the bug class structurally unreachable in well-formed code, fails-the-build on type extension that's unhandled, and is grep-detectable on intentional bypass.
 
@@ -73,7 +73,7 @@ struct Descriptor {
 };
 ```
 
-**Rejected.** Per-Kind union increases descriptor size; doesn't compose with template-instantiated FPN<F> (would need per-F member pointers); type safety enforced at member-pointer-init time but dispatch still reads Kind to know which union arm to use → drift class persists.
+**Rejected.** Per-Kind union increases descriptor size; doesn't compose with template-instantiated FPN_Binary<F> (would need per-F member pointers); type safety enforced at member-pointer-init time but dispatch still reads Kind to know which union arm to use → drift class persists.
 
 ### Option C — Templated dispatch via tt:: namespace, T deduced from field reference (chosen)
 
@@ -99,12 +99,12 @@ X-macro extractor passes the field by reference: `tt::dispatch_parse(cfg->name, 
 
 **Wins over B:**
 - No per-T template specialization explosion (one templated function; type-trait branches inside)
-- Composes with template-instantiated types (FPN<F>) without per-F machinery
+- Composes with template-instantiated types (FPN_Binary<F>) without per-F machinery
 - No descriptor size growth from member-pointer union
 
 **Cost vs A:**
 - Slightly more verbose at the X-macro extractor (passes `cfg->name` instead of `offsetof(Cfg, name)`)
-- Requires type traits for codebase-specific types (e.g., `is_FPN_v<T>`)
+- Requires type traits for codebase-specific types (e.g., `is_fp_binary_v<T>`)
 - All consumer types must be in a "recognized family" or static_assert fails — surfaces extension cost at build time (deliberate; this IS the safety mechanism)
 
 ### Y3 dispatch caveat (where tt:: differs)
@@ -216,7 +216,7 @@ struct Descriptor {
 };
 ```
 
-`KIND_DOUBLE` vs `KIND_DOUBLE_PCT` differ ONLY in GUI presentation (×100 + "%" suffix in render) — both store as `double` (or `FPN<F>` if the actual field is FPN). The dispatch's type behavior is identical; only the renderer reads Kind.
+`KIND_DOUBLE` vs `KIND_DOUBLE_PCT` differ ONLY in GUI presentation (×100 + "%" suffix in render) — both store as `double` (or `FPN_Binary<F>` if the actual field is FPN_Binary). The dispatch's type behavior is identical; only the renderer reads Kind.
 
 This separation is what makes the 3-barrier design sustainable: a future maintainer can add `KIND_DOUBLE_BPS` (basis points; ×10000 + " bps" suffix) without touching the dispatch — just one new render branch keyed on Kind.
 
@@ -226,7 +226,7 @@ This separation is what makes the 3-barrier design sustainable: a future maintai
 
 ### Apply when:
 - Building a registry-driven dispatcher (parser, save, render, drift-check) over typed fields
-- Field types include any of: template-instantiated types (`FPN<F>`, custom POD templates), char arrays, mixed scalar + container types
+- Field types include any of: template-instantiated types (`FPN_Binary<F>`, custom POD templates), char arrays, mixed scalar + container types
 - Multiple verbs dispatch over the same registry (parse + save + render + ...)
 - The cost of silent corruption is high (HMAC-signed wire format, byte-equivalent test harness, deterministic backtest)
 
@@ -237,7 +237,7 @@ This separation is what makes the 3-barrier design sustainable: a future maintai
 
 ### Cost:
 - ~40-80 LOC of `tt::` namespace per verb (one templated function + type-family guard + 4-6 if-constexpr branches)
-- ~5 LOC per codebase-specific type trait (`is_FPN_v` etc.)
+- ~5 LOC per codebase-specific type trait (`is_fp_binary_v` etc.)
 - ~10-20 LOC per X-macro extractor (one per consumer site)
 - Caller migration from offsetof to field-by-reference: mechanical find/replace
 
@@ -265,7 +265,7 @@ This separation is what makes the 3-barrier design sustainable: a future maintai
 - File: `CoreFrameworks/CfgFieldDispatch.hpp` (NEW)
 - Registry: `FOREACH_CFG_FIELD` (~40 KIND_DOUBLE/_PCT entries at .F.4b; expands through .F.4i to 213+ entries across all kinds)
 - Verbs dispatched: parse + save + render + drift-check (the latter via STAMP_BOUND derived filter)
-- Type families covered: `is_FPN_v` (NEW trait; ~38 of the 40 .F.4b entries are FPN<F>) + `std::is_floating_point_v` + `std::is_array_v` + `std::is_integral_v`
+- Type families covered: `is_fp_binary_v` (NEW trait; ~38 of the 40 .F.4b entries are FPN_Binary<F>) + `std::is_floating_point_v` + `std::is_array_v` + `std::is_integral_v`
 - Drives the 3-barrier structural fix that closes Class 23
 
 ### Future application candidates
@@ -295,7 +295,7 @@ If the static_assert fires and the contributor's reaction is "let me bypass this
 
 ### Codebase-specific traits live with the type they describe
 
-`is_FPN_v` lives in `FixedPoint/FixedPointN.hpp` next to the `FPN<F>` primary template. Don't put codebase-specific traits in a central "traits.hpp" — locality with the type makes them discoverable + survives template-class refactors.
+`is_fp_binary_v` lives in `FixedPoint/FixedPointN.hpp` next to the `FPN_Binary<F>` primary template. Don't put codebase-specific traits in a central "traits.hpp" — locality with the type makes them discoverable + survives template-class refactors.
 
 If a future template POD type emerges (e.g., `Volume<N>`), define `is_Volume_v` in `Volume.hpp` next to it. Then extend each `tt::cfg_*_field` function with an `else if constexpr (is_Volume_v<T>)` branch. The static_assert reminds contributors at first-use that the family must include the new type.
 
@@ -323,7 +323,7 @@ The patterns are sister: both leverage if-constexpr + template instantiation; on
 
 If a codebase has Option A dispatchers today (e.g., v5.14 had stamp body parsing via per-Kind specialization), migration is mechanical:
 
-1. Define type traits for codebase-specific types (`is_FPN_v` etc.)
+1. Define type traits for codebase-specific types (`is_fp_binary_v` etc.)
 2. Rewrite the dispatcher as `tt::<verb>_field<T>(T& dst, ...)` with type-family guard + if-constexpr branches per T
 3. Update X-macro extractors to pass field by reference (`cfg->name`) instead of `offsetof(Cfg, name)`
 4. Delete the per-Kind specialization templates
@@ -341,7 +341,7 @@ C++17 variant could store the field reference + dispatch via `std::visit`. Rejec
 - Adds runtime overhead (variant tag + visit dispatch ~5-10ns per access vs zero-overhead template)
 - Opaque to compilers' inlining + optimization
 - Harder to extend (each new type adds a variant arm + visit branch)
-- Doesn't compose with template-instantiated types (FPN<F>) cleanly
+- Doesn't compose with template-instantiated types (FPN_Binary<F>) cleanly
 
 ### `boost::hana` or `boost::mp11` type-list metaprogramming
 

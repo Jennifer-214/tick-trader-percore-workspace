@@ -26,7 +26,7 @@
 #include <cstdint>
 #include <cstdio>             // snprintf for test name templating
 #include <cstring>
-#include "../FixedPoint/FixedPointN.hpp"     // FPN<F> — required before CfgFieldRegistry.hpp
+#include "../FixedPoint/FixedPointN.hpp"     // FPN_Binary<F> — required before CfgFieldRegistry.hpp
 #include "../CoreFrameworks/CfgFieldRegistry.hpp"
 
 struct InvariantContext {

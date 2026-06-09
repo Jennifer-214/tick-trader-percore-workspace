@@ -93,7 +93,7 @@ Per H18 (custom-semantics via sidecar): if a row's behavior differs from the def
 
 Already canonical at HEAD (`.F.4c.3`+):
 - `tt::` namespace type-trait dispatchers — `tt::cfg_save_field<T>`, `tt::cfg_parse_field<T>`
-- Pattern: `if constexpr (is_FPN_v<T>) { ... } else if constexpr (std::is_integral_v<T>) { ... } else if constexpr (std::is_array_v<T>) { ... }` etc.
+- Pattern: `if constexpr (is_fp_binary_v<T>) { ... } else if constexpr (std::is_integral_v<T>) { ... } else if constexpr (std::is_array_v<T>) { ... }` etc.
 
 NEW at `.B.1`:
 - `tt::cfg_emit_field<T>` — wire-format byte emit (sister to `tt::cfg_save_field<T>`; locale-pinned Layer 2 per `ModelInference.hpp:1697` precedent)
@@ -280,7 +280,7 @@ Meta-walker is itself an X-macro registry entry (no rows of its own; dispatches 
 
 ## Extensibility test pattern for cohort consumers (NEW v1.3)
 
-The cfg-derived consumer framework has a complementary **test recurrence vector** that the v1.1/v1.2 sections don't address: the test code that validates per-field round-trip (e.g., "set ridge_lambda=0.15 + emit stamp + parse back + assert sr.ridge_lambda matches") historically enumerates each field explicitly. **That's Class 21 (multiple parallel descriptors) at the TEST LAYER** — the test enumeration is itself a parallel descriptor of the registry. Adding a new flagged row requires manual sync of the test enumeration; forgetting → silent runtime failure (e.g., new STORAGE_T edge case in `tt::cfg_emit_field<T>` that breaks round-trip; FPN precision issue at specific value ranges; missing has_* parsing).
+The cfg-derived consumer framework has a complementary **test recurrence vector** that the v1.1/v1.2 sections don't address: the test code that validates per-field round-trip (e.g., "set ridge_lambda=0.15 + emit stamp + parse back + assert sr.ridge_lambda matches") historically enumerates each field explicitly. **That's Class 21 (multiple parallel descriptors) at the TEST LAYER** — the test enumeration is itself a parallel descriptor of the registry. Adding a new flagged row requires manual sync of the test enumeration; forgetting → silent runtime failure (e.g., new STORAGE_T edge case in `tt::cfg_emit_field<T>` that breaks round-trip; FPN_Binary precision issue at specific value ranges; missing has_* parsing).
 
 **Concrete instance at HEAD pre-v1.3:** `tests/controller_test.cpp` v5.14.1.B.3.E section enumerates 17 flagged rows with explicit per-field assertions. Each new STAMP_BOUND_CFG_DERIVED-flagged row requires manual sync of this block.
 
@@ -485,7 +485,7 @@ When migrating a CONSUMER from caller-supplied input struct (e.g., `inf` populat
 **Migration discipline at consumer-switch ship:**
 
 1. **Identify tests that set inf-fields directly** for migrated consumers. Grep: `inf.<name> = ...` for any field flagged STAMP_BOUND_CFG_DERIVED.
-2. **Migrate test setup from inf → cfg** for each: replace `inf.<name> = value` with `cfg.<name> = value` (with FPN_FromDouble<64> wrap for FPN<F> types).
+2. **Migrate test setup from inf → cfg** for each: replace `inf.<name> = value` with `cfg.<name> = value` (with FPN_FromDouble<64> wrap for FPN_Binary<F> types).
 3. **Consolidate via extensibility test pattern** (§ above) — replace explicit per-field test enumeration with X-macro walker that auto-validates all flagged rows. Sister benefit: future flagged-row additions auto-include in extensibility test.
 
 **Why this matters at coding time:** Step 1.6.4 (production canonical body emit migration at `ModelInference.hpp:~1817`) flips this semantic for the stamp body's cfg-derived fields. Tests that pre-set inf for flagged fields will silently pass (no compile error) but their assertions will check stale inf values vs cfg-at-emit-time values — false-positive test pass. Catch via:

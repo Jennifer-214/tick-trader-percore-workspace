@@ -1,7 +1,7 @@
 ---
 type: refactor-pattern
-stage: 2-draft
-version: 0.1
+stage: 3-first-canonical
+version: 1.0
 established: 2026-06-09
 tags: [refactor-pattern, doc-discipline, terminology-evolution, ci-tooling]
 surface: [registry, boot-time]
@@ -55,6 +55,8 @@ Symbol/terminology renames recur as dedicated ships (A.5 `FPN`→`FPN_Binary`; `
 ## Phase 5 — Doc sweep + bridge
 
 - Execute via **`tools/check_doc_rename_classification.py`** (the `.D.1` Class-36-hardened token-map executor: overlap resolution, path-like-token KEEP, regression-tested) — do NOT hand-sweep or sed.
+- **Verify the EXECUTOR's matching semantics against the Phase-1 substring matrix BEFORE `--write`** (A.5 incident, 2026-06-09): if any RENAME_MAP value CONTAINS its key (`FPN` ⊂ `FPN_Binary`), the executor MUST be boundary-anchored or `--apply` is non-idempotent — re-encountering already-renamed text compounds it (`FPN_Binary_Binary`). The `.D.1`-era matcher was unanchored (safe for `per-core`→`per-node`, where value ⊅ key); fixed with lookaround anchoring at the A.5 incident. **Idempotency proof = run `--apply` (preview) a second time over swept files and require 0 new applies.** Checking the grep against the matrix is NOT checking the tool against it — they are different matchers.
+- **Exclude self-referential docs from the token sweep** (this spec, the rename plan body, the candidates list): docs that *discuss* the tokens cannot be token-swept (B19's transition-doc clause applied to the rename's own apparatus).
 - Glossary bridge entry (old → new, dated) at the canonical glossary home — check the glossary's OWN scope rule for which home (DESIGN_PHILOSOPHY § 15 = deployment terms; runtime primitives → operator `DOCS/GLOSSARY.md`).
 - Generated outputs (`DOCS/CODE_MAP.md`) are EXCLUDED — regenerate, never sweep.
 

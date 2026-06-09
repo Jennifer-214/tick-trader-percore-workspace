@@ -34,7 +34,7 @@ If you ignore this and damage your laptop: that's on you. The engine doesn't apo
 | Component | Requirement |
 |---|---|
 | **CPU** | 8+ cores; modern x86_64 (Skylake+) |
-| **CPU features** | SHA-NI (HMAC acceleration); AVX2 (FPN math); TSC (timing) |
+| **CPU features** | SHA-NI (HMAC acceleration); AVX2 (FPN_Binary math); TSC (timing) |
 | **RAM** | 16GB |
 | **Network** | Standard broadband |
 | **Storage** | 100GB SSD (state + audit logs + models) |

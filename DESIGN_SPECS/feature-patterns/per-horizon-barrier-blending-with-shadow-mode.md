@@ -73,7 +73,7 @@ iteration (Label Kind CSV pattern from v5.13.5).
 ### Cache-friendly tight-pack barrier array (CLAUDE.md items 7, 26)
 
 **Problem.** Reading barriers from N scattered ModelHandle objects =
-N cache lines per slow-path cycle. ModelHandle is ~512+ bytes (FPN
+N cache lines per slow-path cycle. ModelHandle is ~512+ bytes (FPN_Binary
 fields + char buffers + counters); the `label_tp_pct` /
 `label_sl_pct` sit at offset ~349 in each handle. 8 handles =
 8 separate cache-line fetches just for barriers.

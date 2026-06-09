@@ -151,7 +151,7 @@ inline FPN<F> ML_Compute_<Name>(const FeatureComputeCtx<F>* ctx);
 
 `FeatureComputeCtx` is the bundle of all available inputs (rolling,
 EMA, ROR, flow, depth, spread). Each compute fn reads what it needs,
-returns FPN<F>. `FPN_Zero` is the safe "I don't have data yet" return.
+returns FPN_Binary<F>. `FPN_Zero` is the safe "I don't have data yet" return.
 
 `Features_PackAll(ctx, out)` loops the registry, invokes each enabled
 compute fn, writes float result into out[i]. `FEATURE_REGISTRY_HASH`

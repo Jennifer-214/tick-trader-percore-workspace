@@ -200,11 +200,11 @@ Walked every `snap->per_core[i].*` write in `TUI_CopySnapshotSharded`
 
 4. **Slow-path-only fields** (`halt_reason`, `strategy_halt_reason`,
    `core_realized`, `core_fees`, `core_wins`, `core_losses`, all
-   `diag_*` FPN values, `regime_state.*`, etc.) — written by the
+   `diag_*` FPN_Binary values, `regime_state.*`, etc.) — written by the
    slow-path thread that owns the core, read by the GUI thread.
    Slow path runs at ~poll_interval cadence (typically every 10-100
    ticks); GUI at ~60Hz. Race window per field is small. Multi-byte
-   reads (FPN<F> = 16 bytes) could in theory tear under concurrent
+   reads (FPN_Binary<F> = 16 bytes) could in theory tear under concurrent
    write, but: (a) slow-path doesn't write mid-frame; it writes at
    the end of its rebuild cycle; (b) display tolerance is high
    (one stale value resolves next frame); (c) no field is used to

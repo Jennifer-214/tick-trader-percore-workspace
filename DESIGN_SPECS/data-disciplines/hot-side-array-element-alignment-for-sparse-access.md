@@ -138,8 +138,8 @@ The discipline has been applied AD-HOC in the codebase since before this spec ex
   - Position size: 184B (9 PERSIST fields + 7B explicit `_pad_pos` for wire-format compatibility)
   - Add `alignas(64)` → padded to 192B = 3 cache lines exact
   - Per-slot hot-path access: **guaranteed 1 cache line** for the 32B TP+SL read
-- Wire format unaffected BY THIS REFACTOR: moving the SKIP_PERSIST fields to non-persisted OMS sibling arrays adds nothing to the persisted Position, so `PORTFOLIO_SNAPSHOT_VERSION` and `PERSIST_BYTES` track the live Position struct (which Ship-A separately compacted when its FPN fields shrank) — they are not fixed by this reorg
-- Companion: `last_exit_fill_price[16]` (FPN<F>[]; 256B at OMS level) + `last_is_maker_bitmap` (uint16_t; 2B at OMS level via FOREACH_OMS_FIELD)
+- Wire format unaffected BY THIS REFACTOR: moving the SKIP_PERSIST fields to non-persisted OMS sibling arrays adds nothing to the persisted Position, so `PORTFOLIO_SNAPSHOT_VERSION` and `PERSIST_BYTES` track the live Position struct (which Ship-A separately compacted when its FPN_Binary fields shrank) — they are not fixed by this reorg
+- Companion: `last_exit_fill_price[16]` (FPN_Binary<F>[]; 256B at OMS level) + `last_is_maker_bitmap` (uint16_t; 2B at OMS level via FOREACH_OMS_FIELD)
 - Net memory: roughly even with pre-C.5 (Position -16B per slot × 16 = -256B; sibling arrays +258B; net +2B)
 
 ### Future application candidates

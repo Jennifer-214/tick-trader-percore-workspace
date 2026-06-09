@@ -503,7 +503,7 @@ inline void MBS_ObjSet<Field>(Obj* o, int value) {
 | Variant | Use when... |
 |---|---|
 | **Bit-pack into existing packed field** | At-decision-time values are small K-state enums (≤8 values fits 3 bits; ≤16 fits 4 bits); existing packed field has free bits; struct size invariant is load-bearing (would break if grown) |
-| **Sub-struct expansion** | At-decision-time values include scalars that can't bit-pack (FPN<F>, double, large ints); OR struct doesn't have an existing packed field with free bits; OR there are ≥3 fields and a sub-struct is structurally clearer |
+| **Sub-struct expansion** | At-decision-time values include scalars that can't bit-pack (FPN_Binary<F>, double, large ints); OR struct doesn't have an existing packed field with free bits; OR there are ≥3 fields and a sub-struct is structurally clearer |
 
 **Composition:** the two variants can co-exist on the same in-flight object. Example: `Order::pre_resolved` sub-struct for fee_rate/slippage_pct (scalars; HOT cluster) + `Order::flags_packed` bit-pack for bandit context (small enums; same field as existing canonical bit).
 

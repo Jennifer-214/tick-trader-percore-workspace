@@ -50,7 +50,7 @@ Network ingestion cannot fall behind during market bursts.
 * **NO `atof`**: Avoid the C standard library float parser, as it is branch-heavy and slow.
 * **What to use instead**:
   * Use SIMD-accelerated JSON parsers (e.g., `simdjson`) for single-pass `O(N)` extraction.
-  * Use fast, locale-independent parsers (e.g., `fast_float`) or parse directly to `FPN<F>`.
+  * Use fast, locale-independent parsers (e.g., `fast_float`) or parse directly to `FPN_Binary<F>`.
 
 ## 7. Memory Hierarchy & L1 Cache Optimization
 Fetching data from main RAM costs ~100ns (hundreds of CPU cycles), which absolutely destroys sub-microsecond latency. The hot path must execute entirely out of the L1/L2 cache.

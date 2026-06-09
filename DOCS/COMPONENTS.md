@@ -6,7 +6,7 @@ Detailed explanation of how each component works internally.
 
 ## FixedPoint/FixedPointN.hpp
 
-Arbitrary-width fixed-point arithmetic library. Template parameter `F` sets fractional bits (64, 128, 256, etc). The engine uses `FPN<64>` which gives ~19 decimal digits of precision.
+Arbitrary-width fixed-point arithmetic library. Template parameter `F` sets fractional bits (64, 128, 256, etc). The engine uses `FPN_Binary<64>` which gives ~19 decimal digits of precision.
 
 **Why fixed-point instead of float:**
 - No precision surprises from IEEE 754 rounding
@@ -22,7 +22,7 @@ Arbitrary-width fixed-point arithmetic library. Template parameter `F` sets frac
 - `FPN_Min/Max` - branchless via word-level mask-select
 - `FPN_IsZero` - checks all words
 
-**Storage:** `FPN<64>` stores a bare `__int128 v` (two's-complement; sign in the top bit; 16 bytes; 64.64 fixed-point). No separate sign field, no padding. The generic multi-word `FPN<F>` template (`uint64_t w[N]` + sign) is vestigial — `FPN<64>` is the only real instantiation (a full-specialization).
+**Storage:** `FPN_Binary<64>` stores a bare `__int128 v` (two's-complement; sign in the top bit; 16 bytes; 64.64 fixed-point). No separate sign field, no padding. The generic multi-word `FPN_Binary<F>` template (`uint64_t w[N]` + sign) is vestigial — `FPN_Binary<64>` is the only real instantiation (a full-specialization).
 
 ---
 
@@ -43,7 +43,7 @@ Completely branchless. Computes `price_pass & volume_pass` to get a 0/1 result, 
 
 ### DataStream
 
-Simple struct with two fields: `FPN<F> price` and `FPN<F> volume`. This is the interface between the data source (Binance or mock) and the engine. Everything downstream consumes this struct.
+Simple struct with two fields: `FPN_Binary<F> price` and `FPN_Binary<F> volume`. This is the interface between the data source (Binance or mock) and the engine. Everything downstream consumes this struct.
 
 ---
 
@@ -52,7 +52,7 @@ Simple struct with two fields: `FPN<F> price` and `FPN<F> volume`. This is the i
 Bitmap-based position tracking. 16 slots, one bit per position in a `uint16_t active_bitmap`.
 
 ### Position struct
-Each position stores: quantity, entry_price, take_profit_price, stop_loss_price. All FPN<F>.
+Each position stores: quantity, entry_price, take_profit_price, stop_loss_price. All FPN_Binary<F>.
 
 ### PositionExitGate (hot path)
 Runs every tick. Walks the active bitmap with `__builtin_ctz`, checks each position's TP and SL against current price. Uses branchless mask-select to write exit records and clear bits. The exit buffer (`ExitBuffer`) accumulates exits for the slow path to drain and log.
@@ -161,7 +161,7 @@ Same ring buffer pattern as `RegressionFeederX` - branchless power-of-2 wrap wit
 
 Ordinary least squares regression on a ring buffer of 8 samples.
 
-**Input:** Ring buffer of FPN values (P&L snapshots from the controller)
+**Input:** Ring buffer of FPN_Binary values (P&L snapshots from the controller)
 **Output:** slope, intercept, R^2
 
 The slope tells you "is P&L trending up or down?" R^2 tells you "how confident is this trend?" The controller only adjusts when R^2 exceeds the threshold - prevents reacting to noise.
@@ -185,7 +185,7 @@ Full network stack for connecting to Binance websocket trade stream.
 3. **WebSocket** (`binance_ws_handshake`) - HTTP upgrade with random base64 key, verify 101
 4. **Frame parser** (`binance_ws_read_frame`) - reads 2-byte header, extended length, payload. Loops on `SSL_read` until complete frame accumulated. Handles masked/unmasked frames.
 5. **JSON parser** (`binance_parse_trade`) - scans for `"p":"` and `"q":"` substrings, extracts values. No general parser needed.
-6. **FPN conversion** - `FPN_FromString` converts extracted price/qty strings to fixed-point
+6. **FPN_Binary conversion** - `FPN_FromString` converts extracted price/qty strings to fixed-point
 
 ### Ping/pong
 Binance sends pings every ~3 minutes. Handled transparently inside `BinanceStream_ReadTick` - if a ping frame arrives, pong is sent immediately and the next frame is read. The caller never sees ping/pong frames.

@@ -95,11 +95,15 @@ WORKSPACE = _resolve_workspace()
 
 FPN_HEADER = ENGINE / "FixedPoint" / "FixedPointN.hpp"
 
-# Canonical size assert in the code (SSoT). Matches `static_assert(sizeof(FPN<64>) == 16, ...`.
-CANON_RE = re.compile(r'static_assert\s*\(\s*sizeof\s*\(\s*FPN\s*<\s*64\s*>\s*\)\s*==\s*(\d+)')
+# Canonical size assert in the code (SSoT). Matches `static_assert(sizeof(FPN_Binary<64>) == 16, ...`
+# (accepts the pre-A.5 bare-FPN spelling too — robust across the E.0.8 rename boundary).
+CANON_RE = re.compile(r'static_assert\s*\(\s*sizeof\s*\(\s*FPN(?:_Binary)?\s*<\s*64\s*>\s*\)\s*==\s*(\d+)')
 
-# Doc scan surface (root-relative globs).
-SCAN_GLOBS = ["CLAUDE.md", "CLAUDE.local.md", "DOCS/**/*.md", "DESIGN_SPECS/**/*.md"]
+# Doc scan surface (root-relative globs; applied to BOTH roots, realpath-deduped).
+# A.5/S-2 widen: plans/_cross-cutting (living discipline docs — the stale-24B latency-path miss),
+# claude-skills SKILL.md bodies (skills scaffold code), FEATURE_LOOKUP (workspace-root lookup doc).
+SCAN_GLOBS = ["CLAUDE.md", "CLAUDE.local.md", "DOCS/**/*.md", "DESIGN_SPECS/**/*.md",
+              "plans/_cross-cutting/**/*.md", "claude-skills/**/*.md", "FEATURE_LOOKUP.md"]
 
 # Whole-file exclusions — the historical record (path substring, case-insensitive). NEVER flagged.
 FILE_EXCLUDE_SUBSTR = (
@@ -124,8 +128,9 @@ OLD_LAYOUT_RE = re.compile(r'uint64_t\s+w\s*\[|int(?:32|64)_t\s+sign\b|\b_paddin
 
 HIST_WINDOW = 12  # preceding lines scanned for a historical marker / old-layout members
 
-# FPN-token presence on the line (proximity gate). Accept FPN<...> in any of its written forms.
-FPN_TOKEN_RE = re.compile(r'FPN\s*<[^>]*>')
+# FPN-token presence on the line (proximity gate). Accept FPN<...>/FPN_Binary<...> in any written form
+# (both spellings: historical docs keep bare FPN; live docs spell FPN_Binary post-A.5).
+FPN_TOKEN_RE = re.compile(r'FPN(?:_Binary)?\s*<[^>]*>')
 
 # A byte-size token (number + B/bytes), not preceded by a word char / dot (so "0x16B" / "v1.16B" don't match).
 BYTE_TOK = r'(?<![\w.])(\d+)\s*(?:B\b|bytes?\b)'
@@ -133,7 +138,7 @@ BYTE_TOK = r'(?<![\w.])(\d+)\s*(?:B\b|bytes?\b)'
 # (a) struct-field comment trailing size:  ...;  // N bytes   |   // NB
 FIELD_COMMENT_RE = re.compile(r'//[^\n]*?' + BYTE_TOK)
 # (c) sizeof assertion / equality:  sizeof(FPN<...>) == N  |  sizeof(FPN<...>) = N
-SIZEOF_EQ_RE = re.compile(r'sizeof\s*\(\s*FPN\s*<[^>]*>\s*\)\s*[<>=!]?=+\s*(\d+)')
+SIZEOF_EQ_RE = re.compile(r'sizeof\s*\(\s*FPN(?:_Binary)?\s*<[^>]*>\s*\)\s*[<>=!]?=+\s*(\d+)')
 
 # (b) prose: the byte-size must be BOUND to the FPN token, not merely co-occurring on the line (a line can
 #     legitimately also mention an UNRELATED byte quantity — `8B single-word atomic width`, `8 bytes of
@@ -145,7 +150,7 @@ SIZEOF_EQ_RE = re.compile(r'sizeof\s*\(\s*FPN\s*<[^>]*>\s*\)\s*[<>=!]?=+\s*(\d+)
 #   (b2) BEFORE FPN: a byte-size then a binding connector `for`/`per`/`each` ... `FPN<...>` within a short
 #        window (`~24 B for FPN<64>`).
 PROSE_AFTER_RE = re.compile(
-    r'FPN\s*<[^>]*>'                       # the FPN token
+    r'FPN(?:_Binary)?\s*<[^>]*>'           # the FPN token (both spellings)
     r'[^\n]{0,44}?'                        # short gap (non-greedy) — adjacent-ish only
     r'(?:=|\bis\b|\(|;|:|->|→|\s)\s*'      # a binding connector
     + BYTE_TOK
@@ -153,7 +158,7 @@ PROSE_AFTER_RE = re.compile(
 PROSE_BEFORE_RE = re.compile(
     BYTE_TOK +                              # the byte-size
     r'\s*(?:for|per|each)\b[^\n]{0,24}?'    # binding connector + short window
-    r'FPN\s*<[^>]*>'                        # the FPN token
+    r'FPN(?:_Binary)?\s*<[^>]*>'            # the FPN token (both spellings)
 )
 
 
@@ -170,7 +175,7 @@ def parse_canonical():
         m = CANON_RE.search(line)
         if m:
             return int(m.group(1)), f"{FPN_HEADER.name}: {raw.strip()}"
-    return None, f"no `static_assert(sizeof(FPN<64>) == N` in {FPN_HEADER.name}"
+    return None, f"no `static_assert(sizeof(FPN_Binary<64>) == N` (or pre-A.5 spelling) in {FPN_HEADER.name}"
 
 
 def doc_roots():
@@ -257,8 +262,12 @@ def stated_sizes(line):
 def main():
     canon, src = parse_canonical()
     if canon is None:
-        print(f"check_fpn_doc_size_currency: WARN — canonical FPN<64> size not found ({src}); skipping (exit 0).")
-        return 0
+        # S-4 hardening (A.5 gate): canon-missing is RED, never a silent skip — a guard that can go
+        # blind-green is a hole (guards-compound). If the assert moved/renamed, update CANON_RE +
+        # FPN_HEADER in this tool IN THE SAME COMMIT as the code change.
+        print(f"check_fpn_doc_size_currency: RED — canonical binary-core size assert NOT FOUND ({src}). "
+              f"Guard would be blind; fix CANON_RE/FPN_HEADER alongside the code change. (exit 1)")
+        return 1
 
     files = list(iter_doc_files())
     scanned = [f for f in files if not file_excluded(f)]

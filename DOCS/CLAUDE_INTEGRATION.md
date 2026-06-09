@@ -26,7 +26,7 @@ ImGui derives widget IDs from visible labels. Two widgets with the same label at
 Adding a new GUI-editable cfg field whose label matches its section name? Use `##bool` / `##toggle` / `##unique` suffix.
 
 ## New per-core override field (v4.7.24+)
-1. Add ONE line to `PER_CORE_OVERRIDE_FIELDS(PCT, RAW)` X-macro in `CoreFrameworks/ControllerConfig.hpp` — choose `PCT(name)` for percent-stored fields (cfg writes 4.0, stored 0.04) or `RAW(name)` for direct FPN
+1. Add ONE line to `PER_CORE_OVERRIDE_FIELDS(PCT, RAW)` X-macro in `CoreFrameworks/ControllerConfig.hpp` — choose `PCT(name)` for percent-stored fields (cfg writes 4.0, stored 0.04) or `RAW(name)` for direct FPN_Binary
 2. Add corresponding `per_core_fields[]` entry in `GUI/SettingsPanel.hpp` for the per-node tab
 3. **Verify the consumer** reads via `ControllerConfig_ResolveForCore` OR uses the `if (!FPN_IsZero(ov.X)) ov.X else cfg.X` pattern — direct `cfg.X` reads bypass the override (silent no-op). Both live (`EngineSharded.hpp`) and backtest (`BacktestSharded.hpp`) sites must be fixed in lockstep for train-serve parity.
 

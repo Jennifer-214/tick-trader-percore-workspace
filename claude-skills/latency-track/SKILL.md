@@ -162,7 +162,7 @@ For each impacting addition, estimate the cycles + ns:
 |---|---|---|
 | Add / Sub / mask / shift | 1 | ~0.3 |
 | Multiply (int) | 3-5 | ~1-2 |
-| Multiply (FPN<64> partial-products) | 30-60 | ~10-20 |
+| Multiply (FPN_Binary<64> partial-products) | 30-60 | ~10-20 |
 | Atomic relaxed load | 1 | ~0.3 |
 | Atomic acquire load | 1-3 | ~0.3-1 |
 | Atomic CAS (uncontended) | 5-10 | ~2-3 |

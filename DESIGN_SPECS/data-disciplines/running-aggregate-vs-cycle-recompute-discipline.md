@@ -40,7 +40,7 @@ Different use cases favor different choices.
 ✅ Reader needs SUB-CYCLE latency (kill-switch evaluation)
 ✅ Bit-exact total matters (financial accounting)
 ✅ Update rate bounded (cache contention manageable)
-✅ Atomic ops on aggregate value type (uint64 / int32; FPN via __int128 or split)
+✅ Atomic ops on aggregate value type (uint64 / int32; FPN_Binary via __int128 or split)
 
 **Example:** `.E.1` aggregator P&L total — event-driven O(1) push per fill; kill-switch reads instantly.
 

@@ -71,6 +71,7 @@ CXX_FLAGS = ["-std=c++20", f"-I{ENGINE}", "-DENGINE_VERSION=\"\""]
 SYMBOL_INCLUDES = {
     # Core types
     "FPN":                          "FixedPoint/FixedPointN.hpp",
+    "FPN_Binary":                   "FixedPoint/FixedPointN.hpp",
     "FPN_Zero":                     "FixedPoint/FixedPointN.hpp",
     "FPN_FromDouble":               "FixedPoint/FixedPointN.hpp",
     "FPN_ToDouble":                 "FixedPoint/FixedPointN.hpp",
@@ -495,15 +496,15 @@ inline void __plan_body_check__(
     [[maybe_unused]] int tick_index,
     [[maybe_unused]] ShardedBacktestDriver<F>* drv)
 {{
-    [[maybe_unused]] FPN<F> price = FPN_Zero<F>();
-    [[maybe_unused]] FPN<F> volume = FPN_Zero<F>();
+    [[maybe_unused]] FPN_Binary<F> price = FPN_Zero<F>();
+    [[maybe_unused]] FPN_Binary<F> volume = FPN_Zero<F>();
     [[maybe_unused]] uint64_t ts_us = 0;
     [[maybe_unused]] uint64_t now_tick = 0;
-    [[maybe_unused]] FPN<F> mtm_price = FPN_Zero<F>();
+    [[maybe_unused]] FPN_Binary<F> mtm_price = FPN_Zero<F>();
     [[maybe_unused]] double price_d = 0.0, default_per_core = 0.0, default_risk = 0.0;
     [[maybe_unused]] double total_balance = 0.0, core_balance = 0.0;
     [[maybe_unused]] double book_spread_d = 0.0, book_mid_d = 0.0;
-    [[maybe_unused]] FPN<F> book_imb = FPN_Zero<F>();
+    [[maybe_unused]] FPN_Binary<F> book_imb = FPN_Zero<F>();
     [[maybe_unused]] BookSnapshot<F> depth = BookSnapshot_Init<F>();
     [[maybe_unused]] CoreModelZoo<F>* zoo_ptr = nullptr;
     [[maybe_unused]] EnsembleModelZoo<F>* ezoo_ptr = nullptr;

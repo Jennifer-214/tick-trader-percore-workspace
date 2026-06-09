@@ -1,6 +1,6 @@
 // .E.0.1 FP-DETERMINISM GOLDEN harness (promoted from the F-056 seed diagnostic).
 //
-// Exercises the FPN<64> op set over a FIXED input vector and emits a byte-exact hex
+// Exercises the FPN_Binary<64> op set over a FIXED input vector and emits a byte-exact hex
 // dump of every result. Built under the SHIPPED config (USE_NATIVE_128, -O3,
 // -march=native), its stdout is frozen as tools/fp_determinism_golden.txt — the
 // locked BINARY-EPOCH golden (D-100 / D-101: "locks the golden = THE NET").
@@ -22,11 +22,11 @@
 #include <cstddef>
 using namespace std;
 
-static void emit(const char* op, FPN<64> r) {
-    unsigned char b[sizeof(FPN<64>)];
+static void emit(const char* op, FPN_Binary<64> r) {
+    unsigned char b[sizeof(FPN_Binary<64>)];
     memcpy(b, &r, sizeof(r));
     printf("%-16s", op);
-    for (size_t i = 0; i < sizeof(FPN<64>); ++i) printf("%02x", b[i]);
+    for (size_t i = 0; i < sizeof(FPN_Binary<64>); ++i) printf("%02x", b[i]);
     printf("\n");
 }
 
@@ -43,7 +43,7 @@ int main() {
 
     // unary ops over each input (FromDouble seeds; Sqrt is now the generic NR)
     for (int i = 0; i < N; ++i) {
-        FPN<64> x = FPN_FromDouble<64>(IN[i]);
+        FPN_Binary<64> x = FPN_FromDouble<64>(IN[i]);
         snprintf(tag, sizeof tag, "FromDouble[%d]", i); emit(tag, x);
         snprintf(tag, sizeof tag, "Sqrt[%d]", i);       emit(tag, FPN_Sqrt<64>(x));
         snprintf(tag, sizeof tag, "Abs[%d]", i);        emit(tag, FPN_Abs<64>(x));
@@ -51,8 +51,8 @@ int main() {
     }
     // binary ops over adjacent pairs (the native-specialized accounting ops)
     for (int i = 0; i + 1 < N; ++i) {
-        FPN<64> a = FPN_FromDouble<64>(IN[i]);
-        FPN<64> b = FPN_FromDouble<64>(IN[i + 1]);
+        FPN_Binary<64> a = FPN_FromDouble<64>(IN[i]);
+        FPN_Binary<64> b = FPN_FromDouble<64>(IN[i + 1]);
         snprintf(tag, sizeof tag, "AddSat[%d]", i); emit(tag, FPN_AddSat<64>(a, b));
         snprintf(tag, sizeof tag, "SubSat[%d]", i); emit(tag, FPN_SubSat<64>(a, b));
         snprintf(tag, sizeof tag, "Sub[%d]", i);    emit(tag, FPN_Sub<64>(a, b));

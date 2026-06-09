@@ -154,6 +154,10 @@ RENAME_MAP = {
     # handled manually). The overlap-resolution logic below stays as defensive infrastructure
     # for .E.1 reuse (when code-symbol tokens with overlapping spans get added) + Class 36.
     "per-core": "per-node", "Per-core": "Per-node", "Per-Core": "Per-Node", "PER-CORE": "PER-NODE",
+    # A.5 (v5.15.5.F.4d.1.E.0.8, 2026-06-09): the FPN->FPN_Binary CODE rename is DONE (unlike the
+    # .D.1-era per-core case where code symbols were still pending) — so doc NARRATIVE naming the
+    # symbol updates to the live spelling. Fences/historical/ship-tags stay LEAVE per class rules.
+    "FPN": "FPN_Binary", "is_FPN_v": "is_fp_binary_v",
 }
 
 # Classes whose hits are eligible for auto-apply (the RENAME-action narrative classes).
@@ -406,7 +410,14 @@ def parse_md_file(file_path: str, tokens: List[str]) -> List[Hit]:
         line_hit_positions: set = set()
 
         for token in unique_tokens:
-            token_re = re.compile(re.escape(token), re.IGNORECASE)
+            # A.5 incident fix (2026-06-09): boundary-anchored matching. Unanchored re.escape(token)
+            # matched "FPN" INSIDE "FPN_Binary" -> --apply double-renamed already-renamed text
+            # ("FPN_Binary_Binary"). Lookarounds (not \b: tokens may start/end on non-word chars)
+            # block word-char-adjacent matches: "FPN_Binary"/"fp2_to_mag_fpn" no longer match token
+            # "FPN"; "per-core-sharded" still matches "per-core" (hyphen is a boundary). This makes
+            # --apply IDEMPOTENT whenever a RENAME_MAP value contains its key (FPN -> FPN_Binary).
+            token_re = re.compile(
+                r"(?<![A-Za-z0-9_])" + re.escape(token) + r"(?![A-Za-z0-9_])", re.IGNORECASE)
             for m in token_re.finditer(line):
                 if m.start() in line_hit_positions:
                     continue  # Already recorded a hit at this position
@@ -483,7 +494,14 @@ def apply_file(file_path: str, tokens: List[str], write: bool) -> Tuple[int, int
         subs: List[Tuple[int, int, str]] = []
         seen_positions: set = set()
         for token in unique_tokens:
-            token_re = re.compile(re.escape(token), re.IGNORECASE)
+            # A.5 incident fix (2026-06-09): boundary-anchored matching. Unanchored re.escape(token)
+            # matched "FPN" INSIDE "FPN_Binary" -> --apply double-renamed already-renamed text
+            # ("FPN_Binary_Binary"). Lookarounds (not \b: tokens may start/end on non-word chars)
+            # block word-char-adjacent matches: "FPN_Binary"/"fp2_to_mag_fpn" no longer match token
+            # "FPN"; "per-core-sharded" still matches "per-core" (hyphen is a boundary). This makes
+            # --apply IDEMPOTENT whenever a RENAME_MAP value contains its key (FPN -> FPN_Binary).
+            token_re = re.compile(
+                r"(?<![A-Za-z0-9_])" + re.escape(token) + r"(?![A-Za-z0-9_])", re.IGNORECASE)
             for m in token_re.finditer(line):
                 if m.start() in seen_positions:
                     continue

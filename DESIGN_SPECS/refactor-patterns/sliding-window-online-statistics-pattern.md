@@ -241,7 +241,7 @@ Second canonical application. Single-variable case (N=1) over a ring buffer with
 
 State embedded in `BookImbalanceHistory<F, W>` struct (`ML_Headers/FlowFeatures.hpp`). Pre-v5.15.5.D, `BookImbHistory_MeanShort(k=64)` did an O(K=64) sequential walk every slow-path cycle (~24 cache lines / read). Post-v5.15.5.D, a parallel `short_sum` field is maintained at Push time + `BookImbHistory_MeanShortFast(s)` reads it directly in O(1). ~10-20 cache lines saved / slow-path cycle / core.
 
-Numerical stability: book imbalance bounded to [-1, 1] + K=64 → max(|short_sum|) ≤ 64 → far below FPN<64>'s ±2^63 range → no saturation → FPN_Add is bytewise associative for these magnitudes. Bytewise parity vs the walked path verified in `tests/controller_test.cpp` via a 200-push deterministic sequence covering warm-up (count < K) and steady-state (count > K) phases.
+Numerical stability: book imbalance bounded to [-1, 1] + K=64 → max(|short_sum|) ≤ 64 → far below FPN_Binary<64>'s ±2^63 range → no saturation → FPN_Add is bytewise associative for these magnitudes. Bytewise parity vs the walked path verified in `tests/controller_test.cpp` via a 200-push deterministic sequence covering warm-up (count < K) and steady-state (count > K) phases.
 
 ### v5.15.5.E.D — RollingRMSE running-sum
 
@@ -251,7 +251,7 @@ State embedded in `RollingRMSE` struct (`ML_Headers/ConfidenceScore.hpp`). Pre-v
 
 `sum_squared_errors` is intentionally NOT in `FOREACH_CONFIDENCE_PERSIST_FIELD` (derivable from samples). Post-load helper `ConfidenceScorer_RecomputeRunningSums` reconstructs it from samples — keeps wire format minimal (no SHARDED_SNAPSHOT_VERSION bump for a derivable field).
 
-**FP non-associativity caveat:** RollingRMSE uses `double` (not FPN<F>); running-sum vs walked-sum are NOT bytewise identical due to FP rounding order. Bytewise parity test (`tests/controller_test.cpp` 200-push deterministic sequence) uses 1e-12 tolerance, well below realistic squared-error magnitudes (~1e-4) at window=32. For TRUE bytewise determinism, use FPN<F> (as BookImbHistory does); for slow-path scalar consumers like RMSE, tolerance-based equivalence is sufficient.
+**FP non-associativity caveat:** RollingRMSE uses `double` (not FPN_Binary<F>); running-sum vs walked-sum are NOT bytewise identical due to FP rounding order. Bytewise parity test (`tests/controller_test.cpp` 200-push deterministic sequence) uses 1e-12 tolerance, well below realistic squared-error magnitudes (~1e-4) at window=32. For TRUE bytewise determinism, use FPN_Binary<F> (as BookImbHistory does); for slow-path scalar consumers like RMSE, tolerance-based equivalence is sufficient.
 
 ### Pattern strengthens to invariant status
 
@@ -361,7 +361,7 @@ Apply the multi-window variant when ALL of:
 
 - Only ONE window is consumed (single-window pattern suffices; `short_sum` field is dead weight)
 - Short window's K varies at runtime across callers (e.g., test calls with k=2 + production with k=64) — keep the O(K) walk callable for non-canonical K; add `short_sum` only if the production K is fixed AND dominant
-- Memory budget is tight enough that 1 extra FPN<F> per record is prohibitive (uncommon; ~16 B for FPN<64> — the canonical 16B binary core, per CLAUDE.md)
+- Memory budget is tight enough that 1 extra FPN_Binary<F> per record is prohibitive (uncommon; ~16 B for FPN_Binary<64> — the canonical 16B binary core, per CLAUDE.md)
 
 ### Generalization (N-window variant)
 

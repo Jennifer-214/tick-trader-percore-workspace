@@ -4,7 +4,7 @@
 Mechanizes the AR-1 slip (meta-anti-pattern-index): a plan body claims an ENUMERATION
 (a relocation set / fee-site set / boundary-cast set), the author RUNS the code-intelligence
 tool (gen_code_map / rg) but then HAND-SUMMARIZES its output into the plan — dropping members.
-The tool was run; the summary lost members. (#11 step-6 fold: gen_code_map --byte-context FPN
+The tool was run; the summary lost members. (#11 step-6 fold: gen_code_map --byte-context FPN_Binary
 emitted ~18 layout-assert sites; the fold pasted 6. Order.hpp/ExecutionCore.hpp dropped entirely.)
 
 This check makes summarize-and-drop a RED BUILD: every FILE the source tool emits MUST appear
@@ -64,7 +64,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--plan", required=True)
     ap.add_argument("--section", required=True, help="substring of the plan header whose body holds the claimed set")
-    ap.add_argument("--source-cmd", help="shell cmd emitting file:line tokens (e.g. gen_code_map --byte-context FPN)")
+    ap.add_argument("--source-cmd", help="shell cmd emitting file:line tokens (e.g. gen_code_map --byte-context FPN_Binary)")
     ap.add_argument("--source-file", help="read source tokens from a captured file instead")
     ap.add_argument("--allow", nargs="*", default=[], help="basenames intentionally excluded from the plan set")
     a = ap.parse_args()

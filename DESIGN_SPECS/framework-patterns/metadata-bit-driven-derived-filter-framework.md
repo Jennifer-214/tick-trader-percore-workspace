@@ -343,7 +343,7 @@ Production callers replace manual blocks (per-field if-chains) with one walker i
   - Bitmap source: `FOREACH_ML_CFG_FLAG` + `cfg.ml_cfg_flags` field (for 4 bitmap-resident bools)
   - Locked hash: `LOCKED_STAMP_BOUND_DERIVED_HASH_V5_15_5_F4D`
   - Fixture path: `tests/fixtures/v5_14_stamp_canonical.bin`
-- Cohort: 14 fields (11 FPN<F> doubles + 3 ints) + 4 bitmap-resident bools
+- Cohort: 14 fields (11 FPN_Binary<F> doubles + 3 ints) + 4 bitmap-resident bools
 - 12+ consumer-site migration via `CFG_DRIFT_AUTOPOPULATE` + manual stamp emit body migration
 
 ### Future application catalog (7 surfaces planned)

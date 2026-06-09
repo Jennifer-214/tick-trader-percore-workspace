@@ -45,7 +45,7 @@ CI tool `check_doc_metadata.py` (queued at `.C` candidate ship) validates every 
 | `structural-fix` | Patterns that close bug classes structurally rather than patching symptoms |
 | `pattern-codification` | Lifecycle Stage 1-6 maturation discipline; promotion criteria; spec maturity tracking |
 | `branchless-discipline` | Branchless dispatch patterns; cmov / mask-select / fn-pointer-table choice (H7/H20) |
-| `fixed-point-math` | FPN<F> usage; accounting paths; precision rules; locale-independent emit (H4) |
+| `fixed-point-math` | FPN_Binary<F> usage; accounting paths; precision rules; locale-independent emit (H4) |
 | `latency-discipline` | Hot-path / slow-path / drainer cadence budgets; per-tick cost framework |
 | `failure-observability` | Silent-failure detection; PerCoreSnap field allocation; per-class observability fields |
 | `cross-tool-decoupling` | Framework-driven C++ CLI binaries replacing bash mirrors; wire format single-source-of-truth |

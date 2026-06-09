@@ -107,7 +107,7 @@ def parse_foreach_per_core_cfg_field(body: str) -> dict:
     Post-WIP2d-0.B: TYPE is the FIRST column. Row shape:
         X(<storage_type>, KIND_TOKEN, <name>, "label", "section", meta, payload, "tooltip", ...)
 
-    Type can contain template brackets (FPN<F>) so we use a non-greedy match through commas.
+    Type can contain template brackets (FPN_Binary<F>) so we use a non-greedy match through commas.
     """
     result = {}
     # Match: X(<type>, KIND_<TOKEN>, <name>,
@@ -173,7 +173,7 @@ def parse_per_core_cfg_body(text: str) -> dict:
 
     # Find manual field declarations (after stripping comments + the X-macro line)
     # Field decl pattern: optional alignas(N) + type + name;
-    # Type can be: uint8_t, uint16_t, uint32_t, uint64_t, int, double, FPN<F>, etc.
+    # Type can be: uint8_t, uint16_t, uint32_t, uint64_t, int, double, FPN_Binary<F>, etc.
     manual_fields = {}
     line_no = body_start_line
     for line in body.split('\n'):
@@ -331,7 +331,7 @@ def parse_subsystem_state_struct_fields(text: str, struct_name: str) -> dict:
         # Match SCALAR field declaration:
         #   optional 'alignas(N) ' prefix
         #   then 'type name;' or 'type name = init;'
-        # Type can be: uint8_t, FPN<F>, double, etc.
+        # Type can be: uint8_t, FPN_Binary<F>, double, etc.
         # EXPLICITLY EXCLUDE: arrays (name[N]), pointers (type* name)
         m = re.match(
             r'^(?:alignas\(\d+\)\s+)?([a-zA-Z_][a-zA-Z_0-9]*(?:\s*<\s*[^>]+\s*>)?)\s+(\w+)\s*(?:=\s*[^;]+)?\s*;',

@@ -24,7 +24,7 @@ applies_at_skills: []
 
 ## Problem statement
 
-Per-node overrides for individual cfg fields (FPN, int) work via "is-set" sentinels:
+Per-node overrides for individual cfg fields (FPN_Binary, int) work via "is-set" sentinels:
 
 ```cpp
 // One field per override:
@@ -320,7 +320,7 @@ See `heterogeneous-registry-pattern.md` HYBRID Form 3 for the stamp-binding inte
 
 ### Don't try to fit non-bitmap overrides here
 
-This pattern is specific to BITMAP fields. Per-node overrides for FPN (`risk_pct`) or int (`poll_interval`) fields use the simpler "non-zero is override" sentinel (see `PER_CORE_OVERRIDE_FIELDS` + `PER_CORE_OVERRIDE_INT_FIELDS`).
+This pattern is specific to BITMAP fields. Per-node overrides for FPN_Binary (`risk_pct`) or int (`poll_interval`) fields use the simpler "non-zero is override" sentinel (see `PER_CORE_OVERRIDE_FIELDS` + `PER_CORE_OVERRIDE_INT_FIELDS`).
 
 Don't mix the patterns; the registry tuple shape differs.
 

@@ -16,7 +16,7 @@ active snapshot (1 cache line, ~7ns).
 
 | Component | Cost | Notes |
 |-----------|------|-------|
-| BuyGate | ~20ns | 2 FPN comparisons + conditional pool write |
+| BuyGate | ~20ns | 2 FPN_Binary comparisons + conditional pool write |
 | PositionExitGate | ~30ns/position | 2 TP/SL comparisons per position, conditional exit write |
 | PortfolioController_Tick | ~20ns | Bitmap fill detection, tick counter, early return |
 | RDTSCP measurement | ~8ns | 2 calls, only present in profiling builds |
@@ -38,12 +38,12 @@ cache pollution on the hot path. TUI-on latency is now near bench-mode levels.
 To further increase TUI refresh rate, lower `poll_interval` in engine.cfg (e.g. 30).
 
 **Fewer positions per core** — PositionExitGate is O(positions). Each position adds
-~30ns (two 128-bit FPN comparisons + bitmap ops). For colocation: one position per core
+~30ns (two 128-bit FPN_Binary comparisons + bitmap ops). For colocation: one position per core
 per symbol eliminates the bitmap walk entirely.
 
-**FPN word count (N)** — every FPN comparison, add, multiply loops over N 64-bit words.
-Current FPN<64> has N=2 (128-bit total). If a future FPN design could use N=1 with
-sufficient precision for BTC, every FPN operation would be 2x faster. However, N=1
+**FPN_Binary word count (N)** — every FPN_Binary comparison, add, multiply loops over N 64-bit words.
+Current FPN_Binary<64> has N=2 (128-bit total). If a future FPN_Binary design could use N=1 with
+sufficient precision for BTC, every FPN_Binary operation would be 2x faster. However, N=1
 (Q32.32) overflows on BTC price² in regression math, so this requires asymmetric
 integer/fractional bit allocation — not a simple change.
 

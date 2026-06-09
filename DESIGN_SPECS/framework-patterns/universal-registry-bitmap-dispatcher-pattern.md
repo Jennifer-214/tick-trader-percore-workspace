@@ -354,7 +354,7 @@ Pre-Option-2, SettingsPanel maintained `s->float_vals[i]`, `s->bool_vals[i]`, `s
 - Commit-time sync (parallel arrays → cfg)
 - Per-Kind dispatch via `CfgFieldType` enum (CFG_FLOAT/INT/BOOL/PATH) in render loop
 
-The bitmap dispatcher eliminates this indirection: SettingsPanel takes `ControllerConfig<F>&` directly; render fn table per row dispatches via type-trait (`is_FPN_v<T>` / etc.); bitmap walker iterates set bits in composed render mask. Single source of truth (`ControllerConfig<F>` itself) — no sync required.
+The bitmap dispatcher eliminates this indirection: SettingsPanel takes `ControllerConfig<F>&` directly; render fn table per row dispatches via type-trait (`is_fp_binary_v<T>` / etc.); bitmap walker iterates set bits in composed render mask. Single source of truth (`ControllerConfig<F>` itself) — no sync required.
 
 ### Future applications
 

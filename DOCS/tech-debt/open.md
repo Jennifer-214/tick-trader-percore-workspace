@@ -2899,6 +2899,8 @@ related_specs: []
 
 ### TECH_DEBT-142 — Doc-rename tool prose-token approach unsafe for `.E.1` CODE rename (needs symbol/AST-aware tooling)
 
+> **A.5 cross-link (2026-06-09, `v5.15.5.F.4d.1.E.0.8`):** A.5 rehearsed the rename-ship pipeline on the collision-free `FPN`→`FPN_Binary` token and codified `DESIGN_SPECS/refactor-patterns/rename-ship-methodology.md` (Stage 3) — incl. the totality-oracle discriminator (compiler-guarded vs TOOL-REGEX vs PROSE-AMBIGUOUS) that names exactly why `.E.1`'s prose-ambiguous tokens NEED the symbol/AST-aware tooling this entry asks for. The `.D.1` doc classifier also gained boundary-anchored matching (A.5 incident; non-idempotent --apply fixed + proven). STAYS OPEN — closes at `.E.1` with the AST tooling decision.
+
 ```yaml
 id: TECH_DEBT-142
 title: doc-rename tool prose-token approach unsafe for E.1 code rename
@@ -3132,3 +3134,15 @@ sister_debt: TECH_DEBT-154 (the maker-fee guard, which uses the __builtin_expect
 - **Why DEFERRED (merit, NOT effort):** the re-pack changes hot-path struct layouts (latency-sensitive → latency re-verification) AND persisted byte-layouts (`Position` → snapshot version bump + golden refreeze). That's the SAME surface D-157 deferred (the refreeze) until the numeric core stabilizes post-Ship-B — and Ship-B (decimal money) changes those layouts AGAIN. Re-pack-now = do the layout+refreeze+latency work now AND redo it at Ship-B = twice; bundling with the post-Ship-B stabilization does it once.
 - **Trigger:** post-Ship-B core-stabilization (bundle with the refreeze + un-bypass Check F, D-157); fire `/dod-audit` scoped to the FPN-field structs.
 - **Cross-ref:** D-157 (refreeze deferral — same surface); `project_engine_done_edge_is_the_frontier` (optimize-after-inflection); the v5.15.5.F.4d.1.E.0.7 postmortem.
+
+### TECH_DEBT-160 — audit the 2 gui-lane `-Wstringop-overflow` warnings (suspected GCC value-range FPs at guarded sites)
+
+- **id:** TECH_DEBT-160 · **severity:** low · **opened:** 2026-06-09 (A.5 gui build) · **status:** open · **surface_tags:** [build-warnings, slow-path, testing]
+- Surfaced watching the A.5 `build.sh gui` output (NOT rename-caused: zero renamed tokens at either site; absent from the plain test-build lane; the flagged geometry is post-Ship-A 16B sizes, so both would have fired at E.0.7's gui build too). (a) `DataStream/DepthRecorder.hpp:252` — `to_chars` chain writing "at offset 160 into row[160]"; (b) `CoreFrameworks/ControllerEventLoop.hpp:1193` via `controller_test.cpp:6617` inline — "offset 709680 into EventLoopState of size 272640" DESPITE the `slot < 0 || slot >= registered_count` guard at `:1192` (GCC can't prove `registered_count ≤ MAX`). Both look like guarded-but-unprovable value-range FPs; VERIFY each (and either annotate/bound so the warning dies, or document as known-FP). Bounds semantics deliberately untouched at A.5 (zero-semantic ship).
+- **Cross-ref:** A.5 postmortem (`2026-06-09-v5.15.5.F.4d.1.E.0.8-postmortem.md`); fits the D-155 "first-careful-look surfaces a pre-existing batch" shape.
+
+### TECH_DEBT-161 — pin the sanitizer-suite run conditions (stack ulimit + leak mode) + audit harness exit-leaks
+
+- **id:** TECH_DEBT-161 · **severity:** medium · **opened:** 2026-06-09 (A.5 acceptance) · **status:** open · **surface_tags:** [ci-tooling, sanitizers, testing, structural-enforcement]
+- A.5's asan acceptance initially ABORTED (stack-overflow in `controller_test` `main`) under the ambient shell `ulimit -s 12500` — ASan redzones inflate main's huge stack locals (`EventLoopState<64>` ≈ 272KB each). Passing 3246/0 required `ulimit -s unlimited`; LeakSanitizer also reports ~115MB/765 allocs at exit (harness no-teardown exit, NOT per-test leaks) — gate ran `detect_leaks=0`. Ship-A's recorded "asan 3246/0" therefore depended on UNPINNED ambient shell state. FIX (guards-compound): (a) a `tools/run_sanitizer_suite.sh` runner that pins `ulimit -s unlimited` + `ASAN_OPTIONS=detect_leaks=0` (documented WHY inline) so the gate is reproducible from any shell; (b) separately AUDIT the 765-alloc exit-leak set once (likely fixture/XGBoost/arena allocations freed-by-exit; if all benign, document; if not, fix) — then decide whether `detect_leaks` can turn back on.
+- **Cross-ref:** A.5 postmortem; D-155 (sanitizer-batch discipline); `feedback_guards_compound_enforcement_is_leverage`.

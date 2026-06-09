@@ -13,11 +13,11 @@ The hot path (`ExecutionCore_Tick`) is already heavily optimized and primarily b
 **Optimization:** Convert `lat_enabled` into a template boolean parameter (e.g., `template <unsigned F, bool LAT_ENABLED>`). This allows the compiler to completely compile out the `rdtsc` and branch instructions when sampling is disabled, guaranteeing zero overhead.
 
 ### 2. AVX-512 Vectorization of Pipelined Gate Evaluations (Leg B)
-**Current:** The secondary position leg (Leg B) evaluation (`sg_fires_b`) is branch-gated (`if (__builtin_expect(active_b, 0))`) because fixed-point comparisons on Leg B add ~40ns per tick due to instruction pipelining limits for `FPN<64>`.
-**Optimization:** Using AVX-512 (`_mm512_cmpge_epu64_mask`), we can pack both Leg A and Leg B `FPN` comparisons into a single vectorized operation. This reduces the evaluation cost of both legs to a single cycle, allowing us to remove the `__builtin_expect` branch entirely and evaluate both legs unconditionally in 0ns extra latency.
+**Current:** The secondary position leg (Leg B) evaluation (`sg_fires_b`) is branch-gated (`if (__builtin_expect(active_b, 0))`) because fixed-point comparisons on Leg B add ~40ns per tick due to instruction pipelining limits for `FPN_Binary<64>`.
+**Optimization:** Using AVX-512 (`_mm512_cmpge_epu64_mask`), we can pack both Leg A and Leg B `FPN_Binary` comparisons into a single vectorized operation. This reduces the evaluation cost of both legs to a single cycle, allowing us to remove the `__builtin_expect` branch entirely and evaluate both legs unconditionally in 0ns extra latency.
 
 ### 3. Vectorized Active/Inactive CMOV Blending
-**Current:** `FPN<F> tp = active ? core->live_tp : core->cached_params.sg_take_profit_price;` uses CMOV instructions to select the TP/SL thresholds without branching.
+**Current:** `FPN_Binary<F> tp = active ? core->live_tp : core->cached_params.sg_take_profit_price;` uses CMOV instructions to select the TP/SL thresholds without branching.
 **Optimization:** With AVX-512, use `_mm512_mask_blend_epi64` to simultaneously blend the active/inactive thresholds for both Leg A and Leg B in one instruction rather than multiple sequential CMOV chains.
 
 ### 4. Branchless Ring Buffer Event Commits
@@ -35,8 +35,8 @@ The hot path (`ExecutionCore_Tick`) is already heavily optimized and primarily b
 The slow path runs periodically (e.g., every 100 ticks) and computes regressions, features, and parameter packs.
 
 ### 1. AVX-512 Vectorization for Fixed-Point Math (`FixedPointN.hpp`)
-**Current:** The arbitrary-width fixed-point library (`FPN<F>`) uses arrays of `uint64_t` words and relies on compiler loop unrolling (`#pragma GCC unroll`) with scalar carry chains for arithmetic (e.g., `FPN_MagAddN`, `FPN_MagSubN`).
-**Optimization:** For `FPN<256>` or `FPN<512>`, leverage AVX-512 (`__m512i`) intrinsics. AVX-512 supports 512-bit wide integer registers, allowing parallel processing of 8x 64-bit words. We can implement vectorized operations to handle addition, subtraction, and especially multiplication across the entire FPN structure in a few instructions, eliminating sequential scalar carry dependencies.
+**Current:** The arbitrary-width fixed-point library (`FPN_Binary<F>`) uses arrays of `uint64_t` words and relies on compiler loop unrolling (`#pragma GCC unroll`) with scalar carry chains for arithmetic (e.g., `FPN_MagAddN`, `FPN_MagSubN`).
+**Optimization:** For `FPN_Binary<256>` or `FPN_Binary<512>`, leverage AVX-512 (`__m512i`) intrinsics. AVX-512 supports 512-bit wide integer registers, allowing parallel processing of 8x 64-bit words. We can implement vectorized operations to handle addition, subtraction, and especially multiplication across the entire FPN_Binary structure in a few instructions, eliminating sequential scalar carry dependencies.
 
 ### 2. O(1) Online Regression Updates (`LinearRegression3X.hpp`)
 **Current:** `RollingStats_Push` and `LinearRegression3X_Fit` perform an O(W) loop (up to W=128) over the ring buffer every slow-path cycle to compute 5 sums for ordinary least squares (`sum_y`, `sum_y2`, `sum_xy`, etc.).
@@ -44,7 +44,7 @@ The slow path runs periodically (e.g., every 100 ticks) and computes regressions
 
 ### 3. Replacing Fixed-Point Division with Multiplication
 **Current:** `RollingStats_Push` performs division by `n_fp` (the current sample count, max W=128) using `FPN_DivNoAssert`. Fixed-point division of wide integers (like 256-bit or 512-bit) is iteratively branch-heavy and extremely slow.
-**Optimization:** The denominator `n` is always an integer between 2 and `W`. We can precompute an array of `FPN<F>` reciprocals `1/n` at compile-time or initialization. The operation `FPN_DivNoAssert(sum, n_fp)` can then be replaced by `FPN_Mul(sum, precomputed_reciprocal[n])`, which is significantly faster and branchless.
+**Optimization:** The denominator `n` is always an integer between 2 and `W`. We can precompute an array of `FPN_Binary<F>` reciprocals `1/n` at compile-time or initialization. The operation `FPN_DivNoAssert(sum, n_fp)` can then be replaced by `FPN_Mul(sum, precomputed_reciprocal[n])`, which is significantly faster and branchless.
 
 ### 4. Cache Line Padding in RollingStats
 **Current:** `RollingStats` stores rapidly changing outputs (`price_avg`, `price_slope`) adjacent to internal ring-buffer management variables (`head`, `count`). The TUI/GUI thread reads these outputs via snapshot while the engine slow-path mutates them.
@@ -157,7 +157,7 @@ Handling bursts of market data without falling behind requires extreme efficienc
 
 ### 2. Float Parsing Overheads (`BinanceOrderAPI.hpp`)
 **Current:** Numeric values like `fill_price` and `fill_qty` are extracted as substrings, copied into a small stack buffer (`char buf[64]`), null-terminated, and then parsed using the standard C library function `atof(buf)`. `atof` is notoriously slow and branch-heavy as it handles locales, scientific notation, and generic edge cases.
-**Optimization:** Replace `atof` with a fast, locale-independent, and branchless float parser (e.g., `fast_float` or a custom parser designed specifically for Binance's strict decimal formats). Furthermore, extract these directly into the fixed-point (`FPN<F>`) representation where possible, skipping the intermediate double-precision float representation entirely.
+**Optimization:** Replace `atof` with a fast, locale-independent, and branchless float parser (e.g., `fast_float` or a custom parser designed specifically for Binance's strict decimal formats). Furthermore, extract these directly into the fixed-point (`FPN_Binary<F>`) representation where possible, skipping the intermediate double-precision float representation entirely.
 
 ---
 
@@ -189,7 +189,7 @@ The engine utilizes various lock-free patterns to avoid mutex contention. While 
 
 ---
 
-## Part 11: Branchless Fixed-Point (FPN) Libraries
+## Part 11: Branchless Fixed-Point (FPN_Binary) Libraries
 
 The foundational `FixedPoint` math libraries (`FixedPointN.hpp` and `FixedPoint64.hpp`) correctly employ bitwise branchless patterns, but multiple operations can be aggressively accelerated using AVX-512 intrinsic vectorization and true integer division.
 
@@ -198,11 +198,11 @@ The foundational `FixedPoint` math libraries (`FixedPointN.hpp` and `FixedPoint6
 **Optimization:** Implement a true 128-bit integer division routine. To avoid slow hardware `div` instructions, leverage a Newton-Raphson approximation for reciprocal multiplication, operating purely within the integer/SIMD pipelines.
 
 ### 2. AVX-512 Compression of FPN_Min / FPN_Max (`FixedPointN.hpp`)
-**Current:** `FPN_Min` and `FPN_Max` are branchless but compute masking across the `FPN<F>::N` array using loop unrolling (`#pragma GCC unroll 65534`). For `FPN<256>` or `FPN<512>`, this generates long sequences of scalar instructions that clobber general-purpose registers.
+**Current:** `FPN_Min` and `FPN_Max` are branchless but compute masking across the `FPN_Binary<F>::N` array using loop unrolling (`#pragma GCC unroll 65534`). For `FPN_Binary<256>` or `FPN_Binary<512>`, this generates long sequences of scalar instructions that clobber general-purpose registers.
 **Optimization:** Convert the array representations directly to AVX-512 `__m512i` registers. `FPN_Min` and `FPN_Max` can be compressed into single-instruction operations using `_mm512_min_epi64` and `_mm512_max_epi64`, or through single-instruction vector blending (`_mm512_mask_blend_epi64`).
 
 ### 3. Iterative Mul/Div in String Conversion (`FixedPointN.hpp`)
-**Current:** Converting strings to and from `FPN` (`FPN_ToString` / `FPN_FromString`) uses repetitive `O(N * digits)` array multiplication and divmod by 10 (`FPN_MulSingle`, `FPN_DivModSingle`). While not on the hot path, these execute during REST parameter parsing and data ingestion.
+**Current:** Converting strings to and from `FPN_Binary` (`FPN_ToString` / `FPN_FromString`) uses repetitive `O(N * digits)` array multiplication and divmod by 10 (`FPN_MulSingle`, `FPN_DivModSingle`). While not on the hot path, these execute during REST parameter parsing and data ingestion.
 **Optimization:** Use fast integer division by constants (e.g., Lemire's method or libdivide) to replace the inner `divmod` loops with branchless reciprocal multiplication.
 
 ### 4. SBB/CMOV Opportunities in FP64 (`FixedPoint64.hpp`)

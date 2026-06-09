@@ -26,7 +26,7 @@ cd "$REPO_ROOT"
 # --types <T>    classify every `T<...>` reference: DECL / RETURN / PARAM / ALIAS / OTHER
 # --structs <T>  structs/classes EMBEDDING T as a field — the byte-layout blast set (memcmp/SHA/fwrite)
 # --full <T>     --structs then --types, in tandem (granular control + detailed combined output)
-# Grep/rg-based (distinctive tokens like FPN trace cleanly; NOT full AST). The DECL bucket still mixes
+# Grep/rg-based (distinctive tokens like FPN_Binary trace cleanly; NOT full AST). The DECL bucket still mixes
 # struct-field + local; --structs is the scope-aware answer to "which structs". Per D-134.
 type_map() {
     local TYPE="$1"
@@ -170,18 +170,18 @@ callers_map() {
 # clean missing-arg error (vs the bash-noisy ${2:?}) for the modes that need a TYPE/FN argument:
 case "${1:-}" in
     --types|--structs|--composition|--byte-context|--aliases|--callers|--macros|--full)
-        [ -n "${2:-}" ] || { echo "gen_code_map: $1 needs a TYPE/FN argument — e.g.  $1 FPN" >&2; exit 2; } ;;
+        [ -n "${2:-}" ] || { echo "gen_code_map: $1 needs a TYPE/FN argument — e.g.  $1 FPN_Binary" >&2; exit 2; } ;;
 esac
 
 case "${1:-}" in
-    --types)   type_map "${2:?--types needs a TYPE, e.g. FPN}";   exit 0 ;;
-    --composition) composition_map "${2:?--composition needs a TYPE, e.g. FPN}"; exit 0 ;;
+    --types)   type_map "${2:?--types needs a TYPE, e.g. FPN_Binary}";   exit 0 ;;
+    --composition) composition_map "${2:?--composition needs a TYPE, e.g. FPN_Binary}"; exit 0 ;;
     --byte-context) byte_context "${2:?--byte-context needs a TYPE}"; exit 0 ;;
     --aliases) alias_map "${2:?--aliases needs a TYPE}"; exit 0 ;;
     --callers) callers_map "${2:?--callers needs a FN, e.g. FP64_Mul}"; exit 0 ;;
-    --structs) struct_map "${2:?--structs needs a TYPE, e.g. FPN}"; exit 0 ;;
-    --macros)  macro_map "${2:?--macros needs a TYPE, e.g. FPN}"; exit 0 ;;
-    --full)    struct_map "${2:?--full needs a TYPE, e.g. FPN}"; echo; macro_map "${2}"; echo; type_map "${2}"; exit 0 ;;
+    --structs) struct_map "${2:?--structs needs a TYPE, e.g. FPN_Binary}"; exit 0 ;;
+    --macros)  macro_map "${2:?--macros needs a TYPE, e.g. FPN_Binary}"; exit 0 ;;
+    --full)    struct_map "${2:?--full needs a TYPE, e.g. FPN_Binary}"; echo; macro_map "${2}"; echo; type_map "${2}"; exit 0 ;;
     --functions) shift ;;
 esac
 
@@ -339,7 +339,7 @@ FN_REGEX='^[[:space:]]*((static[[:space:]]+)?inline[[:space:]]+)([A-Za-z_<>:&* ]
     echo
     echo "- Function names follow \`Pattern_FunctionName\` convention (e.g. \`Portfolio_Init\`, \`BG_Evaluate\`)"
     echo "- Headers are inline-heavy — most functions live in \`.hpp\` and are \`inline\`"
-    echo "- Templates parameterize on \`unsigned F\` (FPN word count), default \`F=64\` (4096-bit)"
+    echo "- Templates parameterize on \`unsigned F\` (frac-bits); FPN_Binary<64> = the 16B two's-complement binary core"
     echo "- Lowercase helpers (\`fan_out\`, \`drain_with_submit\`) are local to a function and not in this map"
     echo "- ALL_CAPS macros are not in this map; see headers directly"
 

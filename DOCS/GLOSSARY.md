@@ -230,3 +230,23 @@ Boot-time validation: connectivity to each exchange; API permissions (refuse `en
 
 **End of GLOSSARY.md v1.0** (2026-05-28).
 Updated as new concepts surface.
+
+---
+
+## Numeric core types (added at A.5, `v5.15.5.F.4d.1.E.0.8`, 2026-06-09)
+
+### FPN_Binary<64>
+
+The engine's binary fixed-point core: **16 bytes**, two's-complement `__int128`, value = `v / 2^64` (sign in the top bit; 4 per cache line). Used for FEATURE/SIGNAL math (and, until Ship B lands decimal money, accounting per H4's current form). **Spelling bridge:** named bare `FPN` before A.5 — in pre-A.5 docs, commits, and history, `FPN` ≈ today's `FPN_Binary`. It was 24B sign-magnitude (`w[2]`+sign+pad) before Ship A (`v5.15.5.F.4d.1.E.0.7`) flipped the representation.
+
+### FPN_* function family
+
+`FPN_Mul`, `FPN_AddSat`, `FPN_ToDouble`, `FPN_BlendOnMask`, … — the op surface over the binary core. **Deliberately NOT renamed at A.5** (the family's final shape is decided at Ship B when decimal ops land). A doc citing `FPN_DivNoAssert` is current, not stale.
+
+### is_fp_binary_v / is_fp_decimal_v
+
+Disjoint domain traits (B6): binary `FixedPoint<2,F>`+`FPN_Binary<64>` vs decimal `FixedPoint<10,F>` (Ship B). The legacy trait spelling `is_FPN_v` was retired at A.5 — every dispatcher gates on `is_fp_binary_v` directly.
+
+### FPN_Decimal (arrives at Ship B)
+
+The decimal money type (`FixedPoint<10,8>`, scale 10⁸) — NOT yet in the codebase; documented here so the binary/decimal naming pair reads as designed (D-143).

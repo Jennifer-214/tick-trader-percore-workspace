@@ -22,12 +22,12 @@ change rarely enough that manual updates work).
 | # | Invariant | Tests covering it | Coverage |
 |---|---|---|---|
 | 1 | **Position Exit Invariants** (TP > entry > SL, 2:1 reward/risk, fee-floor TP) | Position Exit Gate (line 224), Regime Adjust: TRENDING_DOWN TP/SL (1805), FEE FLOOR AFTER REGIME TIGHTENING (2860) | COVERED |
-| 2 | **FPN Division Guards** (`FPN_DivNoAssert` requires `IsZero` guard) | Volume Spike Detection (1451), DANGER GRADIENT (2080), Wave 2 D.3 (5638) | COVERED |
+| 2 | **FPN_Binary Division Guards** (`FPN_DivNoAssert` requires `IsZero` guard) | Volume Spike Detection (1451), DANGER GRADIENT (2080), Wave 2 D.3 (5638) | COVERED |
 | 3 | **Fill-Counter Atomicity** (v4.7.19 — bump only in DrainPostFill) | v4.7.16 — backtest/live parity (6198) via DrainPostFill mask walk; v4.7.19 — counter/CSV atomicity (6403) | COVERED |
 | 4 | **Config Field Conventions** (`_pct` decimal vs `_mult` direct) | Config Parser (72), Phase 5d: Config validation (3126) | COVERED |
 | 5 | **Cross-Mode Init Placement** (legacy + sharded both initialize globals) | Phase 4: sharded snapshot (4300), v5.0.4 — Parity (6807) | DISCIPLINE — structural rule, not directly testable |
-| 6 | **FPN-Only Accounting** (no double in decision logic) | Full Pipeline Integration (723), BALANCE DRIFT (2529), Phase 2.1 (3883) | COVERED |
-| 7 | **FPN Comparison Completeness** (no partial-word ops) | FPN EXIT GATE COMPARISON (2464), Wave 2 D.3 spread_bps (5638) | COVERED — but `Portfolio.hpp:226-229` has documented partial-word bug accepted as known issue |
+| 6 | **FPN_Binary-Only Accounting** (no double in decision logic) | Full Pipeline Integration (723), BALANCE DRIFT (2529), Phase 2.1 (3883) | COVERED |
+| 7 | **FPN_Binary Comparison Completeness** (no partial-word ops) | FPN_Binary EXIT GATE COMPARISON (2464), Wave 2 D.3 spread_bps (5638) | COVERED — but `Portfolio.hpp:226-229` has documented partial-word bug accepted as known issue |
 | 8 | **Halt Flag Invariant** (`buying_halted=1` AND zero `gate_offset`) | CENTRALIZED HALT FLAG (2220), GATE OFFSET TRACKING (2169) | COVERED |
 | 9 | **Confidence Loop Invariant** (single update, slow-path-only compute, threshold formula) | Phase 6prep: ConfidenceScorer composition (3427); regime mapping with threshold (1971) | PARTIAL — formula tested; "single update site" relies on grep discipline |
 | 10 | **Train-Serve Feature Parity** (BOTH paths feed `Regime_ComputeSignals` identically) | v4.7.16 — backtest/live parity (6198), Wave 2 D.3 RegimeSignals (5638), v5.0.4 — OneCore identity (6807); + `parity_harness` returns 0 drift | COVERED |

@@ -163,7 +163,7 @@ Output: cohort sibling list with overlap analysis (which functions touch BOTH th
 
 ### 7. Compute blast radius
 
-**Deterministic first-pass for TYPE symbols — run `gen_code_map`, don't hand-grep (D-134/D-136; tool-over-LLM-discovery, per `feedback_run_doc_ci_tools_first_never_hand_verify`):** when the traced symbol is a TYPE (or a field whose TYPE is changing — e.g. `FPN<64>` → 16B), the authoritative blast-radius set comes from the code-intelligence index, not eyeballed greps:
+**Deterministic first-pass for TYPE symbols — run `gen_code_map`, don't hand-grep (D-134/D-136; tool-over-LLM-discovery, per `feedback_run_doc_ci_tools_first_never_hand_verify`):** when the traced symbol is a TYPE (or a field whose TYPE is changing — e.g. `FPN_Binary<64>` → 16B), the authoritative blast-radius set comes from the code-intelligence index, not eyeballed greps:
 - `tools/gen_code_map.sh --byte-context <T>` — the ENFORCEMENT-target sites: `sizeof(T)` + the `memcmp`/`SHA`/`fwrite`/`HMAC` ops where a layout change breaks byte-equivalence.
 - `tools/gen_code_map.sh --composition <T>` — structs byte-affected by `T` via TRANSITIVE containment.
 - the type→sites reverse-index (`--types`/`--aliases`) — every struct-field / param / return referencing `T`.

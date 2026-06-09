@@ -56,7 +56,7 @@ So the compiler conservatively keeps them separate. Manual fusion with explicit 
 
 Fusion is COMPLEMENTARY to vectorization. After fusion, each loop iteration's body may itself be a candidate for AVX-512 / SIMD parallelism over the data fields. But fusion comes first — vectorizing N separate cold-cache walks doesn't help if the bandwidth bottleneck is the walks themselves.
 
-Memcpy doesn't apply when the loop body performs computation (aggregation, conditional writes, FPN conversions), not bulk copy.
+Memcpy doesn't apply when the loop body performs computation (aggregation, conditional writes, FPN_Binary conversions), not bulk copy.
 
 ### Why not Struct-of-Arrays (SoA) layout?
 

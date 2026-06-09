@@ -324,7 +324,7 @@ void cli_args_dispatch(const char* flag_name, const char* optarg, CliReceived& a
 
 **Apply received args to cfg + inf:**
 
-Per `/blindspot-scan` v1.15 B8 finding: `cfg.name = args.name` MUST filter rows flagged NO_FLAT_FIELD (e.g., `strategy` row at HEAD has NO_FLAT_FIELD bit; no `cfg.strategy` scalar exists — compile fail without filter). Sister precedent: `ControllerConfig.hpp:1447-1454` uses `if constexpr (!((meta) & NO_FLAT_FIELD))` filter. Per `/blindspot-scan` v1.15 B11-ALT: `apply_cli_args_to_cfg` must be template-parameterized on `unsigned F` for FPN<F> dispatch (sister to `populate_inference_cfg_from_derived<F, InfT>`).
+Per `/blindspot-scan` v1.15 B8 finding: `cfg.name = args.name` MUST filter rows flagged NO_FLAT_FIELD (e.g., `strategy` row at HEAD has NO_FLAT_FIELD bit; no `cfg.strategy` scalar exists — compile fail without filter). Sister precedent: `ControllerConfig.hpp:1447-1454` uses `if constexpr (!((meta) & NO_FLAT_FIELD))` filter. Per `/blindspot-scan` v1.15 B11-ALT: `apply_cli_args_to_cfg` must be template-parameterized on `unsigned F` for FPN_Binary<F> dispatch (sister to `populate_inference_cfg_from_derived<F, InfT>`).
 
 ```cpp
 template <unsigned F>
@@ -554,7 +554,7 @@ bool values_equal(const T& a, const T& b) {
 }
 ```
 
-**Drift impossibility at TEST LAYER:** Adding a new STAMP_BOUND_CFG_DERIVED-flagged row = test walker auto-validates it round-trips. No test code edit required. If round-trip fails for ANY flagged row (e.g., new STORAGE_T not handled by tt::cfg_emit_field; FPN precision edge case; missing has_* parsing), the test FAILS the build at CI time — caught before any operator hits the bug.
+**Drift impossibility at TEST LAYER:** Adding a new STAMP_BOUND_CFG_DERIVED-flagged row = test walker auto-validates it round-trips. No test code edit required. If round-trip fails for ANY flagged row (e.g., new STORAGE_T not handled by tt::cfg_emit_field; FPN_Binary precision edge case; missing has_* parsing), the test FAILS the build at CI time — caught before any operator hits the bug.
 
 **Sister pattern:** The extensibility test pattern is REGISTRY-AGNOSTIC. Applies to ANY cfg-derived consumer cohort. Codified separately in `cfg-derived-consumer-framework.md` v1.3 § "Extensibility test pattern for cohort consumers" so future canonical applications (e.g., FOREACH_STAMP_BOUND_MODEL_CONST cohort) inherit the pattern without re-inventing.
 

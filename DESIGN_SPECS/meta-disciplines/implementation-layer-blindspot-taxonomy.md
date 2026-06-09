@@ -36,7 +36,7 @@ The existing `/precoding-audit-gate` fires 5-8 audits that catch DIFFERENT class
 | `/dod-audit` | DESIGN_SPECS pattern application (cache, branchless, bitmap, X-macro patterns) |
 | `/accounting-audit` | OMS/fee/commission/P&L/Class 27/H4 violations |
 | `/registry-fit-audit` | Registry misapplication (eligibility criteria, KIND vs storage routing) |
-| `/hft-audit` | Universal HFT principles (cache layout, branchless, lock-free, FPN edge cases) |
+| `/hft-audit` | Universal HFT principles (cache layout, branchless, lock-free, FPN_Binary edge cases) |
 
 These audits operate at the SHAPE / STRUCTURE / SCOPE layer. **They do NOT catch IMPLEMENTATION-DETAIL blind spots** — type-compatibility cascades, field-name collisions across unified registries, transitional state coexistence, context-dependent C++ constructs (e.g., `if constexpr` template-context requirements), include-cycle risk, row-order drift between sister registries.
 
@@ -74,7 +74,7 @@ Each category gets: **Definition** / **Detection mechanism** / **Loud vs silent*
 
 ### B1 — Type-change cascade when struct field types shift mid-migration
 
-**Definition:** Existing struct declares field `T_old name;` (e.g., `double ridge_lambda;`); migration changes registry STORAGE_T column to T_new (e.g., `FPN<F>`); auto-gen of struct replaces with `T_new name;`. Downstream consumer sites that compare/assign by-T_old break compile.
+**Definition:** Existing struct declares field `T_old name;` (e.g., `double ridge_lambda;`); migration changes registry STORAGE_T column to T_new (e.g., `FPN_Binary<F>`); auto-gen of struct replaces with `T_new name;`. Downstream consumer sites that compare/assign by-T_old break compile.
 
 **Detection mechanism:**
 - Enumerate currently-flagged field-name set
@@ -85,7 +85,7 @@ Each category gets: **Definition** / **Detection mechanism** / **Loud vs silent*
 
 **Loud vs silent:** LOUD (build failure with type-mismatch diagnostic). HIGH-RISK because consumer count can be 50-100+; rebuild cycles wasted if surfaced mid-coding.
 
-**Worked example:** `.B.3` Step 1.6.3 unconditional struct-gen via Decision C Approach A. 27 currently-STAMP_BOUND_CFG_DERIVED-flagged fields (`ridge_lambda`, `thompson_mu_prior`, `bandit_blend_ratio`, etc.) shift from FOREACH_STAMP_BOUND_CFG declared types (often `double`) to master registry STORAGE_T (often `FPN<F>`). ~80 test fixture sites in `tests/controller_test.cpp` reference `sr.<field>` and compare against literal `double` values — must wrap in `FPN_ToDouble(...)` or add `operator==(FPN<F>, double)` for compile success.
+**Worked example:** `.B.3` Step 1.6.3 unconditional struct-gen via Decision C Approach A. 27 currently-STAMP_BOUND_CFG_DERIVED-flagged fields (`ridge_lambda`, `thompson_mu_prior`, `bandit_blend_ratio`, etc.) shift from FOREACH_STAMP_BOUND_CFG declared types (often `double`) to master registry STORAGE_T (often `FPN_Binary<F>`). ~80 test fixture sites in `tests/controller_test.cpp` reference `sr.<field>` and compare against literal `double` values — must wrap in `FPN_ToDouble(...)` or add `operator==(FPN_Binary<F>, double)` for compile success.
 
 **Detection guard:** Pre-coding type-change diff via `/blindspot-scan` Pillar B1. **+ MECHANICAL (2026-06-01, #11 16B core):** when the type-change introduces signed-overflow UB — two's-complement `abs(INT_MIN)` / `-INT_MIN` / mul-overflow, which NO compile error or memcmp surfaces — a **UBSan build lane** (`build.sh ubsan`, `-fsanitize=signed-integer-overflow,undefined -fno-sanitize-recover`) catches the WHOLE class at runtime. The compiler-sanitizer IS the guard (a grep can't enumerate UB sites); run the migrated core's tests + a `±INT_MIN` probe under it. The "mechanize the pillar" move — a blindspot sub-class that *can* be build-caught should be, not re-found by the LLM each scan.
 
@@ -174,7 +174,7 @@ Each category gets: **Definition** / **Detection mechanism** / **Loud vs silent*
 
 **Worked example:** `.B.3` Step 0.5c LANDED — `tt::cfg_parse_field<T>` extended with char[N] branch (no-op verified at HEAD since no current char[N] fields). At `.F.4e` future ship adding KIND_STRING, the branch is in place; static_assert at registry boot-time verifies all STORAGE_T variants are covered.
 
-**Detection guard:** `tools/check_storage_t_coverage.py` CI tool (NEW at `.B.3` ship close). **+ (2026-06-01, #11) — the SILENT sub-case:** the gap above is LOUD only when the new variant matches NO branch; when an OVER-BROAD trait (e.g. `is_FPN_v` matching both binary AND decimal) routes a new variant down the WRONG existing branch, it's SILENT (the `static_assert` passes). Fix that makes it build-loud: split the trait (`is_fp_binary_v`/`is_fp_decimal_v`) + exhaustive dispatcher `static_assert` + an `always_false` final-else, so a recognized-but-unhandled variant = COMPILE ERROR. Extend `check_storage_t_coverage.py` to assert both-branch coverage.
+**Detection guard:** `tools/check_storage_t_coverage.py` CI tool (NEW at `.B.3` ship close). **+ (2026-06-01, #11) — the SILENT sub-case:** the gap above is LOUD only when the new variant matches NO branch; when an OVER-BROAD trait (e.g. `is_fp_binary_v` matching both binary AND decimal) routes a new variant down the WRONG existing branch, it's SILENT (the `static_assert` passes). Fix that makes it build-loud: split the trait (`is_fp_binary_v`/`is_fp_decimal_v`) + exhaustive dispatcher `static_assert` + an `always_false` final-else, so a recognized-but-unhandled variant = COMPILE ERROR. Extend `check_storage_t_coverage.py` to assert both-branch coverage.
 
 ---
 
@@ -233,7 +233,7 @@ Each category gets: **Definition** / **Detection mechanism** / **Loud vs silent*
 
 ### B10 — Struct layout drift across mixed-width fields
 
-**Definition:** Struct holds fields of varying widths (uint8_t / uint32_t / int64_t / FPN<F>). Compiler inserts padding holes between fields for alignment. If struct is used in byte-equivalence context (memcmp, SHA-256, HMAC input, wire format), padding contents are undefined → byte-equivalence breaks.
+**Definition:** Struct holds fields of varying widths (uint8_t / uint32_t / int64_t / FPN_Binary<F>). Compiler inserts padding holes between fields for alignment. If struct is used in byte-equivalence context (memcmp, SHA-256, HMAC input, wire format), padding contents are undefined → byte-equivalence breaks.
 
 **Detection mechanism:**
 - Identify whether struct is used in any byte-equivalence context
@@ -350,7 +350,7 @@ Each category gets: **Definition** / **Detection mechanism** / **Loud vs silent*
 **Detection mechanism:**
 - For each sub-file emerging from header extraction, enumerate forward declarations inside `namespace tt { ... }` blocks
 - For each forward-decl, classify:
-  - **Intentional `tt::X`** (canonical type in `tt` namespace; e.g., `tt::FPN<F>`) — KEEP
+  - **Intentional `tt::X`** (canonical type in `tt` namespace; e.g., `tt::FPN_Binary<F>`) — KEEP
   - **Sister namespace types** (legitimately `tt::`-scoped; e.g., `tt::ConfidenceScorer`) — KEEP
   - **Re-export aliases** (`namespace tt { using ::SomeGlobalType; }`) — KEEP
   - **Shadow risk** (type X defined at global scope or in `std::`; forward-decl creates shadow type tt::X) — FIX (move to global scope OR `#include` the proper header)

@@ -47,7 +47,7 @@ When two options both compile + both run, the gradient resolves the choice. Thes
 
 **Performance:**
 - Branchless > branched for data-dependent dispatch on hot/slow/drainer/producer paths (H7 hot-path strict; H20 generalizes). Hand-wave "branch predictor handles it" is anti-pattern (Class 28). → § 4 (latency cost) + DESIGN_SPECS/refactor-patterns/branchless-dispatch-discipline.md.
-- `FPN<F=64>` > `double` on accounting paths; never `float` on hot/slow path math (H4). → § 5 (determinism).
+- `FPN_Binary<F=64>` > `double` on accounting paths; never `float` on hot/slow path math (H4). → § 5 (determinism).
 - Bit-packed slots > byte-per-bool (H14 + MBS_* encoding). Memory bandwidth + cache footprint compound.
 - `alignas(64)` cross-thread + cluster by access pattern > flat struct (H6). → § 3.
 - L1d-cache-resident hot-path state > out-of-cache scatter. Working-set discipline applies to per-node slow_state + hot ExecutionCore params.
@@ -167,7 +167,7 @@ Binance WS                OMS_DrainSubmit     SLOW thread (1 per core)
 ## Overview
 
 Tick-level crypto HFT trading engine in C++. Per-node risk-sharded hot
-path (40-400ns p99); branchless fixed-point math (`FPN<F=64>` = 16B);
+path (40-400ns p99); branchless fixed-point math (`FPN_Binary<F=64>` = 16B);
 X-macro registries for multi-site additions; bitmap-packed portfolio +
 flags. Single producer thread fans Binance ticks across SPSC rings →
 N per-node consumers (default 4, cap 16); each core = self-contained
@@ -237,7 +237,7 @@ RANGING / TRENDING / VOLATILE / MILD_TREND → strategy dispatch.
 | `CoreFrameworks/` | OrderGates, Portfolio, ExecutionCore, ControllerEventLoop, EngineSharded, ShardedSnapshot/Persist, GateParameters, TradeEvent, OrderManager, ShardedBacktestDriver, **CfgFieldRegistry / CfgFieldDispatch (v5.15.5.F.4b+)** |
 | `Strategies/` | RegimeDetector, MeanReversion, Momentum, SimpleDip, EmaCross, MLStrategy, StrategyParameters (dispatcher), StrategyInterface, **StrategyCategories / OpModeCategories (v5.15.5.F.4b+)** |
 | `DataStream/` | BinanceCrypto/Depth, DepthReplayState, DepthRecorder, TickRecorder, BinanceOrderAPI, EngineTUI |
-| `FixedPoint/` | FPN<F=64> (16B `__int128`, 64.64 two's-complement; Ship-A) + `is_FPN_v` type trait |
+| `FixedPoint/` | FPN_Binary<F=64> (16B `__int128`, 64.64 two's-complement; Ship-A) + `is_fp_binary_v` type trait |
 | `MemHeaders/` | PoolAllocator (bitmap order pool), BuddyAllocator, BitmapMacros, FailureModeRegistry |
 | `ML_Headers/` | RollingStats, ROR_regressor, ConfidenceScore, ModelInference (XGBoost), FlowFeatures, StampBoundCfgRegistry, StampBoundModelConstRegistry |
 | `GUI/` | Dear ImGui native: FoxmlTheme, DashboardPanels, ChartPanel, CandleAccumulator, TradeReader, SettingsPanel, TradeHistoryPanel, LogViewerPanel, GuiThread |
@@ -256,7 +256,7 @@ Full discussion: `DOCS/DESIGN_PHILOSOPHY.md` § 2 + `DOCS/STRATEGY_AND_CODING_RU
 | H1 | NO `malloc` / `new` / `std::vector` / `std::string` / `std::function` — anywhere |
 | H2 | NO `virtual` / `std::shared_ptr` / `std::unique_ptr` on hot path |
 | H3 | NO `std::mutex` / `condition_variable` / `sleep_for` / `pthread_rwlock` — anywhere |
-| H4 | `FPN<F=64>` for accounting math; NEVER `float`/`double` on accounting paths (display-only OK) |
+| H4 | `FPN_Binary<F=64>` for accounting math; NEVER `float`/`double` on accounting paths (display-only OK) |
 | H5 | NO scalar JSON / `strstr` / `atof` in parser inner loops; use `simdjson` / `fast_float` / `tt::parse_double_fast` |
 | H6 | Cross-thread fields get `alignas(64)`; cluster fields by access pattern (hot reads / hot writes / cold init / cross-thread) |
 | H7 | Hot path BRANCHLESS for data-dependent dispatch (mask compute, cmov; per Rule 8 of latency-path-discipline) |
@@ -282,7 +282,7 @@ Full discussion: `DOCS/DESIGN_PHILOSOPHY.md` § 2 + `DOCS/STRATEGY_AND_CODING_RU
 - `using namespace std;` throughout
 - C-style with templates, no classes (with one exception: RAII destructors on resource-owning structs that own threads or mmap'd memory; e.g., `~OrderManagerState()` since v5.11.26 — see destructor comment in `CoreFrameworks/OrderManager.hpp` for criteria)
 - `Pattern_FunctionName` (e.g., `Portfolio_Init`, `BG_Evaluate`, `OMS_DrainSubmit`)
-- Hot-path math is `FPN<F>` only, no floats (F=64 = 64.64 fixed-point; 16 bytes `__int128`)
+- Hot-path math is `FPN_Binary<F>` only, no floats (F=64 = 64.64 fixed-point; 16 bytes `__int128`)
 - Branchless: mask tricks `-(uint64_t)pass`, word-level mask-select
 - Inline comments explain WHY, not WHAT (well-named identifiers handle the WHAT)
 - **Preserve user's voice in existing comments when editing**

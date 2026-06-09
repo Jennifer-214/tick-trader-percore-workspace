@@ -190,7 +190,7 @@ bumping `MODEL_FORMAT_VERSION`" for the rare case.
 
 **Live-side:**
 - [ ] Bin compiled with new flag set boots clean
-- [ ] No FPN-related test failures from precision differences
+- [ ] No FPN_Binary-related test failures from precision differences
 
 **Cross-check:**
 - [ ] Operator discipline: training and deployment binaries built

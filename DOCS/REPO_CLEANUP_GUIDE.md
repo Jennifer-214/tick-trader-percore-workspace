@@ -83,7 +83,7 @@ The following code paths are archived at `legacy/` at `.E.1`/`.E.2`. They no lon
 ## What stays unchanged
 
 - **FoxLIB primitives** — header-only library; unchanged
-- **FPN<F> fixed-point math** — H4 + core accounting; unchanged
+- **FPN_Binary<F> fixed-point math** — H4 + core accounting; unchanged
 - **Branchless hot path discipline** — H7; unchanged
 - **H1-H20 invariants** — all preserved (H15, H17, H18, H19, H20 added at v5.15.5)
 - **Per-node sharded architecture** — extended to per-node + per-cluster (additive)

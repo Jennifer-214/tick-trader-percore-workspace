@@ -127,7 +127,7 @@ RegimeDetector (RANGING / TRENDING / VOLATILE / MILD_TREND with hysteresis) / Me
 BinanceCrypto (WSS tick stream) / Depth (orderbook stream) / DepthReplayState / DepthRecorder / TickRecorder / BinanceOrderAPI (live REST) / EngineTUI (text dashboard).
 
 ### FixedPoint/
-`FPN<F=64>` = 16-byte 128-bit `__int128` (64.64 two's-complement fixed-point). `is_FPN_v` type trait. NEVER `float`/`double` on accounting paths (H4).
+`FPN_Binary<F=64>` = 16-byte 128-bit `__int128` (64.64 two's-complement fixed-point). `is_fp_binary_v` type trait. NEVER `float`/`double` on accounting paths (H4).
 
 ### MemHeaders/
 PoolAllocator (bitmap order pool) / BuddyAllocator / BitmapMacros / FailureModeRegistry / CfgGateRegistry (FOREACH_STAMP_BOUND_DERIVED_COHORT meta-walker).
@@ -148,7 +148,7 @@ Dear ImGui native (SDL2 + OpenGL3): FoxmlTheme / DashboardPanels / ChartPanel / 
 
 ## Hard invariants (NEVER break — full table at CLAUDE.md § Hard Invariants)
 
-H1 no heap alloc / H2 no virtual on hot path / H3 no mutex anywhere / H4 FPN<F> on accounting paths / H5 no scalar JSON / H6 alignas(64) cross-thread / H7 hot path branchless / H8 ≤500ns hot p99 + ≤100μs slow p99 / H9 wire byte preservation / H10 SIMD scalar fallback / H11 constant-iter math / H12 padding fields default-init / H13 tt:: dispatch (no reinterpret_cast) / H14 NO C++ bitfield syntax (hand-written BITMAP_*/MBS_*) / H15 FOREACH_REGISTRY enrollment / H16 metadata-bit derived-filter / H17 cfg struct auto-gen / H18 sidecar override / H19 meta-registry topology / H20 branchless on SP/HP.
+H1 no heap alloc / H2 no virtual on hot path / H3 no mutex anywhere / H4 FPN_Binary<F> on accounting paths / H5 no scalar JSON / H6 alignas(64) cross-thread / H7 hot path branchless / H8 ≤500ns hot p99 + ≤100μs slow p99 / H9 wire byte preservation / H10 SIMD scalar fallback / H11 constant-iter math / H12 padding fields default-init / H13 tt:: dispatch (no reinterpret_cast) / H14 NO C++ bitfield syntax (hand-written BITMAP_*/MBS_*) / H15 FOREACH_REGISTRY enrollment / H16 metadata-bit derived-filter / H17 cfg struct auto-gen / H18 sidecar override / H19 meta-registry topology / H20 branchless on SP/HP.
 
 ---
 

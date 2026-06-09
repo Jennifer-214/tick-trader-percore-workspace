@@ -136,18 +136,18 @@ constexpr unsigned FP = 64;
 //======================================================================================================
 // [v5.15.5.F.4b] Shared compile-time static_asserts
 //======================================================================================================
-// is_FPN_v + FPN<F>::F member exposure work correctly.
+// is_fp_binary_v + FPN_Binary<F>::F member exposure work correctly.
 // CfgFieldRegistry sanity asserts (v5.15.5.F.4c.3 — two-registry architecture).
 // See DESIGN_SPECS/framework-patterns/type-trait-dispatch-via-tt-namespace.md +
 // DOCS/recurring-bug-patterns/class-23-*.md.
 //======================================================================================================
-static_assert(is_FPN_v<FPN<64>>,                "v5.15.5.F.4b: is_FPN_v should detect FPN<64>");
-// Ship-A (D-143): arbitrary-width FPN<F> SHED — FPN<64> is the sole binary instantiation
-// (FPN<128> was trait-test-only; no production F!=64). Its is_FPN_v / ::F asserts retired.
-static_assert(!is_FPN_v<double>,                "v5.15.5.F.4b: is_FPN_v should reject double");
-static_assert(!is_FPN_v<int>,                   "v5.15.5.F.4b: is_FPN_v should reject int");
-static_assert(!is_FPN_v<uint64_t>,              "v5.15.5.F.4b: is_FPN_v should reject uint64_t");
-static_assert(FPN<64>::F == 64,                 "v5.15.5.F.4b: FPN<64>::F should expose template param value (64)");
+static_assert(is_fp_binary_v<FPN_Binary<64>>,                "v5.15.5.F.4b: is_fp_binary_v should detect FPN_Binary<64>");
+// Ship-A (D-143): arbitrary-width FPN_Binary<F> SHED — FPN_Binary<64> is the sole binary instantiation
+// (FPN_Binary<128> was trait-test-only; no production F!=64). Its is_fp_binary_v / ::F asserts retired.
+static_assert(!is_fp_binary_v<double>,                "v5.15.5.F.4b: is_fp_binary_v should reject double");
+static_assert(!is_fp_binary_v<int>,                   "v5.15.5.F.4b: is_fp_binary_v should reject int");
+static_assert(!is_fp_binary_v<uint64_t>,              "v5.15.5.F.4b: is_fp_binary_v should reject uint64_t");
+static_assert(FPN_Binary<64>::F == 64,                 "v5.15.5.F.4b: FPN_Binary<64>::F should expose template param value (64)");
 
 static_assert(sizeof(CfgFieldDescriptor) <= 128,
               "v5.15.5.F.4b: CfgFieldDescriptor must fit two cache lines");

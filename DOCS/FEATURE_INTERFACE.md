@@ -13,7 +13,7 @@ template <unsigned F>
 inline FPN<F> ML_Compute_<Name>(const FeatureComputeCtx<F>* ctx);
 ```
 
-Returns the feature value as `FPN<F>`. Returns `FPN_Zero<F>()` when
+Returns the feature value as `FPN_Binary<F>`. Returns `FPN_Zero<F>()` when
 the feature can't be computed yet (cold start, missing data).
 
 ## FeatureComputeCtx

@@ -224,7 +224,7 @@ different codebase.
 | H1 | No `malloc` / `new` / `std::vector` / `std::string` on hot/slow/drainer/parser paths | HARD | STRATEGY_AND_CODING_RULES Rule 1 |
 | H2 | No `virtual` functions / `std::function` / `std::shared_ptr` anywhere | HARD | STRATEGY_AND_CODING_RULES Rule 2 |
 | H3 | No `std::mutex` / `condition_variable` / `sleep_for` / `pthread_rwlock` anywhere | HARD | STRATEGY_AND_CODING_RULES Rule 3 |
-| H4 | `FPN<F=64>` for accounting math; NEVER `float`/`double` on accounting paths (display-only OK) | HARD | CLAUDE.md item 4 (per-node data plane); STRATEGY_AND_CODING_RULES |
+| H4 | `FPN_Binary<F=64>` for accounting math; NEVER `float`/`double` on accounting paths (display-only OK) | HARD | CLAUDE.md item 4 (per-node data plane); STRATEGY_AND_CODING_RULES |
 | H5 | No `atof` / `strstr` / scalar JSON in parser inner loops; use `simdjson` / `fast_float` / `parse_double_fast` | HARD | STRATEGY_AND_CODING_RULES Rule 6 |
 | H6 | Cross-thread fields get `alignas(64)` to isolate cache lines; no false sharing | HARD | STRATEGY_AND_CODING_RULES Rule 7; CLAUDE.md item 12 |
 | H7 | Hot path is BRANCHLESS for data-dependent dispatch (mask compute, cmov; per Rule 8 of latency-path-discipline) | HARD | latency-path-discipline.md Rule 8 |
@@ -339,7 +339,7 @@ against the path's budget.
 - See CLAUDE.md item 18
 
 **STRONG: Reuse-audit before adding new code.**
-- Before writing a new function or duplicating state access, scan the codebase + adjacent in-flight plans for: existing functions with overlapping responsibility, atomic loads / `clock_gettime` / cfg accesses that could be SHARED across consumers in the same slow-path cycle, state fields that could be reused, conversion paths (FPN ↔ double, system_clock ↔ rdtsc) that already exist
+- Before writing a new function or duplicating state access, scan the codebase + adjacent in-flight plans for: existing functions with overlapping responsibility, atomic loads / `clock_gettime` / cfg accesses that could be SHARED across consumers in the same slow-path cycle, state fields that could be reused, conversion paths (FPN_Binary ↔ double, system_clock ↔ rdtsc) that already exist
 - Hot-path/producer paths get branchless mask compute on shared data; slow-path can use predictable branches with shared reads
 - Run `/merge-scan` periodically; ship-time check in `/readiness` (item 18) catches per-plan misses
 - See CLAUDE.md item 16
@@ -370,7 +370,7 @@ deterministic source.
 
 ### Principles in this family
 
-**HARD: FPN<F=64> for accounting math.** Floating-point arithmetic is non-associative + locale-dependent + has subnormals. Fixed-point is integer math + bytewise-deterministic across compilers + binaries.
+**HARD: FPN_Binary<F=64> for accounting math.** Floating-point arithmetic is non-associative + locale-dependent + has subnormals. Fixed-point is integer math + bytewise-deterministic across compilers + binaries.
 
 **HARD: Wire-format byte preservation for HMAC-signed bodies.**
 - Locale pinning at emit (`uselocale(newlocale(LC_NUMERIC_MASK, "C", 0))`) — per-thread, lock-free
@@ -386,7 +386,7 @@ deterministic source.
 - Run `/parity-check` before declaring an ML-side sprint complete
 - See CLAUDE.md item 15; DOCS/PARITY_LIFECYCLE.md, PARITY_VERIFICATION_CHECKLIST.md
 
-**HARD: NaN-free feature pack.** `Features_PackAll` is the SINGLE chokepoint where every feature value is validated. Two-layer guard: `FPN_IsValidFinite` (catches FPN saturation past 1e15) + IEEE-754 `isnan/isinf` post float-cast. Returns `-1` sentinel on failure; caller skips prediction cycle + increments `nan_feature_events_total`. Adding a new feature does NOT add a separate validation site — pack-time is the load-bearing surface; downstream code trusts the pack output.
+**HARD: NaN-free feature pack.** `Features_PackAll` is the SINGLE chokepoint where every feature value is validated. Two-layer guard: `FPN_IsValidFinite` (catches FPN_Binary saturation past 1e15) + IEEE-754 `isnan/isinf` post float-cast. Returns `-1` sentinel on failure; caller skips prediction cycle + increments `nan_feature_events_total`. Adding a new feature does NOT add a separate validation site — pack-time is the load-bearing surface; downstream code trusts the pack output.
 
 **HARD: AVX-512 SIMD kernels have scalar fallback producing BYTEWISE IDENTICAL output.**
 - Every AVX-512 kernel has `#if defined(__AVX512F__)` else baseline
@@ -996,7 +996,9 @@ Canonical terminology source-of-truth for the post-`.E` architecture. All other 
 
 **Terminology-evolution note (codified `.D.1` 2026-05-28):** terminology evolved at `v5.15.5.F.4d.1.E.1` — `per-core`→`per-node`, `Core`→`Node`, drainer absorbed into per-node slow-path. **Pre-`.E.1` historical-record docs** (postmortems / handoffs / changelogs / the RECURRING_BUG_PATTERNS catalog / shipped plan bodies) use `per-core` accurately for their time and are NOT rewritten (rewriting would falsify the evolution record + break `.E.1`'s "rename Core→Node" narrative coherence). **Current + forward-looking docs** use `per-node`. This Glossary is the bridge: when reading older docs, `per-core` ≈ today's `per-node`. Code symbols (`CoreContext`, `MAX_CORES`, `state.cores`, `FOREACH_PER_CORE_CFG_FIELD`, cfg-field names) keep their `Core*` names in citations until `.E.1` renames the code itself. (Per `feedback_terminology_evolution_bridge_not_history_rewrite`.)
 
-**Scope of this Glossary:** DEPLOYMENT/ARCHITECTURE-level terms only. Runtime-level primitives (`seqlock`, `SPSC ring`, `BG_Evaluate`, `SG_Evaluate`, `FPN<F=64>`, `tt::` namespace, `OMS_DrainSubmit`, `Regime_Classify`, kill-switch lifecycle) belong in the operator-facing `DOCS/GLOSSARY.md` (lands at `.E.2`), not here.
+**Numeric-core spelling note (A.5, `v5.15.5.F.4d.1.E.0.8`, 2026-06-09):** the binary fixed-point TYPE renamed `FPN` → `FPN_Binary` (D-143/D-163) ahead of Ship-B's `FPN_Decimal`. Reading pre-A.5 docs/history: `FPN` ≈ today's `FPN_Binary`. The `FPN_*` FUNCTION family (`FPN_Mul`, `FPN_ToDouble`, …) did NOT rename (Ship-B decides the op-surface naming); the trait `is_FPN_v` RETIRED onto `is_fp_binary_v`. Full entry: operator `DOCS/GLOSSARY.md` § Numeric core.
+
+**Scope of this Glossary:** DEPLOYMENT/ARCHITECTURE-level terms only. Runtime-level primitives (`seqlock`, `SPSC ring`, `BG_Evaluate`, `SG_Evaluate`, `FPN_Binary<F=64>`, `tt::` namespace, `OMS_DrainSubmit`, `Regime_Classify`, kill-switch lifecycle) belong in the operator-facing `DOCS/GLOSSARY.md` (lands at `.E.2`), not here.
 
 ### Deployment hierarchy
 

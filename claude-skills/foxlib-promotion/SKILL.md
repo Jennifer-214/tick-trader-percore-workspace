@@ -24,7 +24,7 @@ trigger_heuristics: ["generic primitive promotion to FoxLIB candidates -> sugges
 
 FoxLIB at `/home/caramel/code/FoxLIB/` is the public, reusable
 extraction of generic primitives from this engine. It currently holds
-FPN, regression, RollingStats, BuddyAllocator, SPSC ring, WebSocket
+FPN_Binary, regression, RollingStats, BuddyAllocator, SPSC ring, WebSocket
 helper, ConfidenceScorer, etc. — code with no project-specific
 includes or domain-specific names.
 
@@ -77,7 +77,7 @@ A file is a strong promotion candidate if it satisfies ALL of:
 2. **No domain-specific names in the public API.** Function names like
    `Binance_*`, `OMS_*`, `ExecutionCore_*`, `Strategy_*` mean it's
    tightly bound to this engine. Names like `RollingStats_*`,
-   `FPN_*`, `BuddyAllocator_*` are generic.
+   `FPN_Binary_*`, `BuddyAllocator_*` are generic.
 
 3. **No hardcoded domain constants.** A file with `MAX_CORES = 16` or
    `BTCUSDT` in it is engine-specific. Generic constants like buffer

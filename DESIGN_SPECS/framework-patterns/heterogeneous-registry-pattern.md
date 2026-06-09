@@ -567,7 +567,7 @@ HIGH.1 finding from /dod-audit on v5.14.9.F amendment surfaced this as a load-be
 
 ### Future migrations that benefit from this pattern
 
-- **TECH_DEBT-009 (FOREACH_CFG_FIELD):** broader closure of cfg-field N-site class for non-boolean fields (FPN<F> thresholds, ints, strings). Use SPLIT form per-domain; each domain registry handles all field types via type-trait dispatch.
+- **TECH_DEBT-009 (FOREACH_CFG_FIELD):** broader closure of cfg-field N-site class for non-boolean fields (FPN_Binary<F> thresholds, ints, strings). Use SPLIT form per-domain; each domain registry handles all field types via type-trait dispatch.
 - **TECH_DEBT-011 (FOREACH_PER_CORE_SNAP_FIELD):** visible-state snapshot fields. Use SPLIT (failure modes vs general state) + COLUMN (read cadence within domain). HYBRID form natural fit.
 - **TECH_DEBT-012 (FOREACH_OMS_STATE):** OrderManager state fields. Use SPLIT (cold cfg vs hot dispatcher state) — drainer reads hot subset every cycle; cfg subset is boot-frozen.
 

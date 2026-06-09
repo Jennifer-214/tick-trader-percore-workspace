@@ -196,7 +196,7 @@ compare against what the plan's call site implies:
 
 - **Argument count match?** Plan: `Foo(a, b, c)` → actual:
   `Foo(int a, double b)` → DRIFT (3 vs 2 args)
-- **Argument type match?** Plan passes `FPN<F>` → actual takes
+- **Argument type match?** Plan passes `FPN_Binary<F>` → actual takes
   `double` → DRIFT (need conversion at call site; plan should
   call this out)
 - **Return type match?** Plan assigns to int → actual returns

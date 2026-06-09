@@ -15,7 +15,7 @@ FPN<F> sl_floor = FPN_SubSat(pos->entry_price, min_sl_dist);
 pos->stop_loss_price = FPN_Min(pos->stop_loss_price, sl_floor);
 ```
 
-## FPN Division Guards
+## FPN_Binary Division Guards
 Every `FPN_DivNoAssert(num, den)` MUST guard `if (FPN_IsZero(den)) return;`. `FPN_DivNoAssert` saturates to MAX on zero — silent extreme values.
 
 ## Fill-Counter Atomicity (load-bearing — v4.7.19)
@@ -55,15 +55,15 @@ Affects (must work in sharded): Depth WS + DepthRecorder, TickRecorder, NotifySt
 
 Cross-architecture features port from legacy `PortfolioController` to sharded `OrderManager_HandleFill` / `EventLoop_OnEvent`. Same logic, different host struct.
 
-## FPN-Only Accounting
-Balance, P&L, fees, equity, position pricing → `FPN<F>` only. `double` only at boundaries:
+## FPN_Binary-Only Accounting
+Balance, P&L, fees, equity, position pricing → `FPN_Binary<F>` only. `double` only at boundaries:
 - OK: `FPN_ToDouble` for display/logging/CSV/printf
 - OK: `FPN_FromDouble` at exchange API boundary
 - NOT OK: decision-logic intermediate doubles
 
 Known accepted violations: `peak_equity`, `session_start_equity`, `max_drawdown` (kill switch), `ConfidenceScorer` IC/RMSE/freshness (out of scope).
 
-## FPN Comparison Completeness
+## FPN_Binary Comparison Completeness
 Use `FPN_LessThan`, `FPN_GreaterThanOrEqual` etc. — never partial word comparisons. Inline opt in `Portfolio.hpp:226-229` only compares MSW+LSW (known bug, can miss exits near price boundaries).
 
 ## Halt Flag Invariant
@@ -232,7 +232,7 @@ GUI): ROLLING, REBUILD, PUSH, TIME_EXIT, TRAIL_SL. Bracket cost
 
 `Sharded_LegSlot(core_id, leg, partial_enabled)` returns correct slot. `PARTIAL_LEG_A`/`PARTIAL_LEG_B` in `TradeEvent.hpp` (so `ExecutionCore_Tick` doesn't need EventLoop header).
 
-**Hot path** — `ExecutionCore_Tick` branch-gates leg B SG via `if (__builtin_expect(active_b, 0))`. Steady state when partials disabled OR no leg-B open → leg-B FPN comparisons skip. Cost when active: ~1-2ns per tick.
+**Hot path** — `ExecutionCore_Tick` branch-gates leg B SG via `if (__builtin_expect(active_b, 0))`. Steady state when partials disabled OR no leg-B open → leg-B FPN_Binary comparisons skip. Cost when active: ~1-2ns per tick.
 
 **Slow path** — `Strategy_BuildParameters` post-cap sets `GATE_FLAG_PAIR_ACTIVE` + `tp_pct_b = tp_pct * cfg.tp2_mult` when enabled, clears both when disabled. Strategies stay leg-A-only.
 

@@ -55,7 +55,7 @@ struct LargeTradeState {
 ```
 
 Each variant duplicates the ring-buffer skeleton (sample array + count + head + window-or-capacity metadata) while differing in:
-- Element type (`double`, `FPN<F>`, future custom types)
+- Element type (`double`, `FPN_Binary<F>`, future custom types)
 - Number of stored arrays (1 vs 2 vs N)
 - Aggregated state (running sum, sum_sq, neither)
 - Compute method (RMSE, Spearman, Z-score, EWMA)
@@ -289,7 +289,7 @@ Adjacent ring-buffer structs in the codebase that COULD migrate to the template 
 | Existing struct | File | Notes |
 |---|---|---|
 | `BookImbalanceHistory<F, W>` | `ML_Headers/FlowFeatures.hpp` | Already templated; could compose RollingWindow internally OR stay independent (it has dual-window state from v5.15.5.D; might prefer to keep that specialization for clarity) |
-| `LargeTradeState<F, W>` | `ML_Headers/FlowFeatures.hpp` | Has running sum + sum_sq; would compose `RollingWindow<FPN<F>, W>` + 2 aggregate fields |
+| `LargeTradeState<F, W>` | `ML_Headers/FlowFeatures.hpp` | Has running sum + sum_sq; would compose `RollingWindow<FPN_Binary<F>, W>` + 2 aggregate fields |
 | `SpreadState<F, W>` | `ML_Headers/FlowFeatures.hpp` | Same shape as LargeTradeState; would benefit from shared template |
 | `RollingStats<F, W>` | `ML_Headers/RollingStats.hpp` | More complex (slope + r-squared + EWMA); independent investigation needed |
 | `RORRegressor<F>` | `ML_Headers/ROR_regressor.hpp` | Maintains sample window for regression; candidate |

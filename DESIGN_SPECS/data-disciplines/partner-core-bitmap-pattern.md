@@ -197,7 +197,7 @@ The memory win is modest — but the cache-locality + branchless engine-wide que
 - Single-writer-per-bit OR single-thread-coordinated writes (no concurrent multi-thread bit mutation)
 
 ### Skip when:
-- Per-node field is multi-byte (e.g., uint32_t / FPN — bitmap doesn't fit)
+- Per-node field is multi-byte (e.g., uint32_t / FPN_Binary — bitmap doesn't fit)
 - Concurrent multi-thread per-bit mutation (would need atomic; consider whether the design needs this complexity)
 - The per-node field is read EVERY hot-path tick (1-cycle access from owning core's cache is already optimal; bitmap doesn't speed up)
 

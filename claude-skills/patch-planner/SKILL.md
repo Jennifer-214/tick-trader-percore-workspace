@@ -27,7 +27,7 @@ Takes one or more findings from the codebase audit backlog and performs a rigoro
 **This skill enforces the project's strict architectural invariants:**
 - Data-Oriented Design (DOD)
 - Branchless Hot Paths
-- Fixed-Point Math (`FPN`)
+- Fixed-Point Math (`FPN_Binary`)
 - Lock-Free Concurrency (Seqlocks, memory barriers)
 
 **Does NOT modify source code.** Output is a markdown-formatted blueprint document.
@@ -93,5 +93,5 @@ The agent should spawn a subagent to trace and analyze the issue, outputting a b
 
 ## Anti-patterns (DO NOT DO THIS)
 - Do **not** propose `std::mutex` or `std::lock_guard` for thread-safety.
-- Do **not** propose `std::round` or `std::pow` (use fixed-point `FPN_` equivalents).
+- Do **not** propose `std::round` or `std::pow` (use fixed-point `FPN_Binary_` equivalents).
 - Do **not** propose fixing a branch by adding `__builtin_expect` (fix it by removing the branch entirely with bitwise math).

@@ -22,8 +22,8 @@ TOOL = Path(__file__).absolute().parent / "check_fpn_doc_size_currency.py"
 # Fake engine header — the SSoT the docs are checked against (canonical = 16).
 HEADER = """\
 #pragma once
-template <unsigned FRAC_BITS> struct FPN { __int128 v; };
-static_assert(sizeof(FPN<64>) == 16, "Ship A: FPN<64> is the 16B two's-complement binary core");
+template <unsigned FRAC_BITS> struct FPN_Binary { __int128 v; };
+static_assert(sizeof(FPN_Binary<64>) == 16, "Ship A: FPN_Binary<64> is the 16B two's-complement binary core");
 """
 
 # (a) VIOLATION — present-tense drift: states 24B for a single FPN while the code says 16B.

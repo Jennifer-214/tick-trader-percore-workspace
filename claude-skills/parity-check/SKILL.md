@@ -27,7 +27,7 @@ trigger_heuristics: ["train-serve parity / stamp body / same-input-same-output -
 > **Stage 0 — consult institutional knowledge** (per `skill-knowledge-consultation-and-auto-routing.md`): before judging, load this skill's `associated_*` slice (specs / anti-patterns / decisions / postmortems / ledgers) + run the canonical-sister check; if running as a cold Explore/Plan subagent, ensure CLAUDE.md/MEMORY are loaded first. Then the DESIGN_PHILOSOPHY preload:
 >
 > **DESIGN_PHILOSOPHY preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
-> - § 5 (Determinism family) — train-serve parity, wire format, FPN, struct padding, PRNG, AVX-512 byte-determinism, math kernel constant-iter
+> - § 5 (Determinism family) — train-serve parity, wire format, FPN_Binary, struct padding, PRNG, AVX-512 byte-determinism, math kernel constant-iter
 > - § 7 (Structural-fix family) — AUTOPOPULATE production-caller class extinction; PRE/POST registry split
 >
 > Cite specific § N rows in finding descriptions.
@@ -271,11 +271,11 @@ These match the 2026-05-02 audit's structure (which led to v5.9.2c
 + v5.9.4a). Each is a separate heading in the output.
 
 ### Section A — Tick consumption parity
-- Live: `Tick<F>` (FPN price/qty/timestamp_us)
+- Live: `Tick<F>` (FPN_Binary price/qty/timestamp_us)
 - Backtest: `HistoricalTick` (double price/qty, int64 timestamp_us)
 - Question: do the two structs surface IDENTICAL data to
   `Regime_ComputeSignals` / `Features_PackAll`?
-- Risk: FPN→double round-trip differences; field ordering / packing
+- Risk: FPN_Binary→double round-trip differences; field ordering / packing
 - Verifier: spot-check by tracing one tick from CSV/WS through to
   RegimeSignals fields
 
@@ -300,7 +300,7 @@ These match the 2026-05-02 audit's structure (which led to v5.9.2c
 - Sidecar's `num_features` matches `NUM_REGISTERED_FEATURES`
 - Sidecar's `stddev_floor_q` Q32 round-trips correctly
 - Stamp's `scaler_sha256` matches actual sidecar SHA-256
-- Compute math identical to apply math (double, not FPN; std::fmax floor;
+- Compute math identical to apply math (double, not FPN_Binary; std::fmax floor;
   cast→subtract→divide→cast sequence)
 - Two-layer NaN guard (pre-apply via Features_PackAll + post-apply
   finite check)

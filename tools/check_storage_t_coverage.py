@@ -78,13 +78,13 @@ def variant_has_branch(variant, dispatch_text):
 
     Looks for patterns like:
       - `std::is_same_v<T, <variant>>`
-      - `is_FPN_v<T>`  (for FPN<F=64>)
+      - `is_fp_binary_v<T>`  (for FPN_Binary<F=64>; pre-A.5 spelling was is_FPN_v)
       - `std::is_integral_v<T>`  (for int / uint{8,16,32,64}_t)
       - Direct mention of <variant> in if constexpr context
     """
-    # FPN<F> family
-    if variant.startswith("FPN<"):
-        return ("is_FPN_v<T>" in dispatch_text) or ("std::is_same_v<T, FPN" in dispatch_text)
+    # FPN_Binary<F> family (post-A.5 registry spelling; bare FPN< accepted across the rename boundary)
+    if variant.startswith(("FPN_Binary<", "FPN<")):
+        return ("is_fp_binary_v<T>" in dispatch_text) or ("std::is_same_v<T, FPN_Binary" in dispatch_text)
 
     # Bool family (int / uint8_t for KIND_BOOL per H13)
     # Catch-all for integer widths

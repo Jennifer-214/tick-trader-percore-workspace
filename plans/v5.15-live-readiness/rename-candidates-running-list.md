@@ -53,6 +53,7 @@ sister_memory: feedback_proactive_rename_candidate_surfacing.md
 
 | # | Surface | Closed at | Notes |
 |---|---|---|---|
+| 12 | FixedPoint binary core type spelling | **A.5 = `v5.15.5.F.4d.1.E.0.8`** (2026-06-09) | `FPN`→`FPN_Binary` (2,439 lines / 77 files) + `is_FPN_v`→`is_fp_binary_v` (39 sites; alias deleted). Value/codegen-identical (A/B oracle pre==post). `FPN_*` fn family + FP64 absorb = Ship-B non-goals (D-163/D-165). Methodology codified: `rename-ship-methodology.md` (Stage 3; `.E.1` = 2nd application). |
 
 ---
 

@@ -219,7 +219,7 @@ The "decision-first" + "forward-sequential" combo aligns the cluster's layout wi
 
 **Bail behavior:** if `permission == 0`, hot-path bails after reading line 0. Bail rate is HIGH during paused mode → minimal cache pollution.
 
-**Forward-sequential subsequent fields:** `cached_params` (ParameterSlot read-cached), TP/SL FPN values, exit thresholds, ring-push state.
+**Forward-sequential subsequent fields:** `cached_params` (ParameterSlot read-cached), TP/SL FPN_Binary values, exit thresholds, ring-push state.
 
 **Reference: latency-path-discipline.md** "Cross-thread fields → own cache line" rule + this precedent share the alignas(64) discipline AND the decision-first ordering.
 
@@ -241,7 +241,7 @@ The "decision-first" + "forward-sequential" combo aligns the cluster's layout wi
 **Decision-first field at offset 0:**
 - `sequence` (atomic uint64_t) — even/odd seqnum; odd = write in progress; reader bails to retry on odd or mismatched after-read seqnum
 
-**Bail behavior:** hot-path consumer reads seqnum first; if odd, retry; if even, read FPN data; recheck seqnum after read; if changed, retry. Bail saves the consumer from reading torn data.
+**Bail behavior:** hot-path consumer reads seqnum first; if odd, retry; if even, read FPN_Binary data; recheck seqnum after read; if changed, retry. Bail saves the consumer from reading torn data.
 
 **Forward-sequential subsequent fields:** `tp_pct`, `sl_pct`, `qty`, `flags`, exit thresholds.
 

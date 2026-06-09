@@ -90,7 +90,7 @@ inline void record_set(Record& r, int64_t fee_cents, bool is_maker) {
 
 ### Application to v5.15.5.C.4
 
-`FillRecord.was_win` is a 1-bit flag colocated with FPN<F> exit_net_pnl. exit_net_pnl is SIGNED (loss = negative). Sign-bit reuse on exit_net_pnl is UNSAFE (P&L can be negative).
+`FillRecord.was_win` is a 1-bit flag colocated with FPN_Binary<F> exit_net_pnl. exit_net_pnl is SIGNED (loss = negative). Sign-bit reuse on exit_net_pnl is UNSAFE (P&L can be negative).
 
 **Not applied.** Alternative: cross-slot bitmap (Technique 4).
 
@@ -231,7 +231,7 @@ struct FillRecord {
 
 - Source data (entry_price + qty) is reliably available at read site — same lifetime, same access path
 - Computation is cheap (single FPN_Mul ≈ ~10 cycles); not in inner loop
-- Precision of derivation matches stored value (no rounding drift); for FPN<F> with exact arithmetic, this holds
+- Precision of derivation matches stored value (no rounding drift); for FPN_Binary<F> with exact arithmetic, this holds
 - Source data is stable between write and read (not mutated; or mutation observed in tests)
 - Used at FEWER read sites than write sites; computation cost ≪ storage savings × access count
 
@@ -379,28 +379,28 @@ struct Compact {
 
 ---
 
-## Technique 7 — Reduced-precision packing (FPN<F> variant types)
+## Technique 7 — Reduced-precision packing (FPN_Binary<F> variant types)
 
 ### Pattern
 
-Convert a field from FPN<F=64> (16B; 128-bit `__int128`) to FPN<F=32> (smaller representation) when value range + precision tolerance allow.
+Convert a field from FPN_Binary<F=64> (16B; 128-bit `__int128`) to FPN_Binary<F=32> (smaller representation) when value range + precision tolerance allow.
 
 ### When safe
 
 - Value range fits within reduced precision (analytical bound; not empirical observation)
 - Downstream math operators support the reduced type (or explicit conversion at boundaries)
 - Tests cover the reduced-precision arithmetic
-- The math invariant (CLAUDE.md hot-path math is FPN<F> only) is preserved
+- The math invariant (CLAUDE.md hot-path math is FPN_Binary<F> only) is preserved
 
 ### When UNSAFE
 
 - Accounting precision required (entry/exit notional, fee accumulation across many trades)
 - Conversion at boundary loses bits silently
-- Reduced-precision FPN<F> isn't a defined type in the codebase (FPN<32> would need new arithmetic operator overloads)
+- Reduced-precision FPN_Binary<F> isn't a defined type in the codebase (FPN_Binary<32> would need new arithmetic operator overloads)
 
 ### Application to v5.15.5.C.4
 
-Adding FPN<32> as a new type variant is a substantial refactor (new arithmetic overloads, new conversion paths). **Not applied to C.4.** Catalogued for future investigation.
+Adding FPN_Binary<32> as a new type variant is a substantial refactor (new arithmetic overloads, new conversion paths). **Not applied to C.4.** Catalogued for future investigation.
 
 ---
 

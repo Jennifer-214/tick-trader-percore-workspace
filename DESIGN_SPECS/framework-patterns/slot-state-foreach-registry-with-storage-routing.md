@@ -147,7 +147,7 @@ The decision is documented in the field's registry-row position (which registry 
 - Drainer reads in batches that benefit from sequential array stride
 
 ### AoS per-record wins when:
-- Field large (≥16B; FPN<F>) — separate array would waste cache lines per slot access
+- Field large (≥16B; FPN_Binary<F>) — separate array would waste cache lines per slot access
 - Field closely coupled with other record fields in access pattern (entry_notional + entry_fee on ENTRY)
 - Per-slot iteration touches many record fields at once
 

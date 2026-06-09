@@ -13,7 +13,7 @@ associated_anti_patterns: [DOCS/RECURRING_BUG_PATTERNS.md, DESIGN_SPECS/meta-dis
 associated_decisions: [plans/<active-sprint>/decision-logs/]
 associated_postmortems: [plans/<active-sprint>/postmortems/]
 associated_ledgers: [DOCS/TECH_DEBT.md, DOCS/PARITY_ISSUES.md]
-trigger_heuristics: ["accounting / money-path audit / fee / slippage / FPN / balance -> suggest /accounting-audit"]
+trigger_heuristics: ["accounting / money-path audit / fee / slippage / FPN_Binary / balance -> suggest /accounting-audit"]
 ---
 
 # /accounting-audit — Accounting / money-tracking path audit
@@ -21,7 +21,7 @@ trigger_heuristics: ["accounting / money-path audit / fee / slippage / FPN / bal
 > **Stage 0 — consult institutional knowledge** (per `skill-knowledge-consultation-and-auto-routing.md`): before judging, load this skill's `associated_*` slice (specs / anti-patterns / decisions / postmortems / ledgers) + run the canonical-sister check; if running as a cold Explore/Plan subagent, ensure CLAUDE.md/MEMORY are loaded first. Then the preloads:
 >
 > **Stage 0 preload** (workspace/DOCS/DESIGN_PHILOSOPHY.md):
-> - § 3 (Hard Invariants) — H4 (FPN<F> for accounting; never float/double) + H9 (wire-format byte preservation including stamp accounting fields)
+> - § 3 (Hard Invariants) — H4 (FPN_Binary<F> for accounting; never float/double) + H9 (wire-format byte preservation including stamp accounting fields)
 > - § 1.5 (Framework-driven extensibility meta-principle) — Class 27 + Class 24 closure rationale
 >
 > **Stage 0 preload** (workspace/DESIGN_SPECS/):
@@ -93,9 +93,9 @@ Spawn an Explore subagent. The subagent walks the standard 10-category checklist
 
 3. **Slippage / fee floor consistency across paths** — slippage_pct, fee_floor_pct, slip + fee model MUST be byte-equivalent across slow-path / drainer / backtest. Flag divergence (e.g., backtest uses cfg.fee_rate while live uses oms->fee_rate_taker).
 
-4. **H4 enforcement (FPN<F> for accounting)** — scan accounting paths for `float` / `double` storage of monetary values. Display-only conversions OK; accounting STORAGE must be FPN<F>. Flag double-typed fields in Position, Order, balance/realized_pnl/fees, ConfidenceScorer reward updates with monetary semantics.
+4. **H4 enforcement (FPN_Binary<F> for accounting)** — scan accounting paths for `float` / `double` storage of monetary values. Display-only conversions OK; accounting STORAGE must be FPN_Binary<F>. Flag double-typed fields in Position, Order, balance/realized_pnl/fees, ConfidenceScorer reward updates with monetary semantics.
 
-5. **Lossy FPN_ToDouble in accounting paths** — `FPN_ToDouble(...)` calls inside accounting computations introduce double-precision loss; the result must be converted back via FPN_FromDouble before storage. Flag double-typed intermediates in accounting chains that don't round-trip through FPN.
+5. **Lossy FPN_ToDouble in accounting paths** — `FPN_ToDouble(...)` calls inside accounting computations introduce double-precision loss; the result must be converted back via FPN_FromDouble before storage. Flag double-typed intermediates in accounting chains that don't round-trip through FPN_Binary.
 
 6. **Position / realized_pnl / balance update atomicity** — single-source-of-truth invariants. `oms->balance` + `oms->realized_pnl` + `portfolio.total_fees` + `core_realized` per-core must compose consistently. Flag double-updates, missing updates, or order-dependent updates that could race.
 

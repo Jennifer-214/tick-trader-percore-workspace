@@ -64,8 +64,11 @@ instead of 1. Same applies to writes.
 When adding a field to an existing hot struct:
 
 1. Compute `sizeof(field)` exactly. **Common gotchas:**
-   - `FPN<64>` = **24 bytes** (`uint64_t w[2]` + `int32_t sign` + 4B padding), not 16.
-   - `FPN<128>` = 40 bytes; `FPN<256>` = 72 bytes (each crosses cache lines).
+   - `FPN_Binary<64>` = **16 bytes** (bare two's-complement `__int128`; 4 per cache line) — since Ship A
+     `v5.15.5.F.4d.1.E.0.7`; it was 24B sign-magnitude (`w[2]`+sign+pad) pre-Ship-A. (Fixed at A.5: this
+     line survived the Ship-A doc sweep still teaching 24B — the widened doc-size guard now scans this file.)
+   - Arbitrary widths (`<128>`/`<256>`) are SHED — the primary template is declaration-only; only `<64>`
+     exists (D-143/D-151).
    - `std::atomic<T>` is `sizeof(T)` plus alignment requirements.
    - Pointers are 8 bytes; references compile to pointers.
 
@@ -248,17 +251,17 @@ if (!any_active && perm && bg_fires) { ... }  // branchy
 
 ---
 
-## Rule 5 — FPN sizing awareness
+## Rule 5 — FPN_Binary sizing awareness
 
-`FPN<64>` is the engine's binary fixed-point type — **16 bytes** (a bare
+`FPN_Binary<64>` is the engine's binary fixed-point type — **16 bytes** (a bare
 `__int128 v`, two's-complement). The Ship-A 16B flip (`.E` #11) compacted it from
 the old 24B sign-magnitude (`uint64_t w[2]` + `int32_t sign` + pad) and shed
-arbitrary width at the same time: the primary `FPN<F>` is now a declaration-only
-incomplete type, so only `FPN<64>` exists (`FPN<128>`/`<256>` are gone).
+arbitrary width at the same time: the primary `FPN_Binary<F>` is now a declaration-only
+incomplete type, so only `FPN_Binary<64>` exists (`FPN_Binary<128>`/`<256>` are gone).
 
 | Type | Size | Cache line position |
 |---|---|---|
-| `FPN<64>` (the binary fixed-point type) | **16 bytes** | 4 fit in a 64B cache line |
+| `FPN_Binary<64>` (the binary fixed-point type) | **16 bytes** | 4 fit in a 64B cache line |
 
 **Implications:**
 - 4 `FPN<64>` fit per cache line (was 2.6 at 24B) — a struct with up to 4
@@ -267,7 +270,7 @@ incomplete type, so only `FPN<64>` exists (`FPN<128>`/`<256>` are gone).
 - AVX-512 zmm reg = 64 bytes, holds 4 `FPN<64>` (was 2.6). Plan wide math
   accordingly.
 
-**Mistake to avoid (inverted at the 16B flip):** `FPN<64>` is now exactly
+**Mistake to avoid (inverted at the 16B flip):** `FPN_Binary<64>` is now exactly
 `sizeof(__int128) == 16` — no sign field, no padding. Code still assuming the old
 24B layout (`.w[]`/`.sign` members, `sizeof==24`) is a post-flip bug; those
 members are gone.
@@ -353,7 +356,7 @@ These all happened in this codebase before being caught + fixed.
 **Do not reintroduce.**
 
 1. **Field span across cache lines** — `live_sl` spans line 0→1 in
-   `ExecutionCore` due to `FPN<64>=24B` math being miscalculated as
+   `ExecutionCore` due to `FPN_Binary<64>=24B` math being miscalculated as
    16B. Fixed in v5.11.1.5 layout reorder.
 
 2. **`fprintf` on rare-failure hot-path branch** — was in
@@ -365,7 +368,7 @@ These all happened in this codebase before being caught + fixed.
    to its own `alignas(64)` block.
 
 4. **`if (active_b)` branch on hot path** — leg-B compares branch-gated
-   because FPN compares didn't pipeline cleanly. AVX-512 vectorization
+   because FPN_Binary compares didn't pipeline cleanly. AVX-512 vectorization
    in v5.11.1.2 removes the branch.
 
 5. **`lat_enabled` runtime load** — every tick read a cold cache line
@@ -412,26 +415,21 @@ uint64_t mask = -((uint64_t)some_condition);  // 0 or all-1s
 result = blend(a, b, mask);        // bitwise blend, no branch
 ```
 
-### FPN-specific helper (added v5.11.2.C)
+### FPN-specific helper (added v5.11.2.C; body below = the LIVE 16B `<64>` specialization since Ship A)
 
 ```cpp
-// FixedPoint/FixedPointN.hpp
-template <unsigned F>
-inline FPN<F> FPN_BlendOnMask(FPN<F> if_true, FPN<F> if_false, uint64_t mask) {
-    FPN<F> r;
-    for (unsigned i = 0; i < FPN<F>::N; ++i) {
-        r.w[i] = (if_true.w[i] & mask) | (if_false.w[i] & ~mask);
-    }
-    int32_t m32 = (int32_t)mask;  // sign-extension preserves all-or-nothing semantics
-    r.sign = (if_true.sign & m32) | (if_false.sign & ~m32);
-    return r;
+// FixedPoint/FixedPointN.hpp — the live <64> body (16B __int128 core). The pre-Ship-A generic
+// w[]-word-loop + sign-field body it replaced is dead-pending the Ship-B core cleanup (S-13).
+template<> inline FPN_Binary<64> FPN_BlendOnMask<64>(FPN_Binary<64> if_true, FPN_Binary<64> if_false, uint64_t mask) {
+    unsigned __int128 m = (unsigned __int128)(__int128)(int64_t)mask;  // 0 / all-ones-128 (sign-extended)
+    return { (__int128)(((unsigned __int128)if_true.v & m) | ((unsigned __int128)if_false.v & ~m)) };
 }
 ```
 
 ### When to use
 
 - ✓ Slow-path running sum updates (eviction term active vs warmup)
-- ✓ Conditional zeroing of FPN values in branchless predicates
+- ✓ Conditional zeroing of FPN_Binary values in branchless predicates
 - ✓ Per-handle parameter dispatch where compute is similar across paths
 - ✓ Any "predicate fires once, condition stable post-warmup" transition
 
@@ -486,9 +484,12 @@ them without revisiting the analysis.
   Lake's 4 ALU ports → effectively 1 cycle for 4 selects.
 - AVX-512 `vpblendmq`: 1-cycle latency, plus mask-register setup (~1 cycle to
   load mask from `active` byte).
-- 4 × FPN<64> = 96 bytes — doesn't fit in __m512i (only 2 FPN<64> fit per zmm).
-- Magnitude-only blend possible (sign always 0 in hot path) but doesn't change
-  the throughput math: CMOV and vpblendmq are tied.
+- 4 × FPN_Binary<64> = **64 bytes — exactly one __m512i/zmm** (updated at A.5: was "96B / 2-per-zmm"
+  under the 24B layout; Ship A's 16B flip changed this arithmetic).
+- (The old magnitude-only/sign-field nuance died with the sign field — two's-complement since Ship A.)
+- NOTE: 4-per-zmm MAY shift the CMOV-vs-vpblendmq trade below; re-deriving that analysis belongs to the
+  post-Ship-B re-pack pass (TECH_DEBT-159 /dod-audit), not this currency fix — the 2026-05-06 conclusion
+  stands as written until then.
 
 **Net realistic gain: 0-2ns at best, possibly zero or negative due to register
 pressure changes from mask-register setup.** Not worth the bytewise-determinism
@@ -497,8 +498,8 @@ risk + scalar-fallback infrastructure.
 **Revisit when:**
 - A new generation CPU significantly improves AVX-512 mask blend throughput
   vs CMOV
-- FPN representation changes (e.g., FPN<128> for higher precision, where CMOV
-  on 40-byte values stops being single-cycle)
+- The binary representation changes again (widths are D-129-parked; decimal money lands at Ship B —
+  re-run this math then)
 - Hot path adds a 5th or 6th simultaneous threshold compare (where mask blend's
   fixed cost amortizes better)
 

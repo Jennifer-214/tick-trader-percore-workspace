@@ -4,7 +4,7 @@
 
 ## The 10 items
 
-1. **Hot path purity** — touches `ExecutionCore_Tick`/`BG_Evaluate`/`SG_Evaluate`? Branchless, FPN-only, alloc-free? p99 ≤500ns. New code defaults to slow path.
+1. **Hot path purity** — touches `ExecutionCore_Tick`/`BG_Evaluate`/`SG_Evaluate`? Branchless, FPN_Binary-only, alloc-free? p99 ≤500ns. New code defaults to slow path.
 
 2. **Train-serve parity** — touches `RegimeSignals`/`ModelFeatures_Pack`? BOTH `BacktestSharded_Run` AND `EngineSharded_Run` populate with equivalent cadence + inputs. (Post-v5.1.2: both go through `EventLoop_UpdateRollingStateAllCores` + `EventLoop_RebuildAllParameters_PerCore`.)
 

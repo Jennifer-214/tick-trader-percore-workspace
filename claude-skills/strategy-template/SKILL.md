@@ -161,8 +161,8 @@ inline void <init_fn>(<state_struct><F> *state, const RollingStats<F> *rolling,
                        BuySideGateConditions<F> *buy_conds);
 
 template <unsigned F>
-inline void <adapt_fn>(<state_struct><F> *state, FPN<F> current_price,
-                        FPN<F> portfolio_delta, uint16_t active_bitmap,
+inline void <adapt_fn>(<state_struct><F> *state, FPN_Binary<F> current_price,
+                        FPN_Binary<F> portfolio_delta, uint16_t active_bitmap,
                         const BuySideGateConditions<F> *buy_conds,
                         const ControllerConfig<F> *cfg);
 
@@ -290,7 +290,7 @@ reviews + decides whether to commit.
 #include "StrategyInterface.hpp"
 
 template <unsigned F> struct <state_struct> {
-    FPN<F> threshold;        // signal threshold (cfg-driven)
+    FPN_Binary<F> threshold;        // signal threshold (cfg-driven)
     int initialized;
 };
 
@@ -303,8 +303,8 @@ inline void <init_fn>(<state_struct><F> *state, const RollingStats<F> *rolling,
 }
 
 template <unsigned F>
-inline void <adapt_fn>(<state_struct><F> *state, FPN<F> current_price,
-                        FPN<F> portfolio_delta, uint16_t active_bitmap,
+inline void <adapt_fn>(<state_struct><F> *state, FPN_Binary<F> current_price,
+                        FPN_Binary<F> portfolio_delta, uint16_t active_bitmap,
                         const BuySideGateConditions<F> *buy_conds,
                         const ControllerConfig<F> *cfg) {
     // No adaptation for static strategies
@@ -370,7 +370,7 @@ template <unsigned F> struct <state_struct> {
     // Per-regime arm weights — each row sums to 1.0 after softmax
     double arm_weights[NUM_REGIMES][NUM_ARMS];
     // Per-arm threshold value
-    FPN<F> arm_thresholds[NUM_ARMS];
+    FPN_Binary<F> arm_thresholds[NUM_ARMS];
     // Bandit eta (learning rate)
     double bandit_eta;
     // Last selected arm idx (for reward routing)

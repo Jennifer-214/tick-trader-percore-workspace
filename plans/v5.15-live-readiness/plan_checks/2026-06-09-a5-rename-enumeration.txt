@@ -1,0 +1,44 @@
+=== A.5 Step-1 enumeration FREEZE @ f52d874 (engine; pre-rename) ===
+
+--- bare FPN per dir (files:lines) ---
+CoreFrameworks: 31 files / 934 lines
+Strategies: 9 files / 350 lines
+DataStream: 4 files / 17 lines
+FixedPoint: 2 files / 248 lines
+MemHeaders: 10 files / 77 lines
+ML_Headers: 14 files / 276 lines
+GUI: 2 files / 4 lines
+Backtest: 3 files / 11 lines
+tests: 4 files / 411 lines
+tools: 9 files / 92 lines
+foxml_suite.cpp:1
+Version.hpp:11
+main.cpp:7
+TOTAL: 2439 lines
+
+--- comment-leading (pin regex '^\s*(//|\*|/\*)') ---
+311
+
+--- is_FPN_v all (engine+tests+tools) ---
+     21 ./CoreFrameworks/CfgFieldDispatch.hpp
+      6 ./FixedPoint/FixedPointN.hpp
+      3 ./GUI/SettingsPanel.hpp
+      1 ./Version.hpp
+
+--- EXPECTED-RESIDUAL ALLOWLIST (post-rename greps must match EXACTLY) ---
+Version.hpp: 11 bare-FPN lines (ship-history comment block; HISTORICAL-PRESERVE)
+Version.hpp: 1 is_FPN_v lines (same block)
+(experiments/per_core_sharding/: gitignored -> rg-invisible by default; S-14 exemption automatic)
+(all other surfaces: 0 expected)
+
+=== FINAL ALLOWLIST (frozen at Step-7 verification, post-rename) ===
+Engine code+tests (bare FPN):
+is_FPN_v (provenance/history mentions only):
+tools/ (guard docstrings + deliberate old-spelling fixtures + legacy map key + family-named labels):
+tools/check_storage_t_coverage.py:2
+tools/check_doc_rename_classification.py:8
+tools/check_session_docs.sh:4
+tools/check_fpn_doc_size_currency.py:45
+tools/test_check_fpn_doc_size_currency.py:10
+tools/check_plan_body_symbol_existence.py:2
+RATIONALE: Version.hpp = ship-history comment block (HISTORICAL-PRESERVE). FixedPointN.hpp = retirement-provenance comments naming the retired spellings (deliberate, greppable). tools/ = doc-size guard's own docstrings/patterns + teeth-proof old-spelling fixtures (deliberate) + symbol-map legacy key + session-docs display labels. experiments/ = gitignored, rg-invisible. ALL OTHER SURFACES: 0.

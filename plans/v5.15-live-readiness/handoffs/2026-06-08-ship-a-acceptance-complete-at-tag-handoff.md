@@ -8,7 +8,7 @@ phase: ".E.0 FOUNDATIONAL — money is many ships away (see § Where this sits)"
 sprint_end_goal: make the codebase more maintainable for future development; correctness-true foundation before the .E.1 rename + multi-exchange
 decision_log: plans/v5.15-live-readiness/decision-logs/v5.15.5.F.4d.1.E-architecture-v2.md (D-97..D-160; Session-11 addendum = D-154..D-160, this session)
 engine_head: f52d874 (feat/v5.15-live-readiness; SIGNED tag v5.15.5.F.4d.1.E.0.7 + PUSHED to origin)
-workspace_head: 5598d68 (pushed)
+workspace_head: c53be3c (+ this close-out's decision-log/handoff refresh follows; pushed) — substantive anchor; the post-flip doc-currency cohort + the FPN-doc guard landed at aab2753 + 00b0e77 + c53be3c
 predecessor_handoff: handoffs/2026-06-02-post-cleanup-ship-a-flip-handoff.md (the pre-pickup state)
 pickup: /accept-handoff <this doc>
 required_reading: [this doc, the decision-log Session-11 addendum (D-154..D-160), the Ship-A plan body acceptance criteria]

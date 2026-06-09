@@ -1,22 +1,22 @@
 ---
 type: handoff
 status: active
-ship_tag: "#11 Ship-A 16B storage flip — ACCEPTANCE COMPLETE; at the STOP-before-money GPG tag (the only remaining step)"
+ship_tag: "#11 Ship-A 16B storage flip — SHIPPED + GPG-tagged v5.15.5.F.4d.1.E.0.7 (the STOP-before-money boundary, D-130). NEXT = A.5 rename → Ship B money"
 plan_type: refactor (16B binary-core compaction)
 sprint: v5.15-live-readiness
 phase: ".E.0 FOUNDATIONAL — money is many ships away (see § Where this sits)"
 sprint_end_goal: make the codebase more maintainable for future development; correctness-true foundation before the .E.1 rename + multi-exchange
 decision_log: plans/v5.15-live-readiness/decision-logs/v5.15.5.F.4d.1.E-architecture-v2.md (D-97..D-160; Session-11 addendum = D-154..D-160, this session)
-engine_head: 7f1704e (feat/v5.15-live-readiness; NOT pushed — flip + acceptance committed locally, tag pending)
-workspace_head: fadacf3
+engine_head: f52d874 (feat/v5.15-live-readiness; SIGNED tag v5.15.5.F.4d.1.E.0.7 + PUSHED to origin)
+workspace_head: 5598d68 (pushed)
 predecessor_handoff: handoffs/2026-06-02-post-cleanup-ship-a-flip-handoff.md (the pre-pickup state)
 pickup: /accept-handoff <this doc>
 required_reading: [this doc, the decision-log Session-11 addendum (D-154..D-160), the Ship-A plan body acceptance criteria]
 ---
 
-# Ship-A 16B flip — ACCEPTANCE COMPLETE, at the tag (2026-06-08, Session 11)
+# Ship-A 16B flip — SHIPPED + GPG-tagged v5.15.5.F.4d.1.E.0.7 (2026-06-08, Session 11)
 
-**The flip is DONE and the full gate is GREEN. The ONLY remaining step is the GPG tag** (STOP-before-money, D-130 — operator consult). This session RESUMED the flip from a cut-off state (it had been executed-but-uncommitted-and-unverified, and the prior session couldn't even build the tests), de-risked it, fixed the blocker, ran the full acceptance, and closed out the surfaced tech-debt.
+**Ship A is SHIPPED — GPG-tagged `v5.15.5.F.4d.1.E.0.7` ("Good signature from Caramel"), both repos pushed.** This session RESUMED the flip from a cut-off state (executed-but-uncommitted-and-unverified; the prior session couldn't even build the tests), de-risked it, fixed the blocker, ran the full acceptance (3246/0 + asan + ubsan + gui), closed the surfaced tech-debt (157/158), and shipped the tag. An independent deliverable review at close returned **SHIP-CLEAN**. **NEXT pickup = Ship-A.5** (the cosmetic `FPN`→`FPN_Binary` clang-rename against the now-stable 16B anchor).
 
 ## Where this sits (carry this session-to-session)
 **We are in the `.E.0` FOUNDATIONAL phase. Money is many ships away.** The pipeline before any live capital:
@@ -46,12 +46,11 @@ Flip: engine `7304f21` (+ build-fix `655f33f`), workspace `d2814b9` (+ `b1e73e8`
 - Build regression (LANDMINE 7 — symlink `../`-include) FIXED. Slice cohort retired.
 - **TECH_DEBT-157** (struct-alignment guard `tools/check_struct_alignment.py`) BUILT + wired pre-commit **Check K** + teeth-proofed (`test_check_struct_alignment.py`). **TECH_DEBT-158** (pre-existing asan AVX-512 FPs + ubsan timing flake) CLOSED.
 
-## What's LEFT (just the tag)
-1. **The ship ritual + GPG tag (operator consult — STOP-before-money):** bump `Version.hpp` (proposed `v5.15.5.F.4d.1.E.0.7`, monotonic-at-ship D-88 — confirm vs MASTER) + CHANGELOG + postmortem (AUTHOR the D-160 + D-153 meta-harvest here: value-equivalent-storage-flip methodology, branchless-guard-via-safe-compute-and-mask, the first-sanitizer-run-batch meta-pattern, no_sanitize-on-verified-AVX-512, FOXML_SANITIZER_BUILD) → 5-binary clean verify → GPG tag → push → `/sync-workspace`.
-2. **Two small noted items (operator's call, NOT blockers):**
-   - **TECH_DEBT-157 (b) alignof-locks** — 12 over-aligned structs lack a `static_assert(alignof==N)`. The (a) guard is the structural close + the live Check K surfaces (b) on every relevant commit (tracked-by-tooling). Recommended: leave as standing advisory. If hard-locking: do it per-type qualified (tt:: / fox_ml::mem:: / template args; NO `using namespace tt` — it leaks globally and breaks the file).
-   - **Ledger tidy** — move TECH_DEBT-157 + 158 from `open.md` to `closed.md` (resolved this session).
-3. **Then:** Ship-A.5 (rename) → Ship-B (decimal money, the B1-B6 findings + divmul N=127).
+## What's LEFT — Ship A is DONE; next is A.5
+Ship A is shipped + GPG-tagged + pushed; the meta-harvest postmortem is authored; the ledger tidy (157/158 → `closed.md`) is done; the independent close-review returned SHIP-CLEAN. Remaining:
+1. **Ship-A.5 (the next pickup):** the cosmetic `FPN`→`FPN_Binary` clang-rename against the now-stable 16B anchor (D-143 deferred it here). Plan it → then **Ship B** (decimal money — the B1-B6 findings + the D-100 oracle gate + golden regen + un-bypass Check F) → `.E.1` Core→Node rename + multi-exchange.
+2. **One standing note (NOT a blocker):** TECH_DEBT-157 (b) alignof-locks — 12 over-aligned structs could add `static_assert(alignof==N)`; the (a) guard (pre-commit Check K) is the structural close + surfaces (b) on every relevant commit (tracked-by-tooling). Leave as advisory. (If ever hard-locking: per-type qualified `tt::`/`fox_ml::mem::`/template-args — NO `using namespace tt`, it leaks globally + breaks the file.)
+3. **When the numeric core stabilizes (post-Ship-B):** refreeze the 16B golden + un-bypass pre-commit Check F (D-157).
 
 ## Decisions this session (decision-log SSoT: D-154..D-160)
 D-154 flip resumed + the build-regression was the true blocker (LANDMINE 7) · D-155 first-ever-sanitizer-run surfaced a BATCH of pre-existing bugs (close, don't conflate with the change) · D-156 alignment guard built now + teeth-proofed · D-157 verify run-to-run, defer the refreeze · D-158 F4 keep (metrics-only) · D-159 operator meta-stance: close-out-now over defer · D-160 ship-close meta-harvest slate (canonical code proven; author at postmortem).
@@ -60,4 +59,4 @@ D-154 flip resumed + the build-regression was the true blocker (LANDMINE 7) · D
 Address Caramel as Caramel/she/her; no AskUserQuestion modals (inline); evaluate on robustness+latency+design not time; correctness + planning over speed; **consult before the GPG tag** (STOP-before-money); branchless preferred; MED/LOW findings get a disposition; **close-out-now over defer for small in-flight finds** (D-159); no live models (D-131). When a session does a lot, CAPTURE decisions/findings/state as you go — this handoff exists because the last pickup had none.
 
 ## First action
-`/accept-handoff <this doc>` → verify gate still green → then the ship ritual + the tag consult (propose the version, draft CHANGELOG + postmortem with the meta-harvest, then GPG-tag with operator go).
+`/accept-handoff <this doc>` → verify the gate is still green (3246/0) + the tag is live → then plan + start **Ship-A.5** (the cosmetic `FPN`→`FPN_Binary` rename; D-143). Still `.E.0` foundational — money is many ships away.

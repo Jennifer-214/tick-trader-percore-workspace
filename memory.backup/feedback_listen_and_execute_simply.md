@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: c95ac2bd-d963-485c-b028-60d593bce711
-  sister_specs: [feedback_heavier_default_audit_posture_for_capital.md, feedback_never_skip_thoroughness_unless_explicit.md]
+  sister_specs: [feedback_heavier_default_audit_posture_for_capital.md, feedback_never_skip_thoroughness_unless_explicit.md, feedback_deferral_reasons_merit_not_effort_or_context.md]
   tags: [operator-collaboration, scope-discipline]
 ---
 

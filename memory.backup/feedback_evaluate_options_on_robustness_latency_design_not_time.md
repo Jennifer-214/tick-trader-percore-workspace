@@ -5,7 +5,7 @@ metadata:
   type: feedback
   originSessionId: 532f69da-4245-44f3-92c9-acbb549b9570
   tags: [operator-collaboration, scope-discipline]
-  sister_specs: [feedback_address_user_as_caramel.md, feedback_future_headache_vs_optimization_scope_framework.md, feedback_heavier_default_audit_posture_for_capital.md, feedback_lead_with_architectural_merit_not_operator_tone.md, feedback_plan_body_length_no_target_loc.md, feedback_sequential_audit_for_granular_operator_triage.md, feedback_surface_operator_migration_path_proactively.md, user_deep_design_work_intrinsic_value.md, user_public_work_attracts_hedge_funds.md, user_correctness_first_not_ship_fast.md]
+  sister_specs: [feedback_address_user_as_caramel.md, feedback_future_headache_vs_optimization_scope_framework.md, feedback_heavier_default_audit_posture_for_capital.md, feedback_lead_with_architectural_merit_not_operator_tone.md, feedback_plan_body_length_no_target_loc.md, feedback_sequential_audit_for_granular_operator_triage.md, feedback_surface_operator_migration_path_proactively.md, user_deep_design_work_intrinsic_value.md, user_public_work_attracts_hedge_funds.md, user_correctness_first_not_ship_fast.md, feedback_deferral_reasons_merit_not_effort_or_context.md]
 ---
 When presenting implementation options or design choices, evaluate primarily on:
 1. **Robustness** — what capabilities are preserved/lost; what regressions are possible; thread safety; correctness under contention

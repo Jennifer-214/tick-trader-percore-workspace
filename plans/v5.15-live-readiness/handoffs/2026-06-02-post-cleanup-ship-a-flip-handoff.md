@@ -1,6 +1,6 @@
 ---
 type: handoff
-status: active   # RESUMED 2026-06-02 at the skill-meta arc close — this is the next pickup (the #11 storage flip)
+status: superseded   # 2026-06-08: the flip it described is DONE + acceptance-complete — superseded by 2026-06-08-ship-a-acceptance-complete-at-tag-handoff.md
 deferred_for: 2026-06-02-skill-meta-pattern-arc-handoff.md   # the active detour that parked this
 ship_tag: "#11 Ship-A storage flip — RESUME after the code-only-public spring-cleaning session"
 plan_type: refactor (16B binary-core compaction)

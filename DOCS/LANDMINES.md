@@ -168,6 +168,24 @@ watching it actually work).
 
 ---
 
+## Landmine 7 — symlinked tests/+tools/: a `../X` engine include resolves OFF the engine (C++ sibling of Landmine 5) (set 2026-06-08, #11 Ship-A pickup)
+
+**Symptom:** a fresh `cmake -B build` build of `controller_test` (also `depth_recorder_test` / `parity_harness`) fails `fatal error: ../DataStream/MockGenerator.hpp: No such file or directory`, AND the pre-commit determinism gate fails to build `tools/replay_locale_gate.cpp` (`../CoreFrameworks/ParseFast.hpp` not found) — even though both engine headers exist. Built fine before the `tests/`+`tools/` symlink move; a build dir configured pre-symlink (an old `build_gui/`) still works off cached real paths, so it looks intermittent.
+
+**Root cause:** `tests/` + `tools/` are symlinks into the private workspace. A `#include "../X"` in a symlinked-in source resolves `..` against the symlink's CANONICAL dir (the workspace), not the engine → `../DataStream` becomes `workspace/DataStream` (nonexistent). GCC canonicalizes the symlinked source dir for quoted-relative include resolution. The **C++ sibling of Landmine 5** (which is the Python `Path(__file__).resolve()` form of the same symlink trap).
+
+**Why the obvious fixes are traps:** gitignore-in-place (un-symlink) is build-safe but FORKS the syncable-workspace copy — the same trade-off Landmine 5 names (the workspace stops being the single source); rewriting every `../` include is a wide cascade.
+
+**Proper fix:** anchor the quote/`-I` include search on a REAL (non-symlink) engine subdir so `../X` resolves as `<realsubdir>/../X` == `<engine>/X`:
+- **CMake** (covers controller_test / depth_recorder_test / parity_harness / compare_scalers): `include_directories(${CMAKE_SOURCE_DIR}/CoreFrameworks)` before the dev/test targets in `CMakeLists.txt`.
+- **Gate scripts** that compile a tool with `-I$ROOT` (engine root): normalize the source to engine-root-relative — drop the `../` (`#include "CoreFrameworks/ParseFast.hpp"`), matching the sibling convention (`fp_determinism_golden.cpp` already uses `FixedPoint/...`). The lone offender was `replay_locale_gate.cpp`.
+
+**Future-Claude debugging hint:** a test/tool build "file not found"s an ENGINE header that DOES exist, via a `../` include, after the tests/+tools/ symlink move → this. Fix = the CoreFrameworks anchor (CMake) or a root-relative include (script-compiled tool). Verify with a FRESH `cmake -B build && cmake --build build --target controller_test` (never a stale pre-symlink build dir).
+
+**Reference:** #11 Ship-A storage-flip pickup (2026-06-08) — a fresh `controller_test` configure + the pre-commit determinism gate both broke on this; sibling of Landmine 5; fix = `CMakeLists.txt` CoreFrameworks anchor + `tools/replay_locale_gate.cpp` root-relative include. The flip session's `build_probe/` keystone logs show it was already biting then.
+
+---
+
 ## How to add a new landmine
 
 When you encounter a non-obvious pitfall (segfault, race, parallelism

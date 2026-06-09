@@ -10,7 +10,7 @@
 //
 // Exit 0 = GREEN (or SKIP if no comma-decimal locale is installed — immunity still holds
 // by construction, only the empirical leg is unavailable). Exit 1 = RED (drift).
-#include "../CoreFrameworks/ParseFast.hpp"
+#include "CoreFrameworks/ParseFast.hpp"   // engine-root-relative (script builds with -I$ROOT, like fp_determinism_golden.cpp); NOT "../" — tools/ is a workspace symlink, so "../" canonicalizes off the engine (DOCS/LANDMINES.md)
 #include <cstdio>
 #include <cstring>
 #include <clocale>

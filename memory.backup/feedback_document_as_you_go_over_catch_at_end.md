@@ -1,6 +1,6 @@
 ---
 name: document-as-you-go-over-catch-at-end
-description: "Capture every decision/finding/work-product AT the moment it's produced, not in an end-of-session sweep — the gap between producing and capturing is where compaction-loss happens. The named contracts (decision-log / auto-write ledgers / synthesis-autowrite) are INSTANCES; this is the unifying principle + closes the hole for intermediate work-products (survey results, analysis maps) no contract enumerates. Correctness risk-control, not bureaucracy."
+description: "Capture every decision/finding/work-product AT the moment it's produced, not in an end-of-session sweep — the gap between producing and capturing is where compaction-loss happens. The named contracts (decision-log / auto-write ledgers / synthesis-autowrite) are INSTANCES; this is the unifying principle + closes the hole for intermediate work-products (survey results, analysis maps) no contract enumerates. Correctness risk-control, not bureaucracy. UNCONDITIONAL — every decision/finding/state-change is captured regardless of session size; NEVER gated on 'if the session does a lot' (too vague; it invites skipping)."
 metadata: 
   node_type: memory
   type: feedback
@@ -10,6 +10,8 @@ metadata:
 ---
 
 **Document-as-you-go beats catch-everything-at-the-end.** Capture each decision, finding, and work-product at the moment of creation — when context is freshest and before anything can swallow it.
+
+**This is UNCONDITIONAL.** It does NOT gate on "if the session does a lot" — that threshold is too vague and invites skipping (the operator caught exactly that weakened phrasing in a handoff restatement of this rule, 2026-06-09). Every decision / finding / state-change is captured the moment it happens, regardless of session size; a quiet session still captures its one decision. There is no threshold to interpret — "always" is the rule.
 
 ## Why
 The gap between *producing* something (a decision, a survey result, a finding) and *capturing* it durably is exactly where loss happens: compaction drops it, "I'll write it up at the end" never comes, the next session can't see it. For a solo+AI workflow on capital code an un-captured decision is a correctness risk — externalized state IS the second engineer ([[user_structure_is_correctness_risk_control_for_capital]]). Catching-at-the-end is lossy by construction; capturing-as-you-go is lossless by construction.

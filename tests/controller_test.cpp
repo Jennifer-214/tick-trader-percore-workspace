@@ -15151,8 +15151,16 @@ e3_skip_load:;
 
         check("v5.11.3.B: writer published all N_WRITES",
               snap.price == (double)N_WRITES);
+#if defined(FOXML_SANITIZER_BUILD)
+        // Instrumented builds (asan/ubsan/tsan, -O1) run several x slower, so the reader observes
+        // fewer snapshots in the writer's fixed window. The load-bearing invariant is zero torn reads
+        // (asserted below), not the raw count; relax the floor under instrumentation, keep 100 otherwise.
+        check("v5.11.3.B: reader observed snapshots tear-free (instrumented floor)",
+              read_count.load() >= 5);
+#else
         check("v5.11.3.B: reader observed >= 100 snapshots",
               read_count.load() >= 100);
+#endif
         check("v5.11.3.B: zero torn reads across thousands of writer publishes",
               tear_count.load() == 0);
 

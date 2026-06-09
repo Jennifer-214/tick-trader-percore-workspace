@@ -142,12 +142,12 @@ constexpr unsigned FP = 64;
 // DOCS/recurring-bug-patterns/class-23-*.md.
 //======================================================================================================
 static_assert(is_FPN_v<FPN<64>>,                "v5.15.5.F.4b: is_FPN_v should detect FPN<64>");
-static_assert(is_FPN_v<FPN<128>>,               "v5.15.5.F.4b: is_FPN_v should detect FPN<128>");
+// Ship-A (D-143): arbitrary-width FPN<F> SHED — FPN<64> is the sole binary instantiation
+// (FPN<128> was trait-test-only; no production F!=64). Its is_FPN_v / ::F asserts retired.
 static_assert(!is_FPN_v<double>,                "v5.15.5.F.4b: is_FPN_v should reject double");
 static_assert(!is_FPN_v<int>,                   "v5.15.5.F.4b: is_FPN_v should reject int");
 static_assert(!is_FPN_v<uint64_t>,              "v5.15.5.F.4b: is_FPN_v should reject uint64_t");
 static_assert(FPN<64>::F == 64,                 "v5.15.5.F.4b: FPN<64>::F should expose template param value (64)");
-static_assert(FPN<128>::F == 128,               "v5.15.5.F.4b: FPN<128>::F should expose template param value (128)");
 
 static_assert(sizeof(CfgFieldDescriptor) <= 128,
               "v5.15.5.F.4b: CfgFieldDescriptor must fit two cache lines");

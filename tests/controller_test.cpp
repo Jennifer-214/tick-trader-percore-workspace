@@ -1809,22 +1809,16 @@ int main() {
         check("spike: spacing reduced to 50%", fabs(reduced_d - 50.0) < 0.01);
 
         // branchless mask-select produces correct result
-        uint64_t spike_mask = -(uint64_t)is_spike2;
+        __int128 spike_mask = -(__int128)(unsigned)is_spike2;   // all-ones when spike, else 0
         FPN<FP> selected;
-        for (unsigned w = 0; w < FPN<FP>::N; w++) {
-            selected.w[w] = (reduced.w[w] & spike_mask) | (spacing.w[w] & ~spike_mask);
-        }
-        selected.sign = (reduced.sign & is_spike2) | (spacing.sign & !is_spike2);
+        selected.v = (reduced.v & spike_mask) | (spacing.v & ~spike_mask);
         double sel_d = FPN_ToDouble(selected);
         check("spike: mask-select picks reduced spacing", fabs(sel_d - 50.0) < 0.01);
 
         // non-spike mask-select keeps original
-        uint64_t no_mask = -(uint64_t)is_spike; // is_spike = 0
+        __int128 no_mask = -(__int128)(unsigned)is_spike; // is_spike = 0 → mask 0 → keeps spacing
         FPN<FP> selected2;
-        for (unsigned w = 0; w < FPN<FP>::N; w++) {
-            selected2.w[w] = (reduced.w[w] & no_mask) | (spacing.w[w] & ~no_mask);
-        }
-        selected2.sign = (reduced.sign & is_spike) | (spacing.sign & !is_spike);
+        selected2.v = (reduced.v & no_mask) | (spacing.v & ~no_mask);
         double sel2_d = FPN_ToDouble(selected2);
         check("spike: mask-select keeps normal when no spike", fabs(sel2_d - 100.0) < 0.01);
     }
@@ -7027,10 +7021,7 @@ e3_skip_load:;
             FPN<64> walked = BookImbHistory_MeanShort(&h, 64);
             FPN<64> fast   = BookImbHistory_MeanShortFast(&h);
 
-            bool eq = (walked.w[0] == fast.w[0])
-                   && (walked.w[1] == fast.w[1])
-                   && (walked.sign == fast.sign)
-                   && (walked._padding == fast._padding);
+            bool eq = (walked.v == fast.v);   // Ship-A 16B: .v IS the whole value (no words/sign/padding)
             if (eq) parity_pass++;
             else    parity_fail++;
         }
@@ -9683,8 +9674,8 @@ e3_skip_load:;
         // SHARDED_SNAPSHOT_VERSION bumped from 3 to 4 for the CoreContext
         // strategy_state addition. Hardcoded check to catch accidental
         // reverts.
-        check("v5.15.5.C.3: SHARDED_SNAPSHOT_VERSION is 8 (v5.4.0=4, v5.4.3=5, v5.4.4=6, v5.11.65=7, v5.15.5.C.3=8 added OrderManagerState.paper_session_start_us)",
-              SHARDED_SNAPSHOT_VERSION == 8u);
+        check("v5.15.5.C.3: SHARDED_SNAPSHOT_VERSION is 9 (v5.4.0=4, v5.4.3=5, v5.4.4=6, v5.11.65=7, v5.15.5.C.3=8, Ship-A 16B FPN=9: embedded FPN-struct byte layouts changed)",
+              SHARDED_SNAPSHOT_VERSION == 9u);
     }
     {
         // Default state after EventLoopState_Init: strategy_state nullptr,
@@ -10140,8 +10131,7 @@ e3_skip_load:;
         es_down.prev_ema = FPN_Sub(rolling.price_avg,
                                     FPN_Mul(rolling.price_stddev, FPN_FromDouble<FP>(1.0)));
         es_down.last_ema_slope = FPN_FromDouble<FP>(-0.5);
-        // Sign on negation
-        es_down.last_ema_slope.sign = 1;
+        // (two's-comp: FromDouble(-0.5) is already negative; no separate sign-bit set needed)
         tt::GateParameters<FP> out_down{};
         tt::EmaCross_BuildParameters(&rolling, &cfg.cores[0], FPN_FromDouble<FP>(1000.0),
                                       &out_down, &es_down);
@@ -14207,23 +14197,20 @@ e3_skip_load:;
         // Round-trip basic values
         FPN<64> z = FPN_FromInt<64>(0);
         check("v5.10.0b.1: FPN_FromInt(0) zero magnitude",
-              z.sign == 0 && FPN_IsZero(z));
+              FPN_IsZero(z));
 
         FPN<64> one = FPN_FromInt<64>(1);
         check("v5.10.0b.1: FPN_FromInt(1) round-trips to double",
-              FPN_ToDouble(one) == 1.0 && one.sign == 0);
+              FPN_ToDouble(one) == 1.0 && one.v > 0);
 
         FPN<64> neg = FPN_FromInt<64>(-42);
         check("v5.10.0b.1: FPN_FromInt(-42) preserves sign + magnitude",
-              FPN_ToDouble(neg) == -42.0 && neg.sign == 1);
+              FPN_ToDouble(neg) == -42.0 && neg.v < 0);
 
-        // Field-equal helper (memcmp would compare uninitialized struct
-        // padding bytes; compare meaningful fields instead).
+        // Field-equal helper. Ship-A 16B FPN: the value IS the whole struct
+        // (bare __int128 v, no words/sign/padding) — so .v equality is exact byte-equality.
         auto fpn_field_eq = [](const FPN<64>& a, const FPN<64>& b) -> bool {
-            if (a.sign != b.sign) return false;
-            for (unsigned i = 0; i < FPN<64>::N; i++)
-                if (a.w[i] != b.w[i]) return false;
-            return true;
+            return a.v == b.v;
         };
 
         // Field-equal with FromDouble for small ints (indices / counts).
@@ -14265,7 +14252,7 @@ e3_skip_load:;
         // Boundary: large positive + INT64_MIN safety (no UB)
         FPN<64> big = FPN_FromInt<64>(1234567890LL);
         check("v5.10.0b.1: FPN_FromInt(1234567890) round-trips",
-              FPN_ToDouble(big) == 1234567890.0 && big.sign == 0);
+              FPN_ToDouble(big) == 1234567890.0 && big.v > 0);
     }
 
     printf("\n--- EXTENSIBILITY: v5.10.0b.2.5.A — FPN-native Newton-Raphson sqrt ---\n");
@@ -14317,8 +14304,7 @@ e3_skip_load:;
         FPN<64> two = FPN_FromInt<64>(2);
         FPN<64> r1  = FPN_Sqrt(two);
         FPN<64> r2  = FPN_Sqrt(two);
-        bool det = (r1.sign == r2.sign);
-        for (unsigned i = 0; i < FPN<64>::N; i++) det = det && (r1.w[i] == r2.w[i]);
+        bool det = (r1.v == r2.v);   // Ship-A 16B: bytewise-equal ⇔ .v-equal
         check("v5.10.0b.2.5.A: sqrt(x) is deterministic (bytewise-equal repeat)",
               det);
     }
@@ -14376,8 +14362,7 @@ e3_skip_load:;
         FPN<64> input = FPN_FromInt<64>(-3);
         FPN<64> r1 = FPN_Exp(input);
         FPN<64> r2 = FPN_Exp(input);
-        bool det = (r1.sign == r2.sign);
-        for (unsigned i = 0; i < FPN<64>::N; i++) det = det && (r1.w[i] == r2.w[i]);
+        bool det = (r1.v == r2.v);   // Ship-A 16B: bytewise-equal ⇔ .v-equal
         check("v5.10.0b.2.5.B: exp(x) is deterministic (bytewise-equal repeat)",
               det);
 
@@ -14467,8 +14452,7 @@ e3_skip_load:;
         // Determinism
         FPN<64> r1 = FPN_Sin(x_test);
         FPN<64> r2 = FPN_Sin(x_test);
-        bool det = (r1.sign == r2.sign);
-        for (unsigned i = 0; i < FPN<64>::N; i++) det = det && (r1.w[i] == r2.w[i]);
+        bool det = (r1.v == r2.v);   // Ship-A 16B: bytewise-equal ⇔ .v-equal
         check("v5.10.0b.2.5.D: sin(x) is deterministic (bytewise-equal repeat)",
               det);
     }
@@ -14851,14 +14835,12 @@ e3_skip_load:;
         // === Test 2: LUT[2] is exactly 0.5 (power-of-2 reciprocal is exact) ===
         FPN<FP> half = FPN_FromDouble<FP>(0.5);
         check("v5.11.2.A: LUT[2] == FPN(0.5) bytewise (power-of-2 exact)",
-              lut.values[2].w[0] == half.w[0] &&
-              lut.values[2].w[1] == half.w[1]);
+              lut.values[2].v == half.v);
 
         // === Test 3: LUT[128] is exactly 1/128 (power-of-2) ===
         FPN<FP> recip128 = FPN_FromDouble<FP>(1.0 / 128.0);
         check("v5.11.2.A: LUT[128] == FPN(1/128) bytewise (power-of-2 exact)",
-              lut.values[128].w[0] == recip128.w[0] &&
-              lut.values[128].w[1] == recip128.w[1]);
+              lut.values[128].v == recip128.v);
 
         // === Test 4: For power-of-2 n, FPN_Mul(sum, LUT[n]) == FPN_DivNoAssert(sum, n) bytewise ===
         // (Audit's claim; verifies no drift for the steady-state case n=W.)
@@ -14871,7 +14853,7 @@ e3_skip_load:;
             snprintf(msg, sizeof(msg),
                 "v5.11.2.A: FPN_Mul(LUT[%d]) == FPN_DivNoAssert (power-of-2)", n_test);
             check(msg,
-                  via_div.w[0] == via_mul.w[0] && via_div.w[1] == via_mul.w[1]);
+                  via_div.v == via_mul.v);
         }
 
         // === Test 5: For non-power-of-2 n, drift bounded in REAL VALUE terms ===
@@ -14916,8 +14898,8 @@ e3_skip_load:;
         // Cache-line discipline (mirror of static_assert at the type level)
         check("v5.11.2.B: head offset is 64B-aligned (W=128)",
               (offsetof(RS128, head) % 64) == 0);
-        check("v5.11.2.B: head past 5-output-line cluster (W=128)",
-              offsetof(RS128, head) >= 64 * 5);
+        check("v5.11.2.B: head past 4-output-line cluster (W=128; Ship-A 16B FPN, was 5 lines)",
+              offsetof(RS128, head) >= 64 * 4);
         // Layout up to head is W-independent (outputs come first)
         check("v5.11.2.B: head offset same across W=128/256",
               offsetof(RS128, head) == offsetof(RS256, head));
@@ -14928,9 +14910,9 @@ e3_skip_load:;
         // Output cluster sits at the very front (line 0)
         check("v5.11.2.B: price_avg at offset 0 (struct head)",
               offsetof(RS128, price_avg) == 0);
-        // Outputs occupy lines 0-4 — last output `vwap_deviation` < line 5 boundary
-        check("v5.11.2.B: vwap_deviation in cache lines 0-4 (output cluster)",
-              offsetof(RS128, vwap_deviation) < 64 * 5);
+        // Outputs occupy lines 0-3 (Ship-A 16B FPN; was 0-4) — last output `vwap_deviation` < line 4 boundary
+        check("v5.11.2.B: vwap_deviation in cache lines 0-3 (output cluster)",
+              offsetof(RS128, vwap_deviation) < 64 * 4);
 
         // Functional correctness — Push still computes valid outputs after reorder
         RS128 rolling = RollingStats_Init<FP, 128>();
@@ -15103,9 +15085,9 @@ e3_skip_load:;
             FPN<FP> blend_a = FPN_BlendOnMask(a, b, (uint64_t)-1);
             FPN<FP> blend_b = FPN_BlendOnMask(a, b, (uint64_t)0);
             check("v5.11.2.C: FPN_BlendOnMask preserves positive sign (a path)",
-                  blend_a.sign == a.sign);
+                  (blend_a.v < 0) == (a.v < 0));
             check("v5.11.2.C: FPN_BlendOnMask preserves negative sign (b path)",
-                  blend_b.sign == b.sign);
+                  (blend_b.v < 0) == (b.v < 0));
         }
     }
 
@@ -16334,8 +16316,7 @@ e3_skip_load:;
         // Determinism: same input → same FPN bytes
         FPN<64> d1 = FPN_DivNoAssert(price, small);
         FPN<64> d2 = FPN_DivNoAssert(price, small);
-        bool det = (d1.sign == d2.sign);
-        for (unsigned i = 0; i < FPN<64>::N; i++) det = det && (d1.w[i] == d2.w[i]);
+        bool det = (d1.v == d2.v);   // Ship-A 16B: bytewise-equal ⇔ .v-equal
         check("v5.10.0b.3: divide is bytewise-deterministic (repeat)",
               det);
 
@@ -18198,13 +18179,12 @@ e3_skip_load:;
         FPN<64> b = FPN_FromDouble<64>(101.0);
         FPN<64> delta = FPN_Sub(a, b);  // negative
         check("v5.12.2.B: FPN_Sub(100.5, 101.0) sign == 1 (negative)",
-              delta.sign == 1);
-        FPN<64> abs_delta = delta;
-        abs_delta.sign = 0;
-        check("v5.12.2.B: |delta| via sign-bit clear → magnitude same",
-              FPN_MagEq<64>(abs_delta, delta));
-        check("v5.12.2.B: |delta| sign cleared",
-              abs_delta.sign == 0);
+              delta.v < 0);
+        FPN<64> abs_delta = FPN_Abs(delta);
+        check("v5.12.2.B: |delta| via FPN_Abs → magnitude same (delta<0 ⇒ |delta| == -delta)",
+              abs_delta.v == FPN_Negate(delta).v);
+        check("v5.12.2.B: |delta| is non-negative",
+              abs_delta.v >= 0);
 
         // === Test 3: relative delta math at threshold boundary ===
         // |100.5 - 101.0| / 101.0 ≈ 0.00495 > 0.0005 → would trigger rebuild
@@ -18216,8 +18196,7 @@ e3_skip_load:;
         // 100.04 vs 100.0 → rel_delta = 0.0004 < 0.0005 threshold → SKIP
         FPN<64> p1 = FPN_FromDouble<64>(100.0);
         FPN<64> p2 = FPN_FromDouble<64>(100.04);
-        FPN<64> small_delta = FPN_Sub(p2, p1);
-        small_delta.sign = 0;  // abs
+        FPN<64> small_delta = FPN_Abs(FPN_Sub(p2, p1));  // abs
         FPN<64> small_rel = FPN_DivNoAssert(small_delta, p1);
         check("v5.12.2.B: small price delta (0.04%) below 0.05% threshold",
               !FPN_GreaterThan(small_rel, cfg.lazy_rebuild_price_threshold_pct));
@@ -24419,17 +24398,17 @@ e3_skip_load:;
 
     {
         // FPN<F=64> bytewise-identity: two FPN_Zero<64> values must be
-        // bytewise identical (padding deterministically zero).
+        // bytewise identical (Ship-A 16B: bare __int128 v — no padding to differ).
         FPN<64> a = FPN_Zero<64>();
         FPN<64> b = FPN_Zero<64>();
         check("v5.14.11.B.2: FPN_Zero<64> produces bytewise-identical struct",
               memcmp(&a, &b, sizeof(a)) == 0);
 
-        // Struct size invariant — adding _padding field doesn't change size.
-        static_assert(sizeof(FPN<64>) == 24,
-                      "FPN<F=64> struct size must remain 24 bytes (16 w[] + 4 sign + 4 _padding)");
-        check("v5.14.11.B.2: sizeof(FPN<64>) == 24 (struct size invariant preserved)",
-              sizeof(FPN<64>) == 24);
+        // Struct size invariant — Ship-A 16B: bare __int128 v (no words/sign/padding).
+        static_assert(sizeof(FPN<64>) == 16,
+                      "FPN<F=64> struct size must be 16 bytes (bare __int128 v; Ship-A 16B two's-comp, was 24)");
+        check("v5.14.11.B.2: sizeof(FPN<64>) == 16 (Ship-A 16B struct size invariant)",
+              sizeof(FPN<64>) == 16);
 
         // FPN values from same double bytewise-identical (test that FracDiff
         // regression class is structurally eliminated).

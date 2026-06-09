@@ -467,8 +467,11 @@ CHECK_10_PER_CORE_FIELDS_WITH_GLOBAL_SISTER = {
 # Operator extends via MANUAL_FIELDS_INVENTORY.md Section D when new legitimate cases surface.
 CHECK_10_SECTION_D_EXEMPTIONS = {
     # LEGACY single_core paths (per .B.7 audit Cat 8 LEGACY-KEEP verdict; caller is single_core PortfolioController)
-    ("Strategies/private/EmaCross.hpp", 143),  # EmaCross_ExitAdjust legacy single_core fee_rate_taker
-    ("Strategies/private/EmaCross.hpp", 144),  # sister fallback fee_rate
+    # NOTE (Ship-A): these line anchors drifted 143/144 -> 145/146 across this session's .v-port edits above
+    # the site. Line-keyed exemptions are fragile (any edit above shifts them); flagged for a structural
+    # re-key (by file+field or a code-anchor comment) as a follow-up — see Ship-A learnings.
+    ("Strategies/private/EmaCross.hpp", 145),  # EmaCross_ExitAdjust legacy single_core fee_rate_taker (!IsZero guard)
+    ("Strategies/private/EmaCross.hpp", 146),  # ternary: fee_rate_taker : fee_rate (sister fallback) — gate keys here
     # KEEP-AS-GLOBAL display sites (Settings panel operator-facing semantic; per-core deviations
     # surfaced via per_core_count panel instead). Line numbers reflect post-.B.8 Phase B
     # KEEP-AS-GLOBAL comment additions (lines shifted from original 139/330/331 to 142/343/344).

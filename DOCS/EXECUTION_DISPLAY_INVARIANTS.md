@@ -204,7 +204,7 @@ Walked every `snap->per_core[i].*` write in `TUI_CopySnapshotSharded`
    slow-path thread that owns the core, read by the GUI thread.
    Slow path runs at ~poll_interval cadence (typically every 10-100
    ticks); GUI at ~60Hz. Race window per field is small. Multi-byte
-   reads (FPN<F> = 24 bytes) could in theory tear under concurrent
+   reads (FPN<F> = 16 bytes) could in theory tear under concurrent
    write, but: (a) slow-path doesn't write mid-frame; it writes at
    the end of its rebuild cycle; (b) display tolerance is high
    (one stale value resolves next frame); (c) no field is used to

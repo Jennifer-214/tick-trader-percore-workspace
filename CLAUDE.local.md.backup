@@ -215,9 +215,9 @@ Skills pre-load matching deep-dive bodies so cold sessions have full pattern acc
 
 ## Privacy boundary recap
 
-**Private (workspace-backed):** plans/, .claude/skills/, engine.cfg / backtest.cfg / controller.cfg / secrets.cfg, models/, runtime logs + per-symbol metrics CSVs + baseline_run/, `DOCS/LATENCY_OPTIMIZATION_AUDIT.md`, `DOCS/STRATEGY_AND_CODING_RULES.md`, `*-design-notes.md`, `FUTURE_*.md`, all `*_AUDIT.md`, this file.
+**Private (workspace-backed; gitignored-in-place per the 2026-06-02 code-only-public spring-cleaning — `project_public_repo_is_code_only`):** everything that isn't compile-the-code — `tests/`, `tools/`, `DOCS/` (whole dir: architecture, invariants, code map, changelogs, parity, recurring-bug patterns, all audits), `.claude/` (skills), `.githooks/`, `plans/`, **`CLAUDE.md`** (symlinked from workspace; gitignored since v5.14.2.E.3 → never pushed), this file, configs (engine/backtest/controller/secrets.cfg + .env*), models/, runtime logs + per-symbol metrics CSVs + baseline_run/. The dev apparatus ships later as a separate `workspace-template` release.
 
-**Public (AGPL on GitHub):** all source in `CoreFrameworks/`, `Strategies/`, `ML_Headers/`, `Backtest/`, `DataStream/`, `FixedPoint/`, `MemHeaders/`, `GUI/`; tracked `DOCS/` (architecture, invariants, code map, changelogs, known issues, parity docs, recurring-bug patterns, public design history); tests; build infrastructure; `CLAUDE.md`.
+**Public (AGPL on GitHub) = compile-the-code ONLY:** source in `CoreFrameworks/`, `Strategies/`, `ML_Headers/`, `Backtest/`, `DataStream/`, `FixedPoint/`, `MemHeaders/`, `GUI/` + build infrastructure (`CMakeLists.txt` / `build.sh`) + `LICENSE` + `README.md`. Nothing else — everything in the Private list above is gitignored-in-place.
 
 ---
 

@@ -167,7 +167,7 @@ Binance WS                OMS_DrainSubmit     SLOW thread (1 per core)
 ## Overview
 
 Tick-level crypto HFT trading engine in C++. Per-node risk-sharded hot
-path (40-400ns p99); branchless fixed-point math (`FPN<F=64>` = 24B);
+path (40-400ns p99); branchless fixed-point math (`FPN<F=64>` = 16B);
 X-macro registries for multi-site additions; bitmap-packed portfolio +
 flags. Single producer thread fans Binance ticks across SPSC rings →
 N per-node consumers (default 4, cap 16); each core = self-contained
@@ -237,7 +237,7 @@ RANGING / TRENDING / VOLATILE / MILD_TREND → strategy dispatch.
 | `CoreFrameworks/` | OrderGates, Portfolio, ExecutionCore, ControllerEventLoop, EngineSharded, ShardedSnapshot/Persist, GateParameters, TradeEvent, OrderManager, ShardedBacktestDriver, **CfgFieldRegistry / CfgFieldDispatch (v5.15.5.F.4b+)** |
 | `Strategies/` | RegimeDetector, MeanReversion, Momentum, SimpleDip, EmaCross, MLStrategy, StrategyParameters (dispatcher), StrategyInterface, **StrategyCategories / OpModeCategories (v5.15.5.F.4b+)** |
 | `DataStream/` | BinanceCrypto/Depth, DepthReplayState, DepthRecorder, TickRecorder, BinanceOrderAPI, EngineTUI |
-| `FixedPoint/` | FPN<F=64> (4096-bit) + `is_FPN_v` type trait |
+| `FixedPoint/` | FPN<F=64> (16B `__int128`, 64.64 two's-complement; Ship-A) + `is_FPN_v` type trait |
 | `MemHeaders/` | PoolAllocator (bitmap order pool), BuddyAllocator, BitmapMacros, FailureModeRegistry |
 | `ML_Headers/` | RollingStats, ROR_regressor, ConfidenceScore, ModelInference (XGBoost), FlowFeatures, StampBoundCfgRegistry, StampBoundModelConstRegistry |
 | `GUI/` | Dear ImGui native: FoxmlTheme, DashboardPanels, ChartPanel, CandleAccumulator, TradeReader, SettingsPanel, TradeHistoryPanel, LogViewerPanel, GuiThread |
@@ -282,7 +282,7 @@ Full discussion: `DOCS/DESIGN_PHILOSOPHY.md` § 2 + `DOCS/STRATEGY_AND_CODING_RU
 - `using namespace std;` throughout
 - C-style with templates, no classes (with one exception: RAII destructors on resource-owning structs that own threads or mmap'd memory; e.g., `~OrderManagerState()` since v5.11.26 — see destructor comment in `CoreFrameworks/OrderManager.hpp` for criteria)
 - `Pattern_FunctionName` (e.g., `Portfolio_Init`, `BG_Evaluate`, `OMS_DrainSubmit`)
-- Hot-path math is `FPN<F>` only, no floats (F=64 = 4096-bit; 24 bytes)
+- Hot-path math is `FPN<F>` only, no floats (F=64 = 64.64 fixed-point; 16 bytes `__int128`)
 - Branchless: mask tricks `-(uint64_t)pass`, word-level mask-select
 - Inline comments explain WHY, not WHAT (well-named identifiers handle the WHAT)
 - **Preserve user's voice in existing comments when editing**

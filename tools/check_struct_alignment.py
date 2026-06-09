@@ -22,11 +22,14 @@ workspace symlink, and .resolve() would hunt for engine source under the workspa
 
 Exit 0 = clean; 1 = (a) violation(s). Run: python3 tools/check_struct_alignment.py
 """
+import os
 import re
 import sys
 from pathlib import Path
 
-ENGINE = Path(__file__).absolute().parent.parent  # tools/ -> engine root (keep the symlink path)
+# .absolute() (NOT .resolve()) keeps the engine symlink path; FOXML_ENGINE override lets the teeth-proof
+# self-test point the scan at a temp tree (LANDMINES 5/7).
+ENGINE = Path(os.environ.get("FOXML_ENGINE") or Path(__file__).absolute().parent.parent)
 SCAN_DIRS = ["CoreFrameworks", "ML_Headers", "Strategies", "FixedPoint", "MemHeaders",
              "DataStream", "Backtest", "GUI", "tests"]
 MAX_ALIGN_T = 16  # what malloc/calloc/realloc guarantee
@@ -53,7 +56,8 @@ def collect_overaligned(files):
         except Exception:
             continue
         cur = None  # nearest enclosing struct/class name (heuristic; good enough for the alloc-site set)
-        for i, line in enumerate(lines, 1):
+        for i, raw in enumerate(lines, 1):
+            line = raw.split("//", 1)[0]  # strip // line-comments — don't match alignas/struct in prose
             ms = STRUCT_ALIGNAS.search(line)
             if ms:
                 cur = ms.group(2)
@@ -87,12 +91,13 @@ def main():
             lines = f.read_text(errors="replace").splitlines()
         except Exception:
             continue
-        for i, line in enumerate(lines, 1):
+        for i, raw in enumerate(lines, 1):
+            line = raw.split("//", 1)[0]  # ignore commented-out allocations
             if not any(a in line for a in ("malloc", "calloc", "realloc")):
                 continue
             m = sizeof_alloc.search(line) or cast_alloc.search(line)
             if m:
-                violations.append((f, i, m.group(1), line.strip()))
+                violations.append((f, i, m.group(1), raw.strip()))
 
     # (b) advisory: alignof static_assert present per type?
     full = {f: f.read_text(errors="replace") for f in files if f.exists()}

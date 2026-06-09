@@ -250,24 +250,27 @@ if (!any_active && perm && bg_fires) { ... }  // branchy
 
 ## Rule 5 — FPN sizing awareness
 
-`FPN<F>` template generates structs of varying sizes. Memorize:
+`FPN<64>` is the engine's binary fixed-point type — **16 bytes** (a bare
+`__int128 v`, two's-complement). The Ship-A 16B flip (`.E` #11) compacted it from
+the old 24B sign-magnitude (`uint64_t w[2]` + `int32_t sign` + pad) and shed
+arbitrary width at the same time: the primary `FPN<F>` is now a declaration-only
+incomplete type, so only `FPN<64>` exists (`FPN<128>`/`<256>` are gone).
 
-| Template | Size | Cache line position |
+| Type | Size | Cache line position |
 |---|---|---|
-| `FPN<64>` (production default) | **24 bytes** | 2.6 fit in a cache line |
-| `FPN<128>` | 40 bytes | 1.6 fit per line |
-| `FPN<256>` | 72 bytes | spans 1+ lines per FPN |
-| `FPN<512>` | 136 bytes | spans 2+ lines per FPN |
+| `FPN<64>` (the binary fixed-point type) | **16 bytes** | 4 fit in a 64B cache line |
 
 **Implications:**
-- A struct with 3+ `FPN<64>` fields back-to-back overflows a cache line
-  somewhere — must reorder + pad.
-- Wide-FPN slow-path math (v5.11.2 vectorization) doesn't fit in
-  registers cleanly; AVX-512 zmm reg = 64 bytes, holds at most 2.6
-  `FPN<64>` words. Plan accordingly.
+- 4 `FPN<64>` fit per cache line (was 2.6 at 24B) — a struct with up to 4
+  back-to-back stays within one line; still reorder + pad hot structs by access
+  pattern.
+- AVX-512 zmm reg = 64 bytes, holds 4 `FPN<64>` (was 2.6). Plan wide math
+  accordingly.
 
-**Mistake to avoid:** assuming `FPN<64> == 2 uint64_t == 16 bytes`. The
-`int32_t sign` + 4-byte padding bumps it to 24.
+**Mistake to avoid (inverted at the 16B flip):** `FPN<64>` is now exactly
+`sizeof(__int128) == 16` — no sign field, no padding. Code still assuming the old
+24B layout (`.w[]`/`.sign` members, `sizeof==24`) is a post-flip bug; those
+members are gone.
 
 ---
 

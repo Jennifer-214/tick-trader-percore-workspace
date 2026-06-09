@@ -1191,3 +1191,19 @@ related_specs: [framework-patterns/meta-registry-pattern-for-codebase-registry-d
 - **Fix (landed this session):** broadened the regex `\(\s*X\s*\)` → `\(\s*\w+\s*\)` (any single-identifier param) so action-parameterized meta-walkers (`FOREACH_<COHORT>_COHORT(BASE_X)`) are seen. `check_meta_registry.py` now **EXIT 0** (Check 2 PASS: all 64 rows match a real #define; found 66 macros). Kept as a CLOSED record (not deleted) so the false-positive class is on file.
 - **Residual (genuinely pre-existing, NON-FATAL):** 2 Check-1 WARNs (`FOREACH_LEGACY_PREFIXED_KEY`, `FOREACH_STAMP_RESULT_FIELD_EXCLUSION` unregistered) — explicitly "NON-FATAL during transition" per the tool; not debt, transition state.
 - **Cross-ref:** `tools/check_meta_registry.py:70` (the fixed regex); `MemHeaders/CfgGateRegistry.hpp:227`; CLAUDE.md H15; decision-log D-114.
+
+---
+
+## v5.15.5.F.4d.1.E.0.7 closures (Ship A — the 16B storage flip; 2026-06-08)
+
+### TECH_DEBT-157 — struct-alignment guard tool (alloc-site + alignof CI check) — CLOSED
+
+- **id:** TECH_DEBT-157 · **severity:** medium · **opened:** 2026-06-08 · **closed:** 2026-06-08 (v5.15.5.F.4d.1.E.0.7) · **surface_tags:** [ci-tooling, capital-safety, data-oriented-design, alignment, structural-enforcement]
+- **Resolution:** BUILT this session — `tools/check_struct_alignment.py` collects every `alignas(>16)` struct (struct- + member-level via a state machine; strips `//` comments) and flags any over-aligned type allocated via bare `malloc`/`calloc`/`realloc` (exit 1 = the Knight/H21 over-aligned-bare-malloc class). Wired pre-commit **Check K** (blocking) + teeth-proofed by `test_check_struct_alignment.py` (VIOLATION → RED+named; CLEAN → GREEN). Enrolled in `DOCS/TOOLS.md`. The (a) malloc-honors-alignment guard IS the structural close; an optional (b) advisory lists 12 over-aligned types that could add a locked `static_assert(alignof==N)` — surfaced on every relevant commit (tracked-by-tooling), NOT pursued per D-84 (close-the-class-via-the-guard ≠ lock-every-site; the per-type namespace/template-arg friction was disproportionate + a `using namespace tt` wrap leaked globally).
+- **Cross-ref:** pre-commit Check K; M7 (`structural-enforcement-when-memory-insufficient.md`); `feedback_guards_compound_enforcement_is_leverage`; postmortem `2026-06-08-v5.15.5.F.4d.1.E.0.7-postmortem.md`.
+
+### TECH_DEBT-158 — pre-existing sanitizer findings (asan AVX-512 SEGV + ubsan timing-test) — CLOSED
+
+- **id:** TECH_DEBT-158 · **severity:** low · **opened:** 2026-06-08 · **closed:** 2026-06-08 (v5.15.5.F.4d.1.E.0.7) · **surface_tags:** [ci-tooling, sanitizers, avx512, ml-bandit, testing]
+- **Resolution:** FIXED this session (not deferred — operator close-out-now steer, D-159). (1) asan AVX-512 SEGV → `__attribute__((no_sanitize("address")))` on the 3 verified-correct AVX-512 masked kernels (`Bandit_GetProbabilities` + `RidgeBlender_BuildCorr`/`_UpdateOnline`; asan can't model `_mm512_mask_*`; buffers correctly 8-wide; scalar-reference byte-determinism tests prove correctness) → asan 3246/0. (2) ubsan timing-test flakiness → NEW `FOXML_SANITIZER_BUILD` flag (build.sh tsan/asan/ubsan lanes) lets the seqlock timing test relax its snapshot-count floor under instrumentation → ubsan UB-clean. The flip itself is value-correct (3246/0) + own-UB-clean.
+- **Cross-ref:** TECH_DEBT-157; `avx512-byte-determinism-pattern.md`; postmortem `2026-06-08-v5.15.5.F.4d.1.E.0.7-postmortem.md`.

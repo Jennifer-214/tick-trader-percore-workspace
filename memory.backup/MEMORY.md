@@ -10,6 +10,7 @@
 - [Single-cycle exist+good; design once, maintain forever](feedback_design_once_maintain_forever.md) — take a piece exist→good in ONE cycle; don't re-traverse determinism-gated code; foundational/known-requirement only (unknown-unknowns still MVP)
 - [Opportunistic tech-debt closure — subsumption not adjacency](feedback_opportunistic_tech_debt_closure.md) — close debt a ship SUBSUMES (≈0 marginal cost); merely ADJACENT → cross-link + leave tracked; discriminator = marginal-cost, not surface-adjacency
 - [Deferral is merit, not effort/context](feedback_deferral_reasons_merit_not_effort_or_context.md) — do-now-vs-defer = correctness/scope/proof/marginal-cost; my effort or "we have context" is NOT a valid axis (relatability tell)
+- [Close-out-now over defer for small in-flight finds](feedback_close_out_now_over_defer_when_small.md) — small fixable found in-flight → close NOW; only genuinely-separate DELIVERABLES defer (D-159)
 - [Guards compound — enforcement is the highest-leverage investment](feedback_guards_compound_enforcement_is_leverage.md) — a guard protects a whole CLASS forever, no-thought; code is one instance, the guard is permanent leverage; convention-only on a capital/determinism surface = a hole to close
 - [Prefer structural fix over patch for recurring bug classes](feedback_structural_fix_for_recurring_class.md) — registry/helper-extract + compile-time enforcement beats a one-time patch
 - [After pre-coding checks, ALWAYS consult before coding](feedback_consult_on_audit_findings.md) — present findings + iterate; do NOT auto-proceed

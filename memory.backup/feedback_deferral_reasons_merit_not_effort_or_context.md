@@ -6,7 +6,7 @@ metadata:
   type: feedback
   tags: [operator-collaboration, scope-discipline]
   originSessionId: 51696014-e078-4937-8012-21dd2596cc14
-  sister_specs: [feedback_design_once_maintain_forever.md, feedback_evaluate_options_on_robustness_latency_design_not_time.md, feedback_listen_and_execute_simply.md, feedback_opportunistic_tech_debt_closure.md]
+  sister_specs: [feedback_design_once_maintain_forever.md, feedback_evaluate_options_on_robustness_latency_design_not_time.md, feedback_listen_and_execute_simply.md, feedback_opportunistic_tech_debt_closure.md, feedback_close_out_now_over_defer_when_small.md]
 ---
 
 When deciding whether to do an adjacent/future item NOW vs defer it, the discriminator is MERIT only: correctness risk (correct-by-construction vs correct-by-verification), scope / tag-boundary cleanliness, value-equivalence / determinism proof burden, and subsumption-vs-adjacency marginal cost ([[feedback_opportunistic_tech_debt_closure]]). "We have context loaded" / "it's a focused sitting" / "it's a real chunk of work" is NOT a valid axis — the AI's effort and time are not real costs and must never enter the decision.

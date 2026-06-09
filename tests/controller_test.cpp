@@ -24418,6 +24418,45 @@ e3_skip_load:;
               memcmp(&c, &d, sizeof(c)) == 0);
     }
 
+    // === Ship-A 16B FPN acceptance: R2 saturate-not-wrap + D-144 version-monotonic ===
+    {
+        // R2 (max-magnitude saturate, NOT wrap): the 16B FPN_Mul<64> preserves the branchless
+        // of_mask saturate-on-overflow (FixedPointN.hpp fp2_mul) — the load-bearing property that
+        // makes the 63-bit value-equivalence bound safe: a feature whose product overflows the 16B
+        // 2^127-magnitude range saturates to the bounded max, never wraps to a garbage small value.
+        // Two ~2^40 values multiply to ~1e24 >> the ~2^63 representable max -> must saturate.
+        const __int128 MAXMAG = (__int128)(((unsigned __int128)1 << 127) - 1);   // +2^127-1
+        FPN<64> big = FPN_FromDouble<64>(1.0e12);                                  // value ~2^40
+        check("Ship-A R2: FPN_Mul<64> saturates to +MAX on 16B overflow (not wrap)",
+              FPN_Mul<64>(big, big).v == MAXMAG);
+        check("Ship-A R2: FPN_Mul<64> saturates to -MAX on 16B overflow (not wrap)",
+              FPN_Mul<64>(big, FPN_Negate<64>(big)).v == -MAXMAG);
+
+        // D-144 (layout-coupled version monotonicity): the 16B FPN layout invalidates every old
+        // snapshot, so the 3 snapshot VERSIONs must strictly exceed their pre-16B values (12/8/5)
+        // -> reached the post-16B 13/9/6. An un-bumped version would silently load a 24B snapshot
+        // into the 16B engine (the H21 epoch-reject failure mode). >= keeps it forward-compatible
+        // with any later ship (e.g. Ship B decimal) bumping further.
+        static_assert(CONTROLLER_SNAPSHOT_VERSION >= 13 && SHARDED_SNAPSHOT_VERSION >= 9u
+                          && PORTFOLIO_SNAPSHOT_VERSION >= 6,
+                      "Ship-A D-144: snapshot versions must be >= post-16B 13/9/6 (strictly past pre-16B "
+                      "12/8/5); the 16B FPN layout change invalidates old snapshots (H21 epoch reject)");
+        check("Ship-A D-144: snapshot versions strictly increased past pre-16B 12/8/5 (>= 13/9/6)",
+              CONTROLLER_SNAPSHOT_VERSION >= 13 && SHARDED_SNAPSHOT_VERSION >= 9u
+                  && PORTFOLIO_SNAPSHOT_VERSION >= 6);
+
+        // D-147/B1 (two's-complement INT_MIN edge — the guarded boundary): negating/abs'ing the
+        // most-negative value (-2^127) is signed-overflow UB in naive code. FPN_Negate/FPN_Abs<64>
+        // compute in UNSIGNED space + saturate INT_MIN -> +MAX (branchless, D-147). This checks the
+        // saturate VALUE; under `build.sh ubsan` (-fsanitize=signed-integer-overflow) the whole 16B
+        // core — these included — must run abort-free (the B1 signed-overflow-class gate).
+        FPN<64> int_min; int_min.v = (__int128)((unsigned __int128)1 << 127);     // -2^127 (FP2_64_MIN)
+        check("Ship-A D-147: FPN_Negate<64>(INT_MIN) saturates to +MAX (UB-free)",
+              FPN_Negate<64>(int_min).v == MAXMAG);
+        check("Ship-A D-147: FPN_Abs<64>(INT_MIN) saturates to +MAX (UB-free)",
+              FPN_Abs<64>(int_min).v == MAXMAG);
+    }
+
     {
         // ThompsonBanditState bytewise-identity: two Thompson_InitDefault
         // calls with same args produce bytewise-identical state.
@@ -25335,8 +25374,11 @@ e3_skip_load:;
 
             // Synth a minimal EventLoopState with one core's model_handle set.
             // EventLoopState is big (~270KB); allocate on heap for stack safety.
+            // EventLoopState is alignas(64); malloc only guarantees 16-byte alignment, so a
+            // misaligned alignas(64) struct is UB (caught by build.sh ubsan). aligned_alloc honors
+            // it — sizeof is always a multiple of alignof, so the size arg is already valid; free()-able.
             tt::EventLoopState<64>* state =
-                (tt::EventLoopState<64>*)malloc(sizeof(tt::EventLoopState<64>));
+                (tt::EventLoopState<64>*)aligned_alloc(alignof(tt::EventLoopState<64>), sizeof(tt::EventLoopState<64>));
             check("v5.15.4.C/D: synth EventLoopState allocation",
                   state != nullptr);
             if (state) {

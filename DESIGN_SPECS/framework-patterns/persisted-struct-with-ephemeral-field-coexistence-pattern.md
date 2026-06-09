@@ -61,7 +61,7 @@ Use a FOREACH X-macro registry with a **PERSIST_KIND column** that drives wire-f
 //   SKIP_PERSIST  → field lives in Position struct but NOT in wire format
 //                    (cleared on Init; never persisted; never restored from snapshot)
 #define FOREACH_POSITION_FIELD(X)                                                                                  \
-    /* PERSIST fields — current wire format (PORTFOLIO_SNAPSHOT_VERSION=5) — bytewise preserved */                  \
+    /* PERSIST fields — the current Portfolio wire format (PORTFOLIO_SNAPSHOT_VERSION) — bytewise preserved */       \
     X(entry_price,         FPN<F>,   FPN_Zero<F>(),  PERSIST,      "entry price at position open")                  \
     X(quantity,            FPN<F>,   FPN_Zero<F>(),  PERSIST,      "position quantity")                             \
     X(entry_fee,           FPN<F>,   FPN_Zero<F>(),  PERSIST,      "entry fee paid (maker or taker)")               \
@@ -187,7 +187,7 @@ For an existing persisted struct (e.g., Position pre-v5.15.5.C.4):
 - New registry: `MemHeaders/PositionFieldRegistry.hpp` (NEW header)
 - 9 existing PERSIST fields (entry_price, quantity, entry_fee, stop_loss_price, take_profit_price, intended_tp, allocated_balance, entry_timestamp_us, pair_index)
 - 2 NEW SKIP_PERSIST fields (exit_fill_price, is_maker)
-- Wire format byte-preserved: `PORTFOLIO_SNAPSHOT_VERSION` stays at 5; legacy snapshots load unchanged
+- Wire format byte-preserved: the SKIP_PERSIST split added zero persisted fields, so it required no `PORTFOLIO_SNAPSHOT_VERSION` bump and legacy snapshots loaded unchanged (this refactor adds nothing to the persisted layout; the version tracks the live Position struct, which later Ship cycles compact independently)
 - Closes: "Position struct extensions require snapshot version bump" class permanently
 
 ### Anticipated future applications

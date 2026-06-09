@@ -79,8 +79,8 @@ struct alignas(64) ResolvedCoreCfg {
     // ============================================================
     // CACHE LINE 0 (HOT — read every slow-path cycle) — 64 bytes
     // ============================================================
-    FPN<F>   ml_buy_threshold;            // 24 bytes (FPN<64> = 24B per CLAUDE.md hot-path discipline)
-    FPN<F>   ml_tp_pct;                   // 24 bytes
+    FPN<F>   ml_buy_threshold;            // 16 bytes (FPN<64> = 16B per CLAUDE.md hot-path discipline)
+    FPN<F>   ml_tp_pct;                   // 16 bytes
     uint16_t ml_cfg_flags_resolved;       // 2 bytes
     uint8_t  gate_cfg_flags_resolved;     // 1 byte
     uint8_t  lifecycle_cfg_flags_resolved;// 1 byte
@@ -88,7 +88,7 @@ struct alignas(64) ResolvedCoreCfg {
     uint8_t  ops_cfg_flags_resolved;      // 1 byte
     /* K-state enum cohort (item 30) — packed uint16_t */
     uint16_t k_state_word;                // 2 bytes [bandit_algo:1][engine_arch:1][risk_curve:2][barrier_blend:3][regime:2+2]
-    uint8_t  _pad_line0[8];               // pad to 64B
+    uint8_t  _pad_line0[24];              // pad to 64B (count = 64 − Σfields; the static_assert below is the SSoT, not this number)
 
     // ============================================================
     // CACHE LINE 1 (WARM — read most cycles but not all) — 64 bytes

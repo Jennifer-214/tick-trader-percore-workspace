@@ -22,7 +22,7 @@ Arbitrary-width fixed-point arithmetic library. Template parameter `F` sets frac
 - `FPN_Min/Max` - branchless via word-level mask-select
 - `FPN_IsZero` - checks all words
 
-**Storage:** `uint64_t w[N]` array + `int sign`. N = FRAC_BITS / 64 + integer words.
+**Storage:** `FPN<64>` stores a bare `__int128 v` (two's-complement; sign in the top bit; 16 bytes; 64.64 fixed-point). No separate sign field, no padding. The generic multi-word `FPN<F>` template (`uint64_t w[N]` + sign) is vestigial — `FPN<64>` is the only real instantiation (a full-specialization).
 
 ---
 

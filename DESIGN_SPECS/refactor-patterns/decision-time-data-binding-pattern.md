@@ -165,7 +165,7 @@ FPN<F> rate = o->effective_fee_rate;
 - ✓ Hot-swap-safe by construction (in-flight Orders keep their rate; new Orders get new rate — correct semantic)
 - ✓ Self-contained accounting record (Order carries everything for reconciliation)
 - ✓ Generalizes to ANY subsystem with an in-flight object (Position, Event, TradeEvent, ...)
-- Costs: in-flight object struct grows (Order +24B for `effective_fee_rate`); needs static_assert layout verification
+- Costs: in-flight object struct grows (Order +16B for `effective_fee_rate`); needs static_assert layout verification
 - Verdict: structural closure of the CLASS
 
 ### Option D — `FOREACH_SUBSYSTEM_CFG_CACHE` registry as primary mechanism (REJECTED as PRIMARY; kept as FALLBACK)
@@ -275,7 +275,7 @@ Order<F> at v5.15.5.F.4c.3 enters at Stage 2 (fee_rate + slippage_pct simultaneo
 - Subsystem has no in-flight object AND value is uniform across instances by design
 
 **Cost:**
-- In-flight object struct grows (per pre-resolved field; typically 8-24B depending on type)
+- In-flight object struct grows (per pre-resolved field; typically 8-16B depending on type)
 - Slow-path / decision-path gains one assignment per object creation
 - Static_assert layout verification per new field
 
@@ -309,7 +309,7 @@ Codified in `DOCS/DESIGN_PHILOSOPHY.md` § 11 sub-section "Framework-selection c
 
 ## Lessons / gotchas
 
-- **In-flight object alignment matters.** `Order` is in a SPSC ring buffer; growing it by 24B may push it across a cache line boundary. Verify via `static_assert(sizeof(Order<F>) ...)` + `static_assert(offsetof(Order<F>, effective_fee_rate) ...)`. If alignment cost is non-trivial, consider sub-struct packing (`OrderPreResolved` sub-struct).
+- **In-flight object alignment matters.** `Order` is in a SPSC ring buffer; growing it by 16B may push it across a cache line boundary. Verify via `static_assert(sizeof(Order<F>) ...)` + `static_assert(offsetof(Order<F>, effective_fee_rate) ...)`. If alignment cost is non-trivial, consider sub-struct packing (`OrderPreResolved` sub-struct).
 - **The retroactive recognition pattern.** Position.entry_fee already followed this principle pre-codification. Codifying the principle let us NAME what was already working — and apply it deliberately to new surfaces. Worth scanning the codebase for other retroactive applications when the spec promotes to Stage 3.
 - **Cross-thread cfg read brittleness is masked by boot-time-only cfg today.** If a future hot-swap path is added without pre-resolution discipline, accounting can briefly use mixed rates. Pre-resolution at decision time sidesteps the entire concurrency question.
 - **Don't reach for the registry mechanism first.** The registry was the first impulse during design; the principle was the second. Naming the principle first lets us see when the registry isn't actually needed.

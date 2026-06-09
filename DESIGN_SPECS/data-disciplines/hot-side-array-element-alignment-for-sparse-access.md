@@ -41,12 +41,12 @@ When all 4 conditions hold, the hot path's per-element read STRADDLES cache line
 **Concrete example (FoxML_Trader_v2 Position pre-v5.15.5.C.5):**
 - `Position` size = 216B (3.375 cache lines per record)
 - `Position[16]` array iterated via active_bitmap walk in `BG_Evaluate` / `SG_Evaluate` (hot path)
-- Hot path reads `take_profit_price` (offset 0, 24B) + `stop_loss_price` (offset 24, 24B) = 48B per active slot
+- Hot path reads `take_profit_price` (offset 0, 16B) + `stop_loss_price` (offset 16, 16B) = 32B per active slot
 - For N=1: Position[1] starts at byte 216 = cache line 3 byte 24 → TP+SL straddles lines 3 and 4
 - For N=4: Position[4] starts at byte 864 = cache line 13 byte 32 → TP+SL straddles lines 13 and 14
 - Pattern: ~50%+ of slot accesses straddle 2 cache lines instead of 1
 
-The hot path pays 2× cache lines per active slot vs the physical minimum (1 line for 48B of data).
+The hot path pays 2× cache lines per active slot vs the physical minimum (1 line for 32B of data).
 
 ---
 
@@ -137,10 +137,10 @@ The discipline has been applied AD-HOC in the codebase since before this spec ex
   - Revert POS.2 SKIP_PERSIST fields back to OMS sibling arrays (per `slot-state-foreach-registry-with-storage-routing.md` decision tree's ephemeral-sibling-array preference for sparse-access state)
   - Position size: 184B (9 PERSIST fields + 7B explicit `_pad_pos` for wire-format compatibility)
   - Add `alignas(64)` → padded to 192B = 3 cache lines exact
-  - Per-slot hot-path access: **guaranteed 1 cache line** for the 48B TP+SL read
-- Wire format byte-identical (PORTFOLIO_SNAPSHOT_VERSION=5 unchanged; PERSIST_BYTES=184 unchanged; SKIP_PERSIST fields move to OMS sibling arrays which are not persisted)
-- Companion: `last_exit_fill_price[16]` (FPN<F>[]; 384B at OMS level) + `last_is_maker_bitmap` (uint16_t; 2B at OMS level via FOREACH_OMS_FIELD)
-- Net memory: roughly even with pre-C.5 (Position -24B per slot × 16 = -384B; sibling arrays +386B; net +2B)
+  - Per-slot hot-path access: **guaranteed 1 cache line** for the 32B TP+SL read
+- Wire format unaffected BY THIS REFACTOR: moving the SKIP_PERSIST fields to non-persisted OMS sibling arrays adds nothing to the persisted Position, so `PORTFOLIO_SNAPSHOT_VERSION` and `PERSIST_BYTES` track the live Position struct (which Ship-A separately compacted when its FPN fields shrank) — they are not fixed by this reorg
+- Companion: `last_exit_fill_price[16]` (FPN<F>[]; 256B at OMS level) + `last_is_maker_bitmap` (uint16_t; 2B at OMS level via FOREACH_OMS_FIELD)
+- Net memory: roughly even with pre-C.5 (Position -16B per slot × 16 = -256B; sibling arrays +258B; net +2B)
 
 ### Future application candidates
 

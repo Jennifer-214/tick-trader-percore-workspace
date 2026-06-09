@@ -1179,6 +1179,6 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 - Function names follow `Pattern_FunctionName` convention (e.g. `Portfolio_Init`, `BG_Evaluate`)
 - Headers are inline-heavy — most functions live in `.hpp` and are `inline`
-- Templates parameterize on `unsigned F` (FPN word count), default `F=64` (4096-bit)
+- The generic `FPN<unsigned F>` template is vestigial; `FPN<64>` is a full specialization = the 16-byte 128-bit `__int128` (64.64 two's-complement fixed-point) binary core used everywhere
 - Lowercase helpers (`fan_out`, `drain_with_submit`) are local to a function and not in this map
 - ALL_CAPS macros are not in this map; see headers directly

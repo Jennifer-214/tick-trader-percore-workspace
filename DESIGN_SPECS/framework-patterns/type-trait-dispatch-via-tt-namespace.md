@@ -39,7 +39,7 @@ template <> void dispatch_parse<KIND_DOUBLE>(void* dst_base, size_t offset, cons
 }
 ```
 
-This SILENTLY CORRUPTS when the actual field type at `(dst_base + offset)` differs from the assumed pun type. Concrete failure: punning a `double` write through an `FPN<F>` field address (24 bytes) writes 8 bytes of mantissa+exponent into the FPN's first `uint64_t w[0]`, leaving `w[1] + sign + padding` stale. Subsequent FPN arithmetic operates on corrupt state → silent precision loss → backtest determinism breaks → train-serve parity breaks. The bug is undetectable by load+compare-back roundtrip tests that only inspect the trivial-type subset.
+This SILENTLY CORRUPTS when the actual field type at `(dst_base + offset)` differs from the assumed pun type. Concrete failure: punning a `double` write through an `FPN<F>` field address (16 bytes; a bare two's-complement `__int128 v`) writes 8 bytes of mantissa+exponent into the low half of the FPN's `__int128 v`, leaving the high 64 bits stale. Subsequent FPN arithmetic operates on corrupt state → silent precision loss → backtest determinism breaks → train-serve parity breaks. The bug is undetectable by load+compare-back roundtrip tests that only inspect the trivial-type subset.
 
 The recurring class behind this anti-shape: **type erasure at registry dispatch time**. The registry knows the entry NAME but the dispatcher manipulates the destination via opaque address+offset. Type safety is left to the macro-author's discipline ("make sure Kind matches the actual field type"). When discipline slips — and it WILL slip — the failure is silent.
 

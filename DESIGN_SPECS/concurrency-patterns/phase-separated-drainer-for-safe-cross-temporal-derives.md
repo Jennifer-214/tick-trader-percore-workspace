@@ -188,9 +188,9 @@ Apply this pattern when ALL of these hold:
 ### First application: v5.15.5.C.4 Phase F + G (OrderManager_Tick SELL/BUY split + 3-field derive cascade)
 
 - Surface: `CoreFrameworks/OrderManager.hpp:1318-1341` (OrderManager_Tick while-loop) + `CoreFrameworks/EngineSharded.hpp:2567-2569` (drainer sequencing) + `CoreFrameworks/ControllerEventLoop.hpp:1385/1408/1585` (DrainPostFill derive sites)
-- Removes from FillRecord: `exit_net_pnl` (24B), `exit_entry_notional` (24B), `exit_total_fees` (24B) = 72B per record × 16 records = **1152B per OMS saved**
-- Adds to Position struct: `exit_fill_price` (24B FPN) + `is_maker` (1-bit-flag or full byte; TBD per pre-coding investigation)
-- FillRecord shrinks from 128B (2 cache lines) to ~56-64B (1 cache line per record)
+- Removes from FillRecord: `exit_net_pnl` (16B), `exit_entry_notional` (16B), `exit_total_fees` (16B) = 48B per record × 16 records = **768B per OMS saved**
+- Adds to Position struct: `exit_fill_price` (16B FPN) + `is_maker` (1-bit-flag or full byte; TBD per pre-coding investigation)
+- FillRecord drops 3 FPN fields/record (48B at 16B FPN) → ~halves it toward one cache line per record (relative win; absolute size tracks the live struct, not a frozen count)
 - Drainer close-mask iter cache footprint: 1 cache line per slot (was 2)
 
 ### Anticipated future applications

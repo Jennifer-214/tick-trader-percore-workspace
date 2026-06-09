@@ -185,7 +185,7 @@ The framework can be MISAPPLIED. Anti-patterns:
 - Pattern: source state (Position) is guaranteed in CLOSE-completed form during the close-side consumer pass; derive-from-source becomes SAFE for previously-blocked fields
 - Closes: the "transient-source-data" failure mode class for the FillRecord-as-snapshot surface (3 fields unlocked: exit_net_pnl + exit_entry_notional + exit_total_fees)
 - Win:
-  - 1152B saved per OMS (3 FillRecord fields × 24B × 16 records)
+  - 768B saved per OMS (3 FillRecord fields × 16B × 16 records)
   - FillRecord shrinks 128B → ~56B (1 cache line per record vs 2)
   - Drainer close-mask iter touches 1 cache line per slot (was 2)
   - Scales to richer maker-order lifecycle (PARTIAL_FILL / CANCELED / TIMEOUT phases)

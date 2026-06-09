@@ -361,7 +361,7 @@ Apply the multi-window variant when ALL of:
 
 - Only ONE window is consumed (single-window pattern suffices; `short_sum` field is dead weight)
 - Short window's K varies at runtime across callers (e.g., test calls with k=2 + production with k=64) — keep the O(K) walk callable for non-canonical K; add `short_sum` only if the production K is fixed AND dominant
-- Memory budget is tight enough that 1 extra FPN<F> per record is prohibitive (uncommon; ~24 B for FPN<64>)
+- Memory budget is tight enough that 1 extra FPN<F> per record is prohibitive (uncommon; ~16 B for FPN<64> — the canonical 16B binary core, per CLAUDE.md)
 
 ### Generalization (N-window variant)
 

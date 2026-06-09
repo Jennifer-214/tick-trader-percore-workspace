@@ -198,7 +198,7 @@ uint16_t last_was_win_bitmap;  // 2B; bit N = was_win for slot N
 
 Savings: 16 × 8B (per-record was_win + pad) - 2B (bitmap) - 6B (alignment pad after bitmap) = ~120B per FillRecord array. **Substantial.**
 
-After extraction, FillRecord's size shrinks by 8B (the was_win + its alignment pad) → 120B per record. Or 96B if other 24B fields can also be trimmed.
+After extraction, FillRecord's size shrinks by 8B (the was_win + its alignment pad) → 120B per record. Or 104B if other 16B fields can also be trimmed.
 
 ---
 
@@ -211,19 +211,19 @@ A field that stores a value computable from OTHER available data can be eliminat
 ```cpp
 // Before — store entry_notional (= entry_price × qty)
 struct FillRecord {
-    FPN<F> entry_price;    // 24B
-    FPN<F> qty;            // 24B
-    FPN<F> entry_notional; // 24B (DERIVED — could be computed)
+    FPN<F> entry_price;    // 16B
+    FPN<F> qty;            // 16B
+    FPN<F> entry_notional; // 16B (DERIVED — could be computed)
 };
-// Size: 72B per record
+// Size: 48B per record
 
 // After — compute on demand
 struct FillRecord {
-    FPN<F> entry_price;    // 24B
-    FPN<F> qty;            // 24B
+    FPN<F> entry_price;    // 16B
+    FPN<F> qty;            // 16B
     // entry_notional removed; derive at read site
 };
-// Size: 48B
+// Size: 32B
 // Access: FPN_Mul(rec.entry_price, rec.qty)
 ```
 
@@ -244,7 +244,7 @@ struct FillRecord {
 
 ### Application to v5.15.5.C.4
 
-`FillRecord.exit_entry_notional` (24B per slot × 16 = 384B). Question: is Position.entry_price + Position.qty preserved at exit fill time?
+`FillRecord.exit_entry_notional` (16B per slot × 16 = 256B). Question: is Position.entry_price + Position.qty preserved at exit fill time?
 
 **Verified UNSAFE 2026-05-13** by /merge-scan agent — same-cycle SELL→BUY on same slot overwrites `Position.entry_price + .quantity` before DrainPostFill reads. See `phase-separated-drainer-for-safe-cross-temporal-derives.md` for the STRUCTURAL FIX that unblocks this technique.
 
@@ -383,7 +383,7 @@ struct Compact {
 
 ### Pattern
 
-Convert a field from FPN<F=64> (24B; ~192-bit precision) to FPN<F=32> (smaller representation) when value range + precision tolerance allow.
+Convert a field from FPN<F=64> (16B; 128-bit `__int128`) to FPN<F=32> (smaller representation) when value range + precision tolerance allow.
 
 ### When safe
 

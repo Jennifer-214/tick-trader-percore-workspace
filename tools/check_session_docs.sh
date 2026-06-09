@@ -17,6 +17,7 @@
 #   check_capture_audit.py --quiet                      [HARD — index/sentinels/skill-linkage]
 #   check_tools_inventory.py                            [HARD — every tools/*.{sh,py} enrolled in DOCS/TOOLS.md]
 #   check_always_loaded_budget.py                       [HARD — CLAUDE.md/local + MEMORY.md vs harness byte caps]
+#   check_fpn_doc_size_currency.py                      [HARD — docs' single-FPN<> byte size vs the code's sizeof assert]
 #   check_forward_promise_audit.py                      [ADVISORY — MED/LOW expected]
 #   check_meta_registry.py                              [ADVISORY — engine-structural; pre-existing orphans surfaced]
 #
@@ -142,6 +143,16 @@ if [ "${SKIP_HANDOFF_ACTIVE_CHECK:-0}" != "1" ]; then
         python3 "$REPO_ROOT/tools/check_handoff_active_singleton.py"
 else
     RESULTS+=("  ⏭  HARD  handoff-active singleton (SKIP_HANDOFF_ACTIVE_CHECK=1)")
+fi
+
+# --- HARD 7: FPN-doc-size currency (docs' single-FPN<> byte size vs the code's sizeof assert) ---
+# No FOXML_ENGINE pin: the tool's own dual-root resolver finds the engine (canonical parse) AND the
+# workspace (incl. workspace-only docs) — pinning FOXML_ENGINE would confine the scan to one tree.
+if [ "${SKIP_FPN_DOC_SIZE_CHECK:-0}" != "1" ]; then
+    run_hard "FPN-doc-size currency (single-FPN<> byte size vs FixedPointN.hpp sizeof assert)" \
+        python3 "$REPO_ROOT/tools/check_fpn_doc_size_currency.py"
+else
+    RESULTS+=("  ⏭  HARD  FPN-doc-size currency (SKIP_FPN_DOC_SIZE_CHECK=1)")
 fi
 
 # --- ADVISORY: forward-promise (MED/LOW backlog expected) ---

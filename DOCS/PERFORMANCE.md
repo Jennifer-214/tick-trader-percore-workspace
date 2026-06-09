@@ -64,11 +64,12 @@ Packing them contiguously at offset 0 (~50 cache lines) would improve hardware
 prefetching after TUI-induced cache eviction. Helps ~10-20ns per TUI render cycle.
 No effect with TUI off.
 
-**FPN sign packing** — each FPN<64> wastes 4 bytes of alignment padding (24 bytes
-actual vs 20 bytes raw). Packing the sign bit into the MSB of the highest word would
-save 8 bytes per FPN (24 → 16 bytes, 33% reduction). Saves ~7KB on the controller
-struct. Requires rewriting every FPN operation — high effort, deferred.
-See `plans/fpn_sign_packing.md`.
+**FPN sign packing** — DONE (Ship-A, tag v5.15.5.F.4d.1.E.0.7). `FPN<64>` is now a bare
+16-byte 128-bit `__int128` (64.64 two's-complement) — the sign lives in the top bit, so
+there is no separate sign field and no alignment padding to pack. This obsoletes the old
+idea below: the former 24-byte sign-magnitude layout (`uint64_t w[2]` magnitude + `int32_t
+sign` + `int32_t _padding`) wasted 4 bytes of alignment padding; the two's-complement flip
+delivered the full 24 → 16 byte (33% reduction) win and saved ~7KB on the controller struct.
 
 ### No impact
 

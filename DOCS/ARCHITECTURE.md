@@ -127,7 +127,7 @@ RegimeDetector (RANGING / TRENDING / VOLATILE / MILD_TREND with hysteresis) / Me
 BinanceCrypto (WSS tick stream) / Depth (orderbook stream) / DepthReplayState / DepthRecorder / TickRecorder / BinanceOrderAPI (live REST) / EngineTUI (text dashboard).
 
 ### FixedPoint/
-`FPN<F=64>` = 24-byte 4096-bit fixed-point. `is_FPN_v` type trait. NEVER `float`/`double` on accounting paths (H4).
+`FPN<F=64>` = 16-byte 128-bit `__int128` (64.64 two's-complement fixed-point). `is_FPN_v` type trait. NEVER `float`/`double` on accounting paths (H4).
 
 ### MemHeaders/
 PoolAllocator (bitmap order pool) / BuddyAllocator / BitmapMacros / FailureModeRegistry / CfgGateRegistry (FOREACH_STAMP_BOUND_DERIVED_COHORT meta-walker).

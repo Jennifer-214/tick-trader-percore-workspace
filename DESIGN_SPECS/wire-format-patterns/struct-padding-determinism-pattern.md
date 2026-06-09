@@ -25,18 +25,24 @@ applies_at_skills: [/parity-check]
 
 ## Problem statement
 
-C/C++ structs frequently contain implicit padding bytes to satisfy alignment requirements. Example: `FPN<F=64>`:
+C/C++ structs frequently contain implicit padding bytes to satisfy alignment requirements.
+
+> [!NOTE]
+> **The FPN worked example below is HISTORICAL.** It documents the original sign-magnitude `FPN<F=64>` layout (24B: `uint64_t w[2]` + `int32_t sign` + `int32_t _padding`) that motivated this pattern. **Ship-A (tag `v5.15.5.F.4d.1.E.0.7`) SUPERSEDED that layout** — `FPN<F=64>` is now a bare two's-complement `__int128 v` (16 bytes, sign in the top bit, NO sign field, NO padding). FPN therefore no longer needs the `_padding` trick: it has **no padding at all**, so the determinism comes for free. The example is preserved because the **general H12 padding-determinism pattern still applies to any OTHER struct with implicit padding** (see § "The pattern (concrete shape)"). Read the FPN specifics as the origin story; read the pattern as the durable lesson.
+
+Example (historical, pre-Ship-A FPN layout): `FPN<F=64>` was:
 
 ```cpp
+// HISTORICAL — pre-Ship-A sign-magnitude layout, sizeof 24 (superseded by the 16B __int128).
 template <unsigned FRAC_BITS> struct FPN {
-    uint64_t w[N];        // 16 bytes (N=2 at FRAC_BITS=64); 8-byte aligned
+    uint64_t w[N];        // the magnitude array: 16 bytes (N=2 at FRAC_BITS=64); 8-byte aligned
     int32_t  sign;        // 4 bytes
     // 4 bytes IMPLICIT PADDING to round struct size to 8-byte multiple
 };
-// sizeof(FPN<64>) = 24 (not 20)
+// sizeof(FPN<64>) = 24 (16B w[2] + 4B sign + 4B padding); NOT the 16B of the current __int128 core
 ```
 
-The 4 padding bytes after `sign` are **UB unless explicitly initialized**. Two FPN<64> values with identical `w[]` + `sign` may have DIFFERENT padding bytes (whatever was on the stack at construction time).
+The 4 padding bytes after `sign` were **UB unless explicitly initialized**. Two FPN<64> values with identical `w[]` + `sign` could have DIFFERENT padding bytes (whatever was on the stack at construction time).
 
 **Consequences:**
 
@@ -174,11 +180,14 @@ For `alignas(N) struct X { ... };`, padding fields still work — they fill gaps
 
 ## Reference implementations
 
-### v5.14.11.B.2 — FPN<F> (canonical first reference)
+### v5.14.11.B.2 — FPN<F> (canonical first reference) — SUPERSEDED by Ship-A
 
-`FixedPoint/FixedPointN.hpp::FPN<F>`. Added `int32_t _padding = 0;` after `int32_t sign`. Same struct size (24B at F=64; was 24B with implicit padding). FracDiff `same input → bytewise identical` test now passes reliably regardless of stack-layout shifts.
+> [!NOTE]
+> **This FPN application was later SUPERSEDED.** Ship-A (tag `v5.15.5.F.4d.1.E.0.7`) flipped `FPN<F=64>` to a bare two's-complement `__int128 v` (16 bytes, no `sign` field, no `_padding` field). The `_padding = 0` trick recorded below no longer exists in `FPN<F>` — the 16B `__int128` has **no padding at all**, so determinism is structural. The entry is preserved as the historical first canonical reference; the general pattern remains valid for other padded structs.
 
-Verified: all 92 FPN core operation tests pass; all 67 consumer-site usages of `.sign` unaffected.
+`FixedPoint/FixedPointN.hpp::FPN<F>` (historical). Added `int32_t _padding = 0;` after `int32_t sign`. Same struct size (24B at F=64; was 24B with implicit padding). FracDiff `same input → bytewise identical` test now passed reliably regardless of stack-layout shifts.
+
+Verified at the time: all 92 FPN core operation tests pass; all 67 consumer-site usages of `.sign` unaffected.
 
 ### Future application candidates (audit findings)
 
@@ -245,11 +254,21 @@ The `= 0` is load-bearing. Without it, the field exists but is uninit; same UB a
 
 ### Verify struct size unchanged after migration
 
+Guard the post-migration struct size with a `static_assert` so a future field addition can't silently reintroduce (or shift) padding:
+
 ```cpp
-static_assert(sizeof(FPN<F=64>) == 24, "FPN<F=64> struct size must remain 24 bytes");
+// General technique — pin the size of ANY padded struct after migration:
+static_assert(sizeof(SomePaddedStruct) == EXPECTED_BYTES, "size must stay fixed");
 ```
 
 Add to test suite. Catches accidental size changes (e.g., from a future field addition).
+
+> [!NOTE]
+> **The original FPN-specific worked example is OBSOLETE.** It read:
+> ```cpp
+> static_assert(sizeof(FPN<F=64>) == 24, "FPN<F=64> struct size must remain 24 bytes");  // pre-Ship-A
+> ```
+> Ship-A (tag `v5.15.5.F.4d.1.E.0.7`) flipped `FPN<F=64>` to a bare `__int128 v` — it is now **16 bytes with no `_padding` field**, so this 24-byte / `_padding`-determinism assertion no longer applies to FPN (the live guard is `sizeof(FPN<F=64>) == 16`). The **general technique above is still valid** for any other struct that uses the explicit-`_padding` pattern.
 
 ### Wire format / serialization compatibility
 

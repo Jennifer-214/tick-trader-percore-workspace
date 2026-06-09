@@ -86,9 +86,9 @@ void Aggregator_OnFill(AggregatorState& agg, NodeState<F>& node, const FillEvent
 
 ### FPN<F> atomic-add semantics
 
-FPN<F=64> is 24 bytes (3 × uint64_t). Not native atomic on x86_64. Options:
+FPN<F=64> is 16 bytes (a bare `__int128`; two's-complement, sign in the top bit — post Ship-A `v5.15.5.F.4d.1.E.0.7`). Not native-atomic on x86_64 (16B > the 8B single-word atomic width — the point holds). Options:
 
-1. **__int128 atomic** (sometimes available; not portable)
+1. **__int128 atomic** (16B CAS via `cmpxchg16b`; sometimes available; not portable)
 2. **Per-node delta accumulators** (each node atomic-write own slot; aggregator sums lazily)
 3. **Spinlock per FPN field** (violates H3 if used in hot path; OK at slow-path)
 4. **Approximate via uint64_t for fast-path; full FPN at cycle boundary**

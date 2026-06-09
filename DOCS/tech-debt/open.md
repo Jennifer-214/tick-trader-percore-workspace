@@ -3123,3 +3123,12 @@ sister_debt: TECH_DEBT-154 (the maker-fee guard, which uses the __builtin_expect
 - **Trigger:** a guard needing a side-effect on a HOT/branchless path (current guards are on the drainer = fine as-is), OR converting `OMS_GuardTakerBoundFeeBasis` on principle.
 - **Status:** OPEN (operator-floated; low priority).
 - **Cross-ref:** `OMS_GuardTakerBoundFeeBasis`; `branchless-dispatch-discipline.md` (H20 fprintf-exception); `feedback_guards_compound_enforcement_is_leverage`.
+
+### TECH_DEBT-159 — DOD re-pack of FPN-using structs to exploit the 16B headroom (gated on Ship-B)
+
+- **id:** TECH_DEBT-159 · **severity:** low · **opened:** 2026-06-09 · **status:** open (deferred-for-merit; gated on Ship-B) · **surface_tags:** [data-oriented-design, hot-path, persistence, optimization, cache-line]
+- **Title:** Re-pack the hot/persisted structs that contain FPN fields (`Position` / `Order` / `FillRecord`-equiv / `ResolvedCoreCfg` / OMS) to exploit the 8B/field headroom the Ship-A 16B flip opened — tighter cache-line splits, possibly fewer lines.
+- **Created:** 2026-06-09 — operator: *"the structs that use the new 16B ones, since they shrunk by 8B should we optimize them?"* The flip halved `FPN<64>` (24B→16B), so every struct with FPN fields shrank 8B/field — a hot FPN pair (TP+SL) is now 32B = half a cache line, opening tighter hot/cold splits than 24B allowed (e.g. `ResolvedCoreCfg`'s per-line padding grew 8→24B; `Position`/`Order` have re-pack headroom).
+- **Why DEFERRED (merit, NOT effort):** the re-pack changes hot-path struct layouts (latency-sensitive → latency re-verification) AND persisted byte-layouts (`Position` → snapshot version bump + golden refreeze). That's the SAME surface D-157 deferred (the refreeze) until the numeric core stabilizes post-Ship-B — and Ship-B (decimal money) changes those layouts AGAIN. Re-pack-now = do the layout+refreeze+latency work now AND redo it at Ship-B = twice; bundling with the post-Ship-B stabilization does it once.
+- **Trigger:** post-Ship-B core-stabilization (bundle with the refreeze + un-bypass Check F, D-157); fire `/dod-audit` scoped to the FPN-field structs.
+- **Cross-ref:** D-157 (refreeze deferral — same surface); `project_engine_done_edge_is_the_frontier` (optimize-after-inflection); the v5.15.5.F.4d.1.E.0.7 postmortem.

@@ -22,6 +22,8 @@
 | `check_determinism.sh` | STANDING-CI | pre-commit (Check F); umbrella | ✓ | `.E.0.1` determinism-net umbrella (runs the FP + locale gates) |
 | `check_fp_determinism.sh` | STANDING-CI | `check_determinism.sh` | — | `.E.0.1` FP-determinism gate |
 | `check_locale_determinism.sh` | STANDING-CI | `check_determinism.sh` | ✓ | `.E.0.1` locale-determinism guard |
+| `run_sanitizer_suite.sh` | STANDING-CI | ship acceptance (operator / `/ship`) | — | pinned-run-conditions sanitizer gate: `ulimit -s unlimited` + `detect_leaks=0` with documented WHY (TECH_DEBT-161; A.5 found the gate depended on ambient shell state) |
+| `run_sanitizer_suite_selftest.sh` | TEST-HARNESS | test runner; manual | — | negative self-test for `run_sanitizer_suite.sh`: RED-on-failing-lane + `[FAIL]`-line surfaced + GREEN-on-pass + RED-on-missing-lane (hermetic stub lanes via `FOXML_SUITE_ROOT`; stubs beside tools, NOT /tmp — noexec-hardened hosts) |
 | `check_session_docs.sh` | STANDING-CI | hook; close/accept/precoding/readiness; umbrella | ✓ | one-shot doc/plan CI sweep (runs the doc checks below) |
 | `check_capture_audit.py` | STANDING-CI | hook; `check_session_docs`; capture/accept-handoff | — | mechanical decision-capture drift check (11 checks) |
 | `check_doc_metadata.py` | STANDING-CI | hook; `check_session_docs`; capture/doc-create/metadata-audit/ship/sync | ✓ | doc frontmatter bidirectional + index check |

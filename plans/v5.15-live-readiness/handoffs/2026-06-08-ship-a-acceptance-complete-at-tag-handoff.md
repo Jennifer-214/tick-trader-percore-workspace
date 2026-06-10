@@ -1,6 +1,6 @@
 ---
 type: handoff
-status: active
+status: superseded (by handoffs/2026-06-09-ship-a5-shipped-next-ship-b-handoff.md — A.5 picked up via this doc 2026-06-09, planned, gated, shipped + GPG-tagged v5.15.5.F.4d.1.E.0.8 SAME DAY)
 ship_tag: "#11 Ship-A 16B storage flip — SHIPPED + GPG-tagged v5.15.5.F.4d.1.E.0.7 (the STOP-before-money boundary, D-130). NEXT = A.5 rename → Ship B money"
 plan_type: refactor (16B binary-core compaction)
 sprint: v5.15-live-readiness

@@ -21,5 +21,12 @@ TECH_DEBT-142 closes there).
 commission-asset string-direct parse, BNB boot-query + runtime guard (D-173 full two-layer),
 TD-149 residual (TUI/depth/recorder doubles). The fold stays gross-of-fee (S-3 slot ready).
 
+**Known-unverified (operator-descoped 2026-06-10):** the GUI/suite build configs
+(`build.sh gui` / `suite`) were NOT compiled post-flip — the GUI decouples at `.E.2`
+anyway (operator call). Expect possible flip-residue compile fixes in
+SettingsPanel/EngineTUI/BacktestPanels the first time those targets build. Sanitizer
+lanes (tsan/asan/ubsan) also not re-run this ship — semantic flip, no new memory shapes;
+re-run at the next sanitizer-cadence ship.
+
 **Critical pickup-time reads:** decision-log Session-13/14 addenda + the postmortem +
 `plan_checks/2026-06-10-p2b-flip-work-order.md` (the executed record). Resume `/accept-handoff`.

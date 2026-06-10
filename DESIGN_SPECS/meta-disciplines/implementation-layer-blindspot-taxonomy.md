@@ -246,6 +246,14 @@ Each category gets: **Definition** / **Detection mechanism** / **Loud vs silent*
 
 **Detection guard:** H12 invariant clarification — applies only when struct IS byte-equivalence input.
 
+**Encoding-flip extension (D-172b, Ship-B close 2026-06-10):** the INVERSE blind spot also
+lives here — a SEMANTIC re-encoding at IDENTICAL layout (Ship-B: 16B binary money → 16B
+decimal money) passes every size/offset/entry_size guard while persisted/wire VALUES change
+meaning (Class 42). When a B10 walk finds a byte-equivalence struct, ALSO ask: "do its
+values carry an ENCODING that could flip without a size change?" If yes → demand an
+encoding-keyed guard (the D-181 epoch-net pattern: `static_assert(EPOCH == 0 || VERSION >=
+N + EPOCH)`), not just layout locks.
+
 ---
 
 ### B11 — Context-dependent C++ construct (if-constexpr template-context requirement)

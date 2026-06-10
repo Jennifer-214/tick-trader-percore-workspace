@@ -24450,13 +24450,20 @@ e3_skip_load:;
         // -> reached the post-16B 13/9/6. An un-bumped version would silently load a 24B snapshot
         // into the 16B engine (the H21 epoch-reject failure mode). >= keeps it forward-compatible
         // with any later ship (e.g. Ship B decimal) bumping further.
-        static_assert(CONTROLLER_SNAPSHOT_VERSION >= 13 && SHARDED_SNAPSHOT_VERSION >= 9u
-                          && PORTFOLIO_SNAPSHOT_VERSION >= 6,
-                      "Ship-A D-144: snapshot versions must be >= post-16B 13/9/6 (strictly past pre-16B "
-                      "12/8/5); the 16B FPN_Binary layout change invalidates old snapshots (H21 epoch reject)");
-        check("Ship-A D-144: snapshot versions strictly increased past pre-16B 12/8/5 (>= 13/9/6)",
-              CONTROLLER_SNAPSHOT_VERSION >= 13 && SHARDED_SNAPSHOT_VERSION >= 9u
-                  && PORTFOLIO_SNAPSHOT_VERSION >= 6);
+        // Ship-B P2 markers (S-4/D-174 #14): the floors DERIVE from MONEY_ENCODING_EPOCH — the
+        // decimal flip auto-raises them to 14/10/7 (red build until the bumps ride the same
+        // commit). The 16B->16B re-encoding is layout-invisible; the ENCODING keys the guard.
+        static_assert(CONTROLLER_SNAPSHOT_VERSION >= 13 + MONEY_ENCODING_EPOCH
+                          && SHARDED_SNAPSHOT_VERSION >= 9u + MONEY_ENCODING_EPOCH
+                          && PORTFOLIO_SNAPSHOT_VERSION >= 6 + MONEY_ENCODING_EPOCH,
+                      "Ship-A D-144 / Ship-B S-4: snapshot versions must be >= 13/9/6 + the money "
+                      "encoding epoch (the decimal flip auto-raises the floor; bump in the SAME commit)");
+        check("Ship-A D-144: snapshot versions >= 13/9/6 + MONEY_ENCODING_EPOCH (auto-raising floor)",
+              CONTROLLER_SNAPSHOT_VERSION >= 13 + MONEY_ENCODING_EPOCH
+                  && SHARDED_SNAPSHOT_VERSION >= 9u + MONEY_ENCODING_EPOCH
+                  && PORTFOLIO_SNAPSHOT_VERSION >= 6 + MONEY_ENCODING_EPOCH);
+        check("Ship-B P2 markers: MONEY_ENCODING_EPOCH == 0 pre-flip (EngineMoneyT is still binary)",
+              MONEY_ENCODING_EPOCH == 0u && is_fp_binary_v<EngineMoneyT>);
 
         // ===== Ship-B P1a: decimal money core spine (Money_Mul + divmul + half-even + S-17 flags) =====
         // D-100 discipline: the expected values come from the FROZEN oracle fixture

@@ -4,7 +4,7 @@ description: "Verifying doc/plan/citation/index/memory correctness → run the d
 metadata: 
   node_type: memory
   type: feedback
-  sister_specs: [feedback_independence_for_judgment_not_mechanical.md, feedback_structural_enforcement_when_memory_insufficient.md, feedback_operator_pushback_as_audit_signal.md, feedback_document_as_you_go_over_catch_at_end.md, feedback_ground_design_in_real_code.md, feedback_paste_tool_output_dont_summarize.md]
+  sister_specs: [feedback_independence_for_judgment_not_mechanical.md, feedback_structural_enforcement_when_memory_insufficient.md, feedback_operator_pushback_as_audit_signal.md, feedback_document_as_you_go_over_catch_at_end.md, feedback_ground_design_in_real_code.md, feedback_paste_tool_output_dont_summarize.md, feedback_structure_judgment_loop_not_output.md]
   tags: [audit-methodology, framework-discipline, meta-discipline]
   originSessionId: b1ce1b7e-9d36-4f05-a210-c616603d3d9d
 ---

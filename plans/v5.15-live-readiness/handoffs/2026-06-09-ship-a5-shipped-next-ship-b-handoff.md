@@ -40,7 +40,7 @@ required_reading: [this doc, the decision-log Session-12 addendum (D-163..D-167)
 
 ## What landed this session (the short list)
 
-1. **The rename:** 77 engine/test files; `is_FPN_v` retired (39 sites; alias deleted); `FPN_*` fn family + FixedPoint64 absorb = EXPLICIT Ship-B non-goals (D-163/D-165). H21 verified zero wire-visible changes; NO operator migration.
+1. **The rename:** 77 engine-side files (tests/tools rode workspace-side in `a18ed9d`); `is_FPN_v` retired (39 sites; alias deleted); `FPN_*` fn family + FixedPoint64 absorb = EXPLICIT Ship-B non-goals (D-163/D-165). H21 verified zero wire-visible changes; NO operator migration.
 2. **`rename-ship-methodology.md` Stage 3** — the `.E.1` Core→Node rename inherits it (totality-oracle discriminator: compiler-guarded vs TOOL-REGEX vs PROSE-AMBIGUOUS — `.E.1`'s tokens are the third kind and NEED the AST tooling TECH_DEBT-142 asks for; 142 annotated, closes at `.E.1`).
 3. **Two real incidents, both structurally closed:** the `.D.1` doc classifier was UNANCHORED → double-renames + fn-name corruption across 28 doc files → boundary-anchored fix + idempotency PROVEN (2nd apply = 0) + repairs landed. And the `rg -rln` flag phantom (display-replacement faked a live rewriter) → "verify the VERIFIER's invocation."
 4. **Guards hardened:** doc-size guard exit-1 on canon-missing + SCAN_GLOBS widened (caught `latency-path-discipline.md` still teaching 24B — fixed, with the dead `w[]` BlendOnMask sample swapped for the live `__int128` body); NEW `tools/run_sanitizer_suite.sh` (pinned `ulimit`/`detect_leaks`; `[FAIL]`-preserving).
@@ -52,6 +52,15 @@ required_reading: [this doc, the decision-log Session-12 addendum (D-163..D-167)
 1. **The standing Ship-B body** = `subplans/2026-05-30-v5.15.5.F.4d.1.E-money-numeric-core-foundation.md` (v0.2, step-6 folded; acceptance §302-330 — the Ship-A-scoped rows are DONE, the rest is Ship B). **RE-AUDIT at pickup** (D-144: targets rot between plan-write and code-time; it pre-dates A.5's rename + Ship A's shipped reality). Pre-coding: HIGH-RISK tier gate + `/blindspot-scan` + the D-93 new-fn design audits; D-100 oracle (`plan_checks/2026-06-01-11-phase1-divmul-proof/`) is the standing acceptance gate.
 2. **At Ship B's close:** golden refreeze + un-bypass Check F (D-157) + TECH_DEBT-159 re-pack `/dod-audit` (D-161) + the H4 SEMANTIC rewrite in CLAUDE.md (decimal-money/binary-features) + FPN_* op-family naming decision + FixedPoint64 absorb (D-99).
 3. **Standing notes (NOT blockers):** MASTER.md last refreshed May 27 (pre-E.0.5) — the live state = CLAUDE.local table + CHANGELOG + postmortems; backfill = optional `.F`-sweep item. TECH_DEBT-157(b) alignof-locks stay advisory (tracked-by-tooling). The 8 SPSCRing stringop lines in gui builds are KNOWN-classified (comment at `SPSCRing.hpp` TryPush) — do not re-investigate; any OTHER stringop site is signal.
+
+## TaskList at close (Stage 1.5 capture — recreate at pickup)
+
+| # | Subject | Status |
+|---|---|---|
+| 1 | Plan Ship-A.5 — cosmetic FPN→FPN_Binary clang-rename | completed (this session) |
+| 2 | Implement + ship Ship-A.5 after plan gate | completed (this session; tagged E.0.8 + close-out) |
+| 3 | GATED post-Ship-B: golden refreeze + Check-F un-bypass (D-157) + TECH_DEBT-159 re-pack `/dod-audit` (D-161) | pending — NOT actionable until Ship B closes |
+| NEW at pickup | Re-audit `money-numeric-core-foundation.md` vs post-A.5 HEAD + open the Ship-B planning cycle (HIGH-RISK gate + `/blindspot-scan`; consult before coding) | create as in_progress at pickup |
 
 ## Operator norms (carry forward)
 

@@ -15,7 +15,7 @@ whole class forever; the fix is one instance.
 SSoT: the canonical size is parsed FROM THE CODE — `static_assert(sizeof(FPN<64>) == N` in
 `FixedPoint/FixedPointN.hpp` (the engine repo). The docs are checked against that, never against a number
 hardcoded here, so the guard auto-tracks the next flip (Ship-B decimal money) with zero edits. If the
-canonical assert can't be found, the guard prints WARN + exits 0 (it never false-fails on a parse miss).
+canonical assert can't be found, the guard prints RED + exits 1 (S-4 hardening, A.5) (it never false-fails on a parse miss).
 
 What it flags: a line that states a SINGLE FPN<...>'s byte size != canonical —
   (a) struct-field comment   `FPN<...> name;  // N bytes`  /  `// NB`
@@ -70,7 +70,7 @@ def _resolve_engine():
     sibling = _TOOL_PARENT.parent / "FoxML_Trader_v2"  # invoked from the workspace -> sibling engine repo
     if _has_fpn_header(sibling):
         return sibling
-    return _TOOL_PARENT  # last resort; parse_canonical() will WARN+exit-0 if the header isn't there
+    return _TOOL_PARENT  # last resort; parse_canonical() failure then goes RED/exit-1 (S-4 hardening, A.5)
 
 
 def _resolve_workspace():

@@ -42,3 +42,22 @@ tools/check_fpn_doc_size_currency.py:45
 tools/test_check_fpn_doc_size_currency.py:10
 tools/check_plan_body_symbol_existence.py:2
 RATIONALE: Version.hpp = ship-history comment block (HISTORICAL-PRESERVE). FixedPointN.hpp = retirement-provenance comments naming the retired spellings (deliberate, greppable). tools/ = doc-size guard's own docstrings/patterns + teeth-proof old-spelling fixtures (deliberate) + symbol-map legacy key + session-docs display labels. experiments/ = gitignored, rg-invisible. ALL OTHER SURFACES: 0.
+
+=== CORRECTED-FINAL ALLOWLIST (independent-review F2 fix, 2026-06-09 — counts PASTED from live greps @ engine 0e48150; the earlier FINAL section's engine counts were empty [AR-5: the capture pipeline dropped them] and its 11+1 projection pre-dated the E.0.8 Version.hpp history block) ===
+--- bare FPN, engine code+tests (rg -c):
+Version.hpp:14
+FixedPoint/FixedPointN.hpp:1
+--- is_FPN_v, engine C++ (rg -c):
+Version.hpp:2
+FixedPoint/FixedPointN.hpp:3
+--- bare FPN, tools/ (rg -c):
+tools/check_session_docs.sh:4
+tools/check_plan_body_symbol_existence.py:2
+tools/test_check_fpn_doc_size_currency.py:10
+tools/check_doc_rename_classification.py:8
+tools/check_fpn_doc_size_currency.py:45
+tools/check_storage_t_coverage.py:2
+--- is_FPN_v, tools/ (rg -c):
+tools/check_doc_rename_classification.py:1
+tools/check_storage_t_coverage.py:1
+RATIONALE: Version.hpp = ship-history comment block incl. the NEW E.0.8 block (HISTORICAL-PRESERVE). FixedPointN.hpp = retirement-provenance comments. tools/ = guard docstrings/patterns + deliberate old-spelling teeth fixtures + symbol-map legacy key + display labels + the new runner family. experiments/ gitignored = rg-invisible. ALL OTHER SURFACES: 0 (verified: the code greps above return rows ONLY for the files listed).

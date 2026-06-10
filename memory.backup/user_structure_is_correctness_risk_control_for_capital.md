@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: user
   originSessionId: ab5d402f-2ba7-43b9-9ae7-35187b313483
-  sister_specs: [user_adhd_deferred_reward_discipline.md, user_deep_design_work_intrinsic_value.md, user_mvp_to_professional_transition.md, feedback_framework_layer_payoff_diminishing_returns.md, feedback_heavier_default_audit_posture_for_capital.md, project_engine_done_edge_is_the_frontier.md, feedback_document_as_you_go_over_catch_at_end.md]
+  sister_specs: [user_adhd_deferred_reward_discipline.md, user_deep_design_work_intrinsic_value.md, user_mvp_to_professional_transition.md, feedback_framework_layer_payoff_diminishing_returns.md, feedback_heavier_default_audit_posture_for_capital.md, project_engine_done_edge_is_the_frontier.md, feedback_document_as_you_go_over_catch_at_end.md, feedback_structure_judgment_loop_not_output.md]
   tags: [user-profile, operator-collaboration]
 ---
 

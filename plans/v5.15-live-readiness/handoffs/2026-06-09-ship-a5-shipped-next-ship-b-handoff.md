@@ -1,6 +1,7 @@
 ---
 type: handoff
-status: active
+status: superseded
+superseded_by: handoffs/2026-06-10-ship-b-p2a-done-next-p2b-flip-handoff.md
 ship_tag: "Ship A.5 FPN->FPN_Binary rename — SHIPPED + GPG-tagged v5.15.5.F.4d.1.E.0.8 (2026-06-09, same-day plan->gate->code->tag); close-out NET-ZERO ledger. NEXT = plan Ship B (decimal money — the FIRST capital-bearing ship)"
 plan_type: refactor (cosmetic type+trait rename; zero-semantic, zero-codegen — PROVEN via A/B oracle)
 sprint: v5.15-live-readiness

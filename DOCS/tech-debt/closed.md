@@ -1223,3 +1223,20 @@ related_specs: [framework-patterns/meta-registry-pattern-for-codebase-registry-d
   2. **FIXED** `DataStream/DepthRecorder.hpp` + **`TickRecorder.hpp` (sister-cohort, same emit shape)** — `to_chars(o, rend-1, ...)` reserves the separator byte so `*o++` is PROVABLY in-bounds even on the value-too-large path (`ptr==last`); the unchecked-ptr shape was a latent 1-byte overflow under the type contract, only arithmetically unreachable (142/160B, ~73/96B worst cases). Warnings verified GONE; suite 3246/0; replay emit byte-identical for all real values.
   3. **VERIFIED-FP, documented** `CoreFrameworks/SPSCRing.hpp` `SPSCRing_TryPush` masked write — 8 instances via IPA/.isra clones of the submit chain (`BinanceAdapter_Submit*` -> `OrderManager_Submit` -> `OMS_DrainSubmit`). In-bounds BY CONSTRUCTION (`MASK = N-1`, power-of-2 static_assert). "Region of size 0" = degenerate clone-side base-pointer PROVENANCE — index-side facts can't fix it; BOTH remedies tried + verified ineffective (GCC pragma ignored by late IPA passes; `__builtin_unreachable()` range hint no effect). Disposition comment AT the write site; the 8 lines are known-classified — **any stringop warning at any OTHER site is real signal**.
 - **Cross-ref:** A.5 postmortem addendum; TECH_DEBT-161 (same acceptance batch); D-155 (don't-conflate discipline that opened these as rows instead of folding into the zero-semantic ship).
+
+### TECH_DEBT-146 — Symbol `lot_step_size`/`qty_decimals` stored as `double`
+
+```yaml
+id: TECH_DEBT-146
+severity: LOW
+status: OPEN
+trigger: .E.0.3 review OR PRE-PAPER-TEST
+surface_tags: [accounting, symbol-precision, fpn, order-validation]
+```
+
+- **Created:** 2026-05-29 by v5.15.5.F.4d.1.E.0.1 hardened-gate audit (symbol-precision question).
+- **What's deferred:** `BinanceOrderAPI.hpp:76/80` stores `lot_step_size` as `double` + derives `qty_decimals`. For order-validation precision + consistency with the `.E.0.3` `string→FPN` direction, review whether it should be FPN/decimal-exact. Low-stakes (order validation, not core accounting).
+- **Cross-ref:** decision-log D-85.
+
+> **CLOSED 2026-06-10 (SUBSUMED by Ship B v5.15.5.F.4d.1.E.0.9):** `SymbolFilters` fields retyped to decimal `Money` (D-106 source-exact mirrors) + `Money_QuantizeToStep` (#6) is the exact LOT_SIZE quantizer; `qty_decimals` derives from the Money step. The double SHELL on the REST plumbing rides .E.3.
+

@@ -563,16 +563,23 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ## FixedPoint/
 
-### FixedPoint64.hpp
+### FixedPoint64.hpp — DELETED (Ship-B P5 FP64 absorb, D-163)
 
-- `FP64_ToDouble` — line 47
-- `FP64_Equal` — line 245
-- `FP64_NotEqual` — line 250
-- `FP64_LessThan` — line 254
-- `FP64_LessThanOrEqual` — line 262
-- `FP64_GreaterThan` — line 266
-- `FP64_GreaterThanOrEqual` — line 270
-- `FP64_IsZero` — line 280
+The legacy `FP64` native-128 twin is gone; `FixedPointN.hpp`'s certified 16B bodies are
+the only implementation. The decimal money family lives in FixedPointN.hpp:
+
+- `Money` = `FixedPoint<10, 8>` — decimal money type (value = v/10^8; exact at venue ≤8dp)
+- `EngineMoneyT` / `MONEY_ENCODING_EPOCH` — the epoch switch (1 = decimal, flipped at P2b)
+- `Money_Mul` / `Money_Div` / `Money_Add` / `Money_Sub` — saturating, half-even (oracle-gated)
+- `Money_Min/Max/Abs/Negate/Zero/IsZero/Lt/Le/Eq/Gt/Ge/BlendOnMask/FromInt` — one-liners
+- `Money_FromString` → `MoneyParse{value, flags}` — EXACT venue-string parse (D-102)
+- `Money_ToBinary` / `Money_FromBinary` — the ONLY money↔feature domain casts (D-170)
+- `Money_ToDouble` / `Money_ToCString` — display/cfg emit (exact 8dp; cfg-save trims)
+- `Money_QuantizeToStep` — venue LOT_SIZE truncation (#6, via certified divider)
+- `money_from_double_payload` — TOTAL saturating cfg/result-vehicle bridge (D-103 sites)
+- `money_op_flags` + `MONEY_FLAG_*` / `MONEY_PARSE_*` — sticky observational flags (S-17;
+  drained at the drainer cycle tail)
+- certified shared kernels: `umul_128x128_256`, `udiv256_qr`, `udiv_q64`, `divmul_pow10`
 
 ### FixedPointN.hpp
 
@@ -1179,6 +1186,6 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 - Function names follow `Pattern_FunctionName` convention (e.g. `Portfolio_Init`, `BG_Evaluate`)
 - Headers are inline-heavy — most functions live in `.hpp` and are `inline`
-- The generic `FPN<unsigned F>` template is vestigial; `FPN<64>` is a full specialization = the 16-byte 128-bit `__int128` (64.64 two's-complement fixed-point) binary core used everywhere
+- Money domain: `Money` (`FixedPoint<10,8>`, decimal) for ALL money math; `FPN_Binary<64>` (16B `__int128` 64.64 two's-complement) for FEATURE math; crossings only at `Money_ToBinary`/`Money_FromBinary` seams (H4 post-Ship-B)
 - Lowercase helpers (`fan_out`, `drain_with_submit`) are local to a function and not in this map
 - ALL_CAPS macros are not in this map; see headers directly

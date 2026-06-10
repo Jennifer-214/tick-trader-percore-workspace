@@ -1124,3 +1124,12 @@ cfg dump.
 - `feedback_operator_facing_doc_cohort_at_cfg_deletion.md` (WIP-14a cohort sweep)
 - B-Plus v0.4 `--gen-deletion-cohort PATTERN` generator mode (M7 second canonical extension)
 
+
+### Decimal money core (v5.15.5.F.4d.1.E.0.9+ — Ship B)
+- **What**: All money values (prices, qtys, fees, balances, money-pct thresholds) are decimal `Money` (`FixedPoint<10,8>`) — exact at venue ≤8dp; venue WS strings parse exactly; ops saturate + round half-even.
+- **Cfg flags**: none new — cfg files keep their existing shapes (PCT fields still authored as percents; values now parse EXACTLY; saves trim trailing zeros past 2dp, e.g. "2.34").
+- **Fallback**: none (the binary money encoding is retired; pre-epoch artifacts refuse to load).
+- **Where to verify**: boot log — stale `order_events.bin` rotates to `<path>.pre-epoch.<ts>` with a loud line; `[ws-parse] MONEY parse flags` / `[drainer] MONEY FLAGS` warns are NEW operator signals (should be silent in normal operation).
+- **Paper-test sanity**: P&L/fee numbers now end at 8dp exactly; old snapshots/event-logs/stamps from before this version are REFUSED at boot (engine starts fresh — expected, paper-only data).
+- **Gotchas**: a fill whose venue commission is NOT USDT books the COMPUTED fee + warns (`D-173 fallback`) — if you enable BNB fee-burn on the account, expect those warns until the .E.3 BNB guard lands.
+- **Related**: D-168..D-188 (decision log), Class 41, `DOCS/CODE_MAP.md` § FixedPoint.

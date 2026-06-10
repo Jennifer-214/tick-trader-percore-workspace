@@ -1,6 +1,6 @@
 ---
 type: handoff
-status: active  # UPDATED in-session 2026-06-10: P2b EXECUTED (engine 838bf09, 3268/0) — next = P3 fee booking per the sidecar fill-lifecycle design; then P4 epoch-reject tests; P5 close (golden regen + Check-F un-bypass + codification slate F-12)
+status: superseded  # Ship B SHIPPED 2026-06-10 (tag v5.15.5.F.4d.1.E.0.9, engine 830615c) — see 2026-06-10-ship-b-shipped-next-e02-handoff.md  # UPDATED in-session 2026-06-10: P2b EXECUTED (engine 838bf09, 3268/0) — next = P3 fee booking per the sidecar fill-lifecycle design; then P4 epoch-reject tests; P5 close (golden regen + Check-F un-bypass + codification slate F-12)
 ship_tag: "Ship B (decimal money) IN FLIGHT — P0+P1+P2-markers+P2a LANDED (engine WIP chain through 6814d4d; suite 3268/0); NEXT = the P2b atomic flip per the frozen work-order"
 plan_type: refactor+feature (decimal money core; THE capital-bearing ship)
 sprint: v5.15-live-readiness

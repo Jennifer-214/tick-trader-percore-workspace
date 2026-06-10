@@ -54,20 +54,6 @@ surface_tags: [locale, log-emit, determinism, output-only]
 - **What's deferred:** calib/trade-log CSV float emit should use the canonical locale-pinned emit (per-thread `uselocale` or the `.E.0.3` format primitive). **Output-only — does NOT feed the replay net/golden** → not net-gating → routed PRE-PAPER-TEST.
 - **Cross-ref:** decision-log D-87; PARITY-036 (the recorder-emit, which IS net-gating — distinct from these output-only logs).
 
-### TECH_DEBT-146 — Symbol `lot_step_size`/`qty_decimals` stored as `double`
-
-```yaml
-id: TECH_DEBT-146
-severity: LOW
-status: OPEN
-trigger: .E.0.3 review OR PRE-PAPER-TEST
-surface_tags: [accounting, symbol-precision, fpn, order-validation]
-```
-
-- **Created:** 2026-05-29 by v5.15.5.F.4d.1.E.0.1 hardened-gate audit (symbol-precision question).
-- **What's deferred:** `BinanceOrderAPI.hpp:76/80` stores `lot_step_size` as `double` + derives `qty_decimals`. For order-validation precision + consistency with the `.E.0.3` `string→FPN` direction, review whether it should be FPN/decimal-exact. Low-stakes (order validation, not core accounting).
-- **Cross-ref:** decision-log D-85.
-
 ### TECH_DEBT-147 — True-decimal vs binary-FPN accounting representation (deferred design consideration)
 
 ```yaml
@@ -84,6 +70,8 @@ surface_tags: [accounting, fpn, decimal-exactness, architecture]
 - **Cross-ref:** decision-log D-85; [[feedback_two_foundations_determinism_vs_correctness]]. **⚠ STATUS-SHIFT PENDING (D-97/D-99, 2026-05-30):** D-85's binary-FPN-direct is SUPERSEDED — money goes DECIMAL; this item flips from DEFERRED-INDEFINITE to **being-done** by the numeric-foundation unification ship (the decimal decision IS this item). Re-status to in-flight / closed when that ship lands. See `subplans/2026-05-30-v5.15.5.F.4d.1.E-money-numeric-core-foundation.md`.
 
 ### TECH_DEBT-149 — Producer `string→FPN→double→FPN` round-trip discards the exact parse (latent precision loss, binary AND decimal)
+
+> **2026-06-10 Ship-B P2b (D-188): PARTIALLY SUBSUMED** — the WS trade parse now goes `Money_FromString(price_str/qty_str)` EXACT on the money side (the round-trip is gone for tick price/volume). Residual: the TUI double derivation + depth/recorder paths; re-scope at the recorder rework.
 
 ```yaml
 id: TECH_DEBT-149
@@ -3128,7 +3116,7 @@ sister_debt: TECH_DEBT-154 (the maker-fee guard, which uses the __builtin_expect
 
 ### TECH_DEBT-159 — DOD re-pack of FPN-using structs to exploit the 16B headroom (gated on Ship-B)
 
-- **id:** TECH_DEBT-159 · **severity:** low · **opened:** 2026-06-09 · **status:** open (deferred-for-merit; gated on Ship-B) · **surface_tags:** [data-oriented-design, hot-path, persistence, optimization, cache-line]
+- **id:** TECH_DEBT-159 · **severity:** low · **opened:** 2026-06-09 · **status:** open (UNGATED 2026-06-10 — Ship-B SHIPPED; eligible for a `/dod-audit` re-pack pass any sprint) · **surface_tags:** [data-oriented-design, hot-path, persistence, optimization, cache-line]
 - **Title:** Re-pack the hot/persisted structs that contain FPN fields (`Position` / `Order` / `FillRecord`-equiv / `ResolvedCoreCfg` / OMS) to exploit the 8B/field headroom the Ship-A 16B flip opened — tighter cache-line splits, possibly fewer lines.
 - **Created:** 2026-06-09 — operator: *"the structs that use the new 16B ones, since they shrunk by 8B should we optimize them?"* The flip halved `FPN<64>` (24B→16B), so every struct with FPN fields shrank 8B/field — a hot FPN pair (TP+SL) is now 32B = half a cache line, opening tighter hot/cold splits than 24B allowed (e.g. `ResolvedCoreCfg`'s per-line padding grew 8→24B; `Position`/`Order` have re-pack headroom).
 - **Why DEFERRED (merit, NOT effort):** the re-pack changes hot-path struct layouts (latency-sensitive → latency re-verification) AND persisted byte-layouts (`Position` → snapshot version bump + golden refreeze). That's the SAME surface D-157 deferred (the refreeze) until the numeric core stabilizes post-Ship-B — and Ship-B (decimal money) changes those layouts AGAIN. Re-pack-now = do the layout+refreeze+latency work now AND redo it at Ship-B = twice; bundling with the post-Ship-B stabilization does it once.

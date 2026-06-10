@@ -24561,6 +24561,62 @@ e3_skip_load:;
             }
             check("Ship-B P1c: Money_FromBinary == oracle over the 162-row frozen set (saturate + flag where reachable)",
                   fb_fail == 0);
+
+            // ===== Ship-B P2a: dispatcher decimal branches — DIRECT instantiation (no Money cfg
+            // field exists pre-flip, so these branches would otherwise be uninstantiated dead
+            // templates; this block IS their per-fn gate + keeps --require-decimal-branches honest).
+            {
+                CfgFieldDescriptor d{};
+                d.kind = CfgFieldDescriptor::KIND_DOUBLE_PCT;
+                d.cfg_field_name = "p2a_test_pct";
+                d.payload.as_double = { 0.075, 0.0, 5.0 };          // percent-space payload (P0.3)
+                Money m{};
+                tt::cfg_parse_field(m, d, "0.075", false);          // file ctx: percent -> fraction
+                check("Ship-B P2a: decimal cfg_parse_field PCT file-ctx exact (0.075% -> .v 75000)",
+                      m.v == 75000);
+                tt::cfg_parse_field(m, d, "0.00075000", true);      // wire ctx: raw fraction
+                check("Ship-B P2a: decimal cfg_parse_field wire-ctx exact", m.v == 75000);
+                char b[64];
+                tt::cfg_save_field(m, d, b, sizeof b);
+                check("Ship-B P2a: decimal cfg_save_field emits the EXACT percent string",
+                      strcmp(b, "0.07500000") == 0);
+                Money a2{};
+                tt::cfg_assign_field(a2, d);
+                check("Ship-B P2a: decimal cfg_assign_field percent default -> exact fraction",
+                      a2.v == 75000);
+                check("Ship-B P2a: decimal cfg_diff_field exact (.v compare vs converted default)",
+                      !tt::cfg_diff_field(a2, d) && tt::cfg_diff_field(Money{ (__int128)75001 }, d));
+                tt::cfg_emit_field(m, d, b, sizeof b);
+                check("Ship-B P2a: decimal cfg_emit_field = exact raw-fraction kv on the wire body",
+                      strcmp(b, "p2a_test_pct=0.00075000\n") == 0);
+                double inf = 0.0; uint8_t has = 0;
+                tt::cfg_populate_inf_field(m, inf, has, true);
+                check("Ship-B P2a: decimal cfg_populate_inf_field bridge (Money -> double inf)",
+                      has == 1 && inf == 0.00075);
+                check("Ship-B P2a: decimal cfg_drift_compare bridge + exact forms",
+                      !tt::cfg_drift_compare(inf, m) && tt::cfg_drift_compare(0.00076, m)
+                          && !tt::cfg_drift_compare(m, m)
+                          && tt::cfg_drift_compare(Money{ (__int128)75001 }, m));
+                char rb[96];
+                tt::cfg_drift_format_reason(rb, sizeof rb, "p2a", Money{ (__int128)75001 }, m);
+                check("Ship-B P2a: decimal cfg_drift_format_reason exact-string attribution",
+                      strstr(rb, "0.00075001") != nullptr && strstr(rb, "0.00075000") != nullptr);
+                // (Discovered live: the .v-space clamp works — the first run clamped 70000.12
+                // against the PCT row's stale {0,5} payload. Made deliberate below.)
+                d.kind = CfgFieldDescriptor::KIND_DOUBLE;           // non-PCT: value-space clamps
+                d.payload.as_double = { 0.0, 0.0, 1.0e12 };         // wide value-space clamp
+                tt::cfg_parse_field(m, d, "70000.12345678", false);
+                check("Ship-B P2a: decimal cfg_parse_field non-PCT venue-scale exact",
+                      m.v == (__int128)7000012345678LL);
+                d.payload.as_double = { 0.0, 0.0, 5.0 };            // tight clamp: 9.0 -> 5.0
+                tt::cfg_parse_field(m, d, "9.0", false);
+                check("Ship-B P2a: decimal cfg_parse_field clamps in .v space (9.0 -> clamp_max 5.0)",
+                      m.v == (__int128)500000000LL);
+                char rt[40];
+                Money_ToCString(m, rt, (int)sizeof(rt));
+                check("Ship-B P2a: ToCString -> FromString bit-exact round-trip",
+                      Money_FromString(rt).value.v == m.v && Money_FromString(rt).flags == 0u);
+            }
             money_op_flags = flags_save;
         }
 

@@ -1,3 +1,5 @@
+<!-- STATUS: EXECUTED 2026-06-10 — engine 838bf09, 3268/0; D-184..D-188 -->
+
 # P2b flip work-order (Step-A enumeration freeze) — Ship B decimal money
 
 **Date:** 2026-06-10 (Session 13/14 boundary) · **HEAD:** engine `6814d4d` (P2a), suite **3268/0** · **Decision record:** D-168..D-183 (`decision-logs/v5.15.5.F.4d.1.E-architecture-v2.md` Session-13 addendum — the SSoT for everything below)

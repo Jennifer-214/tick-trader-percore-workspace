@@ -51,10 +51,10 @@ static void test_config_parser() {
     check("max_shift parsed", fabs(ms - 3.0) < 0.01);
 
     // take_profit_pct is divided by 100 in parser
-    double tp = FPN_ToDouble(cfg.take_profit_pct);
+    double tp = Money_ToDouble(cfg.take_profit_pct);
     check("take_profit_pct parsed (5% -> 0.05)", fabs(tp - 0.05) < 0.001);
 
-    double sl = FPN_ToDouble(cfg.stop_loss_pct);
+    double sl = Money_ToDouble(cfg.stop_loss_pct);
     check("stop_loss_pct parsed (2% -> 0.02)", fabs(sl - 0.02) < 0.001);
 
     // test defaults when file missing
@@ -76,11 +76,11 @@ static void test_portfolio_bitmap() {
     check("count is 0", Portfolio_CountActive(&port) == 0);
 
     // add positions
-    Portfolio_AddPosition(&port, FPN_FromDouble<FP>(10.0), FPN_FromDouble<FP>(100.0));
+    Portfolio_AddPosition(&port, MQ(10.0), MQ(100.0));
     check("add sets bit", port.active_bitmap == 1);
     check("count is 1", Portfolio_CountActive(&port) == 1);
 
-    Portfolio_AddPosition(&port, FPN_FromDouble<FP>(5.0), FPN_FromDouble<FP>(200.0));
+    Portfolio_AddPosition(&port, MQ(5.0), MQ(200.0));
     check("second add sets bit 1", port.active_bitmap == 3);
     check("count is 2", Portfolio_CountActive(&port) == 2);
 
@@ -89,26 +89,26 @@ static void test_portfolio_bitmap() {
     check("remove clears bit 0", port.active_bitmap == 2);
     check("count is 1 after remove", Portfolio_CountActive(&port) == 1);
     // data still at index 1
-    double q1 = FPN_ToDouble(port.positions[1].quantity);
+    double q1 = Money_ToDouble(port.positions[1].quantity);
     check("position 1 data intact", fabs(q1 - 5.0) < 0.01);
 
     // slot reuse: add new position, should get slot 0
-    Portfolio_AddPosition(&port, FPN_FromDouble<FP>(7.0), FPN_FromDouble<FP>(300.0));
+    Portfolio_AddPosition(&port, MQ(7.0), MQ(300.0));
     check("slot 0 reused", port.active_bitmap == 3);
-    double q0 = FPN_ToDouble(port.positions[0].quantity);
+    double q0 = Money_ToDouble(port.positions[0].quantity);
     check("new position in slot 0", fabs(q0 - 7.0) < 0.01);
 
     // test full
     check("not full at 2", !Portfolio_IsFull(&port));
     Portfolio_ClearPositions(&port);
     for (int i = 0; i < 16; i++) {
-        Portfolio_AddPosition(&port, FPN_FromDouble<FP>(1.0), FPN_FromDouble<FP>((double)i));
+        Portfolio_AddPosition(&port, MQ(1.0), MQ((double)i));
     }
     check("full at 16", Portfolio_IsFull(&port));
     check("count is 16", Portfolio_CountActive(&port) == 16);
 
     // add when full should be no-op
-    Portfolio_AddPosition(&port, FPN_FromDouble<FP>(1.0), FPN_FromDouble<FP>(999.0));
+    Portfolio_AddPosition(&port, MQ(1.0), MQ(999.0));
     check("count still 16", Portfolio_CountActive(&port) == 16);
 }
 
@@ -122,17 +122,17 @@ static void test_portfolio_pnl() {
     Portfolio_Init(&port);
 
     // add positions: 10 shares at $100, -5 shares at $50
-    Portfolio_AddPosition(&port, FPN_FromDouble<FP>(10.0), FPN_FromDouble<FP>(100.0));
-    Portfolio_AddPosition(&port, FPN_FromDouble<FP>(-5.0), FPN_FromDouble<FP>(50.0));
+    Portfolio_AddPosition(&port, MQ(10.0), MQ(100.0));
+    Portfolio_AddPosition(&port, MQ(-5.0), MQ(50.0));
 
     // at $110: long P&L = (110-100)*10 = 100, short P&L = (110-50)*(-5) = -300, total = -200
-    FPN_Binary<FP> price = FPN_FromDouble<FP>(110.0);
-    double pnl = FPN_ToDouble(Portfolio_ComputePnL(&port, price));
+    Money price = MQ(110.0);
+    double pnl = Money_ToDouble(Portfolio_ComputePnL(&port, price));
     check("mixed P&L correct", fabs(pnl - (-200.0)) < 1.0);
 
     // empty portfolio P&L is zero
     Portfolio_ClearPositions(&port);
-    pnl = FPN_ToDouble(Portfolio_ComputePnL(&port, price));
+    pnl = Money_ToDouble(Portfolio_ComputePnL(&port, price));
     check("empty P&L is zero", fabs(pnl) < 0.01);
 }
 
@@ -145,9 +145,9 @@ static void test_consolidation() {
     Portfolio<FP> port;
     Portfolio_Init(&port);
 
-    FPN_Binary<FP> price = FPN_FromDouble<FP>(98.50);
+    Money price = MQ(98.50);
 
-    Portfolio_AddPosition(&port, FPN_FromDouble<FP>(100.0), price);
+    Portfolio_AddPosition(&port, MQ(100.0), price);
     check("first add", Portfolio_CountActive(&port) == 1);
 
     // find by price
@@ -155,20 +155,20 @@ static void test_consolidation() {
     check("find by price works", idx == 0);
 
     // consolidate
-    Portfolio_AddQuantity(&port, idx, FPN_FromDouble<FP>(200.0));
-    double qty = FPN_ToDouble(port.positions[0].quantity);
+    Portfolio_AddQuantity(&port, idx, MQ(200.0));
+    double qty = Money_ToDouble(port.positions[0].quantity);
     check("consolidated quantity", fabs(qty - 300.0) < 0.01);
     check("still one position", Portfolio_CountActive(&port) == 1);
 
     // different price is a separate position
-    FPN_Binary<FP> price2 = FPN_FromDouble<FP>(99.00);
-    Portfolio_AddPosition(&port, FPN_FromDouble<FP>(50.0), price2);
+    Money price2 = MQ(99.00);
+    Portfolio_AddPosition(&port, MQ(50.0), price2);
     check("different price = new position", Portfolio_CountActive(&port) == 2);
 
     // FPN_Equal determinism: same double -> same bits
-    FPN_Binary<FP> a = FPN_FromDouble<FP>(98.50);
-    FPN_Binary<FP> b = FPN_FromDouble<FP>(98.50);
-    check("FPN_Equal deterministic", FPN_Equal(a, b));
+    Money a = MQ(98.50);
+    Money b = MQ(98.50);
+    check("FPN_Equal deterministic", Money_Eq(a, b));
 }
 
 //======================================================================================================
@@ -183,18 +183,18 @@ static void test_exit_gate() {
     ExitBuffer_Init(&buf);
 
     // add position: entry $100, TP $103, SL $98.50
-    FPN_Binary<FP> entry = FPN_FromDouble<FP>(100.0);
-    FPN_Binary<FP> tp    = FPN_FromDouble<FP>(103.0);
-    FPN_Binary<FP> sl    = FPN_FromDouble<FP>(98.50);
-    Portfolio_AddPositionWithExits(&port, FPN_FromDouble<FP>(10.0), entry, tp, sl);
+    Money entry = MQ(100.0);
+    Money tp    = MQ(103.0);
+    Money sl    = MQ(98.50);
+    Portfolio_AddPositionWithExits(&port, MQ(10.0), entry, tp, sl);
 
     // price between TP and SL - no exit
-    PositionExitGate(&port, FPN_FromDouble<FP>(101.0), &buf, 100);
+    PositionExitGate(&port, MQ(101.0), &buf, 100);
     check("no exit between TP/SL", buf.count == 0);
     check("position still active", port.active_bitmap == 1);
 
     // price hits take profit
-    PositionExitGate(&port, FPN_FromDouble<FP>(103.50), &buf, 200);
+    PositionExitGate(&port, MQ(103.50), &buf, 200);
     check("TP exit triggered", buf.count == 1);
     check("exit reason is TP", buf.records[0].reason == 0);
     check("exit index correct", buf.records[0].position_index == 0);
@@ -202,16 +202,16 @@ static void test_exit_gate() {
     check("bit cleared", port.active_bitmap == 0);
 
     // call again - should NOT re-trigger (bit is cleared)
-    PositionExitGate(&port, FPN_FromDouble<FP>(103.50), &buf, 201);
+    PositionExitGate(&port, MQ(103.50), &buf, 201);
     check("no re-trigger after exit", buf.count == 1); // still 1, not 2
 
     // test stop loss
     ExitBuffer_Clear(&buf);
-    Portfolio_AddPositionWithExits(&port, FPN_FromDouble<FP>(5.0),
-                                   FPN_FromDouble<FP>(100.0),
-                                   FPN_FromDouble<FP>(103.0),
-                                   FPN_FromDouble<FP>(98.50));
-    PositionExitGate(&port, FPN_FromDouble<FP>(97.0), &buf, 300);
+    Portfolio_AddPositionWithExits(&port, MQ(5.0),
+                                   MQ(100.0),
+                                   MQ(103.0),
+                                   MQ(98.50));
+    PositionExitGate(&port, MQ(97.0), &buf, 300);
     check("SL exit triggered", buf.count == 1);
     check("exit reason is SL", buf.records[0].reason == 1);
 
@@ -219,18 +219,18 @@ static void test_exit_gate() {
     ExitBuffer_Clear(&buf);
     Portfolio_ClearPositions(&port);
     // pos 0: TP $105
-    Portfolio_AddPositionWithExits(&port, FPN_FromDouble<FP>(10.0),
-                                   FPN_FromDouble<FP>(100.0),
-                                   FPN_FromDouble<FP>(105.0),
-                                   FPN_FromDouble<FP>(95.0));
+    Portfolio_AddPositionWithExits(&port, MQ(10.0),
+                                   MQ(100.0),
+                                   MQ(105.0),
+                                   MQ(95.0));
     // pos 1: TP $102
-    Portfolio_AddPositionWithExits(&port, FPN_FromDouble<FP>(5.0),
-                                   FPN_FromDouble<FP>(99.0),
-                                   FPN_FromDouble<FP>(102.0),
-                                   FPN_FromDouble<FP>(96.0));
+    Portfolio_AddPositionWithExits(&port, MQ(5.0),
+                                   MQ(99.0),
+                                   MQ(102.0),
+                                   MQ(96.0));
 
     // price $103: pos 1 exits (TP $102), pos 0 stays (TP $105)
-    PositionExitGate(&port, FPN_FromDouble<FP>(103.0), &buf, 400);
+    PositionExitGate(&port, MQ(103.0), &buf, 400);
     check("partial exit: 1 of 2", buf.count == 1);
     check("correct position exited", buf.records[0].position_index == 1);
     check("other position still active", (port.active_bitmap & 1) == 1);
@@ -246,15 +246,15 @@ static void test_exit_buffer_drain() {
     Portfolio_Init(&port);
 
     // add position, then manually populate exit buffer
-    Portfolio_AddPositionWithExits(&port, FPN_FromDouble<FP>(10.0),
-                                   FPN_FromDouble<FP>(100.0),
-                                   FPN_FromDouble<FP>(103.0),
-                                   FPN_FromDouble<FP>(98.50));
+    Portfolio_AddPositionWithExits(&port, MQ(10.0),
+                                   MQ(100.0),
+                                   MQ(103.0),
+                                   MQ(98.50));
     // clear bit (simulate hot-path exit)
     Portfolio_RemovePosition(&port, 0);
 
     // data still readable at index 0
-    double ep = FPN_ToDouble(port.positions[0].entry_price);
+    double ep = Money_ToDouble(port.positions[0].entry_price);
     check("data readable after bit clear", fabs(ep - 100.0) < 0.01);
 }
 
@@ -271,8 +271,8 @@ static void test_fill_timing() {
     PortfolioController<FP> ctrl = {};
     PortfolioController_Init(&ctrl, cfg);
     ctrl.state = CONTROLLER_ACTIVE; // force active
-    ctrl.buy_conds.price  = FPN_FromDouble<FP>(100.0);
-    ctrl.buy_conds.volume = FPN_FromDouble<FP>(400.0);
+    ctrl.buy_conds.price  = FPN_FromDouble<64>(100.0);
+    ctrl.buy_conds.volume = FPN_FromDouble<64>(400.0);
     ctrl.mean_rev.buy_conds_initial = ctrl.buy_conds;
 
     OrderPool<FP> pool;
@@ -283,19 +283,19 @@ static void test_fill_timing() {
     log.trade_count = 0;
 
     // simulate BuyGate filling slot 0
-    pool.slots[0].price    = FPN_FromDouble<FP>(98.0);
-    pool.slots[0].quantity = FPN_FromDouble<FP>(500.0);
+    pool.slots[0].price    = MQ(98.0);
+    pool.slots[0].quantity = MQ(500.0);
     pool.bitmap = 1;
 
     // call controller tick - should consume fill immediately
-    PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(98.0), FPN_FromDouble<FP>(500.0), &log);
+    PortfolioController_Tick(&ctrl, &pool, MQ(98.0), MQ(500.0), &log);
 
     check("position created same tick", Portfolio_CountActive(&ctrl.portfolio) == 1);
     check("pool slot cleared", pool.bitmap == 0);
 
     // verify TP/SL computed correctly
-    double tp = FPN_ToDouble(ctrl.portfolio.positions[0].take_profit_price);
-    double sl = FPN_ToDouble(ctrl.portfolio.positions[0].stop_loss_price);
+    double tp = Money_ToDouble(ctrl.portfolio.positions[0].take_profit_price);
+    double sl = Money_ToDouble(ctrl.portfolio.positions[0].stop_loss_price);
     double expected_tp = 98.0 * (1.0 + 0.03);  // 100.94
     double expected_sl = 98.0 * (1.0 - 0.015); // 96.53
     check("TP price computed", fabs(tp - expected_tp) < 0.1);
@@ -318,8 +318,8 @@ static void test_backpressure() {
     PortfolioController<FP> ctrl = {};
     PortfolioController_Init(&ctrl, cfg);
     ctrl.state = CONTROLLER_ACTIVE;
-    ctrl.buy_conds.price  = FPN_FromDouble<FP>(100.0);
-    ctrl.buy_conds.volume = FPN_FromDouble<FP>(400.0);
+    ctrl.buy_conds.price  = FPN_FromDouble<64>(100.0);
+    ctrl.buy_conds.volume = FPN_FromDouble<64>(400.0);
     ctrl.mean_rev.buy_conds_initial = ctrl.buy_conds;
 
     OrderPool<FP> pool;
@@ -331,20 +331,20 @@ static void test_backpressure() {
 
     // fill all 16 portfolio slots
     for (int i = 0; i < 16; i++) {
-        pool.slots[i].price    = FPN_FromDouble<FP>(90.0 + i); // different prices
-        pool.slots[i].quantity = FPN_FromDouble<FP>(100.0);
+        pool.slots[i].price    = MQ(90.0 + i); // different prices
+        pool.slots[i].quantity = MQ(100.0);
         pool.bitmap |= (1ULL << i);
     }
-    PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(95.0), FPN_FromDouble<FP>(500.0), &log);
+    PortfolioController_Tick(&ctrl, &pool, MQ(95.0), MQ(500.0), &log);
     check("16 positions filled", Portfolio_CountActive(&ctrl.portfolio) == 16);
     check("portfolio full", Portfolio_IsFull(&ctrl.portfolio));
 
     // try to add more - pool slot should stay
-    pool.slots[20].price    = FPN_FromDouble<FP>(110.0);
-    pool.slots[20].quantity = FPN_FromDouble<FP>(100.0);
+    pool.slots[20].price    = MQ(110.0);
+    pool.slots[20].quantity = MQ(100.0);
     pool.bitmap |= (1ULL << 20);
 
-    PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(95.0), FPN_FromDouble<FP>(500.0), &log);
+    PortfolioController_Tick(&ctrl, &pool, MQ(95.0), MQ(500.0), &log);
     check("still 16 (backpressure)", Portfolio_CountActive(&ctrl.portfolio) == 16);
     check("pool slot remains", (pool.bitmap & (1ULL << 20)) != 0);
 
@@ -375,8 +375,8 @@ static void test_warmup() {
 
     // feed 10 ticks with known prices around $100
     for (int i = 0; i < 10; i++) {
-        FPN_Binary<FP> price  = FPN_FromDouble<FP>(98.0 + (double)i * 0.5); // 98, 98.5, ..., 102.5
-        FPN_Binary<FP> volume = FPN_FromDouble<FP>(500.0 + (double)i * 10.0);
+        Money price  = MQ(98.0 + (double)i * 0.5); // 98, 98.5, ..., 102.5
+        Money volume = MQ(500.0 + (double)i * 10.0);
         PortfolioController_Tick(&ctrl, &pool, price, volume, &log);
     }
 
@@ -405,7 +405,7 @@ static void test_regression_feedback() {
     ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
     cfg.warmup_ticks  = 10;
     cfg.poll_interval = 1;   // slow path every tick for testing
-    cfg.r2_threshold  = FPN_FromDouble<FP>(0.01); // low threshold so adjustments happen
+    cfg.r2_threshold  = FPN_FromDouble<64>(0.01); // low threshold so adjustments happen
 
     PortfolioController<FP> ctrl = {};
     PortfolioController_Init(&ctrl, cfg);
@@ -419,8 +419,8 @@ static void test_regression_feedback() {
 
     // warmup
     for (int i = 0; i < 10; i++) {
-        FPN_Binary<FP> price = FPN_FromDouble<FP>(100.0);
-        FPN_Binary<FP> vol   = FPN_FromDouble<FP>(500.0);
+        Money price = MQ(100.0);
+        Money vol   = MQ(500.0);
         PortfolioController_Tick(&ctrl, &pool, price, vol, &log);
     }
     check("warmup done", ctrl.state == CONTROLLER_ACTIVE);
@@ -430,15 +430,15 @@ static void test_regression_feedback() {
     // feed ticks with positions that have clear uptrend P&L
     // simulate fills manually
     for (int i = 0; i < 5; i++) {
-        pool.slots[i].price    = FPN_FromDouble<FP>(99.0);
-        pool.slots[i].quantity = FPN_FromDouble<FP>(10.0);
+        pool.slots[i].price    = MQ(99.0);
+        pool.slots[i].quantity = MQ(10.0);
         pool.bitmap |= (1ULL << i);
     }
 
     // run many ticks with rising price (positions become increasingly profitable)
     for (int i = 0; i < 200; i++) {
-        FPN_Binary<FP> price = FPN_FromDouble<FP>(99.0 + (double)i * 0.01);
-        FPN_Binary<FP> vol   = FPN_FromDouble<FP>(500.0);
+        Money price = MQ(99.0 + (double)i * 0.01);
+        Money vol   = MQ(500.0);
         PortfolioController_Tick(&ctrl, &pool, price, vol, &log);
     }
 
@@ -503,8 +503,8 @@ static void test_branchless() {
     ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
     cfg.warmup_ticks  = 5;
     cfg.poll_interval = 1;
-    cfg.r2_threshold  = FPN_FromDouble<FP>(0.80); // HIGH threshold
-    cfg.regime_volatile_stddev = FPN_FromDouble<FP>(1.0); // disable volatile detection for this test
+    cfg.r2_threshold  = FPN_FromDouble<64>(0.80); // HIGH threshold
+    cfg.regime_volatile_stddev = FPN_FromDouble<64>(1.0); // disable volatile detection for this test
     cfg.regime_hysteresis = 1000; // prevent regime switching during test
 
     PortfolioController<FP> ctrl = {};
@@ -518,7 +518,7 @@ static void test_branchless() {
 
     // warmup
     for (int i = 0; i < 5; i++) {
-        PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(100.0), FPN_FromDouble<FP>(500.0), &log);
+        PortfolioController_Tick(&ctrl, &pool, MQ(100.0), MQ(500.0), &log);
     }
 
     FPN_Binary<FP> initial_price = ctrl.buy_conds.price;
@@ -555,12 +555,12 @@ static void test_max_shift() {
     printf("\n--- Max Shift Clamp ---\n");
 
     ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
-    cfg.max_shift     = FPN_FromDouble<FP>(0.02); // tight clamp: 2% of price (~$2 at $100)
-    cfg.r2_threshold  = FPN_FromDouble<FP>(0.01);
+    cfg.max_shift     = FPN_FromDouble<64>(0.02); // tight clamp: 2% of price (~$2 at $100)
+    cfg.r2_threshold  = FPN_FromDouble<64>(0.01);
     cfg.warmup_ticks  = 5;
     cfg.poll_interval = 1;
     // pin to RANGING — this test is about MR max_shift, not regime detection
-    cfg.regime_slope_threshold = FPN_FromDouble<FP>(1.0);
+    cfg.regime_slope_threshold = FPN_FromDouble<64>(1.0);
 
     PortfolioController<FP> ctrl = {};
     PortfolioController_Init(&ctrl, cfg);
@@ -573,21 +573,21 @@ static void test_max_shift() {
 
     // warmup
     for (int i = 0; i < 5; i++) {
-        PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(100.0), FPN_FromDouble<FP>(500.0), &log);
+        PortfolioController_Tick(&ctrl, &pool, MQ(100.0), MQ(500.0), &log);
     }
 
     FPN_Binary<FP> initial = ctrl.mean_rev.buy_conds_initial.price;
 
     // add positions and feed extreme trend
     for (int i = 0; i < 5; i++) {
-        pool.slots[i].price    = FPN_FromDouble<FP>(99.0);
-        pool.slots[i].quantity = FPN_FromDouble<FP>(10.0);
+        pool.slots[i].price    = MQ(99.0);
+        pool.slots[i].quantity = MQ(10.0);
         pool.bitmap |= (1ULL << i);
     }
 
     for (int i = 0; i < 500; i++) {
-        FPN_Binary<FP> price = FPN_FromDouble<FP>(100.0 + (double)i * 0.1);
-        PortfolioController_Tick(&ctrl, &pool, price, FPN_FromDouble<FP>(500.0), &log);
+        Money price = MQ(100.0 + (double)i * 0.1);
+        PortfolioController_Tick(&ctrl, &pool, price, MQ(500.0), &log);
     }
 
     // buy_conds_initial now tracks rolling average, so the gate moves with the market
@@ -612,7 +612,7 @@ static void test_empty_regression() {
     ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
     cfg.warmup_ticks  = 5;
     cfg.poll_interval = 1;
-    cfg.r2_threshold  = FPN_FromDouble<FP>(0.01);
+    cfg.r2_threshold  = FPN_FromDouble<64>(0.01);
 
     PortfolioController<FP> ctrl = {};
     PortfolioController_Init(&ctrl, cfg);
@@ -625,7 +625,7 @@ static void test_empty_regression() {
 
     // warmup
     for (int i = 0; i < 5; i++) {
-        PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(100.0), FPN_FromDouble<FP>(500.0), &log);
+        PortfolioController_Tick(&ctrl, &pool, MQ(100.0), MQ(500.0), &log);
     }
 
     // no positions - P&L should be zero
@@ -633,10 +633,10 @@ static void test_empty_regression() {
 
     // run ticks - should push zero, slope should flatten
     for (int i = 0; i < 50; i++) {
-        PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(100.0), FPN_FromDouble<FP>(500.0), &log);
+        PortfolioController_Tick(&ctrl, &pool, MQ(100.0), MQ(500.0), &log);
     }
 
-    double pnl = FPN_ToDouble(ctrl.portfolio_delta);
+    double pnl = Money_ToDouble(ctrl.portfolio_delta);
     check("P&L stays zero", fabs(pnl) < 0.01);
 
     OrderPool_DestroyBacking(&pool);
@@ -663,7 +663,7 @@ static void test_tick_counter() {
     check("starts at 0", ctrl.total_ticks == 0);
 
     for (int i = 0; i < 20; i++) {
-        PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(100.0), FPN_FromDouble<FP>(500.0), &log);
+        PortfolioController_Tick(&ctrl, &pool, MQ(100.0), MQ(500.0), &log);
     }
     check("total_ticks = 20", ctrl.total_ticks == 20);
 
@@ -681,13 +681,13 @@ static void test_full_pipeline() {
     ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
     cfg.warmup_ticks  = 20;
     cfg.poll_interval = 10;
-    cfg.take_profit_pct    = FPN_FromDouble<FP>(0.03);
-    cfg.stop_loss_pct      = FPN_FromDouble<FP>(0.015);
+    cfg.take_profit_pct    = MQ(0.03);
+    cfg.stop_loss_pct      = MQ(0.015);
     // loosen volume filter for mock data - mock volumes are uniform around base_volume
     // so we need a low multiplier for some ticks to pass the filter
-    cfg.volume_multiplier  = FPN_FromDouble<FP>(1.2);
-    cfg.entry_offset_pct   = FPN_FromDouble<FP>(0.005); // 0.5% offset - mock data has high volatility
-    cfg.spacing_multiplier = FPN_FromDouble<FP>(0.5);    // tight spacing - mock price range is small
+    cfg.volume_multiplier  = FPN_FromDouble<64>(1.2);
+    cfg.entry_offset_pct   = MQ(0.005); // 0.5% offset - mock data has high volatility
+    cfg.spacing_multiplier = FPN_FromDouble<64>(0.5);    // tight spacing - mock price range is small
 
     PortfolioController<FP> ctrl = {};
     PortfolioController_Init(&ctrl, cfg);
@@ -765,7 +765,7 @@ static void test_stddev_offset() {
     ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
     cfg.warmup_ticks  = 10;
     cfg.poll_interval = 1;
-    cfg.offset_stddev_mult = FPN_FromDouble<FP>(1.5); // enable stddev mode at 1.5x
+    cfg.offset_stddev_mult = FPN_FromDouble<64>(1.5); // enable stddev mode at 1.5x
 
     PortfolioController<FP> ctrl = {};
     PortfolioController_Init(&ctrl, cfg);
@@ -778,8 +778,8 @@ static void test_stddev_offset() {
 
     // warmup with known prices around $100 with some spread
     for (int i = 0; i < 10; i++) {
-        FPN_Binary<FP> price  = FPN_FromDouble<FP>(98.0 + (double)i * 0.5);
-        FPN_Binary<FP> volume = FPN_FromDouble<FP>(500.0);
+        Money price  = MQ(98.0 + (double)i * 0.5);
+        Money volume = MQ(500.0);
         PortfolioController_Tick(&ctrl, &pool, price, volume, &log);
     }
     check("stddev: warmup done", ctrl.state == CONTROLLER_ACTIVE);
@@ -805,8 +805,8 @@ static void test_stddev_offset() {
     PortfolioController_Init(&ctrl2, cfg2);
 
     for (int i = 0; i < 10; i++) {
-        FPN_Binary<FP> price  = FPN_FromDouble<FP>(98.0 + (double)i * 0.5);
-        FPN_Binary<FP> volume = FPN_FromDouble<FP>(500.0);
+        Money price  = MQ(98.0 + (double)i * 0.5);
+        Money volume = MQ(500.0);
         PortfolioController_Tick(&ctrl2, &pool, price, volume, &log);
     }
 
@@ -825,10 +825,10 @@ static void test_stddev_adaptation() {
     ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
     cfg.warmup_ticks     = 5;
     cfg.poll_interval    = 1;
-    cfg.r2_threshold     = FPN_FromDouble<FP>(0.01);
-    cfg.offset_stddev_mult = FPN_FromDouble<FP>(2.0);
-    cfg.offset_stddev_min  = FPN_FromDouble<FP>(0.5);
-    cfg.offset_stddev_max  = FPN_FromDouble<FP>(4.0);
+    cfg.r2_threshold     = FPN_FromDouble<64>(0.01);
+    cfg.offset_stddev_mult = FPN_FromDouble<64>(2.0);
+    cfg.offset_stddev_min  = FPN_FromDouble<64>(0.5);
+    cfg.offset_stddev_max  = FPN_FromDouble<64>(4.0);
 
     PortfolioController<FP> ctrl = {};
     PortfolioController_Init(&ctrl, cfg);
@@ -843,19 +843,19 @@ static void test_stddev_adaptation() {
 
     // warmup
     for (int i = 0; i < 5; i++) {
-        PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(100.0), FPN_FromDouble<FP>(500.0), &log);
+        PortfolioController_Tick(&ctrl, &pool, MQ(100.0), MQ(500.0), &log);
     }
 
     // add positions and run many ticks to trigger regression adaptation
     for (int i = 0; i < 5; i++) {
-        pool.slots[i].price    = FPN_FromDouble<FP>(99.0);
-        pool.slots[i].quantity = FPN_FromDouble<FP>(10.0);
+        pool.slots[i].price    = MQ(99.0);
+        pool.slots[i].quantity = MQ(10.0);
         pool.bitmap |= (1ULL << i);
     }
 
     for (int i = 0; i < 200; i++) {
-        FPN_Binary<FP> price = FPN_FromDouble<FP>(99.0 + (double)i * 0.01);
-        PortfolioController_Tick(&ctrl, &pool, price, FPN_FromDouble<FP>(500.0), &log);
+        Money price = MQ(99.0 + (double)i * 0.01);
+        PortfolioController_Tick(&ctrl, &pool, price, MQ(500.0), &log);
     }
 
     // stddev_mult should stay within bounds regardless of regression direction
@@ -865,7 +865,7 @@ static void test_stddev_adaptation() {
 
     // in stddev mode, offset_pct should NOT have drifted (mode-conditional)
     double op = FPN_ToDouble(ctrl.mean_rev.live_offset_pct);
-    double init_op = FPN_ToDouble(cfg.entry_offset_pct);
+    double init_op = Money_ToDouble(cfg.entry_offset_pct);
     check("stddev: offset_pct unchanged in stddev mode", fabs(op - init_op) < 0.0001);
 
     OrderPool_DestroyBacking(&pool);
@@ -880,7 +880,7 @@ static void test_multi_timeframe() {
     ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
     cfg.warmup_ticks  = 10;
     cfg.poll_interval = 1;
-    cfg.min_long_slope = FPN_FromDouble<FP>(0.0001); // require positive long trend
+    cfg.min_long_slope = FPN_FromDouble<64>(0.0001); // require positive long trend
 
     PortfolioController<FP> ctrl = {};
     PortfolioController_Init(&ctrl, cfg);
@@ -893,15 +893,15 @@ static void test_multi_timeframe() {
 
     // warmup with rising prices (positive long slope)
     for (int i = 0; i < 10; i++) {
-        FPN_Binary<FP> price = FPN_FromDouble<FP>(100.0 + (double)i * 0.1);
-        PortfolioController_Tick(&ctrl, &pool, price, FPN_FromDouble<FP>(500.0), &log);
+        Money price = MQ(100.0 + (double)i * 0.1);
+        PortfolioController_Tick(&ctrl, &pool, price, MQ(500.0), &log);
     }
     check("mt: warmup done", ctrl.state == CONTROLLER_ACTIVE);
 
     // run a few more ticks with rising prices to build long slope
     for (int i = 0; i < 20; i++) {
-        FPN_Binary<FP> price = FPN_FromDouble<FP>(101.0 + (double)i * 0.05);
-        PortfolioController_Tick(&ctrl, &pool, price, FPN_FromDouble<FP>(500.0), &log);
+        Money price = MQ(101.0 + (double)i * 0.05);
+        PortfolioController_Tick(&ctrl, &pool, price, MQ(500.0), &log);
     }
 
     // with rising long slope, buy gate should be active (price > 0)
@@ -910,8 +910,8 @@ static void test_multi_timeframe() {
 
     // now feed falling prices to create negative long slope
     for (int i = 0; i < 30; i++) {
-        FPN_Binary<FP> price = FPN_FromDouble<FP>(102.0 - (double)i * 0.2);
-        PortfolioController_Tick(&ctrl, &pool, price, FPN_FromDouble<FP>(500.0), &log);
+        Money price = MQ(102.0 - (double)i * 0.2);
+        PortfolioController_Tick(&ctrl, &pool, price, MQ(500.0), &log);
     }
 
     // with negative long slope, buy gate should be blocked (price = 0)
@@ -943,13 +943,13 @@ static void test_multi_timeframe_disabled() {
 
     // warmup
     for (int i = 0; i < 10; i++) {
-        PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(100.0), FPN_FromDouble<FP>(500.0), &log);
+        PortfolioController_Tick(&ctrl, &pool, MQ(100.0), MQ(500.0), &log);
     }
 
     // feed falling prices — with gate disabled, buys should still work
     for (int i = 0; i < 20; i++) {
-        FPN_Binary<FP> price = FPN_FromDouble<FP>(100.0 - (double)i * 0.1);
-        PortfolioController_Tick(&ctrl, &pool, price, FPN_FromDouble<FP>(500.0), &log);
+        Money price = MQ(100.0 - (double)i * 0.1);
+        PortfolioController_Tick(&ctrl, &pool, price, MQ(500.0), &log);
     }
 
     double buy_p = FPN_ToDouble(ctrl.buy_conds.price);
@@ -980,24 +980,24 @@ static void test_trailing_disabled() {
 
     // warmup
     for (int i = 0; i < 5; i++) {
-        PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(100.0), FPN_FromDouble<FP>(500.0), &log);
+        PortfolioController_Tick(&ctrl, &pool, MQ(100.0), MQ(500.0), &log);
     }
 
     // add a position manually
-    FPN_Binary<FP> tp = FPN_FromDouble<FP>(103.0);
-    FPN_Binary<FP> sl = FPN_FromDouble<FP>(98.0);
-    int slot = Portfolio_AddPositionWithExits(&ctrl.portfolio, FPN_FromDouble<FP>(10.0),
-                                              FPN_FromDouble<FP>(100.0), tp, sl);
+    Money tp = MQ(103.0);
+    Money sl = MQ(98.0);
+    int slot = Portfolio_AddPositionWithExits(&ctrl.portfolio, MQ(10.0),
+                                              MQ(100.0), tp, sl);
     ctrl.portfolio.positions[slot].original_tp = tp;
     ctrl.portfolio.positions[slot].original_sl = sl;
 
     // run with price above TP — should NOT trail (disabled)
     for (int i = 0; i < 20; i++) {
-        PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(105.0), FPN_FromDouble<FP>(500.0), &log);
+        PortfolioController_Tick(&ctrl, &pool, MQ(105.0), MQ(500.0), &log);
     }
 
     // TP should still be original (103.0) — not raised
-    double final_tp = FPN_ToDouble(ctrl.portfolio.positions[slot].take_profit_price);
+    double final_tp = Money_ToDouble(ctrl.portfolio.positions[slot].take_profit_price);
     check("trailing disabled: TP unchanged", fabs(final_tp - 103.0) < 0.01);
 
     OrderPool_DestroyBacking(&pool);
@@ -1012,9 +1012,9 @@ static void test_trailing_activates() {
     ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
     cfg.warmup_ticks    = 5;
     cfg.poll_interval   = 1;
-    cfg.tp_hold_score   = FPN_FromDouble<FP>(0.01); // low threshold so it activates easily
-    cfg.tp_trail_mult   = FPN_FromDouble<FP>(1.0);
-    cfg.sl_trail_mult   = FPN_FromDouble<FP>(2.0);
+    cfg.tp_hold_score   = FPN_FromDouble<64>(0.01); // low threshold so it activates easily
+    cfg.tp_trail_mult   = FPN_FromDouble<64>(1.0);
+    cfg.sl_trail_mult   = FPN_FromDouble<64>(2.0);
 
     PortfolioController<FP> ctrl = {};
     PortfolioController_Init(&ctrl, cfg);
@@ -1028,30 +1028,30 @@ static void test_trailing_activates() {
 
     // warmup
     for (int i = 0; i < 5; i++) {
-        PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(100.0), FPN_FromDouble<FP>(500.0), &log);
+        PortfolioController_Tick(&ctrl, &pool, MQ(100.0), MQ(500.0), &log);
     }
 
     // add a momentum position with TP at 103
-    FPN_Binary<FP> entry = FPN_FromDouble<FP>(100.0);
-    FPN_Binary<FP> tp = FPN_FromDouble<FP>(103.0);
-    FPN_Binary<FP> sl = FPN_FromDouble<FP>(97.0);
-    int slot = Portfolio_AddPositionWithExits(&ctrl.portfolio, FPN_FromDouble<FP>(10.0), entry, tp, sl);
+    Money entry = MQ(100.0);
+    Money tp = MQ(103.0);
+    Money sl = MQ(97.0);
+    int slot = Portfolio_AddPositionWithExits(&ctrl.portfolio, MQ(10.0), entry, tp, sl);
     ctrl.portfolio.positions[slot].original_tp = tp;
     ctrl.portfolio.positions[slot].original_sl = sl;
     ctrl.entry_strategy[slot] = STRATEGY_MOMENTUM;
 
     // feed steadily rising prices above TP (strong clean trend → high SNR * R²)
     for (int i = 0; i < 50; i++) {
-        FPN_Binary<FP> price = FPN_FromDouble<FP>(104.0 + (double)i * 0.2);
-        PortfolioController_Tick(&ctrl, &pool, price, FPN_FromDouble<FP>(500.0), &log);
+        Money price = MQ(104.0 + (double)i * 0.2);
+        PortfolioController_Tick(&ctrl, &pool, price, MQ(500.0), &log);
     }
 
     // check if TP was raised above original (trailing activated)
-    double final_tp = FPN_ToDouble(ctrl.portfolio.positions[slot].take_profit_price);
+    double final_tp = Money_ToDouble(ctrl.portfolio.positions[slot].take_profit_price);
     check("trailing: TP raised above original", final_tp > 103.0);
 
     // check SL was also raised (locking in gains)
-    double final_sl = FPN_ToDouble(ctrl.portfolio.positions[slot].stop_loss_price);
+    double final_sl = Money_ToDouble(ctrl.portfolio.positions[slot].stop_loss_price);
     check("trailing: SL raised above original", final_sl > 97.0);
 
     // TP should ratchet up only — check it's below the final price (trail distance)
@@ -1070,9 +1070,9 @@ static void test_trailing_ratchet() {
     ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
     cfg.warmup_ticks    = 5;
     cfg.poll_interval   = 1;
-    cfg.tp_hold_score   = FPN_FromDouble<FP>(0.01);
-    cfg.tp_trail_mult   = FPN_FromDouble<FP>(1.0);
-    cfg.sl_trail_mult   = FPN_FromDouble<FP>(2.0);
+    cfg.tp_hold_score   = FPN_FromDouble<64>(0.01);
+    cfg.tp_trail_mult   = FPN_FromDouble<64>(1.0);
+    cfg.sl_trail_mult   = FPN_FromDouble<64>(2.0);
 
     PortfolioController<FP> ctrl = {};
     PortfolioController_Init(&ctrl, cfg);
@@ -1085,29 +1085,29 @@ static void test_trailing_ratchet() {
 
     // warmup
     for (int i = 0; i < 5; i++) {
-        PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(100.0), FPN_FromDouble<FP>(500.0), &log);
+        PortfolioController_Tick(&ctrl, &pool, MQ(100.0), MQ(500.0), &log);
     }
 
-    FPN_Binary<FP> tp = FPN_FromDouble<FP>(103.0);
-    FPN_Binary<FP> sl = FPN_FromDouble<FP>(97.0);
-    int slot = Portfolio_AddPositionWithExits(&ctrl.portfolio, FPN_FromDouble<FP>(10.0),
-                                              FPN_FromDouble<FP>(100.0), tp, sl);
+    Money tp = MQ(103.0);
+    Money sl = MQ(97.0);
+    int slot = Portfolio_AddPositionWithExits(&ctrl.portfolio, MQ(10.0),
+                                              MQ(100.0), tp, sl);
     ctrl.portfolio.positions[slot].original_tp = tp;
     ctrl.portfolio.positions[slot].original_sl = sl;
 
     // phase 1: rising prices — TP should ratchet up
     for (int i = 0; i < 30; i++) {
-        FPN_Binary<FP> price = FPN_FromDouble<FP>(104.0 + (double)i * 0.3);
-        PortfolioController_Tick(&ctrl, &pool, price, FPN_FromDouble<FP>(500.0), &log);
+        Money price = MQ(104.0 + (double)i * 0.3);
+        PortfolioController_Tick(&ctrl, &pool, price, MQ(500.0), &log);
     }
-    double tp_after_rise = FPN_ToDouble(ctrl.portfolio.positions[slot].take_profit_price);
+    double tp_after_rise = Money_ToDouble(ctrl.portfolio.positions[slot].take_profit_price);
 
     // phase 2: slightly falling prices — TP should NOT decrease
     for (int i = 0; i < 10; i++) {
-        FPN_Binary<FP> price = FPN_FromDouble<FP>(112.0 - (double)i * 0.1);
-        PortfolioController_Tick(&ctrl, &pool, price, FPN_FromDouble<FP>(500.0), &log);
+        Money price = MQ(112.0 - (double)i * 0.1);
+        PortfolioController_Tick(&ctrl, &pool, price, MQ(500.0), &log);
     }
-    double tp_after_dip = FPN_ToDouble(ctrl.portfolio.positions[slot].take_profit_price);
+    double tp_after_dip = Money_ToDouble(ctrl.portfolio.positions[slot].take_profit_price);
 
     check("ratchet: TP did not decrease during dip", tp_after_dip >= tp_after_rise - 0.01);
 
@@ -1135,24 +1135,24 @@ static void test_original_tp_sl() {
 
     // warmup
     for (int i = 0; i < 5; i++) {
-        PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(100.0), FPN_FromDouble<FP>(500.0), &log);
+        PortfolioController_Tick(&ctrl, &pool, MQ(100.0), MQ(500.0), &log);
     }
 
     // inject a fill
     ctrl.state = CONTROLLER_ACTIVE;
     ctrl.mean_rev.buy_conds_initial = ctrl.buy_conds;
-    pool.slots[0].price    = FPN_FromDouble<FP>(99.0);
-    pool.slots[0].quantity = FPN_FromDouble<FP>(500.0);
+    pool.slots[0].price    = MQ(99.0);
+    pool.slots[0].quantity = MQ(500.0);
     pool.bitmap = 1;
 
-    PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(99.0), FPN_FromDouble<FP>(500.0), &log);
+    PortfolioController_Tick(&ctrl, &pool, MQ(99.0), MQ(500.0), &log);
 
     if (Portfolio_CountActive(&ctrl.portfolio) > 0) {
         int idx = __builtin_ctz(ctrl.portfolio.active_bitmap);
-        double live_tp = FPN_ToDouble(ctrl.portfolio.positions[idx].take_profit_price);
-        double orig_tp = FPN_ToDouble(ctrl.portfolio.positions[idx].original_tp);
-        double live_sl = FPN_ToDouble(ctrl.portfolio.positions[idx].stop_loss_price);
-        double orig_sl = FPN_ToDouble(ctrl.portfolio.positions[idx].original_sl);
+        double live_tp = Money_ToDouble(ctrl.portfolio.positions[idx].take_profit_price);
+        double orig_tp = Money_ToDouble(ctrl.portfolio.positions[idx].original_tp);
+        double live_sl = Money_ToDouble(ctrl.portfolio.positions[idx].stop_loss_price);
+        double orig_sl = Money_ToDouble(ctrl.portfolio.positions[idx].original_sl);
 
         check("original_tp matches live TP at fill", fabs(live_tp - orig_tp) < 0.01);
         check("original_sl matches live SL at fill", fabs(live_sl - orig_sl) < 0.01);
@@ -1176,28 +1176,28 @@ static void test_slippage() {
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
         cfg.warmup_ticks = 0;
         cfg.poll_interval = 1000;
-        cfg.slippage_pct = FPN_FromDouble<FP>(0.01); // 1% slippage
+        cfg.slippage_pct = MQ(0.01); // 1% slippage
 
         PortfolioController<FP> ctrl = {};
         PortfolioController_Init(&ctrl, cfg);
         ctrl.state = CONTROLLER_ACTIVE;
-        ctrl.buy_conds.price  = FPN_FromDouble<FP>(105.0);
-        ctrl.buy_conds.volume = FPN_FromDouble<FP>(1.0);
+        ctrl.buy_conds.price  = FPN_FromDouble<64>(105.0);
+        ctrl.buy_conds.volume = FPN_FromDouble<64>(1.0);
         ctrl.mean_rev.buy_conds_initial = ctrl.buy_conds;
 
         OrderPool<FP> pool;
         OrderPool_init(&pool, 64);
         TradeLog log; log.file = 0; log.trade_count = 0;
 
-        pool.slots[0].price    = FPN_FromDouble<FP>(100.0);
-        pool.slots[0].quantity = FPN_FromDouble<FP>(1.0);
+        pool.slots[0].price    = MQ(100.0);
+        pool.slots[0].quantity = MQ(1.0);
         pool.bitmap = 1;
 
-        PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(100.0),
-                                  FPN_FromDouble<FP>(1.0), &log);
+        PortfolioController_Tick(&ctrl, &pool, MQ(100.0),
+                                  MQ(1.0), &log);
 
         check("slippage buy: position created", Portfolio_CountActive(&ctrl.portfolio) == 1);
-        double entry = FPN_ToDouble(ctrl.portfolio.positions[0].entry_price);
+        double entry = Money_ToDouble(ctrl.portfolio.positions[0].entry_price);
         // 100 + 100*0.01 = 101
         check("slippage buy: entry price adjusted", fabs(entry - 101.0) < 0.1);
         OrderPool_DestroyBacking(&pool);
@@ -1208,30 +1208,30 @@ static void test_slippage() {
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
         cfg.warmup_ticks = 0;
         cfg.poll_interval = 1000;
-        cfg.slippage_pct = FPN_FromDouble<FP>(0.01); // 1% slippage
-        cfg.fee_rate = FPN_Zero<FP>(); // zero fees to isolate slippage effect
+        cfg.slippage_pct = MQ(0.01); // 1% slippage
+        cfg.fee_rate = Money_Zero(); // zero fees to isolate slippage effect
 
         PortfolioController<FP> ctrl = {};
         PortfolioController_Init(&ctrl, cfg);
         ctrl.state = CONTROLLER_ACTIVE;
 
         // manually add a position at $101 (simulating buy slippage already applied)
-        FPN_Binary<FP> entry_p = FPN_FromDouble<FP>(101.0);
-        FPN_Binary<FP> qty = FPN_FromDouble<FP>(1.0);
+        Money entry_p = MQ(101.0);
+        Money qty = MQ(1.0);
         Portfolio_AddPositionWithExits(&ctrl.portfolio, qty, entry_p,
-            FPN_FromDouble<FP>(110.0), FPN_FromDouble<FP>(90.0));
+            MQ(110.0), MQ(90.0));
 
         // trigger TP exit at $110
-        PositionExitGate(&ctrl.portfolio, FPN_FromDouble<FP>(110.0),
+        PositionExitGate(&ctrl.portfolio, MQ(110.0),
                           &ctrl.exit_buf, 100);
         check("slippage sell: exit detected", ctrl.exit_buf.count == 1);
 
-        FPN_Binary<FP> pnl_before = ctrl.realized_pnl;
+        Money pnl_before = ctrl.realized_pnl;
         PortfolioController_DrainExits(&ctrl);
 
         // exit at 110 with 1% slippage → effective exit = 110 - 110*0.01 = 108.90
         // P&L = 108.90 - 101.0 = 7.90 (with zero fees)
-        double pnl = FPN_ToDouble(FPN_Sub(ctrl.realized_pnl, pnl_before));
+        double pnl = Money_ToDouble(Money_Sub(ctrl.realized_pnl, pnl_before));
         check("slippage sell: P&L reflects slippage", fabs(pnl - 7.90) < 0.2);
     }
 
@@ -1240,28 +1240,28 @@ static void test_slippage() {
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
         cfg.warmup_ticks = 0;
         cfg.poll_interval = 1000;
-        cfg.slippage_pct = FPN_Zero<FP>(); // disabled
+        cfg.slippage_pct = Money_Zero(); // disabled
 
         PortfolioController<FP> ctrl = {};
         PortfolioController_Init(&ctrl, cfg);
         ctrl.state = CONTROLLER_ACTIVE;
-        ctrl.buy_conds.price  = FPN_FromDouble<FP>(105.0);
-        ctrl.buy_conds.volume = FPN_FromDouble<FP>(1.0);
+        ctrl.buy_conds.price  = FPN_FromDouble<64>(105.0);
+        ctrl.buy_conds.volume = FPN_FromDouble<64>(1.0);
         ctrl.mean_rev.buy_conds_initial = ctrl.buy_conds;
 
         OrderPool<FP> pool;
         OrderPool_init(&pool, 64);
         TradeLog log; log.file = 0; log.trade_count = 0;
 
-        pool.slots[0].price    = FPN_FromDouble<FP>(100.0);
-        pool.slots[0].quantity = FPN_FromDouble<FP>(1.0);
+        pool.slots[0].price    = MQ(100.0);
+        pool.slots[0].quantity = MQ(1.0);
         pool.bitmap = 1;
 
-        PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(100.0),
-                                  FPN_FromDouble<FP>(1.0), &log);
+        PortfolioController_Tick(&ctrl, &pool, MQ(100.0),
+                                  MQ(1.0), &log);
 
         check("slippage disabled: position created", Portfolio_CountActive(&ctrl.portfolio) == 1);
-        double entry = FPN_ToDouble(ctrl.portfolio.positions[0].entry_price);
+        double entry = Money_ToDouble(ctrl.portfolio.positions[0].entry_price);
         check("slippage disabled: entry price exact", fabs(entry - 100.0) < 0.01);
         OrderPool_DestroyBacking(&pool);
     }
@@ -1284,8 +1284,8 @@ static void test_max_positions() {
         PortfolioController<FP> ctrl = {};
         PortfolioController_Init(&ctrl, cfg);
         ctrl.state = CONTROLLER_ACTIVE;
-        ctrl.buy_conds.price  = FPN_FromDouble<FP>(100.0);
-        ctrl.buy_conds.volume = FPN_FromDouble<FP>(400.0);
+        ctrl.buy_conds.price  = FPN_FromDouble<64>(100.0);
+        ctrl.buy_conds.volume = FPN_FromDouble<64>(400.0);
         ctrl.mean_rev.buy_conds_initial = ctrl.buy_conds;
 
         OrderPool<FP> pool;
@@ -1293,21 +1293,21 @@ static void test_max_positions() {
         TradeLog log; log.file = 0; log.trade_count = 0;
 
         // first fill should succeed
-        pool.slots[0].price = FPN_FromDouble<FP>(98.0);
-        pool.slots[0].quantity = FPN_FromDouble<FP>(500.0);
+        pool.slots[0].price = MQ(98.0);
+        pool.slots[0].quantity = MQ(500.0);
         pool.bitmap = 1;
 
-        PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(98.0),
-                                  FPN_FromDouble<FP>(500.0), &log);
+        PortfolioController_Tick(&ctrl, &pool, MQ(98.0),
+                                  MQ(500.0), &log);
         check("max_pos=1: first fill accepted", Portfolio_CountActive(&ctrl.portfolio) == 1);
 
         // second fill at different price should be rejected
-        pool.slots[1].price = FPN_FromDouble<FP>(110.0);
-        pool.slots[1].quantity = FPN_FromDouble<FP>(500.0);
+        pool.slots[1].price = MQ(110.0);
+        pool.slots[1].quantity = MQ(500.0);
         pool.bitmap |= (1ULL << 1);
 
-        PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(98.0),
-                                  FPN_FromDouble<FP>(500.0), &log);
+        PortfolioController_Tick(&ctrl, &pool, MQ(98.0),
+                                  MQ(500.0), &log);
         check("max_pos=1: second fill rejected", Portfolio_CountActive(&ctrl.portfolio) == 1);
         check("max_pos=1: pool slot 1 remains", (pool.bitmap & (1ULL << 1)) != 0);
 
@@ -1325,8 +1325,8 @@ static void test_max_positions() {
         PortfolioController<FP> ctrl = {};
         PortfolioController_Init(&ctrl, cfg);
         ctrl.state = CONTROLLER_ACTIVE;
-        ctrl.buy_conds.price  = FPN_FromDouble<FP>(100.0);
-        ctrl.buy_conds.volume = FPN_FromDouble<FP>(400.0);
+        ctrl.buy_conds.price  = FPN_FromDouble<64>(100.0);
+        ctrl.buy_conds.volume = FPN_FromDouble<64>(400.0);
         ctrl.mean_rev.buy_conds_initial = ctrl.buy_conds;
 
         OrderPool<FP> pool;
@@ -1334,23 +1334,23 @@ static void test_max_positions() {
         TradeLog log; log.file = 0; log.trade_count = 0;
 
         // two fills at different prices
-        pool.slots[0].price = FPN_FromDouble<FP>(98.0);
-        pool.slots[0].quantity = FPN_FromDouble<FP>(500.0);
-        pool.slots[1].price = FPN_FromDouble<FP>(80.0);
-        pool.slots[1].quantity = FPN_FromDouble<FP>(500.0);
+        pool.slots[0].price = MQ(98.0);
+        pool.slots[0].quantity = MQ(500.0);
+        pool.slots[1].price = MQ(80.0);
+        pool.slots[1].quantity = MQ(500.0);
         pool.bitmap = 3; // bits 0 and 1
 
-        PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(98.0),
-                                  FPN_FromDouble<FP>(500.0), &log);
+        PortfolioController_Tick(&ctrl, &pool, MQ(98.0),
+                                  MQ(500.0), &log);
         check("max_pos=2: two fills accepted", Portfolio_CountActive(&ctrl.portfolio) == 2);
 
         // third fill should be rejected
-        pool.slots[2].price = FPN_FromDouble<FP>(60.0);
-        pool.slots[2].quantity = FPN_FromDouble<FP>(500.0);
+        pool.slots[2].price = MQ(60.0);
+        pool.slots[2].quantity = MQ(500.0);
         pool.bitmap |= (1ULL << 2);
 
-        PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(98.0),
-                                  FPN_FromDouble<FP>(500.0), &log);
+        PortfolioController_Tick(&ctrl, &pool, MQ(98.0),
+                                  MQ(500.0), &log);
         check("max_pos=2: third fill rejected", Portfolio_CountActive(&ctrl.portfolio) == 2);
 
         OrderPool_DestroyBacking(&pool);
@@ -1452,16 +1452,16 @@ static void test_v5_15_5_F4b_cfg_field_dispatch() {
     // === T1: FPN_Binary<F> dispatch — KIND_DOUBLE_PCT roundtrip ===
     // .F.4c.3 — take_profit_pct now lives in FOREACH_PER_CORE_CFG_FIELD.
     {
-        FPN_Binary<64> dst = FPN_FromDouble<64>(0.0);
+        Money dst = MQ(0.0);
         tt::cfg_parse_field(dst, g_per_core_cfg_field_descriptors[FIELD_IDX_PER_CORE_take_profit_pct], "3.0");
-        double parsed = FPN_ToDouble(dst);
+        double parsed = Money_ToDouble(dst);
         check("v5.15.5.F.4b: KIND_DOUBLE_PCT parse '3.0' → 0.03 (PCT /100 scaling)",
               fabs(parsed - 0.03) < 1e-9);
     }
 
     // === T2: tt::cfg_save_field roundtrip — produces locale-independent output ===
     {
-        FPN_Binary<64> src = FPN_FromDouble<64>(0.0234);
+        Money src = MQ(0.0234);
         char buf[64] = {0};
         int n = tt::cfg_save_field(src, g_per_core_cfg_field_descriptors[FIELD_IDX_PER_CORE_take_profit_pct], buf, sizeof(buf));
         check("v5.15.5.F.4b: KIND_DOUBLE_PCT save returns positive char count", n > 0);
@@ -1475,7 +1475,7 @@ static void test_v5_15_5_F4b_cfg_field_dispatch() {
     {
         const char* prev_locale = setlocale(LC_NUMERIC, NULL);
         setlocale(LC_NUMERIC, "de_DE.UTF-8");  // German locale uses ',' decimal
-        FPN_Binary<64> src = FPN_FromDouble<64>(0.0234);
+        Money src = MQ(0.0234);
         char buf[64] = {0};
         tt::cfg_save_field(src, g_per_core_cfg_field_descriptors[FIELD_IDX_PER_CORE_take_profit_pct], buf, sizeof(buf));
         check("v5.15.5.F.4b: tt::cfg_save_field is locale-immune (de_DE → '2.34' not '2,34')",
@@ -1782,33 +1782,33 @@ int main() {
 
         // rolling max tracking
         RollingStats<FP> rs = RollingStats_Init<FP>();
-        FPN_Binary<FP> p = FPN_FromDouble<FP>(100.0);
+        Money p = MQ(100.0);
         for (int i = 0; i < 10; i++) {
-            FPN_Binary<FP> v = FPN_FromDouble<FP>(1.0 + i * 0.5); // volumes: 1.0, 1.5, 2.0, ..., 5.5
-            RollingStats_Push(&rs, p, v);
+            Money v = MQ(1.0 + i * 0.5); // volumes: 1.0, 1.5, 2.0, ..., 5.5
+            RollingStats_Push(&rs, Money_ToBinary(p), Money_ToBinary(v));
         }
         double vmax = FPN_ToDouble(rs.volume_max);
         check("rolling volume_max tracks max", fabs(vmax - 5.5) < 0.01);
 
         // spike ratio computation
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
-        cfg.spike_threshold = FPN_FromDouble<FP>(3.0); // 3x max triggers spike
-        cfg.spike_spacing_reduction = FPN_FromDouble<FP>(0.5);
+        cfg.spike_threshold = FPN_FromDouble<64>(3.0); // 3x max triggers spike
+        cfg.spike_spacing_reduction = FPN_FromDouble<64>(0.5);
 
         // ratio = current / max: 5.5 / 5.5 = 1.0 (not a spike)
-        FPN_Binary<FP> current_vol = FPN_FromDouble<FP>(5.5);
+        FPN_Binary<FP> current_vol = FPN_FromDouble<64>(5.5);
         FPN_Binary<FP> ratio = FPN_DivNoAssert(current_vol, rs.volume_max);
         int is_spike = FPN_GreaterThanOrEqual(ratio, cfg.spike_threshold);
         check("spike: 1x max is not a spike", !is_spike);
 
         // ratio = 20.0 / 5.5 = 3.6x (IS a spike)
-        FPN_Binary<FP> big_vol = FPN_FromDouble<FP>(20.0);
+        FPN_Binary<FP> big_vol = FPN_FromDouble<64>(20.0);
         FPN_Binary<FP> ratio2 = FPN_DivNoAssert(big_vol, rs.volume_max);
         int is_spike2 = FPN_GreaterThanOrEqual(ratio2, cfg.spike_threshold);
         check("spike: 3.6x max triggers spike", is_spike2);
 
         // spacing reduction: normal spacing vs spike spacing
-        FPN_Binary<FP> spacing = FPN_FromDouble<FP>(100.0);
+        FPN_Binary<FP> spacing = FPN_FromDouble<64>(100.0);
         FPN_Binary<FP> reduced = FPN_Mul(spacing, cfg.spike_spacing_reduction);
         double reduced_d = FPN_ToDouble(reduced);
         check("spike: spacing reduced to 50%", fabs(reduced_d - 50.0) < 0.01);
@@ -1836,9 +1836,9 @@ int main() {
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
         cfg.warmup_ticks = 10;
         cfg.poll_interval = 5;
-        cfg.starting_balance = FPN_FromDouble<FP>(10000.0);
-        cfg.momentum_tp_mult = FPN_FromDouble<FP>(3.0);
-        cfg.momentum_sl_mult = FPN_FromDouble<FP>(1.0);
+        cfg.starting_balance = MQ(10000.0);
+        cfg.momentum_tp_mult = FPN_FromDouble<64>(3.0);
+        cfg.momentum_sl_mult = FPN_FromDouble<64>(1.0);
 
         PortfolioController<FP> ctrl = {};
         PortfolioController_Init(&ctrl, cfg);
@@ -1848,9 +1848,9 @@ int main() {
         TradeLog log; log.file = 0; log.trade_count = 0;
 
         // warmup with stable price to build stats
-        FPN_Binary<FP> vol = FPN_FromDouble<FP>(1.0);
+        Money vol = MQ(1.0);
         for (uint64_t t = 0; t < 20; t++) {
-            FPN_Binary<FP> p = FPN_FromDouble<FP>(70000.0 + (t % 3) * 10.0);
+            Money p = MQ(70000.0 + (t % 3) * 10.0);
             PortfolioController_Tick(&ctrl, &pool, p, vol, &log);
         }
         check("momentum: warmup done", ctrl.state == CONTROLLER_ACTIVE);
@@ -1859,20 +1859,20 @@ int main() {
         ctrl.strategy_id = STRATEGY_MOMENTUM;
 
         // create a fill via pool
-        pool.slots[0].price    = FPN_FromDouble<FP>(70000.0);
-        pool.slots[0].quantity = FPN_FromDouble<FP>(0.01);
+        pool.slots[0].price    = MQ(70000.0);
+        pool.slots[0].quantity = MQ(0.01);
         pool.bitmap = 1;
 
         // tick to consume the fill
-        PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(70000.0), vol, &log);
+        PortfolioController_Tick(&ctrl, &pool, MQ(70000.0), vol, &log);
 
         int has_pos = Portfolio_CountActive(&ctrl.portfolio) > 0;
         check("momentum: position created", has_pos);
 
         if (has_pos) {
             int pidx = __builtin_ctz(ctrl.portfolio.active_bitmap);
-            double tp = FPN_ToDouble(ctrl.portfolio.positions[pidx].take_profit_price);
-            double sl = FPN_ToDouble(ctrl.portfolio.positions[pidx].stop_loss_price);
+            double tp = Money_ToDouble(ctrl.portfolio.positions[pidx].take_profit_price);
+            double sl = Money_ToDouble(ctrl.portfolio.positions[pidx].stop_loss_price);
             double entry = 70000.0;
 
             // TP should be reasonable (not 110k from ×100 bug)
@@ -1892,42 +1892,42 @@ int main() {
         printf("\n--- Regime Switch Position Adjustment ---\n");
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
         cfg.warmup_ticks = 10;
-        cfg.starting_balance = FPN_FromDouble<FP>(10000.0);
-        cfg.momentum_tp_mult = FPN_FromDouble<FP>(3.0);
-        cfg.momentum_sl_mult = FPN_FromDouble<FP>(1.0);
+        cfg.starting_balance = MQ(10000.0);
+        cfg.momentum_tp_mult = FPN_FromDouble<64>(3.0);
+        cfg.momentum_sl_mult = FPN_FromDouble<64>(1.0);
 
         PortfolioController<FP> ctrl = {};
         PortfolioController_Init(&ctrl, cfg);
 
         // build rolling stats with meaningful stddev
         for (int i = 0; i < 20; i++) {
-            RollingStats_Push(&ctrl.rolling, FPN_FromDouble<FP>(70000.0 + i * 5.0),
-                              FPN_FromDouble<FP>(1.0));
+            RollingStats_Push(&ctrl.rolling, FPN_FromDouble<64>(70000.0 + i * 5.0),
+                              FPN_FromDouble<64>(1.0));
         }
 
         // manually create a position under MR
         ctrl.state = CONTROLLER_ACTIVE;
         ctrl.strategy_id = STRATEGY_MEAN_REVERSION;
-        FPN_Binary<FP> entry_p = FPN_FromDouble<FP>(70000.0);
-        FPN_Binary<FP> qty = FPN_FromDouble<FP>(0.01);
+        Money entry_p = MQ(70000.0);
+        Money qty = MQ(0.01);
         Portfolio_AddPosition(&ctrl.portfolio, qty, entry_p);
         int pidx = __builtin_ctz(ctrl.portfolio.active_bitmap);
-        ctrl.portfolio.positions[pidx].take_profit_price = FPN_FromDouble<FP>(70500.0);
-        ctrl.portfolio.positions[pidx].stop_loss_price   = FPN_FromDouble<FP>(69500.0);
+        ctrl.portfolio.positions[pidx].take_profit_price = MQ(70500.0);
+        ctrl.portfolio.positions[pidx].stop_loss_price   = MQ(69500.0);
         ctrl.portfolio.positions[pidx].original_tp = ctrl.portfolio.positions[pidx].take_profit_price;
         ctrl.portfolio.positions[pidx].original_sl = ctrl.portfolio.positions[pidx].stop_loss_price;
         ctrl.entry_strategy[pidx] = STRATEGY_MEAN_REVERSION;
 
-        double tp_before = FPN_ToDouble(ctrl.portfolio.positions[pidx].take_profit_price);
-        double sl_before = FPN_ToDouble(ctrl.portfolio.positions[pidx].stop_loss_price);
+        double tp_before = Money_ToDouble(ctrl.portfolio.positions[pidx].take_profit_price);
+        double sl_before = Money_ToDouble(ctrl.portfolio.positions[pidx].stop_loss_price);
 
         // simulate RANGING → TRENDING regime switch
         Regime_AdjustPositions(&ctrl.portfolio, &ctrl.rolling,
                                 REGIME_RANGING, REGIME_TRENDING,
                                 ctrl.entry_strategy, &ctrl.config);
 
-        double tp_after = FPN_ToDouble(ctrl.portfolio.positions[pidx].take_profit_price);
-        double sl_after = FPN_ToDouble(ctrl.portfolio.positions[pidx].stop_loss_price);
+        double tp_after = Money_ToDouble(ctrl.portfolio.positions[pidx].take_profit_price);
+        double sl_after = Money_ToDouble(ctrl.portfolio.positions[pidx].stop_loss_price);
 
         // TP should widen (increase) or stay same
         check("regime switch: TP widened or unchanged", tp_after >= tp_before - 0.01);
@@ -1946,7 +1946,7 @@ int main() {
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
         cfg.warmup_ticks = 5;
         cfg.poll_interval = 1; // slow path every tick for test speed
-        cfg.starting_balance = FPN_FromDouble<FP>(10000.0);
+        cfg.starting_balance = MQ(10000.0);
         cfg.sl_cooldown_cycles = 3;
 
         PortfolioController<FP> ctrl = {};
@@ -1958,24 +1958,24 @@ int main() {
 
         // warmup
         for (uint64_t t = 0; t < 10; t++)
-            PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(100.0),
-                                      FPN_FromDouble<FP>(1.0), &log);
+            PortfolioController_Tick(&ctrl, &pool, MQ(100.0),
+                                      MQ(1.0), &log);
         check("cooldown: warmup done", ctrl.state == CONTROLLER_ACTIVE);
         check("cooldown: counter starts at 0", ctrl.sl_cooldown_counter == 0);
 
         // create a position and trigger SL exit
-        pool.slots[0].price    = FPN_FromDouble<FP>(100.0);
-        pool.slots[0].quantity = FPN_FromDouble<FP>(1.0);
+        pool.slots[0].price    = MQ(100.0);
+        pool.slots[0].quantity = MQ(1.0);
         pool.bitmap = 1;
-        PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(100.0),
-                                  FPN_FromDouble<FP>(1.0), &log);
+        PortfolioController_Tick(&ctrl, &pool, MQ(100.0),
+                                  MQ(1.0), &log);
         check("cooldown: position created", Portfolio_CountActive(&ctrl.portfolio) == 1);
 
         // drop price below SL to trigger exit
         // SL is ~98.5 (entry 100, 1.5% SL), price at 50 is well below
         // PositionExitGate runs on hot path, exit buffer drained on slow path
-        FPN_Binary<FP> drop_price = FPN_FromDouble<FP>(50.0);
-        FPN_Binary<FP> drop_vol = FPN_FromDouble<FP>(1.0);
+        Money drop_price = MQ(50.0);
+        Money drop_vol = MQ(1.0);
 
         // one tick: exit gate detects SL, controller drains it + sets cooldown
         PositionExitGate(&ctrl.portfolio, drop_price, &ctrl.exit_buf, 100);
@@ -2015,15 +2015,15 @@ int main() {
 
         // fill all 16 positions
         for (int i = 0; i < 16; i++) {
-            port.positions[i].quantity = FPN_FromDouble<FP>(1.0);
-            port.positions[i].entry_price = FPN_FromDouble<FP>(100.0);
-            port.positions[i].take_profit_price = FPN_FromDouble<FP>(101.0);
-            port.positions[i].stop_loss_price = FPN_FromDouble<FP>(90.0);
+            port.positions[i].quantity = MQ(1.0);
+            port.positions[i].entry_price = MQ(100.0);
+            port.positions[i].take_profit_price = MQ(101.0);
+            port.positions[i].stop_loss_price = MQ(90.0);
             port.active_bitmap |= (1 << i);
         }
 
         // trigger all 16 exits at once (price below all SLs)
-        FPN_Binary<FP> crash_price = FPN_FromDouble<FP>(50.0);
+        Money crash_price = MQ(50.0);
         PositionExitGate(&port, crash_price, &ebuf, 1);
         check("exit_buf: count capped at 16", ebuf.count <= 16);
         check("exit_buf: all positions exited", port.active_bitmap == 0);
@@ -2039,7 +2039,7 @@ int main() {
 
         // manually inject a bad exit record with out-of-bounds index
         ctrl.exit_buf.records[0].position_index = 99; // way out of bounds
-        ctrl.exit_buf.records[0].exit_price = FPN_FromDouble<FP>(100.0);
+        ctrl.exit_buf.records[0].exit_price = MQ(100.0);
         ctrl.exit_buf.records[0].tick = 1;
         ctrl.exit_buf.records[0].reason = 0;
         ctrl.exit_buf.count = 1;
@@ -2059,15 +2059,15 @@ int main() {
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
         cfg.warmup_ticks = 0;
         cfg.poll_interval = 5;
-        cfg.starting_balance = FPN_FromDouble<FP>(10000.0);
+        cfg.starting_balance = MQ(10000.0);
         cfg.max_positions = 1;
         cfg.spacing_multiplier = FPN_Zero<FP>();
 
         PortfolioController<FP> ctrl = {};
         PortfolioController_Init(&ctrl, cfg);
         ctrl.state = CONTROLLER_ACTIVE;
-        ctrl.buy_conds.price = FPN_FromDouble<FP>(100.0);
-        ctrl.buy_conds.volume = FPN_FromDouble<FP>(400.0);
+        ctrl.buy_conds.price = FPN_FromDouble<64>(100.0);
+        ctrl.buy_conds.volume = FPN_FromDouble<64>(400.0);
         ctrl.mean_rev.buy_conds_initial = ctrl.buy_conds;
 
         OrderPool<FP> pool;
@@ -2076,36 +2076,36 @@ int main() {
 
         // warmup
         for (uint64_t t = 0; t < 10; t++)
-            PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(100.0),
-                                      FPN_FromDouble<FP>(1.0), &log);
+            PortfolioController_Tick(&ctrl, &pool, MQ(100.0),
+                                      MQ(1.0), &log);
 
         // create position
-        pool.slots[0].price = FPN_FromDouble<FP>(98.0);
-        pool.slots[0].quantity = FPN_FromDouble<FP>(500.0);
+        pool.slots[0].price = MQ(98.0);
+        pool.slots[0].quantity = MQ(500.0);
         pool.bitmap = 1;
-        PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(98.0),
-                                  FPN_FromDouble<FP>(500.0), &log);
+        PortfolioController_Tick(&ctrl, &pool, MQ(98.0),
+                                  MQ(500.0), &log);
         check("same_tick: position created", Portfolio_CountActive(&ctrl.portfolio) == 1);
 
         // exit via SL
-        PositionExitGate(&ctrl.portfolio, FPN_FromDouble<FP>(50.0), &ctrl.exit_buf, 100);
+        PositionExitGate(&ctrl.portfolio, MQ(50.0), &ctrl.exit_buf, 100);
         check("same_tick: exit buffered", ctrl.exit_buf.count > 0);
 
         // new fill available in pool
-        pool.slots[1].price = FPN_FromDouble<FP>(98.0);
-        pool.slots[1].quantity = FPN_FromDouble<FP>(500.0);
+        pool.slots[1].price = MQ(98.0);
+        pool.slots[1].quantity = MQ(500.0);
         pool.bitmap |= (1ULL << 1);
 
         // tick processes both exit drain and new fill
-        PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(98.0),
-                                  FPN_FromDouble<FP>(500.0), &log);
+        PortfolioController_Tick(&ctrl, &pool, MQ(98.0),
+                                  MQ(500.0), &log);
         // exit was drained, new fill may or may not be accepted depending on
         // timing within the tick — but it must not crash
         check("same_tick: no crash on exit+fill same tick", 1);
         // drain exits until loss is counted (may need a slow-path tick)
         for (int t = 0; t < 10; t++)
-            PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(98.0),
-                                      FPN_FromDouble<FP>(500.0), &log);
+            PortfolioController_Tick(&ctrl, &pool, MQ(98.0),
+                                      MQ(500.0), &log);
         check("same_tick: losses counted", ctrl.losses > 0);
 
         OrderPool_DestroyBacking(&pool);
@@ -2128,24 +2128,24 @@ int main() {
     {
         printf("\n--- Regime Adjust: TRENDING_DOWN TP/SL ---\n");
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
-        cfg.momentum_tp_mult = FPN_FromDouble<FP>(3.0);
-        cfg.momentum_sl_mult = FPN_FromDouble<FP>(1.0);
-        cfg.take_profit_pct  = FPN_FromDouble<FP>(0.04); // 4% → ×100 = 4.0σ (MR style)
+        cfg.momentum_tp_mult = FPN_FromDouble<64>(3.0);
+        cfg.momentum_sl_mult = FPN_FromDouble<64>(1.0);
+        cfg.take_profit_pct  = MQ(0.04); // 4% → ×100 = 4.0σ (MR style)
 
         PortfolioController<FP> ctrl = {};
         PortfolioController_Init(&ctrl, cfg);
 
         // set up rolling stats with known stddev
-        ctrl.rolling.price_stddev = FPN_FromDouble<FP>(100.0); // $100 stddev
-        ctrl.rolling.price_avg    = FPN_FromDouble<FP>(70000.0);
+        ctrl.rolling.price_stddev = FPN_FromDouble<64>(100.0); // $100 stddev
+        ctrl.rolling.price_avg    = FPN_FromDouble<64>(70000.0);
 
         // add momentum position: entry $70000, TP $70500, SL $69500
-        FPN_Binary<FP> entry = FPN_FromDouble<FP>(70000.0);
-        FPN_Binary<FP> qty   = FPN_FromDouble<FP>(0.01);
+        Money entry = MQ(70000.0);
+        Money qty   = MQ(0.01);
         Portfolio_AddPosition(&ctrl.portfolio, qty, entry);
         int pidx = __builtin_ctz(ctrl.portfolio.active_bitmap);
-        ctrl.portfolio.positions[pidx].take_profit_price = FPN_FromDouble<FP>(70500.0);
-        ctrl.portfolio.positions[pidx].stop_loss_price   = FPN_FromDouble<FP>(69500.0);
+        ctrl.portfolio.positions[pidx].take_profit_price = MQ(70500.0);
+        ctrl.portfolio.positions[pidx].stop_loss_price   = MQ(69500.0);
         ctrl.entry_strategy[pidx] = STRATEGY_MOMENTUM;
 
         // simulate TRENDING → TRENDING_DOWN
@@ -2153,8 +2153,8 @@ int main() {
                                 REGIME_TRENDING, REGIME_TRENDING_DOWN,
                                 ctrl.entry_strategy, &ctrl.config);
 
-        double tp_after = FPN_ToDouble(ctrl.portfolio.positions[pidx].take_profit_price);
-        double sl_after = FPN_ToDouble(ctrl.portfolio.positions[pidx].stop_loss_price);
+        double tp_after = Money_ToDouble(ctrl.portfolio.positions[pidx].take_profit_price);
+        double sl_after = Money_ToDouble(ctrl.portfolio.positions[pidx].stop_loss_price);
         double entry_d  = 70000.0;
 
         // TP should use momentum_tp_mult (3.0 × $100 = $300 offset → $70300)
@@ -2190,27 +2190,27 @@ int main() {
 
         // set stddev to ZERO (flat market)
         ctrl.rolling.price_stddev = FPN_Zero<FP>();
-        ctrl.rolling.price_avg    = FPN_FromDouble<FP>(70000.0);
+        ctrl.rolling.price_avg    = FPN_FromDouble<64>(70000.0);
 
         // add position with known TP/SL
-        FPN_Binary<FP> entry = FPN_FromDouble<FP>(70000.0);
-        FPN_Binary<FP> qty   = FPN_FromDouble<FP>(0.01);
+        Money entry = MQ(70000.0);
+        Money qty   = MQ(0.01);
         Portfolio_AddPosition(&ctrl.portfolio, qty, entry);
         int pidx = __builtin_ctz(ctrl.portfolio.active_bitmap);
-        ctrl.portfolio.positions[pidx].take_profit_price = FPN_FromDouble<FP>(70500.0);
-        ctrl.portfolio.positions[pidx].stop_loss_price   = FPN_FromDouble<FP>(69500.0);
+        ctrl.portfolio.positions[pidx].take_profit_price = MQ(70500.0);
+        ctrl.portfolio.positions[pidx].stop_loss_price   = MQ(69500.0);
         ctrl.entry_strategy[pidx] = STRATEGY_MOMENTUM;
 
-        double tp_before = FPN_ToDouble(ctrl.portfolio.positions[pidx].take_profit_price);
-        double sl_before = FPN_ToDouble(ctrl.portfolio.positions[pidx].stop_loss_price);
+        double tp_before = Money_ToDouble(ctrl.portfolio.positions[pidx].take_profit_price);
+        double sl_before = Money_ToDouble(ctrl.portfolio.positions[pidx].stop_loss_price);
 
         // attempt regime adjustment — should early-return, positions untouched
         Regime_AdjustPositions(&ctrl.portfolio, &ctrl.rolling,
                                 REGIME_TRENDING, REGIME_TRENDING_DOWN,
                                 ctrl.entry_strategy, &ctrl.config);
 
-        double tp_after = FPN_ToDouble(ctrl.portfolio.positions[pidx].take_profit_price);
-        double sl_after = FPN_ToDouble(ctrl.portfolio.positions[pidx].stop_loss_price);
+        double tp_after = Money_ToDouble(ctrl.portfolio.positions[pidx].take_profit_price);
+        double sl_after = Money_ToDouble(ctrl.portfolio.positions[pidx].stop_loss_price);
 
         check("stddev=0: TP unchanged", fabs(tp_after - tp_before) < 0.01);
         check("stddev=0: SL unchanged", fabs(sl_after - sl_before) < 0.01);
@@ -2224,15 +2224,15 @@ int main() {
     {
         printf("\n--- Regime Adjust: SL floor all paths ---\n");
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
-        cfg.momentum_tp_mult = FPN_FromDouble<FP>(3.0);
-        cfg.momentum_sl_mult = FPN_FromDouble<FP>(1.0);
-        cfg.take_profit_pct  = FPN_FromDouble<FP>(0.04);
-        cfg.stop_loss_pct    = FPN_FromDouble<FP>(0.04);
+        cfg.momentum_tp_mult = FPN_FromDouble<64>(3.0);
+        cfg.momentum_sl_mult = FPN_FromDouble<64>(1.0);
+        cfg.take_profit_pct  = MQ(0.04);
+        cfg.stop_loss_pct    = MQ(0.04);
 
         PortfolioController<FP> ctrl = {};
         PortfolioController_Init(&ctrl, cfg);
-        ctrl.rolling.price_stddev = FPN_FromDouble<FP>(100.0);
-        ctrl.rolling.price_avg    = FPN_FromDouble<FP>(70000.0);
+        ctrl.rolling.price_stddev = FPN_FromDouble<64>(100.0);
+        ctrl.rolling.price_avg    = FPN_FromDouble<64>(70000.0);
 
         // test each regime transition path
         int transitions[][2] = {
@@ -2257,20 +2257,20 @@ int main() {
         for (int t = 0; t < 4; t++) {
             // reset position each time
             ctrl.portfolio.active_bitmap = 0;
-            FPN_Binary<FP> entry = FPN_FromDouble<FP>(70000.0);
-            FPN_Binary<FP> qty   = FPN_FromDouble<FP>(0.01);
+            Money entry = MQ(70000.0);
+            Money qty   = MQ(0.01);
             Portfolio_AddPosition(&ctrl.portfolio, qty, entry);
             int pidx = __builtin_ctz(ctrl.portfolio.active_bitmap);
-            ctrl.portfolio.positions[pidx].take_profit_price = FPN_FromDouble<FP>(70500.0);
-            ctrl.portfolio.positions[pidx].stop_loss_price   = FPN_FromDouble<FP>(69500.0);
+            ctrl.portfolio.positions[pidx].take_profit_price = MQ(70500.0);
+            ctrl.portfolio.positions[pidx].stop_loss_price   = MQ(69500.0);
             ctrl.entry_strategy[pidx] = strategies[t];
 
             Regime_AdjustPositions(&ctrl.portfolio, &ctrl.rolling,
                                     transitions[t][0], transitions[t][1],
                                     ctrl.entry_strategy, &ctrl.config);
 
-            double tp_a = FPN_ToDouble(ctrl.portfolio.positions[pidx].take_profit_price);
-            double sl_a = FPN_ToDouble(ctrl.portfolio.positions[pidx].stop_loss_price);
+            double tp_a = Money_ToDouble(ctrl.portfolio.positions[pidx].take_profit_price);
+            double sl_a = Money_ToDouble(ctrl.portfolio.positions[pidx].stop_loss_price);
             double entry_d = 70000.0;
             double tp_dist = tp_a - entry_d;
             double sl_dist = entry_d - sl_a;
@@ -2340,8 +2340,8 @@ int main() {
         RollingStats<FP> rolling;
         memset(&rolling, 0, sizeof(rolling));
 
-        FPN_Binary<FP> entry = FPN_FromDouble<FP>(70000.0);
-        FPN_Binary<FP> stddev = FPN_FromDouble<FP>(50.0);
+        Money entry = MQ(70000.0);
+        FPN_Binary<FP> stddev = FPN_FromDouble<64>(50.0);
         rolling.price_stddev = stddev;
 
         // transitions to test
@@ -2365,10 +2365,10 @@ int main() {
 
         for (int t = 0; t < 5; t++) {
             Portfolio_Init(&portfolio);
-            FPN_Binary<FP> tp = FPN_AddSat(entry, FPN_FromDouble<FP>(300.0));
-            FPN_Binary<FP> sl = FPN_SubSat(entry, FPN_FromDouble<FP>(150.0));
-            FPN_Binary<FP> qty = FPN_FromDouble<FP>(0.01);
-            int slot = Portfolio_AddPositionWithExits(&portfolio, qty, entry, tp, sl, FPN_Zero<FP>());
+            Money tp = Money_Add(entry, MQ(300.0));
+            Money sl = Money_Sub(entry, MQ(150.0));
+            Money qty = MQ(0.01);
+            int slot = Portfolio_AddPositionWithExits(&portfolio, qty, entry, tp, sl, Money_Zero());
 
             uint8_t entry_strat[16] = {};
             entry_strat[slot] = (uint8_t)strategies[t];
@@ -2377,9 +2377,9 @@ int main() {
                                    transitions[t][0], transitions[t][1],
                                    entry_strat, &cfg);
 
-            double tp_a = FPN_ToDouble(portfolio.positions[slot].take_profit_price);
-            double sl_a = FPN_ToDouble(portfolio.positions[slot].stop_loss_price);
-            double entry_d = FPN_ToDouble(entry);
+            double tp_a = Money_ToDouble(portfolio.positions[slot].take_profit_price);
+            double sl_a = Money_ToDouble(portfolio.positions[slot].stop_loss_price);
+            double entry_d = Money_ToDouble(entry);
             double tp_dist = tp_a - entry_d;
             double sl_dist = entry_d - sl_a;
 
@@ -2416,12 +2416,12 @@ int main() {
 
         // test danger score math: simulate precomputed thresholds
         // avg=100, stddev=10 → warn=70 (3σ below), crash=40 (6σ below)
-        FPN_Binary<FP> avg = FPN_FromDouble<FP>(100.0);
-        FPN_Binary<FP> sd = FPN_FromDouble<FP>(10.0);
+        FPN_Binary<FP> avg = FPN_FromDouble<64>(100.0);
+        FPN_Binary<FP> sd = FPN_FromDouble<64>(10.0);
         FPN_Binary<FP> warn = FPN_SubSat(avg, FPN_Mul(sd, cfg.danger_warn_stddevs));  // 100-30=70
         FPN_Binary<FP> crash = FPN_SubSat(avg, FPN_Mul(sd, cfg.danger_crash_stddevs)); // 100-60=40
         FPN_Binary<FP> range = FPN_SubSat(warn, crash);  // 70-40=30
-        FPN_Binary<FP> range_inv = FPN_DivNoAssert(FPN_FromDouble<FP>(1.0), range);
+        FPN_Binary<FP> range_inv = FPN_DivNoAssert(FPN_FromDouble<64>(1.0), range);
 
         check("danger: warn threshold ~70.0",
               fabs(FPN_ToDouble(warn) - 70.0) < 0.01);
@@ -2430,11 +2430,11 @@ int main() {
 
         // price at 100 (safe): score should be 0
         {
-            FPN_Binary<FP> price = FPN_FromDouble<FP>(100.0);
+            FPN_Binary<FP> price = FPN_FromDouble<64>(100.0);
             FPN_Binary<FP> depth = FPN_SubSat(warn, price); // 70 - 100 = 0 (saturated)
             FPN_Binary<FP> raw = FPN_Mul(depth, range_inv);
             FPN_Binary<FP> zero = FPN_Zero<FP>();
-            FPN_Binary<FP> one = FPN_FromDouble<FP>(1.0);
+            FPN_Binary<FP> one = FPN_FromDouble<64>(1.0);
             FPN_Binary<FP> score = FPN_Min(FPN_Max(raw, zero), one);
             check("danger: price=100 (safe) → score=0",
                   FPN_ToDouble(score) < 0.01);
@@ -2442,11 +2442,11 @@ int main() {
 
         // price at 55 (in danger zone, halfway): score should be ~0.5
         {
-            FPN_Binary<FP> price = FPN_FromDouble<FP>(55.0);
+            FPN_Binary<FP> price = FPN_FromDouble<64>(55.0);
             FPN_Binary<FP> depth = FPN_SubSat(warn, price); // 70 - 55 = 15
             FPN_Binary<FP> raw = FPN_Mul(depth, range_inv); // 15/30 = 0.5
             FPN_Binary<FP> zero = FPN_Zero<FP>();
-            FPN_Binary<FP> one = FPN_FromDouble<FP>(1.0);
+            FPN_Binary<FP> one = FPN_FromDouble<64>(1.0);
             FPN_Binary<FP> score = FPN_Min(FPN_Max(raw, zero), one);
             double sv = FPN_ToDouble(score);
             check("danger: price=55 (mid-zone) → score~0.5",
@@ -2455,11 +2455,11 @@ int main() {
 
         // price at 30 (below crash): score should be clamped to 1.0
         {
-            FPN_Binary<FP> price = FPN_FromDouble<FP>(30.0);
+            FPN_Binary<FP> price = FPN_FromDouble<64>(30.0);
             FPN_Binary<FP> depth = FPN_SubSat(warn, price); // 70 - 30 = 40
             FPN_Binary<FP> raw = FPN_Mul(depth, range_inv); // 40/30 = 1.33
             FPN_Binary<FP> zero = FPN_Zero<FP>();
-            FPN_Binary<FP> one = FPN_FromDouble<FP>(1.0);
+            FPN_Binary<FP> one = FPN_FromDouble<64>(1.0);
             FPN_Binary<FP> score = FPN_Min(FPN_Max(raw, zero), one);
             check("danger: price=30 (crash) → score=1.0",
                   fabs(FPN_ToDouble(score) - 1.0) < 0.01);
@@ -2467,10 +2467,10 @@ int main() {
 
         // gate scaling: score=0.5 should halve the gate price
         {
-            FPN_Binary<FP> gate = FPN_FromDouble<FP>(68000.0);
-            FPN_Binary<FP> score = FPN_FromDouble<FP>(0.5);
-            FPN_Binary<FP> one = FPN_FromDouble<FP>(1.0);
-            FPN_Binary<FP> scale = FPN_SubSat(one, score); // 0.5
+            FPN_Binary<FP> gate = FPN_FromDouble<64>(68000.0);
+            FPN_Binary<FP> score = FPN_FromDouble<64>(0.5);
+            FPN_Binary<FP> one = FPN_FromDouble<64>(1.0);
+            FPN_Binary<FP> scale = FPN_Sub(one, score); // 0.5
             FPN_Binary<FP> scaled_gate = FPN_Mul(gate, scale);
             check("danger: gate scaling at score=0.5 → ~$34000",
                   fabs(FPN_ToDouble(scaled_gate) - 34000.0) < 1.0);
@@ -2478,9 +2478,9 @@ int main() {
 
         // gate scaling: score=1.0 should zero the gate
         {
-            FPN_Binary<FP> gate = FPN_FromDouble<FP>(68000.0);
-            FPN_Binary<FP> one = FPN_FromDouble<FP>(1.0);
-            FPN_Binary<FP> scale = FPN_SubSat(one, one); // 0
+            FPN_Binary<FP> gate = FPN_FromDouble<64>(68000.0);
+            FPN_Binary<FP> one = FPN_FromDouble<64>(1.0);
+            FPN_Binary<FP> scale = FPN_Sub(one, one); // 0
             FPN_Binary<FP> scaled_gate = FPN_Mul(gate, scale);
             check("danger: gate scaling at score=1.0 → $0",
                   FPN_ToDouble(scaled_gate) < 0.01);
@@ -2494,21 +2494,21 @@ int main() {
     {
         // verify offset capture: if EMA=68000 and gate_price=67950 (dir=0, buy below)
         // offset should be 50 (distance from EMA to gate)
-        FPN_Binary<FP> ema = FPN_FromDouble<FP>(68000.0);
-        FPN_Binary<FP> gate_price = FPN_FromDouble<FP>(67950.0);
-        FPN_Binary<FP> offset = FPN_SubSat(ema, gate_price); // 50
+        FPN_Binary<FP> ema = FPN_FromDouble<64>(68000.0);
+        FPN_Binary<FP> gate_price = FPN_FromDouble<64>(67950.0);
+        FPN_Binary<FP> offset = FPN_Sub(ema, gate_price); // 50
         check("gate offset: EMA=68000, gate=67950 → offset=50",
               fabs(FPN_ToDouble(offset) - 50.0) < 0.01);
 
         // verify live gate recompute: if EMA rises to 68500, gate should be 68450
-        FPN_Binary<FP> new_ema = FPN_FromDouble<FP>(68500.0);
+        FPN_Binary<FP> new_ema = FPN_FromDouble<64>(68500.0);
         FPN_Binary<FP> live_gate = FPN_SubSat(new_ema, offset);
         check("gate offset: EMA rises to 68500 → gate=68450",
               fabs(FPN_ToDouble(live_gate) - 68450.0) < 0.01);
 
         // verify momentum direction (dir=1, buy above)
-        FPN_Binary<FP> mom_gate = FPN_FromDouble<FP>(68100.0);
-        FPN_Binary<FP> mom_offset = FPN_SubSat(mom_gate, ema); // 100
+        FPN_Binary<FP> mom_gate = FPN_FromDouble<64>(68100.0);
+        FPN_Binary<FP> mom_offset = FPN_Sub(mom_gate, ema); // 100
         FPN_Binary<FP> mom_live = FPN_AddSat(new_ema, mom_offset); // 68600
         check("gate offset: momentum dir=1, EMA rises → gate=68600",
               fabs(FPN_ToDouble(mom_live) - 68600.0) < 0.01);
@@ -2548,8 +2548,8 @@ int main() {
         cfg.poll_interval = 1;
         cfg.min_warmup_samples = 10;
         BITMAP_SET(cfg.risk_cfg_flags, MASK_RISK_CFG_KILL_SWITCH_ENABLED);
-        cfg.kill_switch_daily_loss_pct = FPN_FromDouble<FP>(0.03); // 3%
-        cfg.kill_switch_drawdown_pct = FPN_FromDouble<FP>(0.05);   // 5%
+        cfg.kill_switch_daily_loss_pct = MQ(0.03); // 3%
+        cfg.kill_switch_drawdown_pct = MQ(0.05);   // 5%
 
         PortfolioController<FP> ctrl = {};
         PortfolioController_Init(&ctrl, cfg);
@@ -2562,12 +2562,12 @@ int main() {
         // 1. halt enforcement clears gate_offset and buy_conds
         // use kill_switch_active to create a real halt condition
         ctrl.kill_switch_active = 1;
-        ctrl.gate_offset = FPN_FromDouble<FP>(5.0);
-        ctrl.buy_conds.price = FPN_FromDouble<FP>(95.0);
-        ctrl.buy_conds.volume = FPN_FromDouble<FP>(100.0);
-        ctrl.ema_price = FPN_FromDouble<FP>(100.0); // needed for gate tracking
-        PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(100.0),
-                                  FPN_FromDouble<FP>(500.0), &log);
+        ctrl.gate_offset = FPN_FromDouble<64>(5.0);
+        ctrl.buy_conds.price = FPN_FromDouble<64>(95.0);
+        ctrl.buy_conds.volume = FPN_FromDouble<64>(100.0);
+        ctrl.ema_price = FPN_FromDouble<64>(100.0); // needed for gate tracking
+        PortfolioController_Tick(&ctrl, &pool, MQ(100.0),
+                                  MQ(500.0), &log);
         check("halt enforcement: buy_conds.price zeroed",
               FPN_IsZero(ctrl.buy_conds.price));
         check("halt enforcement: buy_conds.volume zeroed",
@@ -2576,9 +2576,9 @@ int main() {
               FPN_IsZero(ctrl.gate_offset));
 
         // 2. halt persists across multiple ticks (gate tracking can't resurrect)
-        ctrl.gate_offset = FPN_FromDouble<FP>(3.0); // try to set it again
-        PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(100.0),
-                                  FPN_FromDouble<FP>(500.0), &log);
+        ctrl.gate_offset = FPN_FromDouble<64>(3.0); // try to set it again
+        PortfolioController_Tick(&ctrl, &pool, MQ(100.0),
+                                  MQ(500.0), &log);
         check("halt persists: gate_offset re-zeroed on next tick",
               FPN_IsZero(ctrl.gate_offset));
         check("halt persists: buy_conds.price still zero",
@@ -2589,19 +2589,19 @@ int main() {
         PortfolioController<FP> ctrl2 = {};
         PortfolioController_Init(&ctrl2, cfg);
         test_warmup_ctrl(&ctrl2, &pool, &log, 100.0, 500.0);
-        ctrl2.session_start_equity = FPN_FromDouble<FP>(10000.0);
-        ctrl2.peak_equity = FPN_FromDouble<FP>(10000.0);
+        ctrl2.session_start_equity = MQ(10000.0);
+        ctrl2.peak_equity = MQ(10000.0);
         // manually place a position at 100, then crash price to 50
-        Portfolio_AddPositionWithExits(&ctrl2.portfolio, FPN_FromDouble<FP>(1.0),
-            FPN_FromDouble<FP>(100.0), FPN_FromDouble<FP>(110.0),
-            FPN_FromDouble<FP>(90.0));
-        ctrl2.balance = FPN_FromDouble<FP>(9900.0); // $100 deducted for the position
+        Portfolio_AddPositionWithExits(&ctrl2.portfolio, MQ(1.0),
+            MQ(100.0), MQ(110.0),
+            MQ(90.0));
+        ctrl2.balance = MQ(9900.0); // $100 deducted for the position
         // crash to 50: position value = 50, equity = 9900+50 = 9950, daily return = -0.5%
         // not enough for 3% kill, let's use a bigger crash
-        ctrl2.balance = FPN_FromDouble<FP>(9000.0); // simulate earlier losses
+        ctrl2.balance = MQ(9000.0); // simulate earlier losses
         // equity = 9000 + 50 = 9050, return = (9050-10000)/10000 = -9.5% > 3% limit
-        PortfolioController_Tick(&ctrl2, &pool, FPN_FromDouble<FP>(50.0),
-                                  FPN_FromDouble<FP>(500.0), &log);
+        PortfolioController_Tick(&ctrl2, &pool, MQ(50.0),
+                                  MQ(500.0), &log);
         check("hot-path kill: kill_switch_active set on equity crash",
               ctrl2.kill_switch_active == 1);
         check("hot-path kill: buying_halted set",
@@ -2613,15 +2613,15 @@ int main() {
         PortfolioController<FP> ctrl3 = {};
         PortfolioController_Init(&ctrl3, cfg);
         test_warmup_ctrl(&ctrl3, &pool, &log, 100.0, 500.0);
-        ctrl3.session_start_equity = FPN_FromDouble<FP>(10000.0);
-        ctrl3.peak_equity = FPN_FromDouble<FP>(12000.0);  // was at 12k, now crashed
-        ctrl3.balance = FPN_FromDouble<FP>(10000.0);
+        ctrl3.session_start_equity = MQ(10000.0);
+        ctrl3.peak_equity = MQ(12000.0);  // was at 12k, now crashed
+        ctrl3.balance = MQ(10000.0);
         // position worth 100, equity = 10100, dd = (12000-10100)/12000 = 15.8% > 5% limit
-        Portfolio_AddPositionWithExits(&ctrl3.portfolio, FPN_FromDouble<FP>(1.0),
-            FPN_FromDouble<FP>(100.0), FPN_FromDouble<FP>(110.0),
-            FPN_FromDouble<FP>(90.0));
-        PortfolioController_Tick(&ctrl3, &pool, FPN_FromDouble<FP>(100.0),
-                                  FPN_FromDouble<FP>(500.0), &log);
+        Portfolio_AddPositionWithExits(&ctrl3.portfolio, MQ(1.0),
+            MQ(100.0), MQ(110.0),
+            MQ(90.0));
+        PortfolioController_Tick(&ctrl3, &pool, MQ(100.0),
+                                  MQ(500.0), &log);
         check("hot-path kill: drawdown triggers kill switch",
               ctrl3.kill_switch_active == 1);
         check("hot-path kill: drawdown kill_reason is 2",
@@ -2651,8 +2651,8 @@ int main() {
         ctrl5.regime.current_regime = REGIME_VOLATILE;
         // run a slow-path tick to trigger centralized halt
         ctrl5.tick_count = ctrl5.config.poll_interval; // force slow path
-        PortfolioController_Tick(&ctrl5, &pool, FPN_FromDouble<FP>(100.0),
-                                  FPN_FromDouble<FP>(500.0), &log);
+        PortfolioController_Tick(&ctrl5, &pool, MQ(100.0),
+                                  MQ(500.0), &log);
         check("volatile halt: buying_halted set",
               ctrl5.buying_halted == 1);
         check("volatile halt: halt_reason is 3 (volatile)",
@@ -2661,8 +2661,8 @@ int main() {
         // 7. SL cooldown decrements independently during volatile
         ctrl5.sl_cooldown_counter = 5;
         ctrl5.tick_count = ctrl5.config.poll_interval;
-        PortfolioController_Tick(&ctrl5, &pool, FPN_FromDouble<FP>(100.0),
-                                  FPN_FromDouble<FP>(500.0), &log);
+        PortfolioController_Tick(&ctrl5, &pool, MQ(100.0),
+                                  MQ(500.0), &log);
         check("cooldown decrement: counter decremented during volatile",
               ctrl5.sl_cooldown_counter == 4);
         check("cooldown decrement: halt_reason still volatile (higher priority)",
@@ -2674,10 +2674,10 @@ int main() {
             small_cfg.warmup_ticks = 10;
             small_cfg.poll_interval = 1;
             small_cfg.min_warmup_samples = 10;
-            small_cfg.starting_balance = FPN_FromDouble<FP>(10000.0);
+            small_cfg.starting_balance = MQ(10000.0);
             BITMAP_SET(small_cfg.risk_cfg_flags, MASK_RISK_CFG_KILL_SWITCH_ENABLED);
-            small_cfg.kill_switch_daily_loss_pct = FPN_FromDouble<FP>(0.03);  // 3%
-            small_cfg.kill_switch_drawdown_pct = FPN_FromDouble<FP>(0.05);    // 5%
+            small_cfg.kill_switch_daily_loss_pct = MQ(0.03);  // 3%
+            small_cfg.kill_switch_drawdown_pct = MQ(0.05);    // 5%
             small_cfg.max_positions = 1;
 
             PortfolioController<FP> sk = {};
@@ -2689,17 +2689,17 @@ int main() {
             test_warmup_ctrl(&sk, &sp, &sl, 66000.0, 500.0);
 
             // simulate a small loss: balance drops by $6.75 (0.07%)
-            sk.session_start_equity = FPN_FromDouble<FP>(10000.0);
-            sk.peak_equity = FPN_FromDouble<FP>(10000.0);
-            sk.balance = FPN_FromDouble<FP>(9993.25);  // $6.75 loss
+            sk.session_start_equity = MQ(10000.0);
+            sk.peak_equity = MQ(10000.0);
+            sk.balance = MQ(9993.25);  // $6.75 loss
             // no open positions — equity = balance = $9993.25
             // daily loss: (10000 - 9993.25) / 10000 = 0.07% — below 3% threshold
             // drawdown: (10000 - 9993.25) / 10000 = 0.07% — below 5% threshold
 
             // run enough ticks to hit the kill check (every 16th tick)
             for (int i = 0; i < 32; i++) {
-                PortfolioController_Tick(&sk, &sp, FPN_FromDouble<FP>(66000.0),
-                                          FPN_FromDouble<FP>(500.0), &sl);
+                PortfolioController_Tick(&sk, &sp, MQ(66000.0),
+                                          MQ(500.0), &sl);
             }
             check("small loss: kill switch should NOT fire on $6.75 loss (0.07%)",
                   sk.kill_switch_active == 0);
@@ -2707,8 +2707,8 @@ int main() {
                   sk.buying_halted == 0 || sk.halt_reason != 1);
 
             // verify the thresholds are correct
-            double daily_pct = FPN_ToDouble(sk.config.kill_switch_daily_loss_pct);
-            double dd_pct = FPN_ToDouble(sk.config.kill_switch_drawdown_pct);
+            double daily_pct = Money_ToDouble(sk.config.kill_switch_daily_loss_pct);
+            double dd_pct = Money_ToDouble(sk.config.kill_switch_drawdown_pct);
             check("small loss: daily_loss_pct is 0.03 (3%)",
                   daily_pct > 0.029 && daily_pct < 0.031);
             check("small loss: drawdown_pct is 0.05 (5%)",
@@ -2718,10 +2718,10 @@ int main() {
             sk.kill_switch_active = 0;
             sk.buying_halted = 0;
             sk.halt_reason = 0;
-            sk.balance = FPN_FromDouble<FP>(9600.0);  // $400 loss = 4% > 3% daily limit
+            sk.balance = MQ(9600.0);  // $400 loss = 4% > 3% daily limit
             for (int i = 0; i < 32; i++) {
-                PortfolioController_Tick(&sk, &sp, FPN_FromDouble<FP>(66000.0),
-                                          FPN_FromDouble<FP>(500.0), &sl);
+                PortfolioController_Tick(&sk, &sp, MQ(66000.0),
+                                          MQ(500.0), &sl);
             }
             check("real loss: kill switch fires on $400 loss (4%)",
                   sk.kill_switch_active == 1);
@@ -2747,7 +2747,7 @@ int main() {
         cfg.warmup_ticks = 10;
         cfg.poll_interval = 1;
         cfg.min_warmup_samples = 10;
-        cfg.starting_balance = FPN_FromDouble<FP>(10000.0);
+        cfg.starting_balance = MQ(10000.0);
         cfg.max_positions = 1;
 
         PortfolioController<FP> ctrl = {};
@@ -2759,19 +2759,19 @@ int main() {
         test_warmup_ctrl(&ctrl, &pool, &log, 100.0, 500.0);
 
         // fill slot 0 so portfolio is full (max_positions=1)
-        Portfolio_AddPositionWithExits(&ctrl.portfolio, FPN_FromDouble<FP>(0.1),
-            FPN_FromDouble<FP>(100.0), FPN_FromDouble<FP>(110.0), FPN_FromDouble<FP>(90.0));
+        Portfolio_AddPositionWithExits(&ctrl.portfolio, MQ(0.1),
+            MQ(100.0), MQ(110.0), MQ(90.0));
 
         // set up buy conditions and put a fill in the pool
-        ctrl.buy_conds.price = FPN_FromDouble<FP>(95.0);
-        ctrl.buy_conds.volume = FPN_FromDouble<FP>(100.0);
+        ctrl.buy_conds.price = FPN_FromDouble<64>(95.0);
+        ctrl.buy_conds.volume = FPN_FromDouble<64>(100.0);
         DataStream<FP> ds_push = {};
-        ds_push.price = FPN_FromDouble<FP>(94.0);
-        ds_push.volume = FPN_FromDouble<FP>(200.0);
+        ds_push.price = MQ(94.0);
+        ds_push.volume = MQ(200.0);
         BuyGate(&ctrl.buy_conds, &ds_push, &pool);
         int buf_before = ctrl.trade_buf.count;
-        PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(94.0),
-                                  FPN_FromDouble<FP>(200.0), &log);
+        PortfolioController_Tick(&ctrl, &pool, MQ(94.0),
+                                  MQ(200.0), &log);
         check("pushbuy guard: trade_buf.count unchanged on rejected fill",
               ctrl.trade_buf.count == buf_before);
         check("pushbuy guard: still only 1 position (full)",
@@ -2793,13 +2793,13 @@ int main() {
         ExitBuffer_Init(&ebuf);
 
         // add position: entry=100, TP=105, SL=95
-        FPN_Binary<FP> entry = FPN_FromDouble<FP>(100.0);
-        FPN_Binary<FP> tp = FPN_FromDouble<FP>(105.0);
-        FPN_Binary<FP> sl = FPN_FromDouble<FP>(95.0);
-        Portfolio_AddPositionWithExits(&port, FPN_FromDouble<FP>(1.0), entry, tp, sl);
+        Money entry = MQ(100.0);
+        Money tp = MQ(105.0);
+        Money sl = MQ(95.0);
+        Portfolio_AddPositionWithExits(&port, MQ(1.0), entry, tp, sl);
 
         // price at 94 (below SL) — must trigger exit
-        PositionExitGate(&port, FPN_FromDouble<FP>(94.0), &ebuf, 1);
+        PositionExitGate(&port, MQ(94.0), &ebuf, 1);
         check("exit gate: SL triggers at price below SL",
               ebuf.count == 1);
         check("exit gate: reason is SL (1)",
@@ -2809,8 +2809,8 @@ int main() {
 
         // reset, test TP
         ExitBuffer_Init(&ebuf);
-        Portfolio_AddPositionWithExits(&port, FPN_FromDouble<FP>(1.0), entry, tp, sl);
-        PositionExitGate(&port, FPN_FromDouble<FP>(106.0), &ebuf, 2);
+        Portfolio_AddPositionWithExits(&port, MQ(1.0), entry, tp, sl);
+        PositionExitGate(&port, MQ(106.0), &ebuf, 2);
         check("exit gate: TP triggers at price above TP",
               ebuf.count == 1);
         check("exit gate: reason is TP (0)",
@@ -2818,8 +2818,8 @@ int main() {
 
         // reset, test price between SL and TP — no exit
         ExitBuffer_Init(&ebuf);
-        Portfolio_AddPositionWithExits(&port, FPN_FromDouble<FP>(1.0), entry, tp, sl);
-        PositionExitGate(&port, FPN_FromDouble<FP>(100.0), &ebuf, 3);
+        Portfolio_AddPositionWithExits(&port, MQ(1.0), entry, tp, sl);
+        PositionExitGate(&port, MQ(100.0), &ebuf, 3);
         check("exit gate: no exit when price between SL and TP",
               ebuf.count == 0);
         check("exit gate: bitmap still active",
@@ -2829,10 +2829,10 @@ int main() {
         // this exercises middle FPN_Binary words — the old 2-word comparison could miss this
         ExitBuffer_Init(&ebuf);
         Portfolio_Init(&port);
-        FPN_Binary<FP> tight_sl = FPN_FromDouble<FP>(95.001);
-        FPN_Binary<FP> tight_tp = FPN_FromDouble<FP>(105.0);
-        Portfolio_AddPositionWithExits(&port, FPN_FromDouble<FP>(1.0), entry, tight_tp, tight_sl);
-        FPN_Binary<FP> just_below = FPN_FromDouble<FP>(95.0005);
+        Money tight_sl = MQ(95.001);
+        Money tight_tp = MQ(105.0);
+        Portfolio_AddPositionWithExits(&port, MQ(1.0), entry, tight_tp, tight_sl);
+        Money just_below = MQ(95.0005);
         PositionExitGate(&port, just_below, &ebuf, 4);
         check("exit gate: tight SL boundary triggers correctly",
               ebuf.count == 1);
@@ -2840,8 +2840,8 @@ int main() {
         // price just above SL — no exit
         ExitBuffer_Init(&ebuf);
         Portfolio_Init(&port);
-        Portfolio_AddPositionWithExits(&port, FPN_FromDouble<FP>(1.0), entry, tight_tp, tight_sl);
-        FPN_Binary<FP> just_above = FPN_FromDouble<FP>(95.0015);
+        Portfolio_AddPositionWithExits(&port, MQ(1.0), entry, tight_tp, tight_sl);
+        Money just_above = MQ(95.0015);
         PositionExitGate(&port, just_above, &ebuf, 5);
         check("exit gate: price just above SL does not trigger",
               ebuf.count == 0);
@@ -2856,14 +2856,14 @@ int main() {
         cfg.warmup_ticks = 10;
         cfg.poll_interval = 1;
         cfg.min_warmup_samples = 10;
-        cfg.starting_balance = FPN_FromDouble<FP>(10000.0);
-        cfg.risk_pct = FPN_FromDouble<FP>(0.15);  // 15%
-        cfg.fee_rate = FPN_FromDouble<FP>(0.001);  // 0.1%
+        cfg.starting_balance = MQ(10000.0);
+        cfg.risk_pct = MQ(0.15);  // 15%
+        cfg.fee_rate = MQ(0.001);  // 0.1%
         cfg.max_positions = 1;
         BITMAP_CLR(cfg.risk_cfg_flags, MASK_RISK_CFG_KILL_SWITCH_ENABLED);  // disable kill — we're testing accounting
-        cfg.slippage_pct = FPN_Zero<FP>();  // no slippage for clean test
-        cfg.take_profit_pct = FPN_FromDouble<FP>(0.03);
-        cfg.stop_loss_pct = FPN_FromDouble<FP>(0.015);
+        cfg.slippage_pct = Money_Zero();  // no slippage for clean test
+        cfg.take_profit_pct = MQ(0.03);
+        cfg.stop_loss_pct = MQ(0.015);
 
         double starting = 10000.0;
 
@@ -2877,50 +2877,50 @@ int main() {
             TradeLog_Init(&log, "DRIFT_TEST1");
             test_warmup_ctrl(&ctrl, &pool, &log, 66000.0, 500.0);
 
-            double bal_before = FPN_ToDouble(ctrl.balance);
+            double bal_before = Money_ToDouble(ctrl.balance);
 
             // manually create a fill at $66,000
-            FPN_Binary<FP> fill_price = FPN_FromDouble<FP>(66000.0);
-            FPN_Binary<FP> risk = FPN_Mul(ctrl.balance, cfg.risk_pct);
-            FPN_Binary<FP> qty = FPN_DivNoAssert(risk, fill_price);
-            FPN_Binary<FP> cost = FPN_Mul(fill_price, qty);
-            FPN_Binary<FP> fee = FPN_Mul(cost, cfg.fee_rate);
-            FPN_Binary<FP> total = FPN_AddSat(cost, fee);
+            Money fill_price = MQ(66000.0);
+            Money risk = Money_Mul(ctrl.balance, cfg.risk_pct);
+            Money qty = Money_Div(risk, fill_price);
+            Money cost = Money_Mul(fill_price, qty);
+            Money fee = Money_Mul(cost, cfg.fee_rate);
+            Money total = Money_Add(cost, fee);
 
             // simulate fill
             Portfolio_AddPositionWithExits(&ctrl.portfolio, qty, fill_price,
-                FPN_FromDouble<FP>(68000.0), FPN_FromDouble<FP>(65000.0), fee);
-            ctrl.balance = FPN_SubSat(ctrl.balance, total);
+                MQ(68000.0), MQ(65000.0), fee);
+            ctrl.balance = Money_Sub(ctrl.balance, total);
 
-            double bal_after = FPN_ToDouble(ctrl.balance);
+            double bal_after = Money_ToDouble(ctrl.balance);
             double deducted = bal_before - bal_after;
-            double expected_deduction = FPN_ToDouble(total);
+            double expected_deduction = Money_ToDouble(total);
 
             check("buy deduction: balance decreased by cost + fee",
                   fabs(deducted - expected_deduction) < 0.01);
 
             // verify equity = balance + position value ≈ starting
-            FPN_Binary<FP> pv = Portfolio_ComputeValue(&ctrl.portfolio, fill_price);
-            FPN_Binary<FP> equity = FPN_AddSat(ctrl.balance, pv);
-            double eq = FPN_ToDouble(equity);
+            Money pv = Portfolio_ComputeValue(&ctrl.portfolio, fill_price);
+            Money equity = Money_Add(ctrl.balance, pv);
+            double eq = Money_ToDouble(equity);
             check("buy equity: balance + position ≈ starting - entry fee",
-                  fabs(eq - (starting - FPN_ToDouble(fee))) < 0.01);
+                  fabs(eq - (starting - Money_ToDouble(fee))) < 0.01);
 
             printf("    bal_before=%.2f bal_after=%.2f deducted=%.2f pv=%.2f equity=%.2f\n",
-                   bal_before, bal_after, deducted, FPN_ToDouble(pv), eq);
+                   bal_before, bal_after, deducted, Money_ToDouble(pv), eq);
 
             // TEST 2: sell at TP — balance fully restored
-            FPN_Binary<FP> exit_price = FPN_FromDouble<FP>(68000.0);
-            FPN_Binary<FP> gross = FPN_Mul(exit_price, qty);
-            FPN_Binary<FP> exit_fee = FPN_Mul(gross, cfg.fee_rate);
-            FPN_Binary<FP> net = FPN_SubSat(gross, exit_fee);
-            ctrl.balance = FPN_AddSat(ctrl.balance, net);
+            Money exit_price = MQ(68000.0);
+            Money gross = Money_Mul(exit_price, qty);
+            Money exit_fee = Money_Mul(gross, cfg.fee_rate);
+            Money net = Money_Sub(gross, exit_fee);
+            ctrl.balance = Money_Add(ctrl.balance, net);
             ctrl.portfolio.active_bitmap = 0;  // clear position
 
-            double bal_final = FPN_ToDouble(ctrl.balance);
+            double bal_final = Money_ToDouble(ctrl.balance);
             // expected: starting - entry_fee - exit_fee + price_gain
-            double price_gain = (68000.0 - 66000.0) * FPN_ToDouble(qty);
-            double total_fees = FPN_ToDouble(fee) + FPN_ToDouble(exit_fee);
+            double price_gain = (68000.0 - 66000.0) * Money_ToDouble(qty);
+            double total_fees = Money_ToDouble(fee) + Money_ToDouble(exit_fee);
             double expected_final = starting + price_gain - total_fees;
 
             check("round trip: balance = starting + gain - fees (no drift)",
@@ -2944,37 +2944,37 @@ int main() {
             test_warmup_ctrl(&ctrl, &pool, &log, 66000.0, 500.0);
 
             // open position at $66,000
-            FPN_Binary<FP> fill_price = FPN_FromDouble<FP>(66000.0);
-            FPN_Binary<FP> risk = FPN_Mul(ctrl.balance, cfg.risk_pct);
-            FPN_Binary<FP> qty = FPN_DivNoAssert(risk, fill_price);
-            FPN_Binary<FP> cost = FPN_Mul(fill_price, qty);
-            FPN_Binary<FP> fee = FPN_Mul(cost, cfg.fee_rate);
-            FPN_Binary<FP> total_cost = FPN_AddSat(cost, fee);
+            Money fill_price = MQ(66000.0);
+            Money risk = Money_Mul(ctrl.balance, cfg.risk_pct);
+            Money qty = Money_Div(risk, fill_price);
+            Money cost = Money_Mul(fill_price, qty);
+            Money fee = Money_Mul(cost, cfg.fee_rate);
+            Money total_cost = Money_Add(cost, fee);
             Portfolio_AddPositionWithExits(&ctrl.portfolio, qty, fill_price,
-                FPN_FromDouble<FP>(68000.0), FPN_FromDouble<FP>(65000.0), fee);
-            ctrl.balance = FPN_SubSat(ctrl.balance, total_cost);
+                MQ(68000.0), MQ(65000.0), fee);
+            ctrl.balance = Money_Sub(ctrl.balance, total_cost);
 
             // check equity at entry price
-            FPN_Binary<FP> pv1 = Portfolio_ComputeValue(&ctrl.portfolio, fill_price);
-            FPN_Binary<FP> eq1 = FPN_AddSat(ctrl.balance, pv1);
-            double entry_eq = FPN_ToDouble(eq1);
+            Money pv1 = Portfolio_ComputeValue(&ctrl.portfolio, fill_price);
+            Money eq1 = Money_Add(ctrl.balance, pv1);
+            double entry_eq = Money_ToDouble(eq1);
             check("open pos equity at entry price ≈ starting - fee",
-                  fabs(entry_eq - (starting - FPN_ToDouble(fee))) < 0.01);
+                  fabs(entry_eq - (starting - Money_ToDouble(fee))) < 0.01);
 
             // check equity at higher price ($67,000)
-            FPN_Binary<FP> high = FPN_FromDouble<FP>(67000.0);
-            FPN_Binary<FP> pv2 = Portfolio_ComputeValue(&ctrl.portfolio, high);
-            FPN_Binary<FP> eq2 = FPN_AddSat(ctrl.balance, pv2);
-            double high_eq = FPN_ToDouble(eq2);
-            double expected_gain = 1000.0 * FPN_ToDouble(qty);  // $1000 price move × qty
+            Money high = MQ(67000.0);
+            Money pv2 = Portfolio_ComputeValue(&ctrl.portfolio, high);
+            Money eq2 = Money_Add(ctrl.balance, pv2);
+            double high_eq = Money_ToDouble(eq2);
+            double expected_gain = 1000.0 * Money_ToDouble(qty);  // $1000 price move × qty
             check("open pos equity at +$1000 reflects unrealized gain",
                   fabs(high_eq - entry_eq - expected_gain) < 0.01);
 
             // check equity at lower price ($65,000) — should NOT trigger kill on 3% threshold
-            FPN_Binary<FP> low = FPN_FromDouble<FP>(65000.0);
-            FPN_Binary<FP> pv3 = Portfolio_ComputeValue(&ctrl.portfolio, low);
-            FPN_Binary<FP> eq3 = FPN_AddSat(ctrl.balance, pv3);
-            double low_eq = FPN_ToDouble(eq3);
+            Money low = MQ(65000.0);
+            Money pv3 = Portfolio_ComputeValue(&ctrl.portfolio, low);
+            Money eq3 = Money_Add(ctrl.balance, pv3);
+            double low_eq = Money_ToDouble(eq3);
             double pct_drop = (starting - low_eq) / starting * 100.0;
             check("open pos equity at -$1000: drop < 3% (no false kill)",
                   pct_drop < 3.0);
@@ -2982,8 +2982,8 @@ int main() {
                    entry_eq, high_eq, low_eq, pct_drop);
 
             // TEST 4: verify Portfolio_ComputeValue matches manual calculation
-            double manual_pv = FPN_ToDouble(qty) * 65000.0;
-            double computed_pv = FPN_ToDouble(pv3);
+            double manual_pv = Money_ToDouble(qty) * 65000.0;
+            double computed_pv = Money_ToDouble(pv3);
             check("Portfolio_ComputeValue matches qty × price",
                   fabs(computed_pv - manual_pv) < 0.01);
             printf("    manual_pv=%.2f computed_pv=%.2f diff=%.6f\n",
@@ -2998,7 +2998,7 @@ int main() {
         {
             ControllerConfig<FP> rt_cfg = cfg;
             BITMAP_CLR(rt_cfg.risk_cfg_flags, MASK_RISK_CFG_KILL_SWITCH_ENABLED);
-            rt_cfg.offset_stddev_mult = FPN_FromDouble<FP>(0.5); // tight gate for quick fill
+            rt_cfg.offset_stddev_mult = FPN_FromDouble<64>(0.5); // tight gate for quick fill
             PortfolioController<FP> ctrl = {};
             PortfolioController_Init(&ctrl, rt_cfg);
             OrderPool<FP> pool;
@@ -3007,18 +3007,18 @@ int main() {
             TradeLog_Init(&log, "DRIFT_TEST3");
             test_warmup_ctrl(&ctrl, &pool, &log, 66000.0, 500.0);
 
-            double bal_start = FPN_ToDouble(ctrl.balance);
+            double bal_start = Money_ToDouble(ctrl.balance);
 
             // run 500 ticks at stable price — should buy, then TP or SL
             for (int i = 0; i < 500; i++) {
                 double p = 66000.0 + (i % 50) * 10.0;  // oscillate $0-$500
-                PortfolioController_Tick(&ctrl, &pool, FPN_FromDouble<FP>(p),
-                                          FPN_FromDouble<FP>(500.0), &log);
+                PortfolioController_Tick(&ctrl, &pool, MQ(p),
+                                          MQ(500.0), &log);
             }
 
             int active = Portfolio_CountActive(&ctrl.portfolio);
-            double bal_end = FPN_ToDouble(ctrl.balance);
-            double realized = FPN_ToDouble(ctrl.realized_pnl);
+            double bal_end = Money_ToDouble(ctrl.balance);
+            double realized = Money_ToDouble(ctrl.realized_pnl);
 
             if (active == 0) {
                 // all positions closed — balance should equal starting + realized
@@ -3050,27 +3050,27 @@ int main() {
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
         cfg.warmup_ticks = 0;
         cfg.poll_interval = 1000; // large poll so slow path doesn't run
-        cfg.starting_balance = FPN_FromDouble<FP>(10000.0);
+        cfg.starting_balance = MQ(10000.0);
         cfg.max_positions = 1;
-        cfg.fee_rate = FPN_FromDouble<FP>(0.001);  // 0.1%
-        cfg.slippage_pct = FPN_Zero<FP>();          // no slippage for exact math
+        cfg.fee_rate = MQ(0.001);  // 0.1%
+        cfg.slippage_pct = Money_Zero();          // no slippage for exact math
 
         PortfolioController<FP> ctrl = {};
         PortfolioController_Init(&ctrl, cfg);
         ctrl.state = CONTROLLER_ACTIVE;
 
         // manually add a position: entry $100, qty 1.0, TP $105, SL $95
-        FPN_Binary<FP> entry = FPN_FromDouble<FP>(100.0);
-        FPN_Binary<FP> qty = FPN_FromDouble<FP>(1.0);
-        FPN_Binary<FP> tp = FPN_FromDouble<FP>(105.0);
-        FPN_Binary<FP> sl = FPN_FromDouble<FP>(95.0);
+        Money entry = MQ(100.0);
+        Money qty = MQ(1.0);
+        Money tp = MQ(105.0);
+        Money sl = MQ(95.0);
         Portfolio_AddPositionWithExits(&ctrl.portfolio, qty, entry, tp, sl);
-        ctrl.balance = FPN_FromDouble<FP>(9900.0); // $100 deducted for position
+        ctrl.balance = MQ(9900.0); // $100 deducted for position
 
         // equity before exit: balance + position_value = 9900 + 105 = 10005 (at TP price)
-        FPN_Binary<FP> price_at_tp = FPN_FromDouble<FP>(105.0);
-        FPN_Binary<FP> pv_before = Portfolio_ComputeValue(&ctrl.portfolio, price_at_tp);
-        FPN_Binary<FP> equity_before = FPN_AddSat(ctrl.balance, pv_before);
+        Money price_at_tp = MQ(105.0);
+        Money pv_before = Portfolio_ComputeValue(&ctrl.portfolio, price_at_tp);
+        Money equity_before = Money_Add(ctrl.balance, pv_before);
 
         // trigger exit gate — clears bitmap, writes to exit buffer
         PositionExitGate(&ctrl.portfolio, price_at_tp, &ctrl.exit_buf, 1);
@@ -3078,31 +3078,31 @@ int main() {
         check("equity gap: bitmap cleared", ctrl.portfolio.active_bitmap == 0);
 
         // portfolio value is now 0 (position cleared from bitmap)
-        FPN_Binary<FP> pv_after = Portfolio_ComputeValue(&ctrl.portfolio, price_at_tp);
+        Money pv_after = Portfolio_ComputeValue(&ctrl.portfolio, price_at_tp);
         check("equity gap: portfolio value is zero after exit gate",
-              FPN_IsZero(pv_after));
+              Money_IsZero(pv_after));
 
         // naive equity (the bug): balance + pv = 9900 + 0 = 9900 — $105 phantom crash
-        FPN_Binary<FP> naive_equity = FPN_AddSat(ctrl.balance, pv_after);
+        Money naive_equity = Money_Add(ctrl.balance, pv_after);
 
         // correct equity: balance + pv + pending proceeds
-        FPN_Binary<FP> pending = ExitBuffer_PendingProceeds(&ctrl.exit_buf,
+        Money pending = ExitBuffer_PendingProceeds(&ctrl.exit_buf,
                                                       cfg.fee_rate, cfg.slippage_pct);
-        FPN_Binary<FP> correct_equity = FPN_AddSat(FPN_AddSat(ctrl.balance, pv_after), pending);
+        Money correct_equity = Money_Add(Money_Add(ctrl.balance, pv_after), pending);
 
         // pending should be close to gross - fees: 105 * 1.0 - 105 * 1.0 * 0.001 = 104.895
-        double pending_d = FPN_ToDouble(pending);
+        double pending_d = Money_ToDouble(pending);
         check("equity gap: pending proceeds ~$104.90",
               pending_d > 104.8 && pending_d < 105.0);
 
         // naive equity has the phantom crash
-        double naive_d = FPN_ToDouble(naive_equity);
-        double before_d = FPN_ToDouble(equity_before);
+        double naive_d = Money_ToDouble(naive_equity);
+        double before_d = Money_ToDouble(equity_before);
         check("equity gap: naive equity shows phantom $105 drop",
               (before_d - naive_d) > 100.0);
 
         // correct equity is close to before (within fee difference)
-        double correct_d = FPN_ToDouble(correct_equity);
+        double correct_d = Money_ToDouble(correct_equity);
         double gap = fabs(before_d - correct_d);
         check("equity gap: correct equity within $0.20 of pre-exit",
               gap < 0.20);
@@ -3118,24 +3118,24 @@ int main() {
     {
         // a TP exit where fees exceed gross profit should count as a loss, not a win
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
-        cfg.starting_balance = FPN_FromDouble<FP>(10000.0);
-        cfg.fee_rate = FPN_FromDouble<FP>(0.01); // 1% fee to make fee > gross easy
-        cfg.slippage_pct = FPN_Zero<FP>();
+        cfg.starting_balance = MQ(10000.0);
+        cfg.fee_rate = MQ(0.01); // 1% fee to make fee > gross easy
+        cfg.slippage_pct = Money_Zero();
 
         PortfolioController<FP> ctrl = {};
         PortfolioController_Init(&ctrl, cfg);
         ctrl.rolling = RollingStats_Init<FP>();
-        ctrl.rolling.price_stddev = FPN_FromDouble<FP>(50.0);
+        ctrl.rolling.price_stddev = FPN_FromDouble<64>(50.0);
 
         // add position: entry $100, qty 0.5, small gross profit
-        FPN_Binary<FP> entry = FPN_FromDouble<FP>(100.0);
-        FPN_Binary<FP> qty = FPN_FromDouble<FP>(0.5);
+        Money entry = MQ(100.0);
+        Money qty = MQ(0.5);
         Portfolio_AddPositionWithExits(&ctrl.portfolio, qty, entry,
-            FPN_FromDouble<FP>(101.0), FPN_FromDouble<FP>(95.0));
-        ctrl.portfolio.positions[0].entry_fee = FPN_FromDouble<FP>(0.50); // $0.50 entry fee
+            MQ(101.0), MQ(95.0));
+        ctrl.portfolio.positions[0].entry_fee = MQ(0.50); // $0.50 entry fee
 
         // helper: build ExitRecord from position slot (slot is still valid in tests)
-        auto make_rec = [](Portfolio<FP> *p, int slot, FPN_Binary<FP> exit_price, uint64_t tick, int reason) {
+        auto make_rec = [](Portfolio<FP> *p, int slot, Money exit_price, uint64_t tick, int reason) {
             ExitRecord<FP> rec;
             rec.position_index = slot;
             rec.exit_price = exit_price;
@@ -3151,28 +3151,28 @@ int main() {
         // exit at TP $101: gross = 0.5 × (101-100) = $0.50
         // exit fee = 0.5 × 101 × 0.01 = $0.505
         // net P&L = 0.50 - 0.505 - 0.50 = -$0.505 (loss despite TP exit)
-        { ExitRecord<FP> rec = make_rec(&ctrl.portfolio, 0, FPN_FromDouble<FP>(101.0), 100, 0);
+        { ExitRecord<FP> rec = make_rec(&ctrl.portfolio, 0, MQ(101.0), 100, 0);
           RecordExit(&ctrl, &rec); }
         check("win/loss: TP exit with fee-dominated P&L counts as loss",
               ctrl.losses == 1 && ctrl.wins == 0);
 
         // now test a genuine winning TP exit
         Portfolio_AddPositionWithExits(&ctrl.portfolio, qty, entry,
-            FPN_FromDouble<FP>(110.0), FPN_FromDouble<FP>(95.0));
-        ctrl.portfolio.positions[0].entry_fee = FPN_FromDouble<FP>(0.50);
+            MQ(110.0), MQ(95.0));
+        ctrl.portfolio.positions[0].entry_fee = MQ(0.50);
         // exit at $110: gross = 0.5 × (110-100) = $5.00
         // exit fee = 0.5 × 110 × 0.01 = $0.55
         // net P&L = 5.00 - 0.55 - 0.50 = $3.95 (genuine win)
-        { ExitRecord<FP> rec = make_rec(&ctrl.portfolio, 0, FPN_FromDouble<FP>(110.0), 200, 0);
+        { ExitRecord<FP> rec = make_rec(&ctrl.portfolio, 0, MQ(110.0), 200, 0);
           RecordExit(&ctrl, &rec); }
         check("win/loss: TP exit with genuine profit counts as win",
               ctrl.wins == 1);
 
         // SL exit always counts as loss regardless of P&L
         Portfolio_AddPositionWithExits(&ctrl.portfolio, qty, entry,
-            FPN_FromDouble<FP>(110.0), FPN_FromDouble<FP>(95.0));
-        ctrl.portfolio.positions[0].entry_fee = FPN_FromDouble<FP>(0.50);
-        { ExitRecord<FP> rec = make_rec(&ctrl.portfolio, 0, FPN_FromDouble<FP>(95.0), 300, 1);
+            MQ(110.0), MQ(95.0));
+        ctrl.portfolio.positions[0].entry_fee = MQ(0.50);
+        { ExitRecord<FP> rec = make_rec(&ctrl.portfolio, 0, MQ(95.0), 300, 1);
           RecordExit(&ctrl, &rec); }
         check("win/loss: SL exit counts as loss",
               ctrl.losses == 2); // fee-dominated TP loss + this SL
@@ -3184,26 +3184,26 @@ int main() {
     printf("\n--- FEE FLOOR AFTER REGIME TIGHTENING ---\n");
     {
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
-        cfg.fee_rate = FPN_FromDouble<FP>(0.001);      // 0.1%
-        cfg.fee_floor_mult = FPN_FromDouble<FP>(3.0);   // TP floor = 3× round-trip fees
-        cfg.take_profit_pct = FPN_FromDouble<FP>(0.01);  // 1% TP offset for MR (used as stddev mult × 100)
-        cfg.stop_loss_pct = FPN_FromDouble<FP>(0.01);    // 1% SL
-        cfg.momentum_tp_mult = FPN_FromDouble<FP>(3.0);  // 3 stddev TP for momentum
-        cfg.momentum_sl_mult = FPN_FromDouble<FP>(1.0);  // 1 stddev SL
-        cfg.min_sl_tp_ratio = FPN_FromDouble<FP>(0.5);
+        cfg.fee_rate = MQ(0.001);      // 0.1%
+        cfg.fee_floor_mult = MQ(3.0);   // TP floor = 3× round-trip fees
+        cfg.take_profit_pct = MQ(0.01);  // 1% TP offset for MR (used as stddev mult × 100)
+        cfg.stop_loss_pct = MQ(0.01);    // 1% SL
+        cfg.momentum_tp_mult = FPN_FromDouble<64>(3.0);  // 3 stddev TP for momentum
+        cfg.momentum_sl_mult = FPN_FromDouble<64>(1.0);  // 1 stddev SL
+        cfg.min_sl_tp_ratio = MQ(0.5);
         cfg.max_positions = 1;
 
         // setup: position at $66000, wide TP from momentum (stddev × 3 = $30 at σ=10)
         Portfolio<FP> port = {};
         Portfolio_Init(&port);
-        FPN_Binary<FP> entry = FPN_FromDouble<FP>(66000.0);
-        FPN_Binary<FP> wide_tp = FPN_FromDouble<FP>(66500.0);  // $500 above entry (momentum)
-        FPN_Binary<FP> sl = FPN_FromDouble<FP>(65800.0);
-        Portfolio_AddPositionWithExits(&port, FPN_FromDouble<FP>(0.05), entry, wide_tp, sl);
+        Money entry = MQ(66000.0);
+        Money wide_tp = MQ(66500.0);  // $500 above entry (momentum)
+        Money sl = MQ(65800.0);
+        Portfolio_AddPositionWithExits(&port, MQ(0.05), entry, wide_tp, sl);
 
         // rolling stats with VERY low stddev (simulates volatility crash after fill)
         RollingStats<FP> rolling = RollingStats_Init<FP>();
-        rolling.price_stddev = FPN_FromDouble<FP>(5.0); // tiny stddev
+        rolling.price_stddev = FPN_FromDouble<64>(5.0); // tiny stddev
 
         // regime: TRENDING → RANGING — tightens TP using FPN_Min
         // tight_tp = entry + stddev × (take_profit_pct × 100) = 66000 + 5 × 1.0 = 66005
@@ -3212,8 +3212,8 @@ int main() {
         entry_strat[0] = Regime_ToStrategy(REGIME_TRENDING);
         Regime_AdjustPositions(&port, &rolling, REGIME_TRENDING, REGIME_RANGING, entry_strat, &cfg);
 
-        double tp_after = FPN_ToDouble(port.positions[0].take_profit_price);
-        double entry_d = FPN_ToDouble(entry);
+        double tp_after = Money_ToDouble(port.positions[0].take_profit_price);
+        double entry_d = Money_ToDouble(entry);
         double tp_dist = tp_after - entry_d;
 
         // fee floor = entry × fee_rate × fee_floor_mult = 66000 × 0.001 × 3 = $198
@@ -3225,22 +3225,22 @@ int main() {
 
         // test TRENDING → MILD_TREND too
         Portfolio_Init(&port);
-        Portfolio_AddPositionWithExits(&port, FPN_FromDouble<FP>(0.05), entry, wide_tp, sl);
+        Portfolio_AddPositionWithExits(&port, MQ(0.05), entry, wide_tp, sl);
         entry_strat[0] = Regime_ToStrategy(REGIME_TRENDING);
         Regime_AdjustPositions(&port, &rolling, REGIME_TRENDING, REGIME_MILD_TREND, entry_strat, &cfg);
 
-        double tp_mild = FPN_ToDouble(port.positions[0].take_profit_price);
+        double tp_mild = Money_ToDouble(port.positions[0].take_profit_price);
         double tp_mild_dist = tp_mild - entry_d;
         check("fee floor: TRENDING→MILD_TREND TP above fee breakeven",
               tp_mild_dist >= fee_floor_d - 0.01);
 
         // test → TRENDING_DOWN
         Portfolio_Init(&port);
-        Portfolio_AddPositionWithExits(&port, FPN_FromDouble<FP>(0.05), entry, wide_tp, sl);
+        Portfolio_AddPositionWithExits(&port, MQ(0.05), entry, wide_tp, sl);
         entry_strat[0] = Regime_ToStrategy(REGIME_TRENDING);
         Regime_AdjustPositions(&port, &rolling, REGIME_TRENDING, REGIME_TRENDING_DOWN, entry_strat, &cfg);
 
-        double tp_down = FPN_ToDouble(port.positions[0].take_profit_price);
+        double tp_down = Money_ToDouble(port.positions[0].take_profit_price);
         double tp_down_dist = tp_down - entry_d;
         check("fee floor: →TRENDING_DOWN TP above fee breakeven",
               tp_down_dist >= fee_floor_d - 0.01);
@@ -3255,56 +3255,56 @@ int main() {
         // DrainExits must use A's data (from ExitRecord), not B's (from slot)
 
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
-        cfg.starting_balance = FPN_FromDouble<FP>(10000.0);
-        cfg.fee_rate = FPN_FromDouble<FP>(0.001);
-        cfg.slippage_pct = FPN_Zero<FP>();
+        cfg.starting_balance = MQ(10000.0);
+        cfg.fee_rate = MQ(0.001);
+        cfg.slippage_pct = Money_Zero();
         cfg.max_positions = 1;
 
         PortfolioController<FP> ctrl = {};
         PortfolioController_Init(&ctrl, cfg);
 
         // position A at slot 0: entry $100, qty 1.0, TP $110, SL $90
-        FPN_Binary<FP> entry_a = FPN_FromDouble<FP>(100.0);
-        FPN_Binary<FP> qty_a = FPN_FromDouble<FP>(1.0);
+        Money entry_a = MQ(100.0);
+        Money qty_a = MQ(1.0);
         Portfolio_AddPositionWithExits(&ctrl.portfolio, qty_a, entry_a,
-            FPN_FromDouble<FP>(110.0), FPN_FromDouble<FP>(90.0));
-        ctrl.portfolio.positions[0].entry_fee = FPN_FromDouble<FP>(0.10);
-        ctrl.balance = FPN_FromDouble<FP>(9899.90); // 10000 - 100 - 0.10 fee
+            MQ(110.0), MQ(90.0));
+        ctrl.portfolio.positions[0].entry_fee = MQ(0.10);
+        ctrl.balance = MQ(9899.90); // 10000 - 100 - 0.10 fee
 
         // exit gate: price hits SL at $90
-        PositionExitGate(&ctrl.portfolio, FPN_FromDouble<FP>(90.0), &ctrl.exit_buf, 100);
+        PositionExitGate(&ctrl.portfolio, MQ(90.0), &ctrl.exit_buf, 100);
         check("slot reuse: A exited", ctrl.exit_buf.count == 1);
         check("slot reuse: bitmap cleared", ctrl.portfolio.active_bitmap == 0);
 
         // verify ExitRecord captured A's data
         check("slot reuse: record has A's entry",
-              fabs(FPN_ToDouble(ctrl.exit_buf.records[0].entry_price) - 100.0) < 0.01);
+              fabs(Money_ToDouble(ctrl.exit_buf.records[0].entry_price) - 100.0) < 0.01);
         check("slot reuse: record has A's quantity",
-              fabs(FPN_ToDouble(ctrl.exit_buf.records[0].quantity) - 1.0) < 0.01);
+              fabs(Money_ToDouble(ctrl.exit_buf.records[0].quantity) - 1.0) < 0.01);
 
         // NOW: position B fills into slot 0 (overwrites slot data)
-        FPN_Binary<FP> entry_b = FPN_FromDouble<FP>(200.0);
-        FPN_Binary<FP> qty_b = FPN_FromDouble<FP>(0.5);
+        Money entry_b = MQ(200.0);
+        Money qty_b = MQ(0.5);
         Portfolio_AddPositionWithExits(&ctrl.portfolio, qty_b, entry_b,
-            FPN_FromDouble<FP>(220.0), FPN_FromDouble<FP>(180.0));
-        ctrl.portfolio.positions[0].entry_fee = FPN_FromDouble<FP>(0.20);
+            MQ(220.0), MQ(180.0));
+        ctrl.portfolio.positions[0].entry_fee = MQ(0.20);
 
         // slot 0 now has B's data — entry $200, qty 0.5
         check("slot reuse: slot has B's entry",
-              fabs(FPN_ToDouble(ctrl.portfolio.positions[0].entry_price) - 200.0) < 0.01);
+              fabs(Money_ToDouble(ctrl.portfolio.positions[0].entry_price) - 200.0) < 0.01);
 
         // PendingProceeds must use A's quantity (1.0), not B's (0.5)
-        FPN_Binary<FP> pending = ExitBuffer_PendingProceeds(&ctrl.exit_buf,
+        Money pending = ExitBuffer_PendingProceeds(&ctrl.exit_buf,
                                                       cfg.fee_rate, cfg.slippage_pct);
-        double pending_d = FPN_ToDouble(pending);
+        double pending_d = Money_ToDouble(pending);
         // A exited at $90, qty 1.0: gross=$90, fee=$0.09, net=$89.91
         check("slot reuse: pending uses A's qty (not B's)",
               pending_d > 89.8 && pending_d < 90.0);
 
         // DrainExits must compute P&L against A's entry ($100), not B's ($200)
-        double bal_before = FPN_ToDouble(ctrl.balance);
+        double bal_before = Money_ToDouble(ctrl.balance);
         PortfolioController_DrainExits(&ctrl);
-        double bal_after = FPN_ToDouble(ctrl.balance);
+        double bal_after = Money_ToDouble(ctrl.balance);
         double credited = bal_after - bal_before;
 
         // A's net proceeds: $90 × 1.0 - fee = $89.91
@@ -3312,7 +3312,7 @@ int main() {
               credited > 89.8 && credited < 90.0);
 
         // P&L should be against A's entry: $89.91 - ($100 × 1.0 + $0.10) = -$10.19
-        double realized = FPN_ToDouble(ctrl.realized_pnl);
+        double realized = Money_ToDouble(ctrl.realized_pnl);
         check("slot reuse: P&L computed against A's entry",
               realized < -10.0 && realized > -10.5);
 
@@ -3470,7 +3470,7 @@ int main() {
             close(fd);
             ControllerConfig<FP> cfg = ControllerConfig_Load<FP>(path);
             check("fee_rate=0.10 parses to 0.001 fraction (CFG_PARSE_PCT)",
-                  fabs(FPN_ToDouble(cfg.fee_rate) - 0.001) < 1e-6);
+                  fabs(Money_ToDouble(cfg.fee_rate) - 0.001) < 1e-6);
             unlink(path);
         }
     }
@@ -5057,19 +5057,19 @@ int main() {
     printf("\n--- Phase 8: Fee_Compute helper ---\n");
     {
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
-        cfg.fee_rate_maker = FPN_FromDouble<FP>(0.00075);
-        cfg.fee_rate_taker = FPN_FromDouble<FP>(0.00100);
-        FPN_Binary<FP> notional = FPN_FromDouble<FP>(1000.0);
+        cfg.fee_rate_maker = MQ(0.00075);
+        cfg.fee_rate_taker = MQ(0.00100);
+        Money notional = MQ(1000.0);
 
-        FPN_Binary<FP> fee_maker = Fee_Compute(&cfg, notional, /*is_maker=*/1);
-        FPN_Binary<FP> fee_taker = Fee_Compute(&cfg, notional, /*is_maker=*/0);
+        Money fee_maker = Fee_Compute(&cfg, notional, /*is_maker=*/1);
+        Money fee_taker = Fee_Compute(&cfg, notional, /*is_maker=*/0);
 
         check("Fee_Compute is_maker=1 → 1000 * 0.075% = 0.75",
-              fabs(FPN_ToDouble(fee_maker) - 0.75) < 1e-4);
+              fabs(Money_ToDouble(fee_maker) - 0.75) < 1e-4);
         check("Fee_Compute is_maker=0 → 1000 * 0.100% = 1.00",
-              fabs(FPN_ToDouble(fee_taker) - 1.00) < 1e-4);
+              fabs(Money_ToDouble(fee_taker) - 1.00) < 1e-4);
         check("maker fee strictly less than taker fee at same notional",
-              FPN_ToDouble(fee_maker) < FPN_ToDouble(fee_taker));
+              Money_ToDouble(fee_maker) < Money_ToDouble(fee_taker));
     }
 
     // ----- Group 4: Backward compat — legacy fee_rate path (4 assertions) -----------------------------
@@ -5085,11 +5085,11 @@ int main() {
             close(fd);
             ControllerConfig<FP> cfg = ControllerConfig_Load<FP>(path);
             check("legacy: fee_rate=0.10 → fee_rate=0.001 (CFG_PARSE_PCT)",
-                  fabs(FPN_ToDouble(cfg.fee_rate) - 0.001) < 1e-6);
+                  fabs(Money_ToDouble(cfg.fee_rate) - 0.001) < 1e-6);
             check("legacy mirroring: fee_rate_maker == fee_rate",
-                  fabs(FPN_ToDouble(cfg.fee_rate_maker) - 0.001) < 1e-6);
+                  fabs(Money_ToDouble(cfg.fee_rate_maker) - 0.001) < 1e-6);
             check("legacy mirroring: fee_rate_taker == fee_rate",
-                  fabs(FPN_ToDouble(cfg.fee_rate_taker) - 0.001) < 1e-6);
+                  fabs(Money_ToDouble(cfg.fee_rate_taker) - 0.001) < 1e-6);
             unlink(path);
         }
     }
@@ -5102,8 +5102,8 @@ int main() {
             close(fd);
             ControllerConfig<FP> cfg = ControllerConfig_Load<FP>(path);
             check("explicit cfg: maker=0.00075 + taker=0.00100 parsed independently",
-                  fabs(FPN_ToDouble(cfg.fee_rate_maker) - 0.00075) < 1e-7 &&
-                  fabs(FPN_ToDouble(cfg.fee_rate_taker) - 0.00100) < 1e-7);
+                  fabs(Money_ToDouble(cfg.fee_rate_maker) - 0.00075) < 1e-7 &&
+                  fabs(Money_ToDouble(cfg.fee_rate_taker) - 0.00100) < 1e-7);
             unlink(path);
         }
     }
@@ -5182,12 +5182,12 @@ int main() {
     printf("\n--- Phase 8: Maker/taker accounting invariant ---\n");
     {
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
-        cfg.starting_balance = FPN_FromDouble<FP>(10000.0);
+        cfg.starting_balance = MQ(10000.0);
         // legacy: fee_rate=0.001, mirrored to maker+taker
-        cfg.fee_rate = FPN_FromDouble<FP>(0.001);
+        cfg.fee_rate = MQ(0.001);
         cfg.fee_rate_maker = cfg.fee_rate;
         cfg.fee_rate_taker = cfg.fee_rate;
-        cfg.slippage_pct = FPN_Zero<FP>();
+        cfg.slippage_pct = Money_Zero();
         cfg.max_positions = 1;
 
         PortfolioController<FP> ctrl = {};
@@ -5196,40 +5196,40 @@ int main() {
         // Counters start at 0
         check("counters initialized to 0",
               ctrl.maker_fills_count == 0 && ctrl.taker_fills_count == 0 &&
-              FPN_ToDouble(ctrl.total_maker_fees) == 0.0 &&
-              FPN_ToDouble(ctrl.total_taker_fees) == 0.0);
+              Money_ToDouble(ctrl.total_maker_fees) == 0.0 &&
+              Money_ToDouble(ctrl.total_taker_fees) == 0.0);
 
         // Drive a synthetic exit (RecordExit increments taker counter — TP/SL = market sell)
-        FPN_Binary<FP> entry = FPN_FromDouble<FP>(100.0);
-        FPN_Binary<FP> qty   = FPN_FromDouble<FP>(1.0);
+        Money entry = MQ(100.0);
+        Money qty   = MQ(1.0);
         Portfolio_AddPositionWithExits(&ctrl.portfolio, qty, entry,
-            FPN_FromDouble<FP>(110.0), FPN_FromDouble<FP>(90.0));
-        ctrl.portfolio.positions[0].entry_fee = FPN_FromDouble<FP>(0.10);
-        ctrl.balance = FPN_FromDouble<FP>(9899.90);
+            MQ(110.0), MQ(90.0));
+        ctrl.portfolio.positions[0].entry_fee = MQ(0.10);
+        ctrl.balance = MQ(9899.90);
 
-        PositionExitGate(&ctrl.portfolio, FPN_FromDouble<FP>(110.0), &ctrl.exit_buf, 100);
+        PositionExitGate(&ctrl.portfolio, MQ(110.0), &ctrl.exit_buf, 100);
         PortfolioController_DrainExits(&ctrl);
 
         // After one TP hit + drain: 1 taker fill, 0 maker fills
         check("after sync exit: 1 taker fill, 0 maker, total_fees == total_taker_fees",
               ctrl.taker_fills_count == 1 && ctrl.maker_fills_count == 0 &&
-              fabs(FPN_ToDouble(ctrl.total_fees) - FPN_ToDouble(ctrl.total_taker_fees)) < 1e-9 &&
-              FPN_ToDouble(ctrl.total_maker_fees) == 0.0);
+              fabs(Money_ToDouble(ctrl.total_fees) - Money_ToDouble(ctrl.total_taker_fees)) < 1e-9 &&
+              Money_ToDouble(ctrl.total_maker_fees) == 0.0);
     }
 
     // ----- Group 6: Snapshot sync — TUISnapshot has new fields (2 assertions) -------------------------
     printf("\n--- Phase 8: TUISnapshot maker/taker fields ---\n");
     {
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
-        cfg.starting_balance = FPN_FromDouble<FP>(10000.0);
+        cfg.starting_balance = MQ(10000.0);
         PortfolioController<FP> ctrl = {};
         PortfolioController_Init(&ctrl, cfg);
 
         // Manually set counter values
         ctrl.maker_fills_count = 3;
         ctrl.taker_fills_count = 7;
-        ctrl.total_maker_fees  = FPN_FromDouble<FP>(0.5);
-        ctrl.total_taker_fees  = FPN_FromDouble<FP>(2.0);
+        ctrl.total_maker_fees  = MQ(0.5);
+        ctrl.total_taker_fees  = MQ(2.0);
 
         TUISnapshot snap = {};
         TUI_CopySnapshot<FP>(&snap, &ctrl, /*price=*/60000.0, /*volume=*/0.0);
@@ -5289,7 +5289,7 @@ int main() {
         // Helper to build a TradeEvent
         auto make_event = [](uint16_t cid, uint8_t type, double price, uint64_t ts) {
             tt::TradeEvent<64> ev{};
-            ev.price = FPN_FromDouble<64>(price);
+            ev.price = MQ(price);
             ev.timestamp = ts;
             ev.core_id = cid;
             ev.type = type;
@@ -5300,25 +5300,25 @@ int main() {
         tt::OrderManagerState<64> oms;
         tt::EventLoopState<64> state;
         tt::EventLoopState_InitLegacy(&state, &oms,
-            FPN_FromDouble<64>(10000.0));
+            MQ(10000.0));
 
         tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
         tt::SPSCRing_Init(&tick_ring);
         tt::ExecutionCore<64> core;
         tt::ExecutionCore_Init(&core, 0, &tick_ring);
         int slot = tt::EventLoopState_RegisterCore(&state, &core,
-            FPN_FromDouble<64>(60100.0),  // intended_tp
-            FPN_FromDouble<64>(59900.0),  // intended_sl
-            FPN_FromDouble<64>(0.01));    // intended_qty
+            MQ(60100.0),  // intended_tp
+            MQ(59900.0),  // intended_sl
+            MQ(0.01));    // intended_qty
 
         // Initial state: zero notional
         check("initial: core_open_notional == 0",
-              FPN_ToDouble(state.cores[slot].core_open_notional) == 0.0);
+              Money_ToDouble(state.cores[slot].core_open_notional) == 0.0);
 
         // Single entry at $60000 × 0.01 BTC = $600 notional
         tt::EventLoop_OnEvent(&state,
             make_event((uint16_t)slot, tt::TRADE_EVENT_ENTRY, 60000.0, 1));
-        double after_entry = FPN_ToDouble(state.cores[slot].core_open_notional);
+        double after_entry = Money_ToDouble(state.cores[slot].core_open_notional);
         check("after entry @60000 × 0.01: notional == 600.0",
               fabs(after_entry - 600.0) < 1e-6);
 
@@ -5328,7 +5328,7 @@ int main() {
         // If subtracted asymmetrically, residue = -1.0 per round trip.
         tt::EventLoop_OnEvent(&state,
             make_event((uint16_t)slot, tt::TRADE_EVENT_EXIT, 60100.0, 2));
-        double after_winning_exit = FPN_ToDouble(state.cores[slot].core_open_notional);
+        double after_winning_exit = Money_ToDouble(state.cores[slot].core_open_notional);
         check("after winning exit: notional returns to 0 (no positive residue)",
               fabs(after_winning_exit) < 1e-6);
 
@@ -5338,7 +5338,7 @@ int main() {
             make_event((uint16_t)slot, tt::TRADE_EVENT_ENTRY, 60000.0, 3));
         tt::EventLoop_OnEvent(&state,
             make_event((uint16_t)slot, tt::TRADE_EVENT_EXIT, 59500.0, 4));
-        double after_losing_exit = FPN_ToDouble(state.cores[slot].core_open_notional);
+        double after_losing_exit = Money_ToDouble(state.cores[slot].core_open_notional);
         check("after losing exit: notional returns to 0 (no negative residue)",
               fabs(after_losing_exit) < 1e-6);
 
@@ -5356,7 +5356,7 @@ int main() {
             tt::EventLoop_OnEvent(&state,
                 make_event((uint16_t)slot, tt::TRADE_EVENT_EXIT, exit_price, 101 + 2 * i));
         }
-        double after_hammer = FPN_ToDouble(state.cores[slot].core_open_notional);
+        double after_hammer = Money_ToDouble(state.cores[slot].core_open_notional);
         check("hammer test (100 round trips, varied prices): notional == 0",
               fabs(after_hammer) < 1e-6);
 
@@ -5370,11 +5370,11 @@ int main() {
         tt::EventLoop_OnEvent(&state,
             make_event((uint16_t)slot, tt::TRADE_EVENT_ENTRY, 65000.0, 9999));
         check("standalone open: notional == 65000 × 0.01 = 650",
-              fabs(FPN_ToDouble(state.cores[slot].core_open_notional) - 650.0) < 1e-6);
+              fabs(Money_ToDouble(state.cores[slot].core_open_notional) - 650.0) < 1e-6);
         tt::EventLoop_OnEvent(&state,
             make_event((uint16_t)slot, tt::TRADE_EVENT_EXIT, 65500.0, 10000));
         check("final close: notional back to 0",
-              fabs(FPN_ToDouble(state.cores[slot].core_open_notional)) < 1e-6);
+              fabs(Money_ToDouble(state.cores[slot].core_open_notional)) < 1e-6);
     }
 
     //======================================================================================================
@@ -5394,27 +5394,27 @@ int main() {
         tt::OrderManagerState<64> oms;
         tt::EventLoopState<64> state;
         tt::EventLoopState_InitLegacy(&state, &oms,
-            FPN_FromDouble<64>(10000.0));
+            MQ(10000.0));
 
         tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
         tt::SPSCRing_Init(&tick_ring);
         tt::ExecutionCore<64> core;
         tt::ExecutionCore_Init(&core, 0, &tick_ring);
         int slot = tt::EventLoopState_RegisterCore(&state, &core,
-            FPN_FromDouble<64>(60100.0), FPN_FromDouble<64>(59900.0),
-            FPN_FromDouble<64>(0.01));
+            MQ(60100.0), MQ(59900.0),
+            MQ(0.01));
 
         // SimpleDip with $1000 allocation. Sizing math:
         //   trade_size = allocated / expected_entry = 1000 / 60000 ≈ 0.0167
         tt::EventLoopState_SetCoreStrategy(&state, slot,
-            STRATEGY_SIMPLE_DIP, FPN_FromDouble<64>(1000.0));
+            STRATEGY_SIMPLE_DIP, MQ(1000.0));
 
         // Stub cfg + rolling stats with values that produce a non-zero
         // bg_price_threshold. SimpleDip uses recent_high * (1 - offset_pct).
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
-        cfg.entry_offset_pct  = FPN_FromDouble<64>(0.001);
-        cfg.take_profit_pct   = FPN_FromDouble<64>(0.005);
-        cfg.stop_loss_pct     = FPN_FromDouble<64>(0.003);
+        cfg.entry_offset_pct  = MQ(0.001);
+        cfg.take_profit_pct   = MQ(0.005);
+        cfg.stop_loss_pct     = MQ(0.003);
         cfg.volume_multiplier = FPN_FromDouble<64>(1.0);
         // disable cross-cutting filters that would zero-gate independently
         cfg.min_stddev_pct  = FPN_Zero<64>();
@@ -5422,7 +5422,7 @@ int main() {
         cfg.min_buy_delta   = FPN_Zero<64>();
         cfg.vwap_offset     = FPN_Zero<64>();
         cfg.spacing_multiplier = FPN_Zero<64>();
-        cfg.fee_floor_mult  = FPN_Zero<64>();
+        cfg.fee_floor_mult  = Money_Zero();
         cfg.spike_threshold = FPN_Zero<64>();
         cfg.filter_scale    = FPN_Zero<64>();
 
@@ -5434,46 +5434,46 @@ int main() {
         rolling.count      = 200;  // past warmup
 
         // ---- Test 1: full budget remaining → no clamp, no halt ----
-        state.cores[slot].core_open_notional = FPN_Zero<64>();
+        state.cores[slot].core_open_notional = Money_Zero();
         tt::EventLoop_RebuildAllParameters(&state, &rolling, &cfg);
         check("budget=full: halt_reason != HALT_CORE_BUDGET (not budget-halted)",
               state.cores[slot].halt_reason != HALT_CORE_BUDGET);
         // qty should equal 1000 / (60000 × (1 - 0.001)) ≈ 0.01668
-        double tsize_full = FPN_ToDouble(state.cores[slot].pending_params.trade_size);
+        double tsize_full = Money_ToDouble(state.cores[slot].pending_params.trade_size);
         check("budget=full: trade_size matches strategy math (~0.0167)",
               tsize_full > 0.016 && tsize_full < 0.018);
 
         // ---- Test 2: partial budget → qty clamps proportionally ----
         // Set core_open_notional to $500 of $1000 allocation. Budget
         // remaining = $500. Expected: trade_size = 500 / 59940 ≈ 0.00834.
-        state.cores[slot].core_open_notional = FPN_FromDouble<64>(500.0);
+        state.cores[slot].core_open_notional = MQ(500.0);
         tt::EventLoop_RebuildAllParameters(&state, &rolling, &cfg);
         check("budget=half: halt_reason != HALT_CORE_BUDGET (still has room)",
               state.cores[slot].halt_reason != HALT_CORE_BUDGET);
-        double tsize_half = FPN_ToDouble(state.cores[slot].pending_params.trade_size);
+        double tsize_half = Money_ToDouble(state.cores[slot].pending_params.trade_size);
         check("budget=half: trade_size clamped to ~half (~0.00834)",
               tsize_half > 0.008 && tsize_half < 0.009);
 
         // ---- Test 3: budget fully deployed → halt fires + qty=0 ----
-        state.cores[slot].core_open_notional = FPN_FromDouble<64>(1000.0);
+        state.cores[slot].core_open_notional = MQ(1000.0);
         tt::EventLoop_RebuildAllParameters(&state, &rolling, &cfg);
         check("budget=exhausted: halt_reason == HALT_CORE_BUDGET",
               state.cores[slot].halt_reason == HALT_CORE_BUDGET);
         check("budget=exhausted: trade_size clamped to 0",
-              FPN_IsZero(state.cores[slot].pending_params.trade_size));
+              Money_IsZero(state.cores[slot].pending_params.trade_size));
         check("budget=exhausted: bg_price_threshold zero-gated",
-              FPN_IsZero(state.cores[slot].pending_params.bg_price_threshold));
+              Money_IsZero(state.cores[slot].pending_params.bg_price_threshold));
 
         // ---- Test 4: over-budget (defensive) → halt + qty=0 ----
         // open_notional > allocated should never happen with the symmetric
         // tracker, but defensive: FPN_SubSat saturates at zero so budget
         // remaining is zero and halt fires.
-        state.cores[slot].core_open_notional = FPN_FromDouble<64>(1500.0);
+        state.cores[slot].core_open_notional = MQ(1500.0);
         tt::EventLoop_RebuildAllParameters(&state, &rolling, &cfg);
         check("budget=over: halt_reason == HALT_CORE_BUDGET (saturating subtraction safe)",
               state.cores[slot].halt_reason == HALT_CORE_BUDGET);
         check("budget=over: trade_size still 0",
-              FPN_IsZero(state.cores[slot].pending_params.trade_size));
+              Money_IsZero(state.cores[slot].pending_params.trade_size));
 
         // ---- Test 5: multi-core isolation ----
         // Add a second core with full budget; verify core 0 budget exhaustion
@@ -5481,18 +5481,18 @@ int main() {
         tt::ExecutionCore<64> core1;
         tt::ExecutionCore_Init(&core1, 0, &tick_ring);
         int slot1 = tt::EventLoopState_RegisterCore(&state, &core1,
-            FPN_FromDouble<64>(60100.0), FPN_FromDouble<64>(59900.0),
-            FPN_FromDouble<64>(0.01));
+            MQ(60100.0), MQ(59900.0),
+            MQ(0.01));
         tt::EventLoopState_SetCoreStrategy(&state, slot1,
-            STRATEGY_SIMPLE_DIP, FPN_FromDouble<64>(1000.0));
+            STRATEGY_SIMPLE_DIP, MQ(1000.0));
         // core 0 stays exhausted from test 4; core 1 has full budget
-        state.cores[slot1].core_open_notional = FPN_Zero<64>();
+        state.cores[slot1].core_open_notional = Money_Zero();
         tt::EventLoop_RebuildAllParameters(&state, &rolling, &cfg);
         check("multi-core: core 0 still budget-halted",
               state.cores[slot].halt_reason == HALT_CORE_BUDGET);
         check("multi-core: core 1 not halted (independent budget)",
               state.cores[slot1].halt_reason != 8);
-        double t1 = FPN_ToDouble(state.cores[slot1].pending_params.trade_size);
+        double t1 = Money_ToDouble(state.cores[slot1].pending_params.trade_size);
         check("multi-core: core 1 trade_size unclamped",
               t1 > 0.016 && t1 < 0.018);
     }
@@ -5519,14 +5519,14 @@ int main() {
             // short-lived and small — the leak is acceptable.
             R* r = new R();
             tt::EventLoopState_InitLegacy(&r->state, &r->oms,
-                FPN_FromDouble<64>(10000.0));
+                MQ(10000.0));
             tt::SPSCRing_Init(&r->tick_ring);
             tt::ExecutionCore_Init(&r->core, 0, &r->tick_ring);
             int slot = tt::EventLoopState_RegisterCore(&r->state, &r->core,
-                FPN_FromDouble<64>(60100.0), FPN_FromDouble<64>(59900.0),
-                FPN_FromDouble<64>(0.01));
+                MQ(60100.0), MQ(59900.0),
+                MQ(0.01));
             tt::EventLoopState_SetCoreStrategy(&r->state, slot,
-                STRATEGY_SIMPLE_DIP, FPN_FromDouble<64>(1000.0));
+                STRATEGY_SIMPLE_DIP, MQ(1000.0));
             return r;
         };
 
@@ -5534,21 +5534,21 @@ int main() {
         // and disables the other zero-gate filters
         auto stub_cfg = []() {
             ControllerConfig<64> c = ControllerConfig_Default<64>();
-            c.entry_offset_pct = FPN_FromDouble<64>(0.001);
-            c.take_profit_pct  = FPN_FromDouble<64>(0.005);
-            c.stop_loss_pct    = FPN_FromDouble<64>(0.003);
+            c.entry_offset_pct = MQ(0.001);
+            c.take_profit_pct  = MQ(0.005);
+            c.stop_loss_pct    = MQ(0.003);
             c.volume_multiplier = FPN_FromDouble<64>(1.0);
             c.min_stddev_pct = FPN_Zero<64>();
             c.min_long_slope = FPN_Zero<64>();
             c.min_buy_delta  = FPN_Zero<64>();
             c.vwap_offset    = FPN_Zero<64>();
             c.spacing_multiplier = FPN_Zero<64>();
-            c.fee_floor_mult = FPN_Zero<64>();
+            c.fee_floor_mult = Money_Zero();
             c.spike_threshold = FPN_Zero<64>();
             c.filter_scale   = FPN_Zero<64>();
             // Phase 3: 10% drawdown threshold, $5 floor, MTM enabled
-            c.max_drawdown_pct = FPN_FromDouble<64>(0.10);
-            c.min_kill_loss    = FPN_FromDouble<64>(5.0);
+            c.max_drawdown_pct = MQ(0.10);
+            c.min_kill_loss    = MQ(5.0);
             BITMAP_SET(c.risk_cfg_flags, MASK_RISK_CFG_MTM_KILL_SWITCH_ENABLED);  // v5.15.5.F.4d.1.B.4 Cx-T H14 migration
             return c;
         };
@@ -5565,11 +5565,11 @@ int main() {
             ControllerConfig<64> cfg = stub_cfg();
             tt::EventLoop_RebuildAllParameters(&r->state, &rolling, &cfg);
             check("init: peak == allocated_balance after first rebuild",
-                  fabs(FPN_ToDouble(r->state.cores[0].core_peak_balance) - 1000.0) < 1e-6);
+                  fabs(Money_ToDouble(r->state.cores[0].core_peak_balance) - 1000.0) < 1e-6);
             check("init: kill not tripped",
                   !CORE_STATE_FLAG_IS_SET(r->state.cores[0], KILL_TRIPPED));
             check("init: dd == 0",
-                  FPN_IsZero(r->state.cores[0].core_dd_pct));
+                  Money_IsZero(r->state.cores[0].core_dd_pct));
         }
 
         // ---- Test 2: realized loss within threshold doesn't trip ----
@@ -5579,12 +5579,12 @@ int main() {
             // First rebuild establishes peak at 1000
             tt::EventLoop_RebuildAllParameters(&r->state, &rolling, &cfg);
             // Now lose $50 realized = 5% drawdown (under 10% threshold)
-            r->state.cores[0].core_realized = FPN_FromDouble<64>(-50.0);
+            r->state.cores[0].core_realized = MQ(-50.0);
             tt::EventLoop_RebuildAllParameters(&r->state, &rolling, &cfg);
             check("loss within threshold (5%, $50): no trip",
                   !CORE_STATE_FLAG_IS_SET(r->state.cores[0], KILL_TRIPPED));
             // dd should compute as roughly 5%
-            double dd = FPN_ToDouble(r->state.cores[0].core_dd_pct);
+            double dd = Money_ToDouble(r->state.cores[0].core_dd_pct);
             check("loss within threshold: dd ~= 5%",
                   dd > 0.04 && dd < 0.06);
         }
@@ -5596,7 +5596,7 @@ int main() {
             tt::EventLoop_RebuildAllParameters(&r->state, &rolling, &cfg);
             // Lose $150 realized = 15% drawdown (over 10% threshold) and
             // $150 > $5 min_kill_loss
-            r->state.cores[0].core_realized = FPN_FromDouble<64>(-150.0);
+            r->state.cores[0].core_realized = MQ(-150.0);
             tt::EventLoop_RebuildAllParameters(&r->state, &rolling, &cfg);
             check("loss exceeds threshold (15%): kill tripped",
                   CORE_STATE_FLAG_IS_SET(r->state.cores[0], KILL_TRIPPED));
@@ -5605,7 +5605,7 @@ int main() {
             check("trip: halt_reason == HALT_CORE_KILL",
                   r->state.cores[0].halt_reason == HALT_CORE_KILL);
             check("trip: bg_price_threshold zero-gated",
-                  FPN_IsZero(r->state.cores[0].pending_params.bg_price_threshold));
+                  Money_IsZero(r->state.cores[0].pending_params.bg_price_threshold));
         }
 
         // ---- Test 4: tiny absolute loss doesn't trip even if dd% high ----
@@ -5616,11 +5616,11 @@ int main() {
             // under the threshold anyway, so this is more about confirming
             // both conditions are AND'd. Try a config where allocated is
             // small to force the floor check to matter.
-            r->state.cores[0].allocated_balance = FPN_FromDouble<64>(20.0);
+            r->state.cores[0].allocated_balance = MQ(20.0);
             tt::EventLoop_RebuildAllParameters(&r->state, &rolling, &cfg);
             // peak should now be 20
             // Drop $4 = 20% dd (over 10% threshold), but $4 < $5 floor
-            r->state.cores[0].core_realized = FPN_FromDouble<64>(-4.0);
+            r->state.cores[0].core_realized = MQ(-4.0);
             tt::EventLoop_RebuildAllParameters(&r->state, &rolling, &cfg);
             check("dd over threshold but drop under floor ($4 < $5): NO trip",
                   !CORE_STATE_FLAG_IS_SET(r->state.cores[0], KILL_TRIPPED));
@@ -5633,16 +5633,16 @@ int main() {
             tt::EventLoop_RebuildAllParameters(&r->state, &rolling, &cfg);
             // Manually open a position at $60000 with qty 0.01 (notional $600)
             Portfolio_OpenSlot(&r->oms.portfolio, 0,
-                FPN_FromDouble<64>(60000.0), FPN_FromDouble<64>(0.01),
-                FPN_FromDouble<64>(60500.0), FPN_FromDouble<64>(59000.0),
-                FPN_Zero<64>());
-            r->state.cores[0].core_open_notional = FPN_FromDouble<64>(600.0);
+                MQ(60000.0), MQ(0.01),
+                MQ(60500.0), MQ(59000.0),
+                Money_Zero());
+            r->state.cores[0].core_open_notional = MQ(600.0);
 
             // Price drops to $40000: unrealized = (40000-60000)*0.01 = -$200
             // current_value = 1000 + 0 + (-200) = 800
             // peak still 1000, dd = 200/1000 = 20% (over 10% threshold)
             // drop = $200 > $5 floor → trip
-            FPN_Binary<64> mtm = FPN_FromDouble<64>(40000.0);
+            Money mtm = MQ(40000.0);
             tt::EventLoop_RebuildAllParameters(&r->state, &rolling, &cfg, (const RollingStats<64, 512>*)nullptr, nullptr, nullptr, &mtm);
             check("MTM: -$200 unrealized trips kill (no realized)",
                   CORE_STATE_FLAG_IS_SET(r->state.cores[0], KILL_TRIPPED));
@@ -5655,11 +5655,11 @@ int main() {
             BITMAP_CLR(cfg.risk_cfg_flags, MASK_RISK_CFG_MTM_KILL_SWITCH_ENABLED);  // realized-only mode (v5.15.5.F.4d.1.B.4 Cx-T H14 migration)
             tt::EventLoop_RebuildAllParameters(&r->state, &rolling, &cfg);
             Portfolio_OpenSlot(&r->oms.portfolio, 0,
-                FPN_FromDouble<64>(60000.0), FPN_FromDouble<64>(0.01),
-                FPN_FromDouble<64>(60500.0), FPN_FromDouble<64>(59000.0),
-                FPN_Zero<64>());
+                MQ(60000.0), MQ(0.01),
+                MQ(60500.0), MQ(59000.0),
+                Money_Zero());
             // Big unrealized loss but MTM is off — kill should NOT fire
-            FPN_Binary<64> mtm = FPN_FromDouble<64>(30000.0);  // -$300 unrealized
+            Money mtm = MQ(30000.0);  // -$300 unrealized
             tt::EventLoop_RebuildAllParameters(&r->state, &rolling, &cfg, (const RollingStats<64, 512>*)nullptr, nullptr, nullptr, &mtm);
             check("MTM disabled: unrealized loss alone doesn't trip",
                   !CORE_STATE_FLAG_IS_SET(r->state.cores[0], KILL_TRIPPED));
@@ -5670,10 +5670,10 @@ int main() {
             auto* r = fresh_state();
             ControllerConfig<64> cfg = stub_cfg();
             // Global threshold 10%, override core 0 to 5%
-            cfg.core_max_drawdown_pct[0] = FPN_FromDouble<64>(0.05);
+            cfg.core_max_drawdown_pct[0] = MQ(0.05);
             tt::EventLoop_RebuildAllParameters(&r->state, &rolling, &cfg);
             // Lose $80 = 8% — over 5% override but under 10% global
-            r->state.cores[0].core_realized = FPN_FromDouble<64>(-80.0);
+            r->state.cores[0].core_realized = MQ(-80.0);
             tt::EventLoop_RebuildAllParameters(&r->state, &rolling, &cfg);
             check("per-core override (5%) trips at 8% even when global (10%) wouldn't",
                   CORE_STATE_FLAG_IS_SET(r->state.cores[0], KILL_TRIPPED));
@@ -5689,7 +5689,7 @@ int main() {
             check("pre-tripped: halt_reason == HALT_CORE_KILL immediately",
                   r->state.cores[0].halt_reason == HALT_CORE_KILL);
             check("pre-tripped: bg_price_threshold zero-gated",
-                  FPN_IsZero(r->state.cores[0].pending_params.bg_price_threshold));
+                  Money_IsZero(r->state.cores[0].pending_params.bg_price_threshold));
         }
     }
 
@@ -5716,15 +5716,15 @@ int main() {
             };
             R* r = new R();
             tt::EventLoopState_InitLegacy(&r->state, &r->oms,
-                FPN_FromDouble<64>(balance));
+                MQ(balance));
             for (int i = 0; i < num_cores && i < 8; ++i) {
                 tt::SPSCRing_Init(&r->tick_rings[i]);
                 tt::ExecutionCore_Init(&r->cores[i], 0, &r->tick_rings[i]);
                 tt::EventLoopState_RegisterCore(&r->state, &r->cores[i],
-                    FPN_FromDouble<64>(60100.0), FPN_FromDouble<64>(59900.0),
-                    FPN_FromDouble<64>(0.01));
+                    MQ(60100.0), MQ(59900.0),
+                    MQ(0.01));
                 tt::EventLoopState_SetCoreStrategy(&r->state, i,
-                    STRATEGY_SIMPLE_DIP, FPN_FromDouble<64>(balance / num_cores));
+                    STRATEGY_SIMPLE_DIP, MQ(balance / num_cores));
             }
             return r;
         };
@@ -5736,7 +5736,7 @@ int main() {
             check("missing file: load returns 0",
                   loaded == 0);
             check("missing file: state untouched (balance still starting)",
-                  fabs(FPN_ToDouble(r->state.oms->balance) - 10000.0) < 1e-6);
+                  fabs(Money_ToDouble(r->state.oms->balance) - 10000.0) < 1e-6);
         }
 
         // ---- Test 2: round trip preserves all per-core state ----
@@ -5746,13 +5746,13 @@ int main() {
             for (int c = 0; c < 4; ++c) {
                 r->state.cores[c].entries_processed = 10 + c;
                 r->state.cores[c].exits_processed   = 8 + c;
-                r->state.cores[c].core_realized     = FPN_FromDouble<64>(50.0 - 10.0 * c);
-                r->state.cores[c].core_fees         = FPN_FromDouble<64>(2.5);
+                r->state.cores[c].core_realized     = MQ(50.0 - 10.0 * c);
+                r->state.cores[c].core_fees         = MQ(2.5);
                 r->state.cores[c].core_wins         = 6 + c;
                 r->state.cores[c].core_losses       = 2;
-                r->state.cores[c].core_open_notional = FPN_FromDouble<64>(100.0 + 50.0 * c);
-                r->state.cores[c].core_peak_balance  = FPN_FromDouble<64>(2600.0 + 100.0 * c);
-                r->state.cores[c].core_dd_pct        = FPN_FromDouble<64>(0.03 * c);
+                r->state.cores[c].core_open_notional = MQ(100.0 + 50.0 * c);
+                r->state.cores[c].core_peak_balance  = MQ(2600.0 + 100.0 * c);
+                r->state.cores[c].core_dd_pct        = MQ(0.03 * c);
                 if (c == 2) CORE_STATE_FLAG_SET(r->state.cores[c], KILL_TRIPPED);
                 else        CORE_STATE_FLAG_CLR(r->state.cores[c], KILL_TRIPPED);
                 r->state.cores[c].core_ks_trips_total = c;
@@ -5779,8 +5779,8 @@ int main() {
                     r->state.cores[c].confidence.rmse.window.samples[j]    = 0.001 * (c + 1) + 0.0001 * j;
                 }
             }
-            r->oms.balance      = FPN_FromDouble<64>(9837.42);
-            r->oms.realized_pnl = FPN_FromDouble<64>(-162.58);
+            r->oms.balance      = MQ(9837.42);
+            r->oms.realized_pnl = MQ(-162.58);
             // v5.15.5.C.2.1 (test-strength audit INFO close): exercise the
             // OMS-level kill_switch_tripped bit through the persist round-trip.
             // Pre-S3a-W this was a uint8_t int4 wire field; post-S3a-W the
@@ -5795,10 +5795,10 @@ int main() {
             // bytes 3-10 (ks_peak_balance, total_fees, total_maker_fees,
             // total_taker_fees, maker_fills_count, taker_fills_count,
             // paper_session_start_us) now get direct assertions too.
-            r->oms.ks_peak_balance = FPN_FromDouble<64>(11250.75);
-            r->oms.total_fees      = FPN_FromDouble<64>(42.50);
-            r->oms.total_maker_fees= FPN_FromDouble<64>(15.25);
-            r->oms.total_taker_fees= FPN_FromDouble<64>(27.25);
+            r->oms.ks_peak_balance = MQ(11250.75);
+            r->oms.total_fees      = MQ(42.50);
+            r->oms.total_maker_fees= MQ(15.25);
+            r->oms.total_taker_fees= MQ(27.25);
             r->oms.maker_fills_count = 7;
             r->oms.taker_fills_count = 13;
             r->oms.paper_session_start_us = 1700000000000000ULL;  // arbitrary epoch us
@@ -5813,9 +5813,9 @@ int main() {
             check("round-trip: load returns 1",
                   loaded == 1);
             check("round-trip: oms.balance restored",
-                  fabs(FPN_ToDouble(r2->state.oms->balance) - 9837.42) < 1e-6);
+                  fabs(Money_ToDouble(r2->state.oms->balance) - 9837.42) < 1e-6);
             check("round-trip: oms.realized_pnl restored",
-                  fabs(FPN_ToDouble(r2->state.oms->realized_pnl) - (-162.58)) < 1e-6);
+                  fabs(Money_ToDouble(r2->state.oms->realized_pnl) - (-162.58)) < 1e-6);
             // v5.15.5.C.2.1 (test-strength audit INFO close): verify the
             // kill_switch_tripped bit round-tripped through FOREACH_OMS_
             // PERSIST_FIELD's BIT-kind save (extract bit→int wire) +
@@ -5825,13 +5825,13 @@ int main() {
                                 tt::MASK_OMS_STATE_KILL_SWITCH_TRIPPED));
             // v5.15.5.C.3 Phase 10 — 7 additional PERSIST fields directly asserted.
             check("round-trip: oms.ks_peak_balance restored",
-                  fabs(FPN_ToDouble(r2->state.oms->ks_peak_balance) - 11250.75) < 1e-6);
+                  fabs(Money_ToDouble(r2->state.oms->ks_peak_balance) - 11250.75) < 1e-6);
             check("round-trip: oms.total_fees restored",
-                  fabs(FPN_ToDouble(r2->state.oms->total_fees) - 42.50) < 1e-6);
+                  fabs(Money_ToDouble(r2->state.oms->total_fees) - 42.50) < 1e-6);
             check("round-trip: oms.total_maker_fees restored",
-                  fabs(FPN_ToDouble(r2->state.oms->total_maker_fees) - 15.25) < 1e-6);
+                  fabs(Money_ToDouble(r2->state.oms->total_maker_fees) - 15.25) < 1e-6);
             check("round-trip: oms.total_taker_fees restored",
-                  fabs(FPN_ToDouble(r2->state.oms->total_taker_fees) - 27.25) < 1e-6);
+                  fabs(Money_ToDouble(r2->state.oms->total_taker_fees) - 27.25) < 1e-6);
             check("round-trip: oms.maker_fills_count restored",
                   r2->state.oms->maker_fills_count == 7u);
             check("round-trip: oms.taker_fills_count restored",
@@ -5857,7 +5857,7 @@ int main() {
                 check("round-trip: entries_processed",
                       r2->state.cores[c].entries_processed == (uint64_t)(10 + c));
                 check("round-trip: core_realized",
-                      fabs(FPN_ToDouble(r2->state.cores[c].core_realized) - (50.0 - 10.0 * c)) < 1e-6);
+                      fabs(Money_ToDouble(r2->state.cores[c].core_realized) - (50.0 - 10.0 * c)) < 1e-6);
                 check("round-trip: core_kill_tripped",
                       CORE_STATE_FLAG_IS_SET(r2->state.cores[c], KILL_TRIPPED) == (c == 2));
                 check("round-trip: regime current",
@@ -5897,7 +5897,7 @@ int main() {
             check("legacy magic: refused (returns 0)",
                   loaded == 0);
             check("legacy magic: state untouched",
-                  fabs(FPN_ToDouble(r->state.oms->balance) - 10000.0) < 1e-6);
+                  fabs(Money_ToDouble(r->state.oms->balance) - 10000.0) < 1e-6);
         }
 
         // ---- Test 4: refuse version mismatch ----
@@ -5934,7 +5934,7 @@ int main() {
         {
             // Save with 4 cores
             auto* r4 = build_state(4, 10000.0);
-            r4->oms.balance = FPN_FromDouble<64>(8888.0);  // distinguishable
+            r4->oms.balance = MQ(8888.0);  // distinguishable
             tt::ShardedSnapshot_Save<64>(&r4->state, test_path, 0);
 
             // Load into a 2-core state
@@ -5943,7 +5943,7 @@ int main() {
             check("core-count mismatch (4 saved, 2 cfg): refused",
                   loaded == 0);
             check("core-count mismatch: state untouched",
-                  fabs(FPN_ToDouble(r2->state.oms->balance) - 10000.0) < 1e-6);
+                  fabs(Money_ToDouble(r2->state.oms->balance) - 10000.0) < 1e-6);
         }
 
         // ---- Test 6: corrupted file (truncated mid-block) ----
@@ -5976,11 +5976,11 @@ int main() {
 
             // Open a position on slot 0 with known TP/SL prices
             Portfolio_OpenSlot(&r->state.oms->portfolio, 0,
-                FPN_FromDouble<64>(60000.0),  // entry_price
-                FPN_FromDouble<64>(0.01),     // qty
-                FPN_FromDouble<64>(60900.0),  // tp
-                FPN_FromDouble<64>(59100.0),  // sl
-                FPN_FromDouble<64>(0.6));     // entry_fee
+                MQ(60000.0),  // entry_price
+                MQ(0.01),     // qty
+                MQ(60900.0),  // tp
+                MQ(59100.0),  // sl
+                MQ(0.6));     // entry_fee
 
             // Save snapshot of this state
             tt::ShardedSnapshot_Save<64>(&r->state, test_path, 0);
@@ -5990,7 +5990,7 @@ int main() {
             check("pre-load: fresh core[0].active == 0",
                   r2->cores[0].active == 0);
             check("pre-load: fresh core[0].live_tp == 0",
-                  FPN_IsZero(r2->cores[0].live_tp));
+                  Money_IsZero(r2->cores[0].live_tp));
 
             // Load — should re-activate core[0] from restored Position
             int loaded = tt::ShardedSnapshot_Load<64>(&r2->state, test_path, 0);
@@ -6001,11 +6001,11 @@ int main() {
             check("snapshot re-activate: core[0].active == 1",
                   r2->cores[0].active == 1);
             check("snapshot re-activate: core[0].live_tp == 60900",
-                  fabs(FPN_ToDouble(r2->cores[0].live_tp) - 60900.0) < 1e-6);
+                  fabs(Money_ToDouble(r2->cores[0].live_tp) - 60900.0) < 1e-6);
             check("snapshot re-activate: core[0].live_sl == 59100",
-                  fabs(FPN_ToDouble(r2->cores[0].live_sl) - 59100.0) < 1e-6);
+                  fabs(Money_ToDouble(r2->cores[0].live_sl) - 59100.0) < 1e-6);
             check("snapshot re-activate: core[0].entry_price == 60000",
-                  fabs(FPN_ToDouble(r2->cores[0].entry_price) - 60000.0) < 1e-6);
+                  fabs(Money_ToDouble(r2->cores[0].entry_price) - 60000.0) < 1e-6);
             // Slot 1 has no position; core[1] should stay inactive
             check("snapshot re-activate: core[1].active stays 0 (no position)",
                   r2->cores[1].active == 0);
@@ -6021,7 +6021,7 @@ int main() {
         // → zombie positions, undisplayable strategies).
         {
             auto* r = build_state(2, 10000.0);
-            r->oms.balance = FPN_FromDouble<64>(7777.0);
+            r->oms.balance = MQ(7777.0);
             tt::ShardedSnapshot_Save<64>(&r->state, test_path, 0);  // saved partials=0
 
             auto* r2 = build_state(2, 10000.0);
@@ -6029,11 +6029,11 @@ int main() {
             check("v3 partials toggle (saved=0, load=1): refused",
                   loaded == 0);
             check("v3 partials toggle: state untouched on refuse",
-                  fabs(FPN_ToDouble(r2->state.oms->balance) - 10000.0) < 1e-6);
+                  fabs(Money_ToDouble(r2->state.oms->balance) - 10000.0) < 1e-6);
             unlink(test_path);
 
             auto* r3 = build_state(2, 10000.0);
-            r3->oms.balance = FPN_FromDouble<64>(8888.0);
+            r3->oms.balance = MQ(8888.0);
             tt::ShardedSnapshot_Save<64>(&r3->state, test_path, 1);  // saved partials=1
 
             auto* r4 = build_state(2, 10000.0);
@@ -6047,7 +6047,7 @@ int main() {
             check("v3 partials toggle (saved=1, load=1): accepted",
                   loaded3 == 1);
             check("v3 partials toggle accepted: balance restored",
-                  fabs(FPN_ToDouble(r5->state.oms->balance) - 8888.0) < 1e-6);
+                  fabs(Money_ToDouble(r5->state.oms->balance) - 8888.0) < 1e-6);
             unlink(test_path);
         }
 
@@ -6074,25 +6074,25 @@ int main() {
             };
             R* r = new R();
             tt::EventLoopState_InitLegacy(&r->state, &r->oms,
-                FPN_FromDouble<64>(balance));
+                MQ(balance));
             // v5.15.5.F.4c.3 WIP2d-1.B.1 — slippage_pct moved from OMS scalar to per-core cfg.
             // OnEvent reads effective_cores[event.core_id].slippage_pct via the cores param.
-            r->cfg.cores[0].slippage_pct = FPN_FromDouble<64>(slippage);
-            r->cfg.cores[0].fee_rate_taker = FPN_FromDouble<64>(0.001);  // mode-0 body reads this too
-            r->cfg.cores[0].fee_rate_maker = FPN_FromDouble<64>(0.001);
+            r->cfg.cores[0].slippage_pct = MQ(slippage);
+            r->cfg.cores[0].fee_rate_taker = MQ(0.001);  // mode-0 body reads this too
+            r->cfg.cores[0].fee_rate_maker = MQ(0.001);
             tt::SPSCRing_Init(&r->tick_ring);
             tt::ExecutionCore_Init(&r->core, 0, &r->tick_ring);
             tt::EventLoopState_RegisterCore(&r->state, &r->core,
-                FPN_FromDouble<64>(60500.0), FPN_FromDouble<64>(59500.0),
-                FPN_FromDouble<64>(0.01));
+                MQ(60500.0), MQ(59500.0),
+                MQ(0.01));
             tt::EventLoopState_SetCoreStrategy(&r->state, 0,
-                STRATEGY_SIMPLE_DIP, FPN_FromDouble<64>(1000.0));
+                STRATEGY_SIMPLE_DIP, MQ(1000.0));
             return r;
         };
 
         auto make_event = [](uint16_t cid, uint8_t type, double price) {
             tt::TradeEvent<64> ev{};
-            ev.price = FPN_FromDouble<64>(price);
+            ev.price = MQ(price);
             ev.timestamp = 1;
             ev.core_id = cid;
             ev.type = type;
@@ -6107,17 +6107,17 @@ int main() {
             tt::EventLoop_OnEvent(&r->state,
                 make_event(0, tt::TRADE_EVENT_ENTRY, 60000.0),
                 r->cfg.cores);  // v5.15.5.F.4c.3 WIP2d-1.B.1 — per-core cfg array for slippage/fee_rate
-            double entry_price = FPN_ToDouble(r->oms.portfolio.positions[0].entry_price);
+            double entry_price = Money_ToDouble(r->oms.portfolio.positions[0].entry_price);
             check("paper slippage on entry: stored price = base × 1.001",
                   fabs(entry_price - 60060.0) < 1e-3);
 
             // Exit at $61000 → effective exit price = $61000 × 0.999 = $60939
             // Net gross = (60939 - 60060) × 0.01 = $8.79 (vs $10 without slippage)
-            double pre_balance = FPN_ToDouble(r->oms.balance);
+            double pre_balance = Money_ToDouble(r->oms.balance);
             tt::EventLoop_OnEvent(&r->state,
                 make_event(0, tt::TRADE_EVENT_EXIT, 61000.0),
                 r->cfg.cores);
-            double post_balance = FPN_ToDouble(r->oms.balance);
+            double post_balance = Money_ToDouble(r->oms.balance);
             // Some math here: gross is (60939 - 60060) × 0.01 = $8.79.
             // Fees: entry_fee at fill time used taker rate × notional ≈ ~$0.6.
             // Exit fee at exit ≈ ~$0.61. Net ≈ $8.79 - $1.21 ≈ $7.58 added.
@@ -6135,7 +6135,7 @@ int main() {
             BITMAP_SET(r->oms.oms_state_flags, tt::MASK_OMS_STATE_LIVE_TRADING);  // LIVE — should skip slippage
             tt::EventLoop_OnEvent(&r->state,
                 make_event(0, tt::TRADE_EVENT_ENTRY, 60000.0));
-            double entry_price = FPN_ToDouble(r->oms.portfolio.positions[0].entry_price);
+            double entry_price = Money_ToDouble(r->oms.portfolio.positions[0].entry_price);
             check("live mode: slippage_pct is ignored (price unchanged)",
                   fabs(entry_price - 60000.0) < 1e-6);
         }
@@ -6146,7 +6146,7 @@ int main() {
             BITMAP_CLR(r->oms.oms_state_flags, tt::MASK_OMS_STATE_LIVE_TRADING);
             tt::EventLoop_OnEvent(&r->state,
                 make_event(0, tt::TRADE_EVENT_ENTRY, 60000.0));
-            double entry_price = FPN_ToDouble(r->oms.portfolio.positions[0].entry_price);
+            double entry_price = Money_ToDouble(r->oms.portfolio.positions[0].entry_price);
             check("zero slippage_pct: no adjustment",
                   fabs(entry_price - 60000.0) < 1e-6);
         }
@@ -6160,21 +6160,21 @@ int main() {
         tt::OrderManagerState<64> oms;
         tt::EventLoopState<64> state;
         tt::EventLoopState_InitLegacy(&state, &oms,
-            FPN_FromDouble<64>(10000.0));
+            MQ(10000.0));
         tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
         tt::SPSCRing_Init(&tick_ring);
         tt::ExecutionCore<64> core;
         tt::ExecutionCore_Init(&core, 0, &tick_ring);
         int slot = tt::EventLoopState_RegisterCore(&state, &core,
-            FPN_FromDouble<64>(60100.0), FPN_FromDouble<64>(59900.0),
-            FPN_FromDouble<64>(0.01));
+            MQ(60100.0), MQ(59900.0),
+            MQ(0.01));
         tt::EventLoopState_SetCoreStrategy(&state, slot,
-            STRATEGY_SIMPLE_DIP, FPN_FromDouble<64>(1000.0));
+            STRATEGY_SIMPLE_DIP, MQ(1000.0));
 
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
         cfg.idle_reset_cycles = 5;       // small threshold for fast test
         cfg.min_stddev_pct = FPN_Zero<64>();
-        cfg.fee_floor_mult = FPN_Zero<64>();
+        cfg.fee_floor_mult = Money_Zero();
         cfg.filter_scale = FPN_Zero<64>();
         RollingStats<64, 128> rolling = RollingStats_Init<64, 128>();
         rolling.price_max = FPN_FromDouble<64>(60000.0);
@@ -6200,7 +6200,7 @@ int main() {
 
         // Trigger a fill event — idle_cycles resets
         tt::TradeEvent<64> entry{};
-        entry.price = FPN_FromDouble<64>(60000.0);
+        entry.price = MQ(60000.0);
         entry.timestamp = 1;
         entry.core_id = (uint16_t)slot;
         entry.type = tt::TRADE_EVENT_ENTRY;
@@ -6235,13 +6235,13 @@ int main() {
         check("init: sum == 0", FPN_IsZero(s.sum));
 
         // single buy aggression (is_buyer_maker=0): +qty
-        CumDelta_Push(&s, FPN_FromDouble<64>(0.5), 0);
+        CumDelta_Push(&s, Money_ToBinary(MQ(0.5)), 0);
         check("after 1 buy push: count == 1", s.count == 1);
         check("after 1 buy push: sum == +0.5",
               fabs(FPN_ToDouble(s.sum) - 0.5) < 1e-6);
 
         // sell aggression (is_buyer_maker=1): -qty
-        CumDelta_Push(&s, FPN_FromDouble<64>(0.3), 1);
+        CumDelta_Push(&s, Money_ToBinary(MQ(0.3)), 1);
         check("after 1 sell push: count == 2",  s.count == 2);
         check("after 1 sell push: sum == 0.5 - 0.3 = 0.2",
               fabs(FPN_ToDouble(s.sum) - 0.2) < 1e-6);
@@ -6259,7 +6259,7 @@ int main() {
         CumDeltaState<64> s2;
         CumDelta_Init(&s2);
         for (int i = 0; i < 2000; ++i) {
-            CumDelta_Push(&s2, FPN_FromDouble<64>(0.5), 0);
+            CumDelta_Push(&s2, Money_ToBinary(MQ(0.5)), 0);
         }
         check("wrap test 2000 buys: count saturates at CUMDELTA_WINDOW=1024",
               s2.count == 1024);
@@ -6395,7 +6395,7 @@ int main() {
         ExchangeAdapter<64> empty_adapter{};
         OrderManager_Init(&oms, empty_adapter, 0,
                           /*partial_exit_enabled=*/0,
-                          FPN_FromDouble<64>(10000.0));
+                          MQ(10000.0));
 
         EventLoopState<64> state;
         EventLoopState_Init(&state, &oms);
@@ -6405,7 +6405,7 @@ int main() {
         ExecutionCore<64> core;
         ExecutionCore_Init(&core, 0, &ring);
         EventLoopState_RegisterCore(&state, &core,
-            FPN_Zero<64>(), FPN_Zero<64>(), FPN_Zero<64>());
+            Money_Zero(), Money_Zero(), Money_Zero());
 
         RollingStats<64, 128> rolling = RollingStats_Init<64, 128>();
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
@@ -6428,8 +6428,8 @@ int main() {
         // Feed 80 ticks at slow_path_interval=8 → expect 10 hook firings.
         for (int i = 0; i < 80; ++i) {
             Tick<64> t{};
-            t.price     = FPN_FromDouble<64>(60000.0 + i);
-            t.volume    = FPN_FromDouble<64>(1.0);
+            t.price     = MQ(60000.0 + i);
+            t.volume    = MQ(1.0);
             t.timestamp = (uint64_t)(1000000ULL * (uint64_t)i);
             t.sequence  = (uint64_t)i;
             ShardedBacktest_RunTick(&drv, t, i);
@@ -6465,7 +6465,7 @@ int main() {
         ExchangeAdapter<64> empty_adapter{};
         OrderManager_Init(&oms, empty_adapter, 0,
                           /*partial_exit_enabled=*/0,
-                          FPN_FromDouble<64>(10000.0));
+                          MQ(10000.0));
         EventLoopState<64> state;
         EventLoopState_Init(&state, &oms);
 
@@ -6474,7 +6474,7 @@ int main() {
         ExecutionCore<64> core;
         ExecutionCore_Init(&core, 0, &ring);
         EventLoopState_RegisterCore(&state, &core,
-            FPN_Zero<64>(), FPN_Zero<64>(), FPN_Zero<64>());
+            Money_Zero(), Money_Zero(), Money_Zero());
 
         RollingStats<64, 128> rolling = RollingStats_Init<64, 128>();
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
@@ -6488,15 +6488,15 @@ int main() {
                               int /*ti*/) {
             WitnessCtx* w_ = (WitnessCtx*)ctx_v;
             w_->observed_runs  = d->slow_path_runs;
-            w_->observed_price = FPN_ToDouble(tk.price);
+            w_->observed_price = Money_ToDouble(tk.price);
             w_->observed_ts    = tk.timestamp;
         };
 
         // Send four ticks — only the 4th (index 3) lands on slow path.
         for (int i = 0; i < 4; ++i) {
             Tick<64> t{};
-            t.price     = FPN_FromDouble<64>(50000.0 + 100.0 * i);
-            t.volume    = FPN_FromDouble<64>(1.0);
+            t.price     = MQ(50000.0 + 100.0 * i);
+            t.volume    = MQ(1.0);
             t.timestamp = (uint64_t)(2000000ULL * (uint64_t)i);
             t.sequence  = (uint64_t)i;
             ShardedBacktest_RunTick(&drv, t, i);
@@ -6565,7 +6565,7 @@ int main() {
         ExchangeAdapter<64> empty_adapter{};
         OrderManager_Init(&oms, empty_adapter, 0,
                           /*partial_exit_enabled=*/0,
-                          FPN_FromDouble<64>(10000.0));
+                          MQ(10000.0));
         EventLoopState<64> state;
         EventLoopState_Init(&state, &oms);
 
@@ -6575,7 +6575,7 @@ int main() {
             SPSCRing_Init(&rings[i]);
             ExecutionCore_Init(&cores[i], (uint16_t)i, &rings[i]);
             EventLoopState_RegisterCore(&state, &cores[i],
-                FPN_Zero<64>(), FPN_Zero<64>(), FPN_Zero<64>());
+                Money_Zero(), Money_Zero(), Money_Zero());
         }
 
         // Mimic BacktestSharded_Run lines 178-185: even-split default,
@@ -6593,13 +6593,13 @@ int main() {
         const double slot1_override    = total_balance * 0.20;                 // $2000
 
         EventLoopState_SetCoreStrategy(&state, 0, strategies[0],
-            FPN_FromDouble<64>(default_per_core));
+            MQ(default_per_core));
         EventLoopState_SetCoreStrategy(&state, 1, strategies[1],
-            FPN_FromDouble<64>(slot1_override));
+            MQ(slot1_override));
         EventLoopState_SetCoreStrategy(&state, 2, strategies[2],
-            FPN_FromDouble<64>(default_per_core));
+            MQ(default_per_core));
         EventLoopState_SetCoreStrategy(&state, 3, strategies[3],
-            FPN_FromDouble<64>(default_per_core));
+            MQ(default_per_core));
 
         check("slot 0 strategy_id == SIMPLE_DIP",
               state.cores[0].strategy_id == STRATEGY_SIMPLE_DIP);
@@ -6611,16 +6611,16 @@ int main() {
               state.cores[3].strategy_id == STRATEGY_NONE);
 
         check("slot 0 allocated_balance ~= $250 (default split)",
-              fabs(FPN_ToDouble(state.cores[0].allocated_balance) - default_per_core) < 1e-6);
+              fabs(Money_ToDouble(state.cores[0].allocated_balance) - default_per_core) < 1e-6);
         check("slot 1 allocated_balance ~= $2000 (override)",
-              fabs(FPN_ToDouble(state.cores[1].allocated_balance) - slot1_override) < 1e-6);
+              fabs(Money_ToDouble(state.cores[1].allocated_balance) - slot1_override) < 1e-6);
         check("slot 2 allocated_balance ~= $250 (default split)",
-              fabs(FPN_ToDouble(state.cores[2].allocated_balance) - default_per_core) < 1e-6);
+              fabs(Money_ToDouble(state.cores[2].allocated_balance) - default_per_core) < 1e-6);
 
         // Out-of-range slot: SetCoreStrategy must NOT crash + must NOT
         // mutate state. Defensive guard at ControllerEventLoop.hpp:359.
         EventLoopState_SetCoreStrategy(&state, 99, STRATEGY_MOMENTUM,
-            FPN_FromDouble<64>(99999.0));
+            MQ(99999.0));
         check("out-of-range slot 99: no crash, slot 0 unchanged",
               state.cores[0].strategy_id == STRATEGY_SIMPLE_DIP);
     }
@@ -6638,7 +6638,7 @@ int main() {
         ExchangeAdapter<64> empty_adapter{};
         OrderManager_Init(&oms, empty_adapter, 0,
                           /*partial_exit_enabled=*/0,
-                          FPN_FromDouble<64>(10000.0));
+                          MQ(10000.0));
         EventLoopState<64> state;
         EventLoopState_Init(&state, &oms);
 
@@ -6648,16 +6648,16 @@ int main() {
             SPSCRing_Init(&rings[i]);
             ExecutionCore_Init(&cores[i], (uint16_t)i, &rings[i]);
             EventLoopState_RegisterCore(&state, &cores[i],
-                FPN_Zero<64>(), FPN_Zero<64>(), FPN_Zero<64>());
+                Money_Zero(), Money_Zero(), Money_Zero());
             ExecutionCore_SetPermission(&cores[i], 0); // E.2: starts at 0
         }
 
         EventLoopState_SetCoreStrategy(&state, 0, STRATEGY_SIMPLE_DIP,
-            FPN_FromDouble<64>(250.0));
+            MQ(250.0));
         EventLoopState_SetCoreStrategy(&state, 1, STRATEGY_NONE,
-            FPN_FromDouble<64>(250.0));
+            MQ(250.0));
         EventLoopState_SetCoreStrategy(&state, 2, STRATEGY_MOMENTUM,
-            FPN_FromDouble<64>(250.0));
+            MQ(250.0));
 
         check("pre-warmup: slot 0 permission == 0",
               __atomic_load_n(&cores[0].permission, __ATOMIC_ACQUIRE) == 0);
@@ -6826,13 +6826,13 @@ e3_skip_load:;
         using namespace tt;
         // Buy-below strategy: gate normally fires when price < threshold.
         Tick<64> tick{};
-        tick.price  = FPN_FromDouble<64>(99.0);
-        tick.volume = FPN_FromDouble<64>(0.0);
+        tick.price  = MQ(99.0);
+        tick.volume = MQ(0.0);
 
         GateParameters<64> params;
         GateParameters_Init(&params);
-        params.bg_price_threshold  = FPN_FromDouble<64>(100.0);
-        params.bg_volume_threshold = FPN_FromDouble<64>(0.0);
+        params.bg_price_threshold  = MQ(100.0);
+        params.bg_volume_threshold = MQ(0.0);
         params.flags = 0;  // no volume requirement, no buy-above, no block
 
         check("buy-below: gate fires when price < threshold",
@@ -6845,12 +6845,12 @@ e3_skip_load:;
 
         // Buy-above (momentum) — also vetoed
         Tick<64> tick_up{};
-        tick_up.price  = FPN_FromDouble<64>(101.0);
-        tick_up.volume = FPN_FromDouble<64>(0.0);
+        tick_up.price  = MQ(101.0);
+        tick_up.volume = MQ(0.0);
         GateParameters<64> params_up;
         GateParameters_Init(&params_up);
-        params_up.bg_price_threshold  = FPN_FromDouble<64>(100.0);
-        params_up.bg_volume_threshold = FPN_FromDouble<64>(0.0);
+        params_up.bg_price_threshold  = MQ(100.0);
+        params_up.bg_volume_threshold = MQ(0.0);
         params_up.flags = GATE_FLAG_BUY_ABOVE;
 
         check("buy-above: gate fires when price > threshold",
@@ -6870,7 +6870,7 @@ e3_skip_load:;
         ExchangeAdapter<64> empty_adapter{};
         OrderManager_Init(&oms, empty_adapter, 0,
                           /*partial_exit_enabled=*/0,
-                          FPN_FromDouble<64>(10000.0));
+                          MQ(10000.0));
         EventLoopState<64> state;
         EventLoopState_Init(&state, &oms);
 
@@ -6880,9 +6880,9 @@ e3_skip_load:;
             SPSCRing_Init(&rings[i]);
             ExecutionCore_Init(&cores[i], (uint16_t)i, &rings[i]);
             EventLoopState_RegisterCore(&state, &cores[i],
-                FPN_Zero<64>(), FPN_Zero<64>(), FPN_Zero<64>());
+                Money_Zero(), Money_Zero(), Money_Zero());
             EventLoopState_SetCoreStrategy(&state, i, STRATEGY_SIMPLE_DIP,
-                FPN_FromDouble<64>(250.0));
+                MQ(250.0));
         }
 
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
@@ -6969,10 +6969,10 @@ e3_skip_load:;
         check("Init: Last == 0 on empty", FPN_IsZero(BookImbHistory_Last(&h)));
 
         // Push 4 samples: 0.1, 0.2, 0.3, 0.4
-        BookImbHistory_Push(&h, FPN_FromDouble<64>(0.1));
-        BookImbHistory_Push(&h, FPN_FromDouble<64>(0.2));
-        BookImbHistory_Push(&h, FPN_FromDouble<64>(0.3));
-        BookImbHistory_Push(&h, FPN_FromDouble<64>(0.4));
+        BookImbHistory_Push(&h, Money_ToBinary(MQ(0.1)));
+        BookImbHistory_Push(&h, Money_ToBinary(MQ(0.2)));
+        BookImbHistory_Push(&h, Money_ToBinary(MQ(0.3)));
+        BookImbHistory_Push(&h, Money_ToBinary(MQ(0.4)));
         check("Push 4: count == 4", h.count == 4);
         check("MeanLong: (0.1+0.2+0.3+0.4)/4 == 0.25",
               fabs(FPN_ToDouble(BookImbHistory_MeanLong(&h)) - 0.25) < 1e-9);
@@ -6983,10 +6983,10 @@ e3_skip_load:;
 
         // Fill to capacity, then evict
         for (int i = 4; i < 8; i++)
-            BookImbHistory_Push(&h, FPN_FromDouble<64>(0.5 + 0.1 * (i - 4)));
+            BookImbHistory_Push(&h, Money_ToBinary(MQ(0.5 + 0.1 * (i - 4))));
         check("Filled: count == 8 (W)", h.count == 8);
         // Push one more — evict oldest (0.1), new sum = 0.2..0.8 + 0.9
-        BookImbHistory_Push(&h, FPN_FromDouble<64>(0.9));
+        BookImbHistory_Push(&h, Money_ToBinary(MQ(0.9)));
         check("After eviction: count stays at 8", h.count == 8);
         // sum should be (0.2+0.3+0.4+0.5+0.6+0.7+0.8+0.9) = 4.4, mean = 0.55
         check("Eviction: sum tracks correctly (mean = 0.55)",
@@ -7019,9 +7019,9 @@ e3_skip_load:;
         for (int i = 0; i < 200; ++i) {
             double sign  = (i % 3 == 0) ? -1.0 : ((i % 3 == 1) ? 1.0 : 0.0);
             double mag   = (double)((i * 17 + 13) % 100) / 100.0;
-            FPN_Binary<64> samp = FPN_FromDouble<64>(sign * mag);
+            Money samp = MQ(sign * mag);
 
-            BookImbHistory_Push(&h, samp);
+            BookImbHistory_Push(&h, Money_ToBinary(samp));
 
             FPN_Binary<64> walked = BookImbHistory_MeanShort(&h, 64);
             FPN_Binary<64> fast   = BookImbHistory_MeanShortFast(&h);
@@ -7083,7 +7083,7 @@ e3_skip_load:;
 
         // Push uniform values: z-score should be 0 (no variance)
         for (int i = 0; i < 4; i++)
-            LargeTradeState_Push(&lt, FPN_FromDouble<64>(1.0));
+            LargeTradeState_Push(&lt, Money_ToBinary(MQ(1.0)));
         check("Uniform window: z-score of mean == 0",
               fabs(LargeTradeState_ZScore(&lt, FPN_FromDouble<64>(1.0))) < 1e-9);
 
@@ -7091,7 +7091,7 @@ e3_skip_load:;
         // stddev = sqrt(1.25) ≈ 1.118
         LargeTradeState_Init(&lt);
         for (int i = 1; i <= 4; i++)
-            LargeTradeState_Push(&lt, FPN_FromDouble<64>((double)i));
+            LargeTradeState_Push(&lt, Money_ToBinary(MQ((double)i)));
         double expect_z = (4.0 - 2.5) / sqrt(1.25);
         check("Spread window: z-score of 4.0 ≈ (4-2.5)/sqrt(1.25)",
               fabs(LargeTradeState_ZScore(&lt, FPN_FromDouble<64>(4.0)) - expect_z) < 1e-9);
@@ -7100,10 +7100,10 @@ e3_skip_load:;
 
         // Eviction: fill to W=8, then push. sum + sum_sq must update.
         for (int i = 5; i <= 8; i++)
-            LargeTradeState_Push(&lt, FPN_FromDouble<64>((double)i));
+            LargeTradeState_Push(&lt, Money_ToBinary(MQ((double)i)));
         check("Filled to W=8: count == 8", lt.count == 8);
         // Push 9: evict 1 (oldest). New window: 2..9. mean = (2+3+...+9)/8 = 44/8 = 5.5
-        LargeTradeState_Push(&lt, FPN_FromDouble<64>(9.0));
+        LargeTradeState_Push(&lt, Money_ToBinary(MQ(9.0)));
         double mean = FPN_ToDouble(lt.sum) / 8.0;
         check("After eviction: mean ≈ 5.5 (sum tracks)",
               fabs(mean - 5.5) < 1e-9);
@@ -7126,14 +7126,14 @@ e3_skip_load:;
 
         // Uniform values: z-score == 0 (no variance)
         for (int i = 0; i < 4; i++)
-            SpreadState_Push(&sp, FPN_FromDouble<64>(0.01));
+            SpreadState_Push(&sp, Money_ToBinary(MQ(0.01)));
         check("SpreadState uniform: z-score of mean == 0",
               fabs(SpreadState_ZScore(&sp, FPN_FromDouble<64>(0.01))) < 1e-9);
 
         // Spread of values 0.01, 0.02, 0.03, 0.04. mean=0.025, var=1.25e-4
         SpreadState_Init(&sp);
         for (int i = 1; i <= 4; i++)
-            SpreadState_Push(&sp, FPN_FromDouble<64>(0.01 * (double)i));
+            SpreadState_Push(&sp, Money_ToBinary(MQ(0.01 * (double)i)));
         double expect_z = (0.04 - 0.025) / sqrt(1.25e-4);
         check("SpreadState spread: z-score of 0.04 matches expected",
               fabs(SpreadState_ZScore(&sp, FPN_FromDouble<64>(0.04)) - expect_z) < 1e-7);
@@ -7142,10 +7142,10 @@ e3_skip_load:;
 
         // Ring eviction at W=8: push 8 more, sum tracks correctly
         for (int i = 5; i <= 8; i++)
-            SpreadState_Push(&sp, FPN_FromDouble<64>(0.01 * (double)i));
+            SpreadState_Push(&sp, Money_ToBinary(MQ(0.01 * (double)i)));
         check("SpreadState filled: count == 8", sp.count == 8);
         // Push another (evicts 0.01). Window: 0.02..0.09. mean = 0.055
-        SpreadState_Push(&sp, FPN_FromDouble<64>(0.09));
+        SpreadState_Push(&sp, Money_ToBinary(MQ(0.09)));
         double mean = FPN_ToDouble(sp.sum) / 8.0;
         check("SpreadState eviction: mean ≈ 0.055",
               fabs(mean - 0.055) < 1e-9);
@@ -7237,7 +7237,7 @@ e3_skip_load:;
         // Enabled, within capacity (4 cores → 8 slots, fits 16-slot portfolio)
         BITMAP_SET(cfg.lifecycle_cfg_flags, MASK_LIFECYCLE_CFG_PARTIAL_EXIT_ENABLED);
         cfg.num_execution_cores = 4;
-        cfg.partial_exit_pct = FPN_FromDouble<64>(0.5);
+        cfg.partial_exit_pct = MQ(0.5);
         check("enabled with 4 cores: validation passes",
               Sharded_ValidatePartialExitCfg(&cfg) == 1);
 
@@ -7253,15 +7253,15 @@ e3_skip_load:;
 
         // Enabled with bad partial_exit_pct
         cfg.num_execution_cores = 4;
-        cfg.partial_exit_pct = FPN_Zero<64>();
+        cfg.partial_exit_pct = Money_Zero();
         check("enabled with partial_exit_pct=0: validation FAILS",
               Sharded_ValidatePartialExitCfg(&cfg) == 0);
-        cfg.partial_exit_pct = FPN_FromDouble<64>(1.5);
+        cfg.partial_exit_pct = MQ(1.5);
         check("enabled with partial_exit_pct=1.5: validation FAILS",
               Sharded_ValidatePartialExitCfg(&cfg) == 0);
 
         // Enabled with zero cores
-        cfg.partial_exit_pct = FPN_FromDouble<64>(0.5);
+        cfg.partial_exit_pct = MQ(0.5);
         cfg.num_execution_cores = 0;
         check("enabled with 0 cores: validation FAILS",
               Sharded_ValidatePartialExitCfg(&cfg) == 0);
@@ -7285,31 +7285,31 @@ e3_skip_load:;
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
         cfg.num_execution_cores = 4;
         BITMAP_SET(cfg.lifecycle_cfg_flags, MASK_LIFECYCLE_CFG_PARTIAL_EXIT_ENABLED);
-        cfg.partial_exit_pct = FPN_FromDouble<64>(0.5);  // legacy global default
+        cfg.partial_exit_pct = MQ(0.5);  // legacy global default
 
         // Distinct per-core values — wrong-slot reads will mismatch
-        cfg.cores[0].partial_exit_pct = FPN_FromDouble<64>(0.10);
-        cfg.cores[1].partial_exit_pct = FPN_FromDouble<64>(0.20);
-        cfg.cores[2].partial_exit_pct = FPN_FromDouble<64>(0.30);
-        cfg.cores[3].partial_exit_pct = FPN_FromDouble<64>(0.40);
-        cfg.cores[0].tp2_mult = FPN_FromDouble<64>(1.1);
-        cfg.cores[1].tp2_mult = FPN_FromDouble<64>(1.2);
-        cfg.cores[2].tp2_mult = FPN_FromDouble<64>(1.3);
-        cfg.cores[3].tp2_mult = FPN_FromDouble<64>(1.4);
+        cfg.cores[0].partial_exit_pct = MQ(0.10);
+        cfg.cores[1].partial_exit_pct = MQ(0.20);
+        cfg.cores[2].partial_exit_pct = MQ(0.30);
+        cfg.cores[3].partial_exit_pct = MQ(0.40);
+        cfg.cores[0].tp2_mult = MQ(1.1);
+        cfg.cores[1].tp2_mult = MQ(1.2);
+        cfg.cores[2].tp2_mult = MQ(1.3);
+        cfg.cores[3].tp2_mult = MQ(1.4);
         // NO core_overrides set (all default-zero) → triggers fallback branch
 
         // Mirror drainer's per-core slot iteration (Async.hpp:765+ outer for-slot loop):
         for (int slot = 0; slot < cfg.num_execution_cores; ++slot) {
             const auto& ov_slot = cfg.core_overrides[slot];
-            FPN_Binary<64> partial_pct_eff = !FPN_IsZero(ov_slot.partial_exit_pct)
+            Money partial_pct_eff = !Money_IsZero(ov_slot.partial_exit_pct)
                 ? ov_slot.partial_exit_pct : cfg.cores[slot].partial_exit_pct;  // post-fix Async.hpp:814
-            FPN_Binary<64> tp2_mult_eff = !FPN_IsZero(ov_slot.tp2_mult)
+            Money tp2_mult_eff = !Money_IsZero(ov_slot.tp2_mult)
                 ? ov_slot.tp2_mult : cfg.cores[slot].tp2_mult;  // post-fix Async.hpp:853
 
             double expected_pct = 0.10 * (slot + 1);
             double expected_tp2 = 1.0 + 0.1 * (slot + 1);
-            double actual_pct = FPN_ToDouble(partial_pct_eff);
-            double actual_tp2 = FPN_ToDouble(tp2_mult_eff);
+            double actual_pct = Money_ToDouble(partial_pct_eff);
+            double actual_tp2 = Money_ToDouble(tp2_mult_eff);
 
             char msg[128];
             snprintf(msg, sizeof(msg), "Class 26 slot %d: partial_exit_pct reads cfg.cores[%d] = %.2f",
@@ -7346,15 +7346,15 @@ e3_skip_load:;
         cfg.num_execution_cores = 4;
 
         // GLOBAL fee_rate sentinel (should NOT be read by per-core consumers post-fix)
-        cfg.fee_rate = FPN_FromDouble<64>(0.005);            // sentinel value distinct from per-core
-        cfg.fee_rate_taker = FPN_FromDouble<64>(0.005);      // sentinel value distinct from per-core
-        cfg.fee_rate_maker = FPN_FromDouble<64>(0.005);
+        cfg.fee_rate = MQ(0.005);            // sentinel value distinct from per-core
+        cfg.fee_rate_taker = MQ(0.005);      // sentinel value distinct from per-core
+        cfg.fee_rate_maker = MQ(0.005);
 
         // Distinct per-core fee_rate_taker values — UNINDEXED-GLOBAL reads will mismatch
         const double expected_arr[4] = {0.0008, 0.0010, 0.0012, 0.0015};
         for (int c = 0; c < 4; ++c) {
-            cfg.cores[c].fee_rate_taker = FPN_FromDouble<64>(expected_arr[c]);
-            cfg.cores[c].fee_rate        = FPN_FromDouble<64>(expected_arr[c]);
+            cfg.cores[c].fee_rate_taker = MQ(expected_arr[c]);
+            cfg.cores[c].fee_rate        = MQ(expected_arr[c]);
         }
 
         for (int core_id = 0; core_id < cfg.num_execution_cores; ++core_id) {
@@ -7363,7 +7363,7 @@ e3_skip_load:;
             // Post-fix HIGH-1/HIGH-2 ControllerEventLoop pattern
             // (mirrors EventLoop_TrailingSLRatchetOneCore + EventLoop_BreakevenOnProfitOneCore)
             const auto& core_cfg = cfg.cores[core_id];
-            double fee_taker_h12 = FPN_ToDouble(!FPN_IsZero(core_cfg.fee_rate_taker)
+            double fee_taker_h12 = Money_ToDouble(!Money_IsZero(core_cfg.fee_rate_taker)
                 ? core_cfg.fee_rate_taker : core_cfg.fee_rate);
 
             char msg[192];
@@ -7375,10 +7375,10 @@ e3_skip_load:;
             // Post-fix HIGH-3 StrategyLifecycle pattern
             // (mirrors Strategy_WriteRatchetSL shared helper; ptr access via cfg->)
             const auto* cfg_p = &cfg;
-            FPN_Binary<64> fee_taker_sl = !FPN_IsZero(cfg_p->cores[core_id].fee_rate_taker)
+            Money fee_taker_sl = !Money_IsZero(cfg_p->cores[core_id].fee_rate_taker)
                 ? cfg_p->cores[core_id].fee_rate_taker
                 : cfg_p->cores[core_id].fee_rate;
-            double fee_taker_sl_d = FPN_ToDouble(fee_taker_sl);
+            double fee_taker_sl_d = Money_ToDouble(fee_taker_sl);
 
             snprintf(msg, sizeof(msg),
                      "Class 26 sub-shape B core %d: Strategy_WriteRatchetSL HIGH-3 reads cfg->cores[%d].fee_rate_taker = %.5f (not global %.5f)",
@@ -7389,10 +7389,10 @@ e3_skip_load:;
             // (mirrors EventLoop_RebuildOneCore display capture; ControllerConfig_ResolveForCore
             // produces stack-local copy; per-core fields still accessible via resolved_cfg.cores[slot])
             ControllerConfig<64> resolved_cfg = ControllerConfig_ResolveForCore(cfg, core_id);
-            FPN_Binary<64> fee_taker_rc = !FPN_IsZero(resolved_cfg.cores[core_id].fee_rate_taker)
+            Money fee_taker_rc = !Money_IsZero(resolved_cfg.cores[core_id].fee_rate_taker)
                 ? resolved_cfg.cores[core_id].fee_rate_taker
                 : resolved_cfg.cores[core_id].fee_rate;
-            double fee_taker_rc_d = FPN_ToDouble(fee_taker_rc);
+            double fee_taker_rc_d = Money_ToDouble(fee_taker_rc);
 
             snprintf(msg, sizeof(msg),
                      "Class 26 sub-shape B core %d: GUI diag HIGH-4 reads resolved_cfg.cores[%d].fee_rate_taker = %.5f (not aliased global %.5f)",
@@ -7402,7 +7402,7 @@ e3_skip_load:;
             // Post-fix MED-1 ShardedSnapshot per-position TUI net_pnl pattern
             // (mirrors ShardedSnapshot_BuildTUISnapshot per-position loop; core_id_for_pos in scope)
             const auto& core_cfg_snap = cfg.cores[core_id];  // core_id_for_pos at MED-1 site
-            double fee_r_snap = FPN_ToDouble(!FPN_IsZero(core_cfg_snap.fee_rate_taker)
+            double fee_r_snap = Money_ToDouble(!Money_IsZero(core_cfg_snap.fee_rate_taker)
                 ? core_cfg_snap.fee_rate_taker : core_cfg_snap.fee_rate);
 
             snprintf(msg, sizeof(msg),
@@ -7440,12 +7440,12 @@ e3_skip_load:;
             ExecutionCore_Init(core, 0, ring);
             ExecutionCore_SetPermission(core, 1);
             GateParameters_Init(params);
-            params->bg_price_threshold = FPN_FromDouble<64>(bg_threshold);
-            params->bg_volume_threshold = FPN_Zero<64>();
-            params->tp_pct = FPN_FromDouble<64>(tp_pct);
-            params->tp_pct_b = FPN_FromDouble<64>(tp_pct_b);
-            params->sl_pct = FPN_FromDouble<64>(sl_pct);
-            params->trade_size = FPN_FromDouble<64>(0.01);
+            params->bg_price_threshold = MQ(bg_threshold);
+            params->bg_volume_threshold = Money_Zero();
+            params->tp_pct = MQ(tp_pct);
+            params->tp_pct_b = MQ(tp_pct_b);
+            params->sl_pct = MQ(sl_pct);
+            params->trade_size = MQ(0.01);
             params->strategy_id = STRATEGY_SIMPLE_DIP;
             params->flags = GATE_FLAG_TP_ENABLED | GATE_FLAG_SL_ENABLED;
             if (pair_active) params->flags |= GATE_FLAG_PAIR_ACTIVE;
@@ -7463,8 +7463,8 @@ e3_skip_load:;
 
             // Tick at price 99 → below threshold 100 → BG fires → entry
             Tick<64> t{};
-            t.price  = FPN_FromDouble<64>(99.0);
-            t.volume = FPN_FromDouble<64>(1.0);
+            t.price  = MQ(99.0);
+            t.volume = MQ(1.0);
             ExecutionCore_Tick(&core, t);
             check("pair_off: leg A active after entry",
                   core.active == 1);
@@ -7486,21 +7486,21 @@ e3_skip_load:;
                   /*bg=*/100.0, /*tp%=*/0.01, /*tp_b%=*/0.02, /*sl%=*/0.005);
 
             Tick<64> t{};
-            t.price  = FPN_FromDouble<64>(99.0);
-            t.volume = FPN_FromDouble<64>(1.0);
+            t.price  = MQ(99.0);
+            t.volume = MQ(1.0);
             ExecutionCore_Tick(&core, t);
             check("pair_on entry: leg A active",
                   core.active == 1);
             check("pair_on entry: leg B active",
                   core.active_b == 1);
             check("pair_on entry: leg A live_tp = 99 * 1.01 = 99.99",
-                  fabs(FPN_ToDouble(core.live_tp) - 99.99) < 1e-6);
+                  fabs(Money_ToDouble(core.live_tp) - 99.99) < 1e-6);
             check("pair_on entry: leg B live_tp_b = 99 * 1.02 = 100.98",
-                  fabs(FPN_ToDouble(core.live_tp_b) - 100.98) < 1e-6);
+                  fabs(Money_ToDouble(core.live_tp_b) - 100.98) < 1e-6);
             check("pair_on entry: shared SL (leg A) = 99 * 0.995 = 98.505",
-                  fabs(FPN_ToDouble(core.live_sl) - 98.505) < 1e-6);
+                  fabs(Money_ToDouble(core.live_sl) - 98.505) < 1e-6);
             check("pair_on entry: leg B SL == leg A SL (shared)",
-                  fabs(FPN_ToDouble(core.live_sl_b) - 98.505) < 1e-6);
+                  fabs(Money_ToDouble(core.live_sl_b) - 98.505) < 1e-6);
             // Two events: leg A entry + leg B entry
             int popped = 0;
             int saw_leg_a = 0, saw_leg_b = 0;
@@ -7526,13 +7526,13 @@ e3_skip_load:;
                   /*bg=*/100.0, /*tp%=*/0.01, /*tp_b%=*/0.02, /*sl%=*/0.005);
             // Entry tick
             Tick<64> t{};
-            t.price = FPN_FromDouble<64>(99.0); t.volume = FPN_FromDouble<64>(1.0);
+            t.price = MQ(99.0); t.volume = MQ(1.0);
             ExecutionCore_Tick(&core, t);
             // Drain entry events
             TradeEvent<64> ev;
             while (SPSCRing_TryPop(&core.event_ring, &ev)) {}
             // Tick at price 100 → leg A TP (99.99) hit; leg B TP (100.98) not yet
-            t.price = FPN_FromDouble<64>(100.0);
+            t.price = MQ(100.0);
             ExecutionCore_Tick(&core, t);
             check("leg A TP only: leg A inactive after TP1",
                   core.active == 0);
@@ -7560,12 +7560,12 @@ e3_skip_load:;
             setup(&core, &ring, &params, /*pair_active=*/true,
                   /*bg=*/100.0, /*tp%=*/0.01, /*tp_b%=*/0.02, /*sl%=*/0.005);
             Tick<64> t{};
-            t.price = FPN_FromDouble<64>(99.0); t.volume = FPN_FromDouble<64>(1.0);
+            t.price = MQ(99.0); t.volume = MQ(1.0);
             ExecutionCore_Tick(&core, t);
             TradeEvent<64> ev;
             while (SPSCRing_TryPop(&core.event_ring, &ev)) {}
             // Tick at 98.0 → below SL 98.505 → both legs SL fire
-            t.price = FPN_FromDouble<64>(98.0);
+            t.price = MQ(98.0);
             ExecutionCore_Tick(&core, t);
             check("shared SL: leg A inactive",
                   core.active == 0);
@@ -7599,7 +7599,7 @@ e3_skip_load:;
         using namespace tt;
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
         BITMAP_CLR(cfg.lifecycle_cfg_flags, MASK_LIFECYCLE_CFG_PARTIAL_EXIT_ENABLED);  // DISABLED first
-        cfg.tp2_mult             = FPN_FromDouble<64>(2.0);
+        cfg.tp2_mult             = MQ(2.0);
 
         // Need rolling stats with enough data for SimpleDip to compute
         RollingStats<64, 128> rolling = RollingStats_Init<64, 128>();
@@ -7619,38 +7619,38 @@ e3_skip_load:;
         BITMAP_CLR(cfg.lifecycle_cfg_flags, MASK_LIFECYCLE_CFG_PARTIAL_EXIT_ENABLED);
         ControllerConfig_PopulateCoresFromFlat(&cfg);  // v5.15.5.F.4c.3 WIP2c.2 — sync flat→cores[0] for shadow window
         Strategy_BuildParameters(STRATEGY_SIMPLE_DIP,
-            &rolling, &cfg.cores[0], FPN_FromDouble<64>(1000.0),
+            &rolling, &cfg.cores[0], MQ(1000.0),
             &params, &rolling_long);
         check("P.4 disabled: GATE_FLAG_PAIR_ACTIVE NOT set",
               (params.flags & GATE_FLAG_PAIR_ACTIVE) == 0);
         check("P.4 disabled: tp_pct_b stays at zero",
-              FPN_IsZero(params.tp_pct_b));
+              Money_IsZero(params.tp_pct_b));
 
         // ---- partial_exit_enabled=1 → flag set, tp_pct_b = tp_pct * 2.0 ----
         BITMAP_SET(cfg.lifecycle_cfg_flags, MASK_LIFECYCLE_CFG_PARTIAL_EXIT_ENABLED);
         ControllerConfig_PopulateCoresFromFlat(&cfg);  // v5.15.5.F.4c.3 WIP2c.2 — sync flat→cores[0]
         Strategy_BuildParameters(STRATEGY_SIMPLE_DIP,
-            &rolling, &cfg.cores[0], FPN_FromDouble<64>(1000.0),
+            &rolling, &cfg.cores[0], MQ(1000.0),
             &params, &rolling_long);
         check("P.4 enabled: GATE_FLAG_PAIR_ACTIVE set",
               (params.flags & GATE_FLAG_PAIR_ACTIVE) != 0);
         // tp_pct_b should be tp_pct × 2.0 (when tp_pct non-zero)
-        if (!FPN_IsZero(params.tp_pct)) {
-            double tp_pct_d = FPN_ToDouble(params.tp_pct);
-            double tp_pct_b_d = FPN_ToDouble(params.tp_pct_b);
+        if (!Money_IsZero(params.tp_pct)) {
+            double tp_pct_d = Money_ToDouble(params.tp_pct);
+            double tp_pct_b_d = Money_ToDouble(params.tp_pct_b);
             check("P.4 enabled: tp_pct_b == tp_pct × tp2_mult (2x)",
                   fabs(tp_pct_b_d - 2.0 * tp_pct_d) < 1e-9);
         }
 
         // ---- Defensive: tp2_mult=0 → tp_pct_b falls back to tp_pct ----
-        cfg.tp2_mult = FPN_Zero<64>();
+        cfg.tp2_mult = Money_Zero();
         ControllerConfig_PopulateCoresFromFlat(&cfg);  // v5.15.5.F.4c.3 WIP2c.2 — sync flat→cores[0]
         Strategy_BuildParameters(STRATEGY_SIMPLE_DIP,
-            &rolling, &cfg.cores[0], FPN_FromDouble<64>(1000.0),
+            &rolling, &cfg.cores[0], MQ(1000.0),
             &params, &rolling_long);
-        if (!FPN_IsZero(params.tp_pct)) {
+        if (!Money_IsZero(params.tp_pct)) {
             check("P.4 defensive: tp2_mult=0 → tp_pct_b == tp_pct (fallback)",
-                  fabs(FPN_ToDouble(params.tp_pct_b) - FPN_ToDouble(params.tp_pct)) < 1e-9);
+                  fabs(Money_ToDouble(params.tp_pct_b) - Money_ToDouble(params.tp_pct)) < 1e-9);
         }
     }
 
@@ -7673,14 +7673,14 @@ e3_skip_load:;
         };
         R* r = new R();
         tt::EventLoopState_InitLegacy(&r->state, &r->oms,
-            FPN_FromDouble<64>(10000.0));
+            MQ(10000.0));
         // Mode 1 — OMS owns portfolio mutation + per-core accounting via
         // the FillRecord machinery this commit added.
         MBS_SET_U8(r->oms.oms_state_flags, tt::MASK_OMS_STATE_EVENT_LOG_MODE, tt::SHIFT_OMS_STATE_EVENT_LOG_MODE, 1);
         BITMAP_SET(r->oms.oms_state_flags, tt::MASK_OMS_STATE_PARTIAL_EXIT_ENABLED);  // paired-leg geometry
         // v5.15.5.F.4c.3 WIP2d-1.B.1 — per-core cfg drives fee accounting via Order_BindPreResolved.
-        r->cfg.cores[0].fee_rate_taker = FPN_FromDouble<64>(0.001);
-        r->cfg.cores[0].fee_rate_maker = FPN_FromDouble<64>(0.001);
+        r->cfg.cores[0].fee_rate_taker = MQ(0.001);
+        r->cfg.cores[0].fee_rate_maker = MQ(0.001);
 
         // Two cores → 4 portfolio slots in pair mode (slot 2c is leg A,
         // 2c+1 is leg B for core c).
@@ -7688,10 +7688,10 @@ e3_skip_load:;
             tt::SPSCRing_Init(&r->tick_rings[c]);
             tt::ExecutionCore_Init(&r->cores[c], c, &r->tick_rings[c]);
             tt::EventLoopState_RegisterCore(&r->state, &r->cores[c],
-                FPN_FromDouble<64>(60500.0), FPN_FromDouble<64>(59500.0),
-                FPN_FromDouble<64>(0.01));
+                MQ(60500.0), MQ(59500.0),
+                MQ(0.01));
             tt::EventLoopState_SetCoreStrategy(&r->state, c,
-                STRATEGY_SIMPLE_DIP, FPN_FromDouble<64>(1500.0));
+                STRATEGY_SIMPLE_DIP, MQ(1500.0));
         }
 
         // Synthesize a paired entry fill on core 0 (slots 0 + 1).
@@ -7703,12 +7703,12 @@ e3_skip_load:;
             tt::ExchangeAdapter<64> empty{};
             // v5.15.5.F.4c.3 WIP2d-1.B.1 — pass per-core cfg so Order_BindPreResolved gets fee_rate.
             tt::SubmitCommand<64> cmd((int16_t)portfolio_slot, tt::ORDER_MARKET_BUY,
-                                       FPN_FromDouble<64>(qty),
+                                       MQ(qty),
                                        /*leg*/(uint8_t)0, /*core_cfg*/&r->cfg.cores[0]);
-            cmd.intended_tp = FPN_FromDouble<64>(60500.0);
-            cmd.intended_sl = FPN_FromDouble<64>(59500.0);
+            cmd.intended_tp = MQ(60500.0);
+            cmd.intended_sl = MQ(59500.0);
             cmd.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
-            cmd.event_price = FPN_FromDouble<64>(price);
+            cmd.event_price = MQ(price);
             uint64_t oid = tt::OrderManager_Submit(&r->oms, cmd);
             (void)oid;
             // Find the order we just submitted and fill it.
@@ -7717,7 +7717,7 @@ e3_skip_load:;
                 tt::Order<64>* o = &r->oms.orders[i];
                 if (o->core_id == portfolio_slot && tt::Order_GetState(o) != tt::ORDER_FILLED) {
                     tt::OrderManager_HandleFill(&r->oms, o,
-                        FPN_FromDouble<64>(price), FPN_FromDouble<64>(qty));
+                        MQ(price), MQ(qty));
                     tt::Order_SetState(o, tt::ORDER_FILLED);
                     r->oms.order_bitmap &= ~(uint16_t)(1u << i);
                     break;
@@ -7731,7 +7731,7 @@ e3_skip_load:;
         // Pre-drain: per-core stats are zero (FillRecord is captured but
         // not consumed yet).
         check("mode 1 pre-drain: core 0 open_notional still 0",
-              FPN_IsZero(r->state.cores[0].core_open_notional));
+              Money_IsZero(r->state.cores[0].core_open_notional));
         check("mode 1 pre-drain: oms.last_opened_mask has slots 0+1",
               (r->oms.last_opened_mask & 0x3) == 0x3);
 
@@ -7741,7 +7741,7 @@ e3_skip_load:;
         // both legs accumulated into core 0's CoreContext. The 200% bug
         // was caused by mode-0 OnEvent adding ctx->intended_qty (full
         // qty) per leg event — it accumulated to $2400 instead.
-        double open_n = FPN_ToDouble(r->state.cores[0].core_open_notional);
+        double open_n = Money_ToDouble(r->state.cores[0].core_open_notional);
         check("mode 1 post-drain: core 0 open_notional == $1200 (both legs)",
               fabs(open_n - 1200.0) < 0.5);
         check("mode 1 post-drain: open_notional ≤ allocated (no 200% bug)",
@@ -7754,16 +7754,16 @@ e3_skip_load:;
         // checked > 1.0 because line 860 added entry_fee on entry; that
         // was double-counting against the exit pass's exit_total_fees.
         check("mode 1 post-drain: core 0 fees still 0 (only exits accumulate)",
-              FPN_IsZero(r->state.cores[0].core_fees));
+              Money_IsZero(r->state.cores[0].core_fees));
 
         // Synthesize paired exit at $61200 (= +2% gross).
         auto submit_and_fill_exit = [&](int portfolio_slot, double qty, double price) {
             // v5.15.5.F.4c.3 WIP2d-1.B.1 — pass per-core cfg so Order_BindPreResolved gets fee_rate.
             tt::SubmitCommand<64> cmd((int16_t)portfolio_slot, tt::ORDER_MARKET_SELL,
-                                       FPN_FromDouble<64>(qty),
+                                       MQ(qty),
                                        /*leg*/(uint8_t)0, /*core_cfg*/&r->cfg.cores[0]);
             cmd.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
-            cmd.event_price = FPN_FromDouble<64>(price);
+            cmd.event_price = MQ(price);
             uint64_t oid = tt::OrderManager_Submit(&r->oms, cmd);
             (void)oid;
             for (int i = 0; i < MAX_INFLIGHT_ORDERS; ++i) {
@@ -7771,7 +7771,7 @@ e3_skip_load:;
                 tt::Order<64>* o = &r->oms.orders[i];
                 if (o->core_id == portfolio_slot && tt::Order_GetState(o) != tt::ORDER_FILLED) {
                     tt::OrderManager_HandleFill(&r->oms, o,
-                        FPN_FromDouble<64>(price), FPN_FromDouble<64>(qty));
+                        MQ(price), MQ(qty));
                     tt::Order_SetState(o, tt::ORDER_FILLED);
                     r->oms.order_bitmap &= ~(uint16_t)(1u << i);
                     break;
@@ -7788,11 +7788,11 @@ e3_skip_load:;
         // trades, not legs — paired exit = 1 trade, so wins == 1 (was 2
         // pre-v4.7.4 when both leg bits incremented). Realized still
         // sums both legs' net P&L.
-        double realized = FPN_ToDouble(r->state.cores[0].core_realized);
+        double realized = Money_ToDouble(r->state.cores[0].core_realized);
         check("mode 1 post-exit: core 0 core_realized > 0 (both legs profited)",
               realized > 0.0);
         check("mode 1 post-exit: core 0 open_notional decremented to ~0",
-              FPN_ToDouble(r->state.cores[0].core_open_notional) < 0.5);
+              Money_ToDouble(r->state.cores[0].core_open_notional) < 0.5);
         check("mode 1 post-exit: core 0 wins == 1 (one logical trade)",
               r->state.cores[0].core_wins == 1);
         check("mode 1 post-exit: core 0 losses == 0",
@@ -7805,12 +7805,12 @@ e3_skip_load:;
         //        = $0.60 + $0.612 = $1.212.  Both legs: ~$2.424.
         // Sanity range $2.0–$2.6 to be tolerant of fee_rate variations.
         check("mode 1 post-exit: core 0 fees ≈ round-trip × 2 legs",
-              FPN_ToDouble(r->state.cores[0].core_fees) > 2.0 &&
-              FPN_ToDouble(r->state.cores[0].core_fees) < 2.6);
+              Money_ToDouble(r->state.cores[0].core_fees) > 2.0 &&
+              Money_ToDouble(r->state.cores[0].core_fees) < 2.6);
 
         // Other cores untouched.
         check("mode 1: core 1 open_notional still 0 (no fills)",
-              FPN_IsZero(r->state.cores[1].core_open_notional));
+              Money_IsZero(r->state.cores[1].core_open_notional));
         check("mode 1: core 1 wins/losses still 0",
               r->state.cores[1].core_wins == 0 &&
               r->state.cores[1].core_losses == 0);
@@ -7829,25 +7829,25 @@ e3_skip_load:;
         };
         R* r = new R();
         tt::EventLoopState_InitLegacy(&r->state, &r->oms,
-            FPN_FromDouble<64>(10000.0));
+            MQ(10000.0));
         MBS_SET_U8(r->oms.oms_state_flags, tt::MASK_OMS_STATE_EVENT_LOG_MODE, tt::SHIFT_OMS_STATE_EVENT_LOG_MODE, 1);
         BITMAP_CLR(r->oms.oms_state_flags, tt::MASK_OMS_STATE_PARTIAL_EXIT_ENABLED);  // single-leg
         tt::SPSCRing_Init(&r->tick_ring);
         tt::ExecutionCore_Init(&r->core, 0, &r->tick_ring);
         tt::EventLoopState_RegisterCore(&r->state, &r->core,
-            FPN_FromDouble<64>(60500.0), FPN_FromDouble<64>(59500.0),
-            FPN_FromDouble<64>(0.01));
+            MQ(60500.0), MQ(59500.0),
+            MQ(0.01));
         tt::EventLoopState_SetCoreStrategy(&r->state, 0,
-            STRATEGY_SIMPLE_DIP, FPN_FromDouble<64>(1500.0));
+            STRATEGY_SIMPLE_DIP, MQ(1500.0));
 
         // Synthesize a single full-qty entry fill on slot 0.
         tt::SubmitCommand<64> cmd(0, tt::ORDER_MARKET_BUY,
-                                   FPN_FromDouble<64>(0.02),
+                                   MQ(0.02),
                                    /*leg*/(uint8_t)0, /*core_cfg*/nullptr);
-        cmd.intended_tp = FPN_FromDouble<64>(60500.0);
-        cmd.intended_sl = FPN_FromDouble<64>(59500.0);
+        cmd.intended_tp = MQ(60500.0);
+        cmd.intended_sl = MQ(59500.0);
         cmd.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
-        cmd.event_price = FPN_FromDouble<64>(60000.0);
+        cmd.event_price = MQ(60000.0);
         uint64_t oid = tt::OrderManager_Submit(&r->oms, cmd);
         (void)oid;
         for (int i = 0; i < MAX_INFLIGHT_ORDERS; ++i) {
@@ -7855,7 +7855,7 @@ e3_skip_load:;
             tt::Order<64>* o = &r->oms.orders[i];
             if (tt::Order_GetState(o) != tt::ORDER_FILLED) {
                 tt::OrderManager_HandleFill(&r->oms, o,
-                    FPN_FromDouble<64>(60000.0), FPN_FromDouble<64>(0.02));
+                    MQ(60000.0), MQ(0.02));
                 tt::Order_SetState(o, tt::ORDER_FILLED);
                 r->oms.order_bitmap &= ~(uint16_t)(1u << i);
                 break;
@@ -7865,7 +7865,7 @@ e3_skip_load:;
 
         // Notional = 0.02 × 60000 = $1200 (full qty).
         check("mode 1 partials-off: core 0 open_notional == $1200 single leg",
-              fabs(FPN_ToDouble(r->state.cores[0].core_open_notional) - 1200.0) < 0.5);
+              fabs(Money_ToDouble(r->state.cores[0].core_open_notional) - 1200.0) < 0.5);
 
         delete r;
     }
@@ -7901,19 +7901,19 @@ e3_skip_load:;
         r->cfg = ControllerConfig_Default<64>();
         r->cfg.sl_cooldown_cycles = 0;
         // v5.15.5.F.4c.3 WIP2d-1.B.1 — per-core cfg drives fee accounting via Order_BindPreResolved.
-        r->cfg.cores[0].fee_rate_taker = FPN_FromDouble<64>(0.001);
-        r->cfg.cores[0].fee_rate_maker = FPN_FromDouble<64>(0.001);
+        r->cfg.cores[0].fee_rate_taker = MQ(0.001);
+        r->cfg.cores[0].fee_rate_maker = MQ(0.001);
         tt::EventLoopState_InitLegacy(&r->state, &r->oms,
-            FPN_FromDouble<64>(10000.0));
+            MQ(10000.0));
         MBS_SET_U8(r->oms.oms_state_flags, tt::MASK_OMS_STATE_EVENT_LOG_MODE, tt::SHIFT_OMS_STATE_EVENT_LOG_MODE, 1);       // mirror live default
         BITMAP_CLR(r->oms.oms_state_flags, tt::MASK_OMS_STATE_PARTIAL_EXIT_ENABLED);
         tt::SPSCRing_Init(&r->tick_ring);
         tt::ExecutionCore_Init(&r->core, 0, &r->tick_ring);
         tt::EventLoopState_RegisterCore(&r->state, &r->core,
-            FPN_FromDouble<64>(60500.0), FPN_FromDouble<64>(59500.0),
-            FPN_FromDouble<64>(0.01));
+            MQ(60500.0), MQ(59500.0),
+            MQ(0.01));
         tt::EventLoopState_SetCoreStrategy(&r->state, 0,
-            STRATEGY_SIMPLE_DIP, FPN_FromDouble<64>(1500.0));
+            STRATEGY_SIMPLE_DIP, MQ(1500.0));
         r->rolling      = RollingStats_Init<64, 128>();
         r->rolling_long = RollingStats_Init<64, 512>();
         tt::ShardedBacktestDriver_Init(&r->drv, &r->state, &r->rolling,
@@ -7926,12 +7926,12 @@ e3_skip_load:;
         tt::ExchangeAdapter<64> empty{};
         // v5.15.5.F.4c.3 WIP2d-1.B.1 — pass per-core cfg so Order_BindPreResolved gets fee_rate.
         tt::SubmitCommand<64> cmd(0, tt::ORDER_MARKET_BUY,
-                                   FPN_FromDouble<64>(0.02),
+                                   MQ(0.02),
                                    /*leg*/(uint8_t)0, /*core_cfg*/&r->cfg.cores[0]);
-        cmd.intended_tp = FPN_FromDouble<64>(60500.0);
-        cmd.intended_sl = FPN_FromDouble<64>(59500.0);
+        cmd.intended_tp = MQ(60500.0);
+        cmd.intended_sl = MQ(59500.0);
         cmd.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
-        cmd.event_price = FPN_FromDouble<64>(60000.0);
+        cmd.event_price = MQ(60000.0);
         uint64_t oid = tt::OrderManager_Submit(&r->oms, cmd);
         (void)oid;
         for (int i = 0; i < MAX_INFLIGHT_ORDERS; ++i) {
@@ -7939,7 +7939,7 @@ e3_skip_load:;
             tt::Order<64>* o = &r->oms.orders[i];
             if (tt::Order_GetState(o) != tt::ORDER_FILLED) {
                 tt::OrderManager_HandleFill(&r->oms, o,
-                    FPN_FromDouble<64>(60000.0), FPN_FromDouble<64>(0.02));
+                    MQ(60000.0), MQ(0.02));
                 tt::Order_SetState(o, tt::ORDER_FILLED);
                 r->oms.order_bitmap &= ~(uint16_t)(1u << i);
                 break;
@@ -7949,7 +7949,7 @@ e3_skip_load:;
         check("v4.7.16 pre-RunTick: open_mask has slot 0",
               (r->oms.last_opened_mask & 0x1) != 0);
         check("v4.7.16 pre-RunTick: core 0 open_notional still zero",
-              FPN_IsZero(r->state.cores[0].core_open_notional));
+              Money_IsZero(r->state.cores[0].core_open_notional));
 
         // Run a no-op tick through the driver. Internally:
         //   1. Fan out tick to cores (no event since gate state unchanged)
@@ -7957,14 +7957,14 @@ e3_skip_load:;
         //   3. OrderManager_Tick (no commands queued)
         //   4. v4.7.15: EventLoop_DrainPostFill consumes our pre-staged mask
         // Step 4 is what we're regression-testing.
-        tt::Tick<64> dummy = { FPN_FromDouble<64>(60000.0),
-                                FPN_FromDouble<64>(0.001),
+        tt::Tick<64> dummy = { MQ(60000.0),
+                                MQ(0.001),
                                 1000000ULL, 0, 0 };
         tt::ShardedBacktest_RunTick(&r->drv, dummy, 0);
 
         // If DrainPostFill ran: CoreContext updated, mask cleared.
         check("v4.7.16 post-RunTick: core 0 open_notional == $1200 (drainer ran)",
-              fabs(FPN_ToDouble(r->state.cores[0].core_open_notional) - 1200.0) < 0.5);
+              fabs(Money_ToDouble(r->state.cores[0].core_open_notional) - 1200.0) < 0.5);
         check("v4.7.16 post-RunTick: last_opened_mask cleared",
               r->oms.last_opened_mask == 0);
         // v5.3.1 (Phase D): entry pass no longer adds entry_fee to core_fees.
@@ -7972,16 +7972,16 @@ e3_skip_load:;
         // accumulated entry_fee on entry AND entry_fee+exit_fee on exit
         // (double-counting). See ControllerEventLoop.hpp Phase D fix.
         check("v4.7.16 post-RunTick: core 0 fees still 0 (only exits accumulate)",
-              FPN_IsZero(r->state.cores[0].core_fees));
+              Money_IsZero(r->state.cores[0].core_fees));
 
         // Synthesize an exit at +1% — RunTick should now drain the close mask
         // too, incrementing wins. Confirms exit-path parity.
         // v5.15.5.F.4c.3 WIP2d-1.B.1 — pass per-core cfg so Order_BindPreResolved gets fee_rate.
         tt::SubmitCommand<64> exit_cmd(0, tt::ORDER_MARKET_SELL,
-                                        FPN_FromDouble<64>(0.02),
+                                        MQ(0.02),
                                         /*leg*/(uint8_t)0, /*core_cfg*/&r->cfg.cores[0]);
         exit_cmd.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
-        exit_cmd.event_price = FPN_FromDouble<64>(60600.0);
+        exit_cmd.event_price = MQ(60600.0);
         uint64_t exit_oid = tt::OrderManager_Submit(&r->oms, exit_cmd);
         (void)exit_oid;
         for (int i = 0; i < MAX_INFLIGHT_ORDERS; ++i) {
@@ -7989,7 +7989,7 @@ e3_skip_load:;
             tt::Order<64>* o = &r->oms.orders[i];
             if (tt::Order_GetState(o) != tt::ORDER_FILLED) {
                 tt::OrderManager_HandleFill(&r->oms, o,
-                    FPN_FromDouble<64>(60600.0), FPN_FromDouble<64>(0.02));
+                    MQ(60600.0), MQ(0.02));
                 tt::Order_SetState(o, tt::ORDER_FILLED);
                 r->oms.order_bitmap &= ~(uint16_t)(1u << i);
                 break;
@@ -8001,15 +8001,15 @@ e3_skip_load:;
         check("v4.7.16 post-exit: core 0 losses == 0",
               r->state.cores[0].core_losses == 0);
         check("v4.7.16 post-exit: core 0 core_realized > 0",
-              FPN_ToDouble(r->state.cores[0].core_realized) > 0.0);
+              Money_ToDouble(r->state.cores[0].core_realized) > 0.0);
         check("v4.7.16 post-exit: open_notional decremented",
-              FPN_ToDouble(r->state.cores[0].core_open_notional) < 0.5);
+              Money_ToDouble(r->state.cores[0].core_open_notional) < 0.5);
         // v5.3.1 (Phase D): post-exit fees ≈ entry_fee + exit_fee
         // = $1200 × 0.001 + $1212 × 0.001 ≈ $2.412.
         // Tolerance $2.0–$2.6.
         check("v4.7.16 post-exit: core 0 fees ≈ round-trip (entry+exit fee)",
-              FPN_ToDouble(r->state.cores[0].core_fees) > 2.0 &&
-              FPN_ToDouble(r->state.cores[0].core_fees) < 2.6);
+              Money_ToDouble(r->state.cores[0].core_fees) > 2.0 &&
+              Money_ToDouble(r->state.cores[0].core_fees) < 2.6);
 
         delete r;
     }
@@ -8038,16 +8038,16 @@ e3_skip_load:;
         r->cfg = ControllerConfig_Default<64>();
         r->cfg.sl_cooldown_cycles = 0;
         tt::EventLoopState_InitLegacy(&r->state, &r->oms,
-            FPN_FromDouble<64>(10000.0));
+            MQ(10000.0));
         MBS_SET_U8(r->oms.oms_state_flags, tt::MASK_OMS_STATE_EVENT_LOG_MODE, tt::SHIFT_OMS_STATE_EVENT_LOG_MODE, 1);
         BITMAP_CLR(r->oms.oms_state_flags, tt::MASK_OMS_STATE_PARTIAL_EXIT_ENABLED);
         tt::SPSCRing_Init(&r->tick_ring);
         tt::ExecutionCore_Init(&r->core, 0, &r->tick_ring);
         tt::EventLoopState_RegisterCore(&r->state, &r->core,
-            FPN_FromDouble<64>(60500.0), FPN_FromDouble<64>(59500.0),
-            FPN_FromDouble<64>(0.01));
+            MQ(60500.0), MQ(59500.0),
+            MQ(0.01));
         tt::EventLoopState_SetCoreStrategy(&r->state, 0,
-            STRATEGY_SIMPLE_DIP, FPN_FromDouble<64>(1500.0));
+            STRATEGY_SIMPLE_DIP, MQ(1500.0));
         r->rolling      = RollingStats_Init<64, 128>();
         r->rolling_long = RollingStats_Init<64, 512>();
         tt::ShardedBacktestDriver_Init(&r->drv, &r->state, &r->rolling,
@@ -8058,12 +8058,12 @@ e3_skip_load:;
         // will fan ticks to cores then do the final flush. We assert the
         // mask gets consumed even though no tick fired during the run.
         tt::SubmitCommand<64> cmd(0, tt::ORDER_MARKET_BUY,
-                                   FPN_FromDouble<64>(0.02),
+                                   MQ(0.02),
                                    /*leg*/(uint8_t)0, /*core_cfg*/nullptr);
-        cmd.intended_tp = FPN_FromDouble<64>(60500.0);
-        cmd.intended_sl = FPN_FromDouble<64>(59500.0);
+        cmd.intended_tp = MQ(60500.0);
+        cmd.intended_sl = MQ(59500.0);
         cmd.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
-        cmd.event_price = FPN_FromDouble<64>(60000.0);
+        cmd.event_price = MQ(60000.0);
         uint64_t oid = tt::OrderManager_Submit(&r->oms, cmd);
         (void)oid;
         for (int i = 0; i < MAX_INFLIGHT_ORDERS; ++i) {
@@ -8071,7 +8071,7 @@ e3_skip_load:;
             tt::Order<64>* o = &r->oms.orders[i];
             if (tt::Order_GetState(o) != tt::ORDER_FILLED) {
                 tt::OrderManager_HandleFill(&r->oms, o,
-                    FPN_FromDouble<64>(60000.0), FPN_FromDouble<64>(0.02));
+                    MQ(60000.0), MQ(0.02));
                 tt::Order_SetState(o, tt::ORDER_FILLED);
                 r->oms.order_bitmap &= ~(uint16_t)(1u << i);
                 break;
@@ -8079,13 +8079,13 @@ e3_skip_load:;
         }
 
         // Empty tick stream — only the final-flush block runs.
-        tt::Tick<64> ticks[1] = { { FPN_FromDouble<64>(60000.0),
-                                     FPN_FromDouble<64>(0.001),
+        tt::Tick<64> ticks[1] = { { MQ(60000.0),
+                                     MQ(0.001),
                                      1000000ULL, 0, 0 } };
         tt::ShardedBacktest_Run(&r->drv, ticks, 0);
 
         check("v4.7.16 final-flush: open_notional drained ($1200)",
-              fabs(FPN_ToDouble(r->state.cores[0].core_open_notional) - 1200.0) < 0.5);
+              fabs(Money_ToDouble(r->state.cores[0].core_open_notional) - 1200.0) < 0.5);
         check("v4.7.16 final-flush: last_opened_mask cleared",
               r->oms.last_opened_mask == 0);
 
@@ -8119,26 +8119,26 @@ e3_skip_load:;
         };
         R* r = new R();
         tt::EventLoopState_InitLegacy(&r->state, &r->oms,
-            FPN_FromDouble<64>(10000.0));
+            MQ(10000.0));
         MBS_SET_U8(r->oms.oms_state_flags, tt::MASK_OMS_STATE_EVENT_LOG_MODE, tt::SHIFT_OMS_STATE_EVENT_LOG_MODE, 1);
         BITMAP_CLR(r->oms.oms_state_flags, tt::MASK_OMS_STATE_PARTIAL_EXIT_ENABLED);
         tt::SPSCRing_Init(&r->tick_ring);
         tt::ExecutionCore_Init(&r->core, 0, &r->tick_ring);
         tt::EventLoopState_RegisterCore(&r->state, &r->core,
-            FPN_FromDouble<64>(60500.0), FPN_FromDouble<64>(59500.0),
-            FPN_FromDouble<64>(0.01));
+            MQ(60500.0), MQ(59500.0),
+            MQ(0.01));
         tt::EventLoopState_SetCoreStrategy(&r->state, 0,
-            STRATEGY_SIMPLE_DIP, FPN_FromDouble<64>(1500.0));
+            STRATEGY_SIMPLE_DIP, MQ(1500.0));
 
         // ---- Open + close slot 0 normally ----
         tt::ExchangeAdapter<64> empty{};
         tt::SubmitCommand<64> buy_cmd(0, tt::ORDER_MARKET_BUY,
-                                       FPN_FromDouble<64>(0.02),
+                                       MQ(0.02),
                                        /*leg*/(uint8_t)0, /*core_cfg*/nullptr);
-        buy_cmd.intended_tp = FPN_FromDouble<64>(60500.0);
-        buy_cmd.intended_sl = FPN_FromDouble<64>(59500.0);
+        buy_cmd.intended_tp = MQ(60500.0);
+        buy_cmd.intended_sl = MQ(59500.0);
         buy_cmd.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
-        buy_cmd.event_price = FPN_FromDouble<64>(60000.0);
+        buy_cmd.event_price = MQ(60000.0);
         uint64_t buy_id = tt::OrderManager_Submit(&r->oms, buy_cmd);
         (void)buy_id;
         for (int i = 0; i < MAX_INFLIGHT_ORDERS; ++i) {
@@ -8146,7 +8146,7 @@ e3_skip_load:;
             tt::Order<64>* o = &r->oms.orders[i];
             if (tt::Order_GetState(o) != tt::ORDER_FILLED) {
                 tt::OrderManager_HandleFill(&r->oms, o,
-                    FPN_FromDouble<64>(60000.0), FPN_FromDouble<64>(0.02));
+                    MQ(60000.0), MQ(0.02));
                 tt::Order_SetState(o, tt::ORDER_FILLED);
                 r->oms.order_bitmap &= ~(uint16_t)(1u << i);
                 break;
@@ -8161,10 +8161,10 @@ e3_skip_load:;
 
         // Now close it.
         tt::SubmitCommand<64> sell_cmd(0, tt::ORDER_MARKET_SELL,
-                                        FPN_FromDouble<64>(0.02),
+                                        MQ(0.02),
                                         /*leg*/(uint8_t)0, /*core_cfg*/nullptr);
         sell_cmd.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
-        sell_cmd.event_price = FPN_FromDouble<64>(60600.0);
+        sell_cmd.event_price = MQ(60600.0);
         uint64_t sell_id = tt::OrderManager_Submit(&r->oms, sell_cmd);
         (void)sell_id;
         for (int i = 0; i < MAX_INFLIGHT_ORDERS; ++i) {
@@ -8172,7 +8172,7 @@ e3_skip_load:;
             tt::Order<64>* o = &r->oms.orders[i];
             if (tt::Order_GetState(o) != tt::ORDER_FILLED) {
                 tt::OrderManager_HandleFill(&r->oms, o,
-                    FPN_FromDouble<64>(60600.0), FPN_FromDouble<64>(0.02));
+                    MQ(60600.0), MQ(0.02));
                 tt::Order_SetState(o, tt::ORDER_FILLED);
                 r->oms.order_bitmap &= ~(uint16_t)(1u << i);
                 break;
@@ -8182,7 +8182,7 @@ e3_skip_load:;
 
         check("v4.7.19 (b): exit bump via DrainPostFill — total_exits == 1",
               r->state.total_exits == 1);
-        double balance_after_close = FPN_ToDouble(r->oms.balance);
+        double balance_after_close = Money_ToDouble(r->oms.balance);
         check("v4.7.19 (b): balance reflects single close (~$10000 + win - 2 fees)",
               balance_after_close > 9990.0 && balance_after_close < 10020.0);
 
@@ -8201,15 +8201,15 @@ e3_skip_load:;
         dup_sell.strategy_id   = STRATEGY_SIMPLE_DIP;
         tt::Order_SetType(&dup_sell, tt::ORDER_MARKET_SELL);
         tt::Order_SetIsMaker(&dup_sell, false);
-        dup_sell.requested_qty = FPN_FromDouble<64>(0.02);
-        dup_sell.intended_tp   = FPN_Zero<64>();
-        dup_sell.intended_sl   = FPN_Zero<64>();
+        dup_sell.requested_qty = MQ(0.02);
+        dup_sell.intended_tp   = Money_Zero();
+        dup_sell.intended_sl   = Money_Zero();
         tt::OrderManager_HandleFill(&r->oms, &dup_sell,
-            FPN_FromDouble<64>(60600.0), FPN_FromDouble<64>(0.02));
+            MQ(60600.0), MQ(0.02));
         tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
 
         check("v4.7.19 (a): duplicate SELL on closed slot — balance unchanged",
-              fabs(FPN_ToDouble(r->oms.balance) - balance_before_dup) < 0.01);
+              fabs(Money_ToDouble(r->oms.balance) - balance_before_dup) < 0.01);
         check("v4.7.19 (a): duplicate SELL — total_exits NOT bumped",
               r->state.total_exits == exits_before_dup);
         check("v4.7.19 (a): duplicate SELL — last_closed_mask stays clear",
@@ -8252,20 +8252,20 @@ e3_skip_load:;
             // With entry_price=0, entry_fee=0, fee_rate=0, qty=1:
             //   exit_net_pnl = exit_fill_price; exit_entry_notional=0; exit_total_fees=0
             auto& pos_a = r->oms.portfolio.positions[0];
-            pos_a.entry_price     = FPN_Zero<64>();
-            pos_a.quantity        = FPN_FromDouble<64>(1.0);
-            pos_a.entry_fee       = FPN_Zero<64>();
+            pos_a.entry_price     = Money_Zero();
+            pos_a.quantity        = MQ(1.0);
+            pos_a.entry_fee       = Money_Zero();
             // v5.15.5.C.5 — exit_fill_price + is_maker moved to OMS sibling state
-            r->oms.last_exit_fill_price[0] = FPN_FromDouble<64>(pnl_a);
+            r->oms.last_exit_fill_price[0] = MQ(pnl_a);
             BITMAP_CLR(r->oms.last_is_maker_bitmap, BITMAP_BIT_U16(0));  // 0 = taker
             if (pnl_a > 0.0) BITMAP_SET(r->oms.last_was_win_bitmap, BITMAP_BIT_U16(0));
             else             BITMAP_CLR(r->oms.last_was_win_bitmap, BITMAP_BIT_U16(0));
             auto& pos_b = r->oms.portfolio.positions[1];
-            pos_b.entry_price     = FPN_Zero<64>();
-            pos_b.quantity        = FPN_FromDouble<64>(1.0);
-            pos_b.entry_fee       = FPN_Zero<64>();
+            pos_b.entry_price     = Money_Zero();
+            pos_b.quantity        = MQ(1.0);
+            pos_b.entry_fee       = Money_Zero();
             // v5.15.5.C.5 — exit_fill_price + is_maker moved to OMS sibling state
-            r->oms.last_exit_fill_price[1] = FPN_FromDouble<64>(pnl_b);
+            r->oms.last_exit_fill_price[1] = MQ(pnl_b);
             BITMAP_CLR(r->oms.last_is_maker_bitmap, BITMAP_BIT_U16(1));  // 0 = taker
             if (pnl_b > 0.0) BITMAP_SET(r->oms.last_was_win_bitmap, BITMAP_BIT_U16(1));
             else             BITMAP_CLR(r->oms.last_was_win_bitmap, BITMAP_BIT_U16(1));
@@ -8276,16 +8276,16 @@ e3_skip_load:;
         {
             R* r = new R();
             tt::EventLoopState_InitLegacy(&r->state, &r->oms,
-                FPN_FromDouble<64>(10000.0));
+                MQ(10000.0));
             BITMAP_SET(r->oms.oms_state_flags, tt::MASK_OMS_STATE_PARTIAL_EXIT_ENABLED);
             MBS_SET_U8(r->oms.oms_state_flags, tt::MASK_OMS_STATE_EVENT_LOG_MODE, tt::SHIFT_OMS_STATE_EVENT_LOG_MODE, 1);
             tt::SPSCRing_Init(&r->tick_ring);
             tt::ExecutionCore_Init(&r->core, 0, &r->tick_ring);
             tt::EventLoopState_RegisterCore(&r->state, &r->core,
-                FPN_FromDouble<64>(60500.0), FPN_FromDouble<64>(59500.0),
-                FPN_FromDouble<64>(0.01));
+                MQ(60500.0), MQ(59500.0),
+                MQ(0.01));
             tt::EventLoopState_SetCoreStrategy(&r->state, 0,
-                STRATEGY_SIMPLE_DIP, FPN_FromDouble<64>(1500.0));
+                STRATEGY_SIMPLE_DIP, MQ(1500.0));
 
             seed_paired_exit(r, +5.0, +10.0);  // TP1 + TP2
             tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
@@ -8298,9 +8298,9 @@ e3_skip_load:;
                   !BITMAP_IS_SET(r->state.partner_pending_bitmap, BITMAP_BIT_U16(0)));
             // v4.7.25: gross win bucket should hold the total net (5+10=15)
             check("v4.7.25 (1): TP+TP paired → core_gross_wins == 15.0",
-                  fabs(FPN_ToDouble(r->state.cores[0].core_gross_wins) - 15.0) < 0.001);
+                  fabs(Money_ToDouble(r->state.cores[0].core_gross_wins) - 15.0) < 0.001);
             check("v4.7.25 (1): TP+TP paired → core_gross_losses untouched",
-                  FPN_IsZero(r->state.cores[0].core_gross_losses));
+                  Money_IsZero(r->state.cores[0].core_gross_losses));
             delete r;
         }
 
@@ -8308,16 +8308,16 @@ e3_skip_load:;
         {
             R* r = new R();
             tt::EventLoopState_InitLegacy(&r->state, &r->oms,
-                FPN_FromDouble<64>(10000.0));
+                MQ(10000.0));
             BITMAP_SET(r->oms.oms_state_flags, tt::MASK_OMS_STATE_PARTIAL_EXIT_ENABLED);
             MBS_SET_U8(r->oms.oms_state_flags, tt::MASK_OMS_STATE_EVENT_LOG_MODE, tt::SHIFT_OMS_STATE_EVENT_LOG_MODE, 1);
             tt::SPSCRing_Init(&r->tick_ring);
             tt::ExecutionCore_Init(&r->core, 0, &r->tick_ring);
             tt::EventLoopState_RegisterCore(&r->state, &r->core,
-                FPN_FromDouble<64>(60500.0), FPN_FromDouble<64>(59500.0),
-                FPN_FromDouble<64>(0.01));
+                MQ(60500.0), MQ(59500.0),
+                MQ(0.01));
             tt::EventLoopState_SetCoreStrategy(&r->state, 0,
-                STRATEGY_SIMPLE_DIP, FPN_FromDouble<64>(1500.0));
+                STRATEGY_SIMPLE_DIP, MQ(1500.0));
 
             seed_paired_exit(r, +3.0, -8.0);  // TP1 small win + SL larger loss = net -5
             tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
@@ -8328,9 +8328,9 @@ e3_skip_load:;
                   r->state.cores[0].core_losses == 1);
             // v4.7.25: gross loss bucket holds magnitude of -5.0 net = 5.0
             check("v4.7.25 (2): TP+SL paired (net -5) → core_gross_losses == 5.0",
-                  fabs(FPN_ToDouble(r->state.cores[0].core_gross_losses) - 5.0) < 0.001);
+                  fabs(Money_ToDouble(r->state.cores[0].core_gross_losses) - 5.0) < 0.001);
             check("v4.7.25 (2): TP+SL paired → core_gross_wins untouched",
-                  FPN_IsZero(r->state.cores[0].core_gross_wins));
+                  Money_IsZero(r->state.cores[0].core_gross_wins));
             delete r;
         }
 
@@ -8338,25 +8338,25 @@ e3_skip_load:;
         {
             R* r = new R();
             tt::EventLoopState_InitLegacy(&r->state, &r->oms,
-                FPN_FromDouble<64>(10000.0));
+                MQ(10000.0));
             BITMAP_CLR(r->oms.oms_state_flags, tt::MASK_OMS_STATE_PARTIAL_EXIT_ENABLED);
             MBS_SET_U8(r->oms.oms_state_flags, tt::MASK_OMS_STATE_EVENT_LOG_MODE, tt::SHIFT_OMS_STATE_EVENT_LOG_MODE, 1);
             tt::SPSCRing_Init(&r->tick_ring);
             tt::ExecutionCore_Init(&r->core, 0, &r->tick_ring);
             tt::EventLoopState_RegisterCore(&r->state, &r->core,
-                FPN_FromDouble<64>(60500.0), FPN_FromDouble<64>(59500.0),
-                FPN_FromDouble<64>(0.01));
+                MQ(60500.0), MQ(59500.0),
+                MQ(0.01));
             tt::EventLoopState_SetCoreStrategy(&r->state, 0,
-                STRATEGY_SIMPLE_DIP, FPN_FromDouble<64>(1500.0));
+                STRATEGY_SIMPLE_DIP, MQ(1500.0));
 
             // v5.15.5.C.4 Phase G — seed Position state for derive cascade.
             // Single-leg: just slot 0. exit_net_pnl = exit_fill_price × 1 = +7.0.
             auto& pos_single = r->oms.portfolio.positions[0];
-            pos_single.entry_price     = FPN_Zero<64>();
-            pos_single.quantity        = FPN_FromDouble<64>(1.0);
-            pos_single.entry_fee       = FPN_Zero<64>();
+            pos_single.entry_price     = Money_Zero();
+            pos_single.quantity        = MQ(1.0);
+            pos_single.entry_fee       = Money_Zero();
             // v5.15.5.C.5 — exit_fill_price + is_maker moved to OMS sibling state
-            r->oms.last_exit_fill_price[0] = FPN_FromDouble<64>(+7.0);
+            r->oms.last_exit_fill_price[0] = MQ(+7.0);
             BITMAP_CLR(r->oms.last_is_maker_bitmap, BITMAP_BIT_U16(0));
             BITMAP_SET(r->oms.last_was_win_bitmap, BITMAP_BIT_U16(0));
             r->oms.last_closed_mask = (uint16_t)0x1;
@@ -8406,16 +8406,16 @@ e3_skip_load:;
         r->cfg.sl_cooldown_cycles = 0;
         BITMAP_SET(r->cfg.lifecycle_cfg_flags, MASK_LIFECYCLE_CFG_PARTIAL_EXIT_ENABLED);
         tt::EventLoopState_InitLegacy(&r->state, &r->oms,
-            FPN_FromDouble<64>(10000.0));
+            MQ(10000.0));
         MBS_SET_U8(r->oms.oms_state_flags, tt::MASK_OMS_STATE_EVENT_LOG_MODE, tt::SHIFT_OMS_STATE_EVENT_LOG_MODE, 1);
         BITMAP_SET(r->oms.oms_state_flags, tt::MASK_OMS_STATE_PARTIAL_EXIT_ENABLED);       // mirror cfg
         tt::SPSCRing_Init(&r->tick_ring);
         tt::ExecutionCore_Init(&r->core, 0, &r->tick_ring);
         tt::EventLoopState_RegisterCore(&r->state, &r->core,
-            FPN_FromDouble<64>(60500.0), FPN_FromDouble<64>(59500.0),
-            FPN_FromDouble<64>(0.01));
+            MQ(60500.0), MQ(59500.0),
+            MQ(0.01));
         tt::EventLoopState_SetCoreStrategy(&r->state, 0,
-            STRATEGY_SIMPLE_DIP, FPN_FromDouble<64>(1500.0));
+            STRATEGY_SIMPLE_DIP, MQ(1500.0));
         r->rolling      = RollingStats_Init<64, 128>();
         r->rolling_long = RollingStats_Init<64, 512>();
         tt::ShardedBacktestDriver_Init(&r->drv, &r->state, &r->rolling,
@@ -8425,27 +8425,27 @@ e3_skip_load:;
         // v5.15.5.C.4 Phase G — seed Position state for derive cascade.
         // Leg A (slot 0) wins +3.0, leg B (slot 1) loses -8.0. Net = -5.0 → 1 loss when paired.
         auto& pos_pair_a = r->oms.portfolio.positions[0];
-        pos_pair_a.entry_price     = FPN_Zero<64>();
-        pos_pair_a.quantity        = FPN_FromDouble<64>(1.0);
-        pos_pair_a.entry_fee       = FPN_Zero<64>();
+        pos_pair_a.entry_price     = Money_Zero();
+        pos_pair_a.quantity        = MQ(1.0);
+        pos_pair_a.entry_fee       = Money_Zero();
         // v5.15.5.C.5 — exit_fill_price + is_maker moved to OMS sibling state
-        r->oms.last_exit_fill_price[0] = FPN_FromDouble<64>(+3.0);
+        r->oms.last_exit_fill_price[0] = MQ(+3.0);
         BITMAP_CLR(r->oms.last_is_maker_bitmap, BITMAP_BIT_U16(0));
         BITMAP_SET(r->oms.last_was_win_bitmap, BITMAP_BIT_U16(0));
         auto& pos_pair_b = r->oms.portfolio.positions[1];
-        pos_pair_b.entry_price     = FPN_Zero<64>();
-        pos_pair_b.quantity        = FPN_FromDouble<64>(1.0);
-        pos_pair_b.entry_fee       = FPN_Zero<64>();
+        pos_pair_b.entry_price     = Money_Zero();
+        pos_pair_b.quantity        = MQ(1.0);
+        pos_pair_b.entry_fee       = Money_Zero();
         // v5.15.5.C.5 — exit_fill_price + is_maker moved to OMS sibling state
-        r->oms.last_exit_fill_price[1] = FPN_FromDouble<64>(-8.0);
+        r->oms.last_exit_fill_price[1] = MQ(-8.0);
         BITMAP_CLR(r->oms.last_is_maker_bitmap, BITMAP_BIT_U16(1));
         BITMAP_CLR(r->oms.last_was_win_bitmap, BITMAP_BIT_U16(1));
         r->oms.last_closed_mask = (uint16_t)0x3;
 
         // Drive a no-op tick through the backtest driver — DrainPostFill
         // gets called inside.
-        tt::Tick<64> dummy = { FPN_FromDouble<64>(60000.0),
-                                FPN_FromDouble<64>(0.001),
+        tt::Tick<64> dummy = { MQ(60000.0),
+                                MQ(0.001),
                                 1000000ULL, 0, 0 };
         tt::ShardedBacktest_RunTick(&r->drv, dummy, 0);
 
@@ -8478,29 +8478,29 @@ e3_skip_load:;
         R* r = new R();
         tt::ExchangeAdapter<64> empty{};
         tt::OrderManager_Init(&r->oms, empty, /*live=*/0, /*partial_exit_enabled=*/0,
-            FPN_FromDouble<64>(10000.0));
+            MQ(10000.0));
         MBS_SET_U8(r->oms.oms_state_flags, tt::MASK_OMS_STATE_EVENT_LOG_MODE, tt::SHIFT_OMS_STATE_EVENT_LOG_MODE, 1);       // mirror live default
 
         // Push 3 SubmitCommands across different core_ids
-        tt::SubmitCommand<64> push0(0, tt::ORDER_MARKET_BUY, FPN_FromDouble<64>(0.02), 0, nullptr);
-        push0.intended_tp = FPN_FromDouble<64>(60500.0);
-        push0.intended_sl = FPN_FromDouble<64>(59500.0);
+        tt::SubmitCommand<64> push0(0, tt::ORDER_MARKET_BUY, MQ(0.02), 0, nullptr);
+        push0.intended_tp = MQ(60500.0);
+        push0.intended_sl = MQ(59500.0);
         push0.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
-        push0.event_price = FPN_FromDouble<64>(60000.0);
+        push0.event_price = MQ(60000.0);
         bool p0 = tt::OMS_PushSubmit(&r->oms, push0);
 
-        tt::SubmitCommand<64> push1(1, tt::ORDER_MARKET_BUY, FPN_FromDouble<64>(0.03), 0, nullptr);
-        push1.intended_tp = FPN_FromDouble<64>(60800.0);
-        push1.intended_sl = FPN_FromDouble<64>(59800.0);
+        tt::SubmitCommand<64> push1(1, tt::ORDER_MARKET_BUY, MQ(0.03), 0, nullptr);
+        push1.intended_tp = MQ(60800.0);
+        push1.intended_sl = MQ(59800.0);
         push1.strategy_id = (uint8_t)STRATEGY_MEAN_REVERSION;
-        push1.event_price = FPN_FromDouble<64>(60100.0);
+        push1.event_price = MQ(60100.0);
         bool p1 = tt::OMS_PushSubmit(&r->oms, push1);
 
-        tt::SubmitCommand<64> push2(2, tt::ORDER_MARKET_BUY, FPN_FromDouble<64>(0.04), 0, nullptr);
-        push2.intended_tp = FPN_FromDouble<64>(60900.0);
-        push2.intended_sl = FPN_FromDouble<64>(59900.0);
+        tt::SubmitCommand<64> push2(2, tt::ORDER_MARKET_BUY, MQ(0.04), 0, nullptr);
+        push2.intended_tp = MQ(60900.0);
+        push2.intended_sl = MQ(59900.0);
         push2.strategy_id = (uint8_t)STRATEGY_EMA_CROSS;
-        push2.event_price = FPN_FromDouble<64>(60200.0);
+        push2.event_price = MQ(60200.0);
         bool p2 = tt::OMS_PushSubmit(&r->oms, push2);
 
         check("v4.7.37: PushSubmit core 0 succeeded", p0);
@@ -8518,9 +8518,9 @@ e3_skip_load:;
               __builtin_popcount(r->oms.order_bitmap) == 3);
 
         // Push another and drain only that one — verify the queues stay clean
-        tt::SubmitCommand<64> push3(0, tt::ORDER_MARKET_SELL, FPN_FromDouble<64>(0.02), 0, nullptr);
+        tt::SubmitCommand<64> push3(0, tt::ORDER_MARKET_SELL, MQ(0.02), 0, nullptr);
         push3.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
-        push3.event_price = FPN_FromDouble<64>(60500.0);
+        push3.event_price = MQ(60500.0);
         bool p3 = tt::OMS_PushSubmit(&r->oms, push3);
         check("v4.7.37: subsequent PushSubmit succeeds (queue not full)", p3);
         int drained2 = tt::OMS_DrainSubmit(&r->oms, 3);
@@ -8531,12 +8531,12 @@ e3_skip_load:;
 
         // Invalid core_id rejected
         tt::SubmitCommand<64> bad_invalid(/*invalid*/-1, tt::ORDER_MARKET_BUY,
-                                           FPN_FromDouble<64>(0.01), 0, nullptr);
+                                           MQ(0.01), 0, nullptr);
         bool bad = tt::OMS_PushSubmit(&r->oms, bad_invalid);
         check("v4.7.37: PushSubmit rejects invalid core_id=-1", !bad);
         tt::SubmitCommand<64> bad_too_high(/*too high*/MAX_EXECUTION_CORES,
                                             tt::ORDER_MARKET_BUY,
-                                            FPN_FromDouble<64>(0.01), 0, nullptr);
+                                            MQ(0.01), 0, nullptr);
         bad = tt::OMS_PushSubmit(&r->oms, bad_too_high);
         check("v4.7.37: PushSubmit rejects core_id >= MAX_EXECUTION_CORES",
               !bad);
@@ -8565,13 +8565,13 @@ e3_skip_load:;
         R* r2 = new R();
         for (R* rp : {r1, r2}) {
             tt::EventLoopState_InitLegacy(&rp->state, &rp->oms,
-                FPN_FromDouble<64>(10000.0));
+                MQ(10000.0));
             tt::SPSCRing_Init(&rp->tick_ring);
             for (int c = 0; c < 4; ++c) {
                 tt::ExecutionCore_Init(&rp->cores_ec[c], (uint16_t)c, &rp->tick_ring);
                 tt::EventLoopState_RegisterCore(&rp->state, &rp->cores_ec[c],
-                    FPN_FromDouble<64>(60100.0), FPN_FromDouble<64>(59900.0),
-                    FPN_FromDouble<64>(0.01));
+                    MQ(60100.0), MQ(59900.0),
+                    MQ(0.01));
             }
         }
 
@@ -8598,9 +8598,9 @@ e3_skip_load:;
                 a.sl_cooldown_remaining != b.sl_cooldown_remaining) {
                 counters_match = false;
             }
-            if (FPN_ToDouble(a.core_open_notional) != FPN_ToDouble(b.core_open_notional) ||
-                FPN_ToDouble(a.core_realized) != FPN_ToDouble(b.core_realized) ||
-                FPN_ToDouble(a.core_fees) != FPN_ToDouble(b.core_fees)) {
+            if (Money_ToDouble(a.core_open_notional) != Money_ToDouble(b.core_open_notional) ||
+                Money_ToDouble(a.core_realized) != Money_ToDouble(b.core_realized) ||
+                Money_ToDouble(a.core_fees) != Money_ToDouble(b.core_fees)) {
                 notional_match = false;
             }
             if (CORE_STATE_FLAG_IS_SET(a, DIRTY) != CORE_STATE_FLAG_IS_SET(b, DIRTY)) {
@@ -8652,13 +8652,13 @@ e3_skip_load:;
         };
         R* r = new R();
         tt::EventLoopState_InitLegacy(&r->state, &r->oms,
-            FPN_FromDouble<64>(10000.0));
+            MQ(10000.0));
         tt::SPSCRing_Init(&r->tick_ring);
         for (int c = 0; c < 4; ++c) {
             tt::ExecutionCore_Init(&r->cores_ec[c], (uint16_t)c, &r->tick_ring);
             tt::EventLoopState_RegisterCore(&r->state, &r->cores_ec[c],
-                FPN_FromDouble<64>(60100.0), FPN_FromDouble<64>(59900.0),
-                FPN_FromDouble<64>(0.01));
+                MQ(60100.0), MQ(59900.0),
+                MQ(0.01));
             // Mark each core with a distinct sentinel
             r->state.cores[c].entries_processed = (uint32_t)(100 + c);
             r->state.cores[c].exits_processed   = (uint32_t)(200 + c);
@@ -8670,8 +8670,8 @@ e3_skip_load:;
         for (int c = 0; c < 4; ++c) {
             pre_entries[c] = r->state.cores[c].entries_processed;
             pre_exits[c]   = r->state.cores[c].exits_processed;
-            pre_notional[c] = FPN_ToDouble(r->state.cores[c].core_open_notional);
-            pre_realized[c] = FPN_ToDouble(r->state.cores[c].core_realized);
+            pre_notional[c] = Money_ToDouble(r->state.cores[c].core_open_notional);
+            pre_realized[c] = Money_ToDouble(r->state.cores[c].core_realized);
         }
 
         // Call OneCore for c=2 ONLY
@@ -8688,11 +8688,11 @@ e3_skip_load:;
             check(nm, r->state.cores[sibling].exits_processed == pre_exits[sibling]);
             snprintf(nm, sizeof(nm),
                 "v5.0.4: OneCore(c=2) leaves c=%d notional unchanged", sibling);
-            check(nm, FPN_ToDouble(r->state.cores[sibling].core_open_notional) ==
+            check(nm, Money_ToDouble(r->state.cores[sibling].core_open_notional) ==
                   pre_notional[sibling]);
             snprintf(nm, sizeof(nm),
                 "v5.0.4: OneCore(c=2) leaves c=%d realized unchanged", sibling);
-            check(nm, FPN_ToDouble(r->state.cores[sibling].core_realized) ==
+            check(nm, Money_ToDouble(r->state.cores[sibling].core_realized) ==
                   pre_realized[sibling]);
         }
         delete r;
@@ -8705,16 +8705,16 @@ e3_skip_load:;
         R* r = new R();
         tt::ExchangeAdapter<64> empty{};
         tt::OrderManager_Init(&r->oms, empty, 0, /*partial_exit_enabled=*/0,
-            FPN_FromDouble<64>(10000.0));
+            MQ(10000.0));
 
         int pushed_ok = 0;
         for (int i = 0; i < 33; ++i) {
             tt::SubmitCommand<64> push_cmd(0, tt::ORDER_MARKET_BUY,
-                                            FPN_FromDouble<64>(0.01), 0, nullptr);
-            push_cmd.intended_tp = FPN_FromDouble<64>(60500.0);
-            push_cmd.intended_sl = FPN_FromDouble<64>(59500.0);
+                                            MQ(0.01), 0, nullptr);
+            push_cmd.intended_tp = MQ(60500.0);
+            push_cmd.intended_sl = MQ(59500.0);
             push_cmd.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
-            push_cmd.event_price = FPN_FromDouble<64>(60000.0);
+            push_cmd.event_price = MQ(60000.0);
             bool ok = tt::OMS_PushSubmit(&r->oms, push_cmd);
             if (ok) pushed_ok++;
         }
@@ -8736,11 +8736,11 @@ e3_skip_load:;
 
         // Push another after drain — must succeed (queue empty)
         tt::SubmitCommand<64> after_drain(0, tt::ORDER_MARKET_BUY,
-                                           FPN_FromDouble<64>(0.01), 0, nullptr);
-        after_drain.intended_tp = FPN_FromDouble<64>(60500.0);
-        after_drain.intended_sl = FPN_FromDouble<64>(59500.0);
+                                           MQ(0.01), 0, nullptr);
+        after_drain.intended_tp = MQ(60500.0);
+        after_drain.intended_sl = MQ(59500.0);
         after_drain.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
-        after_drain.event_price = FPN_FromDouble<64>(60000.0);
+        after_drain.event_price = MQ(60000.0);
         bool ok = tt::OMS_PushSubmit(&r->oms, after_drain);
         check("v5.0.4: push after full drain succeeds", ok);
         delete r;
@@ -8810,8 +8810,8 @@ e3_skip_load:;
     {
         // Build a minimal config with known fee_rate_taker
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
-        cfg.fee_rate_taker = FPN_FromDouble<64>(0.001);  // 0.1% taker
-        cfg.fee_rate       = FPN_FromDouble<64>(0.001);
+        cfg.fee_rate_taker = MQ(0.001);  // 0.1% taker
+        cfg.fee_rate       = MQ(0.001);
         // Floor = 3 × 0.001 = 0.003 (0.3% TP minimum)
 
         // Minimal RollingStats — populate enough that strategies emit non-zero output
@@ -8825,65 +8825,65 @@ e3_skip_load:;
 
         // Test 1: TP wide enough — gate NOT set
         {
-            cfg.take_profit_pct = FPN_FromDouble<64>(0.01);   // 1% TP
-            cfg.stop_loss_pct   = FPN_FromDouble<64>(0.005);  // 0.5% SL
+            cfg.take_profit_pct = MQ(0.01);   // 1% TP
+            cfg.stop_loss_pct   = MQ(0.005);  // 0.5% SL
             BITMAP_CLR(cfg.lifecycle_cfg_flags, MASK_LIFECYCLE_CFG_PARTIAL_EXIT_ENABLED);  // simpler path
             tt::GateParameters<64> out;
             tt::GateParameters_Init(&out);
             tt::Strategy_BuildParameters<64>(STRATEGY_MEAN_REVERSION, &rs, &cfg.cores[0],
-                FPN_FromDouble<64>(1000.0), &out);
+                MQ(1000.0), &out);
             check("v5.1.10: TP=1.0% > floor 0.3% → BUY_BLOCKED clear",
                   (out.flags & tt::GATE_FLAG_BUY_BLOCKED) == 0);
             check("v5.1.10: TP=1.0% wide trade → tp_pct populated",
-                  !FPN_IsZero(out.tp_pct));
+                  !Money_IsZero(out.tp_pct));
         }
 
         // Test 2: TP exactly at floor (3 × 0.001 = 0.003) — boundary
         {
-            cfg.take_profit_pct = FPN_FromDouble<64>(0.003);  // 0.3% TP, == floor
+            cfg.take_profit_pct = MQ(0.003);  // 0.3% TP, == floor
             tt::GateParameters<64> out;
             tt::GateParameters_Init(&out);
             tt::Strategy_BuildParameters<64>(STRATEGY_MEAN_REVERSION, &rs, &cfg.cores[0],
-                FPN_FromDouble<64>(1000.0), &out);
+                MQ(1000.0), &out);
             check("v5.1.10: TP exactly at floor → BUY_BLOCKED clear (LessThan, not LE)",
                   (out.flags & tt::GATE_FLAG_BUY_BLOCKED) == 0);
         }
 
         // Test 3: TP below floor — gate FIRES
         {
-            cfg.take_profit_pct = FPN_FromDouble<64>(0.001);  // 0.1% TP, below floor
+            cfg.take_profit_pct = MQ(0.001);  // 0.1% TP, below floor
             ControllerConfig_PopulateCoresFromFlat(&cfg);  // v5.15.5.F.4c.3 WIP2c.2 — sync flat→cores[0]
             tt::GateParameters<64> out;
             tt::GateParameters_Init(&out);
             tt::Strategy_BuildParameters<64>(STRATEGY_MEAN_REVERSION, &rs, &cfg.cores[0],
-                FPN_FromDouble<64>(1000.0), &out);
+                MQ(1000.0), &out);
             check("v5.1.10: TP=0.1% < floor 0.3% → BUY_BLOCKED set",
                   (out.flags & tt::GATE_FLAG_BUY_BLOCKED) != 0);
         }
 
         // Test 4: fee_rate_taker fallback to fee_rate
         {
-            cfg.fee_rate_taker  = FPN_Zero<64>();              // unset
-            cfg.fee_rate        = FPN_FromDouble<64>(0.002);   // 0.2% legacy
-            cfg.take_profit_pct = FPN_FromDouble<64>(0.005);   // 0.5% TP, > 3 × 0.002 = 0.6%? no, 0.005 < 0.006
+            cfg.fee_rate_taker  = Money_Zero();              // unset
+            cfg.fee_rate        = MQ(0.002);   // 0.2% legacy
+            cfg.take_profit_pct = MQ(0.005);   // 0.5% TP, > 3 × 0.002 = 0.6%? no, 0.005 < 0.006
             ControllerConfig_PopulateCoresFromFlat(&cfg);  // v5.15.5.F.4c.3 WIP2c.2 — sync flat→cores[0]
             tt::GateParameters<64> out;
             tt::GateParameters_Init(&out);
             tt::Strategy_BuildParameters<64>(STRATEGY_MEAN_REVERSION, &rs, &cfg.cores[0],
-                FPN_FromDouble<64>(1000.0), &out);
+                MQ(1000.0), &out);
             check("v5.1.10: fee_rate_taker=0 falls back to fee_rate; TP 0.5% < 3×0.2%=0.6% → BUY_BLOCKED set",
                   (out.flags & tt::GATE_FLAG_BUY_BLOCKED) != 0);
         }
 
         // Test 5: STRATEGY_NONE produces tp_pct=0 — gate skips (no false positive)
         {
-            cfg.fee_rate_taker  = FPN_FromDouble<64>(0.001);
-            cfg.fee_rate        = FPN_FromDouble<64>(0.001);
-            cfg.take_profit_pct = FPN_FromDouble<64>(0.01);
+            cfg.fee_rate_taker  = MQ(0.001);
+            cfg.fee_rate        = MQ(0.001);
+            cfg.take_profit_pct = MQ(0.01);
             tt::GateParameters<64> out;
             tt::GateParameters_Init(&out);
             tt::Strategy_BuildParameters<64>(STRATEGY_NONE, &rs, &cfg.cores[0],
-                FPN_FromDouble<64>(1000.0), &out);
+                MQ(1000.0), &out);
             check("v5.1.10: STRATEGY_NONE → tp_pct=0 → BUY_BLOCKED NOT set (skip-on-zero guard)",
                   (out.flags & tt::GATE_FLAG_BUY_BLOCKED) == 0);
         }
@@ -9679,8 +9679,8 @@ e3_skip_load:;
         // SHARDED_SNAPSHOT_VERSION bumped from 3 to 4 for the CoreContext
         // strategy_state addition. Hardcoded check to catch accidental
         // reverts.
-        check("v5.15.5.C.3: SHARDED_SNAPSHOT_VERSION is 9 (v5.4.0=4, v5.4.3=5, v5.4.4=6, v5.11.65=7, v5.15.5.C.3=8, Ship-A 16B FPN_Binary=9: embedded FPN_Binary-struct byte layouts changed)",
-              SHARDED_SNAPSHOT_VERSION == 9u);
+        check("v5.15.5.C.3: SHARDED_SNAPSHOT_VERSION is 10 (…=8, Ship-A 16B=9, Ship-B DECIMAL epoch=10: money re-encoded 2^64->10^8)",
+              SHARDED_SNAPSHOT_VERSION == 10u);
     }
     {
         // Default state after EventLoopState_Init: strategy_state nullptr,
@@ -9809,17 +9809,17 @@ e3_skip_load:;
         RollingStats<FP, 128> rolling = RollingStats_Init<FP, 128>();
         // Seed rolling with a price scan so price_max is meaningful
         for (int i = 0; i < 64; ++i) {
-            FPN_Binary<FP> p = FPN_FromDouble<FP>(50000.0 + (double)i * 10.0);
-            FPN_Binary<FP> v = FPN_FromDouble<FP>(1.0);
-            RollingStats_Push(&rolling, p, v);
+            Money p = MQ(50000.0 + (double)i * 10.0);
+            Money v = MQ(1.0);
+            RollingStats_Push(&rolling, Money_ToBinary(p), Money_ToBinary(v));
         }
 
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
-        cfg.entry_offset_pct = FPN_FromDouble<FP>(0.0015);
+        cfg.entry_offset_pct = MQ(0.0015);
 
         SimpleDipState<FP> sdip{};
         tt::GateParameters<FP> out_with_state{};
-        SimpleDip_BuildParameters(&rolling, &cfg.cores[0], FPN_FromDouble<FP>(1000.0),
+        SimpleDip_BuildParameters(&rolling, &cfg.cores[0], MQ(1000.0),
                                    &out_with_state, (RollingStats<FP, 512>*)nullptr,
                                    &sdip);
         check("v5.4.0p2.1: state-aware Build populates state->recent_high",
@@ -9830,33 +9830,33 @@ e3_skip_load:;
         // Same call with nullptr state — must produce identical gate output
         // (state is a write-only side-channel, doesn't affect numerics).
         tt::GateParameters<FP> out_no_state{};
-        SimpleDip_BuildParameters(&rolling, &cfg.cores[0], FPN_FromDouble<FP>(1000.0),
+        SimpleDip_BuildParameters(&rolling, &cfg.cores[0], MQ(1000.0),
                                    &out_no_state, (RollingStats<FP, 512>*)nullptr,
                                    (SimpleDipState<FP>*)nullptr);
         check("v5.4.0p2.1: nullptr-state path produces identical bg threshold",
-              FPN_Equal(out_with_state.bg_price_threshold, out_no_state.bg_price_threshold));
+              Money_Eq(out_with_state.bg_price_threshold, out_no_state.bg_price_threshold));
         check("v5.4.0p2.1: nullptr-state path produces identical TP",
-              FPN_Equal(out_with_state.sg_take_profit_price, out_no_state.sg_take_profit_price));
+              Money_Eq(out_with_state.sg_take_profit_price, out_no_state.sg_take_profit_price));
         check("v5.4.0p2.1: nullptr-state path produces identical SL",
-              FPN_Equal(out_with_state.sg_stop_loss_price, out_no_state.sg_stop_loss_price));
+              Money_Eq(out_with_state.sg_stop_loss_price, out_no_state.sg_stop_loss_price));
     }
     {
         // Strategy_BuildParameters dispatcher accepts strategy_state and
         // routes it to SimpleDip. Verify the cast happens correctly.
         RollingStats<FP, 128> rolling = RollingStats_Init<FP, 128>();
         for (int i = 0; i < 64; ++i) {
-            FPN_Binary<FP> p = FPN_FromDouble<FP>(60000.0 + (double)i * 5.0);
-            FPN_Binary<FP> v = FPN_FromDouble<FP>(2.0);
-            RollingStats_Push(&rolling, p, v);
+            Money p = MQ(60000.0 + (double)i * 5.0);
+            Money v = MQ(2.0);
+            RollingStats_Push(&rolling, Money_ToBinary(p), Money_ToBinary(v));
         }
 
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
-        cfg.entry_offset_pct = FPN_FromDouble<FP>(0.001);
+        cfg.entry_offset_pct = MQ(0.001);
 
         SimpleDipState<FP> sdip{};
         tt::GateParameters<FP> out{};
         tt::Strategy_BuildParameters(STRATEGY_SIMPLE_DIP, &rolling, &cfg.cores[0],
-                                      FPN_FromDouble<FP>(500.0), &out,
+                                      MQ(500.0), &out,
                                       (RollingStats<FP, 512>*)nullptr,
                                       nullptr, &sdip);
         check("v5.4.0p2.1: dispatcher routes strategy_state to SimpleDip",
@@ -9872,7 +9872,7 @@ e3_skip_load:;
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
         // strategy_state stays null (no Init called)
         tt::Strategy_AdaptPerCore(&state, 0, STRATEGY_SIMPLE_DIP,
-                                   FPN_FromDouble<FP>(50000.0),
+                                   FPN_FromDouble<64>(50000.0),
                                    FPN_Zero<FP>(), 0, &cfg);
         check("v5.4.0p2.1: AdaptPerCore is no-op when strategy_state is null",
               state.cores[0].strategy_state == nullptr);
@@ -9881,7 +9881,7 @@ e3_skip_load:;
         RollingStats<FP, 128> rolling = RollingStats_Init<FP, 128>();
         tt::Strategy_InitPerCore(&state, 0, STRATEGY_SIMPLE_DIP, &rolling, &cfg);
         tt::Strategy_AdaptPerCore(&state, 0, STRATEGY_SIMPLE_DIP,
-                                   FPN_FromDouble<FP>(50000.0),
+                                   FPN_FromDouble<64>(50000.0),
                                    FPN_Zero<FP>(), 0, &cfg);
         check("v5.4.0p2.1: AdaptPerCore safely runs SimpleDip_Adapt with allocated state",
               state.cores[0].strategy_state != nullptr);
@@ -9896,18 +9896,18 @@ e3_skip_load:;
         tt::EventLoopState<FP> state;
         tt::EventLoopState_Init(&state, &oms);
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
-        cfg.entry_offset_pct  = FPN_FromDouble<FP>(0.0020);
-        cfg.volume_multiplier = FPN_FromDouble<FP>(2.0);
+        cfg.entry_offset_pct  = MQ(0.0020);
+        cfg.volume_multiplier = FPN_FromDouble<64>(2.0);
         cfg.offset_stddev_mult = FPN_Zero<FP>();  // pct mode
         RollingStats<FP, 128> rolling = RollingStats_Init<FP, 128>();
         for (int i = 0; i < 64; ++i) {
-            RollingStats_Push(&rolling, FPN_FromDouble<FP>(50000.0 + i),
-                              FPN_FromDouble<FP>(1.0));
+            RollingStats_Push(&rolling, FPN_FromDouble<64>(50000.0 + i),
+                              FPN_FromDouble<64>(1.0));
         }
         tt::Strategy_InitPerCore(&state, 0, STRATEGY_MEAN_REVERSION, &rolling, &cfg);
         auto* mr = static_cast<MeanReversionState<FP>*>(state.cores[0].strategy_state);
         check("v5.4.0p2.2: MR Init seeds live_offset_pct from cfg",
-              FPN_Equal(mr->live_offset_pct, cfg.entry_offset_pct));
+              FPN_Equal(mr->live_offset_pct, Money_ToBinary(cfg.entry_offset_pct)));
         check("v5.4.0p2.2: MR Init seeds live_vol_mult from cfg",
               FPN_Equal(mr->live_vol_mult, cfg.volume_multiplier));
 
@@ -9921,59 +9921,59 @@ e3_skip_load:;
         // the bg threshold should reflect the state value.
         RollingStats<FP, 128> rolling = RollingStats_Init<FP, 128>();
         for (int i = 0; i < 64; ++i) {
-            RollingStats_Push(&rolling, FPN_FromDouble<FP>(50000.0 + i),
-                              FPN_FromDouble<FP>(1.0));
+            RollingStats_Push(&rolling, FPN_FromDouble<64>(50000.0 + i),
+                              FPN_FromDouble<64>(1.0));
         }
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
-        cfg.entry_offset_pct = FPN_FromDouble<FP>(0.001);
+        cfg.entry_offset_pct = MQ(0.001);
         cfg.offset_stddev_mult = FPN_Zero<FP>();
-        cfg.volume_multiplier = FPN_FromDouble<FP>(1.0);
+        cfg.volume_multiplier = FPN_FromDouble<64>(1.0);
         ControllerConfig_PopulateCoresFromFlat(&cfg);  // v5.15.5.F.4c.3 WIP2c.2 — sync flat→cores[0]
 
         // nullptr-state path (legacy)
         tt::GateParameters<FP> out_legacy{};
-        tt::MeanReversion_BuildParameters(&rolling, &cfg.cores[0], FPN_FromDouble<FP>(1000.0),
+        tt::MeanReversion_BuildParameters(&rolling, &cfg.cores[0], MQ(1000.0),
                                            &out_legacy);
 
         // State-aware path with deliberately DIFFERENT live values
         MeanReversionState<FP> mr{};
-        mr.live_offset_pct  = FPN_FromDouble<FP>(0.005);   // 5x cfg
-        mr.live_vol_mult    = FPN_FromDouble<FP>(3.0);
+        mr.live_offset_pct  = FPN_FromDouble<64>(0.005);   // 5x cfg
+        mr.live_vol_mult    = FPN_FromDouble<64>(3.0);
         mr.live_stddev_mult = FPN_Zero<FP>();
         tt::GateParameters<FP> out_state{};
-        tt::MeanReversion_BuildParameters(&rolling, &cfg.cores[0], FPN_FromDouble<FP>(1000.0),
+        tt::MeanReversion_BuildParameters(&rolling, &cfg.cores[0], MQ(1000.0),
                                            &out_state, &mr);
         check("v5.4.0p2.2: state-aware MR produces lower bg threshold (bigger dip)",
-              FPN_LessThan(out_state.bg_price_threshold, out_legacy.bg_price_threshold));
+              Money_Lt(out_state.bg_price_threshold, out_legacy.bg_price_threshold));
         check("v5.4.0p2.2: state-aware MR produces higher volume threshold (3x mult)",
-              FPN_GreaterThan(out_state.bg_volume_threshold, out_legacy.bg_volume_threshold));
+              Money_Gt(out_state.bg_volume_threshold, out_legacy.bg_volume_threshold));
     }
     {
         // Dispatcher routes strategy_state to MR branch.
         RollingStats<FP, 128> rolling = RollingStats_Init<FP, 128>();
         for (int i = 0; i < 64; ++i) {
-            RollingStats_Push(&rolling, FPN_FromDouble<FP>(50000.0 + i),
-                              FPN_FromDouble<FP>(1.0));
+            RollingStats_Push(&rolling, FPN_FromDouble<64>(50000.0 + i),
+                              FPN_FromDouble<64>(1.0));
         }
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
-        cfg.entry_offset_pct = FPN_FromDouble<FP>(0.001);
+        cfg.entry_offset_pct = MQ(0.001);
         cfg.offset_stddev_mult = FPN_Zero<FP>();
 
         MeanReversionState<FP> mr{};
-        mr.live_offset_pct = FPN_FromDouble<FP>(0.010);  // 10x cfg
-        mr.live_vol_mult   = FPN_FromDouble<FP>(1.0);
+        mr.live_offset_pct = FPN_FromDouble<64>(0.010);  // 10x cfg
+        mr.live_vol_mult   = FPN_FromDouble<64>(1.0);
         mr.live_stddev_mult = FPN_Zero<FP>();
 
         tt::GateParameters<FP> out{};
         tt::Strategy_BuildParameters(STRATEGY_MEAN_REVERSION, &rolling, &cfg.cores[0],
-                                      FPN_FromDouble<FP>(500.0), &out,
+                                      MQ(500.0), &out,
                                       (RollingStats<FP, 512>*)nullptr,
                                       nullptr, &mr);
         // Compute expected: avg - avg*0.010
         FPN_Binary<FP> avg = rolling.price_avg;
         FPN_Binary<FP> expected = FPN_Sub(avg, FPN_Mul(avg, mr.live_offset_pct));
         check("v5.4.0p2.2: dispatcher routes strategy_state to MR (uses live_offset)",
-              FPN_Equal(out.bg_price_threshold, expected));
+              Money_Eq(out.bg_price_threshold, Money_FromBinary(expected)));
     }
     {
         // Strategy_WriteRatchetSL fee-floor cap: a proposal above the floor
@@ -9982,14 +9982,14 @@ e3_skip_load:;
         tt::EventLoopState<FP> state;
         tt::EventLoopState_Init(&state, &oms);
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
-        cfg.fee_rate_taker = FPN_FromDouble<FP>(0.001);  // 10 bps
+        cfg.fee_rate_taker = MQ(0.001);  // 10 bps
         cfg.fee_rate       = cfg.fee_rate_taker;
-        FPN_Binary<FP> entry = FPN_FromDouble<FP>(50000.0);
+        Money entry = MQ(50000.0);
         // Floor ≈ entry * (1 - 3*0.001) ≈ 49850 (FPN_Binary precision: 49849.x..49850.x)
         // Use a tolerance check to avoid double→FPN_Binary rounding mismatches.
-        FPN_Binary<FP> proposal_above = FPN_FromDouble<FP>(49950.0);
+        Money proposal_above = MQ(49950.0);
         bool wrote = tt::Strategy_WriteRatchetSL(&state, 0, proposal_above, entry, &cfg);
-        double stored_d = FPN_ToDouble(state.cores[0].pending_params.ratchet_sl);
+        double stored_d = Money_ToDouble(state.cores[0].pending_params.ratchet_sl);
         check("v5.4.0p2.2: WriteRatchetSL accepts above-floor proposal and caps",
               wrote && stored_d > 49849.0 && stored_d < 49851.0);
         check("v5.4.0p2.2: WriteRatchetSL sets dirty=1 on advance",
@@ -9997,12 +9997,12 @@ e3_skip_load:;
 
         // Lower proposal (well below current cap) is a no-op since
         // ratchet_sl is now the cap value (~49850).
-        FPN_Binary<FP> lower_proposal = FPN_FromDouble<FP>(49000.0);
+        Money lower_proposal = MQ(49000.0);
         CORE_STATE_FLAG_CLR(state.cores[0], DIRTY);
-        FPN_Binary<FP> ratchet_before = state.cores[0].pending_params.ratchet_sl;
+        Money ratchet_before = state.cores[0].pending_params.ratchet_sl;
         bool wrote2 = tt::Strategy_WriteRatchetSL(&state, 0, lower_proposal, entry, &cfg);
         check("v5.4.0p2.2: WriteRatchetSL is max-only (lower proposal ignored)",
-              !wrote2 && FPN_Equal(state.cores[0].pending_params.ratchet_sl, ratchet_before));
+              !wrote2 && Money_Eq(state.cores[0].pending_params.ratchet_sl, ratchet_before));
         check("v5.4.0p2.2: WriteRatchetSL leaves dirty unchanged when no advance",
               !CORE_STATE_FLAG_IS_SET(state.cores[0], DIRTY));
 
@@ -10018,7 +10018,7 @@ e3_skip_load:;
         RollingStats<FP, 128> rolling = RollingStats_Init<FP, 128>();
         // No Init call — strategy_state stays null.
         tt::Strategy_ExitAdjustPerCore(&state, 0, STRATEGY_MEAN_REVERSION,
-                                        FPN_FromDouble<FP>(50000.0), &rolling, &cfg);
+                                        MQ(50000.0), &rolling, &cfg);
         check("v5.4.0p2.2: ExitAdjustPerCore is no-op when state is null",
               state.cores[0].strategy_state == nullptr &&
               !CORE_STATE_FLAG_IS_SET(state.cores[0], DIRTY));
@@ -10032,8 +10032,8 @@ e3_skip_load:;
         tt::EventLoopState<FP> state;
         tt::EventLoopState_Init(&state, &oms);
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
-        cfg.momentum_breakout_mult = FPN_FromDouble<FP>(1.5);
-        cfg.volume_multiplier      = FPN_FromDouble<FP>(2.0);
+        cfg.momentum_breakout_mult = FPN_FromDouble<64>(1.5);
+        cfg.volume_multiplier      = FPN_FromDouble<64>(2.0);
         RollingStats<FP, 128> rolling = RollingStats_Init<FP, 128>();
         tt::Strategy_InitPerCore(&state, 0, STRATEGY_MOMENTUM, &rolling, &cfg);
         auto* mom = static_cast<MomentumState<FP>*>(state.cores[0].strategy_state);
@@ -10053,53 +10053,53 @@ e3_skip_load:;
         for (int i = 0; i < 64; ++i) {
             // Add some noise to ensure non-zero stddev
             double p = 50000.0 + (double)((i % 4) * 50);
-            RollingStats_Push(&rolling, FPN_FromDouble<FP>(p),
-                              FPN_FromDouble<FP>(1.0));
+            RollingStats_Push(&rolling, FPN_FromDouble<64>(p),
+                              FPN_FromDouble<64>(1.0));
         }
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
-        cfg.entry_offset_pct = FPN_FromDouble<FP>(0.0001);  // tiny pct path
-        cfg.volume_multiplier = FPN_FromDouble<FP>(1.0);
+        cfg.entry_offset_pct = MQ(0.0001);  // tiny pct path
+        cfg.volume_multiplier = FPN_FromDouble<64>(1.0);
 
         // Legacy path (no state): uses entry_offset_pct
         tt::GateParameters<FP> out_legacy{};
-        tt::Momentum_BuildParameters(&rolling, &cfg.cores[0], FPN_FromDouble<FP>(1000.0),
+        tt::Momentum_BuildParameters(&rolling, &cfg.cores[0], MQ(1000.0),
                                       &out_legacy);
 
         // State-aware: large breakout_mult should push entry far above avg
         MomentumState<FP> mom{};
-        mom.live_breakout_mult = FPN_FromDouble<FP>(3.0);  // 3σ breakout
-        mom.live_vol_mult      = FPN_FromDouble<FP>(1.0);
+        mom.live_breakout_mult = FPN_FromDouble<64>(3.0);  // 3σ breakout
+        mom.live_vol_mult      = FPN_FromDouble<64>(1.0);
         tt::GateParameters<FP> out_state{};
-        tt::Momentum_BuildParameters(&rolling, &cfg.cores[0], FPN_FromDouble<FP>(1000.0),
+        tt::Momentum_BuildParameters(&rolling, &cfg.cores[0], MQ(1000.0),
                                       &out_state, &mom);
         check("v5.4.0p2.3: state-aware Momentum produces higher bg threshold "
               "(stddev path > pct path)",
-              FPN_GreaterThan(out_state.bg_price_threshold, out_legacy.bg_price_threshold));
+              Money_Gt(out_state.bg_price_threshold, out_legacy.bg_price_threshold));
     }
     {
         // Dispatcher routes strategy_state to Momentum branch.
         RollingStats<FP, 128> rolling = RollingStats_Init<FP, 128>();
         for (int i = 0; i < 64; ++i) {
             double p = 50000.0 + (double)((i % 4) * 100);
-            RollingStats_Push(&rolling, FPN_FromDouble<FP>(p),
-                              FPN_FromDouble<FP>(1.0));
+            RollingStats_Push(&rolling, FPN_FromDouble<64>(p),
+                              FPN_FromDouble<64>(1.0));
         }
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
 
         MomentumState<FP> mom{};
-        mom.live_breakout_mult = FPN_FromDouble<FP>(2.5);
-        mom.live_vol_mult      = FPN_FromDouble<FP>(1.0);
+        mom.live_breakout_mult = FPN_FromDouble<64>(2.5);
+        mom.live_vol_mult      = FPN_FromDouble<64>(1.0);
 
         tt::GateParameters<FP> out{};
         tt::Strategy_BuildParameters(STRATEGY_MOMENTUM, &rolling, &cfg.cores[0],
-                                      FPN_FromDouble<FP>(500.0), &out,
+                                      MQ(500.0), &out,
                                       (RollingStats<FP, 512>*)nullptr,
                                       nullptr, &mom);
         // Expected: avg + stddev * 2.5
         FPN_Binary<FP> expected_breakout = FPN_Mul(rolling.price_stddev, mom.live_breakout_mult);
         FPN_Binary<FP> expected = FPN_Add(rolling.price_avg, expected_breakout);
         check("v5.4.0p2.3: dispatcher routes state to Momentum (stddev*breakout_mult)",
-              FPN_Equal(out.bg_price_threshold, expected));
+              Money_Eq(out.bg_price_threshold, Money_FromBinary(expected)));
         check("v5.4.0p2.3: Momentum BuildParameters sets BUY_ABOVE flag",
               (out.flags & tt::GATE_FLAG_BUY_ABOVE) != 0);
     }
@@ -10112,36 +10112,36 @@ e3_skip_load:;
         for (int i = 0; i < 64; ++i) {
             // Steady prices to keep stddev meaningful
             double p = 50000.0 + (double)((i % 8) * 25);
-            RollingStats_Push(&rolling, FPN_FromDouble<FP>(p),
-                              FPN_FromDouble<FP>(1.0));
+            RollingStats_Push(&rolling, FPN_FromDouble<64>(p),
+                              FPN_FromDouble<64>(1.0));
         }
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
-        cfg.emacross_dip_mult        = FPN_FromDouble<FP>(0.5);
-        cfg.emacross_crossover_min   = FPN_FromDouble<FP>(0.1);  // 0.1σ above SMA
-        cfg.volume_multiplier        = FPN_FromDouble<FP>(1.0);
+        cfg.emacross_dip_mult        = FPN_FromDouble<64>(0.5);
+        cfg.emacross_crossover_min   = FPN_FromDouble<64>(0.1);  // 0.1σ above SMA
+        cfg.volume_multiplier        = FPN_FromDouble<64>(1.0);
 
         // Uptrend state: EMA well above rolling avg → crossover passes
         EmaCrossState<FP> es_up{};
         es_up.prev_ema = FPN_Add(rolling.price_avg,
-                                  FPN_Mul(rolling.price_stddev, FPN_FromDouble<FP>(1.0)));
-        es_up.last_ema_slope = FPN_FromDouble<FP>(0.5);  // rising
+                                  FPN_Mul(rolling.price_stddev, FPN_FromDouble<64>(1.0)));
+        es_up.last_ema_slope = FPN_FromDouble<64>(0.5);  // rising
         tt::GateParameters<FP> out_up{};
-        tt::EmaCross_BuildParameters(&rolling, &cfg.cores[0], FPN_FromDouble<FP>(1000.0),
+        tt::EmaCross_BuildParameters(&rolling, &cfg.cores[0], MQ(1000.0),
                                       &out_up, &es_up);
         check("v5.4.0p2.4: EmaCross uptrend → bg threshold is non-zero",
-              !FPN_IsZero(out_up.bg_price_threshold));
+              !Money_IsZero(out_up.bg_price_threshold));
 
         // Downtrend state: EMA below rolling avg → crossover fails → gate zeroes
         EmaCrossState<FP> es_down{};
         es_down.prev_ema = FPN_Sub(rolling.price_avg,
-                                    FPN_Mul(rolling.price_stddev, FPN_FromDouble<FP>(1.0)));
-        es_down.last_ema_slope = FPN_FromDouble<FP>(-0.5);
+                                    FPN_Mul(rolling.price_stddev, FPN_FromDouble<64>(1.0)));
+        es_down.last_ema_slope = FPN_FromDouble<64>(-0.5);
         // (two's-comp: FromDouble(-0.5) is already negative; no separate sign-bit set needed)
         tt::GateParameters<FP> out_down{};
-        tt::EmaCross_BuildParameters(&rolling, &cfg.cores[0], FPN_FromDouble<FP>(1000.0),
+        tt::EmaCross_BuildParameters(&rolling, &cfg.cores[0], MQ(1000.0),
                                       &out_down, &es_down);
         check("v5.4.0p2.4: EmaCross no-uptrend → bg threshold zeroed",
-              FPN_IsZero(out_down.bg_price_threshold));
+              Money_IsZero(out_down.bg_price_threshold));
     }
     {
         // Strategy_AdaptPerCore EmaCross branch: updates state->prev_ema and
@@ -10152,8 +10152,8 @@ e3_skip_load:;
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
         RollingStats<FP, 128> rolling = RollingStats_Init<FP, 128>();
         for (int i = 0; i < 32; ++i) {
-            RollingStats_Push(&rolling, FPN_FromDouble<FP>(50000.0 + i),
-                              FPN_FromDouble<FP>(1.0));
+            RollingStats_Push(&rolling, FPN_FromDouble<64>(50000.0 + i),
+                              FPN_FromDouble<64>(1.0));
         }
         tt::Strategy_InitPerCore(&state, 0, STRATEGY_EMA_CROSS, &rolling, &cfg);
         auto* es = static_cast<EmaCrossState<FP>*>(state.cores[0].strategy_state);
@@ -10161,9 +10161,9 @@ e3_skip_load:;
         check("v5.4.0p2.4: Init seeds prev_ema from rolling",
               FPN_Equal(prev_seed, rolling.price_avg));
 
-        FPN_Binary<FP> ema_now = FPN_FromDouble<FP>(50500.0);
+        FPN_Binary<FP> ema_now = FPN_FromDouble<64>(50500.0);
         tt::Strategy_AdaptPerCore(&state, 0, STRATEGY_EMA_CROSS,
-                                   FPN_FromDouble<FP>(50000.0),
+                                   FPN_FromDouble<64>(50000.0),
                                    FPN_Zero<FP>(), 0, &cfg, &ema_now);
         check("v5.4.0p2.4: AdaptPerCore updates prev_ema to ema_now",
               FPN_Equal(es->prev_ema, ema_now));
@@ -10181,16 +10181,16 @@ e3_skip_load:;
         // callers remain numerically stable.
         RollingStats<FP, 128> rolling = RollingStats_Init<FP, 128>();
         for (int i = 0; i < 64; ++i) {
-            RollingStats_Push(&rolling, FPN_FromDouble<FP>(50000.0 + i * 5),
-                              FPN_FromDouble<FP>(1.0));
+            RollingStats_Push(&rolling, FPN_FromDouble<64>(50000.0 + i * 5),
+                              FPN_FromDouble<64>(1.0));
         }
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
 
         tt::GateParameters<FP> out{};
-        tt::EmaCross_BuildParameters(&rolling, &cfg.cores[0], FPN_FromDouble<FP>(1000.0),
+        tt::EmaCross_BuildParameters(&rolling, &cfg.cores[0], MQ(1000.0),
                                       &out, (EmaCrossState<FP>*)nullptr);
         check("v5.4.0p2.4: nullptr-state path produces non-zero threshold (SimpleDip fallback)",
-              !FPN_IsZero(out.bg_price_threshold));
+              !Money_IsZero(out.bg_price_threshold));
         check("v5.4.0p2.4: nullptr-state path tags strategy_id as EMA_CROSS",
               out.strategy_id == STRATEGY_EMA_CROSS);
     }
@@ -10212,7 +10212,7 @@ e3_skip_load:;
         // Adapt should not crash + not write the dirty bit.
         CORE_STATE_FLAG_CLR(state.cores[0], DIRTY);
         tt::Strategy_AdaptPerCore(&state, 0, STRATEGY_ML,
-                                   FPN_FromDouble<FP>(50000.0),
+                                   FPN_FromDouble<64>(50000.0),
                                    FPN_Zero<FP>(), 0, &cfg);
         check("v5.4.0p2.5: ML Adapt is a clean no-op (no dirty bit set)",
               !CORE_STATE_FLAG_IS_SET(state.cores[0], DIRTY));
@@ -10225,28 +10225,28 @@ e3_skip_load:;
         tt::EventLoopState<FP> state;
         tt::EventLoopState_Init(&state, &oms);
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
-        cfg.fee_rate_taker = FPN_FromDouble<FP>(0.001);
+        cfg.fee_rate_taker = MQ(0.001);
         cfg.fee_rate       = cfg.fee_rate_taker;
-        cfg.sl_trail_mult  = FPN_FromDouble<FP>(2.0);
+        cfg.sl_trail_mult  = FPN_FromDouble<64>(2.0);
 
         // Hand-craft a rolling-stats with low R² (below 0.5)
         RollingStats<FP, 128> rolling = RollingStats_Init<FP, 128>();
-        rolling.price_stddev    = FPN_FromDouble<FP>(50.0);
-        rolling.price_r_squared = FPN_FromDouble<FP>(0.3);  // below threshold
+        rolling.price_stddev    = FPN_FromDouble<64>(50.0);
+        rolling.price_r_squared = FPN_FromDouble<64>(0.3);  // below threshold
 
         tt::Strategy_InitPerCore(&state, 0, STRATEGY_ML, &rolling, &cfg);
         // Open a fake position for slot 0 so the iterator has something
         // to consider. ratchet stays at zero through ExitAdjust because
         // R² gate fails.
         state.oms->portfolio.active_bitmap = (uint16_t)0x1;
-        state.oms->portfolio.positions[0].entry_price = FPN_FromDouble<FP>(50000.0);
-        state.oms->portfolio.positions[0].original_tp = FPN_FromDouble<FP>(50500.0);
+        state.oms->portfolio.positions[0].entry_price = MQ(50000.0);
+        state.oms->portfolio.positions[0].original_tp = MQ(50500.0);
 
-        FPN_Binary<FP> ratchet_before = state.cores[0].pending_params.ratchet_sl;
+        Money ratchet_before = state.cores[0].pending_params.ratchet_sl;
         tt::Strategy_ExitAdjustPerCore(&state, 0, STRATEGY_ML,
-                                        FPN_FromDouble<FP>(51000.0), &rolling, &cfg);
+                                        MQ(51000.0), &rolling, &cfg);
         check("v5.4.0p2.5: ML ExitAdjust skips when R² < 0.5",
-              FPN_Equal(state.cores[0].pending_params.ratchet_sl, ratchet_before));
+              Money_Eq(state.cores[0].pending_params.ratchet_sl, ratchet_before));
 
         tt::Strategy_FreePerCore(&state, 0);
         state.oms->portfolio.active_bitmap = 0;
@@ -10259,24 +10259,24 @@ e3_skip_load:;
         tt::EventLoopState<FP> state;
         tt::EventLoopState_Init(&state, &oms);
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
-        cfg.fee_rate_taker = FPN_FromDouble<FP>(0.001);
+        cfg.fee_rate_taker = MQ(0.001);
         cfg.fee_rate       = cfg.fee_rate_taker;
-        cfg.sl_trail_mult  = FPN_FromDouble<FP>(2.0);
+        cfg.sl_trail_mult  = FPN_FromDouble<64>(2.0);
 
         RollingStats<FP, 128> rolling = RollingStats_Init<FP, 128>();
-        rolling.price_stddev    = FPN_FromDouble<FP>(50.0);
-        rolling.price_r_squared = FPN_FromDouble<FP>(0.85);  // strong R²
+        rolling.price_stddev    = FPN_FromDouble<64>(50.0);
+        rolling.price_r_squared = FPN_FromDouble<64>(0.85);  // strong R²
 
         tt::Strategy_InitPerCore(&state, 0, STRATEGY_ML, &rolling, &cfg);
         state.oms->portfolio.active_bitmap = (uint16_t)0x1;
-        state.oms->portfolio.positions[0].entry_price = FPN_FromDouble<FP>(50000.0);
-        state.oms->portfolio.positions[0].original_tp = FPN_FromDouble<FP>(50500.0);
+        state.oms->portfolio.positions[0].entry_price = MQ(50000.0);
+        state.oms->portfolio.positions[0].original_tp = MQ(50500.0);
 
         // current_price 51000 → trailing_sl = 51000 - 50*2 = 50900.
         // floor = 50000 * (1 - 3*0.001) ≈ 49850. trailing_sl > floor → cap to floor.
         tt::Strategy_ExitAdjustPerCore(&state, 0, STRATEGY_ML,
-                                        FPN_FromDouble<FP>(51000.0), &rolling, &cfg);
-        double stored = FPN_ToDouble(state.cores[0].pending_params.ratchet_sl);
+                                        MQ(51000.0), &rolling, &cfg);
+        double stored = Money_ToDouble(state.cores[0].pending_params.ratchet_sl);
         check("v5.4.0p2.5: ML ExitAdjust ratchets via fee-floor cap when R² ≥ 0.5",
               stored > 49849.0 && stored < 49851.0);
         check("v5.4.0p2.5: ML ExitAdjust sets dirty=1 on advance",
@@ -10293,7 +10293,7 @@ e3_skip_load:;
         tt::GateParameters<FP> p;
         tt::GateParameters_Init(&p);
         check("v5.4.0p3.3: GateParameters_Init clears ratchet_tp",
-              FPN_IsZero(p.ratchet_tp));
+              Money_IsZero(p.ratchet_tp));
     }
     {
         // SG_Evaluate (standalone): ratchet_tp = 0 → behavior identical
@@ -10301,26 +10301,26 @@ e3_skip_load:;
         tt::GateParameters<FP> p;
         tt::GateParameters_Init(&p);
         p.flags = tt::GATE_FLAG_TP_ENABLED | tt::GATE_FLAG_SL_ENABLED;
-        p.sg_take_profit_price = FPN_FromDouble<FP>(50500.0);
-        p.sg_stop_loss_price   = FPN_FromDouble<FP>(49500.0);
+        p.sg_take_profit_price = MQ(50500.0);
+        p.sg_stop_loss_price   = MQ(49500.0);
 
         // Price below TP, above SL: no fire
         check("v5.4.0p3.3: SG_Evaluate ratchet_tp=0 — mid-range no fire",
-              !tt::SG_Evaluate(FPN_FromDouble<FP>(50000.0),
-                                FPN_FromDouble<FP>(50000.0), &p));
+              !tt::SG_Evaluate(MQ(50000.0),
+                                MQ(50000.0), &p));
         // Price at TP: fire
         check("v5.4.0p3.3: SG_Evaluate ratchet_tp=0 — TP hit fires",
-              tt::SG_Evaluate(FPN_FromDouble<FP>(50500.0),
-                               FPN_FromDouble<FP>(50000.0), &p));
+              tt::SG_Evaluate(MQ(50500.0),
+                               MQ(50000.0), &p));
 
         // ratchet_tp above TP → effective_tp uses ratchet (the TP "moves up")
-        p.ratchet_tp = FPN_FromDouble<FP>(51000.0);
+        p.ratchet_tp = MQ(51000.0);
         check("v5.4.0p3.3: ratchet_tp > tp — old TP price no longer fires",
-              !tt::SG_Evaluate(FPN_FromDouble<FP>(50500.0),
-                                FPN_FromDouble<FP>(50000.0), &p));
+              !tt::SG_Evaluate(MQ(50500.0),
+                                MQ(50000.0), &p));
         check("v5.4.0p3.3: ratchet_tp > tp — new ratchet level fires",
-              tt::SG_Evaluate(FPN_FromDouble<FP>(51000.0),
-                               FPN_FromDouble<FP>(50000.0), &p));
+              tt::SG_Evaluate(MQ(51000.0),
+                               MQ(50000.0), &p));
     }
     {
         // Strategy_WriteRatchetTP: max-only semantics + dirty bit.
@@ -10328,28 +10328,28 @@ e3_skip_load:;
         tt::EventLoopState<FP> state;
         tt::EventLoopState_Init(&state, &oms);
         check("v5.4.0p3.3: ratchet_tp default is zero",
-              FPN_IsZero(state.cores[0].pending_params.ratchet_tp));
+              Money_IsZero(state.cores[0].pending_params.ratchet_tp));
 
         bool wrote1 = tt::Strategy_WriteRatchetTP(&state, 0,
-                                                    FPN_FromDouble<FP>(51000.0));
+                                                    MQ(51000.0));
         check("v5.4.0p3.3: WriteRatchetTP advance from 0 returns true",
-              wrote1 && FPN_Equal(state.cores[0].pending_params.ratchet_tp,
-                                   FPN_FromDouble<FP>(51000.0)) &&
+              wrote1 && Money_Eq(state.cores[0].pending_params.ratchet_tp,
+                                   MQ(51000.0)) &&
               CORE_STATE_FLAG_IS_SET(state.cores[0], DIRTY));
 
         CORE_STATE_FLAG_CLR(state.cores[0], DIRTY);
         bool wrote2 = tt::Strategy_WriteRatchetTP(&state, 0,
-                                                    FPN_FromDouble<FP>(50500.0));
+                                                    MQ(50500.0));
         check("v5.4.0p3.3: WriteRatchetTP lower proposal is no-op",
-              !wrote2 && FPN_Equal(state.cores[0].pending_params.ratchet_tp,
-                                    FPN_FromDouble<FP>(51000.0)) &&
+              !wrote2 && Money_Eq(state.cores[0].pending_params.ratchet_tp,
+                                    MQ(51000.0)) &&
               !CORE_STATE_FLAG_IS_SET(state.cores[0], DIRTY));
 
         bool wrote3 = tt::Strategy_WriteRatchetTP(&state, 0,
-                                                    FPN_FromDouble<FP>(52000.0));
+                                                    MQ(52000.0));
         check("v5.4.0p3.3: WriteRatchetTP higher proposal advances",
-              wrote3 && FPN_Equal(state.cores[0].pending_params.ratchet_tp,
-                                   FPN_FromDouble<FP>(52000.0)));
+              wrote3 && Money_Eq(state.cores[0].pending_params.ratchet_tp,
+                                   MQ(52000.0)));
 
         tt::EventLoopState_Free(&state);
     }
@@ -10362,39 +10362,39 @@ e3_skip_load:;
         RollingStats<FP, 128> rolling = RollingStats_Init<FP, 128>();
         for (int i = 0; i < 64; ++i) {
             RollingStats_Push(&rolling,
-                FPN_FromDouble<FP>(50000.0 + (double)((i % 8) * 25)),
-                FPN_FromDouble<FP>(1.0));
+                FPN_FromDouble<64>(50000.0 + (double)((i % 8) * 25)),
+                FPN_FromDouble<64>(1.0));
         }
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
-        cfg.entry_offset_pct = FPN_FromDouble<FP>(0.001);
+        cfg.entry_offset_pct = MQ(0.001);
 
         // Defaults off — baseline gate output.
         BITMAP_CLR(cfg.gate_cfg_flags, MASK_GATE_CFG_COST_GATE_ENABLED);
         BITMAP_CLR(cfg.ml_cfg_flags, MASK_ML_CFG_FOXML_VOL_SCALING_ENABLED);
         tt::GateParameters<FP> baseline{};
         tt::Strategy_BuildParameters(STRATEGY_SIMPLE_DIP, &rolling, &cfg.cores[0],
-                                      FPN_FromDouble<FP>(1000.0), &baseline);
+                                      MQ(1000.0), &baseline);
         check("v5.5.0p8: defaults off — bg threshold non-zero",
-              !FPN_IsZero(baseline.bg_price_threshold));
+              !Money_IsZero(baseline.bg_price_threshold));
         check("v5.5.0p8: defaults off — trade_size populated",
-              !FPN_IsZero(baseline.trade_size));
-        FPN_Binary<FP> baseline_size = baseline.trade_size;
+              !Money_IsZero(baseline.trade_size));
+        Money baseline_size = baseline.trade_size;
 
         // VolScaler enabled — trade_size should shrink under high rel vol.
         BITMAP_SET(cfg.ml_cfg_flags, MASK_ML_CFG_FOXML_VOL_SCALING_ENABLED);
-        cfg.foxml_vol_scaling_z_max = FPN_FromDouble<FP>(3.0);
+        cfg.foxml_vol_scaling_z_max = FPN_FromDouble<64>(3.0);
         tt::GateParameters<FP> with_vol{};
         tt::Strategy_BuildParameters(STRATEGY_SIMPLE_DIP, &rolling, &cfg.cores[0],
-                                      FPN_FromDouble<FP>(1000.0), &with_vol);
+                                      MQ(1000.0), &with_vol);
         check("v5.5.0p8: VolScaler enabled — trade_size <= baseline (scale-down only)",
-              FPN_LessThanOrEqual(with_vol.trade_size, baseline_size));
+              Money_Le(with_vol.trade_size, baseline_size));
 
         // CostModel enabled — non-crashing path, flags computed.
         BITMAP_CLR(cfg.ml_cfg_flags, MASK_ML_CFG_FOXML_VOL_SCALING_ENABLED);
         BITMAP_SET(cfg.gate_cfg_flags, MASK_GATE_CFG_COST_GATE_ENABLED);
         tt::GateParameters<FP> with_cost{};
         tt::Strategy_BuildParameters(STRATEGY_SIMPLE_DIP, &rolling, &cfg.cores[0],
-                                      FPN_FromDouble<FP>(1000.0), &with_cost);
+                                      MQ(1000.0), &with_cost);
         check("v5.5.0p8: CostModel enabled — flags computed without crash",
               with_cost.strategy_id == STRATEGY_SIMPLE_DIP);
     }
@@ -10416,7 +10416,7 @@ e3_skip_load:;
         tt::OrderManager_Init(&rig->oms, adapter,
                                /*live_trading=*/0,
                                /*partial_exit_enabled=*/0,
-                               FPN_FromDouble<64>(10000.0),
+                               MQ(10000.0),
                                
                                /*event_log_mode=*/0);  // mode 0 keeps
                                                         // Submit a no-op
@@ -10431,9 +10431,9 @@ e3_skip_load:;
         for (int slot = 0; slot < 8; ++slot) {
             uint8_t leg = (uint8_t)(slot & 1);
             tt::SubmitCommand<64> rig_cmd((int16_t)slot, tt::ORDER_MARKET_BUY,
-                                           FPN_FromDouble<64>(0.01), leg, nullptr);
+                                           MQ(0.01), leg, nullptr);
             rig_cmd.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
-            rig_cmd.event_price = FPN_FromDouble<64>(50000.0);
+            rig_cmd.event_price = MQ(50000.0);
             bool ok = tt::OMS_PushSubmit(&rig->oms, rig_cmd);
             if (ok) pushed++;
         }
@@ -10463,10 +10463,10 @@ e3_skip_load:;
         // the other 4 stay stuck in queues 4..7.
         for (int slot = 0; slot < 8; ++slot) {
             tt::SubmitCommand<64> rig_cmd((int16_t)slot, tt::ORDER_MARKET_BUY,
-                                           FPN_FromDouble<64>(0.01),
+                                           MQ(0.01),
                                            (uint8_t)(slot & 1), nullptr);
             rig_cmd.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
-            rig_cmd.event_price = FPN_FromDouble<64>(50000.0);
+            rig_cmd.event_price = MQ(50000.0);
             tt::OMS_PushSubmit(&rig->oms, rig_cmd);
         }
         int pre_fix_drained = tt::OMS_DrainSubmit(&rig->oms, /*num_cores=*/4);
@@ -10573,20 +10573,20 @@ e3_skip_load:;
         rolling.volume_avg    = FPN_FromDouble<64>(0.5);
         rolling.count         = 200;  // warmed
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
-        cfg.fee_rate_taker = FPN_FromDouble<64>(0.0005);
-        cfg.fee_rate       = FPN_FromDouble<64>(0.0005);
+        cfg.fee_rate_taker = MQ(0.0005);
+        cfg.fee_rate       = MQ(0.0005);
         GateParameters<64> out;
         GateParameters_Init(&out);
         uint8_t shalt = SHALT_OK;
         Strategy_BuildParameters(STRATEGY_NONE, &rolling, &cfg.cores[0],
-                                  FPN_FromDouble<64>(1500.0), &out,
+                                  MQ(1500.0), &out,
                                   (const RollingStats<64, 512>*)nullptr,
                                   nullptr, nullptr, &shalt);
         // STRATEGY_NONE leaves bg_price_threshold zero, no flags set.
         // Post-pass should write SHALT_NO_SIGNAL.
         check("v5.6.2: post-pass writes SHALT_NO_SIGNAL on zero-gate "
               "with no specific code",
-              FPN_IsZero(out.bg_price_threshold)
+              Money_IsZero(out.bg_price_threshold)
               ? (shalt == SHALT_NO_SIGNAL)
               : true);
     }
@@ -12295,26 +12295,26 @@ e3_skip_load:;
             rolling.volume_avg   = FPN_FromDouble<64>(0.005);
 
             ControllerConfig<64> cfg = ControllerConfig_Default<64>();
-            cfg.take_profit_pct = FPN_FromDouble<64>(0.005);
-            cfg.stop_loss_pct   = FPN_FromDouble<64>(0.0025);
+            cfg.take_profit_pct = MQ(0.005);
+            cfg.stop_loss_pct   = MQ(0.0025);
             ControllerConfig_PopulateCoresFromFlat(&cfg);  // v5.15.5.F.4c.3 WIP2c.2 — sync flat→cores[0]
 
             GateParameters<64> out = {};
             SimpleDip_BuildParameters<64, 128>(
-                &rolling, &cfg.cores[0], FPN_FromDouble<64>(1000.0), &out);
+                &rolling, &cfg.cores[0], MQ(1000.0), &out);
 
             // SimpleDip threshold = recent_high * (1 - entry_offset_pct).
             // With price_max=60100 + default offset=0.0015 → threshold ≈ 60009.85
             // which is BELOW price_max but ABOVE price_avg=60000. Assert
             // threshold < recent_high (the strategy contract).
             check("v5.9.2a: SimpleDip gate price_threshold < recent_high (price_max)",
-                  FPN_LessThan(out.bg_price_threshold, rolling.price_max));
+                  Money_Lt(out.bg_price_threshold, Money_FromBinary(rolling.price_max)));
             check("v5.9.2a: SimpleDip tp_pct propagates from cfg",
-                  FPN_ToDouble(out.tp_pct) == 0.005);
+                  Money_ToDouble(out.tp_pct) == 0.005);
             check("v5.9.2a: SimpleDip sl_pct propagates from cfg",
-                  FPN_ToDouble(out.sl_pct) == 0.0025);
+                  Money_ToDouble(out.sl_pct) == 0.0025);
             check("v5.9.2a: SimpleDip trade_size > 0",
-                  !FPN_IsZero(out.trade_size));
+                  !Money_IsZero(out.trade_size));
             check("v5.9.2a: SimpleDip strategy_id == STRATEGY_SIMPLE_DIP",
                   out.strategy_id == STRATEGY_SIMPLE_DIP);
         }
@@ -12439,8 +12439,8 @@ e3_skip_load:;
                 BITMAP_SET(cfg.ml_cfg_flags, MASK_ML_CFG_BANDIT_ENABLED);  // enables bandit cohort
                 cfg.bandit_blend_ratio = FPN_FromDouble<64>(0.30);
                 BITMAP_SET(cfg.gate_cfg_flags, MASK_GATE_CFG_COST_GATE_ENABLED);  // enables fees cohort
-                cfg.fee_rate_maker = FPN_FromDouble<64>(0.00075);
-                cfg.fee_rate_taker = FPN_FromDouble<64>(0.00100);
+                cfg.fee_rate_maker = MQ(0.00075);
+                cfg.fee_rate_taker = MQ(0.00100);
                 // MC inf-side fields (training_poll_interval is standalone PRE_CFG)
                 STAMP_SET(inf, training_poll_interval);
                 inf.training_poll_interval = 100;
@@ -12474,7 +12474,7 @@ e3_skip_load:;
                 check("v5.9.2b: parsed has_fee_rate_taker=1 (cfg-derived per-field)",
                       v.has_fee_rate_taker == 1);
                 check("v5.9.2b: parsed fee_rate_taker matches stamp",
-                      fabs(FPN_ToDouble(v.fee_rate_taker) - 0.001) < 1e-9);
+                      fabs(Money_ToDouble(v.fee_rate_taker) - 0.001) < 1e-9);
                 check("v5.9.2b: parsed has_training_poll_interval=1",
                       STAMP_HAS(v, training_poll_interval) == 1);
                 check("v5.9.2b: parsed training_poll_interval matches stamp",
@@ -13212,8 +13212,8 @@ e3_skip_load:;
                 BITMAP_SET(cfg.ml_cfg_flags, MASK_ML_CFG_BANDIT_ENABLED);
                 cfg.bandit_blend_ratio               = FPN_FromDouble<64>(0.40);
                 BITMAP_SET(cfg.gate_cfg_flags, MASK_GATE_CFG_COST_GATE_ENABLED);
-                cfg.fee_rate_maker                   = FPN_FromDouble<64>(0.00060);
-                cfg.fee_rate_taker                   = FPN_FromDouble<64>(0.00090);
+                cfg.fee_rate_maker                   = MQ(0.00060);
+                cfg.fee_rate_taker                   = MQ(0.00090);
                 cfg.poll_interval                    = 200u;
 
                 int label_type = LABEL_PEAK_VALLEY_STABLE;  // 3-class
@@ -13236,8 +13236,8 @@ e3_skip_load:;
                 }
                 if (BITMAP_IS_SET(cfg.gate_cfg_flags, MASK_GATE_CFG_COST_GATE_ENABLED)) {
                     STAMP_SET(inf, fees);
-                    inf.inference_cfg_fee_rate_maker = FPN_ToDouble(cfg.fee_rate_maker);
-                    inf.inference_cfg_fee_rate_taker = FPN_ToDouble(cfg.fee_rate_taker);
+                    inf.inference_cfg_fee_rate_maker = Money_ToDouble(cfg.fee_rate_maker);
+                    inf.inference_cfg_fee_rate_taker = Money_ToDouble(cfg.fee_rate_taker);
                 }
                 STAMP_SET(inf, training_poll_interval);
                 inf.training_poll_interval     = cfg.poll_interval;
@@ -14516,8 +14516,8 @@ e3_skip_load:;
         LargeTradeState_Init(&lt2);
         double sizes[] = {10.0, 12.0, 11.5, 9.8, 13.2, 10.7, 14.0, 11.0};
         for (double s : sizes) {
-            LargeTradeState_Push(&lt1, FPN_FromDouble<64>(s));
-            LargeTradeState_Push(&lt2, FPN_FromDouble<64>(s));
+            LargeTradeState_Push(&lt1, Money_ToBinary(MQ(s)));
+            LargeTradeState_Push(&lt2, Money_ToBinary(MQ(s)));
         }
         FPN_Binary<64> probe = FPN_FromDouble<64>(13.5);
         double z1 = LargeTradeState_ZScore(&lt1, probe);
@@ -14534,8 +14534,8 @@ e3_skip_load:;
         SpreadState_Init(&ss1);
         SpreadState_Init(&ss2);
         for (double s : sizes) {
-            SpreadState_Push(&ss1, FPN_FromDouble<64>(s));
-            SpreadState_Push(&ss2, FPN_FromDouble<64>(s));
+            SpreadState_Push(&ss1, Money_ToBinary(MQ(s)));
+            SpreadState_Push(&ss2, Money_ToBinary(MQ(s)));
         }
         double sz1 = SpreadState_ZScore(&ss1, FPN_FromDouble<64>(8.0));
         double sz2 = SpreadState_ZScore(&ss2, FPN_FromDouble<64>(8.0));
@@ -14838,18 +14838,18 @@ e3_skip_load:;
               !FPN_IsZero(lut.values[128]));
 
         // === Test 2: LUT[2] is exactly 0.5 (power-of-2 reciprocal is exact) ===
-        FPN_Binary<FP> half = FPN_FromDouble<FP>(0.5);
+        FPN_Binary<64> half = FPN_FromDouble<64>(0.5);
         check("v5.11.2.A: LUT[2] == FPN_Binary(0.5) bytewise (power-of-2 exact)",
               lut.values[2].v == half.v);
 
         // === Test 3: LUT[128] is exactly 1/128 (power-of-2) ===
-        FPN_Binary<FP> recip128 = FPN_FromDouble<FP>(1.0 / 128.0);
+        FPN_Binary<64> recip128 = FPN_FromDouble<64>(1.0 / 128.0);
         check("v5.11.2.A: LUT[128] == FPN_Binary(1/128) bytewise (power-of-2 exact)",
               lut.values[128].v == recip128.v);
 
         // === Test 4: For power-of-2 n, FPN_Mul(sum, LUT[n]) == FPN_DivNoAssert(sum, n) bytewise ===
         // (Audit's claim; verifies no drift for the steady-state case n=W.)
-        FPN_Binary<FP> sum = FPN_FromDouble<FP>(12345.6789);
+        FPN_Binary<FP> sum = FPN_FromDouble<64>(12345.6789);
         for (int n_test : {2, 4, 8, 16, 32, 64, 128}) {
             FPN_Binary<FP> n_fp = FPN_FromInt<FP>((int64_t)n_test);
             FPN_Binary<FP> via_div = FPN_DivNoAssert(sum, n_fp);
@@ -14922,8 +14922,8 @@ e3_skip_load:;
         // Functional correctness — Push still computes valid outputs after reorder
         RS128 rolling = RollingStats_Init<FP, 128>();
         for (int i = 0; i < 16; ++i) {
-            FPN_Binary<FP> p = FPN_FromDouble<FP>(100.0 + i * 0.5);
-            FPN_Binary<FP> v = FPN_FromDouble<FP>(1.0);
+            FPN_Binary<64> p = FPN_FromDouble<64>(100.0 + i * 0.5);
+            FPN_Binary<64> v = FPN_FromDouble<64>(1.0);
             RollingStats_Push(&rolling, p, v, /*is_buyer_maker=*/0);
         }
         check("v5.11.2.B: post-reorder count populated",
@@ -15015,8 +15015,8 @@ e3_skip_load:;
             int sum_xy_match = 1, sum_y_match = 1, sum_y2_match = 1;
             int min_match = 1, max_match = 1;
             for (int i = 0; i < 16; ++i) {
-                RollingStats_Push(&rs, FPN_FromDouble<FP>(prices[i]),
-                                       FPN_FromDouble<FP>(1.0));
+                RollingStats_Push(&rs, FPN_FromDouble<64>(prices[i]),
+                                       FPN_FromDouble<64>(1.0));
                 if (rs.count < 1) continue;
                 sum_y_match  &= FPN_Equal(rs.price_sum_running,    brute_sum_y(rs));
                 sum_y2_match &= FPN_Equal(rs.price_sum_y2_running, brute_sum_y2(rs));
@@ -15037,28 +15037,28 @@ e3_skip_load:;
         {
             RollingStats<FP, WTEST> rs = RollingStats_Init<FP, WTEST>();
             for (int i = 0; i < 12; ++i) {
-                RollingStats_Push(&rs, FPN_FromDouble<FP>(100.0 + i * 10.0),
-                                       FPN_FromDouble<FP>(1.0));
+                RollingStats_Push(&rs, FPN_FromDouble<64>(100.0 + i * 10.0),
+                                       FPN_FromDouble<64>(1.0));
             }
             // After 12 pushes with W=8: window holds prices[4..11] = 140..210
             check("v5.11.2.C: monotonic-up: max == latest (210)",
-                  FPN_Equal(rs.price_max, FPN_FromDouble<FP>(210.0)));
+                  FPN_Equal(rs.price_max, FPN_FromDouble<64>(210.0)));
             check("v5.11.2.C: monotonic-up: min == oldest in window (140)",
-                  FPN_Equal(rs.price_min, FPN_FromDouble<FP>(140.0)));
+                  FPN_Equal(rs.price_min, FPN_FromDouble<64>(140.0)));
         }
 
         // --- Test 3: monotonically decreasing — exercises min-deque back-pop ---
         {
             RollingStats<FP, WTEST> rs = RollingStats_Init<FP, WTEST>();
             for (int i = 0; i < 12; ++i) {
-                RollingStats_Push(&rs, FPN_FromDouble<FP>(200.0 - i * 10.0),
-                                       FPN_FromDouble<FP>(1.0));
+                RollingStats_Push(&rs, FPN_FromDouble<64>(200.0 - i * 10.0),
+                                       FPN_FromDouble<64>(1.0));
             }
             // After 12 pushes with W=8: window holds prices[4..11] = 160..90
             check("v5.11.2.C: monotonic-down: min == latest (90)",
-                  FPN_Equal(rs.price_min, FPN_FromDouble<FP>(90.0)));
+                  FPN_Equal(rs.price_min, FPN_FromDouble<64>(90.0)));
             check("v5.11.2.C: monotonic-down: max == oldest in window (160)",
-                  FPN_Equal(rs.price_max, FPN_FromDouble<FP>(160.0)));
+                  FPN_Equal(rs.price_max, FPN_FromDouble<64>(160.0)));
         }
 
         // --- Test 4: deque fronts must NEVER reference an evicted slot ---
@@ -15068,7 +15068,7 @@ e3_skip_load:;
             int size_ok = 1;
             for (int i = 0; i < 100; ++i) {
                 double p = 50.0 + (double)((i * 13) % 23);  // pseudo-noisy
-                RollingStats_Push(&rs, FPN_FromDouble<FP>(p), FPN_FromDouble<FP>(1.0));
+                RollingStats_Push(&rs, FPN_FromDouble<64>(p), FPN_FromDouble<64>(1.0));
                 size_ok &= (rs.min_dq_size  <= (int)WTEST);
                 size_ok &= (rs.max_dq_size  <= (int)WTEST);
                 size_ok &= (rs.vmax_dq_size <= (int)WTEST);
@@ -15080,15 +15080,15 @@ e3_skip_load:;
 
         // --- Test 5: FPN_BlendOnMask correctness (Rule 8 helper) ---
         {
-            FPN_Binary<FP> a = FPN_FromDouble<FP>(42.0);
-            FPN_Binary<FP> b = FPN_FromDouble<FP>(-17.5);
+            Money a = MQ(42.0);
+            Money b = MQ(-17.5);
             check("v5.11.2.C: FPN_BlendOnMask(a, b, all-1s) == a",
-                  FPN_Equal(FPN_BlendOnMask(a, b, (uint64_t)-1), a));
+                  Money_Eq(Money_BlendOnMask(a, b, (uint64_t)-1), a));
             check("v5.11.2.C: FPN_BlendOnMask(a, b, 0) == b",
-                  FPN_Equal(FPN_BlendOnMask(a, b, (uint64_t)0),  b));
+                  Money_Eq(Money_BlendOnMask(a, b, (uint64_t)0),  b));
             // Sign-bit blending: a is positive, b is negative → blend preserves
-            FPN_Binary<FP> blend_a = FPN_BlendOnMask(a, b, (uint64_t)-1);
-            FPN_Binary<FP> blend_b = FPN_BlendOnMask(a, b, (uint64_t)0);
+            Money blend_a = Money_BlendOnMask(a, b, (uint64_t)-1);
+            Money blend_b = Money_BlendOnMask(a, b, (uint64_t)0);
             check("v5.11.2.C: FPN_BlendOnMask preserves positive sign (a path)",
                   (blend_a.v < 0) == (a.v < 0));
             check("v5.11.2.C: FPN_BlendOnMask preserves negative sign (b path)",
@@ -15559,18 +15559,18 @@ e3_skip_load:;
         // the table populated to test the slot encoding.
         OrderManager_Init(&oms, empty_adapter, /*live=*/0,
                           /*partial_exit_enabled=*/0,
-                          FPN_FromDouble<64>(10000.0),
+                          MQ(10000.0),
                           
                           /*event_log_mode=*/1, /*event_log_path=*/nullptr);
 
         // First submit — paper mode (mode=1), fills synthetically. The returned
         // order id should have slot in the upper 4 bits.
         SubmitCommand<64> sub1(/*core_id=*/0, ORDER_MARKET_BUY,
-                                FPN_FromDouble<64>(0.001), 0, nullptr);
-        sub1.intended_tp = FPN_FromDouble<64>(60500.0);
-        sub1.intended_sl = FPN_FromDouble<64>(59500.0);
+                                MQ(0.001), 0, nullptr);
+        sub1.intended_tp = MQ(60500.0);
+        sub1.intended_sl = MQ(59500.0);
         sub1.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
-        sub1.event_price = FPN_FromDouble<64>(60000.0);
+        sub1.event_price = MQ(60000.0);
         uint64_t oid1 = OrderManager_Submit(&oms, sub1);
 
         int decoded_slot1 = (int)((oid1 >> 60) & 0xFu);
@@ -15586,11 +15586,11 @@ e3_skip_load:;
         // Submit a second order. Slot 0 still holds order 1; slot 1 should be
         // allocated.
         SubmitCommand<64> sub2(/*core_id=*/0, ORDER_MARKET_BUY,
-                                FPN_FromDouble<64>(0.002), 0, nullptr);
-        sub2.intended_tp = FPN_FromDouble<64>(60500.0);
-        sub2.intended_sl = FPN_FromDouble<64>(59500.0);
+                                MQ(0.002), 0, nullptr);
+        sub2.intended_tp = MQ(60500.0);
+        sub2.intended_sl = MQ(59500.0);
         sub2.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
-        sub2.event_price = FPN_FromDouble<64>(60000.0);
+        sub2.event_price = MQ(60000.0);
         uint64_t oid2 = OrderManager_Submit(&oms, sub2);
         int decoded_slot2 = (int)((oid2 >> 60) & 0xFu);
         check("v5.11.5.B: second submit's id encodes slot 1",
@@ -15783,13 +15783,13 @@ e3_skip_load:;
         // Leg A active with live_tp = 110 (won't fire on tick 100).
         // Leg B active with live_tp_b = 105 (won't fire on tick 100, will fire on tick 106).
         core.active = 1;
-        core.entry_price = FPN_FromDouble<FP>(100.0);
-        core.live_tp = FPN_FromDouble<FP>(110.0);
-        core.live_sl = FPN_FromDouble<FP>(95.0);
+        core.entry_price = MQ(100.0);
+        core.live_tp = MQ(110.0);
+        core.live_sl = MQ(95.0);
         core.active_b = 1;
-        core.entry_price_b = FPN_FromDouble<FP>(100.0);
-        core.live_tp_b = FPN_FromDouble<FP>(105.0);
-        core.live_sl_b = FPN_FromDouble<FP>(98.0);
+        core.entry_price_b = MQ(100.0);
+        core.live_tp_b = MQ(105.0);
+        core.live_sl_b = MQ(98.0);
 
         // Push params via the proper seqlock pipeline. Direct assignment to
         // cached_params would be overwritten on the first _Impl call (cache-miss
@@ -15804,8 +15804,8 @@ e3_skip_load:;
         // cached_seq matches param_slot.seq → subsequent calls use the cached
         // copy and respect the flags we set above.
         Tick<FP> warmup_tick{};
-        warmup_tick.price = FPN_FromDouble<FP>(100.0);  // no fire (= entry_price)
-        warmup_tick.volume = FPN_FromDouble<FP>(1.0);
+        warmup_tick.price = MQ(100.0);  // no fire (= entry_price)
+        warmup_tick.volume = MQ(1.0);
         warmup_tick.timestamp = 0;
         warmup_tick.sequence = 0;
         ExecutionCore_Tick<FP>(&core, warmup_tick);
@@ -15815,8 +15815,8 @@ e3_skip_load:;
 
         // === Test 1: PAIR_BRANCHLESS=false with leg-B threshold hit fires ===
         Tick<FP> tick_hit_b{};
-        tick_hit_b.price = FPN_FromDouble<FP>(106.0);  // > live_tp_b=105 → leg B fires
-        tick_hit_b.volume = FPN_FromDouble<FP>(1.0);
+        tick_hit_b.price = MQ(106.0);  // > live_tp_b=105 → leg B fires
+        tick_hit_b.volume = MQ(1.0);
         tick_hit_b.timestamp = 1;
         tick_hit_b.sequence = 1;
 
@@ -15829,7 +15829,7 @@ e3_skip_load:;
 
         // Reset for branchless test
         core.active_b = 1;
-        core.live_tp_b = FPN_FromDouble<FP>(105.0);
+        core.live_tp_b = MQ(105.0);
 
         // === Test 2: PAIR_BRANCHLESS=true with same input fires identically ===
         ExecutionCore_Tick_Impl<FP, /*LAT_ENABLED=*/false, /*PAIR_BRANCHLESS=*/true>(
@@ -15842,7 +15842,7 @@ e3_skip_load:;
         // Set active_b=0 + tick price triggers the leg-B compare. Branchless
         // path computes leg-B SG but masks with active_b=0 → no fire.
         core.active_b = 0;
-        core.live_tp_b = FPN_FromDouble<FP>(105.0);  // would-fire threshold
+        core.live_tp_b = MQ(105.0);  // would-fire threshold
         ExecutionCore_Tick_Impl<FP, /*LAT_ENABLED=*/false, /*PAIR_BRANCHLESS=*/true>(
             &core, tick_hit_b);
         check("v5.11.1.2 branchless: active_b=0 masks leg-B fire (stays 0)",
@@ -15852,16 +15852,16 @@ e3_skip_load:;
         // === Test 4: PAIR_BRANCHLESS=true vs false, no-fire scenario ===
         // Tick price below leg-B TP and above leg-B SL → no fire either path.
         Tick<FP> tick_no_fire{};
-        tick_no_fire.price = FPN_FromDouble<FP>(102.0);  // between live_sl_b=98 and live_tp_b=105
-        tick_no_fire.volume = FPN_FromDouble<FP>(1.0);
+        tick_no_fire.price = MQ(102.0);  // between live_sl_b=98 and live_tp_b=105
+        tick_no_fire.volume = MQ(1.0);
         tick_no_fire.timestamp = 2;
         tick_no_fire.sequence = 2;
 
         // Reset to leg-B-active state
         core.active = 1;
         core.active_b = 1;
-        core.live_tp_b = FPN_FromDouble<FP>(105.0);
-        core.live_sl_b = FPN_FromDouble<FP>(98.0);
+        core.live_tp_b = MQ(105.0);
+        core.live_sl_b = MQ(98.0);
 
         ExecutionCore_Tick_Impl<FP, /*LAT_ENABLED=*/false, /*PAIR_BRANCHLESS=*/false>(
             &core, tick_no_fire);
@@ -15884,14 +15884,14 @@ e3_skip_load:;
         // With it clear, wrapper dispatches to PAIR_BRANCHLESS=false.
         // Both paths produce same observable output → verifies dispatch correctness.
         core.active = 1; core.active_b = 1;
-        core.live_tp_b = FPN_FromDouble<FP>(105.0);
+        core.live_tp_b = MQ(105.0);
         core.cached_params.flags = GATE_FLAG_TP_ENABLED | GATE_FLAG_SL_ENABLED | GATE_FLAG_PAIR_ACTIVE;
         ExecutionCore_Tick<FP>(&core, tick_hit_b);  // wrapper → branchless
         uint8_t wrap_pair_active = core.active_b;
         while (SPSCRing_TryPop(&core.event_ring, &evt)) {}
 
         core.active = 1; core.active_b = 1;
-        core.live_tp_b = FPN_FromDouble<FP>(105.0);
+        core.live_tp_b = MQ(105.0);
         core.cached_params.flags = GATE_FLAG_TP_ENABLED | GATE_FLAG_SL_ENABLED;  // pair clear
         ExecutionCore_Tick<FP>(&core, tick_hit_b);  // wrapper → branched
         uint8_t wrap_no_pair = core.active_b;
@@ -15928,8 +15928,8 @@ e3_skip_load:;
         ExecutionCore_Init<FP>(&core, /*core_id=*/0, &tick_ring);
 
         Tick<FP> tick{};
-        tick.price = FPN_FromDouble<FP>(100.0);
-        tick.volume = FPN_FromDouble<FP>(1.0);
+        tick.price = MQ(100.0);
+        tick.volume = MQ(1.0);
         tick.timestamp = 1234567890ULL;
         tick.sequence = 1;
 
@@ -16667,7 +16667,7 @@ e3_skip_load:;
         // preserving pre-v5.10.0a.D call shape. Smoke test: a ControllerConfig
         // can be built and the override pointer is accepted by the type system.
         ControllerConfig<FP> override_cfg = ControllerConfig_Default<FP>();
-        override_cfg.xgb_subsample = FPN_FromDouble<FP>(0.6);  // sweep value
+        override_cfg.xgb_subsample = FPN_FromDouble<64>(0.6);  // sweep value
         const ControllerConfig<FP>* override_ptr = &override_cfg;
         check("v5.10.0a.D: WF cfg_override pointer type accepts ControllerConfig<FP>*",
               override_ptr != nullptr && FPN_ToDouble(override_ptr->xgb_subsample) > 0.55);
@@ -18184,35 +18184,35 @@ e3_skip_load:;
         check("v5.12.2.B: default cfg.lazy_rebuild_force_period_us == 1_000_000",
               cfg.lazy_rebuild_force_period_us == 1000000ULL);
         check("v5.12.2.B: default cfg.lazy_rebuild_price_threshold_pct == 0.0005",
-              std::fabs(FPN_ToDouble(cfg.lazy_rebuild_price_threshold_pct)
+              std::fabs(Money_ToDouble(cfg.lazy_rebuild_price_threshold_pct)
                         - 0.0005) < 1e-9);
 
         // === Test 2: FPN_Binary abs via sign-bit clear (used by lazy predicate) ===
-        FPN_Binary<64> a = FPN_FromDouble<64>(100.5);
-        FPN_Binary<64> b = FPN_FromDouble<64>(101.0);
-        FPN_Binary<64> delta = FPN_Sub(a, b);  // negative
+        Money a = MQ(100.5);
+        Money b = MQ(101.0);
+        Money delta = Money_Sub(a, b);  // negative
         check("v5.12.2.B: FPN_Sub(100.5, 101.0) sign == 1 (negative)",
               delta.v < 0);
-        FPN_Binary<64> abs_delta = FPN_Abs(delta);
+        Money abs_delta = Money_Abs(delta);
         check("v5.12.2.B: |delta| via FPN_Abs → magnitude same (delta<0 ⇒ |delta| == -delta)",
-              abs_delta.v == FPN_Negate(delta).v);
+              abs_delta.v == Money_Negate(delta).v);
         check("v5.12.2.B: |delta| is non-negative",
               abs_delta.v >= 0);
 
         // === Test 3: relative delta math at threshold boundary ===
         // |100.5 - 101.0| / 101.0 ≈ 0.00495 > 0.0005 → would trigger rebuild
-        FPN_Binary<64> rel = FPN_DivNoAssert(abs_delta, b);
+        Money rel = Money_Div(abs_delta, b);
         check("v5.12.2.B: rel_delta(100.5, 101.0) > 0.0005 threshold",
-              FPN_GreaterThan(rel, cfg.lazy_rebuild_price_threshold_pct));
+              Money_Gt(rel, cfg.lazy_rebuild_price_threshold_pct));
 
         // === Test 4: small price change → below threshold ===
         // 100.04 vs 100.0 → rel_delta = 0.0004 < 0.0005 threshold → SKIP
-        FPN_Binary<64> p1 = FPN_FromDouble<64>(100.0);
-        FPN_Binary<64> p2 = FPN_FromDouble<64>(100.04);
-        FPN_Binary<64> small_delta = FPN_Abs(FPN_Sub(p2, p1));  // abs
-        FPN_Binary<64> small_rel = FPN_DivNoAssert(small_delta, p1);
+        Money p1 = MQ(100.0);
+        Money p2 = MQ(100.04);
+        Money small_delta = Money_Abs(Money_Sub(p2, p1));  // abs
+        Money small_rel = Money_Div(small_delta, p1);
         check("v5.12.2.B: small price delta (0.04%) below 0.05% threshold",
-              !FPN_GreaterThan(small_rel, cfg.lazy_rebuild_price_threshold_pct));
+              !Money_Gt(small_rel, cfg.lazy_rebuild_price_threshold_pct));
     }
 
     printf("\n--- v5.12.1.D: confidence-conditional sizing infra (REPLACED v5.14.9.B; lambda kept as historical reference) ---\n");
@@ -18441,7 +18441,7 @@ e3_skip_load:;
         tt::ExchangeAdapter<64> empty_adapter{};
         tt::OrderManager_Init(&oms, empty_adapter, /*live=*/0,
                               /*partial_exit_enabled=*/0,
-                              FPN_FromDouble<64>(10000.0));
+                              MQ(10000.0));
         tt::EventLoopState<64> state;
         tt::EventLoopState_Init(&state, &oms);
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
@@ -18537,7 +18537,7 @@ e3_skip_load:;
         tt::ExchangeAdapter<64> empty_adapter{};
         tt::OrderManager_Init(&oms, empty_adapter, /*live=*/0,
                               /*partial_exit_enabled=*/0,
-                              FPN_FromDouble<64>(10000.0));
+                              MQ(10000.0));
         tt::EventLoopState<64> state;
         tt::EventLoopState_Init(&state, &oms);
 
@@ -18632,8 +18632,8 @@ e3_skip_load:;
             // slot 0 == core 0.
             oms.flatten_pending.store(0, std::memory_order_release);
             oms.portfolio.active_bitmap = (uint16_t)0x0001;
-            oms.portfolio.positions[0].quantity = FPN_FromDouble<64>(1.5);
-            oms.portfolio.positions[0].entry_price = FPN_FromDouble<64>(50000.0);
+            oms.portfolio.positions[0].quantity = MQ(1.5);
+            oms.portfolio.positions[0].entry_price = MQ(50000.0);
             // Pre-condition: submit queue 0 should be empty (drainer
             // hasn't run). Capture head before; verify head increased.
             int submitted = tt::EventLoop_FlattenAll(&state, &oms, cfg.cores, 50000.0,
@@ -18661,7 +18661,7 @@ e3_skip_load:;
         tt::ExchangeAdapter<64> empty_adapter{};
         tt::OrderManager_Init(&oms, empty_adapter, /*live=*/0,
                               /*partial_exit_enabled=*/0,
-                              FPN_FromDouble<64>(10000.0));
+                              MQ(10000.0));
         tt::EventLoopState<64> state;
         tt::EventLoopState_Init(&state, &oms);
 
@@ -18728,7 +18728,7 @@ e3_skip_load:;
         ExchangeAdapter<64> empty_adapter{};
         OrderManager_Init(&oms, empty_adapter, /*live_trading=*/0,
                           /*partial_exit_enabled=*/0,
-                          FPN_FromDouble<64>(10000.0));
+                          MQ(10000.0));
 
         // === Init defaults ===
         // v5.15.5.C.2 (S3b) — last_exit_was_predicted[16] → uint16_t last_exit_predicted_bitmap.
@@ -18769,7 +18769,7 @@ e3_skip_load:;
         ExchangeAdapter<64> empty_adapter{};
         OrderManager_Init(&oms, empty_adapter, 0,
                           /*partial_exit_enabled=*/0,
-                          FPN_FromDouble<64>(10000.0));
+                          MQ(10000.0));
 
         // === Empty path → no-op success ===
         int rv_empty = OrderManager_OpenCalibrationLog(&oms, "");
@@ -18818,7 +18818,7 @@ e3_skip_load:;
         ExchangeAdapter<64> empty_adapter{};
         OrderManager_Init(&oms, empty_adapter, 0,
                           /*partial_exit_enabled=*/0,
-                          FPN_FromDouble<64>(10000.0));
+                          MQ(10000.0));
         EventLoopState_Init(&state, &oms);
 
         // === Init defaults ===
@@ -18977,7 +18977,7 @@ e3_skip_load:;
         ExchangeAdapter<64> empty_adapter{};
         OrderManager_Init(&oms, empty_adapter, 0,
                           /*partial_exit_enabled=*/0,
-                          FPN_FromDouble<64>(10000.0));
+                          MQ(10000.0));
         // === Defaults post-Init: -1 sentinel ===
         int all_neg1 = 1;
         for (int i = 0; i < MAX_PORTFOLIO_POSITIONS; ++i) {
@@ -19576,7 +19576,7 @@ e3_skip_load:;
         tt::OrderManagerState<64> oms;
         tt::EventLoopState<64> state;
         tt::EventLoopState_InitLegacy(&state, &oms,
-            FPN_FromDouble<64>(10000.0));
+            MQ(10000.0));
         // EventLoopState_Init initializes regime_state[i] for ALL i with safe
         // default 5 (EngineSharded_Run overrides with cfg.regime_hysteresis
         // post-init; tests use the safe default).
@@ -20088,7 +20088,7 @@ e3_skip_load:;
         tt::OrderManagerState<64> oms;
         tt::EventLoopState<64> state;
         tt::EventLoopState_InitLegacy(&state, &oms,
-            FPN_FromDouble<64>(10000.0));
+            MQ(10000.0));
         check("v5.14.4.B.1: ApplyMissedFills null trades → 0",
               tt::Reconcile_ApplyMissedFills(&oms, (tt::ReconcileTrade*)nullptr, 5) == 0);
         check("v5.14.4.B.1: ApplyMissedFills n_trades=0 → 0",
@@ -20099,7 +20099,7 @@ e3_skip_load:;
         tt::OrderManagerState<64> oms;
         tt::EventLoopState<64> state;
         tt::EventLoopState_InitLegacy(&state, &oms,
-            FPN_FromDouble<64>(10000.0));
+            MQ(10000.0));
         oms.last_seen_trade_id = 100;
 
         tt::ReconcileTrade trades[3];
@@ -20118,7 +20118,7 @@ e3_skip_load:;
         tt::OrderManagerState<64> oms;
         tt::EventLoopState<64> state;
         tt::EventLoopState_InitLegacy(&state, &oms,
-            FPN_FromDouble<64>(10000.0));
+            MQ(10000.0));
         oms.last_seen_trade_id = 50;
 
         tt::ReconcileTrade trades[3];
@@ -20137,7 +20137,7 @@ e3_skip_load:;
         tt::OrderManagerState<64> oms;
         tt::EventLoopState<64> state;
         tt::EventLoopState_InitLegacy(&state, &oms,
-            FPN_FromDouble<64>(10000.0));
+            MQ(10000.0));
         oms.last_seen_trade_id = 100;
 
         tt::ReconcileTrade trades[4];
@@ -20157,7 +20157,7 @@ e3_skip_load:;
         tt::OrderManagerState<64> oms;
         tt::EventLoopState<64> state;
         tt::EventLoopState_InitLegacy(&state, &oms,
-            FPN_FromDouble<64>(10000.0));
+            MQ(10000.0));
 
         tt::ReconcileTrade trades[2];
         trades[0] = {.trade_id = 100, .order_id = 1, .price = 50000.0, .qty = 0.001, .commission = 0, .time_ms = 0, .is_buyer = 1, .is_maker = 0};
@@ -20285,7 +20285,7 @@ e3_skip_load:;
         tt::OrderManagerState<64> oms;
         tt::EventLoopState<64> state;
         tt::EventLoopState_InitLegacy(&state, &oms,
-            FPN_FromDouble<64>(10000.0));
+            MQ(10000.0));
         check("v5.14.4.0: OrderManager_Init zero-inits last_seen_trade_id",
               oms.last_seen_trade_id == 0);
     }
@@ -20295,7 +20295,7 @@ e3_skip_load:;
         tt::OrderManagerState<64> oms;
         tt::EventLoopState<64> state;
         tt::EventLoopState_InitLegacy(&state, &oms,
-            FPN_FromDouble<64>(10000.0));
+            MQ(10000.0));
         oms.last_seen_trade_id = 42;
         check("v5.14.4.0: last_seen_trade_id mutable (= 42 after write)",
               oms.last_seen_trade_id == 42);
@@ -21857,14 +21857,14 @@ e3_skip_load:;
         // PARITY-030 by-construction (LIVE + BACKTEST both call this pre-loop).
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
         cfg.pay_fees_in_bnb = 1;
-        cfg.cores[0].fee_rate_maker = FPN_FromDouble<64>(0.001);
-        cfg.cores[0].fee_rate_taker = FPN_FromDouble<64>(0.001);
+        cfg.cores[0].fee_rate_maker = MQ(0.001);
+        cfg.cores[0].fee_rate_taker = MQ(0.001);
         EngineCommon_ApplyBnbDiscount(cfg);
         // 0.001 * 0.75 = 0.00075 (exactly representable in F=64 FPN_Binary)
         check("v5.15.5.F.4d.1.B.4: ApplyBnbDiscount pay_fees_in_bnb=1 reduces core[0] fee_rate_maker",
-              FPN_ToDouble(cfg.cores[0].fee_rate_maker) < 0.001);
+              Money_ToDouble(cfg.cores[0].fee_rate_maker) < 0.001);
         check("v5.15.5.F.4d.1.B.4: ApplyBnbDiscount pay_fees_in_bnb=1 reduces core[0] fee_rate_taker",
-              FPN_ToDouble(cfg.cores[0].fee_rate_taker) < 0.001);
+              Money_ToDouble(cfg.cores[0].fee_rate_taker) < 0.001);
     }
     {
         using namespace tt;
@@ -21872,13 +21872,13 @@ e3_skip_load:;
         // (default cfg path; preserves pre-.B.4 fee_rate_* values verbatim)
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
         cfg.pay_fees_in_bnb = 0;
-        FPN_Binary<64> baseline_maker = FPN_FromDouble<64>(0.001);
+        Money baseline_maker = MQ(0.001);
         cfg.cores[0].fee_rate_maker = baseline_maker;
         EngineCommon_ApplyBnbDiscount(cfg);
         // Compare via FPN_ToDouble for tolerant exact-match (F=64 represents
         // doubles exactly in normal range; conversion roundtrip is identity).
         check("v5.15.5.F.4d.1.B.4: ApplyBnbDiscount pay_fees_in_bnb=0 → fee_rate_maker unchanged",
-              FPN_ToDouble(cfg.cores[0].fee_rate_maker) == FPN_ToDouble(baseline_maker));
+              Money_ToDouble(cfg.cores[0].fee_rate_maker) == Money_ToDouble(baseline_maker));
     }
 
     //======================================================================
@@ -24425,9 +24425,9 @@ e3_skip_load:;
 
         // FPN_Binary values from same double bytewise-identical (test that FracDiff
         // regression class is structurally eliminated).
-        FPN_Binary<64> c = FPN_FromDouble<64>(3.14159);
-        FPN_Binary<64> d = FPN_FromDouble<64>(3.14159);
-        check("v5.14.11.B.2: FPN_FromDouble<64>(same input) bytewise-identical (FracDiff regression class extinct)",
+        Money c = MQ(3.14159);
+        Money d = MQ(3.14159);
+        check("v5.14.11.B.2: MQ(same input) bytewise-identical (FracDiff regression class extinct)",
               memcmp(&c, &d, sizeof(c)) == 0);
     }
 
@@ -24439,7 +24439,7 @@ e3_skip_load:;
         // 2^127-magnitude range saturates to the bounded max, never wraps to a garbage small value.
         // Two ~2^40 values multiply to ~1e24 >> the ~2^63 representable max -> must saturate.
         const __int128 MAXMAG = (__int128)(((unsigned __int128)1 << 127) - 1);   // +2^127-1
-        FPN_Binary<64> big = FPN_FromDouble<64>(1.0e12);                                  // value ~2^40
+        FPN_Binary<64> big = FPN_FromDouble<64>(1.0e12);         // value ~2^40
         check("Ship-A R2: FPN_Mul<64> saturates to +MAX on 16B overflow (not wrap)",
               FPN_Mul<64>(big, big).v == MAXMAG);
         check("Ship-A R2: FPN_Mul<64> saturates to -MAX on 16B overflow (not wrap)",
@@ -24462,8 +24462,8 @@ e3_skip_load:;
               CONTROLLER_SNAPSHOT_VERSION >= 13 + MONEY_ENCODING_EPOCH
                   && SHARDED_SNAPSHOT_VERSION >= 9u + MONEY_ENCODING_EPOCH
                   && PORTFOLIO_SNAPSHOT_VERSION >= 6 + MONEY_ENCODING_EPOCH);
-        check("Ship-B P2 markers: MONEY_ENCODING_EPOCH == 0 pre-flip (EngineMoneyT is still binary)",
-              MONEY_ENCODING_EPOCH == 0u && is_fp_binary_v<EngineMoneyT>);
+        check("Ship-B P2b: MONEY_ENCODING_EPOCH == 1 POST-flip (EngineMoneyT is DECIMAL Money)",
+              MONEY_ENCODING_EPOCH == 1u && is_fp_decimal_v<EngineMoneyT>);
 
         // ===== Ship-B P1a: decimal money core spine (Money_Mul + divmul + half-even + S-17 flags) =====
         // D-100 discipline: the expected values come from the FROZEN oracle fixture
@@ -24578,8 +24578,8 @@ e3_skip_load:;
                 check("Ship-B P2a: decimal cfg_parse_field wire-ctx exact", m.v == 75000);
                 char b[64];
                 tt::cfg_save_field(m, d, b, sizeof b);
-                check("Ship-B P2a: decimal cfg_save_field emits the EXACT percent string",
-                      strcmp(b, "0.07500000") == 0);
+                check("Ship-B P2a: decimal cfg_save_field emits the EXACT percent string (trailing-zero trimmed)",
+                      strcmp(b, "0.075") == 0);
                 Money a2{};
                 tt::cfg_assign_field(a2, d);
                 check("Ship-B P2a: decimal cfg_assign_field percent default -> exact fraction",
@@ -25165,7 +25165,7 @@ e3_skip_load:;
         tt::OrderManagerState<64> oms;
         tt::EventLoopState<64> state;
         tt::EventLoopState_InitLegacy(&state, &oms,
-            FPN_FromDouble<64>(10000.0));
+            MQ(10000.0));
 
         // check_secret_nonempty — default cfg has empty secret → returns false
         check("v5.15.2.B.2: check_secret_nonempty false when held_out_stamp_secret empty",
@@ -25606,41 +25606,41 @@ e3_skip_load:;
         ctx[0].resolved_strategy_id = 1;
         ctx[0].entries_processed = 10;
         ctx[0].exits_processed   = 9;
-        ctx[0].core_realized = FPN_FromDouble<64>(100.0);
-        ctx[0].core_fees     = FPN_FromDouble<64>(2.0);
+        ctx[0].core_realized = MQ(100.0);
+        ctx[0].core_fees     = MQ(2.0);
         ctx[0].core_wins     = 6;
         ctx[0].core_losses   = 3;
-        ctx[0].core_open_notional = FPN_FromDouble<64>(500.0);
+        ctx[0].core_open_notional = MQ(500.0);
 
         ctx[1].strategy_id = 1;
         ctx[1].resolved_strategy_id = 1;
         ctx[1].entries_processed = 20;
         ctx[1].exits_processed   = 18;
-        ctx[1].core_realized = FPN_FromDouble<64>(50.0);
-        ctx[1].core_fees     = FPN_FromDouble<64>(3.0);
+        ctx[1].core_realized = MQ(50.0);
+        ctx[1].core_fees     = MQ(3.0);
         ctx[1].core_wins     = 10;
         ctx[1].core_losses   = 8;
-        ctx[1].core_open_notional = FPN_FromDouble<64>(750.0);
+        ctx[1].core_open_notional = MQ(750.0);
 
         ctx[2].strategy_id = 3;
         ctx[2].resolved_strategy_id = 3;
         ctx[2].entries_processed = 5;
         ctx[2].exits_processed   = 5;
-        ctx[2].core_realized = FPN_FromDouble<64>(-25.0);
-        ctx[2].core_fees     = FPN_FromDouble<64>(1.0);
+        ctx[2].core_realized = MQ(-25.0);
+        ctx[2].core_fees     = MQ(1.0);
         ctx[2].core_wins     = 2;
         ctx[2].core_losses   = 3;
-        ctx[2].core_open_notional = FPN_FromDouble<64>(0.0);
+        ctx[2].core_open_notional = MQ(0.0);
 
         ctx[3].strategy_id = 3;
         ctx[3].resolved_strategy_id = 3;
         ctx[3].entries_processed = 7;
         ctx[3].exits_processed   = 7;
-        ctx[3].core_realized = FPN_FromDouble<64>(35.0);
-        ctx[3].core_fees     = FPN_FromDouble<64>(1.5);
+        ctx[3].core_realized = MQ(35.0);
+        ctx[3].core_fees     = MQ(1.5);
         ctx[3].core_wins     = 4;
         ctx[3].core_losses   = 3;
-        ctx[3].core_open_notional = FPN_FromDouble<64>(200.0);
+        ctx[3].core_open_notional = MQ(200.0);
 
         // Test 1: registry count sentinel — guard against accidental field-set shrinkage.
         check("v5.15.5.C.3 Phase 4: FOREACH_CORE_CTX_SUMMARY_FIELD_COUNT >= 18",
@@ -25925,23 +25925,23 @@ e3_skip_load:;
         evt0.timestamp = 1700000000ULL * 1000000ULL;
         evt0.core_id = 0;
         evt0.type = TRADE_EVENT_ENTRY;
-        evt0.price = FPN_FromDouble<64>(50000.0);
+        evt0.price = MQ(50000.0);
         ShardedTradeLog_RecordEntry(&log, evt0, /*strategy_id=*/1,
-                                     FPN_FromDouble<64>(50000.0),  // entry_price
-                                     FPN_FromDouble<64>(0.001),    // trade_size
-                                     FPN_FromDouble<64>(5.0),      // entry_fee
-                                     FPN_FromDouble<64>(9995.0));  // balance_after
+                                     MQ(50000.0),  // entry_price
+                                     MQ(0.001),    // trade_size
+                                     MQ(5.0),      // entry_fee
+                                     MQ(9995.0));  // balance_after
 
         TradeEvent<64> evt5{};
         evt5.timestamp = 1700000001ULL * 1000000ULL;
         evt5.core_id = 5;
         evt5.type = TRADE_EVENT_ENTRY;
-        evt5.price = FPN_FromDouble<64>(50100.0);
+        evt5.price = MQ(50100.0);
         ShardedTradeLog_RecordEntry(&log, evt5, /*strategy_id=*/2,
-                                     FPN_FromDouble<64>(50100.0),
-                                     FPN_FromDouble<64>(0.002),
-                                     FPN_FromDouble<64>(10.0),
-                                     FPN_FromDouble<64>(9985.0));
+                                     MQ(50100.0),
+                                     MQ(0.002),
+                                     MQ(10.0),
+                                     MQ(9985.0));
 
         // Flush + close to ensure rows are written to disk.
         ShardedTradeLog_Close(&log);
@@ -26002,7 +26002,7 @@ e3_skip_load:;
             ExchangeAdapter<64> empty{};
             OrderManager_Init(&oms_a, empty,
                               /*live_trading=*/1, /*partial_exit_enabled=*/1,
-                              FPN_FromDouble<64>(10000.0));
+                              MQ(10000.0));
             check("v5.15.5.C.3 Phase 10: AUTOPOPULATE BIT init — LIVE_TRADING bit set when arg=1",
                   BITMAP_IS_SET(oms_a.oms_state_flags, tt::MASK_OMS_STATE_LIVE_TRADING));
             check("v5.15.5.C.3 Phase 10: AUTOPOPULATE BIT init — PARTIAL_EXIT_ENABLED bit set when arg=1",
@@ -26019,7 +26019,7 @@ e3_skip_load:;
             ExchangeAdapter<64> empty{};
             OrderManager_Init(&oms_b, empty,
                               /*live_trading=*/0, /*partial_exit_enabled=*/0,
-                              FPN_FromDouble<64>(10000.0));
+                              MQ(10000.0));
             check("v5.15.5.C.3 Phase 10: AUTOPOPULATE BIT init — LIVE_TRADING bit cleared when arg=0",
                   !BITMAP_IS_SET(oms_b.oms_state_flags, tt::MASK_OMS_STATE_LIVE_TRADING));
             check("v5.15.5.C.3 Phase 10: AUTOPOPULATE BIT init — PARTIAL_EXIT_ENABLED bit cleared when arg=0",
@@ -26031,7 +26031,7 @@ e3_skip_load:;
             ExchangeAdapter<64> empty{};
             OrderManager_Init(&oms_c, empty,
                               /*live_trading=*/0, /*partial_exit_enabled=*/0,
-                              FPN_FromDouble<64>(10000.0), 
+                              MQ(10000.0), 
                               /*event_log_mode=*/1);
             check("v5.15.5.C.3 Phase 10: AUTOPOPULATE MULTI_BIT init — EVENT_LOG_MODE slot = 1 when arg=1",
                   MBS_EQ_U8(oms_c.oms_state_flags, tt::MASK_OMS_STATE_EVENT_LOG_MODE,
@@ -26260,8 +26260,8 @@ e3_skip_load:;
         // T4: tt::cfg_populate_inf_field — gate=true populates + sets has bit
         // ---------------------------------------------------------------------------------
         {
-            FPN_Binary<64> cfg_src = FPN_FromDouble<64>(42.5);
-            FPN_Binary<64> inf_dst = FPN_FromDouble<64>(0.0);
+            Money cfg_src = MQ(42.5);
+            Money inf_dst = MQ(0.0);
             uint8_t inf_has_dst = 0;
             tt::cfg_populate_inf_field(cfg_src, inf_dst, inf_has_dst, /*gate*/true);
             // FPN_Binary<F> compared via memcmp (no operator== defined; bit-exact equality on integer limbs)
@@ -26275,12 +26275,12 @@ e3_skip_load:;
         // T5: tt::cfg_populate_inf_field — gate=false zeros inf + clears has bit (Q3.G)
         // ---------------------------------------------------------------------------------
         {
-            FPN_Binary<64> cfg_src = FPN_FromDouble<64>(42.5);
-            FPN_Binary<64> inf_dst = FPN_FromDouble<64>(99.0);  // sentinel
+            Money cfg_src = MQ(42.5);
+            Money inf_dst = MQ(99.0);  // sentinel
             uint8_t inf_has_dst = 99;
             tt::cfg_populate_inf_field(cfg_src, inf_dst, inf_has_dst, /*gate*/false);
             check("v5.15.5.F.4d.1.B.1: tt::cfg_populate_inf_field gate=false → inf_dst zeroed (Q3.G)",
-                  FPN_ToDouble(inf_dst) == 0.0);
+                  Money_ToDouble(inf_dst) == 0.0);
             check("v5.15.5.F.4d.1.B.1: tt::cfg_populate_inf_field gate=false → inf_has_dst = 0",
                   inf_has_dst == 0);
         }
@@ -26289,8 +26289,8 @@ e3_skip_load:;
         // T6: tt::cfg_drift_compare — same value → false (no drift)
         // ---------------------------------------------------------------------------------
         {
-            FPN_Binary<64> a = FPN_FromDouble<64>(42.5);
-            FPN_Binary<64> b = FPN_FromDouble<64>(42.5);
+            Money a = MQ(42.5);
+            Money b = MQ(42.5);
             check("v5.15.5.F.4d.1.B.1: tt::cfg_drift_compare same FPN_Binary<F> → false (no drift)",
                   tt::cfg_drift_compare(a, b) == false);
         }
@@ -26299,8 +26299,8 @@ e3_skip_load:;
         // T7: tt::cfg_drift_compare — different value → true (drift detected)
         // ---------------------------------------------------------------------------------
         {
-            FPN_Binary<64> a = FPN_FromDouble<64>(42.5);
-            FPN_Binary<64> b = FPN_FromDouble<64>(99.0);
+            Money a = MQ(42.5);
+            Money b = MQ(99.0);
             check("v5.15.5.F.4d.1.B.1: tt::cfg_drift_compare different FPN_Binary<F> → true (drift)",
                   tt::cfg_drift_compare(a, b) == true);
         }

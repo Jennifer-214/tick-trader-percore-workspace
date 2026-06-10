@@ -35,6 +35,11 @@
 
 #pragma once
 
+// Ship-B P2b test bridge: exact Money construction from <=8dp test literals (llround at 1e8 is
+// exact for every test constant; NEVER a production ingress — that is Money_FromString).
+#include "../FixedPoint/FixedPointN.hpp"
+static inline Money MQ(double d) { return Money{ (__int128)llround(d * 1e8) }; }
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -123,8 +128,8 @@ inline void test_warmup_ctrl(PortfolioController<64> *ctrl, OrderPool<64> *pool,
     ticks += 5; // margin
     for (int i = 0; i < ticks; i++) {
         PortfolioController_Tick(ctrl, pool,
-            FPN_FromDouble<64>(base_price + (i % 10) * 0.3),
-            FPN_FromDouble<64>(base_vol), log);
+            MQ(base_price + (i % 10) * 0.3),
+            MQ(base_vol), log);
     }
 }
 

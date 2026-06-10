@@ -47,7 +47,7 @@ When two options both compile + both run, the gradient resolves the choice. Thes
 
 **Performance:**
 - Branchless > branched for data-dependent dispatch on hot/slow/drainer/producer paths (H7 hot-path strict; H20 generalizes). Hand-wave "branch predictor handles it" is anti-pattern (Class 28). → § 4 (latency cost) + DESIGN_SPECS/refactor-patterns/branchless-dispatch-discipline.md.
-- `FPN_Binary<F=64>` > `double` on accounting paths; never `float` on hot/slow path math (H4). → § 5 (determinism).
+- `Money` (decimal) > `double` on money paths; `FPN_Binary<64>` for features; never `float` on hot/slow path math (H4). → § 5 (determinism).
 - Bit-packed slots > byte-per-bool (H14 + MBS_* encoding). Memory bandwidth + cache footprint compound.
 - `alignas(64)` cross-thread + cluster by access pattern > flat struct (H6). → § 3.
 - L1d-cache-resident hot-path state > out-of-cache scatter. Working-set discipline applies to per-node slow_state + hot ExecutionCore params.

@@ -103,6 +103,59 @@ def variant_has_branch(variant, dispatch_text):
     return variant in dispatch_text
 
 
+DUAL_TYPE_DISPATCHERS = ("cfg_drift_compare", "cfg_drift_format_reason")
+
+# Single-T wire dispatchers that must each carry an is_fp_decimal_v branch once the
+# decimal money type lands (Ship-B P2; activated via --require-decimal-branches).
+SINGLE_T_DISPATCHERS = ("cfg_parse_field", "cfg_save_field", "cfg_assign_field",
+                        "cfg_diff_field", "cfg_emit_field", "cfg_populate_inf_field")
+
+
+def _fn_body(dispatch_text, fn_name):
+    """Slice the fn DEFINITION body: anchor on `name(` (comments mention the name without a
+    juxtaposed paren), back up to its template<> header, end at the next template<> decl."""
+    call = dispatch_text.find(fn_name + "(")
+    if call < 0:
+        return None
+    start = dispatch_text.rfind("template <typename", 0, call)
+    if start < 0:
+        start = call
+    nxt = dispatch_text.find("template <typename", call)
+    return dispatch_text[start:nxt if nxt > 0 else len(dispatch_text)]
+
+
+def check_dual_type_dispatcher_guards(dispatch_text):
+    """Ship-B P0 (S-5/V5): the two-template drift dispatchers must family-assert BOTH
+    params AND end their if-constexpr chain with an always_false_v exhaustive else —
+    otherwise an unmatched (StampT, CfgT) pair compiles into a silent no-drift."""
+    failures = []
+    for fn in DUAL_TYPE_DISPATCHERS:
+        body = _fn_body(dispatch_text, fn)
+        if body is None:
+            failures.append(f"{fn}: NOT FOUND in dispatch file")
+            continue
+        if "is_fp_binary_v<StampT>" not in body:
+            failures.append(f"{fn}: missing StampT family static_assert")
+        if "is_fp_binary_v<CfgT>" not in body:
+            failures.append(f"{fn}: missing CfgT family static_assert (the V5 silent-no-drift hole)")
+        if "always_false_v<StampT, CfgT>" not in body:
+            failures.append(f"{fn}: missing always_false_v exhaustive-else (chain can fall through)")
+    return failures
+
+
+def check_decimal_branches(dispatch_text):
+    """Ship-B P2 gate (--require-decimal-branches): every wire dispatcher carries an
+    is_fp_decimal_v branch so decimal money cannot red-build-bypass via a missed fn."""
+    failures = []
+    for fn in SINGLE_T_DISPATCHERS + DUAL_TYPE_DISPATCHERS:
+        body = _fn_body(dispatch_text, fn)
+        if body is None:
+            failures.append(f"{fn}: NOT FOUND in dispatch file")
+        elif "is_fp_decimal_v" not in body:
+            failures.append(f"{fn}: no is_fp_decimal_v branch (decimal money unhandled)")
+    return failures
+
+
 def main():
     print("[storage-t-coverage-CI] scanning master cfg registries for STORAGE_T variants...")
     all_variants = set()
@@ -134,6 +187,23 @@ def main():
         print("    tt::cfg_parse_field<T> / tt::cfg_emit_field<T> / tt::cfg_drift_compare<T> / tt::cfg_set_field<T>")
         print("  - Each tt:: family member MUST cover the new variant; X-macro walker will hit it")
         return 1
+
+    dual_failures = check_dual_type_dispatcher_guards(dispatch_text)
+    if dual_failures:
+        print("[storage-t-coverage-CI] FAIL: dual-type dispatcher guards incomplete (Ship-B P0, S-5/V5):")
+        for f in dual_failures:
+            print(f"  {f}")
+        return 1
+    print("[storage-t-coverage-CI] dual-type drift dispatchers: both-param asserts + exhaustive-else verified")
+
+    if "--require-decimal-branches" in sys.argv:
+        dec_failures = check_decimal_branches(dispatch_text)
+        if dec_failures:
+            print("[storage-t-coverage-CI] FAIL: decimal branch coverage (Ship-B P2 gate):")
+            for f in dec_failures:
+                print(f"  {f}")
+            return 1
+        print("[storage-t-coverage-CI] decimal branches: all wire dispatchers covered")
 
     print(f"[storage-t-coverage-CI] PASS: all {len(all_variants)} STORAGE_T variants covered in tt:: family")
     print("[storage-t-coverage-CI] meta-discipline M4 / Pillar B6 verified")

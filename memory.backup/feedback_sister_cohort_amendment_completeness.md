@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 219ed0c3-e701-4643-ab2e-f475f7b60f64
-  sister_specs: [feedback_audit_canonical_sister_before_new_infra.md, feedback_no_defer_for_effort.md, feedback_iteration_spiral_signals_audit_meta_gap.md, feedback_forward_promise_auto_write_verification.md, feedback_proactive_rename_candidate_surfacing.md, feedback_skill_edit_cohort_checklist.md, feedback_verify_every_enumerated_site_at_close.md]
+  sister_specs: [feedback_audit_canonical_sister_before_new_infra.md, feedback_no_defer_for_effort.md, feedback_iteration_spiral_signals_audit_meta_gap.md, feedback_forward_promise_auto_write_verification.md, feedback_proactive_rename_candidate_surfacing.md, feedback_skill_edit_cohort_checklist.md, feedback_verify_every_enumerated_site_at_close.md, feedback_capture_and_check_are_model_bounded.md]
   tags: [session-continuity, doc-discipline, enumeration-discipline]
 ---
 

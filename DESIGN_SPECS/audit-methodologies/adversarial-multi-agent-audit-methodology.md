@@ -39,6 +39,7 @@ The policy lives in memory `feedback_adversarial_framing_default_for_checks` (BI
    An adversarial completeness check fed only the plan's headline list re-derives a **false floor**; fed the DAG + findings-index, it measures *real* coverage. The artifact existing ≠ the artifact being used — handing it to the hunter is what makes it work.
 4. **Treat DISAGREEMENT as signal.** When agents disagree on a finding's severity or existence, that IS the finding — do NOT average it. Resolve it by READING THE DISPUTED CODE YOURSELF.
 5. **Anti-self-attestation applies to the agents too.** Adversarial agents OVER-RATE (they're hunting, so they inflate). Verify every surviving finding against the actual code before acting — adversarial agents are a HUNTING tool, never a verdict.
+6. **A MUTATING agent returns a CHANGE-MANIFEST.** Default-prefer read-only review agents (report findings, the orchestrator fixes). When an agent MUST mutate (e.g. a Workflow / worktree agent), its return MUST enumerate what it did — files touched · what changed · what's now OWED / needs-propagation — because a subagent's edits are out-of-the-orchestrator's-model BY DEFINITION, so without the manifest they become undocumented drift the orchestrator can't capture or propagate (`feedback_capture_and_check_are_model_bounded`).
 
 ## Worked examples (this session — 4 proofs in one day)
 

@@ -4,7 +4,7 @@ description: "Capture every decision/finding/work-product AT the moment it's pro
 metadata: 
   node_type: memory
   type: feedback
-  sister_specs: [feedback_address_med_low_findings_not_just_high_crit.md, feedback_forward_promise_auto_write_verification.md, feedback_run_doc_ci_tools_first_never_hand_verify.md, feedback_session_decision_log_discipline.md, user_structure_is_correctness_risk_control_for_capital.md, feedback_fold_findings_into_destination_plan.md]
+  sister_specs: [feedback_address_med_low_findings_not_just_high_crit.md, feedback_forward_promise_auto_write_verification.md, feedback_run_doc_ci_tools_first_never_hand_verify.md, feedback_session_decision_log_discipline.md, user_structure_is_correctness_risk_control_for_capital.md, feedback_fold_findings_into_destination_plan.md, feedback_capture_and_check_are_model_bounded.md]
   tags: [doc-discipline, scope-discipline]
   originSessionId: f32196ed-3aec-4520-b332-f2f9f8af7e2c
 ---

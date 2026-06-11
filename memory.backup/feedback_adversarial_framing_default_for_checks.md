@@ -6,7 +6,7 @@ metadata:
   type: feedback
   tags: [audit-methodology]
   originSessionId: 3e806606-ac69-40fd-ac33-45906443bae4
-  sister_specs: [feedback_heavier_default_audit_posture_for_capital.md, feedback_independence_for_judgment_not_mechanical.md, feedback_passing_test_is_not_verification.md, feedback_runtime_executor_mode_for_judgment_skills.md]
+  sister_specs: [feedback_heavier_default_audit_posture_for_capital.md, feedback_independence_for_judgment_not_mechanical.md, feedback_passing_test_is_not_verification.md, feedback_runtime_executor_mode_for_judgment_skills.md, feedback_capture_and_check_are_model_bounded.md]
 ---
 
 When running ANY audit/check/review, frame it ADVERSARIALLY by default: prompt the agent(s) to FIND the bug / REFUTE the claim / prove the code wrong / default to suspicion — NOT to "verify it's correct." A confirmatory pass rationalizes its way to GREEN; an adversarial pass hunts. Prefer MULTIPLE independent adversarial agents (different lenses/scopes) over one — they cross-check each other, and their DISAGREEMENT is signal.

@@ -144,11 +144,12 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/data-disciplines/raii-destructor-with-cluster-reorg-interaction.md` | 3-first-canonical | data-oriented-design, concurrency | 3 |
 | `DESIGN_SPECS/data-disciplines/running-aggregate-vs-cycle-recompute-discipline.md` | 2-draft | data-discipline, running-aggregate, o1-compute, +2 | 0 |
 
-## concurrency-pattern (11 specs)
+## concurrency-pattern (12 specs)
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
-| `DESIGN_SPECS/concurrency-patterns/concurrency-model-summary.md` | 2-draft | concurrency, data-oriented-design | 2 |
+| `DESIGN_SPECS/concurrency-patterns/concurrency-model-summary.md` | 2-draft | concurrency, data-oriented-design | 3 |
+| `DESIGN_SPECS/concurrency-patterns/cross-thread-multiword-read-consistency-discipline.md` | 3-first-canonical | concurrency, data-oriented-design, framework-discipline | 1 |
 | `DESIGN_SPECS/concurrency-patterns/cross-thread-snapshot-publish-cluster-isolation.md` | 3-first-canonical | concurrency, data-oriented-design, latency-discipline | 4 |
 | `DESIGN_SPECS/concurrency-patterns/dpdk-userspace-networking-pattern.md` | 2-draft | concurrency, dpdk, userspace-networking, +2 | 0 |
 | `DESIGN_SPECS/concurrency-patterns/io-uring-kernel-bypass-pattern.md` | 3-first-canonical | concurrency, io-uring, kernel-bypass-lite, +2 | 0 |

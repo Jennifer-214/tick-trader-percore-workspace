@@ -5,7 +5,7 @@ version: 1.0
 established: 2026-05-18
 tags: [concurrency, data-oriented-design]
 surface: [hot-path, slow-path, oms-drainer, producer, gui-thread]
-sister_specs: [cache-line-discipline.md, universal-registry-bitmap-dispatcher-pattern.md]
+sister_specs: [cache-line-discipline.md, universal-registry-bitmap-dispatcher-pattern.md, cross-thread-multiword-read-consistency-discipline.md]
 applies_at_skills: [/hft-audit, /blindspot-scan]
 ---
 

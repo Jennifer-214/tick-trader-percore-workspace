@@ -1,0 +1,16 @@
+---
+name: feedback_tag_disposition_at_fix_time
+description: Audit findings + tracked backlog items (findings / TECH_DEBT / PARITY / decision sentinels) carry a LIVE disposition (open / in-flight / closed / superseded) that flips AT fix-time at the source of truth — so the set is always queryable. Never leave a fixed item looking open or a shipped one looking deferred; never reconstruct disposition by archaeology at re-triage. Tag-as-you-fix.
+metadata: 
+  node_type: memory
+  type: feedback
+  tags: [audit-methodology, ledger-discipline, ssot]
+  sister_specs: [feedback_forward_promise_auto_write_verification.md, feedback_address_med_low_findings_not_just_high_crit.md, feedback_archived_changelog_preservation_discipline.md, feedback_verify_by_context_not_count.md, feedback_verify_every_enumerated_site_at_close.md]
+  originSessionId: 3e806606-ac69-40fd-ac33-45906443bae4
+---
+
+When an audit produces findings, or a backlog is tracked (findings / TECH_DEBT / PARITY / a decision sentinel), every item carries a **live disposition** — open / in-flight / closed / superseded — and that status **flips AT fix-time, at the source of truth**. The set stays queryable ("what's still open?") at every moment; you never reconstruct an item's state by archaeology later.
+
+**Why:** the cost of skipping the tag is invisible at fix-time and brutal at re-triage. (1) The 141 `.E` findings + 93 TECH_DEBT + 5 PARITY backlog (D-98) had no live per-item disposition → the pre-`.E.1` Net-1 re-triage has to reconstruct open-vs-closed by reading every ship's postmortem + grepping code, and risks re-surfacing already-closed items as if open. (2) Same session, the D-76 decision sentinel still read `"build deferred to fresh session"` **11 days after** the subsystem shipped as tag `.E.0.5` — a stale-status pointer that made an in-flight pickup mis-read the pipeline position (it looked like the next ship when it was already done). Both are one shape: status not flipped at the fix → the set lies until someone pays to reconcile it.
+
+**How to apply:** (1) Findings/backlog get a status FIELD, flipped the moment the item is fixed/closed/superseded — the canonical mechanisms already exist: the TECH_DEBT `{open,in-flight,closed}.md` 3-file split (items MOVE on disposition), the decision-log `<!-- STATUS -->` sentinels, the forward-promise auto-write. Use them; don't spin up a parallel un-tracked list. (2) When an audit fixes things, tag the dispositioned items in the SAME pass as the fix (document-as-you-go), not "later." (3) A re-triage that finds itself *reconstructing* disposition = the signal the discipline was skipped upstream → close the gap (a disposition field / a CI check), don't just re-pay the reconstruction cost. (4) Frozen historical records (a postmortem's "what we found") are exempt — immutable point-in-time records, not a live queryable backlog (sister: [[feedback_archived_changelog_preservation_discipline]]). Sisters: [[feedback_forward_promise_auto_write_verification]] (ship-close promises land → verify), [[feedback_address_med_low_findings_not_just_high_crit]] (every finding gets a disposition), [[feedback_verify_every_enumerated_site_at_close]]. Meta-anti-pattern home: **WH-7** in `meta-anti-pattern-index.md` (harvest candidate at next `/close-session`).

@@ -4,7 +4,7 @@ description: "For externally-DEFINED values/semantics (exchange price+qty precis
 metadata: 
   node_type: memory
   type: feedback
-  sister_specs: [feedback_single_source_of_truth_discipline.md, feedback_two_foundations_determinism_vs_correctness.md]
+  sister_specs: [feedback_single_source_of_truth_discipline.md, feedback_two_foundations_determinism_vs_correctness.md, feedback_single_source_the_computation_not_just_the_mode.md]
   tags: [ssot, framework-discipline, wire-format]
   originSessionId: b1ce1b7e-9d36-4f05-a210-c616603d3d9d
 ---

@@ -4,7 +4,7 @@ description: "Audit findings at EVERY severity get addressed as found — not ju
 metadata: 
   node_type: memory
   type: feedback
-  sister_specs: [feedback_proportionate_response_to_audit_findings.md, feedback_no_defer_for_effort.md, feedback_heavier_default_audit_posture_for_capital.md, feedback_consult_on_audit_findings.md, feedback_structural_enforcement_when_memory_insufficient.md, feedback_document_as_you_go_over_catch_at_end.md]
+  sister_specs: [feedback_proportionate_response_to_audit_findings.md, feedback_no_defer_for_effort.md, feedback_heavier_default_audit_posture_for_capital.md, feedback_consult_on_audit_findings.md, feedback_structural_enforcement_when_memory_insufficient.md, feedback_document_as_you_go_over_catch_at_end.md, feedback_tag_disposition_at_fix_time.md]
   tags: [audit-methodology, scope-discipline, planning-discipline]
   originSessionId: 816a7be5-c788-407f-8304-b4b174dd9eb0
 ---

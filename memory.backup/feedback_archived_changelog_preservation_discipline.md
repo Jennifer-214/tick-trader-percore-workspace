@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: f7bb757d-2b7c-4ba6-9c4a-1c7d60bff493
-  sister_specs: [feedback_operator_facing_doc_cohort_at_cfg_deletion.md, feedback_categorical_triggers_over_hardcoded_refs.md, feedback_claude_md_guidelines_not_stuff_to_do.md, feedback_multi_surface_deletion_ordering_discipline.md, feedback_terminology_evolution_bridge_not_history_rewrite.md, feedback_verify_symbol_existence_at_plan_drafting_time.md]
+  sister_specs: [feedback_operator_facing_doc_cohort_at_cfg_deletion.md, feedback_categorical_triggers_over_hardcoded_refs.md, feedback_claude_md_guidelines_not_stuff_to_do.md, feedback_multi_surface_deletion_ordering_discipline.md, feedback_terminology_evolution_bridge_not_history_rewrite.md, feedback_verify_symbol_existence_at_plan_drafting_time.md, feedback_tag_disposition_at_fix_time.md]
   tags: [deletion-discipline, migration-discipline, ledger-discipline]
 ---
 

@@ -36,3 +36,11 @@ When amending one Class catalog (e.g., Class 26) OR DESIGN_SPEC (e.g., structura
 - `/capture-audit` Check 9 (memory→DESIGN_SPECS sister cross-ref) catches drift at commit-time
 
 **Lifecycle:** **Stage 3 first canonical v1.0 at v5.15.5.F.4d.1.B.8** (promoted Stage 2→Stage 3 at ship close per /capture-audit Check 7; 4 distinct AMENDMENT-layer canonical applications at single ship: Class 27 + Class 25 sister-catalog cross-ref amendments + canonical-sister-extension-discipline.md v1.0→v1.1 + /dod-audit sister-skill amendment). Stage 4 cohort migration promotion at 2nd canonical at next ship surface (e.g., NEW Class catalog with sister cross-refs to existing classes OR NEW DESIGN_SPEC requiring parallel sister-spec amendments).
+
+**Decision-fold sweep clause (D-172c, 2026-06-10):** when a D-NNN decision SUPERSEDES or
+FOLDS a finding's disposition, sweep the plan-body rows still carrying the OLD disposition
+in the SAME session — a decision log that moves on while body rows say "low priority" (or
+keep a superseded formula) is the same silent cross-ref drift, between the log and the body.
+Canonical instance: Ship-B S-1 (D-127 folded F-B; rows kept the stale disposition); the
+clause then fired ON ITSELF within hours at the fold-fidelity re-fire (the superseded `2r`
+formula swept from plan rows) — confirming the class.

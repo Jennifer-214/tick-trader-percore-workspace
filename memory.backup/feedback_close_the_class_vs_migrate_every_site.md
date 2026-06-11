@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: e0432c39-f2fb-4a6b-844b-d2ce99975ef0
-  sister_specs: [feedback_structural_fix_for_recurring_class.md, feedback_no_defer_for_effort.md, feedback_guard_matrix_bounds_foundation_hardening.md, feedback_verify_every_enumerated_site_at_close.md, feedback_opportunistic_tech_debt_closure.md, feedback_guards_compound_enforcement_is_leverage.md]
+  sister_specs: [feedback_structural_fix_for_recurring_class.md, feedback_no_defer_for_effort.md, feedback_guard_matrix_bounds_foundation_hardening.md, feedback_verify_every_enumerated_site_at_close.md, feedback_opportunistic_tech_debt_closure.md, feedback_guards_compound_enforcement_is_leverage.md, feedback_domain_guards_for_bulk_transforms.md]
   tags: [structural-fix, migration-discipline, scope-discipline]
 ---
 

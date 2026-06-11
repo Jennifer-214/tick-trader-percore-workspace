@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: c95ac2bd-d963-485c-b028-60d593bce711
-  sister_specs: [feedback_independence_for_judgment_not_mechanical.md, feedback_heavier_default_audit_posture_for_capital.md, feedback_never_skip_thoroughness_unless_explicit.md, feedback_no_question_boxes.md]
+  sister_specs: [feedback_independence_for_judgment_not_mechanical.md, feedback_heavier_default_audit_posture_for_capital.md, feedback_never_skip_thoroughness_unless_explicit.md, feedback_no_question_boxes.md, feedback_adversarial_framing_default_for_checks.md]
   tags: [audit-methodology, operator-collaboration]
 ---
 

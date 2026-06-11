@@ -38,6 +38,8 @@ purpose: Single-point-of-access reference index for the entire .E sub-sprint tra
 
 **Total `.E` sub-sprint effort:** ~25-35 days focused work (excluding deferred ships).
 
+**▶ STATUS (2026-06-10):** the `.E.0` phase is COMPLETE — `.E.0` audit + `.E.0.1` determinism net (tag `.E.0.6`) + `.E.0.2` meta-error-tracking (tag `.E.0.5`) + the numeric core (Ship A/A.5/B = tags `.E.0.7/.8/.9`) all SHIPPED. **NEXT = `.E.1` Foundation** (Core→Node rename + per-node drainer absorption + multi-exchange registry; v0.1 plan, pre-audit-gate). Pre-`.E.1` gates per the `.E.0.5` DoD (D-78): **Net-1** PERSIST characterization + golden-master on the current engine + **guard-coverage-matrix no-HOLE** for the surfaces `.E.1` touches.
+
 ---
 
 ## 1. Plan body documents
@@ -46,9 +48,9 @@ purpose: Single-point-of-access reference index for the entire .E sub-sprint tra
 
 | Ship | Plan body | Status |
 |---|---|---|
-| `.E.0` | `subplans/2026-05-28-v5.15.5.F.4d.1.E.0-precoding-plan-audit-verification.md` | DRAFTED v0.2 (Job A + Job B) |
-| `.E.0.1` | `subplans/2026-05-29-v5.15.5.F.4d.1.E.0.1-pre-E1-foundational-fix-net.md` | DRAFTED v0.1 (Net-2; 5 net-gating FP+replay fixes; gates `.E.1`) |
-| `.E.0.2` | `subplans/2026-05-29-v5.15.5.F.4d.1.E.0.2-meta-error-tracking-subsystem.md` | v0.2 — 4 pieces (catalog + cascade-audit Check 12 + close-out harvest + hardened /precoding-audit-gate Piece 4 [D-77/D-78]); BUILDING 2026-05-29 (B/C/D/E done; F dogfood done; G ship-close pending) |
+| `.E.0` | `subplans/2026-05-28-v5.15.5.F.4d.1.E.0-precoding-plan-audit-verification.md` | ✅ EXECUTED (read-only audit phase; 141 findings → Net-1/Net-2 scope + Classes 37+) |
+| `.E.0.1` | `subplans/2026-05-29-v5.15.5.F.4d.1.E.0.1-pre-E1-foundational-fix-net.md` | ✅ SHIPPED 2026-05-31 as tag `.E.0.6` (Net-2; FP+replay+locale determinism net; standing CI gates) |
+| `.E.0.2` | `subplans/2026-05-29-v5.15.5.F.4d.1.E.0.2-meta-error-tracking-subsystem.md` | ✅ SHIPPED 2026-05-30 as tag `.E.0.5` (4 pieces: catalog `meta-anti-pattern-index.md` + /capture-audit Check 12 + /close-session harvest Stage 4.5/5.5 + hardened /precoding-audit-gate; close-G verified) |
 | `.E.1` | `subplans/2026-05-28-v5.15.5.F.4d.1.E.1-foundation.md` | DRAFTED v0.1 (substantial; ~3600 lines; RED per dive — amendment-bound) |
 | `.E.2` | `subplans/2026-05-28-v5.15.5.F.4d.1.E.2-headless-configs-docs.md` | DRAFTED v0.1 |
 | `.E.3` | `subplans/2026-05-28-v5.15.5.F.4d.1.E.3-ws-api-persistent-connections.md` | DRAFTED v0.1 (substantial; ~2500 lines) |

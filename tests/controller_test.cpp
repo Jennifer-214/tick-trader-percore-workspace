@@ -5747,12 +5747,18 @@ int main() {
                 r->state.cores[c].entries_processed = 10 + c;
                 r->state.cores[c].exits_processed   = 8 + c;
                 r->state.cores[c].core_realized     = MQ(50.0 - 10.0 * c);
-                r->state.cores[c].core_fees         = MQ(2.5);
+                r->state.cores[c].core_fees         = MQ(2.5 + 0.5 * c);  // D-110 extend: distinct per core (was flat 2.5)
                 r->state.cores[c].core_wins         = 6 + c;
                 r->state.cores[c].core_losses       = 2;
                 r->state.cores[c].core_open_notional = MQ(100.0 + 50.0 * c);
                 r->state.cores[c].core_peak_balance  = MQ(2600.0 + 100.0 * c);
                 r->state.cores[c].core_dd_pct        = MQ(0.03 * c);
+                // D-110 extend (adversarial-audit finding): the remaining persisted per-core money
+                // fields were SAVED but never asserted. Set distinct values + assert money-exact below.
+                r->state.cores[c].allocated_balance  = MQ(2500.0 + 25.0 * c);
+                r->state.cores[c].core_gross_wins    = MQ(120.0 + 10.0 * c);
+                r->state.cores[c].core_gross_losses  = MQ(40.0 + 5.0 * c);
+                r->state.cores[c].last_entry_price   = MQ(60000.0 + 100.0 * c);
                 if (c == 2) CORE_STATE_FLAG_SET(r->state.cores[c], KILL_TRIPPED);
                 else        CORE_STATE_FLAG_CLR(r->state.cores[c], KILL_TRIPPED);
                 r->state.cores[c].core_ks_trips_total = c;
@@ -5803,6 +5809,17 @@ int main() {
             r->oms.taker_fills_count = 13;
             r->oms.paper_session_start_us = 1700000000000000ULL;  // arbitrary epoch us
 
+            // D-110 extend (adversarial-audit finding): Test 2 opened NO position, so the 7 persisted
+            // Position<F> money fields never round-tripped. Open slot 0 with distinct money values.
+            r->oms.portfolio.positions[0].entry_price       = MQ(61234.56789012);
+            r->oms.portfolio.positions[0].quantity          = MQ(0.01234567);
+            r->oms.portfolio.positions[0].entry_fee         = MQ(0.75);
+            r->oms.portfolio.positions[0].take_profit_price = MQ(62000.0);
+            r->oms.portfolio.positions[0].stop_loss_price   = MQ(60500.0);
+            r->oms.portfolio.positions[0].original_tp       = MQ(62100.0);
+            r->oms.portfolio.positions[0].original_sl       = MQ(60400.0);
+            r->oms.portfolio.active_bitmap |= (uint16_t)1u;  // slot 0 live so it's a real position
+
             int saved = tt::ShardedSnapshot_Save<64>(&r->state, test_path, 0);
             check("round-trip: save returns 1",
                   saved == 1);
@@ -5812,10 +5829,10 @@ int main() {
             int loaded = tt::ShardedSnapshot_Load<64>(&r2->state, test_path, 0);
             check("round-trip: load returns 1",
                   loaded == 1);
-            check("round-trip: oms.balance restored",
-                  fabs(Money_ToDouble(r2->state.oms->balance) - 9837.42) < 1e-6);
-            check("round-trip: oms.realized_pnl restored",
-                  fabs(Money_ToDouble(r2->state.oms->realized_pnl) - (-162.58)) < 1e-6);
+            check("round-trip: oms.balance restored (money-exact, D-110)",
+                  Money_Eq(r2->state.oms->balance, MQ(9837.42)));
+            check("round-trip: oms.realized_pnl restored (money-exact, D-110)",
+                  Money_Eq(r2->state.oms->realized_pnl, MQ(-162.58)));
             // v5.15.5.C.2.1 (test-strength audit INFO close): verify the
             // kill_switch_tripped bit round-tripped through FOREACH_OMS_
             // PERSIST_FIELD's BIT-kind save (extract bit→int wire) +
@@ -5824,14 +5841,14 @@ int main() {
                   BITMAP_IS_SET(r2->state.oms->oms_state_flags,
                                 tt::MASK_OMS_STATE_KILL_SWITCH_TRIPPED));
             // v5.15.5.C.3 Phase 10 — 7 additional PERSIST fields directly asserted.
-            check("round-trip: oms.ks_peak_balance restored",
-                  fabs(Money_ToDouble(r2->state.oms->ks_peak_balance) - 11250.75) < 1e-6);
-            check("round-trip: oms.total_fees restored",
-                  fabs(Money_ToDouble(r2->state.oms->total_fees) - 42.50) < 1e-6);
-            check("round-trip: oms.total_maker_fees restored",
-                  fabs(Money_ToDouble(r2->state.oms->total_maker_fees) - 15.25) < 1e-6);
-            check("round-trip: oms.total_taker_fees restored",
-                  fabs(Money_ToDouble(r2->state.oms->total_taker_fees) - 27.25) < 1e-6);
+            check("round-trip: oms.ks_peak_balance restored (money-exact, D-110)",
+                  Money_Eq(r2->state.oms->ks_peak_balance, MQ(11250.75)));
+            check("round-trip: oms.total_fees restored (money-exact, D-110)",
+                  Money_Eq(r2->state.oms->total_fees, MQ(42.50)));
+            check("round-trip: oms.total_maker_fees restored (money-exact, D-110)",
+                  Money_Eq(r2->state.oms->total_maker_fees, MQ(15.25)));
+            check("round-trip: oms.total_taker_fees restored (money-exact, D-110)",
+                  Money_Eq(r2->state.oms->total_taker_fees, MQ(27.25)));
             check("round-trip: oms.maker_fills_count restored",
                   r2->state.oms->maker_fills_count == 7u);
             check("round-trip: oms.taker_fills_count restored",
@@ -5856,8 +5873,25 @@ int main() {
             for (int c = 0; c < 4; ++c) {
                 check("round-trip: entries_processed",
                       r2->state.cores[c].entries_processed == (uint64_t)(10 + c));
-                check("round-trip: core_realized",
-                      fabs(Money_ToDouble(r2->state.cores[c].core_realized) - (50.0 - 10.0 * c)) < 1e-6);
+                check("round-trip: core_realized (money-exact, D-110)",
+                      Money_Eq(r2->state.cores[c].core_realized, MQ(50.0 - 10.0 * c)));
+                // D-110 extend: the 8 remaining persisted per-core money fields, money-exact.
+                check("round-trip: core_fees (money-exact, D-110)",
+                      Money_Eq(r2->state.cores[c].core_fees, MQ(2.5 + 0.5 * c)));
+                check("round-trip: allocated_balance (money-exact, D-110)",
+                      Money_Eq(r2->state.cores[c].allocated_balance, MQ(2500.0 + 25.0 * c)));
+                check("round-trip: core_open_notional (money-exact, D-110)",
+                      Money_Eq(r2->state.cores[c].core_open_notional, MQ(100.0 + 50.0 * c)));
+                check("round-trip: core_gross_wins (money-exact, D-110)",
+                      Money_Eq(r2->state.cores[c].core_gross_wins, MQ(120.0 + 10.0 * c)));
+                check("round-trip: core_gross_losses (money-exact, D-110)",
+                      Money_Eq(r2->state.cores[c].core_gross_losses, MQ(40.0 + 5.0 * c)));
+                check("round-trip: last_entry_price (money-exact, D-110)",
+                      Money_Eq(r2->state.cores[c].last_entry_price, MQ(60000.0 + 100.0 * c)));
+                check("round-trip: core_peak_balance (money-exact, D-110)",
+                      Money_Eq(r2->state.cores[c].core_peak_balance, MQ(2600.0 + 100.0 * c)));
+                check("round-trip: core_dd_pct (money-exact, D-110)",
+                      Money_Eq(r2->state.cores[c].core_dd_pct, MQ(0.03 * c)));
                 check("round-trip: core_kill_tripped",
                       CORE_STATE_FLAG_IS_SET(r2->state.cores[c], KILL_TRIPPED) == (c == 2));
                 check("round-trip: regime current",
@@ -5881,6 +5915,21 @@ int main() {
                 check("round-trip: RMSE squared_errors[2] restored",
                       fabs(r2->state.cores[c].confidence.rmse.window.samples[2] - (0.001 * (c + 1) + 0.0002)) < 1e-9);
             }
+            // D-110 extend: the 7 persisted Position<F> money fields round-trip money-exact (slot 0).
+            check("round-trip: Position entry_price (money-exact, D-110)",
+                  Money_Eq(r2->state.oms->portfolio.positions[0].entry_price, MQ(61234.56789012)));
+            check("round-trip: Position quantity (money-exact, D-110)",
+                  Money_Eq(r2->state.oms->portfolio.positions[0].quantity, MQ(0.01234567)));
+            check("round-trip: Position entry_fee (money-exact, D-110)",
+                  Money_Eq(r2->state.oms->portfolio.positions[0].entry_fee, MQ(0.75)));
+            check("round-trip: Position take_profit_price (money-exact, D-110)",
+                  Money_Eq(r2->state.oms->portfolio.positions[0].take_profit_price, MQ(62000.0)));
+            check("round-trip: Position stop_loss_price (money-exact, D-110)",
+                  Money_Eq(r2->state.oms->portfolio.positions[0].stop_loss_price, MQ(60500.0)));
+            check("round-trip: Position original_tp (money-exact, D-110)",
+                  Money_Eq(r2->state.oms->portfolio.positions[0].original_tp, MQ(62100.0)));
+            check("round-trip: Position original_sl (money-exact, D-110)",
+                  Money_Eq(r2->state.oms->portfolio.positions[0].original_sl, MQ(60400.0)));
         }
 
         // ---- Test 3: refuse legacy v11 magic cleanly ----
@@ -7807,6 +7856,28 @@ e3_skip_load:;
         check("mode 1 post-exit: core 0 fees ≈ round-trip × 2 legs",
               Money_ToDouble(r->state.cores[0].core_fees) > 2.0 &&
               Money_ToDouble(r->state.cores[0].core_fees) < 2.6);
+        // oms-ts-2 (Net-1 .E.0.10): cross-check the TWO independent net-P&L derivations —
+        // per-core core_realized/core_fees vs the OMS aggregates — never reconciled pre-Net-1.
+        // Only core 0 is active (cores 1+ verified untouched below) → sum(core_X) == cores[0].
+        check("oms-ts-2: sum(core_realized) reconciles oms.realized_pnl",
+              Money_Eq(r->state.cores[0].core_realized, r->oms.realized_pnl));
+        check("oms-ts-2: sum(core_fees) reconciles oms.total_fees",
+              Money_Eq(r->state.cores[0].core_fees, r->oms.total_fees));
+        // === D-190 P&L-gross single-source regression guard ===
+        // Realized gross = round((exit−entry)×qty) (1-mul, the canonical Money_FillGross) — NOT
+        // round(exit×qty)−round(entry×qty) (2-mul). The lone DrainPostFill 2-mul outlier diverged from
+        // the OMS books by 1 ULP under decimal half-even (D-105 fixed the rounding MODE but missed the
+        // FORMULA). These inputs make the two forms differ; the guards catch (a) a reverted divergence
+        // and (b) Money_FillGross ever changing away from the canonical 1-mul.
+        {
+            Money g_entry = MQ(35763.61465912), g_exit = MQ(40044.86126179), g_qty = MQ(6.89383318);
+            Money g_1mul  = Money_FillGross(g_entry, g_exit, g_qty);
+            Money g_2mul  = Money_Sub(Money_Mul(g_exit, g_qty), Money_Mul(g_entry, g_qty));
+            check("D-190: the 1-mul and 2-mul P&L gross DIVERGE on realistic inputs (the bug was real)",
+                  !Money_Eq(g_1mul, g_2mul));
+            check("D-190: Money_FillGross is the canonical 1-mul (round the price diff once, then scale)",
+                  Money_Eq(g_1mul, Money_Mul(Money_Sub(g_exit, g_entry), g_qty)));
+        }
 
         // Other cores untouched.
         check("mode 1: core 1 open_notional still 0 (no fills)",
@@ -19604,6 +19675,109 @@ e3_skip_load:;
               new_regime == REGIME_RANGING && rs.current_regime == REGIME_RANGING);
     }
 
+    // ----- rsf-ts-1 (Net-1 .E.0.10): Regime_Classify DIRECT classification --------------------------
+    // Pre-Net-1 only the cold-start gate (Test 6) was covered; the score/direction/strength/hysteresis
+    // logic (RegimeDetector.hpp:520-623) was untested. These PIN the classification + hysteresis so the
+    // .E.1 rename can't silently change regime behavior. Thresholds set explicitly (not defaults).
+    {
+        ControllerConfig<64> cfg = ControllerConfig_Default<64>();
+        cfg.regime_crossover_threshold = FPN_FromDouble<64>(0.0005);
+        cfg.regime_strong_crossover    = FPN_FromDouble<64>(0.0015);
+        cfg.regime_r2_threshold        = FPN_FromDouble<64>(0.70);
+        cfg.regime_vol_spike_ratio     = FPN_FromDouble<64>(2.0);
+        cfg.regime_model_weight        = FPN_Zero<64>();
+
+        // Test 7 — strong uptrend: crossover > strong + high R² → TRENDING, commits after hysteresis
+        {
+            RegimeState<64> rs; Regime_Init(&rs, 3); rs.current_regime = REGIME_RANGING;
+            RegimeSignals<64> sig; memset(&sig, 0, sizeof(sig));
+            sig.short_count = 100; sig.long_count = 100;
+            sig.ema_sma_spread = FPN_FromDouble<64>(0.003);   // abs > strong_crossover (0.0015)
+            sig.ema_above_sma  = 1;
+            sig.short_r2       = FPN_FromDouble<64>(0.85);    // > r2_threshold → consistent
+            sig.vol_ratio      = FPN_FromDouble<64>(1.0);     // no spike
+            for (int i = 0; i < 3; ++i) Regime_Classify(&rs, &sig, &cfg);
+            check("rsf-ts-1: strong uptrend (crossover>strong + high R²) → proposed TRENDING",
+                  rs.proposed_regime == REGIME_TRENDING);
+            check("rsf-ts-1: TRENDING commits to current_regime after 3-cycle hysteresis",
+                  rs.current_regime == REGIME_TRENDING);
+            check("rsf-ts-1: trending_score >= 2 (crossover + R² signals) recorded",
+                  rs.last_trending_score >= 2);
+        }
+        // Test 8 — mild uptrend: crossover between mild + strong threshold → MILD_TREND
+        {
+            RegimeState<64> rs; Regime_Init(&rs, 1); rs.current_regime = REGIME_RANGING;
+            RegimeSignals<64> sig; memset(&sig, 0, sizeof(sig));
+            sig.short_count = 100; sig.long_count = 100;
+            sig.ema_sma_spread = FPN_FromDouble<64>(0.001);   // > mild (0.0005), < strong (0.0015)
+            sig.ema_above_sma  = 1;
+            sig.short_r2       = FPN_FromDouble<64>(0.85);
+            sig.vol_ratio      = FPN_FromDouble<64>(1.0);
+            Regime_Classify(&rs, &sig, &cfg);                 // hysteresis 1 → proposed updates now
+            check("rsf-ts-1: mild uptrend (mild < crossover < strong) → MILD_TREND",
+                  rs.proposed_regime == REGIME_MILD_TREND);
+        }
+        // Test 9 — strong crossover with EMA below SMA → TRENDING_DOWN (down > up signals)
+        {
+            RegimeState<64> rs; Regime_Init(&rs, 1); rs.current_regime = REGIME_RANGING;
+            RegimeSignals<64> sig; memset(&sig, 0, sizeof(sig));
+            sig.short_count = 100; sig.long_count = 100;
+            sig.ema_sma_spread = FPN_FromDouble<64>(-0.003);  // abs > strong; below SMA
+            sig.ema_above_sma  = 0;
+            sig.short_r2       = FPN_FromDouble<64>(0.85);
+            sig.vol_ratio      = FPN_FromDouble<64>(1.0);
+            Regime_Classify(&rs, &sig, &cfg);
+            check("rsf-ts-1: strong crossover + EMA below SMA → TRENDING_DOWN",
+                  rs.proposed_regime == REGIME_TRENDING_DOWN);
+        }
+        // Test 10 — volatility spike + no direction (low R²) → VOLATILE
+        {
+            RegimeState<64> rs; Regime_Init(&rs, 1); rs.current_regime = REGIME_RANGING;
+            RegimeSignals<64> sig; memset(&sig, 0, sizeof(sig));
+            sig.short_count = 100; sig.long_count = 100;
+            sig.ema_sma_spread = FPN_Zero<64>();              // no crossover
+            sig.short_r2       = FPN_FromDouble<64>(0.20);    // < r2_threshold → inconsistent
+            sig.vol_ratio      = FPN_FromDouble<64>(3.0);     // > vol_spike_ratio → spike
+            Regime_Classify(&rs, &sig, &cfg);
+            check("rsf-ts-1: vol spike + inconsistent (low R²) → VOLATILE",
+                  rs.proposed_regime == REGIME_VOLATILE);
+            check("rsf-ts-1: volatile_score >= 2 (spike + inconsistent) recorded",
+                  rs.last_volatile_score >= 2);
+        }
+        // Test 11 — no trend + no spike → RANGING (default classification)
+        {
+            RegimeState<64> rs; Regime_Init(&rs, 1); rs.current_regime = REGIME_RANGING;
+            RegimeSignals<64> sig; memset(&sig, 0, sizeof(sig));
+            sig.short_count = 100; sig.long_count = 100;
+            sig.short_r2  = FPN_FromDouble<64>(0.10);          // weak everything
+            sig.vol_ratio = FPN_FromDouble<64>(1.0);
+            Regime_Classify(&rs, &sig, &cfg);
+            check("rsf-ts-1: no trend + no spike → RANGING (default)",
+                  rs.proposed_regime == REGIME_RANGING);
+        }
+        // Test 12 — hysteresis LAG: proposed flips immediately; current_regime lags until threshold cycles
+        {
+            RegimeState<64> rs; Regime_Init(&rs, 3); rs.current_regime = REGIME_RANGING;
+            RegimeSignals<64> sig; memset(&sig, 0, sizeof(sig));
+            sig.short_count = 100; sig.long_count = 100;
+            sig.ema_sma_spread = FPN_FromDouble<64>(0.003);
+            sig.ema_above_sma  = 1;
+            sig.short_r2       = FPN_FromDouble<64>(0.85);
+            sig.vol_ratio      = FPN_FromDouble<64>(1.0);
+            Regime_Classify(&rs, &sig, &cfg);                 // cycle 1
+            check("rsf-ts-1: hysteresis — proposed flips to TRENDING on cycle 1",
+                  rs.proposed_regime == REGIME_TRENDING);
+            check("rsf-ts-1: hysteresis — current_regime STILL RANGING after 1 cycle (lags)",
+                  rs.current_regime == REGIME_RANGING);
+            Regime_Classify(&rs, &sig, &cfg);                 // cycle 2
+            check("rsf-ts-1: hysteresis — current still RANGING after 2 cycles (< threshold 3)",
+                  rs.current_regime == REGIME_RANGING);
+            Regime_Classify(&rs, &sig, &cfg);                 // cycle 3
+            check("rsf-ts-1: hysteresis — current commits to TRENDING on cycle 3 (== threshold)",
+                  rs.current_regime == REGIME_TRENDING);
+        }
+    }
+
     // ----- v5.14.5.A: CS targets X-macro append (FoxML_Core port) ------------------------------------
     printf("\n--- v5.14.5.A: cross-sectional target plumbing ---\n");
     {
@@ -20131,6 +20305,23 @@ e3_skip_load:;
               rc == 3);
         check("v5.14.4.B.1: last_seen_trade_id bumped to max (200)",
               oms.last_seen_trade_id == 200);
+        // tsa-live-2 (Net-1 .E.0.10): characterize the OMS SIDE-EFFECT — pre-Net-1 the test
+        // asserted only the replay count + watermark, never that the fills actually applied.
+        // ApplyMissedFills → OrderManager_HandleFill → Portfolio_OpenSlot per buy fill.
+        // (NB: the event-log append is a no-op in this fixture — OrderEventLog_Append early-returns
+        //  when the log buffer isn't allocated [count>=capacity, capacity=0 here]; the in-struct
+        //  portfolio bitmap is the evidence the fills applied. Golden-master discovery, not a bug.)
+        // tsa-live-2 STRENGTHENED (Net-1 .E.0.10, adversarial-audit finding): `>=1` was vacuous —
+        // it passed even though all 3 fills collapse into ONE slot. The 3 order_ids miss the (empty)
+        // order_bitmap → released-order fallback to cores[0] (Reconcile.hpp:243-245) → each buy opens
+        // core 0's single slot → last-write-wins. Documented fallback corner (TECH_DEBT-072); this
+        // PINS the current collapse behavior so the .E.1 rename can't silently change it.
+        check("tsa-live-2: 3 same-core-fallback buys collapse to exactly 1 position (released-order->cores[0]; TECH_DEBT-072)",
+              Portfolio_CountActive(&oms.portfolio) == 1);
+        check("tsa-live-2: surviving slot-0 carries qty 0.001 (all 3 fills share qty)",
+              Money_Eq(oms.portfolio.positions[0].quantity, MQ(0.001)));
+        check("tsa-live-2: surviving slot-0 entry = last-applied fill's price 50050 (array-order last-write-wins; pins the collapse)",
+              Money_Eq(oms.portfolio.positions[0].entry_price, MQ(50050.0)));
     }
     {
         // Test 4 — mixed (some old, some new) → only new ones replayed

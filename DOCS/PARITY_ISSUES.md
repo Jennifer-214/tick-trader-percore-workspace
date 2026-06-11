@@ -1497,6 +1497,29 @@ related_specs:
 - **Cross-ref:** Ship-B plan B3/B6 (dispatcher decimal forks); `feedback_single_source_of_truth_discipline`; PARITY-033 (sister fee_rate_taker surface).
 - **RESOLUTION (Ship-B P0.3, 2026-06-10 — D-177; the framing INVERTED by full-cohort enumeration):** the DBL payload column proved COHERENTLY PERCENT-SPACE (~20 PCT rows + their 0-100 clamp ranges + the file convention `cfg_parse_field` ÷100 + the per-core manual parser `:2840` ÷100 + the GUI ×100 display all agree) — the wrong side was `cfg_assign_field`/`cfg_diff_field` and their "default is stored as fraction" contract comment, NOT the row data as this entry recommended. Fix: ÷100 PCT scaling added to BOTH dispatchers (mirroring the file parser) + the ONE fraction-authored outlier row `lazy_rebuild_price_threshold_pct` re-authored percent-form (`DBL(0.0005,0,0.1)`→`DBL(0.05,0,10.0)`, value-identical through the new scaling — it was also the one row already living UNMASKED on the registry default, and its FILE-parse path was live-wrong 100× pre-fix). Suite 3246/0; boot values byte-unchanged; GUI reset/diff/--changed-only go from 100×-wrong to correct. The Workaround's "do NOT delete manual inits" hold is LIFTED. Residuals ride P2 by design: `cfg_save_field` exact-decimal-string (S-15) + the cfg-file→stored round-trip over all money rows (D-100 gate row).
 
+```yaml
+id: PARITY-038
+title: per-core vs OMS realized-P&L gross formula divergence (DrainPostFill 2-mul vs books 1-mul)
+surface_tags: [accounting, money, realized-pnl, slow-path, decimal-epoch, single-source, drainer]
+severity: high
+parity_axis: per-core core_realized vs OMS realized_pnl (same-run, same-fills reconciliation)
+status: closed
+detected_at: v5.15.5.F.4d.1.E.0.10 (2026-06-10; adversarial audit of the Net-1 characterization tests)
+related_specs:
+  - decision log D-190 (amends D-105)
+  - memory/feedback_single_source_the_computation_not_just_the_mode.md
+  - memory/feedback_passing_test_is_not_verification.md
+```
+**Symptom:** the per-core `core_realized` sum does not reconcile `oms.realized_pnl` exactly — they drift by 1 ULP (1e-8) on ~25% of realistic fills, accumulating over the run.
+
+**Root cause:** the realized-P&L gross was open-coded in 3 sites with 2 different formulas. `DrainPostFill` (`ControllerEventLoop.hpp:1536`) computed `round(exit×qty) − round(entry×qty)` (2-mul) while `Portfolio_CloseSlot:395` + mode-0 `:880` + `EventLoop_OnEvent:1962` use `round((exit−entry)×qty)` (1-mul). Under decimal half-even the two diverge. **PREEXISTING** (FPN era `.E.0.6`, ~1e-19 gap, invisible); the Ship-B P2b decimal flip (838bf09) activated it. D-105 fixed the rounding MODE uniformly but missed the FORMULA split + the DrainPostFill site (D-190). Sister landmine: LANDMINES.md Landmine 8.
+
+**Fix path:** NEW canonical `Money_FillGross` (1-mul SSoT, `Portfolio.hpp:397`) — ALL 5 price-diff gross sites (3 realized + 2 unrealized) route through it → reconcile by construction. Regression guard in `controller_test` pins the 1-mul/2-mul divergence as real (catches a reverted formula). LANDED at v5.15.5.F.4d.1.E.0.10 (D-190); suite 3290/0.
+
+**Status:** closed (v5.15.5.F.4d.1.E.0.10; D-190). Pending a confirming `/parity-check` + the backtest-golden regen check (D-105-flagged; unit suite is clean — clean inputs don't diverge).
+
+**Cross-ref:** D-190; D-105 (the incomplete predecessor decision); AP4 (rounding-mode anti-pattern, extended to formula-SSoT); `feedback_single_source_the_computation_not_just_the_mode`.
+
 ---
 
 ## Audit log

@@ -186,6 +186,22 @@ watching it actually work).
 
 ---
 
+## Landmine 8 — the decimal epoch silently ACTIVATES latent parallel-derivation divergences (set 2026-06-10, v5.15.5.F.4d.1.E.0.10)
+
+**Symptom:** a money value computed two ways — e.g. P&L gross as `round((exit−entry)×qty)` (1-mul) in one accounting path and `round(exit×qty)−round(entry×qty)` (2-mul) in another — reconciled fine under the OLD binary/FPN money but diverges by 1 ULP under the NEW decimal money, silently, on ~25% of realistic inputs, ACCUMULATING. Here: per-core `core_realized` stopped reconciling `oms.realized_pnl`.
+
+**Root cause:** under FPN binary (2⁻⁶⁴ granularity) the two formulas differed by ~1e-19 — invisible at any sane tolerance, so the inconsistency was graded "not a present bug." Decimal half-even at 1e-8 amplifies the SAME formula gap to a real 1 ULP. The P2b decimal flip (Ship B, `838bf09`) mechanically carried the FPN formulas into decimal and ACTIVATED the latent divergence.
+
+**Why the obvious fix didn't catch it:** "apply ONE canonical rounding mode everywhere" (D-105) is necessary but NOT sufficient — it governs HOW each multiply rounds, not WHETHER two paths compute the same expression. A uniform mode does not make two different formulas (1-mul vs 2-mul) agree. The formula split survived the mode fix.
+
+**Proper fix (shipped `.E.0.10`, D-190):** single-source the COMPUTATION — one `Money_FillGross` helper (`Portfolio.hpp:397`) that every gross site calls, so the values reconcile by construction, not by discipline.
+
+**Future-Claude debugging hint:** after ANY representation/epoch change (binary→decimal, truncate→half-even, scale change), RE-OPEN every "benign inconsistency" judgment AND sweep the money path for parallel/dual derivations of the same value. If you see two open-coded forms of one quantity (`Money_Sub(Mul,Mul)` vs `Mul(Sub,qty)`), that's the smell.
+
+**Reference:** D-190 (amends D-105); PARITY-038; memory `feedback_single_source_the_computation_not_just_the_mode`; v5.15.5.F.4d.1.E.0.10.
+
+---
+
 ## How to add a new landmine
 
 When you encounter a non-obvious pitfall (segfault, race, parallelism

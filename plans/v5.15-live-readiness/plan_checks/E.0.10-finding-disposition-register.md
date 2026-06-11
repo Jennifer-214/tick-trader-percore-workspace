@@ -1,0 +1,118 @@
+---
+type: finding-disposition-register
+ship: v5.15.5.F.4d.1.E.0.10 (Net-1)
+status: IN-PROGRESS (Phase-1 re-triage; grows as findings are code-verified)
+source_corpus: plan_checks/E.0-audit-reports/pre-implementation-findings/ (141 findings) + DOCS/tech-debt/open.md (93) + DOCS/PARITY_ISSUES.md (5 open)
+disposition_legend: "CLOSED-by-<ship> | OPEN | NEW (post-Ship-B) | SUPERSEDED | PENDING-RETRIAGE"
+verification_rule: "disposition flips ONLY on a code grep/READ-of-context — never a token-count, never an assumption (the fpmem lesson: USE_NATIVE_128 showed 8 refs but was inert)."
+dogfoods: feedback_tag_disposition_at_fix_time (WH-7) + feedback_consult_indexes_before_full_reads
+---
+
+# `.E.0.10` finding-disposition register
+
+Live disposition of the `.E.0` backlog (141 findings + 93 TECH_DEBT + 5 PARITY), re-triaged against the **post-Ship-B** engine. Every item carries a status flipped at verification; the set stays queryable instead of reconstructed.
+
+## Re-triage progress
+| batch | status |
+|---|---|
+| fpmem cluster (core 3 + layout) | ✅ VERIFIED CLOSED (2026-06-10) |
+| fpmem cluster (granular ×8) | ⏳ PENDING |
+| E.1 bucket (30, incl. `conc-5` CRIT) | 🔄 IN-PROGRESS — HIGH targets verified; MED/LOW + 3 detail-reads pending |
+| PERSIST subset of PRE-PAPER-TEST | ⏳ PENDING |
+| E.2 / E.3 / E.5 / E.6 (routed to own ships) | ⏳ PENDING (disposition only) |
+| BACKLOG-STANDALONE (24) + 93 TECH_DEBT + 5 PARITY | ⏳ PENDING |
+
+## fpmem cluster — VERIFIED (code-read, not token-count)
+
+| finding | sev | disposition | evidence |
+|---|---|---|---|
+| `fpmem-1` FPN_Sqrt<64> native-path IEEE round-trip voids deterministic NR sqrt | HIGH | **CLOSED-by-.E.0.9-P5** | native-forwarding block REMOVED; `FixedPointN.hpp:1246` "the flag is inert"; ONE FP path (certified 16B bodies) — no native branch to round through `double` |
+| `fpmem-2` strict-aliasing/misaligned `__uint128_t` pun in `_to_fp64`/`_from_fp64` (accounting UB) | HIGH | **CLOSED-by-.E.0.9-P5** | FP64 conversion block REMOVED (`FixedPointN.hpp:490`); `FixedPoint64.hpp` deleted; 5 residual refs are historical comments/tombstones, not live code |
+| `fpmem-3` FPN native path untested — tests omit `USE_NATIVE_128` (tested≠shipped) | HIGH | **CLOSED-by-.E.0.9-P5** | native-FP pin REMOVED from `controller_test` (`CMakeLists:221/233/244`); one FP path → nothing to diverge |
+| `fpmem` layout static_assert (sizeof==16) | LOW | **CLOSED** | `static_assert(sizeof(FPN_Binary<64>)==16)` `FixedPointN.hpp:44` + Money `:102` present |
+| `fpmem` granular ×8 (DivNoAssert-sat / FPN_Negate-untested / Mul-AddSat-sat / ToDouble-dead-work / IsValidFinite-recompute / FromString-overflow / partial-native-spec / `FP64_AddSat`-dead) | mixed | **PENDING-RETRIAGE** | `FP64`-prefixed → likely CLOSED (FP64 gone); `FPN_`-op ones may apply to the new `FPN_Binary`/`Money` op surface → per-finding grep owed |
+
+**Method note (the fpmem lesson, harvest candidate):** grep-COUNT misleads in BOTH directions. `USE_NATIVE_128` = 8 refs but INERT (build-fingerprint string + provenance comments). Disposition requires reading what each ref IS, never its presence/absence. Sharpens `feedback_run_doc_ci_tools_first_never_hand_verify` → *verify-by-context, not by-count.*
+
+## E.1 + characterization targets — re-triage (verified by context, 2026-06-10)
+
+**Pattern: structural/concurrency findings were CLOSED by later ships; the TEST-GAP findings ("no test for X") are still OPEN — and they ARE Net-1's deliverable** (nobody wrote them; that is the point of Net-1).
+
+| finding | sev | disposition | evidence (code-read) |
+|---|---|---|---|
+| `conc-bc-1` paper-reset no quiescence handshake | HIGH | **CLOSED** | park handshake present — `paper_reset_in_progress` → slow-paths park (`Run.hpp:1670`; `Async.hpp:564` "slow-paths park (yield)"; producer clears on reset complete) |
+| `hpg-bc-1` parity oracle validates `SG_Evaluate` stub | HIGH | **SUPERSEDED → Net-1** | `LegacyReferenceDriver` GONE (only a comment, `StrategyParameters.hpp:671`); the fix = F-059 golden-master, a Net-1 deliverable |
+| `tsa-live-2` `Reconcile_ApplyMissedFills` asserts count+watermark, not balance | HIGH | **✅ DONE (Net-1 #2)** | extended Test 3 (`controller_test:20131+`): after 3 replayed buy fills, `Portfolio_CountActive(&oms.portfolio) >= 1` → the portfolio side-effect is now asserted. **build+suite GREEN 3286/0.** Golden-master finding: event-log append is a no-op in this fixture (buffer unallocated) → the in-struct portfolio bitmap is the right evidence (documented in the test). |
+| `rsf-ts-1` `Regime_Classify` no direct classification test | HIGH | **OPEN → Net-1 target** | only the cold-start gate is tested (`controller_test:19602`, short_count<64); score/direction/strength/hysteresis untested |
+| `oms-ts-2` `sum(core_realized)==oms->realized_pnl` never reconciled | HIGH | **✅ DONE (Net-1 #3)** | added to the mode-1 post-exit test (`controller_test:7810+`): `Money_Eq(cores[0].core_realized, oms.realized_pnl)` + `Money_Eq(cores[0].core_fees, oms.total_fees)`; **build+suite GREEN 3288/0** — the two independent net-P&L derivations RECONCILE exactly (no divergence). |
+| `persist-8` paper-reset omits `ExecutionCore_Init` → zombie active | HIGH | **OPEN → Net-1 target** | per-core reset registry resets ctx fields, but the `ExecutionCore<F>*` PERSISTS (`CoreCtxInitRegistry.hpp:94/160` "pointer; registration persists") — its hot mirror (active/live_tp/live_sl) not in the reset list → characterize that paper-reset clears it (a test pins it: fail=fix, pass=characterized) |
+| `persist-dod-1` torn un-sync snapshot save | HIGH | **LIKELY-CLOSED** | the archive-flow save (`Async.hpp:605`) runs INSIDE the park-quiesce window (slow-paths parked) → not torn |
+| `wfa-1` warm-restart restores positions exit-disarmed | HIGH | **LIKELY-CLOSED** | restore ARMS the gates — `ShardedSnapshotPersist.hpp:54` "stay armed-but-inactive", `:681` "hot-path SG/TP/SL gates armed" |
+| `D-110` snapshot money-exact round-trip | HIGH | **✅ DONE (Net-1 #1)** | 7 money assertions TIGHTENED `fabs(ToDouble-V)<1e-6` → `Money_Eq(x, MQ(V))` (`controller_test:5816-5860`); **build + suite GREEN 3285/0** → decimal recovery round-trips money EXACTLY (probe came back CLEAR — no representation bug) |
+
+## Adversarial audit of the 3 money-core characterizations (2026-06-10, 3 independent agents)
+
+Operator-directed adversarial audit (completeness / vacuousness / frozen-bug lenses, none fed my findings). **It CORRECTED the "3/6 done green" assessment — 2 of 3 had real issues + surfaced 2 ENGINE findings a self-audit would have confirmed green.**
+
+| target | verdict | finding |
+|---|---|---|
+| **oms-ts-2** | ❌ **FROZE A FALSE INVARIANT + ENGINE finding** | the two P&L derivations ROUND DIFFERENTLY: `oms.realized_pnl` uses `Money_Mul(Money_Sub(exit,entry),qty)` (1 rounded mul, `OrderManager.hpp:1209-1216`); `core_realized` uses `Money_Sub(Money_Mul(exit,qty),Money_Mul(entry,qty))` (2 rounded muls, `ControllerEventLoop.hpp:1528-1540`). Agent compiled both + swept 20M realistic triples → **25.01% diverge by 1 ULP (1e-8), and it ACCUMULATES** (`core_realized` never re-synced). My `Money_Eq` passed ONLY on the test's rounding-clean inputs (60000/61200/0.01) → enshrines a contract that fails ~25% on live data + masks a latent accounting discrepancy. **ENGINE FINDING:** two P&L truths drift by rounding — what Ship-B exact-money was meant to eliminate. FIX: unify the gross (both share ONE `Money_Mul(Money_Sub(exit,entry),qty)`) → reconciliation legitimately exact; OR tolerance-band the test + ledger the divergence. |
+| **tsa-live-2** | ⚠️ **WEAK + masks a recovery question** | `Portfolio_CountActive >= 1` is invariant to how many fills applied: all 3 boot-replayed buys route to core 0 (empty order_bitmap → fallback, `Reconcile.hpp:236-245`) → `Portfolio_OpenSlot` OVERWRITES slot 0 ×3 (`Portfolio.hpp:347-372`) → exactly 1 position, **2 of 3 fills' qty/price silently dropped**. `>=1` passes even if only 1 fill applied. Silent on no-balance-debit (buys net-on-close). FIX: `== 1` + assert surviving Position qty/price (last-write-wins) + document the collapse; **investigate whether dropping 2 replayed fills is intended or a recovery defect.** |
+| **D-110** | ✅ **assertions CORRECT, coverage INCOMPLETE** | the 6 OMS + 1 core money fields are correctly money-exact + non-vacuous (fresh `r2` baseline rules out no-op-load false-pass — verified). BUT **8 per-core money fields** (allocated_balance, core_fees, core_open_notional, core_gross_wins/losses, last_entry_price, core_peak_balance, core_dd_pct) + **7 Position<F> money fields** are SAVED-but-UNASSERTED (`ShardedSnapshotPersist.hpp:187-213` + `:169`; Test 2 never opens a position); pnl_feeder double-tolerance + a Money/FPN_Binary sizeof type-pun. FIX: extend Test 2 — assert all per-core money-exact + open a Position with distinct values + assert each. |
+
+**2 ENGINE findings to ledger** (operator disposition needed): (1) per-core vs OMS P&L derivation rounding divergence; (2) boot-reconcile same-core fill collapse / data-loss.
+
+**Meta (harvest candidate):** a GREEN characterization test masked a real engine bug — oms-ts-2 froze a false invariant that holds only on clean inputs. Self-audit confirms; adversarial refutes. Validates adversarial-audit-for-capital.
+
+## Process-error retro — why "3/6 done green" was WRONG (2026-06-10)
+
+**Root cause: treated SUITE-GREEN as VERIFIED + SELF-ATTESTED my own Phase-2 work** — both things the corpus already forbids:
+- A green test proves the assertion-as-written holds on the input-as-written — NOT that it's the right invariant (oms-ts-2), complete (D-110: 1/9 per-core fields), or non-vacuous (tsa-live-2: `>=1`). = **AR-4 verification-by-proxy at the test-WRITING layer.**
+- Didn't enumerate/generalize: "reconciles exactly" from ONE clean input (**AR-1**); tightened seen-fields vs the full persist registry set (paste-tool-output). Both are codified memories I failed to apply.
+- Self-attested: declared own work done on green; no independent adversarial pass (which I have at `/close-session` 5.5 + `/precoding-audit-gate` 3.5) until operator forced it.
+- **DEEPER:** no TRIGGER fired the disciplines on "I wrote a test + it's green." Recurrence-despite-memory = **M7**.
+
+**Codification queue (from this retro):**
+1. memory `feedback_passing_test_is_not_verification` (green ≠ verified; adversarial-verify own characterization work before "done").
+2. **M7 structural:** the adversarial 3-lens pass (complete / non-vacuous / not-frozen-bug) FIRES on characterization/test work before "done" — the missing trigger.
+3. DESIGN_SPEC `characterization-test-discipline` (the 3 lenses).
+4. meta-anti-pattern-index harvest: green-test-as-done + adversarial-beats-self.
+5. PARITY: per-core vs OMS P&L derivation rounding divergence.
+6. **BLOCKER:** MEMORY.md at byte-cap (WH-6) → compress before landing new memories.
+
+**More-issues sweep owed:** P&L divergence likely a CLASS (other paired per-core-vs-aggregate money derivations); re-check the fpmem "CLOSED-by-context" calls with the same skepticism; run concurrency/replay lenses.
+
+**ENGINE root-cause TRACED → D-105 (foreseen-but-incompletely-solved):**
+- The 1-mul/2-mul split is **PREEXISTING** — present in the FPN era (`.E.0.6`: DrainPostFill `:1532` 2-mul vs mode-0 `:880` 1-mul vs Portfolio_CloseSlot 1-mul). Invisible at FPN's 2⁻⁶⁴ granularity (~1e-19); the P2b flip (838bf09) mechanically carried it into decimal where half-even at 1e-8 = a real 1-ULP divergence. **The flip ACTIVATED a latent bug, didn't write it.**
+- **D-105 (2026-05-30) IDENTIFIED THIS COHORT** ("decimal-sensitive cohort that must move together: handle_sell_fill + EventLoop_OnEvent exit + Portfolio_CloseSlot gross + fee muls + replay") AND the risk ("live≠replay if not uniform"). BUT the solution was **uniform rounding MODE (half-even), not single-source FORMULA.** Same mode ≠ same value when one path is 1-mul and another 2-mul. AND D-105 judged the existing inconsistency "correctness-WIN, not a present bug (0 CRITICAL)" because "entry/exit/replay all truncate the same way → balances reconcile" — TRUE under FPN truncation, FALSE once decimal half-even amplifies the formula gap. AND the cohort list (`:1959-1967` + `:862-890`) appears to have **missed the DrainPostFill mode-1 path (`:1528-1540`)** — the 2-mul outlier.
+- **Net:** foreseen (cohort + risk), but solution-incomplete (mode-uniformity ≠ formula-SSoT) + cohort-incomplete + a "not-a-present-bug" judgment that didn't survive the representation change.
+
+**Codification this opens:** amend **D-105** (add formula-SSoT requirement + the cohort gap); extend **AP4** (rounding-mode class → also "single-source the COMPUTATION, not just the mode, for any money value derived ≥2 ways"); NEW **landmine** (parallel money derivations agree under truncation/binary, diverge under decimal — the epoch activates latent divergence); NEW **meta-anti-pattern** (judged "not a present bug" under the OLD representation without checking it survives the NEW one); PARITY entry; **codebase-wide sweep** for parallel/dual money derivations.
+
+**✅ FIX LANDED (D-190, 2026-06-10):** NEW `Money_FillGross(entry, mark, qty)` (1-mul SSoT, `Portfolio.hpp:397`) — ALL 5 price-diff gross sites route through it (realized: `Portfolio_CloseSlot` + `ControllerEventLoop:879/1537`; unrealized: `Portfolio_ComputePnL:443` + MTM kill-switch `:2896`). The `:1536` 2-mul→1-mul is the only behavior change; unrealized folds are behavior-neutral (already 1-mul). **3288/0** + clean compile. **ADVERSARIALLY VERIFIED:** structural grep proved completeness — and CAUGHT 2 sites (`:443`/`:2896`) the initial enumeration missed → folded (the completeness lens working). Memories `feedback_passing_test_is_not_verification` + `feedback_single_source_the_computation_not_just_the_mode` codified; D-190 decision-log amendment landed. STILL OWED: backtest-golden regen check (D-105-flagged; unit suite unaffected — clean inputs); AP4 class extension + characterization-test DESIGN_SPEC + M7 "adversarial-pass-fires-on-test-writing" trigger (deeper process codification); the other Net-1 tests (tsa-live-2 strengthen, D-110 extend); codebase sweep for sibling parallel money derivations.
+
+**✅ "DON'T REINTRODUCE" NET LANDED (3 layers, 2026-06-10):**
+1. **Behavioral** — D-190 regression test in `controller_test` (now 3290/0): pins the 1-mul/2-mul divergence as REAL on divergent inputs (verified non-vacuous) + guards `Money_FillGross` against reverting to 2-mul.
+2. **Structural** — `tools/check_money_gross_single_source.py` wired into **pre-commit Check G** (scoped to money-path accounting headers): catches a re-introduced open-coded 2-mul gross at commit. Teeth-proofed via `..._selftest.sh` — and the self-test CAUGHT a Landmine-5 bug in the guard itself (`.resolve()` followed the symlinked `tools/` → wrong root; fixed to `.absolute()`). Both enrolled in TOOLS.md.
+3. **Institutional** — D-190 + PARITY-038 + Landmine 8 + 2 memories + the `Money_FillGross` doc-comment.
+Doc sweep CLEAN (tools-inventory + budget + metadata all green).
+
+**✅ ADVERSARIAL SIBLING-DIVERGENCE SWEEP (3 independent agents, 2026-06-10):** hunted the whole money path for OTHER D-190-class (parallel-derivation) divergences. **VERDICT: clean for steady-state** — gross/net/total_fee/exit_fee(market)/open_notional-decrement/balance/realized_pnl/win-loss-bucketing/boot-capital-split all reconcile across the live + replay + backtest paths. The agents CROSS-CHECKED each other: Agent 1 rated a warm-restart fee-replay HIGH (claimed core_realized vs realized_pnl diverge by the full fee); Agent 3 REFUTED it by reading the callers (both replay folds pass `Money_Zero()` rate → both gross-of-fee → they AGREE; `ControllerEventLoop.hpp:951-952` + `OmsFieldRegistry.hpp:741-743`). Two items surfaced, both pre-existing/known:
+  - **NEW (low/latent) — track for `.E.1` fee work:** the warm-restart replay folds (`Portfolio_FromEventLog`, `EventLoopState_ReconstructPerCoreFromEventLog`) IGNORE the stored booked fee `e.fee` and recompute `notional×rate`. Harmless today (rate=0, documented gross-of-fee boot replay) but a latent trap — they should CONSUME `e.fee` (re-single-source the fee exactly as D-190 single-sourced the gross). Composes with D-123/D-173 fee booking; natural home = `.E.1` adapter/fee rework.
+  - **KNOWN (D-123, deferred to `.E.1`/`.E.3`):** live venue-ingest is still a `double` pipeline (`OrderResult` carries `double`; `money_from_double_payload` bridge; REST avg-price = `cum_quote/exec_qty` double-division diverges from WS `"L"` exact). D-123 already DECIDED the fix (parse venue strings → decimal, carry decimal on `OrderResult`, book reported commission source-exact). Live is pre-validation. No new action — verified tracked.
+
+**Codified the operator preference (2026-06-10):** memory `feedback_adversarial_framing_default_for_checks` — audit/check/review skills default to ADVERSARIAL framing (FIND/REFUTE, not confirm) + prefer multiple independent agents that cross-check. (MEMORY.md hit its byte-cap a 5th time this session — a real WH-6 structural problem; the always-loaded index needs a context-aware-loading split, not more trimming.)
+
+**✅ NET-1 CONTINUATION (2026-06-10) — the 2 adversarial-audit findings on the prior 3 tests CLOSED:**
+- **tsa-live-2 STRENGTHENED** (`controller_test:20156+`): `>=1` → `==1` + qty 0.001 + surviving entry 50050 (array-order last-write-wins) — non-vacuous; pins the released-order→cores[0] collapse. Cross-linked TECH_DEBT-072 BOTH ways (the collapse is a sibling aspect of the documented fee-fallback; not a new defect — a per-core one-position-model limitation).
+- **D-110 EXTENDED** (`controller_test:5749+`): all 9 persisted per-core money fields (was just `core_realized`) + 7 `Position<F>` money fields (Test 2 now opens a position) assert money-exact across save→recover. Suite **3331/0**.
+- **Deferred debt → TECH_DEBT** (per `feedback_opportunistic_tech_debt_closure` — subsume-vs-adjacent): TECH_DEBT-162 (replay folds ignore `e.fee`), -163 (MEMORY.md WH-6 byte-cap), -164 (D-190 process-codification residue). Golden-regen verified NOT-owed (kernel-only golden, D-190 doesn't touch it); double-ingest D-123-tracked.
+- **`rsf-ts-1` ✅ DONE** (`controller_test:19678+`): Regime_Classify direct classification — 12 non-vacuous checks across TRENDING (strong) / MILD_TREND / TRENDING_DOWN / VOLATILE / RANGING + the hysteresis LAG (proposed flips on cycle 1, current commits on cycle == threshold). Thresholds set explicitly. Suite **3343/0**. (Was: only the cold-start gate covered.)
+- **STILL OPEN in Net-1:** `persist-8` (paper-reset ExecutionCore flag), `hpg-bc-1` (F-059 golden-master), `oms-ts-1` (fee-blind), `persist-dod-1`/`wfa-1` (confirm); `conc-5` CRITICAL runtime-confirm; the Phase-1 backlog re-triage (93 TECH_DEBT + 5 PARITY); batch adversarial-verify the new tests at ship close.
+
+## CRITICALs (must runtime-confirm on a disposable clone — corpus hard-constraint #3)
+- `conc-5` (E.1) — submit_queue multi-producer race. **PENDING** — `.E.1` CHANGES-BY-DESIGN claim is "LIKELY/verify"; confirm via `tsan` + drainer/slow stress. NOT closed; the rename must handle it.
+- `live-bc-1` (E.6) — Binance global/US endpoint split. **PENDING** — routed to `.E.6` (out of Net-1 scope); disposition only.
+
+## Net-1 characterization targets (the PERSIST kept-surfaces, by finding ID)
+`oms-ts-1` (fee-blind ±$15 check) · `oms-ts-2` (core/oms reconciliation) · `persist-dod-1` (torn snapshot) · `wfa-1` (warm-restart exit-disarmed) · `tsa-live-2` (recovery count-not-balance) · `persist-8` (paper-reset zombie active) · `hpg-bc-1` (stub-oracle / F-059) · `rsf-ts-1` (Regime_Classify untested). → each becomes a characterization test in Phase 2; disposition (already-tested? buggy?) verified in Phase 1.

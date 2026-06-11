@@ -1,5 +1,12 @@
 # v5.15 — Live-readiness hardening + ModelHandle structural unification — MASTER
 
+> [!IMPORTANT]
+> **▶ CURRENT STATE (2026-06-10) — the MASTER body below is HISTORICAL (drafted 2026-05-12, pre-`.E`); preserved as the original sprint-origin record, not the live state.**
+> Most recent ship: **`v5.15.5.F.4d.1.E.0.9` — Ship B (decimal money)**, SHIPPED 2026-06-10 (engine `c2d0987`, suite 3285/0).
+> The **`.E` sub-sprint** (per-node sharding + decimal-money numeric core + live-readiness) is the live trajectory — full index at `E-MASTER-REFERENCE.md`. **`.E.0` phase COMPLETE**: `.E.0.1` determinism net = tag `.E.0.6`; `.E.0.2` meta-error-tracking = tag `.E.0.5`; numeric core A/A.5/B = `.E.0.7/.8/.9` — all shipped.
+> **NEXT = `.E.1` Foundation: Core→Node rename + per-node drainer absorption + multi-exchange registry** (v0.1 plan, pre-audit-gate). Pre-`.E.1` gates per the `.E.0.5` DoD = Net-1 PERSIST characterization + guard-matrix-no-HOLE.
+> **Live sprint-state SSoT for the `.E` era:** `CLAUDE.local.md` § Current sprint state + `E-MASTER-REFERENCE.md` + `decision-logs/v5.15.5.F.4d.1.E-architecture-v2.md` (D-168..D-189).
+
 **Date drafted:** 2026-05-12 (post v5.14 sprint close + v5.14.post1 patch)
 **Branch:** `feat/v5.15-live-readiness` (CREATE from engine tag `v5.14.post1` =
 commit `1752fde`, per 2026-05-12 amendment — v5.14 has known
@@ -262,9 +269,9 @@ override:**
 **TECH_DEBT-005 unification (hot-swap strict-mode handling via shadow-load):**
 
 Boot does Free + null + flag on validate failure. Hot-swap dispatcher
-at `EngineSharded.hpp:2914+` (single-zoo) + `:2846` (ensemble) both do
-flag-only (v5.10.0c "log-and-leave" semantics; comment at :2803-2806
-notes the TODO).
+in `EngineSharded.hpp` (single-zoo + ensemble) both do
+flag-only (v5.10.0c "log-and-leave" semantics; the TODO comment
+notes it). [Line anchors stripped — pre-`.B.6` subfolder split.]
 
 **Plan-draft 1 (capture-pointer-and-revert) had a FATAL FLAW** caught by
 /parity-check PARITY-023: `_Free` destroys data IN-PLACE; captured
@@ -450,9 +457,9 @@ multi-horizon worker uses the same pattern.
    - `reconcile_mode` parser at
      `CoreFrameworks/ControllerConfig.hpp:2371-2381` (canonical
      reference for trading_mode string-keyed enum parse)
-   - `EngineSharded_Run` at `CoreFrameworks/EngineSharded.hpp:572`
+   - `EngineSharded_Run` in `CoreFrameworks/EngineSharded.hpp`
      (boot path; insert point for LiveReadiness_Verify gate)
-   - Single-zoo hot-swap site at `CoreFrameworks/EngineSharded.hpp:2855`
+   - Single-zoo hot-swap site in `CoreFrameworks/EngineSharded.hpp`
      (`v5.10.0c "log-and-leave"` semantics; TECH_DEBT-005 target)
    - `train_model_worker_fn` (single-horizon canonical post-v5.14.post1)
      at `Backtest/BacktestPanels.hpp:3206-3266`

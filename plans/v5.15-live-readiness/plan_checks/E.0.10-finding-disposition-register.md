@@ -12,6 +12,24 @@ dogfoods: feedback_tag_disposition_at_fix_time (WH-7) + feedback_consult_indexes
 
 Live disposition of the `.E.0` backlog (141 findings + 93 TECH_DEBT + 5 PARITY), re-triaged against the **post-Ship-B** engine. Every item carries a status flipped at verification; the set stays queryable instead of reconstructed.
 
+## 📍 SESSION STATE + CLOSE-OUT PLAN (2026-06-10 — end of the big `.E.0.10` session)
+
+**WHERE WE ARE:** `.E.0.10` (Net-1) in progress. SHIPPED this session (all committed + pushed — engine `5e65933`, workspace `71d96b3`): **D-190** (P&L gross SSoT — the real capital bug) + triple-guard + codification; **4 Net-1 characterization tests** (oms-ts-2 / tsa-live-2 / D-110 / rsf-ts-1, suite 3343/0); **persist-8 fix** (LOW); **2 NEW DESIGN_SPECS** (adversarial-multi-agent-audit-methodology + cross-thread-multiword-read-consistency); the persist-dod-1 re-exam + the corrected concurrency picture.
+
+**THE BIG OPEN ITEM — cross-thread torn-read class:** SYSTEMIC (9 sites; 3 LIVE capital-control incl. the reconciler that *corrects capital on a torn read* = Knight-shaped). **DELIBERATE accepted-race** (2026-04-09), structural fix SLATED for `.E.1` (aggregator-single-writer + seqlock-published money snapshot; F-2/D-74). It is NOT "left open" — it's TRACKED + PLANNED + (proposed) GATED.
+
+**🚧 LIVE-ENABLE HARD GATE (proposed — needs a decision-log entry + ideally a boot-time refuse):** **live trading MUST be BLOCKED until the torn-read class + `conc-5` are closed** (lands `.E.1`). The capital-critical races (kill-switch, reconciler) are pre-production NOW; the gate guarantees they cannot reach live before the fix. This is what makes the `.E.1` deferral SAFE rather than open.
+
+**🔑 OPERATOR ARCHITECTURE INSIGHT:** the torn-read fix (published snapshot) + the decoupled monitoring plane + headless/SSH viewing are **ONE pattern** — the GUI already reads the safe published snapshot; the `.E.1` aggregator-published-snapshot is the foundation for all three. → fold into `plans/_future/2026-05-12-decoupling-endgoal-roadmap.md`.
+
+**CLOSE-OUT PLAN (the in-depth work — deserves a FOCUSED phase, fresh context):**
+1. **Live-enable HARD gate** (safety; decision-log + boot-refuse).
+2. **Deeper concurrency audit** — the 9 sites + a full sweep, as `.E.1` prep (a focused adversarial multi-agent pass).
+3. **Anti-pattern + CI check** → `RECURRING_BUG_PATTERNS` (catches future instances; content in the new spec).
+4. **`.E.1` structural fix** (aggregator rework — closes the class).
+5. **Adversarial-audit SKILL** (so "check" auto-fires the methodology — addresses the over-lump failure mode directly; extends TECH_DEBT-164 + `feedback_auto_route_input_to_matching_skill`).
+6. **Remaining Net-1** characterization tests (oms-ts-1 / hpg-bc-1 / wfa-1) — in-session-able.
+
 ## Re-triage progress
 | batch | status |
 |---|---|

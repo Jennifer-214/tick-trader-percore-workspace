@@ -97,6 +97,9 @@ Cross-thread state (kill_switch_tripped / flatten_pending / recovery_until_us / 
 - `memory_order_acquire` / `memory_order_release` — default for cross-thread visibility
 - `memory_order_seq_cst` — rarely needed; overkill for most uses
 
+**Reader-side consistency (multi-word state):**
+- A non-owner thread reading drainer/owner-written **multi-word** state — esp. money (`Money`/`FixedPoint` = 16B = 2 machine words) and `Position` — must read it through a **seqlock or a consistent-copy** (published snapshot). A bare multi-word load compiles to multiple `mov`s → a read concurrent with a write can TEAR. Single-word/≤8B atomically-loadable fields are exempt; >8B is not. See `cross-thread-multiword-read-consistency-discipline.md` (the OMS money cluster is the canonical instance: 9 cross-thread reader sites; fix rides the `.E.1` aggregator).
+
 ---
 
 ## Sister patterns

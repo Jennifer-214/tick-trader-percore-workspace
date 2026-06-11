@@ -1,8 +1,9 @@
 ---
 type: handoff
 date: 2026-06-10
-status: active
+status: superseded
 ship_context: post-Ship-B (v5.15.5.F.4d.1.E.0.9 SHIPPED)
+superseded_by: 2026-06-10-E.0.10-net1-concurrency-checkpoint-handoff.md
 ---
 
 # Handoff — Ship B SHIPPED; `.E.0` phase COMPLETE; next = `.E.1` Foundation (Core→Node)

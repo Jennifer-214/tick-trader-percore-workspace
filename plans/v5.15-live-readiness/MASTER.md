@@ -4,7 +4,8 @@
 > **▶ CURRENT STATE (2026-06-10) — the MASTER body below is HISTORICAL (drafted 2026-05-12, pre-`.E`); preserved as the original sprint-origin record, not the live state.**
 > Most recent ship: **`v5.15.5.F.4d.1.E.0.9` — Ship B (decimal money)**, SHIPPED 2026-06-10 (engine `c2d0987`, suite 3285/0).
 > The **`.E` sub-sprint** (per-node sharding + decimal-money numeric core + live-readiness) is the live trajectory — full index at `E-MASTER-REFERENCE.md`. **`.E.0` phase COMPLETE**: `.E.0.1` determinism net = tag `.E.0.6`; `.E.0.2` meta-error-tracking = tag `.E.0.5`; numeric core A/A.5/B = `.E.0.7/.8/.9` — all shipped.
-> **NEXT = `.E.1` Foundation: Core→Node rename + per-node drainer absorption + multi-exchange registry** (v0.1 plan, pre-audit-gate). Pre-`.E.1` gates per the `.E.0.5` DoD = Net-1 PERSIST characterization + guard-matrix-no-HOLE.
+> **`.E.0.10` Net-1 (pre-`.E.1` characterization net) IN-FLIGHT (2026-06-10):** D-190 P&L-gross capital bug FIXED + the **cross-thread torn-read CLASS** found (9 sites, 3 live capital-control) → **`.E.1` is now a HARD LIVE-ENABLE GATE**. Pickup → `handoffs/2026-06-10-E.0.10-net1-concurrency-checkpoint-handoff.md`.
+> **NEXT (after Net-1) = `.E.1` Foundation: Core→Node rename + per-node drainer absorption + multi-exchange registry** (v0.1 plan, **RED**/pre-audit-gate). Pre-`.E.1` gates per the `.E.0.5` DoD = Net-1 PERSIST characterization + guard-matrix-no-HOLE.
 > **Live sprint-state SSoT for the `.E` era:** `CLAUDE.local.md` § Current sprint state + `E-MASTER-REFERENCE.md` + `decision-logs/v5.15.5.F.4d.1.E-architecture-v2.md` (D-168..D-189).
 
 **Date drafted:** 2026-05-12 (post v5.14 sprint close + v5.14.post1 patch)

@@ -202,6 +202,24 @@ watching it actually work).
 
 ---
 
+## Landmine 9 — the engine does NOT symlink `DOCS/tech-debt/` (only individual `DOCS/*.md`): the real ledger is invisible from the engine path (set 2026-06-11, v5.15.5.F.4d.1.E.0.10)
+
+**Symptom:** ledgering or reading a TECH_DEBT entry from the ENGINE path silently fails — `ls FoxML_Trader_v2/DOCS/tech-debt/` → "No such file or directory"; a `Read` of `DOCS/tech-debt/open.md` → "File does not exist"; a `DOCS/tech-debt/*.md` glob → "no matches found". Looks like the sub-file ledger was never created / the ledger is broken. It is NOT — it's fully populated in the WORKSPACE. Caused a real error this session: concluded "the ledger doesn't exist," appended a NEW TECH_DEBT-164 to `DOCS/TECH_DEBT.md`'s "Future debt findings" section — a DUPLICATE of the TECH_DEBT-164 already in `open.md` (an H21 identifier collision caught only by the `/close-session` Stage 5.5 independent review).
+
+**Root cause:** `DOCS/` is symlinked into the engine PER-FILE (individual `DOCS/<name>.md` → workspace), NOT as a directory. The `DOCS/tech-debt/` SUBDIRECTORY was never symlinked. So `DOCS/TECH_DEBT.md` (the index/format doc) resolves from the engine, but the real numbered entries — `DOCS/tech-debt/{open,closed}.md` — exist ONLY at `tick-trader-percore-workspace/DOCS/tech-debt/`. The C++/Python sibling of Landmines 5 + 7 — the same symlink-topology trap, here as a MISSING subdir symlink.
+
+**Why the obvious read fails:** the engine `DOCS/` listing shows the per-file-symlinked `.md` files but no `tech-debt/` subdir, so "the ledger" looks like just `TECH_DEBT.md` — which is the index, NOT the entries. A next-id grep against the engine path finds nothing → you mis-assign an already-used id (H21 violation).
+
+**Current mitigation:** ALWAYS read/edit the tech-debt ledger via the WORKSPACE path — `tick-trader-percore-workspace/DOCS/tech-debt/{open,closed}.md`. Find the true next-free id with `rg -n '^### TECH_DEBT-[0-9]+' <workspace>/DOCS/tech-debt/open.md | tail`.
+
+**Proper fix (deferred):** symlink the `DOCS/tech-debt/` subdir into the engine (like `plans/` is a dir symlink) so the engine + its tools see the real ledger. Until then, workspace-path discipline.
+
+**Future-Claude debugging hint:** about to ledger a TECH_DEBT entry and the engine `DOCS/tech-debt/` "doesn't exist" → it's THIS, not a broken ledger. Go to the workspace path; check for an EXISTING entry at your intended id BEFORE writing (H21 — identifiers are append-only + immutable, never reuse a number).
+
+**Reference:** v5.15.5.F.4d.1.E.0.10 close (2026-06-11) — duplicate TECH_DEBT-164 caught by `/close-session` Stage 5.5; siblings Landmine 5 (Python `__file__.resolve()`) + Landmine 7 (C++ `../` include); H21 (identifier retirement discipline).
+
+---
+
 ## How to add a new landmine
 
 When you encounter a non-obvious pitfall (segfault, race, parallelism

@@ -34,6 +34,17 @@ This roadmap's vision lands at the **`.E.2`** ship. Canonical references:
 - Decision log v2: D-4 (headless folded into `.E.2`) + D-7 (GUI focus reduced) + D-26 (GUI hard-deprecate at `.E.2`) + D-46 (documentation deliverables)
 - Canonical binary names (per DESIGN_PHILOSOPHY § 15): `fox-engine` / `fox-tui` / `fox-cli` / `foxml-train` — these supersede the `engine_viewer` / `foxml_runtime` / `foxml_viewer` working-names in the original diagram below.
 
+---
+
+## `.E.0.10` breadcrumb (2026-06-10) — the published-snapshot pattern is the SHARED FOUNDATION (operator insight)
+
+**Caramel surfaced this at the `.E.0.10` cross-thread torn-read investigation:** the torn-read fix, the decoupled monitor, and headless/SSH viewing are **ONE pattern, not three problems.**
+- The GUI is the ONE site today that reads money SAFELY — off a seqlock-published `TUISnapshot` (vs the 9 cross-thread torn-read sites that read live OMS money raw; see `concurrency-patterns/cross-thread-multiword-read-consistency-discipline.md` + `.E.0.10` register).
+- The `.E.1` **aggregator-published money snapshot** (the structural fix for the torn-read class — D-54 / decision-log F-2-AMEND) IS that same published-snapshot pattern, generalized to the whole money surface.
+- And that aggregator-published snapshot IS the foundation the decoupled monitoring plane needs: the **headless engine publishes the snapshot; viewers (`fox-tui` / GUI / SSH / web) attach + read it.** Headless monitoring works *because* the viewer reads the published snapshot, not live state.
+
+**Positioning for the decoupling sprint:** the `.E.1` aggregator-published-snapshot is **load-bearing for the decoupling end-goal**, not just a concurrency fix — it's the publish side of the runtime→viewer boundary. When `.E.2` builds the headless/viewer split, the money-snapshot publish channel should already exist (built at `.E.1`). So sequence-wise: `.E.1` aggregator (publish channel) → `.E.2` headless + viewer attach. Cross-ref: `.E.0.10` register § SESSION STATE (operator-architecture-insight) + decision-log F-2-AMEND + `cross-thread-multiword-read-consistency-discipline.md`.
+
 **What `.E` adds beyond the original vision:** the **multi-exchange substrate** (per-cluster scaling) that the 2026-05-12 doc didn't cover — the `.E` Cluster/Node/Deployment hierarchy wasn't yet decided.
 
 ---

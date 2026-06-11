@@ -214,12 +214,6 @@ A finding that exists only in a transient audit report or chat memory gets re-di
 When `/readiness` Check 25 OR `/merge-scan` OR any audit identifies deferral candidates:
 1. Assign next TECH_DEBT-NNN
 2. Fill in the format template above
-
-### TECH_DEBT-164 — adversarial-default not wired into the audit skills (the M7 enforcement)
-- **Status:** DONE (2026-06-11) — parts A + B. (Shrinking backlog: 5 pre-convention capital tests still need an independent refute + marker; KNOWN-PENDING per close-the-class.)
-- **What:** Adversarial/independent-refute is the BINDING policy (`feedback_adversarial_framing_default_for_checks`) + the methodology (`adversarial-multi-agent-audit-methodology.md`) + the capability EXISTS (`/second-opinion`, `/precoding-audit-gate` Stage 3.5 N=3 quorum) — but was NOT wired as the DEFAULT execution of the audit skills, and there was NO auto-fire on the capital-work-declared-done surface. So verification stayed opt-in and lost to momentum (meta-anti-pattern AR-8 self-attestation; 3 misses in one session, each caught only by operator pushback).
-- **Fix (2 parts):** (A) audit skills DEFAULT to adversarial via the shared consult discipline (`skill-knowledge-consultation-and-auto-routing.md` § Default EXECUTION framing) + the methodology-spec binding-default flip — **DONE 2026-06-11**; (B) auto-fire failsafe — a `/capture-audit` check that flags new/changed capital test+code lacking an adversarial-refute (the exact hole `oms-ts-1` fell through) — **PENDING**.
-- **Source:** `.E.0.10` 2026-06-11 — oms-ts-1 self-attested "adversarially verified"; a 3-agent INDEPENDENT refute (fired only when the operator said "run an adversarial audit") found 3 coverage gaps. Sister: AR-8, `feedback_adversarial_framing_default_for_checks`.
 3. Set initial status (usually OPEN) → append entry to `DOCS/tech-debt/open.md`
 4. Cross-link from the audit report (`plans/plan_checks/*`)
 5. Reference in commit message of the closing ship

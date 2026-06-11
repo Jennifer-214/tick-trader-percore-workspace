@@ -193,7 +193,7 @@ def validate_doc(path, concern_vocab, surface_vocab, strict=False):
 
     is_design_spec = "DESIGN_SPECS/" in str(path) and path.suffix == ".md"
     is_skill = "claude-skills/" in str(path) and path.name == "SKILL.md"
-    is_memory = "memory/" in str(path) and path.name != "MEMORY.md"
+    is_memory = "memory/" in str(path) and path.name not in ("MEMORY.md", "MEMORY_EXTENDED.md")
 
     needs_frontmatter = is_design_spec or is_skill or is_memory
 

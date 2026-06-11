@@ -61,7 +61,7 @@ The above replaces the prior LLM-orchestrated `/capture-audit --deep` invocation
 
 The deep gate's 12-check drift verification surfaces (Checks 1-10 enumerated below; Check 11 = forward-promise auto-write + Check 12 = amendment-cascade are detailed in the `/capture-audit` spec):
 
-- (1) `MEMORY.md` index sync — every memory file has an index entry
+- (1) memory index sync — every memory file indexed in `MEMORY.md` OR `MEMORY_EXTENDED.md` (TECH_DEBT-163 split; guard spans both)
 - (2) Plan body frontmatter completeness (`audit_tier:` + `decision_log:` + `sister_specs:`)
 - (3) Decision log artifact existence at expected path
 - (4) Sentinel matching (`<!-- D/C/F: <id> --> + <!-- STATUS: <state> -->` in plan body)
@@ -70,7 +70,7 @@ The deep gate's 12-check drift verification surfaces (Checks 1-10 enumerated bel
 - (7) DESIGN_SPECS Stage 2→3 promotion eligibility
 - (8) Skill-in-CLAUDE.md-suite linkage (every NEW skill cross-referenced)
 - (9) Memory→DESIGN_SPECS sister cross-ref completeness (every NEW memory pairs with a spec OR explicitly is operator-collaboration-only)
-- (10) `CLAUDE.local.md` going-forward rules currency (recent operator preferences captured)
+- (10) going-forward rules currency — `CLAUDE.local.md` (Tier-0 collaboration) + `DOCS/GOING_FORWARD_RULES.md` (the full Tier-2 index)
 
 ### Stage 3 — Operator triage + fix iteration
 
@@ -81,7 +81,7 @@ For each `/capture-audit` finding:
 - **LOW + INFO**: document in close-out report; usually defer
 
 Common findings + their fixes:
-- "D-N captured in decision log but no memory file" → write NEW memory file + MEMORY.md index entry + CLAUDE.local.md going-forward rule
+- "D-N captured in decision log but no memory file" → write NEW memory file + index it BY TIER (collaboration/judgment/user/project → `MEMORY.md`; deep-technical/process → `MEMORY_EXTENDED.md`) + the going-forward rule BY TIER (every-turn collaboration → `CLAUDE.local.md`; Code&design/Process/Docs → `DOCS/GOING_FORWARD_RULES.md`) — TECH_DEBT-163 tiering; do NOT re-bloat the always-loaded docs
 - "Plan body frontmatter missing audit_tier" → amend frontmatter
 - "Skill mentioned in commit but not in CLAUDE.md suite table" → amend CLAUDE.md
 - "Memory amended but description in MEMORY.md index is stale" → update index
@@ -137,7 +137,7 @@ Verify the SESSION'S substantive deliverables ACTUALLY landed complete + coheren
 
 **Dimensions the reviewer checks** (each = a distinct failure mode a completeness-only pass misses):
 1. **Landed + substantive** — each claimed deliverable is present + real content, not a stub.
-2. **Coherent + fully propagated** — artifacts agree with each other AND each operator decision reached ALL its homes (decision-log + memory + MEMORY.md index + the skill/spec it governs + CLAUDE.local.md if a going-forward rule). A decision in the log but not wired into the skill it governs = half-landed. Complements `/capture-audit` Check 12 (mechanical stale-ref scan) with the judgment "did it fully land."
+2. **Coherent + fully propagated** — artifacts agree with each other AND each operator decision reached ALL its homes (decision-log + memory + the memory index (MEMORY.md or MEMORY_EXTENDED.md by tier) + the skill/spec it governs + the going-forward index (CLAUDE.local.md Tier-0, or GOING_FORWARD_RULES.md, by tier)). A decision in the log but not wired into the skill it governs = half-landed. Complements `/capture-audit` Check 12 (mechanical stale-ref scan) with the judgment "did it fully land."
 3. **No fabrication** — no tool / symbol / file cited as runnable-or-real that doesn't exist on disk.
 4. **Edits were surgical** — the touched files' PRE-EXISTING + adjacent content is intact (an additive-looking edit can silently clobber a neighbor); *completeness checks new content arrived, this checks old content survived*. Includes the **WH-2 stale-index check**: no always-loaded index (MEMORY.md / sprint-state / MASTER) left pointing at superseded state.
 5. **Meets the bar** — deliverables satisfy the plan's OWN acceptance criteria, not merely exist (N/A if no acceptance-criteria'd plan).

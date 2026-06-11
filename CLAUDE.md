@@ -80,71 +80,9 @@ When two options both compile + both run, the gradient resolves the choice. Thes
 
 → DESIGN_PHILOSOPHY § 11 (process discipline) + § 11.5 (meta-disciplines M1-M4) for the audit-driven framework + worked examples.
 
-### Latency budgets
+### Latency + memory budgets · concurrency model → `CoreFrameworks/CLAUDE.md`
 
-| Path | p50 | p99 | p99.99 | Source |
-|---|---|---|---|---|
-| Hot path tick → trade decision | ~100ns | **≤500ns** | ≤2μs | H8 (ship blocker if violated) |
-| Hot path BG_Evaluate alone | <50ns | <200ns | — | per-gate budget within hot path |
-| Slow path rebuild cycle | — | **≤100μs** | — | H8 (ship blocker if violated) |
-| Drainer cycle (OMS_DrainSubmit + OrderManager_Tick) | <5μs | ≤10μs | — | per-tick drainer cadence |
-| Producer fan_out per tick | <100ns | ≤200ns | — | per-tick parser+replicate budget |
-| Async (Binance WS / DepthRecorder / Notify) | — | <100μs | — | non-trading-path tolerance |
-| GUI frame budget | 16.7ms | — | — | 60Hz target (H3 thread isolation) |
-| Boot warm-restart | <2s | ≤5s | — | recovery scenario (live-readiness) |
-| Stamp emit (HMAC-signed) | — | <50μs | — | wire-format byte preservation gate |
-
-Hot path is BRANCHLESS (H7); branch mispredicts cost 30-100ns real-world per `DESIGN_PHILOSOPHY.md` § 4 — eliminating them is the budget mechanism. → § 4 (latency cost framework).
-
-### Memory budgets
-
-| Surface | Budget | Reason |
-|---|---|---|
-| Hot path working set | ≤L1d (32-64KB typical) | Stay cache-resident; eviction kills p99 |
-| Per-node slow_state | ≤64KB | Comfortable L1d+L2; per-node isolation |
-| Cross-thread cfg (seqlock cached) | ≤single cache line per param group | False-sharing prevention (H6) |
-| SPSC ring depth | `Limits.hpp:MAX_RING_*` | Bounded; backpressure detectable |
-| Order pool | `Limits.hpp:MAX_ORDERS` | Bounded; bitmap-packed (H1 no heap) |
-| Per-node ML feature window | `Limits.hpp:ML_WINDOW_MAX` | Bounded ring buffer |
-| Bitmap structures (portfolio / flags) | uint64_t typical | H14 — never C++ bitfield syntax |
-| Stack frames on hot path | <few KB | No deep recursion / large stack-alloc |
-
-L1d working-set discipline: hot path SHOULD fit in single core's L1d (32-64KB). Verify via perf counters when uncertain. → DESIGN_SPECS/data-disciplines/cache-line-discipline.md (Stage 2 DRAFT).
-
-### Concurrency model summary
-
-Thread architecture:
-
-```
-PRODUCER (1)              DRAINER (1)         PER-CORE CONSUMERS (N=2..16)
-─────────────             ──────────          ──────────────────────────────
-Binance WS                OMS_DrainSubmit     SLOW thread (1 per core)
-  ├─ parse tick    ──┐    OrderManager_Tick   ├─ EventLoop_UpdateRollingState
-  ├─ ema_price    ──┤    DrainPostFill       ├─ Regime_Classify
-  ├─ fan_out:      ──┘─→ SPSC ring          ├─ Strategy rebuild
-  │   for c in N: │                          ├─ ExecutionCore_SetParameters
-  │     push(c)   │                          │   (seqlock → HOT)
-  └─ GUI publish  │                          ├─ TimeExitOneCore
-                  │                          └─ TrailingSLRatchet
-                  ↓
-              SPSC ring → HOT thread (1 per core)
-                          ├─ BG_Evaluate (branchless)
-                          ├─ SG_Evaluate ×2
-                          └─ push TradeEvent (rare branch)
-```
-
-**Sync primitives (H1-H3):**
-- **SPSC rings:** producer↔consumer + slow↔hot params + post-fill events. Lock-free; bounded; align-padded.
-- **Seqlock:** slow→hot cfg parameter handoff. No mutex per H3.
-- **Atomic flags:** cross-thread state (kill_switch / recovery_until_us / flatten_pending). Acquire/release semantics.
-- **`alignas(64)` discipline:** every cross-thread field gets cache-line padding (H6). Cluster by access pattern (hot reads / hot writes / cold init / cross-thread).
-
-**Anti-patterns (NEVER):**
-- `std::mutex` / `condition_variable` / `sleep_for` / `pthread_rwlock` anywhere (H3)
-- Pointer-sharing between GUI thread and HP/SP threads (file-mediated + reload-signal instead)
-- C++ bitfield syntax in cross-thread structs (H14 — layout/signedness/packing-order implementation-defined)
-
-**False-sharing prevention:** cross-thread struct fields padded to cache-line boundaries; producer-written + consumer-read fields in separate cache lines. → DESIGN_SPECS/concurrency-patterns/concurrency-model-summary.md + DESIGN_SPECS/data-disciplines/cache-line-discipline.md (Stage 2 DRAFT).
+Hot/slow/drainer latency table (hot p99 ≤500ns / slow ≤100μs, H8) · working-set memory budgets (L1d-resident hot path) · the producer→SPSC→per-core hot+slow thread model + sync primitives (SPSC rings / slow→hot seqlock / atomic flags / `alignas(64)` false-sharing) — all live in the engine-core nested doc, which **loads on-demand when you edit `CoreFrameworks/`**. → `DOCS/DESIGN_PHILOSOPHY.md` § 4 (latency cost) + § 6 (concurrency). H3/H6/H7/H8 stay in the Hard Invariants table below.
 
 ### Doc layer separation
 
@@ -194,41 +132,9 @@ recursive, cmake with `-DBUILD_STATIC_LIB=OFF`, install + ldconfig.
 `build.sh` symlinks `engine.cfg` into each build dir; `bin/engine_gui`
 → `build_gui/engine_gui`.
 
-## Architecture (sharded)
+## Architecture + Data Flow → `CoreFrameworks/CLAUDE.md`
 
-```
-HOT PATH (per tick, per core, branchless; ≤500ns p99):
-  BG_Evaluate → SG_Evaluate ×2 → TradeEvent push (rare branch)
-
-SLOW PATH (per-core thread, every poll_interval ticks; ≤100μs p99):
-  EventLoop_UpdateRollingStateOneCore → RebuildOneCore (regime + strategy)
-  → ExecutionCore_SetParameters (seqlock to hot path)
-  → TimeExitOneCore → TrailingSLRatchetOneCore
-
-GLOBAL THREADS:
-  Producer: tick read + fan_out + ema_price replication + GUI publish
-  Drainer:  OMS_DrainSubmit + OrderManager_Tick + DrainPostFill
-  Async:    Binance trade WS, depth WS, Tick/DepthRecorder, Notify worker, GUI
-```
-
-- Per-node strategy (`core_N_strategy=simple_dip|momentum|ema_cross|ml`)
-- Per-node ML model (`core_N_model_path=...` or `core_N_model_dir=...`)
-- Per-node risk (`core_N_risk_pct=...`)
-- Per-node ConfidenceScorer (when STRATEGY_ML)
-- Per-core slow_state owns rolling/regime/flow data (v5.1.2+)
-- Partial exits (`partial_exit_enabled=1`): each core owns 2 slots (legs A+B); max cores = 8
-- `engine_arch=per_core_slow` (default v5.0+) | `centralized` (legacy)
-
-## Data Flow: Regime Detection
-
-Per-engine slow_state (RollingStats × 4 + RORRegressor + flow + depth)
-→ RegimeSignals (slope, R², variance, ror_slope, ema_sma_spread,
-book_imbalance, spread_z, flow_*_ewma, large_trade_z, ...) →
-Regime_Classify (trending_score + volatile_score with hysteresis) →
-RANGING / TRENDING / VOLATILE / MILD_TREND → strategy dispatch.
-
-`RegimeSignals` is the extensibility point — see
-`DOCS/CLAUDE_INTEGRATION.md` for the recipe.
+The sharded hot/slow/global-thread architecture, the per-node strategy/model/risk knobs (`core_N_*`), and the regime data flow (slow_state → RegimeSignals → Regime_Classify → RANGING/TRENDING/VOLATILE/MILD_TREND → strategy dispatch) live in the engine-core nested doc — **loads on-demand when you edit `CoreFrameworks/`**. `RegimeSignals` is the ML extensibility point (recipe: `DOCS/CLAUDE_INTEGRATION.md`).
 
 ## Directory Structure
 
@@ -376,6 +282,7 @@ If you can't find the answer at the layer you're looking at, go DOWN the hierarc
 | Touching FeatureRegistry / scaler / stamp / train→serve path | `DOCS/CLAUDE_ML_INVARIANTS.md` |
 | Planning a multi-day change | `DOCS/CLAUDE_REVIEW.md` |
 | Backtest suite (Run Control, Training, WF, Held-Out) | `DOCS/CLAUDE_FOXML_SUITE.md` |
+| Run/find/extend a tool, or see what's wired · generated index maps | `DOCS/TOOLS.md` (tool inventory + disposition) + `DOCS/CODE_MAP.md` + `tests/INVARIANTS_MAP.md` |
 
 These are *never* automatically loaded — read on-demand when the
 conversation matches a row above. Keeps always-on context small

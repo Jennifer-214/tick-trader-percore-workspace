@@ -4,7 +4,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-06-01 (commit 3f415a0)
+**Last regenerated**: 2026-06-10 (commit 5e65933)
 
 ## CoreFrameworks/
 
@@ -22,58 +22,58 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### ControllerConfig.hpp
 
-- `Fee_Compute` — line 1366
-- `ControllerConfig_ResolveForCore` — line 1384
-- `ControllerConfig_PopulateCoresFromFlat` — line 1441
-- `ControllerConfig_NormalizeForMode` — line 1995
-- `ControllerConfig_Load` — line 2026
+- `Fee_Compute` — line 1365
+- `ControllerConfig_ResolveForCore` — line 1383
+- `ControllerConfig_PopulateCoresFromFlat` — line 1445
+- `ControllerConfig_NormalizeForMode` — line 2004
+- `ControllerConfig_Load` — line 2035
 
 ### ControllerEventLoop.hpp
 
 - `CoreSlowState_Init` — line 166
 - `CoreContextDisplayMeta_Init` — line 691
 - `EventLoopState_ReconstructPerCoreFromEventLog` — line 835
-- `EventLoopState_Init` — line 907
-- `EventLoopState_InitLegacy` — line 964
-- `EventLoopState_Free` — line 997
-- `EventLoopState_RegisterCore` — line 1050
-- `Sharded_LegSlot` — line 1100 — All slow-path / boot-time. Trivially inlined.
-- `Sharded_ValidatePartialExitCfg` — line 1137
-- `EventLoopState_SetCoreStrategy` — line 1189
-- `EventLoopState_AttachTradeLog` — line 1209
-- `EventLoopState_AttachOms` — line 1226
-- `EventLoopState_Balance` — line 1244
-- `EventLoopState_RealizedPnl` — line 1249
-- `EventLoopState_Portfolio` — line 1260
-- `EventLoopState_PortfolioMut` — line 1265
-- `EventLoopState_KsMinBalance` — line 1270
-- `EventLoopState_KsMaxDrawdownPct` — line 1275
-- `EventLoopState_KsPeakBalance` — line 1280
-- `EventLoopState_TradeLog` — line 1296
-- `EventLoopState_SetIntendedParams` — line 1311
-- `EventLoop_DrainPostFillOneCore` — line 1367
-- `EventLoop_DrainPostFill` — line 1793
-- `EventLoop_OnEvent` — line 1845
-- `EventLoop_DrainEvents` — line 2026
-- `EventLoop_QueueParameters` — line 2060
-- `EventLoop_RebuildAllParameters` — line 2093
-- `EventLoop_UpdateRollingStateOneCore` — line 2183
-- `EventLoop_UpdateEmaPriceAllCores` — line 2221
-- `EventLoop_RebuildOneCore` — line 2240
-- `EventLoop_PushParameters` — line 3148
-- `EventLoopState_ConfigureKillSwitch` — line 3183
-- `EventLoop_ClearAllPermissions` — line 3193
-- `EventLoop_KillSwitchTrip` — line 3204
-- `EventLoop_KillSwitchEvaluate` — line 3233
-- `EventLoop_TimeExitOneCore` — line 3307
-- `EventLoop_FlattenAll` — line 3402
-- `EventLoop_CheckWsStaleness` — line 3465
-- `EventLoop_TryClearRecovery` — line 3544
-- `EventLoop_TrailingSLRatchetOneCore` — line 3587
-- `EventLoop_BreakevenOnProfitOneCore` — line 3666
-- `EventLoop_Unpause` — line 3710
-- `EventLoop_SlowPath` — line 3734
-- `EventLoop_RunController` — line 3759
+- `EventLoopState_Init` — line 906
+- `EventLoopState_InitLegacy` — line 963
+- `EventLoopState_Free` — line 996
+- `EventLoopState_RegisterCore` — line 1049
+- `Sharded_LegSlot` — line 1099 — All slow-path / boot-time. Trivially inlined.
+- `Sharded_ValidatePartialExitCfg` — line 1136
+- `EventLoopState_SetCoreStrategy` — line 1188
+- `EventLoopState_AttachTradeLog` — line 1212
+- `EventLoopState_AttachOms` — line 1229
+- `EventLoopState_Balance` — line 1247
+- `EventLoopState_RealizedPnl` — line 1252
+- `EventLoopState_Portfolio` — line 1263
+- `EventLoopState_PortfolioMut` — line 1268
+- `EventLoopState_KsMinBalance` — line 1273
+- `EventLoopState_KsMaxDrawdownPct` — line 1278
+- `EventLoopState_KsPeakBalance` — line 1283
+- `EventLoopState_TradeLog` — line 1299
+- `EventLoopState_SetIntendedParams` — line 1314
+- `EventLoop_DrainPostFillOneCore` — line 1370
+- `EventLoop_DrainPostFill` — line 1798
+- `EventLoop_OnEvent` — line 1850
+- `EventLoop_DrainEvents` — line 2031
+- `EventLoop_QueueParameters` — line 2065
+- `EventLoop_RebuildAllParameters` — line 2098
+- `EventLoop_UpdateRollingStateOneCore` — line 2188
+- `EventLoop_UpdateEmaPriceAllCores` — line 2231
+- `EventLoop_RebuildOneCore` — line 2250
+- `EventLoop_PushParameters` — line 3158
+- `EventLoopState_ConfigureKillSwitch` — line 3193
+- `EventLoop_ClearAllPermissions` — line 3203
+- `EventLoop_KillSwitchTrip` — line 3214
+- `EventLoop_KillSwitchEvaluate` — line 3243
+- `EventLoop_TimeExitOneCore` — line 3317
+- `EventLoop_FlattenAll` — line 3412
+- `EventLoop_CheckWsStaleness` — line 3475
+- `EventLoop_TryClearRecovery` — line 3554
+- `EventLoop_TrailingSLRatchetOneCore` — line 3597
+- `EventLoop_BreakevenOnProfitOneCore` — line 3676
+- `EventLoop_Unpause` — line 3720
+- `EventLoop_SlowPath` — line 3744
+- `EventLoop_RunController` — line 3769
 
 ### CoreLatencyStats.hpp
 
@@ -157,59 +157,60 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### OrderEventLog.hpp
 
-- `OrderEventLog_Init` — line 187
-- `OrderEventLog_Free` — line 230
-- `OrderEventLog_ApplyEvent` — line 274
-- `OrderEventLog_Append` — line 297
-- `OrderEventLog_AsyncWriterRoutine` — line 332
-- `OrderEventLog_StartAsyncWriter` — line 366
-- `OrderEventLog_StopAsyncWriter` — line 381
-- `OrderEventLog_InitWithFile` — line 400
-- `OrderEventLog_Reset` — line 445
-- `OrderEventLog_LoadFromDisk` — line 486
-- `OrderEvent_MakeFill` — line 561
-- `OrderEvent_MakeRejection` — line 586
-- `Portfolio_FromEventLog` — line 633
+- `OrderEventLog_Init` — line 204
+- `OrderEventLog_Free` — line 247
+- `OrderEventLog_ApplyEvent` — line 291
+- `OrderEventLog_Append` — line 314
+- `OrderEventLog_AsyncWriterRoutine` — line 349
+- `OrderEventLog_StartAsyncWriter` — line 383
+- `OrderEventLog_StopAsyncWriter` — line 398
+- `OrderEventLog_InitWithFile` — line 417
+- `OrderEventLog_Reset` — line 492
+- `OrderEventLog_LoadFromDisk` — line 534
+- `OrderEvent_MakeFill` — line 624
+- `OrderEvent_MakeRejection` — line 651
+- `Portfolio_FromEventLog` — line 698
 
 ### OrderGates.hpp
 
 - `Gate_Zero` — line 62
-- `Gate_ZeroAll` — line 72
+- `Gate_ZeroAll` — line 69
 
 ### Order.hpp
 
-- `Order_GetType` — line 207
-- `Order_SetType` — line 211
-- `Order_GetState` — line 217
-- `Order_SetState` — line 221
-- `Order_GetIsMaker` — line 227
-- `Order_SetIsMaker` — line 231
-- `Order_SetLeg` — line 241
-- `Order_SetRetryCount` — line 251
-- `Order_GetPreResolvedBound` — line 260
-- `Order_MarkPreResolvedBound` — line 264
-- `MBS_OrderBanditActiveState` — line 280
-- `MBS_OrderBanditRegime` — line 284
-- `MBS_OrderBanditChosenArm` — line 288
-- `MBS_OrderSetBanditContext` — line 292
-- `Order_Init` — line 315
-- `Order_BindPreResolved` — line 356
-- `Order_WarnIfNotPreResolved` — line 382
-- `Order_IsTerminal` — line 412
+- `Order_GetType` — line 209
+- `Order_SetType` — line 213
+- `Order_GetState` — line 219
+- `Order_SetState` — line 223
+- `Order_GetIsMaker` — line 229
+- `Order_SetIsMaker` — line 233
+- `Order_SetLeg` — line 243
+- `Order_SetRetryCount` — line 253
+- `Order_GetPreResolvedBound` — line 262
+- `Order_MarkPreResolvedBound` — line 266
+- `MBS_OrderBanditActiveState` — line 282
+- `MBS_OrderBanditRegime` — line 286
+- `MBS_OrderBanditChosenArm` — line 290
+- `MBS_OrderSetBanditContext` — line 294
+- `Order_Init` — line 317
+- `Order_BindPreResolved` — line 358
+- `Order_WarnIfNotPreResolved` — line 384
+- `Order_IsTerminal` — line 415
 
 ### OrderManager.hpp
 
-- `OrderManager_Init` — line 857
-- `OMS_PushSubmit` — line 1056
-- `OMS_DrainSubmit` — line 1087
-- `OrderManager_AccountMakerTakerFee` — line 1118
-- `OrderManager_HandleFill` — line 1263
-- `OrderManager_ProcessFillCommand` — line 1300
-- `OrderManager_ProcessReconcile` — line 1402
-- `OrderManager_Tick` — line 1438
-- `OrderManager_Shutdown` — line 1472
-- `OrderManager_OpenCalibrationLog` — line 1494
-- `OrderManager_InflightCount` — line 1539
+- `OrderManager_Init` — line 860
+- `OMS_PushSubmit` — line 1059
+- `OMS_DrainSubmit` — line 1090
+- `OrderManager_AccountMakerTakerFee` — line 1121
+- `OMS_GuardTakerBoundFeeBasis` — line 1140
+- `OrderManager_HandleFill` — line 1285
+- `OrderManager_ProcessFillCommand` — line 1345
+- `OrderManager_ProcessReconcile` — line 1448
+- `OrderManager_Tick` — line 1484
+- `OrderManager_Shutdown` — line 1518
+- `OrderManager_OpenCalibrationLog` — line 1540
+- `OrderManager_InflightCount` — line 1585
 
 ### PaperResetArchive.hpp
 
@@ -227,30 +228,31 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 ### PortfolioController.hpp
 
 - `PortfolioController_Init` — line 286
-- `KillSwitch_Activate` — line 534
-- `KillSwitch_Reset` — line 548
-- `Buying_Halt` — line 557
-- `PortfolioController_DrainExits` — line 753
-- `PortfolioController_StrategyBuySignal` — line 780
-- `PortfolioController_StrategyDispatch` — line 882
-- `PortfolioController_Tick` — line 928
-- `PortfolioController_Unpause` — line 1955
-- `PortfolioController_CycleRegime` — line 1966
-- `PortfolioController_HotReload` — line 1992
-- `PortfolioController_SaveSnapshot` — line 2069
-- `PortfolioController_LoadSnapshot` — line 2144
+- `KillSwitch_Activate` — line 538
+- `KillSwitch_Reset` — line 552
+- `Buying_Halt` — line 561
+- `PortfolioController_DrainExits` — line 751
+- `PortfolioController_StrategyBuySignal` — line 778
+- `PortfolioController_StrategyDispatch` — line 869
+- `PortfolioController_Tick` — line 915
+- `PortfolioController_Unpause` — line 1921
+- `PortfolioController_CycleRegime` — line 1932
+- `PortfolioController_HotReload` — line 1958
+- `PortfolioController_SaveSnapshot` — line 2035
+- `PortfolioController_LoadSnapshot` — line 2110
 
 ### Portfolio.hpp
 
-- `ExitBuffer_PendingProceeds` — line 191
-- `Portfolio_AddPositionWithExits` — line 253
-- `Portfolio_OpenSlot` — line 342
-- `Portfolio_OpenSlot` — line 373
-- `Portfolio_CloseSlot` — line 388
-- `Portfolio_SlotActive` — line 396
-- `Portfolio_UpdatePosition` — line 412
-- `Portfolio_Save` — line 533
-- `Portfolio_Load` — line 572
+- `ExitBuffer_PendingProceeds` — line 196
+- `Portfolio_AddPositionWithExits` — line 258
+- `Portfolio_OpenSlot` — line 347
+- `Portfolio_OpenSlot` — line 378
+- `Money_FillGross` — line 397 — open-coding the 2-mul form at any site (was DrainPostFill :1536) re-introduces a 1-ULP divergence.
+- `Portfolio_CloseSlot` — line 402
+- `Portfolio_SlotActive` — line 410
+- `Portfolio_UpdatePosition` — line 426
+- `Portfolio_Save` — line 542
+- `Portfolio_Load` — line 581
 
 ### Reconcile.hpp
 
@@ -275,7 +277,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 - `ShardedBacktestDriver_Init` — line 144
 - `ShardedBacktest_RunTick` — line 192
-- `ShardedBacktest_Run` — line 390
+- `ShardedBacktest_Run` — line 393
 
 ### ShardedLiveSafety.hpp
 
@@ -293,8 +295,8 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### ShardedSnapshotPersist.hpp
 
-- `ShardedSnapshot_Save` — line 109
-- `ShardedSnapshot_Load` — line 305
+- `ShardedSnapshot_Save` — line 116
+- `ShardedSnapshot_Load` — line 312
 
 ### ShardedTradeLog.hpp
 
@@ -311,9 +313,9 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 - `SPSCRing_Init` — line 95
 - `SPSCRing_TryPush` — line 132
-- `SPSCRing_TryPop` — line 167
-- `SPSCRing_Depth` — line 189
-- `SPSCRing_Capacity` — line 198
+- `SPSCRing_TryPop` — line 179
+- `SPSCRing_Depth` — line 201
+- `SPSCRing_Capacity` — line 210
 
 ### SpSectionRegistry.hpp
 
@@ -333,10 +335,10 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 ### MeanReversion.hpp
 
 - `MeanReversion_Init` — line 73
-- `MeanReversion_Adapt` — line 125
-- `MeanReversion_BuySignal` — line 311
-- `MeanReversion_ExitAdjust` — line 459
-- `MeanReversion_ExitAdjustSharded` — line 566
+- `MeanReversion_Adapt` — line 118
+- `MeanReversion_BuySignal` — line 273
+- `MeanReversion_ExitAdjust` — line 413
+- `MeanReversion_ExitAdjustSharded` — line 520
 
 ### MLStrategy.hpp
 
@@ -351,9 +353,9 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 - `Momentum_Init` — line 60
 - `Momentum_Adapt` — line 92
-- `Momentum_BuySignal` — line 185
-- `Momentum_ExitAdjust` — line 267
-- `Momentum_ExitAdjustSharded` — line 348
+- `Momentum_BuySignal` — line 171
+- `Momentum_ExitAdjust` — line 249
+- `Momentum_ExitAdjustSharded` — line 330
 
 ### RegimeDetector.hpp
 
@@ -363,10 +365,10 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `TickRate_Push` — line 172
 - `TickRate_CurrentZ` — line 199
 - `Regime_ComputeSignals` — line 223
-- `Regime_Init` — line 482
-- `Regime_Classify` — line 514
-- `Regime_ToStrategy` — line 668
-- `Regime_AdjustPositions` — line 686
+- `Regime_Init` — line 481
+- `Regime_Classify` — line 513
+- `Regime_ToStrategy` — line 667
+- `Regime_AdjustPositions` — line 685
 
 ### SimpleDip.hpp
 
@@ -393,11 +395,11 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `Strategy_SpacingOk` — line 238
 - `Strategy_TpFloor` — line 257
 - `SimpleDip_BuildParameters` — line 300
-- `MeanReversion_BuildParameters` — line 379
-- `Momentum_BuildParameters` — line 450
-- `EmaCross_BuildParameters` — line 564
-- `ML_BuildParameters` — line 669
-- `Strategy_BuildParameters` — line 1582
+- `MeanReversion_BuildParameters` — line 380
+- `Momentum_BuildParameters` — line 452
+- `EmaCross_BuildParameters` — line 567
+- `ML_BuildParameters` — line 676
+- `Strategy_BuildParameters` — line 1591
 
 ## Strategies/private/
 
@@ -406,8 +408,8 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `EmaCross_Init` — line 34
 - `EmaCross_Adapt` — line 46
 - `EmaCross_BuySignal` — line 58
-- `EmaCross_ExitAdjust` — line 108
-- `EmaCross_ExitAdjustSharded` — line 182
+- `EmaCross_ExitAdjust` — line 109
+- `EmaCross_ExitAdjustSharded` — line 184
 
 ## DataStream/
 
@@ -418,10 +420,10 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `BinanceStream_Reconnect` — line 613
 - `BinanceStream_Poll` — line 659 — returns OR'd combination of POLL_NONE, POLL_SOCKET, POLL_STDIN
 - `BinanceStream_ReadTick` — line 707
-- `BinanceStream_InWindDown` — line 781 — BinanceStream_ShouldReconnect: returns 1 if it's time to close and reconnect
-- `BinanceStream_ShouldReconnect` — line 794
-- `BinanceStream_HasPending` — line 810 — returns 1 if SSL has buffered data that can be read without blocking
-- `BinanceConfig_Load` — line 821 — same key=value format as ControllerConfig_Load, skips # comments and empty lines
+- `BinanceStream_InWindDown` — line 794 — BinanceStream_ShouldReconnect: returns 1 if it's time to close and reconnect
+- `BinanceStream_ShouldReconnect` — line 807
+- `BinanceStream_HasPending` — line 823 — returns 1 if SSL has buffered data that can be read without blocking
+- `BinanceConfig_Load` — line 834 — same key=value format as ControllerConfig_Load, skips # comments and empty lines
 
 ### BinanceDepth.hpp
 
@@ -429,18 +431,18 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### BinanceOrderAPI.hpp
 
-- `BinanceOrderAPI_Cleanup` — line 493
-- `BinanceOrderAPI_MarketBuy` — line 503 — fill_price_out/fill_qty_out receive actual execution values (NULL = don't care)
-- `BinanceOrderAPI_MarketSell` — line 549 — place a market sell order
-- `BinanceOrderAPI_CancelOrder` — line 616 — different operator semantics.
-- `BinanceOrderAPI_GetStatus` — line 650 — fills filled_qty and avg_price on success
-- `BinanceOrderAPI_LoadFilters` — line 699 — returns 1 on success, 0 on failure (caller should treat as fatal)
-- `BinanceOrderAPI_GetBalance` — line 734 — returns 1 on success, 0 on failure
-- `BinanceOrderAPI_GetOpenOrders` — line 766 — network-independent (testable without real REST calls).
-- `BinanceOrderAPI_GetMyTrades` — line 777 — the last-known-processed trade id to catch only new fills.
-- `BinanceOrderAPI_GetBalances` — line 793 — returns 1 on success, 0 on failure
-- `BinanceOrderAPI_SyncClock` — line 817 — re-sync clock offset (call periodically or after reconnect)
-- `BinanceOrderAPI_Init` — line 831 — must be called after Cleanup, ServerTime, SyncClock, LoadFilters are defined
+- `BinanceOrderAPI_Cleanup` — line 500
+- `BinanceOrderAPI_MarketBuy` — line 510 — fill_price_out/fill_qty_out receive actual execution values (NULL = don't care)
+- `BinanceOrderAPI_MarketSell` — line 565 — place a market sell order
+- `BinanceOrderAPI_CancelOrder` — line 639 — different operator semantics.
+- `BinanceOrderAPI_GetStatus` — line 673 — fills filled_qty and avg_price on success
+- `BinanceOrderAPI_LoadFilters` — line 722 — returns 1 on success, 0 on failure (caller should treat as fatal)
+- `BinanceOrderAPI_GetBalance` — line 757 — returns 1 on success, 0 on failure
+- `BinanceOrderAPI_GetOpenOrders` — line 789 — network-independent (testable without real REST calls).
+- `BinanceOrderAPI_GetMyTrades` — line 800 — the last-known-processed trade id to catch only new fills.
+- `BinanceOrderAPI_GetBalances` — line 816 — returns 1 on success, 0 on failure
+- `BinanceOrderAPI_SyncClock` — line 840 — re-sync clock offset (call periodically or after reconnect)
+- `BinanceOrderAPI_Init` — line 854 — must be called after Cleanup, ServerTime, SyncClock, LoadFilters are defined
 
 ### BinanceUserData.hpp
 
@@ -461,7 +463,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `DepthRecorder_Init` — line 158
 - `DepthRecorder_LogGap` — line 194 — disconnect time, or the current snapshot's timestamp_us).
 - `DepthRecorder_Write` — line 222
-- `DepthRecorder_Close` — line 271
+- `DepthRecorder_Close` — line 275
 
 ### DepthReplayState.hpp
 
@@ -490,7 +492,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `TUI_PopulatePerCoreSlowPathLatency` — line 1788
 - `TUI_PopulateAdvancedTopology` — line 1826
 - `TUI_PopulateTopology` — line 1870 — poll_interval[i]    — per-core resolved poll cadence
-- `TUI_Render_Snapshot` — line 1906 — runs on TUI thread. reads only from snapshot (all doubles, no FPN).
+- `TUI_Render_Snapshot` — line 1906 — runs on TUI thread. reads only from snapshot (all doubles, no FPN_Binary).
 - `TUI_ReadKey` — line 2117
 
 ### FauxFIX.hpp
@@ -524,7 +526,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `TickRecorder_PruneOld` — line 106
 - `TickRecorder_Init` — line 141
 - `TickRecorder_Push` — line 173
-- `TickRecorder_Close` — line 204
+- `TickRecorder_Close` — line 207
 
 ### TradeLog.hpp
 
@@ -563,34 +565,38 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ## FixedPoint/
 
-### FixedPoint64.hpp — DELETED (Ship-B P5 FP64 absorb, D-163)
-
-The legacy `FP64` native-128 twin is gone; `FixedPointN.hpp`'s certified 16B bodies are
-the only implementation. The decimal money family lives in FixedPointN.hpp:
-
-- `Money` = `FixedPoint<10, 8>` — decimal money type (value = v/10^8; exact at venue ≤8dp)
-- `EngineMoneyT` / `MONEY_ENCODING_EPOCH` — the epoch switch (1 = decimal, flipped at P2b)
-- `Money_Mul` / `Money_Div` / `Money_Add` / `Money_Sub` — saturating, half-even (oracle-gated)
-- `Money_Min/Max/Abs/Negate/Zero/IsZero/Lt/Le/Eq/Gt/Ge/BlendOnMask/FromInt` — one-liners
-- `Money_FromString` → `MoneyParse{value, flags}` — EXACT venue-string parse (D-102)
-- `Money_ToBinary` / `Money_FromBinary` — the ONLY money↔feature domain casts (D-170)
-- `Money_ToDouble` / `Money_ToCString` — display/cfg emit (exact 8dp; cfg-save trims)
-- `Money_QuantizeToStep` — venue LOT_SIZE truncation (#6, via certified divider)
-- `money_from_double_payload` — TOTAL saturating cfg/result-vehicle bridge (D-103 sites)
-- `money_op_flags` + `MONEY_FLAG_*` / `MONEY_PARSE_*` — sticky observational flags (S-17;
-  drained at the drainer cycle tail)
-- certified shared kernels: `umul_128x128_256`, `udiv256_qr`, `udiv_q64`, `divmul_pow10`
-
 ### FixedPointN.hpp
 
-- `FPN_BlendOnMask` — line 478
+- `FPN_BlendOnMask` — line 508
+- `Money_Mul` — line 1580 — into the overflow mask -> saturate + flag (never garbage-as-value).
+- `Money_Div` — line 1604 — NEVER __udivti3 (constant 128-trip cmov loop).
+- `Money_Add` — line 1624 — integer ops with a closure clamp + S-17 flag). Branchless mask-select clamp by the result sign.
+- `Money_Add` — line 1632
+- `Money_FromString` — line 1788
+- `Money_FromBinary` — line 1830 — threshold would be a wrong gate — load-bearing, per the fold).
+- `Money_Zero` — line 1847 — lower to cmov (same shape as fp2_min/max); BlendOnMask mirrors the live <64> mask-select.
+- `Money_Negate` — line 1848
+- `Money_Abs` — line 1849
+- `Money_Min` — line 1850
+- `Money_Max` — line 1851
+- `Money_IsZero` — line 1852
+- `Money_Lt` — line 1853
+- `Money_Le` — line 1854
+- `Money_Eq` — line 1855
+- `Money_Gt` — line 1856
+- `Money_Ge` — line 1857
+- `Money_QuantizeToStep` — line 1864 — NEVER a plain wide divide (no __udivti3 on any path).
+- `Money_BlendOnMask` — line 1873
+- `Money_FromInt` — line 1878 — Money_FromInt: whole-unit int -> money (i*10^8), clamp+flag past the closure ceiling.
+- `Money_ToDouble` — line 1887 — Money_ToDouble — DISPLAY-ONLY (H4-exempt): GUI/diag/inf-bridge consumption. Never accounting.
+- `Money_ToCString` — line 1912 — quantize). Returns chars written (excl. NUL); 0 on insufficient cap (needs <= 32).
 
 ## MemHeaders/
 
 ### CoreCtxSummaryFieldRegistry.hpp
 
-- `Summary_EmitPerCoreEntry` — line 200
-- `Summary_EmitPerStrategy` — line 235
+- `Summary_EmitPerCoreEntry` — line 202
+- `Summary_EmitPerStrategy` — line 237
 
 ### DrainerConstants.hpp
 
@@ -663,15 +669,15 @@ the only implementation. The decimal money family lives in FixedPointN.hpp:
 - `BanditDisplayMeta_SetArmName` — line 98 — Set a custom human-readable name for an arm (display only).
 - `Bandit_Init` — line 133
 - `Bandit_InitDefault` — line 156 — convenience: init with default FoxML parameters
-- `Bandit_GetProbabilities` — line 180 — p_i = (1 - gamma) * (w_i / sum_w) + gamma / K
-- `Bandit_Select` — line 263 — returns arm index. use a PRNG or hardware RNG for the random value.
-- `Bandit_Update` — line 284 — with adaptive eta: min(eta_max, sqrt(ln(K) / (K * T)))
-- `Bandit_GetWeights` — line 330 — returns weights summing to 1.0 (for blending / display)
-- `Bandit_EffectiveBlend` — line 352 — steps >= min+ramp:             effective_blend = blend_ratio
-- `Bandit_BlendWeights` — line 361
-- `Bandit_Print` — line 394 — to print human-readable names.
-- `Bandit_SaveJSON` — line 446 — n_regimes (NUM_REGIMES). NULL → omits the field.
-- `Bandit_LoadJSON` — line 634 — caller's prior Bandit_Init call — load is overlay only.
+- `Bandit_GetProbabilities` — line 185 — tests. Suppress asan here; ubsan + the normal -O3 build still exercise it. (TECH_DEBT-158 close-out.)
+- `Bandit_Select` — line 268 — returns arm index. use a PRNG or hardware RNG for the random value.
+- `Bandit_Update` — line 289 — with adaptive eta: min(eta_max, sqrt(ln(K) / (K * T)))
+- `Bandit_GetWeights` — line 335 — returns weights summing to 1.0 (for blending / display)
+- `Bandit_EffectiveBlend` — line 357 — steps >= min+ramp:             effective_blend = blend_ratio
+- `Bandit_BlendWeights` — line 366
+- `Bandit_Print` — line 399 — to print human-readable names.
+- `Bandit_SaveJSON` — line 451 — n_regimes (NUM_REGIMES). NULL → omits the field.
+- `Bandit_LoadJSON` — line 639 — caller's prior Bandit_Init call — load is overlay only.
 
 ### BarrierBlendModeRegistry.hpp
 
@@ -857,33 +863,33 @@ the only implementation. The decimal money family lives in FixedPointN.hpp:
 - `BookImbHistory_Last` — line 180
 - `BookImbHistory_MeanShort` — line 189
 - `FlowState_Init` — line 240
-- `FlowState_Push` — line 253 — Full RegimeSignals→FPN cascade is a v5.11 ship (large blast radius).
-- `LargeTradeState_Init` — line 332
-- `LargeTradeState_Push` — line 342
-- `LargeTradeState_ZScore` — line 365
-- `LargeTradeState_Last` — line 381
-- `SpreadState_Init` — line 429
-- `SpreadState_Push` — line 439
-- `SpreadState_ZScore` — line 457
-- `SpreadState_Last` — line 472
+- `FlowState_Push` — line 253 — Full RegimeSignals→FPN_Binary cascade is a v5.11 ship (large blast radius).
+- `LargeTradeState_Init` — line 333
+- `LargeTradeState_Push` — line 343
+- `LargeTradeState_ZScore` — line 366
+- `LargeTradeState_Last` — line 382
+- `SpreadState_Init` — line 430
+- `SpreadState_Push` — line 440
+- `SpreadState_ZScore` — line 458
+- `SpreadState_Last` — line 473
 
 ### ModelInference.hpp
 
-- `FeatureLookback_Max` — line 216 — used by: ValidationSplit (purge gap), PortfolioController (warmup check)
-- `FeatureLookback_CountEnabled` — line 226 — count enabled features (for validation)
-- `Model_Init` — line 416
-- `Model_Load` — line 453
-- `Model_Predict_Normalized` — line 612
-- `Model_Predict_AtClass` — line 665
-- `Model_LoadAOT` — line 694
-- `Model_Predict_AOT` — line 708
-- `Model_Predict` — line 724
-- `Model_Predict_Ensemble` — line 818
-- `Model_Predict_Ensemble_Weighted` — line 891
-- `Model_PredictMulti` — line 1003
-- `Model_Free` — line 1058
-- `Model_IsLoaded` — line 1079
-- `ModelFeatures_Pack` — line 1107
+- `FeatureLookback_Max` — line 225 — used by: ValidationSplit (purge gap), PortfolioController (warmup check)
+- `FeatureLookback_CountEnabled` — line 235 — count enabled features (for validation)
+- `Model_Init` — line 425
+- `Model_Load` — line 462
+- `Model_Predict_Normalized` — line 621
+- `Model_Predict_AtClass` — line 674
+- `Model_LoadAOT` — line 703
+- `Model_Predict_AOT` — line 717
+- `Model_Predict` — line 733
+- `Model_Predict_Ensemble` — line 827
+- `Model_Predict_Ensemble_Weighted` — line 900
+- `Model_PredictMulti` — line 1012
+- `Model_Free` — line 1067
+- `Model_IsLoaded` — line 1088
+- `ModelFeatures_Pack` — line 1116
 
 ### PerArmFlagRegistry.hpp
 
@@ -900,11 +906,11 @@ the only implementation. The decimal money family lives in FixedPointN.hpp:
 - `Cholesky_Solve` — line 150
 - `RidgeBlender_Compute` — line 285
 - `RidgeBlender_FinalizeCorrFromSums` — line 378
-- `RidgeBlender_BuildCorr` — line 471
-- `RidgeBlender_UpdateOnline` — line 559
-- `RidgeBlender_BuildHistoryFromRing` — line 695
-- `RidgeBlender_OnlineCycleStep` — line 754
-- `RidgeWeights_Init` — line 802
+- `RidgeBlender_BuildCorr` — line 474 — byte-determinism tests). Sister to Bandit_GetProbabilities. TECH_DEBT-158.
+- `RidgeBlender_UpdateOnline` — line 563
+- `RidgeBlender_BuildHistoryFromRing` — line 699
+- `RidgeBlender_OnlineCycleStep` — line 758
+- `RidgeWeights_Init` — line 806
 
 ### RollingStats.hpp
 
@@ -1019,12 +1025,12 @@ the only implementation. The decimal money family lives in FixedPointN.hpp:
 
 ### SettingsPanel.hpp
 
-- `Settings_RescanModels` — line 788 — stays free of opendir/stat (per /readiness check 17 hardening).
-- `Settings_Init` — line 846 — so Settings_Load knows where to read.
-- `Settings_Load` — line 856
-- `Settings_RenderGlobalTab` — line 1004 — GLOBAL TAB — renders the auto-generated field_defs[] layout
-- `Settings_RenderPerCoreTab` — line 1236
-- `GUI_Panel_Settings` — line 1670 — running cores, not cfg-only intent — engine doesn't add/remove cores live.
+- `Settings_RescanModels` — line 801 — stays free of opendir/stat (per /readiness check 17 hardening).
+- `Settings_Init` — line 859 — so Settings_Load knows where to read.
+- `Settings_Load` — line 869
+- `Settings_RenderGlobalTab` — line 1017 — GLOBAL TAB — renders the auto-generated field_defs[] layout
+- `Settings_RenderPerCoreTab` — line 1249
+- `GUI_Panel_Settings` — line 1683 — running cores, not cfg-only intent — engine doesn't add/remove cores live.
 
 ### StrategyQualityPanel.hpp
 
@@ -1072,7 +1078,7 @@ the only implementation. The decimal money family lives in FixedPointN.hpp:
 - `WalkForward_ComputeCorrelation` — line 1349 — gets low MSE on small-magnitude targets while having zero predictive power).
 - `Backtest_RunWalkForward` — line 1373
 - `HeldOutSplit_TrainEval` — line 1995 — functions it uses (WalkForward_Compute*, XGBoost_Compute*) are visible.
-- `ConfigField_Set` — line 2240 — handles both FPN and PCT fields (PCT keys are stored as decimal, value comes in as %).
+- `ConfigField_Set` — line 2240 — handles both FPN_Binary and PCT fields (PCT keys are stored as decimal, value comes in as %).
 - `Backtest_RunSweep` — line 2344
 - `Backtest_RunHyperparamTrainSweep` — line 2434 — mean_val_correlation (regression). Stored as positive number; higher = better.
 
@@ -1144,12 +1150,9 @@ the only implementation. The decimal money family lives in FixedPointN.hpp:
 
 ### OverfitDetection.hpp
 
-- `OverfitDetection_Check` — line 68 — feat_cap:     feature count cap (0 to disable)
-- `OverfitDetection_CheckDefaults` — line 133 — convenience: check with default FoxML thresholds
-- `OverfitDetection_CheckRegression` — line 159 — interpretation is correlation-space. Both tunable separately if needed.
-- `OverfitDetection_CheckRegressionDefaults` — line 210
-- `OverfitDetection_CountOverfit` — line 221 — returns: number of folds flagged as overfit
-- `OverfitDetection_Print` — line 230 — print report (for logging / debugging)
+- `OverfitDetection_CheckDefaults` — line 136 — convenience: check with default FoxML thresholds
+- `OverfitDetection_CountOverfit` — line 225 — returns: number of folds flagged as overfit
+- `OverfitDetection_Print` — line 236 — print report (for logging / debugging)
 
 ### PhaseTimers.hpp
 
@@ -1172,20 +1175,18 @@ the only implementation. The decimal money family lives in FixedPointN.hpp:
 - `XGBHyperparams_Defaults` — line 52 — modify the returned struct in-place.
 - `XGBHyperparams_Apply` — line 62 — use 1 (deterministic per-fold output). Caller chooses.
 
-## tests/
-
 ---
 
 ## Top-level files
 
 - `main.cpp` — 1320 lines
-- `Version.hpp` — 941 lines
+- `Version.hpp` — 1022 lines
 - `Limits.hpp` — 30 lines
 
 ## Conventions
 
 - Function names follow `Pattern_FunctionName` convention (e.g. `Portfolio_Init`, `BG_Evaluate`)
 - Headers are inline-heavy — most functions live in `.hpp` and are `inline`
-- Money domain: `Money` (`FixedPoint<10,8>`, decimal) for ALL money math; `FPN_Binary<64>` (16B `__int128` 64.64 two's-complement) for FEATURE math; crossings only at `Money_ToBinary`/`Money_FromBinary` seams (H4 post-Ship-B)
+- Templates parameterize on `unsigned F` (frac-bits); FPN_Binary<64> = the 16B two's-complement binary core
 - Lowercase helpers (`fan_out`, `drain_with_submit`) are local to a function and not in this map
 - ALL_CAPS macros are not in this map; see headers directly

@@ -217,13 +217,19 @@ the subagent will need. Reads at invocation time (NOT cached):
 | `tick-trader-percore-workspace/DOCS/DESIGN_PHILOSOPHY.md` | Family sections matched to focus_keywords |
 | `tick-trader-percore-workspace/DESIGN_SPECS/README.md` | Pattern catalog index |
 | `DOCS/RECURRING_BUG_PATTERNS.md` | Bug class catalog (for /bug-check correlation) |
-| Engine `CLAUDE.local.md` | Sprint State Tracker + going-forward rules in force |
+| Engine `CLAUDE.local.md` + `DOCS/GOING_FORWARD_RULES.md` | Sprint State Tracker (now → MASTER.md) + Tier-0 collaboration rules (CLAUDE.local.md) + the FULL going-forward rule index (`DOCS/GOING_FORWARD_RULES.md`, TECH_DEBT-163) |
 | Plan file | Full body |
 | Engine `Version.hpp` + `git log -5` | Current ship state for staleness detection |
+| `DOCS/CODE_MAP.md` (regenerated, Stage 2.5 step 0) | Real `Pattern_FunctionName` file:line — handed to every agent as anti-fabrication ground truth |
+| `plans/<sprint>/subplans/*-dependency-graph.md` (when present) | Surface-ownership + cross-ship invariants — the completeness-lens surface set |
+| `plans/<sprint>/plan_checks/**/CANONICAL-FINDINGS.md` + live disposition register (when present) | Already-found/dispositioned set — agents hunt NEW, not re-find known |
+| `plans/<sprint>/E-guard-coverage-matrix.md` + `tests/INVARIANTS_MAP.md` | Enforcement-tier per invariant — feeds the heavy/light decision + the "is it enforced?" lens |
 
 ### Stage 2.5 — Deterministic pre-gate (mechanize-down; runs BEFORE any LLM agent) [NEW `.E.0.2`]
 
 Per the D-70 enforcement ladder + heavier-default posture: anything mechanizable is checked DETERMINISTICALLY first, so a finding never rests on a stochastic agent noticing it. Run as ground truth before Stage 3 spawns:
+
+0. **Regen the navigation map (so every downstream checker AND every Stage-3 agent reads CURRENT file:line, never a stale map):** `./tools/gen_code_map.sh` (idempotent, <5s) → `DOCS/CODE_MAP.md`. Sister to `/readiness` Stage 2 (already mandates this) + `/accept-handoff` Stage 3 nav-infra load. The symbol-existence + enumeration-completeness checkers below consume the fresh map; so do the spawned agents (Stage 3 hands it to them). CODE_MAP currency is thus a mechanical guarantee, not an agent's hope.
 
 1. **Python checkers** (exit-code authoritative):
    - **One-shot (preferred — D-112/.E Session-4):** `/home/caramel/code/FoxML_Trader_v2/tools/check_session_docs.sh` runs the WHOLE mechanical floor in one call (B-Plus symbol-existence + bidirectional+index memories + capture-audit-mechanical [index/sentinels/skill-linkage] + forward-promise + meta-registry). Use as the Stage-2.5 default; the granular checkers below target a single concern.
@@ -252,6 +258,11 @@ CONTEXT:
 - Sprint context: <predecessor> → <plan> → <successor>
 - Focus keywords: <focus_keywords>
 - DESIGN_PHILOSOPHY family preload: <matched_sections>
+- **Navigation-infra slice (hand it to the agent so it measures against the REAL surface set — per `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md` step 3 — NEVER a hand-recalled one):**
+  - CODE_MAP `DOCS/CODE_MAP.md` (regenerated at Stage 2.5) — real `Pattern_FunctionName` file:line for the symbols in scope; the anti-fabrication ground truth (grep THIS, never recall a line).
+  - Dependency-graph DAG `plans/<sprint>/subplans/*-dependency-graph.md` (when it exists) — the authoritative "what does this surface touch" + cross-ship-invariant rows; the COMPLETENESS lens (Stage 3.5) measures against this, not the plan headline.
+  - Findings-index `plans/<sprint>/plan_checks/**/CANONICAL-FINDINGS.md` + the live disposition register (when they exist) — what's already found/dispositioned, so the agent hunts NEW + knows the open set, not re-finds known.
+  - Guard-coverage matrix `plans/<sprint>/E-guard-coverage-matrix.md` + `tests/INVARIANTS_MAP.md` — for the "is this invariant actually ENFORCED (which tier)?" lens.
 - Date: <YYYY-MM-DD>
 
 The user is Caramel (she/her); reports persist for her review.

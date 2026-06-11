@@ -1,0 +1,21 @@
+# Memory index — EXTENDED (Tier-2, on-demand)
+
+> Deep-technical / implementation-specific disciplines moved out of always-loaded MEMORY.md 2026-06-11 (TECH_DEBT-163), + the home for NEW Tier-2 (process / pattern / deep-technical) memories. Loaded on-demand by the work-mode skills + when doing that specific work. The always-relevant collaboration / judgment / audit-posture / user / project memories stay in MEMORY.md. Memory-index guards accept MEMORY.md OR here as indexed.
+
+## Deep-technical / implementation-specific (Tier-2)
+
+- [Avoid substring replace_all on member-access patterns](feedback_avoid_substring_replace_all_on_member_access.md) — `config.X` mangles `ctrl->config.X`; inventory variations OR per-prefix targeted edits
+- [Prefer action-parameterized walker over per-consumer bodies](feedback_prefer_action_parameterized_walker_over_per_consumer_walker_bodies.md) — `FOREACH_<COHORT>_COHORT(BASE_X)` meta-walker prevents drift across consumers
+- [Wire-context vs cfg-file parser separation](feedback_wire_context_vs_cfg_file_parser_separation.md) — dual-context parser MUST take a `bool wire_context` param OR split the functions
+- [Train-serve execution-layer parity META gap (M5)](feedback_train_serve_execution_layer_meta_gap.md) — pre-coding gate includes a train-serve EXECUTION-LAYER walk (boot + slow-path-cycle) for any HIGH-RISK EngineSharded ship
+- [Enumerate helper signature args before extract (M6)](feedback_enumerate_helper_signature_args_before_extract.md) — body-content enumeration CSV before plan-body lock
+- [Multi-surface deletion ordering (B14)](feedback_multi_surface_deletion_ordering_discipline.md) — deletion across ≥3 files w/ compile interdeps: enumerate + classify per kind + sequence leaves-first (cfg-row last)
+- [Unconditionalization latent-assumption audit (B15)](feedback_unconditionalization_latent_assumption_audit.md) — removing a cfg-gate via "always-true" → enumerate latent per-arch/per-mode assumptions; verify none load-bearing BEFORE unconditionalizing
+- [Operator-facing doc cohort at cfg deletion](feedback_operator_facing_doc_cohort_at_cfg_deletion.md) — cfg/feature deletion → sweep README + QUICKSTART + cfg.example + sister operator-docs in the deletion cohort
+- [Archived changelog preservation](feedback_archived_changelog_preservation_discipline.md) — DO NOT modify archived changelog files/rows even when removing the feature; only the CURRENT CHANGELOG gets a new row at ship close
+- [Categorize by consumer-pattern not field-name](feedback_categorize_by_consumer_pattern_not_field_name.md) — field-name taxonomy is NOT a substitute for consumer-pattern analysis (walker behavior + override membership + actual reads)
+- [Cfg field categorization at registry-add time](feedback_cfg_field_categorization_at_registry_add_time.md) — 4-category decision tree; re-categorization is a 5-step atomic migration (partial = orphan state)
+- [C++17 inline variable for header-only shared state](feedback_cpp17_inline_variable_for_shared_state_across_tus.md) — header-only globals → C++17 `inline` (never `static` = per-TU copies; never extern+cpp)
+- [Machine-portable resolver for committed tool paths](feedback_machine_portable_resolver_for_committed_tool_paths.md) — committed tool with a per-machine path → env-override + derived-default + `.exists()`-guard, NOT a hardcode
+- [Forward-decl at global scope not inside namespace tt](feedback_forward_decl_at_global_scope_not_namespace.md) — `namespace tt { class X; }` shadows ::X; forward-decls at GLOBAL scope OR `#include` (B17)
+- [Enumerate block-scope statics before hoist](feedback_enumerate_block_scope_statics_before_hoist.md) — hoist a lambda into a named fn → enumerate ALL enclosing block-scope statics; pass each as explicit arg (Class 35/B18)

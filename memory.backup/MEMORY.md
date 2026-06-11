@@ -4,6 +4,8 @@
 
 ## Process + collaboration
 
+> **Deep-technical / implementation-specific disciplines + NEW Tier-2 memories -> `MEMORY_EXTENDED.md`** (on-demand; the work-mode skills load it). This always-loaded index = the every-turn collaboration / judgment / audit-posture / user / project memories.
+
 - [Prefer boundary-stable refactors over wide cascades](feedback_reduce_touch_sites.md) — keep public types unchanged; cascade only when the boundary type itself is the bug
 - [Bump Version.hpp every ship + rename plans when ship-order diverges](feedback_bump_version_per_ship.md) — every `vX.Y.Z` tag bumps Version.hpp in the same commit; rename the plan file (not Version.hpp) to keep filename+tag monotonic
 - [Defer is last-ditch, never effort-avoidance](feedback_no_defer_for_effort.md) — implement properly first time; "smaller scope" has failed 3/3 vs do-it-right
@@ -38,7 +40,6 @@
 - [Compaction degrades — verify handoffs against current code](feedback_compaction_degrades_treat_handoffs_as_hints.md) — re-verify handoff claims + audit verdicts vs actual code
 - [Overengineering boundary — pick harder when future work much easier](feedback_overengineering_boundary_when_future_easier.md) — the future-work simplification multiplier wins at the borderline
 - [Evaluate options on robustness + latency + design, NOT time](feedback_evaluate_options_on_robustness_latency_design_not_time.md) — time is essentially never the deciding factor
-- [Avoid substring replace_all on member-access patterns](feedback_avoid_substring_replace_all_on_member_access.md) — `config.X` mangles `ctrl->config.X`; inventory variations OR per-prefix targeted edits
 - [Don't ship MVP for plumbing/refactor work](feedback_no_mvp_for_plumbing_only_for_unknown_unknowns.md) — MVP is for genuinely-new features with external deps only
 - [Don't measure structural work by LOC](feedback_dont_measure_structural_work_by_loc.md) — lead with classes closed + patterns codified; LOC incidental
 - [Auto-pick future-oriented option when trade-off clear](feedback_auto_pick_future_oriented.md) — don't punt clear decisions; escalate only when future-vs-now sharp OR ambiguous
@@ -59,35 +60,21 @@
 - [Enumerate consumers before registry-row deletion](feedback_enumerate_consumers_before_registry_row_deletion.md) — ONE comprehensive grep across all access patterns + file types BEFORE finalizing scope
 - [Future-headache vs optimization scope framework](feedback_future_headache_vs_optimization_scope_framework.md) — close anti-pattern instances at ship (future-headache); defer pure-performance optimization
 - [Implementation-detail blind-spot recovery via taxonomy (M4)](feedback_implementation_detail_blindspot_recovery_via_taxonomy.md) — fire `/blindspot-scan` when SHAPE audits stay GREEN/YELLOW after 3+ iterations
-- [Prefer action-parameterized walker over per-consumer bodies](feedback_prefer_action_parameterized_walker_over_per_consumer_walker_bodies.md) — `FOREACH_<COHORT>_COHORT(BASE_X)` meta-walker prevents drift across consumers
 - [CLAUDE.md/local/SKILL/memory are GUIDELINES not stuff-to-do](feedback_claude_md_guidelines_not_stuff_to_do.md) — always-loaded = TIMELESS guidelines/triggers/pointers; on-demand carries EPHEMERAL work
 - [Plans + sub-plans codify explicit end goals](feedback_plans_have_explicit_end_goal.md) — every plan body MUST include "End goal" + acceptance-criteria sections
 - [Categorical triggers > hardcoded refs in always-loaded content](feedback_categorical_triggers_over_hardcoded_refs.md) — use categorical patterns, not hardcoded fn/TECH_DEBT-NNN/path
 - [Quarterly /metadata-audit cadence](feedback_metadata_audit_quarterly.md) — sister to /anti-spaghetti quarterly; catches doc-system drift mechanically
 - [File-size split discipline](feedback_file_size_split_discipline.md) — always-loaded byte-cap is the BINDING ceiling (guard: check_always_loaded_budget.py); line-count is a proxy
-- [Wire-context vs cfg-file parser separation](feedback_wire_context_vs_cfg_file_parser_separation.md) — dual-context parser MUST take a `bool wire_context` param OR split the functions
-- [Train-serve execution-layer parity META gap (M5)](feedback_train_serve_execution_layer_meta_gap.md) — pre-coding gate includes a train-serve EXECUTION-LAYER walk (boot + slow-path-cycle) for any HIGH-RISK EngineSharded ship
 - [Verify symbol existence at plan-drafting time](feedback_verify_symbol_existence_at_plan_drafting_time.md) — comprehensive grep before a plan body cites any fn/symbol/file:line (Class 14)
 - [Lead with architectural merit, not operator tone](feedback_lead_with_architectural_merit_not_operator_tone.md) — re-evaluate on MERIT before pivoting on pushback; articulate why X wins vs Y
-- [Enumerate helper signature args before extract (M6)](feedback_enumerate_helper_signature_args_before_extract.md) — body-content enumeration CSV before plan-body lock
 - [Tiered audit discipline per plan scope](feedback_tiered_audit_discipline_per_plan_scope.md) — HIGH 5-agent/MED 3-agent/LOW 2-agent/TRIVIAL skip; via `audit_tier:` frontmatter
 - [Structural enforcement when memory insufficient (M7)](feedback_structural_enforcement_when_memory_insufficient.md) — escalate to CI/pre-commit/compile-time when a bug class recurs DESPITE codified memory at the SAME surface
 - [Session decision log discipline](feedback_session_decision_log_discipline.md) — planning cycle >3 amendments OR multi-session → per-version decision log + `<!-- D/C/F -->` + `<!-- STATUS -->` sentinels
 - [Document-as-you-go > catch-at-the-end](feedback_document_as_you_go_over_catch_at_end.md) — capture decisions/findings/work AT creation, ALWAYS; the create→capture gap is where compaction-loss lives
-- [Multi-surface deletion ordering (B14)](feedback_multi_surface_deletion_ordering_discipline.md) — deletion across ≥3 files w/ compile interdeps: enumerate + classify per kind + sequence leaves-first (cfg-row last)
-- [Unconditionalization latent-assumption audit (B15)](feedback_unconditionalization_latent_assumption_audit.md) — removing a cfg-gate via "always-true" → enumerate latent per-arch/per-mode assumptions; verify none load-bearing BEFORE unconditionalizing
-- [Operator-facing doc cohort at cfg deletion](feedback_operator_facing_doc_cohort_at_cfg_deletion.md) — cfg/feature deletion → sweep README + QUICKSTART + cfg.example + sister operator-docs in the deletion cohort
-- [Archived changelog preservation](feedback_archived_changelog_preservation_discipline.md) — DO NOT modify archived changelog files/rows even when removing the feature; only the CURRENT CHANGELOG gets a new row at ship close
 - [Operator pushback as audit signal](feedback_operator_pushback_as_audit_signal.md) — "are you sure?" / "analyzing actual code?" → STOP, do actual code analysis BEFORE responding; do NOT reactively flip
-- [Categorize by consumer-pattern not field-name](feedback_categorize_by_consumer_pattern_not_field_name.md) — field-name taxonomy is NOT a substitute for consumer-pattern analysis (walker behavior + override membership + actual reads)
-- [Cfg field categorization at registry-add time](feedback_cfg_field_categorization_at_registry_add_time.md) — 4-category decision tree; re-categorization is a 5-step atomic migration (partial = orphan state)
 - [No question boxes](feedback_no_question_boxes.md) — never use AskUserQuestion modal; inline text presentation only
-- [C++17 inline variable for header-only shared state](feedback_cpp17_inline_variable_for_shared_state_across_tus.md) — header-only globals → C++17 `inline` (never `static` = per-TU copies; never extern+cpp)
 - [Single source of truth discipline](feedback_single_source_of_truth_discipline.md) — any fact/constant/fn-body in 2+ places = SSoT candidate; default MERGE unless a semantic distinction (then document why)
-- [Machine-portable resolver for committed tool paths](feedback_machine_portable_resolver_for_committed_tool_paths.md) — committed tool with a per-machine path → env-override + derived-default + `.exists()`-guard, NOT a hardcode
 - [Count code-LOC not total-lines for thresholds](feedback_count_code_loc_not_total_lines.md) — file-size/function-length checks count code-LOC (exclude comments+blanks)
-- [Forward-decl at global scope not inside namespace tt](feedback_forward_decl_at_global_scope_not_namespace.md) — `namespace tt { class X; }` shadows ::X; forward-decls at GLOBAL scope OR `#include` (B17)
-- [Enumerate block-scope statics before hoist](feedback_enumerate_block_scope_statics_before_hoist.md) — hoist a lambda into a named fn → enumerate ALL enclosing block-scope statics; pass each as explicit arg (Class 35/B18)
 - [Sister-cohort amendment completeness](feedback_sister_cohort_amendment_completeness.md) — amending a Class/DESIGN_SPEC/ledger → enumerate the sister-cohort (cross-refs + reverse); parallel-amend same ship
 - [Forward-promise auto-write verification](feedback_forward_promise_auto_write_verification.md) — ship-close promises auto-write → next-ship verify it landed at the expected ledger; /capture-audit Check 11
 - [Tag disposition at fix-time](feedback_tag_disposition_at_fix_time.md) — findings/backlog carry a LIVE disposition flipped AT fix-time at the SSoT; never reconstruct open-vs-closed by archaeology at re-triage

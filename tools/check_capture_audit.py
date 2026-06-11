@@ -87,6 +87,9 @@ def check_index_sync(quiet):
         print(f"  [Check 1] SKIP — {index} not found")
         return 0
     idx_text = index.read_text(encoding="utf-8")
+    ext = mem / "MEMORY_EXTENDED.md"   # Tier-2 on-demand index (TECH_DEBT-163) — a file indexed in EITHER counts
+    if ext.exists():
+        idx_text += "\n" + ext.read_text(encoding="utf-8")
     orphans = []
     for f in sorted(mem.glob("*.md")):
         if f.name == "MEMORY.md":
@@ -96,12 +99,12 @@ def check_index_sync(quiet):
         if f.name not in idx_text:
             orphans.append(f.name)
     if orphans:
-        print(f"  [Check 1] FAIL — {len(orphans)} memory file(s) NOT indexed in MEMORY.md:")
+        print(f"  [Check 1] FAIL — {len(orphans)} memory file(s) NOT indexed in MEMORY.md / MEMORY_EXTENDED.md:")
         for o in orphans:
             print(f"             orphan: {o}")
         return 1
     if not quiet:
-        print("  [Check 1] PASS — MEMORY.md index sync (all memory files indexed)")
+        print("  [Check 1] PASS — memory index sync (all files indexed in MEMORY.md or MEMORY_EXTENDED.md)")
     return 0
 
 

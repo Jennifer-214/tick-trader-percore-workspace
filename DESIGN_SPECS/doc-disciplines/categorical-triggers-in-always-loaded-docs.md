@@ -5,7 +5,7 @@ version: 1.0
 established: 2026-05-18
 tags: [doc-discipline, framework-discipline, structural-fix, meta-discipline]
 surface: []
-sister_specs: [pattern-codification-lifecycle.md, structural-fix-preferred-decision-framework.md, wire-format-byte-preservation-discipline.md, doc-frontmatter-convention.md, doc-tag-vocabulary.md]
+sister_specs: [pattern-codification-lifecycle.md, structural-fix-preferred-decision-framework.md, wire-format-byte-preservation-discipline.md, doc-frontmatter-convention.md, doc-tag-vocabulary.md, module-scoped-claude-md-pattern.md]
 applies_at_skills: []
 ---
 

@@ -9,7 +9,7 @@ audit_cadence: per-ship
 tags: [operator-collaboration, doc-discipline, plan-template]
 surface: []
 sister_skills: [/readiness, /precoding-audit-gate, /plan-draft]
-loads_dynamically: [CLAUDE.local.md, CLAUDE.md, DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/README.md, memory/MEMORY.md, DOCS/TECH_DEBT.md, DOCS/PARITY_ISSUES.md, DOCS/LANDMINES.md]
+loads_dynamically: [CLAUDE.local.md, CLAUDE.md, DOCS/DESIGN_PHILOSOPHY.md, DESIGN_SPECS/README.md, memory/MEMORY.md, memory/MEMORY_EXTENDED.md, DOCS/TECH_DEBT.md, DOCS/PARITY_ISSUES.md, DOCS/LANDMINES.md, DOCS/TOOLS.md, DOCS/CODE_MAP.md]
 ---
 
 # /handoff — Generate a sub-ship handoff prompt
@@ -248,7 +248,7 @@ each invocation pulls current state.
 
 | Source | Read for |
 |---|---|
-| `/home/caramel/code/FoxML_Trader_v2/CLAUDE.local.md` | Going-forward rules INDEX (since 2026-05-14 condense: rule one-liners + DESIGN_SPECS pointers + auto-write contracts + required-reading triggers). Follow pointers into DESIGN_SPECS for rule deep-dives. |
+| `/home/caramel/code/FoxML_Trader_v2/CLAUDE.local.md` + `DOCS/GOING_FORWARD_RULES.md` | Going-forward rules INDEX — CLAUDE.local.md keeps the Tier-0 collaboration rules (always-loaded) + a pointer; the FULL Code&design/Process/Docs index lives in `DOCS/GOING_FORWARD_RULES.md` (TECH_DEBT-163, 2026-06-11). Follow pointers into DESIGN_SPECS for rule deep-dives. |
 | `/home/caramel/code/FoxML_Trader_v2/CLAUDE.md` | Codified design philosophy items 1-30 (always loaded; canonical pattern doctrine). |
 | `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/MEMORY.md` | Auto-memory index; feedback / user / project / reference entries to surface |
 | `tick-trader-percore-workspace/DESIGN_SPECS/README.md` | Pattern catalog + "I need to..." quick-discovery |
@@ -356,10 +356,20 @@ For each artifact claim cited in the handoff body's predecessor-context section,
 - **Class catalog amendments** — `Class N recurrence_count A→B` per row
 - **NEW DESIGN_SPECS landed** — full file paths (workspace-prefixed; the DESIGN_SPECS dir is workspace-only, not symlinked into engine repo)
 - **NEW memories** — full file paths (`~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/<name>.md`)
-- **NEW going-forward rules** — title + date as cited in CLAUDE.local.md `Going-forward rules (index)` section
+- **NEW going-forward rules** — title + date as cited in CLAUDE.local.md (Tier-0) OR `DOCS/GOING_FORWARD_RULES.md` (Code&design/Process/Docs) `Going-forward rules (index)`
 - **Version.hpp value** — exact string at predecessor ship close
 
 These are enumerated in the handoff body's `## What landed at <predecessor-tag> ship close (PREDECESSOR CONTEXT)` section. Stage 2.8 of /handoff ensures the citation discipline is followed; Step 1.4 of the generated prompt enables the receiver to verify mechanically.
+
+### Stage 2.9 — Navigation-infra enumeration (cite the index maps as first-class pickup reads)
+
+The handoff's "Critical pickup-time reads" historically listed the plan + specs + register but BURIED the navigation infra one level down (referenced-by, not first-class) — so the receiver had nothing to chase and re-derived from memory (the M7 shape: the artifact exists but nothing routes work through it; the `.E.0.10` pickup needed an operator nudge to load the DAG + CODE_MAP). When the active sprint HAS them, the generated handoff MUST cite, as first-class "Critical pickup-time reads":
+
+- the **dependency-graph DAG** (`plans/<sprint>/subplans/*-dependency-graph.md`) — surface-ownership + cross-ship invariants (the receiver's + any completeness audit's surface set);
+- the **findings-index** (`plans/<sprint>/plan_checks/**/CANONICAL-FINDINGS.md` + the live disposition register) — the already-found/dispositioned set;
+- a **CODE_MAP currency note** — "regen `./tools/gen_code_map.sh` at pickup" (the receiver's `/accept-handoff` Stage 3.6 does this automatically; the cite makes it visible).
+
+Tool inventory pointer: `DOCS/TOOLS.md`. Omit any that don't exist for the sprint (most non-`.E` sprints have no DAG). Sister: `/accept-handoff` Stage 3.6 (receiver loads them) + `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md` step 3 (audits consume them).
 
 ### Stage 3 — Scan plan for DESIGN_SPECS pattern symptoms
 
@@ -611,8 +621,8 @@ If `/accept-handoff` returns BLOCK findings: address them before continuing.
    | TECH_DEBT closures actually moved | For each `TECH_DEBT-N` closure cited: `rg "id: TECH_DEBT-N" tick-trader-percore-workspace/DOCS/tech-debt/closed.md` AND `rg "id: TECH_DEBT-N" tick-trader-percore-workspace/DOCS/tech-debt/open.md` | First returns match; second returns NO match |
    | PARITY closures marked closed | For each `PARITY-NNN`: `rg -A3 "^id: PARITY-NNN" tick-trader-percore-workspace/DOCS/PARITY_ISSUES.md` | Shows `status: closed` |
    | DESIGN_SPECS Stage promotions | For each cited Stage X→Y: `grep "^stage:" tick-trader-percore-workspace/DESIGN_SPECS/<path>.md` | Shows promoted stage |
-   | NEW memory files exist + indexed | For each cited memory: `ls ~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/<name>.md` AND `grep <name>.md ~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/MEMORY.md` | Both succeed |
-   | NEW going-forward rules cited | For each rule: `grep -A2 "<rule-title>" CLAUDE.local.md` | Returns match in "Going-forward rules (index)" section |
+   | NEW memory files exist + indexed | For each cited memory: `ls ~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/<name>.md` AND `grep <name>.md ~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/MEMORY.md ~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/MEMORY_EXTENDED.md` | Both succeed (indexed in either) |
+   | NEW going-forward rules cited | For each rule: `grep -A2 "<rule-title>" CLAUDE.local.md DOCS/GOING_FORWARD_RULES.md` | Returns match (Tier-0 in CLAUDE.local.md; Code&design/Process/Docs in GOING_FORWARD_RULES.md) |
    | Version.hpp matches predecessor | `cat Version.hpp` (engine repo) | String matches predecessor-tag's claimed Version.hpp value at the time of its ship close |
 
    **If ANY predecessor claim fails verification:** the predecessor ship close ritual was incomplete OR an intervening commit reverted/moved the artifact. Common failure modes:
@@ -718,7 +728,7 @@ Don't write code until the matched-pattern docs are read + integration plan arti
 
 **Going-forward rules + feedback entries (dynamically injected from CLAUDE.local.md + memory):**
 
-<inject going-forward rules + relevant feedback entries dynamically from CLAUDE.local.md + memory/MEMORY.md indexes>; do NOT hardcode specific rule bodies — they're the index source. Sample rules to inject based on plan's surface tags: defer-discipline, structural-fix, boundary-stable, hot-path-discipline, branchless-on-slow-path, reuse-audit, latency-additions-tracked, replay-determinism, bump-Version.hpp-on-ship, no-AskUserQuestion, evaluate-on-robustness-not-time, consult-on-audit-findings, address-Caramel-as-Caramel.
+<inject going-forward rules + relevant feedback entries dynamically from CLAUDE.local.md (Tier-0 collaboration) + DOCS/GOING_FORWARD_RULES.md (the full Code&design/Process/Docs rule index) + memory/MEMORY.md + memory/MEMORY_EXTENDED.md indexes>; do NOT hardcode specific rule bodies — they're the index source. Sample rules to inject based on plan's surface tags: defer-discipline, structural-fix, boundary-stable, hot-path-discipline, branchless-on-slow-path, reuse-audit, latency-additions-tracked, replay-determinism, bump-Version.hpp-on-ship, no-AskUserQuestion, evaluate-on-robustness-not-time, consult-on-audit-findings, address-Caramel-as-Caramel.
 
 ## Step 5 — TECH_DEBT items in surface area
 

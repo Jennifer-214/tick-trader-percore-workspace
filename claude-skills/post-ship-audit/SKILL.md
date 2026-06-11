@@ -270,5 +270,5 @@ Generate `plans/<sprint>/postmortems/<YYYY-MM-DD>-<ship>-postship-audit.md`:
 - `DOCS/RECURRING_BUG_PATTERNS.md` — all classes for cross-checking
 - `DOCS/DESIGN_PHILOSOPHY.md` § 4 + § 11 — discipline references
 - CLAUDE.md Hard Invariants — H1-H14 + H20 verification
-- CLAUDE.local.md going-forward rules — discipline drift detection baseline
+- CLAUDE.local.md (Tier-0) + `DOCS/GOING_FORWARD_RULES.md` (full index) going-forward rules — discipline drift detection baseline
 - All sister audit skills (composed)

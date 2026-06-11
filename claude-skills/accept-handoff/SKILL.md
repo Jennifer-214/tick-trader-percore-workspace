@@ -9,7 +9,7 @@ audit_cadence: per-session-start
 tags: [doc-discipline, framework-discipline, operator-collaboration, meta-discipline]
 surface: [handoff-pipeline, session-pickup]
 sister_skills: [/handoff, /capture-audit, /readiness, /sync-workspace]
-loads_dynamically: [CLAUDE.md, CLAUDE.local.md, memory/MEMORY.md, DOCS/DESIGN_PHILOSOPHY.md, target-handoff.md, cited-reference-files, in-flight-plan-body.md, decision-log.md]
+loads_dynamically: [CLAUDE.md, CLAUDE.local.md, memory/MEMORY.md, memory/MEMORY_EXTENDED.md, DOCS/DESIGN_PHILOSOPHY.md, target-handoff.md, cited-reference-files, in-flight-plan-body.md, decision-log.md, DOCS/CODE_MAP.md, dependency-graph-DAG, CANONICAL-FINDINGS.md, DOCS/TOOLS.md]
 applies_meta_discipline: M7 (structural-enforcement-when-memory-insufficient)
 established: 2026-05-26
 first_canonical_application: post-.B.4 v1.7.4 handoff addendum cycle
@@ -92,6 +92,14 @@ Scan plan body for `<source-file>.hpp:<line>-<line>` extract references. Auto-lo
 
 Memory files referenced in plan body / handoff doc / decision log via `[[name]]` or `feedback_*` / `user_*` / `project_*` / `reference_*` patterns auto-load (these are typically already loaded via MEMORY.md auto-load; this is verification).
 
+**Stage 3.6 — Navigation-infra load (regen + consult the index maps so pickup + the Stage-6 completeness checks measure against the REAL surface set, not a hand-recalled one):**
+
+The artifact existing ≠ the artifact being used — this stage routes pickup through the nav-infra (the M7 close of "the map sits there unread"). Per `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md` step 3:
+
+- **ALWAYS — regen + consult CODE_MAP:** `./tools/gen_code_map.sh` (idempotent, <5s) → `DOCS/CODE_MAP.md`. Real `Pattern_FunctionName` file:line — the anti-fabrication ground truth (grep THIS to verify a handoff's cited symbols, never recall a line). Sister to `/readiness` Stage 2 + `/precoding-audit-gate` Stage 2.5 (both already regen it).
+- **CONDITIONAL — load the INDEX, never the per-ship sidecars** (consult-indexes-before-full-reads): if the active sprint has a **dependency-graph DAG** (`plans/<sprint>/subplans/*-dependency-graph.md`) and/or a **findings corpus** (`plans/<sprint>/plan_checks/**/CANONICAL-FINDINGS.md` + the live disposition register), load the DAG + the deduped INDEX. The ~500KB per-ship sidecars stay grep-on-demand. These are the surface-set + already-found/dispositioned set that the Stage-6 `/readiness` completeness pass measures against — a completeness check fed only the plan headline re-derives a false floor (the `.E.0.10` net-completeness instance).
+- **Tool index:** `DOCS/TOOLS.md` (every `tools/*` + disposition + invoker) — consult when the pickup needs a tool or to check what's wired.
+
 ### Stage 4: Verify git state matches handoff claims
 
 ```bash
@@ -132,8 +140,8 @@ Parse the handoff body's `## What landed at <predecessor-tag> ship close (PREDEC
 | TECH_DEBT closures moved | For each `TECH_DEBT-N` claimed closed: `rg "id: TECH_DEBT-N" tick-trader-percore-workspace/DOCS/tech-debt/closed.md` AND `rg "id: TECH_DEBT-N" tick-trader-percore-workspace/DOCS/tech-debt/open.md` | First matches; second NO match |
 | PARITY closures marked | For each `PARITY-NNN` claimed closed: `rg -A3 "^id: PARITY-NNN" tick-trader-percore-workspace/DOCS/PARITY_ISSUES.md` | Shows `status: closed` |
 | DESIGN_SPECS Stage promotions | For each cited Stage X→Y: `grep "^stage:" tick-trader-percore-workspace/DESIGN_SPECS/<path>.md` | Shows promoted stage |
-| NEW memory files exist + indexed | For each cited: file exists at `memory/<name>.md` AND `grep <name>.md MEMORY.md` returns match | Both succeed |
-| NEW going-forward rules in CLAUDE.local.md | For each rule: `grep -A2 "<rule-title>" CLAUDE.local.md` | Returns match in "Going-forward rules (index)" section |
+| NEW memory files exist + indexed | For each cited: file exists at `memory/<name>.md` AND `grep <name>.md MEMORY.md MEMORY_EXTENDED.md` returns match | Both succeed (indexed in either) |
+| NEW going-forward rules | For each rule: `grep -A2 "<rule-title>" CLAUDE.local.md DOCS/GOING_FORWARD_RULES.md` | Returns match (Tier-0 collaboration in CLAUDE.local.md; Code&design/Process/Docs in GOING_FORWARD_RULES.md — TECH_DEBT-163) |
 | Version.hpp matches predecessor | `cat Version.hpp` (engine repo) | String matches predecessor-tag's claimed value at its ship close |
 
 **Output classification:**

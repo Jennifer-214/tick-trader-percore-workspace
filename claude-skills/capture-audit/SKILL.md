@@ -9,7 +9,7 @@ audit_cadence: per-commit + per-handoff + per-version-bump
 tags: [meta-discipline, doc-discipline, framework-discipline, structural-fix]
 surface: [doc-pipeline, plan-pipeline, skill-pipeline, memory-index]
 sister_skills: [/handoff, /sync-workspace, /readiness, /plan-check, /metadata-audit]
-loads_dynamically: [MEMORY.md, CLAUDE.md, CLAUDE.local.md, DOCS/DESIGN_PHILOSOPHY.md]
+loads_dynamically: [MEMORY.md, MEMORY_EXTENDED.md, CLAUDE.md, CLAUDE.local.md, DOCS/GOING_FORWARD_RULES.md, DOCS/DESIGN_PHILOSOPHY.md]
 applies_meta_discipline: M7 (structural-enforcement-when-memory-insufficient)
 established: 2026-05-26
 first_canonical_application: .B.4 v1.7.4 ship-close addendum cycle
@@ -105,9 +105,9 @@ For each memory file at Stage 3+ codification:
 - Verify sister DESIGN_SPECS exists at cited path
 - Bidirectional check: DESIGN_SPECS doc back-references the memory
 
-### Check 10: CLAUDE.local.md going-forward rules currency
+### Check 10: going-forward rules currency
 
-For each entry in CLAUDE.local.md `## Going-forward rules (index)`:
+For each entry in CLAUDE.local.md `## Going-forward rules (index)` (Tier-0 collaboration) AND `DOCS/GOING_FORWARD_RULES.md` (the FULL Code&design/Process/Docs index — moved out of always-loaded 2026-06-11, TECH_DEBT-163):
 - Verify cited canonical-doc pointer exists
 - Verify memory file referenced exists (if `feedback_*` cited)
 - Skill referenced exists (if `/skillname` cited)

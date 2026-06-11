@@ -2,14 +2,14 @@
 
 **Auto-generated** by `tools/rebuild_doc_indexes.py`. Regenerate after adding/moving specs.
 
-Total: 156 specs across 12 types.
+Total: 161 specs across 12 types.
 
 Per-type catalog grouped by lifecycle stage. Cross-ref:
 - `doc-frontmatter-convention.md` (frontmatter schema)
 - `doc-tag-vocabulary.md` (tag canonical list)
 - CLAUDE.md § How to find anything (grep recipes)
 
-## refactor-pattern (22 specs)
+## refactor-pattern (23 specs)
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
@@ -30,6 +30,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/refactor-patterns/orchestration-helper-with-pod-args-pattern.md` | 3-first-canonical | framework-discipline, structural-fix | 2 |
 | `DESIGN_SPECS/refactor-patterns/post-parse-normalize-with-explicit-key-bitmap-pattern.md` | 3-first-canonical | framework-discipline, structural-fix | 3 |
 | `DESIGN_SPECS/refactor-patterns/registry-bitmap-set-discipline.md` | 3-first-canonical | structural-fix, framework-discipline, data-oriented-design | 4 |
+| `DESIGN_SPECS/refactor-patterns/rename-ship-methodology.md` | 3-first-canonical | refactor-pattern, doc-discipline, terminology-evolution, +1 | 2 |
 | `DESIGN_SPECS/refactor-patterns/shared-helper-extract-for-train-serve-mirror-close.md` | 2-draft | structural-fix, framework-discipline | 0 |
 | `DESIGN_SPECS/refactor-patterns/sliding-window-online-statistics-pattern.md` | 3-first-canonical | fixed-point-math, latency-discipline | 2 |
 | `DESIGN_SPECS/refactor-patterns/slow-path-cfg-resolution-cache-pattern.md` | 3-first-canonical | latency-discipline, data-oriented-design, structural-fix | 3 |
@@ -122,7 +123,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
 | `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md` | 3-first-canonical | audit-methodology, meta-discipline, framework-discipline | 1 |
-| `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md` | 3-first-canonical | audit-methodology, framework-discipline, meta-discipline | 3 |
+| `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md` | 3-first-canonical | audit-methodology, framework-discipline, meta-discipline | 4 |
 | `DESIGN_SPECS/audit-methodologies/audit-finding-kind-taxonomy.md` | 2-draft | audit-methodology, scope-discipline, finding-triage | 2 |
 | `DESIGN_SPECS/audit-methodologies/audit-report-format.md` | 2-draft | audit-methodology, doc-discipline, framework-discipline | 4 |
 | `DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md` | 3-first-canonical | audit-methodology, meta-discipline, framework-discipline | 2 |
@@ -172,14 +173,15 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md` | 5-claude-md | wire-format, framework-discipline, structural-fix, +1 | 6 |
 | `DESIGN_SPECS/wire-format-patterns/wire-format-canonical-body-invariants-helper.md` | 3-first-canonical | wire-format, framework-discipline, structural-fix | 3 |
 
-## doc-discipline (2 specs)
+## doc-discipline (3 specs)
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
-| `DESIGN_SPECS/doc-disciplines/categorical-triggers-in-always-loaded-docs.md` | 2-draft | doc-discipline, framework-discipline, structural-fix, +1 | 5 |
-| `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md` | 3-first-canonical | doc-discipline, structural-fix, pattern-codification, +1 | 5 |
+| `DESIGN_SPECS/doc-disciplines/categorical-triggers-in-always-loaded-docs.md` | 2-draft | doc-discipline, framework-discipline, structural-fix, +1 | 6 |
+| `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md` | 3-first-canonical | doc-discipline, structural-fix, pattern-codification, +1 | 6 |
+| `DESIGN_SPECS/doc-disciplines/module-scoped-claude-md-pattern.md` | 2-draft | doc-discipline, framework-discipline, context-aware-loading | 2 |
 
-## meta-discipline (22 specs)
+## meta-discipline (23 specs)
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
@@ -202,6 +204,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/meta-disciplines/session-decision-log-discipline.md` | 3-first-canonical | meta-discipline, doc-discipline, plan-template, +1 | 0 |
 | `DESIGN_SPECS/meta-disciplines/single-source-of-truth-discipline.md` | 3-first-canonical | meta-discipline, ssot, refactor-discipline, +1 | 3 |
 | `DESIGN_SPECS/meta-disciplines/sister-cohort-amendment-completeness-discipline.md` | 3-first-canonical | meta-discipline, framework-discipline, doc-discipline, +2 | 0 |
+| `DESIGN_SPECS/meta-disciplines/skill-knowledge-consultation-and-auto-routing.md` | 2-draft | meta-discipline, framework-discipline, doc-discipline, +1 | 0 |
 | `DESIGN_SPECS/meta-disciplines/structural-enforcement-when-memory-insufficient.md` | 3-first-canonical | meta-discipline, framework-discipline, structural-fix, +1 | 0 |
 | `DESIGN_SPECS/meta-disciplines/structural-fix-preferred-decision-framework.md` | 5-claude-md | meta-discipline, structural-fix, pattern-codification, +1 | 4 |
 | `DESIGN_SPECS/meta-disciplines/train-serve-execution-layer-parity.md` | 3-first-canonical | audit-methodology, meta-discipline, structural-fix | 0 |

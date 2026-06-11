@@ -6,7 +6,7 @@ established: 2026-05-18
 last_amended: 2026-05-27
 tags: [doc-discipline, structural-fix, pattern-codification, wontfix-rationale]
 surface: [doc-pipeline]
-sister_specs: [doc-frontmatter-convention.md, ledger-entry-templates.md, categorical-triggers-in-always-loaded-docs.md, cpp17-inline-variable-for-header-shared-state.md, single-source-of-truth-discipline.md]
+sister_specs: [doc-frontmatter-convention.md, ledger-entry-templates.md, categorical-triggers-in-always-loaded-docs.md, cpp17-inline-variable-for-header-shared-state.md, single-source-of-truth-discipline.md, module-scoped-claude-md-pattern.md]
 applies_at_skills: [/metadata-audit, /ship]
 ---
 

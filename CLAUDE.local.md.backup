@@ -167,6 +167,7 @@ Each rule = one-line trigger + canonical-doc pointer. Body (Why / How / worked e
 ### Docs & files
 
 - **New docs default to private** (2026-05-06). Doc captures unshipped direction / optimization / operator-edge → `plans/`. Public architectural-only → `DOCS/`. Auto-private: `*_AUDIT.md`, `FUTURE_*.md`, `*-design-notes.md`, `*.local.md`, etc.
+- **Fold findings into the destination plan** (2026-06-10) — `feedback_fold_findings_into_destination_plan.md`. Current work surfaces a finding belonging in a future/other plan → amend/append INTO that plan as discovered (reactive fold, NOT proactive scouting). Cross-plan auto-write.
 - **Workspace mirror for edge content** (2026-05-06) — `/sync-workspace` canonical. Mirrors plans/, skills (symlink); cfgs/.env/*.local.md (copy).
 - **Cold-pickup plan completeness — 10 fields** (2026-05-06) — `/readiness` Cold-pickup section canonical.
 - **Long-term doc-system evolution visions at `plans/_future/`** (2026-05-28) — (a) `2026-05-28-docs-as-meta-code-roadmap.md`; (b) `2026-05-28-context-aware-claude-md-loading-roadmap.md`. Trigger: v6.X+ post-decoupling OR CLAUDE.md >1200 lines OR multi-language scale.

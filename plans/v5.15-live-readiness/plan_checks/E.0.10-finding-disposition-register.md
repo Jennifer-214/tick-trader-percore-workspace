@@ -29,6 +29,7 @@ Live disposition of the `.E.0` backlog (141 findings + 93 TECH_DEBT + 5 PARITY),
 4. **`.E.1` structural fix** (aggregator rework — closes the class).
 5. **Adversarial-audit SKILL** (so "check" auto-fires the methodology — addresses the over-lump failure mode directly; extends TECH_DEBT-164 + `feedback_auto_route_input_to_matching_skill`).
 6. **Remaining Net-1** characterization tests (oms-ts-1 / hpg-bc-1 / wfa-1) — in-session-able.
+7. **`.E.1` plan code-sample B-Plus reconciliation** (surfaced 2026-06-10 by the F-2 fold) — the `.E.1` plan carries **10 PRE-EXISTING** illustrative template-code fragments (lines ~362–925; use `F`/`RING_SIZE` without standalone context) that trip the B-Plus symbol check now that the plan is a "session plan." NOT fabrications — a B-Plus false-positive class (context-dependent illustrations). My F-2 fold (prose, lines 68/280) + this register are CLEAN. Reconcile at the `.E.1` plan review: add B-Plus exemption markers OR wrap each fragment in compilable template context. Tracked, NOT blocking (workspace commits have no B-Plus pre-commit gate).
 
 ## Re-triage progress
 | batch | status |

@@ -117,10 +117,11 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/feature-patterns/runtime-toggleable-bench-gate-pattern.md` | 3-first-canonical | latency-discipline, framework-discipline | 1 |
 | `DESIGN_SPECS/feature-patterns/shadow-load-state-transition-pattern.md` | 3-first-canonical | framework-discipline, structural-fix, concurrency | 1 |
 
-## audit-methodology (4 specs)
+## audit-methodology (5 specs)
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
+| `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md` | 3-first-canonical | audit-methodology, meta-discipline, framework-discipline | 1 |
 | `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md` | 3-first-canonical | audit-methodology, framework-discipline, meta-discipline | 3 |
 | `DESIGN_SPECS/audit-methodologies/audit-finding-kind-taxonomy.md` | 2-draft | audit-methodology, scope-discipline, finding-triage | 2 |
 | `DESIGN_SPECS/audit-methodologies/audit-report-format.md` | 2-draft | audit-methodology, doc-discipline, framework-discipline | 4 |

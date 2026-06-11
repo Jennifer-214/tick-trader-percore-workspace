@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 219ed0c3-e701-4643-ab2e-f475f7b60f64
-  sister_specs: [feedback_structural_enforcement_when_memory_insufficient.md, feedback_sister_cohort_amendment_completeness.md, feedback_compaction_degrades_treat_handoffs_as_hints.md, feedback_document_as_you_go_over_catch_at_end.md, feedback_tag_disposition_at_fix_time.md]
+  sister_specs: [feedback_structural_enforcement_when_memory_insufficient.md, feedback_sister_cohort_amendment_completeness.md, feedback_compaction_degrades_treat_handoffs_as_hints.md, feedback_document_as_you_go_over_catch_at_end.md, feedback_tag_disposition_at_fix_time.md, feedback_fold_findings_into_destination_plan.md]
   tags: [session-continuity, ledger-discipline]
 ---
 

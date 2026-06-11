@@ -1,6 +1,6 @@
 # Memory index
 
-> Compressed 2026-05-26; re-compressed 2026-06-02 under the always-loaded byte-budget guard (`tools/check_always_loaded_budget.py`, enforced via `check_session_docs.sh`). Each entry ≤200 chars; deep WHY/sisters/examples live in the memory file body. Pattern: `[Title](file.md) — short trigger + key principle.`
+> Compressed under the always-loaded byte-budget guard (`tools/check_always_loaded_budget.py`). Each entry ≤200 chars; deep WHY/sisters/examples live in the memory file body.
 
 ## Process + collaboration
 
@@ -93,14 +93,15 @@
 - [Tag disposition at fix-time](feedback_tag_disposition_at_fix_time.md) — findings/backlog carry a LIVE disposition flipped AT fix-time at the SSoT; never reconstruct open-vs-closed by archaeology at re-triage
 - [Consult indexes before full reads](feedback_consult_indexes_before_full_reads.md) — read index/summary/map files FIRST for structure/location/counts; full-read only the detail you need (index→grep→targeted→full)
 - [Verify by context, not count](feedback_verify_by_context_not_count.md) — verify by READING what matches ARE, not the token COUNT (present-inert / absent-renamed both mislead); never bundle `rg -rln`
-- [Passing test is not verification](feedback_passing_test_is_not_verification.md) — green ≠ verified; a passing test only proves the assertion holds on its input; adversarially verify your OWN test work (complete/non-vacuous/not-frozen-bug) before "done"
-- [Single-source the computation not the mode](feedback_single_source_the_computation_not_just_the_mode.md) — money derived ≥2 ways → single-source the FORMULA not just rounding mode (round((a−b)q)≠round(aq)−round(bq) decimal); re-check "not a bug" under repr change
+- [Passing test is not verification](feedback_passing_test_is_not_verification.md) — green ≠ verified; a passing test only proves its assertion holds on its input; adversarially verify your OWN test work before "done"
+- [Single-source the computation not the mode](feedback_single_source_the_computation_not_just_the_mode.md) — money derived ≥2 ways → single-source the FORMULA not just the rounding mode; re-check "not a bug" under repr change
 - [Adversarial framing default for checks](feedback_adversarial_framing_default_for_checks.md) — audit/check/review default to ADVERSARIAL framing (FIND/REFUTE not confirm) + multiple independent agents that cross-check; operator: adversarial performs better
 - [Golden-master over reimplemented oracle](feedback_golden_master_over_reimplemented_oracle.md) — validate by freezing REAL output + diff; NEVER a stub/reimplemented oracle (Class-18 mirror that drifts)
 - [Phased pre-rework correctness foundation + net-gating](feedback_phased_pre_rework_correctness_foundation.md) — high-risk multi-ship restructure: phase the foundation (bedrock→lock-current→root-GREEN→sweep→gate); the no-reintroduction guarantee is the NET, not the audits
 - [Enumerate the set before a categorical risk-dismissal](feedback_enumerate_set_before_categorical_claim.md) — before dismissing a risk via a property over a SET ("the rest are safe"), enumerate + verify each + name any non-conformer (Class-33)
 - [Ground design claims in real code](feedback_ground_design_in_real_code.md) — design talk: Read+cite file:line for EXISTING-code claims (don't reconstruct from memory); show framing+reuse for NEW code
 - [Domain guards for bulk transforms](feedback_domain_guards_for_bulk_transforms.md) — error-driven migration consults the DOMAIN list first (compiler checks types not domains); integration smokes mandatory at encoding epochs
+- [Fold findings into the destination plan](feedback_fold_findings_into_destination_plan.md) — current work finds something belonging in a future/other plan → fold it INTO that plan as discovered; reactive, not scouting
 
 ## User profile
 

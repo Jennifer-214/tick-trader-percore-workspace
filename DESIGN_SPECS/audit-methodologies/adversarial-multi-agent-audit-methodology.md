@@ -12,7 +12,7 @@ applies_at_skills: [/precoding-audit-gate, /bug-check, /dod-audit, /accounting-a
 # Adversarial multi-agent audit methodology
 
 **Established:** 2026-06-10 (v5.15.5.F.4d.1.E.0.10; operator-stated preference + 3 same-session proofs)
-**Status:** ACTIVE — the DEFAULT framing when the operator says "check / audit / verify / make sure" on a capital / determinism / correctness-critical surface.
+**Status:** ACTIVE — the BINDING DEFAULT for judgment verification of any capital / determinism / correctness-critical surface. NOT operator-triggered: it fires whether or not anyone asks (opt-OUT, not opt-in). Self-check / a single confirmatory pass is the exception — taken operator-explicitly OR with an in-line stated reason. (Made binding 2026-06-11 per TECH_DEBT-164 + meta-anti-pattern AR-8 — opt-in adversarial lost to momentum 3× in one session, each caught only by operator pushback.)
 
 ## The discipline (one line)
 
@@ -24,7 +24,7 @@ When checking or auditing a surface, DEFAULT to spawning multiple INDEPENDENT ag
 - Any high-stakes verification: capital-path change, money math, persistence/recovery, concurrency, wire format, train↔serve parity.
 - A confirmatory pass returned GREEN but the surface is high-stakes — an adversarial re-pass means more.
 
-The trigger/preference lives in memory `feedback_adversarial_framing_default_for_checks`; the multi-agent INFRASTRUCTURE is `/precoding-audit-gate` (which today is convergence-oriented — EXTEND it to default this framing, per TECH_DEBT-164). This spec is the METHODOLOGY both point at.
+The policy lives in memory `feedback_adversarial_framing_default_for_checks` (BINDING 2026-06-11); the multi-agent INFRASTRUCTURE already exists — `/precoding-audit-gate` Stage 3.5 (N=3 independent quorum) + `/second-opinion` (independent challenge, anti-self-attestation). The remaining work (TECH_DEBT-164, in progress 2026-06-11) is the WIRING: (A) the audit skills DEFAULT to this framing via the shared consult discipline, and (B) an auto-fire failsafe on the capital-work-declared-done surface (the hole `oms-ts-1` fell through). This spec is the METHODOLOGY they all point at.
 
 ## The pattern (how to run one)
 

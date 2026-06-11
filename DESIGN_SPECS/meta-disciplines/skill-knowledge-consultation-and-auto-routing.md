@@ -168,6 +168,12 @@ The greppable, indexed doc-system is exactly what makes broad consult feasible: 
 
 ---
 
+## Default EXECUTION framing — ADVERSARIAL by default (verification skills; binding 2026-06-11)
+
+Distinct from the consult axis above (what KNOWLEDGE to load): this is the EXECUTION axis (how the verification RUNS). For any skill that VERIFIES / audits / checks / reviews a capital / determinism / correctness-critical surface, the DEFAULT execution is **ADVERSARIAL** — independent FIND/REFUTE agent(s) (≥2–3 with distinct lenses for a capital surface), per `adversarial-multi-agent-audit-methodology.md` — NOT a single confirmatory self-check, and the maker NEVER grades its own artifact (anti-self-attestation). This is **opt-OUT, not opt-in**: self-check / confirmatory is the exception, taken operator-explicitly OR with an in-line stated reason. The legitimate self-execution case is a genuinely MECHANICAL check — a deterministic tool or a re-run of a frozen golden — which is verified by RUNNING it, not by an agent (`feedback_independence_for_judgment_not_mechanical`); judgment surfaces (test completeness, finding-correctness, claim-soundness) are NOT. Policy: `feedback_adversarial_framing_default_for_checks` (binding); enforcement wiring: TECH_DEBT-164; error-shape it closes: meta-anti-pattern-index **AR-8** (self-attested verification — opt-in adversarial lost to momentum 3× in one session, each caught only by operator pushback).
+
+---
+
 ## How it functions (worked walk-throughs)
 
 **Walk-through 1 — Layer A on `/plan-check` (a judgment skill):**

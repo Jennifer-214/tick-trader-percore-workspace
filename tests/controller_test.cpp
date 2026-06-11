@@ -8290,6 +8290,212 @@ e3_skip_load:;
     }
 
     //======================================================================================================
+    // [oms-ts-1 — fee-EXACT fill→balance/P&L/fees characterization (Net-1)]
+    //======================================================================================================
+    // The v4.7.19 balance check above is fee-BLIND (core_cfg=nullptr → pre_resolved
+    // .fee_rate=0, so balance = $10000 + $12 gross − $0 fees, asserted with a ~$30
+    // window). This Net-1 characterization runs the SAME round-trip with a NON-ZERO
+    // fee and freezes the EXACT balance / realized_pnl / total_fees the engine books,
+    // so the .E.1 Core→Node rename cannot silently shift the fee→P&L→balance math.
+    //
+    // 0.02 BTC, entry 60000 → exit 60600, fee_rate 0.001 (10 bps taker). Exact 8dp:
+    //   booked_fee = Money_Mul(Money_Mul(price,qty), fee_rate)  [OrderManager_HandleFill]
+    //     entry_fee = 1200 × 0.001 = 1.20 ; exit_fee = 1212 × 0.001 = 1.212
+    //   gross = Money_FillGross(60000,60600,0.02) = 600 × 0.02 = 12.00  [D-190 SSoT]
+    //   net   = 12.00 − (1.20 + 1.212) = 9.588   [handle_sell_fill]
+    //   balance = 10000 + 9.588 = 10009.588 ; realized_pnl = 9.588
+    // Values are HAND-DERIVED from the booking code (not capture-frozen) → a GREEN run
+    // cross-checks the reading; a RED run is a real divergence to investigate, never a
+    // "just match the engine" edit (the oms-ts-2 false-invariant trap).
+    //
+    // D-190 COVERAGE DISCLAIMER (audit 2026-06-11): these inputs are ROUND -> every Money_Mul has
+    // zero 8dp remainder, so 1-mul (Money_FillGross) is value-identical to 2-mul HERE. This test
+    // does NOT exercise the D-190 gross-formula split; that divergence is guarded by the
+    // divergent-input D-190 sibling + tools/check_money_gross_single_source.py. oms-ts-1 owns the
+    // fee->bucket->P&L->balance booking; the LOSS variant (oms-ts-1b) below adds the sign path.
+    //
+    // ADV-REFUTE: 2026-06-11 — 3 INDEPENDENT FIND/REFUTE agents (vacuity/faithfulness · value-
+    // correctness · regression/completeness): verdict SOUND + values independently re-derived to
+    // the ULP; 3 coverage gaps FOLDED — D-190 overclaim disclaimed (above), maker/taker bucket
+    // now asserted, loss/sign variant added (oms-ts-1b). Per the binding adversarial-default.
+    //======================================================================================================
+    printf("\n--- oms-ts-1 — fee-exact fill→balance/P&L/fees (Net-1 characterization) ---\n");
+    {
+        struct R {
+            tt::OrderManagerState<64> oms;
+            tt::EventLoopState<64>    state;
+            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
+            tt::ExecutionCore<64>     core;
+        };
+        R* r = new R();
+        tt::EventLoopState_InitLegacy(&r->state, &r->oms, MQ(10000.0));
+        MBS_SET_U8(r->oms.oms_state_flags, tt::MASK_OMS_STATE_EVENT_LOG_MODE, tt::SHIFT_OMS_STATE_EVENT_LOG_MODE, 1);
+        BITMAP_CLR(r->oms.oms_state_flags, tt::MASK_OMS_STATE_PARTIAL_EXIT_ENABLED);
+        tt::SPSCRing_Init(&r->tick_ring);
+        tt::ExecutionCore_Init(&r->core, 0, &r->tick_ring);
+        tt::EventLoopState_RegisterCore(&r->state, &r->core, MQ(60500.0), MQ(59500.0), MQ(0.01));
+        tt::EventLoopState_SetCoreStrategy(&r->state, 0, STRATEGY_SIMPLE_DIP, MQ(1500.0));
+
+        const Money bal_before = r->oms.balance;
+        const Money FEE_RATE   = MQ(0.001);  // 10 bps taker
+
+        // ---- Open slot 0, injecting the taker fee on the real booking path ----
+        tt::SubmitCommand<64> buy_cmd(0, tt::ORDER_MARKET_BUY, MQ(0.02), (uint8_t)0, /*core_cfg*/nullptr);
+        buy_cmd.intended_tp = MQ(60500.0);
+        buy_cmd.intended_sl = MQ(59500.0);
+        buy_cmd.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
+        buy_cmd.event_price = MQ(60000.0);
+        tt::OrderManager_Submit(&r->oms, buy_cmd);
+        for (int i = 0; i < MAX_INFLIGHT_ORDERS; ++i) {
+            if ((r->oms.order_bitmap & (uint16_t)(1u << i)) == 0) continue;
+            tt::Order<64>* o = &r->oms.orders[i];
+            if (tt::Order_GetState(o) != tt::ORDER_FILLED) {
+                o->pre_resolved.fee_rate = FEE_RATE;   // non-zero fee → real booked_fee path
+                tt::OrderManager_HandleFill(&r->oms, o, MQ(60000.0), MQ(0.02));
+                tt::Order_SetState(o, tt::ORDER_FILLED);
+                r->oms.order_bitmap &= ~(uint16_t)(1u << i);
+                break;
+            }
+        }
+        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+
+        check("oms-ts-1: total_fees after entry == 1.20 (1200 × 0.001, exact)",
+              Money_Eq(r->oms.total_fees, MQ(1.20)));
+
+        // ---- Close slot 0, injecting the taker fee ----
+        tt::SubmitCommand<64> sell_cmd(0, tt::ORDER_MARKET_SELL, MQ(0.02), (uint8_t)0, /*core_cfg*/nullptr);
+        sell_cmd.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
+        sell_cmd.event_price = MQ(60600.0);
+        tt::OrderManager_Submit(&r->oms, sell_cmd);
+        for (int i = 0; i < MAX_INFLIGHT_ORDERS; ++i) {
+            if ((r->oms.order_bitmap & (uint16_t)(1u << i)) == 0) continue;
+            tt::Order<64>* o = &r->oms.orders[i];
+            if (tt::Order_GetState(o) != tt::ORDER_FILLED) {
+                o->pre_resolved.fee_rate = FEE_RATE;
+                tt::OrderManager_HandleFill(&r->oms, o, MQ(60600.0), MQ(0.02));
+                tt::Order_SetState(o, tt::ORDER_FILLED);
+                r->oms.order_bitmap &= ~(uint16_t)(1u << i);
+                break;
+            }
+        }
+        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+
+        // EXACT fee→P&L→balance characterization (frozen byte-exact, not windowed):
+        check("oms-ts-1: total_fees == 2.412 (entry 1.20 + exit 1.212, exact)",
+              Money_Eq(r->oms.total_fees, MQ(2.412)));
+        check("oms-ts-1: realized_pnl == 9.588 (gross 12.00 − fees 2.412, exact)",
+              Money_Eq(r->oms.realized_pnl, MQ(9.588)));
+        check("oms-ts-1: balance == before + 9.588 == 10009.588 (exact)",
+              Money_Eq(r->oms.balance, Money_Add(bal_before, MQ(9.588))));
+
+        // Bucket decomposition — both fills are MARKET (taker, is_maker=0). The aggregate
+        // total_fees stays correct under a maker/taker mask-inversion; the bucket split catches
+        // it (the OrderManager.hpp:319 invariant total_fees == maker+taker):
+        check("oms-ts-1: total_taker_fees == 2.412 (both fills taker)",
+              Money_Eq(r->oms.total_taker_fees, MQ(2.412)));
+        check("oms-ts-1: total_maker_fees == 0 (no maker fills)",
+              Money_IsZero(r->oms.total_maker_fees));
+        check("oms-ts-1: taker_fills_count==2 / maker_fills_count==0",
+              r->oms.taker_fills_count == 2 && r->oms.maker_fills_count == 0);
+        check("oms-ts-1: total_fees == total_maker_fees + total_taker_fees (bucket invariant)",
+              Money_Eq(r->oms.total_fees, Money_Add(r->oms.total_maker_fees, r->oms.total_taker_fees)));
+        // Secondary exit state the fill writes (complete-write-set characterization):
+        check("oms-ts-1: last_was_win bit SET for the winning exit (slot 0)",
+              (r->oms.last_was_win_bitmap & BITMAP_BIT_U16(0)) != 0);
+        check("oms-ts-1: last_realized_return[0] == +0.01 ((60600-60000)/60000)",
+              fabs(r->oms.last_realized_return[0] - 0.01) < 1e-9);
+        check("oms-ts-1: ks_peak_balance == 10009.588 (peak tracks post-win balance)",
+              Money_Eq(r->oms.ks_peak_balance, MQ(10009.588)));
+
+        delete r;
+    }
+
+    //======================================================================================================
+    // [oms-ts-1b — LOSS round-trip: the sign path (Net-1, audit Finding 6)]
+    //======================================================================================================
+    // The win block leaves the net-SIGN path uncharacterized — an all-winner test cannot catch a
+    // sign regression (Money_Add vs Money_Sub of net, or a negative-net clamp). This LOSES:
+    // entry 60600 -> exit 60000, fee_rate 0.001.
+    //   entry_fee = 1212 x 0.001 = 1.212 ; exit_fee = 1200 x 0.001 = 1.20 ; total_fees = 2.412
+    //   gross = (60000-60600) x 0.02 = -12.00 ; net = -12.00 - 2.412 = -14.412
+    //   balance = 10000 - 14.412 = 9985.588 ; realized_pnl = -14.412 ; last_was_win = 0
+    // ADV-REFUTE: 2026-06-11 — the loss/sign coverage the oms-ts-1 3-agent panel (Finding 6)
+    // required; values hand-derived from handle_sell_fill + cross-checked green (suite 3359/0).
+    //======================================================================================================
+    printf("\n--- oms-ts-1b — LOSS round-trip (sign path) ---\n");
+    {
+        struct R {
+            tt::OrderManagerState<64> oms;
+            tt::EventLoopState<64>    state;
+            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
+            tt::ExecutionCore<64>     core;
+        };
+        R* r = new R();
+        tt::EventLoopState_InitLegacy(&r->state, &r->oms, MQ(10000.0));
+        MBS_SET_U8(r->oms.oms_state_flags, tt::MASK_OMS_STATE_EVENT_LOG_MODE, tt::SHIFT_OMS_STATE_EVENT_LOG_MODE, 1);
+        BITMAP_CLR(r->oms.oms_state_flags, tt::MASK_OMS_STATE_PARTIAL_EXIT_ENABLED);
+        tt::SPSCRing_Init(&r->tick_ring);
+        tt::ExecutionCore_Init(&r->core, 0, &r->tick_ring);
+        tt::EventLoopState_RegisterCore(&r->state, &r->core, MQ(61000.0), MQ(60000.0), MQ(0.01));
+        tt::EventLoopState_SetCoreStrategy(&r->state, 0, STRATEGY_SIMPLE_DIP, MQ(1500.0));
+
+        const Money bal_before = r->oms.balance;
+        const Money FEE_RATE   = MQ(0.001);
+
+        // ---- Open slot 0 @ 60600 ----
+        tt::SubmitCommand<64> buy_cmd(0, tt::ORDER_MARKET_BUY, MQ(0.02), (uint8_t)0, /*core_cfg*/nullptr);
+        buy_cmd.intended_tp = MQ(61000.0);
+        buy_cmd.intended_sl = MQ(60000.0);
+        buy_cmd.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
+        buy_cmd.event_price = MQ(60600.0);
+        tt::OrderManager_Submit(&r->oms, buy_cmd);
+        for (int i = 0; i < MAX_INFLIGHT_ORDERS; ++i) {
+            if ((r->oms.order_bitmap & (uint16_t)(1u << i)) == 0) continue;
+            tt::Order<64>* o = &r->oms.orders[i];
+            if (tt::Order_GetState(o) != tt::ORDER_FILLED) {
+                o->pre_resolved.fee_rate = FEE_RATE;
+                tt::OrderManager_HandleFill(&r->oms, o, MQ(60600.0), MQ(0.02));
+                tt::Order_SetState(o, tt::ORDER_FILLED);
+                r->oms.order_bitmap &= ~(uint16_t)(1u << i);
+                break;
+            }
+        }
+        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+
+        // ---- Close slot 0 @ 60000 (a LOSS) ----
+        tt::SubmitCommand<64> sell_cmd(0, tt::ORDER_MARKET_SELL, MQ(0.02), (uint8_t)0, /*core_cfg*/nullptr);
+        sell_cmd.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
+        sell_cmd.event_price = MQ(60000.0);
+        tt::OrderManager_Submit(&r->oms, sell_cmd);
+        for (int i = 0; i < MAX_INFLIGHT_ORDERS; ++i) {
+            if ((r->oms.order_bitmap & (uint16_t)(1u << i)) == 0) continue;
+            tt::Order<64>* o = &r->oms.orders[i];
+            if (tt::Order_GetState(o) != tt::ORDER_FILLED) {
+                o->pre_resolved.fee_rate = FEE_RATE;
+                tt::OrderManager_HandleFill(&r->oms, o, MQ(60000.0), MQ(0.02));
+                tt::Order_SetState(o, tt::ORDER_FILLED);
+                r->oms.order_bitmap &= ~(uint16_t)(1u << i);
+                break;
+            }
+        }
+        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+
+        // EXACT loss characterization — the SIGN path the winner cannot reach:
+        check("oms-ts-1b: realized_pnl == -14.412 (gross -12.00 - fees 2.412, exact)",
+              Money_Eq(r->oms.realized_pnl, MQ(-14.412)));
+        check("oms-ts-1b: balance == before - 14.412 == 9985.588 (exact loss)",
+              Money_Eq(r->oms.balance, Money_Sub(bal_before, MQ(14.412))));
+        check("oms-ts-1b: total_fees == 2.412 (1.212 entry + 1.20 exit)",
+              Money_Eq(r->oms.total_fees, MQ(2.412)));
+        check("oms-ts-1b: total_taker_fees == 2.412 / total_maker_fees == 0",
+              Money_Eq(r->oms.total_taker_fees, MQ(2.412)) && Money_IsZero(r->oms.total_maker_fees));
+        check("oms-ts-1b: last_was_win bit CLEAR for the losing exit (slot 0)",
+              (r->oms.last_was_win_bitmap & BITMAP_BIT_U16(0)) == 0);
+
+        delete r;
+    }
+
+    //======================================================================================================
     // [v4.7.21 — W/L pairing under partial exits]
     //======================================================================================================
     // Verify the per-trade W/L classification when partials are enabled:

@@ -163,6 +163,21 @@ run_advisory "forward-promise audit (--since HEAD~5)" \
 run_advisory "meta-registry coverage" \
     python3 "$REPO_ROOT/tools/check_meta_registry.py"
 
+# --- ADVISORY: capital-test adversarial-refute markers (TECH_DEBT-164 part B — the AR-8 failsafe) ---
+# The binding adversarial-default can't be self-attested: every capital TEST block must carry an
+# // ADV-REFUTE (independent refute ran) or // ADV-SELF (opt-out + reason) disposition. tests/ is
+# gitignored so this is a standing marker scan, not a diff gate. Advisory: existing unmarked = KNOWN
+# shrinking backlog; a NEW unmarked capital test bumps the count conspicuously at the gate.
+if [ "${SKIP_CAPITAL_ADV_CHECK:-0}" != "1" ]; then
+    CAP_OUT=$(python3 "$REPO_ROOT/tools/check_capital_adversarial_audit.py" 2>&1)
+    if echo "$CAP_OUT" | grep -q 'WARN'; then
+        CAP_N=$(echo "$CAP_OUT" | sed -n 's/.*WARN — \([0-9]*\) capital.*/\1/p')
+        RESULTS+=("  ⚠️  ADV   capital-test adversarial markers — ${CAP_N:-?} unmarked block(s) (KNOWN backlog; NEW capital tests need // ADV-REFUTE or // ADV-SELF)")
+    else
+        RESULTS+=("  ✅ ADV   capital-test adversarial markers (every capital test carries a refute disposition)")
+    fi
+fi
+
 echo ""
 echo "=== SWEEP RESULTS ==="
 for r in "${RESULTS[@]}"; do echo "$r"; done

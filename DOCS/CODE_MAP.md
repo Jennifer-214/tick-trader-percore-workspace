@@ -4,7 +4,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-06-11 (commit a503dd2)
+**Last regenerated**: 2026-06-12 (commit 5b02cce)
 
 ## CoreFrameworks/
 
@@ -67,13 +67,13 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `EventLoop_KillSwitchEvaluate` — line 3245
 - `EventLoop_TimeExitOneCore` — line 3319
 - `EventLoop_FlattenAll` — line 3414
-- `EventLoop_CheckWsStaleness` — line 3477
-- `EventLoop_TryClearRecovery` — line 3556
-- `EventLoop_TrailingSLRatchetOneCore` — line 3599
-- `EventLoop_BreakevenOnProfitOneCore` — line 3678
-- `EventLoop_Unpause` — line 3722
-- `EventLoop_SlowPath` — line 3746
-- `EventLoop_RunController` — line 3771
+- `EventLoop_CheckWsStaleness` — line 3498
+- `EventLoop_TryClearRecovery` — line 3577
+- `EventLoop_TrailingSLRatchetOneCore` — line 3620
+- `EventLoop_BreakevenOnProfitOneCore` — line 3699
+- `EventLoop_Unpause` — line 3743
+- `EventLoop_SlowPath` — line 3767
+- `EventLoop_RunController` — line 3792
 
 ### CoreLatencyStats.hpp
 

@@ -1240,3 +1240,15 @@ surface_tags: [accounting, symbol-precision, fpn, order-validation]
 
 > **CLOSED 2026-06-10 (SUBSUMED by Ship B v5.15.5.F.4d.1.E.0.9):** `SymbolFilters` fields retyped to decimal `Money` (D-106 source-exact mirrors) + `Money_QuantizeToStep` (#6) is the exact LOT_SIZE quantizer; `qty_decimals` derives from the Money step. The double SHELL on the REST plumbing rides .E.3.
 
+---
+
+### TECH_DEBT-164 — D-190 process-codification residue (AP4 extension + characterization-test DESIGN_SPEC + adversarial-default into skills)
+
+- **id:** TECH_DEBT-164 · **severity:** low · **opened:** 2026-06-10 · **status:** CLOSED 2026-06-12 (all 3 parts done) · **surface_tags:** [audit-methodology, anti-pattern-catalog, design-spec, skill-default, M7, doc-system]
+- **What it was:** the `.E.0.10` D-190 saga codified the immediate lessons (3 memories + D-190 + PARITY-038 + Landmine 8 + the structural guard) but left 3 DEEPER process codifications: (1) the "AP4 extension" (single-source the COMPUTATION, not just the mode, for any money value derived ≥2 ways); (2) a NEW `characterization-test-discipline` DESIGN_SPEC (the complete / non-vacuous / not-frozen-bug 3-lens pass); (3) M7 — wire the adversarial-default + 3-lens pass INTO the audit/review skills so they fire by default, not from memory.
+- **CLOSED across 3 passes:**
+  - **Part 3 (2026-06-11):** adversarial-default made BINDING DEFAULT — shared consult discipline Stage-0 + `tools/check_capital_adversarial_audit.py` failsafe (+ D-137 self-test) + AR-8/AR-9 catalogued + `feedback_adversarial_framing_default_for_checks` BINDING.
+  - **Part 2 (2026-06-12):** authored `DESIGN_SPECS/audit-methodologies/characterization-test-discipline.md` (first-canonical = `oms-ts-1`/`oms-ts-1b`; README audit-methodology 5→6; sister-symmetric with adversarial-multi-agent + audit-driven-pre-coding-gate; `applies_at_skills` = /readiness /test-strength-audit /blindspot-scan /precoding-audit-gate /plan-dive /accounting-audit).
+  - **Part 1 (2026-06-12):** the "AP4 extension" — a grep PROVED **AP4 was never authored as a catalog class** (D-121 left AP1–AP4 Stage-2 DRAFT; only memory + ledger refs ever existed — a cited-but-nonexistent / WH-5 catch surfaced by grounding-in-real-code at write time) → authored fresh as **Class 43** (money value derived ≥2 ways without single-sourcing the computation — Sub-shape A divergent/implicit rounding-mode [D-105] + Sub-shape B open-coded formula duplication [D-190]; recurrence_count 2), added to the RBP index table (the 41/42 rows that were numbering-note-only were backfilled in the same edit), cross-reffed from `feedback_single_source_the_computation_not_just_the_mode`.
+- **Cross-ref:** D-190; D-198 (the codification-pass decision); Class 43; `DESIGN_SPECS/audit-methodologies/characterization-test-discipline.md`; `feedback_single_source_the_computation_not_just_the_mode`; `feedback_adversarial_framing_default_for_checks`. Index consistency gated by `tools/check_session_docs.sh`.
+

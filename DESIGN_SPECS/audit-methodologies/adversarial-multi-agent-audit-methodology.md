@@ -5,7 +5,7 @@ version: 1.0
 established: 2026-06-10
 tags: [audit-methodology, meta-discipline, framework-discipline]
 surface: [hot-path, slow-path, live-trading]
-sister_specs: [audit-driven-pre-coding-gate.md]
+sister_specs: [audit-driven-pre-coding-gate.md, characterization-test-discipline.md]
 applies_at_skills: [/handoff, /accept-handoff, /precoding-audit-gate, /trace-deps, /dependency-chain-trace, /bug-check, /dod-audit, /accounting-audit, /hft-audit, /ml-audit, /blindspot-scan, /registry-fit-audit, /second-opinion, /merge-scan, /parity-check, /plan-check, /plan-dive, /finding-analyzer]
 ---
 
@@ -75,6 +75,17 @@ Adversarial agents OVER-RATE (step 5) for a specific structural reason: they con
 ## Why it works (and why confirmatory doesn't)
 
 A confirmatory pass ("verify X is correct") rationalizes toward GREEN — it reads the code looking for reasons it's fine, and finds them. An adversarial pass ("prove X is wrong") reads the code looking for the break, and finds those. SAME reviewer, same code, opposite framing → opposite outcomes. For capital/determinism the cost is asymmetric — a missed bug costs money, a false-positive costs minutes — so the asymmetry says HUNT, not confirm.
+
+## Mechanical green ≠ content verified
+
+A deterministic gate (the doc-CI sweep `check_session_docs.sh`, a compiler, a frozen-golden re-run) is legitimately verified by RUNNING it — `feedback_independence_for_judgment_not_mechanical` is the opt-out for mechanical work. But a gate verifies ONLY its own scope. A consistency/index gate proves the indexes are *consistent*; it says NOTHING about whether the *content* is *correct*. So passing it is NOT a stated-reason opt-out from the adversarial CONTENT pass on a capital/correctness surface — they answer different questions:
+
+| Gate | Verifies | Blind to |
+|---|---|---|
+| Mechanical sweep (consistency) | sister-symmetry, tag-vocab, index sync, broken-ref, citation *syntax* | whether a cited `file:line` is *true*, whether a claim is *correct*, whether a test is *complete* |
+| Adversarial content pass | claim soundness, citation truth, coverage, value-correctness | only what it isn't pointed at — so point N independent lenses |
+
+The trap (`.E.0.10`, the AR-8 mechanical-green sharpening): a codification's doc-CI sweep went SWEEP CLEAN, was reported as "verified," and a 3-agent panel then found 2 HIGH stale `file:line` cites the mechanical gate is structurally blind to (it checks a citation is *well-formed*, never that the line *exists* or *says what's claimed*). **"The mechanical check is green" verifies a different thing than "the content is correct" — run BOTH on a capital/correctness surface.**
 
 ## Cross-references
 

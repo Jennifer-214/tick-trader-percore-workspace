@@ -72,6 +72,8 @@ CI tool `check_doc_metadata.py` (queued at `.C` candidate ship) validates every 
 | `refactor-discipline` | Boundary-stable refactors, reduce-touch-sites, action-parameterized walkers, safe substring/member-access edits |
 | `user-profile` | Who the operator is — working style, motivations, ADHD/deferred-reward, public-work stakes, structure-as-cognition |
 | `project-state` | Ongoing project facts not derivable from code/git — sprint trajectory, cadence conventions, repo quirks, queued work |
+| `capital-safety` | Capital-bearing money paths; accounting correctness; loss-prevention guards; dead-capital-path / Knight-Capital discipline (Class 40-43 cohort) |
+| `determinism` | Cross-run / cross-binary / cross-locale byte equivalence; reproducibility; replay-determinism nets (engine priority #2) |
 
 ---
 
@@ -105,6 +107,7 @@ CI tool `check_doc_metadata.py` (queued at `.C` candidate ship) validates every 
 | `helper-extraction` | Lambda hoisting / function extraction / shared-helper discipline (M5/M6 cohort) |
 | `session-pickup` | Fresh-context onboarding / required reading / drift-check / TaskList recreation |
 | `skill-pipeline` | claude-skills SKILL.md spec / pre-coding gate / sister-skill composition |
+| `persistence` | Snapshot save/load / warm-restart recovery / RunHistory / ShardedSnapshot money-exact round-trip |
 
 ---
 

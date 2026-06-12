@@ -45,6 +45,7 @@ A value computed by one stage is **unconditionally overwritten or ignored** by a
 2. **Migration consumer-enumeration (Class 33 sister):** when a field moves to a new home, enumerate ALL of its consumers and verify EACH re-wired — a half-wired migration (fee wired, slippage orphaned) is this class's commonest origin.
 3. **Gate or document the overwrite (Sub-shape B):** an unconditional overwrite of a *computed* value is a smell — gate it (precedence flag), or document the precedence AND verify the computing stage knows it's overridden (don't compute-then-silently-discard).
 4. **Live-vs-dead consumer discipline (Class 40/26 sister):** a consumer in a dead/legacy/mode-0 path is NOT a live consumer — the live path needs its own.
+5. **The full structural close — a struct-field produce/consume tracker.** This class is fundamentally a *data-flow* gap (a field's producer or consumer is missing/wrong). The complete M7 close is a tool that maps, per struct field, every PRODUCE (write/bind) and CONSUME (live read) site across the codebase — sister to `/dependency-chain-trace` but at FIELD granularity. It catches both orphan directions AND the overwrite shape structurally, AND doubles as the field-access-pattern map a DOD re-pack (TECH_DEBT-159) needs + a feeder for the `subsystem-designs/` catalogue. The CI-check candidate in `closure_mechanism` is the SEED; the full tracker is the endgame (operator-raised 2026-06-12; scope as a future discipline).
 
 ## False-positive surface
 

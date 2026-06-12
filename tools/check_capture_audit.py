@@ -13,6 +13,9 @@ Mechanizes:
   Check 1  — MEMORY.md index sync: every memory/<f>.md has an index line in MEMORY.md (no orphans)
   Check 4  — decision-log sentinel matching: every `<!-- D/C/F: <id> -->` has a `<!-- STATUS: ... -->`
   Check 8  — skill -> CLAUDE.md suite linkage: every claude-skills/<x>/SKILL.md named in CLAUDE.md
+  Check 13 — decision-log COMPLETENESS (ADVISORY, explicit-only): a new Hard-Invariant (Hnn) added to
+             CLAUDE.md in the session window with NO referencing D-entry = a likely un-logged decision
+             (the create->capture gap; M7 escalation of feedback_document_as_you_go). Sibling to Check 4.
 
 Already tool-backed elsewhere (invoke those directly; NOT duplicated here):
   Check 1 frontmatter + Check 9/12 bidirectional sisters -> check_doc_metadata.py --bidirectional --memories
@@ -23,13 +26,16 @@ CONVENTIONS (mirror check_doc_metadata.py): machine-portable resolver (env | scr
 exit 1 on any violation (CI-gating); minimal line-scan (no yaml dep).
 
 USAGE
-  python3 tools/check_capture_audit.py                 # all mechanical checks
-  python3 tools/check_capture_audit.py --check 1|4|8    # one check
+  python3 tools/check_capture_audit.py                 # default-all HARD checks (1/4/8)
+  python3 tools/check_capture_audit.py --check 1|4|8|13 # one check (13 = advisory completeness)
+  python3 tools/check_capture_audit.py --check 13 --since HEAD~8   # decision-completeness over a window
+  python3 tools/check_capture_audit.py --selftest      # unit-test Check 13 cross-ref logic, then exit
   python3 tools/check_capture_audit.py --quiet          # only failures + summary
 """
 import argparse
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -175,11 +181,111 @@ def check_skill_linkage(quiet, engine, workspace):
     return 0
 
 
+# ---------------------------------------------------------------------------
+# Check 13 — decision-log COMPLETENESS (ADVISORY; sibling to Check 4 sentinel MATCHING)
+#
+# WHY (operator 2026-06-11, the .E.0.10 close): Check 4 proves a D/C/F marker is well-FORMED (has a
+# STATUS). It does NOT prove the log is COMPLETE — that every decision actually MADE this session got
+# an entry. The create->capture gap (feedback_document_as_you_go): a decision lands in its natural
+# home (a new Hard-Invariant row in CLAUDE.md, a new DESIGN_SPEC) but never gets a D-N, so the
+# planning trail silently misses it. H22 this session sat un-logged until operator pushback forced a
+# retrofit (D-193). Memory codified the discipline and it STILL leaked -> M7 escalation from
+# "remember to" to a firing gate.
+#
+# Heuristic (ADVISORY — never hard-fails; surfaces for human triage): a decision-bearing artifact
+# ADDED in the window with NO referencing D-entry is a likely un-logged decision. The git-robust,
+# highest-signal detector is a new Hard-Invariant `| Hnn |` row in CLAUDE.md (an invariant is ALWAYS
+# a decision); new DESIGN_SPECS are reported as an informational note. Window via --since (default
+# HEAD~8; a session boundary is fuzzy — hence ADVISORY + explicit-only, never a hard gate).
+# ---------------------------------------------------------------------------
+def _git_lines(repo, git_args):
+    try:
+        out = subprocess.run(["git", "-C", str(repo)] + git_args,
+                             capture_output=True, text=True, timeout=20)
+        return out.stdout.splitlines() if out.returncode == 0 else None
+    except Exception:
+        return None
+
+
+def _new_invariants(workspace, since_ref):
+    """Hnn identifiers added to CLAUDE.md in the window (added '| **Hnn** |' table rows)."""
+    lines = _git_lines(workspace, ["diff", f"{since_ref}..HEAD", "--", "CLAUDE.md"])
+    if lines is None:
+        return None  # git unavailable / bad ref -> caller SKIPs
+    out = []
+    for ln in lines:
+        if ln.startswith("+++") or not ln.startswith("+"):
+            continue
+        m = re.match(r"\+\s*\|\s*\*{0,2}(H\d+)\*{0,2}\s*\|", ln)
+        if m:
+            out.append(m.group(1))
+    return sorted(set(out))
+
+
+def _new_specs(workspace, since_ref):
+    """DESIGN_SPECS/*.md files ADDED in the window (stems)."""
+    lines = _git_lines(workspace, ["diff", "--diff-filter=A", "--name-only",
+                                   f"{since_ref}..HEAD", "--", "DESIGN_SPECS/"])
+    if lines is None:
+        return []
+    return sorted({Path(p).stem for p in lines if p.endswith(".md")})
+
+
+def _unreferenced(ids, ref_text):
+    """ids with no word-boundary mention in ref_text (the core cross-ref; unit-tested via --selftest)."""
+    return [i for i in ids if not re.search(rf"\b{re.escape(i)}\b", ref_text)]
+
+
+def check_decision_completeness(quiet, workspace, since_ref):
+    invs = _new_invariants(workspace, since_ref)
+    if invs is None:
+        print(f"  [Check 13] SKIP — git unavailable or bad --since ref ({since_ref})")
+        return 0
+    dlogs = list(workspace.glob("plans/**/decision-logs/*.md"))
+    ref_text = "\n".join(dl.read_text(encoding="utf-8") for dl in dlogs)
+    specs = _new_specs(workspace, since_ref)
+    missing_inv = _unreferenced(invs, ref_text)
+    missing_spec = _unreferenced(specs, ref_text)
+    if missing_inv:
+        print(f"  [Check 13] FLAG — {len(missing_inv)} new Hard-Invariant(s) since {since_ref} with NO "
+              f"referencing D-entry (likely un-logged decision — add a D-N, or confirm intentional):")
+        for h in missing_inv:
+            print(f"             {h}: added to CLAUDE.md, not referenced in any decision log")
+        if missing_spec:
+            print(f"             (also new spec(s) with no D-entry: {', '.join(missing_spec)})")
+        return 1
+    if not quiet:
+        print(f"  [Check 13] PASS — decision-log completeness "
+              f"({len(invs)} new invariant(s), {len(specs)} new spec(s) in window; all referenced)")
+        if missing_spec:
+            print(f"             note (informational): new spec(s) not yet in a D-entry: {', '.join(missing_spec)}")
+    return 0
+
+
+def _selftest():
+    ref_with = "<!-- D/C/F: D-193 --> H22 scale-invariance / shard-independence invariant"
+    ref_without = "<!-- D/C/F: D-190 --> Money_FillGross single-source"
+    ok = (_unreferenced(["H22"], ref_with) == []
+          and _unreferenced(["H22"], ref_without) == ["H22"]
+          and _unreferenced(["H22", "H21"], ref_with) == ["H21"])
+    print("  [selftest] PASS — cross-ref clears referenced ids + flags unreferenced ones"
+          if ok else "  [selftest] FAIL — cross-ref logic regression")
+    return 0 if ok else 1
+
+
 def main():
     ap = argparse.ArgumentParser(description="Mechanical half of /capture-audit (Checks 1/4/8).")
-    ap.add_argument("--check", type=int, choices=[1, 4, 8], help="run only one check")
+    ap.add_argument("--check", type=int, choices=[1, 4, 8, 13], help="run only one check")
     ap.add_argument("--quiet", action="store_true", help="only failures + summary")
+    ap.add_argument("--since", default="HEAD~8",
+                    help="session window for Check 13 decision-completeness (default HEAD~8)")
+    ap.add_argument("--selftest", action="store_true",
+                    help="unit-test Check 13 cross-ref logic, then exit")
     args = ap.parse_args()
+
+    if args.selftest:
+        print("=== check_capture_audit.py — Check 13 selftest ===")
+        sys.exit(_selftest())
 
     engine = _resolve_engine()
     workspace = _resolve_workspace()
@@ -192,6 +298,10 @@ def main():
         rc |= check_sentinels(args.quiet, workspace)
     if args.check in (None, 8):
         rc |= check_skill_linkage(args.quiet, engine, workspace)
+    # Check 13 is ADVISORY + EXPLICIT-ONLY — deliberately NOT in the default-all set so the
+    # aggregator's HARD `--quiet` run (Checks 1/4/8) never trips on this heuristic. Via --check 13.
+    if args.check == 13:
+        rc |= check_decision_completeness(args.quiet, workspace, args.since)
 
     if rc:
         print("=== capture-audit MECHANICAL checks FAILED ===")

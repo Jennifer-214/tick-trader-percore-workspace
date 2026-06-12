@@ -178,6 +178,15 @@ if [ "${SKIP_CAPITAL_ADV_CHECK:-0}" != "1" ]; then
     fi
 fi
 
+# --- ADVISORY: decision-log completeness (a new Hard-Invariant with no D-entry = likely un-logged decision) ---
+# The create->capture gap (feedback_document_as_you_go): a decision lands in its home (a new Hnn row in
+# CLAUDE.md) but never gets a D-N. H22 sat un-logged until operator pushback at the .E.0.10 close -> M7
+# escalation. Check 13 of check_capture_audit.py; advisory + explicit-only (heuristic, never hard-fails).
+if [ "${SKIP_DECISION_COMPLETENESS_CHECK:-0}" != "1" ]; then
+    run_advisory "decision-log completeness (new invariant ⇒ a D-entry; the create→capture gap)" \
+        python3 "$REPO_ROOT/tools/check_capture_audit.py" --check 13 --since "${DLOG_SINCE:-HEAD~8}"
+fi
+
 echo ""
 echo "=== SWEEP RESULTS ==="
 for r in "${RESULTS[@]}"; do echo "$r"; done

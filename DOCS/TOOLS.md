@@ -25,7 +25,7 @@
 | `run_sanitizer_suite.sh` | STANDING-CI | ship acceptance (operator / `/ship`) | — | pinned-run-conditions sanitizer gate: `ulimit -s unlimited` + `detect_leaks=0` with documented WHY (TECH_DEBT-161; A.5 found the gate depended on ambient shell state) |
 | `run_sanitizer_suite_selftest.sh` | TEST-HARNESS | test runner; manual | — | negative self-test for `run_sanitizer_suite.sh`: RED-on-failing-lane + `[FAIL]`-line surfaced + GREEN-on-pass + RED-on-missing-lane (hermetic stub lanes via `FOXML_SUITE_ROOT`; stubs beside tools, NOT /tmp — noexec-hardened hosts) |
 | `check_session_docs.sh` | STANDING-CI | hook; close/accept/precoding/readiness; umbrella | ✓ | one-shot doc/plan CI sweep (runs the doc checks below) |
-| `check_capture_audit.py` | STANDING-CI | hook; `check_session_docs`; capture/accept-handoff | — | mechanical decision-capture drift check (11 checks) |
+| `check_capture_audit.py` | STANDING-CI | hook; `check_session_docs`; capture/accept-handoff | — | mechanical capture-audit checks 1/4/8 (index / decision-sentinel / skill-linkage) + 13 decision-log completeness (advisory; new-invariant→D-entry create→capture M7 guard) |
 | `check_doc_metadata.py` | STANDING-CI | hook; `check_session_docs`; capture/doc-create/metadata-audit/ship/sync | ✓ | doc frontmatter bidirectional + index check |
 | `check_forward_promise_audit.py` | STANDING-CI | hook; `check_session_docs`; +6 skills | ✓ | forward-promise landed-verification (Check 11) |
 | `check_plan_body_symbol_existence.py` | STANDING-CI | hook; `check_session_docs`; +4 skills | ✓ | Class-14 plan-body symbol-existence (B-Plus) |

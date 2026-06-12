@@ -89,6 +89,9 @@
 - [Ground design claims in real code](feedback_ground_design_in_real_code.md) — design talk: Read+cite file:line for EXISTING-code claims (don't reconstruct from memory); show framing+reuse for NEW code
 - [Domain guards for bulk transforms](feedback_domain_guards_for_bulk_transforms.md) — error-driven migration consults the DOMAIN list first (compiler checks types not domains); integration smokes mandatory at encoding epochs
 - [Fold findings into the destination plan](feedback_fold_findings_into_destination_plan.md) — current work finds something belonging in a future/other plan → fold it INTO that plan as discovered; reactive, not scouting; folding TRACKS, it does NOT defer the FIX (the fix's do-vs-defer is the separate subsumption test, not adjacency)
+- [MOOT-UNREACHABLE disposition for real-but-unreachable findings](feedback_moot_unreachable_disposition.md) — a code-real flaw whose trigger is structurally unreachable (+ bigger-issues-already-in-play if it fires) → pin the guarantee, don't patch; REQUIRES code-demonstrated unreachability NOT a vibe (the merit bar, not effort-avoidance); first applied A7 `.E.0.10`
+- [Micro-commits, compile-gated; never push broken code](feedback_micro_commits_compile_gated.md) — prefer small frequent commits at clean boundaries; each MUST compile (suite green ideally); WIP/partial in SCOPE ok, complete in COMPILATION; gate push on green; `wip(<ship>):` prefix mid-ship
+- [No unhomed debt — unhomed = code smell](feedback_no_unhomed_debt_code_smell.md) — every debt traces to a HOME (future plan / TECH_DEBT-with-trigger / register disposition) or closes NOW; homed-and-deferred is SAFE, unhomed rots; the floor under do-now-vs-defer; plans are binding AND living (update the owning plan with whatever touches its blast radius)
 
 ## User profile
 

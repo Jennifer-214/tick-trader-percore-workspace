@@ -128,11 +128,16 @@ def main() -> int:
     failures = 0
 
     # Check 1: every codebase macro is in FOREACH_REGISTRY (or exempted)
+    # FATAL since .E.0.10 (2026-06-11): the transition window closed — all macros are now enrolled, so a
+    # NEW unregistered macro is a hard CI failure per H15 ("adding a registry without enrollment fails CI
+    # Check"). The 2 stragglers (FOREACH_LEGACY_PREFIXED_KEY / FOREACH_STAMP_RESULT_FIELD_EXCLUSION) slipped
+    # precisely because this was warn-only past its .F.4d promote-milestone — the warn WAS the hole. Close
+    # a future one by a row in CoreFrameworks/MetaRegistry.hpp, or (if genuinely not a registry) EXEMPTIONS.
     unregistered = codebase_macros - set(registry_entries.keys()) - EXEMPTIONS - {"FOREACH_REGISTRY"}
     if unregistered:
         for name in sorted(unregistered):
-            warn(f"Check 1: codebase macro `{name}` not in FOREACH_REGISTRY — register or document as EXEMPTION in tools/check_meta_registry.py")
-        warn(f"Check 1 INFO: {len(unregistered)} unregistered macros (NON-FATAL during transition; promote to fatal at .F.4d H15 codification)")
+            fail(f"Check 1 FAIL: codebase macro `{name}` not in FOREACH_REGISTRY — add a row in CoreFrameworks/MetaRegistry.hpp (or document as EXEMPTION in tools/check_meta_registry.py)")
+        failures += 1
     else:
         info(f"Check 1 PASS: all codebase FOREACH_<X> macros registered in FOREACH_REGISTRY (or exempted)")
 

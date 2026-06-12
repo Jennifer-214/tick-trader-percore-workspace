@@ -182,7 +182,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md` | 3-first-canonical | doc-discipline, structural-fix, pattern-codification, +1 | 6 |
 | `DESIGN_SPECS/doc-disciplines/module-scoped-claude-md-pattern.md` | 2-draft | doc-discipline, framework-discipline, context-aware-loading | 2 |
 
-## meta-discipline (23 specs)
+## meta-discipline (24 specs)
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
@@ -202,6 +202,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md` | 3-first-canonical | meta-discipline, anti-pattern-index, audit-methodology, +3 | 0 |
 | `DESIGN_SPECS/meta-disciplines/pattern-codification-lifecycle.md` | 5-claude-md | meta-discipline, pattern-codification, doc-discipline, +1 | 5 |
 | `DESIGN_SPECS/meta-disciplines/public-private-boundary-and-ecosystem-discipline.md` | 3-first-canonical | privacy-boundary, ecosystem, workspace, +2 | 0 |
+| `DESIGN_SPECS/meta-disciplines/representation-migration-completeness.md` | 3-first-canonical | capital-safety, ssot, structural-fix, +2 | 0 |
 | `DESIGN_SPECS/meta-disciplines/session-decision-log-discipline.md` | 3-first-canonical | meta-discipline, doc-discipline, plan-template, +1 | 0 |
 | `DESIGN_SPECS/meta-disciplines/single-source-of-truth-discipline.md` | 3-first-canonical | meta-discipline, ssot, refactor-discipline, +1 | 3 |
 | `DESIGN_SPECS/meta-disciplines/sister-cohort-amendment-completeness-discipline.md` | 3-first-canonical | meta-discipline, framework-discipline, doc-discipline, +2 | 0 |

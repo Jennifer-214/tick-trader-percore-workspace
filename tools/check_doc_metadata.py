@@ -95,7 +95,7 @@ VALID_TYPES = {
     "refactor-pattern", "feature-pattern", "framework-pattern",
     "audit-methodology", "data-discipline", "concurrency-pattern",
     "wire-format-pattern", "doc-discipline", "meta-discipline",
-    "plan-template", "ledger-template", "architecture-overview",
+    "plan-template", "ledger-template", "architecture-overview", "subsystem-design",
     "skill", "skill-check", "feedback", "user", "project", "reference",
     "sprint-master", "sub-plan", "handoff", "postmortem",
     "audit-report", "orientation-doc",

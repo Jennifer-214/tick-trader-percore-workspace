@@ -224,3 +224,11 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
 | `DESIGN_SPECS/ledger-templates/ledger-entry-templates.md` | 2-draft | ledger-discipline, plan-template, doc-discipline | 2 |
+
+## subsystem-design (1 specs)
+
+The design catalogue — as-built + as-intended references for one subsystem each, with a live divergences table (where the code silently differs from the intent). Grown + maintained as the codebase evolves.
+
+| Spec | Stage | Tags | Sister count |
+|---|---|---|---|
+| `DESIGN_SPECS/subsystem-designs/exit-chain-tp-sl-design.md` | 3-first-canonical | capital-safety, data-oriented-design, structural-fix, +1 | 0 |

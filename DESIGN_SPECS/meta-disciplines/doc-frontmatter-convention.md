@@ -60,7 +60,7 @@ sister_specs: [<paths to related DESIGN_SPECS>]
 
 ### DESIGN_SPECS/*.md
 ```yaml
-type: refactor-pattern | feature-pattern | framework-pattern | audit-methodology | data-discipline | concurrency-pattern | wire-format-pattern | doc-discipline | meta-discipline | plan-template | ledger-template | architecture-overview
+type: refactor-pattern | feature-pattern | framework-pattern | audit-methodology | data-discipline | concurrency-pattern | wire-format-pattern | doc-discipline | meta-discipline | plan-template | ledger-template | architecture-overview | subsystem-design
 applies_at_skills: [/skill1, /skill2]  # which skills load this dynamically
 ```
 

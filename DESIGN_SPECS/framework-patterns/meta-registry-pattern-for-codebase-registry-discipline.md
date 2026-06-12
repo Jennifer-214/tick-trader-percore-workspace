@@ -44,6 +44,9 @@ Recurrence guaranteed: every future sprint adds 1-3 more registries. Without a s
 
 ## Design
 
+> [!WARNING]
+> **This Design section is STALE vs the shipped implementation** (flagged `.E.0.10` 2026-06-11; full refresh tracked at **TECH_DEBT-172**). It describes the ORIGINAL design — `CoreFrameworks/RegistryRoster.hpp` with an 8-field tuple `X(NAME, file, LEVEL, PARENT, spec, BUG_CLASS, WIRE_KIND, doc)` + a bit-packed `RegistryRosterEntry` struct + **concrete = Level 0 / root = Level 2** numbering. **What shipped is simpler and numbered the OTHER way:** `CoreFrameworks/MetaRegistry.hpp`, a 4-field `X(registry_name, LEVEL, PARENT_NAME, description)`, with **root `FOREACH_REGISTRY` = Level 0**, direct registries = Level 1, a child of a Level-1 meta = Level 2 — the numbering the tool's Check 3 enforces and that CLAUDE.md / DESIGN_PHILOSOPHY H19 now match. **Read every level number below as INVERTED** until the refresh lands. The PATTERN (a meta-registry of registries + topology discipline) is sound; the specific structure + numbering here are pre-implementation.
+
 ### Three-level topology (no artificial cap; document the expectation)
 
 ```

@@ -3229,3 +3229,12 @@ sister_debt: TECH_DEBT-154 (the maker-fee guard, which uses the __builtin_expect
 - **Cost estimate:** ~1-2h each.
 - **Trigger:** `.E.1` adapter / per-node ML rework, OR pre-live-enable hardening.
 - **Cross-ref:** register bug-hunt § A5/A6; D-123 (A5 rides the adapter); F-096/TECH_DEBT-167 (A6 sister — same ML-barrier `double` path).
+
+### TECH_DEBT-172 — meta-registry DESIGN_SPEC describes a never-built design (RegistryRoster 8-field) + inverted LEVEL numbering
+
+- **id:** TECH_DEBT-172 · **severity:** low · **opened:** 2026-06-11 · **status:** open · **surface_tags:** [doc-system, design-spec, meta-registry, H19, framework, staleness]
+- **Title:** `DESIGN_SPECS/framework-patterns/meta-registry-pattern-for-codebase-registry-discipline.md` Design § describes the ORIGINAL design — `CoreFrameworks/RegistryRoster.hpp`, an 8-field tuple `X(NAME, file, LEVEL, PARENT, spec, BUG_CLASS, WIRE_KIND, doc)` + a bit-packed `RegistryRosterEntry` struct + concrete=Level0 / root=Level2. The SHIPPED impl is the simpler `CoreFrameworks/MetaRegistry.hpp` (4-field `X(registry_name, LEVEL, PARENT_NAME, description)`, root `FOREACH_REGISTRY`=Level0). The LEVEL numbering is INVERTED.
+- **Created:** 2026-06-11 — `.E.0.10` H15 enrollment (had to read the topology to enroll 2 macros correctly; found the docs contradict the code).
+- **Already done (D-195):** CLAUDE.md H19 + DESIGN_PHILOSOPHY H19 corrected to the code's numbering; the spec Design § WARNING-bannered (read levels as inverted).
+- **Owed:** rewrite the spec's Design + example rows to describe the actual `MetaRegistry.hpp` (4-field, root=Level0). The PATTERN (meta-registry-of-registries + topology discipline) is sound; only the structure + numbering are pre-implementation.
+- **Cross-ref:** D-195; CLAUDE.md / DESIGN_PHILOSOPHY H19; the spec's `.E.0.10` staleness banner.

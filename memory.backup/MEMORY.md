@@ -52,6 +52,7 @@
 - [Proportionate response to audit findings](feedback_proportionate_response_to_audit_findings.md) — full menu (INLINE/ACCEPT/FOLD/ARCHITECT/NO-FOLD); pick what's ACTUALLY right not first-sufficient
 - [Address MED/LOW findings, not just HIGH/CRIT](feedback_address_med_low_findings_not_just_high_crit.md) — every finding gets a disposition; severity gates urgency NOT whether-to-address; dropping MED/LOW = labeled techdebt
 - [Plan right not fast](feedback_plan_right_not_fast.md) — planning IS the hard part now; decide RIGHTLY not QUICKLY; indecisiveness while planning is a feature
+- [Planning-treadmill → bias to execution when discovery sufficient](feedback_planning_treadmill_bias_to_execution.md) — steps spawning 5 more + no code landing = avoidance not depth; land one verified fix; execution-timing not decision-quality (≠ plan-right-not-fast)
 - [Audit own proposals with the same rigor](feedback_audit_own_proposals_with_same_rigor.md) — 4-pillar: DESIGN_SPECS / anti-pattern / operator-impact / novel-alternative
 - [Surface operator migration path proactively on breaking changes](feedback_surface_operator_migration_path_proactively.md) — wire-format / version-bump / breaking cfg MUST include "Operator migration impact"; prefer SOFT compat
 - [Proactive novel alternative consideration](feedback_proactive_novel_alternative_consideration.md) — every decision matrix MUST include a "Novel alternative considered" row with verdict

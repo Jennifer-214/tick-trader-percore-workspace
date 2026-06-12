@@ -155,3 +155,50 @@ Doc sweep CLEAN (tools-inventory + budget + metadata all green).
 
 ## Net-1 characterization targets (the PERSIST kept-surfaces, by finding ID)
 `oms-ts-1` (fee-blind ±$15 check) · `oms-ts-2` (core/oms reconciliation) · `persist-dod-1` (torn snapshot) · `wfa-1` (warm-restart exit-disarmed) · `tsa-live-2` (recovery count-not-balance) · `persist-8` (paper-reset zombie active) · `hpg-bc-1` (stub-oracle / F-059) · `rsf-ts-1` (Regime_Classify untested). → each becomes a characterization test in Phase 2; disposition (already-tested? buggy?) verified in Phase 1.
+
+## 🔎 Net-1 adversarial money-surface bug-hunt (2026-06-11 — 5 independent surface-blind agents)
+
+> **⚙️ A1 FIX LANDED (2026-06-11):** single-sourced `ResolvePerFillTpPct/SlPct` (`StrategyParameters.hpp`) — the entry dispatcher (SimpleDip/MR/EmaCross/Momentum) + the restore site now resolve the per-NODE override, not the global. Characterization test GREEN (`controller_test.cpp`: restore → 60720/59400 override, NOT 60480/59640 global), suite **3368/0** (+MR cohort variant). **✅ CLOSED 2026-06-11** — 3-agent independent refute (vacuity/value/completeness) all SOUND/CORRECT (helper byte-identical to every pre-fix entry inline → no regression; SID round-trips before recompute; leg-B converges); folded the MR-SID variant + the EmaCross stateless H22-exemption. TECH_DEBT-168 + PARITY-039 closed. ML restore-recompute stays GLOBAL (blend unreproducible at restore — a separate tracked sibling, out of A1 scope).
+
+The plan's stated "one place the fan-out earns its tokens" (money-surface completeness). 5 independent agents on exit-pricing / partial-exit / parser / FlattenAll / sibling-divergence. **3 NEW HIGH bugs verified against code (refute-condition sealed by the orchestrator before disposition — adversarial-default + AR-8); convergent confirmations of F-096 + D-123; 3 clean refutes.** Validated the thesis: the fan-out found 3 NEW HIGH bugs no single audit had surfaced.
+
+### NEW findings (disposition + .E-home)
+
+| id | finding | sev | site (sealed) | disposition | home |
+|---|---|---|---|---|---|
+| **A1** | Warm-restart recomputes `live_tp/live_sl` from GLOBAL `take_profit_pct`, ignoring the per-strategy override (`simpledip/mr/emacross_tp_pct`) → a restored position exits at a DIFFERENT TP/SL than while live (SimpleDip/MR/EmaCross when override set; Momentum/ML unaffected). Leg-B same. | HIGH | `ShardedSnapshotPersist.hpp:653` vs `StrategyParameters.hpp:327`; sealed: `ResolveForCore@1383` does NOT fold the override; restore comment `:644` states the violated intent | VERIFIED bug — char-now (correct-value, paired w/ fix to avoid enshrining) + FIX = single-source `ResolvePerFillTpSlPct(core,strategy,cfg)` for entry+restore | TECH_DEBT-168 · PARITY-039 · **✅ CLOSED in `.E.0.10` 2026-06-11** (was triaged → `.E.1`; closed-now per the bidirectional rule — the fix is durable, not subsumed; see the A1 banner above) |
+| **A2** | Parser drops partial-fill qty — venue `"z"` (cumulative) never parsed; `filled_qty` overwritten not accumulated; slot freed on 1st fill → later partials dropped → position sized at ONE leg | HIGH | `BinanceUserData.hpp:339` + `OrderManager.hpp:1394,1440`; sealed: `rg '"z"'`=0 | char-current + FIX | TECH_DEBT-169 · **fix → D-123 venue-ingest (`.E.1`/`.E.3`; SWAR-parse notes)** |
+| **A3** | FlattenAll half-flattens under partials — ignores `OMS_PushSubmit` return → queue-full leaves leg B OPEN on an emergency path + dirty `partner_pending_bitmap` mis-buckets next trade's W/L | HIGH | `ControllerEventLoop.hpp:3441-3443`; sealed: `submitted++` unconditional | char + FIX (capture push bool; leave flatten_pending on fail) | TECH_DEBT-170 · **fix → `.E.1`** (FlattenAll reshard) |
+| A4 | BNB/non-USDT commission DROPPED (computed fee substituted); reconcile-replay path drops the parsed commission entirely (HandleFill called w/o commission args) | MED→HIGH-on-BNB | `OrderManager.hpp:1309-1318` + `Reconcile.hpp:546` | char-current + FIX rides D-123 | TECH_DEBT-169 (parser cluster) · D-123 |
+| A5 | WS fill side never cross-checked vs venue `"S"` — taken from local order type only (Knight-shaped: a slot-decode slip → buy booked as sell, no guard) | MED | `ExchangeAdapter.hpp:43`; `OrderManager.hpp:1330` | FIX (~5 lines: parse `"S"`, assert==local, warn/skip on mismatch) | TECH_DEBT-171 · `.E.1` adapter |
+| A6 | ML barrier-blend `tp_pct/sl_pct` has no sign/range clamp → negative blended `sl_pct` inverts `live_sl` above entry (fires immediately) | MED | `StrategyParameters.hpp:1366` | FIX (clamp ≥0 + `live_sl<entry<live_tp` assert) | TECH_DEBT-171 · now or `.E.1` |
+| A7 | FlattenAll at `price≤0` → `Money_Zero` fill → full-notional WIPEOUT in paper/backtest | MED | `ControllerEventLoop.hpp:3424` | char + FIX (refuse flatten on non-positive price) | TECH_DEBT-170 (FlattenAll cluster) |
+| A8 | FlattenAll hardcodes `leg=0` for odd slots (currently benign — no `Order_GetLeg` accounting consumer — but a trap) | MED | `ControllerEventLoop.hpp:3441` | FIX value `(slot&1)`; cheap future-proof | TECH_DEBT-170 (cluster) |
+
+### ⚖️ Disposition correction (2026-06-11 — operator-caught over-defer; rule re-applied)
+Initial homes deferred ALL fixes to `.E.1`/D-123 on ADJACENCY ("the rework touches that surface"). Operator caught it (no-defer + `.E`-purpose = close debt / patch failures). Re-applied the subsumption-not-adjacency test (`feedback_opportunistic_tech_debt_closure`, amended BIDIRECTIONAL this session — folding a finding TRACKS it; it does NOT defer the fix):
+- **CLOSE NOW in `.E.0.10` (durable — `.E.1` would only RENAME these, not redo):** A1 · A3 · A5 · A6 · A7 · A8. Each = fix + characterization test + binding 3-agent adversarial refute + `// ADV-REFUTE`. (`.E.0.10` accordingly expands from test/tooling-only → +capital-hardening.)
+- **DEFER to D-123 (genuinely SUBSUMED — pre-existing decimal-OrderResult design):** A2/A4 decimal-exactness — but a durable data-loss STOP lands now (accumulate qty + parse `"z"`; pass reconcile commission) so nothing bleeds pre-D-123.
+TECH_DEBT-168/170/171 → `closed.md` as each fix lands; 169 splits (stop-now / decimal-rides-D-123).
+
+### Confirmed-existing (precisely located) + known-homed
+- **F-096** — partial-leg qty split in `double` — PRECISELY located at `Async.hpp:827-837` (`Money→double→llround→Money`; `legA+legB ≠ intended` by ≤1e-8); diverges from the EXACT single_core `PortfolioController.hpp:1344`. Already TECH_DEBT-167 / `.E.1` Decision K — **this hunt validates the ledger entry's site + magnitude.**
+- **D-123** — WS price/qty/commission via `double`; REST avg = `cum_quote/exec_qty` division ≠ WS `"L"` exact. KNOWN, `.E.1`/`.E.3`. A2/A4 are NEW members of this class.
+- **F-044/045** — maker booked at taker rate (bucket self-consistent; `total_fees` wrong amount). KNOWN, LIMIT-gated, TECH_DEBT-154.
+
+### Refuted clean (adversarial-default cutting BOTH ways)
+- **`FPN_GreaterThan`-on-`Money`** (this register's OWN prior §MED-tier suspicion) — **REFUTED**: all live win/loss sites use the correct `Money_Gt`; the literal `FPN_GreaterThan(net,0)` does NOT exist in code — it survived only as a STALE COMMENT at `ControllerEventLoop.hpp:1977` (the register transcribed the rotted comment, not the line). **Comment fixed 2026-06-11.** Lesson: a register disposition sourced from a COMMENT, not the executable line, is an AR-3-shape (doc-accepted-as-verification).
+- **`.v`-direct compares** in `PositionExitGate` (`Portfolio.hpp:483`) — **REFUTED**: bit-identical to `Money_Ge` (`FixedPointN.hpp:1857` = `a.v>=b.v`); deprecated single_core path.
+- per-leg gross via `Money_FillGross` / entry-exit notional round-trip / `last_exit_*` per-slot arrays — **REFUTED clean** (no D-190 sibling; no leg-B clobber) → become positive-lock characterizations.
+
+### Characterization gaps confirmed (the false-floor — Phase-2 targets, sharpened)
+- **F-059** exit chain: trigger-vs-book SLIPPAGE gap (books at `tick−slip`, not `live_tp`, `ExecutionCore.hpp:508`+`:1887`) + MOM stddev-TP silently discarded by flat `tp_pct` (`:543`). → task #7.
+- **F-018** partial-exit per-leg gross w/ REAL entry (the only test seeds `entry=0,qty=1` → degenerate identity, `:8526`). → task #8.
+- **F-046** FlattenAll P&L (0 tests reference `EventLoop_FlattenAll`). → task #8.
+- **MTM** unrealized VALUE never asserted (only the `KILL_TRIPPED` boolean, `:5629`). → fold into MED-tier.
+
+### 🧭 Meta-lessons (harvest candidates — codify at /close-session per the population rule)
+1. **NEW anti-pattern class candidate — "reconstruct-path-reads-a-DIFFERENT-source-field":** a restore/reconstruct/replay path that re-derives a value the FORWARD path computes, but reads a different source field, so the two silently diverge (A1: restore reads global `take_profit_pct`; entry reads the per-strategy override). Distinct from D-190 (same field, different FORMULA) and Class 18 (parallel emit/parse mirror). Sibling to AR-7 (structural-pattern false-completeness). **Structural fix = single-source the derivation BOTH paths call.** → candidate new Class in RECURRING_BUG_PATTERNS + a `forward-vs-reconstruct-single-source` DESIGN_SPEC.
+2. **vacuous-test-masks-bug (recurrence):** the restore test HID A1 because its fixture used a cfg where global==override → the divergence was invisible (same shape as oms-ts-2's clean-input invariant). Concrete new rule for the **characterization-test-discipline** spec (TECH_DEBT-164 part 2): *a characterization fixture MUST vary the fields whose divergence the assertion could mask.*
+3. **comment-as-disposition-source (AR-3):** the `FPN_GreaterThan` false-positive came from trusting a code COMMENT over the executable line. Reinforces verify-by-context-not-comment.
+4. **Thesis validated:** money-surface completeness fan-out earns its tokens (3 NEW HIGH bugs). The plan's "exactly one dimension, 3–5 agents" bet was correct.

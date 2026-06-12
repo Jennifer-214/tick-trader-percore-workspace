@@ -6062,6 +6062,79 @@ int main() {
             unlink(test_path);
         }
 
+        // ---- A1 (.E.0.10): warm-restart honors the per-NODE per-strategy TP/SL
+        // override, NOT the global take_profit_pct (H22 single-source) ----
+        // Pre-A1 restore recomputed live_tp from resolved.take_profit_pct (GLOBAL), dropping
+        // the per-node simpledip_tp_pct → a SimpleDip position survived a restart at the wrong
+        // exit price. The fix routes BOTH the fresh-entry dispatcher and restore through
+        // ResolvePerFillTpPct/SlPct. Fixture deliberately sets simpledip_*_pct != the global
+        // (the field whose divergence the prior restore test masked by using global==override),
+        // and Load MUST be called WITH a cfg (the recompute is `if (cfg)`; the prior test passed
+        // nullptr so it never exercised this path). Values hand-derived from entry x (1 +/- pct).
+        // ADV-REFUTE: 2026-06-11 — 3 INDEPENDENT agents (vacuity/faithfulness · value-correctness ·
+        // completeness/regression) all returned SOUND/CORRECT: values re-derived exact at 8dp (zero
+        // remainder), the helper is byte-identical to every pre-fix entry inline (no entry regression),
+        // the resolved_strategy_id round-trips before the recompute reads it, leg-B converges via an
+        // identical formula. Folded from the refute: the MR-SID cohort variant below + the EmaCross
+        // stateless-branch H22 exemption (StrategyParameters.hpp). Per the binding adversarial-default.
+        {
+            auto* r = build_state(2, 10000.0);
+            r->state.cores[0].resolved_strategy_id = STRATEGY_SIMPLE_DIP;  // saved → drives restore resolution
+            Portfolio_OpenSlot(&r->state.oms->portfolio, 0,
+                MQ(60000.0), MQ(0.01), MQ(60900.0), MQ(59100.0), MQ(0.6));
+            tt::ShardedSnapshot_Save<64>(&r->state, test_path, 0);
+
+            ControllerConfig<64> cfg = ControllerConfig_Default<64>();
+            cfg.take_profit_pct  = MQ(0.008);  // global 0.8%
+            cfg.simpledip_tp_pct = MQ(0.012);  // SimpleDip override 1.2%  (!= global)
+            cfg.stop_loss_pct    = MQ(0.006);  // global 0.6%
+            cfg.simpledip_sl_pct = MQ(0.010);  // SimpleDip override 1.0%  (!= global)
+
+            auto* r2 = build_state(2, 10000.0);
+            int loaded = tt::ShardedSnapshot_Load<64>(&r2->state, test_path, 0, &cfg);
+            check("A1: restore-with-cfg load succeeded", loaded == 1);
+            // live_tp = entry * (1 + simpledip_tp_pct) = 60000 * 1.012 = 60720 (OVERRIDE, exact 8dp)
+            check("A1: restored live_tp uses the per-node SimpleDip override (60720)",
+                  Money_Eq(r2->cores[0].live_tp, MQ(60720.0)));
+            check("A1: restored live_tp is NOT the global take_profit_pct value (60480)",
+                  !Money_Eq(r2->cores[0].live_tp, MQ(60480.0)));
+            // live_sl = entry * (1 - simpledip_sl_pct) = 60000 * 0.990 = 59400 (OVERRIDE, exact 8dp)
+            check("A1: restored live_sl uses the per-node SimpleDip override (59400)",
+                  Money_Eq(r2->cores[0].live_sl, MQ(59400.0)));
+            check("A1: restored live_sl is NOT the global stop_loss_pct value (59640)",
+                  !Money_Eq(r2->cores[0].live_sl, MQ(59640.0)));
+
+            unlink(test_path);
+        }
+
+        // ---- A1 cohort breadth (folded from the 3-agent refute): the same per-node
+        // override resolution on a MeanReversion node, proving the single-source helper
+        // covers >=2 override strategies (not just SimpleDip) ----
+        {
+            auto* r = build_state(2, 10000.0);
+            r->state.cores[0].resolved_strategy_id = STRATEGY_MEAN_REVERSION;
+            Portfolio_OpenSlot(&r->state.oms->portfolio, 0,
+                MQ(60000.0), MQ(0.01), MQ(60900.0), MQ(59100.0), MQ(0.6));
+            tt::ShardedSnapshot_Save<64>(&r->state, test_path, 0);
+
+            ControllerConfig<64> cfg = ControllerConfig_Default<64>();
+            cfg.take_profit_pct = MQ(0.008);  // global 0.8%
+            cfg.mr_tp_pct       = MQ(0.012);  // MR override 1.2% (!= global)
+            cfg.stop_loss_pct   = MQ(0.006);  // global 0.6%
+            cfg.mr_sl_pct       = MQ(0.010);  // MR override 1.0% (!= global)
+
+            auto* r2 = build_state(2, 10000.0);
+            int loaded = tt::ShardedSnapshot_Load<64>(&r2->state, test_path, 0, &cfg);
+            check("A1/MR: restore-with-cfg load succeeded", loaded == 1);
+            check("A1/MR: restored live_tp uses the per-node mr_tp_pct override (60720)",
+                  Money_Eq(r2->cores[0].live_tp, MQ(60720.0)));
+            check("A1/MR: restored live_tp is NOT the global take_profit_pct value (60480)",
+                  !Money_Eq(r2->cores[0].live_tp, MQ(60480.0)));
+            check("A1/MR: restored live_sl uses the per-node mr_sl_pct override (59400)",
+                  Money_Eq(r2->cores[0].live_sl, MQ(59400.0)));
+            unlink(test_path);
+        }
+
         // ---- Test 8 (v3): partials-toggle mismatch refused ----
         // Snapshot saved with partials=0 must be refused when current cfg
         // says partials=1, and vice versa. Prevents the slot-geometry

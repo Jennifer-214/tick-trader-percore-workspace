@@ -1536,6 +1536,8 @@ related_specs:
 
 - **2026-06-10** — Ship-B P0.3 closes **PARITY-037** (see RESOLUTION in the entry — the percent-vs-fraction framing inverted by enumeration; fix = PCT scaling in `cfg_assign_field`/`cfg_diff_field` + the `lazy_rebuild_price_threshold_pct` outlier row re-authored percent-form, value-identical; suite 3246/0; boot bytes unchanged). Recorded at decision log D-177.
 
+- **2026-06-11** — `.E.0.10` Net-1 adversarial money-surface bug-hunt (5 independent surface-blind agents) surfaced **PARITY-039** (HIGH; restore↔live TP/SL parity): snapshot-restore recomputes `live_tp/live_sl/live_tp_b` from the GLOBAL `take_profit_pct` (`ShardedSnapshotPersist.hpp:653`) while the live entry path uses the per-strategy override (`simpledip/mr/emacross_tp_pct`, `StrategyParameters.hpp:327`); `ControllerConfig_ResolveForCore` (`:1383`) does NOT fold the override → a SimpleDip/MR/EmaCross position exits at a DIFFERENT TP/SL after a warm-restart than while live (whenever the override is set). Status: **FIXED 2026-06-11 in `.E.0.10`** (single-sourced via `ResolvePerFillTpPct/SlPct`, entry + restore; SimpleDip+MR cohort char-tests GREEN, suite 3368/0; 3-agent independent refute SOUND/CORRECT; TECH_DEBT-168 closed; final `/parity-check` re-confirm at ship close). The do-it-twice defer to `.E.1` was the adjacency-defer the bidirectional rule corrected — the fix is durable, so it closed now. Sealed by orchestrator (ResolveForCore read); 2 agents converged. Momentum/ML unaffected (`out->tp_pct==take_profit_pct`). Register: `plan_checks/E.0.10-finding-disposition-register.md` bug-hunt § A1.
+
 ---
 
 ## Future audit findings will append here

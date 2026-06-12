@@ -3186,3 +3186,46 @@ sister_debt: TECH_DEBT-154 (the maker-fee guard, which uses the __builtin_expect
 - **Cost estimate:** ~1h, folded into the `.E.1` SoA re-layout (incremental).
 - **Trigger:** `.E.1` Decision-K Portfolio/Position SoA re-layout.
 - **Cross-ref:** `plan_checks/E.0.10-finding-disposition-register.md` § MED-tier re-triage (F-096); `.E.1` foundation plan Decision K + acceptance "CLOSED bug classes"; `CANONICAL-FINDINGS.md` F-096; H4 (`Money` for money/sizing math).
+
+### TECH_DEBT-168 — A1: warm-restart recomputes live_tp/live_sl from GLOBAL take_profit_pct, ignoring the per-strategy override (restore ≠ live exit price)
+
+- **id:** TECH_DEBT-168 · **severity:** high · **opened:** 2026-06-11 · **status:** CLOSED 2026-06-11 in `.E.0.10` (single-source helper `ResolvePerFillTpPct/SlPct` + restore swap; SimpleDip+MR cohort char-tests GREEN, suite 3368/0; 3-agent independent refute SOUND/CORRECT; folded the MR variant + the EmaCross stateless H22-exemption; → move to closed.md at ship close) · **surface_tags:** [accounting, snapshot-restore, tp-sl, parity, reconstruct-vs-forward, .E.0.10]
+- **Title:** `ShardedSnapshotPersist.hpp:653` recomputes restored `live_tp/live_sl/live_tp_b` from GLOBAL `resolved.take_profit_pct`; the live entry path (`StrategyParameters.hpp:327` SimpleDip / `:418` MR / `:645` EmaCross) uses the per-strategy override (`simpledip_tp_pct ?: take_profit_pct`). `ResolveForCore` (`ControllerConfig.hpp:1383`) does NOT fold the override → a SimpleDip/MR/EmaCross position that survives a warm-restart exits at a DIFFERENT TP/SL than while live, whenever the override is set (the intended tuned config). Restore comment `:644` ("recompute … so it matches the fresh-entry hot path") states the violated intent. Momentum/ML unaffected (`out->tp_pct==take_profit_pct`).
+- **Created:** 2026-06-11 — `.E.0.10` Net-1 adversarial money-surface bug-hunt (2 independent agents converged; orchestrator sealed via the ResolveForCore read). Invisible to the existing restore test (cfg had global==override → divergence masked).
+- **Why this home (merit):** `.E.1` reworks snapshot-restore + per-node cfg flow. Structural fix = single-source `ResolvePerFillTpSlPct(node, strategy_id, cfg)` called by BOTH ExecutionCore entry AND restore (closes A1 + leg-B sibling + the whole "reconstruct-reads-a-different-source-field" class). Before-the-rework risks do-it-twice. CANDIDATE now-fix (small) if restart-mid-position is paper-tested pre-`.E.1`.
+- **Characterization (Net-1):** pin the CORRECTED behavior PAIRED with the fix (do NOT green-pin the buggy value — oms-ts-2 trap). Fixture MUST set `simpledip_tp_pct ≠ take_profit_pct` (the field whose divergence the bug masks).
+- **Cost estimate:** ~2-3h, folds into the `.E.1` restore rework.
+- **Trigger:** `.E.1` snapshot-restore / per-node cfg rework, OR a pre-`.E.1` restart-with-open-position paper-test.
+- **Cross-ref:** register bug-hunt § A1; PARITY-039; `.E.1` foundation plan § CLOSED bug classes; meta-lesson "reconstruct-path-reads-different-source-field" (harvest → RECURRING_BUG_PATTERNS new Class + DESIGN_SPEC).
+
+### TECH_DEBT-169 — A2/A4: venue fill-parser drops data (partial-fill cumulative qty + non-USDT/reconcile commission)
+
+- **id:** TECH_DEBT-169 · **severity:** high · **opened:** 2026-06-11 · **status:** open · **surface_tags:** [parser, venue-ingest, partial-fill, commission, D-123, live-trading, .E.1, .E.3]
+- **Title:** Two venue-fill-parser data-loss bugs. **(A2)** partial-fill qty DROPPED — venue `"z"` (cumulative filled qty) never parsed; `filled_qty` overwritten not accumulated (`OrderManager.hpp:1394`); slot freed on 1st fill (`:1440`) → a multi-partial market order books a position sized at ONE leg. **(A4)** commission DROPPED on non-USDT asset (BNB-pay = common account default) → fabricated `notional×rate` fee booked instead (`OrderManager.hpp:1309-1318`); AND the reconcile-replay path drops the parsed `t.commission` entirely (`HandleFill` w/o commission args, `Reconcile.hpp:546`).
+- **Created:** 2026-06-11 — `.E.0.10` Net-1 parser hunt. A2's drop (not double-count) was NOT in the register's prior framing; A4's reconcile-drop is new.
+- **Why this home (merit):** both are D-123 venue-ingest class members (parse venue strings → decimal, carry decimal `OrderResult`, book commission source-exact). Fix rides the D-123 ExchangeAdapter decimal-OrderResult rework (`.E.1`/`.E.3`; SWAR-parse notes). Contract must carry cumulative-qty + commission + commissionAsset source-exact through BOTH WS + reconcile.
+- **Characterization (Net-1):** pin CURRENT (lossy/dropping) behavior (2-event partial `l=0.3`→`l=0.7` → assert booked qty==0.3; BNB commission → assert booked fee==computed not venue).
+- **Cost estimate:** folded into D-123 venue-ingest.
+- **Trigger:** D-123 ExchangeAdapter decimal-OrderResult rework (`.E.1`/`.E.3`).
+- **Cross-ref:** register bug-hunt § A2/A4; D-123; SWAR-parse design notes § Net-1 findings folded in; F-044/045 (TECH_DEBT-154).
+
+### TECH_DEBT-170 — A3/A7/A8: FlattenAll robustness (half-flatten under partials + price≤0 wipeout + wrong leg index)
+
+- **id:** TECH_DEBT-170 · **severity:** high · **opened:** 2026-06-11 · **status:** open · **surface_tags:** [flatten, emergency-path, partial-exit, kill-switch, .E.1]
+- **Title:** Three `EventLoop_FlattenAll` robustness bugs on the emergency-close path. **(A3, HIGH)** ignores the `OMS_PushSubmit` return (`ControllerEventLoop.hpp:3443` `submitted++` unconditional) → under partials a full submit_queue leaves leg B OPEN while reporting success, and the orphaned leg-A close leaves `partner_pending_bitmap` dirty → mis-buckets the next trade's W/L. **(A7, MED)** `price≤0` books `Money_Zero` fills → full-notional WIPEOUT in paper/backtest (`:3424`). **(A8, MED)** hardcodes `leg=0` for odd slots (`:3441`) — currently benign (no `Order_GetLeg` accounting consumer) but a trap.
+- **Created:** 2026-06-11 — `.E.0.10` Net-1 FlattenAll hunt (A3 sealed: the return is discarded; ExecutionCore's normal exit tracks `exit_a/b_pushed` to avoid exactly this).
+- **Why this home (merit):** `.E.1` reshards the FlattenAll slot↔node mapping (drainer absorption). Fix there: capture per-slot push bool + leave `flatten_pending` on failure; refuse flatten on non-positive price; `leg=(slot&1)`. A3 CANDIDATE now-fix (emergency-path capital safety, localized) if live-enable approached pre-`.E.1`.
+- **Characterization (Net-1):** F-046 (FlattenAll has ZERO P&L tests) — full-flatten balance + partials-on half-flatten (queue-full → leg B still active + dirty partner_pending) + the price≤0 wipeout, all uncovered.
+- **Cost estimate:** ~2-3h at the reshard (or ~1h for A3 alone now).
+- **Trigger:** `.E.1` FlattenAll/drainer-absorption rework, OR a pre-live-enable emergency-path hardening pass.
+- **Cross-ref:** register bug-hunt § A3/A7/A8; F-046; `.E.1` foundation plan § CLOSED bug classes.
+
+### TECH_DEBT-171 — A5/A6: missing capital guards (WS fill side not cross-checked; ML-blend TP/SL unclamped)
+
+- **id:** TECH_DEBT-171 · **severity:** medium · **opened:** 2026-06-11 · **status:** open · **surface_tags:** [guard, knight, side-attribution, ml-barrier, tp-sl, .E.1]
+- **Title:** Two missing defense-in-depth guards. **(A5, Knight-shaped)** WS fill side taken from the LOCAL order type only — the venue `"S"` field is parsed but never cross-checked; a slot-decode slip → a SELL booked through `handle_buy_fill` (phantom long), no guard (`ExchangeAdapter.hpp:43`, `OrderManager.hpp:1330`). **(A6)** the ML barrier-blend `tp_pct/sl_pct` (`StrategyParameters.hpp:1366`) has no sign/range clamp → negative blended `sl_pct` inverts `live_sl` above entry (fires immediately); cfg pcts ARE clamped (`DBL(…,0,100)`) but the blend bypasses cfg clamps.
+- **Created:** 2026-06-11 — `.E.0.10` Net-1 bug-hunt (parser + exit-pricing agents).
+- **Why this home (merit):** cheap structural guards on the live path. A5 ≈ 5 lines (parse `"S"`, assert==local, warn/skip — Knight-class check on the redundant truth the venue already sends). A6 = clamp `≥0` + post-compute `live_sl < entry < live_tp` assert → BUY_BLOCKED on violation.
+- **Cost estimate:** ~1-2h each.
+- **Trigger:** `.E.1` adapter / per-node ML rework, OR pre-live-enable hardening.
+- **Cross-ref:** register bug-hunt § A5/A6; D-123 (A5 rides the adapter); F-096/TECH_DEBT-167 (A6 sister — same ML-barrier `double` path).

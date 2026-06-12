@@ -4,7 +4,7 @@ description: "Operator meta-stance (D-159, Ship-A session 2026-06-08): a SMALL f
 metadata: 
   node_type: memory
   type: feedback
-  sister_specs: [feedback_opportunistic_tech_debt_closure.md, feedback_no_defer_for_effort.md, feedback_deferral_reasons_merit_not_effort_or_context.md, feedback_design_once_maintain_forever.md]
+  sister_specs: [feedback_opportunistic_tech_debt_closure.md, feedback_no_defer_for_effort.md, feedback_deferral_reasons_merit_not_effort_or_context.md, feedback_design_once_maintain_forever.md, feedback_no_unhomed_debt_code_smell.md]
   tags: [scope-discipline, operator-collaboration]
   originSessionId: 687aa85a-836d-488f-8cb8-2ee60d314782
 ---

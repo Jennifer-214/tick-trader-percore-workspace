@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: ce648e23-8658-4181-885c-5400b8e672bb
+  sister_specs: [feedback_bump_version_per_ship.md, user_correctness_first_not_ship_fast.md]
+  tags: []
 ---
 
 Prefer **micro-commits**: small, frequent commits at clean boundaries rather than accumulating one large changeset. **Each commit MUST compile** (ideally keep the suite green) — *"at some point we do need to ensure it compiles."* **Never push broken code.** (Operator-stated 2026-06-11, `.E.0.10`.)

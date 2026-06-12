@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: ce648e23-8658-4181-885c-5400b8e672bb
+  sister_specs: [feedback_adversarial_framing_default_for_checks.md, feedback_deferral_reasons_merit_not_effort_or_context.md, feedback_golden_master_over_reimplemented_oracle.md, feedback_no_defer_for_effort.md]
+  tags: []
 ---
 
 A finding can be technically REAL (the code path does have the flaw) yet **functionally not a concern** because its trigger is **structurally unreachable** — guarded upstream, prevented by construction, or gated behind a misconfiguration — AND if it somehow fired, a LARGER failure is already in play (the code symptom is downstream of that bigger problem: *"if this happens, there are bigger issues than the code breaking"*). Disposition tag: **MOOT-UNREACHABLE**.

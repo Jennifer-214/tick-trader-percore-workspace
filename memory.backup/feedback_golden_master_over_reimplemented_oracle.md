@@ -6,7 +6,7 @@ metadata:
   type: feedback
   originSessionId: a5882276-85a9-4550-a78d-e4ab42ed7eaf
   tags: [audit-methodology, ssot, structural-fix, test-discipline]
-  sister_specs: [feedback_phased_pre_rework_correctness_foundation.md, feedback_independence_for_judgment_not_mechanical.md, feedback_two_foundations_determinism_vs_correctness.md, feedback_ground_design_in_real_code.md, project_no_live_models_dev_test_only.md, feedback_domain_guards_for_bulk_transforms.md, feedback_passing_test_is_not_verification.md]
+  sister_specs: [feedback_phased_pre_rework_correctness_foundation.md, feedback_independence_for_judgment_not_mechanical.md, feedback_two_foundations_determinism_vs_correctness.md, feedback_ground_design_in_real_code.md, project_no_live_models_dev_test_only.md, feedback_domain_guards_for_bulk_transforms.md, feedback_passing_test_is_not_verification.md, feedback_moot_unreachable_disposition.md, project_pessimistic_sim_is_trustworthy.md]
 ---
 
 To validate that code path X is correct, prefer a **golden-master / characterization** check (run the REAL path X on fixed input, freeze the exact output once, diff every run against it) over a **reimplemented or stub oracle** (a hand-written second implementation of X's logic).

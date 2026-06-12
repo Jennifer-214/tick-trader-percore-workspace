@@ -6,7 +6,7 @@ metadata:
   type: feedback
   tags: [doc-discipline]
   originSessionId: 3e806606-ac69-40fd-ac33-45906443bae4
-  sister_specs: [feedback_document_as_you_go_over_catch_at_end.md, feedback_opportunistic_tech_debt_closure.md, feedback_forward_promise_auto_write_verification.md]
+  sister_specs: [feedback_document_as_you_go_over_catch_at_end.md, feedback_opportunistic_tech_debt_closure.md, feedback_forward_promise_auto_write_verification.md, feedback_no_defer_for_effort.md, feedback_no_unhomed_debt_code_smell.md]
 ---
 
 When current work (a ship, an audit, an investigation) surfaces a finding or information that BELONGS in a DIFFERENT plan — it sharpens that plan's decision, adds scope, reframes one of its findings, gates something in it, or gives it greater information — AMEND/APPEND the finding INTO that plan (its body + its decision log if it has one), dated, with a back-reference to the source. Do NOT leave it only in the current ship's register/handoff/decision-log.

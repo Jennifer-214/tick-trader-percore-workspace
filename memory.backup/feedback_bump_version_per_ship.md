@@ -5,7 +5,7 @@ metadata:
   type: feedback
   originSessionId: eb96e5e5-7931-48ae-9510-0b0433c695bf
   tags: [project-state, ledger-discipline]
-  sister_specs: []
+  sister_specs: [feedback_micro_commits_compile_gated.md]
 ---
 Every ship that creates a `vX.Y.Z` git tag in `~/code/FoxML_Trader_v2`
 must bump `Version.hpp` in the SAME commit:

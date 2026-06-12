@@ -117,12 +117,13 @@ L1d working-set discipline: hot path SHOULD fit in single core's L1d (32-64KB). 
 - **Money math = `Money`** (decimal) for prices/qtys/fees/balances; **features = `FPN_Binary<F>`**; crossings only at named `Money_ToBinary`/`Money_FromBinary` seams (H4). Price-diff gross P&L routes through `Money_FillGross` SSoT (D-190) — never open-code a 2-mul form.
 - **`alignas(64)`** cross-thread fields (H6); explicit `int<N>_t _padding = 0` in byte-equiv structs (H12); `alignas(>16)` structs NEVER bare-malloc'd (H21 — aligned_alloc/new/arena).
 - **Snapshot/wire identifiers** (SHARDED_SNAPSHOT_VERSION, persisted enum CODES) are append-only + immutable (H21 Knight-Capital) — tombstone, never renumber/reuse.
+- **Changing a core struct's layout** (resize/reorder a field, or swap a field type — esp. `Money`/`Position`/`Order`/`CoreContext`/cfg structs) → run the **cascade check FIRST**; the transitive downstream impact is too big to hold in your head (the 16B flip cascaded `Money`→`OrderPreResolved`→`Order`/`Position`+their persist sites). `tools/gen_code_map.sh --composition <T>` (transitive containers) + `--byte-context <T>` (byte-sensitive wire/persist/memcmp sites) + `clang -Xclang -fdump-record-layouts <TU>` for exact offsets/cache-line spans (`pahole` chokes on the `<F>` templates). `check_struct_alignment.py` (c) ENFORCES that byte-serialized types stay size-pinned (`static_assert(sizeof(T)==N)`) → a silent layout change is a compile error, then bump the snapshot VERSION (H21). Full tool design + the deferred orphan-detector: `DESIGN_SPECS/meta-disciplines/struct-change-cascade-impact-tooling.md` (D-202).
 
 ## Tools for this surface (slice of `DOCS/TOOLS.md`)
 
 - `check_per_core_registry_integrity.py` — PerCoreCfg X-macro integrity (H17) + Class 25/26 paired-access + UNINDEXED-GLOBAL detector (SKILL-WIRED).
 - `check_money_gross_single_source.py` — D-190 gross-SSoT guard (pre-commit Check G/L): realized+unrealized price-diff gross MUST route through `Money_FillGross`.
-- `check_struct_alignment.py` — `alignas(>16)` vs bare malloc/calloc/realloc (Knight/H21; pre-commit Check K).
+- `check_struct_alignment.py` — (a) `alignas(>16)` vs bare malloc/calloc/realloc (Knight/H21) + (c) byte-serialization size-pin coverage: a type serialized via fwrite/fread/memcmp/SHA/HMAC must carry `static_assert(sizeof(T)==N)` (H9/H12 — silent layout change = compile error, not a wire break; D-202). Pre-commit Check K.
 - `check_identifier_retirement.py` — snapshot/format VERSION + persisted enum CODE tombstone guard vs the golden ledger (H21; pre-commit Check H).
 - `calls_graph_diff.sh` — strategy/regime orphan-diff; run to verify the hot path stayed UNTOUCHED after any CoreFrameworks change.
 - `scan_class_27_full.py` — full Class-27 (scalar cfg-mirror) scan (fired by `/bug-check`).

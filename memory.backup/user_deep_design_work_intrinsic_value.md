@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: user
   originSessionId: baa3c428-ac86-4363-afaa-4b0001a44131
-  sister_specs: [user_public_work_attracts_hedge_funds.md, feedback_dont_measure_structural_work_by_loc.md, feedback_evaluate_options_on_robustness_latency_design_not_time.md, user_adhd_deferred_reward_discipline.md, user_mvp_to_professional_transition.md, user_structure_is_correctness_risk_control_for_capital.md, user_correctness_first_not_ship_fast.md]
+  sister_specs: [user_public_work_attracts_hedge_funds.md, feedback_dont_measure_structural_work_by_loc.md, feedback_evaluate_options_on_robustness_latency_design_not_time.md, user_adhd_deferred_reward_discipline.md, user_mvp_to_professional_transition.md, user_structure_is_correctness_risk_control_for_capital.md, user_correctness_first_not_ship_fast.md, feedback_planning_treadmill_bias_to_execution.md]
   tags: [user-profile, operator-collaboration]
 ---
 

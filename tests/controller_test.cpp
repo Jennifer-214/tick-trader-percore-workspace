@@ -6242,94 +6242,80 @@ int main() {
     // skipped in live mode. idle_cycles increments per rebuild + resets on
     // fill; threshold fires pnl_feeder reset.
     //======================================================================================================
-    printf("\n--- v4.2.1: slippage_pct (paper-mode only) ---\n");
+    printf("\n--- A9: paper/backtest slippage at the Submit fill chokepoint (D-202; replaces the v4.2.1 OnEvent-slip test) ---\n");
     {
-        auto build = [](double balance, double slippage) {
-            struct R {
-                tt::OrderManagerState<64> oms;
-                tt::EventLoopState<64> state;
-                tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
-                tt::ExecutionCore<64> core;
-                ControllerConfig<64> cfg;  // v5.15.5.F.4c.3 WIP2d-1.B.1 — per-core cfg holder for OnEvent
-            };
+        // A9 char-test (characterization-test-discipline 3-lens). The paper/backtest slip MOVED from the dead
+        // EventLoop_OnEvent block (in mode-1 it slipped a discarded copy → now deleted) to the
+        // OrderManager_Submit synthetic-fill chokepoint — the single production slip SSoT (adversarial-
+        // pessimistic-simulation-discipline.md). We drive the paper (mode-1) Submit path + pop result_queue to
+        // assert the SLIPPED avg_fill_price. Lens 2 (non-vacuous): values HAND-DERIVED from OrderManager.hpp:1001-
+        // 1006 (event_price ± event_price×slip_pct), not capture-matched. Lens 3 (not-frozen-bug): A9 is a FIX —
+        // the production path booked the RAW trigger price; this freezes the CORRECTED slip-applied behavior.
+        struct R {
+            tt::OrderManagerState<64> oms;
+            tt::EventLoopState<64>    state;
+            ControllerConfig<64>      cfg;
+        };
+        auto paper_setup = [](R* r) {
+            tt::EventLoopState_InitLegacy(&r->state, &r->oms, MQ(10000.0));
+            BITMAP_CLR(r->oms.oms_state_flags, tt::MASK_OMS_STATE_LIVE_TRADING);  // paper (not live)
+            MBS_SET_U8(r->oms.oms_state_flags, tt::MASK_OMS_STATE_EVENT_LOG_MODE,
+                       tt::SHIFT_OMS_STATE_EVENT_LOG_MODE, 1);  // mode-1 → the synthetic-fill branch pushes result_queue
+        };
+        auto pop_fill = [](R* r) -> double {
+            tt::Command c{};
+            return tt::SPSCRing_TryPop(&r->oms.result_queue, &c) ? c.result.avg_fill_price : -1.0;
+        };
+
+        // ---- Lens 1+2: entry (BUY) slips WORSE/up, exit (SELL) slips WORSE/down (opposite signs); slip 0.1% ----
+        {
             R* r = new R();
-            tt::EventLoopState_InitLegacy(&r->state, &r->oms,
-                MQ(balance));
-            // v5.15.5.F.4c.3 WIP2d-1.B.1 — slippage_pct moved from OMS scalar to per-core cfg.
-            // OnEvent reads effective_cores[event.core_id].slippage_pct via the cores param.
-            r->cfg.cores[0].slippage_pct = MQ(slippage);
-            r->cfg.cores[0].fee_rate_taker = MQ(0.001);  // mode-0 body reads this too
-            r->cfg.cores[0].fee_rate_maker = MQ(0.001);
-            tt::SPSCRing_Init(&r->tick_ring);
-            tt::ExecutionCore_Init(&r->core, 0, &r->tick_ring);
-            tt::EventLoopState_RegisterCore(&r->state, &r->core,
-                MQ(60500.0), MQ(59500.0),
-                MQ(0.01));
-            tt::EventLoopState_SetCoreStrategy(&r->state, 0,
-                STRATEGY_SIMPLE_DIP, MQ(1000.0));
-            return r;
-        };
-
-        auto make_event = [](uint16_t cid, uint8_t type, double price) {
-            tt::TradeEvent<64> ev{};
-            ev.price = MQ(price);
-            ev.timestamp = 1;
-            ev.core_id = cid;
-            ev.type = type;
-            return ev;
-        };
-
-        // ---- Test 1: paper + slippage 0.1% → entry slips up, exit slips down ----
-        {
-            auto* r = build(10000.0, 0.001);
-            BITMAP_CLR(r->oms.oms_state_flags, tt::MASK_OMS_STATE_LIVE_TRADING);  // paper
-            // Entry at $60000 → expect stored entry_price = $60000 × 1.001 = $60060
-            tt::EventLoop_OnEvent(&r->state,
-                make_event(0, tt::TRADE_EVENT_ENTRY, 60000.0),
-                r->cfg.cores);  // v5.15.5.F.4c.3 WIP2d-1.B.1 — per-core cfg array for slippage/fee_rate
-            double entry_price = Money_ToDouble(r->oms.portfolio.positions[0].entry_price);
-            check("paper slippage on entry: stored price = base × 1.001",
-                  fabs(entry_price - 60060.0) < 1e-3);
-
-            // Exit at $61000 → effective exit price = $61000 × 0.999 = $60939
-            // Net gross = (60939 - 60060) × 0.01 = $8.79 (vs $10 without slippage)
-            double pre_balance = Money_ToDouble(r->oms.balance);
-            tt::EventLoop_OnEvent(&r->state,
-                make_event(0, tt::TRADE_EVENT_EXIT, 61000.0),
-                r->cfg.cores);
-            double post_balance = Money_ToDouble(r->oms.balance);
-            // Some math here: gross is (60939 - 60060) × 0.01 = $8.79.
-            // Fees: entry_fee at fill time used taker rate × notional ≈ ~$0.6.
-            // Exit fee at exit ≈ ~$0.61. Net ≈ $8.79 - $1.21 ≈ $7.58 added.
-            // Without slippage: gross would be ($61000-$60000)×0.01 = $10.
-            // The point: with slippage, P&L is LESS than the no-slippage case.
-            // We just verify direction + that slippage was applied to BOTH ends.
-            double delta = post_balance - pre_balance;
-            check("paper slippage on exit: gross less than naive (no slippage) case",
-                  delta < 9.5 && delta > 7.0);  // generous bounds, accounts for fees
+            r->cfg.cores[0].slippage_pct = MQ(0.001);   // explicit 0.1% — independent of the (separate) cfg default
+            paper_setup(r);
+            tt::SubmitCommand<64> buy(0, tt::ORDER_MARKET_BUY, MQ(0.02), (uint8_t)0, &r->cfg.cores[0]);
+            buy.event_price = MQ(60000.0);
+            tt::OrderManager_Submit(&r->oms, buy);
+            check("A9: paper entry (BUY) fills WORSE — 60000 x 1.001 == 60060.0 (slip consumed at Submit)",
+                  fabs(pop_fill(r) - 60060.0) < 1e-6);
+            tt::SubmitCommand<64> sell(0, tt::ORDER_MARKET_SELL, MQ(0.02), (uint8_t)0, &r->cfg.cores[0]);
+            sell.event_price = MQ(61000.0);
+            tt::OrderManager_Submit(&r->oms, sell);
+            check("A9: paper exit (SELL) fills WORSE — 61000 x 0.999 == 60939.0 (opposite sign from entry)",
+                  fabs(pop_fill(r) - 60939.0) < 1e-6);
+            delete r;
         }
 
-        // ---- Test 2: live mode → no slippage adjustment ----
+        // ---- Lens 2 (vary the divergence field): slip_pct=0 → fill == raw trigger. This was the production
+        //      path's behavior for EVERY trade pre-A9 (the dead-slip bug). Green here + green above = a
+        //      regression back to slip-less cannot pass silently. ----
         {
-            auto* r = build(10000.0, 0.001);
-            BITMAP_SET(r->oms.oms_state_flags, tt::MASK_OMS_STATE_LIVE_TRADING);  // LIVE — should skip slippage
-            tt::EventLoop_OnEvent(&r->state,
-                make_event(0, tt::TRADE_EVENT_ENTRY, 60000.0));
-            double entry_price = Money_ToDouble(r->oms.portfolio.positions[0].entry_price);
-            check("live mode: slippage_pct is ignored (price unchanged)",
-                  fabs(entry_price - 60000.0) < 1e-6);
+            R* r = new R();
+            r->cfg.cores[0].slippage_pct = Money_Zero();   // disabled
+            paper_setup(r);
+            tt::SubmitCommand<64> buy(0, tt::ORDER_MARKET_BUY, MQ(0.02), (uint8_t)0, &r->cfg.cores[0]);
+            buy.event_price = MQ(60000.0);
+            tt::OrderManager_Submit(&r->oms, buy);
+            check("A9: slip_pct=0 → fill == raw 60000.0 (no-op; the pre-A9 behavior, now opt-in only)",
+                  fabs(pop_fill(r) - 60000.0) < 1e-6);
+            delete r;
         }
-
-        // ---- Test 3: zero slippage → no adjustment regardless of mode ----
+        // ---- Default-pin (D-203): a DEFAULT ControllerConfig is pessimistic-by-DEFAULT — both the global and
+        //      the per-core (what A9 actually reads) slippage_pct default to 0.05% (0.0005), NEVER zero. Freezes
+        //      the conservative default so it can't silently revert to optimistic-by-omission. The per-core pin
+        //      is the load-bearing one — A9 consumes cores[c].slippage_pct, not the global. ----
         {
-            auto* r = build(10000.0, 0.0);
-            BITMAP_CLR(r->oms.oms_state_flags, tt::MASK_OMS_STATE_LIVE_TRADING);
-            tt::EventLoop_OnEvent(&r->state,
-                make_event(0, tt::TRADE_EVENT_ENTRY, 60000.0));
-            double entry_price = Money_ToDouble(r->oms.portfolio.positions[0].entry_price);
-            check("zero slippage_pct: no adjustment",
-                  fabs(entry_price - 60000.0) < 1e-6);
+            ControllerConfig<64> dcfg = ControllerConfig_Default<64>();
+            check("A9/D-203: default global slippage_pct == 0.0005 (0.05%, conservative non-zero)",
+                  Money_Eq(dcfg.slippage_pct, MQ(0.0005)));
+            check("A9/D-203: default per-core cores[0].slippage_pct == 0.0005 (what A9 consumes — pessimistic-by-default)",
+                  Money_Eq(dcfg.cores[0].slippage_pct, MQ(0.0005)));
         }
+        // COVERAGE DISCLAIMER (honest scope): live-mode skip is BY CONSTRUCTION — the slip lives inside the
+        // !LIVE_TRADING branch; live takes the adapter path + never reaches the synthetic fill, so it is not
+        // separately exercised here. The fill-timing / partial-fill / gap-through-stops pessimism axes are NOT
+        // modeled (adversarial-pessimistic-simulation-discipline.md §axes). // ADV-REFUTE: the frozen values are
+        // hand-derived from OrderManager.hpp:1001-1006 (60000x1.001=60060, 61000x0.999=60939); an independent
+        // re-derivation is owed before ship close.
     }
 
     printf("\n--- v4.2.1: idle_cycles ---\n");

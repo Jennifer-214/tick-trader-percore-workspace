@@ -4,7 +4,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-06-12 (commit 5b02cce)
+**Last regenerated**: 2026-06-12 (commit f90aa66)
 
 ## CoreFrameworks/
 
@@ -60,20 +60,20 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `EventLoop_UpdateRollingStateOneCore` — line 2190
 - `EventLoop_UpdateEmaPriceAllCores` — line 2233
 - `EventLoop_RebuildOneCore` — line 2252
-- `EventLoop_PushParameters` — line 3160
-- `EventLoopState_ConfigureKillSwitch` — line 3195
-- `EventLoop_ClearAllPermissions` — line 3205
-- `EventLoop_KillSwitchTrip` — line 3216
-- `EventLoop_KillSwitchEvaluate` — line 3245
-- `EventLoop_TimeExitOneCore` — line 3319
-- `EventLoop_FlattenAll` — line 3414
-- `EventLoop_CheckWsStaleness` — line 3498
-- `EventLoop_TryClearRecovery` — line 3577
-- `EventLoop_TrailingSLRatchetOneCore` — line 3620
-- `EventLoop_BreakevenOnProfitOneCore` — line 3699
-- `EventLoop_Unpause` — line 3743
-- `EventLoop_SlowPath` — line 3767
-- `EventLoop_RunController` — line 3792
+- `EventLoop_PushParameters` — line 3165
+- `EventLoopState_ConfigureKillSwitch` — line 3200
+- `EventLoop_ClearAllPermissions` — line 3210
+- `EventLoop_KillSwitchTrip` — line 3221
+- `EventLoop_KillSwitchEvaluate` — line 3250
+- `EventLoop_TimeExitOneCore` — line 3324
+- `EventLoop_FlattenAll` — line 3419
+- `EventLoop_CheckWsStaleness` — line 3503
+- `EventLoop_TryClearRecovery` — line 3582
+- `EventLoop_TrailingSLRatchetOneCore` — line 3625
+- `EventLoop_BreakevenOnProfitOneCore` — line 3704
+- `EventLoop_Unpause` — line 3748
+- `EventLoop_SlowPath` — line 3772
+- `EventLoop_RunController` — line 3797
 
 ### CoreLatencyStats.hpp
 

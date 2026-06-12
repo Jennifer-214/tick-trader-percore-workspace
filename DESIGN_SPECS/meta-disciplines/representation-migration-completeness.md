@@ -51,7 +51,7 @@ EXISTING guards already cover parts of the family — use them, don't hand-check
 - `tools/scan_class_27_full.py` — scalar cfg-mirror (Binding-adjacent).
 - `cross-thread-multiword-read-consistency-discipline.md` + the reader-side rule — the Threading sub-shape.
 
-The GAP (the missing structural close, M7): **one struct-field produce/consume tracker** — sister to `/dependency-chain-trace` but at FIELD granularity — flags `write-with-no-live-read` / `read-with-no-live-write` / `>8B cross-thread-written field read outside a seqlock` / `flat-mutation-then-cores[slot]-read`. It catches all four sub-shapes mechanically, doubles as the field-access map a DOD re-pack (TECH_DEBT-159) needs, and feeds the `subsystem-designs/` catalogue. The Class-44 CI-check candidate is its seed; this tool is the meta-pattern's permanent guard. (Scope as a future discipline-ship.)
+The GAP (the missing structural close, M7): **one struct-field produce/consume tracker** — sister to `/dependency-chain-trace` but at FIELD granularity — flags `write-with-no-live-read` / `read-with-no-live-write` / `>8B cross-thread-written field read outside a seqlock` / `flat-mutation-then-cores[slot]-read`. It catches all four sub-shapes mechanically, doubles as the field-access map a DOD re-pack (TECH_DEBT-159) needs, and feeds the `subsystem-designs/` catalogue. The Class-44 CI-check candidate is its seed; this tool is the meta-pattern's permanent guard. (Scope as a future discipline-ship; the **full tool design is now drafted** — `struct-change-cascade-impact-tooling.md`, D-202: Tool A = the struct-change cascade-impact analyzer [composition/layout impact + the orphan sub-shapes as a secondary query], Tool B = its codegen-verifier sister.)
 
 ## Cross-references
 

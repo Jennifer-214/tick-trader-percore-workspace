@@ -211,7 +211,7 @@ The plan's stated "one place the fan-out earns its tokens" (money-surface comple
 
 | finding | E-home / fix-grouping | disposition |
 |---|---|---|
-| **A9** slippage dead | **`.E.0.10` durable-now fix-ship** | fix-now — gates paper-test TRUST |
+| **A9** slippage dead | **`.E.0.10` durable-now fix-ship** | ✅ **LANDED** — slip consumed at the `OrderManager_Submit` synthetic-fill chokepoint (one production SSoT; entry +slip/exit −slip, paper-gated by construction, branchless H20); dead `EventLoop_OnEvent` slip block DELETED (closes A15); char-test migrated (60060/60939, 3-lens); suite 3371/0; 2-agent adversarial refute CLEAN (sign/live-gating/no-double-slip/backtest-coverage/OnEvent-deletion all verified). OWED: conservative non-zero default slippage_pct (the cfg default-conflict — operator decision pending) so the sim is pessimistic by DEFAULT, not just opt-in. Codified `adversarial-pessimistic-simulation-discipline.md` (A9 first canonical). |
 | **A16** partial book-and-free (OMS gate) | **`.E.0.10` fix-ship** (gate) + D-123/`.E.1` (parser A2/A4) | durable-now gate |
 | **A19** ratchet_tp clear | **`.E.0.10` fix-ship** | ✅ **LANDED** (engine `f90aa66` + char-test 4/4; suite 3372/0; `run_all_tests.sh --fast` green) |
 | **A24** dead cfg mutations | **`.E.0.10` fix-ship** (H22 single-source) | durable-now (live regression) |

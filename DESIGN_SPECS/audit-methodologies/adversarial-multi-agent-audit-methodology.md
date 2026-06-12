@@ -6,7 +6,7 @@ established: 2026-06-10
 tags: [audit-methodology, meta-discipline, framework-discipline]
 surface: [hot-path, slow-path, live-trading]
 sister_specs: [audit-driven-pre-coding-gate.md]
-applies_at_skills: [/precoding-audit-gate, /bug-check, /dod-audit, /accounting-audit, /hft-audit, /ml-audit, /blindspot-scan]
+applies_at_skills: [/handoff, /accept-handoff, /precoding-audit-gate, /trace-deps, /dependency-chain-trace, /bug-check, /dod-audit, /accounting-audit, /hft-audit, /ml-audit, /blindspot-scan, /registry-fit-audit, /second-opinion, /merge-scan, /parity-check, /plan-check, /plan-dive, /finding-analyzer]
 ---
 
 # Adversarial multi-agent audit methodology
@@ -40,6 +40,30 @@ The policy lives in memory `feedback_adversarial_framing_default_for_checks` (BI
 4. **Treat DISAGREEMENT as signal.** When agents disagree on a finding's severity or existence, that IS the finding — do NOT average it. Resolve it by READING THE DISPUTED CODE YOURSELF.
 5. **Anti-self-attestation applies to the agents too.** Adversarial agents OVER-RATE (they're hunting, so they inflate). Verify every surviving finding against the actual code before acting — adversarial agents are a HUNTING tool, never a verdict.
 6. **A MUTATING agent returns a CHANGE-MANIFEST.** Default-prefer read-only review agents (report findings, the orchestrator fixes). When an agent MUST mutate (e.g. a Workflow / worktree agent), its return MUST enumerate what it did — files touched · what changed · what's now OWED / needs-propagation — because a subagent's edits are out-of-the-orchestrator's-model BY DEFINITION, so without the manifest they become undocumented drift the orchestrator can't capture or propagate (`feedback_capture_and_check_are_model_bounded`).
+
+## Nav-infra is a first-class input — pickup + the WHOLE audit / plan-check cohort (not just the completeness lens)
+
+Step 3's "hand the hunter the nav-infra" is NOT only for a completeness lens, and NOT only for the spawned-agent case. It is the standard FIRST input for **pickup** (`/handoff` Stage 2.9 + `/accept-handoff` Stage 3.6) AND for **every audit / adversarial-audit / plan-check skill** in `applies_at_skills` — run inline or fanned-out. Two purposes, both first-class:
+
+1. **Completeness surface-set** — measure coverage against the REAL set (DAG + findings-index), never a plan-headline or hand-recalled one (the false-floor close — worked example 4 below).
+2. **Per-edit downstream-impact + data-flow** — *before judging or editing a function: what does touching it hit DOWNSTREAM, and where does its data flow IN from?* The CODE_MAP (`./tools/gen_code_map.sh`; `--byte-context`/`--composition` for type edits) + `/dependency-chain-trace` (`chain:<symbol>` → write/read sites by thread+cadence + the data-flow graph of which writes feed which reads + blast radius) + `/trace-deps` (call-sequence + mirror-data-flow) answer it; the path-discipline docs (`DESIGN_PHILOSOPHY.md` families + `latency-path-discipline.md` + `STRATEGY_AND_CODING_RULES.md`) say which rules the surface is held to. (Operator-stated 2026-06-11: this is the line of reasoning the audits should carry — "how we proceed when making edits to individual functions to determine the impact downstream, and how the data flows into it.")
+
+**The cohort REFERENCES this — it does not paste a copy** (parallel-descriptor / Class-21 avoidance; categorical-trigger discipline). The single inheritance point is `skill-knowledge-consultation-and-auto-routing.md` Stage 0 item 6 — every judgment skill that already cites that shared Stage 0 (17 of the cohort at codification) inherits the nav-infra consult automatically; `/handoff` + `/accept-handoff` carry it via their own pickup stages. No skill restates it.
+
+**Structural enforcement (M7 — convention/memory under-delivered; the operator had to hand-nudge the nav-infra in every session).** Textbook M7 surface: the artifacts exist (DAG, CODE_MAP, the trace skills) but nothing routed the cohort through them, so the discipline depended on the human remembering to enforce it — and "you can only do so much" by hand. The structural close: a mechanical check (`tools/check_navinfra_cohort_reference.py`, wired into `check_session_docs.sh` + `/capture-audit`) verifies every skill in this spec's `applies_at_skills` reaches the nav-infra consult (via the shared Stage 0 citation OR a direct pointer); a skill that drops it fails the check. That takes the human OUT of the manual-enforcement loop — the discipline self-perpetuates instead of depending on each session (or each operator nudge) to re-establish it.
+
+## Reachability before severity — a confirmed PATH is not a reachable BUG (the A7/A5/A6 lesson)
+
+Adversarial agents OVER-RATE (step 5) for a specific structural reason: they confirm the **PATH** (the bad sequence exists in code) and rate it real the moment they see it. But **a finding's severity is a property of its REACHABILITY, not its path** — and reachability is a property of the **data-flow INTO the trigger**, which is invisible at the finding's own line. Before rating ANY finding, trace the trigger's inflow: *where does the triggering value come from, and can it actually take the triggering value?*
+
+**The discipline — ask "PATH or BUG?":** a PATH is "this code does X if input is Y." A BUG is "input CAN be Y." Confirm the second by tracing Y's inflow to ground (cfg clamps, registry validation, upstream structural invariants, what the caller actually passes). If the inflow structurally cannot produce Y → the finding is MOOT-UNREACHABLE (`feedback_moot_unreachable_disposition`), not a bug: downgrade, don't fix, and pin the guarantee that keeps it unreachable.
+
+**Earned by 3 instances in one sub-sprint (`.E.0.10`), all rated MED by a hunt that confirmed the path and stopped:**
+- **A7** (FlattenAll `price≤0` wipeout): path real; trigger unreachable — backtest gap=0 so the flatten can't fire, gate off-by-default, pre-warmup guarded, price = last-known-positive. → MOOT.
+- **A5** (fill side not cross-checked): path real; the claimed *intra-process* "slot-decode slip" is unreachable — the fill→order match is a full 64-bit exact-id equality + bitmap-presence + dedup. The real (narrower) residual is a venue-side / future-LIMIT mismatch — a dormant tripwire, not the rated live Knight bug.
+- **A6** (ML blend unclamped → negative SL): path real; unreachable from any *in-engine* computation — cfg pcts are walker-clamped ≥0, Ridge weights clip non-negative, bandit weights are softmax. The only inflow to a negative is an unvalidated negative `label_sl_pct` in an on-disk stamp. → real but LOW (a stamp-ingest gap), not MED.
+
+**The mechanical fix:** hand every adversarial agent the nav-infra (above) AND the explicit mandate — *"trace the trigger's inflow; rate REACHABILITY, not the path; default to suspicion the finding is over-rated."* Meta-anti-pattern *path-confirmed-severity-inflated* — harvested to `meta-anti-pattern-index.md` at `/close-session`.
 
 ## Worked examples (this session — 4 proofs in one day)
 

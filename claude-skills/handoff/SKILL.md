@@ -361,15 +361,22 @@ For each artifact claim cited in the handoff body's predecessor-context section,
 
 These are enumerated in the handoff body's `## What landed at <predecessor-tag> ship close (PREDECESSOR CONTEXT)` section. Stage 2.8 of /handoff ensures the citation discipline is followed; Step 1.4 of the generated prompt enables the receiver to verify mechanically.
 
-### Stage 2.9 — Navigation-infra enumeration (cite the index maps as first-class pickup reads)
+### Stage 2.9 — Navigation-infra enumeration (cite the index maps + impact/data-flow tooling as first-class pickup reads)
 
-The handoff's "Critical pickup-time reads" historically listed the plan + specs + register but BURIED the navigation infra one level down (referenced-by, not first-class) — so the receiver had nothing to chase and re-derived from memory (the M7 shape: the artifact exists but nothing routes work through it; the `.E.0.10` pickup needed an operator nudge to load the DAG + CODE_MAP). When the active sprint HAS them, the generated handoff MUST cite, as first-class "Critical pickup-time reads":
+The handoff's "Critical pickup-time reads" historically listed the plan + specs + register but BURIED the navigation infra one level down (referenced-by, not first-class) — so the receiver had nothing to chase and re-derived from memory (the M7 shape: the artifact exists but nothing routes work through it; the `.E.0.10` pickup needed an operator nudge to load the DAG + CODE_MAP). The nav-infra serves TWO first-class pickup purposes; the generated handoff MUST cite for BOTH:
 
-- the **dependency-graph DAG** (`plans/<sprint>/subplans/*-dependency-graph.md`) — surface-ownership + cross-ship invariants (the receiver's + any completeness audit's surface set);
+- **(a) Completeness surface-set** — what the ship/audit must cover, so a completeness lens measures against the REAL set, not a hand-recalled one (the false-floor close).
+- **(b) Per-edit impact + data-flow** — the day-to-day editing question: *before touching an individual function, what does editing it hit DOWNSTREAM, and where does its data flow IN from?* The DAG + CODE_MAP + the dependency-trace skills answer it; the path-discipline docs say which rules the surface is held to before a line changes. (Operator-stated 2026-06-11: these docs "help answer questions about how we proceed when making edits to individual functions to determine the impact downstream, and how the data flows into it.")
+
+When the active sprint HAS them, cite as first-class "Critical pickup-time reads":
+
+- the **dependency-graph DAG** (`plans/<sprint>/subplans/*-dependency-graph.md`) — surface-ownership + cross-ship invariants (the completeness surface-set + which ship owns the surface being edited);
 - the **findings-index** (`plans/<sprint>/plan_checks/**/CANONICAL-FINDINGS.md` + the live disposition register) — the already-found/dispositioned set;
-- a **CODE_MAP currency note** — "regen `./tools/gen_code_map.sh` at pickup" (the receiver's `/accept-handoff` Stage 3.6 does this automatically; the cite makes it visible).
+- a **CODE_MAP currency note** — "regen `./tools/gen_code_map.sh` at pickup" (the receiver's `/accept-handoff` Stage 3.6 does this automatically; the cite makes it visible) — the anti-fabrication file:line ground truth, plus the `--byte-context <T>` / `--composition <T>` blast-radius enumerators for type-surface edits;
+- the **per-function impact/data-flow tools** — `/dependency-chain-trace` (`chain:<symbol>` → write/read sites classified by thread+cadence, the data-flow graph of which writes feed which reads, cohort siblings, blast radius) and `/trace-deps` (call-sequence + Mirror data-flow audit) — run BEFORE editing a function to see its downstream reach + data inflows, not after;
+- the **path-discipline reference docs for the surface being edited** — `DOCS/DESIGN_PHILOSOPHY.md` matched family sections + `plans/_cross-cutting/2026-05-06-latency-path-discipline.md` + `DOCS/STRATEGY_AND_CODING_RULES.md` — so the editor knows the hot/slow/drainer/parser rules the surface is held to BEFORE a single line changes.
 
-Tool inventory pointer: `DOCS/TOOLS.md`. Omit any that don't exist for the sprint (most non-`.E` sprints have no DAG). Sister: `/accept-handoff` Stage 3.6 (receiver loads them) + `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md` step 3 (audits consume them).
+Tool inventory pointer: `DOCS/TOOLS.md`. Omit any that don't exist for the sprint (most non-`.E` sprints have no DAG). Sister: `/accept-handoff` Stage 3.6 (receiver loads them) + `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md` step 3 (the canonical "hand the hunter the nav-infra" discipline — pickup, audits, adversarial audits, and plan-checks all consume the SAME set; that step is the single source the cohort references rather than each pasting its own copy).
 
 ### Stage 3 — Scan plan for DESIGN_SPECS pattern symptoms
 
@@ -551,7 +558,7 @@ plan_type: refactor | feature | live-readiness | hotfix
 sprint_end_goal: <one-line statement from sprint MASTER plan>
 ship_end_goal: <one-line statement from sub-plan body>
 predecessor_handoff: <path or null>
-required_reading: [CLAUDE.md, CLAUDE.local.md, MEMORY.md, plan-body, sprint-MASTER]
+required_reading: [CLAUDE.md, CLAUDE.local.md, MEMORY.md, MEMORY_EXTENDED.md, plan-body, sprint-MASTER, <nav-infra per Stage 2.9 when the sprint has them: dependency-graph-DAG + CODE_MAP(regen at pickup) + CANONICAL-FINDINGS-index + the path-discipline docs for the edited surface>]
 coding_status: planning-complete | mid-coding-checkpoint-N | post-ship-postmortem
 ---
 

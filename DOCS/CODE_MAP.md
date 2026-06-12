@@ -4,7 +4,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-06-11 (commit 5e65933)
+**Last regenerated**: 2026-06-11 (commit a503dd2)
 
 ## CoreFrameworks/
 
@@ -54,26 +54,26 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `EventLoop_DrainPostFillOneCore` — line 1370
 - `EventLoop_DrainPostFill` — line 1798
 - `EventLoop_OnEvent` — line 1850
-- `EventLoop_DrainEvents` — line 2031
-- `EventLoop_QueueParameters` — line 2065
-- `EventLoop_RebuildAllParameters` — line 2098
-- `EventLoop_UpdateRollingStateOneCore` — line 2188
-- `EventLoop_UpdateEmaPriceAllCores` — line 2231
-- `EventLoop_RebuildOneCore` — line 2250
-- `EventLoop_PushParameters` — line 3158
-- `EventLoopState_ConfigureKillSwitch` — line 3193
-- `EventLoop_ClearAllPermissions` — line 3203
-- `EventLoop_KillSwitchTrip` — line 3214
-- `EventLoop_KillSwitchEvaluate` — line 3243
-- `EventLoop_TimeExitOneCore` — line 3317
-- `EventLoop_FlattenAll` — line 3412
-- `EventLoop_CheckWsStaleness` — line 3475
-- `EventLoop_TryClearRecovery` — line 3554
-- `EventLoop_TrailingSLRatchetOneCore` — line 3597
-- `EventLoop_BreakevenOnProfitOneCore` — line 3676
-- `EventLoop_Unpause` — line 3720
-- `EventLoop_SlowPath` — line 3744
-- `EventLoop_RunController` — line 3769
+- `EventLoop_DrainEvents` — line 2033
+- `EventLoop_QueueParameters` — line 2067
+- `EventLoop_RebuildAllParameters` — line 2100
+- `EventLoop_UpdateRollingStateOneCore` — line 2190
+- `EventLoop_UpdateEmaPriceAllCores` — line 2233
+- `EventLoop_RebuildOneCore` — line 2252
+- `EventLoop_PushParameters` — line 3160
+- `EventLoopState_ConfigureKillSwitch` — line 3195
+- `EventLoop_ClearAllPermissions` — line 3205
+- `EventLoop_KillSwitchTrip` — line 3216
+- `EventLoop_KillSwitchEvaluate` — line 3245
+- `EventLoop_TimeExitOneCore` — line 3319
+- `EventLoop_FlattenAll` — line 3414
+- `EventLoop_CheckWsStaleness` — line 3477
+- `EventLoop_TryClearRecovery` — line 3556
+- `EventLoop_TrailingSLRatchetOneCore` — line 3599
+- `EventLoop_BreakevenOnProfitOneCore` — line 3678
+- `EventLoop_Unpause` — line 3722
+- `EventLoop_SlowPath` — line 3746
+- `EventLoop_RunController` — line 3771
 
 ### CoreLatencyStats.hpp
 
@@ -394,12 +394,12 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 - `Strategy_SpacingOk` — line 238
 - `Strategy_TpFloor` — line 257
-- `SimpleDip_BuildParameters` — line 300
-- `MeanReversion_BuildParameters` — line 380
-- `Momentum_BuildParameters` — line 452
-- `EmaCross_BuildParameters` — line 567
-- `ML_BuildParameters` — line 676
-- `Strategy_BuildParameters` — line 1591
+- `SimpleDip_BuildParameters` — line 342
+- `MeanReversion_BuildParameters` — line 422
+- `Momentum_BuildParameters` — line 494
+- `EmaCross_BuildParameters` — line 609
+- `ML_BuildParameters` — line 722
+- `Strategy_BuildParameters` — line 1637
 
 ## Strategies/private/
 

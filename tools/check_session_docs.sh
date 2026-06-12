@@ -18,6 +18,7 @@
 #   check_tools_inventory.py                            [HARD — every tools/*.{sh,py} enrolled in DOCS/TOOLS.md]
 #   check_always_loaded_budget.py                       [HARD — CLAUDE.md/local + MEMORY.md vs harness byte caps]
 #   check_fpn_doc_size_currency.py                      [HARD — docs' single-FPN<> byte size vs the code's sizeof assert]
+#   check_navinfra_cohort_reference.py                  [HARD — every audit/plan-check/pickup skill reaches the nav-infra consult]
 #   check_forward_promise_audit.py                      [ADVISORY — MED/LOW expected]
 #   check_meta_registry.py                              [ADVISORY — engine-structural; pre-existing orphans surfaced]
 #
@@ -153,6 +154,17 @@ if [ "${SKIP_FPN_DOC_SIZE_CHECK:-0}" != "1" ]; then
         python3 "$REPO_ROOT/tools/check_fpn_doc_size_currency.py"
 else
     RESULTS+=("  ⏭  HARD  FPN-doc-size currency (SKIP_FPN_DOC_SIZE_CHECK=1)")
+fi
+
+# --- HARD 8: nav-infra cohort reference (every audit/plan-check/pickup skill reaches the nav-infra consult) ---
+# M7 close of the "operator hand-nudges the DAG/CODE_MAP in every session" surface (2026-06-11, the .E.0.10
+# pickup): the adversarial-audit spec's applies_at_skills MUST each reach the nav-infra consult — via the
+# shared Stage-0 doc citation OR a direct ref. A cohort skill that drops it = red build, no nudge required.
+if [ "${SKIP_NAVINFRA_COHORT_CHECK:-0}" != "1" ]; then
+    run_hard "nav-infra cohort reference (audit/plan-check/pickup skills reach the nav-infra consult)" \
+        python3 "$REPO_ROOT/tools/check_navinfra_cohort_reference.py"
+else
+    RESULTS+=("  ⏭  HARD  nav-infra cohort reference (SKIP_NAVINFRA_COHORT_CHECK=1)")
 fi
 
 # --- ADVISORY: forward-promise (MED/LOW backlog expected) ---

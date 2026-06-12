@@ -10,7 +10,7 @@
 - [Bump Version.hpp every ship + rename plans when ship-order diverges](feedback_bump_version_per_ship.md) — every `vX.Y.Z` tag bumps Version.hpp in the same commit; rename the plan file (not Version.hpp) to keep filename+tag monotonic
 - [Defer is last-ditch, never effort-avoidance](feedback_no_defer_for_effort.md) — implement properly first time; "smaller scope" has failed 3/3 vs do-it-right
 - [Single-cycle exist+good; design once, maintain forever](feedback_design_once_maintain_forever.md) — take a piece exist→good in ONE cycle; don't re-traverse determinism-gated code; foundational/known-requirement only (unknown-unknowns still MVP)
-- [Opportunistic tech-debt closure — subsumption not adjacency](feedback_opportunistic_tech_debt_closure.md) — close debt a ship SUBSUMES (≈0 marginal cost); merely ADJACENT → cross-link + leave tracked; discriminator = marginal-cost, not surface-adjacency
+- [Opportunistic tech-debt closure — subsumption not adjacency](feedback_opportunistic_tech_debt_closure.md) — close debt a ship SUBSUMES (≈0 marginal cost); merely ADJACENT → cross-link + leave tracked; discriminator = marginal-cost, not surface-adjacency; BIDIRECTIONAL — also blocks deferring a NEW fix on adjacency (durable fix a later plan merely renames ≠ subsumed → close NOW)
 - [Deferral is merit, not effort/context](feedback_deferral_reasons_merit_not_effort_or_context.md) — do-now-vs-defer = correctness/scope/proof/marginal-cost; my effort or "we have context" is NOT a valid axis (relatability tell)
 - [Close-out-now over defer for small in-flight finds](feedback_close_out_now_over_defer_when_small.md) — small fixable found in-flight → close NOW; only genuinely-separate DELIVERABLES defer (D-159)
 - [Guards compound — enforcement is the highest-leverage investment](feedback_guards_compound_enforcement_is_leverage.md) — a guard protects a whole CLASS forever, no-thought; code is one instance, the guard is permanent leverage; convention-only on a capital/determinism surface = a hole to close
@@ -88,7 +88,7 @@
 - [Enumerate the set before a categorical risk-dismissal](feedback_enumerate_set_before_categorical_claim.md) — before dismissing a risk via a property over a SET ("the rest are safe"), enumerate + verify each + name any non-conformer (Class-33)
 - [Ground design claims in real code](feedback_ground_design_in_real_code.md) — design talk: Read+cite file:line for EXISTING-code claims (don't reconstruct from memory); show framing+reuse for NEW code
 - [Domain guards for bulk transforms](feedback_domain_guards_for_bulk_transforms.md) — error-driven migration consults the DOMAIN list first (compiler checks types not domains); integration smokes mandatory at encoding epochs
-- [Fold findings into the destination plan](feedback_fold_findings_into_destination_plan.md) — current work finds something belonging in a future/other plan → fold it INTO that plan as discovered; reactive, not scouting
+- [Fold findings into the destination plan](feedback_fold_findings_into_destination_plan.md) — current work finds something belonging in a future/other plan → fold it INTO that plan as discovered; reactive, not scouting; folding TRACKS, it does NOT defer the FIX (the fix's do-vs-defer is the separate subsumption test, not adjacency)
 
 ## User profile
 

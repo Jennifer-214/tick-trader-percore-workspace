@@ -203,7 +203,26 @@ The plan's stated "one place the fan-out earns its tokens" (money-surface comple
 | **A24** | **Session-of-day + D10-adaptive + spike-spacing cfg mutations are DEAD on the production path (Class 44 + H22; the adaptive SAFETY loop is INERT).** `RebuildOneCore` mutates `volume_multiplier`/`entry_offset_pct`/`spacing_multiplier` on the FLAT `resolved_cfg` every rebuild (`ControllerEventLoop.hpp:2360/2426/2978`), but every production consumer reads the BOOT-FROZEN per-core shadow `cores[slot]` (`:2700`/`:2998`) or strategy-owned `live_*` (seeded once at boot) → none reach a live consumer. Session vol-mult (non-1.0 18/24h), the D10 P&L-regression filter-tighten safety loop (default-ON), spike relaxation — all silently inert. **Regression** from the per-core migration (`49649b8` switched reads to `cores[slot]` without reconciling the flat mutations). | **HIGH** (wrong gate — SimpleDip vol-gate mis-set most of the day; the losing-streak safety loop dead) | mutate `ControllerEventLoop.hpp:2360/2426/2978`; read `:2700/:2998` + `StrategyParameters.hpp:365/381/245` | FIX (H22) = mutate `resolved_cfg.cores[slot]` directly (single-source the per-core view) OR sync the override-eligible mutated fields to `cores[slot]` before the consumer. The literal H22 CI-check candidate. NEW. |
 | **A25** | Trailing-SL ACTIVATION gates on the absolute `original_tp` (expected-entry-priced) while the exit fires from per-fill `live_tp` — all 4 sharded strategies (`Momentum.hpp:373`/`MeanReversion.hpp:565`/`MLStrategy.hpp:312`/`EmaCross.hpp:216`). Under slippage they diverge → the trail arms at the wrong price. Ratchet plumbing is fine; only the trigger threshold is stale-priced. Class 44 / absolute-vs-per-fill family (sister to A1/A10). | MED (mistimes the trail start; not an accounting error) | set-site `Portfolio.hpp:354`; read-sites above | FIX = gate on the per-fill TP (`entry×(1+ResolvePerFillTpPct(...))`, mirror the A1 SSoT) OR store `original_tp` from `live_tp` at `Portfolio_OpenSlot`. NEW. |
 
-### ⚖️ Disposition correction (2026-06-11 — operator-caught over-defer; rule re-applied)
+### 🗺️ Routing map — deep-audit cohort → E homes (2026-06-12, D-201; "amend them to each plan they're associated with so E delivers polish")
+
+| finding | E-home / fix-grouping | disposition |
+|---|---|---|
+| **A9** slippage dead | **`.E.0.10` durable-now fix-ship** | fix-now — gates paper-test TRUST |
+| **A16** partial book-and-free (OMS gate) | **`.E.0.10` fix-ship** (gate) + D-123/`.E.1` (parser A2/A4) | durable-now gate |
+| **A19** ratchet_tp clear | **`.E.0.10` fix-ship** | one-liner + char-test |
+| **A24** dead cfg mutations | **`.E.0.10` fix-ship** (H22 single-source) | durable-now (live regression) |
+| **A25** trail stale-TP trigger | **`.E.0.10` fix-ship** (per-fill SSoT) | durable-now |
+| **A20** reconcile watermark | **`.E.1` live-enable gate** | gates live |
+| **A21** reconciler balance formula | **`.E.1` live-enable gate** | gates live (KS corruption) |
+| **A22/A23** CoreContext torn-read | **`.E.1`** (aggregator/concurrency rework; expands torn-read #10) | gates live |
+| **A15** cores=nullptr zero-stub | fold into the A9 fix | latent |
+| **A11/A12** bandit · **A10** dual-arm | **`.E.M` ML ship** (TECH_DEBT-174) | subsumed / design-decision |
+| **A2/A4** partial qty/commission · **A5** venue side | **D-123** (+ `.E.0.10` data-loss stop) | subsumed (decimal) |
+| **A13** no-trade-band · **A14** legacy vol-flag | `.E.1` wire OR cleanup (tombstone) | decision |
+
+**The `.E.0.10` durable-now fix-ship (the immediate CODING work):** A19 (ratchet_tp one-liner) → A9 (slippage consume + delete the dead `OnEvent` block) → A25 (trail per-fill SSoT) → A24 (cfg-mutation single-source) → A16 (partial-fill state-gate). Each = fix + characterization test (per `characterization-test-discipline.md`) + `calls_graph_diff` + independent `// ADV-REFUTE`. **A9 sequenced early** — it gates trusting paper-test results as live-readiness evidence. Live-enable set (A20/A21/A22/A23) → `.E.1`; ML set → `.E.M`; decimal set → D-123.
+
+**TECH_DEBT routed to E:** 159 (FPN re-pack + regression-check) → `.E.1`; 173 (branch-scanner) → `.E.1`; 174 (bandit) → `.E.M`; 175 (struct-tracker) + 176 (unified test-runner) → `.E` discipline-ships. → E-done = polished.
 
 ### ⚖️ Disposition correction (2026-06-11 — operator-caught over-defer; rule re-applied)
 Initial homes deferred ALL fixes to `.E.1`/D-123 on ADJACENCY ("the rework touches that surface"). Operator caught it (no-defer + `.E`-purpose = close debt / patch failures). Re-applied the subsumption-not-adjacency test (`feedback_opportunistic_tech_debt_closure`, amended BIDIRECTIONAL this session — folding a finding TRACKS it; it does NOT defer the fix):

@@ -71,4 +71,4 @@ One verdict — GREEN (both align, recommendation sound) / YELLOW (minor flags) 
 - `/precoding-audit-gate` (the heavyweight plan-gate sibling) + `/blindspot-scan` (implementation-detail layer).
 - [[feedback_adversarial_framing_default_for_checks]] (the policy this enforces at the decision surface — incl. the A25 sharpening) + `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md`.
 - [[feedback_audit_canonical_sister_before_new_infra]] (a recurring Stage-2 refutation) + `DOCS/DESIGN_PHILOSOPHY.md` (boundary-stable-over-wide-cascade — the A25 catch).
-- Motivating instance: decision-log D-204 (A25) + TECH_DEBT-178 (which this skill closes).
+- Motivating instance: decision-log D-204 (A25 — motivated the skill) + **D-205 / D-207 + AR-11** (the dogfood that HARDENED Stage 3 — the resolve-by-fiat failure committed *while dogfooding this skill*, which is why the factual-disagreement code-read is now mandatory) + TECH_DEBT-178 (which this skill closes).

@@ -102,6 +102,7 @@ Skills pre-load matching deep-dive bodies so cold sessions have full pattern acc
 | `/capture-audit` | Loads `memory/MEMORY.md` (Check 1) + `CLAUDE.md` skill suite (Check 8) + `CLAUDE.local.md` going-forward rules (Check 10) + scans decision-logs (Check 3) + plan-body sentinels (Check 4) + handoff PENDING (Check 5) + DESIGN_SPECS Stage promotion (Check 7) + M7 escalation candidates (Check 6) + Check 11 forward-promise (`tools/check_forward_promise_audit.py`). |
 | `/accept-handoff` | Loads handoff doc + "Critical pickup-time reads" files + invokes `/capture-audit --deep` + `/readiness` + reads CLAUDE.md/local/MEMORY baseline + recreates TaskList + verifies engine+workspace git state. |
 | `/close-session` | Loads sprint context (Version.hpp + MASTER + plan frontmatter) + current handoff + engine+workspace HEAD. Composes-by-reference: `/capture-audit --deep` + `/readiness` (conditional) + `/handoff` + `/sync-workspace`. Layer 1 orchestrator; SENDER side (sister to `/accept-handoff`). |
+| `/decision-check` | Loads `adversarial-multi-agent-audit-methodology.md` + `skill-knowledge-consultation-and-auto-routing.md` + `DESIGN_PHILOSOPHY.md`; composes `/finding-analyzer` (investigate) + `/second-opinion` (refute) by reference. Fires the investigative + INDEPENDENT-adversarial agents (Stage 1/2), cross-checks (Stage 3 — a FACTUAL agent-disagreement ⇒ MANDATORY orchestrator code-read, never resolve-by-fiat per AR-11), synthesizes (never auto-proceeds). |
 
 ---
 

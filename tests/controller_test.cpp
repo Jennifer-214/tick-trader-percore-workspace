@@ -5397,6 +5397,18 @@ int main() {
         // set BOTH ratchets non-zero on an INACTIVE slot, drive the slow-path rebuild, assert BOTH
         // cleared (complete write-set); non-vacuous — the pre-state is asserted non-zero, so the clear
         // (not a pre-existing zero) is what flips it. Freezes the CORRECTED behavior, not the bug.
+        // ADV-REFUTE: 2026-06-12 — 1 INDEPENDENT FIND/REFUTE agent (reachability-before-severity) ran 6
+        // refute targets (active->active re-entry leak · clear-site placement · 2-leg isolation · test
+        // vacuity · frozen-bug · Money_Zero sentinel) → CONFIRMED-CORRECT / NON-VACUOUS. Clear-site map:
+        // ratchet_tp WRITES = Strategy_WriteRatchetTP (slot-indexed, gated on active_bitmap) +
+        // GateParameters_Init; sole CLEAR = this inactive-slot block; READS = seqlock-published
+        // cached_params at ExecutionCore.hpp:427/447/458. No active->active leak: the hot path is INERT
+        // (permission=0) between close and the next entry, and the next RebuildOneCore sees !slot_active
+        // -> clears -> end-of-OneCore DIRTY publishes ratchet_tp=0. EventLoop_RebuildAllParameters is the
+        // REAL production rebuild (not a shim). Latent (homed to the next A24/A25 touch of
+        // ControllerEventLoop.hpp): the clear's propagation relies on the unconditional DIRTY-set at
+        // end-of-RebuildOneCore (implicit coupling; correct as-is — hedge a WHY-comment if the
+        // dirty-trigger is ever narrowed).
         tt::OrderManagerState<64> oms;
         tt::EventLoopState<64> state;
         tt::EventLoopState_InitLegacy(&state, &oms, MQ(10000.0));

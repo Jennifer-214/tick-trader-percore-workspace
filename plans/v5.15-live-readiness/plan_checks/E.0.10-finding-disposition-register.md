@@ -213,7 +213,7 @@ The plan's stated "one place the fan-out earns its tokens" (money-surface comple
 |---|---|---|
 | **A9** slippage dead | **`.E.0.10` durable-now fix-ship** | fix-now — gates paper-test TRUST |
 | **A16** partial book-and-free (OMS gate) | **`.E.0.10` fix-ship** (gate) + D-123/`.E.1` (parser A2/A4) | durable-now gate |
-| **A19** ratchet_tp clear | **`.E.0.10` fix-ship** | one-liner + char-test |
+| **A19** ratchet_tp clear | **`.E.0.10` fix-ship** | ✅ **LANDED** (engine `f90aa66` + char-test 4/4; suite 3372/0; `run_all_tests.sh --fast` green) |
 | **A24** dead cfg mutations | **`.E.0.10` fix-ship** (H22 single-source) | durable-now (live regression) |
 | **A25** trail stale-TP trigger | **`.E.0.10` fix-ship** (per-fill SSoT) | durable-now |
 | **A20** reconcile watermark | **`.E.1` live-enable gate** | gates live |

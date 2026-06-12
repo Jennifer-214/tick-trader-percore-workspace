@@ -5387,6 +5387,52 @@ int main() {
     // logic lives in the cross-cutting filter post-process inside
     // EventLoop_RebuildAllParameters — no strategy code is touched.
     //======================================================================================================
+    printf("\n--- A19 — ratchet_tp cleared between trades (inactive slot; .E.0.10) ---\n");
+    {
+        // A19 (.E.0.10): the slow-path inactive-slot clear must zero ratchet_tp SYMMETRICALLY with
+        // ratchet_sl, so a stale TP-ratchet from a PRIOR trade can't leak into the next entry's
+        // effective_tp = Money_Max(tp, ratchet_tp) (H22 per-trade purity). Before the fix, ratchet_sl
+        // cleared but ratchet_tp persisted across trades on a core (a cross-trade representation leak,
+        // representation-migration-completeness.md). Char-test (characterization-test-discipline.md):
+        // set BOTH ratchets non-zero on an INACTIVE slot, drive the slow-path rebuild, assert BOTH
+        // cleared (complete write-set); non-vacuous — the pre-state is asserted non-zero, so the clear
+        // (not a pre-existing zero) is what flips it. Freezes the CORRECTED behavior, not the bug.
+        tt::OrderManagerState<64> oms;
+        tt::EventLoopState<64> state;
+        tt::EventLoopState_InitLegacy(&state, &oms, MQ(10000.0));
+        tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
+        tt::SPSCRing_Init(&tick_ring);
+        tt::ExecutionCore<64> core;
+        tt::ExecutionCore_Init(&core, 0, &tick_ring);
+        int slot = tt::EventLoopState_RegisterCore(&state, &core, MQ(60100.0), MQ(59900.0), MQ(0.01));
+        tt::EventLoopState_SetCoreStrategy(&state, slot, STRATEGY_SIMPLE_DIP, MQ(1000.0));
+
+        ControllerConfig<64> cfg = ControllerConfig_Default<64>();
+        cfg.spacing_multiplier = FPN_Zero<64>();
+        cfg.filter_scale       = FPN_Zero<64>();
+        RollingStats<64, 128> rolling = RollingStats_Init<64, 128>();
+        rolling.price_max  = FPN_FromDouble<64>(60000.0);
+        rolling.price_avg  = FPN_FromDouble<64>(60000.0);
+        rolling.volume_avg = FPN_FromDouble<64>(1.0);
+        rolling.count      = 200;
+
+        // INACTIVE slot — no position opened, so active_bitmap is clear → the clear block fires.
+        check("A19: precondition — slot inactive (active_bitmap clear)",
+              oms.portfolio.active_bitmap == 0);
+        // Simulate a stale ratchet left by a prior trade (what the AUTO regime-transition writes).
+        state.cores[slot].pending_params.ratchet_tp = MQ(60500.0);   // stale high TP-ratchet
+        state.cores[slot].pending_params.ratchet_sl = MQ(59500.0);   // stale SL-ratchet
+        check("A19: precondition — ratchet_tp pre-set non-zero (non-vacuity)",
+              !Money_IsZero(state.cores[slot].pending_params.ratchet_tp));
+
+        tt::EventLoop_RebuildAllParameters(&state, &rolling, &cfg);
+
+        check("A19: ratchet_tp CLEARED on inactive slot (the fix — the previously-missing half)",
+              Money_IsZero(state.cores[slot].pending_params.ratchet_tp));
+        check("A19: ratchet_sl CLEARED on inactive slot (pre-existing half; complete write-set)",
+              Money_IsZero(state.cores[slot].pending_params.ratchet_sl));
+    }
+
     printf("\n--- Phase 2.2: budget enforcement ---\n");
     {
         // Drive RebuildAllParameters with a stub rolling stats + cfg so we

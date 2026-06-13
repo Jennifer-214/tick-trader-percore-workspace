@@ -16357,6 +16357,41 @@ e3_skip_load:;
         OrderEventLog_Free(&oms.event_log);
     }
 
+    printf("\n--- A20 (.E.0.10): reconciler seed-don't-replay ---\n");
+    {
+        // A20: Reconcile_SeedWatermark seeds last_seen_trade_id to max(trade_id) WITHOUT
+        // replaying. On a live AUTO_SYNC boot the exchange-seeded balance ALREADY reflects the
+        // fetched trades, so replaying them (the old ApplyMissedFills path) double-books balance
+        // + opens phantom positions. Seed-don't-replay must set ONLY the watermark.
+        // ADV-REFUTE: the contrast is the tsa-live-2 test above -- ApplyMissedFills over these
+        // SAME trades opens a position + would mutate balance; SeedWatermark opens 0 + leaves
+        // balance untouched, then makes a subsequent replay a no-op (the idempotency floor).
+        using namespace tt;
+
+        OrderManagerState<64> oms;
+        EventLoopState<64> state;
+        EventLoopState_InitLegacy(&state, &oms, MQ(10000.0));
+        check("A20: cold-boot watermark starts 0", oms.last_seen_trade_id == 0);
+        Money bal_before = oms.balance;
+
+        ReconcileTrade trades[3];
+        trades[0] = {.trade_id = 100, .order_id = 1, .price = 50000.0, .qty = 0.001, .commission = 0, .time_ms = 0, .is_buyer = 1, .is_maker = 0};
+        trades[1] = {.trade_id = 200, .order_id = 2, .price = 50100.0, .qty = 0.001, .commission = 0, .time_ms = 0, .is_buyer = 1, .is_maker = 0};
+        trades[2] = {.trade_id = 150, .order_id = 3, .price = 50050.0, .qty = 0.001, .commission = 0, .time_ms = 0, .is_buyer = 1, .is_maker = 0};
+
+        uint64_t seeded = Reconcile_SeedWatermark(&oms, trades, 3);
+        check("A20: seed = max(trade_id) = 200", seeded == 200);
+        check("A20: watermark bumped to 200", oms.last_seen_trade_id == 200);
+        check("A20: ZERO positions opened (no replay -- vs ApplyMissedFills which opens a slot)",
+              Portfolio_CountActive(&oms.portfolio) == 0);
+        check("A20: balance unchanged (no double-book)", Money_Eq(oms.balance, bal_before));
+
+        // idempotency: a subsequent replay over the SAME trades does nothing (all <= watermark)
+        int warm = Reconcile_ApplyMissedFills(&oms, trades, 3);
+        check("A20: ApplyMissedFills after seed -> 0 replayed (all <= watermark)", warm == 0);
+        check("A20: still 0 positions after the warm pass", Portfolio_CountActive(&oms.portfolio) == 0);
+    }
+
     printf("\n--- EXTENSIBILITY: v5.11.3.C — Async log thread (drainer I/O isolation) ---\n");
     {
         // Theory: pre-v5.11.3.C, every OrderEventLog_Append on the drainer

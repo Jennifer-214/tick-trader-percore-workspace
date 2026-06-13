@@ -220,6 +220,20 @@ watching it actually work).
 
 ---
 
+## Landmine 10 — code+test change splits across TWO repos: code → engine, `tests/` → workspace (`git add tests/` in the engine = "beyond a symbolic link" → silent no-op commit) (set 2026-06-13, v5.15.5.F.4d.1.E.0.10 A24)
+
+**Symptom:** after a code+test change — an engine fix in `CoreFrameworks/X.hpp` + a char-test in `tests/controller_test.cpp` — `cd engine && git add tests/controller_test.cpp` → `fatal: pathspec 'tests/controller_test.cpp' is beyond a symbolic link`; the following `git commit` then reports **"nothing to commit, working tree clean"** and the test is silently NOT committed (it never reached the engine repo). Looks like the commit worked; it didn't include the test.
+
+**Root cause:** `tests/` (+ `plans/`, `DESIGN_SPECS/`, `tools/`) are symlinks into the private workspace. The PUBLIC engine repo tracks ONLY compile-the-code (`CoreFrameworks/`, `Strategies/`, … + build infra). A `tests/` path is beyond a symlink + not engine-tracked → `git add` refuses and `git commit` sees nothing. So ONE logical code+test change SPLITS across two repos: public code → engine repo, private test → workspace repo. (The COMMIT face of the symlink-topology family — siblings Landmines 5/7/9.)
+
+**Current mitigation:** commit a code+test change as TWO commits, one per repo — `cd engine && git add CoreFrameworks/X.hpp && git commit` (public code) + `cd workspace && git add tests/X <+ docs/trackers> && git commit` (private test + captures). Cross-reference in the messages ("Pairs with engine `<sha>`"). Verify each repo's `git status` after — a "nothing to commit" right after editing a test is the tell. (Same split for the Edit tool: Read+Edit a `tests/`/`tools/` file via ONE consistent path — engine OR workspace — since the tool tracks the literal path string, not the canonical inode.)
+
+**Future-Claude debugging hint:** `git add` of a `tests/`/`tools/`/`plans/`/`DESIGN_SPECS/` path in the ENGINE repo errors "beyond a symbolic link", OR an engine commit says "nothing to commit" right after you edited a test → the file is a workspace file; commit it in the workspace repo. EVERY A-series fix (engine code + char-test) hits this — plan two commits + a rollback tag on each repo.
+
+**Reference:** v5.15.5.F.4d.1.E.0.10 A24 close (2026-06-13) — the char-test commit no-op'd in the engine, caught by the `git add` error; the symlink-topology family Landmines 5 (Python `__file__.resolve`) / 7 (C++ `../` include) / 9 (`DOCS/tech-debt/` subdir); privacy boundary `project_public_repo_is_code_only` + `public-private-boundary-and-ecosystem-discipline.md`.
+
+---
+
 ## How to add a new landmine
 
 When you encounter a non-obvious pitfall (segfault, race, parallelism

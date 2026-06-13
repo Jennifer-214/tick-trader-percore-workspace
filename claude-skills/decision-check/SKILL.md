@@ -48,6 +48,22 @@ Fire ONE investigative agent (general-purpose; the `/dependency-chain-trace` / `
 ### Stage 2 — ADVERSARIALLY REFUTE (independent; FIND/REFUTE the recommendation)
 Fire an INDEPENDENT adversarial agent (the `/second-opinion` lens — broad-ranging, NOT fed the investigative agent's conclusions as truth): default to "the recommendation is WRONG." Challenge: is it a **wide cascade** the boundary-stable gradient forbids (count the blast-TUs)? a simpler/safer option? a **sister that already covers it** ([[feedback_audit_canonical_sister_before_new_infra]])? a hidden cross-consumer break? mismatched blast-radius/proportionality? Per the binding adversarial-default this half is MANDATORY — it is the whole reason the skill exists.
 
+### Stage 2.5 — Surface-matched skill routing (MANDATORY — applies to BOTH agents; added 2026-06-12)
+
+Both agents are general-purpose with a generic investigative/adversarial lens — so they do generic code investigation UNLESS the prompt routes them to the DOMAIN skill that matches the decision's **material**. The orchestrator MUST name the surface-matched skill(s) in each agent's prompt (the agent applies that skill's methodology), not just the `/trace-deps` / `/second-opinion` lens. (Operator-surfaced 2026-06-12 — the `.E.0.10` per-fix checks: *"do those subagents use the appropriate skills for the type of check + the material?"* — the answer was "only if I route them.")
+
+| Decision surface (the MATERIAL) | Route the agents to |
+|---|---|
+| money / fee / commission / P&L / balance / kill-switch | `/accounting-audit` (+ Class 43 / `Money_FillGross` SSoT) |
+| hot path / branchless / cache-alignment / SIMD | `/hft-audit` (+ H7/H8 + `latency-path-discipline`) |
+| cfg-flow / per-core override / registry | `/trace-deps` + `/dod-audit` + `cfg-scope-discipline.md` (+ Class 25/26/27) |
+| ML / model / scaler / bandit / calib | `/ml-audit` |
+| train↔serve identity / stamp body / wire-format | `/parity-check` (+ `wire-format-byte-preservation-discipline.md`) |
+| recurring-bug-class / anti-pattern | `/bug-check` (against the matched Class) |
+| DOD pattern application (bit-pack / X-macro / alignment) | `/dod-audit` |
+
+Pick by the MATERIAL, not the decision's framing. A decision can span ≥2 surfaces → route to each. If no domain skill matches (pure design/sequencing), the generic lens is the floor. This is `[[feedback_auto_route_input_to_matching_skill]]` applied INSIDE the gate.
+
 ### Stage 3 — CROSS-CHECK (the value-add over running the two separately)
 Compare Stage 1 + Stage 2. Where they AGREE → high-confidence — **but agreement is corroboration, not proof**: independent agents that share an approach/frame CAN converge on the same wrong answer (a shared blind spot), so spot-check whether both keyed on the same assumption before banking it. Where they DISAGREE → that is **signal, not noise**: surface the conflict explicitly. The orchestrator does NOT resolve it by fiat (the agents can BOTH be wrong — anti-self-attestation applies to them too).
 

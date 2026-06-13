@@ -2,7 +2,7 @@
 name: handoff
 skill_kind: mechanical
 trigger_heuristics: ["generate a handoff for a fresh context window -> suggest /handoff"]
-description: Generate a self-contained handoff prompt for opening a sub-ship in a fresh context window. Composes the 9-step pickup workflow (pre-flight verification → required reading → plan re-verification → pre-coding audit gate → DESIGN_SPECS pattern check → design philosophy reminders → TECH_DEBT items in surface area → filesystem conventions → sprint-close verification gate). Reads CLAUDE.local.md going-forward rules + DESIGN_SPECS/*.md catalog + auto-memory MEMORY.md + DOCS/TECH_DEBT.md dynamically so each prompt reflects current discipline. Output: /home/caramel/code/tick-trader-percore-workspace/plans/<sprint>/handoffs/<YYYY-MM-DD>-<ship>-handoff.md (WORKSPACE path explicitly, never engine-side symlink). Layer 1 orchestrator (compose-by-reference, NOT by-spawning).
+description: Generate a self-contained handoff prompt for opening a sub-ship in a fresh context window. Composes the 9-step pickup workflow (pre-flight verification → required reading → plan re-verification → pre-coding audit gate → DESIGN_SPECS pattern check → design philosophy reminders → TECH_DEBT items in surface area → filesystem conventions → sprint-close verification gate). Reads CLAUDE.local.md going-forward rules + DESIGN_SPECS/*.md catalog + auto-memory MEMORY.md + DOCS/TECH_DEBT.md dynamically so each prompt reflects current discipline. Writes a MANDATORY "Arming for the next action" block (surface-matched skills to route to + tools to RUN + reference docs + M8 scout-first; Stage 4.6) so the receiver is armed to use the right ones without being asked — the sender complement to /accept-handoff's always-on receiver arming. Output: /home/caramel/code/tick-trader-percore-workspace/plans/<sprint>/handoffs/<YYYY-MM-DD>-<ship>-handoff.md (WORKSPACE path explicitly, never engine-side symlink). Layer 1 orchestrator (compose-by-reference, NOT by-spawning).
 type: skill
 concern: workflow
 audit_cadence: per-ship
@@ -481,6 +481,30 @@ Verified at handoff write time. Fresh-session pickup may re-evaluate if scope sh
 
 Fresh-session pickup can verify each pillar against current state. If any pillar's verdict has DRIFTED (e.g., new anti-pattern Class codified post-handoff), pickup re-evaluates before coding.
 
+### Stage 4.6 — Next-action arming (surface-matched skills + tools + M8 for the IMMEDIATE next action) [added 2026-06-13]
+
+The SENDER complement to `/accept-handoff`'s M8 receiver-side session-arming. The receiver auto-loads the baseline + nav-infra, but it can only ROUTE the next action to the right domain skills + tools if the handoff NAMES them. Without this block a handoff names a generic verb ("run `/decision-check`") but not WHICH surface-matched skills to route its agents to — so the fresh session boots blind on the routing (the exact gap that left A16 under-armed at the `.E.0.10` A24-close handoff until it was hand-fixed). This is the M7 structural close at the sender surface: the writer can no longer skip arming because the template REQUIRES the block. It SHARPENS the generated prompt's generic Step-2 audit gate with surface-matched routing for the SPECIFIC next action (complements, does not duplicate).
+
+For the ship's IMMEDIATE next action (the "your next action is X" the handoff resolves to), enumerate:
+
+1. **Surface-matched skills to ROUTE to** — consult the **`/decision-check` Stage 2.5 routing table** (the SSoT surface→skill map; read it + pick the rows matching the next-action's MATERIAL — do NOT re-paste the table) + the `/accept-handoff` Stage 3.3 trigger table. Compressed map (pointer, not the SSoT): money/fee/P&L/kill-switch → `/accounting-audit`; hot/slow/branchless/cache → `/hft-audit`; cfg-flow/per-core/registry → `/trace-deps` + `/dod-audit` + `cfg-scope-discipline.md`; ML/model/bandit → `/ml-audit`; train↔serve/stamp/wire → `/parity-check`; recurring-bug-class → `/bug-check`. A decision-shaped action → `/decision-check` ROUTING its agents to those same surface skills. Pick by the MATERIAL not the framing; multi-surface → route to each.
+2. **Mechanical tools to RUN** (not just read) — the surface's `check_*.py` guard(s), `./build.sh test` + `run_all_tests.sh --full` (asan/ubsan), `tools/calls_graph_diff`, regen `./tools/gen_code_map.sh`. Name the SPECIFIC ones the next action needs.
+3. **Surface reference docs + invariants** — the path-discipline docs for the surface (`STRATEGY_AND_CODING_RULES.md` for hot/slow/OMS/parse/ML; `latency-path-discipline.md`; the matched `DESIGN_PHILOSOPHY.md` family) + the specific H-invariants in play.
+4. **M8 scout-first** — agents boot BLIND; arm each prompt with the docs + the toolchain to RUN + nav-infra + scout-before-execute; keep the adversarial agent independent on the VERDICT (per `definition-of-done-and-armed-scout-verification.md`).
+
+**Template shape** (skill substitutes the actual next-action's skills/tools/docs):
+
+```markdown
+## Arming for the next action
+
+For `<the immediate next action>` — the surface is `<surface>`, so arm it:
+- **Route to:** `<surface-matched skills per /decision-check Stage 2.5>` (ARM each agent per M8 — docs + toolchain + scout-first; adversarial agent independent on the verdict)
+- **Run (not just read):** `<the specific check_*.py / build / calls_graph_diff / gen_code_map tools>`
+- **Read first:** `<the path-discipline docs + H-invariants for the surface>`
+```
+
+MANDATORY — never omit. If the next action is genuinely trivial (single-file, no audit), write "next action is trivial; no skill routing needed" rather than dropping the block. Sister: `/accept-handoff` Stage 3.3/3.6/3.7 (receiver side) + `/decision-check` Stage 2.5 (the routing SSoT) + M8.
+
 ### Stage 5 — Compose handoff prompt
 
 Assemble the prompt with this structure:
@@ -544,6 +568,8 @@ If no in-flight tasks at handoff write: "No active task list — fresh-session p
 <insert "TECH_DEBT scoreboard (in-flight status at handoff write)" section here per Stage 4 Pass B output — include even if empty (says "No TECH_DEBT cited in plan body")>
 
 <insert "Pre-pickup self-audit (4-pillar discipline)" section here per Stage 4.5 output>
+
+<insert "Arming for the next action" section here per Stage 4.6 output — MANDATORY; surface-matched skills to route to + tools to RUN + docs + M8 for the immediate next action>
 
 ---
 

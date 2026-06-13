@@ -38,6 +38,13 @@ This is the same memory-only-discipline-insufficient pattern that M7 addresses �
 3. **Anti-pattern catalog** — `RECURRING_BUG_PATTERNS.md`, consulted for the Class IDs the work touches (Stage 3.6) — the known bug shapes the next edit must not reintroduce.
 4. **Next-action surface kit** — the surface-matched skills + tools + specs + anti-pattern classes + invariants routed to the immediate next action (Stage 3.7), surfaced in the Stage-8 report. This is the *"use the correct ones where appropriate"* ask, made deterministic.
 
+**Load vs consult — the discipline that keeps "mandatory" from blowing the context budget (and accelerating the very compaction this is meant to survive):** *mandatory* means the session ALWAYS routes through the arming set — NOT that every byte is dumped into context. Three tiers:
+- **Always LOADED (full content):** the small + always-relevant — the baseline (CLAUDE.md / CLAUDE.local.md / MEMORY.md) + a freshly-regen'd CODE_MAP.
+- **Always CONSULTED (mandatory routing, read-on-demand):** the tool index (TOOLS.md), the skill suite (CLAUDE.md lists it), the anti-pattern catalog, and — when the sprint has them — the DAG + findings index. Knowing they exist + reaching for them at the decision points IS the arming; the full file is grepped/read on demand, not pre-dumped.
+- **Conditionally full-loaded (by surface keyword):** the heavy reference docs (STRATEGY_AND_CODING_RULES, latency audit, the DESIGN_PHILOSOPHY families) — loaded when the ship's surface matches (Stage 3.3), not every pickup.
+
+Full-loading everything every time would eat the window the actual work needs + push the session toward compaction sooner — the opposite of the goal. So: consult-over-load for the indexes; full-load only the small-always-relevant + the surface-matched heavy docs.
+
 If a pickup ever can't fully arm (a cited doc is missing, a tool errors), that's a SURFACED finding in the report — never a silent skip.
 
 ## What this skill does (sequential)
@@ -112,7 +119,7 @@ The artifact existing ≠ the artifact being used — this stage routes pickup t
 
 - **ALWAYS — regen + consult CODE_MAP:** `./tools/gen_code_map.sh` (idempotent, <5s) → `DOCS/CODE_MAP.md`. Real `Pattern_FunctionName` file:line — the anti-fabrication ground truth (grep THIS to verify a handoff's cited symbols, never recall a line). Sister to `/readiness` Stage 2 + `/precoding-audit-gate` Stage 2.5 (both already regen it).
 - **CONDITIONAL — load the INDEX, never the per-ship sidecars** (consult-indexes-before-full-reads): if the active sprint has a **dependency-graph DAG** (`plans/<sprint>/subplans/*-dependency-graph.md`) and/or a **findings corpus** (`plans/<sprint>/plan_checks/**/CANONICAL-FINDINGS.md` + the live disposition register), load the DAG + the deduped INDEX. The ~500KB per-ship sidecars stay grep-on-demand. These are the surface-set + already-found/dispositioned set that the Stage-6 `/readiness` completeness pass measures against — a completeness check fed only the plan headline re-derives a false floor (the `.E.0.10` net-completeness instance).
-- **Tool index:** `DOCS/TOOLS.md` (every `tools/*` + disposition + invoker) — consult when the pickup needs a tool or to check what's wired.
+- **Tool index (ALWAYS consult — the always-CONSULT tier):** `DOCS/TOOLS.md` (every `tools/*` + disposition + invoker) — consult on EVERY pickup, do NOT wait to "need" a tool: knowing the inventory is what stops a session hand-rolling what a tool already does (and seeds the Stage-3.7 kit's mechanical-toolchain row). The full file is read-on-demand; the consult itself is mandatory.
 - **Anti-pattern catalog (ALWAYS):** `DOCS/RECURRING_BUG_PATTERNS.md` — consult (grep, don't recite — registry-driven) for the Class IDs the in-flight/next work touches (the handoff + register usually name them, e.g. Class 25/26/27 for cfg-scope work; Class 44/45 for the exit-chain / reconstruct-path family). These are the known bug shapes the next edit must not reintroduce; they seed the Stage-3.7 surface kit + any `/bug-check` the next action routes to.
 
 **Stage 3.7 — Next-action surface kit (route the immediate next action — the M8 session-arm):**

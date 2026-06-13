@@ -16217,6 +16217,82 @@ e3_skip_load:;
         OrderEventLog_Free(&oms.event_log);
     }
 
+    printf("\n--- A17 (.E.0.10): order_complete terminal-state gate ---\n");
+    {
+        // A17: the paper synth fills the FULL requested qty in one synthetic event →
+        // order_complete=1 → ORDER_FILLED (regression: pre-A17 it left order_complete=0
+        // → paper orders lingered ORDER_PARTIAL, leaking slots). Anti-vacuous: a PARTIAL
+        // (order_complete=0, fill_qty>0) MUST still land ORDER_PARTIAL — guards a future
+        // hardcoded =1 (the REST path's venue-"status" read is what makes it discriminate,
+        // D-106). ACK-only (fill_qty=0) MUST land ORDER_ACKNOWLEDGED (order_complete unread).
+        // ADV-REFUTE: independently re-derived — the divergence field is order_complete{0,1};
+        // a fixture where it is always 1 could not distinguish (b) from a hardcoded constant.
+        using namespace tt;
+
+        OrderManagerState<64> oms;
+        ExchangeAdapter<64> empty_adapter{};
+        OrderManager_Init(&oms, empty_adapter, /*live=*/0, /*partial_exit_enabled=*/0,
+                          MQ(10000.0), /*event_log_mode=*/1, /*event_log_path=*/nullptr);
+
+        // (A) paper synth → order_complete=1 → ORDER_FILLED
+        SubmitCommand<64> sub_a(/*core_id=*/0, ORDER_MARKET_BUY, MQ(0.001), 0, nullptr);
+        sub_a.intended_tp = MQ(60500.0); sub_a.intended_sl = MQ(59500.0);
+        sub_a.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP; sub_a.event_price = MQ(60000.0);
+        uint64_t oid_a = OrderManager_Submit(&oms, sub_a);
+        int slot_a = (int)((oid_a >> 60) & 0xFu);
+
+        Command synth{};
+        bool got = SPSCRing_TryPop(&oms.result_queue, &synth);
+        check("A17: paper synth pushes a fill result", got);
+        check("A17: paper synth sets order_complete=1 (full requested qty by construction)",
+              got && synth.result.order_complete == 1);
+        int proc_a = OrderManager_ProcessFillCommand(&oms, synth);
+        check("A17: paper full fill lands ORDER_FILLED (not slot-leaking ORDER_PARTIAL)",
+              proc_a == 1 && Order_GetState(&oms.orders[slot_a]) == ORDER_FILLED);
+
+        // (B) anti-vacuous: order_complete=0 + fill_qty>0 → ORDER_PARTIAL
+        SubmitCommand<64> sub_b(/*core_id=*/0, ORDER_MARKET_BUY, MQ(0.002), 0, nullptr);
+        sub_b.intended_tp = MQ(60500.0); sub_b.intended_sl = MQ(59500.0);
+        sub_b.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP; sub_b.event_price = MQ(60000.0);
+        uint64_t oid_b = OrderManager_Submit(&oms, sub_b);
+        int slot_b = (int)((oid_b >> 60) & 0xFu);
+        (void)SPSCRing_TryPop(&oms.result_queue, &synth);  // discard the (complete) synth result
+        Command partial{};
+        partial.type     = (uint8_t)CMD_FILL_RESULT;
+        partial.order_id = oid_b;
+        std::memset(&partial.result, 0, sizeof(partial.result));
+        partial.result.success        = 1;
+        partial.result.avg_fill_price = 60100.0;
+        partial.result.fill_qty       = 0.001;   // < requested 0.002
+        partial.result.order_complete = 0;       // venue would report PARTIALLY_FILLED
+        std::strncpy(partial.result.exchange_id, "TEST_EX", sizeof(partial.result.exchange_id) - 1);
+        int proc_b = OrderManager_ProcessFillCommand(&oms, partial);
+        check("A17 anti-vacuous: order_complete=0 + fill_qty>0 lands ORDER_PARTIAL",
+              proc_b == 1 && Order_GetState(&oms.orders[slot_b]) == ORDER_PARTIAL);
+
+        // (C) ACK-only (fill_qty=0, avg=0) → ORDER_ACKNOWLEDGED (order_complete never read)
+        SubmitCommand<64> sub_c(/*core_id=*/0, ORDER_MARKET_BUY, MQ(0.001), 0, nullptr);
+        sub_c.intended_tp = MQ(60500.0); sub_c.intended_sl = MQ(59500.0);
+        sub_c.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP; sub_c.event_price = MQ(60000.0);
+        uint64_t oid_c = OrderManager_Submit(&oms, sub_c);
+        int slot_c = (int)((oid_c >> 60) & 0xFu);
+        (void)SPSCRing_TryPop(&oms.result_queue, &synth);  // discard the synth result
+        Command ack{};
+        ack.type     = (uint8_t)CMD_FILL_RESULT;
+        ack.order_id = oid_c;
+        std::memset(&ack.result, 0, sizeof(ack.result));
+        ack.result.success        = 1;
+        ack.result.avg_fill_price = 0.0;
+        ack.result.fill_qty       = 0.0;
+        ack.result.order_complete = 0;
+        std::strncpy(ack.result.exchange_id, "TEST_EX", sizeof(ack.result.exchange_id) - 1);
+        int proc_c = OrderManager_ProcessFillCommand(&oms, ack);
+        check("A17: ACK-only (fill_qty=0, avg=0) lands ORDER_ACKNOWLEDGED",
+              proc_c == 1 && Order_GetState(&oms.orders[slot_c]) == ORDER_ACKNOWLEDGED);
+
+        OrderEventLog_Free(&oms.event_log);
+    }
+
     printf("\n--- EXTENSIBILITY: v5.11.3.C — Async log thread (drainer I/O isolation) ---\n");
     {
         // Theory: pre-v5.11.3.C, every OrderEventLog_Append on the drainer

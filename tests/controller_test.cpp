@@ -16293,6 +16293,70 @@ e3_skip_load:;
         OrderEventLog_Free(&oms.event_log);
     }
 
+    printf("\n--- A21 (.E.0.10): reconciler cash-leg formula + detect-only ---\n");
+    {
+        // A21: expected-free-cash must NET OUT the open-position committed cost (oms->balance
+        // is flat-account, start + sum realized; a BUY never debits it) -- the old formula compared
+        // flat balance against venue free-USDT -> structural false drift the instant a position
+        // opened. And ProcessReconcile is now DETECT-ONLY: it must NOT clobber oms->balance or
+        // ratchet ks_peak (advisory; a venue-free-USDT write breaks balance==start+sum-realized +
+        // boot-replay determinism, and a bad ks_peak ratchet mis-arms the kill-switch). Anti-vacuous:
+        // open a NON-ZERO-cost position so ExpectedFreeCash != balance; the regressions fail on
+        // pre-A21 code. ADV-REFUTE: $9399.40 + the no-clobber re-derived by hand.
+        using namespace tt;
+
+        OrderManagerState<64> oms;
+        ExchangeAdapter<64> empty_adapter{};
+        OrderManager_Init(&oms, empty_adapter, /*live=*/0, /*partial_exit_enabled=*/0,
+                          MQ(10000.0), /*event_log_mode=*/1, /*event_log_path=*/nullptr);
+        oms.balance = MQ(10000.0);   // flat-account value (start + sum realized)
+
+        // open ONE position: entry 60000 x 0.01 BTC, entry_fee $0.60 -> committed cost $600.60
+        oms.portfolio.active_bitmap            = 0x1;
+        oms.portfolio.positions[0].entry_price = MQ(60000.0);
+        oms.portfolio.positions[0].quantity    = MQ(0.01);
+        oms.portfolio.positions[0].entry_fee   = MQ(0.60);
+        oms.order_bitmap = 0;   // no inflight yet
+
+        check("A21: OMS_OpenPositionCost = entry*qty + entry_fee ($600.60)",
+              Money_Eq(OMS_OpenPositionCost(&oms), MQ(600.60)));
+        Money expected = OMS_ExpectedFreeCash(&oms);
+        check("A21: ExpectedFreeCash nets out open cost ($9399.40), NOT the flat balance",
+              Money_Eq(expected, MQ(9399.40)));
+        check("A21 anti-vacuous: ExpectedFreeCash != oms->balance with a position open",
+              !Money_Eq(expected, oms.balance));
+
+        // inflight BUY also reduces free cash: requested 0.005 @ 61000, fee_rate 0.001
+        // -> notional $305.00 + est_fee $0.305 = $305.305
+        Order_Init(&oms.orders[0], /*id=*/1, /*core_id=*/0, ORDER_MARKET_BUY);
+        oms.orders[0].requested_qty         = MQ(0.005);
+        oms.orders[0].filled_qty            = Money_Zero();
+        oms.orders[0].event_price           = MQ(61000.0);
+        oms.orders[0].pre_resolved.fee_rate = MQ(0.001);
+        Order_SetState(&oms.orders[0], ORDER_SUBMITTED);
+        oms.order_bitmap = 0x1;
+        check("A21: ExpectedFreeCash also subtracts inflight-BUY reserved ($305.305)",
+              Money_Eq(OMS_ExpectedFreeCash(&oms), Money_Sub(expected, MQ(305.305))));
+
+        // DETECT-ONLY: ProcessReconcile must NOT clobber balance or ratchet ks_peak.
+        oms.ks_peak_balance = MQ(10000.0);
+        Money bal_before  = oms.balance;
+        Money peak_before = oms.ks_peak_balance;
+        Command cmd{};
+        cmd.type = (uint8_t)CMD_RECONCILE;
+        std::memset(&cmd.result, 0, sizeof(cmd.result));
+        cmd.result.success        = 1;
+        cmd.result.avg_fill_price = -600.60;    // drift (repurposed field)
+        cmd.result.fill_qty       = 9399.40;    // venue free-USDT (repurposed field)
+        OrderManager_ProcessReconcile(&oms, cmd);
+        check("A21 detect-only: ProcessReconcile does NOT clobber oms->balance",
+              Money_Eq(oms.balance, bal_before));
+        check("A21 detect-only: ProcessReconcile does NOT ratchet ks_peak_balance",
+              Money_Eq(oms.ks_peak_balance, peak_before));
+
+        OrderEventLog_Free(&oms.event_log);
+    }
+
     printf("\n--- EXTENSIBILITY: v5.11.3.C — Async log thread (drainer I/O isolation) ---\n");
     {
         // Theory: pre-v5.11.3.C, every OrderEventLog_Append on the drainer

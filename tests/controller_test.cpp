@@ -5445,6 +5445,80 @@ int main() {
               Money_IsZero(state.cores[slot].pending_params.ratchet_sl));
     }
 
+    printf("\n--- A24 — RebuildOneCore cfg-mutation reaches the per-node consumer (D10 brake; .E.0.10) ---\n");
+    {
+        // A24 (.E.0.10, D-211 option c): RebuildOneCore's D6 session-mult / D10 losing-streak brake /
+        // spike-spacing adaptations historically mutated the FLAT resolved_cfg field, but the live
+        // consumer reads resolved_cfg.cores[slot] (the per-node slice; ResolveForCore copies cores[]
+        // verbatim + never re-writes it) → the mutation was silently DEAD (Class 44-B / H22 per-node
+        // purity; the default-ON D10 brake inert for SimpleDip/EmaCross/ML). The fix writes the slice.
+        // All three share the identical slice-write; D10 is the clean DETERMINISTIC trigger (D6 keys
+        // on wall-clock hour, so it can't be pinned portably).
+        //
+        // Char-test (characterization-test-discipline.md): drive the D10 brake with a clean negative-
+        // slope pnl_feeder and assert it RAISES volume_multiplier AS THE CONSUMER SEES IT — SimpleDip
+        // sets bg_volume_threshold = volume_avg × core_cfg->volume_multiplier. Compare D10-ON
+        // (filter_scale != 0 + losing feeder) vs D10-OFF baseline (filter_scale == 0) on the SAME
+        // fixture. Freezes the CORRECTED behavior, not the bug.
+        //
+        // ADV-SELF (2026-06-13): non-vacuity is STRUCTURAL — pre-fix BOTH runs read the un-mutated
+        // slice (the D10 mutation hit the dead flat field) → tightened == baseline → the Money_Gt
+        // assert FAILS pre-fix; the fix is exactly what makes tightened > baseline. The baseline-
+        // non-zero precondition rules out an all-zero vacuous pass; bounds set wide so the shift isn't
+        // clamped to a no-op; D6/spike (if active) hit BOTH runs equally so the delta isolates D10.
+        // Independent ADV-REFUTE owed at A24 close.
+        auto run_d10 = [&](FPN_Binary<64> filter_scale) -> Money {
+            tt::OrderManagerState<64> oms;
+            tt::EventLoopState<64> state;
+            tt::EventLoopState_InitLegacy(&state, &oms, MQ(10000.0));
+            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
+            tt::SPSCRing_Init(&tick_ring);
+            tt::ExecutionCore<64> core;
+            tt::ExecutionCore_Init(&core, 0, &tick_ring);
+            int slot = tt::EventLoopState_RegisterCore(&state, &core, MQ(60100.0), MQ(59900.0), MQ(0.01));
+            tt::EventLoopState_SetCoreStrategy(&state, slot, STRATEGY_SIMPLE_DIP, MQ(1000.0));
+
+            ControllerConfig<64> cfg = ControllerConfig_Default<64>();
+            // The per-NODE slice = what the consumer reads (and what A24 now mutates).
+            cfg.cores[slot].volume_multiplier = FPN_FromDouble<64>(1.0);
+            cfg.cores[slot].entry_offset_pct  = MQ(0.001);
+            // Wide flat clamp bounds (the D10 clamp reads flat; resolve-equal) so the shift isn't clamped.
+            cfg.vol_mult_min = FPN_FromDouble<64>(0.1);
+            cfg.vol_mult_max = FPN_FromDouble<64>(100.0);
+            cfg.offset_min   = MQ(0.0);
+            cfg.offset_max   = MQ(0.10);
+            cfg.filter_scale = filter_scale;
+            cfg.idle_reset_cycles = 0;            // don't reset the feeder before D10 reads it
+            cfg.spacing_multiplier = FPN_Zero<64>();
+            cfg.min_stddev_pct = FPN_Zero<64>();
+            cfg.min_long_slope = FPN_Zero<64>();
+
+            RollingStats<64, 128> rolling = RollingStats_Init<64, 128>();
+            rolling.price_max  = FPN_FromDouble<64>(60000.0);
+            rolling.price_avg  = FPN_FromDouble<64>(60000.0);
+            rolling.volume_avg = FPN_FromDouble<64>(2.0);
+            rolling.count      = 200;
+
+            // Seed a clean LOSING slope (decreasing realized P&L) → negative slope, R²≈1.0 → D10 tightens.
+            for (int i = 0; i < 8; ++i)
+                state.cores[slot].pnl_feeder.price_samples[i] = FPN_FromDouble<64>(80.0 - 10.0 * (double)i);
+            state.cores[slot].pnl_feeder.head  = 0;   // full window; Compute reads chronological [0..7]
+            state.cores[slot].pnl_feeder.count = 8;
+
+            tt::EventLoop_RebuildAllParameters(&state, &rolling, &cfg);
+            return state.cores[slot].pending_params.bg_volume_threshold;
+        };
+
+        Money baseline  = run_d10(FPN_Zero<64>());            // D10 OFF (filter_scale == 0)
+        Money tightened = run_d10(FPN_FromDouble<64>(0.01));  // D10 ON (losing feeder)
+
+        check("A24: D10-off baseline bg_volume_threshold non-zero (non-vacuity guard)",
+              !Money_IsZero(baseline));
+        check("A24: D10 losing-streak brake RAISES volume_multiplier as the consumer sees it "
+              "(bg_volume_threshold > baseline — the cfg-mutation reaches cores[slot]; FAILS pre-fix)",
+              Money_Gt(tightened, baseline));
+    }
+
     printf("\n--- Phase 2.2: budget enforcement ---\n");
     {
         // Drive RebuildAllParameters with a stub rolling stats + cfg so we

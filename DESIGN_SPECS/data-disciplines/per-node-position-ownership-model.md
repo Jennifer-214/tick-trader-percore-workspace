@@ -8,6 +8,7 @@ surface: [oms-drainer, persistence, live-trading, hot-path]
 sister_specs:
   - portfolio-soa-vectorization-pattern.md
   - cross-thread-multiword-read-consistency-discipline.md
+  - per-node-purity-scale-invariance.md
 living_spec: true
 extends_when: "scaling-in/out becomes a real feature (§ Future expansion) — the full per-node sub-pool mechanism extends this spec's .E.1 foundation; do NOT build it speculatively"
 ---

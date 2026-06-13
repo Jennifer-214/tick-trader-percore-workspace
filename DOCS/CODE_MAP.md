@@ -4,7 +4,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-06-12 (commit 2b38bd6)
+**Last regenerated**: 2026-06-12 (commit 8352b5e)
 
 ## CoreFrameworks/
 
@@ -52,28 +52,28 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `EventLoopState_TradeLog` — line 1299
 - `EventLoopState_SetIntendedParams` — line 1314
 - `EventLoop_DrainPostFillOneCore` — line 1370
-- `EventLoop_DrainPostFill` — line 1798
-- `EventLoop_OnEvent` — line 1850
-- `EventLoop_DrainEvents` — line 2009
-- `EventLoop_QueueParameters` — line 2043
-- `EventLoop_RebuildAllParameters` — line 2076
-- `EventLoop_UpdateRollingStateOneCore` — line 2166
-- `EventLoop_UpdateEmaPriceAllCores` — line 2209
-- `EventLoop_RebuildOneCore` — line 2228
-- `EventLoop_PushParameters` — line 3141
-- `EventLoopState_ConfigureKillSwitch` — line 3176
-- `EventLoop_ClearAllPermissions` — line 3186
-- `EventLoop_KillSwitchTrip` — line 3197
-- `EventLoop_KillSwitchEvaluate` — line 3226
-- `EventLoop_TimeExitOneCore` — line 3300
-- `EventLoop_FlattenAll` — line 3395
-- `EventLoop_CheckWsStaleness` — line 3479
-- `EventLoop_TryClearRecovery` — line 3558
-- `EventLoop_TrailingSLRatchetOneCore` — line 3601
-- `EventLoop_BreakevenOnProfitOneCore` — line 3680
-- `EventLoop_Unpause` — line 3724
-- `EventLoop_SlowPath` — line 3748
-- `EventLoop_RunController` — line 3773
+- `EventLoop_DrainPostFill` — line 1799
+- `EventLoop_OnEvent` — line 1851
+- `EventLoop_DrainEvents` — line 2010
+- `EventLoop_QueueParameters` — line 2044
+- `EventLoop_RebuildAllParameters` — line 2077
+- `EventLoop_UpdateRollingStateOneCore` — line 2167
+- `EventLoop_UpdateEmaPriceAllCores` — line 2210
+- `EventLoop_RebuildOneCore` — line 2229
+- `EventLoop_PushParameters` — line 3142
+- `EventLoopState_ConfigureKillSwitch` — line 3177
+- `EventLoop_ClearAllPermissions` — line 3187
+- `EventLoop_KillSwitchTrip` — line 3198
+- `EventLoop_KillSwitchEvaluate` — line 3227
+- `EventLoop_TimeExitOneCore` — line 3301
+- `EventLoop_FlattenAll` — line 3396
+- `EventLoop_CheckWsStaleness` — line 3480
+- `EventLoop_TryClearRecovery` — line 3559
+- `EventLoop_TrailingSLRatchetOneCore` — line 3602
+- `EventLoop_BreakevenOnProfitOneCore` — line 3681
+- `EventLoop_Unpause` — line 3725
+- `EventLoop_SlowPath` — line 3749
+- `EventLoop_RunController` — line 3774
 
 ### CoreLatencyStats.hpp
 
@@ -178,39 +178,39 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### Order.hpp
 
-- `Order_GetType` — line 209
-- `Order_SetType` — line 213
-- `Order_GetState` — line 219
-- `Order_SetState` — line 223
-- `Order_GetIsMaker` — line 229
-- `Order_SetIsMaker` — line 233
-- `Order_SetLeg` — line 243
-- `Order_SetRetryCount` — line 253
-- `Order_GetPreResolvedBound` — line 262
-- `Order_MarkPreResolvedBound` — line 266
-- `MBS_OrderBanditActiveState` — line 282
-- `MBS_OrderBanditRegime` — line 286
-- `MBS_OrderBanditChosenArm` — line 290
-- `MBS_OrderSetBanditContext` — line 294
-- `Order_Init` — line 317
-- `Order_BindPreResolved` — line 358
-- `Order_WarnIfNotPreResolved` — line 384
-- `Order_IsTerminal` — line 415
+- `Order_GetType` — line 210
+- `Order_SetType` — line 214
+- `Order_GetState` — line 220
+- `Order_SetState` — line 224
+- `Order_GetIsMaker` — line 230
+- `Order_SetIsMaker` — line 234
+- `Order_SetLeg` — line 244
+- `Order_SetRetryCount` — line 254
+- `Order_GetPreResolvedBound` — line 263
+- `Order_MarkPreResolvedBound` — line 267
+- `MBS_OrderBanditActiveState` — line 283
+- `MBS_OrderBanditRegime` — line 287
+- `MBS_OrderBanditChosenArm` — line 291
+- `MBS_OrderSetBanditContext` — line 295
+- `Order_Init` — line 318
+- `Order_BindPreResolved` — line 359
+- `Order_WarnIfNotPreResolved` — line 385
+- `Order_IsTerminal` — line 416
 
 ### OrderManager.hpp
 
-- `OrderManager_Init` — line 860
-- `OMS_PushSubmit` — line 1070
-- `OMS_DrainSubmit` — line 1101
-- `OrderManager_AccountMakerTakerFee` — line 1132
-- `OMS_GuardTakerBoundFeeBasis` — line 1151
-- `OrderManager_HandleFill` — line 1296
-- `OrderManager_ProcessFillCommand` — line 1356
-- `OrderManager_ProcessReconcile` — line 1459
-- `OrderManager_Tick` — line 1495
-- `OrderManager_Shutdown` — line 1529
-- `OrderManager_OpenCalibrationLog` — line 1551
-- `OrderManager_InflightCount` — line 1596
+- `OrderManager_Init` — line 861
+- `OMS_PushSubmit` — line 1076
+- `OMS_DrainSubmit` — line 1107
+- `OrderManager_AccountMakerTakerFee` — line 1138
+- `OMS_GuardTakerBoundFeeBasis` — line 1157
+- `OrderManager_HandleFill` — line 1310
+- `OrderManager_ProcessFillCommand` — line 1370
+- `OrderManager_ProcessReconcile` — line 1473
+- `OrderManager_Tick` — line 1509
+- `OrderManager_Shutdown` — line 1543
+- `OrderManager_OpenCalibrationLog` — line 1565
+- `OrderManager_InflightCount` — line 1610
 
 ### PaperResetArchive.hpp
 
@@ -244,15 +244,15 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 ### Portfolio.hpp
 
 - `ExitBuffer_PendingProceeds` — line 196
-- `Portfolio_AddPositionWithExits` — line 258
-- `Portfolio_OpenSlot` — line 347
-- `Portfolio_OpenSlot` — line 378
-- `Money_FillGross` — line 397 — open-coding the 2-mul form at any site (was DrainPostFill :1536) re-introduces a 1-ULP divergence.
-- `Portfolio_CloseSlot` — line 402
-- `Portfolio_SlotActive` — line 410
-- `Portfolio_UpdatePosition` — line 426
-- `Portfolio_Save` — line 542
-- `Portfolio_Load` — line 581
+- `Portfolio_AddPositionWithExits` — line 268
+- `Portfolio_OpenSlot` — line 358
+- `Portfolio_OpenSlot` — line 389
+- `Money_FillGross` — line 408 — open-coding the 2-mul form at any site (was DrainPostFill :1536) re-introduces a 1-ULP divergence.
+- `Portfolio_CloseSlot` — line 413
+- `Portfolio_SlotActive` — line 421
+- `Portfolio_UpdatePosition` — line 431
+- `Portfolio_Save` — line 547
+- `Portfolio_Load` — line 586
 
 ### Reconcile.hpp
 

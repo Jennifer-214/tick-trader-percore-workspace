@@ -2,15 +2,15 @@
 name: accept-handoff
 skill_kind: mechanical
 trigger_heuristics: ["fresh-session pickup / accept a handoff -> fire /accept-handoff (read + verify)"]
-description: Receiver-side handoff verification skill. Fresh-session pickup runs ONE command to load handoff doc + all cited reference files + run drift-check + recreate TaskList + verify git state matches handoff claims + reconcile decision-log status (decided vs open). Closes the "fresh session forgets to load required reading" failure mode. Sister to /handoff (writer side); both close the multi-session pickup loop. Output: PICKUP-READY status + concrete "your next action is X" instruction.
+description: Receiver-side handoff verification skill. Fresh-session pickup runs ONE command to load handoff doc + all cited reference files + run drift-check + recreate TaskList + verify git state matches handoff claims + reconcile decision-log status (decided vs open). Closes the "fresh session forgets to load required reading" failure mode. Sister to /handoff (writer side); both close the multi-session pickup loop. Output: PICKUP-READY status + concrete "your next action is X" instruction. Always-on full arming (M8 session-arm): every pickup loads code-maps + nav-infra + surface DESIGN_SPECS + the anti-pattern catalog + a next-action surface kit (skills/tools/specs/invariants) — the operator never has to request it.
 type: skill
 concern: workflow
 audit_cadence: per-session-start
 tags: [doc-discipline, framework-discipline, operator-collaboration, meta-discipline]
 surface: [handoff-pipeline, session-pickup]
 sister_skills: [/handoff, /capture-audit, /readiness, /sync-workspace]
-loads_dynamically: [CLAUDE.md, CLAUDE.local.md, memory/MEMORY.md, memory/MEMORY_EXTENDED.md, DOCS/DESIGN_PHILOSOPHY.md, target-handoff.md, cited-reference-files, in-flight-plan-body.md, decision-log.md, DOCS/CODE_MAP.md, dependency-graph-DAG, CANONICAL-FINDINGS.md, DOCS/TOOLS.md]
-applies_meta_discipline: M7 (structural-enforcement-when-memory-insufficient)
+loads_dynamically: [CLAUDE.md, CLAUDE.local.md, memory/MEMORY.md, memory/MEMORY_EXTENDED.md, DOCS/DESIGN_PHILOSOPHY.md, target-handoff.md, cited-reference-files, in-flight-plan-body.md, decision-log.md, DOCS/CODE_MAP.md, dependency-graph-DAG, CANONICAL-FINDINGS.md, DOCS/TOOLS.md, DOCS/RECURRING_BUG_PATTERNS.md]
+applies_meta_discipline: M7 (structural-enforcement-when-memory-insufficient) + M8 (definition-of-done-and-armed-scout-verification — session-arming applied to pickup)
 established: 2026-05-26
 first_canonical_application: post-.B.4 v1.7.4 handoff addendum cycle
 ---
@@ -25,6 +25,20 @@ The `/handoff` skill writes a comprehensive handoff doc. But nothing structurall
 - Fresh session remembering to run /capture-audit + /readiness
 
 This is the same memory-only-discipline-insufficient pattern that M7 addresses — a textbook Stage 6 escalation candidate at the handoff-receiver surface. `/accept-handoff` provides structural enforcement: ONE command loads everything + runs drift check + recreates TaskList + reports concrete next action.
+
+## Always-on full arming (the operator never needs to ask for it)
+
+> Codified 2026-06-12 at Caramel's directive (*"make all this part of the process — I'm tired of saying it, and I wanna make sure it always gets loaded and set into context"*). The recurring manual ask — *"load all the code-maps, consult the workspace for the design-specs / anti-patterns / DAG / skills / tools, and use the correct ones where appropriate"* — is now the skill's STANDING CONTRACT, not something to request per-pickup. Stages 3.2–3.7 load it; the Stage-8 report SURFACES it so it is visibly always-on.
+
+**The frame: arm the SESSION the way M8 arms a subagent.** A fresh session picking up a handoff is in the *identical* blind position as a freshly-spawned verification subagent — it boots with nothing but the prompt (`definition-of-done-and-armed-scout-verification.md`, M8). M8's fix is to ARM the subagent before it executes: load the surface's reference-docs + the mechanical toolchain to RUN + the nav-infra + the domain skill, then scout, then execute. `/accept-handoff` IS that arming step applied to the whole session. Parity on facts + tooling; the operator keeps the judgment.
+
+**The always-on arming set (every pickup, no request needed):**
+1. **Code-maps + nav-infra** — CODE_MAP (regen), the DAG, the live finding/disposition register, TOOLS.md (Stage 3.6).
+2. **Surface-matched DESIGN_SPECS** — cited (3.2) + keyword-triggered (3.3) + the in-flight plan's extract surfaces (3.4).
+3. **Anti-pattern catalog** — `RECURRING_BUG_PATTERNS.md`, consulted for the Class IDs the work touches (Stage 3.6) — the known bug shapes the next edit must not reintroduce.
+4. **Next-action surface kit** — the surface-matched skills + tools + specs + anti-pattern classes + invariants routed to the immediate next action (Stage 3.7), surfaced in the Stage-8 report. This is the *"use the correct ones where appropriate"* ask, made deterministic.
+
+If a pickup ever can't fully arm (a cited doc is missing, a tool errors), that's a SURFACED finding in the report — never a silent skip.
 
 ## What this skill does (sequential)
 
@@ -99,6 +113,21 @@ The artifact existing ≠ the artifact being used — this stage routes pickup t
 - **ALWAYS — regen + consult CODE_MAP:** `./tools/gen_code_map.sh` (idempotent, <5s) → `DOCS/CODE_MAP.md`. Real `Pattern_FunctionName` file:line — the anti-fabrication ground truth (grep THIS to verify a handoff's cited symbols, never recall a line). Sister to `/readiness` Stage 2 + `/precoding-audit-gate` Stage 2.5 (both already regen it).
 - **CONDITIONAL — load the INDEX, never the per-ship sidecars** (consult-indexes-before-full-reads): if the active sprint has a **dependency-graph DAG** (`plans/<sprint>/subplans/*-dependency-graph.md`) and/or a **findings corpus** (`plans/<sprint>/plan_checks/**/CANONICAL-FINDINGS.md` + the live disposition register), load the DAG + the deduped INDEX. The ~500KB per-ship sidecars stay grep-on-demand. These are the surface-set + already-found/dispositioned set that the Stage-6 `/readiness` completeness pass measures against — a completeness check fed only the plan headline re-derives a false floor (the `.E.0.10` net-completeness instance).
 - **Tool index:** `DOCS/TOOLS.md` (every `tools/*` + disposition + invoker) — consult when the pickup needs a tool or to check what's wired.
+- **Anti-pattern catalog (ALWAYS):** `DOCS/RECURRING_BUG_PATTERNS.md` — consult (grep, don't recite — registry-driven) for the Class IDs the in-flight/next work touches (the handoff + register usually name them, e.g. Class 25/26/27 for cfg-scope work; Class 44/45 for the exit-chain / reconstruct-path family). These are the known bug shapes the next edit must not reintroduce; they seed the Stage-3.7 surface kit + any `/bug-check` the next action routes to.
+
+**Stage 3.7 — Next-action surface kit (route the immediate next action — the M8 session-arm):**
+
+The operator's recurring *"use the correct skills / tools / specs where appropriate and needed"* is THIS stage, made deterministic. For the immediate next action (the in-progress task / the handoff's "NEXT ACTION" section), assemble + SURFACE its **surface kit** — everything the action needs to start ARMED instead of blind:
+
+| Kit element | How to derive |
+|---|---|
+| **Domain skill(s)** | Map the action's MATERIAL to its skill (per M8 / `/decision-check` Stage 2.5): money → `/accounting-audit`; hot-path → `/hft-audit`; cfg/registry → `/trace-deps` + `/dod-audit`; ML → `/ml-audit`; train↔serve → `/parity-check`; a design DECISION → `/decision-check`; an unknown-size hunt → the relevant fan-out audit. Prefer the handoff's explicit routing when present; else derive from surface keywords. |
+| **Mechanical toolchain** | The specific `tools/*.py` the action RUNS (from `DOCS/TOOLS.md` + the handoff) — name the command, e.g. `check_per_core_registry_integrity.py` for per-core cfg work. "Run the tool", not "read the code". |
+| **DESIGN_SPECS** | The pattern/discipline docs governing the surface (cited + keyword-derived). |
+| **Anti-pattern classes** | The `RECURRING_BUG_PATTERNS` Class IDs the action must not reintroduce. |
+| **Invariants** | The H-numbers in play (e.g. H22 per-node purity; H4 money-math; H7/H8 hot-path). |
+
+Output the kit in the Stage-8 report. If the next action is a design DECISION, the kit IS the `/decision-check` arming payload — hand the spawned agents the docs + toolchain + nav-infra + domain skill (M8 arming); withhold only the orchestrator's verdict from the adversarial half. Honors consult-before-coding: SURFACE the kit + SUGGEST the judgment skill (await the operator's go); mechanical tools may auto-run.
 
 ### Stage 4: Verify git state matches handoff claims
 
@@ -244,6 +273,17 @@ TaskList recreated:
   In-progress: #<id> <subject>
   Next pending: #<id> <subject>
 
+Loaded-context manifest (always-on arming — Stage 3):
+  ✅ Nav-infra: CODE_MAP (<N> fns, regen) · DAG · finding/disposition register · TOOLS.md
+  ✅ Surface DESIGN_SPECS: <list>
+  ✅ Anti-pattern classes consulted: <Class IDs> · Invariants in play: <H-numbers>
+
+Next-action surface kit (the routed "correct ones" — Stage 3.7):
+  Skills: <surface-matched skills, handoff-routed if present>
+  Tools:  <mechanical toolchain to run>
+  Specs:  <governing DESIGN_SPECS>
+  Anti-patterns: <Class IDs not to reintroduce> · Invariants: <H-numbers>
+
 === PICKUP-READY ===
 
 Your immediate next action: <derived from in-progress task / pending tasks / handoff "PENDING" section>
@@ -285,6 +325,9 @@ If reading this spec inside an Explore subagent: return error. `/accept-handoff`
 - `feedback_compaction_degrades_treat_handoffs_as_hints` — sister discipline (handoffs ARE hints; this skill structurally verifies them against current state)
 - `feedback_structural_enforcement_when_memory_insufficient` (M7) — parent meta-discipline
 - `structural-enforcement-when-memory-insufficient.md` — pattern body for Stage 6 escalation
+- `definition-of-done-and-armed-scout-verification.md` (M8) — the **armed scout-first** discipline this skill applies to the SESSION (Stages 3.6/3.7 = arm-then-scout); pickup arms the session exactly as M8 arms a subagent
+- `adversarial-multi-agent-audit-methodology.md` — the canonical agent-arming + cross-check step a judgment next-action (e.g. `/decision-check`) is routed into by Stage 3.7
+- `feedback_auto_route_input_to_matching_skill` — Stage 3.7's routing is the pickup-surface application (SUGGEST judgment skills + await go; auto-run mechanical ones)
 
 ## Anti-patterns this prevents
 
@@ -301,3 +344,4 @@ If reading this spec inside an Explore subagent: return error. `/accept-handoff`
 - Cache handoff parse state across multiple invocations within session
 - Auto-detect when /accept-handoff should fire (e.g., conversation transcript shows session-pickup language)
 - Composite mode that also runs `/post-ship-audit` if handoff indicates ship-close context
+- **Mechanical surface-kit emitter** — derive the Stage-3.7 next-action kit (skills/tools/specs/invariants) deterministically from the handoff's routing block + a keyword→skill/tool/spec map table, instead of LLM-synthesis. Sister to the Stage-4.6 `--emit-decision-status` candidate; both could extend `check_capture_audit.py` or land as a new dedicated pickup-kit emitter tool (enroll it in `DOCS/TOOLS.md` when built).

@@ -250,7 +250,7 @@ rg -nP 'TRANSITIONAL.*delete at' DOCS/MANUAL_FIELDS_INVENTORY.md
 ```
 
 False-positive cases (documented exemptions):
-- `ControllerConfig_ResolveForCore` itself — the resolver that produces per-core views; takes `const ControllerConfig<F>&` by design. (Deleted at WIP2f.)
+- `ControllerConfig_ResolveForCore` itself — the resolver that produces per-core views; takes `const ControllerConfig<F>&` by design. (**STILL LIVE** at `ControllerConfig.hpp:1383` + ~8 callers — the WIP2f deletion was PLANNED but never landed; corrected 2026-06-12 per A24 / D-211. **Important nuance the A24 bug exposed:** the resolver overlays overrides onto the FLAT fields ONLY (`:1385-1417`) and NEVER writes `resolved.cores[slot]` → a per-rebuild mutation of a flat field (e.g. the session / D10 / spike adaptation in `RebuildOneCore`) does NOT reach a `cores[slot]`-reading consumer. **Rule:** any per-rebuild adaptive mutation MUST write the `cores[slot]` slice (the canonical per-node view), never the flat field — formalized as `check_per_core_registry_integrity.py` Check 10 at A24 close.)
 - Boot-time engine init paths that legitimately need the full cfg (multi-core setup; non-trading consumer; documented per Class 25 catalog).
 - `ControllerConfig_NormalizeForMode` — operates on the whole cfg by design.
 - `FOREACH_MANUAL_PER_CORE_FIELD` X-macro expansion in ControllerConfig.hpp — A3 signature matches BUT the regex check excludes the X-macro expansion area (delimited by macro define + EMIT_MANUAL_PER_CORE_DECL undef).

@@ -6,7 +6,7 @@ parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-05-18
 surface_tags: [gui-thread, live-trading, hot-path]
 severity: high
-recurrence_count: 4
+recurrence_count: 8
 first_instance: v5.4.0
 closure_mechanism: predicate-display invariant matrix (DOCS/EXECUTION_DISPLAY_INVARIANTS.md) + /readiness Check 12 display↔execution + /dust Scan 8 dead-write detection + single-source rule (GUI reads SAME variable as controller)
 sister_classes: [1, 11]
@@ -44,6 +44,20 @@ grep -rn "pos->stop_loss_price\|pos->take_profit_price" \
   `snap->taker_fills_count`, `snap->total_maker_fees`,
   `snap->total_taker_fees` set in legacy `EngineTUI.hpp` but never
   in sharded `ShardedSnapshot.hpp`. Fixed in `f82d94f` + `7b04ac1`.
+- v5.15.5.F.4d.1.E.0.10 (sharded-migration cohort, 2026-06-12/13) —
+  **A29** GUI-drag writes `pos->take_profit_price`/`stop_loss_price`
+  (`Async.hpp:246-247`) but the hot exit gate fires on
+  `core->live_tp`/`live_sl` → a dragged stop has NO execution effect
+  (gates-live; TECH_DEBT-184). **A30** `is_trailing =
+  (take_profit_price != original_tp)` is perma-FALSE on sharded (the
+  ratchet moves `ratchet_sl`/`live_tp`, never `pos->take_profit_price`).
+  **A32** spacing GUI diag (`ControllerEventLoop.hpp:2974`) reads the
+  FLAT `spacing_cfg.spacing_multiplier` while the gate `Strategy_SpacingOk`
+  reads the per-node slice (folded into A24's option-(c) fix). **A35**
+  `GATE_EMA_ENABLED` is GUI-badged but inert on sharded (sub-pattern 2c
+  — display says active, isn't). All "sharded migration left the GUI
+  reading the legacy field" instances; also Class-44 cfg-flag overlap
+  (A35). See `E.0.10-finding-disposition-register.md` + D-211.
 
 **Prevention:**
 - Readiness skill Check 12 (display ↔ execution invariant).

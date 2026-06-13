@@ -226,7 +226,7 @@ def validate_doc(path, concern_vocab, surface_vocab, strict=False):
 
     if "sister_specs" in fm:
         for ref in fm["sister_specs"]:
-            ref_clean = ref.strip('"').strip("'")
+            ref_clean = _strip_sister_annotation(ref)
             if not ref_clean:
                 continue
             if ref_clean.startswith("DESIGN_SPECS/"):
@@ -251,6 +251,15 @@ def validate_doc(path, concern_vocab, surface_vocab, strict=False):
     return violations
 
 
+def _strip_sister_annotation(ref):
+    """A sister_specs entry may carry a trailing "(relationship description)" annotation
+    (de-facto convention across the .E future-ship specs, e.g. `x.md (parent; ...)`);
+    resolve + compare on the bare path. Still validates real existence + bidirectionality
+    on the actual filename — only the human-readable relationship note is dropped."""
+    r = ref.strip('"').strip("'")
+    return r.split(" (", 1)[0].strip() if " (" in r else r
+
+
 def _norm_sister(ref):
     """Normalize a sister_specs ref to a comparable filename (basename + `.md`).
 
@@ -259,7 +268,7 @@ def _norm_sister(ref):
     (`feedback_x` -> `feedback_x.md`). Lets memory<->memory + memory<->spec links
     compare uniformly (D-89 fork 2).
     """
-    n = Path(ref.strip('"').strip("'")).name
+    n = Path(_strip_sister_annotation(ref)).name
     return n if n.endswith(".md") else n + ".md"
 
 

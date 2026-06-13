@@ -596,6 +596,73 @@ def scan_check_9_violations(text: str, file_rel_path: str) -> list:
     return findings
 
 
+# ============================================================================
+# Check 11 — A24 / H22: per-shard FLAT write of a per-node cfg field (Class 44 cfg-mutation)
+# ============================================================================
+# Per RECURRING_BUG_PATTERNS Class 44 (cfg-mutation sub-shape) + the H22 spec
+# DESIGN_SPECS/data-disciplines/per-node-purity-scale-invariance.md §"The mechanical guard"
+# + refactor-patterns/cfg-scope-discipline.md (the per-node-slice-is-canonical rule).
+# Canonical: A24 (.E.0.10) — EventLoop_RebuildOneCore's D6/D10/spike adaptations wrote the FLAT
+# resolved_cfg.{volume_multiplier,entry_offset_pct,spacing_multiplier} while the consumer reads
+# resolved_cfg.cores[slot] → the mutation was silently DEAD. The un-reintroducible close: a
+# per-shard mutation MUST write the cores[slot] slice, never the flat field.
+CHECK_11_SCAN_FILES = [
+    "CoreFrameworks/ControllerEventLoop.hpp",  # EventLoop_RebuildOneCore — the canonical per-shard rebuild
+]
+# Boot/parse/populate fns legitimately WRITE flat cfg fields (config load/normalize) — exempt.
+CHECK_11_BOOT_TIME_FN_NAME_PATTERNS = {"Boot", "Init", "Default", "Parse", "Normalize", "Load", "Populate"}
+# (file, line) exemptions for any legitimate per-shard flat write (none expected post-A24).
+CHECK_11_EXEMPTIONS = set()
+
+
+def scan_check_11_violations(text: str, file_rel_path: str, per_core_fields: set) -> list:
+    """A24 / H22 Class-44 cfg-mutation detection: a FLAT write of a per-node cfg field (one that
+    HAS a cores[] slice) inside a per-shard consumer = a silently-dead mutation (the consumer
+    reads the slice, not the flat field).
+
+    Matches `<localcfg>.<field> [op]= ...` where <field> ∈ per_core_fields and the field comes
+    IMMEDIATELY after the dot → `<localcfg>.cores[...].<field>` does NOT match (the correct slice
+    write), nor does `<localcfg>.<field>[idx]` (a per-core array element). Excludes `==`,
+    boot/parse/populate fns (legit flat population), and (file,line) exemptions.
+
+    Returns list of (file_rel_path, line_num, container, field, current_fn) tuples.
+    """
+    findings = []
+    if not per_core_fields:
+        return findings
+    # Longest-first alternation so a short field name can't shadow a longer one sharing its prefix.
+    field_alt = '|'.join(re.escape(f) for f in sorted(per_core_fields, key=len, reverse=True))
+    flat_write_re = re.compile(
+        r'\b(\w*cfg)\.(' + field_alt + r')\s*(?:[-+*/|&^]?=)(?!=)'
+    )
+    fn_decl_re = re.compile(r'^\s*(?:inline\s+|template\s*<[^>]+>\s*)*(?:[\w<>:&*\s,]+\s+)?(\w+)\s*\([^)]*\)\s*[{|\n]')
+    current_fn = ""
+    in_macro = False
+    for line_num, line in enumerate(text.split('\n'), start=1):
+        if in_macro:
+            if not line.rstrip().endswith('\\'):
+                in_macro = False
+            continue
+        stripped = line.strip()
+        if stripped.startswith('#define '):
+            if line.rstrip().endswith('\\'):
+                in_macro = True
+            continue
+        fn_match = fn_decl_re.match(line)
+        if fn_match:
+            candidate = fn_match.group(1)
+            if candidate not in ("if", "while", "for", "switch", "return", "sizeof", "alignof", "static_assert"):
+                current_fn = candidate
+        if (file_rel_path, line_num) in CHECK_11_EXEMPTIONS:
+            continue
+        if any(pattern in current_fn for pattern in CHECK_11_BOOT_TIME_FN_NAME_PATTERNS):
+            continue
+        line_no_comments = re.sub(r'//.*$', '', line)
+        for m in flat_write_re.finditer(line_no_comments):
+            findings.append((file_rel_path, line_num, m.group(1), m.group(2), current_fn))
+    return findings
+
+
 def main() -> int:
     info("running per-core cfg registry integrity check...")
 
@@ -813,11 +880,36 @@ def main() -> int:
     else:
         info(f"Check 10 PASS: {len(CHECK_10_SCAN_FILES)} file(s) scanned; no Class 26 sub-shape B UNINDEXED-GLOBAL violations ({len(CHECK_10_SECTION_D_EXEMPTIONS)} Section D exemption(s) on file)")
 
+    # --- Check 11: A24 / H22 — per-shard FLAT write of a per-node cfg field (Class 44 cfg-mutation) ---
+    # Per RECURRING_BUG_PATTERNS Class 44 + the H22 spec per-node-purity-scale-invariance.md §"The mechanical guard".
+    # A per-shard mutation writing the flat resolved_cfg.<field> (instead of cores[slot].<field>) is silently
+    # DEAD — the consumer reads the slice. Canonical: A24 (.E.0.10). The un-reintroducible structural close.
+    check_11_violations = []
+    for rel_path in CHECK_11_SCAN_FILES:
+        full_path = REPO_ROOT / rel_path
+        if not full_path.exists():
+            warn(f"Check 11 WARN: scan target not found: {rel_path} — skipping")
+            continue
+        file_text = read_file(full_path)
+        check_11_violations.extend(scan_check_11_violations(file_text, rel_path, cfg_field_name_set))
+    if check_11_violations:
+        fail(f"Check 11 FAIL: {len(check_11_violations)} A24/H22 Class-44 cfg-mutation violation(s) — per-shard FLAT write of a per-node cfg field (the consumer reads the cores[slot] slice → the mutation is silently DEAD):")
+        for rel_path, line_num, container, field, fn_name in check_11_violations:
+            fn_ctx = f" in fn '{fn_name}'" if fn_name else ""
+            fail(f"  → {rel_path}:{line_num}{fn_ctx}: '{container}.{field} = ...' writes the FLAT field")
+            fail(f"     A24 / H22 anti-pattern (Class 44 cfg-mutation) — a per-shard mutation must write the per-node slice")
+            fail(f"     Fix: change {container}.{field} → {container}.cores[<slot>].{field}")
+            fail(f"     OR if legitimately flat (boot/parse / global-only field): add to CHECK_11_EXEMPTIONS at tools/check_per_core_registry_integrity.py")
+            fail(f"     See: DESIGN_SPECS/data-disciplines/per-node-purity-scale-invariance.md + RECURRING_BUG_PATTERNS Class 44")
+        failures += 1
+    else:
+        info(f"Check 11 PASS: {len(CHECK_11_SCAN_FILES)} file(s) scanned; no A24/H22 per-shard flat-write violations ({len(cfg_field_name_set)} per-node fields tracked)")
+
     # --- Final verdict ---
     if failures > 0:
         fail(f"per-core cfg integrity check FAILED with {failures} violations — see errors above")
         return 1
-    info(f"all 9 structural checks PASS — per-core cfg discipline intact (Check 6 informational; Check 7 Class 27 prevention; Check 8 pending mechanical impl per cfg-field-categorization-discipline.md Stage 3 sister ship; Check 9 Class 26 sub-shape A paired-access mismatch detection; Check 10 Class 26 sub-shape B UNINDEXED-GLOBAL detection)")
+    info(f"all structural checks PASS — per-core cfg discipline intact (Check 6 informational; Check 7 Class 27 prevention; Check 8 pending mechanical impl per cfg-field-categorization-discipline.md Stage 3 sister ship; Check 9 Class 26 sub-shape A paired-access mismatch detection; Check 10 Class 26 sub-shape B UNINDEXED-GLOBAL detection; Check 11 A24/H22 Class-44 cfg-mutation per-shard flat-write detection)")
     return 0
 
 

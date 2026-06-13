@@ -8,7 +8,7 @@ surface: [slow-path, hot-path, cfg-flow, oms-drainer, persistence, live-trading]
 sister_specs:
   - per-node-position-ownership-model.md
 registry_id: H22
-canonical_instance: A1 (.E.0.10 warm-restart read global take_profit_pct vs the per-strategy override — CLOSED) + A24 (.E.0.10 RebuildOneCore mutates flat resolved_cfg; per-node consumer reads the cores[slot] slice — fix in-flight, D-211 option c)
+canonical_instance: A1 (.E.0.10 warm-restart read global take_profit_pct vs the per-strategy override — CLOSED) + A24 (.E.0.10 RebuildOneCore mutates flat resolved_cfg; per-node consumer reads the cores[slot] slice — LANDED .E.0.10 engine f2ef5d6, D-211 option c + Check-11 guard)
 living_spec: true
 ---
 
@@ -67,7 +67,7 @@ must depend only on its own inputs.
   DIFFERENT price than while live. **Fix:** single-source the per-node resolution (`ResolvePerFillTpPct/SlPct`)
   for BOTH entry and restore — the node's own resolved value, both paths. (Also a Class-45 instance — same
   field, different source.)
-- **A24 (fix in-flight, D-211 option c):** `EventLoop_RebuildOneCore` mutates the FLAT
+- **A24 (LANDED `.E.0.10`, engine `f2ef5d6`):** `EventLoop_RebuildOneCore` mutated the FLAT
   `resolved_cfg.{volume_multiplier,entry_offset_pct,spacing_multiplier}` (the D6/D10/spike adaptations) while
   the per-node consumer reads `resolved_cfg.cores[slot]` (the slice) → the per-node adaptation is silently dead
   (`ControllerConfig_ResolveForCore` writes the flat fields, never `cores[slot]`). The default-ON D10

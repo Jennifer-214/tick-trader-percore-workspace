@@ -5461,12 +5461,14 @@ int main() {
         // (filter_scale != 0 + losing feeder) vs D10-OFF baseline (filter_scale == 0) on the SAME
         // fixture. Freezes the CORRECTED behavior, not the bug.
         //
-        // ADV-SELF (2026-06-13): non-vacuity is STRUCTURAL — pre-fix BOTH runs read the un-mutated
+        // ADV-REFUTE (2026-06-13): non-vacuity is STRUCTURAL — pre-fix BOTH runs read the un-mutated
         // slice (the D10 mutation hit the dead flat field) → tightened == baseline → the Money_Gt
         // assert FAILS pre-fix; the fix is exactly what makes tightened > baseline. The baseline-
         // non-zero precondition rules out an all-zero vacuous pass; bounds set wide so the shift isn't
         // clamped to a no-op; D6/spike (if active) hit BOTH runs equally so the delta isolates D10.
-        // Independent ADV-REFUTE owed at A24 close.
+        // Independent ADV-REFUTE 2026-06-13: SOUND — an independent agent cleared 7/7 challenges
+        // (slope=-10 exact, R^2=1.0, shift +0.10 unclamped; D6 cancels additively; clamp bounds
+        // resolve-equal vs ControllerConfig_ResolveForCore; fails pre-fix structurally). No defects.
         auto run_d10 = [&](FPN_Binary<64> filter_scale) -> Money {
             tt::OrderManagerState<64> oms;
             tt::EventLoopState<64> state;

@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: ab5d402f-2ba7-43b9-9ae7-35187b313483
-  sister_specs: [project_e_series_is_vision_convergence_not_scope_balloon.md, feedback_framework_layer_payoff_diminishing_returns.md, user_mvp_to_professional_transition.md, user_structure_is_correctness_risk_control_for_capital.md]
+  sister_specs: [project_e_series_is_vision_convergence_not_scope_balloon.md, feedback_framework_layer_payoff_diminishing_returns.md, user_mvp_to_professional_transition.md, user_structure_is_correctness_risk_control_for_capital.md, feedback_proactive_novel_alternative_consideration.md]
   tags: [project-state, meta-discipline]
 ---
 

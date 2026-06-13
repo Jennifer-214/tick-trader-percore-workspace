@@ -86,7 +86,7 @@ must depend only on its own inputs.
    forward path calls — never read a different (global) source field (Class 45 close).
 4. **The mechanical guard (the H22 CI-check).** Flag **a per-shard READ of a global cfg field that HAS a
    `core_N_*` override**, and **a per-shard WRITE to a flat cfg field that HAS a `cores[]` slice** — the
-   `tools/check_per_core_registry_integrity.py` **Check-10** extension (A24's un-reintroducible close). This is
+   `tools/check_per_core_registry_integrity.py` **Check-11** (A24's un-reintroducible close). This is
    the mechanical enforcement of H22 at the cfg surface; it composes with the Class-44 detector (the
    codebase-wide "write-with-no-live-read" sweep).
 
@@ -108,6 +108,6 @@ no per-cluster layer owns the aggregate. The cluster-risk layer that closes it m
   Anti-pattern 1 = the flat-default+override shape H22 forbids).
 - `DOCS/RECURRING_BUG_PATTERNS.md` Class 25 / 26 / 27 / 44 / 45 (the violation shapes) +
   `cross-thread-multiword-read-consistency-discipline.md` (the torn-read sibling).
-- **A1** (Class 45, CLOSED) + **A24** (Class 44, fix-in-flight) — the canonical instances; **D-211** (the A24
-  decision + the cfg-surface sweep); `tools/check_per_core_registry_integrity.py` Check-10 (the guard).
+- **A1** (Class 45, CLOSED) + **A24** (Class 44, LANDED `.E.0.10` engine `f2ef5d6`) — the canonical instances;
+  **D-211** (the A24 decision + the cfg-surface sweep); `tools/check_per_core_registry_integrity.py` Check-11 (the guard).
 - TECH_DEBT-190 (cluster-aggregate exposure — the cluster-level scale-invariance gap).

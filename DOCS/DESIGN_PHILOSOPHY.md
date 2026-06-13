@@ -325,6 +325,12 @@ against the path's budget.
 - `tools/calls_graph_diff.sh` + bench gate verify before merge
 - Replay-determinism test at `tests/controller_test.cpp:10251` is bytewise lock
 
+**STRONG: Effective latency = the whole tick→decision pipeline; optimize the weakest link, not the cheapest stage.** Operator-perceived latency is the SUM of every stage on the critical path from venue-byte-in to order-decision-out (parse → fan_out → ring-hop → hot-path gate). A sub-microsecond hot path is wasted behind a slow parse or a producer that spins on a stalled consumer — *no point in a 30ns hot path if parsing a tick takes 20ms.* The per-path budgets (the HARD principle above + the `CoreFrameworks/CLAUDE.md` table) are necessary but NOT sufficient: they bound each stage; this principle bounds their COMPOSITION and directs optimization to the DOMINANT stage. Distinguish the **three latency contracts** so they aren't conflated under one "latency" heading:
+- **Critical-path latency** (tick → decision): minimize the SUM across parse / fan_out / ring-hop / hot-gate. The hot-path ≤500ns budget is a PART of this, not the whole.
+- **Reaction latency** (fill → kill-switch / risk action): a SEPARATE budget — the event-sourced aggregator drops it ~100ms→50μs (D-54). The fill / post-trade path lives HERE, off the critical path.
+- **Variance** (hot-path determinism): the H7/H8 p99 contract — branchless eliminates mispredict variance; this is about the DISTRIBUTION, not the mean.
+- Sister: H20 (branchless across ALL critical-path stages, not just the hot one); `plans/_cross-cutting/2026-05-06-latency-path-discipline.md`.
+
 **STRONG: Latency-additions to hot/slow/drainer paths get tracked.**
 - Document in `DOCS/HOT_PATH_CHANGELOG.md` with cost estimate (ns) + branchless analysis + cache impact + FUTURE optimization note
 - Run `/latency-track` skill after sprints touching audited surfaces

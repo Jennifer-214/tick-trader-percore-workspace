@@ -118,6 +118,17 @@ The POPULATION mechanism for the meta-anti-pattern catalog (`DESIGN_SPECS/meta-d
 
 **Anti-ceremony guard:** if a close produces only trivial one-offs, write nothing — yield-as-signal (a quiet harvest = mature apparatus; a spike = a new meta-error class slipped in → M7 escalation).
 
+### Stage 4.6 — Session-issue fix-sweep: FIX the fixable-now before close (don't just log) [NEW v5.15.5.F.4d.1.E.0.10]
+
+The close's bias is **FIX, not LOG.** Enumerate EVERY issue the session surfaced — not only the Stage-3 `/capture-audit` mechanical findings and the Stage-4.5 meta-shapes, but ALSO the tooling false-positives / gaps the session hit, doc / SSoT-index drift (e.g. a stale MASTER banner), guard gaps, and half-applied conventions. For each, apply the close-out-now test:
+
+- **Fixable-now** (small + in-context + does NOT change the handoff / plans / capital-path) → **FIX IT NOW.** Do NOT log it as a TECH_DEBT-to-defer. A CI guard, a doc/index fix, a tooling false-positive carve-out is fixable-now by default — and a built guard COMPOUNDS where a logged TECH_DEBT just waits (`feedback_guards_compound_enforcement_is_leverage`).
+- **Genuinely-separate DELIVERABLE** (its own ship / scope) OR **capital-code needing a focused fresh-context cycle** → defer with a HOME (TECH_DEBT / a plan / the handoff). Defer is the EXCEPTION, decided on merit (`feedback_deferral_reasons_merit_not_effort_or_context`), never the default.
+
+PROACTIVE + DEFAULT: the agent runs this fix-sweep ITSELF — it must NOT wait for operator pushback ("fix them, don't log them"; "scan EVERYTHING, not top-N"). Codified `.E.0.10` 2026-06-13 as the M7 escalation of `feedback_close_out_now_over_defer_when_small`: despite that memory, the session LOGGED TECH_DEBT-193/194 (a B-Plus design-plan false-positive + the MASTER-staleness guard) and left MASTER stale, and the operator had to prompt both the fix-sweep AND the exhaustive (not-top-N) capture-scan. Memory proved insufficient → this structural close-ritual step is the enforcement. Sister: Stage 4.5 (catalogs the SHAPE; THIS fixes the INSTANCE) + `feedback_close_out_now_over_defer_when_small` + `feedback_no_defer_for_effort`.
+
+After the fix-sweep, re-run Stage 2.0's `check_session_docs.sh` → confirm SWEEP CLEAN (the fixes landed; no new drift).
+
 ### Stage 5 — `/readiness` against in-flight plan body (planning-state ships only)
 
 If close is at a planning-state boundary (vs post-coding mid-ship checkpoint), fire `/readiness <plan-path>` to verify plan body still GREEN. Skip for code-state close (where plan body amendment is done; just need to capture state).

@@ -98,6 +98,15 @@ if [ "${SKIP_PLAN_BODY_CHECK:-0}" != "1" ]; then
             for rel in $MODIFIED; do
                 f="$WORKSPACE_ROOT/$rel"
                 [ -f "$f" ] || continue
+                # TECH_DEBT-193: a forward-design DRAFT plan (bplus_scope: design-draft) carries to-build
+                # `(NEW)` sketches + deliberately-stale citations (re-derived at its pre-coding gate per the
+                # plan's own discipline). DEFER its B-Plus to that gate — /readiness runs B-Plus HARD on the
+                # plan when it goes to code (the compensating control; the doc-sweep is the wrong time). Opt-in
+                # marker → normal plans stay HARD (no hole in the Class-14 fabrication catch).
+                if grep -qiE '^bplus_scope:[[:space:]]*design-draft' "$f"; then
+                    echo "  [B-Plus] deferred (bplus_scope: design-draft → pre-coding gate): $rel"
+                    continue
+                fi
                 python3 "$B_PLUS" "$f" >/tmp/csd_bp_$$.log 2>&1 || FAB=1
             done
             if [ "$FAB" = "1" ]; then
@@ -165,6 +174,18 @@ if [ "${SKIP_NAVINFRA_COHORT_CHECK:-0}" != "1" ]; then
         python3 "$REPO_ROOT/tools/check_navinfra_cohort_reference.py"
 else
     RESULTS+=("  ⏭  HARD  nav-infra cohort reference (SKIP_NAVINFRA_COHORT_CHECK=1)")
+fi
+
+# --- HARD 9: index-currency (the sprint MASTER CURRENT-STATE banner ↔ the singleton active handoff) ---
+# M7 close of WH-2 (stale SSoT-index banner): the MASTER "Pickup → handoffs/..." pointer kept naming a
+# SUPERSEDED handoff while a newer one was the live status:active singleton — recurred across sessions,
+# caught only by operator prompt, never by this floor. Cross-checks the two SSoTs; composes with HARD 6
+# (singleton enforces ≤1 active; this enforces MASTER-names-it). TECH_DEBT-194.
+if [ "${SKIP_INDEX_CURRENCY_CHECK:-0}" != "1" ]; then
+    run_hard "index-currency (MASTER banner ↔ active handoff)" \
+        python3 "$REPO_ROOT/tools/check_index_currency.py"
+else
+    RESULTS+=("  ⏭  HARD  index-currency (SKIP_INDEX_CURRENCY_CHECK=1)")
 fi
 
 # --- ADVISORY: forward-promise (MED/LOW backlog expected) ---

@@ -62,6 +62,7 @@ Audit the entire codebase for instances of the bug class (or its bug-shape):
 - Use `/dod-audit`, `/merge-scan`, or targeted grep
 - Classify findings by severity (CRITICAL / HIGH / MEDIUM / LOW)
 - Identify the canonical "first reference" instance where the structural fix will land
+- **AR-6 over-lump gate (added 2026-06-13, `.E.0.10` keystone-validation):** before codifying a unifying class/root that CLUSTERS multiple findings under one fix, adversarially verify it is a shared **MECHANISM**, not a shared **THEME / EPOCH / SURFACE**. The test: does the proposed root **predict + close EACH member's fix**? A real root predicts the fixes; a theme mis-predicts which findings a fix closes (and produces a wrong subsumption map). Run an **INDEPENDENT** adversarial pass — the proposer cannot grade its own abstraction (AR-8). This is the **structural enforcement** of the AR-6 lesson at the codification surface: AR-6 recurred at ARCHITECTURE altitude (the keystone over-lump) DESPITE being a codified memory — caught by validation, NOT prevented by the memory → M7. → meta-anti-pattern-index **AR-6** + `feedback_adversarial_framing_default_for_checks`.
 
 Output: audit findings report in `plans/plan_checks/<DATE>-<scope>-audit.md` documenting all known instances + which are in-scope for the codification ship vs deferred.
 

@@ -320,7 +320,7 @@ Skills group by concern. Read each skill's `claude-skills/<name>/SKILL.md` for i
 
 | Concern | Skills |
 |---|---|
-| **Pre-coding plan verification** | `/precoding-audit-gate` + `/readiness` + `/second-opinion` + `/decision-check` (combined investigate→adversarially-refute a single fix/design DECISION) |
+| **Pre-coding plan verification** | `/decision-check` + `/precoding-audit-gate` + `/readiness` + `/second-opinion` |
 | **SHAPE audits (design-layer)** | `/dod-audit` + `/merge-scan` + `/parity-check` + `/trace-deps` |
 | **IMPLEMENTATION-DETAIL audits** | `/blindspot-scan` |
 | **DOMAIN audits** | `/accounting-audit` + `/hft-audit` + `/ml-audit` + `/registry-fit-audit` |

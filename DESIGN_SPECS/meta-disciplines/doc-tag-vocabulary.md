@@ -74,6 +74,9 @@ CI tool `check_doc_metadata.py` (queued at `.C` candidate ship) validates every 
 | `project-state` | Ongoing project facts not derivable from code/git — sprint trajectory, cadence conventions, repo quirks, queued work |
 | `capital-safety` | Capital-bearing money paths; accounting correctness; loss-prevention guards; dead-capital-path / Knight-Capital discipline (Class 40-43 cohort) |
 | `determinism` | Cross-run / cross-binary / cross-locale byte equivalence; reproducibility; replay-determinism nets (engine priority #2) |
+| `scale-invariance` | H22 per-node purity / horizontal scaling — a node's (and cluster's) state is a pure function of its OWN local inputs; the (N+1)th node requires ZERO change to existing per-shard logic |
+| `reconcile-recovery` | Boot/restart recovery semantics — venue-truth reconciliation, missed-fill replay, attribution, net-position reconstruction (vs overwrite/aggregate); the boot-reconcile-collapse class |
+| `future-expansion` | LIVING-spec discipline — a spec documents a FOUNDATION now + a planned mechanism DEFERRED to a real future need (build-when-earned, NOT speculative); the `§ Future expansion` section is the gated growth, built only when the need actually arrives |
 
 ---
 

@@ -6318,6 +6318,81 @@ int main() {
         // re-derivation is owed before ship close.
     }
 
+    printf("\n--- A25 (.E.0.10): per-fill original_tp SSoT (trail anchor fill-priced, D-205) ---\n");
+    {
+        // A25 char-test (characterization-test-discipline 3-lens). original_tp — the trail-arming anchor read by
+        // the 4 sharded *_ExitAdjustSharded + the exit-bandit counterfactual — must arm relative to the ACTUAL
+        // fill, not the expected-entry intended_tp; post-A9 they diverge under slippage. Carry: cmd.tp_pct (resolved
+        // at the Async submit site via ResolvePerFillTpPct, A1 SSoT) → OMS_Submit copies to Order::pre_resolved.tp_pct
+        // → handle_buy_fill sets original_tp = fill×(1+tp_pct).
+        //   Lens 1 (complete): freeze BOTH original_tp + take_profit_price (Portfolio_OpenSlot sets both from the arg).
+        //   Lens 2 (non-vacuous, HAND-DERIVED): fill 60060 != expected-entry 60000 → original_tp = 60060×1.03 = 61861.8,
+        //       which DIFFERS from the pre-A25 expected-entry intended_tp (61800) — asserted both directions.
+        //   Lens 3 (not-frozen-bug): A25 is a FIX → freeze the CORRECTED fill-priced value; tp_pct==0 freezes the
+        //       bytewise-identical legacy intended_tp path.
+        struct R { tt::OrderManagerState<64> oms; tt::EventLoopState<64> state; };
+        auto a25_setup = [](R* r) {
+            tt::EventLoopState_InitLegacy(&r->state, &r->oms, MQ(10000.0));
+            BITMAP_CLR(r->oms.oms_state_flags, tt::MASK_OMS_STATE_LIVE_TRADING);              // paper
+            MBS_SET_U8(r->oms.oms_state_flags, tt::MASK_OMS_STATE_EVENT_LOG_MODE,
+                       tt::SHIFT_OMS_STATE_EVENT_LOG_MODE, 1);
+            BITMAP_CLR(r->oms.oms_state_flags, tt::MASK_OMS_STATE_PARTIAL_EXIT_ENABLED);      // single-leg (leg A)
+        };
+        // Drives the consume path: cmd.tp_pct (what the Async producer resolves) → Submit → HandleFill at fill_price.
+        auto fill_entry = [](R* r, Money tp_pct, Money intended_tp, Money fill_price) {
+            tt::SubmitCommand<64> cmd(0, tt::ORDER_MARKET_BUY, MQ(0.02), (uint8_t)0, nullptr);
+            cmd.intended_tp = intended_tp;
+            cmd.intended_sl = MQ(59400.0);
+            cmd.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
+            cmd.event_price = MQ(60000.0);
+            cmd.tp_pct      = tp_pct;
+            tt::OrderManager_Submit(&r->oms, cmd);
+            // The manual HandleFill below drives original_tp with the SLIPPED fill price; the paper Submit also
+            // pushes a synthetic fill @event_price (no slip) to result_queue, deliberately left undrained — the
+            // manual HandleFill, not the queue, is the driver (adv-verify D2).
+            for (int i = 0; i < MAX_INFLIGHT_ORDERS; ++i) {
+                if ((r->oms.order_bitmap & (uint16_t)(1u << i)) == 0) continue;
+                tt::Order<64>* o = &r->oms.orders[i];
+                if (tt::Order_GetState(o) != tt::ORDER_FILLED) {
+                    tt::OrderManager_HandleFill(&r->oms, o, fill_price, MQ(0.02));
+                    break;
+                }
+            }
+        };
+
+        // ---- Lens 1+2: tp_pct=3%, expected-entry 60000 → intended_tp 61800; fill SLIPS to 60060.
+        //      original_tp = 60060 × 1.03 = 61861.8 (fill-priced), NOT 61800 (expected-entry). ----
+        {
+            R* r = new R(); a25_setup(r);
+            fill_entry(r, MQ(0.03), MQ(61800.0), MQ(60060.0));
+            const auto& p = r->oms.portfolio.positions[0];
+            check("A25: original_tp is FILL-priced — 60060 x 1.03 == 61861.8 (Money-exact)",
+                  Money_Eq(p.original_tp, MQ(61861.8)));
+            check("A25: original_tp is NOT the pre-A25 expected-entry intended_tp (61800) — non-vacuous",
+                  !Money_Eq(p.original_tp, MQ(61800.0)));
+            check("A25: take_profit_price tracks original_tp (Portfolio_OpenSlot sets both from the same arg)",
+                  Money_Eq(p.take_profit_price, p.original_tp));
+            check("A25: original_sl stays intended_sl (59400) — TP-only fix, SL NOT fill-adjusted (adv-verify D1)",
+                  Money_Eq(p.original_sl, MQ(59400.0)) && Money_Eq(p.stop_loss_price, MQ(59400.0)));
+            delete r;
+        }
+        // ---- Lens 3 (vary the divergence field): tp_pct=0 (unwired/legacy paths) → fallback to intended_tp (61800),
+        //      bytewise-identical. Green here + green above = a regression to the expected-entry anchor can't pass silently. ----
+        {
+            R* r = new R(); a25_setup(r);
+            fill_entry(r, Money_Zero(), MQ(61800.0), MQ(60060.0));
+            const auto& p = r->oms.portfolio.positions[0];
+            check("A25: tp_pct==0 → original_tp == intended_tp (61800, legacy path, bytewise-identical)",
+                  Money_Eq(p.original_tp, MQ(61800.0)));
+            delete r;
+        }
+        // COVERAGE DISCLAIMER (honest): exercises the CONSUME side (cmd.tp_pct → pre_resolved → original_tp). The Async
+        // producer RESOLUTION (ResolvePerFillTpPct per-node override + leg-B ×tp2_mult) is covered by the A1 cohort
+        // tests + the build; the leg-B TP2 carry is not separately driven here.
+        // // ADV-REFUTE: 61861.8 = 60060×1.03 hand-derived from handle_buy_fill (per_fill_tp = fill + fill×tp_pct,
+        // OrderManager.hpp); independent re-derivation owed before ship close.
+    }
+
     printf("\n--- v4.2.1: idle_cycles ---\n");
     {
         // Setup: build state, rebuild N times, verify counter increments.

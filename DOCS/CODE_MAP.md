@@ -4,7 +4,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-06-12 (commit f90aa66)
+**Last regenerated**: 2026-06-12 (commit 2b38bd6)
 
 ## CoreFrameworks/
 
@@ -25,8 +25,8 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `Fee_Compute` — line 1365
 - `ControllerConfig_ResolveForCore` — line 1383
 - `ControllerConfig_PopulateCoresFromFlat` — line 1445
-- `ControllerConfig_NormalizeForMode` — line 2004
-- `ControllerConfig_Load` — line 2035
+- `ControllerConfig_NormalizeForMode` — line 2008
+- `ControllerConfig_Load` — line 2039
 
 ### ControllerEventLoop.hpp
 
@@ -54,26 +54,26 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `EventLoop_DrainPostFillOneCore` — line 1370
 - `EventLoop_DrainPostFill` — line 1798
 - `EventLoop_OnEvent` — line 1850
-- `EventLoop_DrainEvents` — line 2033
-- `EventLoop_QueueParameters` — line 2067
-- `EventLoop_RebuildAllParameters` — line 2100
-- `EventLoop_UpdateRollingStateOneCore` — line 2190
-- `EventLoop_UpdateEmaPriceAllCores` — line 2233
-- `EventLoop_RebuildOneCore` — line 2252
-- `EventLoop_PushParameters` — line 3165
-- `EventLoopState_ConfigureKillSwitch` — line 3200
-- `EventLoop_ClearAllPermissions` — line 3210
-- `EventLoop_KillSwitchTrip` — line 3221
-- `EventLoop_KillSwitchEvaluate` — line 3250
-- `EventLoop_TimeExitOneCore` — line 3324
-- `EventLoop_FlattenAll` — line 3419
-- `EventLoop_CheckWsStaleness` — line 3503
-- `EventLoop_TryClearRecovery` — line 3582
-- `EventLoop_TrailingSLRatchetOneCore` — line 3625
-- `EventLoop_BreakevenOnProfitOneCore` — line 3704
-- `EventLoop_Unpause` — line 3748
-- `EventLoop_SlowPath` — line 3772
-- `EventLoop_RunController` — line 3797
+- `EventLoop_DrainEvents` — line 2009
+- `EventLoop_QueueParameters` — line 2043
+- `EventLoop_RebuildAllParameters` — line 2076
+- `EventLoop_UpdateRollingStateOneCore` — line 2166
+- `EventLoop_UpdateEmaPriceAllCores` — line 2209
+- `EventLoop_RebuildOneCore` — line 2228
+- `EventLoop_PushParameters` — line 3141
+- `EventLoopState_ConfigureKillSwitch` — line 3176
+- `EventLoop_ClearAllPermissions` — line 3186
+- `EventLoop_KillSwitchTrip` — line 3197
+- `EventLoop_KillSwitchEvaluate` — line 3226
+- `EventLoop_TimeExitOneCore` — line 3300
+- `EventLoop_FlattenAll` — line 3395
+- `EventLoop_CheckWsStaleness` — line 3479
+- `EventLoop_TryClearRecovery` — line 3558
+- `EventLoop_TrailingSLRatchetOneCore` — line 3601
+- `EventLoop_BreakevenOnProfitOneCore` — line 3680
+- `EventLoop_Unpause` — line 3724
+- `EventLoop_SlowPath` — line 3748
+- `EventLoop_RunController` — line 3773
 
 ### CoreLatencyStats.hpp
 
@@ -200,17 +200,17 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 ### OrderManager.hpp
 
 - `OrderManager_Init` — line 860
-- `OMS_PushSubmit` — line 1059
-- `OMS_DrainSubmit` — line 1090
-- `OrderManager_AccountMakerTakerFee` — line 1121
-- `OMS_GuardTakerBoundFeeBasis` — line 1140
-- `OrderManager_HandleFill` — line 1285
-- `OrderManager_ProcessFillCommand` — line 1345
-- `OrderManager_ProcessReconcile` — line 1448
-- `OrderManager_Tick` — line 1484
-- `OrderManager_Shutdown` — line 1518
-- `OrderManager_OpenCalibrationLog` — line 1540
-- `OrderManager_InflightCount` — line 1585
+- `OMS_PushSubmit` — line 1070
+- `OMS_DrainSubmit` — line 1101
+- `OrderManager_AccountMakerTakerFee` — line 1132
+- `OMS_GuardTakerBoundFeeBasis` — line 1151
+- `OrderManager_HandleFill` — line 1296
+- `OrderManager_ProcessFillCommand` — line 1356
+- `OrderManager_ProcessReconcile` — line 1459
+- `OrderManager_Tick` — line 1495
+- `OrderManager_Shutdown` — line 1529
+- `OrderManager_OpenCalibrationLog` — line 1551
+- `OrderManager_InflightCount` — line 1596
 
 ### PaperResetArchive.hpp
 
@@ -567,29 +567,29 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### FixedPointN.hpp
 
-- `FPN_BlendOnMask` — line 508
-- `Money_Mul` — line 1580 — into the overflow mask -> saturate + flag (never garbage-as-value).
-- `Money_Div` — line 1604 — NEVER __udivti3 (constant 128-trip cmov loop).
-- `Money_Add` — line 1624 — integer ops with a closure clamp + S-17 flag). Branchless mask-select clamp by the result sign.
-- `Money_Add` — line 1632
-- `Money_FromString` — line 1788
-- `Money_FromBinary` — line 1830 — threshold would be a wrong gate — load-bearing, per the fold).
-- `Money_Zero` — line 1847 — lower to cmov (same shape as fp2_min/max); BlendOnMask mirrors the live <64> mask-select.
-- `Money_Negate` — line 1848
-- `Money_Abs` — line 1849
-- `Money_Min` — line 1850
-- `Money_Max` — line 1851
-- `Money_IsZero` — line 1852
-- `Money_Lt` — line 1853
-- `Money_Le` — line 1854
-- `Money_Eq` — line 1855
-- `Money_Gt` — line 1856
-- `Money_Ge` — line 1857
-- `Money_QuantizeToStep` — line 1864 — NEVER a plain wide divide (no __udivti3 on any path).
-- `Money_BlendOnMask` — line 1873
-- `Money_FromInt` — line 1878 — Money_FromInt: whole-unit int -> money (i*10^8), clamp+flag past the closure ceiling.
-- `Money_ToDouble` — line 1887 — Money_ToDouble — DISPLAY-ONLY (H4-exempt): GUI/diag/inf-bridge consumption. Never accounting.
-- `Money_ToCString` — line 1912 — quantize). Returns chars written (excl. NUL); 0 on insufficient cap (needs <= 32).
+- `FPN_BlendOnMask` — line 511
+- `Money_Mul` — line 1583 — into the overflow mask -> saturate + flag (never garbage-as-value).
+- `Money_Div` — line 1607 — NEVER __udivti3 (constant 128-trip cmov loop).
+- `Money_Add` — line 1627 — integer ops with a closure clamp + S-17 flag). Branchless mask-select clamp by the result sign.
+- `Money_Add` — line 1635
+- `Money_FromString` — line 1791
+- `Money_FromBinary` — line 1833 — threshold would be a wrong gate — load-bearing, per the fold).
+- `Money_Zero` — line 1850 — lower to cmov (same shape as fp2_min/max); BlendOnMask mirrors the live <64> mask-select.
+- `Money_Negate` — line 1851
+- `Money_Abs` — line 1852
+- `Money_Min` — line 1853
+- `Money_Max` — line 1854
+- `Money_IsZero` — line 1855
+- `Money_Lt` — line 1856
+- `Money_Le` — line 1857
+- `Money_Eq` — line 1858
+- `Money_Gt` — line 1859
+- `Money_Ge` — line 1860
+- `Money_QuantizeToStep` — line 1867 — NEVER a plain wide divide (no __udivti3 on any path).
+- `Money_BlendOnMask` — line 1876
+- `Money_FromInt` — line 1881 — Money_FromInt: whole-unit int -> money (i*10^8), clamp+flag past the closure ceiling.
+- `Money_ToDouble` — line 1890 — Money_ToDouble — DISPLAY-ONLY (H4-exempt): GUI/diag/inf-bridge consumption. Never accounting.
+- `Money_ToCString` — line 1915 — quantize). Returns chars written (excl. NUL); 0 on insufficient cap (needs <= 32).
 
 ## MemHeaders/
 

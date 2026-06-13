@@ -2,7 +2,7 @@
 
 **Auto-generated** by `tools/rebuild_doc_indexes.py`. Regenerate after adding/moving specs.
 
-Total: 161 specs across 12 types.
+Total: 167 specs across 13 types.
 
 Per-type catalog grouped by lifecycle stage. Cross-ref:
 - `doc-frontmatter-convention.md` (frontmatter schema)
@@ -129,7 +129,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md` | 3-first-canonical | audit-methodology, meta-discipline, framework-discipline | 2 |
 | `DESIGN_SPECS/audit-methodologies/characterization-test-discipline.md` | 3-first-canonical | audit-methodology, test-discipline, capital-safety, +1 | 2 |
 
-## data-discipline (12 specs)
+## data-discipline (13 specs)
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
@@ -142,6 +142,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/data-disciplines/hot-side-array-element-alignment-for-sparse-access.md` | 3-first-canonical | data-oriented-design, latency-discipline | 3 |
 | `DESIGN_SPECS/data-disciplines/locale-determinism-discipline.md` | 3-first-canonical | determinism, locale, parsing, +5 | 0 |
 | `DESIGN_SPECS/data-disciplines/partner-core-bitmap-pattern.md` | 3-first-canonical | data-oriented-design, branchless-discipline | 3 |
+| `DESIGN_SPECS/data-disciplines/per-node-position-ownership-model.md` | 2-draft | data-oriented-design, capital-safety, persistence, +3 | 0 |
 | `DESIGN_SPECS/data-disciplines/per-snapshot-cluster-layout-pattern.md` | 3-first-canonical | data-oriented-design, concurrency, latency-discipline | 4 |
 | `DESIGN_SPECS/data-disciplines/raii-destructor-with-cluster-reorg-interaction.md` | 3-first-canonical | data-oriented-design, concurrency | 3 |
 | `DESIGN_SPECS/data-disciplines/running-aggregate-vs-cycle-recompute-discipline.md` | 2-draft | data-discipline, running-aggregate, o1-compute, +2 | 0 |
@@ -182,10 +183,11 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md` | 3-first-canonical | doc-discipline, structural-fix, pattern-codification, +1 | 6 |
 | `DESIGN_SPECS/doc-disciplines/module-scoped-claude-md-pattern.md` | 2-draft | doc-discipline, framework-discipline, context-aware-loading | 2 |
 
-## meta-discipline (24 specs)
+## meta-discipline (26 specs)
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
+| `DESIGN_SPECS/meta-disciplines/adversarial-pessimistic-simulation-discipline.md` | 3-first-canonical | meta-discipline, backtest, paper-mode, +3 | 0 |
 | `DESIGN_SPECS/meta-disciplines/audit-driven-sub-sprint-trajectory-verification.md` | 3-first-canonical | audit-methodology, sub-sprint-discipline, plan-trajectory-verification, +2 | 0 |
 | `DESIGN_SPECS/meta-disciplines/backtest-paper-live-convergence-discipline.md` | 3-first-canonical | meta-discipline, strategy-lifecycle, backtest-to-live, +1 | 0 |
 | `DESIGN_SPECS/meta-disciplines/backwards-compat-not-default-concern.md` | 3-first-canonical | meta-discipline, backwards-compat, breaking-changes, +2 | 0 |
@@ -207,6 +209,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/meta-disciplines/single-source-of-truth-discipline.md` | 3-first-canonical | meta-discipline, ssot, refactor-discipline, +1 | 3 |
 | `DESIGN_SPECS/meta-disciplines/sister-cohort-amendment-completeness-discipline.md` | 3-first-canonical | meta-discipline, framework-discipline, doc-discipline, +2 | 0 |
 | `DESIGN_SPECS/meta-disciplines/skill-knowledge-consultation-and-auto-routing.md` | 2-draft | meta-discipline, framework-discipline, doc-discipline, +1 | 0 |
+| `DESIGN_SPECS/meta-disciplines/struct-change-cascade-impact-tooling.md` | 2-draft | data-oriented-design, ci-tooling, static-analysis, +4 | 2 |
 | `DESIGN_SPECS/meta-disciplines/structural-enforcement-when-memory-insufficient.md` | 3-first-canonical | meta-discipline, framework-discipline, structural-fix, +1 | 0 |
 | `DESIGN_SPECS/meta-disciplines/structural-fix-preferred-decision-framework.md` | 5-claude-md | meta-discipline, structural-fix, pattern-codification, +1 | 4 |
 | `DESIGN_SPECS/meta-disciplines/train-serve-execution-layer-parity.md` | 3-first-canonical | audit-methodology, meta-discipline, structural-fix | 0 |
@@ -225,11 +228,3 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
 | `DESIGN_SPECS/ledger-templates/ledger-entry-templates.md` | 2-draft | ledger-discipline, plan-template, doc-discipline | 2 |
-
-## subsystem-design (1 specs)
-
-The design catalogue — as-built + as-intended references for one subsystem each, with a live divergences table (where the code silently differs from the intent). Grown + maintained as the codebase evolves.
-
-| Spec | Stage | Tags | Sister count |
-|---|---|---|---|
-| `DESIGN_SPECS/subsystem-designs/exit-chain-tp-sl-design.md` | 3-first-canonical | capital-safety, data-oriented-design, structural-fix, +1 | 0 |

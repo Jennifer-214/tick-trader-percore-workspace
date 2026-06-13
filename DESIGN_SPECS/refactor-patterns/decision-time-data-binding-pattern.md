@@ -510,3 +510,13 @@ inline void MBS_ObjSet<Field>(Obj* o, int value) {
 ---
 
 **Stage 3 ACTIVE v1.2 — promoted 2026-05-15 at v5.15.5.F.4c.3 r-8; sibling-array family canonical + bit-pack carrier variant added 2026-05-16 at v5.15.5.F.4c.4; v1.1 cleanup applied at .F.4c.4 fresh-context audit per decisions-capture Decision 1 (registry was extended by 2 rows, not extracted; sub-struct decoupled as orthogonal cache concern).** Three Pattern 4 carrier variants documented: (1) in-flight-object sub-struct refinement (`Order::pre_resolved` at Stage 2 — 2 fields `fee_rate` + `slippage_pct`; UNCHANGED at `.F.4c.4`), (2) sibling-array on owning subsystem enrolled in canonical registry (e.g., `FOREACH_OMS_PER_SLOT_FIELD` at 5 entries post-`.F.4c.4` + 1 EXEMPT per `SPECIAL_CLEAR_HELPER` rationale), (3) bit-pack into existing packed field on in-flight object (`Order::flags_packed` bandit context bits 17-25; sister to existing `MASK_ORDER_PRE_RESOLVED` canonical at bit 16). CI enforcement via `registry-coverage-ci-check-pattern.md` Check 8 closes Class 30 for the sibling-array variant.
+
+---
+
+### Stage 3 amendment v1.3 — the reconstruct-path corollary (TECH_DEBT-186 harvest; A1 + A25 canonical; 2026-06-12)
+
+The v1.2 "downstream READS the canonical value, never RECOMPUTES from a different source" lesson has a **restore / reconstruct / replay** sibling worth naming explicitly: a recovery path re-derives a value the FORWARD path computes, but reads a **DIFFERENT source field**, so the two silently diverge. Distinct from Class 43 (same field, different FORMULA) and Class 18 (parallel emit/parse mirror); catalogued as RECURRING_BUG_PATTERNS **Class 45**.
+
+- **A1 (canonical):** warm-restart recomputed `live_tp`/`live_sl` from the GLOBAL `take_profit_pct`, while the fresh-entry dispatcher read the per-strategy override → a restored position exited at a different price than while live. Fixed by single-sourcing `ResolvePerFillTpPct`/`ResolvePerFillSlPct` for BOTH entry + restore.
+- **A25 (canonical):** post-fix, the event-log replay (`Portfolio_FromEventLog`) reconstructs `original_tp` from the expected-entry `e.tp` while the live path sets `fill×(1+tp_pct)` → live≠replay. Dispositioned **option (b)** (documented non-reproducible + F-059 freeze-flag — the binary snapshot is the PRIMARY recovery; the full single-source rides the `.E.1` venue-net reconcile per `data-disciplines/per-node-position-ownership-model.md`).
+- **Structural fix:** single-source the derivation BOTH paths call (the resolver-SSoT shape A1 established). The forward path and every reconstruct/replay/restore path must call the SAME resolver, not re-derive from a sibling field. Closes TECH_DEBT-186.

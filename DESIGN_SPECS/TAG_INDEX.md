@@ -15,6 +15,10 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/dynamic-library-strategy-loading-pattern.md`
 
+### adversarial-default (1 files)
+
+- `claude-skills/decision-check/SKILL.md`
+
 ### aes-gcm (2 files)
 
 - `DESIGN_SPECS/concurrency-patterns/ktls-kernel-tls-pattern.md`
@@ -53,13 +57,14 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/concurrency-patterns/structured-audit-log-pattern.md`
 
-### audit-methodology (28 files)
+### audit-methodology (30 files)
 
 - `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md`
 - `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md`
 - `DESIGN_SPECS/audit-methodologies/audit-finding-kind-taxonomy.md`
 - `DESIGN_SPECS/audit-methodologies/audit-report-format.md`
 - `DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md`
+- `DESIGN_SPECS/audit-methodologies/characterization-test-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/audit-driven-sub-sprint-trajectory-verification.md`
 - `DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md`
 - `DESIGN_SPECS/meta-disciplines/iteration-spiral-signals-audit-meta-gap.md`
@@ -69,6 +74,7 @@ This file is a snapshot for static browsing.
 - `claude-skills/blindspot-scan/SKILL.md`
 - `claude-skills/bug-check/SKILL.md`
 - `claude-skills/dead-code-trace/SKILL.md`
+- `claude-skills/decision-check/SKILL.md`
 - `claude-skills/dependency-chain-trace/SKILL.md`
 - `claude-skills/dust/SKILL.md`
 - `claude-skills/finding-analyzer/SKILL.md`
@@ -87,6 +93,10 @@ This file is a snapshot for static browsing.
 ### avx-512 (1 files)
 
 - `DESIGN_SPECS/framework-patterns/portfolio-soa-vectorization-pattern.md`
+
+### backtest (1 files)
+
+- `DESIGN_SPECS/meta-disciplines/adversarial-pessimistic-simulation-discipline.md`
 
 ### backtest-to-live (1 files)
 
@@ -127,6 +137,10 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/meta-disciplines/backwards-compat-not-default-concern.md`
 
+### cache-line (1 files)
+
+- `DESIGN_SPECS/meta-disciplines/struct-change-cascade-impact-tooling.md`
+
 ### cache-locality (1 files)
 
 - `DESIGN_SPECS/framework-patterns/portfolio-soa-vectorization-pattern.md`
@@ -134,6 +148,15 @@ This file is a snapshot for static browsing.
 ### capital-allocation (1 files)
 
 - `DESIGN_SPECS/framework-patterns/capital-allocation-policy-pattern.md`
+
+### capital-safety (6 files)
+
+- `DESIGN_SPECS/audit-methodologies/characterization-test-discipline.md`
+- `DESIGN_SPECS/data-disciplines/per-node-position-ownership-model.md`
+- `DESIGN_SPECS/meta-disciplines/adversarial-pessimistic-simulation-discipline.md`
+- `DESIGN_SPECS/meta-disciplines/representation-migration-completeness.md`
+- `DESIGN_SPECS/meta-disciplines/struct-change-cascade-impact-tooling.md`
+- `DESIGN_SPECS/subsystem-designs/exit-chain-tp-sl-design.md`
 
 ### cascade-propagation (1 files)
 
@@ -151,8 +174,9 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/hierarchical-config-with-per-node-folders.md`
 
-### ci-tooling (1 files)
+### ci-tooling (2 files)
 
+- `DESIGN_SPECS/meta-disciplines/struct-change-cascade-impact-tooling.md`
 - `DESIGN_SPECS/refactor-patterns/rename-ship-methodology.md`
 
 ### ci-tooling-surface (1 files)
@@ -198,6 +222,10 @@ This file is a snapshot for static browsing.
 ### config-validation (1 files)
 
 - `DESIGN_SPECS/framework-patterns/hierarchical-config-validation-pattern.md`
+
+### conservative-bias (1 files)
+
+- `DESIGN_SPECS/meta-disciplines/adversarial-pessimistic-simulation-discipline.md`
 
 ### context-aware-loading (1 files)
 
@@ -245,7 +273,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/portfolio-soa-vectorization-pattern.md`
 
-### data-oriented-design (30 files)
+### data-oriented-design (34 files)
 
 - `DESIGN_SPECS/concurrency-patterns/concurrency-model-summary.md`
 - `DESIGN_SPECS/concurrency-patterns/cross-thread-multiword-read-consistency-discipline.md`
@@ -258,6 +286,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/data-disciplines/function-struct-alignment-for-single-mov-access.md`
 - `DESIGN_SPECS/data-disciplines/hot-side-array-element-alignment-for-sparse-access.md`
 - `DESIGN_SPECS/data-disciplines/partner-core-bitmap-pattern.md`
+- `DESIGN_SPECS/data-disciplines/per-node-position-ownership-model.md`
 - `DESIGN_SPECS/data-disciplines/per-snapshot-cluster-layout-pattern.md`
 - `DESIGN_SPECS/data-disciplines/raii-destructor-with-cluster-reorg-interaction.md`
 - `DESIGN_SPECS/framework-patterns/bitmap-flag-api.md`
@@ -266,6 +295,8 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/per-bit-per-core-override-pattern.md`
 - `DESIGN_SPECS/framework-patterns/slot-state-foreach-registry-with-storage-routing.md`
 - `DESIGN_SPECS/framework-patterns/universal-registry-bitmap-dispatcher-pattern.md`
+- `DESIGN_SPECS/meta-disciplines/representation-migration-completeness.md`
+- `DESIGN_SPECS/meta-disciplines/struct-change-cascade-impact-tooling.md`
 - `DESIGN_SPECS/refactor-patterns/bitmap-overflow-protection-discipline.md`
 - `DESIGN_SPECS/refactor-patterns/latency-vs-cache-decision-framework.md`
 - `DESIGN_SPECS/refactor-patterns/loop-fusion-pattern.md`
@@ -273,10 +304,15 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/refactor-patterns/registry-bitmap-set-discipline.md`
 - `DESIGN_SPECS/refactor-patterns/slow-path-cfg-resolution-cache-pattern.md`
 - `DESIGN_SPECS/refactor-patterns/transient-aggregation-bitmap-pattern.md`
+- `DESIGN_SPECS/subsystem-designs/exit-chain-tp-sl-design.md`
 - `DESIGN_SPECS/wire-format-patterns/struct-padding-determinism-pattern.md`
 - `claude-skills/dod-audit/SKILL.md`
 - `claude-skills/hft-audit/SKILL.md`
 - `claude-skills/patch-planner/SKILL.md`
+
+### decision-gate (1 files)
+
+- `claude-skills/decision-check/SKILL.md`
 
 ### decoupling (1 files)
 
@@ -290,8 +326,9 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/kernel-vs-userspace-networking-cfg-pattern.md`
 
-### determinism (1 files)
+### determinism (2 files)
 
+- `DESIGN_SPECS/audit-methodologies/characterization-test-discipline.md`
 - `DESIGN_SPECS/data-disciplines/locale-determinism-discipline.md`
 
 ### dev-mode (1 files)
@@ -549,6 +586,10 @@ This file is a snapshot for static browsing.
 - `claude-skills/strategy-template/SKILL.md`
 - `claude-skills/trace-deps/SKILL.md`
 
+### future-expansion (1 files)
+
+- `DESIGN_SPECS/data-disciplines/per-node-position-ownership-model.md`
+
 ### grace-period (1 files)
 
 - `DESIGN_SPECS/framework-patterns/strategy-hot-reload-via-dlopen-pattern.md`
@@ -725,13 +766,14 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/per-node-paper-mode-flag-pattern.md`
 
-### meta-discipline (29 files)
+### meta-discipline (30 files)
 
 - `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md`
 - `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md`
 - `DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md`
 - `DESIGN_SPECS/doc-disciplines/categorical-triggers-in-always-loaded-docs.md`
 - `DESIGN_SPECS/framework-patterns/meta-registry-pattern-for-codebase-registry-discipline.md`
+- `DESIGN_SPECS/meta-disciplines/adversarial-pessimistic-simulation-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/backtest-paper-live-convergence-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/backwards-compat-not-default-concern.md`
 - `DESIGN_SPECS/meta-disciplines/body-content-enumeration-at-plan-time-discipline.md`
@@ -772,6 +814,11 @@ This file is a snapshot for static browsing.
 ### metrics-publication (1 files)
 
 - `DESIGN_SPECS/framework-patterns/dual-format-metrics-publication-pattern.md`
+
+### migration-discipline (2 files)
+
+- `DESIGN_SPECS/meta-disciplines/representation-migration-completeness.md`
+- `DESIGN_SPECS/meta-disciplines/struct-change-cascade-impact-tooling.md`
 
 ### mirror-prevention (1 files)
 
@@ -823,12 +870,13 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/built-in-observability-pattern.md`
 
-### operator-collaboration (10 files)
+### operator-collaboration (11 files)
 
 - `DESIGN_SPECS/meta-disciplines/canonical-sister-extension-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/session-decision-log-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/skill-knowledge-consultation-and-auto-routing.md`
 - `claude-skills/accept-handoff/SKILL.md`
+- `claude-skills/decision-check/SKILL.md`
 - `claude-skills/handoff/SKILL.md`
 - `claude-skills/precoding-audit-gate/SKILL.md`
 - `claude-skills/second-opinion/SKILL.md`
@@ -847,6 +895,10 @@ This file is a snapshot for static browsing.
 ### oss-project (1 files)
 
 - `DESIGN_SPECS/meta-disciplines/backwards-compat-not-default-concern.md`
+
+### paper-mode (1 files)
+
+- `DESIGN_SPECS/meta-disciplines/adversarial-pessimistic-simulation-discipline.md`
 
 ### paper-trading (1 files)
 
@@ -915,6 +967,10 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/per-node-paper-mode-flag-pattern.md`
 
+### persistence (1 files)
+
+- `DESIGN_SPECS/data-disciplines/per-node-position-ownership-model.md`
+
 ### persistent-connection (1 files)
 
 - `DESIGN_SPECS/concurrency-patterns/persistent-ws-connection-management-pattern.md`
@@ -973,6 +1029,10 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/global-aggregator-readonly-pattern.md`
 - `DESIGN_SPECS/framework-patterns/native-tui-via-mmap-readonly-pattern.md`
 
+### reconcile-recovery (1 files)
+
+- `DESIGN_SPECS/data-disciplines/per-node-position-ownership-model.md`
+
 ### reconciliation (2 files)
 
 - `DESIGN_SPECS/framework-patterns/crash-recovery-via-mmap-state-pattern.md`
@@ -1013,6 +1073,10 @@ This file is a snapshot for static browsing.
 ### safety (1 files)
 
 - `DESIGN_SPECS/framework-patterns/kill-switch-hierarchical-pattern.md`
+
+### scale-invariance (1 files)
+
+- `DESIGN_SPECS/data-disciplines/per-node-position-ownership-model.md`
 
 ### scope-discipline (1 files)
 
@@ -1071,13 +1135,19 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/concurrency-patterns/spsc-vs-blackboard-selection-criteria.md`
 
-### ssot (1 files)
+### ssot (3 files)
 
+- `DESIGN_SPECS/meta-disciplines/representation-migration-completeness.md`
 - `DESIGN_SPECS/meta-disciplines/single-source-of-truth-discipline.md`
+- `DESIGN_SPECS/subsystem-designs/exit-chain-tp-sl-design.md`
 
 ### state-persistence (1 files)
 
 - `DESIGN_SPECS/framework-patterns/crash-recovery-via-mmap-state-pattern.md`
+
+### static-analysis (1 files)
+
+- `DESIGN_SPECS/meta-disciplines/struct-change-cascade-impact-tooling.md`
 
 ### strategy-lifecycle (1 files)
 
@@ -1087,7 +1157,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/dynamic-library-strategy-loading-pattern.md`
 
-### structural-fix (75 files)
+### structural-fix (78 files)
 
 - `DESIGN_SPECS/concurrency-patterns/phase-separated-drainer-for-safe-cross-temporal-derives.md`
 - `DESIGN_SPECS/data-disciplines/aggressive-memory-reduction-techniques.md`
@@ -1124,7 +1194,9 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/universal-registry-bitmap-dispatcher-pattern.md`
 - `DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md`
 - `DESIGN_SPECS/meta-disciplines/dead-code-and-identifier-retirement-discipline.md`
+- `DESIGN_SPECS/meta-disciplines/representation-migration-completeness.md`
 - `DESIGN_SPECS/meta-disciplines/sister-cohort-amendment-completeness-discipline.md`
+- `DESIGN_SPECS/meta-disciplines/struct-change-cascade-impact-tooling.md`
 - `DESIGN_SPECS/meta-disciplines/structural-enforcement-when-memory-insufficient.md`
 - `DESIGN_SPECS/meta-disciplines/structural-fix-preferred-decision-framework.md`
 - `DESIGN_SPECS/meta-disciplines/train-serve-execution-layer-parity.md`
@@ -1145,6 +1217,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/refactor-patterns/shared-helper-extract-for-train-serve-mirror-close.md`
 - `DESIGN_SPECS/refactor-patterns/slow-path-cfg-resolution-cache-pattern.md`
 - `DESIGN_SPECS/refactor-patterns/template-deferred-dependency-injection.md`
+- `DESIGN_SPECS/subsystem-designs/exit-chain-tp-sl-design.md`
 - `DESIGN_SPECS/wire-format-patterns/avx512-byte-determinism-pattern.md`
 - `DESIGN_SPECS/wire-format-patterns/pre-post-cfg-registry-split-for-emit-order-preservation.md`
 - `DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md`
@@ -1194,6 +1267,10 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/refactor-patterns/rename-ship-methodology.md`
 
+### test-discipline (1 files)
+
+- `DESIGN_SPECS/audit-methodologies/characterization-test-discipline.md`
+
 ### thread-topology (2 files)
 
 - `DESIGN_SPECS/framework-patterns/dev-vs-production-thread-topology-pattern.md`
@@ -1202,6 +1279,10 @@ This file is a snapshot for static browsing.
 ### tls-resumption (1 files)
 
 - `DESIGN_SPECS/framework-patterns/tls-session-resumption-pattern.md`
+
+### trustworthy-sim (1 files)
+
+- `DESIGN_SPECS/meta-disciplines/adversarial-pessimistic-simulation-discipline.md`
 
 ### tt-dispatch (2 files)
 
@@ -1323,8 +1404,9 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/meta-disciplines/audit-driven-sub-sprint-trajectory-verification.md`
 
-### backtest (4 files)
+### backtest (5 files)
 
+- `DESIGN_SPECS/meta-disciplines/adversarial-pessimistic-simulation-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/train-serve-execution-layer-parity.md`
 - `DESIGN_SPECS/refactor-patterns/shared-helper-extract-for-train-serve-mirror-close.md`
 - `DESIGN_SPECS/wire-format-patterns/prng-choice-for-replay-determinism.md`
@@ -1373,13 +1455,14 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/meta-disciplines/gui-deprecation-decision-rationale.md`
 
-### capital-management (3 files)
+### capital-management (4 files)
 
 - `DESIGN_SPECS/framework-patterns/capital-allocation-policy-pattern.md`
 - `DESIGN_SPECS/framework-patterns/per-node-economic-isolation-pattern.md`
+- `DESIGN_SPECS/meta-disciplines/adversarial-pessimistic-simulation-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/backtest-paper-live-convergence-discipline.md`
 
-### cfg-flow (24 files)
+### cfg-flow (25 files)
 
 - `DESIGN_SPECS/framework-patterns/categorical-tag-applicability-pattern.md`
 - `DESIGN_SPECS/framework-patterns/cfg-derived-consumer-framework.md`
@@ -1399,6 +1482,7 @@ This file is a snapshot for static browsing.
 - `claude-skills/anti-spaghetti/SKILL.md`
 - `claude-skills/blindspot-scan/SKILL.md`
 - `claude-skills/bug-check/SKILL.md`
+- `claude-skills/decision-check/SKILL.md`
 - `claude-skills/dependency-chain-trace/SKILL.md`
 - `claude-skills/ml-audit/SKILL.md`
 - `claude-skills/parity-check/SKILL.md`
@@ -1533,9 +1617,10 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/meta-disciplines/body-content-enumeration-at-plan-time-discipline.md`
 
-### hot-path (46 files)
+### hot-path (52 files)
 
 - `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md`
+- `DESIGN_SPECS/audit-methodologies/characterization-test-discipline.md`
 - `DESIGN_SPECS/concurrency-patterns/concurrency-model-summary.md`
 - `DESIGN_SPECS/concurrency-patterns/cross-thread-multiword-read-consistency-discipline.md`
 - `DESIGN_SPECS/concurrency-patterns/cross-thread-snapshot-publish-cluster-isolation.md`
@@ -1547,6 +1632,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/data-disciplines/function-struct-alignment-for-single-mov-access.md`
 - `DESIGN_SPECS/data-disciplines/hot-side-array-element-alignment-for-sparse-access.md`
 - `DESIGN_SPECS/data-disciplines/partner-core-bitmap-pattern.md`
+- `DESIGN_SPECS/data-disciplines/per-node-position-ownership-model.md`
 - `DESIGN_SPECS/feature-patterns/runtime-toggleable-bench-gate-pattern.md`
 - `DESIGN_SPECS/framework-patterns/bitmap-flag-api.md`
 - `DESIGN_SPECS/framework-patterns/display-execution-invariant-registry-pattern.md`
@@ -1558,6 +1644,8 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/slot-state-foreach-registry-with-storage-routing.md`
 - `DESIGN_SPECS/framework-patterns/slow-path-gate-registry-pattern.md`
 - `DESIGN_SPECS/framework-patterns/universal-registry-bitmap-dispatcher-pattern.md`
+- `DESIGN_SPECS/meta-disciplines/representation-migration-completeness.md`
+- `DESIGN_SPECS/meta-disciplines/struct-change-cascade-impact-tooling.md`
 - `DESIGN_SPECS/refactor-patterns/branchless-dispatch-discipline.md`
 - `DESIGN_SPECS/refactor-patterns/branchless-math-kernel-pattern.md`
 - `DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md`
@@ -1568,10 +1656,12 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/refactor-patterns/multi-bit-state-encoding-pattern.md`
 - `DESIGN_SPECS/refactor-patterns/registry-bitmap-set-discipline.md`
 - `DESIGN_SPECS/refactor-patterns/transient-aggregation-bitmap-pattern.md`
+- `DESIGN_SPECS/subsystem-designs/exit-chain-tp-sl-design.md`
 - `DESIGN_SPECS/wire-format-patterns/avx512-byte-determinism-pattern.md`
 - `claude-skills/accounting-audit/SKILL.md`
 - `claude-skills/anti-spaghetti/SKILL.md`
 - `claude-skills/bug-check/SKILL.md`
+- `claude-skills/decision-check/SKILL.md`
 - `claude-skills/dependency-chain-trace/SKILL.md`
 - `claude-skills/dod-audit/SKILL.md`
 - `claude-skills/finding-analyzer/SKILL.md`
@@ -1623,11 +1713,15 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/concurrency-patterns/dpdk-userspace-networking-pattern.md`
 - `DESIGN_SPECS/concurrency-patterns/io-uring-kernel-bypass-pattern.md`
 
-### live-trading (4 files)
+### live-trading (8 files)
 
 - `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md`
+- `DESIGN_SPECS/audit-methodologies/characterization-test-discipline.md`
 - `DESIGN_SPECS/concurrency-patterns/cross-thread-multiword-read-consistency-discipline.md`
+- `DESIGN_SPECS/data-disciplines/per-node-position-ownership-model.md`
 - `DESIGN_SPECS/meta-disciplines/dead-code-and-identifier-retirement-discipline.md`
+- `DESIGN_SPECS/meta-disciplines/representation-migration-completeness.md`
+- `DESIGN_SPECS/subsystem-designs/exit-chain-tp-sl-design.md`
 - `claude-skills/accounting-audit/SKILL.md`
 
 ### market-data-stream (1 files)
@@ -1695,18 +1789,23 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/built-in-observability-pattern.md`
 - `DESIGN_SPECS/framework-patterns/dual-format-metrics-publication-pattern.md`
 
-### oms-drainer (17 files)
+### oms-drainer (22 files)
 
+- `DESIGN_SPECS/audit-methodologies/characterization-test-discipline.md`
 - `DESIGN_SPECS/concurrency-patterns/concurrency-model-summary.md`
 - `DESIGN_SPECS/concurrency-patterns/cross-thread-multiword-read-consistency-discipline.md`
 - `DESIGN_SPECS/concurrency-patterns/phase-separated-drainer-for-safe-cross-temporal-derives.md`
 - `DESIGN_SPECS/concurrency-patterns/spsc-ring-embedded-in-hot-struct-cluster-discipline.md`
+- `DESIGN_SPECS/data-disciplines/per-node-position-ownership-model.md`
 - `DESIGN_SPECS/data-disciplines/raii-destructor-with-cluster-reorg-interaction.md`
+- `DESIGN_SPECS/meta-disciplines/representation-migration-completeness.md`
+- `DESIGN_SPECS/meta-disciplines/struct-change-cascade-impact-tooling.md`
 - `DESIGN_SPECS/meta-disciplines/train-serve-execution-layer-parity.md`
 - `DESIGN_SPECS/refactor-patterns/branchless-dispatch-discipline.md`
 - `DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md`
 - `DESIGN_SPECS/refactor-patterns/failure-attribution-buffer-pattern.md`
 - `DESIGN_SPECS/refactor-patterns/template-deferred-dependency-injection.md`
+- `DESIGN_SPECS/subsystem-designs/exit-chain-tp-sl-design.md`
 - `claude-skills/accounting-audit/SKILL.md`
 - `claude-skills/bug-check/SKILL.md`
 - `claude-skills/hft-audit/SKILL.md`
@@ -1715,9 +1814,14 @@ This file is a snapshot for static browsing.
 - `claude-skills/patch-planner/SKILL.md`
 - `claude-skills/post-ship-audit/SKILL.md`
 
-### paper-mode (1 files)
+### paper-mode (2 files)
 
+- `DESIGN_SPECS/meta-disciplines/adversarial-pessimistic-simulation-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/backtest-paper-live-convergence-discipline.md`
+
+### paper-test (1 files)
+
+- `DESIGN_SPECS/subsystem-designs/exit-chain-tp-sl-design.md`
 
 ### parser (6 files)
 
@@ -1750,6 +1854,13 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/kill-switch-hierarchical-pattern.md`
 - `DESIGN_SPECS/framework-patterns/per-node-economic-isolation-pattern.md`
 - `DESIGN_SPECS/framework-patterns/per-node-paper-mode-flag-pattern.md`
+
+### persistence (4 files)
+
+- `DESIGN_SPECS/audit-methodologies/characterization-test-discipline.md`
+- `DESIGN_SPECS/data-disciplines/per-node-position-ownership-model.md`
+- `DESIGN_SPECS/meta-disciplines/representation-migration-completeness.md`
+- `DESIGN_SPECS/meta-disciplines/struct-change-cascade-impact-tooling.md`
 
 ### plan-iteration (1 files)
 
@@ -1803,7 +1914,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/meta-disciplines/backwards-compat-not-default-concern.md`
 
-### registry (65 files)
+### registry (66 files)
 
 - `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md`
 - `DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md`
@@ -1858,6 +1969,7 @@ This file is a snapshot for static browsing.
 - `claude-skills/blindspot-scan/SKILL.md`
 - `claude-skills/bug-check/SKILL.md`
 - `claude-skills/dead-code-trace/SKILL.md`
+- `claude-skills/decision-check/SKILL.md`
 - `claude-skills/dependency-chain-trace/SKILL.md`
 - `claude-skills/dod-audit/SKILL.md`
 - `claude-skills/dust/SKILL.md`
@@ -1906,9 +2018,10 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/meta-disciplines/sister-cohort-amendment-completeness-discipline.md`
 - `claude-skills/capture-audit/SKILL.md`
 
-### slow-path (47 files)
+### slow-path (51 files)
 
 - `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md`
+- `DESIGN_SPECS/audit-methodologies/characterization-test-discipline.md`
 - `DESIGN_SPECS/concurrency-patterns/concurrency-model-summary.md`
 - `DESIGN_SPECS/concurrency-patterns/cross-thread-multiword-read-consistency-discipline.md`
 - `DESIGN_SPECS/concurrency-patterns/cross-thread-snapshot-publish-cluster-isolation.md`
@@ -1929,6 +2042,8 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/sink-fn-pointer-for-optional-side-effect-pattern.md`
 - `DESIGN_SPECS/framework-patterns/slow-path-gate-registry-pattern.md`
 - `DESIGN_SPECS/framework-patterns/type-erased-per-core-resource-handle-pattern.md`
+- `DESIGN_SPECS/meta-disciplines/representation-migration-completeness.md`
+- `DESIGN_SPECS/meta-disciplines/struct-change-cascade-impact-tooling.md`
 - `DESIGN_SPECS/meta-disciplines/train-serve-execution-layer-parity.md`
 - `DESIGN_SPECS/refactor-patterns/branchless-dispatch-discipline.md`
 - `DESIGN_SPECS/refactor-patterns/branchless-math-kernel-pattern.md`
@@ -1946,6 +2061,7 @@ This file is a snapshot for static browsing.
 - `claude-skills/accounting-audit/SKILL.md`
 - `claude-skills/anti-spaghetti/SKILL.md`
 - `claude-skills/bug-check/SKILL.md`
+- `claude-skills/decision-check/SKILL.md`
 - `claude-skills/dependency-chain-trace/SKILL.md`
 - `claude-skills/dod-audit/SKILL.md`
 - `claude-skills/finding-analyzer/SKILL.md`
@@ -1972,8 +2088,9 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/data-disciplines/running-aggregate-vs-cycle-recompute-discipline.md`
 
-### strategy-development (1 files)
+### strategy-development (2 files)
 
+- `DESIGN_SPECS/meta-disciplines/adversarial-pessimistic-simulation-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/backtest-paper-live-convergence-discipline.md`
 
 ### strategy-dispatch (1 files)
@@ -2059,7 +2176,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/meta-disciplines/gui-deprecation-decision-rationale.md`
 
-### wire-format (26 files)
+### wire-format (28 files)
 
 - `DESIGN_SPECS/data-disciplines/locale-determinism-discipline.md`
 - `DESIGN_SPECS/framework-patterns/autopopulate-pattern-for-production-caller-class.md`
@@ -2072,6 +2189,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/type-trait-dispatch-via-tt-namespace.md`
 - `DESIGN_SPECS/framework-patterns/universal-cfg-field-registry-pattern.md`
 - `DESIGN_SPECS/meta-disciplines/dead-code-and-identifier-retirement-discipline.md`
+- `DESIGN_SPECS/meta-disciplines/struct-change-cascade-impact-tooling.md`
 - `DESIGN_SPECS/refactor-patterns/cross-walker-struct-field-uniqueness-discipline.md`
 - `DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-pattern.md`
 - `DESIGN_SPECS/refactor-patterns/orchestration-helper-with-pod-args-pattern.md`
@@ -2082,6 +2200,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/wire-format-patterns/wire-format-canonical-body-invariants-helper.md`
 - `claude-skills/accounting-audit/SKILL.md`
 - `claude-skills/blindspot-scan/SKILL.md`
+- `claude-skills/decision-check/SKILL.md`
 - `claude-skills/dod-audit/SKILL.md`
 - `claude-skills/ml-audit/SKILL.md`
 - `claude-skills/parity-check/SKILL.md`

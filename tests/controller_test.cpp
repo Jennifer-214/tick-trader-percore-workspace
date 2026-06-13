@@ -6393,6 +6393,51 @@ int main() {
         // OrderManager.hpp); independent re-derivation owed before ship close.
     }
 
+    // ---- A25/F1 (deep-check 2026-06-12): an AUTO core MUST resolve tp_pct from resolved_strategy_id,
+    //      NOT the configured strategy_id (==STRATEGY_AUTO → ResolvePerFillTpPct default arm → GLOBAL).
+    //      The producer (Async.hpp) now passes state.cores[slot].resolved_strategy_id. This pins that
+    //      configured(AUTO) and resolved(MR) give DIFFERENT values, so a regression to the configured
+    //      id (the original F1 bug — original_tp armed at global while live_tp arms at the override) fails.
+    //      (Resolver-level guard; a full Async-producer integration test is owed — the drain loop isn't
+    //      unit-testable in isolation today.) ----
+    {
+        ControllerConfig<64> cfg = ControllerConfig_Default<64>();
+        cfg.cores[0].mr_tp_pct           = MQ(0.025);   // per-strategy override (2.5%)
+        cfg.cores[0].take_profit_pct     = MQ(0.03);    // global per-core (3%) — DIFFERENT from the override
+        check("A25/F1: AUTO core resolves tp_pct from the RESOLVED strategy (MR override 0.025), not configured",
+              Money_Eq(tt::ResolvePerFillTpPct((uint8_t)STRATEGY_MEAN_REVERSION, cfg.cores[0]), MQ(0.025)));
+        check("A25/F1: the configured AUTO id WRONGLY yields global take_profit_pct (0.03) != the override — the bug the fix guards",
+              Money_Eq(tt::ResolvePerFillTpPct((uint8_t)STRATEGY_AUTO, cfg.cores[0]), MQ(0.03)) &&
+              !Money_Eq(MQ(0.025), MQ(0.03)));
+    }
+
+    printf("\n--- A28/TD-182 (.E.0.10): Position_Reset full reset (no stale original_*/pair_index on slot reuse) ---\n");
+    {
+        // A28 (sister A19): Init/ClearPositions zeroed only a 5-field SUBSET → original_tp/original_sl/
+        // pair_index/entry_timestamp_us survived a slot reuse (stale trail anchor + mis-paired legs).
+        // Fix = Position_Reset SSoT (full reset). Lens 2 (non-vacuous): SEED the exact fields A28 zeros
+        // with non-defaults, reset, assert each cleared — a subset-reset regression goes RED.
+        Portfolio<64> pf;
+        Portfolio_Init(&pf);
+        pf.positions[0].original_tp        = MQ(61861.8);
+        pf.positions[0].original_sl        = MQ(59400.0);
+        pf.positions[0].pair_index         = 1;
+        pf.positions[0].entry_timestamp_us = 123456789ULL;
+        pf.active_bitmap                   = 0x1;
+        Portfolio_ClearPositions(&pf);   // A28: full reset (was a 5-field subset)
+        check("A28: ClearPositions zeros original_tp (was stale 61861.8)", Money_Eq(pf.positions[0].original_tp, Money_Zero()));
+        check("A28: ClearPositions zeros original_sl (was stale 59400)",   Money_Eq(pf.positions[0].original_sl, Money_Zero()));
+        check("A28: ClearPositions resets pair_index to -1 (was stale 1)", pf.positions[0].pair_index == -1);
+        check("A28: ClearPositions zeros entry_timestamp_us (was stale)",  pf.positions[0].entry_timestamp_us == 0);
+        // AddPositionWithExits must SET original_* (was unset → stale on reuse).
+        pf.positions[0].original_tp = MQ(99999.0);   // simulate a stale leftover in the target slot
+        int idx = Portfolio_AddPositionWithExits(&pf, MQ(0.02), MQ(60000.0), MQ(61800.0), MQ(59400.0));
+        check("A28: AddPositionWithExits sets original_tp = take_profit_price (61800, overwrites stale 99999)",
+              idx == 0 && Money_Eq(pf.positions[0].original_tp, MQ(61800.0)));
+        check("A28: AddPositionWithExits sets original_sl = stop_loss_price (59400)",
+              Money_Eq(pf.positions[0].original_sl, MQ(59400.0)));
+    }
+
     printf("\n--- v4.2.1: idle_cycles ---\n");
     {
         // Setup: build state, rebuild N times, verify counter increments.

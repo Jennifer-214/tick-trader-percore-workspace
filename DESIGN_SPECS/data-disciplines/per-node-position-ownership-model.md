@@ -3,11 +3,10 @@ type: data-discipline
 stage: 2-draft
 version: 1.0
 established: 2026-06-12
-tags: [data-oriented-design, capital-safety, persistence, reconcile-recovery, scale-invariance, future-expansion]
+tags: [data-oriented-design, capital-safety, reconcile-recovery, scale-invariance, future-expansion]
 surface: [oms-drainer, persistence, live-trading, hot-path]
 sister_specs:
   - portfolio-soa-vectorization-pattern.md
-  - per-node-purity-scale-invariance.md
   - cross-thread-multiword-read-consistency-discipline.md
 living_spec: true
 extends_when: "scaling-in/out becomes a real feature (§ Future expansion) — the full per-node sub-pool mechanism extends this spec's .E.1 foundation; do NOT build it speculatively"

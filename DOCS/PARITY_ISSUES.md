@@ -1522,6 +1522,35 @@ related_specs:
 
 ---
 
+```yaml
+id: PARITY-040
+title: trail anchor original_tp non-reproducible across event-log replay (live fill-priced vs replay e.tp expected-entry-priced)
+surface_tags: [oms, event-log-replay, trail-stop, original_tp, decision-time-binding, reconstruct-path, class-45]
+severity: low-med
+parity_axis: live original_tp (fill-priced) vs event-log-replay reconstruct original_tp (expected-entry-priced)
+status: open-deferred
+detected_at: v5.15.5.F.4d.1.E.0.10 (2026-06-12; A25 pre-impl DECISION #5 + the A25-close armed deep-check M1)
+related_specs:
+  - decision log D-208 (the #5 resolution = option b) + D-204/D-205 (A25)
+  - DOCS/recurring-bug-patterns/class-45-reconstruct-path-reads-different-source-field.md
+  - DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md (v1.3 reconstruct corollary)
+```
+**Symptom:** Post-A25 the LIVE entry path arms the trail anchor `Position::original_tp` FILL-priced (`handle_buy_fill`: `original_tp = fill×(1+tp_pct)`). The event-log REPLAY reconstruct (`Portfolio_FromEventLog`, `OrderEventLog.hpp:726/732`) rebuilds `original_tp` from the logged `e.tp`, which the append site writes EXPECTED-ENTRY-priced (`e.tp = o->intended_tp`). → a position whose entry slipped arms its trail at the fill price live, but reconstructs it at the expected-entry price on an event-log replay → **live ≠ replay** for `original_tp`. Class 45 (reconstruct path re-derives from a different source field than the forward path).
+
+**Root cause:** `OrderEvent` persists the expected-entry `intended_tp`, not the fill-priced TP; the fold has no access to the fill-priced anchor A25 introduced. The forward (live) and reconstruct (replay) paths single-source `original_tp` from DIFFERENT fields.
+
+**Reachability (AR-11 code-read, D-208):** LOW-MED, confined to the SECONDARY replay path. The fold IS reached by a production caller (`OMS_INIT_AUTOPOPULATE` Layer 4, `OmsFieldRegistry.hpp:741-744`, `event_log_mode==1`-gated), BUT `original_tp` is also persisted in the binary snapshot (`ShardedSnapshot.hpp:248`, the PRIMARY recovery) and live recovery uses Reconcile, not replay (`Run.hpp:974` "Live mode skips load" → `:1019`). The primary recovery preserves the fill-priced anchor; only the secondary event-log-replay reconstruct diverges.
+
+**Decision (D-208 = option b):** DOCUMENT the non-reproducibility (this entry) + have F-059 (the exit-chain golden-master) FREEZE-FLAG `original_tp` as non-byte-reproducible across replay. NO `OrderEvent` format-version bump now — the structural single-source (persist the fill-priced TP on `OrderEvent` + H21 event-log VERSION bump + tombstone the old field) couples to the deferred version rework (TECH_DEBT-126), so forcing it now is wrong. Structural fix rides the version rework.
+
+**NOT a backtest↔live divergence (F2 verified-FALSE 2026-06-12, code-read):** the sharded BACKTEST shares the live submit producer (`Async.hpp:909` sets `cmd.tp_pct`) AND the live fill path (`handle_buy_fill`; `event_log_mode==1` "same fill+drain" per `BacktestSharded.hpp:162-189`, for train-serve parity) → backtest `original_tp` is fill-priced, IDENTICAL to live. The deep-check's "backtest never sets cmd.tp_pct" (F2) was refuted by grounding: the only set-site `Async.hpp:909` is the SHARED producer, not live-gated, and `handle_buy_fill` is not `event_log_mode`-gated. The only expected-priced path is this replay reconstruct, which applies equally to live and backtest on restart — there is no backtest-SPECIFIC gap.
+
+**Status:** open-deferred. Homed: D-208 (option b documented here), F-059 freeze-flag, TECH_DEBT-126 version-rework (the structural fix).
+
+**Cross-ref:** D-208 / D-204 / D-205; RBP Class 45; F-059; `decision-time-data-binding-pattern.md` v1.3; A25 (the live fill-priced anchor this is the reconstruct-twin of).
+
+---
+
 ## Audit log
 
 - **2026-05-10** — `/parity-check` audit of v5.14.10 Thompson bandit plan (pre-coding gate). 3 new findings written: PARITY-013 (HIGH), PARITY-014 (HIGH), PARITY-015 (MEDIUM). Verdict: YELLOW (proceed with 4 plan amendments before scope-lock). Full audit report: `plans/plan_checks/parity-check-2026-05-10-v5.14.10-thompson-bandit.md`.

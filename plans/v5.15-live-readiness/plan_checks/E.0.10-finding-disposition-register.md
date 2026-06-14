@@ -176,6 +176,20 @@ Operator-directed LITERAL 3-I → 3-A on wfa-1 (warm-restart exit-disarm window,
 
 **REMAINING (`.E.0.10` close):** Phase-C structural closes (#9 cfg-flag-orphan cohort A13/A14/A35/A36/A37 · #10 Class-44/46 CI detector · A6 chokepoint guard + guard-matrix-no-HOLE) + Phase-D (implement the blanket live-gate boot-refuse + ship close: version bump `.E.0.9`→`.E.0.10` + tag + postmortem + push).
 
+## 🗺️ Phase C/D execution sequencing (2026-06-14 — operator-directed: "compounds the hardest + exposes the most information to identify remaining gaps as we run our process")
+
+**Principle:** build the detectors/guards FIRST (a mechanical sweep exposes the UNKNOWN gaps + compounds as permanent enforcement; a point-fix only closes what we already named), close what they flag SECOND (verified by the guards), finalize LAST. Aligns with `feedback_guards_compound_enforcement_is_leverage` + `feedback_close_the_class_vs_migrate_every_site` + `feedback_guard_matrix_bounds_foundation_hardening`.
+
+| step | what | why this slot |
+|---|---|---|
+| **A** | **#10 Class-44/46 CI detector** (write-with-no-live-read / dead-flag sweep — extends `check_per_core_registry_integrity.py` Check-10's cfg-flag slice; full version is the codebase-wide field-level detector) | Highest information + compounding: mechanically surfaces the FULL orphan/dead-consumer set (the known #9 cohort A13/A14/A35/A36/A37 + A11/A12 + any unknown — register line 398 confirms NONE of the existing tools catch this class) AND it's a permanent guard. Also stress-tests our own process (a flag the cascades missed = methodology-gap signal). Low blast-radius (workspace tool → light dogfood-iterate audit). |
+| **B** | **#9 cfg-flag-orphan cohort** (A13/A14/A35/A36/A37 + whatever A surfaces) — wire-into-sharded OR tombstone (H21) per row | Close exactly what the detector flags; the detector is the verification (N flagged → KNOWN-PENDING-shrinking → 0). Guard-first-then-migrate. |
+| **C** | **A6 chokepoint guard** (ML-blend clamp ≥0 + gate-zero/SHALT at all 6 strategy gate-emits + stamp-load floor on `label_*_pct`; TECH_DEBT-171) | Engine gate-emit (hot/slow) path → highest blast-radius of the set → heavier audit (`/hft-audit` + precoding-gate). |
+| **D** | **guard-matrix-no-HOLE** | Completeness meta-check; now measures the COMPLETE guard set (incl. A+C) → confirms no unguarded invariant before `.E.1`. The STOP-condition for "is the foundation solid." |
+| **E** | **Phase D** — implement the DECIDED blanket live-gate boot-refuse (LiveReadiness_Verify, via NEW-1 `ControllerConfig_IsLiveCapital`) → ship close (version bump + tag + postmortem + push) | Finalization, once the foundation is verified hole-free. Live-gate sits last deliberately: decided + contained + exposes little (not a sweep), and nothing runs live (D-168 "until I say"). |
+
+**IN-FLIGHT (step A):** scoping the #10 detector — Class-44/46 per-class files present (`DOCS/recurring-bug-patterns/class-{44,46}-*.md`); the known cohort fully detailed at register rows A13/A14 (`:325-326`) + A35/A36/A37 (`:392-394`); extends `check_per_core_registry_integrity.py` Check-10 (Class-26 UNINDEXED-GLOBAL, `:421+`). Note (register `:398`): `check_oms_per_slot_registry_integrity.py` named in an agent brief does NOT exist — only `check_per_core_registry_integrity.py`.
+
 ## Re-triage progress
 | batch | status |
 |---|---|

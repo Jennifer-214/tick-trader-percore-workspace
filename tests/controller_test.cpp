@@ -5145,6 +5145,31 @@ int main() {
         int is_fill = tt::ud_parse_execution_report(json_maker, sizeof(json_maker) - 1, &cmd, &trade_id);
         check("parser: maker fill (m=true) → cmd.result.is_maker=1",
               is_fill == 1 && cmd.result.is_maker == 1 && cmd.result.order_complete == 1);
+        // F-090 (Net-1): the parser's CORE job — the parsed NUMERIC fields + ids, which the flag-only
+        // asserts above never checked (a parser returning avg_fill_price=0 would pass them green). Hand-
+        // derived from the json_maker wire above. Doubles via tt::parse_double_fast = from_chars (C-locale,
+        // H5-clean) → the parsed double == the literal's nearest-double; ids exact. ADV-REFUTE 2026-06-14
+        // (Net-1 I+A cascade: values independently re-derived; the OMS-seam vacuity-trap below caught by A-class).
+        check("F-090: avg_fill_price parsed from \"L\" == 60100.5",
+              fabs(cmd.result.avg_fill_price - 60100.5) < 1e-9);
+        check("F-090: fill_qty parsed from \"l\" == 0.001",
+              fabs(cmd.result.fill_qty - 0.001) < 1e-9);
+        check("F-090: commission parsed from \"n\" == 0.045 (WS path DOES carry it into HandleFill)",
+              fabs(cmd.result.commission - 0.045) < 1e-9);
+        check("F-090: commission_asset parsed from \"N\" == USDT",
+              strcmp(cmd.result.commission_asset, "USDT") == 0);
+        check("F-090: order_id decoded from \"c\":\"oms_42\" == 42 (strip oms_ + strtoull)",
+              cmd.order_id == 42ull);
+        check("F-090: exchange_id parsed from \"i\" == \"99\"",
+              strcmp(cmd.result.exchange_id, "99") == 0);
+        check("F-090: trade_id out-param parsed from \"t\" == 12345",
+              trade_id == 12345ull);
+        // OMS-seam encoding (the value ProcessFillCommand books via money_from_double_payload = llround(d*1e8)):
+        // compare the scaled .v against a LITERAL scaled-int, NOT MQ(60100.5) which re-applies the SAME
+        // llround(d*1e8) transform on both sides (a tautology that passes even if the bridge were lossy — the
+        // A-class Lens-2 catch). 60100.5 × 1e8 = 6010050000000 (exact for |v| ≤ 2^53 per the discipline doc).
+        check("F-090: avg_fill_price bridges to scaled .v == 6010050000000 (60100.5 @ 8dp, literal not round-trip)",
+              llround(cmd.result.avg_fill_price * 1e8) == 6010050000000LL);
     }
     {
         // Same shape but m=false (taker fill) and X=PARTIALLY_FILLED
@@ -5918,6 +5943,21 @@ int main() {
                     r->state.cores[c].confidence.ic.actuals.samples[j]     = -0.05 + 0.02 * j + 0.01 * c;
                     r->state.cores[c].confidence.rmse.window.samples[j]    = 0.001 * (c + 1) + 0.0001 * j;
                 }
+                // F-PERSIST (Net-1): the non-money per-core passthrough the save block persists but Test-2
+                // never set/asserted. Distinct per-c so a cross-core desync (the hand-written-fwrite, NO-
+                // count-lock risk = TECH_DEBT-196) goes RED. (RegimeState's last_trending/volatile_score are
+                // NOT persisted by design — re-derived at warmup — correctly omitted.)
+                r->state.cores[c].regime_state.proposed_regime      = (c + 1) % 4;
+                r->state.cores[c].regime_state.hysteresis_threshold = 3 + c;
+                r->state.cores[c].regime_state.last_strategy_id     = 1 + c;
+                r->state.cores[c].regime_state.regime_start_tick    = (uint64_t)(1000 + c);
+                r->state.cores[c].regime_state.regime_start_time    = (time_t)(1700000000 + c);
+                r->state.cores[c].resolved_strategy_id              = (uint8_t)(c + 1);
+                r->state.cores[c].last_entry_tick                   = (uint64_t)(900 + c);
+                r->state.cores[c].sl_cooldown_remaining             = (uint32_t)(4 + c);
+                r->state.cores[c].idle_cycles                       = (uint32_t)(6 + c);
+                r->state.cores[c].staged_prediction                 = 0.2 + 0.05 * c;
+                r->state.cores[c].active_prediction                 = 0.3 + 0.05 * c;
             }
             r->oms.balance      = MQ(9837.42);
             r->oms.realized_pnl = MQ(-162.58);
@@ -6050,6 +6090,38 @@ int main() {
                       r2->state.cores[c].confidence.rmse.window.count == (12 + c));
                 check("round-trip: RMSE squared_errors[2] restored",
                       fabs(r2->state.cores[c].confidence.rmse.window.samples[2] - (0.001 * (c + 1) + 0.0002)) < 1e-9);
+                // F-PERSIST (Net-1): the non-money per-core passthrough — fields the save block persists +
+                // commits but Test-2 never asserted (silently green today; the hand-written-fwrite NO-count-
+                // lock class = TECH_DEBT-196). ADV-REFUTE 2026-06-14 (PERSIST I+A cascade; field-list
+                // mechanically diffed save-write-set vs asserts; pure passthrough, Lens-3 clean). Excluded
+                // by-design: strategy_id (load: comes from cfg) · strategy_state_kind (read-but-void'd) · the
+                // non-KILL core_state_flags bits (re-derived at boot — H21 hazard to freeze).
+                check("F-PERSIST: exits_processed round-trips",
+                      r2->state.cores[c].exits_processed == (uint64_t)(8 + c));
+                check("F-PERSIST: core_wins / core_losses round-trip",
+                      r2->state.cores[c].core_wins == (uint64_t)(6 + c) && r2->state.cores[c].core_losses == 2u);
+                check("F-PERSIST: core_ks_trips_total round-trips",
+                      r2->state.cores[c].core_ks_trips_total == (uint32_t)c);
+                check("F-PERSIST: regime_state proposed/hysteresis_count/hysteresis_threshold round-trip",
+                      r2->state.cores[c].regime_state.proposed_regime == ((c + 1) % 4) &&
+                      r2->state.cores[c].regime_state.hysteresis_count == (5 + c) &&
+                      r2->state.cores[c].regime_state.hysteresis_threshold == (3 + c));
+                check("F-PERSIST: regime_state last_strategy_id / regime_start_tick / regime_start_time round-trip",
+                      r2->state.cores[c].regime_state.last_strategy_id == (1 + c) &&
+                      r2->state.cores[c].regime_state.regime_start_tick == (uint64_t)(1000 + c) &&
+                      r2->state.cores[c].regime_state.regime_start_time == (time_t)(1700000000 + c));
+                check("F-PERSIST: pnl_feeder.head round-trips (was unasserted; only .count/sample[0] checked)",
+                      r2->state.cores[c].pnl_feeder.head == (c % MAX_WINDOW));
+                check("F-PERSIST: staged_prediction / active_prediction round-trip (double)",
+                      fabs(r2->state.cores[c].staged_prediction - (0.2 + 0.05 * c)) < 1e-9 &&
+                      fabs(r2->state.cores[c].active_prediction - (0.3 + 0.05 * c)) < 1e-9);
+                check("F-PERSIST: last_confidence round-trips (double)",
+                      fabs(r2->state.cores[c].last_confidence - (0.5 + 0.1 * c)) < 1e-9);
+                check("F-PERSIST: resolved_strategy_id / last_entry_tick / sl_cooldown_remaining / idle_cycles round-trip",
+                      r2->state.cores[c].resolved_strategy_id == (uint8_t)(c + 1) &&
+                      r2->state.cores[c].last_entry_tick == (uint64_t)(900 + c) &&
+                      r2->state.cores[c].sl_cooldown_remaining == (uint32_t)(4 + c) &&
+                      r2->state.cores[c].idle_cycles == (uint32_t)(6 + c));
             }
             // D-110 extend: the 7 persisted Position<F> money fields round-trip money-exact (slot 0).
             check("round-trip: Position entry_price (money-exact, D-110)",
@@ -9965,6 +10037,28 @@ e3_skip_load:;
         check("v5.2.1: trade 0 is buyer (BUY fill)", trades[0].is_buyer == 1);
         check("v5.2.1: trade 0 NOT maker (taker)", trades[0].is_maker == 0);
         check("v5.2.1: trade 1 is maker", trades[1].is_maker == 1);
+        // F-093 (Net-1): the parser's CORE job — the parsed price/qty/commission/order_id/time, which the
+        // flag/id-only asserts above never checked. Hand-derived from the trades_json wire above (H5-clean
+        // from_chars). ADV-REFUTE 2026-06-14 (Net-1 I+A cascade). NB the sibling ParseOpenOrders test DOES
+        // assert price (:9949) — this myTrades asymmetry is the real gap.
+        check("F-093: trade 0/1 price parsed (\"price\") == 60000.0 / 61000.0",
+              fabs(trades[0].price - 60000.0) < 1e-9 && fabs(trades[1].price - 61000.0) < 1e-9);
+        check("F-093: trade 0/1 qty parsed (\"qty\") == 0.01 / 0.005",
+              fabs(trades[0].qty - 0.01) < 1e-9 && fabs(trades[1].qty - 0.005) < 1e-9);
+        check("F-093: trade 0/1 order_id parsed (\"orderId\") == 12345 / 67890",
+              trades[0].order_id == 12345 && trades[1].order_id == 67890);
+        check("F-093: trade 0 time_ms parsed (\"time\", int64 not lost to double) == 1700000000000",
+              trades[0].time_ms == 1700000000000LL);
+        // OMS-seam encoding (ApplyMissedFills books price/qty via money_from_double_payload): literal scaled-int,
+        // not an MQ round-trip (the A-class Lens-2 vacuity-trap). 60000×1e8=6000000000000 ; 0.01×1e8=1000000.
+        check("F-093: trade 0 price bridges to scaled .v == 6000000000000 ; qty == 1000000",
+              llround(trades[0].price * 1e8) == 6000000000000LL && llround(trades[0].qty * 1e8) == 1000000LL);
+        // FREEZE-FLAG (A4 / TECH_DEBT-169): commission IS parsed correctly here, but Reconcile_ApplyMissedFills
+        // calls HandleFill WITHOUT the commission args (4-arg form) → the parsed commission is DROPPED on the
+        // reconcile path (booked fee falls back to computed rate×notional). We freeze the PARSE (the parser does
+        // its job); we do NOT freeze a downstream zero. The drop is the A4 bug, homed .E.1/.E.3 (D-123 fee work).
+        check("F-093: trade 0/1 commission PARSED (\"commission\") == 0.06 / 0.03 (parse frozen; A4 drop is downstream)",
+              fabs(trades[0].commission - 0.06) < 1e-9 && fabs(trades[1].commission - 0.03) < 1e-9);
 
         // Test 3: decide() with no disagreement → no actions, no refusal
         {

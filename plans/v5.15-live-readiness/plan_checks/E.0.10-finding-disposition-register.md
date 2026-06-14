@@ -168,6 +168,14 @@ Operator-directed LITERAL 3-I → 3-A on wfa-1 (warm-restart exit-disarm window,
 
 ✅ **LANDED 2026-06-14** — F-018 written (`tests/controller_test.cpp`, after oms-ts-1e / before the v4.7.21 hand-seed it supersedes): 24 checks (2 cases × classification + exits/entries + core_realized/fees/gross exact + per-leg last_was_win + partner_pending-clear + slot-close + mask-clear + reconcile + D-190 witness). ALL 4 folds + FIX-3 applied. Clones oms-ts-1d (manual HandleFill), NOT the v4.7.21 seed. Suite **3600/0** (+24). The exact ULP goldens PASSED — A-1's hand-derivation matched the engine. Engine UNTOUCHED (test-only).
 
+## ✅ NET-1 COMPLETE + the live-gate is DECIDED, not open (2026-06-14)
+
+**Net-1 characterization net CLOSED** — all 6 chars landed + committed + green (suite **3600/0**): F-059 (oms-ts-1c/1d/1e) + F-090/093 + PERSIST (prior) + **wfa-1 `ada6b7c`** + **F-046 `e76c029`** + **F-018 `81372ab`** (this session). Each via a FULL 3-I→3-A cascade (AR-11 clean, SOUND, zero RED); all test-only (engine HEAD 8878155 unchanged); all committed workspace-side (Landmine 10).
+
+**The live-enable HARD gate is ALREADY DECIDED — it is NOT an open (a)-vs-(b) decision.** This register's §SESSION-STATE line 21 ("proposed — needs a decision-log entry") is STALE: the decision-log entry EXISTS at **D-77/F-2** (`<!-- STATUS: decided (live-enable gate) -->`, 2026-06-10) + **D-168** (2026-06-09): **live capital is BLANKET-BLOCKED until `.E` complete + v5.16 + EXPLICIT operator greenlight** — i.e. option (b) blanket, NOT (a) targeted-per-site. WHY blanket is foundationally right (the rationale, not a re-litigation): (1) the torn-read class closes ATOMICALLY at `.E.1` (the aggregator) → there is no partial-close state for a targeted gate to track; (2) single-authority-predicate (Class 47 / NEW-1) > an enumerated allowlist that DRIFTS (silently weakens) as sites close; (3) a targeted "torn-read only" gate would MISS **A21** (the reconciler balance-clobber — "wrong even with an atomic read; the `.E.1` seqlock does NOT fix it") and **conc-5** (a distinct SPSC-ring race). **Phase-D is therefore IMPLEMENTATION, not a decision:** add the boot-time REFUSE in `LiveReadiness_Verify` (route through the NEW-1 `ControllerConfig_IsLiveCapital` single-authority predicate; tombstone-removed at `.E`/v5.16 close per H21) that enforces the already-decided blanket block.
+
+**REMAINING (`.E.0.10` close):** Phase-C structural closes (#9 cfg-flag-orphan cohort A13/A14/A35/A36/A37 · #10 Class-44/46 CI detector · A6 chokepoint guard + guard-matrix-no-HOLE) + Phase-D (implement the blanket live-gate boot-refuse + ship close: version bump `.E.0.9`→`.E.0.10` + tag + postmortem + push).
+
 ## Re-triage progress
 | batch | status |
 |---|---|

@@ -31,6 +31,18 @@ Live disposition of the `.E.0` backlog (141 findings + 93 TECH_DEBT + 5 PARITY),
 6. **Remaining Net-1** characterization tests (oms-ts-1 / hpg-bc-1 / wfa-1) — in-session-able.
 7. **`.E.1` plan code-sample B-Plus reconciliation** (surfaced 2026-06-10 by the F-2 fold) — the `.E.1` plan carries **10 PRE-EXISTING** illustrative template-code fragments (lines ~362–925; use `F`/`RING_SIZE` without standalone context) that trip the B-Plus symbol check now that the plan is a "session plan." NOT fabrications — a B-Plus false-positive class (context-dependent illustrations). My F-2 fold (prose, lines 68/280) + this register are CLEAN. Reconcile at the `.E.1` plan review: add B-Plus exemption markers OR wrap each fragment in compilable template context. Tracked, NOT blocking (workspace commits have no B-Plus pre-commit gate).
 
+## 📍 2026-06-13 PHASE-4 CLOSE-OUT — the 4 durable-now capital fixes DONE + the 2 engine findings + the live-gate
+
+**The 4 durable-now capital fixes LANDED + committed + pushed:** **A17** (REST `order_complete` from venue status; D-215) · **A21** (reconciler cash-leg Money/H4 + detect-only `ProcessReconcile`; D-216) · **A20** (boot seed-don't-replay; persist REVERSED to `.E.1` — paper never consumes the watermark; D-216) · **NEW-1** (split-brain collapse → `ControllerConfig_IsLiveCapital`; legacy LIVE hard-refused; the use_real_money/trading_mode conflict HARD-REFUSES boot per **D-218**; RBP **Class 47**; D-217/D-218). Each: full fan-out → fix → anti-vacuous char-test → 5-way verify → `.E.1` fold.
+
+**The 2 engine findings (2026-06-10 adversarial audit) re-dispositioned:**
+- `oms-ts-2` per-core vs OMS P&L rounding-divergence → **CLOSED-by-D-190** (the gross-formula SSoT `Money_FillGross` unified the two derivations; confirm at pickup by code-read).
+- `tsa-live-2` boot-reconcile same-core fill collapse → **cold-boot-DEFUSED by A20** (seed-don't-replay → no replay on cold boot → no collapse); the warm-tail collapse rides `.E.1` venue-net-reconcile.
+
+**🔴 The live-enable HARD gate (this register's §SESSION-STATE #1 / line 21 "proposed") — VERIFIED MISSING (2026-06-13).** `LiveReadiness_Verify` has 8 REFUSE checks (secret/mlockall/cores/models/age/feature-hash/label-hash/stamps-hmac) — **NONE blocks on the torn-read class / conc-5**. So sharded live (`trading_mode=live` + valid secrets/models) RUNS with the Knight-shaped reconciler-corrects-on-a-torn-read race live. → `.E.0.10` Phase-D, CRITICAL.
+
+**`.E.0.10` (Net-1) is NOT closed** — the characterization net (F-059 keystone + oms-ts-1/wfa-1/F-090/F-093/F-046/F-018 + PERSIST) + the structural closes (#9/#10/A6) + the live-gate remain. Pickup: `handoffs/2026-06-13-E.0.10-net1-closeout-and-live-gate-handoff.md` (Phases A0-D).
+
 ## Re-triage progress
 | batch | status |
 |---|---|

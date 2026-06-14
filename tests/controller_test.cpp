@@ -16418,12 +16418,20 @@ e3_skip_load:;
         // promote: use_real_money=1, trading_mode unset -> LIVE (the mandatory migration case)
         check("NEW-1: alias promote (urm=1, tm unset) -> LIVE",
               ControllerConfig_IsLiveCapital(load_cfg("use_real_money=1\n")));
-        // conflict: urm=1 + explicit trading_mode=paper -> explicit WINS (PAPER; fail-safe, no live capital)
-        check("NEW-1: conflict (urm=1, tm=paper) -> explicit PAPER wins (fail-safe)",
-              !ControllerConfig_IsLiveCapital(load_cfg("use_real_money=1\ntrading_mode=paper\n")));
-        // order-independent: same conflict, reversed cfg line order -> still PAPER (post-loop resolution)
-        check("NEW-1: conflict order-independent (tm=paper before urm=1) -> PAPER",
-              !ControllerConfig_IsLiveCapital(load_cfg("trading_mode=paper\nuse_real_money=1\n")));
+        // conflict: urm=1 + explicit trading_mode=paper -> HARD REFUSE (D-218). NON-VACUOUS — assert the
+        // REFUSE MECHANISM (the conflict flag main.cpp refuses on), NOT just !IsLiveCapital (which was true
+        // for BOTH explicit-wins AND refuse -> the vacuity that hid the D-217 drift). + the non-conflict
+        // cases must NOT flag (anti-vacuous the other way).
+        ControllerConfig<64> cf_conflict = load_cfg("use_real_money=1\ntrading_mode=paper\n");
+        check("NEW-1: conflict (urm=1, tm=paper) -> HARD-REFUSE flag SET", cf_conflict.live_capital_cfg_conflict == 1);
+        check("NEW-1: conflict -> still not live capital (fail-safe)", !ControllerConfig_IsLiveCapital(cf_conflict));
+        // order-independent: same conflict, reversed cfg line order -> still flagged (post-loop resolution)
+        check("NEW-1: conflict order-independent (tm=paper before urm=1) -> flag SET",
+              load_cfg("trading_mode=paper\nuse_real_money=1\n").live_capital_cfg_conflict == 1);
+        check("NEW-1: promote (urm=1, tm unset) -> NO conflict flag",
+              load_cfg("use_real_money=1\n").live_capital_cfg_conflict == 0);
+        check("NEW-1: agree (urm=1, tm=live) -> NO conflict flag",
+              load_cfg("use_real_money=1\ntrading_mode=live\n").live_capital_cfg_conflict == 0);
         // ignored: urm=0 -> PAPER
         check("NEW-1: alias ignore (urm=0) -> PAPER",
               !ControllerConfig_IsLiveCapital(load_cfg("use_real_money=0\n")));

@@ -14,6 +14,16 @@ Last full audit: 2026-05-12 (seeded at v5.15.4 close).
 
 ---
 
+## Capital-authority single-source: `trading_mode` (use_real_money retired) (v5.15.5.F.4d.1.E.0.10+)
+
+**What.** `trading_mode` (paper/live/shadow) is THE single capital-authority field — `ControllerConfig_IsLiveCapital(cfg) := (trading_mode==LIVE)`; every authorizer (OMS live bit, secrets/adapter, paper-reset, display mirrors, legacy `main.cpp`) routes through it. The legacy `use_real_money` bool is RETIRED (NEW-1) — it parses as a back-compat ALIAS only.
+**Cfg flags.** `trading_mode = paper|live|shadow` (or `0|1|2`). `use_real_money=1` still parses (deprecated) → promotes `trading_mode=live` + a WARN. Legacy single_core LIVE is HARD-REFUSED (the sharded engine is the sole real-money authority).
+**Fallback.** Default = paper (safe). SHADOW (=2) is RESERVED/unimplemented → behaves as paper + a boot-WARN.
+**Where to verify.** `ControllerConfig.hpp` `ControllerConfig_IsLiveCapital` + the alias resolution in `ControllerConfig_Load`; authorizers at `Run.hpp:577/493`, `Async.hpp:565`, `main.cpp`.
+**Paper-test sanity.** `trading_mode=paper` (or unset) → paper. `use_real_money=0` → paper + a one-time deprecation WARN. `use_real_money=1` (no trading_mode) → promotes LIVE + WARN. `use_real_money=1` + explicit `trading_mode=paper` → **boot REFUSED** (contradictory capital config; D-218).
+**Gotchas.** The conflict (use_real_money=1 + explicit non-LIVE trading_mode) HARD-REFUSES boot (D-218 — don't silently pick on a capital field; Load sets `live_capital_cfg_conflict` → `main.cpp` returns 1). The tooltip was inverted (now 1=LIVE, 2=SHADOW). HotReload protects `trading_mode` (a cfg reload can't flip capital mid-session). The GUI `use_real_money` checkbox was removed (trading_mode is registry-rendered). **The live-enable HARD gate (torn-read/conc-5 → `.E.1`) is still MISSING** — sharded live is NOT yet blocked on the unresolved race.
+**Related.** RBP Class 47 (split-brain control authority); DESIGN_SPEC `single-authority-predicate-for-mode-gating`; D-217 / D-218.
+
 ## Per-core strategy dispatch
 
 **What.** Each pinned CPU core runs its own strategy (`simple_dip`,

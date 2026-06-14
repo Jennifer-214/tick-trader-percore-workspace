@@ -5963,6 +5963,7 @@ int main() {
             int loaded = tt::ShardedSnapshot_Load<64>(&r2->state, test_path, 0);
             check("round-trip: load returns 1",
                   loaded == 1);
+            // ADV-REFUTE: 2026-06-10 (D-110 3-agent panel — assertions CORRECT, coverage INCOMPLETE → extended Test 2 to all 9 per-core + 7 Position<F> money fields; re-verified 2026-06-14 F-059 I+A fan-out). The D-110 money-exact round-trip cluster (OMS + per-core + Position) follows.
             check("round-trip: oms.balance restored (money-exact, D-110)",
                   Money_Eq(r2->state.oms->balance, MQ(9837.42)));
             check("round-trip: oms.realized_pnl restored (money-exact, D-110)",
@@ -6007,6 +6008,7 @@ int main() {
             for (int c = 0; c < 4; ++c) {
                 check("round-trip: entries_processed",
                       r2->state.cores[c].entries_processed == (uint64_t)(10 + c));
+                // ADV-REFUTE: 2026-06-10 (D-110 panel — per-core money round-trip; coverage extended to all 8 per-core money fields in this loop; re-verified 2026-06-14).
                 check("round-trip: core_realized (money-exact, D-110)",
                       Money_Eq(r2->state.cores[c].core_realized, MQ(50.0 - 10.0 * c)));
                 // D-110 extend: the 8 remaining persisted per-core money fields, money-exact.
@@ -8115,6 +8117,7 @@ e3_skip_load:;
         // up the round-trip total via exit_total_fees). Pre-fix, this
         // checked > 1.0 because line 860 added entry_fee on entry; that
         // was double-counting against the exit pass's exit_total_fees.
+        // ADV-SELF: mechanical pre-exit setup-state (v5.3.1 Phase-D — entry pass adds no fee → core_fees==0 until exits accumulate); deterministic state check, not a money-invariant judgment (feedback_independence_for_judgment_not_mechanical). The panel-reviewed money reconciliation is oms-ts-2 + the D-190 guard below.
         check("mode 1 post-drain: core 0 fees still 0 (only exits accumulate)",
               Money_IsZero(r->state.cores[0].core_fees));
 
@@ -8172,6 +8175,7 @@ e3_skip_load:;
         // oms-ts-2 (Net-1 .E.0.10): cross-check the TWO independent net-P&L derivations —
         // per-core core_realized/core_fees vs the OMS aggregates — never reconciled pre-Net-1.
         // Only core 0 is active (cores 1+ verified untouched below) → sum(core_X) == cores[0].
+        // ADV-REFUTE: 2026-06-10 (3-agent panel found this froze a FALSE invariant — the two net-P&L derivations diverged 1 ULP under decimal half-even → D-190 formula-SSoT fix; now EXACT + guarded by the D-190 regression block below + check_money_gross_single_source.py; re-verified 2026-06-14 F-059 fan-out confirmed the gross+fee inputs are single-sourced via Money_FillGross).
         check("oms-ts-2: sum(core_realized) reconciles oms.realized_pnl",
               Money_Eq(r->state.cores[0].core_realized, r->oms.realized_pnl));
         check("oms-ts-2: sum(core_fees) reconciles oms.total_fees",
@@ -8355,6 +8359,7 @@ e3_skip_load:;
         // The exit pass picks up the round-trip total. Pre-fix, this
         // accumulated entry_fee on entry AND entry_fee+exit_fee on exit
         // (double-counting). See ControllerEventLoop.hpp Phase D fix.
+        // ADV-SELF: mechanical post-RunTick setup-state (v5.3.1 Phase-D — entry pass adds no fee); deterministic state check in the v4.7.16 RunTick parity regression, not a money-invariant judgment (feedback_independence_for_judgment_not_mechanical).
         check("v4.7.16 post-RunTick: core 0 fees still 0 (only exits accumulate)",
               Money_IsZero(r->state.cores[0].core_fees));
 
@@ -8804,6 +8809,328 @@ e3_skip_load:;
               Money_Eq(r->oms.total_taker_fees, MQ(2.412)) && Money_IsZero(r->oms.total_maker_fees));
         check("oms-ts-1b: last_was_win bit CLEAR for the losing exit (slot 0)",
               (r->oms.last_was_win_bitmap & BITMAP_BIT_U16(0)) == 0);
+
+        delete r;
+    }
+
+    //======================================================================================================
+    // [oms-ts-1c — per-core EXIT write-set + per-core↔OMS reconciliation, WIN (Net-1 / F-059 keystone)]
+    //======================================================================================================
+    // oms-ts-1/1b freeze the OMS-AGGREGATE exit write-set on the real handle_sell_fill→DrainPostFill path,
+    // but assert NONE of the per-core CoreContext fields DrainPostFillOneCore mutates, and never tie the two
+    // derivations together. THAT is the genuine F-059 gap (4-agent I+A cascade 2026-06-14; register
+    // § F-059 PRE-CODING SYNTHESIS). 1c/1d freeze the 8 per-core exit fields + the
+    // core_realized==realized_pnl / core_fees==total_fees reconciliation (the D-190 cross-path lock).
+    //
+    // DIVERGENT (non-round) inputs — UNLIKE oms-ts-1's round inputs these carry a non-zero 8dp remainder, so
+    // the D-190 1-mul (Money_FillGross) vs open-coded 2-mul gross forms DIVERGE by 1 ULP. That makes the
+    // reconciliation a REAL D-190 guard: a DrainPostFill reverted to the 2-mul form would diverge from the
+    // OMS 1-mul books by 1 ULP HERE → core_realized != realized_pnl → RED (oms-ts-1's round inputs can't).
+    //
+    // HAND-DERIVED from the booking code (NOT capture-matched); independently re-derived to the ULP by the
+    // cascade's A-1. entry 35763.61465912, exit 40044.86126179, qty 6.89383318, fee_rate 0.00075:
+    //   entry_fee = Money_Mul(Money_Mul(entry,qty),rate) = Money_Mul(246548.39337378,0.00075) = 184.91129503
+    //   exit_fee  = Money_Mul(Money_Mul(exit ,qty),rate) = Money_Mul(276062.59325502,0.00075) = 207.04694494
+    //   gross = Money_FillGross(entry,exit,qty) [1-mul SSoT] = Money_Mul(4281.24660267,qty) = 29514.19988125
+    //   total_fee = 184.91129503 + 207.04694494 = 391.95823997 ; net = 29514.19988125 − 391.95823997 = 29122.24164128
+    // (MQ(d) = Money{(__int128)llround(d*1e8)} — exact for ≤8dp literals + integer Money ops downstream +
+    // locale-free; it is NOT an "int128 literal" — the determinism rests on the exact llround, not the form.)
+    //
+    // COVERAGE DISCLAIMER: single-leg / taker-only (is_maker=0) / MARKET-only / paper mode-1. NOT exercised:
+    // the maker bucket (F-044/045 future maker path), partials (F-018/F-096), LIMIT dispatch, and the two
+    // secondary per-core fields DrainPostFill also mutates — sl_cooldown_remaining (loss-gated) + pnl_feeder
+    // (a RegressionFeeder push, not a frozen scalar). The exit-TRIGGER concerns — original_tp replay-divergence
+    // (Class-45, A25) + the discarded Momentum stddev entry-TP (Class-44-B, A10) — are freeze-FLAGGED in the
+    // register / A25's test, OUT of these per-core-BOOKING blocks.
+    // ADV-REFUTE: 2026-06-14 — 4-agent I+A cascade (I-1 design / I-2 HFT-DOD vet / A-1 independent
+    // re-derivation to the ULP + D-190 divergence confirmed / A-2 HFT-DOD adversarial). Per the binding
+    // adversarial-default.
+    //======================================================================================================
+    printf("\n--- oms-ts-1c — per-core exit write-set + reconciliation, WIN (F-059) ---\n");
+    {
+        struct R {
+            tt::OrderManagerState<64> oms;
+            tt::EventLoopState<64>    state;
+            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
+            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE> tick_ring1;
+            tt::ExecutionCore<64>     core;
+            tt::ExecutionCore<64>     core1;
+        };
+        R* r = new R();
+        tt::EventLoopState_InitLegacy(&r->state, &r->oms, MQ(10000.0));
+        MBS_SET_U8(r->oms.oms_state_flags, tt::MASK_OMS_STATE_EVENT_LOG_MODE, tt::SHIFT_OMS_STATE_EVENT_LOG_MODE, 1);
+        BITMAP_CLR(r->oms.oms_state_flags, tt::MASK_OMS_STATE_PARTIAL_EXIT_ENABLED);
+        tt::SPSCRing_Init(&r->tick_ring);
+        tt::SPSCRing_Init(&r->tick_ring1);
+        tt::ExecutionCore_Init(&r->core,  0, &r->tick_ring);
+        tt::ExecutionCore_Init(&r->core1, 1, &r->tick_ring1);
+        // Register TWO cores; fill core 0 ONLY → core 1 is ITERATED by DrainPostFill (c < registered_count)
+        // but my_mask=(1u<<core_id) filters core-0's events away → core 1 stays zero = the H22 non-leak WITNESS
+        // (a single-core-active leak test, NOT a full per-node-purity proof — a 1-core harness would only
+        // re-test EventLoopState_Init zeroing, never my_mask isolation).
+        tt::EventLoopState_RegisterCore(&r->state, &r->core,  MQ(41000.0), MQ(34000.0), MQ(6.89383318));
+        tt::EventLoopState_RegisterCore(&r->state, &r->core1, MQ(41000.0), MQ(34000.0), MQ(6.89383318));
+        tt::EventLoopState_SetCoreStrategy(&r->state, 0, STRATEGY_SIMPLE_DIP, MQ(300000.0));
+        tt::EventLoopState_SetCoreStrategy(&r->state, 1, STRATEGY_SIMPLE_DIP, MQ(300000.0));
+
+        const Money FEE_RATE = MQ(0.00075);
+        const Money ENTRY = MQ(35763.61465912), EXIT = MQ(40044.86126179), QTY = MQ(6.89383318);
+
+        // --- BUY (open) core 0, real booking path (direct-HandleFill idiom; oms-ts-1 clone) ---
+        tt::SubmitCommand<64> buy(0, tt::ORDER_MARKET_BUY, QTY, (uint8_t)0, /*core_cfg*/nullptr);
+        buy.intended_tp = MQ(41000.0); buy.intended_sl = MQ(34000.0);
+        buy.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP; buy.event_price = ENTRY;
+        tt::OrderManager_Submit(&r->oms, buy);
+        for (int i = 0; i < MAX_INFLIGHT_ORDERS; ++i) {
+            if ((r->oms.order_bitmap & (uint16_t)(1u << i)) == 0) continue;
+            tt::Order<64>* o = &r->oms.orders[i];
+            if (tt::Order_GetState(o) != tt::ORDER_FILLED) {
+                o->pre_resolved.fee_rate = FEE_RATE;
+                tt::OrderManager_HandleFill(&r->oms, o, ENTRY, QTY);
+                tt::Order_SetState(o, tt::ORDER_FILLED);
+                r->oms.order_bitmap &= ~(uint16_t)(1u << i);
+                break;
+            }
+        }
+        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+
+        // --- SELL (close) core 0 @ a WIN ---
+        tt::SubmitCommand<64> sell(0, tt::ORDER_MARKET_SELL, QTY, (uint8_t)0, /*core_cfg*/nullptr);
+        sell.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP; sell.event_price = EXIT;
+        tt::OrderManager_Submit(&r->oms, sell);
+        for (int i = 0; i < MAX_INFLIGHT_ORDERS; ++i) {
+            if ((r->oms.order_bitmap & (uint16_t)(1u << i)) == 0) continue;
+            tt::Order<64>* o = &r->oms.orders[i];
+            if (tt::Order_GetState(o) != tt::ORDER_FILLED) {
+                o->pre_resolved.fee_rate = FEE_RATE;
+                tt::OrderManager_HandleFill(&r->oms, o, EXIT, QTY);
+                tt::Order_SetState(o, tt::ORDER_FILLED);
+                r->oms.order_bitmap &= ~(uint16_t)(1u << i);
+                break;
+            }
+        }
+        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+
+        // ---- The per-core EXIT write-set (the gap oms-ts-1 leaves unfrozen), money-EXACT (not windowed) ----
+        // ADV-REFUTE: 2026-06-14 — cascade A-1 independently re-derived every per-core golden below to the ULP (see block header).
+        check("oms-ts-1c: cores[0].core_realized == 29122.24164128 (net, exact)",
+              Money_Eq(r->state.cores[0].core_realized, MQ(29122.24164128)));
+        check("oms-ts-1c: cores[0].core_fees == 391.95823997 (entry 184.91129503 + exit 207.04694494)",
+              Money_Eq(r->state.cores[0].core_fees, MQ(391.95823997)));
+        check("oms-ts-1c: cores[0].core_open_notional back to 0 (entry add − exit entry-priced sub)",
+              Money_IsZero(r->state.cores[0].core_open_notional));
+        check("oms-ts-1c: cores[0].exits_processed==1 / entries_processed==1",
+              r->state.cores[0].exits_processed == 1 && r->state.cores[0].entries_processed == 1);
+        check("oms-ts-1c: cores[0].core_wins==1 / core_losses==0 (one winning logical trade)",
+              r->state.cores[0].core_wins == 1 && r->state.cores[0].core_losses == 0);
+        check("oms-ts-1c: cores[0].core_gross_wins == 29122.24164128 (=net) / core_gross_losses == 0",
+              Money_Eq(r->state.cores[0].core_gross_wins, MQ(29122.24164128)) &&
+              Money_IsZero(r->state.cores[0].core_gross_losses));
+
+        // ---- The cross-path reconciliation (per-core vs OMS aggregate) — the D-190 lock on THIS path.
+        //      EXACT-by-SSoT-construction: both derive gross via Money_FillGross AND share the booked-fee
+        //      inputs → NOT the retired oms-ts-2 false-invariant (D-190 made it genuinely exact). On these
+        //      DIVERGENT inputs a 2-mul DrainPostFill regression would break it. ----
+        check("oms-ts-1c: cores[0].core_realized reconciles oms.realized_pnl (exact, D-190 lock)",
+              Money_Eq(r->state.cores[0].core_realized, r->oms.realized_pnl));
+        check("oms-ts-1c: cores[0].core_fees reconciles oms.total_fees (exact)",
+              Money_Eq(r->state.cores[0].core_fees, r->oms.total_fees));
+
+        // ---- Divergence WITNESS: prove these inputs DO exercise the D-190 1-mul/2-mul split (else the
+        //      divergent inputs read as an unexplained accident; mirrors the D-190 guard block). ----
+        {
+            Money g_1mul = Money_FillGross(ENTRY, EXIT, QTY);
+            Money g_2mul = Money_Sub(Money_Mul(EXIT, QTY), Money_Mul(ENTRY, QTY));
+            check("oms-ts-1c: gross == 29514.19988125 (Money_FillGross 1-mul SSoT)",
+                  Money_Eq(g_1mul, MQ(29514.19988125)));
+            check("oms-ts-1c: 1-mul gross != 2-mul gross (1 ULP — the inputs DO exercise the D-190 split)",
+                  !Money_Eq(g_1mul, g_2mul));
+        }
+
+        // ---- H22 non-leak witness: core 1 registered + iterated but never filled → stays zero ----
+        check("oms-ts-1c: H22 non-leak — cores[1].core_realized/core_fees == 0 (core-0 activity didn't leak)",
+              Money_IsZero(r->state.cores[1].core_realized) && Money_IsZero(r->state.cores[1].core_fees));
+        check("oms-ts-1c: H22 non-leak — cores[1].core_wins/core_losses/exits_processed == 0",
+              r->state.cores[1].core_wins == 0 && r->state.cores[1].core_losses == 0 &&
+              r->state.cores[1].exits_processed == 0);
+
+        delete r;
+    }
+
+    //======================================================================================================
+    // [oms-ts-1d — per-core EXIT write-set, LOSS sign path (Net-1 / F-059)]
+    //======================================================================================================
+    // The 1c WIN leaves the per-core SIGN path uncharacterized — core_losses / core_gross_losses /
+    // Money_Gt(net,0)==false. This LOSES, divergent inputs (the 1-mul/2-mul split is exercised again — the
+    // first loss candidate did NOT diverge, caught + corrected by A-1). entry 40308.41179447,
+    // exit 38586.72189860, qty 0.44050204, fee_rate 0.00075:
+    //   entry_fee = Money_Mul(17755.93762462,0.00075) = 13.31695322 ; exit_fee = Money_Mul(16997.52971325,0.00075) = 12.74814728
+    //   gross = Money_FillGross(entry,exit,qty) = Money_Mul(-1721.68989587,qty) = -758.40791138
+    //   total_fee = 26.06510050 ; net = -758.40791138 − 26.06510050 = -784.47301188 ; core_gross_losses = 784.47301188
+    // (qty chosen so balance stays positive AND the gross forms diverge. ADV-REFUTE: 2026-06-14 cascade — A-1
+    // independently re-derived to the ULP; LOSS 1-mul .v=-75840791138 vs 2-mul -75840791137, delta -1.)
+    //======================================================================================================
+    printf("\n--- oms-ts-1d — per-core exit write-set, LOSS (sign path; F-059) ---\n");
+    {
+        struct R {
+            tt::OrderManagerState<64> oms;
+            tt::EventLoopState<64>    state;
+            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
+            tt::ExecutionCore<64>     core;
+        };
+        R* r = new R();
+        tt::EventLoopState_InitLegacy(&r->state, &r->oms, MQ(10000.0));
+        MBS_SET_U8(r->oms.oms_state_flags, tt::MASK_OMS_STATE_EVENT_LOG_MODE, tt::SHIFT_OMS_STATE_EVENT_LOG_MODE, 1);
+        BITMAP_CLR(r->oms.oms_state_flags, tt::MASK_OMS_STATE_PARTIAL_EXIT_ENABLED);
+        tt::SPSCRing_Init(&r->tick_ring);
+        tt::ExecutionCore_Init(&r->core, 0, &r->tick_ring);
+        tt::EventLoopState_RegisterCore(&r->state, &r->core, MQ(41000.0), MQ(34000.0), MQ(0.44050204));
+        tt::EventLoopState_SetCoreStrategy(&r->state, 0, STRATEGY_SIMPLE_DIP, MQ(300000.0));
+
+        const Money FEE_RATE = MQ(0.00075);
+        const Money ENTRY = MQ(40308.41179447), EXIT = MQ(38586.72189860), QTY = MQ(0.44050204);
+
+        // --- BUY (open) ---
+        tt::SubmitCommand<64> buy(0, tt::ORDER_MARKET_BUY, QTY, (uint8_t)0, /*core_cfg*/nullptr);
+        buy.intended_tp = MQ(41000.0); buy.intended_sl = MQ(34000.0);
+        buy.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP; buy.event_price = ENTRY;
+        tt::OrderManager_Submit(&r->oms, buy);
+        for (int i = 0; i < MAX_INFLIGHT_ORDERS; ++i) {
+            if ((r->oms.order_bitmap & (uint16_t)(1u << i)) == 0) continue;
+            tt::Order<64>* o = &r->oms.orders[i];
+            if (tt::Order_GetState(o) != tt::ORDER_FILLED) {
+                o->pre_resolved.fee_rate = FEE_RATE;
+                tt::OrderManager_HandleFill(&r->oms, o, ENTRY, QTY);
+                tt::Order_SetState(o, tt::ORDER_FILLED);
+                r->oms.order_bitmap &= ~(uint16_t)(1u << i);
+                break;
+            }
+        }
+        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+
+        // --- SELL (close) @ a LOSS ---
+        tt::SubmitCommand<64> sell(0, tt::ORDER_MARKET_SELL, QTY, (uint8_t)0, /*core_cfg*/nullptr);
+        sell.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP; sell.event_price = EXIT;
+        tt::OrderManager_Submit(&r->oms, sell);
+        for (int i = 0; i < MAX_INFLIGHT_ORDERS; ++i) {
+            if ((r->oms.order_bitmap & (uint16_t)(1u << i)) == 0) continue;
+            tt::Order<64>* o = &r->oms.orders[i];
+            if (tt::Order_GetState(o) != tt::ORDER_FILLED) {
+                o->pre_resolved.fee_rate = FEE_RATE;
+                tt::OrderManager_HandleFill(&r->oms, o, EXIT, QTY);
+                tt::Order_SetState(o, tt::ORDER_FILLED);
+                r->oms.order_bitmap &= ~(uint16_t)(1u << i);
+                break;
+            }
+        }
+        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+
+        check("oms-ts-1d: cores[0].core_realized == -784.47301188 (net loss, exact)",
+              Money_Eq(r->state.cores[0].core_realized, MQ(-784.47301188)));
+        check("oms-ts-1d: cores[0].core_fees == 26.06510050 (13.31695322 + 12.74814728)",
+              Money_Eq(r->state.cores[0].core_fees, MQ(26.06510050)));
+        check("oms-ts-1d: cores[0].core_open_notional back to 0",
+              Money_IsZero(r->state.cores[0].core_open_notional));
+        check("oms-ts-1d: cores[0].core_wins==0 / core_losses==1 (the SIGN path)",
+              r->state.cores[0].core_wins == 0 && r->state.cores[0].core_losses == 1);
+        check("oms-ts-1d: cores[0].core_gross_losses == 784.47301188 (=Money_Negate(net)) / core_gross_wins == 0",
+              Money_Eq(r->state.cores[0].core_gross_losses, MQ(784.47301188)) &&
+              Money_IsZero(r->state.cores[0].core_gross_wins));
+        // Cross-path reconciliation holds on the loss too (D-190 lock):
+        check("oms-ts-1d: cores[0].core_realized reconciles oms.realized_pnl (exact, loss)",
+              Money_Eq(r->state.cores[0].core_realized, r->oms.realized_pnl));
+        check("oms-ts-1d: cores[0].core_fees reconciles oms.total_fees (exact)",
+              Money_Eq(r->state.cores[0].core_fees, r->oms.total_fees));
+        {
+            Money g_1mul = Money_FillGross(ENTRY, EXIT, QTY);
+            Money g_2mul = Money_Sub(Money_Mul(EXIT, QTY), Money_Mul(ENTRY, QTY));
+            check("oms-ts-1d: 1-mul gross != 2-mul gross (1 ULP — loss inputs exercise the D-190 split)",
+                  !Money_Eq(g_1mul, g_2mul));
+        }
+
+        delete r;
+    }
+
+    //======================================================================================================
+    // [oms-ts-1e — slip-into-NET: A9 slip propagates past avg_fill_price into the booked P&L (Net-1 / F-059)]
+    //======================================================================================================
+    // A9 (controller_test.cpp ~:6324) freezes the SLIPPED avg_fill_price at the result_queue ONLY — it pops
+    // the queue, never drains to HandleFill, so it never proves slip moves the booked NET. 1e closes that:
+    // it drives the FULL paper path Submit→OrderManager_Tick→DrainPostFill so the slipped price flows through
+    // ProcessFillCommand→HandleFill→handle_sell_fill into core_realized / realized_pnl.
+    //
+    // ⚠️ TWO false-green traps this avoids (A-2 HFT-DOD cascade pass, 2026-06-14):
+    //   (1) it must NOT clone oms-ts-1's manual HandleFill+SetState(FILLED)+slot-free loop — that pre-FILLs
+    //       the order, so OrderManager_Tick dedup-skips (Order_GetState==FILLED → return 0) → slip never
+    //       fires → false-green. We let Tick drive the fill + WITNESS it (position opens via Tick).
+    //   (2) it must pass a REAL core_cfg with slippage_pct (the synth reads pre_resolved.slippage_pct, bound
+    //       at Order_BindPreResolved INSIDE Submit) — a nullptr cfg ⇒ slippage_pct=0 ⇒ zero-slip no-op.
+    //
+    // HAND-DERIVED (A-1 re-derivation; round inputs HERE — slip-propagation is the target, not the D-190
+    // split; the Money_ToDouble→money_from_double_payload bridge is bit-EXACT for these |v|≤2^53 values per
+    // A-2's IEEE-754 proof). slip 0.1%, fee 0.1%, qty 0.02:
+    //   buy_fill = 60000 × 1.001 = 60060 ; sell_fill = 61000 × 0.999 = 60939 (entry worse-high, exit worse-low)
+    //   entry_fee = Money_Mul(1201.20,0.001)=1.2012 ; exit_fee = Money_Mul(1218.78,0.001)=1.21878 ; total_fee=2.41998
+    //   gross = Money_FillGross(60060,60939,0.02) = 879 × 0.02 = 17.58 ; net = 17.58 − 2.41998 = 15.16002
+    //   no-slip net (same events, slip 0): gross 20.00 − fees 2.42 = 17.58 → slip COSTS 17.58 − 15.16002 = 2.41998
+    // ADV-REFUTE: 2026-06-14 cascade — A-1 re-derived to the ULP + A-2 confirmed the slip-survives-the-drain
+    // chain (Submit→Tick→ProcessFillCommand→HandleFill) + the double-bridge exactness.
+    //======================================================================================================
+    printf("\n--- oms-ts-1e — slip propagates into booked NET via Submit→Tick→DrainPostFill (F-059) ---\n");
+    {
+        struct R {
+            tt::OrderManagerState<64> oms;
+            tt::EventLoopState<64>    state;
+            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
+            tt::ExecutionCore<64>     core;
+            ControllerConfig<64>      cfg;
+        };
+        R* r = new R();
+        tt::EventLoopState_InitLegacy(&r->state, &r->oms, MQ(10000.0));
+        BITMAP_CLR(r->oms.oms_state_flags, tt::MASK_OMS_STATE_LIVE_TRADING);   // paper (the synth-fill branch)
+        MBS_SET_U8(r->oms.oms_state_flags, tt::MASK_OMS_STATE_EVENT_LOG_MODE, tt::SHIFT_OMS_STATE_EVENT_LOG_MODE, 1);
+        BITMAP_CLR(r->oms.oms_state_flags, tt::MASK_OMS_STATE_PARTIAL_EXIT_ENABLED);
+        tt::SPSCRing_Init(&r->tick_ring);
+        tt::ExecutionCore_Init(&r->core, 0, &r->tick_ring);
+        tt::EventLoopState_RegisterCore(&r->state, &r->core, MQ(61500.0), MQ(59500.0), MQ(0.02));
+        tt::EventLoopState_SetCoreStrategy(&r->state, 0, STRATEGY_SIMPLE_DIP, MQ(300000.0));
+        r->cfg.cores[0].slippage_pct   = MQ(0.001);   // 0.1% — the slip under test (read by the synth)
+        r->cfg.cores[0].fee_rate_taker = MQ(0.001);   // bound via Order_BindPreResolved inside Submit
+
+        // --- BUY: Submit (synth slips + pushes) → Tick (drains → ProcessFillCommand → HandleFill) → DrainPostFill ---
+        tt::SubmitCommand<64> buy(0, tt::ORDER_MARKET_BUY, MQ(0.02), (uint8_t)0, &r->cfg.cores[0]);
+        buy.intended_tp = MQ(61500.0); buy.intended_sl = MQ(59500.0);
+        buy.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP; buy.event_price = MQ(60000.0);
+        tt::OrderManager_Submit(&r->oms, buy);
+        tt::OrderManager_Tick(&r->oms);                       // Tick drives the fill — NOT a manual HandleFill
+        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+        // WITNESS the fill actually happened via Tick (guards trap (1) — a dedup no-op would leave no position):
+        check("oms-ts-1e: BUY booked VIA Tick — position open (not a dedup no-op)",
+              (r->oms.portfolio.active_bitmap & (uint16_t)1u) != 0);
+
+        // --- SELL: same full path ---
+        tt::SubmitCommand<64> sell(0, tt::ORDER_MARKET_SELL, MQ(0.02), (uint8_t)0, &r->cfg.cores[0]);
+        sell.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP; sell.event_price = MQ(61000.0);
+        tt::OrderManager_Submit(&r->oms, sell);
+        tt::OrderManager_Tick(&r->oms);
+        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+        check("oms-ts-1e: SELL booked VIA Tick — position closed",
+              (r->oms.portfolio.active_bitmap & (uint16_t)1u) == 0);
+
+        // ---- The slip rode all the way into the booked NET (A9 only proved avg_fill_price) ----
+        check("oms-ts-1e: realized_pnl == 15.16002 (SLIPPED net, exact)",
+              Money_Eq(r->oms.realized_pnl, MQ(15.16002)));
+        check("oms-ts-1e: slipped net DIFFERS from the no-slip net 17.58 (slip propagated past avg_fill_price)",
+              !Money_Eq(r->oms.realized_pnl, MQ(17.58)));
+        check("oms-ts-1e: slip COSTS exactly 2.41998 vs no-slip (17.58 − 15.16002)",
+              Money_Eq(Money_Sub(MQ(17.58), r->oms.realized_pnl), MQ(2.41998)));
+        check("oms-ts-1e: total_fees == 2.41998 (fees booked on the SLIPPED notionals)",
+              Money_Eq(r->oms.total_fees, MQ(2.41998)));
+        // Per-core reconciliation holds under slip:
+        check("oms-ts-1e: cores[0].core_realized reconciles oms.realized_pnl under slip (exact)",
+              Money_Eq(r->state.cores[0].core_realized, r->oms.realized_pnl));
+        check("oms-ts-1e: cores[0].core_fees reconciles oms.total_fees under slip (exact)",
+              Money_Eq(r->state.cores[0].core_fees, r->oms.total_fees));
 
         delete r;
     }

@@ -9366,6 +9366,176 @@ e3_skip_load:;
     }
 
     //======================================================================================================
+    // [F-018 (oms-ts-pp) — partials W/L pairing through the REAL handle_sell_fill -> DrainPostFill consumer]
+    //======================================================================================================
+    // The GAP: Mode-1 (:8259+) drives a partials BOTH-WIN pair through the real consumer; the net-NEGATIVE
+    // pairing (TP1 win + SL larger loss = net negative) was NEVER driven through handle_sell_fill — only the
+    // v4.7.21 hand-seed (below) has it, and it BYPASSES the real consumer (hand-writes positions/sibling
+    // arrays/win-bitmap with entry=0/round PnL — the anti-pattern). F-018 closes that.
+    //
+    // The W/L pairing CLASSIFY lives in EventLoop_DrainPostFillOneCore (ControllerEventLoop.hpp:1575-1591),
+    // NOT in handle_sell_fill (that only sets the per-fill last_was_win_bitmap, OrderManager.hpp:1264-1266).
+    // handle_sell_fill is the per-fill PRODUCER (Portfolio_CloseSlot + Money_FillGross + last_exit_*); the
+    // DrainPostFill pair branch sums the two legs' net and decides ONE W/L by Money_Gt(net_A+net_B, 0). So a
+    // TP1(small win)+SL(larger loss) pair that nets <= 0 classifies as 1 LOSS — NOT 1W+1L. The per-leg
+    // last_was_win bits (bit0 SET leg-A-won / bit1 CLEAR leg-B-lost) PROVE the "looks 1W+1L but is 1L"
+    // distinction the finding names.
+    //
+    // ⚠️ FIX-3 (the false-green trap, A-class): leg-B's Orders MUST carry core_id=1 (slot 1). If both legs
+    //    use core_id=0, leg B overwrites leg A's slot, only one slot closes, partner_pending never pairs, and
+    //    the entire pairing target silently never fires. The active_bitmap&0x3==0 + exits_processed==2 +
+    //    partner_pending-CLEARED asserts guard against that regression.
+    // F-096 SIDESTEP (structural): the entry double-qty split lives at Async.hpp:827-837 (the OnEvent/Tick
+    //    chain); the manual OrderManager_HandleFill idiom never routes through it — each leg's qty is passed
+    //    as an exact Money literal. The test never reads intended_qty. Slot-MAPPING is .E.1 (no assert keys
+    //    off a literal slot index beyond the core-0 {0,1} pair the consumer itself owns).
+    //
+    // ADV-REFUTE 2026-06-14: 3-I -> 3-A FULL fan-out (register § "F-018 PRE-CODING CASCADE"). A-1 independently
+    // re-derived all 13 goldens to the ULP via a bit-exact Money reimplementation (core_realized L=-517.17535106
+    // / W=+22695.66519128); leg-B-of-L == the oms-ts-1d anchor -784.47301188 (cross-validated). D-190 divergence
+    // confirmed on the LOSS/TP2 legs only (FIX-1: the witness goes on the diverging legs; the summed core_realized
+    // carries non-vacuity via leg B's 1 ULP). Test-only; zero engine source.
+    //======================================================================================================
+    printf("\n--- F-018 (oms-ts-pp) — partials net-NEG pairing through real consumer (net-neg = 1 LOSS) ---\n");
+    {
+        using namespace tt;
+        struct R {
+            OrderManagerState<64> oms;
+            EventLoopState<64>    state;
+            SPSCRing<Tick<64>, EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
+            ExecutionCore<64>     core;
+        };
+        const Money FEE_RATE = MQ(0.00075);
+
+        // 1 core (owns slots 0+1 under partials), mode-1, PARTIALS ON (the pairing geometry).
+        auto build = [&](R* r) {
+            EventLoopState_InitLegacy(&r->state, &r->oms, MQ(1000000.0));  // big balance: losses stay solvent
+            MBS_SET_U8(r->oms.oms_state_flags, MASK_OMS_STATE_EVENT_LOG_MODE, SHIFT_OMS_STATE_EVENT_LOG_MODE, 1);
+            BITMAP_SET(r->oms.oms_state_flags, MASK_OMS_STATE_PARTIAL_EXIT_ENABLED);   // <- partials ON
+            SPSCRing_Init(&r->tick_ring);
+            ExecutionCore_Init(&r->core, 0, &r->tick_ring);
+            EventLoopState_RegisterCore(&r->state, &r->core, MQ(41000.0), MQ(34000.0), MQ(0.5));
+            EventLoopState_SetCoreStrategy(&r->state, 0, STRATEGY_SIMPLE_DIP, MQ(300000.0));
+        };
+        // Manual HandleFill per leg (oms-ts-1d idiom). slot == cmd.core_id (FIX-3: leg B uses slot 1).
+        auto fill_leg = [&](R* r, int slot, OrderType type, Money price, Money qty) {
+            SubmitCommand<64> cmd((int16_t)slot, type, qty, (uint8_t)(slot & 1), /*core_cfg*/nullptr);
+            cmd.intended_tp = MQ(41000.0); cmd.intended_sl = MQ(34000.0);
+            cmd.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP; cmd.event_price = price;
+            OrderManager_Submit(&r->oms, cmd);
+            for (int i = 0; i < MAX_INFLIGHT_ORDERS; ++i) {
+                if ((r->oms.order_bitmap & (uint16_t)(1u << i)) == 0) continue;
+                Order<64>* o = &r->oms.orders[i];
+                if (o->core_id == slot && Order_GetState(o) != ORDER_FILLED) {
+                    o->pre_resolved.fee_rate = FEE_RATE;                 // per-leg fee SSoT (override nullptr bind)
+                    OrderManager_HandleFill(&r->oms, o, price, qty);     // REAL consumer (handle_buy/sell_fill)
+                    Order_SetState(o, ORDER_FILLED);
+                    r->oms.order_bitmap &= ~(uint16_t)(1u << i);
+                    break;
+                }
+            }
+        };
+
+        // ---- CASE L: TP1 (small win) + SL (larger loss) -> pair nets NEGATIVE -> 1 LOSS ----
+        // ADV-REFUTE 2026-06-14 (SOUND; 3-I->3-A, A-1 ULP-verified goldens — see F-018 header).
+        {
+            R* r = new R(); build(r);
+            const Money ENTRY = MQ(40308.41179447);
+            // leg A (slot 0, TP1 win):  exit 41020.55671203 qty 0.41050204 -> net +267.29766082
+            // leg B (slot 1, SL loss):  exit 38586.72189860 qty 0.44050204 -> net -784.47301188 (oms-ts-1d anchor)
+            // pair net = -517.17535106 (<= 0) -> core_losses++ ONLY.
+            fill_leg(r, 0, ORDER_MARKET_BUY,  ENTRY,             MQ(0.41050204));   // leg A open -> slot 0 (core_id 0)
+            fill_leg(r, 1, ORDER_MARKET_BUY,  ENTRY,             MQ(0.44050204));   // leg B open -> slot 1 (core_id 1) [FIX-3]
+            EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+            fill_leg(r, 0, ORDER_MARKET_SELL, MQ(41020.55671203), MQ(0.41050204));  // leg A exit TP1 (win)
+            fill_leg(r, 1, ORDER_MARKET_SELL, MQ(38586.72189860), MQ(0.44050204));  // leg B exit SL  (loss)
+            EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+
+            check("F-018 L: core_wins==0 / core_losses==1 (paired net-NEGATIVE = ONE loss, NOT 1W+1L)",
+                  r->state.cores[0].core_wins == 0 && r->state.cores[0].core_losses == 1);
+            check("F-018 L: exits_processed==2 / entries_processed==2 (both legs drained — the pair completed)",
+                  r->state.cores[0].exits_processed == 2 && r->state.cores[0].entries_processed == 2);
+            check("F-018 L: core_realized == -517.17535106 (pair net, exact — A-1 ULP-verified)",
+                  Money_Eq(r->state.cores[0].core_realized, MQ(-517.17535106)));
+            check("F-018 L: core_fees == 51.10438111 (both legs' round-trip fees)",
+                  Money_Eq(r->state.cores[0].core_fees, MQ(51.10438111)));
+            check("F-018 L: core_gross_losses == 517.17535106 (=Money_Negate(pair net)) / core_gross_wins == 0",
+                  Money_Eq(r->state.cores[0].core_gross_losses, MQ(517.17535106)) &&
+                  Money_IsZero(r->state.cores[0].core_gross_wins));
+            // per-leg sign != pair sign — THE "looks 1W+1L but is 1L" distinction (FIX-A):
+            check("F-018 L: last_was_win bit0 SET (leg A won) + bit1 CLEAR (leg B lost) — per-leg != pair",
+                  (r->oms.last_was_win_bitmap & BITMAP_BIT_U16(0)) != 0 &&
+                  (r->oms.last_was_win_bitmap & BITMAP_BIT_U16(1)) == 0);
+            check("F-018 L: partner_pending bit CLEARED + pnl==0 (the pair resolved + reset)",
+                  !BITMAP_IS_SET(r->state.partner_pending_bitmap, BITMAP_BIT_U16(0)) &&
+                  Money_IsZero(r->state.cores[0].partner_pending_pnl));
+            check("F-018 L: core_open_notional back to 0 / both slots closed (active_bitmap & 0x3 == 0)",
+                  Money_IsZero(r->state.cores[0].core_open_notional) &&
+                  (r->oms.portfolio.active_bitmap & 0x3) == 0);
+            check("F-018 L: last_opened_mask==0 / last_closed_mask==0 (drain consumed both)",
+                  r->oms.last_opened_mask == 0 && r->oms.last_closed_mask == 0);
+            check("F-018 L: core_realized reconciles oms.realized_pnl (exact, D-190 cross-path lock)",
+                  Money_Eq(r->state.cores[0].core_realized, r->oms.realized_pnl));
+            check("F-018 L: core_fees reconciles oms.total_fees (exact)",
+                  Money_Eq(r->state.cores[0].core_fees, r->oms.total_fees));
+            // D-190 divergence witness — leg B (the oms-ts-1d anchor) exercises the 1-mul/2-mul split (FIX-1):
+            { Money g1 = Money_FillGross(ENTRY, MQ(38586.72189860), MQ(0.44050204));
+              Money g2 = Money_Sub(Money_Mul(MQ(38586.72189860), MQ(0.44050204)), Money_Mul(ENTRY, MQ(0.44050204)));
+              check("F-018 L: leg-B 1-mul gross != 2-mul gross (loss leg exercises the D-190 split)", !Money_Eq(g1, g2)); }
+            delete r;
+        }
+
+        // ---- CASE W: TP1 + TP2 -> pair nets POSITIVE -> 1 WIN ----
+        // ADV-REFUTE 2026-06-14 (SOUND; 3-I->3-A, A-1 ULP-verified goldens — see F-018 header).
+        {
+            R* r = new R(); build(r);
+            const Money ENTRY = MQ(35763.61465912);
+            // leg A (slot 0, TP1): exit 38044.86126179 qty 3.21570000 -> net +7157.79526320
+            // leg B (slot 1, TP2): exit 40044.86126179 qty 3.67813318 -> net +15537.86992808
+            // pair net = +22695.66519128 (> 0) -> core_wins++ ONLY.
+            fill_leg(r, 0, ORDER_MARKET_BUY,  ENTRY,             MQ(3.21570000));
+            fill_leg(r, 1, ORDER_MARKET_BUY,  ENTRY,             MQ(3.67813318));   // [FIX-3: slot 1]
+            EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+            fill_leg(r, 0, ORDER_MARKET_SELL, MQ(38044.86126179), MQ(3.21570000));  // leg A exit TP1
+            fill_leg(r, 1, ORDER_MARKET_SELL, MQ(40044.86126179), MQ(3.67813318));  // leg B exit TP2
+            EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+
+            check("F-018 W: core_wins==1 / core_losses==0 (paired net-positive = ONE win)",
+                  r->state.cores[0].core_wins == 1 && r->state.cores[0].core_losses == 0);
+            check("F-018 W: exits_processed==2 / entries_processed==2",
+                  r->state.cores[0].exits_processed == 2 && r->state.cores[0].entries_processed == 2);
+            check("F-018 W: core_realized == 22695.66519128 (pair net, exact — A-1 ULP-verified)",
+                  Money_Eq(r->state.cores[0].core_realized, MQ(22695.66519128)));
+            check("F-018 W: core_fees == 387.13468997 (both legs' round-trip fees)",
+                  Money_Eq(r->state.cores[0].core_fees, MQ(387.13468997)));
+            check("F-018 W: core_gross_wins == 22695.66519128 (=pair net) / core_gross_losses == 0",
+                  Money_Eq(r->state.cores[0].core_gross_wins, MQ(22695.66519128)) &&
+                  Money_IsZero(r->state.cores[0].core_gross_losses));
+            // FIX-A: symmetric per-leg witness — BOTH legs won -> bit0 SET + bit1 SET (vs the pair's single win):
+            check("F-018 W: last_was_win bit0 SET + bit1 SET (both legs won) — symmetric per-leg witness",
+                  (r->oms.last_was_win_bitmap & BITMAP_BIT_U16(0)) != 0 &&
+                  (r->oms.last_was_win_bitmap & BITMAP_BIT_U16(1)) != 0);
+            check("F-018 W: partner_pending bit CLEARED + pnl==0",
+                  !BITMAP_IS_SET(r->state.partner_pending_bitmap, BITMAP_BIT_U16(0)) &&
+                  Money_IsZero(r->state.cores[0].partner_pending_pnl));
+            check("F-018 W: core_open_notional back to 0 / both slots closed",
+                  Money_IsZero(r->state.cores[0].core_open_notional) &&
+                  (r->oms.portfolio.active_bitmap & 0x3) == 0);
+            check("F-018 W: last_opened_mask==0 / last_closed_mask==0",
+                  r->oms.last_opened_mask == 0 && r->oms.last_closed_mask == 0);
+            check("F-018 W: core_realized reconciles oms.realized_pnl (exact, D-190 lock)",
+                  Money_Eq(r->state.cores[0].core_realized, r->oms.realized_pnl));
+            check("F-018 W: core_fees reconciles oms.total_fees (exact)",
+                  Money_Eq(r->state.cores[0].core_fees, r->oms.total_fees));
+            // D-190 divergence witness — leg B (TP2) exercises the split (FIX-1):
+            { Money g1 = Money_FillGross(ENTRY, MQ(40044.86126179), MQ(3.67813318));
+              Money g2 = Money_Sub(Money_Mul(MQ(40044.86126179), MQ(3.67813318)), Money_Mul(ENTRY, MQ(3.67813318)));
+              check("F-018 W: leg-B 1-mul gross != 2-mul gross (TP2 leg exercises the D-190 split)", !Money_Eq(g1, g2)); }
+            delete r;
+        }
+    }
+
+    //======================================================================================================
     // [v4.7.21 — W/L pairing under partial exits]
     //======================================================================================================
     // Verify the per-trade W/L classification when partials are enabled:

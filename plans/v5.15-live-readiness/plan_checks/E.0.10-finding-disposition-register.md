@@ -148,6 +148,26 @@ Operator-directed LITERAL 3-I → 3-A on wfa-1 (warm-restart exit-disarm window,
 
 ✅ **LANDED 2026-06-14** — F-046 written (`tests/controller_test.cpp`, fresh block after the v5.12.1.A.2 FlattenAll block): 56 checks — partials-bit precondition + 4-leg setup (real `Portfolio_OpenSlot`) + `submitted==4` + the 5-field negative witness (balance/realized_pnl/total_fees/active_bitmap UNCHANGED + **last_closed_mask==0**; ks_peak subsumed by the balance-pin — a book moves balance) + the per-slot enqueue write-set ×4 (core_id==slot / order_type / qty / leg==(slot&1) / strategy_id==state.cores[slot>>1] / event_price.v==literal / core_cfg==&cfg.cores[slot>>1] / intended_tp/sl/tp_pct==0 / exactly-one). ALL 4 folds applied + `EventLoopState_Free` teardown. Suite **3576/0** (+56). ADV-marker OK; doc-sweep CLEAN. **The slot-vs-logical_core routing is CONFIRMED** — slots 2,3 route to `submit_queues[2],[3]` (the per-slot `core_id==slot` passes). Engine UNTOUCHED (test-only).
 
+## 🔬 F-018 PRE-CODING CASCADE (2026-06-14 — FULL 3-I → 3-A, M8-armed; engine HEAD 8878155)
+
+3-I → 3-A on F-018 (partials net-NEGATIVE pairing TP1+SL through the REAL consumer). **The richest cascade of the net — design SOUND with 4 folds + a classification-site CORRECTION + a critical false-green caught; NO REFUTE of the core.** AR-11 clean.
+
+**Classification-site CORRECTION (all 3 I, code-read):** the prompt framed the W/L pairing classify as "inside `handle_sell_fill`" — WRONG. `handle_sell_fill` (`OrderManager.hpp:1213-1296`) is the per-fill PRODUCER (Portfolio_CloseSlot + Money_FillGross + last_exit_* + the per-fill `last_was_win_bitmap`); the **pair CLASSIFY is in `EventLoop_DrainPostFillOneCore` (`ControllerEventLoop.hpp:1575-1591`)** — leg-A sets `partner_pending_pnl`; leg-B: `total_net = net_A + net_B` → `Money_Gt(total_net, 0) ? core_wins++ : core_losses++`. The test drives BOTH (HandleFill producer → DrainPostFill classify) — shape unchanged, SUT corrected.
+
+**Goldens — A-1 INDEPENDENTLY re-derived all 13 to the ULP** via a bit-exact Money primitive reimpl (`umul_128x128_256`→`divmul_pow10`→`money_round_half_even`): core_realized **L=-517.17535106** (net_A +267.29766082 + net_B -784.47301188) / **W=+22695.66519128**; core_fees L=51.10438111 / W=387.13468997. **Leg-B-of-L == the LIVE oms-ts-1d anchor -784.47301188** (cross-validates the whole reimpl). All passed at write — the hand-derivation matched the engine to the ULP.
+
+**🔴 The critical false-green (A-3 FIX-3, MUST-FOLD):** leg-B's Orders MUST carry `core_id=1` (slot 1). If both legs use core_id=0 (naive oms-ts-1d clone), leg B overwrites leg A's slot, only ONE slot closes, `partner_pending` never pairs → **the entire pairing target silently never fires** = false-green. Guarded by `active_bitmap & 0x3 == 0` + `exits_processed==2` + partner_pending-CLEARED. The single highest-risk find of the net.
+
+**FOLDS (all additive):**
+1. **FIX-3** — leg-B `core_id=1` + `MASK_OMS_STATE_PARTIAL_EXIT_ENABLED` SET (oms-ts-1d CLEARs it).
+2. **FIX-A (A-2)** — the per-leg `last_was_win` witness on BOTH cases: L = bit0 SET + bit1 CLEAR (per-leg ≠ pair — "looks 1W+1L but is 1L"); W = bit0 SET + bit1 SET (symmetric).
+3. **FIX-1 (A-3)** — the D-190 divergence witness on the DIVERGING legs only (L.B / W.B); L.A/W.A don't diverge (the summed core_realized carries non-vacuity via leg B's 1 ULP).
+4. **FIX-2 (A-3)** — freeze `last_closed_mask==0` + `last_opened_mask==0` + `active_bitmap & 0x3 == 0` post-drain (a sister test already freezes the closed mask).
+
+**F-096 sidestep (all 3, structural):** the entry double-qty split lives at `Async.hpp:827-837` (the OnEvent/Tick chain); the manual HandleFill idiom never routes through it (`intended_qty` read NOWHERE in the HandleFill/DrainPostFill chain) → each leg's qty is an exact Money literal. Slot-MAPPING is `.E.1` (no assert keys off a literal slot beyond the core-0 {0,1} pair the consumer owns).
+
+✅ **LANDED 2026-06-14** — F-018 written (`tests/controller_test.cpp`, after oms-ts-1e / before the v4.7.21 hand-seed it supersedes): 24 checks (2 cases × classification + exits/entries + core_realized/fees/gross exact + per-leg last_was_win + partner_pending-clear + slot-close + mask-clear + reconcile + D-190 witness). ALL 4 folds + FIX-3 applied. Clones oms-ts-1d (manual HandleFill), NOT the v4.7.21 seed. Suite **3600/0** (+24). The exact ULP goldens PASSED — A-1's hand-derivation matched the engine. Engine UNTOUCHED (test-only).
+
 ## Re-triage progress
 | batch | status |
 |---|---|

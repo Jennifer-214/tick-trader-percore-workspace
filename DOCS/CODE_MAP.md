@@ -4,29 +4,30 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-06-13 (commit f2ef5d6)
+**Last regenerated**: 2026-06-13 (commit 8878155)
 
 ## CoreFrameworks/
 
 ### BinanceAdapter.hpp
 
 - `BinanceAdapter_WorkerLoop` — line 140 — shutdown_requested flips.
-- `BinanceAdapter_Init` — line 253 — 1; future commits scale up after the back-to-back stress test passes.
-- `BinanceAdapter_ShutdownState` — line 307 — without a successful Init (shutdown_requested is already 0 by default).
-- `BinanceAdapter_SubmitMarketBuy` — line 330 — holds with worker_count == 1.
-- `BinanceAdapter_SubmitMarketSell` — line 350
-- `BinanceAdapter_GetBalancesImpl` — line 384 — pausing submissions during a reconciliation pass.
-- `BinanceAdapter_QueryOrderImpl` — line 392
-- `BinanceAdapter_ShutdownImpl` — line 409
-- `BinanceAdapter_Get` — line 422
+- `BinanceAdapter_Init` — line 255 — 1; future commits scale up after the back-to-back stress test passes.
+- `BinanceAdapter_ShutdownState` — line 309 — without a successful Init (shutdown_requested is already 0 by default).
+- `BinanceAdapter_SubmitMarketBuy` — line 332 — holds with worker_count == 1.
+- `BinanceAdapter_SubmitMarketSell` — line 352
+- `BinanceAdapter_GetBalancesImpl` — line 386 — pausing submissions during a reconciliation pass.
+- `BinanceAdapter_QueryOrderImpl` — line 394
+- `BinanceAdapter_ShutdownImpl` — line 411
+- `BinanceAdapter_Get` — line 424
 
 ### ControllerConfig.hpp
 
-- `Fee_Compute` — line 1365
-- `ControllerConfig_ResolveForCore` — line 1383
-- `ControllerConfig_PopulateCoresFromFlat` — line 1445
-- `ControllerConfig_NormalizeForMode` — line 2008
-- `ControllerConfig_Load` — line 2039
+- `Fee_Compute` — line 1367
+- `ControllerConfig_ResolveForCore` — line 1385
+- `ControllerConfig_PopulateCoresFromFlat` — line 1447
+- `ControllerConfig_NormalizeForMode` — line 2011
+- `ControllerConfig_IsLiveCapital` — line 2045
+- `ControllerConfig_Load` — line 2056
 
 ### ControllerEventLoop.hpp
 
@@ -200,17 +201,19 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 ### OrderManager.hpp
 
 - `OrderManager_Init` — line 861
-- `OMS_PushSubmit` — line 1076
-- `OMS_DrainSubmit` — line 1107
-- `OrderManager_AccountMakerTakerFee` — line 1138
-- `OMS_GuardTakerBoundFeeBasis` — line 1157
-- `OrderManager_HandleFill` — line 1310
-- `OrderManager_ProcessFillCommand` — line 1370
-- `OrderManager_ProcessReconcile` — line 1473
-- `OrderManager_Tick` — line 1509
-- `OrderManager_Shutdown` — line 1543
-- `OrderManager_OpenCalibrationLog` — line 1565
-- `OrderManager_InflightCount` — line 1610
+- `OMS_PushSubmit` — line 1085
+- `OMS_DrainSubmit` — line 1116
+- `OrderManager_AccountMakerTakerFee` — line 1147
+- `OMS_GuardTakerBoundFeeBasis` — line 1166
+- `OrderManager_HandleFill` — line 1319
+- `OrderManager_ProcessFillCommand` — line 1379
+- `OMS_OpenPositionCost` — line 1488
+- `OMS_ExpectedFreeCash` — line 1511
+- `OrderManager_ProcessReconcile` — line 1533
+- `OrderManager_Tick` — line 1574
+- `OrderManager_Shutdown` — line 1608
+- `OrderManager_OpenCalibrationLog` — line 1630
+- `OrderManager_InflightCount` — line 1675
 
 ### PaperResetArchive.hpp
 
@@ -259,19 +262,19 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `ReconcileMode_ToString` — line 136 — Mode → string for logging. Uses cfg_string field (operator-friendly).
 - `ReconcileMode_FromString` — line 149 — parse OR error). Accepts cfg_string values from registry.
 - `Reconcile_ApplyMissedFills` — line 205
-- `Reconcile_AutoCancelStale` — line 343
-- `Reconcile_ParseOpenOrders` — line 498 — Output: fills `out` array up to `out_cap`. Returns count parsed.
-- `Reconcile_ParseMyTrades` — line 531 — Output: fills `out` array up to `out_cap`. Returns count parsed.
-- `Reconcile_Decide` — line 573 — Outputs ReconcileResult with planned actions. Caller applies them.
-- `Reconcile_LogReport` — line 635 — 3. If refused_boot: caller exits / refuses to advance
+- `Reconcile_AutoCancelStale` — line 369
+- `Reconcile_ParseOpenOrders` — line 524 — Output: fills `out` array up to `out_cap`. Returns count parsed.
+- `Reconcile_ParseMyTrades` — line 557 — Output: fills `out` array up to `out_cap`. Returns count parsed.
+- `Reconcile_Decide` — line 599 — Outputs ReconcileResult with planned actions. Caller applies them.
+- `Reconcile_LogReport` — line 661 — 3. If refused_boot: caller exits / refuses to advance
 
 ### ReconciliationLoop.hpp
 
-- `ReconciliationLoop_Pass` — line 93
-- `ReconciliationLoop_Init` — line 195
-- `ReconciliationLoop_Start` — line 225
-- `ReconciliationLoop_TriggerNow` — line 235
-- `ReconciliationLoop_Shutdown` — line 243
+- `ReconciliationLoop_Pass` — line 91
+- `ReconciliationLoop_Init` — line 182
+- `ReconciliationLoop_Start` — line 212
+- `ReconciliationLoop_TriggerNow` — line 222
+- `ReconciliationLoop_Shutdown` — line 230
 
 ### ShardedBacktestDriver.hpp
 
@@ -433,16 +436,16 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 - `BinanceOrderAPI_Cleanup` — line 500
 - `BinanceOrderAPI_MarketBuy` — line 510 — fill_price_out/fill_qty_out receive actual execution values (NULL = don't care)
-- `BinanceOrderAPI_MarketSell` — line 565 — place a market sell order
-- `BinanceOrderAPI_CancelOrder` — line 639 — different operator semantics.
-- `BinanceOrderAPI_GetStatus` — line 673 — fills filled_qty and avg_price on success
-- `BinanceOrderAPI_LoadFilters` — line 722 — returns 1 on success, 0 on failure (caller should treat as fatal)
-- `BinanceOrderAPI_GetBalance` — line 757 — returns 1 on success, 0 on failure
-- `BinanceOrderAPI_GetOpenOrders` — line 789 — network-independent (testable without real REST calls).
-- `BinanceOrderAPI_GetMyTrades` — line 800 — the last-known-processed trade id to catch only new fills.
-- `BinanceOrderAPI_GetBalances` — line 816 — returns 1 on success, 0 on failure
-- `BinanceOrderAPI_SyncClock` — line 840 — re-sync clock offset (call periodically or after reconnect)
-- `BinanceOrderAPI_Init` — line 854 — must be called after Cleanup, ServerTime, SyncClock, LoadFilters are defined
+- `BinanceOrderAPI_MarketSell` — line 574 — place a market sell order
+- `BinanceOrderAPI_CancelOrder` — line 654 — different operator semantics.
+- `BinanceOrderAPI_GetStatus` — line 688 — fills filled_qty and avg_price on success
+- `BinanceOrderAPI_LoadFilters` — line 737 — returns 1 on success, 0 on failure (caller should treat as fatal)
+- `BinanceOrderAPI_GetBalance` — line 772 — returns 1 on success, 0 on failure
+- `BinanceOrderAPI_GetOpenOrders` — line 804 — network-independent (testable without real REST calls).
+- `BinanceOrderAPI_GetMyTrades` — line 815 — the last-known-processed trade id to catch only new fills.
+- `BinanceOrderAPI_GetBalances` — line 831 — returns 1 on success, 0 on failure
+- `BinanceOrderAPI_SyncClock` — line 855 — re-sync clock offset (call periodically or after reconnect)
+- `BinanceOrderAPI_Init` — line 869 — must be called after Cleanup, ServerTime, SyncClock, LoadFilters are defined
 
 ### BinanceUserData.hpp
 
@@ -1025,10 +1028,10 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### SettingsPanel.hpp
 
-- `Settings_RescanModels` — line 801 — stays free of opendir/stat (per /readiness check 17 hardening).
-- `Settings_Init` — line 859 — so Settings_Load knows where to read.
-- `Settings_Load` — line 869
-- `Settings_RenderGlobalTab` — line 1017 — GLOBAL TAB — renders the auto-generated field_defs[] layout
+- `Settings_RescanModels` — line 803 — stays free of opendir/stat (per /readiness check 17 hardening).
+- `Settings_Init` — line 861 — so Settings_Load knows where to read.
+- `Settings_Load` — line 871
+- `Settings_RenderGlobalTab` — line 1019 — GLOBAL TAB — renders the auto-generated field_defs[] layout
 - `Settings_RenderPerCoreTab` — line 1249
 - `GUI_Panel_Settings` — line 1683 — running cores, not cfg-only intent — engine doesn't add/remove cores live.
 
@@ -1179,7 +1182,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ## Top-level files
 
-- `main.cpp` — 1320 lines
+- `main.cpp` — 1340 lines
 - `Version.hpp` — 1022 lines
 - `Limits.hpp` — 30 lines
 

@@ -20044,6 +20044,139 @@ e3_skip_load:;
         tt::OrderManager_Shutdown(&oms);
     }
 
+    printf("\n--- F-046: FlattenAll partials-ON enqueue write-set + UNCHANGED witness ---\n");
+    {
+        using namespace tt;
+        // F-046 characterization (.E.0.10): freeze EventLoop_FlattenAll's ENQUEUE
+        // write-set under partials-ON + a balance/bitmap/close-UNCHANGED negative
+        // witness. FlattenAll (ControllerEventLoop.hpp:3412-3473) is ENQUEUE-ONLY:
+        // it walks active_bitmap and PUSHES a market-exit SubmitCommand per active
+        // slot to submit_queues[cmd.core_id]; it does NOT drain/close/book (that is the
+        // .E.1 DRAINER: OMS_DrainSubmit -> OrderManager_Submit -> handle_sell_fill ->
+        // Portfolio_CloseSlot + balance/realized/fee booking — OUT, changes-by-design).
+        //
+        // KEY (the routing finding): cmd.core_id == SLOT, NOT logical_core. The helper
+        // ctor (OmsPushExitHelper.hpp:86) binds slot->core_id; OMS_PushSubmit
+        // (OrderManager.hpp:1095) routes submit_queues[cmd.core_id]. Under partials-ON
+        // slot 2 -> submit_queues[2] (NOT [logical_core=1]). logical_core = slot>>1 is
+        // used ONLY for the strategy_id read (state.cores[logical_core], :3441) + the
+        // &cores[logical_core] cfg pointer (:3455). The per-slot pop + core_id==slot
+        // asserts catch a [logical_core] mis-keying (would collide slots 2&3 in queue[1]).
+        //
+        // ADV-REFUTE 2026-06-14: 3-I -> 3-A FULL fan-out (register § "F-046 PRE-CODING
+        // CASCADE"). A-class re-derived all 11 goldens (zero errors), reproduced the
+        // routing-witness bug-catch, confirmed the event_price LITERAL is non-tautological
+        // (MQ(49000) == money_from_double_payload(49000) -> a tautology), and REFUTED a
+        // surfaced "drainer-orphan" (both production callers double the drain bound under
+        // partials — Run.hpp:1489 / ShardedBacktestDriver.hpp:216 — so queues 2,3 ARE drained).
+        //
+        // SCOPE: EXCLUDES the A3/SHORTFALL queue-full path (~:3463 — queues never fill,
+        // 1 push/slot < 32; submitted==4 guards the happy path). Does NOT freeze the .E.1
+        // drainer (test never calls OMS_DrainSubmit; the test-only SPSCRing_TryPop reads
+        // the queue without routing through Submit). Test-only; zero engine source.
+
+        OrderManagerState<64> oms;
+        ExchangeAdapter<64> empty_adapter{};
+        OrderManager_Init(&oms, empty_adapter, /*live=*/0,
+                          /*partial_exit_enabled=*/1,      // <- partials ON
+                          MQ(10000.0));
+        EventLoopState<64> state;
+        EventLoopState_Init(&state, &oms);
+        ControllerConfig<64> cfg = ControllerConfig_Default<64>();
+
+        check("F-046: partials-ON bit set after Init(partial=1)",
+              BITMAP_IS_SET(oms.oms_state_flags, MASK_OMS_STATE_PARTIAL_EXIT_ENABLED));
+
+        // Distinct per-core strategy ids (default STRATEGY_NONE=0xFF) so the popped
+        // strategy_id is a REAL read of state.cores[slot>>1] (non-vacuous). slots {0,1}
+        // -> core 0 ; slots {2,3} -> core 1.
+        state.cores[0].strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;   // 2
+        state.cores[1].strategy_id = (uint8_t)STRATEGY_MOMENTUM;     // 1
+
+        // 4 active legs (2 cores x 2 legs) opened via the REAL Portfolio_OpenSlot (not a
+        // hand-poked bitmap) -> active_bitmap = 0x000F. Distinct qtys so a slot<->qty swap
+        // is caught; entry/tp/sl are not read by FlattenAll (set for realism).
+        oms.flatten_pending.store(0, std::memory_order_release);
+        Portfolio_OpenSlot(&oms.portfolio, 0, MQ(50000.0), MQ(1.0), MQ(51000.0), MQ(49000.0), MQ(0.0));
+        Portfolio_OpenSlot(&oms.portfolio, 1, MQ(50000.0), MQ(0.5), MQ(52000.0), MQ(49000.0), MQ(0.0));
+        Portfolio_OpenSlot(&oms.portfolio, 2, MQ(40000.0), MQ(2.0), MQ(41000.0), MQ(39000.0), MQ(0.0));
+        Portfolio_OpenSlot(&oms.portfolio, 3, MQ(40000.0), MQ(1.5), MQ(42000.0), MQ(39000.0), MQ(0.0));
+        check("F-046: setup active_bitmap == 0x000F (4 legs opened)",
+              oms.portfolio.active_bitmap == (uint16_t)0x000F);
+
+        // NEGATIVE-WITNESS pre-capture (BEFORE FlattenAll).
+        const Money    bal_before      = oms.balance;
+        const Money    realized_before = oms.realized_pnl;
+        const Money    fees_before     = oms.total_fees;
+        const uint16_t bitmap_before   = oms.portfolio.active_bitmap;
+
+        // === ACTION: the real enqueue driver (NO drain after). ===
+        const double flatten_price = 49000.0;
+        int submitted = EventLoop_FlattenAll(&state, &oms, cfg.cores, flatten_price, /*reason*/7);
+        check("F-046: FlattenAll enqueued 4 exits (one per active leg)", submitted == 4);
+
+        // === NEGATIVE WITNESS: enqueue is not a close/book (pins enqueue-only) ===
+        check("F-046 [neg]: oms.balance UNCHANGED (no booking)",
+              Money_Eq(oms.balance, bal_before));
+        check("F-046 [neg]: oms.realized_pnl UNCHANGED (no P&L booked)",
+              Money_Eq(oms.realized_pnl, realized_before));
+        check("F-046 [neg]: oms.total_fees UNCHANGED (no fee booked)",
+              Money_Eq(oms.total_fees, fees_before));
+        check("F-046 [neg]: active_bitmap UNCHANGED (no slot closed)",
+              oms.portfolio.active_bitmap == bitmap_before);
+        // last_closed_mask is THE direct "a close booked" tell — a 0->0x000F flip would
+        // catch an eager-close the balance/bitmap pins might not fully isolate (A-2 fold).
+        check("F-046 [neg]: oms.last_closed_mask == 0 (no slot closed via FlattenAll)",
+              oms.last_closed_mask == 0);
+
+        // === ENQUEUE WRITE-SET: pop submit_queues[slot] (== cmd.core_id), per slot ===
+        // event_price golden = LITERAL scaled int (49000 * 1e8), NOT MQ(49000) which would
+        // re-run the same money_from_double_payload conversion -> a tautology (F-090/093 trap).
+        const __int128 EVENT_PRICE_V = (__int128)4900000000000LL;  // 49000.00000000
+        struct ExpectRow { int slot; Money qty; uint8_t leg; uint8_t sid; int core; };
+        const ExpectRow exp[4] = {
+            { 0, MQ(1.0), 0, (uint8_t)STRATEGY_SIMPLE_DIP, 0 },
+            { 1, MQ(0.5), 1, (uint8_t)STRATEGY_SIMPLE_DIP, 0 },
+            { 2, MQ(2.0), 0, (uint8_t)STRATEGY_MOMENTUM,   1 },
+            { 3, MQ(1.5), 1, (uint8_t)STRATEGY_MOMENTUM,   1 },
+        };
+        for (int i = 0; i < 4; ++i) {
+            SubmitCommand<64> cmd{};
+            bool got = SPSCRing_TryPop(&oms.submit_queues[exp[i].slot], &cmd);
+            check("F-046: submit_queues[slot] pop succeeded (slot routed to its own queue)", got);
+            check("F-046: cmd.core_id == slot (routing key is the SLOT, not logical_core)",
+                  (int)cmd.core_id == exp[i].slot);
+            check("F-046: cmd.order_type == ORDER_MARKET_SELL",
+                  cmd.order_type == (uint8_t)ORDER_MARKET_SELL);
+            check("F-046: cmd.qty == positions[slot].quantity (propagation)",
+                  Money_Eq(cmd.qty, exp[i].qty));
+            check("F-046: cmd.leg == (slot&1) under partials-ON",
+                  cmd.leg == exp[i].leg);
+            check("F-046: cmd.strategy_id == state.cores[slot>>1].strategy_id (per-core)",
+                  cmd.strategy_id == exp[i].sid);
+            check("F-046: cmd.event_price.v == 49000*1e8 (literal scaled int, non-tautological)",
+                  cmd.event_price.v == EVENT_PRICE_V);
+            check("F-046: cmd.core_cfg == &cfg.cores[slot>>1] (H22 per-node cfg)",
+                  cmd.core_cfg == &cfg.cores[exp[i].core]);
+            // Mutable-default fields the helper does NOT set — freeze they stay zero
+            // (completes the write-set; tp_pct is the A25/D-205 field — a future per-fill
+            //  TP resolved onto a flatten-exit would else slip through).
+            check("F-046: cmd.intended_tp == 0 (helper bakes degenerate TP)",
+                  Money_IsZero(cmd.intended_tp));
+            check("F-046: cmd.intended_sl == 0 (helper bakes degenerate SL)",
+                  Money_IsZero(cmd.intended_sl));
+            check("F-046: cmd.tp_pct == 0 (A25 field unset on the flatten path)",
+                  Money_IsZero(cmd.tp_pct));
+            // exactly-one per queue (caveat-free vs SPSCRing_Depth): a 2nd pop fails.
+            SubmitCommand<64> extra{};
+            check("F-046: submit_queues[slot] held exactly one command",
+                  !SPSCRing_TryPop(&oms.submit_queues[exp[i].slot], &extra));
+        }
+
+        EventLoopState_Free(&state);
+        OrderManager_Shutdown(&oms);
+    }
+
     printf("\n--- v5.12.1.A.1: last_ws_tick_us field on EventLoopState ---\n");
     {
         // Phase A.1 of v5.12.1.A (Disconnect-flatten policy). Adds a

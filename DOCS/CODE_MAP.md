@@ -4,7 +4,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-06-13 (commit 8878155)
+**Last regenerated**: 2026-06-14 (commit 8878155)
 
 ## CoreFrameworks/
 

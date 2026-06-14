@@ -6257,12 +6257,14 @@ int main() {
                   (r2->state.oms->portfolio.active_bitmap & 0x1) != 0);
             check("snapshot re-activate: core[0].active == 1",
                   r2->cores[0].active == 1);
+            // H4 (.E.0.10 wfa-1 cohort-fold): Money_Eq, not the fabs double-bridge —
+            // exact at 8dp, strictly stronger (the A1 sibling below already does this).
             check("snapshot re-activate: core[0].live_tp == 60900",
-                  fabs(Money_ToDouble(r2->cores[0].live_tp) - 60900.0) < 1e-6);
+                  Money_Eq(r2->cores[0].live_tp, MQ(60900.0)));
             check("snapshot re-activate: core[0].live_sl == 59100",
-                  fabs(Money_ToDouble(r2->cores[0].live_sl) - 59100.0) < 1e-6);
+                  Money_Eq(r2->cores[0].live_sl, MQ(59100.0)));
             check("snapshot re-activate: core[0].entry_price == 60000",
-                  fabs(Money_ToDouble(r2->cores[0].entry_price) - 60000.0) < 1e-6);
+                  Money_Eq(r2->cores[0].entry_price, MQ(60000.0)));
             // Slot 1 has no position; core[1] should stay inactive
             check("snapshot re-activate: core[1].active stays 0 (no position)",
                   r2->cores[1].active == 0);
@@ -6340,6 +6342,162 @@ int main() {
                   !Money_Eq(r2->cores[0].live_tp, MQ(60480.0)));
             check("A1/MR: restored live_sl uses the per-node mr_sl_pct override (59400)",
                   Money_Eq(r2->cores[0].live_sl, MQ(59400.0)));
+            unlink(test_path);
+        }
+
+        // ---- wfa-1 (.E.0.10, TECH_DEBT-195): warm-restart EXIT-DISARM window ----
+        // Characterizes the homed disarm window: on a PAPER warm-restart,
+        // ShardedSnapshot_Load arms the POSITION side (active=1 / live_tp / live_sl,
+        // ShardedSnapshotPersist.hpp:669-673) but NEVER cached_params.flags. The hot
+        // exit predicate needs the enable bits: sg_fires_a = (tp_enabled & tp_hit) |
+        // (sl_enabled & sl_hit), tp_enabled/sl_enabled sourced from flags
+        // (ExecutionCore.hpp:348,413-414,431); can_exit_a = active & sg_fires_a (:477).
+        // flags is 0 at GateParameters_Init (GateParameters.hpp:218) and published ONLY
+        // by the slow-path ExecutionCore_SetParameters (:239), cadence-gated in
+        // EngineSharded/Run.hpp:1677-1685 (slow_path_interval = poll_interval @ :1642;
+        // last_seen_tick=0 @ :1659). So for ~slow_path_interval ticks after boot a
+        // restored position has active=1 + TP/SL set but flags==0 => sg_fires_a==0 =>
+        // it CANNOT exit by TP/SL.
+        //
+        // NON-VACUITY = THE PAIR (same core, same TP-hitting price 61000):
+        //   (a) warmup-disarm: tick BEFORE publish -> NO exit + active stays 1.
+        //   (b) armed-exit:    publish GATE_FLAG_TP/SL_ENABLED -> tick -> exactly one
+        //       EXIT fires + slot closes. (b) is the positive control: the SAME price
+        //       that did nothing in (a) exits once armed, proving (a)'s no-exit is
+        //       caused by flags==0 and nothing else. The seqlock cache-miss is
+        //       load-bearing (mirrors the idiom @ ~:17032): tick-1 cache-misses
+        //       (cached_seq=-1 vs slot seq=0) -> reads flags=0 (disarm); SetParameters
+        //       bumps slot seq 0->2; tick-2 cache-misses -> reads flags=0x03 (arm).
+        //
+        // ADV-REFUTE 2026-06-14: 3-I -> 3-A FULL fan-out (register § "wfa-1 PRE-CODING
+        // CASCADE"). A-class independently re-derived all goldens (zero corrections),
+        // confirmed the non-vacuity airtight (positive control rules out the wrong-reason
+        // set), and confirmed booked-P&L correctly OUT of scope (ExecutionCore_Tick only
+        // EMITS the event; booking is the drainer's DrainPostFill, frozen by oms-ts-1c/1d/1e).
+        //
+        // COVERAGE / FREEZE DISCLAIMER: FREEZES the INERT disarm window as it is at HEAD
+        // — it is a REAL bug (TECH_DEBT-195; the structural fix — publish armed flags at
+        // restore — rides .E.1), NOT a freeze of corrected behavior. The real window is
+        // ~slow_path_interval ticks (default 100), driven MANUALLY here (one pre-publish
+        // tick, one explicit publish, one post-publish tick). Single-leg / partials-OFF /
+        // PAPER (restore is !live_trading-gated, Run.hpp:982 -> LOW capital). No booking
+        // (the exit-EVENT only). ML scoped OUT (STRATEGY_SIMPLE_DIP; disarm is strategy-agnostic).
+        {
+            using namespace tt;  // engine symbols bare in this block (Tick / TradeEvent /
+                                 // GateParameters / GATE_FLAG_* / TRADE_EVENT_* / PARTIAL_LEG_A)
+            // Producer side: open TWO positions with DISTINCT TP/SL on slots 0 and 1
+            // (slot 1 = the H22 restore-routing witness: each core must restore ITS OWN
+            // saved values, not core 0's bleeding across).
+            auto* rp = build_state(2, 10000.0);
+            Portfolio_OpenSlot(&rp->state.oms->portfolio, 0,
+                MQ(60000.0), MQ(0.01), MQ(60900.0), MQ(59100.0), MQ(0.6));
+            Portfolio_OpenSlot(&rp->state.oms->portfolio, 1,
+                MQ(50000.0), MQ(0.01), MQ(50400.0), MQ(49500.0), MQ(0.5));
+            tt::ShardedSnapshot_Save<64>(&rp->state, test_path, 0);  // partials=0
+
+            // Warm-restart into a FRESH state (all cores zero-init: active=0, flags=0).
+            auto* r = build_state(2, 10000.0);
+            check("wfa-1 pre-restore: fresh core[0].active == 0", r->cores[0].active == 0);
+            check("wfa-1 pre-restore: fresh core[0].cached_params.flags == 0",
+                  r->cores[0].cached_params.flags == 0);
+
+            int loaded = tt::ShardedSnapshot_Load<64>(&r->state, test_path, 0);
+            check("wfa-1 restore: load succeeded", loaded == 1);
+
+            // ---- Restore write-set (the POSITION side that DID get armed) ----
+            check("wfa-1 restore: core[0].active == 1 (position side armed)",
+                  r->cores[0].active == 1);
+            check("wfa-1 restore: core[0].live_tp == 60900 (verbatim, cfg=nullptr path)",
+                  Money_Eq(r->cores[0].live_tp, MQ(60900.0)));
+            check("wfa-1 restore: core[0].live_sl == 59100",
+                  Money_Eq(r->cores[0].live_sl, MQ(59100.0)));
+            check("wfa-1 restore: core[0].entry_price == 60000",
+                  Money_Eq(r->cores[0].entry_price, MQ(60000.0)));
+            check("wfa-1 restore: core[0].active_b == 0 (single-leg, partials OFF)",
+                  r->cores[0].active_b == 0);
+            // THE LOAD-BEARING FACT — restore did NOT publish flags (TECH_DEBT-195 root):
+            check("wfa-1 restore: core[0].cached_params.flags STILL 0 (DISARMED — the bug)",
+                  r->cores[0].cached_params.flags == 0);
+
+            // ---- H22 restore-routing witness: each core got ITS OWN saved values ----
+            check("wfa-1 H22: core[1].active == 1 (slot-1 position restored)",
+                  r->cores[1].active == 1);
+            check("wfa-1 H22: core[1].live_tp == 50400 (core 1's OWN value)",
+                  Money_Eq(r->cores[1].live_tp, MQ(50400.0)));
+            check("wfa-1 H22: core[0].live_tp != core[1].live_tp (no cross-node bleed)",
+                  !Money_Eq(r->cores[0].live_tp, r->cores[1].live_tp));
+
+            // The price that crosses TP unambiguously: 61000 > live_tp 60900 (and ABOVE
+            // live_sl 59100, so SL can never be the actor). Reused identically in (b).
+            Tick<64> tp_hit{};
+            tp_hit.price     = MQ(61000.0);
+            tp_hit.volume    = MQ(1.0);
+            tp_hit.timestamp = 1;
+            tp_hit.sequence  = 1;
+
+            // ===== WITNESS (a) — warmup-disarm: TP-hitting tick BEFORE publishing flags =====
+            // EXPECTED-TO-INVERT @ .E.1 (the TECH_DEBT-195 fix publishes flags at restore):
+            // when the fix lands, this no-exit assertion FLIPS (the restored position WILL
+            // exit on tick 1) and MUST be re-derived to the fixed contract — NOT a guarantee.
+            ExecutionCore_Tick<64>(&r->cores[0], tp_hit);
+
+            int disarmed_exits = 0;
+            TradeEvent<64> ev;
+            while (SPSCRing_TryPop(&r->cores[0].event_ring, &ev)) {
+                if (ev.type == TRADE_EVENT_EXIT) disarmed_exits++;
+            }
+            check("wfa-1 (a) warmup-disarm: NO exit on TP-hitting tick (flags==0 disarms TP/SL)",
+                  disarmed_exits == 0);
+            check("wfa-1 (a) warmup-disarm: core[0].active STILL 1 (position not closed)",
+                  r->cores[0].active == 1);
+            // The tick RAN — cache-miss latched the disarmed pack (proves not a no-op):
+            check("wfa-1 (a) warmup-disarm: cached_params.flags still 0 after the tick",
+                  r->cores[0].cached_params.flags == 0);
+
+            // ===== Publish armed flags BETWEEN the two ticks (the non-vacuity hinge) =====
+            GateParameters<64> p;
+            GateParameters_Init(&p);
+            p.flags = GATE_FLAG_TP_ENABLED | GATE_FLAG_SL_ENABLED;  // 0x01 | 0x02
+            ExecutionCore_SetParameters(&r->cores[0], p);
+
+            // FIX-1 (mechanism witness): the publish reached the SLOT (seq 0->2) but the
+            // cache is STILL disarmed — the bug is a cache-publication LATENCY, so the arm
+            // only takes effect on the NEXT tick's cache-miss (not at publish time).
+            check("wfa-1 mechanism: param_slot.seq advanced to 2 (publish reached the slot)",
+                  r->cores[0].param_slot.seq.load(std::memory_order_acquire) == 2);
+            check("wfa-1 mechanism: cached_params.flags STILL 0 after publish (publish-alone "
+                  "inert; the tick-driven refresh is the arm)",
+                  r->cores[0].cached_params.flags == 0);
+
+            // ===== WITNESS (b) — armed-exit: SAME price, now armed => exactly one exit =====
+            Tick<64> tp_hit2 = tp_hit;
+            tp_hit2.timestamp = 2;
+            tp_hit2.sequence  = 2;
+            ExecutionCore_Tick<64>(&r->cores[0], tp_hit2);
+
+            int   armed_total = 0, armed_exits = 0, armed_entries = 0;
+            int   armed_exit_leg = -1;
+            Money armed_exit_price = MQ(0.0);
+            TradeEvent<64> evb;
+            while (SPSCRing_TryPop(&r->cores[0].event_ring, &evb)) {
+                armed_total++;
+                if (evb.type == TRADE_EVENT_EXIT) { armed_exits++; armed_exit_leg = evb.leg; armed_exit_price = evb.price; }
+                if (evb.type == TRADE_EVENT_ENTRY) armed_entries++;
+            }
+            check("wfa-1 (b) armed-exit: exactly 1 event after arming (same price as (a))",
+                  armed_total == 1);
+            check("wfa-1 (b) armed-exit: that event is exactly one EXIT (no ENTRY)",
+                  armed_exits == 1 && armed_entries == 0);
+            check("wfa-1 (b) armed-exit: exit is leg A (single-leg, partials OFF)",
+                  armed_exit_leg == PARTIAL_LEG_A);
+            check("wfa-1 (b) armed-exit: exit booked at the tick price 61000",
+                  Money_Eq(armed_exit_price, MQ(61000.0)));
+            check("wfa-1 (b) armed-exit: core[0].active cleared to 0 (slot closed)",
+                  r->cores[0].active == 0);
+            // The flags arrived via THIS tick's cache-miss (proves the arm, not luck):
+            check("wfa-1 (b) armed-exit: cached_params.flags now 0x03 (TP|SL — the inter-tick delta)",
+                  r->cores[0].cached_params.flags == (GATE_FLAG_TP_ENABLED | GATE_FLAG_SL_ENABLED));
+
             unlink(test_path);
         }
 

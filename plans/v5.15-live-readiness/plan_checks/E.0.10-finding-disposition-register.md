@@ -103,6 +103,31 @@ Operator-directed full-scale I-class shape-check of the remaining Net-1 targets 
 
 **Net write-plan: ALL 5 targets → WRITE** (wfa-1 flipped from defer). The adversarial-default + AR-11 earned a real behavior find (wfa-1) the I-class alone would have deferred. PENDING: operator go to write the 5 test-sets.
 
+## 🔬 wfa-1 PRE-CODING CASCADE (2026-06-14 — FULL 3-I → 3-A fan-out, M8-armed; engine HEAD 8878155)
+
+Operator-directed LITERAL 3-I → 3-A on wfa-1 (warm-restart exit-disarm window, TECH_DEBT-195). **Convergent verdict: design SOUND, READY-TO-WRITE with 5 hardening folds; NO REFUTE.** AR-11 clean — the 3 A-class verdicts (SOUND / SOUND-WITH-FIXES ×2) agree on the core, differ only in ADDITIVE hardening. Reinforces the handoff TL;DR: the I-class shape-check is convergent (3 I independently produced the same design); the **A-class is where multi-lens paid** (it found FIX-1 + the cohort-hygiene item the I-class alone missed — no overturn this time, unlike wfa-1's own Stage-1/2 where the A overturned the I's defer).
+
+**The design (3-I converged, code-grounded @ HEAD 8878155):** clone the restore fixture (`controller_test.cpp:6224-6271`) ⊕ the tick-drive+ring-drain idiom (`:17012-17052` / `:7892-7989`); `cfg=nullptr` (verbatim `live_tp=60900`/`live_sl=59100` from the saved Position — isolates the flags-disarm from the A1 cfg-recompute). Two witnesses, SAME core, SAME TP-hitting price (61000 > live_tp 60900 > live_sl 59100); the **flags-publish BETWEEN the two ticks IS the non-vacuity**:
+- **(a) warmup-disarm:** restore → `ExecutionCore_Tick(61000)` BEFORE publish → 0 `TRADE_EVENT_EXIT`, `active==1` (flags==0 ⇒ `tp_enabled=0` ⇒ `sg_fires_a=0` ⇒ `can_exit_a=0`; `ExecutionCore.hpp:413,431,477`).
+- **(b) armed-exit:** `ExecutionCore_SetParameters(flags=TP|SL)` → `Tick(61000)` → exactly 1 EXIT/leg-A/price==61000, `active==0` (`:609`).
+- **Load-bearing mechanic (all 3 I independently nailed): the seqlock cache-miss** — `cached_seq=-1` vs slot `seq=0` ⇒ tick-1 misses → loads flags=0 (disarm); `SetParameters` bumps `seq 0→2` ⇒ tick-2 misses → loads flags=0x03 (arm). Codebase documents the idiom @ `controller_test.cpp:17032-17052`.
+- **Booked-P&L OUT (I-class disagreement, RESOLVED by code-read + A-3):** `ExecutionCore_Tick` only PUSHES the exit event (`ExecutionCore.hpp:18` "NO P&L"); booking is the drainer's `DrainPostFill` (`ControllerEventLoop.hpp:1843,1949`), already frozen by oms-ts-1c/1d/1e. wfa-1 stops at the exit-EVENT (avoids the F-059 duplication trap).
+
+**Goldens:** A-2 independently re-derived all 13 to the code — **ZERO corrections** (live_tp/sl/entry from the cfg=nullptr path; `tp_hit=Money_Ge(61000,60900)=1`; `event.price=tick.price`; flags 0→0x03; enums TP=0x01/SL=0x02/EXIT=0x02/LEG_A=0). Severity bound PAPER-ONLY/LOW confirmed (`Run.hpp:982` gates restore behind `!live_trading`). Lens-3 posture (characterize-current-with-disclaimer) correct — the fix rides `.E.1`; witness (a) inverts on fix.
+
+**FOLDS before writing (all additive; none contradict):**
+1. **FIX-1 (MED, A-3) — pin the MECHANISM not just the outcome:** after publish, BEFORE tick (b), assert `cached_params.flags==0` STILL + `param_slot.seq==2` (proves the publish ALONE is inert; the tick-driven cache-refresh is the arm — a regression that eagerly-refreshed-on-publish would else pass silently).
+2. **H4 (LOW, A-2/A-3) — `Money_Eq`/`Money_IsZero` for ALL money asserts** (do NOT inherit the neighbor's `fabs(Money_ToDouble..)<1e-6` double-bridge).
+3. **FIX-2 (LOW, A-3) — body marker** `// EXPECTED-TO-INVERT @ .E.1 (TECH_DEBT-195 fix) — NOT a frozen guarantee` on witness (a).
+4. **FIX-3 (LOW, A-3) — the H22 sibling assert is near-vacuous** (`cores[1].active==0` is true at init): STRENGTHEN to a real restore-routing witness (open a 2nd position on slot 1 pre-save w/ DISTINCT TP/SL → assert each core got ITS values + the two `live_tp` differ) — mirrors the F-059 oms-ts-1c must-fix.
+5. **In-range double-witness (A-1):** keep restore-witness `live_tp==60900` in the same block immediately before tick (a) (pins (a)'s 0-exit is the disarm, not a later-drifted TP-miss).
+
+**🆕 NEW finding (cohort-hygiene, A-2/A-3) — `controller_test.cpp:6260-6265`** (the existing "snapshot re-activates" test wfa-1 clones) asserts `live_tp/live_sl/entry_price` via `fabs(Money_ToDouble(..)-X)<1e-6` — an **H4 double-bridge on a money assert** (the A1 sibling @ :6306+ already uses `Money_Eq`). **Disposition: FOLD-NOW** into the wfa-1 ship (opportunistic-closure — wfa-1 is the direct successor, ≈0 marginal cost; `feedback_opportunistic_tech_debt_closure`). Tighten to `Money_Eq` in the same commit. (Homed → not unhomed debt.)
+
+**Drift RECONCILED (A-2):** TECH_DEBT-195's `Run.hpp:1677-1685`/`poll_interval` cite is CORRECT — `slow_path_interval = (int)poll_interval` (`EngineSharded/Run.hpp:1642`), gate @ `:1677-1685` (`last_seen_tick=0` @ :1659). wfa-1 comment cites both sites. NO TECH_DEBT-195 edit needed.
+
+✅ **LANDED 2026-06-14** — wfa-1 written (`tests/controller_test.cpp` ~:6346, in the Phase-4 snapshot block): 23 checks (pre-restore baseline + restore write-set + H22 restore-routing witness [2nd position on slot 1, distinct TP/SL, no cross-node bleed] + witness-(a) warmup-disarm + the FIX-1 seqlock-mechanism witnesses [seq 0→2 + cache-stale-after-publish] + witness-(b) armed-exit). ALL 5 folds applied + the `:6260-6265` cohort-hygiene tighten (`fabs(Money_ToDouble..)` → `Money_Eq`). Suite **3520/0** (+23). ADV-marker gate OK; doc-sweep CLEAN. **The disarm window is CONFIRMED real** — witness-(a) GREEN means a restored position fired NO exit on a TP-hitting tick at `flags==0`; witness-(b) proves the arm. Engine UNTOUCHED (test-only). NOT yet committed (diff-before-commit; commits workspace-side per Landmine 10).
+
 ## Re-triage progress
 | batch | status |
 |---|---|

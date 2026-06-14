@@ -16392,6 +16392,50 @@ e3_skip_load:;
         check("A20: still 0 positions after the warm pass", Portfolio_CountActive(&oms.portfolio) == 0);
     }
 
+    printf("\n--- NEW-1 (.E.0.10): single capital-authority predicate (split-brain collapse) ---\n");
+    {
+        // NEW-1 — ControllerConfig_IsLiveCapital is THE single capital authority (trading_mode==LIVE);
+        // use_real_money is retired to a back-compat parse-alias (tombstone H21). RBP Class 47.
+        // ADV-REFUTE: the anti-vacuous MODE MATRIX — a fixture where use_real_money and trading_mode
+        // AGREE would hide every decoupling bug, so the cells deliberately VARY them (esp. the conflict).
+        using namespace tt;
+
+        // (a) the predicate directly — the 3 enum values map to capital-authority
+        ControllerConfig<64> c = ControllerConfig_Default<64>();
+        c.trading_mode = TRADING_MODE_PAPER;  check("NEW-1: IsLiveCapital(PAPER)  == false", !ControllerConfig_IsLiveCapital(c));
+        c.trading_mode = TRADING_MODE_LIVE;   check("NEW-1: IsLiveCapital(LIVE)   == true",   ControllerConfig_IsLiveCapital(c));
+        c.trading_mode = TRADING_MODE_SHADOW; check("NEW-1: IsLiveCapital(SHADOW) == false (capital-FALSE)", !ControllerConfig_IsLiveCapital(c));
+
+        // (b) the alias mode-matrix through the REAL parser (the divergence cells)
+        auto load_cfg = [](const char* body) -> ControllerConfig<64> {
+            FILE* f = fopen("/tmp/test_new1.cfg", "w");
+            fputs(body, f);
+            fclose(f);
+            ControllerConfig<64> cc = ControllerConfig_Load<64>("/tmp/test_new1.cfg");
+            remove("/tmp/test_new1.cfg");
+            return cc;
+        };
+        // promote: use_real_money=1, trading_mode unset -> LIVE (the mandatory migration case)
+        check("NEW-1: alias promote (urm=1, tm unset) -> LIVE",
+              ControllerConfig_IsLiveCapital(load_cfg("use_real_money=1\n")));
+        // conflict: urm=1 + explicit trading_mode=paper -> explicit WINS (PAPER; fail-safe, no live capital)
+        check("NEW-1: conflict (urm=1, tm=paper) -> explicit PAPER wins (fail-safe)",
+              !ControllerConfig_IsLiveCapital(load_cfg("use_real_money=1\ntrading_mode=paper\n")));
+        // order-independent: same conflict, reversed cfg line order -> still PAPER (post-loop resolution)
+        check("NEW-1: conflict order-independent (tm=paper before urm=1) -> PAPER",
+              !ControllerConfig_IsLiveCapital(load_cfg("trading_mode=paper\nuse_real_money=1\n")));
+        // ignored: urm=0 -> PAPER
+        check("NEW-1: alias ignore (urm=0) -> PAPER",
+              !ControllerConfig_IsLiveCapital(load_cfg("use_real_money=0\n")));
+        // direct: trading_mode=live (no urm) -> LIVE
+        check("NEW-1: direct trading_mode=live -> LIVE",
+              ControllerConfig_IsLiveCapital(load_cfg("trading_mode=live\n")));
+        // shadow: trading_mode=shadow -> NOT live capital; value preserved (==2, H21 append-only)
+        ControllerConfig<64> sh = load_cfg("trading_mode=shadow\n");
+        check("NEW-1: trading_mode=shadow -> NOT live capital", !ControllerConfig_IsLiveCapital(sh));
+        check("NEW-1: trading_mode=shadow value preserved (==2)", sh.trading_mode == TRADING_MODE_SHADOW);
+    }
+
     printf("\n--- EXTENSIBILITY: v5.11.3.C — Async log thread (drainer I/O isolation) ---\n");
     {
         // Theory: pre-v5.11.3.C, every OrderEventLog_Append on the drainer

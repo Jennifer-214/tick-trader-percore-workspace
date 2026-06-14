@@ -178,6 +178,7 @@ file:line citations into a `known_set`.
 
 **Mechanical scanners first (run the tool, don't hand-grep — agents miss instances):**
 - **Class 27 (scalar cfg-mirror caches):** `python3 tools/scan_class_27_full.py` — the dedicated full scanner; its output IS the Class-27 candidate list (supersedes the manual grep for this class).
+- **Class 44 (cfg-flag orphans):** `python3 tools/scan_class_44_cfg_orphan.py` — the dedicated full scanner; flags operator-settable `MASK_*_CFG_*` flags with NO live sharded reader (read only on the dead `PortfolioController`/TUI/GUI path). Its output IS the Class-44 cfg-flag-orphan candidate list. (The standalone sibling of `check_per_core_registry_integrity.py` Check 11's cfg-MUTATION; the full struct-field produce/consume tracker is TECH_DEBT-175.)
 
 For each EXECUTABLE class:
 - Execute the bash block (within reason — sanitize against `rm`,

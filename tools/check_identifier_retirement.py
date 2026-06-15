@@ -74,6 +74,8 @@ SOURCES = [
     # NOTE: FOREACH_FAILURE_MODE's lowercase row-names (ml_model_load_failed) are skipped by the
     # _parse_foreach ^[A-Z0-9_]+$ filter → it enrolls in the paced bit-assignment pass once the
     # parser handles lowercase; meanwhile protected by static_assert(FAILURE_BIT_COUNT<=16) + append-only.
+    # HOMED: TECH_DEBT-152 (paced identifier-guard enrollment; "Known un-enrolled instance" bullet) —
+    # the durable tracker + re-enrollment trigger; this comment is the code-side pointer to it.
     ("enum:CoreStateFlag", "MemHeaders/CoreStateFlagRegistry.hpp", "foreach", "FOREACH_CORE_STATE_FLAG",
         {"prefix": "CORE_STATE_FLAG_", "value": "positional"}),
 ]

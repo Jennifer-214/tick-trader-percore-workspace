@@ -811,6 +811,22 @@ TECH_DEBT-037 + -009 boolean-tail CLOSED.
 
 **Related:** D-220 (the SHALT-vs-degrade policy) + D-221 (the ingress reshape) in the `.E`-architecture-v2 decision log; TECH_DEBT-198 (label_*_pct 3-convention unit hazard) / -199 (SANE_MAX hard-cap-vs-configurable + bit-pack) / -201 (MLBuildContext MODEL_HEALTH bitmap consolidation); RBP Class 49; the A6 EGRESS half (`SHALT_BAD_PCT`, `GateParameters_FinalizeEmit`); the "Per-horizon TP/SL serving" surface above (the barrier values A6 guards); `single-source-of-truth-discipline.md` (the `barrier_is_corrupt` SSoT).
 
+### Blanket live-capital boot-gate — live trading REFUSED until the `.E`-series lands (v5.15.5.F.4d.1.E.0.10 / Phase-D)
+
+**What:** Until the `.E`-series live-readiness rework (per-node aggregator + reconciliation + the cross-thread torn-read closure) lands, the engine REFUSES to boot in live-capital mode. `LiveReadiness_Verify` carries a blanket REFUSE check (`check_live_capital_gated_until_e`, the first `FOREACH_LIVE_READINESS_CHECK` row) that FAILS whenever live capital is requested — routed through the single capital-authority predicate `ControllerConfig_IsLiveCapital` (RBP Class 47). Fail-safe by design: accidental live trading on the pre-`.E` engine is made impossible. paper + shadow boot normally (both capital-FALSE).
+
+**Cfg flags:** none new — keys off the existing `trading_mode` (`paper`|`live`|`shadow`). By design there is no way to set `trading_mode=live` and boot until v5.16.
+
+**Fallback:** none — a deliberate hard gate (`LR_SEV_REFUSE`). Boot stderr prints the reason + fix hint. Use `trading_mode=paper` (or `shadow`).
+
+**Where to verify:** `CoreFrameworks/LiveReadiness.hpp` (`check_live_capital_gated_until_e` + the `FOREACH_LIVE_READINESS_CHECK` row + the `H21 TOMBSTONE` comment). Boot a `trading_mode=live` cfg → `[live_readiness] LIVE REFUSE: live_capital_gated_until_e failed` + `LIVE REFUSED … engine will NOT start`. Tests: controller_test `.E.0.10 Phase-D` (live→refuse / paper+shadow→pass / count==10).
+
+**Paper-test sanity:** paper/shadow boot unaffected (the gate passes silently). A `live` cfg refuses at boot (`LiveReadiness_Verify` returns -1) BEFORE any order/adapter path.
+
+**Gotchas:** REMOVED at v5.16 when live-readiness lands (H21 tombstone; **TECH_DEBT-203**) — do NOT assume it's permanent, and do NOT silently leave it (it would block the intended go-live). Until then "live" is structurally unavailable — intentional, not a bug.
+
+**Related:** A6 corrupt-model SHALT (above — the other `.E.0.10` capital guard); NEW-1 `ControllerConfig_IsLiveCapital` (RBP Class 47, the predicate it routes through); the `.E.1` live-readiness completion; D-77/F-2 + D-168.
+
 ---
 
 ### Cfg-drift detection (v5.15.5.A.7 structural refactor)

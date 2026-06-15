@@ -129,6 +129,21 @@ Distribute, don't pile: each safeguard lives in the ship rewriting the surface i
 
 (Reconciliation, idempotency, crash-recovery, watchdog, etc. — each becomes a row with its tier + guard + status when its ship is dived.)
 
+### 4d. `.E.0.10` net hardening — the COMPLETE current guard set (filled at the `.E.0.10` close, 2026-06-15)
+
+The pre-`.E.1` Net-1 ship added these ENFORCED guards; recorded so the matrix measures the complete guard set the `.E.1` dive inherits (`feedback_guard_matrix_bounds_foundation_hardening`):
+
+| Safeguard | Tier | Guard | Status |
+|---|---|---|---|
+| A6 EGRESS — barrier range-validate at every gate-emit | 1+3 | `GateParameters_FinalizeEmit` single-dispatcher chokepoint (`SHALT_BAD_PCT`; range `[0,10000.0]` catches NaN/+Inf/neg; override-first-wins) — every dispatched strategy flows through it, a 7th auto-inherits + 12 char-tests | ENFORCED |
+| A6 INGRESS — corrupt-model detect → per-arm-drop → majority node-SHALT | 1+3 | `barrier_is_corrupt` SSoT (`BarrierValidation.hpp`) at `ezoo_set_per_arm_barrier` + `EnsembleZoo_FinalizeCorrupt` + `MODEL_CORRUPT` CoreState (bit 5) + `SHALT_MODEL_CORRUPT` + trainer-emit floor + char-tests | ENFORCED |
+| Class 44 — cfg-flag-orphan (operator-settable flag, no live reader) | 2 | `scan_class_44_cfg_orphan.py --strict` promoted to STANDING CI (`check_session_docs.sh` HARD 10) | ENFORCED |
+| Class 47 — split-brain control authority (NEW-1) | 1 | `ControllerConfig_IsLiveCapital` single-authority predicate → the 3 illegal cells UNREPRESENTABLE; every authorizer routes through it; legacy single_core LIVE hard-refused (H21) | ENFORCED (structural); CI detector = candidate |
+| Class 50 — re-init/reset defeats thread-join lifecycle | 3 (+2 cand) | quiesce-first `OrderEventLog_Init` + the dedicated Class-50 regression; the broader single-owner-`disk_file` + CI detector = `.E.1` SPSC rework | ENFORCED (instance) / PARTIAL (class → `.E.1`) |
+| TD-202 OMS event-log UAF (asan ship-gate) | 2+3 | quiesce-first `Init` fix; asan FRESH 3632/0 — and `run_sanitizer_suite.sh` now REBUILDS each lane from current source (anti-stale: the gate had graded months-old binaries) | ENFORCED |
+
+**STOP-condition verdict for `.E.1` entry:** the recorded HOLE cluster on the `.E.1`-touched surface is **§4a H7 / H10 / H14 / H20 + H8** (hot-path branchless · SIMD-fallback · bitfield · SP/HP dispatch · latency) — EXPLICITLY recorded + owned as `.E.1`'s **first-order matrix work** (grep-CI + the determinism gate + the latency ratchet, per §4a:110 + §3). These are deferred BY DESIGN, not overlooked: closing them before the rename would freeze hot-path behavior `.E.1` is about to reshape (two-foundations). **No *unrecorded* HOLE remains on the `.E.1` surface** (§4 completeness rule — every HOLE is a visible, owned to-do). `.E.1` enters with its hardening worklist explicit; the `.E.0.10` net is complete.
+
 ---
 
 ## 5. Rolling-window seam cadence — how the dives sequence

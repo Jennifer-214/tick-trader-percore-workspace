@@ -27222,8 +27222,8 @@ e3_skip_load:;
     }
     {
         // === Anchor 3: FOREACH_LIVE_READINESS_CHECK shape + helpers ===
-        check("v5.15.2.B.1: FOREACH_LIVE_READINESS_CHECK_COUNT == 9",
-              FOREACH_LIVE_READINESS_CHECK_COUNT == 9);
+        check("v5.15.5.E.0.10 Phase-D: FOREACH_LIVE_READINESS_CHECK_COUNT == 10 (added live_capital_gated_until_e)",
+              FOREACH_LIVE_READINESS_CHECK_COUNT == 10);
 
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
         tt::OrderManagerState<64> oms;
@@ -27263,6 +27263,21 @@ e3_skip_load:;
         const CoreModelZoo<64>* null_zoo = nullptr;
         check("v5.15.2.B.2: aggregate_zoo_drift(nullptr) returns 0",
               tt::aggregate_zoo_drift(null_zoo) == 0);
+
+        // .E.0.10 Phase-D — blanket live-capital boot gate (RBP Class 47 predicate; H21 tombstone @ v5.16).
+        // The gate REFUSES live capital at boot (the .E live-readiness rework isn't done); paper/shadow pass.
+        {
+            ControllerConfig<64> lc = ControllerConfig_Default<64>();
+            lc.trading_mode = TRADING_MODE_LIVE;
+            check(".E.0.10 Phase-D: check_live_capital_gated_until_e FAILS (refuses) in LIVE",
+                  !tt::check_live_capital_gated_until_e<64>(lc, state));
+            lc.trading_mode = TRADING_MODE_PAPER;
+            check(".E.0.10 Phase-D: check_live_capital_gated_until_e PASSES in PAPER",
+                  tt::check_live_capital_gated_until_e<64>(lc, state));
+            lc.trading_mode = TRADING_MODE_SHADOW;
+            check(".E.0.10 Phase-D: check_live_capital_gated_until_e PASSES in SHADOW (capital-FALSE)",
+                  tt::check_live_capital_gated_until_e<64>(lc, state));
+        }
 
         // LiveReadiness_Verify — paper mode never REFUSES (returns 0 even with failing checks)
         cfg.trading_mode = TRADING_MODE_PAPER;

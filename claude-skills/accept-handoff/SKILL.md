@@ -74,6 +74,7 @@ Extract:
 - TaskList table from Stage 1.5 capture (if present)
 - PENDING items list ("What's PENDING" sections)
 - WIP-checkpoint commits enumerated
+- **Post-write ADDENDUM / correction block** — any `## ⏩ Addendum` / "AFTER this handoff was written" / "post-write" / "CORRECTED" section. This is content authored AFTER the main body that **SUPERSEDES** parts of it (a corrected root cause, later captures, a status flip). **The body below such a block may be STALE relative to it; the addendum WINS on any conflict.** Extract it + ALWAYS surface it at Stage 8 — a post-write correction that sits loaded-but-unsurfaced is the exact "actionable info lost to the void" failure (the `.E.0.10` A6 handoff carried a corrected TECH_DEBT-202 root cause in an addendum while the original body's wrong mechanism remained below it). If the addendum names a specific superseded claim, cross-check the body for that claim + flag it stale in the report.
 
 ### Stage 3: Load required reading dynamically
 
@@ -258,6 +259,10 @@ Structured report:
 Handoff source: plans/<sprint>/handoffs/<filename>.md
 Handoff written: <date>
 Files loaded: <N> cited; <M> always-loaded baseline
+
+⏩ POST-WRITE CORRECTIONS (addendum block — surface FIRST; omit line if none):
+  <one line per superseding fact — e.g. "TD-202 root cause CORRECTED: the join is not missing, it's defeated by a test double-init; body's earlier 'never joined' phrasing is STALE">
+  ⚠️ The handoff body PREDATES these — the addendum WINS on any conflict. Read the corrections before trusting the body.
 
 Git state verification:
   ✅ Engine HEAD: <sha> (matches handoff)

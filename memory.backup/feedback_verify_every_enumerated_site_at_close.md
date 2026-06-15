@@ -4,7 +4,7 @@ description: "When a plan enumerates a SET of N sites/targets/items to change, v
 metadata: 
   node_type: memory
   type: feedback
-  sister_specs: [feedback_enumerate_set_before_categorical_claim.md, feedback_close_the_class_vs_migrate_every_site.md, feedback_sister_cohort_amendment_completeness.md, feedback_tag_disposition_at_fix_time.md]
+  sister_specs: [feedback_enumerate_set_before_categorical_claim.md, feedback_close_the_class_vs_migrate_every_site.md, feedback_sister_cohort_amendment_completeness.md, feedback_tag_disposition_at_fix_time.md, feedback_exhaustive_capture_and_verify_tracking.md]
   tags: [audit-methodology, framework-discipline, meta-discipline]
   originSessionId: af5dc697-3135-4283-8795-0b1a23cfc94c
 ---

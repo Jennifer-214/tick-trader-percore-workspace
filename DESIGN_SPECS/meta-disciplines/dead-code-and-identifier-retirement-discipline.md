@@ -80,6 +80,14 @@ wired) are exempt — delete and reuse freely.
 - `StrategyInterface.hpp:165`: *"IDs are append-only — never reorder or remove. Persisted snapshots and
   trade logs reference these by integer."* — the rule, written but (until now) unenforced.
 
+**Worked refinement — the NAME is the identifier, a non-persisted BIT is not (don't conflate name-tombstone with bit-freeze).** A bitmap-backed cfg flag carries TWO identifiers with DIFFERENT dispositions; conflating them (treating "retire the flag" as "freeze its bit forever") was made + operator-caught at the `.E.0.10` #9 cohort. Disentangle:
+- The **cfg name key** (`gate_ema_enabled`) is the persisted identity (operators have old `engine.cfg` on disk) → **IMMUTABLE — tombstone the name** (the parser drops/WARNs the retired key so an old cfg can't set a reclaimed bit via the old name; never reuse the name for a new meaning).
+- The **bit-index** (`0x02`) is a protected identifier ONLY IF the bitmap is persisted/wire (snapshot-saved as a raw byte, or raw-byte stamp/fingerprint-emitted). A **runtime-only** bit — reconstructed from a name-keyed cfg each boot — is NOT persisted → **reuse freely** (per the exemption above).
+
+The gate/risk/lifecycle cfg-flag bitmaps are runtime-only (verified `.E.0.10`: the sharded snapshot READS them to interpret layout but never SAVES the bitmap — it reconstructs from `engine.cfg`; the parser is name-keyed `strcmp`; only individual STAMP_BOUND fields like `barrier_gate_enabled` are wire-emitted, **by name**, not the raw byte). So **retirement = tombstone the NAME + RECLAIM the bit** — mark the row RETIRED **in place** (bit position UNCHANGED → no renumber, no churn to sibling bits/stamps/tests; extends the existing `DEPRECATED` soft-retire marker), and the next flag-add REUSES that slot (new name, same bit). Do NOT freeze the non-persisted bit (a permanently-wasted slot) and do NOT widen the bitmap (uint8→16) to dodge retirement — both violate the DOD minimum-footprint / bit-packing ideal; **reclaim before widen**. Single-binary architecture (per-core threads run ONE binary) ⇒ no heterogeneous-deploy bit-misread; the only cross-version surfaces are the name-keyed cfg + the name-keyed stamps, both NAME-protected — which is *why* the bit is free.
+
+**Caveats (the freeze still applies):** (1) a STAMP_BOUND flag's bit, or a genuinely snapshot-persisted raw bit, IS wire-visible → it freezes (reuse only at a deliberate epoch; this project's no-live-models makes epochs cheap). (2) Before reclaiming a SPECIFIC bit, verify it is not carried in a whole-byte cfg-fingerprint / train-serve-parity hash (if the parity hash digests the raw `gate_cfg_flags` byte rather than the named STAMP_BOUND fields, a reused bit can pass the hash with a different meaning — check, don't assume).
+
 ### Rule 3 — No reactivatable dead capital-path
 
 The dangerous subclass of Rule 1: a dead **strategy / order-gate / OMS / kill-switch / fill** path that

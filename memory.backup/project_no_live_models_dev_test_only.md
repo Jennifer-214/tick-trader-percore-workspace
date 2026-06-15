@@ -6,7 +6,7 @@ metadata:
   type: project
   tags: [wire-format, meta-discipline]
   originSessionId: 643c8e61-b2b6-4979-9bbc-299da09650b0
-  sister_specs: [feedback_backwards_compat_not_default_concern.md, feedback_golden_master_over_reimplemented_oracle.md, feedback_two_foundations_determinism_vs_correctness.md]
+  sister_specs: [feedback_backwards_compat_not_default_concern.md, feedback_golden_master_over_reimplemented_oracle.md, feedback_two_foundations_determinism_vs_correctness.md, feedback_tombstone_the_name_reclaim_the_nonpersisted_bit.md]
 ---
 
 FoxML_Trader_v2 has **no live/production models** and is not running capital. Every model/stamp/snapshot artifact on disk is a dev/test fixture from heavy iterative development (operator confirmed 2026-06-01, #11 numeric-foundation planning).

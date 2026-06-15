@@ -188,6 +188,21 @@ else
     RESULTS+=("  ⏭  HARD  index-currency (SKIP_INDEX_CURRENCY_CHECK=1)")
 fi
 
+# --- HARD 10: Class-44 cfg-flag-orphan regression guard (the #9 structural close) ---
+# Promotes scan_class_44_cfg_orphan.py to STANDING-CI (was SKILL-WIRED to /bug-check only). --strict
+# EXCLUDES the 5 KNOWN-PENDING cohort flags (A13/A14/A35/A36/A37 — shrinking as #9 closes) + runs the
+# oracle self-check, so it fires ONLY on a genuinely-NEW operator-settable MASK_*_CFG_* flag with no live
+# sharded reader → closes the Class-44 cfg-flag-orphan class structurally; the guard de-risks the paced
+# tombstone migration (feedback_close_the_class_vs_migrate_every_site). Scans engine source via the tool's
+# own resolver. HARD-appropriate (unlike the pre-existing-surfacing check_meta_registry): --strict's
+# KNOWN_COHORT baseline means it never fires on the known backlog, only on a regression.
+if [ "${SKIP_CFG_ORPHAN_CHECK:-0}" != "1" ]; then
+    run_hard "Class-44 cfg-flag-orphan (--strict: NEW orphan beyond the #9 cohort = fail)" \
+        python3 "$REPO_ROOT/tools/scan_class_44_cfg_orphan.py" --strict
+else
+    RESULTS+=("  ⏭  HARD  Class-44 cfg-flag-orphan (SKIP_CFG_ORPHAN_CHECK=1)")
+fi
+
 # --- ADVISORY: forward-promise (MED/LOW backlog expected) ---
 run_advisory "forward-promise audit (--since HEAD~5)" \
     python3 "$REPO_ROOT/tools/check_forward_promise_audit.py" --since HEAD~5

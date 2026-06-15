@@ -4,7 +4,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-06-14 (commit 8878155)
+**Last regenerated**: 2026-06-15 (commit 7d6a941)
 
 ## CoreFrameworks/
 
@@ -397,12 +397,13 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 - `Strategy_SpacingOk` — line 238
 - `Strategy_TpFloor` — line 257
-- `SimpleDip_BuildParameters` — line 342
-- `MeanReversion_BuildParameters` — line 422
-- `Momentum_BuildParameters` — line 494
-- `EmaCross_BuildParameters` — line 609
-- `ML_BuildParameters` — line 722
-- `Strategy_BuildParameters` — line 1637
+- `GateParameters_FinalizeEmit` — line 279
+- `SimpleDip_BuildParameters` — line 365
+- `MeanReversion_BuildParameters` — line 445
+- `Momentum_BuildParameters` — line 517
+- `EmaCross_BuildParameters` — line 632
+- `ML_BuildParameters` — line 745
+- `Strategy_BuildParameters` — line 1660
 
 ## Strategies/private/
 

@@ -1,7 +1,7 @@
 ---
 type: finding-disposition-register
 ship: v5.15.5.F.4d.1.E.0.10 (Net-1)
-status: IN-PROGRESS (Phase-1 re-triage; grows as findings are code-verified)
+status: CLOSED — `.E.0.10` SHIPPED 2026-06-15 (tag v5.15.5.F.4d.1.E.0.10; engine 572c978 + workspace 3c43458). Net-1 net + the capital-backlog burn-down + A6 (egress+ingress) + the 4 durable-now fixes (NEW-1/A20/A21/A17) + TD-202 + Phase-D all landed. Deferred items are `.E.1`-homed (the cross-thread torn-read class + the single-owner-disk_file event-log rework + the Reset race + recovery-integrity). The register stays the queryable disposition record for the `.E.1` dive.
 source_corpus: plan_checks/E.0-audit-reports/pre-implementation-findings/ (141 findings) + DOCS/tech-debt/open.md (93) + DOCS/PARITY_ISSUES.md (5 open)
 disposition_legend: "CLOSED-by-<ship> | OPEN | NEW (post-Ship-B) | SUPERSEDED | PENDING-RETRIAGE | MOOT-UNREACHABLE (real-in-code but the trigger is structurally unreachable + a larger failure is already in play if it ever fires → pin the guarantee, don't patch; REQUIRES code-demonstrated unreachability, NOT a vibe — feedback_moot_unreachable_disposition)"
 verification_rule: "disposition flips ONLY on a code grep/READ-of-context — never a token-count, never an assumption (the fpmem lesson: USE_NATIVE_128 showed 8 refs but was inert)."

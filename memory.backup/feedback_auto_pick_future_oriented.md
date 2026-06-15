@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: ffe2a54a-a6de-4e19-903c-9879fc9a21e8
-  sister_specs: [feedback_new_plans_use_future_oriented_template.md]
+  sister_specs: [feedback_new_plans_use_future_oriented_template.md, feedback_fix_toward_future_trajectory_not_static_state.md]
   tags: [planning-discipline, scope-discipline, operator-collaboration]
 ---
 

@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   tags: [scope-discipline, operator-collaboration]
-  sister_specs: [feedback_no_defer_for_effort.md, feedback_future_headache_vs_optimization_scope_framework.md, feedback_close_the_class_vs_migrate_every_site.md, feedback_design_once_maintain_forever.md, project_e_series_is_vision_convergence_not_scope_balloon.md, feedback_guards_compound_enforcement_is_leverage.md, feedback_deferral_reasons_merit_not_effort_or_context.md, feedback_close_out_now_over_defer_when_small.md, feedback_fold_findings_into_destination_plan.md, feedback_no_unhomed_debt_code_smell.md]
+  sister_specs: [feedback_no_defer_for_effort.md, feedback_future_headache_vs_optimization_scope_framework.md, feedback_close_the_class_vs_migrate_every_site.md, feedback_design_once_maintain_forever.md, project_e_series_is_vision_convergence_not_scope_balloon.md, feedback_guards_compound_enforcement_is_leverage.md, feedback_deferral_reasons_merit_not_effort_or_context.md, feedback_close_out_now_over_defer_when_small.md, feedback_fold_findings_into_destination_plan.md, feedback_no_unhomed_debt_code_smell.md, feedback_single_source_of_truth_discipline.md]
   originSessionId: 404732ed-f74c-4c1d-a12d-3dad513c1be2
 ---
 

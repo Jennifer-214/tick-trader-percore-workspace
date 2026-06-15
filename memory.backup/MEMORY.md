@@ -44,6 +44,7 @@
 - [Don't ship MVP for plumbing/refactor work](feedback_no_mvp_for_plumbing_only_for_unknown_unknowns.md) — MVP is for genuinely-new features with external deps only
 - [Don't measure structural work by LOC](feedback_dont_measure_structural_work_by_loc.md) — lead with classes closed + patterns codified; LOC incidental
 - [Auto-pick future-oriented option when trade-off clear](feedback_auto_pick_future_oriented.md) — don't punt clear decisions; escalate only when future-vs-now sharp OR ambiguous
+- [Fix toward the future trajectory](feedback_fix_toward_future_trajectory_not_static_state.md) — forward-compatible foundation increment, not a static-state patch; subagents carry the lens
 - [Audit canonical sister before proposing new framework infra](feedback_audit_canonical_sister_before_new_infra.md) — grep for sisters first; EXTEND if ≥50% overlap + same consumer behavior
 - [Plans introducing new registries cite sister inspection](feedback_plans_cite_sister_registry_inspection.md) — plan body MUST include a "Canonical sister registries considered" section; ship-blocker if missing
 - [New plans use future-oriented plan template](feedback_new_plans_use_future_oriented_template.md) — canonical template at `DESIGN_SPECS/plan-templates/future-oriented-plan-template.md`

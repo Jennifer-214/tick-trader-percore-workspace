@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: e94ec146-0520-406c-aacf-edaef169f6f2
-  sister_specs: [feedback_adversarial_framing_default_for_checks.md, feedback_enumerate_set_before_categorical_claim.md, feedback_framework_layer_payoff_diminishing_returns.md, feedback_overengineering_boundary_when_future_easier.md, feedback_tombstone_the_name_reclaim_the_nonpersisted_bit.md]
+  sister_specs: [feedback_adversarial_framing_default_for_checks.md, feedback_enumerate_set_before_categorical_claim.md, feedback_framework_layer_payoff_diminishing_returns.md, feedback_overengineering_boundary_when_future_easier.md, feedback_tombstone_the_name_reclaim_the_nonpersisted_bit.md, feedback_fix_toward_future_trajectory_not_static_state.md]
   tags: []
 ---
 

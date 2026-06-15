@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: b95e8b66-07b9-4970-ade6-d4cac233848d
-  sister_specs: [feedback_adversarial_framing_default_for_checks.md, feedback_auto_route_input_to_matching_skill.md, feedback_capture_and_check_are_model_bounded.md, feedback_passing_test_is_not_verification.md, feedback_structure_judgment_loop_not_output.md, feedback_a_class_i_class_fanout_vocab.md]
+  sister_specs: [feedback_adversarial_framing_default_for_checks.md, feedback_auto_route_input_to_matching_skill.md, feedback_capture_and_check_are_model_bounded.md, feedback_passing_test_is_not_verification.md, feedback_structure_judgment_loop_not_output.md, feedback_a_class_i_class_fanout_vocab.md, feedback_v_class_post_implementation_verification.md]
   tags: []
 ---
 

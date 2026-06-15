@@ -224,6 +224,7 @@ the subagent will need. Reads at invocation time (NOT cached):
 | `plans/<sprint>/subplans/*-dependency-graph.md` (when present) | Surface-ownership + cross-ship invariants — the completeness-lens surface set |
 | `plans/<sprint>/plan_checks/**/CANONICAL-FINDINGS.md` + live disposition register (when present) | Already-found/dispositioned set — agents hunt NEW, not re-find known |
 | `plans/<sprint>/E-guard-coverage-matrix.md` + `tests/INVARIANTS_MAP.md` | Enforcement-tier per invariant — feeds the heavy/light decision + the "is it enforced?" lens |
+| `plans/_future/*` trajectory docs + the destination plan + `DESIGN_SPECS/meta-disciplines/fix-toward-future-trajectory-not-static-state.md` | The DOCUMENTED-DESTINATION lens — each agent evaluates whether a proposed fix is a forward-compatible foundation increment toward where the surface is GOING vs a static-state patch the rework discards (`feedback_fix_toward_future_trajectory_not_static_state`) |
 
 ### Stage 2.5 — Deterministic pre-gate (mechanize-down; runs BEFORE any LLM agent) [NEW `.E.0.2`]
 
@@ -263,6 +264,7 @@ CONTEXT:
   - Dependency-graph DAG `plans/<sprint>/subplans/*-dependency-graph.md` (when it exists) — the authoritative "what does this surface touch" + cross-ship-invariant rows; the COMPLETENESS lens (Stage 3.5) measures against this, not the plan headline.
   - Findings-index `plans/<sprint>/plan_checks/**/CANONICAL-FINDINGS.md` + the live disposition register (when they exist) — what's already found/dispositioned, so the agent hunts NEW + knows the open set, not re-finds known.
   - Guard-coverage matrix `plans/<sprint>/E-guard-coverage-matrix.md` + `tests/INVARIANTS_MAP.md` — for the "is this invariant actually ENFORCED (which tier)?" lens.
+  - **Documented-trajectory docs** (`plans/_future/*` + the destination plan + `DESIGN_SPECS/meta-disciplines/fix-toward-future-trajectory-not-static-state.md`) — measure each proposed fix against where the surface is GOING: a forward-compatible foundation increment (land it) vs a static-state patch the rework would discard (flag it). Per `feedback_fix_toward_future_trajectory_not_static_state` — the destination is documented, so "are we patching a static state or laying a foundation?" is a mechanical audit question, not an after-the-fact catch.
 - Date: <YYYY-MM-DD>
 
 The user is Caramel (she/her); reports persist for her review.

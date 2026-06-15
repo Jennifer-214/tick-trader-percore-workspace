@@ -4,7 +4,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-06-15 (commit 7d6a941)
+**Last regenerated**: 2026-06-15 (commit 3ee95dc)
 
 ## CoreFrameworks/
 
@@ -61,20 +61,20 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `EventLoop_UpdateRollingStateOneCore` — line 2167
 - `EventLoop_UpdateEmaPriceAllCores` — line 2210
 - `EventLoop_RebuildOneCore` — line 2229
-- `EventLoop_PushParameters` — line 3158
-- `EventLoopState_ConfigureKillSwitch` — line 3193
-- `EventLoop_ClearAllPermissions` — line 3203
-- `EventLoop_KillSwitchTrip` — line 3214
-- `EventLoop_KillSwitchEvaluate` — line 3243
-- `EventLoop_TimeExitOneCore` — line 3317
-- `EventLoop_FlattenAll` — line 3412
-- `EventLoop_CheckWsStaleness` — line 3496
-- `EventLoop_TryClearRecovery` — line 3575
-- `EventLoop_TrailingSLRatchetOneCore` — line 3618
-- `EventLoop_BreakevenOnProfitOneCore` — line 3697
-- `EventLoop_Unpause` — line 3741
-- `EventLoop_SlowPath` — line 3765
-- `EventLoop_RunController` — line 3790
+- `EventLoop_PushParameters` — line 3159
+- `EventLoopState_ConfigureKillSwitch` — line 3194
+- `EventLoop_ClearAllPermissions` — line 3204
+- `EventLoop_KillSwitchTrip` — line 3215
+- `EventLoop_KillSwitchEvaluate` — line 3244
+- `EventLoop_TimeExitOneCore` — line 3318
+- `EventLoop_FlattenAll` — line 3413
+- `EventLoop_CheckWsStaleness` — line 3497
+- `EventLoop_TryClearRecovery` — line 3576
+- `EventLoop_TrailingSLRatchetOneCore` — line 3619
+- `EventLoop_BreakevenOnProfitOneCore` — line 3698
+- `EventLoop_Unpause` — line 3742
+- `EventLoop_SlowPath` — line 3766
+- `EventLoop_RunController` — line 3791
 
 ### CoreLatencyStats.hpp
 
@@ -90,8 +90,8 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `EngineCommon_ApplyBnbDiscount` — line 154
 - `EngineCommon_BootGlobal` — line 183
 - `EngineCommon_BootPerCore` — line 235
-- `EngineCommon_SlowPathCycleOneCore` — line 476
-- `EngineCommon_SlowPathCycleAllCores` — line 806
+- `EngineCommon_SlowPathCycleOneCore` — line 488
+- `EngineCommon_SlowPathCycleAllCores` — line 818
 
 ### EnsembleHotSwap.hpp
 
@@ -395,15 +395,16 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### StrategyParameters.hpp
 
-- `Strategy_SpacingOk` — line 238
-- `Strategy_TpFloor` — line 257
-- `GateParameters_FinalizeEmit` — line 279
-- `SimpleDip_BuildParameters` — line 365
-- `MeanReversion_BuildParameters` — line 445
-- `Momentum_BuildParameters` — line 517
-- `EmaCross_BuildParameters` — line 632
-- `ML_BuildParameters` — line 745
-- `Strategy_BuildParameters` — line 1660
+- `Strategy_SpacingOk` — line 239
+- `Strategy_TpFloor` — line 258
+- `GateEgress_MaxPct` — line 282 — FinalizeEmit's range-validate AND the leg-B tp_pct_b clamp below (the A-class leg-B leak fix).
+- `GateParameters_FinalizeEmit` — line 285
+- `SimpleDip_BuildParameters` — line 371
+- `MeanReversion_BuildParameters` — line 451
+- `Momentum_BuildParameters` — line 523
+- `EmaCross_BuildParameters` — line 638
+- `ML_BuildParameters` — line 751
+- `Strategy_BuildParameters` — line 1666
 
 ## Strategies/private/
 
@@ -747,44 +748,45 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### CoreModelZoo.hpp
 
-- `CoreModelZoo_Init` — line 102
-- `CoreModelZoo_TryLoadRole` — line 123
-- `CoreModelZoo_LoadFromDir` — line 578
-- `CoreModelZoo_LoadLegacy` — line 670
-- `CoreModelZoo_Free` — line 681
-- `CoreModelZoo_HasAny` — line 691
-- `CoreModelZoo_VerifyExpected` — line 719 — features in the pack, model crashes or produces garbage.
-- `EnsembleModelZoo_Init` — line 1129
-- `EnsembleModelZoo_EnsurePrimary` — line 1221
-- `EnsembleModelZoo_RecordPrediction` — line 1263
-- `EnsembleModelZoo_UpdateDrift` — line 1292
-- `EnsembleModelZoo_TickRewardsFromLookback` — line 1345
-- `EnsembleModelZoo_TradeCloseReward` — line 1429
-- `EnsembleModelZoo_InitBandits` — line 1493
-- `EnsembleModelZoo_InitExitBandits` — line 1541
-- `EnsembleModelZoo_InitBuyThompsonBandits` — line 1596
-- `EnsembleModelZoo_InitExitThompsonBandits` — line 1648
-- `EnsembleModelZoo_SetDisabledHorizons` — line 1690
-- `EnsembleModelZoo_Free` — line 1718
-- `EnsembleModelZoo_LoadFromCfg` — line 1752
-- `EnsembleZoo_VerifyGridMemberConsistency` — line 2012
-- `EnsembleModelZoo_AutoDetectFromDir` — line 2082
-- `EnsembleModelZoo_ComputeBundleId` — line 2225
-- `EnsembleModelZoo_SaveBanditState` — line 2250
-- `EnsembleModelZoo_SaveExitBanditState` — line 2272
-- `EnsembleModelZoo_LoadBanditState` — line 2296
-- `EnsembleModelZoo_LoadExitBanditState` — line 2327
-- `EnsembleModelZoo_SaveThompsonState` — line 2370
-- `EnsembleModelZoo_SaveExitThompsonState` — line 2459
-- `EnsembleModelZoo_LoadThompsonState` — line 2542
-- `EnsembleModelZoo_LoadExitThompsonState` — line 2676
-- `EnsembleModelZoo_LoadBanditStateFromPath` — line 2805
-- `EnsembleModelZoo_SetBanditSaveInterval` — line 2832
-- `EnsembleModelZoo_MaybeSaveBanditPeriodic` — line 2850
-- `EnsembleModelZoo_PostLoadSetup` — line 2970
-- `EnsembleModelZoo_IsReadyForInference` — line 2989
-- `CoreModelZoo_PostLoadSetup` — line 3030
-- `CoreModelZoo_CheckStaleModel` — line 3063
+- `CoreModelZoo_Init` — line 103
+- `CoreModelZoo_TryLoadRole` — line 124
+- `CoreModelZoo_LoadFromDir` — line 579
+- `CoreModelZoo_LoadLegacy` — line 671
+- `CoreModelZoo_Free` — line 682
+- `CoreModelZoo_HasAny` — line 692
+- `CoreModelZoo_VerifyExpected` — line 720 — features in the pack, model crashes or produces garbage.
+- `EnsembleZoo_FinalizeCorrupt` — line 1155
+- `EnsembleModelZoo_Init` — line 1165
+- `EnsembleModelZoo_EnsurePrimary` — line 1258
+- `EnsembleModelZoo_RecordPrediction` — line 1300
+- `EnsembleModelZoo_UpdateDrift` — line 1329
+- `EnsembleModelZoo_TickRewardsFromLookback` — line 1382
+- `EnsembleModelZoo_TradeCloseReward` — line 1466
+- `EnsembleModelZoo_InitBandits` — line 1530
+- `EnsembleModelZoo_InitExitBandits` — line 1578
+- `EnsembleModelZoo_InitBuyThompsonBandits` — line 1633
+- `EnsembleModelZoo_InitExitThompsonBandits` — line 1685
+- `EnsembleModelZoo_SetDisabledHorizons` — line 1727
+- `EnsembleModelZoo_Free` — line 1755
+- `EnsembleModelZoo_LoadFromCfg` — line 1789
+- `EnsembleZoo_VerifyGridMemberConsistency` — line 2049
+- `EnsembleModelZoo_AutoDetectFromDir` — line 2119
+- `EnsembleModelZoo_ComputeBundleId` — line 2262
+- `EnsembleModelZoo_SaveBanditState` — line 2287
+- `EnsembleModelZoo_SaveExitBanditState` — line 2309
+- `EnsembleModelZoo_LoadBanditState` — line 2333
+- `EnsembleModelZoo_LoadExitBanditState` — line 2364
+- `EnsembleModelZoo_SaveThompsonState` — line 2407
+- `EnsembleModelZoo_SaveExitThompsonState` — line 2496
+- `EnsembleModelZoo_LoadThompsonState` — line 2579
+- `EnsembleModelZoo_LoadExitThompsonState` — line 2713
+- `EnsembleModelZoo_LoadBanditStateFromPath` — line 2842
+- `EnsembleModelZoo_SetBanditSaveInterval` — line 2869
+- `EnsembleModelZoo_MaybeSaveBanditPeriodic` — line 2887
+- `EnsembleModelZoo_PostLoadSetup` — line 3007
+- `EnsembleModelZoo_IsReadyForInference` — line 3026
+- `CoreModelZoo_PostLoadSetup` — line 3067
+- `CoreModelZoo_CheckStaleModel` — line 3100
 
 ### CostModel.hpp
 
@@ -897,7 +899,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### PerArmFlagRegistry.hpp
 
-- `PerArmFlag_ToString` — line 148 — diagnostic panels.
+- `PerArmFlag_ToString` — line 149 — diagnostic panels.
 
 ### RewardTracker.hpp
 
@@ -936,7 +938,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### StampHelper.hpp
 
-- `Stamp_AssembleAndEmit` — line 143
+- `Stamp_AssembleAndEmit` — line 144
 
 ### ThompsonBandit.hpp
 

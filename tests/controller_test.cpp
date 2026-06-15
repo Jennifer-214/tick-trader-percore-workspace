@@ -26454,7 +26454,15 @@ e3_skip_load:;
             auto* oms = new tt::OrderManagerState<64>();
             tt::ExchangeAdapter<64> adapter{};
             tt::OrderManager_Init(oms, adapter, /*live*/0, /*partials*/0, MQ(10000.0));
-            tt::OrderEventLog_Init(&oms->event_log);   // mode 0 leaves the log uninitialized; the test reads the fee slot
+            // (.E.0.10 TD-202) OrderManager_Init starts the async event-log writer (OMS_INIT
+            // Layer 5) even in mode 0. This test reads `entries[count-1]` IMMEDIATELY after each
+            // HandleFill, which requires Append to be SYNCHRONOUS — so quiesce the writer here.
+            // The prior code re-inited the log instead (`OrderEventLog_Init`, with a false "mode 0
+            // leaves the log uninitialized" comment): that clobbered writer_thread_active=0 under
+            // the LIVE writer → Free's guarded join no-opped → heap-UAF at `delete`. StopAsyncWriter
+            // is the correct way to get a synchronous log — it stop+joins the writer (no ring re-init,
+            // no UAF). When (b)/.E.1 gates the writer-start to live-only, this becomes a harmless no-op.
+            tt::OrderEventLog_StopAsyncWriter(&oms->event_log);
             ::PerCoreCfg<64> cc{};
             cc.fee_rate_taker = MQ(0.001);    // 0.1% computed-rule rate (bind picks taker for MARKET)
             cc.fee_rate_maker = MQ(0.001);
@@ -26489,6 +26497,28 @@ e3_skip_load:;
                   fee_c.v == MQ(0.10).v);
             tt::OrderEventLog_Free(&oms->event_log);
             delete oms;
+        }
+
+        // ===== .E.0.10 TD-202 / RBP Class 50: re-Init on a live-writer log must be safe (quiesce-first) =====
+        {
+            // Pins the OrderEventLog_Init quiesce-first guard. WITHOUT it, re-initing a log whose
+            // async writer is running clobbers writer_thread_active=0 under the live thread → the
+            // later Free's guarded join no-ops → heap-use-after-free on async_ring (the exact
+            // Ship-B P3 double-init bug above; ASan-caught). This block goes RED (UAF under ASan)
+            // on a revert of the guard. (NB: the re-Init re-mmaps entries[] = one bounded leak,
+            // the .E.1 fully-idempotent-Init item; the harness runs detect_leaks per its norm.)
+            tt::OrderEventLog<64> log{};
+            tt::OrderEventLog_Init(&log);
+            check("Class 50: fresh Init leaves the writer inactive",
+                  log.writer_thread_active.load() == 0);
+            int started = tt::OrderEventLog_StartAsyncWriter(&log);
+            check("Class 50: async writer is live before re-Init",
+                  started == 1 && log.writer_thread_active.load() == 1);
+            // RE-INIT on the live-writer log: the guard must Stop+join the writer FIRST.
+            tt::OrderEventLog_Init(&log);
+            check("Class 50: re-Init quiesced the live writer (joined; flag cleared; no UAF)",
+                  log.writer_thread_active.load() == 0);
+            tt::OrderEventLog_Free(&log);   // clean teardown — no live writer → join no-ops
         }
 
         // ===== Ship-B P4: lot_max_qty clamp via the quantizer (D-175 ratified pick) =====

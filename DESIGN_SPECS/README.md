@@ -184,7 +184,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md` | 3-first-canonical | doc-discipline, structural-fix, pattern-codification, +1 | 6 |
 | `DESIGN_SPECS/doc-disciplines/module-scoped-claude-md-pattern.md` | 2-draft | doc-discipline, framework-discipline, context-aware-loading | 2 |
 
-## meta-discipline (26 specs)
+## meta-discipline (27 specs)
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
@@ -197,6 +197,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/meta-disciplines/dead-code-and-identifier-retirement-discipline.md` | 5-claude-md | meta-discipline, structural-fix, framework-discipline, +1 | 4 |
 | `DESIGN_SPECS/meta-disciplines/doc-frontmatter-convention.md` | 3-first-canonical | doc-discipline, meta-discipline, framework-discipline | 3 |
 | `DESIGN_SPECS/meta-disciplines/doc-tag-vocabulary.md` | 3-first-canonical | doc-discipline, meta-discipline, framework-discipline | 3 |
+| `DESIGN_SPECS/meta-disciplines/fix-toward-future-trajectory-not-static-state.md` | 2-draft | audit-methodology, design-discipline, future-oriented, +1 | 3 |
 | `DESIGN_SPECS/meta-disciplines/gui-deprecation-decision-rationale.md` | 3-first-canonical | meta-discipline, gui-deprecation, power-user-design, +1 | 0 |
 | `DESIGN_SPECS/meta-disciplines/handoff-active-state-machine.md` | 3-first-canonical | handoff, workflow, doc-discipline, +3 | 3 |
 | `DESIGN_SPECS/meta-disciplines/headless-engine-viewer-split-pattern.md` | 3-first-canonical | meta-discipline, headless-service, viewer-split, +2 | 0 |

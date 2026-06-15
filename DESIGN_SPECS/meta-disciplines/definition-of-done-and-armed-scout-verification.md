@@ -9,6 +9,7 @@ sister_specs:
   - adversarial-multi-agent-audit-methodology.md
   - implementation-layer-blindspot-taxonomy.md
   - structural-enforcement-when-memory-insufficient.md
+  - post-implementation-verification-v-class.md
 canonical_instance: v5.15.5.F.4d.1.E.0.10 A25 close — F1 AUTO-core bug + stale trackers + untested A28 rode to "closed"; the armed deep-check caught them
 registry_id: M8
 ---

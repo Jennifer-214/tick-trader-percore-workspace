@@ -118,7 +118,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/feature-patterns/runtime-toggleable-bench-gate-pattern.md` | 3-first-canonical | latency-discipline, framework-discipline | 1 |
 | `DESIGN_SPECS/feature-patterns/shadow-load-state-transition-pattern.md` | 3-first-canonical | framework-discipline, structural-fix, concurrency | 1 |
 
-## audit-methodology (6 specs)
+## audit-methodology (7 specs)
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
@@ -128,6 +128,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/audit-methodologies/audit-report-format.md` | 2-draft | audit-methodology, doc-discipline, framework-discipline | 4 |
 | `DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md` | 3-first-canonical | audit-methodology, meta-discipline, framework-discipline | 2 |
 | `DESIGN_SPECS/audit-methodologies/characterization-test-discipline.md` | 3-first-canonical | audit-methodology, test-discipline, capital-safety, +1 | 2 |
+| `DESIGN_SPECS/audit-methodologies/post-implementation-verification-v-class.md` | 2-draft | audit-methodology, verification, sanitizers, +3 | 3 |
 
 ## data-discipline (13 specs)
 

@@ -778,6 +778,41 @@ TECH_DEBT-037 + -009 boolean-tail CLOSED.
 
 ---
 
+### Corrupt-model detection + per-node majority-SHALT (v5.15.5.F.4d.1.E.0.10 / A6 INGRESS)
+
+**What:** A model whose serving barrier is CORRUPT — `label_tp_pct`/`label_sl_pct` that is NaN, +Inf, negative, or beyond a sane percentage cap — is DETECTED AT LOAD and refused per-arm. A single corrupt arm in an ensemble is DROPPED (the node trades on the survivors); when a MAJORITY of arms are corrupt the whole node SHALTs (refuses to open new positions) and raises a sticky "model: CORRUPT — RETRAIN" health alert. This is DISTINCT from a MISSING model (no artifact on disk → degrades to SimpleDip): a corrupt artifact is more alarming than an absent one (it implies tampering or a broken trainer), so the response is refuse-to-trade + retrain, NOT a silent strategy swap. A trainer-emit floor refuses to STAMP a corrupt model in the first place (the upstream sister to the load-time refuse). The A6 EGRESS half (prior) clamps a corrupt barrier at emit-time + `SHALT_BAD_PCT`; the INGRESS half (this entry) detects + refuses + surfaces at load.
+
+**Cfg flags:**
+- `model_corrupt_shalt_ratio` (FPN_Binary<F>, KIND_DOUBLE; default **0.5** = simple majority; range [0,1]; "Drift Acknowledgments" group; WARN_ON_CLAMP) — the corrupt-arm fraction at/above which the node SHALTs. 0.5 = "more than half the arms corrupt → refuse." Set lower to SHALT sooner (more conservative); 1.0 = SHALT only when ALL arms corrupt. `CoreFrameworks/CfgFieldRegistry.hpp`.
+- No per-core override (global cfg). The per-arm DROP is unconditional (always drops a poisoned arm regardless of the ratio).
+
+**Fallback:** Single corrupt arm → that arm disabled (unioned into `disabled_horizon_mask`); node trades the survivors. Majority corrupt → whole-node SHALT (every cycle emits BUY_BLOCKED for that core via the egress veto path; existing positions NOT force-closed — block-new-only). Fully-corrupt single-zoo (non-ensemble) model → SHALT. Trainer floor → a corrupt stamp write returns `ok=0` (the model never reaches an engine).
+
+**Where to verify:**
+- CoreState bit `MODEL_CORRUPT` (bit 5; `MASK_CORE_STATE_MODEL_CORRUPT`) — distinct from `MODEL_LOAD_FAILED` (bit 2, the missing-model path).
+- SHALT code `SHALT_MODEL_CORRUPT` (=19) on the blocked gate.
+- Failure mode `ml_model_corrupt` (SEV_RED) → `GUI/MLStatusPanel.hpp` red "model: CORRUPT — RETRAIN" banner (rendered before the load_failed branch).
+- Per-arm bitmap `corrupt_arms_mask` on `EnsembleModelZoo<F>` (set in `ezoo_set_per_arm_barrier`, `CoreModelZoo.hpp`); the majority verdict in `EnsembleZoo_FinalizeCorrupt<F>` (called at boot in `EngineCommon.hpp` + at hot-swap in `EngineSharded/Run.hpp`).
+- The SSoT predicate `tt::barrier_is_corrupt(tp,sl)` (`ML_Headers/BarrierValidation.hpp`) — ONE function called by the load validate, the trainer floor (`StampHelper.hpp`), AND the char-tests.
+- The snapshot surfaces `ml_model_corrupt` whenever ANY arm is corrupt (`ShardedSnapshot.hpp`), even sub-majority (a single dropped arm stays operator-visible before it escalates to a SHALT).
+
+**Paper-test sanity:**
+1. Train an ensemble (multi-horizon labels); confirm it loads + trades normally.
+2. Hand-corrupt ONE arm's `label_tp_pct` in the stamp to `nan` (or a value > 10.0) → reload → observe the arm-drop (the `corrupt_arms_mask` bit + the `ml_model_corrupt` health surface) but the node STILL trades on the survivors.
+3. Corrupt a MAJORITY of arms (> `model_corrupt_shalt_ratio` × n_arms) → reload → observe the node SHALT (BUY_BLOCKED every cycle) + the sticky red "RETRAIN" banner.
+4. Try to STAMP a corrupt model from the trainer → observe the emit floor refuses (`ok=0` + WARN), so the corrupt artifact never lands.
+
+**Gotchas:**
+- SANE caps are SEPARATE per side + are PERCENTAGES (fractions), NOT prices: `BARRIER_SANE_MAX_SL = 1.0` (100% — a stop beyond your whole stake is nonsense), `BARRIER_SANE_MAX_TP = 10.0` (1000% — generous, asymmetric on purpose). Equity-agnostic: BTC over $100k is irrelevant; the barrier is a percentage of the position, not a price.
+- `0.0` is a LEGITIMATE barrier value, NOT corrupt (the predicate rejects `< 0`, not `<= 0`).
+- `< 0` ALONE misses NaN/+Inf (they round-trip the stamp via `%.6g` / `parse_double_fast`) — the predicate uses `!isfinite || < 0 || > cap`.
+- The load validate + the trainer floor call the SAME `barrier_is_corrupt` predicate (no parallel reimplementation → they CANNOT drift; this two-seam-one-predicate guarantee is the SSoT — guard it: a future edit must not fork the predicate). This is why there is NO train↔serve PARITY entry — the surface is parity-safe-by-construction.
+- Block-new-only: a SHALT refuses to OPEN; it does not force-close existing positions (a single position per node makes this low-risk).
+
+**Related:** D-220 (the SHALT-vs-degrade policy) + D-221 (the ingress reshape) in the `.E`-architecture-v2 decision log; TECH_DEBT-198 (label_*_pct 3-convention unit hazard) / -199 (SANE_MAX hard-cap-vs-configurable + bit-pack) / -201 (MLBuildContext MODEL_HEALTH bitmap consolidation); RBP Class 49; the A6 EGRESS half (`SHALT_BAD_PCT`, `GateParameters_FinalizeEmit`); the "Per-horizon TP/SL serving" surface above (the barrier values A6 guards); `single-source-of-truth-discipline.md` (the `barrier_is_corrupt` SSoT).
+
+---
+
 ### Cfg-drift detection (v5.15.5.A.7 structural refactor)
 
 **What:** Stamp ↔ cfg drift detection via FOREACH_CFG_DRIFT_CHECK

@@ -5,7 +5,7 @@ version: 1.0
 established: 2026-06-10
 tags: [audit-methodology, meta-discipline, framework-discipline]
 surface: [hot-path, slow-path, live-trading]
-sister_specs: [audit-driven-pre-coding-gate.md, characterization-test-discipline.md]
+sister_specs: [audit-driven-pre-coding-gate.md, characterization-test-discipline.md, post-implementation-verification-v-class.md]
 applies_at_skills: [/handoff, /accept-handoff, /precoding-audit-gate, /trace-deps, /dependency-chain-trace, /bug-check, /dod-audit, /accounting-audit, /hft-audit, /ml-audit, /blindspot-scan, /registry-fit-audit, /second-opinion, /merge-scan, /parity-check, /plan-check, /plan-dive, /finding-analyzer]
 ---
 

@@ -12,7 +12,7 @@ applies_at_skills: [/merge-scan, /bug-check, /anti-spaghetti, /dod-audit]
 # Single Source of Truth discipline
 
 **Established:** 2026-05-27 (v5.15.5.F.4d.1.B.6 Phase B Decision H merge of `drain_manual_closes` LIVE + NO-OP into single function; codified at ship close as canonical first-application Stage 3)
-**Status:** Stage 3 FIRST CANONICAL v1.0 — first canonical application at `.B.6` Decision H; promotes to Stage 4 cohort when ≥2 additional canonical applications surface
+**Status:** Stage 3 FIRST CANONICAL v1.0 — first canonical application at `.B.6` Decision H; promotes to Stage 4 cohort when ≥2 additional canonical applications surface. **2nd application: the A6 `barrier_is_corrupt` predicate-SSoT (`.E.0.10`, 2026-06-15 — Worked example 2 below) = 1 of the 2 additional needed for Stage 4.**
 
 ---
 
@@ -115,6 +115,18 @@ void drain_manual_closes(/* args */) {
 **Outcome:** 1 function with build-flag-gated body vs 2 functions with identical signatures. SSoT win at the function-identity layer.
 
 **Generalization:** When a build flag / runtime flag selects between alternate IMPLEMENTATIONS of the same CONCEPT, the SSoT shape is single function with conditional body. The shape is wrong when the build flag selects between fundamentally different CONCEPTS — that's where separate functions are justified (per "When to keep separate" above).
+
+---
+
+## Worked example 2 — the `barrier_is_corrupt` predicate-SSoT (A6 corrupt-model guard @ v5.15.5.F.4d.1.E.0.10)
+
+**Surface:** the A6 capital-guard needs the SAME "is this serving barrier corrupt?" judgment at THREE sites — the trainer-emit floor (refuse to STAMP a corrupt model, `ML_Headers/StampHelper.hpp`), the load-time validate (drop/refuse a corrupt arm, `ML_Headers/CoreModelZoo.hpp`), and the char-tests (`tests/controller_test.cpp`).
+
+**The SSoT shape:** ONE predicate — `tt::barrier_is_corrupt(tp_pct, sl_pct)` (`ML_Headers/BarrierValidation.hpp`): `!isfinite || < 0 || > cap`, with the sane caps as named constants (`BARRIER_SANE_MAX_SL` / `BARRIER_SANE_MAX_TP`). All three sites call it; none reimplements the check.
+
+**Why it matters here (the silent drift the SSoT prevents):** a corruptness predicate spread across producer + consumer + test is a textbook mirror class — if the trainer's notion of "corrupt" drifts from the loader's (someone tightens the cap at one site, adds the `isfinite` check at another), a model the trainer considers clean could be rejected at load, or — worse — a model the loader trusts could have been emitted under a looser trainer rule. Because the check is a CAPITAL GUARD (it decides whether a node trades), the drift is silent (compiles + tests pass) and the consequence is a wrong trade-or-refuse. One predicate = the producer, the consumer, and the test provably agree on "corrupt."
+
+**The shape generalized:** a BOOLEAN PREDICATE (a validity / corruptness / eligibility judgment) shared by a producer seam + a consumer seam + the test is the SSoT shape for VALIDATION LOGIC. The merge mechanism is a single `inline bool` in a shared header (no registry needed — one function, not a data table). Distinct from `single-authority-predicate-for-mode-gating.md` (that's the Class-47 capital-AUTHORITY predicate — one source of "are we live?"); this is a VALIDATION predicate — one source of "is this input corrupt?" They share the family insight: a judgment consumed at N sites is an SSoT candidate, and a CAPITAL-BEARING judgment consumed at N sites is an SSoT MANDATE.
 
 ---
 

@@ -81,6 +81,16 @@ else
     RESULTS+=("  ⏭  HARD  doc-metadata bidirectional (SKIP_BIDIR_CHECK=1)")
 fi
 
+# --- HARD 1b: DESIGN_SPECS index currency (README/TAG_INDEX/CLAUDE-skill-table regenerated after a spec add) ---
+# Closes the gap where a spec is added but rebuild_doc_indexes.py isn't re-run → the index drifts
+# (the .E.1.0-s2 close: 2 new specs unindexed; the operator caught it, not the sweep). --check writes nothing.
+if [ "${SKIP_INDEX_CURRENCY:-0}" != "1" ]; then
+    run_hard "DESIGN_SPECS index currency (README/TAG_INDEX vs rebuild --check)" \
+        python3 "$REPO_ROOT/tools/rebuild_doc_indexes.py" --check
+else
+    RESULTS+=("  ⏭  HARD  DESIGN_SPECS index currency (SKIP_INDEX_CURRENCY=1)")
+fi
+
 # --- HARD 2: B-Plus plan-body symbol existence (the citation-error catcher) ---
 if [ "${SKIP_PLAN_BODY_CHECK:-0}" != "1" ]; then
     B_PLUS="$REPO_ROOT/tools/check_plan_body_symbol_existence.py"

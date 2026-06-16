@@ -257,10 +257,21 @@ def gen_tag_index(specs, skills, memories=None):
     return "\n".join(lines)
 
 
+def _read(path):
+    try:
+        with open(path, encoding="utf-8") as f:
+            return f.read()
+    except OSError:
+        return None
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--target", choices=["claude-md", "readme", "tag-index", "all"], default="all")
     p.add_argument("--dry-run", action="store_true")
+    p.add_argument("--check", action="store_true",
+                   help="CURRENCY GUARD: exit 1 if any index is STALE (a regen would change it); "
+                        "writes nothing. Closes the gap where a spec is added but the index isn't rebuilt.")
     args = p.parse_args()
 
     skills = collect_skills()
@@ -268,10 +279,15 @@ def main():
     memories = collect_memories()
     print(f"Loaded {len(skills)} skills + {len(specs)} DESIGN_SPECS + {len(memories)} memories")
 
+    stale = []  # populated only in --check mode
+
     if args.target in ("claude-md", "all"):
         ok, result = update_claude_md_skill_table(skills)
         if not ok:
             print(f"ERROR: {result}", file=sys.stderr)
+        elif args.check:
+            if result != _read(CLAUDE_MD):
+                stale.append("CLAUDE.md skill suite table")
         elif args.dry_run:
             print("\n=== CLAUDE.md skill suite (proposed) ===")
             print(gen_skill_suite_table(skills))
@@ -283,7 +299,10 @@ def main():
     if args.target in ("readme", "all"):
         readme_content = gen_design_specs_readme(specs)
         readme_path = SPECS_DIR / "README.md"
-        if args.dry_run:
+        if args.check:
+            if readme_content != _read(readme_path):
+                stale.append("DESIGN_SPECS/README.md")
+        elif args.dry_run:
             print("\n=== DESIGN_SPECS/README.md (first 60 lines) ===")
             print("\n".join(readme_content.split("\n")[:60]))
         else:
@@ -294,13 +313,24 @@ def main():
     if args.target in ("tag-index", "all"):
         tag_content = gen_tag_index(specs, skills, memories)
         tag_path = SPECS_DIR / "TAG_INDEX.md"
-        if args.dry_run:
+        if args.check:
+            if tag_content != _read(tag_path):
+                stale.append("DESIGN_SPECS/TAG_INDEX.md")
+        elif args.dry_run:
             print("\n=== TAG_INDEX.md (first 50 lines) ===")
             print("\n".join(tag_content.split("\n")[:50]))
         else:
             with open(tag_path, "w", encoding="utf-8") as f:
                 f.write(tag_content)
             print(f"Wrote {tag_path}")
+
+    if args.check:
+        if stale:
+            print("STALE — out of date (run `python3 tools/rebuild_doc_indexes.py` to fix): "
+                  + ", ".join(stale), file=sys.stderr)
+            return 1
+        print("✅ indexes current")
+        return 0
 
     return 0
 

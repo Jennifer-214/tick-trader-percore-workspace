@@ -36,6 +36,18 @@ _DIMENSIONS = {
     "memories/skills → index": re.compile(r'\bmemor|\bskill|MEMORY\.md|\bindexed\b', re.I),
 }
 _PLACEHOLDER = re.compile(r'\bTODO\b|\bTBD\b|\bFIXME\b|\bXXX\b|<\.\.\.>', re.I)
+# Tasks → snapshot (checked over the WHOLE handoff — the task table is its OWN section,
+# not inside capture-completeness): a `| #N | … |` table (so pending tasks survive the
+# /accept-handoff pickup — /handoff Stage 1.5 serializes the TaskList verbatim), OR a
+# recreate-the-tasklist instruction, OR an explicit "no open tasks". Closes the exact bypass
+# this session hit: a HAND-WRITTEN handoff (one not composed via /handoff) omitted the
+# TaskList table → tasks #3/#7 would have silently dropped at pickup; the guard didn't catch
+# it because it only checked the 3 capture dimensions, not the task snapshot (M7).
+_TASK_SNAPSHOT = re.compile(
+    r'\|\s*#?\d+\s*\|'
+    r'|recreate\s+(the\s+)?tasklist'
+    r'|tasklist\s+(snapshot|state\s+at\s+handoff|table)'
+    r'|no\s+(open|pending|in-flight)\s+tasks', re.I)
 
 
 def _active_handoff(root):
@@ -90,11 +102,17 @@ def check_handoff(path):
                         + " — each must be enumerated OR explicitly 'none this session'.")
     if _PLACEHOLDER.search(body):
         problems.append("contains a placeholder (TODO/TBD/<...>) — finish the capture verification.")
+    if not _TASK_SNAPSHOT.search(text):
+        problems.append("NO TaskList snapshot — embed the TaskList (a `| #N | … |` table, per "
+                        "/handoff Stage 1.5) so pending tasks survive /accept-handoff pickup, "
+                        "OR state 'no open tasks'.")
     return (not problems), problems
 
 
 def _selftest():
-    GOOD = ("---\nstatus: active\n---\n# H\n## Capture-completeness (this session — nothing lost)\n"
+    GOOD = ("---\nstatus: active\n---\n# H\n"
+            "## TaskList state at handoff write\n| #1 | build X | pending |\n"
+            "## Capture-completeness (this session — nothing lost)\n"
             "- **Decisions → log:** D-227 added (the reshape).\n"
             "- **Findings → ledger:** TECH_DEBT-204 (the .githooks gap) homed.\n"
             "- **Memories/skills → indexed:** no new memories this session.\n"
@@ -103,9 +121,14 @@ def _selftest():
     BAD_THIN = "---\nstatus: active\n---\n# H\n## Capture-completeness\n- nothing\n## Next\n"
     BAD_PLACEHOLDER = ("---\nstatus: active\n---\n# H\n## Capture-completeness\n"
                        "- Decisions → log: TODO\n- Findings → ledger: TECH_DEBT\n- Memories indexed\n## Next\n")
+    # A full capture section but NO TaskList snapshot — the exact hand-written-bypass this session hit.
+    BAD_NOTASKS = ("---\nstatus: active\n---\n# H\n## Capture-completeness (nothing lost)\n"
+                   "- **Decisions → log:** D-227.\n- **Findings → ledger:** homed to the register.\n"
+                   "- **Memories/skills → indexed:** none this session.\n## Next\n")
     fails = []
     for name, text, want in [("GOOD", GOOD, True), ("BAD-missing", BAD_MISSING, False),
-                             ("BAD-thin", BAD_THIN, False), ("BAD-placeholder", BAD_PLACEHOLDER, False)]:
+                             ("BAD-thin", BAD_THIN, False), ("BAD-placeholder", BAD_PLACEHOLDER, False),
+                             ("BAD-notasks", BAD_NOTASKS, False)]:
         fd, p = tempfile.mkstemp(suffix=".md"); os.close(fd)
         try:
             with open(p, "w") as f:

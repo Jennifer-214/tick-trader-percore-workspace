@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 991d2019-7ac3-46ff-8414-5debd216cb7a
-  sister_specs: [feedback_capture_and_check_are_model_bounded.md, feedback_document_as_you_go_over_catch_at_end.md, feedback_run_doc_ci_tools_first_never_hand_verify.md, feedback_tag_disposition_at_fix_time.md, feedback_verify_every_enumerated_site_at_close.md]
+  sister_specs: [feedback_capture_and_check_are_model_bounded.md, feedback_document_as_you_go_over_catch_at_end.md, feedback_run_doc_ci_tools_first_never_hand_verify.md, feedback_tag_disposition_at_fix_time.md, feedback_verify_every_enumerated_site_at_close.md, feedback_invoke_composable_skills_dont_hand_execute.md]
   tags: []
 ---
 

@@ -95,11 +95,11 @@ Distribute, don't pile: each safeguard lives in the ship rewriting the surface i
 | H7 | hot path branchless | 1/3 | LATENCY_PROFILING; discipline | **PARTIAL → likely HOLE** |
 | H8 | hot p99 ≤500ns; slow ≤100μs | 2 (CI gate) | `LATENCY_BENCH` exists; gate? | **PARTIAL → latency ratchet (`.E.1`)** |
 | H9 | wire byte-preservation (HMAC bodies) | 2/3 | `parity_harness.cpp` + check tools | ENFORCED/PARTIAL |
-| H10 | SIMD scalar fallback byte-identical | 2/3 | — | **HOLE → determinism gate** |
+| H10 | SIMD scalar fallback byte-identical | 2/3 | `check_h10_simd_determinism.sh` (REAL kernel AVX-512 vs `-mno-avx512f` scalar memcmp; `check_determinism.sh` gate 4 + pre-commit Check F; non-vacuity asserted) | **ENFORCED** (`.E.1.0`) |
 | H11 | constant-iter branchless reductions | 1/3 | discipline | TBD |
 | H12 | explicit padding in byte-equiv structs | 1 (static_assert) | — | TBD |
 | H13 | no reinterpret_cast punning; `tt::` dispatch | 1/2 | type-trait; grep candidate | **PARTIAL** |
-| H14 | no C++ bitfield syntax | 2 (grep CI) | — | **HOLE → grep CI** |
+| H14 | no C++ bitfield syntax | 2 (grep CI) | `check_h14_no_bitfield.py` (pre-commit Check M; decidable, 0 hits, teeth-proven) | **ENFORCED** (`.E.1.0`) |
 | H15 | every X-macro registry in FOREACH_REGISTRY | 2 | `test_meta_registry_coverage` | ENFORCED |
 | H16 | metadata bit → derived filter | 2 | `test_metadata_bit_to_derived_filter_coverage` | ENFORCED |
 | H17 | cfg fields auto-gen from FOREACH_CFG_FIELD | 2 | CI Check 2 | ENFORCED |

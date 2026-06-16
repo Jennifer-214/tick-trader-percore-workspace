@@ -19,9 +19,13 @@
 
 | Tool | Disposition | Invoked by | Spec | Purpose |
 |---|---|---|---|---|
-| `check_determinism.sh` | STANDING-CI | pre-commit (Check F); umbrella | ✓ | `.E.0.1` determinism-net umbrella (runs the FP + locale gates) |
+| `check_determinism.sh` | STANDING-CI | pre-commit (Check F); `run_all_tests.sh`; umbrella | ✓ | `.E.0.1` determinism-net umbrella (runs the FP + locale + `.E.1.0` H10-SIMD gates) |
 | `check_fp_determinism.sh` | STANDING-CI | `check_determinism.sh` | — | `.E.0.1` FP-determinism gate |
 | `check_locale_determinism.sh` | STANDING-CI | `check_determinism.sh` | ✓ | `.E.0.1` locale-determinism guard |
+| `check_h10_simd_determinism.sh` | STANDING-CI | `check_determinism.sh` (gate 4); pre-commit (Check F) | — | `.E.1.0` H10 gate — compiles the REAL AVX-512 kernel `RidgeBlender_BuildCorr` two ways (`-march=skylake-avx512` vs `-mno-avx512f` scalar `#else`) + memcmps; ASSERTS the `__AVX512F__` split so it can't go scalar-vs-scalar (non-vacuous). Harness: `h10_kernel_harness.cpp` |
+| `check_h10_simd_determinism_selftest.sh` | TEST-HARNESS | test runner; manual | — | negative selftest for `check_h10` (teeth) — a 1e-12 kernel perturbation MUST be caught + AVX==scalar holds on the real unperturbed run |
+| `check_h14_no_bitfield.py` | STANDING-CI | pre-commit (Check M) | — | `.E.1.0` H14 gate — no C++ bitfield syntax (`name : N`); decidable RED gate, 0 hits today; comment/string/ternary/label-safe (statement-boundary match + keyword blocklist). Check M calls it directly; a grep-CI aggregator script lands when H7/H20 joins (≥2 gates) |
+| `test_check_h14_no_bitfield.py` | TEST-HARNESS | test runner; manual | — | negative selftest for `check_h14` (teeth) — 7 bitfield forms detected, 17 look-alikes (ternaries incl. multi-line, labels, enum-bases, ctor-inits, comments) correctly ignored |
 | `run_sanitizer_suite.sh` | STANDING-CI | ship acceptance (operator / `/ship`) | — | pinned-run-conditions sanitizer gate: `ulimit -s unlimited` + `detect_leaks=0` with documented WHY (TECH_DEBT-161; A.5 found the gate depended on ambient shell state) |
 | `run_sanitizer_suite_selftest.sh` | TEST-HARNESS | test runner; manual | — | negative self-test for `run_sanitizer_suite.sh`: RED-on-failing-lane + `[FAIL]`-line surfaced + GREEN-on-pass + RED-on-missing-lane (hermetic stub lanes via `FOXML_SUITE_ROOT`; stubs beside tools, NOT /tmp — noexec-hardened hosts) |
 | `run_all_tests.sh` | ONE-OFF-MANUAL | operator + `.E.0.10` fix-ship verification (could be `/ship`-wired) | ✓ (`--selftest`) | UNIFIED test runner — COMPOSES `build.sh test` (C++ suite) + `check_session_docs.sh` (doc/plan CI umbrella) + `calls_graph_diff.sh` (orphan) + `run_sanitizer_suite.sh` (under `--full`) → ONE green/red; "running the tests verifies everything" (TECH_DEBT-176 / D-201). Composes the canonical runners — does NOT reimplement them (Class-21 avoidance) |

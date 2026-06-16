@@ -1,0 +1,32 @@
+# tools/lib/sharded_files.txt
+# ───────────────────────────────────────────────────────────────────────────
+# SSoT for the hot/sharded entrypoint file list (the per-core trading-flow path).
+# One repo-relative path per line; full-line "#" comments + blank lines ignored.
+#
+# Consumers LOAD this, never copy it (.E.1.0 must-fix #1 — closes the Class-18
+# mirror an inline copy would create):
+#   - tools/calls_graph_diff.sh            (orphaned-after-migration check)
+#   - the .E.1.0 H7/H20 branchless advisory (shares the same hot-path file set)
+#   - later .E latency / determinism gates
+# Single source so adding a sharded file (e.g. NodeState.hpp / ClusterState.hpp at
+# .E.1.2) updates every consumer at once.
+#
+# Load (bash):   mapfile -t SHARDED_FILES < <(grep -vE '^[[:space:]]*(#|$)' tools/lib/sharded_files.txt)
+# Load (python): [l.split('#',1)[0].strip() for l in open(p) if l.strip() and not l.lstrip().startswith('#')]
+# ───────────────────────────────────────────────────────────────────────────
+
+# shared BootPerCore/SlowPathCycle helpers (.B.4); was MISSING -> Regime_Init read
+# as a false orphan -> rc=1 (.E.0.6 fix; caught by the independent ship-verifier)
+CoreFrameworks/EngineCommon.hpp
+CoreFrameworks/ControllerEventLoop.hpp
+# post-.B.6 INDEX shim (96 LOC); sub-files below
+CoreFrameworks/EngineSharded.hpp
+# v5.15.5.F.4d.1.B.6 subfolder split (Boot added .B.7 per F2 fix)
+CoreFrameworks/EngineSharded/Boot.hpp
+CoreFrameworks/EngineSharded/SlowPath.hpp
+CoreFrameworks/EngineSharded/Async.hpp
+CoreFrameworks/EngineSharded/Run.hpp
+CoreFrameworks/ShardedBacktestDriver.hpp
+Strategies/StrategyParameters.hpp
+# v5.4.0+ per-core dispatch
+Strategies/StrategyLifecycle.hpp

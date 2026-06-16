@@ -20,18 +20,16 @@ REPO_ROOT="${FOXML_ENGINE:-$(cd "$(dirname "$0")/.." && pwd)}"
 cd "$REPO_ROOT"
 
 LEGACY_FILE="CoreFrameworks/PortfolioController.hpp"
-SHARDED_FILES=(
-    "CoreFrameworks/EngineCommon.hpp"                 # shared BootPerCore/SlowPathCycle helpers (.B.4); was MISSING -> Regime_Init read as a false orphan -> rc=1 (.E.0.6 fix; caught by independent ship-verifier)
-    "CoreFrameworks/ControllerEventLoop.hpp"
-    "CoreFrameworks/EngineSharded.hpp"                # post-`.B.6` INDEX shim (96 LOC); sub-files below
-    "CoreFrameworks/EngineSharded/Boot.hpp"           # v5.15.5.F.4d.1.B.6 subfolder split (added .B.7 per F2 fix)
-    "CoreFrameworks/EngineSharded/SlowPath.hpp"       # v5.15.5.F.4d.1.B.6 subfolder split
-    "CoreFrameworks/EngineSharded/Async.hpp"          # v5.15.5.F.4d.1.B.6 subfolder split
-    "CoreFrameworks/EngineSharded/Run.hpp"            # v5.15.5.F.4d.1.B.6 subfolder split
-    "CoreFrameworks/ShardedBacktestDriver.hpp"
-    "Strategies/StrategyParameters.hpp"
-    "Strategies/StrategyLifecycle.hpp"  # v5.4.0+ per-core dispatch
-)
+# Hot/sharded entrypoint file list — SSoT at tools/lib/sharded_files.txt (LOADED, not
+# inlined, so the .E.1.0 H7/H20 branchless advisory + later .E latency/determinism
+# gates share ONE list; .E.1.0 must-fix #1 — closes the Class-18 mirror an inline
+# copy would create as .E.1.2 adds NodeState/ClusterState).
+mapfile -t SHARDED_FILES < <(grep -vE '^[[:space:]]*(#|$)' "$REPO_ROOT/tools/lib/sharded_files.txt")
+if [[ ${#SHARDED_FILES[@]} -eq 0 ]]; then
+    echo "[calls-graph-diff] FATAL: tools/lib/sharded_files.txt missing or empty — cannot run the orphan check (exit 2, NOT a finding)." >&2
+    echo "  It is the hot/sharded file SSoT every .E gate loads; restore it before trusting this guard." >&2
+    exit 2
+fi
 
 # v5.8.0: X-macro registry files. Functions named in FOREACH_*(X) entries
 # are invoked via macro expansion in the dispatchers — the textual call

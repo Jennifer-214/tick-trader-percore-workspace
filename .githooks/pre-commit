@@ -216,7 +216,7 @@ fi
 # ============================================================================
 if [ "${SKIP_DETERMINISM_CHECK:-0}" != "1" ]; then
     DET_TOOL="$REPO_ROOT/tools/check_determinism.sh"
-    STAGED_DET=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^(FixedPoint/|Backtest/BacktestEngine\.hpp|DataStream/(DepthReplayState|TickRecorder|DepthRecorder)\.hpp|CoreFrameworks/ParseFast\.hpp|main\.cpp|foxml_suite\.cpp|tools/(compare_scalers|fp_determinism_golden|replay_locale_gate)\.|GUI/(GuiThread|StrategyQualityPanel)\.hpp|tools/check_(fp_determinism|locale_determinism|determinism)\.sh)' || true)
+    STAGED_DET=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^(FixedPoint/|Backtest/BacktestEngine\.hpp|DataStream/(DepthReplayState|TickRecorder|DepthRecorder)\.hpp|CoreFrameworks/ParseFast\.hpp|main\.cpp|foxml_suite\.cpp|tools/(compare_scalers|fp_determinism_golden|replay_locale_gate)\.|GUI/(GuiThread|StrategyQualityPanel)\.hpp|tools/check_(fp_determinism|locale_determinism|determinism)\.sh|ML_Headers/(RidgeBlender|BanditLearning)\.hpp|tools/(check_h10_simd_determinism\.sh|h10_kernel_harness\.cpp))' || true)
     if [ -n "$STAGED_DET" ] && [ -x "$DET_TOOL" ]; then
         echo "[pre-commit] Check F: determinism net (staged FP/parse/locale change detected)"
         DET_OUT=$("$DET_TOOL" 2>&1); DET_RC=$?
@@ -231,6 +231,31 @@ if [ "${SKIP_DETERMINISM_CHECK:-0}" != "1" ]; then
     fi
 else
     echo "[pre-commit] SKIP_DETERMINISM_CHECK=1; skipping determinism net"
+fi
+
+# ============================================================================
+# CHECK M: hot-path/structural grep-CI invariants (.E.1.0 §4d) — H14 no-C++-bitfield
+# (+ H7/H20 advisory next). Calls check_h14 directly now; an aggregator script lands
+# when H7/H20 joins (≥2 gates justify it — avoid premature abstraction). Scoped to
+# staged engine source so unrelated commits stay fast.
+# ============================================================================
+if [ "${SKIP_HOT_PATH_INVARIANTS_CHECK:-0}" != "1" ]; then
+    H14_TOOL="$REPO_ROOT/tools/check_h14_no_bitfield.py"
+    STAGED_HPI=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^(CoreFrameworks/|Strategies/|MemHeaders/|ML_Headers/|FixedPoint/|DataStream/|GUI/|Backtest/).*\.(hpp|cpp|h|inl)$' || true)
+    if [ -n "$STAGED_HPI" ] && [ -f "$H14_TOOL" ]; then
+        echo "[pre-commit] Check M: hot-path/structural grep-CI — H14 no-bitfield (staged engine source detected)"
+        HPI_OUT=$(python3 "$H14_TOOL" 2>&1); HPI_RC=$?
+        echo "$HPI_OUT" | tail -15
+        if [ "$HPI_RC" -ne 0 ]; then
+            echo "[pre-commit] Check M FAIL: a hot-path/structural grep-CI invariant failed (H14 C++ bitfield — use MBS_*/BITMAP_* over uintN_t)."
+            echo "[pre-commit] Fix it — or bypass with SKIP_HOT_PATH_INVARIANTS_CHECK=1"
+            OVERALL_FAIL=1
+        else
+            echo "[pre-commit] Check M PASS"
+        fi
+    fi
+else
+    echo "[pre-commit] SKIP_HOT_PATH_INVARIANTS_CHECK=1; skipping hot-path invariants grep-CI"
 fi
 
 # ============================================================================

@@ -30,6 +30,10 @@ else echo "  FAIL replay_locale_gate build:"; head -15 "/tmp/det_rlg_$$.err"; rc
 rm -f "/tmp/det_rlg_$$.err"
 
 echo ""
+echo "## (4) H10 SIMD scalar-fallback byte-determinism (AVX-512 kernels byte-identical to scalar #else) ##"
+if ./tools/check_h10_simd_determinism.sh; then :; else rc=1; fi
+
+echo ""
 echo "============================================================"
 [ "$rc" -eq 0 ] && echo " GREEN — determinism net clean." || echo " RED — determinism net violation (see above)."
 echo "============================================================"

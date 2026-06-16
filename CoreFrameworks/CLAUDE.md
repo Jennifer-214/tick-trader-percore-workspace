@@ -126,6 +126,7 @@ L1d working-set discipline: hot path SHOULD fit in single core's L1d (32-64KB). 
 - `check_struct_alignment.py` — (a) `alignas(>16)` vs bare malloc/calloc/realloc (Knight/H21) + (c) byte-serialization size-pin coverage: a type serialized via fwrite/fread/memcmp/SHA/HMAC must carry `static_assert(sizeof(T)==N)` (H9/H12 — silent layout change = compile error, not a wire break; D-202). Pre-commit Check K.
 - `check_identifier_retirement.py` — snapshot/format VERSION + persisted enum CODE tombstone guard vs the golden ledger (H21; pre-commit Check H).
 - `calls_graph_diff.sh` — strategy/regime orphan-diff; run to verify the hot path stayed UNTOUCHED after any CoreFrameworks change.
+- `check_latency_path_conformance.py` — `.E.1.0` STATIC latency-path analyzer: disassembles the PRODUCTION hot (`ExecutionCore_Tick`) + slow (`RollingStats_Push`) paths + gates instruction-budget + **branch-classification {loop / rare-cold / data-dependent-warm = the H7/H20 meter}** + no-float(H4)/div/malloc/indirect/spill; asserts its own non-vacuity (Class-51 self-defense). Mechanizes `latency-path-discipline.md` + the hot/slow invariants. Sister to `check_struct_size_budget.py` (the derived-fact-budget framework). RUN after any hot/slow-path change (D-234/D-235/D-236).
 - `scan_class_27_full.py` — full Class-27 (scalar cfg-mirror) scan (fired by `/bug-check`).
 
 ## Skills for this surface

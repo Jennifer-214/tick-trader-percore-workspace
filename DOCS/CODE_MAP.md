@@ -4,7 +4,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-06-16 (commit 572c978)
+**Last regenerated**: 2026-06-16 (commit 226a652)
 
 ## CoreFrameworks/
 
@@ -920,10 +920,10 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### RollingStats.hpp
 
-- `RollingStats_Push` — line 194
-- `RollingStats_VolumeSignificant` — line 410
-- `RollingStats_EntrySpacing` — line 423
-- `RollingStats_BuyPrice` — line 440
+- `RollingStats_Push` — line 205
+- `RollingStats_VolumeSignificant` — line 421
+- `RollingStats_EntrySpacing` — line 434
+- `RollingStats_BuyPrice` — line 451
 
 ### RollingTurnover.hpp
 

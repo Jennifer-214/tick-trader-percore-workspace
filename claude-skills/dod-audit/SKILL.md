@@ -375,6 +375,8 @@ Cross-ref: `DESIGN_SPECS/refactor-patterns/branchless-math-kernel-pattern.md`,
 CLAUDE.md item 26 (math kernels constant-iter + branchless),
 CLAUDE.md item 18 (slow-path latency reduction sub-clauses).
 
+**MECHANIZED (`.E.1.0`):** `tools/check_latency_path_conformance.py` is the static enforcer for the H11 (loop-structure/complexity), H7/H20 (branch-classification), and H4 (no-float) lenses on the hot/slow paths — the **2nd derived-fact-budget gate** (sister to `check_struct_size_budget.py`; both: manifest → compile-a-probe → measure → gate ≤ budget → `--selftest` teeth). RUN it for the branchless + constant-iter + derived-fact-budget lenses; its **data-dependent-warm** branch count is the H20-reduction meter (→ 0; the curation + reduction = the optimization leaf, D-234/D-235/D-236).
+
 False-positive filter: outer loops with per-call-stable bounds
 (`for i=0..n_models`) are ACCEPTABLE — branch predictor handles them
 cleanly. Only flag INNER reductions with bounds that vary across

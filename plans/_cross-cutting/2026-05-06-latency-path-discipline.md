@@ -340,6 +340,7 @@ Run this checklist before any PR that modifies `ExecutionCore_Tick`,
    - No stack spills (look for `mov %rXX, -8(%rbp)` patterns
      beyond the function preamble)
    - No `vmovups` / `vmovdqu` reads beyond the expected hot fields
+   - **MECHANIZED (`.E.1.0`): `tools/check_latency_path_conformance.py`** automates this whole inspection — disassembles the named hot/slow fns (production build) + gates no-malloc/free/libc + no-stack-spills + no-scalar-float incl. AVX/FMA (H4) + no-div + no-indirect/vtable (H2) + **branch-classification** {loop / rare-cold / data-dependent-warm = the H7/H20 meter, → 0 per the optimization leaf} + an instruction-budget ratchet; asserts its own non-vacuity. Run it instead of hand-`-S`. D-234/D-235/D-236.
 3. **`./tools/calls_graph_diff.sh`** — confirms no new orphan symbols.
 4. **Replay-determinism test** at `tests/controller_test.cpp:10251` —
    bytewise-equal output across runs.

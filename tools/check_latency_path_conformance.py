@@ -90,7 +90,7 @@ DIV_OPS = re.compile(r"\bi?div[a-z]?\b|\bv?div[sp][sd]\b")
 # nothrow forms _Znwm…RKSt9nothrow_t are prefix-caught) + libc + all pthread locks + throw.
 FORBIDDEN_CALL = re.compile(
     r"<(_?malloc|_?free|_?calloc|_?realloc|reallocarray|aligned_alloc|posix_memalign|memalign|valloc|pvalloc"
-    r"|_Znwm|_Znam|_ZdlPv|_ZdaPv|__libc_|pthread_mutex|pthread_cond|pthread_rwlock|pthread_spin|__cxa_throw)")
+    r"|_Znwm|_Znwj|_Znam|_Znaj|_ZdlPv|_ZdaPv|__libc_|pthread_mutex|pthread_cond|pthread_rwlock|pthread_spin|__cxa_throw)")
 
 # ── MANIFEST: latency-critical functions (1 row each; registry discipline) ──
 #   params/call = a noinline probe-wrapper that FORWARDS args (never constructs them),
@@ -197,9 +197,13 @@ def analyze(disasm):
             # forbidden-call: match the linked `<sym>` OR the -r reloc symbol (unlinked .o — the vacuity the teeth caught)
             if FORBIDDEN_CALL.search(ops) or (reloc and FORBIDDEN_CALL.search("<" + reloc)):
                 ext_calls.append((f"{addr:x}", ops + (f"  [→ {reloc}]" if reloc else ""), src))
-        # indirect call OR indirect TAIL-call (jmp *reg / *off(reg)) = H2 vtable/std::function risk;
-        # EXCLUDE indexed `*(,%idx,scale)` (a fn-pointer/jump TABLE = the GOOD branchless-dispatch pattern)
-        if mn in ("call", "jmp") and "*" in ops and not indexed:
+        # indirect CALL through a single fn-pointer / vtable / std::function = the H2 risk → flag.
+        # EXCLUDE an indexed `call *(,%idx,scale)` (a fn-pointer TABLE = the sanctioned branchless
+        # dispatch). NOTE: indirect TAIL-calls (`jmp *reg`) are deliberately NOT flagged — a GCC
+        # `switch` jump-table ALSO compiles to an unindexed `jmp *reg` (the index is in a PRIOR
+        # movslq), so jmp* can't be told from a real tail-call without data-flow (a look-back).
+        # Flagging jmp* false-RED'd jump-tables (reviewer-caught) → homed finish-item (look-back detect).
+        if mn == "call" and "*" in ops and not indexed:
             indirect_calls.append((f"{addr:x}", f"{mn} {ops}", src))
         if FLOAT_OPS.search(mn) or FLOAT_OPS.search(ops):
             floats += 1
@@ -295,10 +299,16 @@ def main(argv):
             print("  ℹ️  report-only (no budget baseline yet; run --update-budgets to set the ratchet).")
 
     if update:
+        missing = [r["name"] for r in MANIFEST if r["name"] not in new_budgets]
         os.makedirs(os.path.dirname(BUDGETS_SIDECAR), exist_ok=True)
         with open(BUDGETS_SIDECAR, "w") as f:
             json.dump(new_budgets, f, indent=2)
-        print(f"\n  ✅ budgets written → {os.path.relpath(BUDGETS_SIDECAR, ENGINE)}")
+        print(f"\n  ✅ budgets written ({len(new_budgets)}/{len(MANIFEST)} manifest rows) → {os.path.relpath(BUDGETS_SIDECAR, ENGINE)}")
+        if missing:   # reviewer-caught: a skipped row was silently dropped from the ratchet
+            print(f"  ⚠️  INCOMPLETE BASELINE — rows skipped (probe-fail / non-vacuity) with NO ratchet: "
+                  f"{missing}. Fix them (e.g. the slow-path callee-symbol follow) before trusting the "
+                  f"grandfathered baseline (D-236).")
+            rc = max(rc, 1)
 
     if selftest:
         # TEETH — every detector MUST fire on an injected probe (D-234 lesson 3: the teeth
@@ -316,8 +326,8 @@ def main(argv):
             ("forbidden-call (malloc)",   {"headers": ["cstdlib"], "params": "void** a",
                                            "call": "*a = std::malloc(64)"},
              lambda a: len(a.get("ext_calls", [])) > 0),
-            ("indirect-call/vtable",      {"headers": ["cstdint"], "params": "void(*fp)(int), int x",
-                                           "call": "fp(x)"},
+            ("indirect-call/vtable",      {"headers": ["cstdint"], "params": "void(*fp)(int), int x, int* s",
+                                           "call": "fp(x); *s = 1"},   # trailing store → a real `call *`, not a tail-`jmp *`
              lambda a: len(a.get("indirect_calls", [])) > 0),
             ("branch-detection",          {"headers": ["cstdint"], "params": "int b, void(*f)()",
                                            "call": "if (b > 7) f()"},

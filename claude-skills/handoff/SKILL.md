@@ -571,6 +571,13 @@ If no in-flight tasks at handoff write: "No active task list — fresh-session p
 
 <insert "Arming for the next action" section here per Stage 4.6 output — MANDATORY; surface-matched skills to route to + tools to RUN + docs + M8 for the immediate next action>
 
+<insert "## Capture-completeness (this session — nothing lost)" section here — MANDATORY + ENFORCED (`tools/check_handoff_capture_completeness.py`, HARD in `check_session_docs.sh`): a SUBSTANTIVE section that addresses EACH capture dimension, each ENUMERATED or an explicit "none this session", NO placeholders —
+  • **Decisions → log:** every operator-steered decision this session has a `D-N` entry (the D-220/D-227 recurring miss);
+  • **Findings → ledger:** every surfaced finding homed (TECH_DEBT / plan / register);
+  • **Memories/skills → indexed:** every new memory/skill in `MEMORY.md`/`MEMORY_EXTENDED.md`/`CLAUDE.md` (or "none new");
+  • **Verified:** doc-CI sweep + `/capture-audit` mechanical PASS.
+This is the un-bypassable structural close of the hand-write-around-the-Stage-1.8-gate bypass (the `.E.1.0` D-227/TECH_DEBT-204 miss). The check red-builds a handoff that OMITS or STUBS the section — so it can't be skipped by hand-writing.>
+
 ---
 
 ## Paste this prompt into a fresh Claude Code session to start <ship-tag>

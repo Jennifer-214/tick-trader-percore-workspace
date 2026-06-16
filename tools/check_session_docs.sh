@@ -151,6 +151,8 @@ fi
 if [ "${SKIP_HANDOFF_ACTIVE_CHECK:-0}" != "1" ]; then
     run_hard "handoff-active singleton (≤1 status:active across plans/**/handoffs)" \
         python3 "$REPO_ROOT/tools/check_handoff_active_singleton.py"
+    run_hard "handoff capture-completeness (active handoff carries a substantive section)" \
+        python3 "$REPO_ROOT/tools/check_handoff_capture_completeness.py"
 else
     RESULTS+=("  ⏭  HARD  handoff-active singleton (SKIP_HANDOFF_ACTIVE_CHECK=1)")
 fi

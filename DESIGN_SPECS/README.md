@@ -2,14 +2,14 @@
 
 **Auto-generated** by `tools/rebuild_doc_indexes.py`. Regenerate after adding/moving specs.
 
-Total: 167 specs across 13 types.
+Total: 177 specs across 13 types.
 
 Per-type catalog grouped by lifecycle stage. Cross-ref:
 - `doc-frontmatter-convention.md` (frontmatter schema)
 - `doc-tag-vocabulary.md` (tag canonical list)
 - CLAUDE.md § How to find anything (grep recipes)
 
-## refactor-pattern (23 specs)
+## refactor-pattern (24 specs)
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
@@ -19,6 +19,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/refactor-patterns/cfg-flag-eligibility-criteria.md` | 3-first-canonical | framework-discipline, structural-fix, pattern-codification | 3 |
 | `DESIGN_SPECS/refactor-patterns/cfg-scope-discipline.md` | 2-draft | framework-discipline, structural-fix | 3 |
 | `DESIGN_SPECS/refactor-patterns/cfg-section-parser-state-machine.md` | 2-draft | framework-discipline, structural-fix | 2 |
+| `DESIGN_SPECS/refactor-patterns/critical-moment-determinism-over-average-latency.md` | 3-first-canonical | hot-path, determinism, branchless, +2 | 0 |
 | `DESIGN_SPECS/refactor-patterns/cross-walker-struct-field-uniqueness-discipline.md` | 2-draft | framework-discipline, structural-fix | 3 |
 | `DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md` | 5-claude-md | structural-fix, framework-discipline, latency-discipline | 2 |
 | `DESIGN_SPECS/refactor-patterns/failure-attribution-buffer-pattern.md` | 2-draft | failure-observability, structural-fix, framework-discipline | 2 |
@@ -37,7 +38,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/refactor-patterns/template-deferred-dependency-injection.md` | 3-first-canonical | framework-discipline, structural-fix | 3 |
 | `DESIGN_SPECS/refactor-patterns/transient-aggregation-bitmap-pattern.md` | 3-first-canonical | data-oriented-design, branchless-discipline | 4 |
 
-## framework-pattern (68 specs)
+## framework-pattern (69 specs)
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
@@ -98,6 +99,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/framework-patterns/registry-tuple-as-single-source-of-truth.md` | 5-claude-md | framework-discipline, structural-fix, pattern-codification | 4 |
 | `DESIGN_SPECS/framework-patterns/runtime-mutable-vs-boot-time-config-pattern.md` | 3-first-canonical | framework-discipline, cfg-mutability, hot-reload, +1 | 0 |
 | `DESIGN_SPECS/framework-patterns/sidecar-override-pattern-for-registry-auto-flows.md` | 5-claude-md | framework-discipline, structural-fix, pattern-codification | 6 |
+| `DESIGN_SPECS/framework-patterns/single-authority-predicate-for-mode-gating.md` | 2-draft | framework-discipline, capital-safety, ssot, +2 | 4 |
 | `DESIGN_SPECS/framework-patterns/sink-fn-pointer-for-optional-side-effect-pattern.md` | 3-first-canonical | framework-discipline, branchless-discipline | 2 |
 | `DESIGN_SPECS/framework-patterns/slot-state-foreach-registry-with-storage-routing.md` | 3-first-canonical | framework-discipline, structural-fix, data-oriented-design | 3 |
 | `DESIGN_SPECS/framework-patterns/slow-path-gate-registry-pattern.md` | 3-first-canonical | framework-discipline, structural-fix | 3 |
@@ -122,15 +124,15 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
-| `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md` | 3-first-canonical | audit-methodology, meta-discipline, framework-discipline | 2 |
-| `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md` | 3-first-canonical | audit-methodology, framework-discipline, meta-discipline | 5 |
+| `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md` | 3-first-canonical | audit-methodology, meta-discipline, framework-discipline | 3 |
+| `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md` | 3-first-canonical | audit-methodology, framework-discipline, meta-discipline | 6 |
 | `DESIGN_SPECS/audit-methodologies/audit-finding-kind-taxonomy.md` | 2-draft | audit-methodology, scope-discipline, finding-triage | 2 |
 | `DESIGN_SPECS/audit-methodologies/audit-report-format.md` | 2-draft | audit-methodology, doc-discipline, framework-discipline | 4 |
 | `DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md` | 3-first-canonical | audit-methodology, meta-discipline, framework-discipline | 2 |
 | `DESIGN_SPECS/audit-methodologies/characterization-test-discipline.md` | 3-first-canonical | audit-methodology, test-discipline, capital-safety, +1 | 2 |
 | `DESIGN_SPECS/audit-methodologies/post-implementation-verification-v-class.md` | 2-draft | audit-methodology, verification, sanitizers, +3 | 3 |
 
-## data-discipline (13 specs)
+## data-discipline (15 specs)
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
@@ -139,11 +141,13 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/data-disciplines/cache-line-discipline.md` | 2-draft | data-oriented-design, concurrency, latency-discipline | 3 |
 | `DESIGN_SPECS/data-disciplines/cpp17-inline-variable-for-header-shared-state.md` | 3-first-canonical | cpp17, header-only, shared-state, +1 | 2 |
 | `DESIGN_SPECS/data-disciplines/decision-first-cluster-layout-pattern.md` | 3-first-canonical | data-oriented-design, latency-discipline | 4 |
+| `DESIGN_SPECS/data-disciplines/fill-path-completeness-and-normalization-discipline.md` | 2-draft | capital-safety, oms-drainer, fill-path, +3 | 0 |
 | `DESIGN_SPECS/data-disciplines/function-struct-alignment-for-single-mov-access.md` | 3-first-canonical | data-oriented-design, latency-discipline | 4 |
 | `DESIGN_SPECS/data-disciplines/hot-side-array-element-alignment-for-sparse-access.md` | 3-first-canonical | data-oriented-design, latency-discipline | 3 |
 | `DESIGN_SPECS/data-disciplines/locale-determinism-discipline.md` | 3-first-canonical | determinism, locale, parsing, +5 | 0 |
 | `DESIGN_SPECS/data-disciplines/partner-core-bitmap-pattern.md` | 3-first-canonical | data-oriented-design, branchless-discipline | 3 |
-| `DESIGN_SPECS/data-disciplines/per-node-position-ownership-model.md` | 2-draft | data-oriented-design, capital-safety, persistence, +3 | 0 |
+| `DESIGN_SPECS/data-disciplines/per-node-position-ownership-model.md` | 2-draft | data-oriented-design, capital-safety, reconcile-recovery, +2 | 0 |
+| `DESIGN_SPECS/data-disciplines/per-node-purity-scale-invariance.md` | 3-first-canonical | data-oriented-design, scale-invariance, per-node-purity, +3 | 0 |
 | `DESIGN_SPECS/data-disciplines/per-snapshot-cluster-layout-pattern.md` | 3-first-canonical | data-oriented-design, concurrency, latency-discipline | 4 |
 | `DESIGN_SPECS/data-disciplines/raii-destructor-with-cluster-reorg-interaction.md` | 3-first-canonical | data-oriented-design, concurrency | 3 |
 | `DESIGN_SPECS/data-disciplines/running-aggregate-vs-cycle-recompute-discipline.md` | 2-draft | data-discipline, running-aggregate, o1-compute, +2 | 0 |
@@ -184,7 +188,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md` | 3-first-canonical | doc-discipline, structural-fix, pattern-codification, +1 | 6 |
 | `DESIGN_SPECS/doc-disciplines/module-scoped-claude-md-pattern.md` | 2-draft | doc-discipline, framework-discipline, context-aware-loading | 2 |
 
-## meta-discipline (27 specs)
+## meta-discipline (31 specs)
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
@@ -195,6 +199,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/meta-disciplines/body-content-enumeration-at-plan-time-discipline.md` | 3-first-canonical | meta-discipline, plan-template, framework-discipline, +1 | 0 |
 | `DESIGN_SPECS/meta-disciplines/canonical-sister-extension-discipline.md` | 3-first-canonical | meta-discipline, framework-discipline, pattern-codification, +2 | 5 |
 | `DESIGN_SPECS/meta-disciplines/dead-code-and-identifier-retirement-discipline.md` | 5-claude-md | meta-discipline, structural-fix, framework-discipline, +1 | 4 |
+| `DESIGN_SPECS/meta-disciplines/definition-of-done-and-armed-scout-verification.md` | 3-first-canonical | audit-methodology, meta-discipline, session-continuity, +2 | 0 |
 | `DESIGN_SPECS/meta-disciplines/doc-frontmatter-convention.md` | 3-first-canonical | doc-discipline, meta-discipline, framework-discipline | 3 |
 | `DESIGN_SPECS/meta-disciplines/doc-tag-vocabulary.md` | 3-first-canonical | doc-discipline, meta-discipline, framework-discipline | 3 |
 | `DESIGN_SPECS/meta-disciplines/fix-toward-future-trajectory-not-static-state.md` | 2-draft | audit-methodology, design-discipline, future-oriented, +1 | 3 |
@@ -203,8 +208,11 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/meta-disciplines/headless-engine-viewer-split-pattern.md` | 3-first-canonical | meta-discipline, headless-service, viewer-split, +2 | 0 |
 | `DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md` | 3-first-canonical | meta-discipline, audit-methodology, framework-discipline | 7 |
 | `DESIGN_SPECS/meta-disciplines/iteration-spiral-signals-audit-meta-gap.md` | 3-first-canonical | audit-methodology, meta-discipline, iteration-spiral, +1 | 0 |
+| `DESIGN_SPECS/meta-disciplines/mechanical-verification-of-derived-code-facts.md` | 3-first-canonical | doc-discipline, data-oriented-design, audit-methodology, +2 | 0 |
 | `DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md` | 3-first-canonical | meta-discipline, anti-pattern-index, audit-methodology, +3 | 0 |
 | `DESIGN_SPECS/meta-disciplines/pattern-codification-lifecycle.md` | 5-claude-md | meta-discipline, pattern-codification, doc-discipline, +1 | 5 |
+| `DESIGN_SPECS/meta-disciplines/plan-decomposition-and-future-aware-agent-arming.md` | 2-draft | audit-methodology, plan-decomposition, future-aware, +3 | 0 |
+| `DESIGN_SPECS/meta-disciplines/plan-hierarchy-and-sub-master-decomposition.md` | 2-draft | planning, plan-hierarchy, sub-master, +3 | 0 |
 | `DESIGN_SPECS/meta-disciplines/public-private-boundary-and-ecosystem-discipline.md` | 3-first-canonical | privacy-boundary, ecosystem, workspace, +2 | 0 |
 | `DESIGN_SPECS/meta-disciplines/representation-migration-completeness.md` | 3-first-canonical | capital-safety, ssot, structural-fix, +2 | 0 |
 | `DESIGN_SPECS/meta-disciplines/session-decision-log-discipline.md` | 3-first-canonical | meta-discipline, doc-discipline, plan-template, +1 | 0 |

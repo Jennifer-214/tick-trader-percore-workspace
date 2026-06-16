@@ -39,6 +39,19 @@ NON-VACUITY (eat-own-dogfood — else this is the Class-51 guard it codifies aga
   ASSERTS the probe symbol was found + a real inlined body disassembled (instr > floor),
   so an optimized-away probe can never pass green.
 
+TOOL-DESIGN DISCIPLINE (the 3 lessons, → the ship-close conformance DESIGN_SPEC):
+  1. A static-ASM detector can be a STRONGER gate than a source-grep — the compiled ASM
+     is ground truth where the source check is undecidable (this is why branch-count
+     SUBSUMES the H7/H20 grep: the grep over-fires + can't tell a compliant fn-pointer
+     dispatch from a violation; the ASM branch is unambiguous).
+  2. Each detector's mnemonic patterns MUST enumerate the FULL variant space
+     (SSE + AVX/`v`-prefixed + FMA + scalar `s[sd]` AND packed `p[sd]`). PROVEN by the
+     dogfood: the float regex was SSE-only (`mulsd|addsd`) and silently MISSED the
+     `-march=native` fused `vfmadd` — a false-clean (now `FLOAT_OPS`/`DIV_OPS` broadened).
+  3. The `--selftest` teeth ARE the guard against (2) — only because it injects float math
+     did the AVX/FMA hole surface. EVERY check needs inject→RED teeth, not just float
+     (the non-float teeth are the open finish-item).
+
 MODES:
   (default)          report-only: MEASURE + print the per-category breakdown (+ ASM).
   --asm              also dump the full per-function disassembly.

@@ -5,11 +5,20 @@ metadata:
   node_type: memory
   type: feedback
   tags: [audit-methodology]
-  sister_specs: [feedback_adversarial_framing_default_for_checks.md, feedback_define_done_and_arm_scout_subagents.md, feedback_independence_for_judgment_not_mechanical.md, feedback_recascade_audit_on_corrected_shape.md]
+  sister_specs: [feedback_adversarial_framing_default_for_checks.md, feedback_define_done_and_arm_scout_subagents.md, feedback_independence_for_judgment_not_mechanical.md, feedback_recascade_audit_on_corrected_shape.md, feedback_arm_subagents_plan_and_future_aware.md, feedback_v_class_post_implementation_verification.md]
   originSessionId: 6842ea9a-ef46-4122-b6c2-94c834863ba2
 ---
 
 When fanning out multiple agents for an audit / decision / pre-coding arming, label them by ROLE with Caramel's shorthand: **A-class = ADVERSARIAL** (prompted to FIND / REFUTE / prove-wrong, default-refuted — the [[feedback_adversarial_framing_default_for_checks]] framing) and **I-class = INVESTIGATIVE** (map the surface: the complete write-set, the options, the seams, the blast-radius — the `/finding-analyzer` framing). Use these labels in each agent's `label`/`description` and in the synthesis (I-1, I-2, A-1, A-2, …) so a fan-out is terse to specify and the report reads at a glance.
+
+**Full agent-class taxonomy (extended `.E.1`, 2026-06-15, D-224 — the pre→during→post lifecycle):**
+- **I-class — INVESTIGATIVE:** map the surface / write-set / options / blast-radius (pre-coding).
+- **A-class — ADVERSARIAL:** FIND / REFUTE / prove-wrong, default-refuted (pre-coding + verification).
+- **V-class — VERIFICATION:** post-implementation, BEFORE commit — RUN the gates + FRESH sanitizers + the domain-audit SKILLS on the SHIPPED code → an M8 Definition-of-Done verdict ([[feedback_v_class_post_implementation_verification]]; the executable `/verify-implementation` skill is task #16, manual V-class passes suffice until built).
+- **D-class — DECOMPOSITION:** propose correctness-driven sub-ship cut-lines for a mega-plan (a specialized I-class; the cut-line principles live in `DESIGN_SPECS/meta-disciplines/plan-decomposition-and-future-aware-agent-arming.md`).
+- **C-class — CURRENCY / re-grounding:** re-derive every plan claim vs HEAD + sweep the decision log for what to HONOR / not re-litigate (the shape-match lens; same spec; [[feedback_arm_subagents_plan_and_future_aware]]).
+
+**Lifecycle: C (re-ground) → D (decompose) → I (investigate) → A (refute) → [code] → V (verify).** Label agents C-1 / D-2 / I-1 / A-2 / V-1 etc. D + C are armed per M8 + the plan/future-aware dimensions ([[feedback_arm_subagents_plan_and_future_aware]]); A challenges the D-class cuts (orphaned-fold / HOLE-across-seam / guards-not-first / non-bisectable / severed-invariant / re-litigated-decision).
 
 **Why:** operator-stated preference (2026-06-14) — *"refer to adversarial as A-class and investigative as I-class for easier fan-outs."* The two roles are the two halves of the canonical investigate→refute gate; naming the ROLE (not the underlying skill) is what matters — an I-class agent might run `/accounting-audit` or `/hft-audit`; an A-class agent might run `/bug-check` or a 3-lens refute. Borne out the F-059 arming (2026-06-14): I-class mapped the write-set + exit-trigger; A-class REFUTED and caught that the planned seams were wrong-path and that the test would largely duplicate existing coverage — a confirmatory pass would have missed both.
 

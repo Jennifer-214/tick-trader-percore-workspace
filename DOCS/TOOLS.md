@@ -83,6 +83,7 @@
 | Tool | Disposition | Status |
 |---|---|---|
 | `check_amendment_cascade.py` | PLANNED | CP-1 amendment-cascade mechanization (capture-audit Check 12 / precoding-gate). Semi-mechanical fallback runs now; build → wire into `--deep` + pre-commit. Correctly disclaimed "not yet built" in the citing skills. |
+| `emit_decisions_to_honor.py` | PLANNED | C-class decision-currency mechanization (D-226) — given a surface/plan, emit the locked decisions it must HONOR / not re-litigate (greps the decision-log `<!-- D/C/F -->`/`<!-- STATUS -->` sentinels + the surface→spec map). Manual sweep runs now (the `.E.1` 223-decision sweep, D-223); build when the manual sweep recurs (M7). Sister to the `--emit-decision-status` candidate on `check_capture_audit.py`. Spec: `plan-decomposition-and-future-aware-agent-arming.md` §3. |
 | `stamp_model.sh` | RETIRED | bash-CLI stamper DELETED at v5.15.5.F.4d.1.B.3 (Path C) — stamping is now in-process / foxml_suite GUI auto-stamp. Lingering runnable cites in /ship + /parity-check fixed `.E` Session-7. |
 
 ## Actionable (status)

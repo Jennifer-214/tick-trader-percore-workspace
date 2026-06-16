@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 740c737e-bb42-40db-90db-3b6f6b3b07dc
-  sister_specs: [feedback_define_done_and_arm_scout_subagents.md, feedback_run_dedicated_audit_skills_not_just_armed_prompts.md, feedback_passing_test_is_not_verification.md]
+  sister_specs: [feedback_define_done_and_arm_scout_subagents.md, feedback_run_dedicated_audit_skills_not_just_armed_prompts.md, feedback_passing_test_is_not_verification.md, feedback_a_class_i_class_fanout_vocab.md]
   tags: []
 ---
 

@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: d04c6027-6cab-4b9d-84f5-356891adc8e6
-  sister_specs: [feedback_auto_pick_future_oriented.md, feedback_design_once_maintain_forever.md, feedback_dont_generalize_substrate_before_input_space_known.md, feedback_fold_findings_into_destination_plan.md, feedback_no_mvp_for_plumbing_only_for_unknown_unknowns.md, feedback_no_unhomed_debt_code_smell.md, feedback_overengineering_boundary_when_future_easier.md, feedback_phased_pre_rework_correctness_foundation.md]
+  sister_specs: [feedback_auto_pick_future_oriented.md, feedback_design_once_maintain_forever.md, feedback_dont_generalize_substrate_before_input_space_known.md, feedback_fold_findings_into_destination_plan.md, feedback_no_mvp_for_plumbing_only_for_unknown_unknowns.md, feedback_no_unhomed_debt_code_smell.md, feedback_overengineering_boundary_when_future_easier.md, feedback_phased_pre_rework_correctness_foundation.md, feedback_arm_subagents_plan_and_future_aware.md]
   tags: []
 ---
 

@@ -8,6 +8,8 @@ canonical_applications:
   - v5.15.5.F.4d.1.E.0 — first canonical (THIS pattern's first instance)
 sister_specs:
   - audit-methodologies/audit-driven-pre-coding-gate.md (parent at per-ship scope)
+  - meta-disciplines/plan-decomposition-and-future-aware-agent-arming.md (the PREQUEL — FINDS the correctness-driven cut-lines this spec then VERIFIES the trajectory of)
+  - meta-disciplines/plan-hierarchy-and-sub-master-decomposition.md (sibling — the plan-TREE the decomposition produces, whose multi-ship trajectory this VERIFIES)
   - meta-disciplines/sister-cohort-amendment-completeness-discipline.md
   - meta-disciplines/canonical-sister-extension-discipline.md
   - meta-disciplines/iteration-spiral-signals-audit-meta-gap.md (sister discipline)

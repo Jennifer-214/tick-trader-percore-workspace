@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 740c737e-bb42-40db-90db-3b6f6b3b07dc
-  sister_specs: [feedback_adversarial_framing_default_for_checks.md, feedback_audit_canonical_sister_before_new_infra.md, feedback_v_class_post_implementation_verification.md]
+  sister_specs: [feedback_adversarial_framing_default_for_checks.md, feedback_audit_canonical_sister_before_new_infra.md, feedback_v_class_post_implementation_verification.md, feedback_arm_subagents_plan_and_future_aware.md]
   tags: []
 ---
 

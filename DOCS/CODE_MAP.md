@@ -4,7 +4,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-06-15 (commit 3ee95dc)
+**Last regenerated**: 2026-06-16 (commit 572c978)
 
 ## CoreFrameworks/
 
@@ -130,7 +130,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### LiveReadiness.hpp
 
-- `LiveReadiness_Verify` — line 228
+- `LiveReadiness_Verify` — line 248
 
 ### MetricCompute.hpp
 
@@ -158,19 +158,19 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### OrderEventLog.hpp
 
-- `OrderEventLog_Init` — line 204
-- `OrderEventLog_Free` — line 247
-- `OrderEventLog_ApplyEvent` — line 291
-- `OrderEventLog_Append` — line 314
-- `OrderEventLog_AsyncWriterRoutine` — line 349
-- `OrderEventLog_StartAsyncWriter` — line 383
-- `OrderEventLog_StopAsyncWriter` — line 398
-- `OrderEventLog_InitWithFile` — line 417
-- `OrderEventLog_Reset` — line 492
-- `OrderEventLog_LoadFromDisk` — line 534
-- `OrderEvent_MakeFill` — line 624
-- `OrderEvent_MakeRejection` — line 651
-- `Portfolio_FromEventLog` — line 698
+- `OrderEventLog_Init` — line 209
+- `OrderEventLog_Free` — line 264
+- `OrderEventLog_ApplyEvent` — line 308
+- `OrderEventLog_Append` — line 331
+- `OrderEventLog_AsyncWriterRoutine` — line 366
+- `OrderEventLog_StartAsyncWriter` — line 400
+- `OrderEventLog_StopAsyncWriter` — line 415
+- `OrderEventLog_InitWithFile` — line 434
+- `OrderEventLog_Reset` — line 509
+- `OrderEventLog_LoadFromDisk` — line 551
+- `OrderEvent_MakeFill` — line 641
+- `OrderEvent_MakeRejection` — line 668
+- `Portfolio_FromEventLog` — line 715
 
 ### OrderGates.hpp
 
@@ -1186,7 +1186,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 ## Top-level files
 
 - `main.cpp` — 1340 lines
-- `Version.hpp` — 1022 lines
+- `Version.hpp` — 1050 lines
 - `Limits.hpp` — 30 lines
 
 ## Conventions

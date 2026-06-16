@@ -12,6 +12,15 @@ dogfoods: feedback_tag_disposition_at_fix_time (WH-7) + feedback_consult_indexes
 
 Live disposition of the `.E.0` backlog (141 findings + 93 TECH_DEBT + 5 PARITY), re-triaged against the **post-Ship-B** engine. Every item carries a status flipped at verification; the set stays queryable instead of reconstructed.
 
+## 📍 `.E.1` DECOMPOSITION — the `.E.1`-homed items now have SUB-SHIP owners (2026-06-15, D-225)
+
+`.E.1` was decomposed into 7 sub-ship leaves (the sub-master `subplans/2026-05-28-…E.1-foundation.md` § DECOMPOSITION). The `.E.1`-homed findings in this register now map to a leaf:
+- **cross-thread torn-read CLASS** (9 sites) + **conc-5** + the GLOBAL aggregator → **E.1.3** (SPINE-2 coherence; HARD-live-gate precondition 1).
+- **single-owner-`disk_file` event-log** (TD-202 Reset race + `LoadFromDisk` integrity + FIX-2 TOCTOU) + the **fill real-handler** (A16/Class-46) + **A20** warm-tail + **A2/A4** venue-fill-parser → **E.1.4** (SPINE-1 fill).
+- **A21** venue-net qty leg + **A34** per-cluster concentration + **NEW-1** per-cluster relocation + **A22/A29** torn-read siblings → **E.1.5** (SPINE-3 purity; HARD-live-gate precondition 2).
+- the **§4d H7/H10/H14/H20+H8 HOLE cluster** → **E.1.0** (guards-first). **Core→Node rename** → **E.1.1**. **SoA/`Money` + snapshot bump** → **E.1.2**.
+Disposition flips at each leaf's ship. (TD-203 stays → v5.16.) Re-grounding corrections caught at scaffold-time are in the sub-master § "Re-grounding corrections."
+
 ## 📍 SESSION STATE + CLOSE-OUT PLAN (2026-06-10 — end of the big `.E.0.10` session)
 
 **WHERE WE ARE:** `.E.0.10` (Net-1) in progress. SHIPPED this session (all committed + pushed — engine `5e65933`, workspace `71d96b3`): **D-190** (P&L gross SSoT — the real capital bug) + triple-guard + codification; **4 Net-1 characterization tests** (oms-ts-2 / tsa-live-2 / D-110 / rsf-ts-1, suite 3343/0); **persist-8 fix** (LOW); **2 NEW DESIGN_SPECS** (adversarial-multi-agent-audit-methodology + cross-thread-multiword-read-consistency); the persist-dod-1 re-exam + the corrected concurrency picture.

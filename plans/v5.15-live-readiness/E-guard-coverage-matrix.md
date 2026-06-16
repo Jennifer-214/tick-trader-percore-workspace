@@ -144,6 +144,8 @@ The pre-`.E.1` Net-1 ship added these ENFORCED guards; recorded so the matrix me
 
 **STOP-condition verdict for `.E.1` entry:** the recorded HOLE cluster on the `.E.1`-touched surface is **§4a H7 / H10 / H14 / H20 + H8** (hot-path branchless · SIMD-fallback · bitfield · SP/HP dispatch · latency) — EXPLICITLY recorded + owned as `.E.1`'s **first-order matrix work** (grep-CI + the determinism gate + the latency ratchet, per §4a:110 + §3). These are deferred BY DESIGN, not overlooked: closing them before the rename would freeze hot-path behavior `.E.1` is about to reshape (two-foundations). **No *unrecorded* HOLE remains on the `.E.1` surface** (§4 completeness rule — every HOLE is a visible, owned to-do). `.E.1` enters with its hardening worklist explicit; the `.E.0.10` net is complete.
 
+**↳ `.E.1` DECOMPOSITION (2026-06-15, D-225):** the HOLE cluster + the per-finding rows now have sub-ship owners (the 7-leaf decomposition). **§4a H7/H10/H14/H20+H8 HOLE cluster → owned by `E.1.0`** (the guards-first leaf — grep-CI + determinism gate + latency ratchet, BEFORE the rename). §4b finding-classes: the torn-read/kill rows → E.1.3; fill-completeness → E.1.4; per-cluster purity → E.1.5. Each leaf FILLS its rows at its dive (the rolling-window). Per-leaf row distribution: the `.E.1` sub-master § DECOMPOSITION + the leaf scaffolds.
+
 ---
 
 ## 5. Rolling-window seam cadence — how the dives sequence

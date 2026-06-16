@@ -85,7 +85,12 @@ COND_JUMPS = {
 # packed ops (vpaddq/vpmullq…) end in b/w/d/q after a `p`-prefix → correctly NOT matched.
 FLOAT_OPS = re.compile(r"\bv?(mul|add|sub|div|sqrt|max|min|comi|ucomi|cvt|fn?m(add|sub))[a-z0-9]*[sp][sd]\b")
 DIV_OPS = re.compile(r"\bi?div[a-z]?\b|\bv?div[sp][sd]\b")
-FORBIDDEN_CALL = re.compile(r"<(_?malloc|_?free|calloc|realloc|_Znwm|_Znam|_ZdlPv|__libc_|pthread_mutex|pthread_cond|__cxa_throw)")
+# Full variant space (D-234 lesson 2): C allocators + aligned variants + every C++
+# new/delete mangling (_Znwm new / _Znam new[] / _ZdlPv delete / _ZdaPv delete[]; the
+# nothrow forms _Znwm…RKSt9nothrow_t are prefix-caught) + libc + all pthread locks + throw.
+FORBIDDEN_CALL = re.compile(
+    r"<(_?malloc|_?free|_?calloc|_?realloc|reallocarray|aligned_alloc|posix_memalign|memalign|valloc|pvalloc"
+    r"|_Znwm|_Znam|_ZdlPv|_ZdaPv|__libc_|pthread_mutex|pthread_cond|pthread_rwlock|pthread_spin|__cxa_throw)")
 
 # ── MANIFEST: latency-critical functions (1 row each; registry discipline) ──
 #   params/call = a noinline probe-wrapper that FORWARDS args (never constructs them),
@@ -130,7 +135,10 @@ def compile_and_disasm(row):
             errs = [l.strip() for l in comp.stderr.splitlines() if "error:" in l]
             tail = comp.stderr.strip().splitlines()
             return None, (errs[0] if errs else (tail[-1] if tail else "compile failed"))
-        dis = subprocess.run(["objdump", "-d", "-l", "--no-show-raw-insn", obj], capture_output=True, text=True)
+        # -r = relocations: an UNLINKED .o shows an external `call malloc` as `call <placeholder>`
+        # with the real target only in a reloc line — without -r the forbidden-call check is VACUOUS
+        # (the teeth caught this). -l = source lines for the per-branch "why".
+        dis = subprocess.run(["objdump", "-d", "-r", "-l", "--no-show-raw-insn", obj], capture_output=True, text=True)
         if dis.returncode != 0:
             return None, "objdump failed"
         return dis.stdout, None
@@ -139,6 +147,8 @@ def compile_and_disasm(row):
 INSTR_RE = re.compile(r"^\s+([0-9a-f]+):\s+([a-z][a-z0-9.]*)\s*(.*)$")
 SRCLINE_RE = re.compile(r"^(/?\S+\.(?:hpp|cpp|h|cc)):(\d+)")
 TARGET_RE = re.compile(r"^([0-9a-f]+)\b")
+RELOC_RE = re.compile(r"R_X86_64\w*\s+(\S+)")  # objdump -r reloc line → the external-call target symbol
+                                               # (e.g. `malloc-0x4`); INVISIBLE in an unlinked .o without -r
 
 
 def analyze(disasm):
@@ -151,42 +161,46 @@ def analyze(disasm):
         if "<probe_fn>:" in ln:
             in_fn = True
             continue
-        if in_fn:
-            if ln.strip() == "":
-                break
-            sm = SRCLINE_RE.match(ln.strip())
-            if sm:
-                cur_src = f"{os.path.basename(sm.group(1))}:{sm.group(2)}"
-                continue
-            m = INSTR_RE.match(ln)
-            if m:
-                body.append((int(m.group(1), 16), m.group(2), m.group(3).strip(), cur_src))
+        if not in_fn:
+            continue
+        if ln.strip() == "":
+            break
+        rm = RELOC_RE.search(ln)
+        if rm and body:                  # reloc line → names the PRECEDING instruction's external target
+            body[-1][4] = rm.group(1)     # (an unlinked `call <placeholder>` whose real target is e.g. `malloc`)
+            continue
+        sm = SRCLINE_RE.match(ln.strip())
+        if sm:
+            cur_src = f"{os.path.basename(sm.group(1))}:{sm.group(2)}"
+            continue
+        m = INSTR_RE.match(ln)
+        if m:
+            body.append([int(m.group(1), 16), m.group(2), m.group(3).strip(), cur_src, None])
     if not body:
         return None
-    addrs = [a for a, _, _, _ in body]
+    addrs = [e[0] for e in body]
     lo, hi = addrs[0], addrs[-1]
     span = max(1, hi - lo)
     cold_start = lo + int(span * 0.75)   # heuristic: gcc tails cold blocks (upper quartile)
 
     cats = {"loop": [], "rare_cold": [], "data_dependent": []}
     calls, ext_calls, indirect_calls, floats, divs, spills = [], [], [], 0, 0, 0
-    for addr, mn, ops, src in body:
+    for addr, mn, ops, src, reloc in body:
+        indexed = bool(re.search(r",%\w+,\d", ops))   # (,%idx,scale) = a fn-pointer/jump TABLE = branchless dispatch (OK), not a vtable
         if mn in COND_JUMPS:
             tm = TARGET_RE.match(ops)
             tgt = int(tm.group(1), 16) if tm else addr
-            if tgt < addr:
-                cat = "loop"
-            elif tgt >= cold_start:
-                cat = "rare_cold"
-            else:
-                cat = "data_dependent"
+            cat = "loop" if tgt < addr else ("rare_cold" if tgt >= cold_start else "data_dependent")
             cats[cat].append((f"{addr:x}", mn, ops, src))
-        elif mn == "call":
+        if mn == "call":
             calls.append((f"{addr:x}", ops, src))
-            if FORBIDDEN_CALL.search(ops):
-                ext_calls.append((f"{addr:x}", ops, src))
-            if "*" in ops:  # call through register/memory = indirect (H2 vtable risk)
-                indirect_calls.append((f"{addr:x}", ops, src))
+            # forbidden-call: match the linked `<sym>` OR the -r reloc symbol (unlinked .o — the vacuity the teeth caught)
+            if FORBIDDEN_CALL.search(ops) or (reloc and FORBIDDEN_CALL.search("<" + reloc)):
+                ext_calls.append((f"{addr:x}", ops + (f"  [→ {reloc}]" if reloc else ""), src))
+        # indirect call OR indirect TAIL-call (jmp *reg / *off(reg)) = H2 vtable/std::function risk;
+        # EXCLUDE indexed `*(,%idx,scale)` (a fn-pointer/jump TABLE = the GOOD branchless-dispatch pattern)
+        if mn in ("call", "jmp") and "*" in ops and not indexed:
+            indirect_calls.append((f"{addr:x}", f"{mn} {ops}", src))
         if FLOAT_OPS.search(mn) or FLOAT_OPS.search(ops):
             floats += 1
         if DIV_OPS.search(mn + " "):
@@ -287,13 +301,41 @@ def main(argv):
         print(f"\n  ✅ budgets written → {os.path.relpath(BUDGETS_SIDECAR, ENGINE)}")
 
     if selftest:
-        # teeth: a probe that does float math MUST trip the H4 check.
-        tprobe = {"name": "selftest", "tier": "hot", "headers": ["cstdint"],
-                  "params": "double* a, double b", "call": "*a = (*a) * b + 1.5"}
-        d, e = compile_and_disasm(tprobe)
-        caught = (e is None) and (analyze(d) or {}).get("floats", 0) > 0
-        print("\n  --selftest:", "✅ teeth (float math tripped the H4 detector)" if caught else "❌ TEETH FAILED")
-        if not caught:
+        # TEETH — every detector MUST fire on an injected probe (D-234 lesson 3: the teeth
+        # ARE the guard against under-enumeration; only because the float probe existed did
+        # the AVX/FMA hole surface). Each case: compile a probe that triggers the detector,
+        # analyze, assert it fired. NOTE: the `spills` check is an inherently-heuristic
+        # ADVISORY count (frame-relative stores aren't all spills) → NOT strict-teeth'd here.
+        cases = [
+            ("H4 scalar-float (AVX/FMA)", {"headers": ["cstdint"], "params": "double* a, double b",
+                                           "call": "*a = (*a) * b + 1.5"},
+             lambda a: a.get("floats", 0) > 0),
+            ("div",                       {"headers": ["cstdint"], "params": "long* a, long b, long c",
+                                           "call": "*a = b / c"},
+             lambda a: a.get("divs", 0) > 0),
+            ("forbidden-call (malloc)",   {"headers": ["cstdlib"], "params": "void** a",
+                                           "call": "*a = std::malloc(64)"},
+             lambda a: len(a.get("ext_calls", [])) > 0),
+            ("indirect-call/vtable",      {"headers": ["cstdint"], "params": "void(*fp)(int), int x",
+                                           "call": "fp(x)"},
+             lambda a: len(a.get("indirect_calls", [])) > 0),
+            ("branch-detection",          {"headers": ["cstdint"], "params": "int b, void(*f)()",
+                                           "call": "if (b > 7) f()"},
+             lambda a: sum(a.get("branches", {}).values()) > 0),
+            ("non-vacuity (empty body)",  {"headers": ["cstdint"], "params": "int x", "call": "(void)x"},
+             lambda a: a is not None and not a.get("nonvacuous", True)),
+        ]
+        all_ok = True
+        print("\n  --selftest (teeth — each detector MUST fire on an injected probe):")
+        for name, probe, want in cases:
+            d, e = compile_and_disasm(probe)
+            a = analyze(d) if (e is None and d) else None
+            ok = (e is None) and want(a if a is not None else {})
+            print(f"      {'✅' if ok else '❌'} {name}" + (f"  (PROBE-FAIL: {e})" if e else ""))
+            all_ok = all_ok and ok
+        print("  --selftest:", "✅ ALL teeth fire" if all_ok
+              else "❌ a detector did NOT fire — under-enumeration risk (D-234 lesson 3)")
+        if not all_ok:
             return 3
 
     print("\n" + ("✅ conformance clean" if rc == 0 else f"⚠️  exit {rc} — see flags above"))

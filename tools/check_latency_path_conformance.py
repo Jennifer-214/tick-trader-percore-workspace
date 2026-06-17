@@ -35,9 +35,20 @@ OTHER CHECKS (each maps to an invariant, decidable from ASM):
   no scalar-float (H4) · no div/idiv (§5 reciprocals) · no malloc/free/__libc/lock
   calls (H1/Rule 2) · no indirect call / vtable (H2) · stack-spill count (reg pressure).
 
-NON-VACUITY (eat-own-dogfood — else this is the Class-51 guard it codifies against):
-  ASSERTS the probe symbol was found + a real inlined body disassembled (instr > floor),
-  so an optimized-away probe can never pass green.
+NON-VACUITY + REACH (eat-own-dogfood — else this is the Class-51 guard it codifies against):
+  ASSERTS the probe symbol was found + a real body disassembled (instr > floor) so an
+  optimized-away probe can never pass green. THREE reach mechanisms so we analyze the REAL
+  body, never thin glue (the post-3:3 finds — A-1/I-1):
+    - INLINED target (always_inline / hot path)  → analyze the probe_fn wrapper directly.
+    - OUT-OF-LINE target (inline-not-always_inline, incl. a GCC `.isra.N`/`.constprop.N`
+      clone reached by a resolved jmp with NO reloc) → find the target's OWN symbol by its
+      mangled length-prefixed name + analyze THAT (the .isra evasion that let a 19-instr
+      glue wrapper pass green on a 4617-instr body).
+    - TRANSITIVE warm work → a HARD-invariant (float/div/forbidden/indirect) can hide one
+      `call` deeper than the analyzed body (the slow path bottoms out in out-of-line FPN
+      kernels). Bounded-recurse into WARM residual calls to defined same-TU bodies; a warm
+      call to a body we CANNOT see (not in this .o, not forbidden) FAILS LOUD rather than
+      certify a false green.
 
 TOOL-DESIGN DISCIPLINE (the 3 lessons, → the ship-close conformance DESIGN_SPEC):
   1. A static-ASM detector can be a STRONGER gate than a source-grep — the compiled ASM
@@ -56,10 +67,13 @@ MODES:
   (default)          report-only: MEASURE + print the per-category breakdown (+ ASM).
   --asm              also dump the full per-function disassembly.
   --update-budgets   write measured counts -> budgets sidecar (the ratchet baseline).
-  --selftest         teeth: inject a float op into a probe -> the H4 check MUST fire.
+  --selftest         teeth: inject each violation into a probe -> its detector MUST fire
+                     (float/div/forbidden/indirect/branch/non-vacuity + the reach/transitive/
+                     fail-loud/stdio cases — every detector, not just float; D-234 lesson 3).
 
-EXIT: 0 = clean / report-only. 1 = a budget or invariant violation. 2 = a probe failed
-to compile (tooling error — surfaced, never silently skipped).
+EXIT: 0 = clean / report-only. 1 = a budget/invariant violation OR un-analyzed warm work.
+2 = a probe failed to compile (tooling error — surfaced, never silently skipped).
+3 = a --selftest tooth did NOT fire (a detector regressed — under-enumeration).
 
 Run from the engine root or set FOXML_ENGINE. PRODUCTION flags only (no LATENCY_PROFILING).
 """
@@ -75,6 +89,7 @@ CXX = os.environ.get("CXX", "g++")
 FLAGS = ["-std=c++20", "-O3", "-march=native", f"-I{ENGINE}"]
 BUDGETS_SIDECAR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib", "latency_path_budgets.json")
 NONVACUITY_FLOOR = 8  # a real inlined hot/slow body is far bigger; < this = optimized away / wrong symbol.
+MAX_FOLLOW_DEPTH = 5  # bounded transitive recursion into warm defined callees (cycle-guarded; closes A-1's "div behind a call")
 
 COND_JUMPS = {
     "je", "jne", "jz", "jnz", "jg", "jge", "jl", "jle", "ja", "jae", "jb", "jbe",
@@ -87,10 +102,33 @@ FLOAT_OPS = re.compile(r"\bv?(mul|add|sub|div|sqrt|max|min|comi|ucomi|cvt|fn?m(a
 DIV_OPS = re.compile(r"\bi?div[a-z]?\b|\bv?div[sp][sd]\b")
 # Full variant space (D-234 lesson 2): C allocators + aligned variants + every C++
 # new/delete mangling (_Znwm new / _Znam new[] / _ZdlPv delete / _ZdaPv delete[]; the
-# nothrow forms _Znwm…RKSt9nothrow_t are prefix-caught) + libc + all pthread locks + throw.
+# nothrow forms _Znwm…RKSt9nothrow_t are prefix-caught) + libc + all pthread locks + throw
+# + STDIO (fprintf/printf/puts/fwrite/fflush/write — the Rule-2 stdio-mutex hazard on a
+# latency path; I-1 found a cold fprintf on Regime_Classify + Notify's queue-full fprintf
+# that this detector was blind to — under-enumeration, same class as the AVX/FMA miss).
 FORBIDDEN_CALL = re.compile(
     r"<(_?malloc|_?free|_?calloc|_?realloc|reallocarray|aligned_alloc|posix_memalign|memalign|valloc|pvalloc"
-    r"|_Znwm|_Znwj|_Znam|_Znaj|_ZdlPv|_ZdaPv|__libc_|pthread_mutex|pthread_cond|pthread_rwlock|pthread_spin|__cxa_throw)")
+    r"|_Znwm|_Znwj|_Znam|_Znaj|_ZdlPv|_ZdaPv|__libc_|pthread_mutex|pthread_cond|pthread_rwlock|pthread_spin|__cxa_throw"
+    r"|f?printf|vf?printf|fwrite|fputs|fputc|puts|putchar|fflush|\bwrite\b)")
+# Compiler-runtime / benign externals (NOT user code that could hide a HARD violation) — a residual
+# call to one of these is SEEN + known-safe, so it must NOT fail-loud as "un-analyzable work" (else a
+# static-init guard / memset would false-RED a clean fn). Static-init / atexit / stack-protector /
+# bulk-mem / crash paths. (Distinct from FORBIDDEN_CALL: these are allowed, just opaque-but-known.)
+BENIGN_EXTERN = re.compile(
+    r"^(__cxa_guard_acquire|__cxa_guard_release|__cxa_atexit|__cxa_pure_virtual|__stack_chk_fail"
+    r"|__assert_fail|abort|memset|memcpy|memmove|memcmp|bcmp|getenv|secure_getenv)$")
+# Feature-domain / display double-math runtime calls (libm + compiler-rt) — the H4-SANCTIONED escape:
+# transcendentals have NO exact fixed-point form (H4 § feature-domain) and double min/max/round +
+# int128↔double conversions are the feature/display seam — the SAME family as the inlined fp2_*/vsqrtsd
+# already exempted by source-`allow`, just emitted OUT-OF-LINE as a `call`. KNOWN + benign for the HARD
+# invariants (pure math; no malloc/lock/money-arithmetic) and appear ONLY on feature/ML paths (money
+# math is integer/decimal udiv256_qr). Skip from the un-analyzed-warm gate — a PRECISE name-whitelist
+# that keeps fail-loud ABSOLUTE for unknown ENGINE calls (not a blanket). D-237/s4 (libm-exemption).
+FEATURE_MATH_EXTERN = re.compile(
+    r"^(sqrtf?|exp2?f?|expm1f?|powf?|logf?|log2f?|log10f?|log1pf?|cbrtf?"
+    r"|sinf?|cosf?|tanf?|asinf?|acosf?|atanf?|atan2f?|sinhf?|coshf?|tanhf?|hypotf?|fmaf?"
+    r"|fmaxf?|fminf?|fabsf?|llroundf?|lroundf?|roundf?|rintf?|nearbyintf?|truncf?|ceilf?|floorf?|ldexpf?"
+    r"|__floattidf|__floattisf|__floatuntidf|__floatunsdidf|__fixdfti|__fixunsdfti)$")
 
 # ── MANIFEST: latency-critical functions (1 row each; registry discipline) ──
 #   params/call = a noinline probe-wrapper that FORWARDS args (never constructs them),
@@ -112,14 +150,94 @@ MANIFEST = [
         "call": "RollingStats_Push<64,128>(a, b, c)",
         "allowlist": [],
     },
+    # NOTE: EventLoop_RebuildOneCore (the slow-rebuild ORCHESTRATOR) is deliberately NOT a manifest row.
+    # The probe (tt::EventLoopState<64>* …22 args) compiles + the .isra-follow reaches its real ~4617-instr
+    # body — but it INLINES the WHOLE slow ML+bandit+strategy+persistence pipeline → ~190 signals: the
+    # 1645 floats/154 divs are all feature-domain H4-exempt (~50 ML/feature source files) BUT it also
+    # surfaces file-I/O (fopen/fclose/rename/unlink) + system() + time/locale on the slow path (FINDING
+    # B2, task #18 — triage cold/sanctioned). Gating the orchestrator floods + would mask those; a
+    # standalone probe also over-inlines vs the real multi-TU build. The latency-critical KERNELS are the
+    # gate-able unit (RollingStats_Push + Regime_Classify below; expand per the per-cycle kernel set).
+    # Decided D-237/s4 dogfood: manifest KERNELS, not the orchestrator.
+    {
+        "name": "Regime_Classify", "tier": "slow",
+        "headers": ["CoreFrameworks/ControllerEventLoop.hpp"],   # pulls in RegimeDetector + the complete ControllerConfig/RegimeState/RegimeSignals
+        "params": "RegimeState<64>* a, const RegimeSignals<64>* b, const ControllerConfig<64>* c",
+        "call": "Regime_Classify<64>(a, b, c)",
+        "allowlist": [],
+        "allow": [
+            "RegimeDetector.hpp:642",  # TT_REGIME_DEBUG fprintf — env-gated cold debug (getenv :633 + (dbg_cycle&0xF)==0); diagnostic-only, known-pending
+            "FixedPointN.hpp:1418",    # fp2_to_double — feature/display double conversion (all 18 regime-score floats) — H4-exempt
+        ],
+    },
+    {   # ML ridge-blend weight kernel — bounded (1097 instr), NOT an orchestrator; its Cholesky sqrt
+        # inlines to vsqrtsd (exemptable) rather than a libm `call sqrt`, so it's a clean gate-unit.
+        "name": "RidgeBlender_Compute", "tier": "slow",
+        "headers": ["ML_Headers/RidgeBlender.hpp"],
+        "params": "RidgeWeights<64>* a, const double* b, const double* c, int d, double e, double f, double g",
+        "call": "RidgeBlender_Compute<64>(a, b, c, d, e, f, g)",
+        "allowlist": [],
+        "allow": [
+            "RidgeBlender.hpp",        # N=8 Cholesky risk-parity solve — feature-domain double math (Σ corr matrix, μ net-IC, weight renorm); not money
+            "FixedPointN.hpp:1405",    # fp2_from_double — feature↔double output-weight seam (FPN_FromDouble) — H4-exempt
+            "FixedPointN.hpp:1406",    # fp2_from_double (same seam)
+            "FixedPointN.hpp:1407",    # fp2_from_double (same seam)
+            "FixedPointN.hpp:1408",    # fp2_from_double (same seam)
+            "FixedPointN.hpp:1410",    # fp2_from_double (same seam)
+            "FixedPointN.hpp:1412",    # fp2_from_double (same seam)
+        ],
+    },
+    {   # ML confidence scorer — 3-factor IC×Freshness×Stability; bounded (64 instr). libm exp
+        # (ConfidenceScore.hpp:335) / sqrt (:320) gate-able via FEATURE_MATH_EXTERN (unanalyzed-warm=0).
+        "name": "ConfidenceScorer_Compute", "tier": "slow",
+        "headers": ["ML_Headers/ConfidenceScore.hpp"],
+        "params": "ConfidenceScorer* a, double b",
+        "call": "ConfidenceScorer_Compute(a, b)",
+        "allowlist": [],
+        "allow": [
+            "ConfidenceScore.hpp",     # RollingIC/RollingRMSE + Confidence_* feature-domain double math (Spearman corr, RMSE, freshness/stability) — not money
+        ],
+    },
+    {   # ML confidence scorer — 4-factor composite IC×Freshness×Capacity×Stability; bounded (98 instr).
+        "name": "ConfidenceScorer_ComputeComposite", "tier": "slow",
+        "headers": ["ML_Headers/ConfidenceScore.hpp"],
+        "params": "ConfidenceScorer* a, uint64_t b",
+        "call": "ConfidenceScorer_ComputeComposite(a, b)",
+        "allowlist": [],
+        "allow": [
+            "ConfidenceScore.hpp",     # 4-factor composite confidence — feature-domain double math (IC/freshness/capacity/stability) — not money
+        ],
+    },
+    {   # ML ridge correlation finalize — O(N²) corr-from-sums, N=8; bounded (815 instr). The 8× std
+        # sqrt (RidgeBlender.hpp:411/:420) inline to vsqrtsd (no libm call); unanalyzed-warm=0.
+        "name": "RidgeBlender_FinalizeCorrFromSums", "tier": "slow",
+        "headers": ["ML_Headers/RidgeBlender.hpp"],
+        "params": "double (*a)[MAX_RIDGE_MODELS], const double* b, const double (*c)[MAX_RIDGE_MODELS], uint64_t d, int e",
+        "call": "RidgeBlender_FinalizeCorrFromSums<64>(a, b, c, d, e)",
+        "allowlist": [],
+        "allow": [
+            "RidgeBlender.hpp",        # N=8 correlation finalize — feature-domain double math (mean/var/cov/corr from sum-of-squares) — not money
+        ],
+    },
+    # NOT manifested (kernel-granularity, dogfood-verified s4):
+    #  · RidgeBlender_OnlineCycleStep — orchestrator-scale (1910 instr, inlines update+finalize+Cholesky);
+    #    its AVX-512 floats clear via an avx512fintrin.h allow, but it retains an unresolvable `.text.unlikely`
+    #    tail-jmp (RidgeBlender.hpp:439) the fail-loud won't certify. Its bounded math IS covered by
+    #    RidgeBlender_FinalizeCorrFromSums above (gate the sub-kernel, not the orchestrator).
+    #  · Model_Predict* (XGBoost inference, ModelInference.hpp:733) — KNOWN COVERAGE GAP. Under prod flags
+    #    (no -DUSE_XGBOOST) it's a vacuous stub; with -DUSE_XGBOOST it's 39 instr = 3 external XGBoost C-API
+    #    calls (XGDMatrixCreateFromMat/XGBoosterPredict/XGDMatrixFree) + NO engine compute underneath → not
+    #    actionable to gate (verified s4). If ever wanted: a per-row extra_flags + an XGBOOST_API_EXTERN
+    #    name-whitelist (sketch in the decision log). Homed gap, not a row.
 ]
 
 
 def compile_and_disasm(row):
     """Compile a noinline probe-wrapper (PRODUCTION flags) + return its disassembly lines."""
     inc = "\n".join(f'#include "{h}"' for h in row["headers"])
+    prelude = row.get("prelude", "")   # optional extra TU code (the --selftest teeth define helpers here)
     src = (
-        f"{inc}\n"
+        f"{inc}\n{prelude}\n"
         f'extern "C" __attribute__((noinline)) void probe_fn({row["params"]}) {{\n'
         f'    {row["call"]};\n'
         f"}}\n"
@@ -149,16 +267,49 @@ SRCLINE_RE = re.compile(r"^(/?\S+\.(?:hpp|cpp|h|cc)):(\d+)")
 TARGET_RE = re.compile(r"^([0-9a-f]+)\b")
 RELOC_RE = re.compile(r"R_X86_64\w*\s+(\S+)")  # objdump -r reloc line → the external-call target symbol
                                                # (e.g. `malloc-0x4`); INVISIBLE in an unlinked .o without -r
+SYMHDR_RE = re.compile(r"^[0-9a-f]+ <(.+)>:$")  # a function-block header line: `<addr> <symbol>:`
+CALLTGT_RE = re.compile(r"<([^>+]+)(?:\+0x[0-9a-f]+)?>")  # the resolved `<sym(+off)?>` operand of a same-TU call/jmp
+CLONE_SUFFIX = re.compile(r"\.(?:isra|constprop|part|cold)\.\d+$")  # GCC IPA-clone suffixes (.isra.0 …)
 
 
-def analyze(disasm):
-    """Extract probe_fn's body, classify branches per category, count invariants."""
+def _strip_clone(sym):
+    return CLONE_SUFFIX.sub("", sym)
+
+
+def _defined_map(disasm):
+    """{symbol AND its clone-stripped form → full defined symbol} for every fn block in the .o.
+    objdump -d only disassembles .text, so data symbols (vtables/typeinfo) never enter here — the
+    transitive/target follow is .text-only BY CONSTRUCTION (A-1's data-symbol-safety note; pinned
+    by this comment so a future -d→-D change can't silently break it)."""
+    d = {}
+    for ln in disasm.splitlines():
+        m = SYMHDR_RE.match(ln.strip())
+        if m:
+            full = m.group(1)
+            d[full] = full
+            d.setdefault(_strip_clone(full), full)
+    return d
+
+
+def _call_target(ops, reloc):
+    """The symbol a `call` goes to — the -r reloc (unlinked external) or the resolved `<sym+off>`
+    operand (same-TU, incl. an .isra clone reached without a reloc — I-1's evasion). None ⟹ a
+    register/relative target (an indirect call, flagged separately)."""
+    if reloc:
+        return re.sub(r"[-+]0x[0-9a-f]+$", "", reloc)
+    m = CALLTGT_RE.search(ops)
+    return m.group(1) if m else None
+
+
+def analyze(disasm, symbol="probe_fn"):
+    """Extract `symbol`'s body (default the probe wrapper; or a followed out-of-line callee),
+    classify branches per category, count invariants."""
     lines = disasm.splitlines()
     body = []          # (addr:int, mnemonic, operands, srcline)
     in_fn = False
     cur_src = None
     for ln in lines:
-        if "<probe_fn>:" in ln:
+        if f"<{symbol}>:" in ln:
             in_fn = True
             continue
         if not in_fn:
@@ -184,7 +335,7 @@ def analyze(disasm):
     cold_start = lo + int(span * 0.75)   # heuristic: gcc tails cold blocks (upper quartile)
 
     cats = {"loop": [], "rare_cold": [], "data_dependent": []}
-    calls, ext_calls, indirect_calls, floats, divs, spills = [], [], [], 0, 0, 0
+    calls, ext_calls, indirect_calls, residual, float_srcs, div_srcs, spills = [], [], [], [], [], [], 0
     for addr, mn, ops, src, reloc in body:
         indexed = bool(re.search(r",%\w+,\d", ops))   # (,%idx,scale) = a fn-pointer/jump TABLE = branchless dispatch (OK), not a vtable
         if mn in COND_JUMPS:
@@ -197,6 +348,20 @@ def analyze(disasm):
             # forbidden-call: match the linked `<sym>` OR the -r reloc symbol (unlinked .o — the vacuity the teeth caught)
             if FORBIDDEN_CALL.search(ops) or (reloc and FORBIDDEN_CALL.search("<" + reloc)):
                 ext_calls.append((f"{addr:x}", ops + (f"  [→ {reloc}]" if reloc else ""), src))
+            # residual-call record for the transitive HARD scan (target + warm/cold per addr)
+            residual.append({"addr": f"{addr:x}", "warm": addr < cold_start,
+                             "target": _call_target(ops, reloc), "src": src})
+        if mn == "jmp":
+            # a DIRECT tail-`jmp` to ANOTHER body (the void / discarded-result tail-call form) is
+            # residual work continuing OUTSIDE this body — capture it like a call so a tail-`jmp
+            # malloc` / tail-`jmp <unseen>` can't slip the forbidden + fail-loud gates (the --selftest
+            # teeth caught this hole). Intra-function jumps (target == self) are skipped; indirect
+            # `jmp *reg` stays a separate finish-item (indistinguishable from a switch jump-table).
+            jt = _call_target(ops, reloc)
+            if jt and _strip_clone(jt) != _strip_clone(symbol):
+                residual.append({"addr": f"{addr:x}", "warm": addr < cold_start, "target": jt, "src": src})
+                if FORBIDDEN_CALL.search(ops) or (reloc and FORBIDDEN_CALL.search("<" + reloc)):
+                    ext_calls.append((f"{addr:x}", f"jmp {ops}" + (f"  [→ {reloc}]" if reloc else ""), src))
         # indirect CALL through a single fn-pointer / vtable / std::function = the H2 risk → flag.
         # EXCLUDE an indexed `call *(,%idx,scale)` (a fn-pointer TABLE = the sanctioned branchless
         # dispatch). NOTE: indirect TAIL-calls (`jmp *reg`) are deliberately NOT flagged — a GCC
@@ -206,9 +371,9 @@ def analyze(disasm):
         if mn == "call" and "*" in ops and not indexed:
             indirect_calls.append((f"{addr:x}", f"{mn} {ops}", src))
         if FLOAT_OPS.search(mn) or FLOAT_OPS.search(ops):
-            floats += 1
+            float_srcs.append(src or "(no src)")     # record the SOURCE so the per-row `allow` list can exempt by-seam (D-237)
         if DIV_OPS.search(mn + " "):
-            divs += 1
+            div_srcs.append(src or "(no src)")
         # crude stack-spill proxy: a store of a reg to a stack slot beyond the preamble
         if mn == "mov" and re.search(r",\s*-?0x[0-9a-f]+\(%rbp\)", ops) and "%rsp" not in ops:
             spills += 1
@@ -217,10 +382,92 @@ def analyze(disasm):
         "branches": {k: len(v) for k, v in cats.items()},
         "branch_detail": cats,
         "calls": calls, "ext_calls": ext_calls, "indirect_calls": indirect_calls,
-        "floats": floats, "divs": divs, "spills": spills,
+        "residual": residual,
+        "float_srcs": float_srcs, "div_srcs": div_srcs,
+        "floats": len(float_srcs), "divs": len(div_srcs), "spills": spills,
+        "transitive_floats": 0, "transitive_divs": 0, "unanalyzed_warm": [],
         "cold_start_off": cold_start - lo,
         "nonvacuous": len(body) >= NONVACUITY_FLOOR,
     }
+
+
+def _short(sym):
+    s = _strip_clone(sym)
+    return (s[:44] + "…") if len(s) > 45 else s
+
+
+def _target_body_symbol(disasm, defined, call_expr):
+    """Find the manifest target fn's OWN out-of-line body symbol — an `inline`-not-`always_inline`
+    fn the compiler kept out of line, INCLUDING a GCC `.isra.N`/`.constprop.N` clone reached by a
+    resolved jmp with NO relocation (the evasion that let a 19-instr glue wrapper pass — I-1).
+    Match the mangled length-prefixed name component (objdump has no -C); extern "C" matches the
+    bare name. None ⟹ the target was INLINED into probe_fn (analyze the wrapper). Among matches,
+    pick the largest non-vacuous body (a stub/thunk loses to the real .isra clone)."""
+    name = re.split(r"[<(]", call_expr.strip())[0].strip().split("::")[-1]
+    if not name:
+        return None
+    needle = f"{len(name)}{name}"          # Itanium length-prefixed component (e.g. 17RollingStats_Push)
+    best, best_n, seen = None, -1, set()
+    for sym, full in defined.items():
+        if sym == "probe_fn" or full in seen:
+            continue
+        if needle in sym or _strip_clone(sym) == name or sym == name:
+            seen.add(full)
+            a = analyze(disasm, full)
+            if a and a["nonvacuous"] and a["instructions"] > best_n:
+                best, best_n = full, a["instructions"]
+    return best
+
+
+def analyze_path(disasm, symbol, defined, depth=0, visited=None):
+    """analyze() + bounded TRANSITIVE HARD-invariant recursion into residual calls to DEFINED same-TU
+    bodies — closes A-1's "a div/float/forbidden one `call` level deeper than the analyzed body is
+    invisible". instr/branch counts stay on the PRIMARY body (no merge — avoids semantic mush); only
+    the HARD findings (float/div/forbidden/indirect) bubble up. A residual call to a body we CANNOT
+    see (not in this .o, not forbidden, not a benign compiler-runtime extern) is recorded as
+    un-analyzed work → main FAILS LOUD rather than certify a false green (the Class-51 backstop).
+
+    The recurse/fail-loud decision is STRUCTURAL (defined-callee / forbidden / benign-extern), NOT
+    positional — R-A found the `lo + 0.75*span` cold-quartile heuristic mis-classifies the FINAL
+    delegating `call` of a compute-then-delegate fn as 'cold' and silently skipped it, defeating the
+    whole transitive + fail-loud point for the dominant slow-path shape (work, then delegate to an
+    out-of-line FPN kernel). Position is the right axis for classifying a conditional BRANCH
+    (rare-cold vs data-dependent), but the WRONG axis for 'is this work analyzed'."""
+    visited = set() if visited is None else visited
+    a = analyze(disasm, symbol)
+    if a is None or depth >= MAX_FOLLOW_DEPTH:
+        return a
+    visited.add(symbol)
+    for rcall in a["residual"]:
+        tgt = rcall["target"]
+        if tgt is None or FORBIDDEN_CALL.search("<" + tgt + ">"):
+            continue                        # register-indirect (flagged elsewhere) or already-counted forbidden
+        full = defined.get(tgt) or defined.get(_strip_clone(tgt))
+        if full and full not in visited:
+            sub = analyze_path(disasm, full, defined, depth + 1, visited)   # analyzable → recurse (ANY position)
+            if sub:
+                a["float_srcs"] += sub["float_srcs"]; a["transitive_floats"] += len(sub["float_srcs"])
+                a["div_srcs"] += sub["div_srcs"];     a["transitive_divs"] += len(sub["div_srcs"])
+                a["floats"] = len(a["float_srcs"]); a["divs"] = len(a["div_srcs"])
+                a["ext_calls"] += [(c[0], c[1] + f"  [via {_short(full)}]", c[2]) for c in sub["ext_calls"]]
+                a["indirect_calls"] += [(c[0], c[1] + f"  [via {_short(full)}]", c[2]) for c in sub["indirect_calls"]]
+                a["unanalyzed_warm"] += sub["unanalyzed_warm"]
+        elif not full and not BENIGN_EXTERN.match(_strip_clone(tgt)) and not FEATURE_MATH_EXTERN.match(_strip_clone(tgt)):
+            a["unanalyzed_warm"].append((rcall["addr"], tgt, rcall["src"]))   # unseen + not benign + not feature-math → fail loud (any position)
+    return a
+
+
+def _analyze_probe(disasm, call_expr):
+    """Pick the body to analyze (the out-of-line target if the compiler kept it out of line, else
+    the inlined probe_fn wrapper) + run the transitive scan. Returns (analysis, followed|None).
+    Shared by main + --selftest so the teeth exercise the REAL follow path."""
+    defined = _defined_map(disasm)
+    target = _target_body_symbol(disasm, defined, call_expr)
+    if target:
+        a = analyze_path(disasm, target, defined)
+        if a and a["nonvacuous"]:
+            return a, target
+    return analyze_path(disasm, "probe_fn", defined), None
 
 
 def load_budgets():
@@ -228,6 +475,47 @@ def load_budgets():
         with open(BUDGETS_SIDECAR) as f:
             return json.load(f)
     return {}
+
+
+def _unallowed(items, allow, key=lambda x: x):
+    """Items whose `-l` source matches NO `allow` pattern — the per-row SOURCE-keyed exemption (D-237).
+    ONE allowlist concept shared by float / div / forbidden, mirroring the data-dependent-branch
+    allowlist. A blank `allow` ⟹ nothing exempt (every signal counts). Matched by substring so a
+    file-level pattern (`RidgeBlender.hpp`) covers every line in it, a file:line (`FixedPointN.hpp:1890`)
+    is exact — so a NEW money-float in a mixed file (keyed file:line) still REDs."""
+    return [x for x in items if not any(p and p in (key(x) or "") for p in allow)]
+
+
+def _hard_findings(a, tier, row=None):
+    """The HARD-invariant gate verdicts (independent of budgets), as (label, detail) — non-empty ⟹
+    RC=1. SINGLE SOURCE so --selftest asserts the GATE fires, not merely that a detector COUNTS (R-A:
+    the div detector counted/printed/teethed while main NEVER gated it — a pure-integer idiv exited
+    'clean'). float / div / forbidden are exempted by the row's source-`allow` list (D-237); indirect
+    + un-analyzed-warm gate ABSOLUTELY (not source-exemptable). div = H4/§5 (the certified path is the
+    branchless udiv256_qr reciprocal, never hardware idiv)."""
+    allow = (row or {}).get("allow", [])
+    # forbidden-calls (malloc/lock/stdio/throw) exempt ONLY by FILE:LINE — never a bare file-level
+    # pattern (the final-verify latent hole: a future malloc/stdio inlined from a file-level-allowed
+    # pure-feature file would silently mask). float/div keep file-level (pure-feature files); a
+    # forbidden exemption must name the exact line (the RegimeDetector.hpp:642 cold-debug idiom).
+    line_allow = [p for p in allow if isinstance(p, str) and re.search(r":\d+$", p)]
+    uf = _unallowed(a["float_srcs"], allow)
+    ud = _unallowed(a["div_srcs"], allow)
+    uec = _unallowed(a["ext_calls"], line_allow, key=lambda c: c[2])
+    out = []
+    if uf:
+        out.append(("H4", f"{len(uf)} non-exempt scalar-float on a {tier} money path (e.g. {uf[0]})"
+                    + (f"; {a['transitive_floats']} via a called helper" if a["transitive_floats"] else "")))
+    if ud:
+        out.append(("H4/§5", f"{len(ud)} non-exempt div/idiv on a {tier} path — use the certified udiv256_qr (e.g. {ud[0]})"))
+    if uec:
+        out.append(("H1/Rule2", f"forbidden calls: {[c[1] for c in uec][:8]}"))
+    if a["indirect_calls"]:
+        out.append(("H2", f"indirect/vtable call(s): {[c[1] for c in a['indirect_calls']][:8]}"))
+    if a["unanalyzed_warm"]:
+        out.append(("UN-ANALYZED", "residual call(s) to a body not in this .o (can't certify HARD-clean — "
+                    f"follow it or manifest it): {[f'{x[0]}:{_short(x[1])}' for x in a['unanalyzed_warm'][:6]]}"))
+    return out
 
 
 def main(argv):
@@ -250,29 +538,39 @@ def main(argv):
             print(f"  ⚠️  PROBE-FAIL — {err}")
             rc = max(rc, 2)
             continue
-        a = analyze(disasm)
+        # Pick the REAL body: the out-of-line target (incl. an .isra/.constprop clone) if the
+        # compiler kept it out of line, else the inlined probe_fn wrapper — then transitively scan
+        # warm defined callees for HARD violations (closes the .isra-evasion + transitive holes).
+        a, followed = _analyze_probe(disasm, row["call"])
         if a is None or not a["nonvacuous"]:
             print(f"  ❌ NON-VACUITY FAIL — probe body not found / optimized away "
                   f"({0 if a is None else a['instructions']} instr < floor {NONVACUITY_FLOOR}). "
                   f"This would be a vacuously-green guard (Class-51) — refusing to pass.")
             rc = max(rc, 1)
             continue
+        if followed:
+            print(f"  ↳ target out-of-line → analyzed its own body `{_short(followed)}` (not the glue wrapper)")
         dd = a["branches"]["data_dependent"]
         allow = len(row.get("allowlist", []))
         unallowed = max(0, dd - allow)
         print(f"  instructions={a['instructions']}  (cold tail ≥ +{a['cold_start_off']}B)")
         print(f"  branches: loop={a['branches']['loop']}  rare-cold={a['branches']['rare_cold']}  "
               f"DATA-DEPENDENT-WARM={dd}  (allowlisted={allow} → unallowed={unallowed})")
-        print(f"  H4 scalar-float={a['floats']}  div={a['divs']}  spills={a['spills']}  "
-              f"forbidden-calls={len(a['ext_calls'])}  indirect/vtable={len(a['indirect_calls'])}")
+        allow = row.get("allow", [])
+        uf = len(_unallowed(a["float_srcs"], allow)); ud = len(_unallowed(a["div_srcs"], allow))
+        uec = len(_unallowed(a["ext_calls"], allow, key=lambda c: c[2]))
+        ftr = f"+{a['transitive_floats']}t" if a["transitive_floats"] else ""
+        print(f"  H4 float={a['floats']}{ftr} (exempt→{a['floats'] - uf} unallowed→{uf})  "
+              f"div={a['divs']} (unallowed→{ud})  spills={a['spills']}  "
+              f"forbidden={len(a['ext_calls'])} (unallowed→{uec})  indirect={len(a['indirect_calls'])}  "
+              f"unanalyzed-warm={len(a['unanalyzed_warm'])}"
+              + (f"   [allow: {len(allow)} exempt sources]" if allow else ""))
 
-        # invariant gates (hard — independent of budgets)
-        if a["floats"]:
-            print(f"  ❌ H4 — {a['floats']} scalar-float instr on a {tier} money path"); rc = max(rc, 1)
-        if a["ext_calls"]:
-            print(f"  ❌ H1/Rule2 — forbidden calls: {[c[1] for c in a['ext_calls']]}"); rc = max(rc, 1)
-        if a["indirect_calls"]:
-            print(f"  ❌ H2 — indirect/vtable call(s): {[c[1] for c in a['indirect_calls']]}"); rc = max(rc, 1)
+        # invariant gates (hard — independent of budgets; merged transitively across defined callees;
+        # float/div/forbidden exempted by the row's source-`allow` list per D-237). SINGLE SOURCE
+        # (_hard_findings) so --selftest asserts the GATE fires, not just the detector count.
+        for label, detail in _hard_findings(a, tier, row):
+            print(f"  ❌ {label} — {detail}"); rc = max(rc, 1)
 
         # the headline: data-dependent-warm branches, ASM per category
         print(f"\n  ▼ DATA-DEPENDENT-WARM branches (the jitter risk → drive to 0; each must be "
@@ -316,31 +614,63 @@ def main(argv):
         # the AVX/FMA hole surface). Each case: compile a probe that triggers the detector,
         # analyze, assert it fired. NOTE: the `spills` check is an inherently-heuristic
         # ADVISORY count (frame-relative stores aren't all spills) → NOT strict-teeth'd here.
+        gates = lambda a, allow=[]: {l for l, _ in _hard_findings(a, "hot", {"allow": allow})}   # HARD gate-labels that FIRED; allow = source-exempt patterns
         cases = [
             ("H4 scalar-float (AVX/FMA)", {"headers": ["cstdint"], "params": "double* a, double b",
                                            "call": "*a = (*a) * b + 1.5"},
-             lambda a: a.get("floats", 0) > 0),
-            ("div",                       {"headers": ["cstdint"], "params": "long* a, long b, long c",
+             lambda a: "H4" in gates(a)),
+            ("div (GATE, not just count)", {"headers": ["cstdint"], "params": "long* a, long b, long c",
                                            "call": "*a = b / c"},
-             lambda a: a.get("divs", 0) > 0),
+             lambda a: "H4/§5" in gates(a)),                                    # asserts the GATE (HOLE #1 regression-proof)
             ("forbidden-call (malloc)",   {"headers": ["cstdlib"], "params": "void** a",
                                            "call": "*a = std::malloc(64)"},
-             lambda a: len(a.get("ext_calls", [])) > 0),
+             lambda a: "H1/Rule2" in gates(a)),
             ("indirect-call/vtable",      {"headers": ["cstdint"], "params": "void(*fp)(int), int x, int* s",
                                            "call": "fp(x); *s = 1"},   # trailing store → a real `call *`, not a tail-`jmp *`
-             lambda a: len(a.get("indirect_calls", [])) > 0),
+             lambda a: "H2" in gates(a)),
             ("branch-detection",          {"headers": ["cstdint"], "params": "int b, void(*f)()",
                                            "call": "if (b > 7) f()"},
-             lambda a: sum(a.get("branches", {}).values()) > 0),
+             lambda a: sum(a["branches"].values()) > 0),                        # detector (branches feed the ratchet, not a hard gate)
             ("non-vacuity (empty body)",  {"headers": ["cstdint"], "params": "int x", "call": "(void)x"},
-             lambda a: a is not None and not a.get("nonvacuous", True)),
+             lambda a: not a["nonvacuous"]),                                    # the non-vacuity REFUSAL gate
+            # ── reach + transitive + fail-loud teeth (the post-3:3 finds; each asserts the GATE) ──
+            ("out-of-line follow + div",  {"prelude": 'extern "C" __attribute__((noinline)) void oobf_div(long* o, long x, long y){ *o = x / (y | 1); }',
+                                           "headers": [], "params": "long* a, long b, long c", "call": "oobf_div(a, b, c)"},
+             lambda a: "H4/§5" in gates(a)),                                    # follow to the out-of-line body + GATE on its div
+            ("transitive div (1 call deeper)", {"prelude": 'extern "C" __attribute__((noinline)) long ttd_deep(long x, long y){ return x / (y | 1); }\n'
+                                                           'extern "C" __attribute__((noinline)) void ttd_mid(long* o, long b, long c){ *o = ttd_deep(b, c) + b; }',
+                                           "headers": [], "params": "long* a, long b, long c", "call": "ttd_mid(a, b, c)"},
+             lambda a: "H4/§5" in gates(a) and a["transitive_divs"] > 0),       # the div hides one `call` deeper than the body
+            ("late-delegate div (cold-quartile regression)", {"prelude": 'extern "C" __attribute__((noinline)) long ld_kernel(long x, long y){ return x / (y | 1); }\n'
+                                                           'extern "C" __attribute__((noinline)) void ld_body(long* o, long b, long c){ long s=b; for(long i=0;i<c;i++){ s=(s*1103515245+12345)^(s>>7); } *o = s + ld_kernel(s, c); }',
+                                           "headers": [], "params": "long* a, long b, long c", "call": "ld_body(a, b, c)"},
+             lambda a: "H4/§5" in gates(a) and a["transitive_divs"] > 0),       # HOLE #2: the delegating call is LATE (post-bulk-work) → must still recurse
+            ("un-analyzed work (undefined extern)", {"prelude": 'extern "C" long ttu_extern(long);',
+                                           "headers": [], "params": "long* a, long b", "call": "*a += ttu_extern(b)"},
+             lambda a: "UN-ANALYZED" in gates(a)),                             # unseen call → fail-loud GATE
+            ("benign extern NOT fail-loud (memset)", {"headers": ["cstring"], "params": "char* a, unsigned long n",
+                                           "call": "memset(a, 0, n)"},          # variable n → a real memset CALL (not inlined)
+             lambda a: "UN-ANALYZED" not in gates(a)),                          # a SEEN benign runtime extern must NOT false-RED
+            ("feature-math extern NOT fail-loud (libm exp)", {"prelude": 'extern "C" double exp(double);',
+                                           "headers": [], "params": "double* a, double b", "call": "*a = exp(b)"},
+             lambda a: "UN-ANALYZED" not in gates(a)),                          # a libm transcendental = the H4 feature-domain escape — exempt from fail-loud (not an un-analyzable risk)
+            ("stdio forbidden-call (fprintf)", {"headers": ["cstdio"], "params": "int x", "call": 'fprintf(stderr, "%d", x)'},
+             lambda a: "H1/Rule2" in gates(a)),                                 # the Rule-2 stdio hazard the detector was blind to
+            # ── source-`allow` exemption teeth (D-237 — the precision proof) ──
+            ("source-allow: suppresses ONLY the matching source", {"prelude": 'extern "C" __attribute__((noinline)) void exf_div(long* o, long x, long y){ *o = (x * x) / (y | 1); }',
+                                           "headers": [], "params": "long* a, long b, long c", "call": "exf_div(a, b, c)"},
+             lambda a: "H4/§5" in gates(a)                                      # un-allowed → REDs
+                       and "H4/§5" not in gates(a, allow=["probe.cpp"])         # allow its source → exempt
+                       and "H4/§5" in gates(a, allow=["OtherFile.hpp"])),       # a NON-matching allow does NOT suppress (precise, not a blanket mute)
+            ("forbidden NOT file-level-exemptable (file:line only)", {"headers": ["cstdio"], "params": "int x", "call": 'fprintf(stderr, "%d", x)'},
+             lambda a: "H1/Rule2" in gates(a, allow=["probe.cpp"])),            # a FILE-LEVEL allow must NOT mask a forbidden call (final-verify latent-hole close; file:line required)
         ]
         all_ok = True
-        print("\n  --selftest (teeth — each detector MUST fire on an injected probe):")
+        print("\n  --selftest (teeth — each asserts its GATE fires (RC), not just the detector count):")
         for name, probe, want in cases:
             d, e = compile_and_disasm(probe)
-            a = analyze(d) if (e is None and d) else None
-            ok = (e is None) and want(a if a is not None else {})
+            a, _ = _analyze_probe(d, probe["call"]) if (e is None and d) else (None, None)
+            ok = (e is None) and (a is not None) and want(a)
             print(f"      {'✅' if ok else '❌'} {name}" + (f"  (PROBE-FAIL: {e})" if e else ""))
             all_ok = all_ok and ok
         print("  --selftest:", "✅ ALL teeth fire" if all_ok

@@ -1,0 +1,30 @@
+{
+  "ExecutionCore_Tick": {
+    "instructions": 2097,
+    "data_dependent": 25
+  },
+  "RollingStats_Push": {
+    "instructions": 3598,
+    "data_dependent": 18
+  },
+  "Regime_Classify": {
+    "instructions": 489,
+    "data_dependent": 8
+  },
+  "RidgeBlender_Compute": {
+    "instructions": 1097,
+    "data_dependent": 24
+  },
+  "ConfidenceScorer_Compute": {
+    "instructions": 64,
+    "data_dependent": 1
+  },
+  "ConfidenceScorer_ComputeComposite": {
+    "instructions": 98,
+    "data_dependent": 3
+  },
+  "RidgeBlender_FinalizeCorrFromSums": {
+    "instructions": 815,
+    "data_dependent": 41
+  }
+}

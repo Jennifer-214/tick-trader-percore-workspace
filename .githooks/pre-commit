@@ -17,6 +17,7 @@
 #  - Check D (plan body Tests-changed section)        at v5.15.5.F.4d.1.D.1  Phase A.6
 #  - Check F (determinism net: FP golden + locale guard + replay-locale)    at v5.15.5.F.4d.1.E.0.1
 #  - Check G (doc-system frontmatter on changed .md; folded from legacy hook) at v5.15.5.F.4d.1.E.0.1
+#  - Check N (latency-path conformance: static ASM instr-budget + H4/H7/H20/H1/H2 gate) at v5.15.5.F.4d.1.E.1.0
 #
 # Bypass via env vars (use sparingly):
 #   SKIP_PLAN_BODY_CHECK=1     — bypass Check A (B-Plus)
@@ -26,6 +27,7 @@
 #   SKIP_TESTS_SECTION_CHECK=1 — bypass Check D (Tests-changed section)
 #   SKIP_DETERMINISM_CHECK=1   — bypass Check F (determinism net)
 #   SKIP_DOC_METADATA_CHECK=1  — bypass Check G (doc frontmatter on changed .md)
+#   SKIP_LATENCY_CONFORMANCE_CHECK=1 — bypass Check N (latency-path conformance)
 #   SKIP_ALL_CHECKS=1          — bypass all
 
 if [ "${SKIP_ALL_CHECKS:-0}" = "1" ]; then
@@ -256,6 +258,31 @@ if [ "${SKIP_HOT_PATH_INVARIANTS_CHECK:-0}" != "1" ]; then
     fi
 else
     echo "[pre-commit] SKIP_HOT_PATH_INVARIANTS_CHECK=1; skipping hot-path invariants grep-CI"
+fi
+
+# ============================================================================
+# CHECK N: latency-path conformance (.E.1.0 H8) — static ASM instruction-budget + branch-class
+# (the H7/H20 meter; SUBSUMES the H7/H20 grep per D-234) + H4-float/div/forbidden/indirect/un-analyzed
+# over the PRODUCTION disassembly of the manifested hot/slow KERNELS, against the grandfathered baseline
+# (tools/lib/latency_path_budgets.json). Scoped to staged latency-path source / tool / baseline.
+# ============================================================================
+if [ "${SKIP_LATENCY_CONFORMANCE_CHECK:-0}" != "1" ]; then
+    LPC_TOOL="$REPO_ROOT/tools/check_latency_path_conformance.py"
+    STAGED_LPC=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^(CoreFrameworks/(ExecutionCore|GateParameters)\.hpp|ML_Headers/(RollingStats|RidgeBlender|ConfidenceScore)\.hpp|Strategies/RegimeDetector\.hpp|FixedPoint/FixedPointN\.hpp|tools/(check_latency_path_conformance\.py|lib/latency_path_budgets\.json))' || true)
+    if [ -n "$STAGED_LPC" ] && [ -f "$LPC_TOOL" ]; then
+        echo "[pre-commit] Check N: latency-path conformance (staged hot/slow-kernel or tool/baseline change detected)"
+        LPC_OUT=$(python3 "$LPC_TOOL" 2>&1); LPC_RC=$?
+        echo "$LPC_OUT" | tail -25
+        if [ "$LPC_RC" -ne 0 ]; then
+            echo "[pre-commit] Check N FAIL: a latency-path HARD invariant (H4 float / div / forbidden-call / indirect / un-analyzed) OR the instruction/branch ratchet was violated."
+            echo "[pre-commit]   Fix it — or, if a kernel intentionally grew, re-baseline (python3 tools/check_latency_path_conformance.py --update-budgets) — OR bypass with SKIP_LATENCY_CONFORMANCE_CHECK=1"
+            OVERALL_FAIL=1
+        else
+            echo "[pre-commit] Check N PASS"
+        fi
+    fi
+else
+    echo "[pre-commit] SKIP_LATENCY_CONFORMANCE_CHECK=1; skipping latency-path conformance"
 fi
 
 # ============================================================================

@@ -7,6 +7,7 @@ established: 2026-06-16
 sister_specs:
   - meta-disciplines/structural-enforcement-when-memory-insufficient.md
   - data-disciplines/cache-line-discipline.md
+  - audit-methodologies/static-latency-path-conformance-analysis.md
 sister_docs:
   - DOCS/RECURRING_BUG_PATTERNS.md  # Class 51 (vacuously-green guard) + its inverse (false-RED)
 applications:
@@ -15,6 +16,7 @@ applications:
   - 'LatencyHistogram "~640B" vs actual 576B'
   - 'ParameterSlot "~1KB memcpy ~20-30ns" for GateParameters<64> vs actual 192B/~4ns'
   - 'check_struct_size_budget.py false-RED of ExecutionCore (the guard reproducing the disease — the inverse)'
+  - 'the LATENCY arm reshaped runtime-bench -> static instruction-budget conformance analyzer (D-233; check_latency_path_conformance.py) — a derived latency-fact reclassified from a runtime measurement to a STATIC proxy'
 ---
 
 # Mechanical verification of derived code-facts (no hand-computed fact without a guard)
@@ -31,10 +33,12 @@ A **derived code-fact** — a quantity computed FROM the code's structure (struc
 |---|---|---|
 | struct **SIZE** | `static_assert(sizeof(T)==N)` + `check_struct_size_budget.py` | compile-time (strongest) |
 | **CACHE**-residency | static budget (`sizeof` vs host-derived L1d/L2) **+** dynamic perf-counter (`L1-dcache-load-misses`) | static flags, **dynamic decides** |
-| **COMPLEXITY** (`O(...)`) | a benchmark; a stale-comment lint | runtime |
-| **LATENCY** | a benchmark (the H8 bench) — never hand-comment "~100-300µs" | runtime |
+| **COMPLEXITY** (`O(...)`) | the static analyzer's instruction-count + loop-structure (the constant-iter / loop shape is visible in ASM) **+** a benchmark for input-scaling; a stale-comment lint | **static proxy** + runtime confirm |
+| **LATENCY** | the **static conformance analyzer** (`check_latency_path_conformance.py` — instruction-budget + branch-class from ASM, deterministic + gating); never hand-comment "~100-300µs" | **static (CI/pre-commit)** + dynamic PMU confirm (deferred) |
 
 Priority gradient (the engine's general law): **compile-time `static_assert` > CI tool > convention.** If a number is kept in a comment at all, it **references the assert** (the SSoT), it does not restate it.
+
+**Reclassify runtime→static when a sound static proxy exists (D-233).** A fact assumed to need a RUNTIME measurement can sometimes be lifted to a STATIC proxy that is *stronger* for CI: LATENCY was reshaped from a wall-clock-ns bench (non-deterministic, non-CI-able, box-dependent) into a **static instruction-budget + branch-classification from ASM** — deterministic, diffable, gating, zero engine behavior (`static-latency-path-conformance-analysis.md`). Prefer the static proxy when it is sound; keep the dynamic measurement as the *deferred confirm* (the PMU arm), not the gate. The "runtime" tier is the floor, not the destination.
 
 ## The INVERSE failure — don't over-correct into a false-RED
 
@@ -46,8 +50,8 @@ Convention proved insufficient at ~15-20 hand-commented sites. Per `structural-e
 
 ## Sister guards (canonical — extend, do not duplicate)
 
-`check_struct_size_budget.py` (this discipline's first guard — non-serialized struct size + cache budget) · `check_struct_alignment.py` (c) (byte-serialized-type size-pins) · `check_fpn_doc_size_currency.py` (doc FPN sizes) · the H8 bench (latency + cache-miss measurement — the *dynamic* arm of this discipline).
+`check_struct_size_budget.py` (this discipline's first guard — non-serialized struct size + cache budget) · `check_struct_alignment.py` (c) (byte-serialized-type size-pins) · `check_fpn_doc_size_currency.py` (doc FPN sizes) · the **static latency-path conformance analyzer** (`check_latency_path_conformance.py` — the LATENCY arm, instruction-budget + branch-class from ASM; `static-latency-path-conformance-analysis.md`), its deferred `perf`/PMU step being the *dynamic* confirm.
 
 ## Mn registry
 
-Candidate meta-discipline (DESIGN_PHILOSOPHY § 11.5). The size/cache arm has its guard (`check_struct_size_budget.py`); the latency/complexity arm's guard IS the H8 bench. Promote to a numbered Mn at the codification batch close.
+Candidate meta-discipline (DESIGN_PHILOSOPHY § 11.5). The size/cache arm has its guard (`check_struct_size_budget.py`); the latency/complexity arm's guard IS the static conformance analyzer (`check_latency_path_conformance.py`; D-233 reshaped it runtime-bench → static-instruction-budget). Promote to a numbered Mn at the codification batch close.

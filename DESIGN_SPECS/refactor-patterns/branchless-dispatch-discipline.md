@@ -5,7 +5,7 @@ version: 1.0
 established: 2026-05-15
 tags: [branchless-discipline, latency-discipline, structural-fix]
 surface: [hot-path, slow-path, oms-drainer, producer]
-sister_specs: [branchless-math-kernel-pattern.md, latency-vs-cache-decision-framework.md]
+sister_specs: [branchless-math-kernel-pattern.md, latency-vs-cache-decision-framework.md, static-latency-path-conformance-analysis.md]
 applies_at_skills: []
 ---
 

@@ -2,7 +2,7 @@
 
 **Auto-generated** by `tools/rebuild_doc_indexes.py`. Regenerate after adding/moving specs.
 
-Total: 177 specs across 13 types.
+Total: 178 specs across 13 types.
 
 Per-type catalog grouped by lifecycle stage. Cross-ref:
 - `doc-frontmatter-convention.md` (frontmatter schema)
@@ -14,7 +14,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
 | `DESIGN_SPECS/refactor-patterns/bitmap-overflow-protection-discipline.md` | 5-claude-md | framework-discipline, data-oriented-design, structural-fix | 2 |
-| `DESIGN_SPECS/refactor-patterns/branchless-dispatch-discipline.md` | 5-claude-md | branchless-discipline, latency-discipline, structural-fix | 2 |
+| `DESIGN_SPECS/refactor-patterns/branchless-dispatch-discipline.md` | 5-claude-md | branchless-discipline, latency-discipline, structural-fix | 3 |
 | `DESIGN_SPECS/refactor-patterns/branchless-math-kernel-pattern.md` | 3-first-canonical | branchless-discipline, latency-discipline, fixed-point-math | 3 |
 | `DESIGN_SPECS/refactor-patterns/cfg-flag-eligibility-criteria.md` | 3-first-canonical | framework-discipline, structural-fix, pattern-codification | 3 |
 | `DESIGN_SPECS/refactor-patterns/cfg-scope-discipline.md` | 2-draft | framework-discipline, structural-fix | 3 |
@@ -120,7 +120,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/feature-patterns/runtime-toggleable-bench-gate-pattern.md` | 3-first-canonical | latency-discipline, framework-discipline | 1 |
 | `DESIGN_SPECS/feature-patterns/shadow-load-state-transition-pattern.md` | 3-first-canonical | framework-discipline, structural-fix, concurrency | 1 |
 
-## audit-methodology (7 specs)
+## audit-methodology (8 specs)
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
@@ -131,6 +131,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md` | 3-first-canonical | audit-methodology, meta-discipline, framework-discipline | 2 |
 | `DESIGN_SPECS/audit-methodologies/characterization-test-discipline.md` | 3-first-canonical | audit-methodology, test-discipline, capital-safety, +1 | 2 |
 | `DESIGN_SPECS/audit-methodologies/post-implementation-verification-v-class.md` | 2-draft | audit-methodology, verification, sanitizers, +3 | 3 |
+| `DESIGN_SPECS/audit-methodologies/static-latency-path-conformance-analysis.md` | 3-first-canonical | audit-methodology, latency-discipline, branchless-discipline, +2 | 0 |
 
 ## data-discipline (15 specs)
 

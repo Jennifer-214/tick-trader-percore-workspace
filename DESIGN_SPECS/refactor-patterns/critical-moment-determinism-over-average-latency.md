@@ -7,6 +7,7 @@ established: 2026-06-16
 sister_specs:
   - refactor-patterns/branchless-dispatch-discipline.md  # H7/H20 — THIS is its deep WHY
   - meta-disciplines/mechanical-verification-of-derived-code-facts.md  # measure the jitter, never hand-assert it
+  - audit-methodologies/static-latency-path-conformance-analysis.md  # the static gate that mechanizes this WHY (instruction-budget determinism)
 ---
 
 # Critical-moment determinism over low average latency

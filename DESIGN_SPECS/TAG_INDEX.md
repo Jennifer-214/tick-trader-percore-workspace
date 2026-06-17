@@ -61,7 +61,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/concurrency-patterns/structured-audit-log-pattern.md`
 
-### audit-methodology (35 files)
+### audit-methodology (36 files)
 
 - `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md`
 - `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md`
@@ -70,6 +70,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md`
 - `DESIGN_SPECS/audit-methodologies/characterization-test-discipline.md`
 - `DESIGN_SPECS/audit-methodologies/post-implementation-verification-v-class.md`
+- `DESIGN_SPECS/audit-methodologies/static-latency-path-conformance-analysis.md`
 - `DESIGN_SPECS/meta-disciplines/audit-driven-sub-sprint-trajectory-verification.md`
 - `DESIGN_SPECS/meta-disciplines/definition-of-done-and-armed-scout-verification.md`
 - `DESIGN_SPECS/meta-disciplines/fix-toward-future-trajectory-not-static-state.md`
@@ -123,8 +124,9 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/refactor-patterns/critical-moment-determinism-over-average-latency.md`
 
-### branchless-discipline (20 files)
+### branchless-discipline (21 files)
 
+- `DESIGN_SPECS/audit-methodologies/static-latency-path-conformance-analysis.md`
 - `DESIGN_SPECS/data-disciplines/partner-core-bitmap-pattern.md`
 - `DESIGN_SPECS/framework-patterns/bitmap-flag-api.md`
 - `DESIGN_SPECS/framework-patterns/composed-filter-mask-pattern.md`
@@ -357,9 +359,10 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/meta-disciplines/fix-toward-future-trajectory-not-static-state.md`
 
-### determinism (3 files)
+### determinism (4 files)
 
 - `DESIGN_SPECS/audit-methodologies/characterization-test-discipline.md`
+- `DESIGN_SPECS/audit-methodologies/static-latency-path-conformance-analysis.md`
 - `DESIGN_SPECS/data-disciplines/locale-determinism-discipline.md`
 - `DESIGN_SPECS/refactor-patterns/critical-moment-determinism-over-average-latency.md`
 
@@ -761,8 +764,9 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/refactor-patterns/critical-moment-determinism-over-average-latency.md`
 
-### latency-discipline (21 files)
+### latency-discipline (22 files)
 
+- `DESIGN_SPECS/audit-methodologies/static-latency-path-conformance-analysis.md`
 - `DESIGN_SPECS/concurrency-patterns/cross-thread-snapshot-publish-cluster-isolation.md`
 - `DESIGN_SPECS/concurrency-patterns/phase-separated-drainer-for-safe-cross-temporal-derives.md`
 - `DESIGN_SPECS/concurrency-patterns/spsc-ring-embedded-in-hot-struct-cluster-discipline.md`
@@ -1269,8 +1273,9 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/meta-disciplines/mechanical-verification-of-derived-code-facts.md`
 
-### structural-fix (80 files)
+### structural-fix (81 files)
 
+- `DESIGN_SPECS/audit-methodologies/static-latency-path-conformance-analysis.md`
 - `DESIGN_SPECS/concurrency-patterns/phase-separated-drainer-for-safe-cross-temporal-derives.md`
 - `DESIGN_SPECS/data-disciplines/aggressive-memory-reduction-techniques.md`
 - `DESIGN_SPECS/doc-disciplines/categorical-triggers-in-always-loaded-docs.md`
@@ -1636,9 +1641,10 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/runtime-mutable-vs-boot-time-config-pattern.md`
 
-### ci-tooling (13 files)
+### ci-tooling (14 files)
 
 - `DESIGN_SPECS/audit-methodologies/audit-report-format.md`
+- `DESIGN_SPECS/audit-methodologies/static-latency-path-conformance-analysis.md`
 - `DESIGN_SPECS/feature-patterns/runtime-toggleable-bench-gate-pattern.md`
 - `DESIGN_SPECS/framework-patterns/meta-registry-pattern-for-codebase-registry-discipline.md`
 - `DESIGN_SPECS/framework-patterns/registry-coverage-ci-check-pattern.md`
@@ -1764,10 +1770,11 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/meta-disciplines/body-content-enumeration-at-plan-time-discipline.md`
 
-### hot-path (55 files)
+### hot-path (56 files)
 
 - `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md`
 - `DESIGN_SPECS/audit-methodologies/characterization-test-discipline.md`
+- `DESIGN_SPECS/audit-methodologies/static-latency-path-conformance-analysis.md`
 - `DESIGN_SPECS/concurrency-patterns/concurrency-model-summary.md`
 - `DESIGN_SPECS/concurrency-patterns/cross-thread-multiword-read-consistency-discipline.md`
 - `DESIGN_SPECS/concurrency-patterns/cross-thread-snapshot-publish-cluster-isolation.md`
@@ -1886,8 +1893,9 @@ This file is a snapshot for static browsing.
 
 - `claude-skills/capture-audit/SKILL.md`
 
-### ml-inference (16 files)
+### ml-inference (17 files)
 
+- `DESIGN_SPECS/audit-methodologies/static-latency-path-conformance-analysis.md`
 - `DESIGN_SPECS/data-disciplines/locale-determinism-discipline.md`
 - `DESIGN_SPECS/feature-patterns/per-horizon-barrier-blending-with-shadow-mode.md`
 - `DESIGN_SPECS/feature-patterns/shadow-load-state-transition-pattern.md`
@@ -2199,10 +2207,11 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/meta-disciplines/sister-cohort-amendment-completeness-discipline.md`
 - `claude-skills/capture-audit/SKILL.md`
 
-### slow-path (54 files)
+### slow-path (55 files)
 
 - `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md`
 - `DESIGN_SPECS/audit-methodologies/characterization-test-discipline.md`
+- `DESIGN_SPECS/audit-methodologies/static-latency-path-conformance-analysis.md`
 - `DESIGN_SPECS/concurrency-patterns/concurrency-model-summary.md`
 - `DESIGN_SPECS/concurrency-patterns/cross-thread-multiword-read-consistency-discipline.md`
 - `DESIGN_SPECS/concurrency-patterns/cross-thread-snapshot-publish-cluster-isolation.md`

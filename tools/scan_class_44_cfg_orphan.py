@@ -43,7 +43,6 @@ SCAN_DIRS = ('CoreFrameworks', 'Strategies', 'DataStream', 'GUI', 'MemHeaders', 
 DEAD_FILES = {
     'CoreFrameworks/PortfolioController.hpp',     # legacy single_core / centralized controller
     'DataStream/EngineTUI.hpp',                    # TUI display snapshot
-    'CoreFrameworks/LegacyReferenceDriver.hpp',    # experiment-only head-to-head driver (not in build)
 }
 DEAD_DIRS = ('GUI/',)                              # all GUI panels (display/render)
 

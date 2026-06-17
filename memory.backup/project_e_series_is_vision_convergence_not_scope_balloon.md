@@ -3,7 +3,7 @@ name: project-e-series-is-vision-convergence-not-scope-balloon
 description: v5.15.5.F.4d.1.E architecture series is Caramel's year-old vision crystallizing in code-ready form, NOT sudden planning-day scope expansion — do not re-flag as iteration-spiral when seeing it cold
 metadata:
   type: project
-  sister_specs: [feedback_audit_own_proposals_with_same_rigor.md, feedback_plan_right_not_fast.md, feedback_overengineering_boundary_when_future_easier.md, project_engine_done_edge_is_the_frontier.md, feedback_opportunistic_tech_debt_closure.md]
+  sister_specs: [feedback_audit_own_proposals_with_same_rigor.md, feedback_plan_right_not_fast.md, feedback_overengineering_boundary_when_future_easier.md, project_engine_done_edge_is_the_frontier.md, feedback_opportunistic_tech_debt_closure.md, feedback_scaffold_outline_depth_at_dive.md]
   tags: [project-state, planning-discipline]
 ---
 

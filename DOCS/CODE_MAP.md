@@ -4,7 +4,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-06-17 (commit 226a652)
+**Last regenerated**: 2026-06-17 (commit 90b2daf)
 
 ## CoreFrameworks/
 
@@ -1186,7 +1186,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 ## Top-level files
 
 - `main.cpp` — 1340 lines
-- `Version.hpp` — 1050 lines
+- `Version.hpp` — 1082 lines
 - `Limits.hpp` — 30 lines
 
 ## Conventions

@@ -31,8 +31,9 @@ to other shards or to flattened-global state on the sharded path.**
 
 If adding a node forces you to touch existing per-shard code, or if a shard's behavior changes when a *different*
 shard's state changes, the design coupled a shard to something non-local. That coupling is the H22 violation.
-A node is a self-contained strategy unit (a pinned CPU running one strategy on one symbol with its own
-slow+hot thread pair, its own resolved cfg, its own position slot, its own capital allocation); its outputs
+A node is a self-contained strategy unit (running one strategy on one symbol via its own slow+hot thread
+pair **pinned across 2 CPUs — typically 2 physical cores; `node_id ≠ cpu_id`** [see DESIGN_PHILOSOPHY §15
+Glossary], with its own resolved cfg, its own position slot, its own capital allocation); its outputs
 must depend only on its own inputs.
 
 ## Why this is load-bearing (not a style preference)

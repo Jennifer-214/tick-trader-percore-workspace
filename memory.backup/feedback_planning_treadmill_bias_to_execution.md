@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: ba1a1443-354e-4bd4-897a-416ccbd8be2a
-  sister_specs: [feedback_deferral_reasons_merit_not_effort_or_context.md, feedback_listen_and_execute_simply.md, feedback_no_defer_for_effort.md, feedback_plan_right_not_fast.md, user_adhd_deferred_reward_discipline.md, user_deep_design_work_intrinsic_value.md]
+  sister_specs: [feedback_deferral_reasons_merit_not_effort_or_context.md, feedback_listen_and_execute_simply.md, feedback_no_defer_for_effort.md, feedback_plan_right_not_fast.md, user_adhd_deferred_reward_discipline.md, user_deep_design_work_intrinsic_value.md, feedback_scaffold_outline_depth_at_dive.md]
   tags: []
 ---
 

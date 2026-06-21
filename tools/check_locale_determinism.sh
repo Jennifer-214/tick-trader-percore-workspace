@@ -25,7 +25,7 @@ rc=0
 # this exact spot). Keep the '.' — it also keeps the check non-vacuous (searches the tree).
 BOOT_FILES='main.cpp foxml_suite.cpp GUI/GuiThread.hpp tools/compare_scalers.cpp'
 # files excluded from (b)/(c): the boot pins themselves + tests (deliberate flips) + the gates.
-EXCLUDE='main\.cpp|foxml_suite\.cpp|GuiThread\.hpp|compare_scalers\.cpp|tests/|controller_test|parity_harness|test_common|replay_locale_gate|fp_determinism|ParseFast'
+EXCLUDE='main\.cpp|foxml_suite\.cpp|GuiThread\.hpp|compare_scalers\.cpp|tests/|controller_test|test_common|replay_locale_gate|fp_determinism|ParseFast'
 
 echo "== (a) boot pins present =="
 for f in $BOOT_FILES; do

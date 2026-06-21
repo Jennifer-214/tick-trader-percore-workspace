@@ -21,8 +21,7 @@ A plan body needs the "Tests changed" section iff its body indicates MODIFICATIO
 engine test source file. Signals (any match → required):
   1. tests/<path>.cpp|hpp     — explicit test source path being touched
   2. <name>_test.cpp          — a test source filename (distinct from running the binary)
-  3. parity_harness.cpp       — the parity harness source
-  4. "tests/ files" / "tests/{...}" / "tests/<reorg-dir>"  — tests/ as an edit target
+  3. "tests/ files" / "tests/{...}" / "tests/<reorg-dir>"  — tests/ as an edit target
 
 DELIBERATELY does NOT trigger on:
   - "controller_test" / "depth_recorder_test" without .cpp  (running the binary; baseline)
@@ -55,7 +54,6 @@ from typing import List, Tuple
 TRIGGER_PATTERNS = [
     re.compile(r"tests/[\w./-]+\.(?:cpp|hpp)"),       # explicit test source path (excludes <placeholder>)
     re.compile(r"\b\w+_test\.cpp\b"),                 # <name>_test.cpp source filename
-    re.compile(r"\bparity_harness\.cpp\b"),           # parity harness source
 ]
 
 # "Tests changed" section header (## or ### etc.).

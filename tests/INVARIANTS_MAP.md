@@ -30,7 +30,7 @@ change rarely enough that manual updates work).
 | 7 | **FPN_Binary Comparison Completeness** (no partial-word ops) | FPN_Binary EXIT GATE COMPARISON (2464), Wave 2 D.3 spread_bps (5638) | COVERED — but `Portfolio.hpp:226-229` has documented partial-word bug accepted as known issue |
 | 8 | **Halt Flag Invariant** (`buying_halted=1` AND zero `gate_offset`) | CENTRALIZED HALT FLAG (2220), GATE OFFSET TRACKING (2169) | COVERED |
 | 9 | **Confidence Loop Invariant** (single update, slow-path-only compute, threshold formula) | Phase 6prep: ConfidenceScorer composition (3427); regime mapping with threshold (1971) | PARTIAL — formula tested; "single update site" relies on grep discipline |
-| 10 | **Train-Serve Feature Parity** (BOTH paths feed `Regime_ComputeSignals` identically) | v4.7.16 — backtest/live parity (6198), Wave 2 D.3 RegimeSignals (5638), v5.0.4 — OneCore identity (6807); + `parity_harness` returns 0 drift | COVERED |
+| 10 | **Train-Serve Feature Parity** (BOTH paths feed `Regime_ComputeSignals` identically) | v4.7.16 — backtest/live parity (6198), Wave 2 D.3 RegimeSignals (5638), v5.0.4 — OneCore identity (6807) | COVERED |
 | 11 | **Maker/Taker Fee Accuracy** (Fee_Compute, is_maker source, sanity) | Phase 8: Fee_Compute helper (3652), Maker/taker accounting (3777), executionReport parser (3729) | COVERED |
 | 12 | **Held-Out Validation Discipline** (token-locked, single eval, gap < threshold, **v5.2.0 stamp gate**) | Phase 7prep: HeldOutSplit math (3501), Lock-token discipline (3529), RunFullValidation framework (3558), v5.2.0 verify_model_stamp (8 tests) | COVERED + ENFORCED (v5.2.0 added crypto stamp check at model load) |
 | 13 | **Operational Alerting** (Notify_Send levels, slow-path-only, kind cooldown) | Phase 8b: Notify lifecycle (3212), Send + dispatch (3225), Cooldown gate (3246) | COVERED |
@@ -38,7 +38,7 @@ change rarely enough that manual updates work).
 | 15 | **Label-type-aware metric invariant** (binary/regression/multiclass dispatch) | Phase 5d: Label-type-aware metric dispatch (3055), Class-balance helpers (3080) | COVERED |
 | 16 | **Snapshot Re-Activation Invariant** (load reactivates ExecutionCore mirrors) | Phase 4: sharded snapshot (line 4501 re-activation test) | COVERED |
 | 17 | **Snapshot Tick-Counter Drift** (`entry_t > now_tick` underflow guard) | Tick Counter (695), Phase 4: sharded snapshot tick-counter (4476) | COVERED |
-| 18 | **Per-Core Data-Plane Single-Writer** (v5.1.0+ slow_state ownership) | v5.0.4 — Single-core update isolation (6896), Phase 2.1 core_open_notional (3883) | DISCIPLINE — single-writer rule is enforced by thread topology, threading-tests are TSan/ASan + parity_harness, not unit assertions |
+| 18 | **Per-Core Data-Plane Single-Writer** (v5.1.0+ slow_state ownership) | v5.0.4 — Single-core update isolation (6896), Phase 2.1 core_open_notional (3883) | DISCIPLINE — single-writer rule is enforced by thread topology, threading-tests are TSan/ASan, not unit assertions |
 | 19 | **Lifecycle Bitmap Single-Writer** (v5.0.3 paused_engines_mask) | v5.0.4 — Engine Topology (6998) | DISCIPLINE — GUI-thread-write / engine-thread-read is structural |
 | 20 | **Per-Section Latency Stats Single-Writer** (v5.1.1 breakdown) | v5.0.4 — Topology field stability (6998) | DISCIPLINE — same as #19 |
 | 21 | **Partial Exits — Two-Position-per-Core** (slot mapping, leg-A only counters) | P.1: Sharded_LegSlot mapping (5681), P.1: Validation (5711), P.2: dual-leg SG (5763) | COVERED |
@@ -53,7 +53,7 @@ change rarely enough that manual updates work).
 
 - **18 COVERED** (67%) — direct test failure on regression
 - **8 DISCIPLINE** (#5, #18, #19, #20, #23, #25, #27, #24-pending-Phase-2) — structural invariants enforced by code
-  layout / thread topology / external tool, verified via parity_harness + sanitizers + calls_graph_diff
+  layout / thread topology / external tool, verified via sanitizers + calls_graph_diff
 - **1 PARTIAL** (#9) — formula tested, "single update site" relies on grep
 - **0 GAP** — every invariant has at least structural enforcement
 

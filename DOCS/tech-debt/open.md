@@ -2844,8 +2844,9 @@ title: engine_mode cfg field vestigial post single_core deletion
 severity: low
 surface_tags: [cfg-flow, boot-time]
 trigger: .E.0.1-or-.E.1
-status: open
+status: closed
 opened: 2026-05-28
+closed: 2026-06-21 (v5.15.5.F.4d.1.E.1.1 Phase 3)
 related_specs: []
 ```
 
@@ -2857,7 +2858,7 @@ related_specs: []
 - **Why deferred (not effort-avoidance):** `.D.1` is a doc-only sweep (no engine code); `single_core` deletion is `.E.0.1`/`.E.1` scope. Deleting `engine_mode` before `single_core` is gone would be premature.
 - **Cost estimate:** ~1h; LOW risk; folds into the `single_core` deletion cohort.
 - **Trigger:** `.E.0.1` precursor (legacy `single_core` delete) OR `.E.1` Foundation.
-- **Status:** OPEN
+- **Status:** CLOSED 2026-06-21 — v5.15.5.F.4d.1.E.1.1 Phase 3. The `engine_mode` registry row deleted at `CfgFieldRegistry.hpp:393` (H17 root edit — auto-cascaded the struct field + both `ENGINE_MODE_*` enums + the parser branch + the 2 hot-reload readers [Async/PortfolioController]); `parity_harness` retired (its single_core↔sharded diff was a tautology — `Backtest_Run` already calls `BacktestSharded_Run` unconditionally); `controller_test.cpp` HAS_SIDE_EFFECT label updated. Build 3635/0 · conformance + determinism (golden byte-IDENTICAL) + calls_graph all GREEN. ~15 stale `engine_mode` COMMENTS remain across EngineSharded/Run/Backtest/GUI/DataStream — deferred to the E.1.1 rename sweep (gate-on-CODE-residue per the 8-agent finding; CODE is clean). (Physical move to `closed.md` batched at E.1.1 ship-close per sprint convention.)
 - **Cross-ref:** `rename-candidates-running-list.md` entry 2; TECH_DEBT-002 (centralized `ControllerEventLoop` removal — sister legacy-path deletion).
 
 ---
@@ -3323,7 +3324,7 @@ sister_debt: TECH_DEBT-154 (the maker-fee guard, which uses the __builtin_expect
 
 ### TECH_DEBT-185 — single_core `*_ExitAdjust` family + `original_tp` back-door = deprecated-path dead-code cohort (H21 candidate)
 
-- **id:** TECH_DEBT-185 · **severity:** low (deprecated single_core path) · **opened:** 2026-06-12 · **status:** open · **disposition (2026-06-20, post-Phase-2):** SUBSUMED by the E.1.1 single_core deletion — the `*_ExitAdjust` cohort + back-door are now UNREACHABLE (main.cpp's single_core entry deleted at `7eacb80`) but still compiled. Remove with the single_core cohort: **Phase 3 if it excises standalone-clean, ELSE E.1.3** (the cohort is reachable via the single_core `PortfolioController` paths whose central-drainer removal is the E.1.3 / TD-002 non-atomic half — verify the coupling before deleting). · **surface_tags:** [dead-code, h21, single-core, legacy, dead-code-trace, class-41]
+- **id:** TECH_DEBT-185 · **severity:** low (deprecated single_core path) · **opened:** 2026-06-12 · **status:** open · **disposition (2026-06-21, Phase-3 coupling VERIFIED → DEFER to E.1.3):** the "verify the coupling" check ran at E.1.1 Phase 3 — every legacy `*_ExitAdjust` + `Regime_AdjustPositions` caller lives in `PortfolioController.hpp` (`:881/:893/:901/:1716/:1743/:1941`), the surviving struct's central-drainer paths that **E.1.3** removes. The cohort does NOT excise standalone-clean (deleting the fns would break their PortfolioController callers, which Phase 3 deliberately KEEPs) → it is confirmed-UNREACHABLE-from-production (main.cpp single_core entry gone at `7eacb80`) but still compiled → **CLOSE at E.1.3 with the central-drainer / TD-002 removal.** · **disposition (2026-06-20, post-Phase-2):** SUBSUMED by the E.1.1 single_core deletion — the `*_ExitAdjust` cohort + back-door are now UNREACHABLE (main.cpp's single_core entry deleted at `7eacb80`) but still compiled. Remove with the single_core cohort: **Phase 3 if it excises standalone-clean, ELSE E.1.3** (the cohort is reachable via the single_core `PortfolioController` paths whose central-drainer removal is the E.1.3 / TD-002 non-atomic half — verify the coupling before deleting). · **surface_tags:** [dead-code, h21, single-core, legacy, dead-code-trace, class-41]
 - **What (register A31):** the non-sharded `*_ExitAdjust` family (`Momentum.hpp:249`/`MeanReversion.hpp:413`/`MLStrategy.hpp:219`/`EmaCross.hpp:109`) + the `PortfolioController.hpp:1372-1396` `original_tp`/`original_sl` back-door + `Regime_AdjustPositions` (`:710-822`) are LIVE only via the deprecated `single_core` `PortfolioController` (compiled+runnable from `main.cpp` under `engine_mode=single_core`, boot-warned). A25's set-site fix does NOT reach them (they read/write `Position` directly) → a latent single_core post-A25 inconsistency. `MeanReversion_ExitAdjust` (`:466-482`) also calls `FPN_*` on `Money` operands (Class-41 encoding-blind).
 - **Why:** if single_core is truly retired, this whole cohort + the back-door + the `Regime_AdjustPositions` block are removable (H21 dead-code). `/dead-code-trace` candidate. At minimum, A25's disposition states single_core is a non-target.
 - **Cross-ref:** register A31 + the A25-impl notes (#7 single_core non-target); `/dead-code-trace`; `dead-code-and-identifier-retirement-discipline.md`; CLAUDE.md "single_core LIVE deprecated".

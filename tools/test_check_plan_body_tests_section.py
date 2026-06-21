@@ -77,11 +77,6 @@ def test_triggered_section_missing_subcategory():
     assert "(c)" in detail, detail
 
 
-def test_parity_harness_triggers():
-    verdict, _ = _check("# Plan\n\nUpdate parity_harness.cpp comparator.\n")
-    assert verdict == "VIOLATION-MISSING-SECTION", verdict
-
-
 def test_unbalanced_fences_dont_hide_trigger():
     # Regression: unbalanced ``` must NOT cause real content after it to be missed
     # (fence-stripping was removed at .D.1 Phase A.5 precisely for this).

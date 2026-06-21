@@ -1621,7 +1621,7 @@ static void test_v5_15_5_F4c_cfg_field_dispatch() {
 
         size_t has_side_effect_count = cfg_field_count(g_global_cfg_has_side_effect_mask)
                                     + cfg_field_count(g_per_core_cfg_has_side_effect_mask);
-        check("v5.15.5.F.4c.3: HAS_SIDE_EFFECT mask aggregate ≥4 bits (reconcile_mode/engine_mode/model_verify_strict/thompson_rng_seed/bandit_algorithm/risk_degradation_curve/trading_mode)",
+        check("v5.15.5.F.4c.3: HAS_SIDE_EFFECT mask aggregate ≥4 bits (reconcile_mode/model_verify_strict/thompson_rng_seed/bandit_algorithm/risk_degradation_curve/trading_mode)",
               has_side_effect_count >= 4);
     }
 

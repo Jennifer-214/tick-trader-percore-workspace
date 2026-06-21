@@ -4,7 +4,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-06-17 (commit 90b2daf)
+**Last regenerated**: 2026-06-20 (commit 3eadb53)
 
 ## CoreFrameworks/
 
@@ -119,14 +119,6 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 - `HotSwap_ShadowLoad_Ensemble` — line 74
 - `HotSwap_ShadowLoad_SingleZoo` — line 211
-
-### LegacyReferenceDriver.hpp
-
-- `LegacyReference_Init` — line 95
-- `LegacyReference_AddSlot` — line 120
-- `LegacyReference_Tick` — line 138
-- `LegacyReference_SlowPath` — line 183
-- `LegacyReference_Run` — line 211
 
 ### LiveReadiness.hpp
 

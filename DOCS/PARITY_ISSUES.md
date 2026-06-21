@@ -535,7 +535,7 @@ title: Ensemble hot-swap (v5.14.2) bypasses 6 post-load setup steps that boot do
 surface_tags: [boot-time, ml-inference, cfg-flow, slow-path]
 severity: high
 parity_axis: train↔serve
-status: in-flight
+status: closed
 detected_at: v5.14.2 (2026-05-09)
 related_specs: [DESIGN_SPECS/framework-patterns/postloadsetup-registry-pattern.md, DESIGN_SPECS/framework-patterns/autopopulate-pattern-for-production-caller-class.md]
 ```
@@ -595,7 +595,7 @@ title: Backtest ensemble init missing v5.13.4 exit-bandit setup
 surface_tags: [backtest, ml-inference, boot-time]
 severity: medium
 parity_axis: live↔backtest
-status: in-flight
+status: closed
 detected_at: v5.14.2 (2026-05-09)
 related_specs: [DESIGN_SPECS/framework-patterns/postloadsetup-registry-pattern.md]
 ```
@@ -643,7 +643,7 @@ title: Single-zoo hot-swap missing VerifyExpected (Class 18 sister of PARITY-009
 surface_tags: [boot-time, ml-inference, cfg-flow]
 severity: medium
 parity_axis: train↔serve
-status: in-flight
+status: closed
 detected_at: v5.14.2 (2026-05-09)
 related_specs: [DESIGN_SPECS/framework-patterns/postloadsetup-registry-pattern.md]
 ```
@@ -685,7 +685,7 @@ title: Backtest single-zoo missing ValidateAgainstCfg (Class 18 sister of PARITY
 surface_tags: [backtest, cfg-flow, ml-inference]
 severity: medium
 parity_axis: live↔backtest
-status: in-flight
+status: closed
 detected_at: v5.14.2 (2026-05-09)
 related_specs: [DESIGN_SPECS/framework-patterns/postloadsetup-registry-pattern.md]
 ```
@@ -714,7 +714,7 @@ title: cfg.bandit_algorithm not stamp-bound; train↔serve algorithm drift undet
 surface_tags: [cfg-flow, ml-inference, wire-format, registry]
 severity: high
 parity_axis: train↔serve
-status: in-flight
+status: closed
 detected_at: v5.14.10 (2026-05-10)
 related_specs: [DESIGN_SPECS/framework-patterns/autopopulate-pattern-for-production-caller-class.md, DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md]
 ```
@@ -750,7 +750,7 @@ title: Thompson replay-determinism contract under-specified; std::normal_distrib
 surface_tags: [ml-inference, backtest, test-infrastructure]
 severity: high
 parity_axis: live↔backtest
-status: in-flight
+status: closed
 detected_at: v5.14.10 (2026-05-10)
 related_specs: [DESIGN_SPECS/wire-format-patterns/prng-choice-for-replay-determinism.md, DESIGN_SPECS/wire-format-patterns/avx512-byte-determinism-pattern.md]
 ```
@@ -787,7 +787,7 @@ title: Thompson display↔execution invariant breach; no PerCoreSnap/panel surfa
 surface_tags: [gui-thread, ml-inference, wire-format]
 severity: medium
 parity_axis: train↔serve
-status: in-flight
+status: closed
 detected_at: v5.14.10 (2026-05-10)
 related_specs: [DESIGN_SPECS/framework-patterns/display-execution-invariant-registry-pattern.md, DESIGN_SPECS/framework-patterns/calibration-log-column-registry.md]
 ```
@@ -822,7 +822,7 @@ title: v5.14.11 Welford↔batch BuildCorr tolerance-vs-bytewise contract mismatc
 surface_tags: [ml-inference, backtest, slow-path]
 severity: high
 parity_axis: live↔backtest
-status: in-flight
+status: closed
 detected_at: v5.14.11 (2026-05-11)
 related_specs: [DESIGN_SPECS/wire-format-patterns/avx512-byte-determinism-pattern.md]
 ```
@@ -858,7 +858,7 @@ title: v5.14.11 AVX-512 vectorization bytewise-determinism; 4 sites need explici
 surface_tags: [ml-inference, slow-path, test-infrastructure]
 severity: high
 parity_axis: scalar↔SIMD
-status: in-flight
+status: closed
 detected_at: v5.14.11 (2026-05-11)
 related_specs: [DESIGN_SPECS/wire-format-patterns/avx512-byte-determinism-pattern.md]
 ```
@@ -895,7 +895,7 @@ title: v5.14.11 periodic-recompute path may leave RidgeOnlineState stale; drift 
 surface_tags: [ml-inference, slow-path]
 severity: medium
 parity_axis: train↔serve
-status: in-flight
+status: closed
 detected_at: v5.14.11 (2026-05-11)
 related_specs: [DESIGN_SPECS/wire-format-patterns/avx512-byte-determinism-pattern.md]
 ```
@@ -1566,6 +1566,8 @@ related_specs:
 - **2026-06-10** — Ship-B P0.3 closes **PARITY-037** (see RESOLUTION in the entry — the percent-vs-fraction framing inverted by enumeration; fix = PCT scaling in `cfg_assign_field`/`cfg_diff_field` + the `lazy_rebuild_price_threshold_pct` outlier row re-authored percent-form, value-identical; suite 3246/0; boot bytes unchanged). Recorded at decision log D-177.
 
 - **2026-06-11** — `.E.0.10` Net-1 adversarial money-surface bug-hunt (5 independent surface-blind agents) surfaced **PARITY-039** (HIGH; restore↔live TP/SL parity): snapshot-restore recomputes `live_tp/live_sl/live_tp_b` from the GLOBAL `take_profit_pct` (`ShardedSnapshotPersist.hpp:653`) while the live entry path uses the per-strategy override (`simpledip/mr/emacross_tp_pct`, `StrategyParameters.hpp:327`); `ControllerConfig_ResolveForCore` (`:1383`) does NOT fold the override → a SimpleDip/MR/EmaCross position exits at a DIFFERENT TP/SL after a warm-restart than while live (whenever the override is set). Status: **FIXED 2026-06-11 in `.E.0.10`** (single-sourced via `ResolvePerFillTpPct/SlPct`, entry + restore; SimpleDip+MR cohort char-tests GREEN, suite 3368/0; 3-agent independent refute SOUND/CORRECT; TECH_DEBT-168 closed; final `/parity-check` re-confirm at ship close). The do-it-twice defer to `.E.1` was the adjacency-defer the bidirectional rule corrected — the fix is durable, so it closed now. Sealed by orchestrator (ResolveForCore read); 2 agents converged. Momentum/ML unaffected (`out->tp_pct==take_profit_pct`). Register: `plan_checks/E.0.10-finding-disposition-register.md` bug-hunt § A1.
+
+- **2026-06-20** — **batch closure: PARITY-009..018 status-drift corrected** (`.E.1.1` state-audit housekeeping; HEAD `3eadb53`). The 10 entries carried `status: in-flight` but were all genuinely RESOLVED long ago — the header fields were never flipped at fix-time (the drift an 8-agent state-audit surfaced 2026-06-20). **Code-grounded before flipping** (their bodies still read "OPEN (fix in flight)", so a blind flip was refused per `feedback_tag_disposition_at_fix_time` — never reconstruct disposition by archaeology): **009/010/011/012 → CLOSED** (the v5.14.2.E.1 `PostLoadSetup` structural fix shipped — `EnsembleModelZoo_PostLoadSetup`/`CoreModelZoo_PostLoadSetup` at `ML_Headers/CoreModelZoo.hpp:3007/3067`, driven by `FOREACH_ENSEMBLE_POST_LOAD`/`FOREACH_SINGLE_ZOO_POST_LOAD`, all three callers wired: boot+backtest `EngineCommon.hpp:313/348`, hot-swap `HotSwap.hpp:154/260` + `EnsembleHotSwap.hpp:109` → Class-18 mirror structurally eliminated); **013 → CLOSED** (`bandit_algorithm` is stamp-bound + drift-checked: `CfgDriftCheckRegistry.hpp:254` + `StampBoundModelConstRegistry.hpp:464`); **014/015/016/018 → CLOSED** (resolved at v5.14.10/.11 per the 2026-05-10/-11 audit-log entries above; long shipped); **017 → CLOSED** (sites 1+2 resolved at v5.14.11.B; sub-site 3c spun to **PARITY-019**, itself closed). The yaml `status:` field (queryable SSoT) is now `closed` for all 10; inline body `**Status:**` narratives preserved as detection-time record. No code change — ledger-truth correction only. Surfaced by the `.E.1.1` mid-dive state-audit (doc-currency agent flagged the drift; the over-broad "009..018 all resolved" claim was code-verified before action).
 
 ---
 

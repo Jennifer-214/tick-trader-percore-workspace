@@ -102,7 +102,7 @@ Aggregate verdict:
 
 ## CI Check 8 sister (commit-time enforcement)
 
-Check 44 is plan-time enforcement; CI Check 8 (`tools/check_per_core_registry_integrity.py`) is commit-time enforcement of the same discipline. Together: plan-time + commit-time = complete discipline coverage (M7 4th canonical structural enforcement).
+Check 44 is plan-time enforcement; CI Check 8 (`tools/check_per_node_registry_integrity.py`) is commit-time enforcement of the same discipline. Together: plan-time + commit-time = complete discipline coverage (M7 4th canonical structural enforcement).
 
 ## When this check applies
 

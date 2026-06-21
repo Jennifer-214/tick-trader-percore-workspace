@@ -81,12 +81,12 @@ Spawn an Explore subagent. The subagent walks the standard 10-category checklist
 
 ### 10-category checklist
 
-1. **Class 27 instances (scalar cfg-mirror)** — scan designated subsystem state types (per `DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md` § Class 27 target subsystems) for scalar fields that mirror cfg field names. Each is a candidate for pre-resolve onto in-flight object (Order/Position/Event) OR registry-driven per-instance cache (FOREACH_<SUBSYS>_CFG_CACHE fallback). The CI check that enforces Class 27 prevention (currently `tools/check_per_core_registry_integrity.py` Check 7) catches new instances; this audit catches existing ones + edge-case patterns.
+1. **Class 27 instances (scalar cfg-mirror)** — scan designated subsystem state types (per `DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md` § Class 27 target subsystems) for scalar fields that mirror cfg field names. Each is a candidate for pre-resolve onto in-flight object (Order/Position/Event) OR registry-driven per-instance cache (FOREACH_<SUBSYS>_CFG_CACHE fallback). The CI check that enforces Class 27 prevention (currently `tools/check_per_node_registry_integrity.py` Check 7) catches new instances; this audit catches existing ones + edge-case patterns.
 
 2. **Per-core / per-instance fee_rate + commission indexing** — every fee/commission read MUST resolve to the relevant instance (per-core via `cfg.cores[c]` or pre-resolved on in-flight object). Flag global `cfg.fee_rate_*` reads at sites that have per-instance context available.
 
    **Class 26 sub-shape distinction (NEW v5.15.5.F.4d.1.B.8 amendment):** Class 26 has TWO sub-shapes documented at `DOCS/recurring-bug-patterns/class-26-global-consumer-reading-per-core-field.md § Sub-shapes`:
-   - **Sub-shape A (WRONG-INDEX paired-access)** — `cfg.core_overrides[X]` + `cfg.cores[Y]` paired access with X != Y; CI Check 9 catches mechanically per `tools/check_per_core_registry_integrity.py`
+   - **Sub-shape A (WRONG-INDEX paired-access)** — `cfg.core_overrides[X]` + `cfg.cores[Y]` paired access with X != Y; CI Check 9 catches mechanically per `tools/check_per_node_registry_integrity.py`
    - **Sub-shape B (UNINDEXED-GLOBAL at per-core consumer site)** — `cfg.X` / `cfg->X` / `resolved_cfg.X` UNINDEXED on per-core-with-global-sister fields (fee_rate / fee_rate_taker / fee_rate_maker / slippage_pct); CI Check 10 catches mechanically (sister to Check 9; M7 6th canonical)
 
    **When firing this audit:** distinguish sub-shape A vs B in findings; cite Check 9 / Check 10 respectively for mechanical detection. Findings format: `class_subshape: A` or `class_subshape: B`. Reference: `.B.7` Async.hpp:814+853 (sub-shape A); `.B.8` ControllerEventLoop.hpp:3605+3670+3042 + StrategyLifecycle.hpp:272 + ShardedSnapshot.hpp:249 (sub-shape B).
@@ -166,6 +166,6 @@ Cross-reference EVERY finding to:
 - `DESIGN_SPECS/data-disciplines/cache-layout-discipline-for-hot-side-structs.md` — subsystem state layout
 - `DESIGN_SPECS/framework-patterns/postloadsetup-registry-pattern.md` — fallback cache cfg-reload hook
 - `DOCS/RECURRING_BUG_PATTERNS.md` Classes 24, 25, 26, 27 — the recurring anti-patterns this skill catches
-- `tools/check_per_core_registry_integrity.py` Check 7 — CI enforcement for Class 27
+- `tools/check_per_node_registry_integrity.py` Check 7 — CI enforcement for Class 27
 - `DOCS/MANUAL_FIELDS_INVENTORY.md` Section C — Class 27 exemption registry
 - CLAUDE.md item 31 + DESIGN_PHILOSOPHY § 11 framework-selection criteria — meta-principle

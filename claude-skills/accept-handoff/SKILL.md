@@ -130,7 +130,7 @@ The operator's recurring *"use the correct skills / tools / specs where appropri
 | Kit element | How to derive |
 |---|---|
 | **Domain skill(s)** | Map the action's MATERIAL to its skill (per M8 / `/decision-check` Stage 2.5): money → `/accounting-audit`; hot-path → `/hft-audit`; cfg/registry → `/trace-deps` + `/dod-audit`; ML → `/ml-audit`; train↔serve → `/parity-check`; a design DECISION → `/decision-check`; an unknown-size hunt → the relevant fan-out audit. Prefer the handoff's explicit routing when present; else derive from surface keywords. |
-| **Mechanical toolchain** | The specific `tools/*.py` the action RUNS (from `DOCS/TOOLS.md` + the handoff) — name the command, e.g. `check_per_core_registry_integrity.py` for per-core cfg work. "Run the tool", not "read the code". |
+| **Mechanical toolchain** | The specific `tools/*.py` the action RUNS (from `DOCS/TOOLS.md` + the handoff) — name the command, e.g. `check_per_node_registry_integrity.py` for per-core cfg work. "Run the tool", not "read the code". |
 | **DESIGN_SPECS** | The pattern/discipline docs governing the surface (cited + keyword-derived). |
 | **Anti-pattern classes** | The `RECURRING_BUG_PATTERNS` Class IDs the action must not reintroduce. |
 | **Invariants** | The H-numbers in play (e.g. H22 per-node purity; H4 money-math; H7/H8 hot-path). |

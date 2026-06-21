@@ -164,7 +164,7 @@ python3 /home/caramel/code/FoxML_Trader_v2/tools/check_forward_promise_audit.py 
 ```
 
 Sister to existing CI tool invocation patterns:
-- `tools/check_per_core_registry_integrity.py` (Check 9 + Check 10)
+- `tools/check_per_node_registry_integrity.py` (Check 9 + Check 10)
 - `tools/check_plan_body_symbol_existence.py` (B-Plus)
 - `tools/check_meta_registry.py` (registry coverage)
 

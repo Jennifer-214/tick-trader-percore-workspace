@@ -121,7 +121,7 @@ L1d working-set discipline: hot path SHOULD fit in single core's L1d (32-64KB). 
 
 ## Tools for this surface (slice of `DOCS/TOOLS.md`)
 
-- `check_per_core_registry_integrity.py` — PerCoreCfg X-macro integrity (H17) + Class 25/26 paired-access + UNINDEXED-GLOBAL detector (SKILL-WIRED).
+- `check_per_node_registry_integrity.py` — PerCoreCfg X-macro integrity (H17) + Class 25/26 paired-access + UNINDEXED-GLOBAL detector (SKILL-WIRED).
 - `check_money_gross_single_source.py` — D-190 gross-SSoT guard (pre-commit Check G/L): realized+unrealized price-diff gross MUST route through `Money_FillGross`.
 - `check_struct_alignment.py` — (a) `alignas(>16)` vs bare malloc/calloc/realloc (Knight/H21) + (c) byte-serialization size-pin coverage: a type serialized via fwrite/fread/memcmp/SHA/HMAC must carry `static_assert(sizeof(T)==N)` (H9/H12 — silent layout change = compile error, not a wire break; D-202). Pre-commit Check K.
 - `check_identifier_retirement.py` — snapshot/format VERSION + persisted enum CODE tombstone guard vs the golden ledger (H21; pre-commit Check H).

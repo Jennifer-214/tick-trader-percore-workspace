@@ -1,18 +1,18 @@
 ---
 type: refactor-pattern
-stage: 3-first-canonical
-version: 1.0
+stage: 4-cohort
+version: 1.1
 established: 2026-06-09
 tags: [refactor-pattern, doc-discipline, terminology-evolution, ci-tooling]
 surface: [registry, boot-time]
 sister_specs: [canonical-sister-extension-discipline.md, single-source-of-truth-discipline.md]
 sister_docs: [DOCS/recurring-bug-patterns/class-36-overlapping-span-substitution-corruption.md, plans/v5.15-live-readiness/rename-candidates-running-list.md]
-applications: ["v5.15.5.F.4d.1.E.0.8 Ship A.5 FPN→FPN_Binary (1st canonical, this ship)", ".E.1 Core→Node (~5,000 sites; 2nd application → Stage 4; TECH_DEBT-142 closure home)"]
+applications: ["v5.15.5.F.4d.1.E.0.8 Ship A.5 FPN→FPN_Binary (1st canonical)", "v5.15.5.F.4d.1.E.1.1 Core→Node (3645 sites; 2nd application, LANDED 2026-06-21 → promoted Stage 4; added the DOC-DATA-FILE bucket + the World-1/World-2 compiler-oracle lesson; TECH_DEBT-142 closure home)"]
 ---
 
 # Rename-ship methodology
 
-**Stage 2 DRAFT (2026-06-09, authored at A.5 Step 0; gate-enriched by `plan_checks/2026-06-09-a5-rename-gate-synthesis.md` S-3/S-6/S-7/S-8/S-9/S-12).** First canonical: Ship A.5. Promotes to Stage 3 at A.5 close; Stage 4 at `.E.1` (the second, much harder application).
+**Stage 4 COHORT (promoted 2026-06-21 at `.E.1.1`, the 2nd application).** Authored Stage 2 DRAFT 2026-06-09 at A.5 Step 0 (gate-enriched by `plan_checks/2026-06-09-a5-rename-gate-synthesis.md` S-3/S-6/S-7/S-8/S-9/S-12); 1st canonical Ship A.5; 2nd application `.E.1.1` Core→Node (3645 sites) — which added the DOC-DATA-FILE triage bucket + the World-1/World-2 compiler-oracle lesson (`feedback_rename_enumerator_is_world2_aid_compiler_is_world1`).
 
 ## Problem
 
@@ -32,6 +32,7 @@ Symbol/terminology renames recur as dedicated ships (A.5 `FPN`→`FPN_Binary`; `
 
 - Run the enumeration greps; **paste output VERBATIM into `plan_checks/`** (`feedback_paste_tool_output_dont_summarize`); wire `check_plan_enumeration_completeness.py` as the drop-guard.
 - **Mechanization (CODE-side):** `tools/cascade.py rename` is the enumerator — engine source **plus the compiler-blind apparatus** (`tools/`/`build.sh`/`.githooks/`, the surface a grep-only freeze forgets, where a stale regex commits GREEN) + the `#include`-cascade for file-basename renames + the expected-residual allowlist, classified by the Phase-3 buckets below. Sister to the `.md`-side executor `check_doc_rename_classification.py` (Phase 5). ENUMERATES only — the code rename stays the human's ONE mechanical commit (Phase 4; compiler = oracle). See `rename-cascade-enumeration-tooling.md` (TD-175a); the standing "a future rename left an apparatus regex dead" net rides `check_tools_inventory.py`'s `build.sh`-scan.
+- **World-1 vs World-2 — the enumerator is a planning aid, the compiler is the completeness oracle.** The freeze/enumerator de-risks the **compiler-BLIND** World-2 surface (apparatus + the DOC-DATA-FILE bucket); the **COMPILER is World-1** code-consumer-completeness — a half-renamed tree won't compile. So **budget a red→green compile loop**: the enumerator WILL have narrow spots (E.1.1: `.cores[` matched only dot-access → missed the `cores[N]` decl / `->cores[` arrow / bare `cores`; `core_[a-z]` missed regex-metachar `core_\w+`/`"core_"`/`core_<digit>`; the scan omitted `tests/`). The compiler caught every code one (7 rounds); the build + doc-CI gates caught the World-2 ones. Don't over-invest in making the enumerator code-complete — it can't be; the compiler is. Memory `feedback_rename_enumerator_is_world2_aid_compiler_is_world1`.
 - Produce the **expected-residual ALLOWLIST** (file:count) for surfaces that legitimately keep the old spelling (ship-history comment blocks, archived dirs, `experiments/` exemptions). Post-rename totality = "grep matches the allowlist EXACTLY", never "= 0 hits" (which fails on the first historical mention).
 - Plan-body counts are at-draft snapshots; the Step-1 freeze output is authoritative (counts rot between draft and code-time — D-144 generalization).
 
@@ -44,6 +45,7 @@ Symbol/terminology renames recur as dedicated ships (A.5 `FPN`→`FPN_Binary`; `
 | COMMENT/STRING | current-identity → rename; explicit was/history phrasing → preserve |
 | STALE-REWRITE | text that was ALREADY wrong before the rename (stale banners/sizes) — rewrite, don't token-swap a falsehood into a new falsehood |
 | FORWARD-DOC | sweep via the doc-rename executor (Phase 5); includes non-obvious trees: engine-real doc subdirs inside symlinked trees, `plans/_cross-cutting/` living disciplines, `claude-skills/*/SKILL.md` (skills that SCAFFOLD code), build files' option-strings, root-level lookup docs |
+| DOC-DATA-FILE | build/doc-CI-BOUND docs a check validates code against: `MANUAL_FIELDS_INVENTORY.md` Section A, `DOCS/TOOLS.md` tool-rows, skill `SKILL.md` tool-name refs, plan-body `file:line` citations → **co-migrate WITH the code commit** (NOT the Phase-5 narrative sweep — these are DATA, not narrative). The content-sub's no-docs scan systematically MISSES this bucket → the build + `check_session_docs.sh` gates are the backstop (E.1.1 caught: the integrity Section-A + 6 skill tool-refs + a plan citation) |
 | HISTORICAL-PRESERVE | changelogs, postmortems, decision logs, handoffs, plan_checks, archives, memory corpus (flag-only) — terminology-evolution: bridge, don't rewrite |
 | OTHER-SHIPS' PLAN BODIES | NOT swept — they re-audit at their own pre-coding gates; their sketches may target a DIFFERENT future spelling (`.E.1` money fields → `FPN_Decimal`, not `FPN_Binary`) |
 

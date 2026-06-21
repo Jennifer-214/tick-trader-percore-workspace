@@ -1384,21 +1384,21 @@ namespace layout_probe {
 
 inline void print_layout_fingerprint() {
     printf("\n-- v5.15.5.B.1 layout fingerprint (sizeof / alignof) --\n");
-    printf("CoreContext<64>            %8zu B  align=%zu\n",
-           sizeof(tt::CoreContext<64>),    alignof(tt::CoreContext<64>));
-    printf("CoreSlowState<64>          %8zu B  align=%zu\n",
-           sizeof(tt::CoreSlowState<64>),  alignof(tt::CoreSlowState<64>));
+    printf("NodeContext<64>            %8zu B  align=%zu\n",
+           sizeof(tt::NodeContext<64>),    alignof(tt::NodeContext<64>));
+    printf("NodeSlowState<64>          %8zu B  align=%zu\n",
+           sizeof(tt::NodeSlowState<64>),  alignof(tt::NodeSlowState<64>));
     printf("EventLoopState<64>         %8zu B  align=%zu\n",
            sizeof(tt::EventLoopState<64>), alignof(tt::EventLoopState<64>));
     printf("-- HOT/WARM/COLD cluster anchors --\n");
-    printf("offsetof CoreContext.entries_processed         = %zu\n",
-           offsetof(tt::CoreContext<64>, entries_processed));
-    printf("offsetof CoreContext.sp_telemetry              = %zu\n",
-           offsetof(tt::CoreContext<64>, sp_telemetry));
-    printf("offsetof CoreSlowState.ema_price               = %zu\n",
-           offsetof(tt::CoreSlowState<64>, ema_price));
-    printf("offsetof CoreSlowState.us_at_last_rebuild      = %zu\n",
-           offsetof(tt::CoreSlowState<64>, us_at_last_rebuild));
+    printf("offsetof NodeContext.entries_processed         = %zu\n",
+           offsetof(tt::NodeContext<64>, entries_processed));
+    printf("offsetof NodeContext.sp_telemetry              = %zu\n",
+           offsetof(tt::NodeContext<64>, sp_telemetry));
+    printf("offsetof NodeSlowState.ema_price               = %zu\n",
+           offsetof(tt::NodeSlowState<64>, ema_price));
+    printf("offsetof NodeSlowState.us_at_last_rebuild      = %zu\n",
+           offsetof(tt::NodeSlowState<64>, us_at_last_rebuild));
     printf("-- Sub-struct sizes --\n");
     printf("FPN_Binary<64>                    %8zu B\n", sizeof(FPN_Binary<64>));
     printf("RollingStats<64,128>       %8zu B\n", sizeof(layout_probe::RS_128));
@@ -1410,8 +1410,8 @@ inline void print_layout_fingerprint() {
     printf("DriftHistory               %8zu B\n", sizeof(DriftHistory));
     printf("SlowPathGateState          %8zu B\n", sizeof(tt::SlowPathGateState));
     printf("GateParameters<64>         %8zu B\n", sizeof(tt::GateParameters<64>));
-    printf("CoreLatencyStats           %8zu B  align=%zu\n",
-           sizeof(tt::CoreLatencyStats), alignof(tt::CoreLatencyStats));
+    printf("NodeLatencyStats           %8zu B  align=%zu\n",
+           sizeof(tt::NodeLatencyStats), alignof(tt::NodeLatencyStats));
     printf("RegimeState<64>            %8zu B\n", sizeof(RegimeState<64>));
     printf("RegressionFeederX<64>      %8zu B\n", sizeof(RegressionFeederX<64>));
     printf("FlowState                  %8zu B\n", sizeof(FlowState));
@@ -1453,7 +1453,7 @@ static void test_v5_15_5_F4b_cfg_field_dispatch() {
     // .F.4c.3 — take_profit_pct now lives in FOREACH_PER_CORE_CFG_FIELD.
     {
         Money dst = MQ(0.0);
-        tt::cfg_parse_field(dst, g_per_core_cfg_field_descriptors[FIELD_IDX_PER_CORE_take_profit_pct], "3.0");
+        tt::cfg_parse_field(dst, g_per_node_cfg_field_descriptors[FIELD_IDX_PER_NODE_take_profit_pct], "3.0");
         double parsed = Money_ToDouble(dst);
         check("v5.15.5.F.4b: KIND_DOUBLE_PCT parse '3.0' → 0.03 (PCT /100 scaling)",
               fabs(parsed - 0.03) < 1e-9);
@@ -1463,7 +1463,7 @@ static void test_v5_15_5_F4b_cfg_field_dispatch() {
     {
         Money src = MQ(0.0234);
         char buf[64] = {0};
-        int n = tt::cfg_save_field(src, g_per_core_cfg_field_descriptors[FIELD_IDX_PER_CORE_take_profit_pct], buf, sizeof(buf));
+        int n = tt::cfg_save_field(src, g_per_node_cfg_field_descriptors[FIELD_IDX_PER_NODE_take_profit_pct], buf, sizeof(buf));
         check("v5.15.5.F.4b: KIND_DOUBLE_PCT save returns positive char count", n > 0);
         // "%.2f" on 2.34 (= 0.0234 * 100) produces "2.34"
         check("v5.15.5.F.4b: KIND_DOUBLE_PCT save '0.0234' → '2.34' (PCT *100 + locale-pinned)",
@@ -1477,7 +1477,7 @@ static void test_v5_15_5_F4b_cfg_field_dispatch() {
         setlocale(LC_NUMERIC, "de_DE.UTF-8");  // German locale uses ',' decimal
         Money src = MQ(0.0234);
         char buf[64] = {0};
-        tt::cfg_save_field(src, g_per_core_cfg_field_descriptors[FIELD_IDX_PER_CORE_take_profit_pct], buf, sizeof(buf));
+        tt::cfg_save_field(src, g_per_node_cfg_field_descriptors[FIELD_IDX_PER_NODE_take_profit_pct], buf, sizeof(buf));
         check("v5.15.5.F.4b: tt::cfg_save_field is locale-immune (de_DE → '2.34' not '2,34')",
               strcmp(buf, "2.34") == 0);
         setlocale(LC_NUMERIC, prev_locale);  // restore
@@ -1498,11 +1498,11 @@ static void test_v5_15_5_F4b_cfg_field_dispatch() {
             }
         }
         if (all_have_strategy_applicability) {
-            for (size_t i = 0; i < FIELD_IDX_PER_CORE_END; ++i) {
-                if (g_per_core_cfg_field_descriptors[i].applies_to_strategy_cat == 0) {
+            for (size_t i = 0; i < FIELD_IDX_PER_NODE_END; ++i) {
+                if (g_per_node_cfg_field_descriptors[i].applies_to_strategy_cat == 0) {
                     all_have_strategy_applicability = false;
                     orphan_idx = i;
-                    orphan_arr = g_per_core_cfg_field_descriptors;
+                    orphan_arr = g_per_node_cfg_field_descriptors;
                     break;
                 }
             }
@@ -1518,12 +1518,12 @@ static void test_v5_15_5_F4b_cfg_field_dispatch() {
     // === T5: Tooltip preservation spot-check (HIGH-6 discipline) ===
     // .F.4c.3 — fee_rate + regime_strong_crossover both in PER_CORE registry.
     {
-        const CfgFieldDescriptor& desc_fee = g_per_core_cfg_field_descriptors[FIELD_IDX_PER_CORE_fee_rate];
+        const CfgFieldDescriptor& desc_fee = g_per_node_cfg_field_descriptors[FIELD_IDX_PER_NODE_fee_rate];
         check("v5.15.5.F.4b: fee_rate tooltip preserved (non-null)", desc_fee.tooltip != nullptr);
         check("v5.15.5.F.4b: fee_rate tooltip mentions 'pre-trade quantity computations'",
               desc_fee.tooltip && strstr(desc_fee.tooltip, "pre-trade quantity computations") != nullptr);
 
-        const CfgFieldDescriptor& desc_regime = g_per_core_cfg_field_descriptors[FIELD_IDX_PER_CORE_regime_strong_crossover];
+        const CfgFieldDescriptor& desc_regime = g_per_node_cfg_field_descriptors[FIELD_IDX_PER_NODE_regime_strong_crossover];
         check("v5.15.5.F.4b: regime_strong_crossover tooltip preserved (non-null)",
               desc_regime.tooltip != nullptr);
         check("v5.15.5.F.4b: regime_strong_crossover tooltip mentions 'BTC $68k' (operator prose)",
@@ -1534,9 +1534,9 @@ static void test_v5_15_5_F4b_cfg_field_dispatch() {
     // .F.4c.3 — combined ≥ 30 (per-core alone is 79; global is 47).
     {
         check("v5.15.5.F.4c.3: both registries combined have at least 30 entries (KIND_DOUBLE/_PCT cohort)",
-              (FIELD_IDX_GLOBAL_END + FIELD_IDX_PER_CORE_END) >= 30);
-        check("v5.15.5.F.4c.3: PER_CORE registry has at least 50 entries (trading + strategy + ML cohort)",
-              FIELD_IDX_PER_CORE_END >= 50);
+              (FIELD_IDX_GLOBAL_END + FIELD_IDX_PER_NODE_END) >= 30);
+        check("v5.15.5.F.4c.3: PER_NODE registry has at least 50 entries (trading + strategy + ML cohort)",
+              FIELD_IDX_PER_NODE_END >= 50);
         check("v5.15.5.F.4c.3: GLOBAL registry has at least 30 entries (system + training + ops cohort)",
               FIELD_IDX_GLOBAL_END >= 30);
     }
@@ -1610,17 +1610,17 @@ static void test_v5_15_5_F4c_cfg_field_dispatch() {
     // .F.4c.3 — mask sums across BOTH registries should still meet aggregate thresholds.
     {
         size_t boot_only_count = cfg_field_count(g_global_cfg_is_boot_only_mask)
-                              + cfg_field_count(g_per_core_cfg_is_boot_only_mask);
+                              + cfg_field_count(g_per_node_cfg_is_boot_only_mask);
         check("v5.15.5.F.4c.3: BOOT_ONLY mask aggregate ≥10 bits (cohort tagging across registries)",
               boot_only_count >= 10);
 
         size_t warn_on_clamp_count = cfg_field_count(g_global_cfg_warn_on_clamp_mask)
-                                  + cfg_field_count(g_per_core_cfg_warn_on_clamp_mask);
+                                  + cfg_field_count(g_per_node_cfg_warn_on_clamp_mask);
         check("v5.15.5.F.4c.3: WARN_ON_CLAMP mask aggregate ≥40 bits (most C1-C5 rows tagged)",
               warn_on_clamp_count >= 40);
 
         size_t has_side_effect_count = cfg_field_count(g_global_cfg_has_side_effect_mask)
-                                    + cfg_field_count(g_per_core_cfg_has_side_effect_mask);
+                                    + cfg_field_count(g_per_node_cfg_has_side_effect_mask);
         check("v5.15.5.F.4c.3: HAS_SIDE_EFFECT mask aggregate ≥4 bits (reconcile_mode/model_verify_strict/thompson_rng_seed/bandit_algorithm/risk_degradation_curve/trading_mode)",
               has_side_effect_count >= 4);
     }
@@ -1637,11 +1637,11 @@ static void test_v5_15_5_F4c_cfg_field_dispatch() {
               iter_count == pop_count);
 
         iter_count = 0;
-        CFG_FIELD_FOR_EACH_SET_BIT(g_per_core_cfg_is_boot_only_mask.words, idx, {
+        CFG_FIELD_FOR_EACH_SET_BIT(g_per_node_cfg_is_boot_only_mask.words, idx, {
             (void)idx;
             iter_count++;
         });
-        pop_count = cfg_field_count(g_per_core_cfg_is_boot_only_mask);
+        pop_count = cfg_field_count(g_per_node_cfg_is_boot_only_mask);
         check("v5.15.5.F.4c.3: per-core bitmap iteration count == popcount (sanity)",
               iter_count == pop_count);
     }
@@ -1655,9 +1655,9 @@ static void test_v5_15_5_F4c_cfg_field_dispatch() {
         check("v5.15.5.F.4c.3: global render + boot_only ≈ FIELD_IDX_GLOBAL_END",
               global_render + global_boot >= (size_t)(FIELD_IDX_GLOBAL_END * 0.9));
 
-        size_t per_core_render = cfg_field_count(g_per_core_cfg_render_mask);
-        check("v5.15.5.F.4c.3: g_per_core_cfg_render_mask popcount ≤ FIELD_IDX_PER_CORE_END",
-              per_core_render <= (size_t)FIELD_IDX_PER_CORE_END);
+        size_t per_node_render = cfg_field_count(g_per_node_cfg_render_mask);
+        check("v5.15.5.F.4c.3: g_per_node_cfg_render_mask popcount ≤ FIELD_IDX_PER_NODE_END",
+              per_node_render <= (size_t)FIELD_IDX_PER_NODE_END);
     }
 
     // === T14: tt::cfg_assign_field<T> — sets KIND_BOOL field to descriptor default ===
@@ -1689,7 +1689,7 @@ static void test_v5_15_5_F4c_cfg_field_dispatch() {
         check("v5.15.5.F.4c: poll_interval tooltip mentions 'autocorrelation' (multi-paragraph preserved)",
               desc.tooltip && strstr(desc.tooltip, "autocorrelation") != nullptr);
 
-        const CfgFieldDescriptor& desc_max_hold = g_per_core_cfg_field_descriptors[FIELD_IDX_PER_CORE_max_hold_ticks];
+        const CfgFieldDescriptor& desc_max_hold = g_per_node_cfg_field_descriptors[FIELD_IDX_PER_NODE_max_hold_ticks];
         check("v5.15.5.F.4c: max_hold_ticks tooltip preserved", desc_max_hold.tooltip != nullptr);
         check("v5.15.5.F.4c: max_hold_ticks tooltip mentions '4-5 hours' (operator prose)",
               desc_max_hold.tooltip && strstr(desc_max_hold.tooltip, "4-5 hours") != nullptr);
@@ -1704,7 +1704,7 @@ static void test_v5_15_5_F4c_cfg_field_dispatch() {
     // === T17: Registry size sanity — combined ≥ 100 (per-core ~79 + global ~47 = ~126) ===
     {
         check("v5.15.5.F.4c.3: combined registry size ≥ 100 entries (.F.4c cohort growth)",
-              (FIELD_IDX_GLOBAL_END + FIELD_IDX_PER_CORE_END) >= 100);
+              (FIELD_IDX_GLOBAL_END + FIELD_IDX_PER_NODE_END) >= 100);
     }
 
     // === T18: Tooltip-byte-count stability (poor-man's hash; item 10 simplified) ===
@@ -1715,8 +1715,8 @@ static void test_v5_15_5_F4c_cfg_field_dispatch() {
             const char* t = g_global_cfg_field_descriptors[i].tooltip;
             if (t) total_tooltip_bytes += strlen(t);
         }
-        for (size_t i = 0; i < FIELD_IDX_PER_CORE_END; ++i) {
-            const char* t = g_per_core_cfg_field_descriptors[i].tooltip;
+        for (size_t i = 0; i < FIELD_IDX_PER_NODE_END; ++i) {
+            const char* t = g_per_node_cfg_field_descriptors[i].tooltip;
             if (t) total_tooltip_bytes += strlen(t);
         }
         check("v5.15.5.F.4c.3: total tooltip bytes ≥ 3000 across both registries (HIGH-6 multi-paragraph preserved)",
@@ -3942,7 +3942,7 @@ int main() {
         // deleted at Step 2) to dual-mask popcount sum via cfg-derived consumer framework.
         // STAMP_BOUND_CFG_DERIVED bit on master per-core + global registries replaces legacy walker.
         check("v5.14.1.B.3+D registry: cohort >= 12 (10 + 2 winsor); via dual-mask popcount",
-              (cfg_field_count(g_per_core_cfg_stamp_bound_cfg_derived_mask) +
+              (cfg_field_count(g_per_node_cfg_stamp_bound_cfg_derived_mask) +
                cfg_field_count(g_global_cfg_stamp_bound_cfg_derived_mask)) >= 12);
     }
     {
@@ -4479,8 +4479,8 @@ int main() {
     {
         // Test 9 — Per-core override field exists in PerCoreOverrides
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
-        cfg.core_overrides[0].winsor_pct_low = FPN_FromDouble<64>(0.01);
-        cfg.core_overrides[0].winsor_pct_high = FPN_FromDouble<64>(0.99);
+        cfg.node_overrides[0].winsor_pct_low = FPN_FromDouble<64>(0.01);
+        cfg.node_overrides[0].winsor_pct_high = FPN_FromDouble<64>(0.99);
         ControllerConfig<64> resolved = ControllerConfig_ResolveForCore(cfg, 0);
         check("v5.14.1.D per-core: override resolves correctly",
               fabs(FPN_ToDouble(resolved.winsor_pct_low) - 0.01) < 1e-6);
@@ -4786,7 +4786,7 @@ int main() {
     {
         // Test 3 — Registry count post-.E (was 12 post-D, now 13)
         check("v5.14.1.E registry: cohort >= 15 (D 12 + E 1 + v5.14.2.E.2 ml_buy_threshold + gap_acceptable_threshold); via dual-mask popcount",
-              (cfg_field_count(g_per_core_cfg_stamp_bound_cfg_derived_mask) +
+              (cfg_field_count(g_per_node_cfg_stamp_bound_cfg_derived_mask) +
                cfg_field_count(g_global_cfg_stamp_bound_cfg_derived_mask)) >= 15);
     }
     {
@@ -5113,7 +5113,7 @@ int main() {
     printf("\n--- Phase 8: ORDER_PARTIAL state ---\n");
     {
         tt::Order<FP> o;
-        tt::Order_Init(&o, 1, /*core_id=*/0, tt::ORDER_MARKET_BUY);
+        tt::Order_Init(&o, 1, /*node_id=*/0, tt::ORDER_MARKET_BUY);
 
         // Default state after Init
         check("Order_Init: default state = ORDER_PENDING, is_maker=0",
@@ -5309,14 +5309,14 @@ int main() {
     // round trip). The hammer test below opens + closes 100 positions with
     // varied entry/exit prices and asserts final value is exactly zero.
     //======================================================================================================
-    printf("\n--- Phase 2.1: core_open_notional symmetry ---\n");
+    printf("\n--- Phase 2.1: node_open_notional symmetry ---\n");
     {
         // Helper to build a TradeEvent
         auto make_event = [](uint16_t cid, uint8_t type, double price, uint64_t ts) {
             tt::TradeEvent<64> ev{};
             ev.price = MQ(price);
             ev.timestamp = ts;
-            ev.core_id = cid;
+            ev.node_id = cid;
             ev.type = type;
             return ev;
         };
@@ -5327,7 +5327,7 @@ int main() {
         tt::EventLoopState_InitLegacy(&state, &oms,
             MQ(10000.0));
 
-        tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
+        tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_NODE_TICK_RING_SIZE> tick_ring;
         tt::SPSCRing_Init(&tick_ring);
         tt::ExecutionCore<64> core;
         tt::ExecutionCore_Init(&core, 0, &tick_ring);
@@ -5337,13 +5337,13 @@ int main() {
             MQ(0.01));    // intended_qty
 
         // Initial state: zero notional
-        check("initial: core_open_notional == 0",
-              Money_ToDouble(state.cores[slot].core_open_notional) == 0.0);
+        check("initial: node_open_notional == 0",
+              Money_ToDouble(state.nodes[slot].node_open_notional) == 0.0);
 
         // Single entry at $60000 × 0.01 BTC = $600 notional
         tt::EventLoop_OnEvent(&state,
             make_event((uint16_t)slot, tt::TRADE_EVENT_ENTRY, 60000.0, 1));
-        double after_entry = Money_ToDouble(state.cores[slot].core_open_notional);
+        double after_entry = Money_ToDouble(state.nodes[slot].node_open_notional);
         check("after entry @60000 × 0.01: notional == 600.0",
               fabs(after_entry - 600.0) < 1e-6);
 
@@ -5353,7 +5353,7 @@ int main() {
         // If subtracted asymmetrically, residue = -1.0 per round trip.
         tt::EventLoop_OnEvent(&state,
             make_event((uint16_t)slot, tt::TRADE_EVENT_EXIT, 60100.0, 2));
-        double after_winning_exit = Money_ToDouble(state.cores[slot].core_open_notional);
+        double after_winning_exit = Money_ToDouble(state.nodes[slot].node_open_notional);
         check("after winning exit: notional returns to 0 (no positive residue)",
               fabs(after_winning_exit) < 1e-6);
 
@@ -5363,7 +5363,7 @@ int main() {
             make_event((uint16_t)slot, tt::TRADE_EVENT_ENTRY, 60000.0, 3));
         tt::EventLoop_OnEvent(&state,
             make_event((uint16_t)slot, tt::TRADE_EVENT_EXIT, 59500.0, 4));
-        double after_losing_exit = Money_ToDouble(state.cores[slot].core_open_notional);
+        double after_losing_exit = Money_ToDouble(state.nodes[slot].node_open_notional);
         check("after losing exit: notional returns to 0 (no negative residue)",
               fabs(after_losing_exit) < 1e-6);
 
@@ -5381,25 +5381,25 @@ int main() {
             tt::EventLoop_OnEvent(&state,
                 make_event((uint16_t)slot, tt::TRADE_EVENT_EXIT, exit_price, 101 + 2 * i));
         }
-        double after_hammer = Money_ToDouble(state.cores[slot].core_open_notional);
+        double after_hammer = Money_ToDouble(state.nodes[slot].node_open_notional);
         check("hammer test (100 round trips, varied prices): notional == 0",
               fabs(after_hammer) < 1e-6);
 
         // Verify entries_processed / exits_processed match (sanity)
         check("hammer: entries_processed == 102 (1+1+100)",
-              state.cores[slot].entries_processed == 102);
+              state.nodes[slot].entries_processed == 102);
         check("hammer: exits_processed == 102",
-              state.cores[slot].exits_processed == 102);
+              state.nodes[slot].exits_processed == 102);
 
         // Open one more without closing, verify nonzero, then close it
         tt::EventLoop_OnEvent(&state,
             make_event((uint16_t)slot, tt::TRADE_EVENT_ENTRY, 65000.0, 9999));
         check("standalone open: notional == 65000 × 0.01 = 650",
-              fabs(Money_ToDouble(state.cores[slot].core_open_notional) - 650.0) < 1e-6);
+              fabs(Money_ToDouble(state.nodes[slot].node_open_notional) - 650.0) < 1e-6);
         tt::EventLoop_OnEvent(&state,
             make_event((uint16_t)slot, tt::TRADE_EVENT_EXIT, 65500.0, 10000));
         check("final close: notional back to 0",
-              fabs(Money_ToDouble(state.cores[slot].core_open_notional)) < 1e-6);
+              fabs(Money_ToDouble(state.nodes[slot].node_open_notional)) < 1e-6);
     }
 
     //======================================================================================================
@@ -5437,7 +5437,7 @@ int main() {
         tt::OrderManagerState<64> oms;
         tt::EventLoopState<64> state;
         tt::EventLoopState_InitLegacy(&state, &oms, MQ(10000.0));
-        tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
+        tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_NODE_TICK_RING_SIZE> tick_ring;
         tt::SPSCRing_Init(&tick_ring);
         tt::ExecutionCore<64> core;
         tt::ExecutionCore_Init(&core, 0, &tick_ring);
@@ -5457,17 +5457,17 @@ int main() {
         check("A19: precondition — slot inactive (active_bitmap clear)",
               oms.portfolio.active_bitmap == 0);
         // Simulate a stale ratchet left by a prior trade (what the AUTO regime-transition writes).
-        state.cores[slot].pending_params.ratchet_tp = MQ(60500.0);   // stale high TP-ratchet
-        state.cores[slot].pending_params.ratchet_sl = MQ(59500.0);   // stale SL-ratchet
+        state.nodes[slot].pending_params.ratchet_tp = MQ(60500.0);   // stale high TP-ratchet
+        state.nodes[slot].pending_params.ratchet_sl = MQ(59500.0);   // stale SL-ratchet
         check("A19: precondition — ratchet_tp pre-set non-zero (non-vacuity)",
-              !Money_IsZero(state.cores[slot].pending_params.ratchet_tp));
+              !Money_IsZero(state.nodes[slot].pending_params.ratchet_tp));
 
         tt::EventLoop_RebuildAllParameters(&state, &rolling, &cfg);
 
         check("A19: ratchet_tp CLEARED on inactive slot (the fix — the previously-missing half)",
-              Money_IsZero(state.cores[slot].pending_params.ratchet_tp));
+              Money_IsZero(state.nodes[slot].pending_params.ratchet_tp));
         check("A19: ratchet_sl CLEARED on inactive slot (pre-existing half; complete write-set)",
-              Money_IsZero(state.cores[slot].pending_params.ratchet_sl));
+              Money_IsZero(state.nodes[slot].pending_params.ratchet_sl));
     }
 
     printf("\n--- A24 — RebuildOneCore cfg-mutation reaches the per-node consumer (D10 brake; .E.0.10) ---\n");
@@ -5498,7 +5498,7 @@ int main() {
             tt::OrderManagerState<64> oms;
             tt::EventLoopState<64> state;
             tt::EventLoopState_InitLegacy(&state, &oms, MQ(10000.0));
-            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
+            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_NODE_TICK_RING_SIZE> tick_ring;
             tt::SPSCRing_Init(&tick_ring);
             tt::ExecutionCore<64> core;
             tt::ExecutionCore_Init(&core, 0, &tick_ring);
@@ -5507,8 +5507,8 @@ int main() {
 
             ControllerConfig<64> cfg = ControllerConfig_Default<64>();
             // The per-NODE slice = what the consumer reads (and what A24 now mutates).
-            cfg.cores[slot].volume_multiplier = FPN_FromDouble<64>(1.0);
-            cfg.cores[slot].entry_offset_pct  = MQ(0.001);
+            cfg.nodes[slot].volume_multiplier = FPN_FromDouble<64>(1.0);
+            cfg.nodes[slot].entry_offset_pct  = MQ(0.001);
             // Wide flat clamp bounds (the D10 clamp reads flat; resolve-equal) so the shift isn't clamped.
             cfg.vol_mult_min = FPN_FromDouble<64>(0.1);
             cfg.vol_mult_max = FPN_FromDouble<64>(100.0);
@@ -5528,12 +5528,12 @@ int main() {
 
             // Seed a clean LOSING slope (decreasing realized P&L) → negative slope, R²≈1.0 → D10 tightens.
             for (int i = 0; i < 8; ++i)
-                state.cores[slot].pnl_feeder.price_samples[i] = FPN_FromDouble<64>(80.0 - 10.0 * (double)i);
-            state.cores[slot].pnl_feeder.head  = 0;   // full window; Compute reads chronological [0..7]
-            state.cores[slot].pnl_feeder.count = 8;
+                state.nodes[slot].pnl_feeder.price_samples[i] = FPN_FromDouble<64>(80.0 - 10.0 * (double)i);
+            state.nodes[slot].pnl_feeder.head  = 0;   // full window; Compute reads chronological [0..7]
+            state.nodes[slot].pnl_feeder.count = 8;
 
             tt::EventLoop_RebuildAllParameters(&state, &rolling, &cfg);
-            return state.cores[slot].pending_params.bg_volume_threshold;
+            return state.nodes[slot].pending_params.bg_volume_threshold;
         };
 
         Money baseline  = run_d10(FPN_Zero<64>());            // D10 OFF (filter_scale == 0)
@@ -5542,7 +5542,7 @@ int main() {
         check("A24: D10-off baseline bg_volume_threshold non-zero (non-vacuity guard)",
               !Money_IsZero(baseline));
         check("A24: D10 losing-streak brake RAISES volume_multiplier as the consumer sees it "
-              "(bg_volume_threshold > baseline — the cfg-mutation reaches cores[slot]; FAILS pre-fix)",
+              "(bg_volume_threshold > baseline — the cfg-mutation reaches nodes[slot]; FAILS pre-fix)",
               Money_Gt(tightened, baseline));
     }
 
@@ -5555,7 +5555,7 @@ int main() {
         tt::EventLoopState_InitLegacy(&state, &oms,
             MQ(10000.0));
 
-        tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
+        tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_NODE_TICK_RING_SIZE> tick_ring;
         tt::SPSCRing_Init(&tick_ring);
         tt::ExecutionCore<64> core;
         tt::ExecutionCore_Init(&core, 0, &tick_ring);
@@ -5593,46 +5593,46 @@ int main() {
         rolling.count      = 200;  // past warmup
 
         // ---- Test 1: full budget remaining → no clamp, no halt ----
-        state.cores[slot].core_open_notional = Money_Zero();
+        state.nodes[slot].node_open_notional = Money_Zero();
         tt::EventLoop_RebuildAllParameters(&state, &rolling, &cfg);
-        check("budget=full: halt_reason != HALT_CORE_BUDGET (not budget-halted)",
-              state.cores[slot].halt_reason != HALT_CORE_BUDGET);
+        check("budget=full: halt_reason != HALT_NODE_BUDGET (not budget-halted)",
+              state.nodes[slot].halt_reason != HALT_NODE_BUDGET);
         // qty should equal 1000 / (60000 × (1 - 0.001)) ≈ 0.01668
-        double tsize_full = Money_ToDouble(state.cores[slot].pending_params.trade_size);
+        double tsize_full = Money_ToDouble(state.nodes[slot].pending_params.trade_size);
         check("budget=full: trade_size matches strategy math (~0.0167)",
               tsize_full > 0.016 && tsize_full < 0.018);
 
         // ---- Test 2: partial budget → qty clamps proportionally ----
         // Set core_open_notional to $500 of $1000 allocation. Budget
         // remaining = $500. Expected: trade_size = 500 / 59940 ≈ 0.00834.
-        state.cores[slot].core_open_notional = MQ(500.0);
+        state.nodes[slot].node_open_notional = MQ(500.0);
         tt::EventLoop_RebuildAllParameters(&state, &rolling, &cfg);
-        check("budget=half: halt_reason != HALT_CORE_BUDGET (still has room)",
-              state.cores[slot].halt_reason != HALT_CORE_BUDGET);
-        double tsize_half = Money_ToDouble(state.cores[slot].pending_params.trade_size);
+        check("budget=half: halt_reason != HALT_NODE_BUDGET (still has room)",
+              state.nodes[slot].halt_reason != HALT_NODE_BUDGET);
+        double tsize_half = Money_ToDouble(state.nodes[slot].pending_params.trade_size);
         check("budget=half: trade_size clamped to ~half (~0.00834)",
               tsize_half > 0.008 && tsize_half < 0.009);
 
         // ---- Test 3: budget fully deployed → halt fires + qty=0 ----
-        state.cores[slot].core_open_notional = MQ(1000.0);
+        state.nodes[slot].node_open_notional = MQ(1000.0);
         tt::EventLoop_RebuildAllParameters(&state, &rolling, &cfg);
-        check("budget=exhausted: halt_reason == HALT_CORE_BUDGET",
-              state.cores[slot].halt_reason == HALT_CORE_BUDGET);
+        check("budget=exhausted: halt_reason == HALT_NODE_BUDGET",
+              state.nodes[slot].halt_reason == HALT_NODE_BUDGET);
         check("budget=exhausted: trade_size clamped to 0",
-              Money_IsZero(state.cores[slot].pending_params.trade_size));
+              Money_IsZero(state.nodes[slot].pending_params.trade_size));
         check("budget=exhausted: bg_price_threshold zero-gated",
-              Money_IsZero(state.cores[slot].pending_params.bg_price_threshold));
+              Money_IsZero(state.nodes[slot].pending_params.bg_price_threshold));
 
         // ---- Test 4: over-budget (defensive) → halt + qty=0 ----
         // open_notional > allocated should never happen with the symmetric
         // tracker, but defensive: FPN_SubSat saturates at zero so budget
         // remaining is zero and halt fires.
-        state.cores[slot].core_open_notional = MQ(1500.0);
+        state.nodes[slot].node_open_notional = MQ(1500.0);
         tt::EventLoop_RebuildAllParameters(&state, &rolling, &cfg);
-        check("budget=over: halt_reason == HALT_CORE_BUDGET (saturating subtraction safe)",
-              state.cores[slot].halt_reason == HALT_CORE_BUDGET);
+        check("budget=over: halt_reason == HALT_NODE_BUDGET (saturating subtraction safe)",
+              state.nodes[slot].halt_reason == HALT_NODE_BUDGET);
         check("budget=over: trade_size still 0",
-              Money_IsZero(state.cores[slot].pending_params.trade_size));
+              Money_IsZero(state.nodes[slot].pending_params.trade_size));
 
         // ---- Test 5: multi-core isolation ----
         // Add a second core with full budget; verify core 0 budget exhaustion
@@ -5645,13 +5645,13 @@ int main() {
         tt::EventLoopState_SetCoreStrategy(&state, slot1,
             STRATEGY_SIMPLE_DIP, MQ(1000.0));
         // core 0 stays exhausted from test 4; core 1 has full budget
-        state.cores[slot1].core_open_notional = Money_Zero();
+        state.nodes[slot1].node_open_notional = Money_Zero();
         tt::EventLoop_RebuildAllParameters(&state, &rolling, &cfg);
         check("multi-core: core 0 still budget-halted",
-              state.cores[slot].halt_reason == HALT_CORE_BUDGET);
+              state.nodes[slot].halt_reason == HALT_NODE_BUDGET);
         check("multi-core: core 1 not halted (independent budget)",
-              state.cores[slot1].halt_reason != 8);
-        double t1 = Money_ToDouble(state.cores[slot1].pending_params.trade_size);
+              state.nodes[slot1].halt_reason != 8);
+        double t1 = Money_ToDouble(state.nodes[slot1].pending_params.trade_size);
         check("multi-core: core 1 trade_size unclamped",
               t1 > 0.016 && t1 < 0.018);
     }
@@ -5670,7 +5670,7 @@ int main() {
             struct R {
                 tt::OrderManagerState<64> oms;
                 tt::EventLoopState<64> state;
-                tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
+                tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_NODE_TICK_RING_SIZE> tick_ring;
                 tt::ExecutionCore<64> core;
             };
             // Heap-allocated so we get fresh OMS state per test (atomics in
@@ -5724,11 +5724,11 @@ int main() {
             ControllerConfig<64> cfg = stub_cfg();
             tt::EventLoop_RebuildAllParameters(&r->state, &rolling, &cfg);
             check("init: peak == allocated_balance after first rebuild",
-                  fabs(Money_ToDouble(r->state.cores[0].core_peak_balance) - 1000.0) < 1e-6);
+                  fabs(Money_ToDouble(r->state.nodes[0].node_peak_balance) - 1000.0) < 1e-6);
             check("init: kill not tripped",
-                  !CORE_STATE_FLAG_IS_SET(r->state.cores[0], KILL_TRIPPED));
+                  !NODE_STATE_FLAG_IS_SET(r->state.nodes[0], KILL_TRIPPED));
             check("init: dd == 0",
-                  Money_IsZero(r->state.cores[0].core_dd_pct));
+                  Money_IsZero(r->state.nodes[0].node_dd_pct));
         }
 
         // ---- Test 2: realized loss within threshold doesn't trip ----
@@ -5738,12 +5738,12 @@ int main() {
             // First rebuild establishes peak at 1000
             tt::EventLoop_RebuildAllParameters(&r->state, &rolling, &cfg);
             // Now lose $50 realized = 5% drawdown (under 10% threshold)
-            r->state.cores[0].core_realized = MQ(-50.0);
+            r->state.nodes[0].node_realized = MQ(-50.0);
             tt::EventLoop_RebuildAllParameters(&r->state, &rolling, &cfg);
             check("loss within threshold (5%, $50): no trip",
-                  !CORE_STATE_FLAG_IS_SET(r->state.cores[0], KILL_TRIPPED));
+                  !NODE_STATE_FLAG_IS_SET(r->state.nodes[0], KILL_TRIPPED));
             // dd should compute as roughly 5%
-            double dd = Money_ToDouble(r->state.cores[0].core_dd_pct);
+            double dd = Money_ToDouble(r->state.nodes[0].node_dd_pct);
             check("loss within threshold: dd ~= 5%",
                   dd > 0.04 && dd < 0.06);
         }
@@ -5755,16 +5755,16 @@ int main() {
             tt::EventLoop_RebuildAllParameters(&r->state, &rolling, &cfg);
             // Lose $150 realized = 15% drawdown (over 10% threshold) and
             // $150 > $5 min_kill_loss
-            r->state.cores[0].core_realized = MQ(-150.0);
+            r->state.nodes[0].node_realized = MQ(-150.0);
             tt::EventLoop_RebuildAllParameters(&r->state, &rolling, &cfg);
             check("loss exceeds threshold (15%): kill tripped",
-                  CORE_STATE_FLAG_IS_SET(r->state.cores[0], KILL_TRIPPED));
+                  NODE_STATE_FLAG_IS_SET(r->state.nodes[0], KILL_TRIPPED));
             check("trip: ks_trips_total bumped",
-                  r->state.cores[0].core_ks_trips_total == 1);
-            check("trip: halt_reason == HALT_CORE_KILL",
-                  r->state.cores[0].halt_reason == HALT_CORE_KILL);
+                  r->state.nodes[0].node_ks_trips_total == 1);
+            check("trip: halt_reason == HALT_NODE_KILL",
+                  r->state.nodes[0].halt_reason == HALT_NODE_KILL);
             check("trip: bg_price_threshold zero-gated",
-                  Money_IsZero(r->state.cores[0].pending_params.bg_price_threshold));
+                  Money_IsZero(r->state.nodes[0].pending_params.bg_price_threshold));
         }
 
         // ---- Test 4: tiny absolute loss doesn't trip even if dd% high ----
@@ -5775,14 +5775,14 @@ int main() {
             // under the threshold anyway, so this is more about confirming
             // both conditions are AND'd. Try a config where allocated is
             // small to force the floor check to matter.
-            r->state.cores[0].allocated_balance = MQ(20.0);
+            r->state.nodes[0].allocated_balance = MQ(20.0);
             tt::EventLoop_RebuildAllParameters(&r->state, &rolling, &cfg);
             // peak should now be 20
             // Drop $4 = 20% dd (over 10% threshold), but $4 < $5 floor
-            r->state.cores[0].core_realized = MQ(-4.0);
+            r->state.nodes[0].node_realized = MQ(-4.0);
             tt::EventLoop_RebuildAllParameters(&r->state, &rolling, &cfg);
             check("dd over threshold but drop under floor ($4 < $5): NO trip",
-                  !CORE_STATE_FLAG_IS_SET(r->state.cores[0], KILL_TRIPPED));
+                  !NODE_STATE_FLAG_IS_SET(r->state.nodes[0], KILL_TRIPPED));
         }
 
         // ---- Test 5: MTM unrealized loss trips (no realized exit yet) ----
@@ -5795,7 +5795,7 @@ int main() {
                 MQ(60000.0), MQ(0.01),
                 MQ(60500.0), MQ(59000.0),
                 Money_Zero());
-            r->state.cores[0].core_open_notional = MQ(600.0);
+            r->state.nodes[0].node_open_notional = MQ(600.0);
 
             // Price drops to $40000: unrealized = (40000-60000)*0.01 = -$200
             // current_value = 1000 + 0 + (-200) = 800
@@ -5804,7 +5804,7 @@ int main() {
             Money mtm = MQ(40000.0);
             tt::EventLoop_RebuildAllParameters(&r->state, &rolling, &cfg, (const RollingStats<64, 512>*)nullptr, nullptr, nullptr, &mtm);
             check("MTM: -$200 unrealized trips kill (no realized)",
-                  CORE_STATE_FLAG_IS_SET(r->state.cores[0], KILL_TRIPPED));
+                  NODE_STATE_FLAG_IS_SET(r->state.nodes[0], KILL_TRIPPED));
         }
 
         // ---- Test 6: MTM disabled → realized-only behavior ----
@@ -5821,7 +5821,7 @@ int main() {
             Money mtm = MQ(30000.0);  // -$300 unrealized
             tt::EventLoop_RebuildAllParameters(&r->state, &rolling, &cfg, (const RollingStats<64, 512>*)nullptr, nullptr, nullptr, &mtm);
             check("MTM disabled: unrealized loss alone doesn't trip",
-                  !CORE_STATE_FLAG_IS_SET(r->state.cores[0], KILL_TRIPPED));
+                  !NODE_STATE_FLAG_IS_SET(r->state.nodes[0], KILL_TRIPPED));
         }
 
         // ---- Test 7: per-core override beats global threshold ----
@@ -5829,13 +5829,13 @@ int main() {
             auto* r = fresh_state();
             ControllerConfig<64> cfg = stub_cfg();
             // Global threshold 10%, override core 0 to 5%
-            cfg.core_max_drawdown_pct[0] = MQ(0.05);
+            cfg.node_max_drawdown_pct[0] = MQ(0.05);
             tt::EventLoop_RebuildAllParameters(&r->state, &rolling, &cfg);
             // Lose $80 = 8% — over 5% override but under 10% global
-            r->state.cores[0].core_realized = MQ(-80.0);
+            r->state.nodes[0].node_realized = MQ(-80.0);
             tt::EventLoop_RebuildAllParameters(&r->state, &rolling, &cfg);
             check("per-core override (5%) trips at 8% even when global (10%) wouldn't",
-                  CORE_STATE_FLAG_IS_SET(r->state.cores[0], KILL_TRIPPED));
+                  NODE_STATE_FLAG_IS_SET(r->state.nodes[0], KILL_TRIPPED));
         }
 
         // ---- Test 8: post-trip halt prevents further entries ----
@@ -5843,12 +5843,12 @@ int main() {
             auto* r = fresh_state();
             ControllerConfig<64> cfg = stub_cfg();
             // Set a small allocated balance to ensure peak doesn't override
-            CORE_STATE_FLAG_SET(r->state.cores[0], KILL_TRIPPED);  // pre-tripped
+            NODE_STATE_FLAG_SET(r->state.nodes[0], KILL_TRIPPED);  // pre-tripped
             tt::EventLoop_RebuildAllParameters(&r->state, &rolling, &cfg);
-            check("pre-tripped: halt_reason == HALT_CORE_KILL immediately",
-                  r->state.cores[0].halt_reason == HALT_CORE_KILL);
+            check("pre-tripped: halt_reason == HALT_NODE_KILL immediately",
+                  r->state.nodes[0].halt_reason == HALT_NODE_KILL);
             check("pre-tripped: bg_price_threshold zero-gated",
-                  Money_IsZero(r->state.cores[0].pending_params.bg_price_threshold));
+                  Money_IsZero(r->state.nodes[0].pending_params.bg_price_threshold));
         }
     }
 
@@ -5866,24 +5866,24 @@ int main() {
         unlink(test_path);  // ensure clean start
 
         // Helper that builds a fresh state with N cores
-        auto build_state = [](int num_cores, double balance) {
+        auto build_state = [](int num_nodes, double balance) {
             struct R {
                 tt::OrderManagerState<64> oms;
                 tt::EventLoopState<64> state;
-                tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE> tick_rings[8];
-                tt::ExecutionCore<64> cores[8];
+                tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_NODE_TICK_RING_SIZE> tick_rings[8];
+                tt::ExecutionCore<64> nodes[8];
             };
             R* r = new R();
             tt::EventLoopState_InitLegacy(&r->state, &r->oms,
                 MQ(balance));
-            for (int i = 0; i < num_cores && i < 8; ++i) {
+            for (int i = 0; i < num_nodes && i < 8; ++i) {
                 tt::SPSCRing_Init(&r->tick_rings[i]);
-                tt::ExecutionCore_Init(&r->cores[i], 0, &r->tick_rings[i]);
-                tt::EventLoopState_RegisterCore(&r->state, &r->cores[i],
+                tt::ExecutionCore_Init(&r->nodes[i], 0, &r->tick_rings[i]);
+                tt::EventLoopState_RegisterCore(&r->state, &r->nodes[i],
                     MQ(60100.0), MQ(59900.0),
                     MQ(0.01));
                 tt::EventLoopState_SetCoreStrategy(&r->state, i,
-                    STRATEGY_SIMPLE_DIP, MQ(balance / num_cores));
+                    STRATEGY_SIMPLE_DIP, MQ(balance / num_nodes));
             }
             return r;
         };
@@ -5903,61 +5903,61 @@ int main() {
             auto* r = build_state(4, 10000.0);
             // Simulate a session of activity on each core
             for (int c = 0; c < 4; ++c) {
-                r->state.cores[c].entries_processed = 10 + c;
-                r->state.cores[c].exits_processed   = 8 + c;
-                r->state.cores[c].core_realized     = MQ(50.0 - 10.0 * c);
-                r->state.cores[c].core_fees         = MQ(2.5 + 0.5 * c);  // D-110 extend: distinct per core (was flat 2.5)
-                r->state.cores[c].core_wins         = 6 + c;
-                r->state.cores[c].core_losses       = 2;
-                r->state.cores[c].core_open_notional = MQ(100.0 + 50.0 * c);
-                r->state.cores[c].core_peak_balance  = MQ(2600.0 + 100.0 * c);
-                r->state.cores[c].core_dd_pct        = MQ(0.03 * c);
+                r->state.nodes[c].entries_processed = 10 + c;
+                r->state.nodes[c].exits_processed   = 8 + c;
+                r->state.nodes[c].node_realized     = MQ(50.0 - 10.0 * c);
+                r->state.nodes[c].node_fees         = MQ(2.5 + 0.5 * c);  // D-110 extend: distinct per core (was flat 2.5)
+                r->state.nodes[c].node_wins         = 6 + c;
+                r->state.nodes[c].node_losses       = 2;
+                r->state.nodes[c].node_open_notional = MQ(100.0 + 50.0 * c);
+                r->state.nodes[c].node_peak_balance  = MQ(2600.0 + 100.0 * c);
+                r->state.nodes[c].node_dd_pct        = MQ(0.03 * c);
                 // D-110 extend (adversarial-audit finding): the remaining persisted per-core money
                 // fields were SAVED but never asserted. Set distinct values + assert money-exact below.
-                r->state.cores[c].allocated_balance  = MQ(2500.0 + 25.0 * c);
-                r->state.cores[c].core_gross_wins    = MQ(120.0 + 10.0 * c);
-                r->state.cores[c].core_gross_losses  = MQ(40.0 + 5.0 * c);
-                r->state.cores[c].last_entry_price   = MQ(60000.0 + 100.0 * c);
-                if (c == 2) CORE_STATE_FLAG_SET(r->state.cores[c], KILL_TRIPPED);
-                else        CORE_STATE_FLAG_CLR(r->state.cores[c], KILL_TRIPPED);
-                r->state.cores[c].core_ks_trips_total = c;
-                r->state.cores[c].regime_state.current_regime = c % 4;
-                r->state.cores[c].regime_state.hysteresis_count = 5 + c;
-                r->state.cores[c].pnl_feeder.head  = c % MAX_WINDOW;
-                r->state.cores[c].pnl_feeder.count = MAX_WINDOW;
+                r->state.nodes[c].allocated_balance  = MQ(2500.0 + 25.0 * c);
+                r->state.nodes[c].node_gross_wins    = MQ(120.0 + 10.0 * c);
+                r->state.nodes[c].node_gross_losses  = MQ(40.0 + 5.0 * c);
+                r->state.nodes[c].last_entry_price   = MQ(60000.0 + 100.0 * c);
+                if (c == 2) NODE_STATE_FLAG_SET(r->state.nodes[c], KILL_TRIPPED);
+                else        NODE_STATE_FLAG_CLR(r->state.nodes[c], KILL_TRIPPED);
+                r->state.nodes[c].node_ks_trips_total = c;
+                r->state.nodes[c].regime_state.current_regime = c % 4;
+                r->state.nodes[c].regime_state.hysteresis_count = 5 + c;
+                r->state.nodes[c].pnl_feeder.head  = c % MAX_WINDOW;
+                r->state.nodes[c].pnl_feeder.count = MAX_WINDOW;
                 for (int j = 0; j < MAX_WINDOW; ++j) {
-                    r->state.cores[c].pnl_feeder.price_samples[j] =
+                    r->state.nodes[c].pnl_feeder.price_samples[j] =
                         FPN_FromDouble<64>(100.0 * (c + 1) + j);
                 }
-                r->state.cores[c].last_confidence = 0.5 + 0.1 * c;
+                r->state.nodes[c].last_confidence = 0.5 + 0.1 * c;
                 // Phase 4.1: populate IC/RMSE buffers with distinguishable values
                 // v5.15.5.E.C — paths updated for RollingWindow composition.
-                r->state.cores[c].confidence.ic.predictions.head  = 5 + c;
-                r->state.cores[c].confidence.ic.predictions.count = 10 + c;
-                r->state.cores[c].confidence.ic.actuals.head      = 5 + c;  // mirror predictions
-                r->state.cores[c].confidence.ic.actuals.count     = 10 + c;
-                r->state.cores[c].confidence.rmse.window.head  = 7 + c;
-                r->state.cores[c].confidence.rmse.window.count = 12 + c;
+                r->state.nodes[c].confidence.ic.predictions.head  = 5 + c;
+                r->state.nodes[c].confidence.ic.predictions.count = 10 + c;
+                r->state.nodes[c].confidence.ic.actuals.head      = 5 + c;  // mirror predictions
+                r->state.nodes[c].confidence.ic.actuals.count     = 10 + c;
+                r->state.nodes[c].confidence.rmse.window.head  = 7 + c;
+                r->state.nodes[c].confidence.rmse.window.count = 12 + c;
                 for (int j = 0; j < 4; ++j) {
-                    r->state.cores[c].confidence.ic.predictions.samples[j] = 0.1 * c + 0.01 * j;
-                    r->state.cores[c].confidence.ic.actuals.samples[j]     = -0.05 + 0.02 * j + 0.01 * c;
-                    r->state.cores[c].confidence.rmse.window.samples[j]    = 0.001 * (c + 1) + 0.0001 * j;
+                    r->state.nodes[c].confidence.ic.predictions.samples[j] = 0.1 * c + 0.01 * j;
+                    r->state.nodes[c].confidence.ic.actuals.samples[j]     = -0.05 + 0.02 * j + 0.01 * c;
+                    r->state.nodes[c].confidence.rmse.window.samples[j]    = 0.001 * (c + 1) + 0.0001 * j;
                 }
                 // F-PERSIST (Net-1): the non-money per-core passthrough the save block persists but Test-2
                 // never set/asserted. Distinct per-c so a cross-core desync (the hand-written-fwrite, NO-
                 // count-lock risk = TECH_DEBT-196) goes RED. (RegimeState's last_trending/volatile_score are
                 // NOT persisted by design — re-derived at warmup — correctly omitted.)
-                r->state.cores[c].regime_state.proposed_regime      = (c + 1) % 4;
-                r->state.cores[c].regime_state.hysteresis_threshold = 3 + c;
-                r->state.cores[c].regime_state.last_strategy_id     = 1 + c;
-                r->state.cores[c].regime_state.regime_start_tick    = (uint64_t)(1000 + c);
-                r->state.cores[c].regime_state.regime_start_time    = (time_t)(1700000000 + c);
-                r->state.cores[c].resolved_strategy_id              = (uint8_t)(c + 1);
-                r->state.cores[c].last_entry_tick                   = (uint64_t)(900 + c);
-                r->state.cores[c].sl_cooldown_remaining             = (uint32_t)(4 + c);
-                r->state.cores[c].idle_cycles                       = (uint32_t)(6 + c);
-                r->state.cores[c].staged_prediction                 = 0.2 + 0.05 * c;
-                r->state.cores[c].active_prediction                 = 0.3 + 0.05 * c;
+                r->state.nodes[c].regime_state.proposed_regime      = (c + 1) % 4;
+                r->state.nodes[c].regime_state.hysteresis_threshold = 3 + c;
+                r->state.nodes[c].regime_state.last_strategy_id     = 1 + c;
+                r->state.nodes[c].regime_state.regime_start_tick    = (uint64_t)(1000 + c);
+                r->state.nodes[c].regime_state.regime_start_time    = (time_t)(1700000000 + c);
+                r->state.nodes[c].resolved_strategy_id              = (uint8_t)(c + 1);
+                r->state.nodes[c].last_entry_tick                   = (uint64_t)(900 + c);
+                r->state.nodes[c].sl_cooldown_remaining             = (uint32_t)(4 + c);
+                r->state.nodes[c].idle_cycles                       = (uint32_t)(6 + c);
+                r->state.nodes[c].staged_prediction                 = 0.2 + 0.05 * c;
+                r->state.nodes[c].active_prediction                 = 0.3 + 0.05 * c;
             }
             r->oms.balance      = MQ(9837.42);
             r->oms.realized_pnl = MQ(-162.58);
@@ -6047,49 +6047,49 @@ int main() {
 
             for (int c = 0; c < 4; ++c) {
                 check("round-trip: entries_processed",
-                      r2->state.cores[c].entries_processed == (uint64_t)(10 + c));
+                      r2->state.nodes[c].entries_processed == (uint64_t)(10 + c));
                 // ADV-REFUTE: 2026-06-10 (D-110 panel — per-core money round-trip; coverage extended to all 8 per-core money fields in this loop; re-verified 2026-06-14).
-                check("round-trip: core_realized (money-exact, D-110)",
-                      Money_Eq(r2->state.cores[c].core_realized, MQ(50.0 - 10.0 * c)));
+                check("round-trip: node_realized (money-exact, D-110)",
+                      Money_Eq(r2->state.nodes[c].node_realized, MQ(50.0 - 10.0 * c)));
                 // D-110 extend: the 8 remaining persisted per-core money fields, money-exact.
-                check("round-trip: core_fees (money-exact, D-110)",
-                      Money_Eq(r2->state.cores[c].core_fees, MQ(2.5 + 0.5 * c)));
+                check("round-trip: node_fees (money-exact, D-110)",
+                      Money_Eq(r2->state.nodes[c].node_fees, MQ(2.5 + 0.5 * c)));
                 check("round-trip: allocated_balance (money-exact, D-110)",
-                      Money_Eq(r2->state.cores[c].allocated_balance, MQ(2500.0 + 25.0 * c)));
-                check("round-trip: core_open_notional (money-exact, D-110)",
-                      Money_Eq(r2->state.cores[c].core_open_notional, MQ(100.0 + 50.0 * c)));
-                check("round-trip: core_gross_wins (money-exact, D-110)",
-                      Money_Eq(r2->state.cores[c].core_gross_wins, MQ(120.0 + 10.0 * c)));
-                check("round-trip: core_gross_losses (money-exact, D-110)",
-                      Money_Eq(r2->state.cores[c].core_gross_losses, MQ(40.0 + 5.0 * c)));
+                      Money_Eq(r2->state.nodes[c].allocated_balance, MQ(2500.0 + 25.0 * c)));
+                check("round-trip: node_open_notional (money-exact, D-110)",
+                      Money_Eq(r2->state.nodes[c].node_open_notional, MQ(100.0 + 50.0 * c)));
+                check("round-trip: node_gross_wins (money-exact, D-110)",
+                      Money_Eq(r2->state.nodes[c].node_gross_wins, MQ(120.0 + 10.0 * c)));
+                check("round-trip: node_gross_losses (money-exact, D-110)",
+                      Money_Eq(r2->state.nodes[c].node_gross_losses, MQ(40.0 + 5.0 * c)));
                 check("round-trip: last_entry_price (money-exact, D-110)",
-                      Money_Eq(r2->state.cores[c].last_entry_price, MQ(60000.0 + 100.0 * c)));
-                check("round-trip: core_peak_balance (money-exact, D-110)",
-                      Money_Eq(r2->state.cores[c].core_peak_balance, MQ(2600.0 + 100.0 * c)));
-                check("round-trip: core_dd_pct (money-exact, D-110)",
-                      Money_Eq(r2->state.cores[c].core_dd_pct, MQ(0.03 * c)));
-                check("round-trip: core_kill_tripped",
-                      CORE_STATE_FLAG_IS_SET(r2->state.cores[c], KILL_TRIPPED) == (c == 2));
+                      Money_Eq(r2->state.nodes[c].last_entry_price, MQ(60000.0 + 100.0 * c)));
+                check("round-trip: node_peak_balance (money-exact, D-110)",
+                      Money_Eq(r2->state.nodes[c].node_peak_balance, MQ(2600.0 + 100.0 * c)));
+                check("round-trip: node_dd_pct (money-exact, D-110)",
+                      Money_Eq(r2->state.nodes[c].node_dd_pct, MQ(0.03 * c)));
+                check("round-trip: node_kill_tripped",
+                      NODE_STATE_FLAG_IS_SET(r2->state.nodes[c], KILL_TRIPPED) == (c == 2));
                 check("round-trip: regime current",
-                      r2->state.cores[c].regime_state.current_regime == (c % 4));
+                      r2->state.nodes[c].regime_state.current_regime == (c % 4));
                 check("round-trip: pnl_feeder count",
-                      r2->state.cores[c].pnl_feeder.count == MAX_WINDOW);
+                      r2->state.nodes[c].pnl_feeder.count == MAX_WINDOW);
                 check("round-trip: pnl_feeder sample[0]",
-                      fabs(FPN_ToDouble(r2->state.cores[c].pnl_feeder.price_samples[0]) - (100.0 * (c + 1))) < 1e-6);
+                      fabs(FPN_ToDouble(r2->state.nodes[c].pnl_feeder.price_samples[0]) - (100.0 * (c + 1))) < 1e-6);
                 // Phase 4.1: IC/RMSE buffers
                 // v5.15.5.E.C — paths updated for RollingWindow composition.
                 check("round-trip: IC head/count restored",
-                      r2->state.cores[c].confidence.ic.predictions.head == (5 + c) &&
-                      r2->state.cores[c].confidence.ic.predictions.count == (10 + c));
+                      r2->state.nodes[c].confidence.ic.predictions.head == (5 + c) &&
+                      r2->state.nodes[c].confidence.ic.predictions.count == (10 + c));
                 check("round-trip: IC predictions[0] restored",
-                      fabs(r2->state.cores[c].confidence.ic.predictions.samples[0] - 0.1 * c) < 1e-9);
+                      fabs(r2->state.nodes[c].confidence.ic.predictions.samples[0] - 0.1 * c) < 1e-9);
                 check("round-trip: IC actuals[1] restored",
-                      fabs(r2->state.cores[c].confidence.ic.actuals.samples[1] - (-0.05 + 0.02 + 0.01 * c)) < 1e-9);
+                      fabs(r2->state.nodes[c].confidence.ic.actuals.samples[1] - (-0.05 + 0.02 + 0.01 * c)) < 1e-9);
                 check("round-trip: RMSE head/count restored",
-                      r2->state.cores[c].confidence.rmse.window.head == (7 + c) &&
-                      r2->state.cores[c].confidence.rmse.window.count == (12 + c));
+                      r2->state.nodes[c].confidence.rmse.window.head == (7 + c) &&
+                      r2->state.nodes[c].confidence.rmse.window.count == (12 + c));
                 check("round-trip: RMSE squared_errors[2] restored",
-                      fabs(r2->state.cores[c].confidence.rmse.window.samples[2] - (0.001 * (c + 1) + 0.0002)) < 1e-9);
+                      fabs(r2->state.nodes[c].confidence.rmse.window.samples[2] - (0.001 * (c + 1) + 0.0002)) < 1e-9);
                 // F-PERSIST (Net-1): the non-money per-core passthrough — fields the save block persists +
                 // commits but Test-2 never asserted (silently green today; the hand-written-fwrite NO-count-
                 // lock class = TECH_DEBT-196). ADV-REFUTE 2026-06-14 (PERSIST I+A cascade; field-list
@@ -6097,31 +6097,31 @@ int main() {
                 // by-design: strategy_id (load: comes from cfg) · strategy_state_kind (read-but-void'd) · the
                 // non-KILL core_state_flags bits (re-derived at boot — H21 hazard to freeze).
                 check("F-PERSIST: exits_processed round-trips",
-                      r2->state.cores[c].exits_processed == (uint64_t)(8 + c));
-                check("F-PERSIST: core_wins / core_losses round-trip",
-                      r2->state.cores[c].core_wins == (uint64_t)(6 + c) && r2->state.cores[c].core_losses == 2u);
-                check("F-PERSIST: core_ks_trips_total round-trips",
-                      r2->state.cores[c].core_ks_trips_total == (uint32_t)c);
+                      r2->state.nodes[c].exits_processed == (uint64_t)(8 + c));
+                check("F-PERSIST: node_wins / node_losses round-trip",
+                      r2->state.nodes[c].node_wins == (uint64_t)(6 + c) && r2->state.nodes[c].node_losses == 2u);
+                check("F-PERSIST: node_ks_trips_total round-trips",
+                      r2->state.nodes[c].node_ks_trips_total == (uint32_t)c);
                 check("F-PERSIST: regime_state proposed/hysteresis_count/hysteresis_threshold round-trip",
-                      r2->state.cores[c].regime_state.proposed_regime == ((c + 1) % 4) &&
-                      r2->state.cores[c].regime_state.hysteresis_count == (5 + c) &&
-                      r2->state.cores[c].regime_state.hysteresis_threshold == (3 + c));
+                      r2->state.nodes[c].regime_state.proposed_regime == ((c + 1) % 4) &&
+                      r2->state.nodes[c].regime_state.hysteresis_count == (5 + c) &&
+                      r2->state.nodes[c].regime_state.hysteresis_threshold == (3 + c));
                 check("F-PERSIST: regime_state last_strategy_id / regime_start_tick / regime_start_time round-trip",
-                      r2->state.cores[c].regime_state.last_strategy_id == (1 + c) &&
-                      r2->state.cores[c].regime_state.regime_start_tick == (uint64_t)(1000 + c) &&
-                      r2->state.cores[c].regime_state.regime_start_time == (time_t)(1700000000 + c));
+                      r2->state.nodes[c].regime_state.last_strategy_id == (1 + c) &&
+                      r2->state.nodes[c].regime_state.regime_start_tick == (uint64_t)(1000 + c) &&
+                      r2->state.nodes[c].regime_state.regime_start_time == (time_t)(1700000000 + c));
                 check("F-PERSIST: pnl_feeder.head round-trips (was unasserted; only .count/sample[0] checked)",
-                      r2->state.cores[c].pnl_feeder.head == (c % MAX_WINDOW));
+                      r2->state.nodes[c].pnl_feeder.head == (c % MAX_WINDOW));
                 check("F-PERSIST: staged_prediction / active_prediction round-trip (double)",
-                      fabs(r2->state.cores[c].staged_prediction - (0.2 + 0.05 * c)) < 1e-9 &&
-                      fabs(r2->state.cores[c].active_prediction - (0.3 + 0.05 * c)) < 1e-9);
+                      fabs(r2->state.nodes[c].staged_prediction - (0.2 + 0.05 * c)) < 1e-9 &&
+                      fabs(r2->state.nodes[c].active_prediction - (0.3 + 0.05 * c)) < 1e-9);
                 check("F-PERSIST: last_confidence round-trips (double)",
-                      fabs(r2->state.cores[c].last_confidence - (0.5 + 0.1 * c)) < 1e-9);
+                      fabs(r2->state.nodes[c].last_confidence - (0.5 + 0.1 * c)) < 1e-9);
                 check("F-PERSIST: resolved_strategy_id / last_entry_tick / sl_cooldown_remaining / idle_cycles round-trip",
-                      r2->state.cores[c].resolved_strategy_id == (uint8_t)(c + 1) &&
-                      r2->state.cores[c].last_entry_tick == (uint64_t)(900 + c) &&
-                      r2->state.cores[c].sl_cooldown_remaining == (uint32_t)(4 + c) &&
-                      r2->state.cores[c].idle_cycles == (uint32_t)(6 + c));
+                      r2->state.nodes[c].resolved_strategy_id == (uint8_t)(c + 1) &&
+                      r2->state.nodes[c].last_entry_tick == (uint64_t)(900 + c) &&
+                      r2->state.nodes[c].sl_cooldown_remaining == (uint32_t)(4 + c) &&
+                      r2->state.nodes[c].idle_cycles == (uint32_t)(6 + c));
             }
             // D-110 extend: the 7 persisted Position<F> money fields round-trip money-exact (slot 0).
             check("round-trip: Position entry_price (money-exact, D-110)",
@@ -6245,9 +6245,9 @@ int main() {
             // Build a FRESH state — ExecutionCore fields are zero-init
             auto* r2 = build_state(2, 10000.0);
             check("pre-load: fresh core[0].active == 0",
-                  r2->cores[0].active == 0);
+                  r2->nodes[0].active == 0);
             check("pre-load: fresh core[0].live_tp == 0",
-                  Money_IsZero(r2->cores[0].live_tp));
+                  Money_IsZero(r2->nodes[0].live_tp));
 
             // Load — should re-activate core[0] from restored Position
             int loaded = tt::ShardedSnapshot_Load<64>(&r2->state, test_path, 0);
@@ -6256,18 +6256,18 @@ int main() {
             check("snapshot re-activate: portfolio.active_bitmap restored",
                   (r2->state.oms->portfolio.active_bitmap & 0x1) != 0);
             check("snapshot re-activate: core[0].active == 1",
-                  r2->cores[0].active == 1);
+                  r2->nodes[0].active == 1);
             // H4 (.E.0.10 wfa-1 cohort-fold): Money_Eq, not the fabs double-bridge —
             // exact at 8dp, strictly stronger (the A1 sibling below already does this).
             check("snapshot re-activate: core[0].live_tp == 60900",
-                  Money_Eq(r2->cores[0].live_tp, MQ(60900.0)));
+                  Money_Eq(r2->nodes[0].live_tp, MQ(60900.0)));
             check("snapshot re-activate: core[0].live_sl == 59100",
-                  Money_Eq(r2->cores[0].live_sl, MQ(59100.0)));
+                  Money_Eq(r2->nodes[0].live_sl, MQ(59100.0)));
             check("snapshot re-activate: core[0].entry_price == 60000",
-                  Money_Eq(r2->cores[0].entry_price, MQ(60000.0)));
+                  Money_Eq(r2->nodes[0].entry_price, MQ(60000.0)));
             // Slot 1 has no position; core[1] should stay inactive
             check("snapshot re-activate: core[1].active stays 0 (no position)",
-                  r2->cores[1].active == 0);
+                  r2->nodes[1].active == 0);
 
             unlink(test_path);
         }
@@ -6289,7 +6289,7 @@ int main() {
         // stateless-branch H22 exemption (StrategyParameters.hpp). Per the binding adversarial-default.
         {
             auto* r = build_state(2, 10000.0);
-            r->state.cores[0].resolved_strategy_id = STRATEGY_SIMPLE_DIP;  // saved → drives restore resolution
+            r->state.nodes[0].resolved_strategy_id = STRATEGY_SIMPLE_DIP;  // saved → drives restore resolution
             Portfolio_OpenSlot(&r->state.oms->portfolio, 0,
                 MQ(60000.0), MQ(0.01), MQ(60900.0), MQ(59100.0), MQ(0.6));
             tt::ShardedSnapshot_Save<64>(&r->state, test_path, 0);
@@ -6305,14 +6305,14 @@ int main() {
             check("A1: restore-with-cfg load succeeded", loaded == 1);
             // live_tp = entry * (1 + simpledip_tp_pct) = 60000 * 1.012 = 60720 (OVERRIDE, exact 8dp)
             check("A1: restored live_tp uses the per-node SimpleDip override (60720)",
-                  Money_Eq(r2->cores[0].live_tp, MQ(60720.0)));
+                  Money_Eq(r2->nodes[0].live_tp, MQ(60720.0)));
             check("A1: restored live_tp is NOT the global take_profit_pct value (60480)",
-                  !Money_Eq(r2->cores[0].live_tp, MQ(60480.0)));
+                  !Money_Eq(r2->nodes[0].live_tp, MQ(60480.0)));
             // live_sl = entry * (1 - simpledip_sl_pct) = 60000 * 0.990 = 59400 (OVERRIDE, exact 8dp)
             check("A1: restored live_sl uses the per-node SimpleDip override (59400)",
-                  Money_Eq(r2->cores[0].live_sl, MQ(59400.0)));
+                  Money_Eq(r2->nodes[0].live_sl, MQ(59400.0)));
             check("A1: restored live_sl is NOT the global stop_loss_pct value (59640)",
-                  !Money_Eq(r2->cores[0].live_sl, MQ(59640.0)));
+                  !Money_Eq(r2->nodes[0].live_sl, MQ(59640.0)));
 
             unlink(test_path);
         }
@@ -6322,7 +6322,7 @@ int main() {
         // covers >=2 override strategies (not just SimpleDip) ----
         {
             auto* r = build_state(2, 10000.0);
-            r->state.cores[0].resolved_strategy_id = STRATEGY_MEAN_REVERSION;
+            r->state.nodes[0].resolved_strategy_id = STRATEGY_MEAN_REVERSION;
             Portfolio_OpenSlot(&r->state.oms->portfolio, 0,
                 MQ(60000.0), MQ(0.01), MQ(60900.0), MQ(59100.0), MQ(0.6));
             tt::ShardedSnapshot_Save<64>(&r->state, test_path, 0);
@@ -6337,11 +6337,11 @@ int main() {
             int loaded = tt::ShardedSnapshot_Load<64>(&r2->state, test_path, 0, &cfg);
             check("A1/MR: restore-with-cfg load succeeded", loaded == 1);
             check("A1/MR: restored live_tp uses the per-node mr_tp_pct override (60720)",
-                  Money_Eq(r2->cores[0].live_tp, MQ(60720.0)));
+                  Money_Eq(r2->nodes[0].live_tp, MQ(60720.0)));
             check("A1/MR: restored live_tp is NOT the global take_profit_pct value (60480)",
-                  !Money_Eq(r2->cores[0].live_tp, MQ(60480.0)));
+                  !Money_Eq(r2->nodes[0].live_tp, MQ(60480.0)));
             check("A1/MR: restored live_sl uses the per-node mr_sl_pct override (59400)",
-                  Money_Eq(r2->cores[0].live_sl, MQ(59400.0)));
+                  Money_Eq(r2->nodes[0].live_sl, MQ(59400.0)));
             unlink(test_path);
         }
 
@@ -6397,35 +6397,35 @@ int main() {
 
             // Warm-restart into a FRESH state (all cores zero-init: active=0, flags=0).
             auto* r = build_state(2, 10000.0);
-            check("wfa-1 pre-restore: fresh core[0].active == 0", r->cores[0].active == 0);
+            check("wfa-1 pre-restore: fresh core[0].active == 0", r->nodes[0].active == 0);
             check("wfa-1 pre-restore: fresh core[0].cached_params.flags == 0",
-                  r->cores[0].cached_params.flags == 0);
+                  r->nodes[0].cached_params.flags == 0);
 
             int loaded = tt::ShardedSnapshot_Load<64>(&r->state, test_path, 0);
             check("wfa-1 restore: load succeeded", loaded == 1);
 
             // ---- Restore write-set (the POSITION side that DID get armed) ----
             check("wfa-1 restore: core[0].active == 1 (position side armed)",
-                  r->cores[0].active == 1);
+                  r->nodes[0].active == 1);
             check("wfa-1 restore: core[0].live_tp == 60900 (verbatim, cfg=nullptr path)",
-                  Money_Eq(r->cores[0].live_tp, MQ(60900.0)));
+                  Money_Eq(r->nodes[0].live_tp, MQ(60900.0)));
             check("wfa-1 restore: core[0].live_sl == 59100",
-                  Money_Eq(r->cores[0].live_sl, MQ(59100.0)));
+                  Money_Eq(r->nodes[0].live_sl, MQ(59100.0)));
             check("wfa-1 restore: core[0].entry_price == 60000",
-                  Money_Eq(r->cores[0].entry_price, MQ(60000.0)));
+                  Money_Eq(r->nodes[0].entry_price, MQ(60000.0)));
             check("wfa-1 restore: core[0].active_b == 0 (single-leg, partials OFF)",
-                  r->cores[0].active_b == 0);
+                  r->nodes[0].active_b == 0);
             // THE LOAD-BEARING FACT — restore did NOT publish flags (TECH_DEBT-195 root):
             check("wfa-1 restore: core[0].cached_params.flags STILL 0 (DISARMED — the bug)",
-                  r->cores[0].cached_params.flags == 0);
+                  r->nodes[0].cached_params.flags == 0);
 
             // ---- H22 restore-routing witness: each core got ITS OWN saved values ----
             check("wfa-1 H22: core[1].active == 1 (slot-1 position restored)",
-                  r->cores[1].active == 1);
+                  r->nodes[1].active == 1);
             check("wfa-1 H22: core[1].live_tp == 50400 (core 1's OWN value)",
-                  Money_Eq(r->cores[1].live_tp, MQ(50400.0)));
+                  Money_Eq(r->nodes[1].live_tp, MQ(50400.0)));
             check("wfa-1 H22: core[0].live_tp != core[1].live_tp (no cross-node bleed)",
-                  !Money_Eq(r->cores[0].live_tp, r->cores[1].live_tp));
+                  !Money_Eq(r->nodes[0].live_tp, r->nodes[1].live_tp));
 
             // The price that crosses TP unambiguously: 61000 > live_tp 60900 (and ABOVE
             // live_sl 59100, so SL can never be the actor). Reused identically in (b).
@@ -6439,47 +6439,47 @@ int main() {
             // EXPECTED-TO-INVERT @ .E.1 (the TECH_DEBT-195 fix publishes flags at restore):
             // when the fix lands, this no-exit assertion FLIPS (the restored position WILL
             // exit on tick 1) and MUST be re-derived to the fixed contract — NOT a guarantee.
-            ExecutionCore_Tick<64>(&r->cores[0], tp_hit);
+            ExecutionCore_Tick<64>(&r->nodes[0], tp_hit);
 
             int disarmed_exits = 0;
             TradeEvent<64> ev;
-            while (SPSCRing_TryPop(&r->cores[0].event_ring, &ev)) {
+            while (SPSCRing_TryPop(&r->nodes[0].event_ring, &ev)) {
                 if (ev.type == TRADE_EVENT_EXIT) disarmed_exits++;
             }
             check("wfa-1 (a) warmup-disarm: NO exit on TP-hitting tick (flags==0 disarms TP/SL)",
                   disarmed_exits == 0);
             check("wfa-1 (a) warmup-disarm: core[0].active STILL 1 (position not closed)",
-                  r->cores[0].active == 1);
+                  r->nodes[0].active == 1);
             // The tick RAN — cache-miss latched the disarmed pack (proves not a no-op):
             check("wfa-1 (a) warmup-disarm: cached_params.flags still 0 after the tick",
-                  r->cores[0].cached_params.flags == 0);
+                  r->nodes[0].cached_params.flags == 0);
 
             // ===== Publish armed flags BETWEEN the two ticks (the non-vacuity hinge) =====
             GateParameters<64> p;
             GateParameters_Init(&p);
             p.flags = GATE_FLAG_TP_ENABLED | GATE_FLAG_SL_ENABLED;  // 0x01 | 0x02
-            ExecutionCore_SetParameters(&r->cores[0], p);
+            ExecutionCore_SetParameters(&r->nodes[0], p);
 
             // FIX-1 (mechanism witness): the publish reached the SLOT (seq 0->2) but the
             // cache is STILL disarmed — the bug is a cache-publication LATENCY, so the arm
             // only takes effect on the NEXT tick's cache-miss (not at publish time).
             check("wfa-1 mechanism: param_slot.seq advanced to 2 (publish reached the slot)",
-                  r->cores[0].param_slot.seq.load(std::memory_order_acquire) == 2);
+                  r->nodes[0].param_slot.seq.load(std::memory_order_acquire) == 2);
             check("wfa-1 mechanism: cached_params.flags STILL 0 after publish (publish-alone "
                   "inert; the tick-driven refresh is the arm)",
-                  r->cores[0].cached_params.flags == 0);
+                  r->nodes[0].cached_params.flags == 0);
 
             // ===== WITNESS (b) — armed-exit: SAME price, now armed => exactly one exit =====
             Tick<64> tp_hit2 = tp_hit;
             tp_hit2.timestamp = 2;
             tp_hit2.sequence  = 2;
-            ExecutionCore_Tick<64>(&r->cores[0], tp_hit2);
+            ExecutionCore_Tick<64>(&r->nodes[0], tp_hit2);
 
             int   armed_total = 0, armed_exits = 0, armed_entries = 0;
             int   armed_exit_leg = -1;
             Money armed_exit_price = MQ(0.0);
             TradeEvent<64> evb;
-            while (SPSCRing_TryPop(&r->cores[0].event_ring, &evb)) {
+            while (SPSCRing_TryPop(&r->nodes[0].event_ring, &evb)) {
                 armed_total++;
                 if (evb.type == TRADE_EVENT_EXIT) { armed_exits++; armed_exit_leg = evb.leg; armed_exit_price = evb.price; }
                 if (evb.type == TRADE_EVENT_ENTRY) armed_entries++;
@@ -6493,10 +6493,10 @@ int main() {
             check("wfa-1 (b) armed-exit: exit booked at the tick price 61000",
                   Money_Eq(armed_exit_price, MQ(61000.0)));
             check("wfa-1 (b) armed-exit: core[0].active cleared to 0 (slot closed)",
-                  r->cores[0].active == 0);
+                  r->nodes[0].active == 0);
             // The flags arrived via THIS tick's cache-miss (proves the arm, not luck):
             check("wfa-1 (b) armed-exit: cached_params.flags now 0x03 (TP|SL — the inter-tick delta)",
-                  r->cores[0].cached_params.flags == (GATE_FLAG_TP_ENABLED | GATE_FLAG_SL_ENABLED));
+                  r->nodes[0].cached_params.flags == (GATE_FLAG_TP_ENABLED | GATE_FLAG_SL_ENABLED));
 
             unlink(test_path);
         }
@@ -6578,14 +6578,14 @@ int main() {
         // ---- Lens 1+2: entry (BUY) slips WORSE/up, exit (SELL) slips WORSE/down (opposite signs); slip 0.1% ----
         {
             R* r = new R();
-            r->cfg.cores[0].slippage_pct = MQ(0.001);   // explicit 0.1% — independent of the (separate) cfg default
+            r->cfg.nodes[0].slippage_pct = MQ(0.001);   // explicit 0.1% — independent of the (separate) cfg default
             paper_setup(r);
-            tt::SubmitCommand<64> buy(0, tt::ORDER_MARKET_BUY, MQ(0.02), (uint8_t)0, &r->cfg.cores[0]);
+            tt::SubmitCommand<64> buy(0, tt::ORDER_MARKET_BUY, MQ(0.02), (uint8_t)0, &r->cfg.nodes[0]);
             buy.event_price = MQ(60000.0);
             tt::OrderManager_Submit(&r->oms, buy);
             check("A9: paper entry (BUY) fills WORSE — 60000 x 1.001 == 60060.0 (slip consumed at Submit)",
                   fabs(pop_fill(r) - 60060.0) < 1e-6);
-            tt::SubmitCommand<64> sell(0, tt::ORDER_MARKET_SELL, MQ(0.02), (uint8_t)0, &r->cfg.cores[0]);
+            tt::SubmitCommand<64> sell(0, tt::ORDER_MARKET_SELL, MQ(0.02), (uint8_t)0, &r->cfg.nodes[0]);
             sell.event_price = MQ(61000.0);
             tt::OrderManager_Submit(&r->oms, sell);
             check("A9: paper exit (SELL) fills WORSE — 61000 x 0.999 == 60939.0 (opposite sign from entry)",
@@ -6598,9 +6598,9 @@ int main() {
         //      regression back to slip-less cannot pass silently. ----
         {
             R* r = new R();
-            r->cfg.cores[0].slippage_pct = Money_Zero();   // disabled
+            r->cfg.nodes[0].slippage_pct = Money_Zero();   // disabled
             paper_setup(r);
-            tt::SubmitCommand<64> buy(0, tt::ORDER_MARKET_BUY, MQ(0.02), (uint8_t)0, &r->cfg.cores[0]);
+            tt::SubmitCommand<64> buy(0, tt::ORDER_MARKET_BUY, MQ(0.02), (uint8_t)0, &r->cfg.nodes[0]);
             buy.event_price = MQ(60000.0);
             tt::OrderManager_Submit(&r->oms, buy);
             check("A9: slip_pct=0 → fill == raw 60000.0 (no-op; the pre-A9 behavior, now opt-in only)",
@@ -6615,8 +6615,8 @@ int main() {
             ControllerConfig<64> dcfg = ControllerConfig_Default<64>();
             check("A9/D-203: default global slippage_pct == 0.0005 (0.05%, conservative non-zero)",
                   Money_Eq(dcfg.slippage_pct, MQ(0.0005)));
-            check("A9/D-203: default per-core cores[0].slippage_pct == 0.0005 (what A9 consumes — pessimistic-by-default)",
-                  Money_Eq(dcfg.cores[0].slippage_pct, MQ(0.0005)));
+            check("A9/D-203: default per-core nodes[0].slippage_pct == 0.0005 (what A9 consumes — pessimistic-by-default)",
+                  Money_Eq(dcfg.nodes[0].slippage_pct, MQ(0.0005)));
         }
         // COVERAGE DISCLAIMER (honest scope): live-mode skip is BY CONSTRUCTION — the slip lives inside the
         // !LIVE_TRADING branch; live takes the adapter path + never reaches the synthetic fill, so it is not
@@ -6710,12 +6710,12 @@ int main() {
     //      unit-testable in isolation today.) ----
     {
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
-        cfg.cores[0].mr_tp_pct           = MQ(0.025);   // per-strategy override (2.5%)
-        cfg.cores[0].take_profit_pct     = MQ(0.03);    // global per-core (3%) — DIFFERENT from the override
+        cfg.nodes[0].mr_tp_pct           = MQ(0.025);   // per-strategy override (2.5%)
+        cfg.nodes[0].take_profit_pct     = MQ(0.03);    // global per-core (3%) — DIFFERENT from the override
         check("A25/F1: AUTO core resolves tp_pct from the RESOLVED strategy (MR override 0.025), not configured",
-              Money_Eq(tt::ResolvePerFillTpPct((uint8_t)STRATEGY_MEAN_REVERSION, cfg.cores[0]), MQ(0.025)));
+              Money_Eq(tt::ResolvePerFillTpPct((uint8_t)STRATEGY_MEAN_REVERSION, cfg.nodes[0]), MQ(0.025)));
         check("A25/F1: the configured AUTO id WRONGLY yields global take_profit_pct (0.03) != the override — the bug the fix guards",
-              Money_Eq(tt::ResolvePerFillTpPct((uint8_t)STRATEGY_AUTO, cfg.cores[0]), MQ(0.03)) &&
+              Money_Eq(tt::ResolvePerFillTpPct((uint8_t)STRATEGY_AUTO, cfg.nodes[0]), MQ(0.03)) &&
               !Money_Eq(MQ(0.025), MQ(0.03)));
     }
 
@@ -6755,7 +6755,7 @@ int main() {
         tt::EventLoopState<64> state;
         tt::EventLoopState_InitLegacy(&state, &oms,
             MQ(10000.0));
-        tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
+        tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_NODE_TICK_RING_SIZE> tick_ring;
         tt::SPSCRing_Init(&tick_ring);
         tt::ExecutionCore<64> core;
         tt::ExecutionCore_Init(&core, 0, &tick_ring);
@@ -6777,38 +6777,38 @@ int main() {
         rolling.count = 200;
 
         check("init: idle_cycles == 0",
-              state.cores[slot].idle_cycles == 0);
+              state.nodes[slot].idle_cycles == 0);
 
         tt::EventLoop_RebuildAllParameters(&state, &rolling, &cfg);
         check("after 1 rebuild: idle_cycles == 1",
-              state.cores[slot].idle_cycles == 1);
+              state.nodes[slot].idle_cycles == 1);
 
         tt::EventLoop_RebuildAllParameters(&state, &rolling, &cfg);
         tt::EventLoop_RebuildAllParameters(&state, &rolling, &cfg);
         check("after 3 rebuilds: idle_cycles == 3",
-              state.cores[slot].idle_cycles == 3);
+              state.nodes[slot].idle_cycles == 3);
 
         // Populate pnl_feeder so we can verify reset on threshold
-        state.cores[slot].pnl_feeder.count = 5;
-        state.cores[slot].pnl_feeder.head  = 5;
+        state.nodes[slot].pnl_feeder.count = 5;
+        state.nodes[slot].pnl_feeder.head  = 5;
 
         // Trigger a fill event — idle_cycles resets
         tt::TradeEvent<64> entry{};
         entry.price = MQ(60000.0);
         entry.timestamp = 1;
-        entry.core_id = (uint16_t)slot;
+        entry.node_id = (uint16_t)slot;
         entry.type = tt::TRADE_EVENT_ENTRY;
         tt::EventLoop_OnEvent(&state, entry);
         check("after fill: idle_cycles reset to 0",
-              state.cores[slot].idle_cycles == 0);
+              state.nodes[slot].idle_cycles == 0);
 
         // Now hammer rebuilds past threshold (5)
         for (int i = 0; i < 6; ++i)
             tt::EventLoop_RebuildAllParameters(&state, &rolling, &cfg);
         check("idle exceeds threshold: pnl_feeder count cleared",
-              state.cores[slot].pnl_feeder.count == 0);
+              state.nodes[slot].pnl_feeder.count == 0);
         check("idle exceeds threshold: pnl_feeder head cleared",
-              state.cores[slot].pnl_feeder.head == 0);
+              state.nodes[slot].pnl_feeder.head == 0);
     }
 
     //======================================================================================================
@@ -6994,7 +6994,7 @@ int main() {
         EventLoopState<64> state;
         EventLoopState_Init(&state, &oms);
 
-        SPSCRing<Tick<64>, EXECUTION_CORE_TICK_RING_SIZE> ring;
+        SPSCRing<Tick<64>, EXECUTION_NODE_TICK_RING_SIZE> ring;
         SPSCRing_Init(&ring);
         ExecutionCore<64> core;
         ExecutionCore_Init(&core, 0, &ring);
@@ -7063,7 +7063,7 @@ int main() {
         EventLoopState<64> state;
         EventLoopState_Init(&state, &oms);
 
-        SPSCRing<Tick<64>, EXECUTION_CORE_TICK_RING_SIZE> ring;
+        SPSCRing<Tick<64>, EXECUTION_NODE_TICK_RING_SIZE> ring;
         SPSCRing_Init(&ring);
         ExecutionCore<64> core;
         ExecutionCore_Init(&core, 0, &ring);
@@ -7114,7 +7114,7 @@ int main() {
     // permission grant's STRATEGY_NONE skip semantics. End-to-end tick-stream
     // parity vs legacy is deferred to the E.6 parity harness.
     //==================================================================================================
-    printf("\n--- Track E.2: CoreModelZoo Free-before-Init safety ---\n");
+    printf("\n--- Track E.2: NodeModelZoo Free-before-Init safety ---\n");
     {
         using namespace tt;
         // BacktestSharded_Run calls CoreModelZoo_Free(&ml_zoos[i]) before
@@ -7124,16 +7124,16 @@ int main() {
         // zero-init memory — Free must be a no-op there or the suite
         // crashes on the first ML backtest. Verify the Free-then-Init
         // dance succeeds on zero-init memory + is idempotent.
-        CoreModelZoo<64> zoo;
+        NodeModelZoo<64> zoo;
         memset(&zoo, 0, sizeof(zoo)); // mimic static-array zero-init
 
-        CoreModelZoo_Free(&zoo);  // expected no-op (all handles=NULL)
+        NodeModelZoo_Free(&zoo);  // expected no-op (all handles=NULL)
         check("Free on zero-init zoo: loaded_mask stays 0",
               zoo.loaded_mask == 0);
         check("Free on zero-init zoo: HasAny == 0",
-              CoreModelZoo_HasAny(&zoo) == 0);
+              NodeModelZoo_HasAny(&zoo) == 0);
 
-        CoreModelZoo_Init(&zoo);
+        NodeModelZoo_Init(&zoo);
         check("Init after Free: loaded_mask == 0",
               zoo.loaded_mask == 0);
         check("Init after Free: barrier handle not loaded",
@@ -7142,7 +7142,7 @@ int main() {
               !Model_IsLoaded(&zoo.buy_signal));
 
         // Idempotent Free: should be safe to call again
-        CoreModelZoo_Free(&zoo);
+        NodeModelZoo_Free(&zoo);
         check("Free idempotent: still loaded_mask == 0",
               zoo.loaded_mask == 0);
     }
@@ -7163,12 +7163,12 @@ int main() {
         EventLoopState<64> state;
         EventLoopState_Init(&state, &oms);
 
-        SPSCRing<Tick<64>, EXECUTION_CORE_TICK_RING_SIZE> rings[4];
-        ExecutionCore<64> cores[4];
+        SPSCRing<Tick<64>, EXECUTION_NODE_TICK_RING_SIZE> rings[4];
+        ExecutionCore<64> nodes[4];
         for (int i = 0; i < 4; ++i) {
             SPSCRing_Init(&rings[i]);
-            ExecutionCore_Init(&cores[i], (uint16_t)i, &rings[i]);
-            EventLoopState_RegisterCore(&state, &cores[i],
+            ExecutionCore_Init(&nodes[i], (uint16_t)i, &rings[i]);
+            EventLoopState_RegisterCore(&state, &nodes[i],
                 Money_Zero(), Money_Zero(), Money_Zero());
         }
 
@@ -7183,40 +7183,40 @@ int main() {
         };
         const double total_balance     = 10000.0;
         const double default_risk      = 0.10;
-        const double default_per_core  = (total_balance * default_risk) / 4.0; // $250
+        const double default_per_node  = (total_balance * default_risk) / 4.0; // $250
         const double slot1_override    = total_balance * 0.20;                 // $2000
 
         EventLoopState_SetCoreStrategy(&state, 0, strategies[0],
-            MQ(default_per_core));
+            MQ(default_per_node));
         EventLoopState_SetCoreStrategy(&state, 1, strategies[1],
             MQ(slot1_override));
         EventLoopState_SetCoreStrategy(&state, 2, strategies[2],
-            MQ(default_per_core));
+            MQ(default_per_node));
         EventLoopState_SetCoreStrategy(&state, 3, strategies[3],
-            MQ(default_per_core));
+            MQ(default_per_node));
 
         check("slot 0 strategy_id == SIMPLE_DIP",
-              state.cores[0].strategy_id == STRATEGY_SIMPLE_DIP);
+              state.nodes[0].strategy_id == STRATEGY_SIMPLE_DIP);
         check("slot 1 strategy_id == MOMENTUM",
-              state.cores[1].strategy_id == STRATEGY_MOMENTUM);
+              state.nodes[1].strategy_id == STRATEGY_MOMENTUM);
         check("slot 2 strategy_id == MEAN_REVERSION",
-              state.cores[2].strategy_id == STRATEGY_MEAN_REVERSION);
+              state.nodes[2].strategy_id == STRATEGY_MEAN_REVERSION);
         check("slot 3 strategy_id == NONE",
-              state.cores[3].strategy_id == STRATEGY_NONE);
+              state.nodes[3].strategy_id == STRATEGY_NONE);
 
         check("slot 0 allocated_balance ~= $250 (default split)",
-              fabs(Money_ToDouble(state.cores[0].allocated_balance) - default_per_core) < 1e-6);
+              fabs(Money_ToDouble(state.nodes[0].allocated_balance) - default_per_node) < 1e-6);
         check("slot 1 allocated_balance ~= $2000 (override)",
-              fabs(Money_ToDouble(state.cores[1].allocated_balance) - slot1_override) < 1e-6);
+              fabs(Money_ToDouble(state.nodes[1].allocated_balance) - slot1_override) < 1e-6);
         check("slot 2 allocated_balance ~= $250 (default split)",
-              fabs(Money_ToDouble(state.cores[2].allocated_balance) - default_per_core) < 1e-6);
+              fabs(Money_ToDouble(state.nodes[2].allocated_balance) - default_per_node) < 1e-6);
 
         // Out-of-range slot: SetCoreStrategy must NOT crash + must NOT
         // mutate state. Defensive guard at ControllerEventLoop.hpp:359.
         EventLoopState_SetCoreStrategy(&state, 99, STRATEGY_MOMENTUM,
             MQ(99999.0));
         check("out-of-range slot 99: no crash, slot 0 unchanged",
-              state.cores[0].strategy_id == STRATEGY_SIMPLE_DIP);
+              state.nodes[0].strategy_id == STRATEGY_SIMPLE_DIP);
     }
 
     printf("\n--- Track E.2: warmup permission grant skips STRATEGY_NONE ---\n");
@@ -7236,14 +7236,14 @@ int main() {
         EventLoopState<64> state;
         EventLoopState_Init(&state, &oms);
 
-        SPSCRing<Tick<64>, EXECUTION_CORE_TICK_RING_SIZE> rings[3];
-        ExecutionCore<64> cores[3];
+        SPSCRing<Tick<64>, EXECUTION_NODE_TICK_RING_SIZE> rings[3];
+        ExecutionCore<64> nodes[3];
         for (int i = 0; i < 3; ++i) {
             SPSCRing_Init(&rings[i]);
-            ExecutionCore_Init(&cores[i], (uint16_t)i, &rings[i]);
-            EventLoopState_RegisterCore(&state, &cores[i],
+            ExecutionCore_Init(&nodes[i], (uint16_t)i, &rings[i]);
+            EventLoopState_RegisterCore(&state, &nodes[i],
                 Money_Zero(), Money_Zero(), Money_Zero());
-            ExecutionCore_SetPermission(&cores[i], 0); // E.2: starts at 0
+            ExecutionCore_SetPermission(&nodes[i], 0); // E.2: starts at 0
         }
 
         EventLoopState_SetCoreStrategy(&state, 0, STRATEGY_SIMPLE_DIP,
@@ -7254,27 +7254,27 @@ int main() {
             MQ(250.0));
 
         check("pre-warmup: slot 0 permission == 0",
-              __atomic_load_n(&cores[0].permission, __ATOMIC_ACQUIRE) == 0);
+              __atomic_load_n(&nodes[0].permission, __ATOMIC_ACQUIRE) == 0);
         check("pre-warmup: slot 1 permission == 0 (NONE)",
-              __atomic_load_n(&cores[1].permission, __ATOMIC_ACQUIRE) == 0);
+              __atomic_load_n(&nodes[1].permission, __ATOMIC_ACQUIRE) == 0);
         check("pre-warmup: slot 2 permission == 0",
-              __atomic_load_n(&cores[2].permission, __ATOMIC_ACQUIRE) == 0);
+              __atomic_load_n(&nodes[2].permission, __ATOMIC_ACQUIRE) == 0);
 
         // Mirror BacktestSharded_Run's warmup grant loop (lines 453-457).
         // Real path checks rolling.count >= min_warmup_samples first; this
         // test exercises the per-core branch directly.
         for (int c = 0; c < 3; ++c) {
-            if (state.cores[c].strategy_id != STRATEGY_NONE) {
-                ExecutionCore_SetPermission(&cores[c], 1);
+            if (state.nodes[c].strategy_id != STRATEGY_NONE) {
+                ExecutionCore_SetPermission(&nodes[c], 1);
             }
         }
 
         check("post-warmup: slot 0 (SIMPLE_DIP) permission == 1",
-              __atomic_load_n(&cores[0].permission, __ATOMIC_ACQUIRE) == 1);
+              __atomic_load_n(&nodes[0].permission, __ATOMIC_ACQUIRE) == 1);
         check("post-warmup: slot 1 (NONE) permission STILL == 0",
-              __atomic_load_n(&cores[1].permission, __ATOMIC_ACQUIRE) == 0);
+              __atomic_load_n(&nodes[1].permission, __ATOMIC_ACQUIRE) == 0);
         check("post-warmup: slot 2 (MOMENTUM) permission == 1",
-              __atomic_load_n(&cores[2].permission, __ATOMIC_ACQUIRE) == 1);
+              __atomic_load_n(&nodes[2].permission, __ATOMIC_ACQUIRE) == 1);
     }
 
     //==================================================================================================
@@ -7468,12 +7468,12 @@ e3_skip_load:;
         EventLoopState<64> state;
         EventLoopState_Init(&state, &oms);
 
-        SPSCRing<Tick<64>, EXECUTION_CORE_TICK_RING_SIZE> rings[2];
-        ExecutionCore<64> cores[2];
+        SPSCRing<Tick<64>, EXECUTION_NODE_TICK_RING_SIZE> rings[2];
+        ExecutionCore<64> nodes[2];
         for (int i = 0; i < 2; ++i) {
             SPSCRing_Init(&rings[i]);
-            ExecutionCore_Init(&cores[i], (uint16_t)i, &rings[i]);
-            EventLoopState_RegisterCore(&state, &cores[i],
+            ExecutionCore_Init(&nodes[i], (uint16_t)i, &rings[i]);
+            EventLoopState_RegisterCore(&state, &nodes[i],
                 Money_Zero(), Money_Zero(), Money_Zero());
             EventLoopState_SetCoreStrategy(&state, i, STRATEGY_SIMPLE_DIP,
                 MQ(250.0));
@@ -7502,11 +7502,11 @@ e3_skip_load:;
             /* book_imbalance*/ &low_imb);
 
         check("low book_imbalance: core 0 BUY_BLOCKED flag set",
-              (state.cores[0].pending_params.flags & tt::GATE_FLAG_BUY_BLOCKED) != 0);
+              (state.nodes[0].pending_params.flags & tt::GATE_FLAG_BUY_BLOCKED) != 0);
         check("low book_imbalance: core 1 BUY_BLOCKED flag set",
-              (state.cores[1].pending_params.flags & tt::GATE_FLAG_BUY_BLOCKED) != 0);
+              (state.nodes[1].pending_params.flags & tt::GATE_FLAG_BUY_BLOCKED) != 0);
         check("low book_imbalance: halt_reason == HALT_IMBALANCE on core 0",
-              state.cores[0].halt_reason == HALT_IMBALANCE);
+              state.nodes[0].halt_reason == HALT_IMBALANCE);
 
         // Case 2: book_imbalance=0.20 (above 0.10 threshold) → NOT blocked
         FPN_Binary<64> high_imb = FPN_FromDouble<64>(0.20);
@@ -7517,9 +7517,9 @@ e3_skip_load:;
             0, &high_imb);
 
         check("high book_imbalance: core 0 BUY_BLOCKED flag CLEARED",
-              (state.cores[0].pending_params.flags & tt::GATE_FLAG_BUY_BLOCKED) == 0);
+              (state.nodes[0].pending_params.flags & tt::GATE_FLAG_BUY_BLOCKED) == 0);
         check("high book_imbalance: halt_reason != 10 on core 0",
-              state.cores[0].halt_reason != 10);
+              state.nodes[0].halt_reason != 10);
 
         // Case 3: book_imbalance=NULL (no depth feed) → gate inert (legacy
         // behavior — pre-E.3 behavior preserved when caller doesn't pass it)
@@ -7530,7 +7530,7 @@ e3_skip_load:;
             0, nullptr);
 
         check("NULL book_imbalance: gate stays inert (flag cleared)",
-              (state.cores[0].pending_params.flags & tt::GATE_FLAG_BUY_BLOCKED) == 0);
+              (state.nodes[0].pending_params.flags & tt::GATE_FLAG_BUY_BLOCKED) == 0);
 
         // Case 4: cfg.min_book_imbalance=0 (gate disabled) + low imb →
         // gate is inert regardless. Default cfg ships with min=0.
@@ -7541,7 +7541,7 @@ e3_skip_load:;
             nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
             0, &low_imb);
         check("min_book_imbalance=0 disables the gate even with low imb",
-              (state.cores[0].pending_params.flags & tt::GATE_FLAG_BUY_BLOCKED) == 0);
+              (state.nodes[0].pending_params.flags & tt::GATE_FLAG_BUY_BLOCKED) == 0);
     }
 
     //==================================================================================================
@@ -7814,7 +7814,7 @@ e3_skip_load:;
               Sharded_LegSlot(8, PARTIAL_LEG_A, 1) == -1);
 
         // Defensive: invalid inputs
-        check("negative core_id → -1", Sharded_LegSlot(-1, 0, 1) == -1);
+        check("negative node_id → -1", Sharded_LegSlot(-1, 0, 1) == -1);
         check("invalid leg index → -1", Sharded_LegSlot(0, 99, 1) == -1);
     }
 
@@ -7824,29 +7824,29 @@ e3_skip_load:;
         // Disabled: always valid regardless of other fields
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
         BITMAP_CLR(cfg.lifecycle_cfg_flags, MASK_LIFECYCLE_CFG_PARTIAL_EXIT_ENABLED);
-        cfg.num_execution_cores = 16;  // would fail if partials enabled
-        check("disabled: validation passes regardless of n_cores",
+        cfg.num_execution_nodes = 16;  // would fail if partials enabled
+        check("disabled: validation passes regardless of n_nodes",
               Sharded_ValidatePartialExitCfg(&cfg) == 1);
 
         // Enabled, within capacity (4 cores → 8 slots, fits 16-slot portfolio)
         BITMAP_SET(cfg.lifecycle_cfg_flags, MASK_LIFECYCLE_CFG_PARTIAL_EXIT_ENABLED);
-        cfg.num_execution_cores = 4;
+        cfg.num_execution_nodes = 4;
         cfg.partial_exit_pct = MQ(0.5);
-        check("enabled with 4 cores: validation passes",
+        check("enabled with 4 nodes: validation passes",
               Sharded_ValidatePartialExitCfg(&cfg) == 1);
 
         // Enabled, at capacity (8 cores × 2 legs = 16 slots, exactly fits)
-        cfg.num_execution_cores = 8;
-        check("enabled with 8 cores (max): validation passes",
+        cfg.num_execution_nodes = 8;
+        check("enabled with 8 nodes (max): validation passes",
               Sharded_ValidatePartialExitCfg(&cfg) == 1);
 
         // Enabled, over capacity (9 cores × 2 = 18 > 16)
-        cfg.num_execution_cores = 9;
-        check("enabled with 9 cores: validation FAILS (over slot capacity)",
+        cfg.num_execution_nodes = 9;
+        check("enabled with 9 nodes: validation FAILS (over slot capacity)",
               Sharded_ValidatePartialExitCfg(&cfg) == 0);
 
         // Enabled with bad partial_exit_pct
-        cfg.num_execution_cores = 4;
+        cfg.num_execution_nodes = 4;
         cfg.partial_exit_pct = Money_Zero();
         check("enabled with partial_exit_pct=0: validation FAILS",
               Sharded_ValidatePartialExitCfg(&cfg) == 0);
@@ -7856,8 +7856,8 @@ e3_skip_load:;
 
         // Enabled with zero cores
         cfg.partial_exit_pct = MQ(0.5);
-        cfg.num_execution_cores = 0;
-        check("enabled with 0 cores: validation FAILS",
+        cfg.num_execution_nodes = 0;
+        check("enabled with 0 nodes: validation FAILS",
               Sharded_ValidatePartialExitCfg(&cfg) == 0);
     }
 
@@ -7877,28 +7877,28 @@ e3_skip_load:;
     {
         using namespace tt;
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
-        cfg.num_execution_cores = 4;
+        cfg.num_execution_nodes = 4;
         BITMAP_SET(cfg.lifecycle_cfg_flags, MASK_LIFECYCLE_CFG_PARTIAL_EXIT_ENABLED);
         cfg.partial_exit_pct = MQ(0.5);  // legacy global default
 
         // Distinct per-core values — wrong-slot reads will mismatch
-        cfg.cores[0].partial_exit_pct = MQ(0.10);
-        cfg.cores[1].partial_exit_pct = MQ(0.20);
-        cfg.cores[2].partial_exit_pct = MQ(0.30);
-        cfg.cores[3].partial_exit_pct = MQ(0.40);
-        cfg.cores[0].tp2_mult = MQ(1.1);
-        cfg.cores[1].tp2_mult = MQ(1.2);
-        cfg.cores[2].tp2_mult = MQ(1.3);
-        cfg.cores[3].tp2_mult = MQ(1.4);
+        cfg.nodes[0].partial_exit_pct = MQ(0.10);
+        cfg.nodes[1].partial_exit_pct = MQ(0.20);
+        cfg.nodes[2].partial_exit_pct = MQ(0.30);
+        cfg.nodes[3].partial_exit_pct = MQ(0.40);
+        cfg.nodes[0].tp2_mult = MQ(1.1);
+        cfg.nodes[1].tp2_mult = MQ(1.2);
+        cfg.nodes[2].tp2_mult = MQ(1.3);
+        cfg.nodes[3].tp2_mult = MQ(1.4);
         // NO core_overrides set (all default-zero) → triggers fallback branch
 
         // Mirror drainer's per-core slot iteration (Async.hpp:765+ outer for-slot loop):
-        for (int slot = 0; slot < cfg.num_execution_cores; ++slot) {
-            const auto& ov_slot = cfg.core_overrides[slot];
+        for (int slot = 0; slot < cfg.num_execution_nodes; ++slot) {
+            const auto& ov_slot = cfg.node_overrides[slot];
             Money partial_pct_eff = !Money_IsZero(ov_slot.partial_exit_pct)
-                ? ov_slot.partial_exit_pct : cfg.cores[slot].partial_exit_pct;  // post-fix Async.hpp:814
+                ? ov_slot.partial_exit_pct : cfg.nodes[slot].partial_exit_pct;  // post-fix Async.hpp:814
             Money tp2_mult_eff = !Money_IsZero(ov_slot.tp2_mult)
-                ? ov_slot.tp2_mult : cfg.cores[slot].tp2_mult;  // post-fix Async.hpp:853
+                ? ov_slot.tp2_mult : cfg.nodes[slot].tp2_mult;  // post-fix Async.hpp:853
 
             double expected_pct = 0.10 * (slot + 1);
             double expected_tp2 = 1.0 + 0.1 * (slot + 1);
@@ -7906,10 +7906,10 @@ e3_skip_load:;
             double actual_tp2 = Money_ToDouble(tp2_mult_eff);
 
             char msg[128];
-            snprintf(msg, sizeof(msg), "Class 26 slot %d: partial_exit_pct reads cfg.cores[%d] = %.2f",
+            snprintf(msg, sizeof(msg), "Class 26 slot %d: partial_exit_pct reads cfg.nodes[%d] = %.2f",
                      slot, slot, expected_pct);
             check(msg, actual_pct > expected_pct - 0.01 && actual_pct < expected_pct + 0.01);
-            snprintf(msg, sizeof(msg), "Class 26 slot %d: tp2_mult reads cfg.cores[%d] = %.2f",
+            snprintf(msg, sizeof(msg), "Class 26 slot %d: tp2_mult reads cfg.nodes[%d] = %.2f",
                      slot, slot, expected_tp2);
             check(msg, actual_tp2 > expected_tp2 - 0.01 && actual_tp2 < expected_tp2 + 0.01);
         }
@@ -7937,7 +7937,7 @@ e3_skip_load:;
     {
         using namespace tt;
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
-        cfg.num_execution_cores = 4;
+        cfg.num_execution_nodes = 4;
 
         // GLOBAL fee_rate sentinel (should NOT be read by per-core consumers post-fix)
         cfg.fee_rate = MQ(0.005);            // sentinel value distinct from per-core
@@ -7947,61 +7947,61 @@ e3_skip_load:;
         // Distinct per-core fee_rate_taker values — UNINDEXED-GLOBAL reads will mismatch
         const double expected_arr[4] = {0.0008, 0.0010, 0.0012, 0.0015};
         for (int c = 0; c < 4; ++c) {
-            cfg.cores[c].fee_rate_taker = MQ(expected_arr[c]);
-            cfg.cores[c].fee_rate        = MQ(expected_arr[c]);
+            cfg.nodes[c].fee_rate_taker = MQ(expected_arr[c]);
+            cfg.nodes[c].fee_rate        = MQ(expected_arr[c]);
         }
 
-        for (int core_id = 0; core_id < cfg.num_execution_cores; ++core_id) {
-            const double expected = expected_arr[core_id];
+        for (int node_id = 0; node_id < cfg.num_execution_nodes; ++node_id) {
+            const double expected = expected_arr[node_id];
 
             // Post-fix HIGH-1/HIGH-2 ControllerEventLoop pattern
             // (mirrors EventLoop_TrailingSLRatchetOneCore + EventLoop_BreakevenOnProfitOneCore)
-            const auto& core_cfg = cfg.cores[core_id];
-            double fee_taker_h12 = Money_ToDouble(!Money_IsZero(core_cfg.fee_rate_taker)
-                ? core_cfg.fee_rate_taker : core_cfg.fee_rate);
+            const auto& node_cfg = cfg.nodes[node_id];
+            double fee_taker_h12 = Money_ToDouble(!Money_IsZero(node_cfg.fee_rate_taker)
+                ? node_cfg.fee_rate_taker : node_cfg.fee_rate);
 
             char msg[192];
             snprintf(msg, sizeof(msg),
-                     "Class 26 sub-shape B core %d: ControllerEventLoop HIGH-1/2 reads cfg.cores[%d].fee_rate_taker = %.5f (not global %.5f)",
-                     core_id, core_id, expected, 0.005);
+                     "Class 26 sub-shape B core %d: ControllerEventLoop HIGH-1/2 reads cfg.nodes[%d].fee_rate_taker = %.5f (not global %.5f)",
+                     node_id, node_id, expected, 0.005);
             check(msg, fee_taker_h12 > expected - 1e-7 && fee_taker_h12 < expected + 1e-7);
 
             // Post-fix HIGH-3 StrategyLifecycle pattern
             // (mirrors Strategy_WriteRatchetSL shared helper; ptr access via cfg->)
             const auto* cfg_p = &cfg;
-            Money fee_taker_sl = !Money_IsZero(cfg_p->cores[core_id].fee_rate_taker)
-                ? cfg_p->cores[core_id].fee_rate_taker
-                : cfg_p->cores[core_id].fee_rate;
+            Money fee_taker_sl = !Money_IsZero(cfg_p->nodes[node_id].fee_rate_taker)
+                ? cfg_p->nodes[node_id].fee_rate_taker
+                : cfg_p->nodes[node_id].fee_rate;
             double fee_taker_sl_d = Money_ToDouble(fee_taker_sl);
 
             snprintf(msg, sizeof(msg),
-                     "Class 26 sub-shape B core %d: Strategy_WriteRatchetSL HIGH-3 reads cfg->cores[%d].fee_rate_taker = %.5f (not global %.5f)",
-                     core_id, core_id, expected, 0.005);
+                     "Class 26 sub-shape B core %d: Strategy_WriteRatchetSL HIGH-3 reads cfg->nodes[%d].fee_rate_taker = %.5f (not global %.5f)",
+                     node_id, node_id, expected, 0.005);
             check(msg, fee_taker_sl_d > expected - 1e-7 && fee_taker_sl_d < expected + 1e-7);
 
             // Post-fix HIGH-4 ControllerEventLoop GUI diag pattern (resolved_cfg aliased)
             // (mirrors EventLoop_RebuildOneCore display capture; ControllerConfig_ResolveForCore
             // produces stack-local copy; per-core fields still accessible via resolved_cfg.cores[slot])
-            ControllerConfig<64> resolved_cfg = ControllerConfig_ResolveForCore(cfg, core_id);
-            Money fee_taker_rc = !Money_IsZero(resolved_cfg.cores[core_id].fee_rate_taker)
-                ? resolved_cfg.cores[core_id].fee_rate_taker
-                : resolved_cfg.cores[core_id].fee_rate;
+            ControllerConfig<64> resolved_cfg = ControllerConfig_ResolveForCore(cfg, node_id);
+            Money fee_taker_rc = !Money_IsZero(resolved_cfg.nodes[node_id].fee_rate_taker)
+                ? resolved_cfg.nodes[node_id].fee_rate_taker
+                : resolved_cfg.nodes[node_id].fee_rate;
             double fee_taker_rc_d = Money_ToDouble(fee_taker_rc);
 
             snprintf(msg, sizeof(msg),
-                     "Class 26 sub-shape B core %d: GUI diag HIGH-4 reads resolved_cfg.cores[%d].fee_rate_taker = %.5f (not aliased global %.5f)",
-                     core_id, core_id, expected, 0.005);
+                     "Class 26 sub-shape B core %d: GUI diag HIGH-4 reads resolved_cfg.nodes[%d].fee_rate_taker = %.5f (not aliased global %.5f)",
+                     node_id, node_id, expected, 0.005);
             check(msg, fee_taker_rc_d > expected - 1e-7 && fee_taker_rc_d < expected + 1e-7);
 
             // Post-fix MED-1 ShardedSnapshot per-position TUI net_pnl pattern
             // (mirrors ShardedSnapshot_BuildTUISnapshot per-position loop; core_id_for_pos in scope)
-            const auto& core_cfg_snap = cfg.cores[core_id];  // core_id_for_pos at MED-1 site
-            double fee_r_snap = Money_ToDouble(!Money_IsZero(core_cfg_snap.fee_rate_taker)
-                ? core_cfg_snap.fee_rate_taker : core_cfg_snap.fee_rate);
+            const auto& node_cfg_snap = cfg.nodes[node_id];  // core_id_for_pos at MED-1 site
+            double fee_r_snap = Money_ToDouble(!Money_IsZero(node_cfg_snap.fee_rate_taker)
+                ? node_cfg_snap.fee_rate_taker : node_cfg_snap.fee_rate);
 
             snprintf(msg, sizeof(msg),
                      "Class 26 sub-shape B core %d: ShardedSnapshot MED-1 net_pnl fee_r = %.5f (not global %.5f)",
-                     core_id, expected, 0.005);
+                     node_id, expected, 0.005);
             check(msg, fee_r_snap > expected - 1e-7 && fee_r_snap < expected + 1e-7);
         }
 
@@ -8025,7 +8025,7 @@ e3_skip_load:;
         using namespace tt;
         // Helper: set up an ExecutionCore + permission + parameter pack
         auto setup = [](ExecutionCore<64>* core,
-                        SPSCRing<Tick<64>, EXECUTION_CORE_TICK_RING_SIZE>* ring,
+                        SPSCRing<Tick<64>, EXECUTION_NODE_TICK_RING_SIZE>* ring,
                         GateParameters<64>* params,
                         bool pair_active,
                         double bg_threshold,
@@ -8050,7 +8050,7 @@ e3_skip_load:;
         // ---- Test: GATE_FLAG_PAIR_ACTIVE off → single-leg behavior unchanged ----
         {
             ExecutionCore<64> core;
-            SPSCRing<Tick<64>, EXECUTION_CORE_TICK_RING_SIZE> ring;
+            SPSCRing<Tick<64>, EXECUTION_NODE_TICK_RING_SIZE> ring;
             GateParameters<64> params;
             setup(&core, &ring, &params, /*pair_active=*/false,
                   /*bg=*/100.0, /*tp%=*/0.01, /*tp_b%=*/0.02, /*sl%=*/0.005);
@@ -8074,7 +8074,7 @@ e3_skip_load:;
         // ---- Test: GATE_FLAG_PAIR_ACTIVE on → entry opens BOTH legs ----
         {
             ExecutionCore<64> core;
-            SPSCRing<Tick<64>, EXECUTION_CORE_TICK_RING_SIZE> ring;
+            SPSCRing<Tick<64>, EXECUTION_NODE_TICK_RING_SIZE> ring;
             GateParameters<64> params;
             setup(&core, &ring, &params, /*pair_active=*/true,
                   /*bg=*/100.0, /*tp%=*/0.01, /*tp_b%=*/0.02, /*sl%=*/0.005);
@@ -8114,7 +8114,7 @@ e3_skip_load:;
         // ---- Test: leg A's TP fires while leg B's doesn't (TP1 < TP2) ----
         {
             ExecutionCore<64> core;
-            SPSCRing<Tick<64>, EXECUTION_CORE_TICK_RING_SIZE> ring;
+            SPSCRing<Tick<64>, EXECUTION_NODE_TICK_RING_SIZE> ring;
             GateParameters<64> params;
             setup(&core, &ring, &params, /*pair_active=*/true,
                   /*bg=*/100.0, /*tp%=*/0.01, /*tp_b%=*/0.02, /*sl%=*/0.005);
@@ -8149,7 +8149,7 @@ e3_skip_load:;
         // ---- Test: SL hits both legs (shared SL) ----
         {
             ExecutionCore<64> core;
-            SPSCRing<Tick<64>, EXECUTION_CORE_TICK_RING_SIZE> ring;
+            SPSCRing<Tick<64>, EXECUTION_NODE_TICK_RING_SIZE> ring;
             GateParameters<64> params;
             setup(&core, &ring, &params, /*pair_active=*/true,
                   /*bg=*/100.0, /*tp%=*/0.01, /*tp_b%=*/0.02, /*sl%=*/0.005);
@@ -8213,7 +8213,7 @@ e3_skip_load:;
         BITMAP_CLR(cfg.lifecycle_cfg_flags, MASK_LIFECYCLE_CFG_PARTIAL_EXIT_ENABLED);
         ControllerConfig_PopulateCoresFromFlat(&cfg);  // v5.15.5.F.4c.3 WIP2c.2 — sync flat→cores[0] for shadow window
         Strategy_BuildParameters(STRATEGY_SIMPLE_DIP,
-            &rolling, &cfg.cores[0], MQ(1000.0),
+            &rolling, &cfg.nodes[0], MQ(1000.0),
             &params, &rolling_long);
         check("P.4 disabled: GATE_FLAG_PAIR_ACTIVE NOT set",
               (params.flags & GATE_FLAG_PAIR_ACTIVE) == 0);
@@ -8224,7 +8224,7 @@ e3_skip_load:;
         BITMAP_SET(cfg.lifecycle_cfg_flags, MASK_LIFECYCLE_CFG_PARTIAL_EXIT_ENABLED);
         ControllerConfig_PopulateCoresFromFlat(&cfg);  // v5.15.5.F.4c.3 WIP2c.2 — sync flat→cores[0]
         Strategy_BuildParameters(STRATEGY_SIMPLE_DIP,
-            &rolling, &cfg.cores[0], MQ(1000.0),
+            &rolling, &cfg.nodes[0], MQ(1000.0),
             &params, &rolling_long);
         check("P.4 enabled: GATE_FLAG_PAIR_ACTIVE set",
               (params.flags & GATE_FLAG_PAIR_ACTIVE) != 0);
@@ -8240,7 +8240,7 @@ e3_skip_load:;
         cfg.tp2_mult = Money_Zero();
         ControllerConfig_PopulateCoresFromFlat(&cfg);  // v5.15.5.F.4c.3 WIP2c.2 — sync flat→cores[0]
         Strategy_BuildParameters(STRATEGY_SIMPLE_DIP,
-            &rolling, &cfg.cores[0], MQ(1000.0),
+            &rolling, &cfg.nodes[0], MQ(1000.0),
             &params, &rolling_long);
         if (!Money_IsZero(params.tp_pct)) {
             check("P.4 defensive: tp2_mult=0 → tp_pct_b == tp_pct (fallback)",
@@ -8261,8 +8261,8 @@ e3_skip_load:;
         struct R {
             tt::OrderManagerState<64> oms;
             tt::EventLoopState<64> state;
-            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE> tick_rings[4];
-            tt::ExecutionCore<64> cores[4];
+            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_NODE_TICK_RING_SIZE> tick_rings[4];
+            tt::ExecutionCore<64> nodes[4];
             ControllerConfig<64> cfg;  // v5.15.5.F.4c.3 WIP2d-1.B.1 — per-core cfg for SubmitCommand.core_cfg
         };
         R* r = new R();
@@ -8273,15 +8273,15 @@ e3_skip_load:;
         MBS_SET_U8(r->oms.oms_state_flags, tt::MASK_OMS_STATE_EVENT_LOG_MODE, tt::SHIFT_OMS_STATE_EVENT_LOG_MODE, 1);
         BITMAP_SET(r->oms.oms_state_flags, tt::MASK_OMS_STATE_PARTIAL_EXIT_ENABLED);  // paired-leg geometry
         // v5.15.5.F.4c.3 WIP2d-1.B.1 — per-core cfg drives fee accounting via Order_BindPreResolved.
-        r->cfg.cores[0].fee_rate_taker = MQ(0.001);
-        r->cfg.cores[0].fee_rate_maker = MQ(0.001);
+        r->cfg.nodes[0].fee_rate_taker = MQ(0.001);
+        r->cfg.nodes[0].fee_rate_maker = MQ(0.001);
 
         // Two cores → 4 portfolio slots in pair mode (slot 2c is leg A,
         // 2c+1 is leg B for core c).
         for (int c = 0; c < 2; ++c) {
             tt::SPSCRing_Init(&r->tick_rings[c]);
-            tt::ExecutionCore_Init(&r->cores[c], c, &r->tick_rings[c]);
-            tt::EventLoopState_RegisterCore(&r->state, &r->cores[c],
+            tt::ExecutionCore_Init(&r->nodes[c], c, &r->tick_rings[c]);
+            tt::EventLoopState_RegisterCore(&r->state, &r->nodes[c],
                 MQ(60500.0), MQ(59500.0),
                 MQ(0.01));
             tt::EventLoopState_SetCoreStrategy(&r->state, c,
@@ -8298,7 +8298,7 @@ e3_skip_load:;
             // v5.15.5.F.4c.3 WIP2d-1.B.1 — pass per-core cfg so Order_BindPreResolved gets fee_rate.
             tt::SubmitCommand<64> cmd((int16_t)portfolio_slot, tt::ORDER_MARKET_BUY,
                                        MQ(qty),
-                                       /*leg*/(uint8_t)0, /*core_cfg*/&r->cfg.cores[0]);
+                                       /*leg*/(uint8_t)0, /*node_cfg*/&r->cfg.nodes[0]);
             cmd.intended_tp = MQ(60500.0);
             cmd.intended_sl = MQ(59500.0);
             cmd.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
@@ -8309,7 +8309,7 @@ e3_skip_load:;
             for (int i = 0; i < MAX_INFLIGHT_ORDERS; ++i) {
                 if ((r->oms.order_bitmap & (uint16_t)(1u << i)) == 0) continue;
                 tt::Order<64>* o = &r->oms.orders[i];
-                if (o->core_id == portfolio_slot && tt::Order_GetState(o) != tt::ORDER_FILLED) {
+                if (o->node_id == portfolio_slot && tt::Order_GetState(o) != tt::ORDER_FILLED) {
                     tt::OrderManager_HandleFill(&r->oms, o,
                         MQ(price), MQ(qty));
                     tt::Order_SetState(o, tt::ORDER_FILLED);
@@ -8325,7 +8325,7 @@ e3_skip_load:;
         // Pre-drain: per-core stats are zero (FillRecord is captured but
         // not consumed yet).
         check("mode 1 pre-drain: core 0 open_notional still 0",
-              Money_IsZero(r->state.cores[0].core_open_notional));
+              Money_IsZero(r->state.nodes[0].node_open_notional));
         check("mode 1 pre-drain: oms.last_opened_mask has slots 0+1",
               (r->oms.last_opened_mask & 0x3) == 0x3);
 
@@ -8335,7 +8335,7 @@ e3_skip_load:;
         // both legs accumulated into core 0's CoreContext. The 200% bug
         // was caused by mode-0 OnEvent adding ctx->intended_qty (full
         // qty) per leg event — it accumulated to $2400 instead.
-        double open_n = Money_ToDouble(r->state.cores[0].core_open_notional);
+        double open_n = Money_ToDouble(r->state.nodes[0].node_open_notional);
         check("mode 1 post-drain: core 0 open_notional == $1200 (both legs)",
               fabs(open_n - 1200.0) < 0.5);
         check("mode 1 post-drain: open_notional ≤ allocated (no 200% bug)",
@@ -8349,14 +8349,14 @@ e3_skip_load:;
         // was double-counting against the exit pass's exit_total_fees.
         // ADV-SELF: mechanical pre-exit setup-state (v5.3.1 Phase-D — entry pass adds no fee → core_fees==0 until exits accumulate); deterministic state check, not a money-invariant judgment (feedback_independence_for_judgment_not_mechanical). The panel-reviewed money reconciliation is oms-ts-2 + the D-190 guard below.
         check("mode 1 post-drain: core 0 fees still 0 (only exits accumulate)",
-              Money_IsZero(r->state.cores[0].core_fees));
+              Money_IsZero(r->state.nodes[0].node_fees));
 
         // Synthesize paired exit at $61200 (= +2% gross).
         auto submit_and_fill_exit = [&](int portfolio_slot, double qty, double price) {
             // v5.15.5.F.4c.3 WIP2d-1.B.1 — pass per-core cfg so Order_BindPreResolved gets fee_rate.
             tt::SubmitCommand<64> cmd((int16_t)portfolio_slot, tt::ORDER_MARKET_SELL,
                                        MQ(qty),
-                                       /*leg*/(uint8_t)0, /*core_cfg*/&r->cfg.cores[0]);
+                                       /*leg*/(uint8_t)0, /*node_cfg*/&r->cfg.nodes[0]);
             cmd.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
             cmd.event_price = MQ(price);
             uint64_t oid = tt::OrderManager_Submit(&r->oms, cmd);
@@ -8364,7 +8364,7 @@ e3_skip_load:;
             for (int i = 0; i < MAX_INFLIGHT_ORDERS; ++i) {
                 if ((r->oms.order_bitmap & (uint16_t)(1u << i)) == 0) continue;
                 tt::Order<64>* o = &r->oms.orders[i];
-                if (o->core_id == portfolio_slot && tt::Order_GetState(o) != tt::ORDER_FILLED) {
+                if (o->node_id == portfolio_slot && tt::Order_GetState(o) != tt::ORDER_FILLED) {
                     tt::OrderManager_HandleFill(&r->oms, o,
                         MQ(price), MQ(qty));
                     tt::Order_SetState(o, tt::ORDER_FILLED);
@@ -8383,15 +8383,15 @@ e3_skip_load:;
         // trades, not legs — paired exit = 1 trade, so wins == 1 (was 2
         // pre-v4.7.4 when both leg bits incremented). Realized still
         // sums both legs' net P&L.
-        double realized = Money_ToDouble(r->state.cores[0].core_realized);
-        check("mode 1 post-exit: core 0 core_realized > 0 (both legs profited)",
+        double realized = Money_ToDouble(r->state.nodes[0].node_realized);
+        check("mode 1 post-exit: core 0 node_realized > 0 (both legs profited)",
               realized > 0.0);
         check("mode 1 post-exit: core 0 open_notional decremented to ~0",
-              Money_ToDouble(r->state.cores[0].core_open_notional) < 0.5);
+              Money_ToDouble(r->state.nodes[0].node_open_notional) < 0.5);
         check("mode 1 post-exit: core 0 wins == 1 (one logical trade)",
-              r->state.cores[0].core_wins == 1);
+              r->state.nodes[0].node_wins == 1);
         check("mode 1 post-exit: core 0 losses == 0",
-              r->state.cores[0].core_losses == 0);
+              r->state.nodes[0].node_losses == 0);
         check("mode 1 post-exit: last_closed_mask cleared",
               r->oms.last_closed_mask == 0);
         // v5.3.1 (Phase D): post-exit, core_fees should equal the round-trip
@@ -8400,16 +8400,16 @@ e3_skip_load:;
         //        = $0.60 + $0.612 = $1.212.  Both legs: ~$2.424.
         // Sanity range $2.0–$2.6 to be tolerant of fee_rate variations.
         check("mode 1 post-exit: core 0 fees ≈ round-trip × 2 legs",
-              Money_ToDouble(r->state.cores[0].core_fees) > 2.0 &&
-              Money_ToDouble(r->state.cores[0].core_fees) < 2.6);
+              Money_ToDouble(r->state.nodes[0].node_fees) > 2.0 &&
+              Money_ToDouble(r->state.nodes[0].node_fees) < 2.6);
         // oms-ts-2 (Net-1 .E.0.10): cross-check the TWO independent net-P&L derivations —
         // per-core core_realized/core_fees vs the OMS aggregates — never reconciled pre-Net-1.
         // Only core 0 is active (cores 1+ verified untouched below) → sum(core_X) == cores[0].
         // ADV-REFUTE: 2026-06-10 (3-agent panel found this froze a FALSE invariant — the two net-P&L derivations diverged 1 ULP under decimal half-even → D-190 formula-SSoT fix; now EXACT + guarded by the D-190 regression block below + check_money_gross_single_source.py; re-verified 2026-06-14 F-059 fan-out confirmed the gross+fee inputs are single-sourced via Money_FillGross).
-        check("oms-ts-2: sum(core_realized) reconciles oms.realized_pnl",
-              Money_Eq(r->state.cores[0].core_realized, r->oms.realized_pnl));
-        check("oms-ts-2: sum(core_fees) reconciles oms.total_fees",
-              Money_Eq(r->state.cores[0].core_fees, r->oms.total_fees));
+        check("oms-ts-2: sum(node_realized) reconciles oms.realized_pnl",
+              Money_Eq(r->state.nodes[0].node_realized, r->oms.realized_pnl));
+        check("oms-ts-2: sum(node_fees) reconciles oms.total_fees",
+              Money_Eq(r->state.nodes[0].node_fees, r->oms.total_fees));
         // === D-190 P&L-gross single-source regression guard ===
         // Realized gross = round((exit−entry)×qty) (1-mul, the canonical Money_FillGross) — NOT
         // round(exit×qty)−round(entry×qty) (2-mul). The lone DrainPostFill 2-mul outlier diverged from
@@ -8428,10 +8428,10 @@ e3_skip_load:;
 
         // Other cores untouched.
         check("mode 1: core 1 open_notional still 0 (no fills)",
-              Money_IsZero(r->state.cores[1].core_open_notional));
+              Money_IsZero(r->state.nodes[1].node_open_notional));
         check("mode 1: core 1 wins/losses still 0",
-              r->state.cores[1].core_wins == 0 &&
-              r->state.cores[1].core_losses == 0);
+              r->state.nodes[1].node_wins == 0 &&
+              r->state.nodes[1].node_losses == 0);
 
         delete r;
     }
@@ -8442,7 +8442,7 @@ e3_skip_load:;
         struct R {
             tt::OrderManagerState<64> oms;
             tt::EventLoopState<64> state;
-            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
+            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_NODE_TICK_RING_SIZE> tick_ring;
             tt::ExecutionCore<64> core;
         };
         R* r = new R();
@@ -8461,7 +8461,7 @@ e3_skip_load:;
         // Synthesize a single full-qty entry fill on slot 0.
         tt::SubmitCommand<64> cmd(0, tt::ORDER_MARKET_BUY,
                                    MQ(0.02),
-                                   /*leg*/(uint8_t)0, /*core_cfg*/nullptr);
+                                   /*leg*/(uint8_t)0, /*node_cfg*/nullptr);
         cmd.intended_tp = MQ(60500.0);
         cmd.intended_sl = MQ(59500.0);
         cmd.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
@@ -8483,7 +8483,7 @@ e3_skip_load:;
 
         // Notional = 0.02 × 60000 = $1200 (full qty).
         check("mode 1 partials-off: core 0 open_notional == $1200 single leg",
-              fabs(Money_ToDouble(r->state.cores[0].core_open_notional) - 1200.0) < 0.5);
+              fabs(Money_ToDouble(r->state.nodes[0].node_open_notional) - 1200.0) < 0.5);
 
         delete r;
     }
@@ -8508,7 +8508,7 @@ e3_skip_load:;
         struct R {
             tt::OrderManagerState<64>                                        oms;
             tt::EventLoopState<64>                                           state;
-            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE>    tick_ring;
+            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_NODE_TICK_RING_SIZE>    tick_ring;
             tt::ExecutionCore<64>                                            core;
             RollingStats<64, 128>                                            rolling;
             RollingStats<64, 512>                                            rolling_long;
@@ -8519,8 +8519,8 @@ e3_skip_load:;
         r->cfg = ControllerConfig_Default<64>();
         r->cfg.sl_cooldown_cycles = 0;
         // v5.15.5.F.4c.3 WIP2d-1.B.1 — per-core cfg drives fee accounting via Order_BindPreResolved.
-        r->cfg.cores[0].fee_rate_taker = MQ(0.001);
-        r->cfg.cores[0].fee_rate_maker = MQ(0.001);
+        r->cfg.nodes[0].fee_rate_taker = MQ(0.001);
+        r->cfg.nodes[0].fee_rate_maker = MQ(0.001);
         tt::EventLoopState_InitLegacy(&r->state, &r->oms,
             MQ(10000.0));
         MBS_SET_U8(r->oms.oms_state_flags, tt::MASK_OMS_STATE_EVENT_LOG_MODE, tt::SHIFT_OMS_STATE_EVENT_LOG_MODE, 1);       // mirror live default
@@ -8545,7 +8545,7 @@ e3_skip_load:;
         // v5.15.5.F.4c.3 WIP2d-1.B.1 — pass per-core cfg so Order_BindPreResolved gets fee_rate.
         tt::SubmitCommand<64> cmd(0, tt::ORDER_MARKET_BUY,
                                    MQ(0.02),
-                                   /*leg*/(uint8_t)0, /*core_cfg*/&r->cfg.cores[0]);
+                                   /*leg*/(uint8_t)0, /*node_cfg*/&r->cfg.nodes[0]);
         cmd.intended_tp = MQ(60500.0);
         cmd.intended_sl = MQ(59500.0);
         cmd.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
@@ -8567,7 +8567,7 @@ e3_skip_load:;
         check("v4.7.16 pre-RunTick: open_mask has slot 0",
               (r->oms.last_opened_mask & 0x1) != 0);
         check("v4.7.16 pre-RunTick: core 0 open_notional still zero",
-              Money_IsZero(r->state.cores[0].core_open_notional));
+              Money_IsZero(r->state.nodes[0].node_open_notional));
 
         // Run a no-op tick through the driver. Internally:
         //   1. Fan out tick to cores (no event since gate state unchanged)
@@ -8582,7 +8582,7 @@ e3_skip_load:;
 
         // If DrainPostFill ran: CoreContext updated, mask cleared.
         check("v4.7.16 post-RunTick: core 0 open_notional == $1200 (drainer ran)",
-              fabs(Money_ToDouble(r->state.cores[0].core_open_notional) - 1200.0) < 0.5);
+              fabs(Money_ToDouble(r->state.nodes[0].node_open_notional) - 1200.0) < 0.5);
         check("v4.7.16 post-RunTick: last_opened_mask cleared",
               r->oms.last_opened_mask == 0);
         // v5.3.1 (Phase D): entry pass no longer adds entry_fee to core_fees.
@@ -8591,14 +8591,14 @@ e3_skip_load:;
         // (double-counting). See ControllerEventLoop.hpp Phase D fix.
         // ADV-SELF: mechanical post-RunTick setup-state (v5.3.1 Phase-D — entry pass adds no fee); deterministic state check in the v4.7.16 RunTick parity regression, not a money-invariant judgment (feedback_independence_for_judgment_not_mechanical).
         check("v4.7.16 post-RunTick: core 0 fees still 0 (only exits accumulate)",
-              Money_IsZero(r->state.cores[0].core_fees));
+              Money_IsZero(r->state.nodes[0].node_fees));
 
         // Synthesize an exit at +1% — RunTick should now drain the close mask
         // too, incrementing wins. Confirms exit-path parity.
         // v5.15.5.F.4c.3 WIP2d-1.B.1 — pass per-core cfg so Order_BindPreResolved gets fee_rate.
         tt::SubmitCommand<64> exit_cmd(0, tt::ORDER_MARKET_SELL,
                                         MQ(0.02),
-                                        /*leg*/(uint8_t)0, /*core_cfg*/&r->cfg.cores[0]);
+                                        /*leg*/(uint8_t)0, /*node_cfg*/&r->cfg.nodes[0]);
         exit_cmd.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
         exit_cmd.event_price = MQ(60600.0);
         uint64_t exit_oid = tt::OrderManager_Submit(&r->oms, exit_cmd);
@@ -8616,19 +8616,19 @@ e3_skip_load:;
         }
         tt::ShardedBacktest_RunTick(&r->drv, dummy, 1);
         check("v4.7.16 post-exit: core 0 wins == 1 (drainer ran on exit)",
-              r->state.cores[0].core_wins == 1);
+              r->state.nodes[0].node_wins == 1);
         check("v4.7.16 post-exit: core 0 losses == 0",
-              r->state.cores[0].core_losses == 0);
-        check("v4.7.16 post-exit: core 0 core_realized > 0",
-              Money_ToDouble(r->state.cores[0].core_realized) > 0.0);
+              r->state.nodes[0].node_losses == 0);
+        check("v4.7.16 post-exit: core 0 node_realized > 0",
+              Money_ToDouble(r->state.nodes[0].node_realized) > 0.0);
         check("v4.7.16 post-exit: open_notional decremented",
-              Money_ToDouble(r->state.cores[0].core_open_notional) < 0.5);
+              Money_ToDouble(r->state.nodes[0].node_open_notional) < 0.5);
         // v5.3.1 (Phase D): post-exit fees ≈ entry_fee + exit_fee
         // = $1200 × 0.001 + $1212 × 0.001 ≈ $2.412.
         // Tolerance $2.0–$2.6.
         check("v4.7.16 post-exit: core 0 fees ≈ round-trip (entry+exit fee)",
-              Money_ToDouble(r->state.cores[0].core_fees) > 2.0 &&
-              Money_ToDouble(r->state.cores[0].core_fees) < 2.6);
+              Money_ToDouble(r->state.nodes[0].node_fees) > 2.0 &&
+              Money_ToDouble(r->state.nodes[0].node_fees) < 2.6);
 
         delete r;
     }
@@ -8646,7 +8646,7 @@ e3_skip_load:;
         struct R {
             tt::OrderManagerState<64>                                        oms;
             tt::EventLoopState<64>                                           state;
-            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE>    tick_ring;
+            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_NODE_TICK_RING_SIZE>    tick_ring;
             tt::ExecutionCore<64>                                            core;
             RollingStats<64, 128>                                            rolling;
             RollingStats<64, 512>                                            rolling_long;
@@ -8678,7 +8678,7 @@ e3_skip_load:;
         // mask gets consumed even though no tick fired during the run.
         tt::SubmitCommand<64> cmd(0, tt::ORDER_MARKET_BUY,
                                    MQ(0.02),
-                                   /*leg*/(uint8_t)0, /*core_cfg*/nullptr);
+                                   /*leg*/(uint8_t)0, /*node_cfg*/nullptr);
         cmd.intended_tp = MQ(60500.0);
         cmd.intended_sl = MQ(59500.0);
         cmd.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
@@ -8704,7 +8704,7 @@ e3_skip_load:;
         tt::ShardedBacktest_Run(&r->drv, ticks, 0);
 
         check("v4.7.16 final-flush: open_notional drained ($1200)",
-              fabs(Money_ToDouble(r->state.cores[0].core_open_notional) - 1200.0) < 0.5);
+              fabs(Money_ToDouble(r->state.nodes[0].node_open_notional) - 1200.0) < 0.5);
         check("v4.7.16 final-flush: last_opened_mask cleared",
               r->oms.last_opened_mask == 0);
 
@@ -8733,7 +8733,7 @@ e3_skip_load:;
         struct R {
             tt::OrderManagerState<64> oms;
             tt::EventLoopState<64>    state;
-            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
+            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_NODE_TICK_RING_SIZE> tick_ring;
             tt::ExecutionCore<64>     core;
         };
         R* r = new R();
@@ -8753,7 +8753,7 @@ e3_skip_load:;
         tt::ExchangeAdapter<64> empty{};
         tt::SubmitCommand<64> buy_cmd(0, tt::ORDER_MARKET_BUY,
                                        MQ(0.02),
-                                       /*leg*/(uint8_t)0, /*core_cfg*/nullptr);
+                                       /*leg*/(uint8_t)0, /*node_cfg*/nullptr);
         buy_cmd.intended_tp = MQ(60500.0);
         buy_cmd.intended_sl = MQ(59500.0);
         buy_cmd.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
@@ -8776,12 +8776,12 @@ e3_skip_load:;
         check("v4.7.19 (b): entry bump happens via DrainPostFill — total_entries == 1",
               r->state.total_entries == 1);
         check("v4.7.19 (b): per-core entries_processed == 1",
-              r->state.cores[0].entries_processed == 1);
+              r->state.nodes[0].entries_processed == 1);
 
         // Now close it.
         tt::SubmitCommand<64> sell_cmd(0, tt::ORDER_MARKET_SELL,
                                         MQ(0.02),
-                                        /*leg*/(uint8_t)0, /*core_cfg*/nullptr);
+                                        /*leg*/(uint8_t)0, /*node_cfg*/nullptr);
         sell_cmd.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
         sell_cmd.event_price = MQ(60600.0);
         uint64_t sell_id = tt::OrderManager_Submit(&r->oms, sell_cmd);
@@ -8816,7 +8816,7 @@ e3_skip_load:;
         // manual-close and hot-path SG.)
         tt::Order<64> dup_sell{};
         dup_sell.id            = 9999;
-        dup_sell.core_id       = 0;
+        dup_sell.node_id       = 0;
         dup_sell.strategy_id   = STRATEGY_SIMPLE_DIP;
         tt::Order_SetType(&dup_sell, tt::ORDER_MARKET_SELL);
         tt::Order_SetIsMaker(&dup_sell, false);
@@ -8872,7 +8872,7 @@ e3_skip_load:;
         struct R {
             tt::OrderManagerState<64> oms;
             tt::EventLoopState<64>    state;
-            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
+            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_NODE_TICK_RING_SIZE> tick_ring;
             tt::ExecutionCore<64>     core;
         };
         R* r = new R();
@@ -8888,7 +8888,7 @@ e3_skip_load:;
         const Money FEE_RATE   = MQ(0.001);  // 10 bps taker
 
         // ---- Open slot 0, injecting the taker fee on the real booking path ----
-        tt::SubmitCommand<64> buy_cmd(0, tt::ORDER_MARKET_BUY, MQ(0.02), (uint8_t)0, /*core_cfg*/nullptr);
+        tt::SubmitCommand<64> buy_cmd(0, tt::ORDER_MARKET_BUY, MQ(0.02), (uint8_t)0, /*node_cfg*/nullptr);
         buy_cmd.intended_tp = MQ(60500.0);
         buy_cmd.intended_sl = MQ(59500.0);
         buy_cmd.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
@@ -8911,7 +8911,7 @@ e3_skip_load:;
               Money_Eq(r->oms.total_fees, MQ(1.20)));
 
         // ---- Close slot 0, injecting the taker fee ----
-        tt::SubmitCommand<64> sell_cmd(0, tt::ORDER_MARKET_SELL, MQ(0.02), (uint8_t)0, /*core_cfg*/nullptr);
+        tt::SubmitCommand<64> sell_cmd(0, tt::ORDER_MARKET_SELL, MQ(0.02), (uint8_t)0, /*node_cfg*/nullptr);
         sell_cmd.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
         sell_cmd.event_price = MQ(60600.0);
         tt::OrderManager_Submit(&r->oms, sell_cmd);
@@ -8975,7 +8975,7 @@ e3_skip_load:;
         struct R {
             tt::OrderManagerState<64> oms;
             tt::EventLoopState<64>    state;
-            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
+            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_NODE_TICK_RING_SIZE> tick_ring;
             tt::ExecutionCore<64>     core;
         };
         R* r = new R();
@@ -8991,7 +8991,7 @@ e3_skip_load:;
         const Money FEE_RATE   = MQ(0.001);
 
         // ---- Open slot 0 @ 60600 ----
-        tt::SubmitCommand<64> buy_cmd(0, tt::ORDER_MARKET_BUY, MQ(0.02), (uint8_t)0, /*core_cfg*/nullptr);
+        tt::SubmitCommand<64> buy_cmd(0, tt::ORDER_MARKET_BUY, MQ(0.02), (uint8_t)0, /*node_cfg*/nullptr);
         buy_cmd.intended_tp = MQ(61000.0);
         buy_cmd.intended_sl = MQ(60000.0);
         buy_cmd.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
@@ -9011,7 +9011,7 @@ e3_skip_load:;
         tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
 
         // ---- Close slot 0 @ 60000 (a LOSS) ----
-        tt::SubmitCommand<64> sell_cmd(0, tt::ORDER_MARKET_SELL, MQ(0.02), (uint8_t)0, /*core_cfg*/nullptr);
+        tt::SubmitCommand<64> sell_cmd(0, tt::ORDER_MARKET_SELL, MQ(0.02), (uint8_t)0, /*node_cfg*/nullptr);
         sell_cmd.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
         sell_cmd.event_price = MQ(60000.0);
         tt::OrderManager_Submit(&r->oms, sell_cmd);
@@ -9081,8 +9081,8 @@ e3_skip_load:;
         struct R {
             tt::OrderManagerState<64> oms;
             tt::EventLoopState<64>    state;
-            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
-            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE> tick_ring1;
+            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_NODE_TICK_RING_SIZE> tick_ring;
+            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_NODE_TICK_RING_SIZE> tick_ring1;
             tt::ExecutionCore<64>     core;
             tt::ExecutionCore<64>     core1;
         };
@@ -9107,7 +9107,7 @@ e3_skip_load:;
         const Money ENTRY = MQ(35763.61465912), EXIT = MQ(40044.86126179), QTY = MQ(6.89383318);
 
         // --- BUY (open) core 0, real booking path (direct-HandleFill idiom; oms-ts-1 clone) ---
-        tt::SubmitCommand<64> buy(0, tt::ORDER_MARKET_BUY, QTY, (uint8_t)0, /*core_cfg*/nullptr);
+        tt::SubmitCommand<64> buy(0, tt::ORDER_MARKET_BUY, QTY, (uint8_t)0, /*node_cfg*/nullptr);
         buy.intended_tp = MQ(41000.0); buy.intended_sl = MQ(34000.0);
         buy.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP; buy.event_price = ENTRY;
         tt::OrderManager_Submit(&r->oms, buy);
@@ -9125,7 +9125,7 @@ e3_skip_load:;
         tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
 
         // --- SELL (close) core 0 @ a WIN ---
-        tt::SubmitCommand<64> sell(0, tt::ORDER_MARKET_SELL, QTY, (uint8_t)0, /*core_cfg*/nullptr);
+        tt::SubmitCommand<64> sell(0, tt::ORDER_MARKET_SELL, QTY, (uint8_t)0, /*node_cfg*/nullptr);
         sell.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP; sell.event_price = EXIT;
         tt::OrderManager_Submit(&r->oms, sell);
         for (int i = 0; i < MAX_INFLIGHT_ORDERS; ++i) {
@@ -9143,28 +9143,28 @@ e3_skip_load:;
 
         // ---- The per-core EXIT write-set (the gap oms-ts-1 leaves unfrozen), money-EXACT (not windowed) ----
         // ADV-REFUTE: 2026-06-14 — cascade A-1 independently re-derived every per-core golden below to the ULP (see block header).
-        check("oms-ts-1c: cores[0].core_realized == 29122.24164128 (net, exact)",
-              Money_Eq(r->state.cores[0].core_realized, MQ(29122.24164128)));
-        check("oms-ts-1c: cores[0].core_fees == 391.95823997 (entry 184.91129503 + exit 207.04694494)",
-              Money_Eq(r->state.cores[0].core_fees, MQ(391.95823997)));
-        check("oms-ts-1c: cores[0].core_open_notional back to 0 (entry add − exit entry-priced sub)",
-              Money_IsZero(r->state.cores[0].core_open_notional));
-        check("oms-ts-1c: cores[0].exits_processed==1 / entries_processed==1",
-              r->state.cores[0].exits_processed == 1 && r->state.cores[0].entries_processed == 1);
-        check("oms-ts-1c: cores[0].core_wins==1 / core_losses==0 (one winning logical trade)",
-              r->state.cores[0].core_wins == 1 && r->state.cores[0].core_losses == 0);
-        check("oms-ts-1c: cores[0].core_gross_wins == 29122.24164128 (=net) / core_gross_losses == 0",
-              Money_Eq(r->state.cores[0].core_gross_wins, MQ(29122.24164128)) &&
-              Money_IsZero(r->state.cores[0].core_gross_losses));
+        check("oms-ts-1c: nodes[0].node_realized == 29122.24164128 (net, exact)",
+              Money_Eq(r->state.nodes[0].node_realized, MQ(29122.24164128)));
+        check("oms-ts-1c: nodes[0].node_fees == 391.95823997 (entry 184.91129503 + exit 207.04694494)",
+              Money_Eq(r->state.nodes[0].node_fees, MQ(391.95823997)));
+        check("oms-ts-1c: nodes[0].node_open_notional back to 0 (entry add − exit entry-priced sub)",
+              Money_IsZero(r->state.nodes[0].node_open_notional));
+        check("oms-ts-1c: nodes[0].exits_processed==1 / entries_processed==1",
+              r->state.nodes[0].exits_processed == 1 && r->state.nodes[0].entries_processed == 1);
+        check("oms-ts-1c: nodes[0].node_wins==1 / node_losses==0 (one winning logical trade)",
+              r->state.nodes[0].node_wins == 1 && r->state.nodes[0].node_losses == 0);
+        check("oms-ts-1c: nodes[0].node_gross_wins == 29122.24164128 (=net) / node_gross_losses == 0",
+              Money_Eq(r->state.nodes[0].node_gross_wins, MQ(29122.24164128)) &&
+              Money_IsZero(r->state.nodes[0].node_gross_losses));
 
         // ---- The cross-path reconciliation (per-core vs OMS aggregate) — the D-190 lock on THIS path.
         //      EXACT-by-SSoT-construction: both derive gross via Money_FillGross AND share the booked-fee
         //      inputs → NOT the retired oms-ts-2 false-invariant (D-190 made it genuinely exact). On these
         //      DIVERGENT inputs a 2-mul DrainPostFill regression would break it. ----
-        check("oms-ts-1c: cores[0].core_realized reconciles oms.realized_pnl (exact, D-190 lock)",
-              Money_Eq(r->state.cores[0].core_realized, r->oms.realized_pnl));
-        check("oms-ts-1c: cores[0].core_fees reconciles oms.total_fees (exact)",
-              Money_Eq(r->state.cores[0].core_fees, r->oms.total_fees));
+        check("oms-ts-1c: nodes[0].node_realized reconciles oms.realized_pnl (exact, D-190 lock)",
+              Money_Eq(r->state.nodes[0].node_realized, r->oms.realized_pnl));
+        check("oms-ts-1c: nodes[0].node_fees reconciles oms.total_fees (exact)",
+              Money_Eq(r->state.nodes[0].node_fees, r->oms.total_fees));
 
         // ---- Divergence WITNESS: prove these inputs DO exercise the D-190 1-mul/2-mul split (else the
         //      divergent inputs read as an unexplained accident; mirrors the D-190 guard block). ----
@@ -9178,11 +9178,11 @@ e3_skip_load:;
         }
 
         // ---- H22 non-leak witness: core 1 registered + iterated but never filled → stays zero ----
-        check("oms-ts-1c: H22 non-leak — cores[1].core_realized/core_fees == 0 (core-0 activity didn't leak)",
-              Money_IsZero(r->state.cores[1].core_realized) && Money_IsZero(r->state.cores[1].core_fees));
-        check("oms-ts-1c: H22 non-leak — cores[1].core_wins/core_losses/exits_processed == 0",
-              r->state.cores[1].core_wins == 0 && r->state.cores[1].core_losses == 0 &&
-              r->state.cores[1].exits_processed == 0);
+        check("oms-ts-1c: H22 non-leak — nodes[1].node_realized/node_fees == 0 (core-0 activity didn't leak)",
+              Money_IsZero(r->state.nodes[1].node_realized) && Money_IsZero(r->state.nodes[1].node_fees));
+        check("oms-ts-1c: H22 non-leak — nodes[1].node_wins/node_losses/exits_processed == 0",
+              r->state.nodes[1].node_wins == 0 && r->state.nodes[1].node_losses == 0 &&
+              r->state.nodes[1].exits_processed == 0);
 
         delete r;
     }
@@ -9205,7 +9205,7 @@ e3_skip_load:;
         struct R {
             tt::OrderManagerState<64> oms;
             tt::EventLoopState<64>    state;
-            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
+            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_NODE_TICK_RING_SIZE> tick_ring;
             tt::ExecutionCore<64>     core;
         };
         R* r = new R();
@@ -9221,7 +9221,7 @@ e3_skip_load:;
         const Money ENTRY = MQ(40308.41179447), EXIT = MQ(38586.72189860), QTY = MQ(0.44050204);
 
         // --- BUY (open) ---
-        tt::SubmitCommand<64> buy(0, tt::ORDER_MARKET_BUY, QTY, (uint8_t)0, /*core_cfg*/nullptr);
+        tt::SubmitCommand<64> buy(0, tt::ORDER_MARKET_BUY, QTY, (uint8_t)0, /*node_cfg*/nullptr);
         buy.intended_tp = MQ(41000.0); buy.intended_sl = MQ(34000.0);
         buy.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP; buy.event_price = ENTRY;
         tt::OrderManager_Submit(&r->oms, buy);
@@ -9239,7 +9239,7 @@ e3_skip_load:;
         tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
 
         // --- SELL (close) @ a LOSS ---
-        tt::SubmitCommand<64> sell(0, tt::ORDER_MARKET_SELL, QTY, (uint8_t)0, /*core_cfg*/nullptr);
+        tt::SubmitCommand<64> sell(0, tt::ORDER_MARKET_SELL, QTY, (uint8_t)0, /*node_cfg*/nullptr);
         sell.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP; sell.event_price = EXIT;
         tt::OrderManager_Submit(&r->oms, sell);
         for (int i = 0; i < MAX_INFLIGHT_ORDERS; ++i) {
@@ -9255,22 +9255,22 @@ e3_skip_load:;
         }
         tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
 
-        check("oms-ts-1d: cores[0].core_realized == -784.47301188 (net loss, exact)",
-              Money_Eq(r->state.cores[0].core_realized, MQ(-784.47301188)));
-        check("oms-ts-1d: cores[0].core_fees == 26.06510050 (13.31695322 + 12.74814728)",
-              Money_Eq(r->state.cores[0].core_fees, MQ(26.06510050)));
-        check("oms-ts-1d: cores[0].core_open_notional back to 0",
-              Money_IsZero(r->state.cores[0].core_open_notional));
-        check("oms-ts-1d: cores[0].core_wins==0 / core_losses==1 (the SIGN path)",
-              r->state.cores[0].core_wins == 0 && r->state.cores[0].core_losses == 1);
-        check("oms-ts-1d: cores[0].core_gross_losses == 784.47301188 (=Money_Negate(net)) / core_gross_wins == 0",
-              Money_Eq(r->state.cores[0].core_gross_losses, MQ(784.47301188)) &&
-              Money_IsZero(r->state.cores[0].core_gross_wins));
+        check("oms-ts-1d: nodes[0].node_realized == -784.47301188 (net loss, exact)",
+              Money_Eq(r->state.nodes[0].node_realized, MQ(-784.47301188)));
+        check("oms-ts-1d: nodes[0].node_fees == 26.06510050 (13.31695322 + 12.74814728)",
+              Money_Eq(r->state.nodes[0].node_fees, MQ(26.06510050)));
+        check("oms-ts-1d: nodes[0].node_open_notional back to 0",
+              Money_IsZero(r->state.nodes[0].node_open_notional));
+        check("oms-ts-1d: nodes[0].node_wins==0 / node_losses==1 (the SIGN path)",
+              r->state.nodes[0].node_wins == 0 && r->state.nodes[0].node_losses == 1);
+        check("oms-ts-1d: nodes[0].node_gross_losses == 784.47301188 (=Money_Negate(net)) / node_gross_wins == 0",
+              Money_Eq(r->state.nodes[0].node_gross_losses, MQ(784.47301188)) &&
+              Money_IsZero(r->state.nodes[0].node_gross_wins));
         // Cross-path reconciliation holds on the loss too (D-190 lock):
-        check("oms-ts-1d: cores[0].core_realized reconciles oms.realized_pnl (exact, loss)",
-              Money_Eq(r->state.cores[0].core_realized, r->oms.realized_pnl));
-        check("oms-ts-1d: cores[0].core_fees reconciles oms.total_fees (exact)",
-              Money_Eq(r->state.cores[0].core_fees, r->oms.total_fees));
+        check("oms-ts-1d: nodes[0].node_realized reconciles oms.realized_pnl (exact, loss)",
+              Money_Eq(r->state.nodes[0].node_realized, r->oms.realized_pnl));
+        check("oms-ts-1d: nodes[0].node_fees reconciles oms.total_fees (exact)",
+              Money_Eq(r->state.nodes[0].node_fees, r->oms.total_fees));
         {
             Money g_1mul = Money_FillGross(ENTRY, EXIT, QTY);
             Money g_2mul = Money_Sub(Money_Mul(EXIT, QTY), Money_Mul(ENTRY, QTY));
@@ -9311,7 +9311,7 @@ e3_skip_load:;
         struct R {
             tt::OrderManagerState<64> oms;
             tt::EventLoopState<64>    state;
-            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
+            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_NODE_TICK_RING_SIZE> tick_ring;
             tt::ExecutionCore<64>     core;
             ControllerConfig<64>      cfg;
         };
@@ -9324,11 +9324,11 @@ e3_skip_load:;
         tt::ExecutionCore_Init(&r->core, 0, &r->tick_ring);
         tt::EventLoopState_RegisterCore(&r->state, &r->core, MQ(61500.0), MQ(59500.0), MQ(0.02));
         tt::EventLoopState_SetCoreStrategy(&r->state, 0, STRATEGY_SIMPLE_DIP, MQ(300000.0));
-        r->cfg.cores[0].slippage_pct   = MQ(0.001);   // 0.1% — the slip under test (read by the synth)
-        r->cfg.cores[0].fee_rate_taker = MQ(0.001);   // bound via Order_BindPreResolved inside Submit
+        r->cfg.nodes[0].slippage_pct   = MQ(0.001);   // 0.1% — the slip under test (read by the synth)
+        r->cfg.nodes[0].fee_rate_taker = MQ(0.001);   // bound via Order_BindPreResolved inside Submit
 
         // --- BUY: Submit (synth slips + pushes) → Tick (drains → ProcessFillCommand → HandleFill) → DrainPostFill ---
-        tt::SubmitCommand<64> buy(0, tt::ORDER_MARKET_BUY, MQ(0.02), (uint8_t)0, &r->cfg.cores[0]);
+        tt::SubmitCommand<64> buy(0, tt::ORDER_MARKET_BUY, MQ(0.02), (uint8_t)0, &r->cfg.nodes[0]);
         buy.intended_tp = MQ(61500.0); buy.intended_sl = MQ(59500.0);
         buy.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP; buy.event_price = MQ(60000.0);
         tt::OrderManager_Submit(&r->oms, buy);
@@ -9339,7 +9339,7 @@ e3_skip_load:;
               (r->oms.portfolio.active_bitmap & (uint16_t)1u) != 0);
 
         // --- SELL: same full path ---
-        tt::SubmitCommand<64> sell(0, tt::ORDER_MARKET_SELL, MQ(0.02), (uint8_t)0, &r->cfg.cores[0]);
+        tt::SubmitCommand<64> sell(0, tt::ORDER_MARKET_SELL, MQ(0.02), (uint8_t)0, &r->cfg.nodes[0]);
         sell.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP; sell.event_price = MQ(61000.0);
         tt::OrderManager_Submit(&r->oms, sell);
         tt::OrderManager_Tick(&r->oms);
@@ -9357,10 +9357,10 @@ e3_skip_load:;
         check("oms-ts-1e: total_fees == 2.41998 (fees booked on the SLIPPED notionals)",
               Money_Eq(r->oms.total_fees, MQ(2.41998)));
         // Per-core reconciliation holds under slip:
-        check("oms-ts-1e: cores[0].core_realized reconciles oms.realized_pnl under slip (exact)",
-              Money_Eq(r->state.cores[0].core_realized, r->oms.realized_pnl));
-        check("oms-ts-1e: cores[0].core_fees reconciles oms.total_fees under slip (exact)",
-              Money_Eq(r->state.cores[0].core_fees, r->oms.total_fees));
+        check("oms-ts-1e: nodes[0].node_realized reconciles oms.realized_pnl under slip (exact)",
+              Money_Eq(r->state.nodes[0].node_realized, r->oms.realized_pnl));
+        check("oms-ts-1e: nodes[0].node_fees reconciles oms.total_fees under slip (exact)",
+              Money_Eq(r->state.nodes[0].node_fees, r->oms.total_fees));
 
         delete r;
     }
@@ -9402,7 +9402,7 @@ e3_skip_load:;
         struct R {
             OrderManagerState<64> oms;
             EventLoopState<64>    state;
-            SPSCRing<Tick<64>, EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
+            SPSCRing<Tick<64>, EXECUTION_NODE_TICK_RING_SIZE> tick_ring;
             ExecutionCore<64>     core;
         };
         const Money FEE_RATE = MQ(0.00075);
@@ -9419,14 +9419,14 @@ e3_skip_load:;
         };
         // Manual HandleFill per leg (oms-ts-1d idiom). slot == cmd.core_id (FIX-3: leg B uses slot 1).
         auto fill_leg = [&](R* r, int slot, OrderType type, Money price, Money qty) {
-            SubmitCommand<64> cmd((int16_t)slot, type, qty, (uint8_t)(slot & 1), /*core_cfg*/nullptr);
+            SubmitCommand<64> cmd((int16_t)slot, type, qty, (uint8_t)(slot & 1), /*node_cfg*/nullptr);
             cmd.intended_tp = MQ(41000.0); cmd.intended_sl = MQ(34000.0);
             cmd.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP; cmd.event_price = price;
             OrderManager_Submit(&r->oms, cmd);
             for (int i = 0; i < MAX_INFLIGHT_ORDERS; ++i) {
                 if ((r->oms.order_bitmap & (uint16_t)(1u << i)) == 0) continue;
                 Order<64>* o = &r->oms.orders[i];
-                if (o->core_id == slot && Order_GetState(o) != ORDER_FILLED) {
+                if (o->node_id == slot && Order_GetState(o) != ORDER_FILLED) {
                     o->pre_resolved.fee_rate = FEE_RATE;                 // per-leg fee SSoT (override nullptr bind)
                     OrderManager_HandleFill(&r->oms, o, price, qty);     // REAL consumer (handle_buy/sell_fill)
                     Order_SetState(o, ORDER_FILLED);
@@ -9451,33 +9451,33 @@ e3_skip_load:;
             fill_leg(r, 1, ORDER_MARKET_SELL, MQ(38586.72189860), MQ(0.44050204));  // leg B exit SL  (loss)
             EventLoop_DrainPostFill(&r->state, &r->oms, 0);
 
-            check("F-018 L: core_wins==0 / core_losses==1 (paired net-NEGATIVE = ONE loss, NOT 1W+1L)",
-                  r->state.cores[0].core_wins == 0 && r->state.cores[0].core_losses == 1);
+            check("F-018 L: node_wins==0 / node_losses==1 (paired net-NEGATIVE = ONE loss, NOT 1W+1L)",
+                  r->state.nodes[0].node_wins == 0 && r->state.nodes[0].node_losses == 1);
             check("F-018 L: exits_processed==2 / entries_processed==2 (both legs drained — the pair completed)",
-                  r->state.cores[0].exits_processed == 2 && r->state.cores[0].entries_processed == 2);
-            check("F-018 L: core_realized == -517.17535106 (pair net, exact — A-1 ULP-verified)",
-                  Money_Eq(r->state.cores[0].core_realized, MQ(-517.17535106)));
-            check("F-018 L: core_fees == 51.10438111 (both legs' round-trip fees)",
-                  Money_Eq(r->state.cores[0].core_fees, MQ(51.10438111)));
-            check("F-018 L: core_gross_losses == 517.17535106 (=Money_Negate(pair net)) / core_gross_wins == 0",
-                  Money_Eq(r->state.cores[0].core_gross_losses, MQ(517.17535106)) &&
-                  Money_IsZero(r->state.cores[0].core_gross_wins));
+                  r->state.nodes[0].exits_processed == 2 && r->state.nodes[0].entries_processed == 2);
+            check("F-018 L: node_realized == -517.17535106 (pair net, exact — A-1 ULP-verified)",
+                  Money_Eq(r->state.nodes[0].node_realized, MQ(-517.17535106)));
+            check("F-018 L: node_fees == 51.10438111 (both legs' round-trip fees)",
+                  Money_Eq(r->state.nodes[0].node_fees, MQ(51.10438111)));
+            check("F-018 L: node_gross_losses == 517.17535106 (=Money_Negate(pair net)) / node_gross_wins == 0",
+                  Money_Eq(r->state.nodes[0].node_gross_losses, MQ(517.17535106)) &&
+                  Money_IsZero(r->state.nodes[0].node_gross_wins));
             // per-leg sign != pair sign — THE "looks 1W+1L but is 1L" distinction (FIX-A):
             check("F-018 L: last_was_win bit0 SET (leg A won) + bit1 CLEAR (leg B lost) — per-leg != pair",
                   (r->oms.last_was_win_bitmap & BITMAP_BIT_U16(0)) != 0 &&
                   (r->oms.last_was_win_bitmap & BITMAP_BIT_U16(1)) == 0);
             check("F-018 L: partner_pending bit CLEARED + pnl==0 (the pair resolved + reset)",
                   !BITMAP_IS_SET(r->state.partner_pending_bitmap, BITMAP_BIT_U16(0)) &&
-                  Money_IsZero(r->state.cores[0].partner_pending_pnl));
-            check("F-018 L: core_open_notional back to 0 / both slots closed (active_bitmap & 0x3 == 0)",
-                  Money_IsZero(r->state.cores[0].core_open_notional) &&
+                  Money_IsZero(r->state.nodes[0].partner_pending_pnl));
+            check("F-018 L: node_open_notional back to 0 / both slots closed (active_bitmap & 0x3 == 0)",
+                  Money_IsZero(r->state.nodes[0].node_open_notional) &&
                   (r->oms.portfolio.active_bitmap & 0x3) == 0);
             check("F-018 L: last_opened_mask==0 / last_closed_mask==0 (drain consumed both)",
                   r->oms.last_opened_mask == 0 && r->oms.last_closed_mask == 0);
-            check("F-018 L: core_realized reconciles oms.realized_pnl (exact, D-190 cross-path lock)",
-                  Money_Eq(r->state.cores[0].core_realized, r->oms.realized_pnl));
-            check("F-018 L: core_fees reconciles oms.total_fees (exact)",
-                  Money_Eq(r->state.cores[0].core_fees, r->oms.total_fees));
+            check("F-018 L: node_realized reconciles oms.realized_pnl (exact, D-190 cross-path lock)",
+                  Money_Eq(r->state.nodes[0].node_realized, r->oms.realized_pnl));
+            check("F-018 L: node_fees reconciles oms.total_fees (exact)",
+                  Money_Eq(r->state.nodes[0].node_fees, r->oms.total_fees));
             // D-190 divergence witness — leg B (the oms-ts-1d anchor) exercises the 1-mul/2-mul split (FIX-1):
             { Money g1 = Money_FillGross(ENTRY, MQ(38586.72189860), MQ(0.44050204));
               Money g2 = Money_Sub(Money_Mul(MQ(38586.72189860), MQ(0.44050204)), Money_Mul(ENTRY, MQ(0.44050204)));
@@ -9500,33 +9500,33 @@ e3_skip_load:;
             fill_leg(r, 1, ORDER_MARKET_SELL, MQ(40044.86126179), MQ(3.67813318));  // leg B exit TP2
             EventLoop_DrainPostFill(&r->state, &r->oms, 0);
 
-            check("F-018 W: core_wins==1 / core_losses==0 (paired net-positive = ONE win)",
-                  r->state.cores[0].core_wins == 1 && r->state.cores[0].core_losses == 0);
+            check("F-018 W: node_wins==1 / node_losses==0 (paired net-positive = ONE win)",
+                  r->state.nodes[0].node_wins == 1 && r->state.nodes[0].node_losses == 0);
             check("F-018 W: exits_processed==2 / entries_processed==2",
-                  r->state.cores[0].exits_processed == 2 && r->state.cores[0].entries_processed == 2);
-            check("F-018 W: core_realized == 22695.66519128 (pair net, exact — A-1 ULP-verified)",
-                  Money_Eq(r->state.cores[0].core_realized, MQ(22695.66519128)));
-            check("F-018 W: core_fees == 387.13468997 (both legs' round-trip fees)",
-                  Money_Eq(r->state.cores[0].core_fees, MQ(387.13468997)));
-            check("F-018 W: core_gross_wins == 22695.66519128 (=pair net) / core_gross_losses == 0",
-                  Money_Eq(r->state.cores[0].core_gross_wins, MQ(22695.66519128)) &&
-                  Money_IsZero(r->state.cores[0].core_gross_losses));
+                  r->state.nodes[0].exits_processed == 2 && r->state.nodes[0].entries_processed == 2);
+            check("F-018 W: node_realized == 22695.66519128 (pair net, exact — A-1 ULP-verified)",
+                  Money_Eq(r->state.nodes[0].node_realized, MQ(22695.66519128)));
+            check("F-018 W: node_fees == 387.13468997 (both legs' round-trip fees)",
+                  Money_Eq(r->state.nodes[0].node_fees, MQ(387.13468997)));
+            check("F-018 W: node_gross_wins == 22695.66519128 (=pair net) / node_gross_losses == 0",
+                  Money_Eq(r->state.nodes[0].node_gross_wins, MQ(22695.66519128)) &&
+                  Money_IsZero(r->state.nodes[0].node_gross_losses));
             // FIX-A: symmetric per-leg witness — BOTH legs won -> bit0 SET + bit1 SET (vs the pair's single win):
             check("F-018 W: last_was_win bit0 SET + bit1 SET (both legs won) — symmetric per-leg witness",
                   (r->oms.last_was_win_bitmap & BITMAP_BIT_U16(0)) != 0 &&
                   (r->oms.last_was_win_bitmap & BITMAP_BIT_U16(1)) != 0);
             check("F-018 W: partner_pending bit CLEARED + pnl==0",
                   !BITMAP_IS_SET(r->state.partner_pending_bitmap, BITMAP_BIT_U16(0)) &&
-                  Money_IsZero(r->state.cores[0].partner_pending_pnl));
-            check("F-018 W: core_open_notional back to 0 / both slots closed",
-                  Money_IsZero(r->state.cores[0].core_open_notional) &&
+                  Money_IsZero(r->state.nodes[0].partner_pending_pnl));
+            check("F-018 W: node_open_notional back to 0 / both slots closed",
+                  Money_IsZero(r->state.nodes[0].node_open_notional) &&
                   (r->oms.portfolio.active_bitmap & 0x3) == 0);
             check("F-018 W: last_opened_mask==0 / last_closed_mask==0",
                   r->oms.last_opened_mask == 0 && r->oms.last_closed_mask == 0);
-            check("F-018 W: core_realized reconciles oms.realized_pnl (exact, D-190 lock)",
-                  Money_Eq(r->state.cores[0].core_realized, r->oms.realized_pnl));
-            check("F-018 W: core_fees reconciles oms.total_fees (exact)",
-                  Money_Eq(r->state.cores[0].core_fees, r->oms.total_fees));
+            check("F-018 W: node_realized reconciles oms.realized_pnl (exact, D-190 lock)",
+                  Money_Eq(r->state.nodes[0].node_realized, r->oms.realized_pnl));
+            check("F-018 W: node_fees reconciles oms.total_fees (exact)",
+                  Money_Eq(r->state.nodes[0].node_fees, r->oms.total_fees));
             // D-190 divergence witness — leg B (TP2) exercises the split (FIX-1):
             { Money g1 = Money_FillGross(ENTRY, MQ(40044.86126179), MQ(3.67813318));
               Money g2 = Money_Sub(Money_Mul(MQ(40044.86126179), MQ(3.67813318)), Money_Mul(ENTRY, MQ(3.67813318)));
@@ -9559,7 +9559,7 @@ e3_skip_load:;
         struct R {
             tt::OrderManagerState<64> oms;
             tt::EventLoopState<64>    state;
-            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
+            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_NODE_TICK_RING_SIZE> tick_ring;
             tt::ExecutionCore<64>     core;
         };
 
@@ -9607,17 +9607,17 @@ e3_skip_load:;
             seed_paired_exit(r, +5.0, +10.0);  // TP1 + TP2
             tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
 
-            check("v4.7.21 (1): TP+TP paired → core_wins == 1",
-                  r->state.cores[0].core_wins == 1);
-            check("v4.7.21 (1): TP+TP paired → core_losses == 0",
-                  r->state.cores[0].core_losses == 0);
+            check("v4.7.21 (1): TP+TP paired → node_wins == 1",
+                  r->state.nodes[0].node_wins == 1);
+            check("v4.7.21 (1): TP+TP paired → node_losses == 0",
+                  r->state.nodes[0].node_losses == 0);
             check("v4.7.21 (1): pairing flag cleared after both legs drained",
                   !BITMAP_IS_SET(r->state.partner_pending_bitmap, BITMAP_BIT_U16(0)));
             // v4.7.25: gross win bucket should hold the total net (5+10=15)
-            check("v4.7.25 (1): TP+TP paired → core_gross_wins == 15.0",
-                  fabs(Money_ToDouble(r->state.cores[0].core_gross_wins) - 15.0) < 0.001);
-            check("v4.7.25 (1): TP+TP paired → core_gross_losses untouched",
-                  Money_IsZero(r->state.cores[0].core_gross_losses));
+            check("v4.7.25 (1): TP+TP paired → node_gross_wins == 15.0",
+                  fabs(Money_ToDouble(r->state.nodes[0].node_gross_wins) - 15.0) < 0.001);
+            check("v4.7.25 (1): TP+TP paired → node_gross_losses untouched",
+                  Money_IsZero(r->state.nodes[0].node_gross_losses));
             delete r;
         }
 
@@ -9639,15 +9639,15 @@ e3_skip_load:;
             seed_paired_exit(r, +3.0, -8.0);  // TP1 small win + SL larger loss = net -5
             tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
 
-            check("v4.7.21 (2): TP+SL paired (net negative) → core_wins == 0",
-                  r->state.cores[0].core_wins == 0);
-            check("v4.7.21 (2): TP+SL paired (net negative) → core_losses == 1",
-                  r->state.cores[0].core_losses == 1);
+            check("v4.7.21 (2): TP+SL paired (net negative) → node_wins == 0",
+                  r->state.nodes[0].node_wins == 0);
+            check("v4.7.21 (2): TP+SL paired (net negative) → node_losses == 1",
+                  r->state.nodes[0].node_losses == 1);
             // v4.7.25: gross loss bucket holds magnitude of -5.0 net = 5.0
-            check("v4.7.25 (2): TP+SL paired (net -5) → core_gross_losses == 5.0",
-                  fabs(Money_ToDouble(r->state.cores[0].core_gross_losses) - 5.0) < 0.001);
-            check("v4.7.25 (2): TP+SL paired → core_gross_wins untouched",
-                  Money_IsZero(r->state.cores[0].core_gross_wins));
+            check("v4.7.25 (2): TP+SL paired (net -5) → node_gross_losses == 5.0",
+                  fabs(Money_ToDouble(r->state.nodes[0].node_gross_losses) - 5.0) < 0.001);
+            check("v4.7.25 (2): TP+SL paired → node_gross_wins untouched",
+                  Money_IsZero(r->state.nodes[0].node_gross_wins));
             delete r;
         }
 
@@ -9679,10 +9679,10 @@ e3_skip_load:;
             r->oms.last_closed_mask = (uint16_t)0x1;
             tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
 
-            check("v4.7.21 (3): partials off → single win bumps core_wins == 1",
-                  r->state.cores[0].core_wins == 1);
-            check("v4.7.21 (3): partials off → core_losses unchanged",
-                  r->state.cores[0].core_losses == 0);
+            check("v4.7.21 (3): partials off → single win bumps node_wins == 1",
+                  r->state.nodes[0].node_wins == 1);
+            check("v4.7.21 (3): partials off → node_losses unchanged",
+                  r->state.nodes[0].node_losses == 0);
             check("v4.7.21 (3): partials off → pending stash never set",
                   !BITMAP_IS_SET(r->state.partner_pending_bitmap, BITMAP_BIT_U16(0)));
             delete r;
@@ -9711,7 +9711,7 @@ e3_skip_load:;
         struct R {
             tt::OrderManagerState<64>                                        oms;
             tt::EventLoopState<64>                                           state;
-            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE>    tick_ring;
+            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_NODE_TICK_RING_SIZE>    tick_ring;
             tt::ExecutionCore<64>                                            core;
             RollingStats<64, 128>                                            rolling;
             RollingStats<64, 512>                                            rolling_long;
@@ -9766,10 +9766,10 @@ e3_skip_load:;
                                 1000000ULL, 0, 0 };
         tt::ShardedBacktest_RunTick(&r->drv, dummy, 0);
 
-        check("v4.7.21 backtest: TP+SL paired through driver → core_wins == 0",
-              r->state.cores[0].core_wins == 0);
-        check("v4.7.21 backtest: TP+SL paired through driver → core_losses == 1",
-              r->state.cores[0].core_losses == 1);
+        check("v4.7.21 backtest: TP+SL paired through driver → node_wins == 0",
+              r->state.nodes[0].node_wins == 0);
+        check("v4.7.21 backtest: TP+SL paired through driver → node_losses == 1",
+              r->state.nodes[0].node_losses == 1);
         check("v4.7.21 backtest: pairing flag cleared after backtest drain",
               !BITMAP_IS_SET(r->state.partner_pending_bitmap, BITMAP_BIT_U16(0)));
         check("v4.7.21 backtest: closed_mask consumed by driver drain",
@@ -9828,7 +9828,7 @@ e3_skip_load:;
               r->oms.order_bitmap == 0);
 
         // Drain — calls OrderManager_Submit serially for each pushed command
-        int drained = tt::OMS_DrainSubmit(&r->oms, /*num_cores=*/3);
+        int drained = tt::OMS_DrainSubmit(&r->oms, /*num_nodes=*/3);
         check("v4.7.37: DrainSubmit returns 3 (all pushed commands consumed)",
               drained == 3);
         check("v4.7.37: order_bitmap reflects 3 reserved slots after drain",
@@ -9850,12 +9850,12 @@ e3_skip_load:;
         tt::SubmitCommand<64> bad_invalid(/*invalid*/-1, tt::ORDER_MARKET_BUY,
                                            MQ(0.01), 0, nullptr);
         bool bad = tt::OMS_PushSubmit(&r->oms, bad_invalid);
-        check("v4.7.37: PushSubmit rejects invalid core_id=-1", !bad);
-        tt::SubmitCommand<64> bad_too_high(/*too high*/MAX_EXECUTION_CORES,
+        check("v4.7.37: PushSubmit rejects invalid node_id=-1", !bad);
+        tt::SubmitCommand<64> bad_too_high(/*too high*/MAX_EXECUTION_NODES,
                                             tt::ORDER_MARKET_BUY,
                                             MQ(0.01), 0, nullptr);
         bad = tt::OMS_PushSubmit(&r->oms, bad_too_high);
-        check("v4.7.37: PushSubmit rejects core_id >= MAX_EXECUTION_CORES",
+        check("v4.7.37: PushSubmit rejects node_id >= MAX_EXECUTION_NODES",
               !bad);
 
         delete r;
@@ -9875,7 +9875,7 @@ e3_skip_load:;
         struct R {
             tt::OrderManagerState<64> oms;
             tt::EventLoopState<64> state;
-            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
+            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_NODE_TICK_RING_SIZE> tick_ring;
             tt::ExecutionCore<64> cores_ec[4];
         };
         R* r1 = new R();
@@ -9906,21 +9906,21 @@ e3_skip_load:;
         bool notional_match = true;
         bool dirty_match = true;
         for (int c = 0; c < 4; ++c) {
-            const auto& a = r1->state.cores[c];
-            const auto& b = r2->state.cores[c];
+            const auto& a = r1->state.nodes[c];
+            const auto& b = r2->state.nodes[c];
             if (a.entries_processed != b.entries_processed ||
                 a.exits_processed != b.exits_processed ||
-                a.core_wins != b.core_wins ||
-                a.core_losses != b.core_losses ||
+                a.node_wins != b.node_wins ||
+                a.node_losses != b.node_losses ||
                 a.sl_cooldown_remaining != b.sl_cooldown_remaining) {
                 counters_match = false;
             }
-            if (Money_ToDouble(a.core_open_notional) != Money_ToDouble(b.core_open_notional) ||
-                Money_ToDouble(a.core_realized) != Money_ToDouble(b.core_realized) ||
-                Money_ToDouble(a.core_fees) != Money_ToDouble(b.core_fees)) {
+            if (Money_ToDouble(a.node_open_notional) != Money_ToDouble(b.node_open_notional) ||
+                Money_ToDouble(a.node_realized) != Money_ToDouble(b.node_realized) ||
+                Money_ToDouble(a.node_fees) != Money_ToDouble(b.node_fees)) {
                 notional_match = false;
             }
-            if (CORE_STATE_FLAG_IS_SET(a, DIRTY) != CORE_STATE_FLAG_IS_SET(b, DIRTY)) {
+            if (NODE_STATE_FLAG_IS_SET(a, DIRTY) != NODE_STATE_FLAG_IS_SET(b, DIRTY)) {
                 dirty_match = false;
             }
         }
@@ -9931,8 +9931,8 @@ e3_skip_load:;
         // Mutate counters non-trivially and re-run; identity must hold
         for (R* rp : {r1, r2}) {
             for (int c = 0; c < 4; ++c) {
-                rp->state.cores[c].entries_processed = (uint32_t)(c + 5);
-                rp->state.cores[c].exits_processed = (uint32_t)(c + 2);
+                rp->state.nodes[c].entries_processed = (uint32_t)(c + 5);
+                rp->state.nodes[c].exits_processed = (uint32_t)(c + 2);
             }
         }
         tt::EventLoop_DrainPostFill(&r1->state, &r1->oms, 0);
@@ -9941,10 +9941,10 @@ e3_skip_load:;
         }
         bool counters_match2 = true;
         for (int c = 0; c < 4; ++c) {
-            if (r1->state.cores[c].entries_processed !=
-                    r2->state.cores[c].entries_processed ||
-                r1->state.cores[c].exits_processed !=
-                    r2->state.cores[c].exits_processed) {
+            if (r1->state.nodes[c].entries_processed !=
+                    r2->state.nodes[c].entries_processed ||
+                r1->state.nodes[c].exits_processed !=
+                    r2->state.nodes[c].exits_processed) {
                 counters_match2 = false;
             }
         }
@@ -9964,7 +9964,7 @@ e3_skip_load:;
         struct R {
             tt::OrderManagerState<64> oms;
             tt::EventLoopState<64> state;
-            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
+            tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_NODE_TICK_RING_SIZE> tick_ring;
             tt::ExecutionCore<64> cores_ec[4];
         };
         R* r = new R();
@@ -9977,18 +9977,18 @@ e3_skip_load:;
                 MQ(60100.0), MQ(59900.0),
                 MQ(0.01));
             // Mark each core with a distinct sentinel
-            r->state.cores[c].entries_processed = (uint32_t)(100 + c);
-            r->state.cores[c].exits_processed   = (uint32_t)(200 + c);
+            r->state.nodes[c].entries_processed = (uint32_t)(100 + c);
+            r->state.nodes[c].exits_processed   = (uint32_t)(200 + c);
         }
 
         // Snapshot SIBLING fields BEFORE call (skip atomics — they're untouched)
         uint32_t pre_entries[4], pre_exits[4];
         double pre_notional[4], pre_realized[4];
         for (int c = 0; c < 4; ++c) {
-            pre_entries[c] = r->state.cores[c].entries_processed;
-            pre_exits[c]   = r->state.cores[c].exits_processed;
-            pre_notional[c] = Money_ToDouble(r->state.cores[c].core_open_notional);
-            pre_realized[c] = Money_ToDouble(r->state.cores[c].core_realized);
+            pre_entries[c] = r->state.nodes[c].entries_processed;
+            pre_exits[c]   = r->state.nodes[c].exits_processed;
+            pre_notional[c] = Money_ToDouble(r->state.nodes[c].node_open_notional);
+            pre_realized[c] = Money_ToDouble(r->state.nodes[c].node_realized);
         }
 
         // Call OneCore for c=2 ONLY
@@ -9999,17 +9999,17 @@ e3_skip_load:;
             char nm[80];
             snprintf(nm, sizeof(nm),
                 "v5.0.4: OneCore(c=2) leaves c=%d entries unchanged", sibling);
-            check(nm, r->state.cores[sibling].entries_processed == pre_entries[sibling]);
+            check(nm, r->state.nodes[sibling].entries_processed == pre_entries[sibling]);
             snprintf(nm, sizeof(nm),
                 "v5.0.4: OneCore(c=2) leaves c=%d exits unchanged", sibling);
-            check(nm, r->state.cores[sibling].exits_processed == pre_exits[sibling]);
+            check(nm, r->state.nodes[sibling].exits_processed == pre_exits[sibling]);
             snprintf(nm, sizeof(nm),
                 "v5.0.4: OneCore(c=2) leaves c=%d notional unchanged", sibling);
-            check(nm, Money_ToDouble(r->state.cores[sibling].core_open_notional) ==
+            check(nm, Money_ToDouble(r->state.nodes[sibling].node_open_notional) ==
                   pre_notional[sibling]);
             snprintf(nm, sizeof(nm),
                 "v5.0.4: OneCore(c=2) leaves c=%d realized unchanged", sibling);
-            check(nm, Money_ToDouble(r->state.cores[sibling].core_realized) ==
+            check(nm, Money_ToDouble(r->state.nodes[sibling].node_realized) ==
                   pre_realized[sibling]);
         }
         delete r;
@@ -10069,7 +10069,7 @@ e3_skip_load:;
         // round-trip via TUI_PopulateTopology.
         TUISnapshot snap;
         memset(&snap, 0, sizeof(snap));
-        snap.per_core_count = 4;
+        snap.per_node_count = 4;
 
         int hot_cpu[16] = {1, 2, 3, 4, 0,0,0,0, 0,0,0,0, 0,0,0,0};
         int slow_cpu[16] = {6, 7, 8, 9, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1};
@@ -10091,15 +10091,15 @@ e3_skip_load:;
         check("v5.0.4: topology pin_offset round-trips",
               snap.slow_path_pin_offset == 0);
         check("v5.0.4: per-core hot CPU round-trips for engine 0",
-              snap.per_core[0].hot_path_cpu == 1);
+              snap.per_node[0].hot_path_cpu == 1);
         check("v5.0.4: per-core hot CPU round-trips for engine 3",
-              snap.per_core[3].hot_path_cpu == 4);
+              snap.per_node[3].hot_path_cpu == 4);
         check("v5.0.4: per-core slow CPU round-trips for engine 0",
-              snap.per_core[0].slow_path_cpu == 6);
+              snap.per_node[0].slow_path_cpu == 6);
         check("v5.0.4: per-core slow CPU round-trips for engine 3",
-              snap.per_core[3].slow_path_cpu == 9);
+              snap.per_node[3].slow_path_cpu == 9);
         check("v5.0.4: per-core poll round-trips for engine 1",
-              snap.per_core[1].poll_interval_ticks == 50);
+              snap.per_node[1].poll_interval_ticks == 50);
 
         // Re-populate with different values — old values must be overwritten
         for (int i = 0; i < 4; ++i) {
@@ -10111,9 +10111,9 @@ e3_skip_load:;
         check("v5.0.4: topology re-populate updates pin_offset (0→-1)",
               snap.slow_path_pin_offset == -1);
         check("v5.0.4: topology re-populate updates per-core slow CPU",
-              snap.per_core[0].slow_path_cpu == -1);
+              snap.per_node[0].slow_path_cpu == -1);
         check("v5.0.4: topology re-populate updates per-core poll",
-              snap.per_core[2].poll_interval_ticks == 999);
+              snap.per_node[2].poll_interval_ticks == 999);
     }
 
     // ─────────────────────────────────────────────────────────────────────
@@ -10147,7 +10147,7 @@ e3_skip_load:;
             BITMAP_CLR(cfg.lifecycle_cfg_flags, MASK_LIFECYCLE_CFG_PARTIAL_EXIT_ENABLED);  // simpler path
             tt::GateParameters<64> out;
             tt::GateParameters_Init(&out);
-            tt::Strategy_BuildParameters<64>(STRATEGY_MEAN_REVERSION, &rs, &cfg.cores[0],
+            tt::Strategy_BuildParameters<64>(STRATEGY_MEAN_REVERSION, &rs, &cfg.nodes[0],
                 MQ(1000.0), &out);
             check("v5.1.10: TP=1.0% > floor 0.3% → BUY_BLOCKED clear",
                   (out.flags & tt::GATE_FLAG_BUY_BLOCKED) == 0);
@@ -10160,7 +10160,7 @@ e3_skip_load:;
             cfg.take_profit_pct = MQ(0.003);  // 0.3% TP, == floor
             tt::GateParameters<64> out;
             tt::GateParameters_Init(&out);
-            tt::Strategy_BuildParameters<64>(STRATEGY_MEAN_REVERSION, &rs, &cfg.cores[0],
+            tt::Strategy_BuildParameters<64>(STRATEGY_MEAN_REVERSION, &rs, &cfg.nodes[0],
                 MQ(1000.0), &out);
             check("v5.1.10: TP exactly at floor → BUY_BLOCKED clear (LessThan, not LE)",
                   (out.flags & tt::GATE_FLAG_BUY_BLOCKED) == 0);
@@ -10172,7 +10172,7 @@ e3_skip_load:;
             ControllerConfig_PopulateCoresFromFlat(&cfg);  // v5.15.5.F.4c.3 WIP2c.2 — sync flat→cores[0]
             tt::GateParameters<64> out;
             tt::GateParameters_Init(&out);
-            tt::Strategy_BuildParameters<64>(STRATEGY_MEAN_REVERSION, &rs, &cfg.cores[0],
+            tt::Strategy_BuildParameters<64>(STRATEGY_MEAN_REVERSION, &rs, &cfg.nodes[0],
                 MQ(1000.0), &out);
             check("v5.1.10: TP=0.1% < floor 0.3% → BUY_BLOCKED set",
                   (out.flags & tt::GATE_FLAG_BUY_BLOCKED) != 0);
@@ -10186,7 +10186,7 @@ e3_skip_load:;
             ControllerConfig_PopulateCoresFromFlat(&cfg);  // v5.15.5.F.4c.3 WIP2c.2 — sync flat→cores[0]
             tt::GateParameters<64> out;
             tt::GateParameters_Init(&out);
-            tt::Strategy_BuildParameters<64>(STRATEGY_MEAN_REVERSION, &rs, &cfg.cores[0],
+            tt::Strategy_BuildParameters<64>(STRATEGY_MEAN_REVERSION, &rs, &cfg.nodes[0],
                 MQ(1000.0), &out);
             check("v5.1.10: fee_rate_taker=0 falls back to fee_rate; TP 0.5% < 3×0.2%=0.6% → BUY_BLOCKED set",
                   (out.flags & tt::GATE_FLAG_BUY_BLOCKED) != 0);
@@ -10199,7 +10199,7 @@ e3_skip_load:;
             cfg.take_profit_pct = MQ(0.01);
             tt::GateParameters<64> out;
             tt::GateParameters_Init(&out);
-            tt::Strategy_BuildParameters<64>(STRATEGY_NONE, &rs, &cfg.cores[0],
+            tt::Strategy_BuildParameters<64>(STRATEGY_NONE, &rs, &cfg.nodes[0],
                 MQ(1000.0), &out);
             check("v5.1.10: STRATEGY_NONE → tp_pct=0 → BUY_BLOCKED NOT set (skip-on-zero guard)",
                   (out.flags & tt::GATE_FLAG_BUY_BLOCKED) == 0);
@@ -11028,9 +11028,9 @@ e3_skip_load:;
         tt::EventLoopState<FP> state;
         tt::EventLoopState_Init(&state, &oms);
         check("v5.4.0p1: default strategy_state is nullptr",
-              state.cores[0].strategy_state == nullptr);
+              state.nodes[0].strategy_state == nullptr);
         check("v5.4.0p1: default strategy_state_kind is 0xFF (uninit)",
-              state.cores[0].strategy_state_kind == 0xFF);
+              state.nodes[0].strategy_state_kind == 0xFF);
         tt::EventLoopState_Free(&state);
     }
     {
@@ -11045,15 +11045,15 @@ e3_skip_load:;
 
         tt::Strategy_InitPerCore(&state, 0, STRATEGY_SIMPLE_DIP, &rolling, &cfg);
         check("v5.4.0p1: SimpleDip Init allocates strategy_state",
-              state.cores[0].strategy_state != nullptr);
+              state.nodes[0].strategy_state != nullptr);
         check("v5.4.0p1: SimpleDip Init sets strategy_state_kind",
-              state.cores[0].strategy_state_kind == STRATEGY_SIMPLE_DIP);
+              state.nodes[0].strategy_state_kind == STRATEGY_SIMPLE_DIP);
 
         tt::Strategy_FreePerCore(&state, 0);
         check("v5.4.0p1: SimpleDip Free clears strategy_state",
-              state.cores[0].strategy_state == nullptr);
+              state.nodes[0].strategy_state == nullptr);
         check("v5.4.0p1: SimpleDip Free clears kind to 0xFF",
-              state.cores[0].strategy_state_kind == 0xFF);
+              state.nodes[0].strategy_state_kind == 0xFF);
 
         tt::EventLoopState_Free(&state);
     }
@@ -11075,11 +11075,11 @@ e3_skip_load:;
             tt::Strategy_InitPerCore(&state, 0, kinds[k], &rolling, &cfg);
             char buf[128];
             snprintf(buf, sizeof(buf), "v5.4.0p1: %s Init allocates", names[k]);
-            check(buf, state.cores[0].strategy_state != nullptr &&
-                       state.cores[0].strategy_state_kind == kinds[k]);
+            check(buf, state.nodes[0].strategy_state != nullptr &&
+                       state.nodes[0].strategy_state_kind == kinds[k]);
             tt::Strategy_FreePerCore(&state, 0);
             snprintf(buf, sizeof(buf), "v5.4.0p1: %s Free releases cleanly", names[k]);
-            check(buf, state.cores[0].strategy_state == nullptr);
+            check(buf, state.nodes[0].strategy_state == nullptr);
         }
         tt::EventLoopState_Free(&state);
     }
@@ -11093,15 +11093,15 @@ e3_skip_load:;
         RollingStats<FP, 128> rolling = RollingStats_Init<FP, 128>();
 
         tt::Strategy_InitPerCore(&state, 0, STRATEGY_MOMENTUM, &rolling, &cfg);
-        void* first_ptr = state.cores[0].strategy_state;
+        void* first_ptr = state.nodes[0].strategy_state;
         check("v5.4.0p1: first Init allocates Momentum",
-              first_ptr != nullptr && state.cores[0].strategy_state_kind == STRATEGY_MOMENTUM);
+              first_ptr != nullptr && state.nodes[0].strategy_state_kind == STRATEGY_MOMENTUM);
 
         // Re-init with MR — must free the old Momentum state and allocate fresh MR
         tt::Strategy_InitPerCore(&state, 0, STRATEGY_MEAN_REVERSION, &rolling, &cfg);
         check("v5.4.0p1: re-Init swaps strategy kind cleanly",
-              state.cores[0].strategy_state != nullptr &&
-              state.cores[0].strategy_state_kind == STRATEGY_MEAN_REVERSION);
+              state.nodes[0].strategy_state != nullptr &&
+              state.nodes[0].strategy_state_kind == STRATEGY_MEAN_REVERSION);
 
         tt::Strategy_FreePerCore(&state, 0);
         tt::EventLoopState_Free(&state);
@@ -11117,13 +11117,13 @@ e3_skip_load:;
 
         tt::Strategy_InitPerCore(&state, 0, STRATEGY_AUTO, &rolling, &cfg);
         check("v5.4.0p1: STRATEGY_AUTO allocates no state (routes to sub-strategy)",
-              state.cores[0].strategy_state == nullptr &&
-              state.cores[0].strategy_state_kind == STRATEGY_AUTO);
+              state.nodes[0].strategy_state == nullptr &&
+              state.nodes[0].strategy_state_kind == STRATEGY_AUTO);
 
         tt::Strategy_InitPerCore(&state, 0, STRATEGY_NONE, &rolling, &cfg);
         check("v5.4.0p1: STRATEGY_NONE allocates no state (no trading)",
-              state.cores[0].strategy_state == nullptr &&
-              state.cores[0].strategy_state_kind == STRATEGY_NONE);
+              state.nodes[0].strategy_state == nullptr &&
+              state.nodes[0].strategy_state_kind == STRATEGY_NONE);
 
         tt::EventLoopState_Free(&state);
     }
@@ -11136,7 +11136,7 @@ e3_skip_load:;
         tt::Strategy_FreePerCore(&state, 0);  // first call — already null
         tt::Strategy_FreePerCore(&state, 0);  // second call — still null
         check("v5.4.0p1: Strategy_FreePerCore is idempotent (no crash on double-call)",
-              state.cores[0].strategy_state == nullptr);
+              state.nodes[0].strategy_state == nullptr);
         tt::EventLoopState_Free(&state);
     }
 
@@ -11158,7 +11158,7 @@ e3_skip_load:;
 
         SimpleDipState<FP> sdip{};
         tt::GateParameters<FP> out_with_state{};
-        SimpleDip_BuildParameters(&rolling, &cfg.cores[0], MQ(1000.0),
+        SimpleDip_BuildParameters(&rolling, &cfg.nodes[0], MQ(1000.0),
                                    &out_with_state, (RollingStats<FP, 512>*)nullptr,
                                    &sdip);
         check("v5.4.0p2.1: state-aware Build populates state->recent_high",
@@ -11169,7 +11169,7 @@ e3_skip_load:;
         // Same call with nullptr state — must produce identical gate output
         // (state is a write-only side-channel, doesn't affect numerics).
         tt::GateParameters<FP> out_no_state{};
-        SimpleDip_BuildParameters(&rolling, &cfg.cores[0], MQ(1000.0),
+        SimpleDip_BuildParameters(&rolling, &cfg.nodes[0], MQ(1000.0),
                                    &out_no_state, (RollingStats<FP, 512>*)nullptr,
                                    (SimpleDipState<FP>*)nullptr);
         check("v5.4.0p2.1: nullptr-state path produces identical bg threshold",
@@ -11194,7 +11194,7 @@ e3_skip_load:;
 
         SimpleDipState<FP> sdip{};
         tt::GateParameters<FP> out{};
-        tt::Strategy_BuildParameters(STRATEGY_SIMPLE_DIP, &rolling, &cfg.cores[0],
+        tt::Strategy_BuildParameters(STRATEGY_SIMPLE_DIP, &rolling, &cfg.nodes[0],
                                       MQ(500.0), &out,
                                       (RollingStats<FP, 512>*)nullptr,
                                       nullptr, &sdip);
@@ -11214,7 +11214,7 @@ e3_skip_load:;
                                    FPN_FromDouble<64>(50000.0),
                                    FPN_Zero<FP>(), 0, &cfg);
         check("v5.4.0p2.1: AdaptPerCore is no-op when strategy_state is null",
-              state.cores[0].strategy_state == nullptr);
+              state.nodes[0].strategy_state == nullptr);
 
         // Now allocate state and verify Adapt runs without crashing.
         RollingStats<FP, 128> rolling = RollingStats_Init<FP, 128>();
@@ -11223,7 +11223,7 @@ e3_skip_load:;
                                    FPN_FromDouble<64>(50000.0),
                                    FPN_Zero<FP>(), 0, &cfg);
         check("v5.4.0p2.1: AdaptPerCore safely runs SimpleDip_Adapt with allocated state",
-              state.cores[0].strategy_state != nullptr);
+              state.nodes[0].strategy_state != nullptr);
         tt::Strategy_FreePerCore(&state, 0);
         tt::EventLoopState_Free(&state);
     }
@@ -11244,7 +11244,7 @@ e3_skip_load:;
                               FPN_FromDouble<64>(1.0));
         }
         tt::Strategy_InitPerCore(&state, 0, STRATEGY_MEAN_REVERSION, &rolling, &cfg);
-        auto* mr = static_cast<MeanReversionState<FP>*>(state.cores[0].strategy_state);
+        auto* mr = static_cast<MeanReversionState<FP>*>(state.nodes[0].strategy_state);
         check("v5.4.0p2.2: MR Init seeds live_offset_pct from cfg",
               FPN_Equal(mr->live_offset_pct, Money_ToBinary(cfg.entry_offset_pct)));
         check("v5.4.0p2.2: MR Init seeds live_vol_mult from cfg",
@@ -11271,7 +11271,7 @@ e3_skip_load:;
 
         // nullptr-state path (legacy)
         tt::GateParameters<FP> out_legacy{};
-        tt::MeanReversion_BuildParameters(&rolling, &cfg.cores[0], MQ(1000.0),
+        tt::MeanReversion_BuildParameters(&rolling, &cfg.nodes[0], MQ(1000.0),
                                            &out_legacy);
 
         // State-aware path with deliberately DIFFERENT live values
@@ -11280,7 +11280,7 @@ e3_skip_load:;
         mr.live_vol_mult    = FPN_FromDouble<64>(3.0);
         mr.live_stddev_mult = FPN_Zero<FP>();
         tt::GateParameters<FP> out_state{};
-        tt::MeanReversion_BuildParameters(&rolling, &cfg.cores[0], MQ(1000.0),
+        tt::MeanReversion_BuildParameters(&rolling, &cfg.nodes[0], MQ(1000.0),
                                            &out_state, &mr);
         check("v5.4.0p2.2: state-aware MR produces lower bg threshold (bigger dip)",
               Money_Lt(out_state.bg_price_threshold, out_legacy.bg_price_threshold));
@@ -11304,7 +11304,7 @@ e3_skip_load:;
         mr.live_stddev_mult = FPN_Zero<FP>();
 
         tt::GateParameters<FP> out{};
-        tt::Strategy_BuildParameters(STRATEGY_MEAN_REVERSION, &rolling, &cfg.cores[0],
+        tt::Strategy_BuildParameters(STRATEGY_MEAN_REVERSION, &rolling, &cfg.nodes[0],
                                       MQ(500.0), &out,
                                       (RollingStats<FP, 512>*)nullptr,
                                       nullptr, &mr);
@@ -11328,22 +11328,22 @@ e3_skip_load:;
         // Use a tolerance check to avoid double→FPN_Binary rounding mismatches.
         Money proposal_above = MQ(49950.0);
         bool wrote = tt::Strategy_WriteRatchetSL(&state, 0, proposal_above, entry, &cfg);
-        double stored_d = Money_ToDouble(state.cores[0].pending_params.ratchet_sl);
+        double stored_d = Money_ToDouble(state.nodes[0].pending_params.ratchet_sl);
         check("v5.4.0p2.2: WriteRatchetSL accepts above-floor proposal and caps",
               wrote && stored_d > 49849.0 && stored_d < 49851.0);
         check("v5.4.0p2.2: WriteRatchetSL sets dirty=1 on advance",
-              CORE_STATE_FLAG_IS_SET(state.cores[0], DIRTY));
+              NODE_STATE_FLAG_IS_SET(state.nodes[0], DIRTY));
 
         // Lower proposal (well below current cap) is a no-op since
         // ratchet_sl is now the cap value (~49850).
         Money lower_proposal = MQ(49000.0);
-        CORE_STATE_FLAG_CLR(state.cores[0], DIRTY);
-        Money ratchet_before = state.cores[0].pending_params.ratchet_sl;
+        NODE_STATE_FLAG_CLR(state.nodes[0], DIRTY);
+        Money ratchet_before = state.nodes[0].pending_params.ratchet_sl;
         bool wrote2 = tt::Strategy_WriteRatchetSL(&state, 0, lower_proposal, entry, &cfg);
         check("v5.4.0p2.2: WriteRatchetSL is max-only (lower proposal ignored)",
-              !wrote2 && Money_Eq(state.cores[0].pending_params.ratchet_sl, ratchet_before));
+              !wrote2 && Money_Eq(state.nodes[0].pending_params.ratchet_sl, ratchet_before));
         check("v5.4.0p2.2: WriteRatchetSL leaves dirty unchanged when no advance",
-              !CORE_STATE_FLAG_IS_SET(state.cores[0], DIRTY));
+              !NODE_STATE_FLAG_IS_SET(state.nodes[0], DIRTY));
 
         tt::EventLoopState_Free(&state);
     }
@@ -11359,8 +11359,8 @@ e3_skip_load:;
         tt::Strategy_ExitAdjustPerCore(&state, 0, STRATEGY_MEAN_REVERSION,
                                         MQ(50000.0), &rolling, &cfg);
         check("v5.4.0p2.2: ExitAdjustPerCore is no-op when state is null",
-              state.cores[0].strategy_state == nullptr &&
-              !CORE_STATE_FLAG_IS_SET(state.cores[0], DIRTY));
+              state.nodes[0].strategy_state == nullptr &&
+              !NODE_STATE_FLAG_IS_SET(state.nodes[0], DIRTY));
         tt::EventLoopState_Free(&state);
     }
 
@@ -11375,7 +11375,7 @@ e3_skip_load:;
         cfg.volume_multiplier      = FPN_FromDouble<64>(2.0);
         RollingStats<FP, 128> rolling = RollingStats_Init<FP, 128>();
         tt::Strategy_InitPerCore(&state, 0, STRATEGY_MOMENTUM, &rolling, &cfg);
-        auto* mom = static_cast<MomentumState<FP>*>(state.cores[0].strategy_state);
+        auto* mom = static_cast<MomentumState<FP>*>(state.nodes[0].strategy_state);
         check("v5.4.0p2.3: Momentum Init seeds live_breakout_mult from cfg",
               FPN_Equal(mom->live_breakout_mult, cfg.momentum_breakout_mult));
         check("v5.4.0p2.3: Momentum Init seeds live_vol_mult from cfg",
@@ -11401,7 +11401,7 @@ e3_skip_load:;
 
         // Legacy path (no state): uses entry_offset_pct
         tt::GateParameters<FP> out_legacy{};
-        tt::Momentum_BuildParameters(&rolling, &cfg.cores[0], MQ(1000.0),
+        tt::Momentum_BuildParameters(&rolling, &cfg.nodes[0], MQ(1000.0),
                                       &out_legacy);
 
         // State-aware: large breakout_mult should push entry far above avg
@@ -11409,7 +11409,7 @@ e3_skip_load:;
         mom.live_breakout_mult = FPN_FromDouble<64>(3.0);  // 3σ breakout
         mom.live_vol_mult      = FPN_FromDouble<64>(1.0);
         tt::GateParameters<FP> out_state{};
-        tt::Momentum_BuildParameters(&rolling, &cfg.cores[0], MQ(1000.0),
+        tt::Momentum_BuildParameters(&rolling, &cfg.nodes[0], MQ(1000.0),
                                       &out_state, &mom);
         check("v5.4.0p2.3: state-aware Momentum produces higher bg threshold "
               "(stddev path > pct path)",
@@ -11430,7 +11430,7 @@ e3_skip_load:;
         mom.live_vol_mult      = FPN_FromDouble<64>(1.0);
 
         tt::GateParameters<FP> out{};
-        tt::Strategy_BuildParameters(STRATEGY_MOMENTUM, &rolling, &cfg.cores[0],
+        tt::Strategy_BuildParameters(STRATEGY_MOMENTUM, &rolling, &cfg.nodes[0],
                                       MQ(500.0), &out,
                                       (RollingStats<FP, 512>*)nullptr,
                                       nullptr, &mom);
@@ -11465,7 +11465,7 @@ e3_skip_load:;
                                   FPN_Mul(rolling.price_stddev, FPN_FromDouble<64>(1.0)));
         es_up.last_ema_slope = FPN_FromDouble<64>(0.5);  // rising
         tt::GateParameters<FP> out_up{};
-        tt::EmaCross_BuildParameters(&rolling, &cfg.cores[0], MQ(1000.0),
+        tt::EmaCross_BuildParameters(&rolling, &cfg.nodes[0], MQ(1000.0),
                                       &out_up, &es_up);
         check("v5.4.0p2.4: EmaCross uptrend → bg threshold is non-zero",
               !Money_IsZero(out_up.bg_price_threshold));
@@ -11477,7 +11477,7 @@ e3_skip_load:;
         es_down.last_ema_slope = FPN_FromDouble<64>(-0.5);
         // (two's-comp: FromDouble(-0.5) is already negative; no separate sign-bit set needed)
         tt::GateParameters<FP> out_down{};
-        tt::EmaCross_BuildParameters(&rolling, &cfg.cores[0], MQ(1000.0),
+        tt::EmaCross_BuildParameters(&rolling, &cfg.nodes[0], MQ(1000.0),
                                       &out_down, &es_down);
         check("v5.4.0p2.4: EmaCross no-uptrend → bg threshold zeroed",
               Money_IsZero(out_down.bg_price_threshold));
@@ -11495,7 +11495,7 @@ e3_skip_load:;
                               FPN_FromDouble<64>(1.0));
         }
         tt::Strategy_InitPerCore(&state, 0, STRATEGY_EMA_CROSS, &rolling, &cfg);
-        auto* es = static_cast<EmaCrossState<FP>*>(state.cores[0].strategy_state);
+        auto* es = static_cast<EmaCrossState<FP>*>(state.nodes[0].strategy_state);
         FPN_Binary<FP> prev_seed = es->prev_ema;
         check("v5.4.0p2.4: Init seeds prev_ema from rolling",
               FPN_Equal(prev_seed, rolling.price_avg));
@@ -11526,7 +11526,7 @@ e3_skip_load:;
         ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
 
         tt::GateParameters<FP> out{};
-        tt::EmaCross_BuildParameters(&rolling, &cfg.cores[0], MQ(1000.0),
+        tt::EmaCross_BuildParameters(&rolling, &cfg.nodes[0], MQ(1000.0),
                                       &out, (EmaCrossState<FP>*)nullptr);
         check("v5.4.0p2.4: nullptr-state path produces non-zero threshold (SimpleDip fallback)",
               !Money_IsZero(out.bg_price_threshold));
@@ -11546,15 +11546,15 @@ e3_skip_load:;
         RollingStats<FP, 128> rolling = RollingStats_Init<FP, 128>();
         tt::Strategy_InitPerCore(&state, 0, STRATEGY_ML, &rolling, &cfg);
         check("v5.4.0p2.5: ML Init allocates state",
-              state.cores[0].strategy_state != nullptr);
+              state.nodes[0].strategy_state != nullptr);
 
         // Adapt should not crash + not write the dirty bit.
-        CORE_STATE_FLAG_CLR(state.cores[0], DIRTY);
+        NODE_STATE_FLAG_CLR(state.nodes[0], DIRTY);
         tt::Strategy_AdaptPerCore(&state, 0, STRATEGY_ML,
                                    FPN_FromDouble<64>(50000.0),
                                    FPN_Zero<FP>(), 0, &cfg);
         check("v5.4.0p2.5: ML Adapt is a clean no-op (no dirty bit set)",
-              !CORE_STATE_FLAG_IS_SET(state.cores[0], DIRTY));
+              !NODE_STATE_FLAG_IS_SET(state.nodes[0], DIRTY));
         tt::Strategy_FreePerCore(&state, 0);
         tt::EventLoopState_Free(&state);
     }
@@ -11581,11 +11581,11 @@ e3_skip_load:;
         state.oms->portfolio.positions[0].entry_price = MQ(50000.0);
         state.oms->portfolio.positions[0].original_tp = MQ(50500.0);
 
-        Money ratchet_before = state.cores[0].pending_params.ratchet_sl;
+        Money ratchet_before = state.nodes[0].pending_params.ratchet_sl;
         tt::Strategy_ExitAdjustPerCore(&state, 0, STRATEGY_ML,
                                         MQ(51000.0), &rolling, &cfg);
         check("v5.4.0p2.5: ML ExitAdjust skips when R² < 0.5",
-              Money_Eq(state.cores[0].pending_params.ratchet_sl, ratchet_before));
+              Money_Eq(state.nodes[0].pending_params.ratchet_sl, ratchet_before));
 
         tt::Strategy_FreePerCore(&state, 0);
         state.oms->portfolio.active_bitmap = 0;
@@ -11615,11 +11615,11 @@ e3_skip_load:;
         // floor = 50000 * (1 - 3*0.001) ≈ 49850. trailing_sl > floor → cap to floor.
         tt::Strategy_ExitAdjustPerCore(&state, 0, STRATEGY_ML,
                                         MQ(51000.0), &rolling, &cfg);
-        double stored = Money_ToDouble(state.cores[0].pending_params.ratchet_sl);
+        double stored = Money_ToDouble(state.nodes[0].pending_params.ratchet_sl);
         check("v5.4.0p2.5: ML ExitAdjust ratchets via fee-floor cap when R² ≥ 0.5",
               stored > 49849.0 && stored < 49851.0);
         check("v5.4.0p2.5: ML ExitAdjust sets dirty=1 on advance",
-              CORE_STATE_FLAG_IS_SET(state.cores[0], DIRTY));
+              NODE_STATE_FLAG_IS_SET(state.nodes[0], DIRTY));
 
         tt::Strategy_FreePerCore(&state, 0);
         state.oms->portfolio.active_bitmap = 0;
@@ -11667,27 +11667,27 @@ e3_skip_load:;
         tt::EventLoopState<FP> state;
         tt::EventLoopState_Init(&state, &oms);
         check("v5.4.0p3.3: ratchet_tp default is zero",
-              Money_IsZero(state.cores[0].pending_params.ratchet_tp));
+              Money_IsZero(state.nodes[0].pending_params.ratchet_tp));
 
         bool wrote1 = tt::Strategy_WriteRatchetTP(&state, 0,
                                                     MQ(51000.0));
         check("v5.4.0p3.3: WriteRatchetTP advance from 0 returns true",
-              wrote1 && Money_Eq(state.cores[0].pending_params.ratchet_tp,
+              wrote1 && Money_Eq(state.nodes[0].pending_params.ratchet_tp,
                                    MQ(51000.0)) &&
-              CORE_STATE_FLAG_IS_SET(state.cores[0], DIRTY));
+              NODE_STATE_FLAG_IS_SET(state.nodes[0], DIRTY));
 
-        CORE_STATE_FLAG_CLR(state.cores[0], DIRTY);
+        NODE_STATE_FLAG_CLR(state.nodes[0], DIRTY);
         bool wrote2 = tt::Strategy_WriteRatchetTP(&state, 0,
                                                     MQ(50500.0));
         check("v5.4.0p3.3: WriteRatchetTP lower proposal is no-op",
-              !wrote2 && Money_Eq(state.cores[0].pending_params.ratchet_tp,
+              !wrote2 && Money_Eq(state.nodes[0].pending_params.ratchet_tp,
                                     MQ(51000.0)) &&
-              !CORE_STATE_FLAG_IS_SET(state.cores[0], DIRTY));
+              !NODE_STATE_FLAG_IS_SET(state.nodes[0], DIRTY));
 
         bool wrote3 = tt::Strategy_WriteRatchetTP(&state, 0,
                                                     MQ(52000.0));
         check("v5.4.0p3.3: WriteRatchetTP higher proposal advances",
-              wrote3 && Money_Eq(state.cores[0].pending_params.ratchet_tp,
+              wrote3 && Money_Eq(state.nodes[0].pending_params.ratchet_tp,
                                    MQ(52000.0)));
 
         tt::EventLoopState_Free(&state);
@@ -11711,7 +11711,7 @@ e3_skip_load:;
         BITMAP_CLR(cfg.gate_cfg_flags, MASK_GATE_CFG_COST_GATE_ENABLED);
         BITMAP_CLR(cfg.ml_cfg_flags, MASK_ML_CFG_FOXML_VOL_SCALING_ENABLED);
         tt::GateParameters<FP> baseline{};
-        tt::Strategy_BuildParameters(STRATEGY_SIMPLE_DIP, &rolling, &cfg.cores[0],
+        tt::Strategy_BuildParameters(STRATEGY_SIMPLE_DIP, &rolling, &cfg.nodes[0],
                                       MQ(1000.0), &baseline);
         check("v5.5.0p8: defaults off — bg threshold non-zero",
               !Money_IsZero(baseline.bg_price_threshold));
@@ -11723,7 +11723,7 @@ e3_skip_load:;
         BITMAP_SET(cfg.ml_cfg_flags, MASK_ML_CFG_FOXML_VOL_SCALING_ENABLED);
         cfg.foxml_vol_scaling_z_max = FPN_FromDouble<64>(3.0);
         tt::GateParameters<FP> with_vol{};
-        tt::Strategy_BuildParameters(STRATEGY_SIMPLE_DIP, &rolling, &cfg.cores[0],
+        tt::Strategy_BuildParameters(STRATEGY_SIMPLE_DIP, &rolling, &cfg.nodes[0],
                                       MQ(1000.0), &with_vol);
         check("v5.5.0p8: VolScaler enabled — trade_size <= baseline (scale-down only)",
               Money_Le(with_vol.trade_size, baseline_size));
@@ -11732,7 +11732,7 @@ e3_skip_load:;
         BITMAP_CLR(cfg.ml_cfg_flags, MASK_ML_CFG_FOXML_VOL_SCALING_ENABLED);
         BITMAP_SET(cfg.gate_cfg_flags, MASK_GATE_CFG_COST_GATE_ENABLED);
         tt::GateParameters<FP> with_cost{};
-        tt::Strategy_BuildParameters(STRATEGY_SIMPLE_DIP, &rolling, &cfg.cores[0],
+        tt::Strategy_BuildParameters(STRATEGY_SIMPLE_DIP, &rolling, &cfg.nodes[0],
                                       MQ(1000.0), &with_cost);
         check("v5.5.0p8: CostModel enabled — flags computed without crash",
               with_cost.strategy_id == STRATEGY_SIMPLE_DIP);
@@ -11808,11 +11808,11 @@ e3_skip_load:;
             rig_cmd.event_price = MQ(50000.0);
             tt::OMS_PushSubmit(&rig->oms, rig_cmd);
         }
-        int pre_fix_drained = tt::OMS_DrainSubmit(&rig->oms, /*num_cores=*/4);
-        check("v5.4.1.B2: pre-fix drain (num_cores=N=4) only walks 4 queues",
+        int pre_fix_drained = tt::OMS_DrainSubmit(&rig->oms, /*num_nodes=*/4);
+        check("v5.4.1.B2: pre-fix drain (num_nodes=N=4) only walks 4 queues",
               pre_fix_drained == 4);
         // Drain remaining 4 with full-walk to clean up
-        tt::OMS_DrainSubmit(&rig->oms, /*num_cores=*/8);
+        tt::OMS_DrainSubmit(&rig->oms, /*num_nodes=*/8);
 
         tt::EventLoopState_Free(&rig->state);
         delete rig;
@@ -11849,13 +11849,13 @@ e3_skip_load:;
               EXPECTED_MAX_HALT_REASON == 10);
     }
 
-    printf("\n--- v5.6.1: PerCoreSnap predicate fields ---\n");
+    printf("\n--- v5.6.1: PerNodeSnap predicate fields ---\n");
     {
         // v5.6.1 adds gate_flags / permission / bitmap_consistency /
         // bg_volume_threshold to PerCoreSnap. Compile-time enforced;
         // runtime asserts catch struct-layout regressions (someone
         // removing a field, accidentally type-changing, etc).
-        TUISnapshot::PerCoreSnap pc{};
+        TUISnapshot::PerNodeSnap pc{};
         pc.gate_flags = 0x20;
         // v5.14.9.B.2 — permission + bitmap_consistency migrated to state_flags
         // BIT_FLAG (TECH_DEBT-013 candidate (3) close).
@@ -11917,7 +11917,7 @@ e3_skip_load:;
         GateParameters<64> out;
         GateParameters_Init(&out);
         uint8_t shalt = SHALT_OK;
-        Strategy_BuildParameters(STRATEGY_NONE, &rolling, &cfg.cores[0],
+        Strategy_BuildParameters(STRATEGY_NONE, &rolling, &cfg.nodes[0],
                                   MQ(1500.0), &out,
                                   (const RollingStats<64, 512>*)nullptr,
                                   nullptr, nullptr, &shalt);
@@ -11947,7 +11947,7 @@ e3_skip_load:;
         // PerCoreSnap gains 12 diag_* fields (6 actual/threshold pairs).
         // Compile-time enforced by struct layout; runtime asserts catch
         // accidental field removal/rename.
-        TUISnapshot::PerCoreSnap pc{};
+        TUISnapshot::PerNodeSnap pc{};
         pc.diag_spacing_actual    = 1.0;
         pc.diag_spacing_floor     = 2.0;
         pc.diag_vwap_actual       = 100.0;
@@ -12460,8 +12460,8 @@ e3_skip_load:;
         check("v5.8.3: HALT_VWAP == 2",        HALT_VWAP == 2);
         check("v5.8.3: HALT_SL_COOLDOWN == 6", HALT_SL_COOLDOWN == 6);
         check("v5.8.3: HALT_WARMUP == 7",      HALT_WARMUP == 7);
-        check("v5.8.3: HALT_CORE_BUDGET == 8", HALT_CORE_BUDGET == 8);
-        check("v5.8.3: HALT_CORE_KILL == 9",   HALT_CORE_KILL == 9);
+        check("v5.8.3: HALT_NODE_BUDGET == 8", HALT_NODE_BUDGET == 8);
+        check("v5.8.3: HALT_NODE_KILL == 9",   HALT_NODE_KILL == 9);
         check("v5.8.3: HALT_IMBALANCE == 10",  HALT_IMBALANCE == 10);
 
         // Names array sized correctly. static_assert in StrategyInterface.hpp
@@ -12978,16 +12978,16 @@ e3_skip_load:;
         // v5.15.5.B.3 — model_load_failed migrated to core_state_flags bitmap
         // bit on CoreContext (final home). The remaining ML-threshold + NaN
         // counters stay on DisplayMeta.
-        tt::CoreContext<64> ctx{};
-        CORE_STATE_FLAG_SET(ctx, MODEL_LOAD_FAILED);
-        tt::CoreContextDisplayMeta<64> meta{};
+        tt::NodeContext<64> ctx{};
+        NODE_STATE_FLAG_SET(ctx, MODEL_LOAD_FAILED);
+        tt::NodeContextDisplayMeta<64> meta{};
         meta.last_ml_threshold = 0.5;
         meta.last_ml_effective_threshold = 0.55;
         meta.nan_feature_events_total = 7;
         meta.nan_prediction_events_total = 3;
         meta.last_ml_critical_log_us = 12345;
-        check("v5.9.0b+v5.15.5.B.3: model_load_failed bit settable on CoreContext bitmap",
-              CORE_STATE_FLAG_IS_SET(ctx, MODEL_LOAD_FAILED));
+        check("v5.9.0b+v5.15.5.B.3: model_load_failed bit settable on NodeContext bitmap",
+              NODE_STATE_FLAG_IS_SET(ctx, MODEL_LOAD_FAILED));
         check("v5.9.0b+v5.15.5.B.2: DisplayMeta.last_ml_threshold assignable",
               meta.last_ml_threshold == 0.5);
         check("v5.9.0b+v5.15.5.B.2: DisplayMeta.nan_feature_events_total counter assignable",
@@ -13024,32 +13024,32 @@ e3_skip_load:;
         // line is encountered. Boot WARN fires when num_execution_cores>0
         // and bitmap is 0.
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
-        check("v5.9.0c: ControllerConfig_Default sets core_strategies_explicit_set=0",
-              cfg.core_strategies_explicit_set == 0);
+        check("v5.9.0c: ControllerConfig_Default sets node_strategies_explicit_set=0",
+              cfg.node_strategies_explicit_set == 0);
         check("v5.9.0c: ControllerConfig_Default sets source_cfg_path=\"\"",
               cfg.source_cfg_path[0] == '\0');
 
-        // Test parser: write a cfg with explicit core_0_strategy + core_2_strategy,
+        // Test parser: write a cfg with explicit node_0_strategy + node_2_strategy,
         // expect bits 0 and 2 set, others clear.
         char tmp_cfg[] = "/tmp/v590c_cfg_test_XXXXXX";
         int fd = mkstemp(tmp_cfg);
         if (fd >= 0) {
             const char* cfg_body =
-                "num_execution_cores=4\n"
-                "core_0_strategy=mr\n"
-                "core_2_strategy=ml\n";
+                "num_execution_nodes=4\n"
+                "node_0_strategy=mr\n"
+                "node_2_strategy=ml\n";
             (void)!write(fd, cfg_body, strlen(cfg_body));
             close(fd);
 
             ControllerConfig<64> parsed = ControllerConfig_Load<64>(tmp_cfg);
-            check("v5.9.0c: parser sets explicit bit for core_0_strategy",
-                  (parsed.core_strategies_explicit_set & 0x1) == 0x1);
-            check("v5.9.0c: parser sets explicit bit for core_2_strategy",
-                  (parsed.core_strategies_explicit_set & 0x4) == 0x4);
-            check("v5.9.0c: parser leaves bit clear for absent core_1_strategy",
-                  (parsed.core_strategies_explicit_set & 0x2) == 0);
-            check("v5.9.0c: parser leaves bit clear for absent core_3_strategy",
-                  (parsed.core_strategies_explicit_set & 0x8) == 0);
+            check("v5.9.0c: parser sets explicit bit for node_0_strategy",
+                  (parsed.node_strategies_explicit_set & 0x1) == 0x1);
+            check("v5.9.0c: parser sets explicit bit for node_2_strategy",
+                  (parsed.node_strategies_explicit_set & 0x4) == 0x4);
+            check("v5.9.0c: parser leaves bit clear for absent node_1_strategy",
+                  (parsed.node_strategies_explicit_set & 0x2) == 0);
+            check("v5.9.0c: parser leaves bit clear for absent node_3_strategy",
+                  (parsed.node_strategies_explicit_set & 0x8) == 0);
             check("v5.9.0c: parser captures source_cfg_path",
                   strcmp(parsed.source_cfg_path, tmp_cfg) == 0);
 
@@ -13065,15 +13065,15 @@ e3_skip_load:;
         char tmp_cfg2[] = "/tmp/v590c_cfg_default_XXXXXX";
         fd = mkstemp(tmp_cfg2);
         if (fd >= 0) {
-            const char* default_body = "num_execution_cores=4\n";  // no per-core
+            const char* default_body = "num_execution_nodes=4\n";  // no per-core
             (void)!write(fd, default_body, strlen(default_body));
             close(fd);
 
             ControllerConfig<64> parsed = ControllerConfig_Load<64>(tmp_cfg2);
             check("v5.9.0c: cfg with no core_N_strategy lines has explicit_set=0",
-                  parsed.core_strategies_explicit_set == 0);
-            check("v5.9.0c: defaulted cfg still sets all cores to SIMPLE_DIP=2",
-                  parsed.core_strategies[0] == 2 && parsed.core_strategies[3] == 2);
+                  parsed.node_strategies_explicit_set == 0);
+            check("v5.9.0c: defaulted cfg still sets all nodes to SIMPLE_DIP=2",
+                  parsed.node_strategies[0] == 2 && parsed.node_strategies[3] == 2);
 
             unlink(tmp_cfg2);
         } else {
@@ -13083,7 +13083,7 @@ e3_skip_load:;
         // v5.14.9.B.2 — strategy_was_explicit_set MIGRATED to state_flags BIT_FLAG.
         // Populator in ShardedSnapshot.hpp now uses STATE_FLAG_SET; consumers
         // read via STATE_FLAG_IS_SET. Verify the bitmap accessor works.
-        TUISnapshot::PerCoreSnap pcs{};
+        TUISnapshot::PerNodeSnap pcs{};
         STATE_FLAG_SET(pcs, STRATEGY_EXPLICITLY_SET);
         check("v5.14.9.B.2: STRATEGY_EXPLICITLY_SET bit settable",
               STATE_FLAG_IS_SET(pcs, STRATEGY_EXPLICITLY_SET));
@@ -13170,12 +13170,12 @@ e3_skip_load:;
 
         // V5_9_AUDIT-#9: PerCoreSnap.warmup_progress_pct field exists,
         // assignable, uint8_t (0..100 range).
-        TUISnapshot::PerCoreSnap pcs{};
+        TUISnapshot::PerNodeSnap pcs{};
         pcs.warmup_progress_pct = 75;
-        check("v5.9.1: PerCoreSnap.warmup_progress_pct assignable",
+        check("v5.9.1: PerNodeSnap.warmup_progress_pct assignable",
               pcs.warmup_progress_pct == 75);
         pcs.warmup_progress_pct = 100;
-        check("v5.9.1: PerCoreSnap.warmup_progress_pct accepts 100",
+        check("v5.9.1: PerNodeSnap.warmup_progress_pct accepts 100",
               pcs.warmup_progress_pct == 100);
     }
 
@@ -13233,7 +13233,7 @@ e3_skip_load:;
         char tmp_cfg[] = "/tmp/v592_parity_cfg_XXXXXX";
         int cfd = mkstemp(tmp_cfg);
         if (cfd >= 0) {
-            const char* cfg_body = "num_execution_cores=1\n";
+            const char* cfg_body = "num_execution_nodes=1\n";
             (void)!write(cfd, cfg_body, strlen(cfg_body));
             close(cfd);
         }
@@ -13245,7 +13245,7 @@ e3_skip_load:;
         snprintf(run.config_path, sizeof(run.config_path), "%s", tmp_cfg);
         run.use_config_override = 1;
         run.config_override = ControllerConfig_Default<BACKTEST_FP>();
-        run.config_override.num_execution_cores = 1;
+        run.config_override.num_execution_nodes = 1;
         run.collect_features = 1;
         run.label_type = LABEL_WIN_LOSS;
         run.label_tp_pct = 1.5;
@@ -13357,7 +13357,7 @@ e3_skip_load:;
         unlink(tmp_cfg);
     }
 
-    printf("\n--- EXTENSIBILITY: v5.8.10 CoreModelZoo strict-mode integration (drift refusal) ---\n");
+    printf("\n--- EXTENSIBILITY: v5.8.10 NodeModelZoo strict-mode integration (drift refusal) ---\n");
     {
         // Engine boot integration test for the drift-refusal path. Distinct
         // from the v5.8.6 unit tests of verify_model_stamp directly: this
@@ -13403,7 +13403,7 @@ e3_skip_load:;
                 // mismatch on hash is what we expect to fire the refusal.
                 ModelHandle<64> handle;
                 Model_Init(&handle);
-                int rc_strict = CoreModelZoo_TryLoadRole(
+                int rc_strict = NodeModelZoo_TryLoadRole(
                     &handle, tmp_dir, "buy_signal",
                     MODEL_BACKEND_XGBOOST,
                     /*held_out_stamp_secret=*/"",
@@ -13420,7 +13420,7 @@ e3_skip_load:;
                 // assert success — just confirm the strict gate didn't fire.
                 Model_Free(&handle);
                 Model_Init(&handle);
-                int rc_warn = CoreModelZoo_TryLoadRole(
+                int rc_warn = NodeModelZoo_TryLoadRole(
                     &handle, tmp_dir, "buy_signal",
                     MODEL_BACKEND_XGBOOST,
                     /*held_out_stamp_secret=*/"",
@@ -13574,16 +13574,16 @@ e3_skip_load:;
         // Spot-check: a synthesized PerCoreSnap with a category-representative
         // field set should round-trip through the populator (verified at
         // compile-time by the comment block in EngineTUI.hpp PerCoreSnap def).
-        TUISnapshot::PerCoreSnap pcs = {};
+        TUISnapshot::PerNodeSnap pcs = {};
         pcs.strategy_id_display = 5;       // v5.4.0 strategy enum
         pcs.halt_reason         = 7;       // warmup
         // v5.14.9.B.2 — ml_model_loaded MIGRATED to state_flags BIT_FLAG.
         STATE_FLAG_SET(pcs, ML_MODEL_LOADED);
-        pcs.core_realized       = 12.34;
+        pcs.node_realized       = 12.34;
         pcs.warmup_progress_pct = 75;
-        check("v5.9.2c: PerCoreSnap representative fields round-trip across categories",
+        check("v5.9.2c: PerNodeSnap representative fields round-trip across categories",
               pcs.strategy_id_display == 5 && pcs.halt_reason == 7 &&
-              STATE_FLAG_IS_SET(pcs, ML_MODEL_LOADED) && pcs.core_realized == 12.34 &&
+              STATE_FLAG_IS_SET(pcs, ML_MODEL_LOADED) && pcs.node_realized == 12.34 &&
               pcs.warmup_progress_pct == 75);
     }
 
@@ -13741,7 +13741,7 @@ e3_skip_load:;
 
             GateParameters<64> out = {};
             SimpleDip_BuildParameters<64, 128>(
-                &rolling, &cfg.cores[0], MQ(1000.0), &out);
+                &rolling, &cfg.nodes[0], MQ(1000.0), &out);
 
             // SimpleDip threshold = recent_high * (1 - entry_offset_pct).
             // With price_max=60100 + default offset=0.0015 → threshold ≈ 60009.85
@@ -14178,7 +14178,7 @@ e3_skip_load:;
         // in failure_flags bitmap.
         // v5.15.1 — ml_scaler_present migrated from uint8_t to BIT_FLAG in
         // state_flags bitmap (TECH_DEBT-028).
-        TUISnapshot::PerCoreSnap pcs = {};
+        TUISnapshot::PerNodeSnap pcs = {};
         STATE_FLAG_SET(pcs, ML_SCALER_PRESENT);
         // failure_flags = 0 → ml_scaler_load_failed cleared (bit unset)
         check("v5.15.1: ml_scaler_present (state_flags) + ml_scaler_load_failed (failure_flags) independent bits",
@@ -14955,11 +14955,11 @@ e3_skip_load:;
               !BITMAP_IS_SET(cfg.ops_cfg_flags, MASK_OPS_CFG_ACKNOWLEDGE_INFERENCE_CFG_DRIFT));
 
         // === Test 3: PerCoreSnap drift counter fields exist + assignable ===
-        TUISnapshot::PerCoreSnap pcs = {};
+        TUISnapshot::PerNodeSnap pcs = {};
         pcs.cfg_drift_tier1_count = 2;
         pcs.cfg_drift_tier2_count = 5;
         pcs.cfg_drift_strict_refused = 1;
-        check("v5.9.5i: PerCoreSnap drift counters assignable",
+        check("v5.9.5i: PerNodeSnap drift counters assignable",
               pcs.cfg_drift_tier1_count == 2 &&
               pcs.cfg_drift_tier2_count == 5 &&
               pcs.cfg_drift_strict_refused == 1);
@@ -17005,7 +17005,7 @@ e3_skip_load:;
 
         // First submit — paper mode (mode=1), fills synthetically. The returned
         // order id should have slot in the upper 4 bits.
-        SubmitCommand<64> sub1(/*core_id=*/0, ORDER_MARKET_BUY,
+        SubmitCommand<64> sub1(/*node_id=*/0, ORDER_MARKET_BUY,
                                 MQ(0.001), 0, nullptr);
         sub1.intended_tp = MQ(60500.0);
         sub1.intended_sl = MQ(59500.0);
@@ -17025,7 +17025,7 @@ e3_skip_load:;
 
         // Submit a second order. Slot 0 still holds order 1; slot 1 should be
         // allocated.
-        SubmitCommand<64> sub2(/*core_id=*/0, ORDER_MARKET_BUY,
+        SubmitCommand<64> sub2(/*node_id=*/0, ORDER_MARKET_BUY,
                                 MQ(0.002), 0, nullptr);
         sub2.intended_tp = MQ(60500.0);
         sub2.intended_sl = MQ(59500.0);
@@ -17085,7 +17085,7 @@ e3_skip_load:;
                           MQ(10000.0), /*event_log_mode=*/1, /*event_log_path=*/nullptr);
 
         // (A) paper synth → order_complete=1 → ORDER_FILLED
-        SubmitCommand<64> sub_a(/*core_id=*/0, ORDER_MARKET_BUY, MQ(0.001), 0, nullptr);
+        SubmitCommand<64> sub_a(/*node_id=*/0, ORDER_MARKET_BUY, MQ(0.001), 0, nullptr);
         sub_a.intended_tp = MQ(60500.0); sub_a.intended_sl = MQ(59500.0);
         sub_a.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP; sub_a.event_price = MQ(60000.0);
         uint64_t oid_a = OrderManager_Submit(&oms, sub_a);
@@ -17101,7 +17101,7 @@ e3_skip_load:;
               proc_a == 1 && Order_GetState(&oms.orders[slot_a]) == ORDER_FILLED);
 
         // (B) anti-vacuous: order_complete=0 + fill_qty>0 → ORDER_PARTIAL
-        SubmitCommand<64> sub_b(/*core_id=*/0, ORDER_MARKET_BUY, MQ(0.002), 0, nullptr);
+        SubmitCommand<64> sub_b(/*node_id=*/0, ORDER_MARKET_BUY, MQ(0.002), 0, nullptr);
         sub_b.intended_tp = MQ(60500.0); sub_b.intended_sl = MQ(59500.0);
         sub_b.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP; sub_b.event_price = MQ(60000.0);
         uint64_t oid_b = OrderManager_Submit(&oms, sub_b);
@@ -17121,7 +17121,7 @@ e3_skip_load:;
               proc_b == 1 && Order_GetState(&oms.orders[slot_b]) == ORDER_PARTIAL);
 
         // (C) ACK-only (fill_qty=0, avg=0) → ORDER_ACKNOWLEDGED (order_complete never read)
-        SubmitCommand<64> sub_c(/*core_id=*/0, ORDER_MARKET_BUY, MQ(0.001), 0, nullptr);
+        SubmitCommand<64> sub_c(/*node_id=*/0, ORDER_MARKET_BUY, MQ(0.001), 0, nullptr);
         sub_c.intended_tp = MQ(60500.0); sub_c.intended_sl = MQ(59500.0);
         sub_c.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP; sub_c.event_price = MQ(60000.0);
         uint64_t oid_c = OrderManager_Submit(&oms, sub_c);
@@ -17178,7 +17178,7 @@ e3_skip_load:;
 
         // inflight BUY also reduces free cash: requested 0.005 @ 61000, fee_rate 0.001
         // -> notional $305.00 + est_fee $0.305 = $305.305
-        Order_Init(&oms.orders[0], /*id=*/1, /*core_id=*/0, ORDER_MARKET_BUY);
+        Order_Init(&oms.orders[0], /*id=*/1, /*node_id=*/0, ORDER_MARKET_BUY);
         oms.orders[0].requested_qty         = MQ(0.005);
         oms.orders[0].filled_qty            = Money_Zero();
         oms.orders[0].event_price           = MQ(61000.0);
@@ -17439,9 +17439,9 @@ e3_skip_load:;
         // Build an ExecutionCore in "leg-B-active" state: active=1, active_b=1,
         // live_tp_b set so a tick price > tp_b fires the leg-B exit.
         ExecutionCore<FP> core;
-        SPSCRing<Tick<FP>, EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
+        SPSCRing<Tick<FP>, EXECUTION_NODE_TICK_RING_SIZE> tick_ring;
         SPSCRing_Init(&tick_ring);
-        ExecutionCore_Init<FP>(&core, /*core_id=*/0, &tick_ring);
+        ExecutionCore_Init<FP>(&core, /*node_id=*/0, &tick_ring);
 
         // Set permission so the gate would let entries through (we're testing
         // exits — leg B SG fires).
@@ -17590,9 +17590,9 @@ e3_skip_load:;
 
         // Setup a minimal ExecutionCore + Tick.
         ExecutionCore<FP> core;
-        SPSCRing<Tick<FP>, EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
+        SPSCRing<Tick<FP>, EXECUTION_NODE_TICK_RING_SIZE> tick_ring;
         SPSCRing_Init(&tick_ring);
-        ExecutionCore_Init<FP>(&core, /*core_id=*/0, &tick_ring);
+        ExecutionCore_Init<FP>(&core, /*node_id=*/0, &tick_ring);
 
         Tick<FP> tick{};
         tick.price = MQ(100.0);
@@ -17610,7 +17610,7 @@ e3_skip_load:;
 
         // === Test 2: LAT_ENABLED=true respects runtime enabled flag (1 = sample) ===
         // Reset stats so we can detect a fresh sample
-        CoreLatencyStats_Init(&core.latency_stats);
+        NodeLatencyStats_Init(&core.latency_stats);
         core.latency_stats.enabled.store(1, std::memory_order_relaxed);
         uint64_t before_true = core.latency_stats.total_count;
         ExecutionCore_Tick_Impl<FP, /*LAT_ENABLED=*/true, /*PAIR_BRANCHLESS=*/false>(&core, tick);
@@ -17620,7 +17620,7 @@ e3_skip_load:;
 
         // === Test 3: LAT_ENABLED=true with runtime enabled=0 still elides at runtime ===
         // (The compile-time path is in; runtime gate still works.)
-        CoreLatencyStats_Init(&core.latency_stats);
+        NodeLatencyStats_Init(&core.latency_stats);
         core.latency_stats.enabled.store(0, std::memory_order_relaxed);
         uint64_t before_runtime = core.latency_stats.total_count;
         ExecutionCore_Tick_Impl<FP, /*LAT_ENABLED=*/true, /*PAIR_BRANCHLESS=*/false>(&core, tick);
@@ -17631,7 +17631,7 @@ e3_skip_load:;
         // === Test 4: Wrapper ExecutionCore_Tick<F> dispatches based on LATENCY_PROFILING ===
         // Tests build without LATENCY_PROFILING, so wrapper picks LAT_ENABLED=false.
         // Verify by setting enabled=1 + running the wrapper + checking no sample.
-        CoreLatencyStats_Init(&core.latency_stats);
+        NodeLatencyStats_Init(&core.latency_stats);
         core.latency_stats.enabled.store(1, std::memory_order_relaxed);
         uint64_t before_wrap = core.latency_stats.total_count;
         ExecutionCore_Tick<FP>(&core, tick);  // wrapper dispatch
@@ -18024,12 +18024,12 @@ e3_skip_load:;
               fabs(cfg.ensemble_min_agreement_pct - 0.6) < 1e-6);
 
         // === Test G.6.2: per-core fields default empty (inherit global) ===
-        check("v5.10.0a.G.6: core_0_horizon_list defaults empty",
-              cfg.core_horizon_list[0][0] == '\0');
-        check("v5.10.0a.G.6: core_0_ensemble_blend_mode defaults empty",
-              cfg.core_ensemble_blend_mode[0][0] == '\0');
-        check("v5.10.0a.G.6: core_0_disabled_horizons defaults empty",
-              cfg.core_disabled_horizons[0][0] == '\0');
+        check("v5.10.0a.G.6: node_0_horizon_list defaults empty",
+              cfg.node_horizon_list[0][0] == '\0');
+        check("v5.10.0a.G.6: node_0_ensemble_blend_mode defaults empty",
+              cfg.node_ensemble_blend_mode[0][0] == '\0');
+        check("v5.10.0a.G.6: node_0_disabled_horizons defaults empty",
+              cfg.node_disabled_horizons[0][0] == '\0');
 
         // === Test G.6.3: parser reads global ensemble fields ===
         char path[] = "/tmp/v5100aG6_global_XXXXXX";
@@ -18079,26 +18079,26 @@ e3_skip_load:;
         }
 
         // === Test G.6.6: parser reads per-core string fields ===
-        char path4[] = "/tmp/v5100aG6_per_core_XXXXXX";
+        char path4[] = "/tmp/v5100aG6_per_node_XXXXXX";
         int fd4 = mkstemp(path4);
         if (fd4 >= 0) {
             dprintf(fd4,
-                    "core_0_horizon_list=100,500,1000\n"
-                    "core_0_ensemble_blend_mode=weighted\n"
-                    "core_0_disabled_horizons=100\n"
-                    "core_2_ensemble_blend_mode=selection\n");
+                    "node_0_horizon_list=100,500,1000\n"
+                    "node_0_ensemble_blend_mode=weighted\n"
+                    "node_0_disabled_horizons=100\n"
+                    "node_2_ensemble_blend_mode=selection\n");
             close(fd4);
             ControllerConfig<FP> parsed = ControllerConfig_Load<FP>(path4);
-            check("v5.10.0a.G.6: parses core_0_horizon_list",
-                  strcmp(parsed.core_horizon_list[0], "100,500,1000") == 0);
-            check("v5.10.0a.G.6: parses core_0_ensemble_blend_mode=weighted",
-                  strcmp(parsed.core_ensemble_blend_mode[0], "weighted") == 0);
-            check("v5.10.0a.G.6: parses core_0_disabled_horizons=100",
-                  strcmp(parsed.core_disabled_horizons[0], "100") == 0);
-            check("v5.10.0a.G.6: per-core fields independent (core_2 overrides)",
-                  strcmp(parsed.core_ensemble_blend_mode[2], "selection") == 0);
+            check("v5.10.0a.G.6: parses node_0_horizon_list",
+                  strcmp(parsed.node_horizon_list[0], "100,500,1000") == 0);
+            check("v5.10.0a.G.6: parses node_0_ensemble_blend_mode=weighted",
+                  strcmp(parsed.node_ensemble_blend_mode[0], "weighted") == 0);
+            check("v5.10.0a.G.6: parses node_0_disabled_horizons=100",
+                  strcmp(parsed.node_disabled_horizons[0], "100") == 0);
+            check("v5.10.0a.G.6: per-core fields independent (node_2 overrides)",
+                  strcmp(parsed.node_ensemble_blend_mode[2], "selection") == 0);
             check("v5.10.0a.G.6: per-core unspecified core stays empty",
-                  parsed.core_horizon_list[3][0] == '\0');
+                  parsed.node_horizon_list[3][0] == '\0');
             unlink(path4);
         }
     }
@@ -18167,12 +18167,12 @@ e3_skip_load:;
         // to nullptr (default for non-ML cores) + assignable to a real
         // ezoo pointer (ML cores with ensemble active). Test would FAIL
         // TO COMPILE if the field doesn't exist.
-        tt::CoreContext<FP> cc{};
+        tt::NodeContext<FP> cc{};
         cc.ensemble_handle = nullptr;
-        check("v5.10.0a.G.5: CoreContext.ensemble_handle defaults to nullptr",
+        check("v5.10.0a.G.5: NodeContext.ensemble_handle defaults to nullptr",
               cc.ensemble_handle == nullptr);
         cc.ensemble_handle = &ezoo;  // also accepts EnsembleModelZoo*
-        check("v5.10.0a.G.5: CoreContext.ensemble_handle accepts EnsembleModelZoo*",
+        check("v5.10.0a.G.5: NodeContext.ensemble_handle accepts EnsembleModelZoo*",
               cc.ensemble_handle == &ezoo);
 
         EnsembleModelZoo_Free(&ezoo);
@@ -18677,15 +18677,15 @@ e3_skip_load:;
             tt::Strategy_InitPerCore(&state, 0, STRATEGY_MEAN_REVERSION, &rolling, &cfg);
 
             check("v5.11.15: post-Init kind matches strategy_id",
-                  state.cores[0].strategy_state_kind == STRATEGY_MEAN_REVERSION);
+                  state.nodes[0].strategy_state_kind == STRATEGY_MEAN_REVERSION);
             check("v5.11.15: post-Init state ptr is non-null for concrete strategy",
-                  state.cores[0].strategy_state != nullptr);
+                  state.nodes[0].strategy_state != nullptr);
 
             tt::Strategy_FreePerCore(&state, 0);
             check("v5.11.15: post-Free kind reset to 0xFF (uninitialized sentinel)",
-                  state.cores[0].strategy_state_kind == 0xFF);
+                  state.nodes[0].strategy_state_kind == 0xFF);
             check("v5.11.15: post-Free state ptr is nullptr",
-                  state.cores[0].strategy_state == nullptr);
+                  state.nodes[0].strategy_state == nullptr);
 
             tt::EventLoopState_Free(&state);
         }
@@ -18708,23 +18708,23 @@ e3_skip_load:;
             // arena-style dummy address that Strategy_FreePerCore must
             // NOT call delete on (would crash if it did).
             char on_stack_dummy[64] = {0};
-            state.cores[0].strategy_state      = on_stack_dummy;
-            state.cores[0].strategy_state_kind = STRATEGY_AUTO;
+            state.nodes[0].strategy_state      = on_stack_dummy;
+            state.nodes[0].strategy_state_kind = STRATEGY_AUTO;
 
             // Should hit AUTO/NONE branch defensively. No crash, no delete.
             tt::Strategy_FreePerCore(&state, 0);
 
             check("v5.11.15: AUTO/NONE branch nulls state ptr",
-                  state.cores[0].strategy_state == nullptr);
+                  state.nodes[0].strategy_state == nullptr);
             check("v5.11.15: AUTO/NONE branch sets kind=0xFF",
-                  state.cores[0].strategy_state_kind == 0xFF);
+                  state.nodes[0].strategy_state_kind == 0xFF);
 
             // Same shape but kind=NONE
-            state.cores[0].strategy_state      = on_stack_dummy;
-            state.cores[0].strategy_state_kind = STRATEGY_NONE;
+            state.nodes[0].strategy_state      = on_stack_dummy;
+            state.nodes[0].strategy_state_kind = STRATEGY_NONE;
             tt::Strategy_FreePerCore(&state, 0);
             check("v5.11.15: NONE branch also nulls state ptr without crash",
-                  state.cores[0].strategy_state == nullptr);
+                  state.nodes[0].strategy_state == nullptr);
 
             tt::EventLoopState_Free(&state);
         }
@@ -18849,10 +18849,10 @@ e3_skip_load:;
         // === Test 1: Default cfg has all-on mask ===
         {
             ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
-            check("v5.11.18a: default core_feature_mask[0] is all-on",
-                  cfg.core_feature_mask[0] == 0xFFFFFFFFFFFFFFFFULL);
-            check("v5.11.18a: default core_feature_mask[15] is all-on",
-                  cfg.core_feature_mask[15] == 0xFFFFFFFFFFFFFFFFULL);
+            check("v5.11.18a: default node_feature_mask[0] is all-on",
+                  cfg.node_feature_mask[0] == 0xFFFFFFFFFFFFFFFFULL);
+            check("v5.11.18a: default node_feature_mask[15] is all-on",
+                  cfg.node_feature_mask[15] == 0xFFFFFFFFFFFFFFFFULL);
         }
 
         // === Test 2: cfg parser accepts hex-prefixed value ===
@@ -18862,17 +18862,17 @@ e3_skip_load:;
             check("v5.11.18a: tmp cfg file creation", fd >= 0);
             if (fd >= 0) {
                 FILE* f = fdopen(fd, "w");
-                fprintf(f, "core_0_feature_mask=0xDEADBEEFCAFEBABE\n");
-                fprintf(f, "core_3_feature_mask=0x00000000000003ff\n");
+                fprintf(f, "node_0_feature_mask=0xDEADBEEFCAFEBABE\n");
+                fprintf(f, "node_3_feature_mask=0x00000000000003ff\n");
                 fclose(f);
 
                 ControllerConfig<FP> cfg = ControllerConfig_Load<FP>(tmp_cfg);
                 check("v5.11.18a: parser reads 0xDEADBEEFCAFEBABE for core 0",
-                      cfg.core_feature_mask[0] == 0xDEADBEEFCAFEBABEULL);
+                      cfg.node_feature_mask[0] == 0xDEADBEEFCAFEBABEULL);
                 check("v5.11.18a: parser reads 0x3ff for core 3",
-                      cfg.core_feature_mask[3] == 0x3FFULL);
+                      cfg.node_feature_mask[3] == 0x3FFULL);
                 check("v5.11.18a: untouched core stays at all-on default",
-                      cfg.core_feature_mask[1] == 0xFFFFFFFFFFFFFFFFULL);
+                      cfg.node_feature_mask[1] == 0xFFFFFFFFFFFFFFFFULL);
                 unlink(tmp_cfg);
             }
         }
@@ -18883,12 +18883,12 @@ e3_skip_load:;
             int fd = mkstemp(tmp_cfg);
             if (fd >= 0) {
                 FILE* f = fdopen(fd, "w");
-                fprintf(f, "core_2_feature_mask=18446744073709551615\n");
+                fprintf(f, "node_2_feature_mask=18446744073709551615\n");
                 fclose(f);
 
                 ControllerConfig<FP> cfg = ControllerConfig_Load<FP>(tmp_cfg);
                 check("v5.11.18a: parser reads decimal max-uint64",
-                      cfg.core_feature_mask[2] == 0xFFFFFFFFFFFFFFFFULL);
+                      cfg.node_feature_mask[2] == 0xFFFFFFFFFFFFFFFFULL);
                 unlink(tmp_cfg);
             }
         }
@@ -19705,17 +19705,17 @@ e3_skip_load:;
         // === Test 1: defaults all zero (use global) ===
         int all_zero = 1;
         for (int i = 0; i < 16; ++i) {
-            if (cfg.core_time_exit_ticks[i] != 0) { all_zero = 0; break; }
+            if (cfg.node_time_exit_ticks[i] != 0) { all_zero = 0; break; }
         }
-        check("v5.12.3.C: default cfg.core_time_exit_ticks all 0 (use global)",
+        check("v5.12.3.C: default cfg.node_time_exit_ticks all 0 (use global)",
               all_zero == 1);
 
         // === Test 2: per-core override semantics ===
         cfg.max_hold_ticks = 1000;
-        cfg.core_time_exit_ticks[2] = 5000;  // core 2 holds 5x longer
+        cfg.node_time_exit_ticks[2] = 5000;  // core 2 holds 5x longer
         // Simulate the lookup logic:
-        auto effective_max_hold = [&](int core_id) -> uint32_t {
-            uint32_t override_val = cfg.core_time_exit_ticks[core_id];
+        auto effective_max_hold = [&](int node_id) -> uint32_t {
+            uint32_t override_val = cfg.node_time_exit_ticks[node_id];
             return (override_val == 0) ? cfg.max_hold_ticks : override_val;
         };
         check("v5.12.3.C: core 0 (no override) uses global = 1000",
@@ -19727,7 +19727,7 @@ e3_skip_load:;
 
         // === Test 3: zero global + per-core override → still works ===
         cfg.max_hold_ticks = 0;
-        cfg.core_time_exit_ticks[3] = 2000;
+        cfg.node_time_exit_ticks[3] = 2000;
         check("v5.12.3.C: global=0 + core 3 override=2000 → core 3 uses 2000",
               effective_max_hold(3) == 2000);
         check("v5.12.3.C: global=0 + core 4 no override → uses 0 (disabled)",
@@ -20286,7 +20286,7 @@ e3_skip_load:;
 
         // === Test 6: FlattenAll on empty portfolio returns 0 ===
         {
-            int n = tt::EventLoop_FlattenAll(&state, &oms, cfg.cores, /*price*/100.0,
+            int n = tt::EventLoop_FlattenAll(&state, &oms, cfg.nodes, /*price*/100.0,
                                               /*reason*/9);
             check("v5.12.1.A.2: FlattenAll on empty bitmap returns 0",
                   n == 0);
@@ -20303,7 +20303,7 @@ e3_skip_load:;
             oms.portfolio.positions[0].entry_price = MQ(50000.0);
             // Pre-condition: submit queue 0 should be empty (drainer
             // hasn't run). Capture head before; verify head increased.
-            int submitted = tt::EventLoop_FlattenAll(&state, &oms, cfg.cores, 50000.0,
+            int submitted = tt::EventLoop_FlattenAll(&state, &oms, cfg.nodes, 50000.0,
                                                       /*reason*/2);
             check("v5.12.1.A.2: FlattenAll on 1-position portfolio "
                   "submits 1 exit",
@@ -20361,8 +20361,8 @@ e3_skip_load:;
         // Distinct per-core strategy ids (default STRATEGY_NONE=0xFF) so the popped
         // strategy_id is a REAL read of state.cores[slot>>1] (non-vacuous). slots {0,1}
         // -> core 0 ; slots {2,3} -> core 1.
-        state.cores[0].strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;   // 2
-        state.cores[1].strategy_id = (uint8_t)STRATEGY_MOMENTUM;     // 1
+        state.nodes[0].strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;   // 2
+        state.nodes[1].strategy_id = (uint8_t)STRATEGY_MOMENTUM;     // 1
 
         // 4 active legs (2 cores x 2 legs) opened via the REAL Portfolio_OpenSlot (not a
         // hand-poked bitmap) -> active_bitmap = 0x000F. Distinct qtys so a slot<->qty swap
@@ -20383,7 +20383,7 @@ e3_skip_load:;
 
         // === ACTION: the real enqueue driver (NO drain after). ===
         const double flatten_price = 49000.0;
-        int submitted = EventLoop_FlattenAll(&state, &oms, cfg.cores, flatten_price, /*reason*/7);
+        int submitted = EventLoop_FlattenAll(&state, &oms, cfg.nodes, flatten_price, /*reason*/7);
         check("F-046: FlattenAll enqueued 4 exits (one per active leg)", submitted == 4);
 
         // === NEGATIVE WITNESS: enqueue is not a close/book (pins enqueue-only) ===
@@ -20415,20 +20415,20 @@ e3_skip_load:;
             SubmitCommand<64> cmd{};
             bool got = SPSCRing_TryPop(&oms.submit_queues[exp[i].slot], &cmd);
             check("F-046: submit_queues[slot] pop succeeded (slot routed to its own queue)", got);
-            check("F-046: cmd.core_id == slot (routing key is the SLOT, not logical_core)",
-                  (int)cmd.core_id == exp[i].slot);
+            check("F-046: cmd.node_id == slot (routing key is the SLOT, not logical_core)",
+                  (int)cmd.node_id == exp[i].slot);
             check("F-046: cmd.order_type == ORDER_MARKET_SELL",
                   cmd.order_type == (uint8_t)ORDER_MARKET_SELL);
             check("F-046: cmd.qty == positions[slot].quantity (propagation)",
                   Money_Eq(cmd.qty, exp[i].qty));
             check("F-046: cmd.leg == (slot&1) under partials-ON",
                   cmd.leg == exp[i].leg);
-            check("F-046: cmd.strategy_id == state.cores[slot>>1].strategy_id (per-core)",
+            check("F-046: cmd.strategy_id == state.nodes[slot>>1].strategy_id (per-core)",
                   cmd.strategy_id == exp[i].sid);
             check("F-046: cmd.event_price.v == 49000*1e8 (literal scaled int, non-tautological)",
                   cmd.event_price.v == EVENT_PRICE_V);
-            check("F-046: cmd.core_cfg == &cfg.cores[slot>>1] (H22 per-node cfg)",
-                  cmd.core_cfg == &cfg.cores[exp[i].core]);
+            check("F-046: cmd.node_cfg == &cfg.nodes[slot>>1] (H22 per-node cfg)",
+                  cmd.node_cfg == &cfg.nodes[exp[i].core]);
             // Mutable-default fields the helper does NOT set — freeze they stay zero
             // (completes the write-set; tp_pct is the A25/D-205 field — a future per-fill
             //  TP resolved onto a flatten-exit would else slip through).
@@ -20610,7 +20610,7 @@ e3_skip_load:;
         std::remove(path);  // cleanup
     }
 
-    printf("\n--- v5.13.0.B: CoreContext sell-side prediction fields ---\n");
+    printf("\n--- v5.13.0.B: NodeContext sell-side prediction fields ---\n");
     {
         using namespace tt;
         EventLoopState<64> state;
@@ -20622,27 +20622,27 @@ e3_skip_load:;
         EventLoopState_Init(&state, &oms);
 
         // === Init defaults ===
-        check("v5.13.0.B: cores[0].last_exit_prediction defaults to 0.0",
-              state.cores[0].last_exit_prediction == 0.0);
-        check("v5.13.0.B: cores[0].last_exit_dominant_horizon defaults to -1",
-              state.cores[0].last_exit_dominant_horizon == -1);
-        check("v5.13.0.B: cores[7].last_exit_prediction defaults to 0.0 (last core)",
-              state.cores[7].last_exit_prediction == 0.0);
+        check("v5.13.0.B: nodes[0].last_exit_prediction defaults to 0.0",
+              state.nodes[0].last_exit_prediction == 0.0);
+        check("v5.13.0.B: nodes[0].last_exit_dominant_horizon defaults to -1",
+              state.nodes[0].last_exit_dominant_horizon == -1);
+        check("v5.13.0.B: nodes[7].last_exit_prediction defaults to 0.0 (last core)",
+              state.nodes[7].last_exit_prediction == 0.0);
 
         // === Per-core writes round-trip ===
-        state.cores[2].last_exit_prediction = 0.81;
-        state.cores[2].last_exit_dominant_horizon = 1;
+        state.nodes[2].last_exit_prediction = 0.81;
+        state.nodes[2].last_exit_dominant_horizon = 1;
         check("v5.13.0.B: per-core write last_exit_prediction[2]=0.81",
-              state.cores[2].last_exit_prediction > 0.80 &&
-              state.cores[2].last_exit_prediction < 0.82);
+              state.nodes[2].last_exit_prediction > 0.80 &&
+              state.nodes[2].last_exit_prediction < 0.82);
         check("v5.13.0.B: per-core write last_exit_dominant_horizon[2]=1",
-              state.cores[2].last_exit_dominant_horizon == 1);
-        check("v5.13.0.B: adjacent cores untouched (core 1)",
-              state.cores[1].last_exit_prediction == 0.0 &&
-              state.cores[1].last_exit_dominant_horizon == -1);
-        check("v5.13.0.B: adjacent cores untouched (core 3)",
-              state.cores[3].last_exit_prediction == 0.0 &&
-              state.cores[3].last_exit_dominant_horizon == -1);
+              state.nodes[2].last_exit_dominant_horizon == 1);
+        check("v5.13.0.B: adjacent nodes untouched (core 1)",
+              state.nodes[1].last_exit_prediction == 0.0 &&
+              state.nodes[1].last_exit_dominant_horizon == -1);
+        check("v5.13.0.B: adjacent nodes untouched (core 3)",
+              state.nodes[3].last_exit_prediction == 0.0 &&
+              state.nodes[3].last_exit_dominant_horizon == -1);
 
         OrderManager_Shutdown(&oms);
     }
@@ -21382,10 +21382,10 @@ e3_skip_load:;
         // post-init; tests use the safe default).
         for (int i = 0; i < 16; i++) {
             check("v5.14.5.B.0: regime_state[i].current_regime = RANGING (post-init)",
-                  state.cores[i].regime_state.current_regime == REGIME_RANGING);
+                  state.nodes[i].regime_state.current_regime == REGIME_RANGING);
         }
         check("v5.14.5.B.0: regime_state[0].hysteresis_threshold = 5 (safe default)",
-              state.cores[0].regime_state.hysteresis_threshold == 5);
+              state.nodes[0].regime_state.hysteresis_threshold == 5);
     }
     {
         // Test 6 — Regime_Classify cold-start gate: short_count < 64 → no transition
@@ -22045,7 +22045,7 @@ e3_skip_load:;
         // order_bitmap → released-order fallback to cores[0] (Reconcile.hpp:243-245) → each buy opens
         // core 0's single slot → last-write-wins. Documented fallback corner (TECH_DEBT-072); this
         // PINS the current collapse behavior so the .E.1 rename can't silently change it.
-        check("tsa-live-2: 3 same-core-fallback buys collapse to exactly 1 position (released-order->cores[0]; TECH_DEBT-072)",
+        check("tsa-live-2: 3 same-core-fallback buys collapse to exactly 1 position (released-order->nodes[0]; TECH_DEBT-072)",
               Portfolio_CountActive(&oms.portfolio) == 1);
         check("tsa-live-2: surviving slot-0 carries qty 0.001 (all 3 fills share qty)",
               Money_Eq(oms.portfolio.positions[0].quantity, MQ(0.001)));
@@ -22325,26 +22325,26 @@ e3_skip_load:;
     {
         // Test 4 — PostLoadVerify with no zoos loaded → returns 0 (nothing to verify)
         int rc = tt::FeatureOverlay_PostLoadVerify<64>(
-            /*zoo=*/nullptr, /*ezoo=*/nullptr, /*core_id=*/0, /*strict_mode=*/1);
+            /*zoo=*/nullptr, /*ezoo=*/nullptr, /*node_id=*/0, /*strict_mode=*/1);
         check("v5.14.3.C: PostLoadVerify null zoos → returns 0", rc == 0);
     }
     {
         // Test 5 — PostLoadVerify with zoo but no overlay-claimed handles → returns 0
         // (loaded handle but has_overlay_hash=0 → silent skip)
-        CoreModelZoo<64> zoo;
-        CoreModelZoo_Init(&zoo);
-        zoo.loaded_mask = CORE_MODEL_BUY_SIGNAL;
+        NodeModelZoo<64> zoo;
+        NodeModelZoo_Init(&zoo);
+        zoo.loaded_mask = NODE_MODEL_BUY_SIGNAL;
         STAMP_CLR(zoo.buy_signal, overlay_hash);  // legacy stamp; no overlay claimed
         int rc = tt::FeatureOverlay_PostLoadVerify<64>(
-            &zoo, /*ezoo=*/nullptr, /*core_id=*/0, /*strict_mode=*/1);
+            &zoo, /*ezoo=*/nullptr, /*node_id=*/0, /*strict_mode=*/1);
         check("v5.14.3.C: PostLoadVerify no overlay claimed → returns 0 (silent skip)", rc == 0);
     }
     {
         // Test 6 — PostLoadVerify with handle claiming overlay but no sidecar →
         // returns -1 in strict mode (REFUSE)
-        CoreModelZoo<64> zoo;
-        CoreModelZoo_Init(&zoo);
-        zoo.loaded_mask = CORE_MODEL_BUY_SIGNAL;
+        NodeModelZoo<64> zoo;
+        NodeModelZoo_Init(&zoo);
+        zoo.loaded_mask = NODE_MODEL_BUY_SIGNAL;
         STAMP_SET(zoo.buy_signal, overlay_hash);
         strncpy(zoo.buy_signal.overlay_hash,
                 "1111111111111111111111111111111111111111111111111111111111111111",
@@ -22352,15 +22352,15 @@ e3_skip_load:;
         strncpy(zoo.buy_signal.model_path, "/tmp/v5_14_3_no_sidecar_model_xyz",
                 sizeof(zoo.buy_signal.model_path) - 1);
         int rc = tt::FeatureOverlay_PostLoadVerify<64>(
-            &zoo, /*ezoo=*/nullptr, /*core_id=*/0, /*strict_mode=*/1);
+            &zoo, /*ezoo=*/nullptr, /*node_id=*/0, /*strict_mode=*/1);
         check("v5.14.3.C: PostLoadVerify overlay claimed + sidecar missing + strict → -1",
               rc == -1);
     }
     {
         // Test 7 — Same as Test 6 but loose mode → returns 0 (WARN-only, no REFUSE)
-        CoreModelZoo<64> zoo;
-        CoreModelZoo_Init(&zoo);
-        zoo.loaded_mask = CORE_MODEL_BUY_SIGNAL;
+        NodeModelZoo<64> zoo;
+        NodeModelZoo_Init(&zoo);
+        zoo.loaded_mask = NODE_MODEL_BUY_SIGNAL;
         STAMP_SET(zoo.buy_signal, overlay_hash);
         strncpy(zoo.buy_signal.overlay_hash,
                 "2222222222222222222222222222222222222222222222222222222222222222",
@@ -22368,7 +22368,7 @@ e3_skip_load:;
         strncpy(zoo.buy_signal.model_path, "/tmp/v5_14_3_no_sidecar_loose_xyz",
                 sizeof(zoo.buy_signal.model_path) - 1);
         int rc = tt::FeatureOverlay_PostLoadVerify<64>(
-            &zoo, /*ezoo=*/nullptr, /*core_id=*/0, /*strict_mode=*/0);
+            &zoo, /*ezoo=*/nullptr, /*node_id=*/0, /*strict_mode=*/0);
         check("v5.14.3.C: PostLoadVerify overlay claimed + sidecar missing + loose → 0 (WARN)",
               rc == 0);
     }
@@ -22386,9 +22386,9 @@ e3_skip_load:;
                 fclose(sf);
             }
 
-            CoreModelZoo<64> zoo;
-            CoreModelZoo_Init(&zoo);
-            zoo.loaded_mask = CORE_MODEL_BUY_SIGNAL;
+            NodeModelZoo<64> zoo;
+            NodeModelZoo_Init(&zoo);
+            zoo.loaded_mask = NODE_MODEL_BUY_SIGNAL;
             STAMP_SET(zoo.buy_signal, overlay_hash);
             strncpy(zoo.buy_signal.overlay_hash,
                     "3333333333333333333333333333333333333333333333333333333333333333",
@@ -22397,7 +22397,7 @@ e3_skip_load:;
                     sizeof(zoo.buy_signal.model_path) - 1);
 
             int rc = tt::FeatureOverlay_PostLoadVerify<64>(
-                &zoo, /*ezoo=*/nullptr, /*core_id=*/0, /*strict_mode=*/1);
+                &zoo, /*ezoo=*/nullptr, /*node_id=*/0, /*strict_mode=*/1);
             check("v5.14.3.C: PostLoadVerify valid sidecar + matching hash + strict → 0",
                   rc == 0);
 
@@ -22419,9 +22419,9 @@ e3_skip_load:;
                 fclose(sf);
             }
 
-            CoreModelZoo<64> zoo;
-            CoreModelZoo_Init(&zoo);
-            zoo.loaded_mask = CORE_MODEL_BUY_SIGNAL;
+            NodeModelZoo<64> zoo;
+            NodeModelZoo_Init(&zoo);
+            zoo.loaded_mask = NODE_MODEL_BUY_SIGNAL;
             STAMP_SET(zoo.buy_signal, overlay_hash);
             // Stamp claims a DIFFERENT hash than sidecar reports
             strncpy(zoo.buy_signal.overlay_hash,
@@ -22431,7 +22431,7 @@ e3_skip_load:;
                     sizeof(zoo.buy_signal.model_path) - 1);
 
             int rc = tt::FeatureOverlay_PostLoadVerify<64>(
-                &zoo, /*ezoo=*/nullptr, /*core_id=*/0, /*strict_mode=*/1);
+                &zoo, /*ezoo=*/nullptr, /*node_id=*/0, /*strict_mode=*/1);
             check("v5.14.3.C: PostLoadVerify hash mismatch + strict → -1 (REFUSE)",
                   rc == -1);
 
@@ -22457,12 +22457,12 @@ e3_skip_load:;
             }
 
             // Build 3 zoos with identical state (simulating boot/backtest/hot-swap)
-            CoreModelZoo<64> zoo_boot, zoo_backtest, zoo_hotswap;
-            CoreModelZoo_Init(&zoo_boot);
-            CoreModelZoo_Init(&zoo_backtest);
-            CoreModelZoo_Init(&zoo_hotswap);
+            NodeModelZoo<64> zoo_boot, zoo_backtest, zoo_hotswap;
+            NodeModelZoo_Init(&zoo_boot);
+            NodeModelZoo_Init(&zoo_backtest);
+            NodeModelZoo_Init(&zoo_hotswap);
             for (auto* z : {&zoo_boot, &zoo_backtest, &zoo_hotswap}) {
-                z->loaded_mask = CORE_MODEL_BUY_SIGNAL;
+                z->loaded_mask = NODE_MODEL_BUY_SIGNAL;
                 STAMP_SET(z->buy_signal, overlay_hash);
                 strncpy(z->buy_signal.overlay_hash,
                         "6666666666666666666666666666666666666666666666666666666666666666",
@@ -22638,7 +22638,7 @@ e3_skip_load:;
         EnsembleModelZoo_Init(&ezoo);
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
         strncpy(cfg.ensemble_blend_mode, "softmax", sizeof(cfg.ensemble_blend_mode) - 1);
-        EnsembleModelZoo_PostLoadSetup<64>(&ezoo, cfg, /*core_id=*/0, "/tmp/v5_14_2_e_test_dir");
+        EnsembleModelZoo_PostLoadSetup<64>(&ezoo, cfg, /*node_id=*/0, "/tmp/v5_14_2_e_test_dir");
         check("v5.14.2.E.1 contract: post-PostLoadSetup ezoo READY (blend_mode set)",
               EnsembleModelZoo_IsReadyForInference(&ezoo) == 1);
         check("v5.14.2.E.1 helper applied: blend_mode = 'softmax'",
@@ -22663,16 +22663,16 @@ e3_skip_load:;
         cfg.ensemble_bandit_save_interval = 999;
         strncpy(cfg.ensemble_blend_mode, "weighted", sizeof(cfg.ensemble_blend_mode) - 1);
         // per-core override for blend_mode at core 1
-        strncpy(cfg.core_ensemble_blend_mode[1], "softmax", sizeof(cfg.core_ensemble_blend_mode[1]) - 1);
+        strncpy(cfg.node_ensemble_blend_mode[1], "softmax", sizeof(cfg.node_ensemble_blend_mode[1]) - 1);
         // disabled horizons CSV at core 0
-        strncpy(cfg.core_disabled_horizons[0], "100,500", sizeof(cfg.core_disabled_horizons[0]) - 1);
+        strncpy(cfg.node_disabled_horizons[0], "100,500", sizeof(cfg.node_disabled_horizons[0]) - 1);
 
         // "Boot" call site — core 0
-        EnsembleModelZoo_PostLoadSetup<64>(&zoo_boot, cfg, /*core_id=*/0, "/tmp/v5_14_2_e_test");
+        EnsembleModelZoo_PostLoadSetup<64>(&zoo_boot, cfg, /*node_id=*/0, "/tmp/v5_14_2_e_test");
         // "Backtest" call site — core 0 (same args)
-        EnsembleModelZoo_PostLoadSetup<64>(&zoo_backtest, cfg, /*core_id=*/0, "/tmp/v5_14_2_e_test");
+        EnsembleModelZoo_PostLoadSetup<64>(&zoo_backtest, cfg, /*node_id=*/0, "/tmp/v5_14_2_e_test");
         // "Hot-swap" call site — core 0 (same args)
-        EnsembleModelZoo_PostLoadSetup<64>(&zoo_hotswap, cfg, /*core_id=*/0, "/tmp/v5_14_2_e_test");
+        EnsembleModelZoo_PostLoadSetup<64>(&zoo_hotswap, cfg, /*node_id=*/0, "/tmp/v5_14_2_e_test");
 
         // Symmetry assertions
         check("v5.14.2.E.1 symmetry: blend_mode identical boot==backtest",
@@ -22695,37 +22695,37 @@ e3_skip_load:;
         EnsembleModelZoo_Init(&zoo);
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
         strncpy(cfg.ensemble_blend_mode, "weighted", sizeof(cfg.ensemble_blend_mode) - 1);
-        strncpy(cfg.core_ensemble_blend_mode[1], "softmax", sizeof(cfg.core_ensemble_blend_mode[1]) - 1);
+        strncpy(cfg.node_ensemble_blend_mode[1], "softmax", sizeof(cfg.node_ensemble_blend_mode[1]) - 1);
 
-        EnsembleModelZoo_PostLoadSetup<64>(&zoo, cfg, /*core_id=*/1, "/tmp/v5_14_2_e_test");
+        EnsembleModelZoo_PostLoadSetup<64>(&zoo, cfg, /*node_id=*/1, "/tmp/v5_14_2_e_test");
         check("v5.14.2.E.1: per-core blend_mode override picked up (core 1 → softmax)",
               strcmp(zoo.blend_mode, "softmax") == 0);
 
         EnsembleModelZoo<64> zoo0;
         EnsembleModelZoo_Init(&zoo0);
-        EnsembleModelZoo_PostLoadSetup<64>(&zoo0, cfg, /*core_id=*/0, "/tmp/v5_14_2_e_test");
+        EnsembleModelZoo_PostLoadSetup<64>(&zoo0, cfg, /*node_id=*/0, "/tmp/v5_14_2_e_test");
         check("v5.14.2.E.1: core 0 falls back to global blend_mode (weighted)",
               strcmp(zoo0.blend_mode, "weighted") == 0);
     }
     {
         // Test 6 — Single-zoo PostLoadSetup contract: returns 0 on null inputs
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
-        check("v5.14.2.E.1: CoreModelZoo_PostLoadSetup null zoo → 0",
-              CoreModelZoo_PostLoadSetup<64>(nullptr, cfg, 0, "/tmp/foo") == 0);
+        check("v5.14.2.E.1: NodeModelZoo_PostLoadSetup null zoo → 0",
+              NodeModelZoo_PostLoadSetup<64>(nullptr, cfg, 0, "/tmp/foo") == 0);
 
-        CoreModelZoo<64> zoo;
-        CoreModelZoo_Init(&zoo);
-        check("v5.14.2.E.1: CoreModelZoo_PostLoadSetup null path → 0",
-              CoreModelZoo_PostLoadSetup<64>(&zoo, cfg, 0, nullptr) == 0);
+        NodeModelZoo<64> zoo;
+        NodeModelZoo_Init(&zoo);
+        check("v5.14.2.E.1: NodeModelZoo_PostLoadSetup null path → 0",
+              NodeModelZoo_PostLoadSetup<64>(&zoo, cfg, 0, nullptr) == 0);
     }
     {
         // Test 7 — Single-zoo PostLoadSetup with nonexistent dir: VerifyExpected
         // returns 1 (silent pass — no expected.cfg = backward compat). Helper
         // returns 1 ("all steps OK").
-        CoreModelZoo<64> zoo;
-        CoreModelZoo_Init(&zoo);
+        NodeModelZoo<64> zoo;
+        NodeModelZoo_Init(&zoo);
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
-        int rc = CoreModelZoo_PostLoadSetup<64>(&zoo, cfg, /*core_id=*/0,
+        int rc = NodeModelZoo_PostLoadSetup<64>(&zoo, cfg, /*node_id=*/0,
                                                   "/tmp/v5_14_2_e_nonexistent_dir_xyz");
         check("v5.14.2.E.1: single-zoo PostLoadSetup with no expected.cfg → 1 (backward compat)",
               rc == 1);
@@ -22737,10 +22737,10 @@ e3_skip_load:;
         // We can't easily simulate verify_ok=0 without a real expected.cfg
         // mismatch on disk, but we can verify the return-code propagation
         // via the null-path test above (which returns 0).
-        CoreModelZoo<64> zoo;
-        CoreModelZoo_Init(&zoo);
+        NodeModelZoo<64> zoo;
+        NodeModelZoo_Init(&zoo);
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
-        int rc_failure = CoreModelZoo_PostLoadSetup<64>(&zoo, cfg, 0, nullptr);
+        int rc_failure = NodeModelZoo_PostLoadSetup<64>(&zoo, cfg, 0, nullptr);
         check("v5.14.2.E.1: PostLoadSetup propagates failure (return code = 0) for caller strict-mode action",
               rc_failure == 0);
     }
@@ -22755,7 +22755,7 @@ e3_skip_load:;
         // Test 1 — Null zoo → returns 0 (failure path)
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
         int rc = tt::EngineSharded_HotSwapEnsemble<64>(
-            nullptr, cfg, /*core_id=*/0,
+            nullptr, cfg, /*node_id=*/0,
             /*new_base_dir=*/"models/some_dir",
             /*swap_backend=*/MODEL_BACKEND_XGBOOST);
         check("v5.14.2: HotSwap null ezoo → returns 0", rc == 0);
@@ -22766,7 +22766,7 @@ e3_skip_load:;
         EnsembleModelZoo_Init(&ezoo);
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
         int rc = tt::EngineSharded_HotSwapEnsemble<64>(
-            &ezoo, cfg, /*core_id=*/0,
+            &ezoo, cfg, /*node_id=*/0,
             /*new_base_dir=*/"",
             /*swap_backend=*/MODEL_BACKEND_XGBOOST);
         check("v5.14.2: HotSwap empty new_base_dir → returns 0", rc == 0);
@@ -22777,7 +22777,7 @@ e3_skip_load:;
         EnsembleModelZoo_Init(&ezoo);
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
         int rc = tt::EngineSharded_HotSwapEnsemble<64>(
-            &ezoo, cfg, /*core_id=*/0,
+            &ezoo, cfg, /*node_id=*/0,
             /*new_base_dir=*/nullptr,
             /*swap_backend=*/MODEL_BACKEND_XGBOOST);
         check("v5.14.2: HotSwap null new_base_dir → returns 0", rc == 0);
@@ -22790,7 +22790,7 @@ e3_skip_load:;
         EnsembleModelZoo_Init(&ezoo);
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
         int rc = tt::EngineSharded_HotSwapEnsemble<64>(
-            &ezoo, cfg, /*core_id=*/0,
+            &ezoo, cfg, /*node_id=*/0,
             /*new_base_dir=*/"/tmp/v5_14_2_nonexistent",
             /*swap_backend=*/MODEL_BACKEND_XGBOOST);
         check("v5.14.2: HotSwap with no cached horizons → returns 0", rc == 0);
@@ -22810,7 +22810,7 @@ e3_skip_load:;
 
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
         int rc = tt::EngineSharded_HotSwapEnsemble<64>(
-            &ezoo, cfg, /*core_id=*/0,
+            &ezoo, cfg, /*node_id=*/0,
             /*new_base_dir=*/"/tmp/v5_14_2_definitely_nonexistent_dir_xyz",
             /*swap_backend=*/MODEL_BACKEND_XGBOOST);
         check("v5.14.2: HotSwap valid horizons + invalid dir → returns 0", rc == 0);
@@ -23337,37 +23337,37 @@ e3_skip_load:;
 
         // Disabled (max_age_hours=0): always returns 0
         check("v5.14.8.E: max_age_hours=0 returns 0 (disabled)",
-              CoreModelZoo_CheckStaleModel(&m, now_us, 0, 1) == 0);
+              NodeModelZoo_CheckStaleModel(&m, now_us, 0, 1) == 0);
 
         // No training_timestamp_us bit (legacy stamp): returns 0
         STAMP_CLR(m, training_timestamp_us);
         check("v5.14.8.E: legacy stamp (no bit) returns 0 (skip check)",
-              CoreModelZoo_CheckStaleModel(&m, now_us, 24, 1) == 0);
+              NodeModelZoo_CheckStaleModel(&m, now_us, 24, 1) == 0);
 
         // Sentinel (training_timestamp_us=0): returns 0
         STAMP_SET(m, training_timestamp_us);
         m.training_timestamp_us = 0;
         check("v5.14.8.E: sentinel timestamp 0 returns 0 (skip)",
-              CoreModelZoo_CheckStaleModel(&m, now_us, 24, 1) == 0);
+              NodeModelZoo_CheckStaleModel(&m, now_us, 24, 1) == 0);
 
         // Fresh model (1h old, max=24h): returns 0
         m.training_timestamp_us = now_us - (1ULL * 3600ULL * 1000000ULL);
         check("v5.14.8.E: 1h old model with max=24h returns 0 (fresh)",
-              CoreModelZoo_CheckStaleModel(&m, now_us, 24, 1) == 0);
+              NodeModelZoo_CheckStaleModel(&m, now_us, 24, 1) == 0);
 
         // Stale model strict_mode=1: returns -1 (REFUSE)
         m.training_timestamp_us = now_us - (48ULL * 3600ULL * 1000000ULL);  // 48h old
         check("v5.14.8.E: stale model strict=1 returns -1 (REFUSE)",
-              CoreModelZoo_CheckStaleModel(&m, now_us, 24, 1) == -1);
+              NodeModelZoo_CheckStaleModel(&m, now_us, 24, 1) == -1);
 
         // Stale model strict_mode=0: returns 0 (WARN; engine continues)
         check("v5.14.8.E: stale model strict=0 returns 0 (WARN)",
-              CoreModelZoo_CheckStaleModel(&m, now_us, 24, 0) == 0);
+              NodeModelZoo_CheckStaleModel(&m, now_us, 24, 0) == 0);
 
         // Future timestamp: returns 0 (treat as fresh; clock skew tolerance)
         m.training_timestamp_us = now_us + (3600ULL * 1000000ULL);
         check("v5.14.8.E: future-timestamp returns 0 (clock skew tolerance)",
-              CoreModelZoo_CheckStaleModel(&m, now_us, 24, 1) == 0);
+              NodeModelZoo_CheckStaleModel(&m, now_us, 24, 1) == 0);
 
         // FOREACH_FAILURE_MODE post-E should have 6 entries (5 + stale_feature_events)
         check("v5.14.8.E: FOREACH_FAILURE_MODE_COUNT >= 6 post-E (added stale_feature_events)",
@@ -23559,8 +23559,8 @@ e3_skip_load:;
     {
         using namespace tt;
         // Registry size assertions (>= per /readiness Check 21).
-        check("v5.14.9.B.0: PER_CORE count >= 5 (LADDER + 4 ML gates)",
-              FOREACH_SLOW_PATH_GATE_PER_CORE_COUNT >= 5);
+        check("v5.14.9.B.0: PER_NODE count >= 5 (LADDER + 4 ML gates)",
+              FOREACH_SLOW_PATH_GATE_PER_NODE_COUNT >= 5);
         check("v5.14.9.B.0: ENGINE_WIDE count >= 2 (LAZY_REBUILD + WS_FLATTEN)",
               FOREACH_SLOW_PATH_GATE_ENGINE_WIDE_COUNT >= 2);
         check("v5.14.9.B.0: total bits <= 16 (uint16_t cap)",
@@ -23571,7 +23571,7 @@ e3_skip_load:;
               MASK_LADDER_ACTIVE != MASK_CONFIDENCE_ENABLED);
         check("v5.14.9.B.0: MASK_LAZY_REBUILD_ACTIVE != MASK_WS_FLATTEN_ACTIVE",
               MASK_LAZY_REBUILD_ACTIVE != MASK_WS_FLATTEN_ACTIVE);
-        check("v5.14.9.B.0: MASK_PER_CORE bits don't collide with ENGINE_WIDE bits",
+        check("v5.14.9.B.0: MASK_PER_NODE bits don't collide with ENGINE_WIDE bits",
               (MASK_LADDER_ACTIVE | MASK_CONFIDENCE_ENABLED | MASK_COMPOSITE_ENABLED |
                MASK_RIDGE_WITHIN_ACTIVE | MASK_EXIT_BLENDER_ACTIVE) ==
               ((MASK_LADDER_ACTIVE | MASK_CONFIDENCE_ENABLED | MASK_COMPOSITE_ENABLED |
@@ -23584,18 +23584,18 @@ e3_skip_load:;
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
         SlowPathGateState state;
         state.flags = 0xFFFF;  // pre-populate to ensure AUTOPOPULATE clears
-        SLOW_PATH_GATE_AUTOPOPULATE_PER_CORE(state, cfg);
-        check("v5.14.9.B.0: PER_CORE default cfg → MASK_LADDER_ACTIVE off",
+        SLOW_PATH_GATE_AUTOPOPULATE_PER_NODE(state, cfg);
+        check("v5.14.9.B.0: PER_NODE default cfg → MASK_LADDER_ACTIVE off",
               !BITMAP_IS_SET(state.flags, MASK_LADDER_ACTIVE));
-        check("v5.14.9.B.0: PER_CORE default cfg → MASK_CONFIDENCE_ENABLED off (default cfg disables)",
+        check("v5.14.9.B.0: PER_NODE default cfg → MASK_CONFIDENCE_ENABLED off (default cfg disables)",
               !BITMAP_IS_SET(state.flags, MASK_CONFIDENCE_ENABLED));
-        check("v5.14.9.B.0: PER_CORE default cfg → MASK_COMPOSITE_ENABLED off",
+        check("v5.14.9.B.0: PER_NODE default cfg → MASK_COMPOSITE_ENABLED off",
               !BITMAP_IS_SET(state.flags, MASK_COMPOSITE_ENABLED));
-        check("v5.14.9.B.0: PER_CORE default cfg → MASK_RIDGE_WITHIN_ACTIVE off",
+        check("v5.14.9.B.0: PER_NODE default cfg → MASK_RIDGE_WITHIN_ACTIVE off",
               !BITMAP_IS_SET(state.flags, MASK_RIDGE_WITHIN_ACTIVE));
-        check("v5.14.9.B.0: PER_CORE default cfg → MASK_EXIT_BLENDER_ACTIVE off",
+        check("v5.14.9.B.0: PER_NODE default cfg → MASK_EXIT_BLENDER_ACTIVE off",
               !BITMAP_IS_SET(state.flags, MASK_EXIT_BLENDER_ACTIVE));
-        check("v5.14.9.B.0: PER_CORE default cfg → ENGINE_WIDE bits stay 0 in PER_CORE state",
+        check("v5.14.9.B.0: PER_NODE default cfg → ENGINE_WIDE bits stay 0 in PER_NODE state",
               !BITMAP_IS_SET(state.flags, MASK_LAZY_REBUILD_ACTIVE) &&
               !BITMAP_IS_SET(state.flags, MASK_WS_FLATTEN_ACTIVE));
     }
@@ -23606,7 +23606,7 @@ e3_skip_load:;
         cfg.risk_degradation_curve     = CURVE_LINEAR;
         BITMAP_SET(cfg.ml_cfg_flags, MASK_ML_CFG_CONFIDENCE_COMPOSITE_ENABLED);
         SlowPathGateState state;
-        SLOW_PATH_GATE_AUTOPOPULATE_PER_CORE(state, cfg);
+        SLOW_PATH_GATE_AUTOPOPULATE_PER_NODE(state, cfg);
         check("v5.14.9.B.0: ladder + composite → MASK_LADDER_ACTIVE set",
               BITMAP_IS_SET(state.flags, MASK_LADDER_ACTIVE));
         check("v5.14.9.B.0: ladder + composite → MASK_COMPOSITE_ENABLED set",
@@ -23619,7 +23619,7 @@ e3_skip_load:;
         cfg.risk_degradation_curve     = CURVE_LINEAR;
         BITMAP_CLR(cfg.ml_cfg_flags, MASK_ML_CFG_CONFIDENCE_COMPOSITE_ENABLED);
         SlowPathGateState state;
-        SLOW_PATH_GATE_AUTOPOPULATE_PER_CORE(state, cfg);
+        SLOW_PATH_GATE_AUTOPOPULATE_PER_NODE(state, cfg);
         check("v5.14.9.B.0: ladder + NO composite → MASK_LADDER_ACTIVE off (composite required)",
               !BITMAP_IS_SET(state.flags, MASK_LADDER_ACTIVE));
         check("v5.14.9.B.0: NO composite → MASK_COMPOSITE_ENABLED off",
@@ -23631,7 +23631,7 @@ e3_skip_load:;
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
         BITMAP_SET(cfg.ml_cfg_flags, MASK_ML_CFG_RIDGE_WITHIN_HORIZON);
         SlowPathGateState state;
-        SLOW_PATH_GATE_AUTOPOPULATE_PER_CORE(state, cfg);
+        SLOW_PATH_GATE_AUTOPOPULATE_PER_NODE(state, cfg);
         check("v5.14.9.B.0: ridge_within_horizon=1 → MASK_RIDGE_WITHIN_ACTIVE set",
               BITMAP_IS_SET(state.flags, MASK_RIDGE_WITHIN_ACTIVE));
     }
@@ -23641,7 +23641,7 @@ e3_skip_load:;
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
         BITMAP_SET(cfg.ml_cfg_flags, MASK_ML_CFG_EXIT_BLENDER_MODE);
         SlowPathGateState state;
-        SLOW_PATH_GATE_AUTOPOPULATE_PER_CORE(state, cfg);
+        SLOW_PATH_GATE_AUTOPOPULATE_PER_NODE(state, cfg);
         check("v5.14.9.B.0: exit_blender_mode=1 → MASK_EXIT_BLENDER_ACTIVE set",
               BITMAP_IS_SET(state.flags, MASK_EXIT_BLENDER_ACTIVE));
     }
@@ -23656,7 +23656,7 @@ e3_skip_load:;
               !BITMAP_IS_SET(state.flags, MASK_LAZY_REBUILD_ACTIVE));
         check("v5.14.9.B.0: ENGINE_WIDE default cfg → MASK_WS_FLATTEN_ACTIVE off",
               !BITMAP_IS_SET(state.flags, MASK_WS_FLATTEN_ACTIVE));
-        check("v5.14.9.B.0: ENGINE_WIDE default → PER_CORE bits stay 0 in ENGINE_WIDE state",
+        check("v5.14.9.B.0: ENGINE_WIDE default → PER_NODE bits stay 0 in ENGINE_WIDE state",
               !BITMAP_IS_SET(state.flags, MASK_LADDER_ACTIVE) &&
               !BITMAP_IS_SET(state.flags, MASK_CONFIDENCE_ENABLED) &&
               !BITMAP_IS_SET(state.flags, MASK_COMPOSITE_ENABLED) &&
@@ -23682,13 +23682,13 @@ e3_skip_load:;
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
         BITMAP_SET(cfg.ml_cfg_flags, MASK_ML_CFG_RIDGE_WITHIN_HORIZON);
         SlowPathGateState state;
-        SLOW_PATH_GATE_AUTOPOPULATE_PER_CORE(state, cfg);
+        SLOW_PATH_GATE_AUTOPOPULATE_PER_NODE(state, cfg);
         const uint16_t blend_mask = MASK_RIDGE_WITHIN_ACTIVE | MASK_EXIT_BLENDER_ACTIVE;
         check("v5.14.9.B.0: BITMAP_ANY catches ridge OR exit_blender (any blend gate)",
               BITMAP_ANY(state.flags, blend_mask));
         BITMAP_CLR(cfg.ml_cfg_flags, MASK_ML_CFG_RIDGE_WITHIN_HORIZON);
         BITMAP_CLR(cfg.ml_cfg_flags, MASK_ML_CFG_EXIT_BLENDER_MODE);
-        SLOW_PATH_GATE_AUTOPOPULATE_PER_CORE(state, cfg);
+        SLOW_PATH_GATE_AUTOPOPULATE_PER_NODE(state, cfg);
         check("v5.14.9.B.0: BITMAP_ANY returns 0 when no blend gates active",
               !BITMAP_ANY(state.flags, blend_mask));
     }
@@ -23698,11 +23698,11 @@ e3_skip_load:;
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
         BITMAP_SET(cfg.ml_cfg_flags, MASK_ML_CFG_CONFIDENCE_COMPOSITE_ENABLED);
         SlowPathGateState state;
-        SLOW_PATH_GATE_AUTOPOPULATE_PER_CORE(state, cfg);
+        SLOW_PATH_GATE_AUTOPOPULATE_PER_NODE(state, cfg);
         check("v5.14.9.B.0: AUTOPOPULATE sets composite when cfg=1",
               BITMAP_IS_SET(state.flags, MASK_COMPOSITE_ENABLED));
         BITMAP_CLR(cfg.ml_cfg_flags, MASK_ML_CFG_CONFIDENCE_COMPOSITE_ENABLED);
-        SLOW_PATH_GATE_AUTOPOPULATE_PER_CORE(state, cfg);
+        SLOW_PATH_GATE_AUTOPOPULATE_PER_NODE(state, cfg);
         check("v5.14.9.B.0: AUTOPOPULATE CLEARS composite when cfg flips to 0 (full re-eval)",
               !BITMAP_IS_SET(state.flags, MASK_COMPOSITE_ENABLED));
     }
@@ -23751,8 +23751,8 @@ e3_skip_load:;
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
         BITMAP_SET(cfg.lifecycle_cfg_flags, MASK_LIFECYCLE_CFG_BREAKEVEN_ON_PROFIT);
         SlowPathGateState state;
-        SLOW_PATH_GATE_AUTOPOPULATE_PER_CORE(state, cfg);
-        check("v5.15.5.F.4d.1.B.4: AUTOPOPULATE_PER_CORE SKIPs ENGINE_WIDE BREAKEVEN_ON_PROFIT (scope discipline)",
+        SLOW_PATH_GATE_AUTOPOPULATE_PER_NODE(state, cfg);
+        check("v5.15.5.F.4d.1.B.4: AUTOPOPULATE_PER_NODE SKIPs ENGINE_WIDE BREAKEVEN_ON_PROFIT (scope discipline)",
               !BITMAP_IS_SET(state.flags, MASK_BREAKEVEN_ON_PROFIT));
     }
     {
@@ -23777,14 +23777,14 @@ e3_skip_load:;
         // PARITY-030 by-construction (LIVE + BACKTEST both call this pre-loop).
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
         cfg.pay_fees_in_bnb = 1;
-        cfg.cores[0].fee_rate_maker = MQ(0.001);
-        cfg.cores[0].fee_rate_taker = MQ(0.001);
+        cfg.nodes[0].fee_rate_maker = MQ(0.001);
+        cfg.nodes[0].fee_rate_taker = MQ(0.001);
         EngineCommon_ApplyBnbDiscount(cfg);
         // 0.001 * 0.75 = 0.00075 (exactly representable in F=64 FPN_Binary)
         check("v5.15.5.F.4d.1.B.4: ApplyBnbDiscount pay_fees_in_bnb=1 reduces core[0] fee_rate_maker",
-              Money_ToDouble(cfg.cores[0].fee_rate_maker) < 0.001);
+              Money_ToDouble(cfg.nodes[0].fee_rate_maker) < 0.001);
         check("v5.15.5.F.4d.1.B.4: ApplyBnbDiscount pay_fees_in_bnb=1 reduces core[0] fee_rate_taker",
-              Money_ToDouble(cfg.cores[0].fee_rate_taker) < 0.001);
+              Money_ToDouble(cfg.nodes[0].fee_rate_taker) < 0.001);
     }
     {
         using namespace tt;
@@ -23793,12 +23793,12 @@ e3_skip_load:;
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
         cfg.pay_fees_in_bnb = 0;
         Money baseline_maker = MQ(0.001);
-        cfg.cores[0].fee_rate_maker = baseline_maker;
+        cfg.nodes[0].fee_rate_maker = baseline_maker;
         EngineCommon_ApplyBnbDiscount(cfg);
         // Compare via FPN_ToDouble for tolerant exact-match (F=64 represents
         // doubles exactly in normal range; conversion roundtrip is identity).
         check("v5.15.5.F.4d.1.B.4: ApplyBnbDiscount pay_fees_in_bnb=0 → fee_rate_maker unchanged",
-              Money_ToDouble(cfg.cores[0].fee_rate_maker) == Money_ToDouble(baseline_maker));
+              Money_ToDouble(cfg.nodes[0].fee_rate_maker) == Money_ToDouble(baseline_maker));
     }
 
     //======================================================================
@@ -23857,8 +23857,8 @@ e3_skip_load:;
         // PerCoreSnap.ml_confidence_factor field exists + initializes to 0.
         // Default-constructed snap has all-zero values; field is part of the
         // ml_* cluster (cache locality verified in plan).
-        TUISnapshot::PerCoreSnap snap{};
-        check("v5.14.9.B: PerCoreSnap.ml_confidence_factor exists + initializes to 0",
+        TUISnapshot::PerNodeSnap snap{};
+        check("v5.14.9.B: PerNodeSnap.ml_confidence_factor exists + initializes to 0",
               snap.ml_confidence_factor == 0.0);
     }
 
@@ -23868,10 +23868,10 @@ e3_skip_load:;
     {
         using namespace tt;
         // Registry sizing assertions
-        check("v5.14.9.B.2: PER_CORE_STATE_FLAG count >= 7 (6 migrated + 1 ladder bottom)",
-              FOREACH_PER_CORE_STATE_FLAG_COUNT >= 7);
-        check("v5.14.9.B.2: PER_CORE_STATE_FLAG count <= 16 (uint16_t cap)",
-              PER_CORE_STATE_FLAG_COUNT <= 16);
+        check("v5.14.9.B.2: PER_NODE_STATE_FLAG count >= 7 (6 migrated + 1 ladder bottom)",
+              FOREACH_PER_NODE_STATE_FLAG_COUNT >= 7);
+        check("v5.14.9.B.2: PER_NODE_STATE_FLAG count <= 16 (uint16_t cap)",
+              PER_NODE_STATE_FLAG_COUNT <= 16);
 
         // MASK_* are bit-distinct
         check("v5.14.9.B.2: MASK_PERMISSION_ALLOWED != MASK_BITMAP_CONSISTENT",
@@ -23884,7 +23884,7 @@ e3_skip_load:;
     }
     {
         // STATE_FLAG_SET / IS_SET / CLR round-trip
-        TUISnapshot::PerCoreSnap snap{};
+        TUISnapshot::PerNodeSnap snap{};
         check("v5.14.9.B.2: default state_flags == 0 (no bits set)",
               snap.state_flags == 0);
 
@@ -23912,7 +23912,7 @@ e3_skip_load:;
     {
         // BITMAP_ANY multi-flag check (forward-leverage)
         using namespace tt;
-        TUISnapshot::PerCoreSnap snap{};
+        TUISnapshot::PerNodeSnap snap{};
         STATE_FLAG_SET(snap, IS_ML);
         check("v5.14.9.B.2: BITMAP_ANY catches IS_ML | ML_MODEL_LOADED set",
               BITMAP_ANY(snap.state_flags, MASK_IS_ML | MASK_ML_MODEL_LOADED));
@@ -23923,7 +23923,7 @@ e3_skip_load:;
     {
         // All 7 currently-defined bits assignable + readable
         using namespace tt;
-        TUISnapshot::PerCoreSnap snap{};
+        TUISnapshot::PerNodeSnap snap{};
         STATE_FLAG_SET(snap, PERMISSION_ALLOWED);
         STATE_FLAG_SET(snap, BITMAP_CONSISTENT);
         STATE_FLAG_SET(snap, GATE_BUY_ABOVE);
@@ -23931,7 +23931,7 @@ e3_skip_load:;
         STATE_FLAG_SET(snap, ML_MODEL_LOADED);
         STATE_FLAG_SET(snap, STRATEGY_EXPLICITLY_SET);
         STATE_FLAG_SET(snap, LADDER_BOTTOM_HIT);
-        check("v5.14.9.B.2: all 7 PER_CORE_STATE_FLAG bits coexist + readable",
+        check("v5.14.9.B.2: all 7 PER_NODE_STATE_FLAG bits coexist + readable",
               STATE_FLAG_IS_SET(snap, PERMISSION_ALLOWED) &&
               STATE_FLAG_IS_SET(snap, BITMAP_CONSISTENT) &&
               STATE_FLAG_IS_SET(snap, GATE_BUY_ABOVE) &&
@@ -23944,8 +23944,8 @@ e3_skip_load:;
         // Memory savings: state_flags is uint16_t (2 bytes) replacing 6
         // uint8_t fields (6 bytes). 3× shrink per snap; 16 cores × 4 bytes =
         // ~64 bytes per engine. Sanity check field layout.
-        check("v5.14.9.B.2: PerCoreSnap.state_flags is uint16_t (2 bytes)",
-              sizeof(((TUISnapshot::PerCoreSnap*)nullptr)->state_flags) == 2);
+        check("v5.14.9.B.2: PerNodeSnap.state_flags is uint16_t (2 bytes)",
+              sizeof(((TUISnapshot::PerNodeSnap*)nullptr)->state_flags) == 2);
     }
 
     //======================================================================
@@ -23955,7 +23955,7 @@ e3_skip_load:;
         // Registry size sanity (>= per /readiness Check 21).
         // Pre-v5.14.9.C had 13 entries; .C adds 4 (risk_degradation_curve + 3 thresholds).
         check("v5.14.9.C: cohort >= 17 post-C; via dual-mask popcount",
-              (cfg_field_count(g_per_core_cfg_stamp_bound_cfg_derived_mask) +
+              (cfg_field_count(g_per_node_cfg_stamp_bound_cfg_derived_mask) +
                cfg_field_count(g_global_cfg_stamp_bound_cfg_derived_mask)) >= 17);
     }
     {
@@ -24296,8 +24296,8 @@ e3_skip_load:;
         fclose(f);
 
         ControllerConfig<64> cfg = ControllerConfig_Load<64>(tmpfile);
-        check("v5.14.9.F: parser loads file (returns valid config; default num_execution_cores>0)",
-              cfg.num_execution_cores > 0);
+        check("v5.14.9.F: parser loads file (returns valid config; default num_execution_nodes>0)",
+              cfg.num_execution_nodes > 0);
         check("v5.14.9.F: parser sets partial_exit bit from legacy key",
               BITMAP_IS_SET(cfg.lifecycle_cfg_flags, MASK_LIFECYCLE_CFG_PARTIAL_EXIT_ENABLED));
         check("v5.14.9.F: parser clears breakeven_on_partial bit from legacy key=0",
@@ -24616,15 +24616,15 @@ e3_skip_load:;
         // Default cfg: no per-core bitmap overrides (override_set == 0)
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
         check("v5.14.9.F.6: default per-core lifecycle override_set == 0",
-              cfg.core_overrides[0].lifecycle_cfg_flags_override_set == 0);
+              cfg.node_overrides[0].lifecycle_cfg_flags_override_set == 0);
         check("v5.14.9.F.6: default per-core gate override_set == 0",
-              cfg.core_overrides[0].gate_cfg_flags_override_set == 0);
+              cfg.node_overrides[0].gate_cfg_flags_override_set == 0);
         check("v5.14.9.F.6: default per-core ml override_set == 0",
-              cfg.core_overrides[0].ml_cfg_flags_override_set == 0);
+              cfg.node_overrides[0].ml_cfg_flags_override_set == 0);
         check("v5.14.9.F.6: default per-core risk override_set == 0",
-              cfg.core_overrides[0].risk_cfg_flags_override_set == 0);
+              cfg.node_overrides[0].risk_cfg_flags_override_set == 0);
         check("v5.14.9.F.6: default per-core ops override_set == 0",
-              cfg.core_overrides[0].ops_cfg_flags_override_set == 0);
+              cfg.node_overrides[0].ops_cfg_flags_override_set == 0);
     }
     {
         // No override → resolver inherits global for ALL bits
@@ -24643,8 +24643,8 @@ e3_skip_load:;
         BITMAP_SET(cfg.ml_cfg_flags, MASK_ML_CFG_BANDIT_ENABLED);   // global bandit ON
         BITMAP_SET(cfg.ml_cfg_flags, MASK_ML_CFG_CONFIDENCE_ENABLED); // global confidence ON
         // Core 3: override bandit OFF; leave confidence at global (inherited)
-        cfg.core_overrides[3].ml_cfg_flags_override_set |= MASK_ML_CFG_BANDIT_ENABLED;
-        cfg.core_overrides[3].ml_cfg_flags_override &= (uint16_t)~MASK_ML_CFG_BANDIT_ENABLED; // bit = 0 in override
+        cfg.node_overrides[3].ml_cfg_flags_override_set |= MASK_ML_CFG_BANDIT_ENABLED;
+        cfg.node_overrides[3].ml_cfg_flags_override &= (uint16_t)~MASK_ML_CFG_BANDIT_ENABLED; // bit = 0 in override
         ControllerConfig<64> resolved3 = ControllerConfig_ResolveForCore(cfg, 3);
         check("v5.14.9.F.6: core 3 override → bandit OFF in resolved",
               !BITMAP_IS_SET(resolved3.ml_cfg_flags, MASK_ML_CFG_BANDIT_ENABLED));
@@ -24658,33 +24658,33 @@ e3_skip_load:;
               BITMAP_IS_SET(resolved0.ml_cfg_flags, MASK_ML_CFG_CONFIDENCE_ENABLED));
     }
     {
-        // Parser: `core_2_kill_switch_enabled = 0` overrides kill_switch on core 2
+        // Parser: `node_2_kill_switch_enabled = 0` overrides kill_switch on core 2
         char tmpfile[] = "/tmp/foxml_v5_14_9_f6_XXXXXX";
         int fd = mkstemp(tmpfile);
         check("v5.14.9.F.6: parser tmpfile created", fd >= 0);
         FILE* f = fdopen(fd, "w");
         fprintf(f, "kill_switch_enabled=1\n");           // global: kill_switch ON (matches default but explicit)
-        fprintf(f, "core_2_kill_switch_enabled=0\n");    // core 2: override OFF
-        fprintf(f, "core_5_partial_exit_enabled=1\n");   // core 5: override partial_exit ON (global default OFF)
-        fprintf(f, "core_5_breakeven_on_partial=0\n");   // core 5: override breakeven OFF (global default ON)
+        fprintf(f, "node_2_kill_switch_enabled=0\n");    // core 2: override OFF
+        fprintf(f, "node_5_partial_exit_enabled=1\n");   // core 5: override partial_exit ON (global default OFF)
+        fprintf(f, "node_5_breakeven_on_partial=0\n");   // core 5: override breakeven OFF (global default ON)
         fclose(f);
 
         ControllerConfig<64> cfg = ControllerConfig_Load<64>(tmpfile);
         check("v5.14.9.F.6: parser sets core 2 RISK override_set bit for kill_switch",
-              BITMAP_IS_SET(cfg.core_overrides[2].risk_cfg_flags_override_set, MASK_RISK_CFG_KILL_SWITCH_ENABLED));
+              BITMAP_IS_SET(cfg.node_overrides[2].risk_cfg_flags_override_set, MASK_RISK_CFG_KILL_SWITCH_ENABLED));
         check("v5.14.9.F.6: parser sets core 2 RISK override VALUE bit OFF (overrides global ON)",
-              !BITMAP_IS_SET(cfg.core_overrides[2].risk_cfg_flags_override, MASK_RISK_CFG_KILL_SWITCH_ENABLED));
+              !BITMAP_IS_SET(cfg.node_overrides[2].risk_cfg_flags_override, MASK_RISK_CFG_KILL_SWITCH_ENABLED));
         check("v5.14.9.F.6: parser sets core 5 LIFECYCLE override_set for partial_exit",
-              BITMAP_IS_SET(cfg.core_overrides[5].lifecycle_cfg_flags_override_set, MASK_LIFECYCLE_CFG_PARTIAL_EXIT_ENABLED));
+              BITMAP_IS_SET(cfg.node_overrides[5].lifecycle_cfg_flags_override_set, MASK_LIFECYCLE_CFG_PARTIAL_EXIT_ENABLED));
         check("v5.14.9.F.6: parser sets core 5 LIFECYCLE override VALUE ON for partial_exit",
-              BITMAP_IS_SET(cfg.core_overrides[5].lifecycle_cfg_flags_override, MASK_LIFECYCLE_CFG_PARTIAL_EXIT_ENABLED));
+              BITMAP_IS_SET(cfg.node_overrides[5].lifecycle_cfg_flags_override, MASK_LIFECYCLE_CFG_PARTIAL_EXIT_ENABLED));
         check("v5.14.9.F.6: parser sets core 5 LIFECYCLE override_set for breakeven_on_partial",
-              BITMAP_IS_SET(cfg.core_overrides[5].lifecycle_cfg_flags_override_set, MASK_LIFECYCLE_CFG_BREAKEVEN_ON_PARTIAL));
+              BITMAP_IS_SET(cfg.node_overrides[5].lifecycle_cfg_flags_override_set, MASK_LIFECYCLE_CFG_BREAKEVEN_ON_PARTIAL));
         check("v5.14.9.F.6: parser sets core 5 LIFECYCLE override VALUE OFF for breakeven_on_partial",
-              !BITMAP_IS_SET(cfg.core_overrides[5].lifecycle_cfg_flags_override, MASK_LIFECYCLE_CFG_BREAKEVEN_ON_PARTIAL));
+              !BITMAP_IS_SET(cfg.node_overrides[5].lifecycle_cfg_flags_override, MASK_LIFECYCLE_CFG_BREAKEVEN_ON_PARTIAL));
         // Core 0: no override
         check("v5.14.9.F.6: core 0 LIFECYCLE override_set == 0 (untouched)",
-              cfg.core_overrides[0].lifecycle_cfg_flags_override_set == 0);
+              cfg.node_overrides[0].lifecycle_cfg_flags_override_set == 0);
 
         // Resolver verifies effective bitmap for core 2 + 5
         ControllerConfig<64> r2 = ControllerConfig_ResolveForCore(cfg, 2);
@@ -24712,7 +24712,7 @@ e3_skip_load:;
         tt::EventLoopState<64> state{};
         tt::OrderManagerState<64> oms{};
         EventLoopState_Init(&state, &oms);
-        check("v5.14.9.G: default partner_pending_bitmap == 0 (no cores pending)",
+        check("v5.14.9.G: default partner_pending_bitmap == 0 (no nodes pending)",
               state.partner_pending_bitmap == 0);
     }
     {
@@ -24759,13 +24759,13 @@ e3_skip_load:;
         // Default cfg → all per-core overrides initialize to 0 (inherit)
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
         check("v5.14.9.B.1: default per-core risk_degradation_curve == 0 (inherit)",
-              cfg.core_overrides[0].risk_degradation_curve == 0);
+              cfg.node_overrides[0].risk_degradation_curve == 0);
         check("v5.14.9.B.1: default per-core risk_full_size_threshold == 0 (inherit)",
-              FPN_IsZero(cfg.core_overrides[0].risk_full_size_threshold));
+              FPN_IsZero(cfg.node_overrides[0].risk_full_size_threshold));
         check("v5.14.9.B.1: default per-core risk_min_size_threshold == 0 (inherit)",
-              FPN_IsZero(cfg.core_overrides[0].risk_min_size_threshold));
+              FPN_IsZero(cfg.node_overrides[0].risk_min_size_threshold));
         check("v5.14.9.B.1: default per-core risk_min_size_pct == 0 (inherit)",
-              FPN_IsZero(cfg.core_overrides[0].risk_min_size_pct));
+              FPN_IsZero(cfg.node_overrides[0].risk_min_size_pct));
     }
     {
         // Per-core override resolves correctly via ControllerConfig_ResolveForCore
@@ -24775,24 +24775,24 @@ e3_skip_load:;
         cfg.risk_min_size_threshold    = FPN_FromDouble<64>(0.05);
         cfg.risk_min_size_pct          = FPN_FromDouble<64>(0.10);
         // Override core 1: aggressive ladder
-        cfg.core_overrides[1].risk_degradation_curve   = (uint32_t)CURVE_LINEAR;
-        cfg.core_overrides[1].risk_full_size_threshold = FPN_FromDouble<64>(0.20);
-        cfg.core_overrides[1].risk_min_size_pct        = FPN_FromDouble<64>(0.05);
+        cfg.node_overrides[1].risk_degradation_curve   = (uint32_t)CURVE_LINEAR;
+        cfg.node_overrides[1].risk_full_size_threshold = FPN_FromDouble<64>(0.20);
+        cfg.node_overrides[1].risk_min_size_pct        = FPN_FromDouble<64>(0.05);
 
-        ControllerConfig<64> resolved_core_0 = ControllerConfig_ResolveForCore(cfg, 0);
+        ControllerConfig<64> resolved_node_0 = ControllerConfig_ResolveForCore(cfg, 0);
         check("v5.14.9.B.1: core 0 (no override) inherits global curve OFF",
-              resolved_core_0.risk_degradation_curve == CURVE_OFF);
+              resolved_node_0.risk_degradation_curve == CURVE_OFF);
 
-        ControllerConfig<64> resolved_core_1 = ControllerConfig_ResolveForCore(cfg, 1);
+        ControllerConfig<64> resolved_node_1 = ControllerConfig_ResolveForCore(cfg, 1);
         check("v5.14.9.B.1: core 1 (override=LINEAR) resolves to LINEAR",
-              resolved_core_1.risk_degradation_curve == CURVE_LINEAR);
+              resolved_node_1.risk_degradation_curve == CURVE_LINEAR);
         check("v5.14.9.B.1: core 1 full_size_threshold override = 0.20",
-              fabs(FPN_ToDouble(resolved_core_1.risk_full_size_threshold) - 0.20) < 1e-6);
+              fabs(FPN_ToDouble(resolved_node_1.risk_full_size_threshold) - 0.20) < 1e-6);
         check("v5.14.9.B.1: core 1 min_size_pct override = 0.05",
-              fabs(FPN_ToDouble(resolved_core_1.risk_min_size_pct) - 0.05) < 1e-6);
+              fabs(FPN_ToDouble(resolved_node_1.risk_min_size_pct) - 0.05) < 1e-6);
         // Min threshold not overridden → inherits global 0.05
         check("v5.14.9.B.1: core 1 min_size_threshold inherits global (no override)",
-              fabs(FPN_ToDouble(resolved_core_1.risk_min_size_threshold) - 0.05) < 1e-6);
+              fabs(FPN_ToDouble(resolved_node_1.risk_min_size_threshold) - 0.05) < 1e-6);
     }
     {
         using namespace tt;
@@ -24801,17 +24801,17 @@ e3_skip_load:;
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
         BITMAP_SET(cfg.ml_cfg_flags, MASK_ML_CFG_CONFIDENCE_COMPOSITE_ENABLED);  // engine-wide composite on
         cfg.risk_degradation_curve = CURVE_OFF;
-        cfg.core_overrides[2].risk_degradation_curve = (uint32_t)CURVE_LINEAR;
+        cfg.node_overrides[2].risk_degradation_curve = (uint32_t)CURVE_LINEAR;
 
-        ControllerConfig<64> resolved_core_0 = ControllerConfig_ResolveForCore(cfg, 0);
+        ControllerConfig<64> resolved_node_0 = ControllerConfig_ResolveForCore(cfg, 0);
         SlowPathGateState state_0;
-        SLOW_PATH_GATE_AUTOPOPULATE_PER_CORE(state_0, resolved_core_0);
+        SLOW_PATH_GATE_AUTOPOPULATE_PER_NODE(state_0, resolved_node_0);
         check("v5.14.9.B.1: core 0 (no override; global OFF) → MASK_LADDER_ACTIVE off",
               !BITMAP_IS_SET(state_0.flags, MASK_LADDER_ACTIVE));
 
-        ControllerConfig<64> resolved_core_2 = ControllerConfig_ResolveForCore(cfg, 2);
+        ControllerConfig<64> resolved_node_2 = ControllerConfig_ResolveForCore(cfg, 2);
         SlowPathGateState state_2;
-        SLOW_PATH_GATE_AUTOPOPULATE_PER_CORE(state_2, resolved_core_2);
+        SLOW_PATH_GATE_AUTOPOPULATE_PER_NODE(state_2, resolved_node_2);
         check("v5.14.9.B.1: core 2 (override=LINEAR + composite ON) → MASK_LADDER_ACTIVE set",
               BITMAP_IS_SET(state_2.flags, MASK_LADDER_ACTIVE));
     }
@@ -24824,8 +24824,8 @@ e3_skip_load:;
             if (c.risk_degradation_curve != CURVE_OFF
                 && !BITMAP_IS_SET(c.ml_cfg_flags, MASK_ML_CFG_CONFIDENCE_COMPOSITE_ENABLED)) return true;
             for (int i = 0; i < 16; ++i) {
-                if (c.core_overrides[i].risk_degradation_curve != 0
-                    && c.core_overrides[i].risk_degradation_curve != (uint32_t)CURVE_OFF
+                if (c.node_overrides[i].risk_degradation_curve != 0
+                    && c.node_overrides[i].risk_degradation_curve != (uint32_t)CURVE_OFF
                     && !BITMAP_IS_SET(c.ml_cfg_flags, MASK_ML_CFG_CONFIDENCE_COMPOSITE_ENABLED)) return true;
             }
             return false;
@@ -24837,7 +24837,7 @@ e3_skip_load:;
         check("v5.14.9.B.1: REFUSE predicate FALSE for default + no per-core override",
               !should_refuse(cfg));
 
-        cfg.core_overrides[3].risk_degradation_curve = (uint32_t)CURVE_LINEAR;
+        cfg.node_overrides[3].risk_degradation_curve = (uint32_t)CURVE_LINEAR;
         check("v5.14.9.B.1: REFUSE predicate TRUE for per-core LINEAR override + NO composite",
               should_refuse(cfg));
 
@@ -24846,7 +24846,7 @@ e3_skip_load:;
               !should_refuse(cfg));
 
         // Multiple cores override; one disables composite
-        cfg.core_overrides[5].risk_degradation_curve = (uint32_t)CURVE_EXP;
+        cfg.node_overrides[5].risk_degradation_curve = (uint32_t)CURVE_EXP;
         check("v5.14.9.B.1: REFUSE predicate FALSE for multiple per-core overrides + composite ON",
               !should_refuse(cfg));
 
@@ -24860,26 +24860,26 @@ e3_skip_load:;
         char tmp_cfg[] = "/tmp/foxml_v5_14_9_b1_XXXXXX";
         int fd = mkstemp(tmp_cfg);
         const char* contents =
-            "core_3_risk_degradation_curve=2\n"            // CURVE_EXP
-            "core_3_risk_full_size_threshold=0.18\n"
-            "core_3_risk_min_size_threshold=0.04\n"
-            "core_3_risk_min_size_pct=0.08\n";
+            "node_3_risk_degradation_curve=2\n"            // CURVE_EXP
+            "node_3_risk_full_size_threshold=0.18\n"
+            "node_3_risk_min_size_threshold=0.04\n"
+            "node_3_risk_min_size_pct=0.08\n";
         write(fd, contents, strlen(contents));
         close(fd);
 
         ControllerConfig<64> cfg = ControllerConfig_Load<64>(tmp_cfg);
-        check("v5.14.9.B.1: parser sets core_3 risk_degradation_curve=2 (CURVE_EXP)",
-              cfg.core_overrides[3].risk_degradation_curve == 2);
-        check("v5.14.9.B.1: parser sets core_3 risk_full_size_threshold=0.18",
-              fabs(FPN_ToDouble(cfg.core_overrides[3].risk_full_size_threshold) - 0.18) < 1e-6);
-        check("v5.14.9.B.1: parser sets core_3 risk_min_size_threshold=0.04",
-              fabs(FPN_ToDouble(cfg.core_overrides[3].risk_min_size_threshold) - 0.04) < 1e-6);
-        check("v5.14.9.B.1: parser sets core_3 risk_min_size_pct=0.08",
-              fabs(FPN_ToDouble(cfg.core_overrides[3].risk_min_size_pct) - 0.08) < 1e-6);
+        check("v5.14.9.B.1: parser sets node_3 risk_degradation_curve=2 (CURVE_EXP)",
+              cfg.node_overrides[3].risk_degradation_curve == 2);
+        check("v5.14.9.B.1: parser sets node_3 risk_full_size_threshold=0.18",
+              fabs(FPN_ToDouble(cfg.node_overrides[3].risk_full_size_threshold) - 0.18) < 1e-6);
+        check("v5.14.9.B.1: parser sets node_3 risk_min_size_threshold=0.04",
+              fabs(FPN_ToDouble(cfg.node_overrides[3].risk_min_size_threshold) - 0.04) < 1e-6);
+        check("v5.14.9.B.1: parser sets node_3 risk_min_size_pct=0.08",
+              fabs(FPN_ToDouble(cfg.node_overrides[3].risk_min_size_pct) - 0.08) < 1e-6);
 
         // Other cores remain inherit (0)
-        check("v5.14.9.B.1: other cores untouched (core_0 still 0=inherit)",
-              cfg.core_overrides[0].risk_degradation_curve == 0);
+        check("v5.14.9.B.1: other nodes untouched (node_0 still 0=inherit)",
+              cfg.node_overrides[0].risk_degradation_curve == 0);
 
         unlink(tmp_cfg);
     }
@@ -25365,8 +25365,8 @@ e3_skip_load:;
         int found_thompson_mu_prior = 0;
         int found_thompson_precision_prior = 0;
         int found_thompson_precision_obs = 0;
-        for (size_t i = 0; i < std::size(g_per_core_cfg_field_descriptors); i++) {
-            const auto& desc = g_per_core_cfg_field_descriptors[i];
+        for (size_t i = 0; i < std::size(g_per_node_cfg_field_descriptors); i++) {
+            const auto& desc = g_per_node_cfg_field_descriptors[i];
             if (!(desc.metadata_flags & CfgFieldDescriptor::STAMP_BOUND_CFG_DERIVED)) continue;
             if (strcmp(desc.cfg_field_name, "bandit_algorithm") == 0)         found_bandit_algorithm++;
             if (strcmp(desc.cfg_field_name, "thompson_mu_prior") == 0)        found_thompson_mu_prior++;
@@ -25389,8 +25389,8 @@ e3_skip_load:;
     // master per-core cfg registry descriptor walk filtered by STAMP_BOUND_CFG_DERIVED bit.
     {
         int found_rng_seed = 0;
-        for (size_t i = 0; i < std::size(g_per_core_cfg_field_descriptors); i++) {
-            const auto& desc = g_per_core_cfg_field_descriptors[i];
+        for (size_t i = 0; i < std::size(g_per_node_cfg_field_descriptors); i++) {
+            const auto& desc = g_per_node_cfg_field_descriptors[i];
             if (!(desc.metadata_flags & CfgFieldDescriptor::STAMP_BOUND_CFG_DERIVED)) continue;
             if (strcmp(desc.cfg_field_name, "thompson_rng_seed") == 0) found_rng_seed++;
         }
@@ -25547,7 +25547,7 @@ e3_skip_load:;
         // Pre-PostLoadSetup: thompson init flag should be 0
         check("v5.14.10.C: pre-PostLoadSetup initialized_thompson_bandits == 0",
               BITMAP_IS_SET(ezoo.init_flags, MASK_EZOO_BUY_THOMPSON_READY) == 0);
-        EnsembleModelZoo_PostLoadSetup<64>(&ezoo, cfg, /*core_id=*/0,
+        EnsembleModelZoo_PostLoadSetup<64>(&ezoo, cfg, /*node_id=*/0,
                                             "/tmp/v5_14_10_c_post_load_test_dir");
         check("v5.14.10.C: post-PostLoadSetup initialized_thompson_bandits == 1 (init step ran)",
               BITMAP_IS_SET(ezoo.init_flags, MASK_EZOO_BUY_THOMPSON_READY) == 1);
@@ -25556,19 +25556,19 @@ e3_skip_load:;
     // ===========================================================================
     // === v5.14.10.D — FULL Bayesian dashboard + FOREACH_CALIB_LOG_COL =========
     // ===========================================================================
-    printf("\n--- v5.14.10.D: PerCoreSnap Thompson display + FOREACH_CALIB_LOG_COL registry ---\n");
+    printf("\n--- v5.14.10.D: PerNodeSnap Thompson display + FOREACH_CALIB_LOG_COL registry ---\n");
 
     // ─── Test D.1: Thompson PerCoreSnap fields exist with bit-pack constants ───
     {
-        TUISnapshot::PerCoreSnap pc;
+        TUISnapshot::PerNodeSnap pc;
         memset(&pc, 0, sizeof(pc));
         // Encode active + chosen_arm = 5 (binary 101)
         pc.thompson_state = (uint8_t)(
-            TUISnapshot::PerCoreSnap::MASK_THOMPSON_BANDIT_ACTIVE |
-            ((5 & 0x07) << TUISnapshot::PerCoreSnap::SHIFT_THOMPSON_CHOSEN_ARM));
-        bool active = (pc.thompson_state & TUISnapshot::PerCoreSnap::MASK_THOMPSON_BANDIT_ACTIVE) != 0;
-        int chosen = (pc.thompson_state & TUISnapshot::PerCoreSnap::MASK_THOMPSON_CHOSEN_ARM)
-                     >> TUISnapshot::PerCoreSnap::SHIFT_THOMPSON_CHOSEN_ARM;
+            TUISnapshot::PerNodeSnap::MASK_THOMPSON_BANDIT_ACTIVE |
+            ((5 & 0x07) << TUISnapshot::PerNodeSnap::SHIFT_THOMPSON_CHOSEN_ARM));
+        bool active = (pc.thompson_state & TUISnapshot::PerNodeSnap::MASK_THOMPSON_BANDIT_ACTIVE) != 0;
+        int chosen = (pc.thompson_state & TUISnapshot::PerNodeSnap::MASK_THOMPSON_CHOSEN_ARM)
+                     >> TUISnapshot::PerNodeSnap::SHIFT_THOMPSON_CHOSEN_ARM;
         check("v5.14.10.D: thompson_state bit-pack encode/decode active=1 + chosen=5 round-trip",
               active == true && chosen == 5);
     }
@@ -25946,8 +25946,8 @@ e3_skip_load:;
         check("v5.15.5.F.4d Step 9.15: thompson_exp3_blend_alpha default = 0.5 (50/50 blend; cfg=4 BLENDED state)",
               FPN_ToDouble(cfg.thompson_exp3_blend_alpha) == 0.5);
         // Also verify the PerCoreCfg slice carries it (auto-generated via FOREACH_PER_CORE_CFG_FIELD)
-        check("v5.15.5.F.4d Step 9.15: PerCoreCfg<F>::thompson_exp3_blend_alpha per-core slice default = 0.5",
-              FPN_ToDouble(cfg.cores[0].thompson_exp3_blend_alpha) == 0.5);
+        check("v5.15.5.F.4d Step 9.15: PerNodeCfg<F>::thompson_exp3_blend_alpha per-core slice default = 0.5",
+              FPN_ToDouble(cfg.nodes[0].thompson_exp3_blend_alpha) == 0.5);
     }
 
     // ===========================================================================
@@ -25980,7 +25980,7 @@ e3_skip_load:;
 
             // v5.15.5.C.3 Phase 5.A — regime + regime_name appended.
             const char* EXPECTED =
-                "timestamp_us,core_id,strategy_id,event_type,price,entry_price,exit_price,pnl,fees,balance_after,trade_size,regime,regime_name\n";
+                "timestamp_us,node_id,strategy_id,event_type,price,entry_price,exit_price,pnl,fees,balance_after,trade_size,regime,regime_name\n";
             check("v5.15.5.C.3 Phase 5.A: TradeLog_EmitHeader includes regime + regime_name columns",
                   strcmp(buf, EXPECTED) == 0);
             unlink(tmp_path);
@@ -25991,7 +25991,7 @@ e3_skip_load:;
     {
         // Set up CALLER SCOPE CONTRACT variables (entry-shape: exit_price=0, pnl=0)
         uint64_t timestamp_us  = 1700000000000000ULL;
-        uint32_t core_id       = 2;
+        uint32_t node_id       = 2;
         uint32_t strategy_id   = 1;
         char     event_type    = 'E';
         double   price_v       = 50000.12345678;
@@ -26027,7 +26027,7 @@ e3_skip_load:;
         char expected[256];
         snprintf(expected, sizeof(expected),
             "%lu,%u,%u,E,%.8f,%.8f,%.8f,%.8f,%.8f,%.8f,%.8f,%d,%s\n",
-            (unsigned long)timestamp_us, (unsigned)core_id, (unsigned)strategy_id,
+            (unsigned long)timestamp_us, (unsigned)node_id, (unsigned)strategy_id,
             price_v, entry_price_v, exit_price_v, pnl_v, fees_v,
             balance_after_v, trade_size_v, regime_v, regime_name_v);
         check("v5.15.5.C.3 Phase 5.A: TRADE_LOG_EMIT_ROW (Entry) includes regime=-1, regime_name=UNKNOWN by default",
@@ -26039,7 +26039,7 @@ e3_skip_load:;
     // ─── Test F.4: TRADE_LOG_EMIT_ROW byte-identical (Exit shape) ───
     {
         uint64_t timestamp_us  = 1700000000999999ULL;
-        uint32_t core_id       = 5;
+        uint32_t node_id       = 5;
         uint32_t strategy_id   = 2;
         char     event_type    = 'X';
         double   price_v       = 50500.87654321;
@@ -26060,7 +26060,7 @@ e3_skip_load:;
         char expected[256];
         snprintf(expected, sizeof(expected),
             "%lu,%u,%u,X,%.8f,%.8f,%.8f,%.8f,%.8f,%.8f,%.8f,%d,%s\n",
-            (unsigned long)timestamp_us, (unsigned)core_id, (unsigned)strategy_id,
+            (unsigned long)timestamp_us, (unsigned)node_id, (unsigned)strategy_id,
             price_v, entry_price_v, exit_price_v, pnl_v, fees_v,
             balance_after_v, trade_size_v, regime_v, regime_name_v);
         check("v5.15.5.C.3 Phase 5.A: TRADE_LOG_EMIT_ROW (Exit) emits regime=2, regime_name=VOLATILE",
@@ -26463,12 +26463,12 @@ e3_skip_load:;
             // is the correct way to get a synchronous log — it stop+joins the writer (no ring re-init,
             // no UAF). When (b)/.E.1 gates the writer-start to live-only, this becomes a harmless no-op.
             tt::OrderEventLog_StopAsyncWriter(&oms->event_log);
-            ::PerCoreCfg<64> cc{};
+            ::PerNodeCfg<64> cc{};
             cc.fee_rate_taker = MQ(0.001);    // 0.1% computed-rule rate (bind picks taker for MARKET)
             cc.fee_rate_maker = MQ(0.001);
             auto make_buy = [&](uint64_t id) {
                 tt::Order<64> o{};
-                o.id = id; o.core_id = 0;
+                o.id = id; o.node_id = 0;
                 tt::Order_SetType(&o, tt::ORDER_MARKET_BUY);
                 tt::Order_BindPreResolved(&o, cc);
                 o.intended_tp = MQ(101.0); o.intended_sl = MQ(99.0);
@@ -26994,8 +26994,8 @@ e3_skip_load:;
     printf("\n--- v5.15.1: Model Health drift + TECH_DEBT-028 bitmap anchors ---\n");
     {
         // === Anchor 1: TECH_DEBT-028 state_flags bitmap migration ===
-        TUISnapshot::PerCoreSnap pcs = {};
-        check("v5.15.1.B.1: PerCoreSnap brace-init clears state_flags",
+        TUISnapshot::PerNodeSnap pcs = {};
+        check("v5.15.1.B.1: PerNodeSnap brace-init clears state_flags",
               pcs.state_flags == 0);
 
         // ML_SCALER_PRESENT round-trip
@@ -27009,16 +27009,16 @@ e3_skip_load:;
         // DRIFT_BREACHED + DRIFT_KILL_TRIPPED + CORE_KILL_TRIPPED — per-bit
         // isolation (set one; verify others stay clear).
         STATE_FLAG_SET(pcs, DRIFT_BREACHED);
-        STATE_FLAG_SET(pcs, CORE_KILL_TRIPPED);
-        check("v5.15.1.B.1: per-bit isolation (DRIFT_BREACHED + CORE_KILL_TRIPPED set; DRIFT_KILL_TRIPPED clear)",
+        STATE_FLAG_SET(pcs, NODE_KILL_TRIPPED);
+        check("v5.15.1.B.1: per-bit isolation (DRIFT_BREACHED + NODE_KILL_TRIPPED set; DRIFT_KILL_TRIPPED clear)",
               STATE_FLAG_IS_SET(pcs, DRIFT_BREACHED) &&
-              STATE_FLAG_IS_SET(pcs, CORE_KILL_TRIPPED) &&
+              STATE_FLAG_IS_SET(pcs, NODE_KILL_TRIPPED) &&
               !STATE_FLAG_IS_SET(pcs, DRIFT_KILL_TRIPPED));
     }
     {
         // === Anchor 2: FOREACH_FAILURE_MODE drift entries ===
-        TUISnapshot::PerCoreSnap pcs = {};
-        check("v5.15.1.A.1: PerCoreSnap brace-init clears failure_flags",
+        TUISnapshot::PerNodeSnap pcs = {};
+        check("v5.15.1.A.1: PerNodeSnap brace-init clears failure_flags",
               pcs.failure_flags == 0);
 
         // Each of 7 new drift BIT_FLAG entries via FAILURE_SET / IS_SET.
@@ -27059,10 +27059,10 @@ e3_skip_load:;
     {
         // === Anchor 3: Registry count + capacity invariants ===
         // PerCoreStateFlagsRegistry: was 7 entries pre-v5.15.1; +4 = 11.
-        check("v5.15.1.B.1: FOREACH_PER_CORE_STATE_FLAG_COUNT == 11 (was 7; +4 TECH_DEBT-028)",
-              FOREACH_PER_CORE_STATE_FLAG_COUNT == 11);
-        check("v5.15.1.B.1: PER_CORE_STATE_FLAG_COUNT fits uint16_t (≤16)",
-              (int)tt::PER_CORE_STATE_FLAG_COUNT <= 16);
+        check("v5.15.1.B.1: FOREACH_PER_NODE_STATE_FLAG_COUNT == 11 (was 7; +4 TECH_DEBT-028)",
+              FOREACH_PER_NODE_STATE_FLAG_COUNT == 11);
+        check("v5.15.1.B.1: PER_NODE_STATE_FLAG_COUNT fits uint16_t (≤16)",
+              (int)tt::PER_NODE_STATE_FLAG_COUNT <= 16);
 
         // FOREACH_FAILURE_MODE total entries: was 6 pre-v5.15.1; +7 = 13 post-.1;
         // +1 = 14 post-v5.15.5.A.7 (cfg_cross_binary_drift BIT_FLAG added for ArchField
@@ -27248,19 +27248,19 @@ e3_skip_load:;
               tt::check_mlockall_required<64>(cfg, state));
 
         // check_all_cores_strategy_explicit — branchless mask compare
-        cfg.num_execution_cores = 4;
-        cfg.core_strategies_explicit_set = 0;  // no bits set
+        cfg.num_execution_nodes = 4;
+        cfg.node_strategies_explicit_set = 0;  // no bits set
         check("v5.15.2.B.2: check_all_cores_strategy_explicit false when no bits set",
               !tt::check_all_cores_strategy_explicit<64>(cfg, state));
-        cfg.core_strategies_explicit_set = 0x000F;  // bits 0-3 = (1<<4) - 1
+        cfg.node_strategies_explicit_set = 0x000F;  // bits 0-3 = (1<<4) - 1
         check("v5.15.2.B.2: check_all_cores_strategy_explicit true when all 4 core bits set",
               tt::check_all_cores_strategy_explicit<64>(cfg, state));
-        cfg.core_strategies_explicit_set = 0x0007;  // bits 0-2 only (core 3 missing)
+        cfg.node_strategies_explicit_set = 0x0007;  // bits 0-2 only (core 3 missing)
         check("v5.15.2.B.2: check_all_cores_strategy_explicit false when one core missing",
               !tt::check_all_cores_strategy_explicit<64>(cfg, state));
 
         // aggregate_zoo_drift — nullptr zoo returns 0
-        const CoreModelZoo<64>* null_zoo = nullptr;
+        const NodeModelZoo<64>* null_zoo = nullptr;
         check("v5.15.2.B.2: aggregate_zoo_drift(nullptr) returns 0",
               tt::aggregate_zoo_drift(null_zoo) == 0);
 
@@ -27283,7 +27283,7 @@ e3_skip_load:;
         cfg.trading_mode = TRADING_MODE_PAPER;
         cfg.held_out_stamp_secret[0] = '\0';  // make secret fail
         cfg.require_mlockall = 0;             // make mlockall fail
-        cfg.core_strategies_explicit_set = 0; // make strategy fail
+        cfg.node_strategies_explicit_set = 0; // make strategy fail
         int rc_paper = tt::LiveReadiness_Verify<64>(cfg, state);
         check("v5.15.2.B.2: LiveReadiness_Verify in PAPER mode returns 0 (WARN-only)",
               rc_paper == 0);
@@ -27502,7 +27502,7 @@ e3_skip_load:;
         check("v5.15.3.A.0 PARITY-022: FOREACH_STAMP_BOUND_MODEL_CONST_COUNT > 0",
               FOREACH_STAMP_BOUND_MODEL_CONST_COUNT > 0);
         check("v5.15.3.A.0 PARITY-022: cohort > 0 (cfg-derived consumer framework); via dual-mask popcount",
-              (cfg_field_count(g_per_core_cfg_stamp_bound_cfg_derived_mask) +
+              (cfg_field_count(g_per_node_cfg_stamp_bound_cfg_derived_mask) +
                cfg_field_count(g_global_cfg_stamp_bound_cfg_derived_mask)) > 0);
     }
 
@@ -27588,10 +27588,10 @@ e3_skip_load:;
     // alignof returns the expected value (sanity).
     // ==================================================================
     {
-        check("v5.15.4.B: alignof(CoreModelZoo<64>) == 64",
-              alignof(CoreModelZoo<64>) == 64);
-        check("v5.15.4.B: sizeof(CoreModelZoo<64>) % 64 == 0",
-              sizeof(CoreModelZoo<64>) % 64 == 0);
+        check("v5.15.4.B: alignof(NodeModelZoo<64>) == 64",
+              alignof(NodeModelZoo<64>) == 64);
+        check("v5.15.4.B: sizeof(NodeModelZoo<64>) % 64 == 0",
+              sizeof(NodeModelZoo<64>) % 64 == 0);
         check("v5.15.4.B: alignof(EnsembleModelZoo<64>) == 64",
               alignof(EnsembleModelZoo<64>) == 64);
         check("v5.15.4.B: sizeof(EnsembleModelZoo<64>) % 64 == 0",
@@ -27619,12 +27619,12 @@ e3_skip_load:;
         cfg.held_out_gate_strict = 0;
 
         // Allocate a pre-swap zoo on heap (mirrors v5.15.4 boot migration).
-        CoreModelZoo<64>* pre_swap =
-            (CoreModelZoo<64>*)aligned_alloc(64, sizeof(CoreModelZoo<64>));
-        check("v5.15.4.C/D: aligned_alloc(CoreModelZoo<64>) succeeds",
+        NodeModelZoo<64>* pre_swap =
+            (NodeModelZoo<64>*)aligned_alloc(64, sizeof(NodeModelZoo<64>));
+        check("v5.15.4.C/D: aligned_alloc(NodeModelZoo<64>) succeeds",
               pre_swap != nullptr);
         if (pre_swap) {
-            CoreModelZoo_Init(pre_swap);
+            NodeModelZoo_Init(pre_swap);
 
             // Synth a minimal EventLoopState with one core's model_handle set.
             // EventLoopState is big (~270KB); allocate on heap for stack safety.
@@ -27637,7 +27637,7 @@ e3_skip_load:;
                   state != nullptr);
             if (state) {
                 memset(state, 0, sizeof(tt::EventLoopState<64>));
-                state->cores[0].model_handle = (void*)pre_swap;
+                state->nodes[0].model_handle = (void*)pre_swap;
 
                 // Shadow-load with non-existent path → expect rc=-2 + pre-swap preserved.
                 int rc = tt::HotSwap_ShadowLoad_SingleZoo<64>(
@@ -27646,7 +27646,7 @@ e3_skip_load:;
                 check("v5.15.4.C/D PARITY-023: shadow-load with bad path returns nonzero",
                       rc != 0);
                 check("v5.15.4.C/D PARITY-023: pre-swap handle preserved after failed load",
-                      state->cores[0].model_handle == (void*)pre_swap);
+                      state->nodes[0].model_handle == (void*)pre_swap);
 
                 // Empty path → -2 specifically
                 int rc_empty = tt::HotSwap_ShadowLoad_SingleZoo<64>(
@@ -27654,11 +27654,11 @@ e3_skip_load:;
                 check("v5.15.4.C/D: shadow-load with empty path returns -2",
                       rc_empty == -2);
                 check("v5.15.4.C/D: pre-swap handle still preserved after empty path",
-                      state->cores[0].model_handle == (void*)pre_swap);
+                      state->nodes[0].model_handle == (void*)pre_swap);
 
                 // Ensemble path with null ensemble_handle → -2 (no pre-swap ezoo
                 // to inherit horizon list from; helper refuses).
-                state->cores[0].ensemble_handle = nullptr;
+                state->nodes[0].ensemble_handle = nullptr;
                 int rc_ens = tt::HotSwap_ShadowLoad_Ensemble<64>(
                     *state, 0, cfg,
                     "/nonexistent/ensemble/path", MODEL_BACKEND_XGBOOST);
@@ -27667,7 +27667,7 @@ e3_skip_load:;
 
                 free(state);
             }
-            CoreModelZoo_Free(pre_swap);
+            NodeModelZoo_Free(pre_swap);
             free(pre_swap);
         }
     }
@@ -27680,50 +27680,50 @@ e3_skip_load:;
         // Build 4 synthetic CoreContexts: 2 cores running strategy 1, 2 running strategy 3.
         // Each core has distinct realized P&L / fees / wins / losses so per_strategy
         // aggregation produces verifiable sums.
-        CoreContext<64> ctx[4] = {};
+        NodeContext<64> ctx[4] = {};
         ctx[0].strategy_id = 1;
         ctx[0].resolved_strategy_id = 1;
         ctx[0].entries_processed = 10;
         ctx[0].exits_processed   = 9;
-        ctx[0].core_realized = MQ(100.0);
-        ctx[0].core_fees     = MQ(2.0);
-        ctx[0].core_wins     = 6;
-        ctx[0].core_losses   = 3;
-        ctx[0].core_open_notional = MQ(500.0);
+        ctx[0].node_realized = MQ(100.0);
+        ctx[0].node_fees     = MQ(2.0);
+        ctx[0].node_wins     = 6;
+        ctx[0].node_losses   = 3;
+        ctx[0].node_open_notional = MQ(500.0);
 
         ctx[1].strategy_id = 1;
         ctx[1].resolved_strategy_id = 1;
         ctx[1].entries_processed = 20;
         ctx[1].exits_processed   = 18;
-        ctx[1].core_realized = MQ(50.0);
-        ctx[1].core_fees     = MQ(3.0);
-        ctx[1].core_wins     = 10;
-        ctx[1].core_losses   = 8;
-        ctx[1].core_open_notional = MQ(750.0);
+        ctx[1].node_realized = MQ(50.0);
+        ctx[1].node_fees     = MQ(3.0);
+        ctx[1].node_wins     = 10;
+        ctx[1].node_losses   = 8;
+        ctx[1].node_open_notional = MQ(750.0);
 
         ctx[2].strategy_id = 3;
         ctx[2].resolved_strategy_id = 3;
         ctx[2].entries_processed = 5;
         ctx[2].exits_processed   = 5;
-        ctx[2].core_realized = MQ(-25.0);
-        ctx[2].core_fees     = MQ(1.0);
-        ctx[2].core_wins     = 2;
-        ctx[2].core_losses   = 3;
-        ctx[2].core_open_notional = MQ(0.0);
+        ctx[2].node_realized = MQ(-25.0);
+        ctx[2].node_fees     = MQ(1.0);
+        ctx[2].node_wins     = 2;
+        ctx[2].node_losses   = 3;
+        ctx[2].node_open_notional = MQ(0.0);
 
         ctx[3].strategy_id = 3;
         ctx[3].resolved_strategy_id = 3;
         ctx[3].entries_processed = 7;
         ctx[3].exits_processed   = 7;
-        ctx[3].core_realized = MQ(35.0);
-        ctx[3].core_fees     = MQ(1.5);
-        ctx[3].core_wins     = 4;
-        ctx[3].core_losses   = 3;
-        ctx[3].core_open_notional = MQ(200.0);
+        ctx[3].node_realized = MQ(35.0);
+        ctx[3].node_fees     = MQ(1.5);
+        ctx[3].node_wins     = 4;
+        ctx[3].node_losses   = 3;
+        ctx[3].node_open_notional = MQ(200.0);
 
         // Test 1: registry count sentinel — guard against accidental field-set shrinkage.
-        check("v5.15.5.C.3 Phase 4: FOREACH_CORE_CTX_SUMMARY_FIELD_COUNT >= 18",
-              FOREACH_CORE_CTX_SUMMARY_FIELD_COUNT >= 18);
+        check("v5.15.5.C.3 Phase 4: FOREACH_NODE_CTX_SUMMARY_FIELD_COUNT >= 18",
+              FOREACH_NODE_CTX_SUMMARY_FIELD_COUNT >= 18);
 
         // Test 2: per-core JSON emit produces well-formed object with expected keys.
         // fmemopen is POSIX glibc; available on Linux build target.
@@ -27732,18 +27732,18 @@ e3_skip_load:;
             FILE* f = fmemopen(buf, sizeof(buf) - 1, "w");
             check("v5.15.5.C.3 Phase 4: fmemopen succeeds", f != nullptr);
             if (f) {
-                Summary_EmitPerCoreEntry(f, ctx[0], /*core_id=*/0);
+                Summary_EmitPerCoreEntry(f, ctx[0], /*node_id=*/0);
                 std::fflush(f);
                 std::fclose(f);
                 // Spot-check key fields appear in the emitted JSON.
-                bool has_core_id   = (std::strstr(buf, "\"core_id\":0") != nullptr);
+                bool has_node_id   = (std::strstr(buf, "\"node_id\":0") != nullptr);
                 bool has_strat     = (std::strstr(buf, "\"strategy_id\":1") != nullptr);
                 bool has_entries   = (std::strstr(buf, "\"entries\":10") != nullptr);
                 bool has_exits     = (std::strstr(buf, "\"exits\":9") != nullptr);
                 bool has_realized  = (std::strstr(buf, "\"realized\":100.000000") != nullptr);
                 bool has_open_brace  = (buf[0] == '{');
                 check("v5.15.5.C.3 Phase 4: per-core JSON opens with {",          has_open_brace);
-                check("v5.15.5.C.3 Phase 4: per-core JSON has core_id field",     has_core_id);
+                check("v5.15.5.C.3 Phase 4: per-core JSON has node_id field",     has_node_id);
                 check("v5.15.5.C.3 Phase 4: per-core JSON has strategy_id field", has_strat);
                 check("v5.15.5.C.3 Phase 4: per-core JSON has entries counter",   has_entries);
                 check("v5.15.5.C.3 Phase 4: per-core JSON has exits counter",     has_exits);
@@ -27757,7 +27757,7 @@ e3_skip_load:;
             FILE* f = fmemopen(buf, sizeof(buf) - 1, "w");
             check("v5.15.5.C.3 Phase 4: fmemopen succeeds (per_strategy)", f != nullptr);
             if (f) {
-                Summary_EmitPerStrategy<64>(f, ctx, /*num_cores=*/4);
+                Summary_EmitPerStrategy<64>(f, ctx, /*num_nodes=*/4);
                 std::fflush(f);
                 std::fclose(f);
 
@@ -27792,17 +27792,17 @@ e3_skip_load:;
             char buf[256] = {};
             FILE* f = fmemopen(buf, sizeof(buf) - 1, "w");
             if (f) {
-                Summary_EmitPerStrategy<64>(f, ctx, /*num_cores=*/0);
+                Summary_EmitPerStrategy<64>(f, ctx, /*num_nodes=*/0);
                 std::fflush(f);
                 std::fclose(f);
                 bool is_empty_arr = (std::strcmp(buf, "[]") == 0);
-                check("v5.15.5.C.3 Phase 4: per_strategy empty array for 0 cores", is_empty_arr);
+                check("v5.15.5.C.3 Phase 4: per_strategy empty array for 0 nodes", is_empty_arr);
             }
         }
 
         // Test 5: STRATEGY_NONE (0xFF) cores skipped from per_strategy aggregation.
         {
-            CoreContext<64> ctx_none[2] = {};
+            NodeContext<64> ctx_none[2] = {};
             ctx_none[0].strategy_id = 0xFF;  // NONE
             ctx_none[0].entries_processed = 99;
             ctx_none[1].strategy_id = 0xFF;
@@ -27810,11 +27810,11 @@ e3_skip_load:;
             char buf[256] = {};
             FILE* f = fmemopen(buf, sizeof(buf) - 1, "w");
             if (f) {
-                Summary_EmitPerStrategy<64>(f, ctx_none, /*num_cores=*/2);
+                Summary_EmitPerStrategy<64>(f, ctx_none, /*num_nodes=*/2);
                 std::fflush(f);
                 std::fclose(f);
                 bool is_empty_arr = (std::strcmp(buf, "[]") == 0);
-                check("v5.15.5.C.3 Phase 4: per_strategy skips STRATEGY_NONE (0xFF) cores",
+                check("v5.15.5.C.3 Phase 4: per_strategy skips STRATEGY_NONE (0xFF) nodes",
                       is_empty_arr);
             }
         }
@@ -27993,16 +27993,16 @@ e3_skip_load:;
         check("v5.15.5.C.3 Phase 5.B: aggregate FILE* opened", log.file != nullptr);
         // All MAX_EXECUTION_CORES per-core mirror files should be open.
         int pc_open_count = 0;
-        for (int c = 0; c < MAX_EXECUTION_CORES; ++c) {
-            if (log.per_core_files[c]) pc_open_count++;
+        for (int c = 0; c < MAX_EXECUTION_NODES; ++c) {
+            if (log.per_node_files[c]) pc_open_count++;
         }
-        check("v5.15.5.C.3 Phase 5.B: all MAX_EXECUTION_CORES per-core mirror files opened",
-              pc_open_count == MAX_EXECUTION_CORES);
+        check("v5.15.5.C.3 Phase 5.B: all MAX_EXECUTION_NODES per-core mirror files opened",
+              pc_open_count == MAX_EXECUTION_NODES);
 
         // Write entries for 2 distinct core_ids; verify aggregate AND per-core get the row.
         TradeEvent<64> evt0{};
         evt0.timestamp = 1700000000ULL * 1000000ULL;
-        evt0.core_id = 0;
+        evt0.node_id = 0;
         evt0.type = TRADE_EVENT_ENTRY;
         evt0.price = MQ(50000.0);
         ShardedTradeLog_RecordEntry(&log, evt0, /*strategy_id=*/1,
@@ -28013,7 +28013,7 @@ e3_skip_load:;
 
         TradeEvent<64> evt5{};
         evt5.timestamp = 1700000001ULL * 1000000ULL;
-        evt5.core_id = 5;
+        evt5.node_id = 5;
         evt5.type = TRADE_EVENT_ENTRY;
         evt5.price = MQ(50100.0);
         ShardedTradeLog_RecordEntry(&log, evt5, /*strategy_id=*/2,
@@ -28041,21 +28041,21 @@ e3_skip_load:;
             return std::strstr(buf, needle) != nullptr;
         };
         char path[256];
-        std::snprintf(path, sizeof(path), "logging/%s_core_0_order_history.csv", test_symbol);
-        check("v5.15.5.C.3 Phase 5.B: per-core file 0 contains the core_id=0 row",
+        std::snprintf(path, sizeof(path), "logging/%s_node_0_order_history.csv", test_symbol);
+        check("v5.15.5.C.3 Phase 5.B: per-core file 0 contains the node_id=0 row",
               file_contains(path, ",0,1,E,50000"));
-        std::snprintf(path, sizeof(path), "logging/%s_core_5_order_history.csv", test_symbol);
-        check("v5.15.5.C.3 Phase 5.B: per-core file 5 contains the core_id=5 row",
+        std::snprintf(path, sizeof(path), "logging/%s_node_5_order_history.csv", test_symbol);
+        check("v5.15.5.C.3 Phase 5.B: per-core file 5 contains the node_id=5 row",
               file_contains(path, ",5,2,E,50100"));
         // Per-core file 0 should NOT contain the core_id=5 row (isolation check).
-        std::snprintf(path, sizeof(path), "logging/%s_core_0_order_history.csv", test_symbol);
-        check("v5.15.5.C.3 Phase 5.B: per-core file 0 isolated — does NOT contain core_id=5 row",
+        std::snprintf(path, sizeof(path), "logging/%s_node_0_order_history.csv", test_symbol);
+        check("v5.15.5.C.3 Phase 5.B: per-core file 0 isolated — does NOT contain node_id=5 row",
               !file_contains(path, ",5,2,E,50100"));
         // Aggregate file contains BOTH rows.
         std::snprintf(path, sizeof(path), "logging/%s_order_history.csv", test_symbol);
         bool has_0 = file_contains(path, ",0,1,E,50000");
         bool has_5 = file_contains(path, ",5,2,E,50100");
-        check("v5.15.5.C.3 Phase 5.B: aggregate file contains BOTH core_id=0 AND core_id=5 rows",
+        check("v5.15.5.C.3 Phase 5.B: aggregate file contains BOTH node_id=0 AND node_id=5 rows",
               has_0 && has_5);
 
         // Cleanup test artifacts (~17 files).
@@ -28147,14 +28147,14 @@ e3_skip_load:;
         // arrays for I4). Stage 3 second reference of helper at .B.2 (was Stage 3 first
         // reference at .A vacuous PASS).
         InvariantContext ctx{
-            /*.mask_words =*/ g_per_core_cfg_stamp_bound_cfg_derived_mask.words,        // legacy field (unused when dual-mask populated)
-            /*.mask_size_words =*/ sizeof(g_per_core_cfg_stamp_bound_cfg_derived_mask.words) / sizeof(uint64_t),
-            /*.per_core_mask_words =*/ g_per_core_cfg_stamp_bound_cfg_derived_mask.words,
-            /*.per_core_mask_size_words =*/ sizeof(g_per_core_cfg_stamp_bound_cfg_derived_mask.words) / sizeof(uint64_t),
+            /*.mask_words =*/ g_per_node_cfg_stamp_bound_cfg_derived_mask.words,        // legacy field (unused when dual-mask populated)
+            /*.mask_size_words =*/ sizeof(g_per_node_cfg_stamp_bound_cfg_derived_mask.words) / sizeof(uint64_t),
+            /*.per_node_mask_words =*/ g_per_node_cfg_stamp_bound_cfg_derived_mask.words,
+            /*.per_node_mask_size_words =*/ sizeof(g_per_node_cfg_stamp_bound_cfg_derived_mask.words) / sizeof(uint64_t),
             /*.global_mask_words =*/ g_global_cfg_stamp_bound_cfg_derived_mask.words,
             /*.global_mask_size_words =*/ sizeof(g_global_cfg_stamp_bound_cfg_derived_mask.words) / sizeof(uint64_t),
-            /*.per_core_descriptors =*/ g_per_core_cfg_field_descriptors,
-            /*.per_core_count =*/ FIELD_IDX_PER_CORE_END,
+            /*.per_node_descriptors =*/ g_per_node_cfg_field_descriptors,
+            /*.per_node_count =*/ FIELD_IDX_PER_NODE_END,
             /*.global_descriptors =*/ g_global_cfg_field_descriptors,
             /*.global_count =*/ FIELD_IDX_GLOBAL_END,
             /*.emit_fn =*/ &STAMP_BOUND_CFG_emit_canonical_body,
@@ -28250,21 +28250,21 @@ e3_skip_load:;
 
     {
         // T12: Per-core sister composed masks — same sanity checks
-        size_t per_core_total = FIELD_IDX_PER_CORE_END;
-        size_t per_core_cli_explain = cfg_field_count(g_per_core_cfg_cli_explain_mask);
-        check("v5.15.5.F.4d.1.A: g_per_core_cfg_cli_explain_mask popcount > 0 (fix verified)",
-              per_core_cli_explain > 0);
-        check("v5.15.5.F.4d.1.A: g_per_core_cfg_cli_explain_mask popcount < FIELD_IDX_PER_CORE_END",
-              per_core_cli_explain < per_core_total);
+        size_t per_node_total = FIELD_IDX_PER_NODE_END;
+        size_t per_node_cli_explain = cfg_field_count(g_per_node_cfg_cli_explain_mask);
+        check("v5.15.5.F.4d.1.A: g_per_node_cfg_cli_explain_mask popcount > 0 (fix verified)",
+              per_node_cli_explain > 0);
+        check("v5.15.5.F.4d.1.A: g_per_node_cfg_cli_explain_mask popcount < FIELD_IDX_PER_NODE_END",
+              per_node_cli_explain < per_node_total);
 
-        size_t excluded_count_per_core = 0;
-        for (size_t w = 0; w < (FIELD_IDX_PER_CORE_END + 63) / 64; w++) {
-            uint64_t excluded = g_per_core_cfg_has_side_effect_mask.words[w]
-                              | g_per_core_cfg_hidden_by_default_mask.words[w];
-            excluded_count_per_core += static_cast<size_t>(__builtin_popcountll(excluded));
+        size_t excluded_count_per_node = 0;
+        for (size_t w = 0; w < (FIELD_IDX_PER_NODE_END + 63) / 64; w++) {
+            uint64_t excluded = g_per_node_cfg_has_side_effect_mask.words[w]
+                              | g_per_node_cfg_hidden_by_default_mask.words[w];
+            excluded_count_per_node += static_cast<size_t>(__builtin_popcountll(excluded));
         }
-        check("v5.15.5.F.4d.1.A: g_per_core_cfg_cli_explain_mask correctness (fix)",
-              per_core_cli_explain + excluded_count_per_core == per_core_total);
+        check("v5.15.5.F.4d.1.A: g_per_node_cfg_cli_explain_mask correctness (fix)",
+              per_node_cli_explain + excluded_count_per_node == per_node_total);
     }
 
     {
@@ -28275,7 +28275,7 @@ e3_skip_load:;
         // verified at Step 9 walker integration tests.
         size_t stamp_bound_cfg_derived_count =
             cfg_field_count(g_global_cfg_stamp_bound_cfg_derived_mask)
-          + cfg_field_count(g_per_core_cfg_stamp_bound_cfg_derived_mask);
+          + cfg_field_count(g_per_node_cfg_stamp_bound_cfg_derived_mask);
         check("v5.15.5.F.4d.1.B.2: g_*_cfg_stamp_bound_cfg_derived_mask >= 19 at .B.2 Step 1 (18 per-core + 1 global)",
               stamp_bound_cfg_derived_count >= 19);
     }
@@ -28389,10 +28389,10 @@ e3_skip_load:;
         // ---------------------------------------------------------------------------------
         {
             ControllerConfig<64> cfg = {};
-            check("v5.15.5.F.4d.1.B.1: cfg_gate::lookup_populate per_core default → true",
-                  cfg_gate::lookup_populate(0, /*is_per_core*/true, cfg) == true);
+            check("v5.15.5.F.4d.1.B.1: cfg_gate::lookup_populate per_node default → true",
+                  cfg_gate::lookup_populate(0, /*is_per_node*/true, cfg) == true);
             check("v5.15.5.F.4d.1.B.1: cfg_gate::lookup_populate global default → true",
-                  cfg_gate::lookup_populate(0, /*is_per_core*/false, cfg) == true);
+                  cfg_gate::lookup_populate(0, /*is_per_node*/false, cfg) == true);
         }
 
         // ---------------------------------------------------------------------------------
@@ -28401,9 +28401,9 @@ e3_skip_load:;
         {
             ControllerConfig<64> cfg = {};
             check("v5.15.5.F.4d.1.B.1: cfg_gate::lookup_drift stamp_has=true → true",
-                  cfg_gate::lookup_drift(0, /*is_per_core*/true, cfg, /*stamp_has*/true) == true);
+                  cfg_gate::lookup_drift(0, /*is_per_node*/true, cfg, /*stamp_has*/true) == true);
             check("v5.15.5.F.4d.1.B.1: cfg_gate::lookup_drift stamp_has=false → false",
-                  cfg_gate::lookup_drift(0, /*is_per_core*/false, cfg, /*stamp_has*/false) == false);
+                  cfg_gate::lookup_drift(0, /*is_per_node*/false, cfg, /*stamp_has*/false) == false);
         }
 
         // ---------------------------------------------------------------------------------
@@ -28435,12 +28435,12 @@ e3_skip_load:;
         // STRENGTHENED at .B.2 per /test-strength-audit discipline (was `== 0` at .B.1).
         // ---------------------------------------------------------------------------------
         {
-            size_t per_core_gate_count = 0;
-            #define X_COUNT_CFG_GATE_PC(name, expr) ++per_core_gate_count;
-            FOREACH_CFG_GATE_PER_CORE(X_COUNT_CFG_GATE_PC)
+            size_t per_node_gate_count = 0;
+            #define X_COUNT_CFG_GATE_PC(name, expr) ++per_node_gate_count;
+            FOREACH_CFG_GATE_PER_NODE(X_COUNT_CFG_GATE_PC)
             #undef X_COUNT_CFG_GATE_PC
-            check("v5.15.5.F.4d.1.B.2: FOREACH_CFG_GATE_PER_CORE has cohort gates (16 at .B.2 Step 5)",
-                  per_core_gate_count == 16);
+            check("v5.15.5.F.4d.1.B.2: FOREACH_CFG_GATE_PER_NODE has cohort gates (16 at .B.2 Step 5)",
+                  per_node_gate_count == 16);
         }
 
         // ---------------------------------------------------------------------------------

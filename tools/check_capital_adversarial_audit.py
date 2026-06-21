@@ -25,7 +25,7 @@ import glob
 import os
 
 MONEY = (r'(total_fees|total_maker_fees|total_taker_fees|realized_pnl'
-         r'|core_realized|core_fees|ks_peak_balance|balance)')
+         r'|node_realized|node_fees|ks_peak_balance|balance)')
 ASSERT = re.compile(r'(Money_Eq|Money_IsZero)\s*\(.*' + MONEY)
 MARKER = re.compile(r'ADV-REFUTE|ADV-SELF|ADVERSARIALLY[- ]REFUTED')
 WINDOW = 70  # lines above a block to search for its disposition marker

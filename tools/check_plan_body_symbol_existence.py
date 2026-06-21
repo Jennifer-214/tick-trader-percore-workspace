@@ -83,8 +83,8 @@ SYMBOL_INCLUDES = {
     "BITMAP_SET":                   "MemHeaders/BitmapMacros.hpp",
     "BITMAP_CLR":                   "MemHeaders/BitmapMacros.hpp",
     "BITMAP_BIT_U16":               "MemHeaders/BitmapMacros.hpp",
-    "CORE_STATE_FLAG_SET":          "MemHeaders/CoreStateFlagRegistry.hpp",
-    "CORE_STATE_FLAG_IS_SET":       "MemHeaders/CoreStateFlagRegistry.hpp",
+    "NODE_STATE_FLAG_SET":          "MemHeaders/NodeStateFlagRegistry.hpp",
+    "NODE_STATE_FLAG_IS_SET":       "MemHeaders/NodeStateFlagRegistry.hpp",
     # CoreFrameworks
     "ControllerConfig":             "CoreFrameworks/ControllerConfig.hpp",
     "EventLoopState":               "CoreFrameworks/ControllerEventLoop.hpp",
@@ -92,7 +92,7 @@ SYMBOL_INCLUDES = {
     "ExecutionCore":                "CoreFrameworks/ExecutionCore.hpp",
     "SPSCRing":                     "CoreFrameworks/ExecutionCore.hpp",
     "Tick":                         "DataStream/BinanceCrypto.hpp",
-    "EXECUTION_CORE_TICK_RING_SIZE": "CoreFrameworks/ExecutionCore.hpp",
+    "EXECUTION_NODE_TICK_RING_SIZE": "CoreFrameworks/ExecutionCore.hpp",
     "EngineCommon_ApplyBnbDiscount": "CoreFrameworks/EngineCommon.hpp",
     "EngineCommon_BootGlobal":       "CoreFrameworks/EngineCommon.hpp",
     "EngineCommon_BootPerCore":      "CoreFrameworks/EngineCommon.hpp",
@@ -107,7 +107,7 @@ SYMBOL_INCLUDES = {
     "MASK_LADDER_ACTIVE":           "CoreFrameworks/SlowPathGateRegistry.hpp",
     "MASK_CONFIDENCE_ENABLED":      "CoreFrameworks/SlowPathGateRegistry.hpp",
     "SLOW_PATH_GATE_AUTOPOPULATE_ENGINE_WIDE": "CoreFrameworks/SlowPathGateRegistry.hpp",
-    "SLOW_PATH_GATE_AUTOPOPULATE_PER_CORE":    "CoreFrameworks/SlowPathGateRegistry.hpp",
+    "SLOW_PATH_GATE_AUTOPOPULATE_PER_NODE":    "CoreFrameworks/SlowPathGateRegistry.hpp",
     "SlowPathGateState":            "CoreFrameworks/SlowPathGateRegistry.hpp",
     "GlobalGateState":              "CoreFrameworks/SlowPathGateRegistry.hpp",
     # DataStream
@@ -118,8 +118,8 @@ SYMBOL_INCLUDES = {
     "STRATEGY_ML":                  "Strategies/StrategyInterface.hpp",
     "STRATEGY_NONE":                "Strategies/StrategyInterface.hpp",
     # ML headers
-    "CoreModelZoo":                 "ML_Headers/CoreModelZoo.hpp",
-    "EnsembleModelZoo":             "ML_Headers/CoreModelZoo.hpp",
+    "NodeModelZoo":                 "ML_Headers/NodeModelZoo.hpp",
+    "EnsembleModelZoo":             "ML_Headers/NodeModelZoo.hpp",
     "ConfidenceScorer_Init":        "ML_Headers/ConfidenceScore.hpp",
     "ConfidenceScorer_BindCompositeCfg": "ML_Headers/ConfidenceScore.hpp",
     "RollingTurnover_Init":         "ML_Headers/RollingTurnover.hpp",
@@ -244,7 +244,7 @@ PLAN_CONTEXT_IDENTIFIER_PATTERNS = [
     re.compile(r'\b([A-Z][a-zA-Z0-9]*_[A-Za-z0-9_]+)\b'),
     # ALL_CAPS_constants (MASK_*, FOREACH_*, STRATEGY_*, GATE_*, etc.)
     re.compile(r'\b(MASK_[A-Z0-9_]+|FOREACH_[A-Z0-9_]+|STRATEGY_[A-Z0-9_]+|GATE_[A-Z0-9_]+|BACKTEST_[A-Z0-9_]+)\b'),
-    # Backtick-quoted member access (`drv->current_spread`, `state.cores[c].slow_state`)
+    # Backtick-quoted member access (`drv->current_spread`, `state.nodes[c].slow_state`)
     re.compile(r'`([a-z_][\w]*(?:->\w+|\.[a-z_][\w]*))`'),
     # Backtick-quoted function call opens (`Function_Name(`)
     re.compile(r'`([A-Za-z_][\w]*)\s*\(`'),
@@ -472,7 +472,7 @@ def wrap_block(code, includes):
         "FixedPoint/FixedPointN.hpp",
         "DataStream/BinanceCrypto.hpp",
         "DataStream/BinanceDepth.hpp",
-        "ML_Headers/CoreModelZoo.hpp",
+        "ML_Headers/NodeModelZoo.hpp",
         "MemHeaders/BitmapMacros.hpp",
     }
     all_includes = sorted(base_includes | set(includes))
@@ -492,7 +492,7 @@ inline void __plan_body_check__(
     [[maybe_unused]] int c,
     [[maybe_unused]] EventLoopState<F>& state,
     [[maybe_unused]] OrderManagerState<F>& oms,
-    [[maybe_unused]] int num_cores,
+    [[maybe_unused]] int num_nodes,
     [[maybe_unused]] int tick_index,
     [[maybe_unused]] ShardedBacktestDriver<F>* drv)
 {{
@@ -501,25 +501,25 @@ inline void __plan_body_check__(
     [[maybe_unused]] uint64_t ts_us = 0;
     [[maybe_unused]] uint64_t now_tick = 0;
     [[maybe_unused]] FPN_Binary<F> mtm_price = FPN_Zero<F>();
-    [[maybe_unused]] double price_d = 0.0, default_per_core = 0.0, default_risk = 0.0;
-    [[maybe_unused]] double total_balance = 0.0, core_balance = 0.0;
+    [[maybe_unused]] double price_d = 0.0, default_per_node = 0.0, default_risk = 0.0;
+    [[maybe_unused]] double total_balance = 0.0, node_balance = 0.0;
     [[maybe_unused]] double book_spread_d = 0.0, book_mid_d = 0.0;
     [[maybe_unused]] FPN_Binary<F> book_imb = FPN_Zero<F>();
     [[maybe_unused]] BookSnapshot<F> depth = BookSnapshot_Init<F>();
-    [[maybe_unused]] CoreModelZoo<F>* zoo_ptr = nullptr;
+    [[maybe_unused]] NodeModelZoo<F>* zoo_ptr = nullptr;
     [[maybe_unused]] EnsembleModelZoo<F>* ezoo_ptr = nullptr;
-    [[maybe_unused]] SPSCRing<Tick<F>, EXECUTION_CORE_TICK_RING_SIZE> tick_ring;
+    [[maybe_unused]] SPSCRing<Tick<F>, EXECUTION_NODE_TICK_RING_SIZE> tick_ring;
     [[maybe_unused]] ExecutionCore<F> core;
     [[maybe_unused]] Tick<F> tick = {{}};
     [[maybe_unused]] auto fn_for_loop = []() {{ return 0; }};
     // Caller-context shim — code blocks in plan body reference caller-scope statics
-    // (cores[]/ml_zoos[]/tick_rings[] arrays) + lambda captures (last_price/last_volume/
+    // (nodes[]/ml_zoos[]/tick_rings[] arrays) + lambda captures (last_price/last_volume/
     // ticks_produced atomics) + caller-passed run_cfg ptr. Shim provides these so tool
     // can isolate REAL fabrications from caller-context references.
-    [[maybe_unused]] ExecutionCore<F> cores[16] = {{}};
-    [[maybe_unused]] CoreModelZoo<F> ml_zoos[16] = {{}};
+    [[maybe_unused]] ExecutionCore<F> nodes[16] = {{}};
+    [[maybe_unused]] NodeModelZoo<F> ml_zoos[16] = {{}};
     [[maybe_unused]] EnsembleModelZoo<F> ml_ensemble_zoos[16] = {{}};
-    [[maybe_unused]] SPSCRing<Tick<F>, EXECUTION_CORE_TICK_RING_SIZE> tick_rings[16];
+    [[maybe_unused]] SPSCRing<Tick<F>, EXECUTION_NODE_TICK_RING_SIZE> tick_rings[16];
     [[maybe_unused]] std::atomic<double> last_price{{0.0}};
     [[maybe_unused]] std::atomic<double> last_volume{{0.0}};
     [[maybe_unused]] std::atomic<uint64_t> ticks_produced{{0}};

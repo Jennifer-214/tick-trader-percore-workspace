@@ -46,7 +46,7 @@ REPO_ROOT  = SCRIPT_DIR.parent
 
 # Master cfg registries that generate fields on ModelStampResult / StampInferenceCfgInputs
 MASTER_REGISTRIES = {
-    "FOREACH_PER_CORE_CFG_FIELD": (
+    "FOREACH_PER_NODE_CFG_FIELD": (
         REPO_ROOT / "CoreFrameworks/CfgFieldRegistry.hpp", 2),
     "FOREACH_GLOBAL_CFG_FIELD": (
         REPO_ROOT / "CoreFrameworks/CfgFieldRegistry.hpp", 2),

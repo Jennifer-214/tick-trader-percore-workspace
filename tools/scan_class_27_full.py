@@ -8,7 +8,7 @@ Two-mode scanner:
 MODE A — Subsystem state struct scan (broader Class 27 detection):
   - Scans ALL `struct` declarations in CoreFrameworks/, ML_Headers/, Strategies/,
     Backtest/, DataStream/
-  - For each, identifies SCALAR fields whose names match FOREACH_PER_CORE_CFG_FIELD
+  - For each, identifies SCALAR fields whose names match FOREACH_PER_NODE_CFG_FIELD
     or FOREACH_GLOBAL_CFG_FIELD entries (heuristic match — exact name AND name
     minus common suffixes like `_pct`, `_ticks`)
   - Reports candidate Class 27 instances with severity tier
@@ -25,7 +25,7 @@ OR JSON via --json flag for programmatic skill integration.
 
 NOT actual edits. Operator/skill decides which instances to triage.
 
-Distinct from tools/check_per_core_registry_integrity.py Check 7:
+Distinct from tools/check_per_node_registry_integrity.py Check 7:
 - Check 7 = narrow build-failing scan (DESIGNATED subsystem types only;
   enforces exemption requirement)
 - scan_class_27_full = broad informational sweep (ALL subsystems; surfaces
@@ -34,7 +34,7 @@ Distinct from tools/check_per_core_registry_integrity.py Check 7:
 Cross-references:
   - DESIGN_SPECS/decision-time-data-binding-pattern.md
   - DOCS/RECURRING_BUG_PATTERNS.md Class 27
-  - tools/check_per_core_registry_integrity.py Check 7 (narrower CI variant)
+  - tools/check_per_node_registry_integrity.py Check 7 (narrower CI variant)
   - claude-skills/accounting-audit/SKILL.md (orchestrator)
 """
 
@@ -62,8 +62,8 @@ SCAN_DIRS = [
 # (the registry IS the field declarations for these structs).
 EXCLUDED_STRUCTS_CFG_AUTHORITY = {
     "ControllerConfig",       # IS the global+per-core cfg authority
-    "PerCoreCfg",             # IS the per-core cfg slice authority
-    "PerCoreOverrides",       # legacy per-core override (deleted at WIP2f)
+    "PerNodeCfg",             # IS the per-core cfg slice authority
+    "PerNodeOverrides",       # legacy per-core override (deleted at WIP2f)
     "BacktestCfg",            # IS the backtest cfg authority
     "TrainingCfg",            # IS the training cfg authority
     "BinanceConfig",          # IS the binance API cfg
@@ -202,7 +202,7 @@ def severity_for_match(struct_name: str, field_name: str) -> str:
     accounting_fields = ("fee", "rate", "slippage", "commission", "pnl", "balance", "drawdown")
     if struct_name in accounting_critical and any(s in field_name.lower() for s in accounting_fields):
         return "HIGH"
-    if "per_core" in struct_name.lower() or "core_" in field_name.lower():
+    if "per_node" in struct_name.lower() or "node_" in field_name.lower():
         return "MEDIUM"
     return "LOW"
 
@@ -269,9 +269,9 @@ def main() -> int:
 
     # Load registry field names
     cfg_text = read_file(CFG_REG)
-    per_core_names = parse_cfg_field_names(cfg_text, "FOREACH_PER_CORE_CFG_FIELD")
+    per_node_names = parse_cfg_field_names(cfg_text, "FOREACH_PER_NODE_CFG_FIELD")
     global_names   = parse_cfg_field_names(cfg_text, "FOREACH_GLOBAL_CFG_FIELD")
-    all_cfg_names  = per_core_names | global_names
+    all_cfg_names  = per_node_names | global_names
 
     # Load Section C exemptions
     inventory_text = read_file(INVENTORY)

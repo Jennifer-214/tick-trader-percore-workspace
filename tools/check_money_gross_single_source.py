@@ -30,7 +30,7 @@ if not (ROOT / "CoreFrameworks").exists():
 SCAN_DIRS = ["CoreFrameworks", "Strategies", "Backtest"]
 
 # (1) unprefixed notional-minus-notional (the bug form); the open_notional decrements are
-#     `ctx.core_open_notional`/`state->...core_open_notional` (dotted/arrow prefix) → not matched.
+#     `ctx.node_open_notional`/`state->...node_open_notional` (dotted/arrow prefix) → not matched.
 RE_NOTIONAL_SUB = re.compile(r"Money_Sub\(\s*\w*notional\w*\s*,\s*\w*notional\w*")
 # (2) a gross computed by subtraction (2-mul) rather than via Money_FillGross.
 RE_GROSS_SUB = re.compile(r"\bgross\s*=\s*Money_Sub\(")

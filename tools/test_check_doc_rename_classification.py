@@ -32,7 +32,7 @@ def test_code_fence_cite_left():
     assert any(c == "code-fence-cite" and a == "LEAVE" for _, c, a in hits), hits
 
 
-def test_execution_core_keep_token():
+def test_execution_node_keep_token():
     # 'core' inside ExecutionCore must NOT be flagged for rename
     hits = _classify_single("Call ExecutionCore_SetParameters per cycle.\n")
     # Either no per-core hit, or classified keep-token-context LEAVE
@@ -56,8 +56,8 @@ def test_dedup_case_variants():
     # but the SAME position must not double-count across case-variant tokens.
     hits = _classify_single("per-core and Per-Core both appear.\n")
     # 2 distinct positions → 2 hits (not 4 from case-variant token list)
-    per_core_hits = [h for h in hits if h[0].lower() == "per-core"]
-    assert len(per_core_hits) == 2, f"expected 2 distinct-position hits, got {len(per_core_hits)}: {hits}"
+    per_node_hits = [h for h in hits if h[0].lower() == "per-core"]
+    assert len(per_node_hits) == 2, f"expected 2 distinct-position hits, got {len(per_node_hits)}: {hits}"
 
 
 def test_archived_file_left():
@@ -104,7 +104,7 @@ def test_file_path_reference_slug_left():
     assert all(a == "LEAVE" for _, c, a in hits), hits
 
 
-def test_narrative_per_core_still_renames_near_paths():
+def test_narrative_per_node_still_renames_near_paths():
     # A real narrative per-core (NOT in a path) still renames even on a line that also has paths
     hits = _classify_single("The per-core design is documented.\n")
     assert any(c == "narrative-current-state" and a == "RENAME" for _, c, a in hits), hits
@@ -113,17 +113,17 @@ def test_narrative_per_core_still_renames_near_paths():
 def test_apply_no_overlap_corruption():
     # Regression for Class 36 — overlap-resolution must prevent double-substitution corruption.
     # .D.1's production token scope is conceptual-only (no overlapping tokens), so this test
-    # INJECTS an overlapping pair (simulating .E.1 code-symbol tokens where PER_CORE is a
-    # substring of FOREACH_PER_CORE_CFG_FIELD) to verify the defensive logic that .E.1 reuses.
+    # INJECTS an overlapping pair (simulating .E.1 code-symbol tokens where PER_NODE is a
+    # substring of FOREACH_PER_NODE_CFG_FIELD) to verify the defensive logic that .E.1 reuses.
     orig_tokens, orig_map = mod.DEFAULT_TOKENS, mod.RENAME_MAP
-    mod.DEFAULT_TOKENS = ["FOREACH_PER_CORE_CFG_FIELD", "PER_CORE", "state.cores", "per-core"]
+    mod.DEFAULT_TOKENS = ["FOREACH_PER_NODE_CFG_FIELD", "PER_NODE", "state.nodes", "per-core"]
     mod.RENAME_MAP = {
-        "FOREACH_PER_CORE_CFG_FIELD": "FOREACH_PER_NODE_CFG_FIELD",
-        "PER_CORE": "PER_NODE",
-        "state.cores": "state.nodes",
+        "FOREACH_PER_NODE_CFG_FIELD": "FOREACH_PER_NODE_CFG_FIELD",
+        "PER_NODE": "PER_NODE",
+        "state.nodes": "state.nodes",
         "per-core": "per-node",
     }
-    body = "The per-core path uses FOREACH_PER_CORE_CFG_FIELD and state.cores access.\n"
+    body = "The per-core path uses FOREACH_PER_NODE_CFG_FIELD and state.nodes access.\n"
     with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False, dir="/tmp") as f:
         f.write(body)
         tmp = f.name
@@ -134,7 +134,7 @@ def test_apply_no_overlap_corruption():
     finally:
         os.unlink(tmp)
         mod.DEFAULT_TOKENS, mod.RENAME_MAP = orig_tokens, orig_map
-    # Outer (longer) FOREACH match wins; inner PER_CORE skipped → clean, not corrupted
+    # Outer (longer) FOREACH match wins; inner PER_NODE skipped → clean, not corrupted
     assert "FOREACH_PER_NODE_CFG_FIELD" in result, result
     assert "per-node path" in result, result
     assert "state.nodes" in result, result

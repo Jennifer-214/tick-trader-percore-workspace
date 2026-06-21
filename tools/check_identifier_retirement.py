@@ -21,7 +21,7 @@ RETIRING one is fine too — but you TOMBSTONE the slot (RESERVED / LEGACY_ /
 DEPRECATED comment, never reassign the number), and the ledger keeps the row.
 
 The codebase ALREADY practices this informally (BanditAlgorithm "OPTION C
-wire-byte preservation"; "RESERVED (was PER_CORE_OK ...)"; LEGACY_CONFIDENCE_VERSION;
+wire-byte preservation"; "RESERVED (was PER_NODE_OK ...)"; LEGACY_CONFIDENCE_VERSION;
 StrategyInterface.hpp's "IDs are append-only — never reorder or remove. Persisted
 snapshots and trade logs reference these by integer."). This tool MECHANIZES that
 existing-but-unenforced convention. Golden-master, not a reimplemented oracle
@@ -70,14 +70,14 @@ SOURCES = [
     # "IDs are append-only; existing trade logs reference numeric values") → Knight-Capital tracked.
     ("enum:ShaltCode",  "Strategies/StrategyInterface.hpp", "foreach", "FOREACH_SHALT",
         {"prefix": "SHALT_", "value": "positional"}),
-    # CoreContext state-flag bit positions (CORE_STATE_FLAG_<name>); append-only per H21.
+    # NodeContext state-flag bit positions (NODE_STATE_FLAG_<name>); append-only per H21.
     # NOTE: FOREACH_FAILURE_MODE's lowercase row-names (ml_model_load_failed) are skipped by the
     # _parse_foreach ^[A-Z0-9_]+$ filter → it enrolls in the paced bit-assignment pass once the
     # parser handles lowercase; meanwhile protected by static_assert(FAILURE_BIT_COUNT<=16) + append-only.
     # HOMED: TECH_DEBT-152 (paced identifier-guard enrollment; "Known un-enrolled instance" bullet) —
     # the durable tracker + re-enrollment trigger; this comment is the code-side pointer to it.
-    ("enum:CoreStateFlag", "MemHeaders/CoreStateFlagRegistry.hpp", "foreach", "FOREACH_CORE_STATE_FLAG",
-        {"prefix": "CORE_STATE_FLAG_", "value": "positional"}),
+    ("enum:NodeStateFlag", "MemHeaders/NodeStateFlagRegistry.hpp", "foreach", "FOREACH_NODE_STATE_FLAG",
+        {"prefix": "NODE_STATE_FLAG_", "value": "positional"}),
 ]
 
 # Categories whose values are monotonic-non-decreasing (a DROP is also a violation).

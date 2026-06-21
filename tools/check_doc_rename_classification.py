@@ -66,17 +66,17 @@ from typing import List, NamedTuple, Tuple
 
 # Default token inventory — .D.1 sweeps CONCEPTUAL terminology ONLY.
 #
-# CODE SYMBOLS (CoreContext / MAX_CORES / state.cores / FOREACH_PER_CORE_CFG_FIELD /
-# core_strategy / core_risk_pct / per_core_slow) are deliberately ABSENT. They are CODE
-# IDENTIFIERS still named Core*/per_core until v5.15.5.F.4d.1.E.1 — they rename WITH the
+# CODE SYMBOLS (NodeContext / MAX_CORES / state.nodes / FOREACH_PER_NODE_CFG_FIELD /
+# node_strategy / node_risk_pct / per_node_slow) are deliberately ABSENT. They are CODE
+# IDENTIFIERS still named Core*/per_node until v5.15.5.F.4d.1.E.1 — they rename WITH the
 # code at .E.1 (doc-citations + code together as a sister-cohort), NOT at this doc sweep.
 # Reasons (per .D.1 Phase A proof finding 2026-05-28):
-#   1. Renaming `CoreContext`→`NodeContext` in prose NOW cites a symbol that won't exist in
+#   1. Renaming `NodeContext`→`NodeContext` in prose NOW cites a symbol that won't exist in
 #      code until .E.1 (Class-14-flavored fabricated-symbol-in-docs).
-#   2. Produces half-renamed phrases ("cores[16] × NodeContext" — array still `cores`, type
+#   2. Produces half-renamed phrases ("nodes[16] × NodeContext" — array still `cores`, type
 #      now `NodeContext`).
-#   3. Underscore/identifier tokens (per_core, MAX_CORES) match INSIDE larger identifiers
-#      (FOREACH_PER_CORE_CFG_FIELD, per_core_slow) → substring mangling
+#   3. Underscore/identifier tokens (per_node, MAX_CORES) match INSIDE larger identifiers
+#      (FOREACH_PER_NODE_CFG_FIELD, per_node_slow) → substring mangling
 #      (sister: feedback_avoid_substring_replace_all_on_member_access + Class 36).
 # The conceptual hyphenated `per-core` adjective is safe (hyphens can't be inside a C
 # identifier) + is the high-value vision-language reframe ("per-core sharded platform" →
@@ -148,8 +148,8 @@ DEFAULT_SCOPE = [
 # deliberately ABSENT — its action is "delete/rephrase references," not a mechanical rename.
 RENAME_MAP = {
     # CONCEPTUAL hyphenated per-core adjective ONLY (the .D.1 scope). Code-symbol renames
-    # (CoreContext→NodeContext, MAX_CORES→MAX_NODES, state.cores→state.nodes,
-    # FOREACH_PER_CORE_CFG_FIELD→…, core_strategy→…, per_core→per_node) are DEFERRED to .E.1
+    # (NodeContext→NodeContext, MAX_CORES→MAX_NODES, state.nodes→state.nodes,
+    # FOREACH_PER_NODE_CFG_FIELD→…, node_strategy→…, per_node→per_node) are DEFERRED to .E.1
     # where they rename alongside the code. single_core is ABSENT (its action is delete/rephrase,
     # handled manually). The overlap-resolution logic below stays as defensive infrastructure
     # for .E.1 reuse (when code-symbol tokens with overlapping spans get added) + Class 36.
@@ -524,7 +524,7 @@ def apply_file(file_path: str, tokens: List[str], write: bool) -> Tuple[int, int
                         )
 
         # Resolve OVERLAPS before applying (per .D.1 Phase A apply-preview finding):
-        # e.g. FOREACH_PER_CORE_CFG_FIELD (0,26) and its inner PER_CORE (8,16) both match.
+        # e.g. FOREACH_PER_NODE_CFG_FIELD (0,26) and its inner PER_NODE (8,16) both match.
         # Two overlapping subs on one span = corruption if replacement lengths differ.
         # Greedily accept non-overlapping subs preferring the LONGER (outer) match:
         # sort by start asc, then by span length desc; accept if start >= last accepted end.

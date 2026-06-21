@@ -14,7 +14,7 @@ promotion"). Per-sentinel verifies the claimed auto-write landed at expected led
 location; outputs UNFULFILLED findings.
 
 Sister tools (M7 Stage 6 canonical applications):
-  - check_per_core_registry_integrity.py (canonicals 5 + 6: Check 9 + Check 10 at .B.7/.B.8)
+  - check_per_node_registry_integrity.py (canonicals 5 + 6: Check 9 + Check 10 at .B.7/.B.8)
   - check_plan_body_symbol_existence.py (canonical 1; B-Plus pre-commit hook)
   - This tool (canonical 7: Check 11 at .D)
 
@@ -33,7 +33,7 @@ Per /capture-audit invocation modes:
   --include-archived: bypass ARCHIVED_EXCLUSIONS (forensic; rare)
 
 Output-privacy discipline (tool public / outputs private):
-  Tool itself = public (engine repo; demonstrates rigorous CI discipline; sister to B-Plus + check_per_core_*).
+  Tool itself = public (engine repo; demonstrates rigorous CI discipline; sister to B-Plus + check_per_node_*).
   Tool outputs = workspace-private OR transient by design:
     - Default output: stdout (transient; not persisted)
     - Report files (when written by skill orchestration): plans/<sprint>/capture-audit-reports/<date>-<reason>.md

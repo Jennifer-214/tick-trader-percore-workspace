@@ -13,7 +13,7 @@ WHY (the meta-pattern this kills):
   Sister guards (canonical, do NOT duplicate):
     - check_struct_alignment.py        — pins sizeof(T)==N for BYTE-SERIALIZED types
                                          (wire/persist/memcmp). Non-serialized runtime
-                                         structs (RollingStats, CoreLatencyStats) fall
+                                         structs (RollingStats, NodeLatencyStats) fall
                                          THROUGH it — that gap is exactly this tool.
     - check_fpn_doc_size_currency.py    — pins DOC statements of a single FPN<> size.
 
@@ -66,7 +66,7 @@ MANIFEST = [
     {"type": "RollingStats<64,256>",  "header": "ML_Headers/RollingStats.hpp",          "tier": "L2"},
     {"type": "RollingStats<64,512>",  "header": "ML_Headers/RollingStats.hpp",          "tier": "L2"},
     {"type": "RollingStats<64,1024>", "header": "ML_Headers/RollingStats.hpp",          "tier": "L2"},
-    {"type": "tt::CoreLatencyStats",  "header": "CoreFrameworks/CoreLatencyStats.hpp",  "tier": "L1d"},
+    {"type": "tt::NodeLatencyStats",  "header": "CoreFrameworks/NodeLatencyStats.hpp",  "tier": "L1d"},
     {"type": "tt::LatencyHistogram",  "header": "MemHeaders/LatencyHistogram.hpp",       "tier": "L1d"},
     # ── hot-path / SoA structs (L1d-residency surface) ──
     # NOTE: sizeof is a COARSE proxy — the per-TICK working set is a SUBSET of the

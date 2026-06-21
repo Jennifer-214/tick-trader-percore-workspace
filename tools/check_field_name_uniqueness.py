@@ -4,7 +4,7 @@
 Implements meta-discipline M4 / Pillar B2 from DESIGN_SPECS/implementation-layer-blindspot-taxonomy.md.
 
 When struct-gen migrations unconditionally walk multiple heterogeneous registries
-(e.g., FOREACH_PER_CORE_CFG_FIELD + FOREACH_GLOBAL_CFG_FIELD + FOREACH_ML_CFG_FLAG +
+(e.g., FOREACH_PER_NODE_CFG_FIELD + FOREACH_GLOBAL_CFG_FIELD + FOREACH_ML_CFG_FLAG +
 FOREACH_GATE_CFG_FLAG) and emit one struct field per row, name collision across
 registries produces duplicate field declarations → compile error.
 
@@ -36,9 +36,9 @@ REPO_ROOT  = SCRIPT_DIR.parent
 
 REGISTRIES = {
     # registry_name: (file_path, foreach_macro_name, name_col_index, name_col_label)
-    "FOREACH_PER_CORE_CFG_FIELD": (
+    "FOREACH_PER_NODE_CFG_FIELD": (
         REPO_ROOT / "CoreFrameworks/CfgFieldRegistry.hpp",
-        "FOREACH_PER_CORE_CFG_FIELD",
+        "FOREACH_PER_NODE_CFG_FIELD",
         2,  # X(STORAGE_T, KIND_TOKEN, name, label, section, meta, payload, tooltip, applies_strat, applies_op, applies_regime, applies_risk, lives_in_struct) — name at idx 2
         "name (col 3)",
     ),

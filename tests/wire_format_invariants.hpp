@@ -42,14 +42,14 @@ struct InvariantContext {
     // second reference of wire-format-canonical-body-invariants-helper.md).
     // If both are non-null, helper sums popcounts + walks both for I1 + I4.
     // If global_mask_words is null, helper falls back to legacy single-mask behavior.
-    const uint64_t*           per_core_mask_words = nullptr;
-    size_t                    per_core_mask_size_words = 0;
+    const uint64_t*           per_node_mask_words = nullptr;
+    size_t                    per_node_mask_size_words = 0;
     const uint64_t*           global_mask_words = nullptr;
     size_t                    global_mask_size_words = 0;
 
     // Descriptor arrays for name lookups
-    const CfgFieldDescriptor* per_core_descriptors;
-    size_t                    per_core_count;
+    const CfgFieldDescriptor* per_node_descriptors;
+    size_t                    per_node_count;
     const CfgFieldDescriptor* global_descriptors;
     size_t                    global_count;
     // Consumer's canonical body emit fn (matches StampBoundDerivedFilter.hpp signature)
@@ -73,9 +73,9 @@ inline void run_wire_format_canonical_body_invariants(const InvariantContext& ct
     }
     size_t pop_count = 0;
     // .B.2+ dual-mask path: sum per_core + global popcounts. .A legacy path: single mask.
-    if (ctx.per_core_mask_words != nullptr && ctx.global_mask_words != nullptr) {
-        for (size_t w = 0; w < ctx.per_core_mask_size_words; w++) {
-            pop_count += static_cast<size_t>(__builtin_popcountll(ctx.per_core_mask_words[w]));
+    if (ctx.per_node_mask_words != nullptr && ctx.global_mask_words != nullptr) {
+        for (size_t w = 0; w < ctx.per_node_mask_size_words; w++) {
+            pop_count += static_cast<size_t>(__builtin_popcountll(ctx.per_node_mask_words[w]));
         }
         for (size_t w = 0; w < ctx.global_mask_size_words; w++) {
             pop_count += static_cast<size_t>(__builtin_popcountll(ctx.global_mask_words[w]));
@@ -114,15 +114,15 @@ inline void run_wire_format_canonical_body_invariants(const InvariantContext& ct
     // descriptor arrays. .A legacy path: single mask + per-core descriptors only.
     bool all_names_present = true;
 
-    if (ctx.per_core_mask_words != nullptr && ctx.global_mask_words != nullptr) {
+    if (ctx.per_node_mask_words != nullptr && ctx.global_mask_words != nullptr) {
         // Walk per-core mask + per-core descriptors
-        for (size_t w = 0; w < ctx.per_core_mask_size_words; w++) {
-            uint64_t word = ctx.per_core_mask_words[w];
+        for (size_t w = 0; w < ctx.per_node_mask_size_words; w++) {
+            uint64_t word = ctx.per_node_mask_words[w];
             while (word) {
                 size_t bit = static_cast<size_t>(__builtin_ctzll(word));
                 size_t idx = w * 64 + bit;
-                if (idx < ctx.per_core_count) {
-                    const char* name = ctx.per_core_descriptors[idx].cfg_field_name;
+                if (idx < ctx.per_node_count) {
+                    const char* name = ctx.per_node_descriptors[idx].cfg_field_name;
                     if (strstr(body, name) == nullptr) all_names_present = false;
                 }
                 word &= word - 1;
@@ -143,14 +143,14 @@ inline void run_wire_format_canonical_body_invariants(const InvariantContext& ct
         }
     } else {
         // Legacy single-mask path (.A vacuous case)
-        size_t per_core_words = (ctx.per_core_count + 63) / 64;
-        for (size_t w = 0; w < ctx.mask_size_words && w < per_core_words; w++) {
+        size_t per_node_words = (ctx.per_node_count + 63) / 64;
+        for (size_t w = 0; w < ctx.mask_size_words && w < per_node_words; w++) {
             uint64_t word = ctx.mask_words[w];
             while (word) {
                 size_t bit = static_cast<size_t>(__builtin_ctzll(word));
                 size_t idx = w * 64 + bit;
-                if (idx < ctx.per_core_count) {
-                    const char* name = ctx.per_core_descriptors[idx].cfg_field_name;
+                if (idx < ctx.per_node_count) {
+                    const char* name = ctx.per_node_descriptors[idx].cfg_field_name;
                     if (strstr(body, name) == nullptr) all_names_present = false;
                 }
                 word &= word - 1;

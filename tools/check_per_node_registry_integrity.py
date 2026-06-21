@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
-"""check_per_core_registry_integrity.py — CI cross-check for per-core cfg discipline.
+"""check_per_node_registry_integrity.py — CI cross-check for per-node cfg discipline.
 
 Established at v5.15.5.F.4c.3 WIP2d-0 per the structural-fix primitive for the
-per-core cfg surface. Enforces H17 STRONG invariant (per-core surface): cfg
-struct field declarations MUST come from FOREACH_PER_CORE_FIELD_TYPE via X-macro
+per-node cfg surface. Enforces H17 STRONG invariant (per-node surface): cfg
+struct field declarations MUST come from FOREACH_PER_NODE_FIELD_TYPE via X-macro
 generation; manual cfg-surface field declarations FORBIDDEN.
 
 Closes bug classes (cfg-scope-discipline.md):
-- Parallel-array drift (Class A): `core_X[16]` shadowing per-core registry row
-- Manual-field bypass (Class B): adding to PerCoreCfg<F> body without registry row
-- Anti-pattern 1 consumer (informational): `cfg.X` + `cfg.core_overrides[c].X`
+- Parallel-array drift (Class A): `node_X[16]` shadowing per-node registry row
+- Manual-field bypass (Class B): adding to PerNodeCfg<F> body without registry row
+- Anti-pattern 1 consumer (informational): `cfg.X` + `cfg.node_overrides[c].X`
 
 Cross-checks performed (all build-failing on violation):
-  1. FOREACH_PER_CORE_CFG_FIELD ↔ FOREACH_PER_CORE_FIELD_TYPE bidirectional sync
-  2. PerCoreCfg<F> body contains ONLY: X-macro expansion + 5 permitted runtime bitmap fields
-  3. ControllerConfig parallel arrays ↔ FOREACH_MANUAL_PER_CORE_FIELD bidirectional sync
-  4. FOREACH_MANUAL_PER_CORE_FIELD ↔ MANUAL_FIELDS_INVENTORY.md bidirectional sync
-  5. No name duplication between FOREACH_PER_CORE_CFG_FIELD + FOREACH_MANUAL_PER_CORE_FIELD
+  1. FOREACH_PER_NODE_CFG_FIELD ↔ FOREACH_PER_NODE_FIELD_TYPE bidirectional sync
+  2. PerNodeCfg<F> body contains ONLY: X-macro expansion + 5 permitted runtime bitmap fields
+  3. ControllerConfig parallel arrays ↔ FOREACH_MANUAL_PER_NODE_FIELD bidirectional sync
+  4. FOREACH_MANUAL_PER_NODE_FIELD ↔ MANUAL_FIELDS_INVENTORY.md bidirectional sync
+  5. No name duplication between FOREACH_PER_NODE_CFG_FIELD + FOREACH_MANUAL_PER_NODE_FIELD
   6. TRANSITIONAL exemption rot detection (WARN-level)
 
 Exit codes:
@@ -43,7 +43,7 @@ CFG_REG    = REPO_ROOT / "CoreFrameworks/CfgFieldRegistry.hpp"
 CTRL_CFG   = REPO_ROOT / "CoreFrameworks/ControllerConfig.hpp"
 INVENTORY  = REPO_ROOT / "DOCS/MANUAL_FIELDS_INVENTORY.md"
 
-# 5 permitted runtime bitmap fields in PerCoreCfg<F> body (Section B of inventory)
+# 5 permitted runtime bitmap fields in PerNodeCfg<F> body (Section B of inventory)
 PERMITTED_RUNTIME_FIELDS = {
     "lifecycle_cfg_flags",
     "gate_cfg_flags",
@@ -64,17 +64,17 @@ SUBSYSTEM_STATE_TYPES_FOR_CLASS_27_SCAN = {
 
 def fail(msg: str) -> None:
     """Emit error to stderr in operator-readable format."""
-    print(f"[per-core-cfg-CI] ERROR: {msg}", file=sys.stderr)
+    print(f"[per-node-cfg-CI] ERROR: {msg}", file=sys.stderr)
 
 
 def warn(msg: str) -> None:
     """Emit warning to stderr (non-fatal)."""
-    print(f"[per-core-cfg-CI] WARN: {msg}", file=sys.stderr)
+    print(f"[per-node-cfg-CI] WARN: {msg}", file=sys.stderr)
 
 
 def info(msg: str) -> None:
     """Emit info to stdout."""
-    print(f"[per-core-cfg-CI] {msg}")
+    print(f"[per-node-cfg-CI] {msg}")
 
 
 def read_file(p: Path) -> str:
@@ -101,8 +101,8 @@ def extract_macro_body(text: str, macro_name: str) -> str:
     return m.group(1)
 
 
-def parse_foreach_per_core_cfg_field(body: str) -> dict:
-    """Parse FOREACH_PER_CORE_CFG_FIELD rows. Returns dict {name: type}.
+def parse_foreach_per_node_cfg_field(body: str) -> dict:
+    """Parse FOREACH_PER_NODE_CFG_FIELD rows. Returns dict {name: type}.
 
     Post-WIP2d-0.B: TYPE is the FIRST column. Row shape:
         X(<storage_type>, KIND_TOKEN, <name>, "label", "section", meta, payload, "tooltip", ...)
@@ -120,8 +120,8 @@ def parse_foreach_per_core_cfg_field(body: str) -> dict:
     return result
 
 
-def parse_foreach_manual_per_core_field(body: str) -> dict:
-    """Parse FOREACH_MANUAL_PER_CORE_FIELD rows. Returns dict {name: (type, suffix, rationale)}.
+def parse_foreach_manual_per_node_field(body: str) -> dict:
+    """Parse FOREACH_MANUAL_PER_NODE_FIELD rows. Returns dict {name: (type, suffix, rationale)}.
 
     Rows look like:
         X(type, name, suffix, "rationale")
@@ -141,34 +141,34 @@ def parse_foreach_manual_per_core_field(body: str) -> dict:
     return result
 
 
-def parse_per_core_cfg_body(text: str) -> dict:
-    """Parse fields declared inside PerCoreCfg<F> struct body.
+def parse_per_node_cfg_body(text: str) -> dict:
+    """Parse fields declared inside PerNodeCfg<F> struct body.
 
     Returns dict {name: (type, line_no)}. EXCLUDES the X-macro expansion call.
-    Detects FOREACH_PER_CORE_FIELD_TYPE invocation; collects manual fields ONLY.
+    Detects FOREACH_PER_NODE_FIELD_TYPE invocation; collects manual fields ONLY.
     """
     # Find the struct definition
     m = re.search(
-        r'template\s*<unsigned\s+F>\s*\nstruct\s+alignas\(64\)\s+PerCoreCfg\s*\{(.*?)^\};',
+        r'template\s*<unsigned\s+F>\s*\nstruct\s+alignas\(64\)\s+PerNodeCfg\s*\{(.*?)^\};',
         text,
         re.MULTILINE | re.DOTALL,
     )
     if not m:
-        fail("could not find PerCoreCfg<F> struct definition")
+        fail("could not find PerNodeCfg<F> struct definition")
         sys.exit(2)
     body = m.group(1)
     body_start_line = text[:m.start()].count('\n') + 2  # approximate; +2 for template + struct lines
 
-    # Detect if FOREACH_PER_CORE_CFG_FIELD is invoked (expected post-WIP2d-0.B; covers 92 fields)
-    has_cfg_macro = bool(re.search(r'FOREACH_PER_CORE_CFG_FIELD\s*\(\s*EMIT_PER_CORE_CFG_STRUCT_FIELD\s*\)', body))
+    # Detect if FOREACH_PER_NODE_CFG_FIELD is invoked (expected post-WIP2d-0.B; covers 92 fields)
+    has_cfg_macro = bool(re.search(r'FOREACH_PER_NODE_CFG_FIELD\s*\(\s*EMIT_PER_NODE_CFG_STRUCT_FIELD\s*\)', body))
     if not has_cfg_macro:
-        fail("PerCoreCfg<F> body missing FOREACH_PER_CORE_CFG_FIELD(EMIT_PER_CORE_CFG_STRUCT_FIELD) invocation")
+        fail("PerNodeCfg<F> body missing FOREACH_PER_NODE_CFG_FIELD(EMIT_PER_NODE_CFG_STRUCT_FIELD) invocation")
         sys.exit(1)
 
-    # Detect if FOREACH_PER_CORE_DOMAIN_BITMAP is invoked (expected post-WIP2d-0.B; covers 5 bitmap fields)
-    has_bitmap_macro = bool(re.search(r'FOREACH_PER_CORE_DOMAIN_BITMAP\s*\(\s*EMIT_DOMAIN_BITMAP_FIELD\s*\)', body))
+    # Detect if FOREACH_PER_NODE_DOMAIN_BITMAP is invoked (expected post-WIP2d-0.B; covers 5 bitmap fields)
+    has_bitmap_macro = bool(re.search(r'FOREACH_PER_NODE_DOMAIN_BITMAP\s*\(\s*EMIT_DOMAIN_BITMAP_FIELD\s*\)', body))
     if not has_bitmap_macro:
-        fail("PerCoreCfg<F> body missing FOREACH_PER_CORE_DOMAIN_BITMAP(EMIT_DOMAIN_BITMAP_FIELD) invocation")
+        fail("PerNodeCfg<F> body missing FOREACH_PER_NODE_DOMAIN_BITMAP(EMIT_DOMAIN_BITMAP_FIELD) invocation")
         sys.exit(1)
 
     # Find manual field declarations (after stripping comments + the X-macro line)
@@ -186,8 +186,8 @@ def parse_per_core_cfg_body(text: str) -> dict:
         if not line or line.startswith('/*') or line.startswith('*'):
             continue
         # Skip block-comment lines + X-macro expansions
-        if ('FOREACH_PER_CORE_CFG_FIELD' in line or 'EMIT_PER_CORE_CFG_STRUCT_FIELD' in line
-                or 'FOREACH_PER_CORE_DOMAIN_BITMAP' in line or 'EMIT_DOMAIN_BITMAP_FIELD' in line):
+        if ('FOREACH_PER_NODE_CFG_FIELD' in line or 'EMIT_PER_NODE_CFG_STRUCT_FIELD' in line
+                or 'FOREACH_PER_NODE_DOMAIN_BITMAP' in line or 'EMIT_DOMAIN_BITMAP_FIELD' in line):
             continue
         # Skip preprocessor + closing braces
         if line.startswith('#') or line == '};' or line == '{':
@@ -202,7 +202,7 @@ def parse_per_core_cfg_body(text: str) -> dict:
 
 
 def parse_controller_config_parallel_arrays(text: str) -> dict:
-    """Parse `<type> core_<name>[16];` declarations in ControllerConfig.hpp.
+    """Parse `<type> node_<name>[16];` declarations in ControllerConfig.hpp.
 
     Returns dict {name: (type, suffix, line_no)}.
     Suffix is e.g. '[256]' for 2D arrays, empty for 1D.
@@ -215,9 +215,9 @@ def parse_controller_config_parallel_arrays(text: str) -> dict:
         comment_pos = line.find('//')
         if comment_pos >= 0:
             line = line[:comment_pos]
-        # Match: optional whitespace + <type> + core_<name>[16] + optional [N] + ;
+        # Match: optional whitespace + <type> + node_<name>[16] + optional [N] + ;
         m = re.match(
-            r'^\s+([a-zA-Z_][a-zA-Z_0-9<>]*(?:\s*<\s*F\s*>)?)\s+(core_\w+)\[(?:16|MAX_EXECUTION_CORES)\](\[[^\]]+\])?\s*;',
+            r'^\s+([a-zA-Z_][a-zA-Z_0-9<>]*(?:\s*<\s*F\s*>)?)\s+(node_\w+)\[(?:16|MAX_EXECUTION_NODES)\](\[[^\]]+\])?\s*;',
             line,
         )
         if m:
@@ -237,7 +237,7 @@ def parse_inventory_section_a(text: str) -> set:
         sys.exit(2)
     section_a = m.group(0)
     # Each entry has a row | `field_name` | ... |
-    names = set(re.findall(r'\|\s*`(core_\w+)`\s*\|', section_a))
+    names = set(re.findall(r'\|\s*`(node_\w+)`\s*\|', section_a))
     return names
 
 
@@ -257,7 +257,7 @@ def strip_macro_definitions(text: str) -> str:
     """Remove all #define ... blocks (single-line + multi-line via \\ continuation).
 
     Used to scan for anti-pattern 1 in PRODUCTION code only, not in X-macro callback bodies
-    (which legitimately use `cfg.core_overrides[c].name` + `cfg.name` as positional meta-vars).
+    (which legitimately use `cfg.node_overrides[c].name` + `cfg.name` as positional meta-vars).
     """
     out = []
     in_macro = False
@@ -281,7 +281,7 @@ def parse_subsystem_state_struct_fields(text: str, struct_name: str) -> dict:
     `struct alignas(N) <struct_name> { ... };` or `template<...> struct <struct_name> { ... };`.
 
     Returns dict {field_name: (type, line_no)}. Excludes:
-    - Array fields (e.g., per_core_X[16])      — already per-instance by construction
+    - Array fields (e.g., per_node_X[16])      — already per-instance by construction
     - Sub-struct fields (composite types)       — recursed-into separately if needed
     - Nested struct/union declarations
     - Comment-only lines
@@ -380,7 +380,7 @@ def parse_inventory_section_c(text: str) -> set:
 
 
 def scan_anti_pattern_1(text: str) -> list:
-    """Scan for anti-pattern 1 consumer shape: cfg.X + cfg.core_overrides[c].X same X.
+    """Scan for anti-pattern 1 consumer shape: cfg.X + cfg.node_overrides[c].X same X.
 
     Strips #define macro bodies first — X-macro callbacks use `name` as a meta-var
     that pastes the field name; matching that as a field-name produces false positives.
@@ -388,8 +388,8 @@ def scan_anti_pattern_1(text: str) -> list:
     findings = []
     # Strip macro definitions to avoid false-positives on X-macro callback meta-vars
     code = strip_macro_definitions(text)
-    # Find each `cfg.core_overrides[c].FIELD` pattern; check if the same scope has `cfg.FIELD`
-    pattern_override = re.compile(r'cfg\.core_overrides\[\w+\]\.(\w+)')
+    # Find each `cfg.node_overrides[c].FIELD` pattern; check if the same scope has `cfg.FIELD`
+    pattern_override = re.compile(r'cfg\.node_overrides\[\w+\]\.(\w+)')
     overridden_fields = set(pattern_override.findall(code))
     for field in overridden_fields:
         # Check if cfg.<field> appears in same text (informational)
@@ -399,7 +399,7 @@ def scan_anti_pattern_1(text: str) -> list:
 
 
 # Files scanned for Check 9 (Class 26 paired-access mismatch detection).
-# Add new source files here as they accumulate cfg.core_overrides[X] + cfg.cores[Y] paired patterns.
+# Add new source files here as they accumulate cfg.node_overrides[X] + cfg.nodes[Y] paired patterns.
 # Per RECURRING_BUG_PATTERNS Class 26 + DESIGN_SPECS/meta-disciplines/structural-enforcement-when-memory-insufficient.md M7 4th canonical.
 # Codified at v5.15.5.F.4d.1.B.7 (2026-05-27) after pre-fix Async.hpp:814+853 silent trading-logic bug.
 CHECK_9_SCAN_FILES = [
@@ -414,24 +414,24 @@ CHECK_9_SCAN_FILES = [
     "CoreFrameworks/ShardedBacktestDriver.hpp",
 ]
 
-CHECK_9_PROXIMITY_LINES = 5  # how far to look for paired cfg.cores[Y] after cfg.core_overrides[X]
+CHECK_9_PROXIMITY_LINES = 5  # how far to look for paired cfg.nodes[Y] after cfg.node_overrides[X]
 
 
 # ============================================================================
-# Check 10 — Class 26 sub-shape B detection: UNINDEXED-GLOBAL per-core-migrated
-# field reads at per-core consumer sites (M7 6th canonical structural enforcement)
+# Check 10 — Class 26 sub-shape B detection: UNINDEXED-GLOBAL per-node-migrated
+# field reads at per-node consumer sites (M7 6th canonical structural enforcement)
 # ============================================================================
 # Per RECURRING_BUG_PATTERNS Class 26 sub-shape B + DESIGN_SPECS/meta-disciplines/
 # structural-enforcement-when-memory-insufficient.md M7 6th canonical.
 # Codified at v5.15.5.F.4d.1.B.8 (2026-05-27) after /accounting-audit surfaced 4 HIGH instances
 # (ControllerEventLoop.hpp:3605+3670+3042 + StrategyLifecycle.hpp:272 + ShardedSnapshot.hpp:249).
 #
-# Sister to Check 9: same tool / same surface family (per-core cfg consumer discipline) /
+# Sister to Check 9: same tool / same surface family (per-node cfg consumer discipline) /
 # different detection signature (UNINDEXED-GLOBAL vs PAIRED-ACCESS-MISMATCH). Check 9 catches
-# `cfg.core_overrides[X]` + `cfg.cores[Y]` with X != Y; Check 10 catches `cfg.X` UNINDEXED
-# where X is per-core-migrated AND has global sister in ControllerConfig<F>.
+# `cfg.node_overrides[X]` + `cfg.nodes[Y]` with X != Y; Check 10 catches `cfg.X` UNINDEXED
+# where X is per-node-migrated AND has global sister in ControllerConfig<F>.
 #
-# Per-core surface files to scan. Operator extends as new per-core surface files land.
+# Per-node surface files to scan. Operator extends as new per-node surface files land.
 CHECK_10_SCAN_FILES = [
     "CoreFrameworks/ControllerEventLoop.hpp",
     "CoreFrameworks/EngineSharded/Async.hpp",
@@ -442,7 +442,7 @@ CHECK_10_SCAN_FILES = [
     "CoreFrameworks/OrderManager.hpp",
     "CoreFrameworks/ShardedSnapshot.hpp",
     "Strategies/StrategyLifecycle.hpp",
-    "Strategies/private/EmaCross.hpp",  # has both per-core sharded (covered) + legacy single_core (exempt)
+    "Strategies/private/EmaCross.hpp",  # has both per-node sharded (covered) + legacy single_core (exempt)
     "Strategies/Momentum.hpp",
     "Strategies/MeanReversion.hpp",
     "Strategies/MLStrategy.hpp",
@@ -451,18 +451,18 @@ CHECK_10_SCAN_FILES = [
     "CoreFrameworks/ShardedBacktestDriver.hpp",
 ]
 
-# Per-core fields with GLOBAL sister in ControllerConfig<F> — reads UNINDEXED at per-core
-# consumer sites = Class 26 sub-shape B violation. Operator extends as new per-core-migrated
+# Per-node fields with GLOBAL sister in ControllerConfig<F> — reads UNINDEXED at per-node
+# consumer sites = Class 26 sub-shape B violation. Operator extends as new per-node-migrated
 # fields land with global sisters. Future enhancement: derive from
-# FOREACH_PER_CORE_CFG_FIELD ∩ ControllerConfig<F> manual decl set programmatically.
-CHECK_10_PER_CORE_FIELDS_WITH_GLOBAL_SISTER = {
+# FOREACH_PER_NODE_CFG_FIELD ∩ ControllerConfig<F> manual decl set programmatically.
+CHECK_10_PER_NODE_FIELDS_WITH_GLOBAL_SISTER = {
     "fee_rate",
     "fee_rate_taker",
     "fee_rate_maker",
     "slippage_pct",
 }
 
-# Section D exemptions — legitimate UNINDEXED-GLOBAL reads at per-core consumer sites.
+# Section D exemptions — legitimate UNINDEXED-GLOBAL reads at per-node consumer sites.
 # Format: (file_rel_path, line_num) tuples.
 # Operator extends via MANUAL_FIELDS_INVENTORY.md Section D when new legitimate cases surface.
 CHECK_10_SECTION_D_EXEMPTIONS = {
@@ -472,8 +472,8 @@ CHECK_10_SECTION_D_EXEMPTIONS = {
     # re-key (by file+field or a code-anchor comment) as a follow-up — see Ship-A learnings.
     ("Strategies/private/EmaCross.hpp", 145),  # EmaCross_ExitAdjust legacy single_core fee_rate_taker (!IsZero guard)
     ("Strategies/private/EmaCross.hpp", 146),  # ternary: fee_rate_taker : fee_rate (sister fallback) — gate keys here
-    # KEEP-AS-GLOBAL display sites (Settings panel operator-facing semantic; per-core deviations
-    # surfaced via per_core_count panel instead). Line numbers reflect post-.B.8 Phase B
+    # KEEP-AS-GLOBAL display sites (Settings panel operator-facing semantic; per-node deviations
+    # surfaced via per_node_count panel instead). Line numbers reflect post-.B.8 Phase B
     # KEEP-AS-GLOBAL comment additions (lines shifted from original 139/330/331 to 142/343/344).
     ("CoreFrameworks/ShardedSnapshot.hpp", 142),  # engine-wide headline fee_rate_pct display
     ("CoreFrameworks/ShardedSnapshot.hpp", 343),  # Settings panel cfg_fee display
@@ -485,11 +485,11 @@ CHECK_10_BOOT_TIME_FN_NAME_PATTERNS = {"Boot", "Init", "Default", "Parse", "Norm
 
 
 def scan_check_10_violations(text: str, file_rel_path: str) -> list:
-    """Class 26 sub-shape B detection: UNINDEXED-GLOBAL per-core-migrated field reads at per-core consumer sites.
+    """Class 26 sub-shape B detection: UNINDEXED-GLOBAL per-node-migrated field reads at per-node consumer sites.
 
-    Catches `cfg.X` / `cfg->X` / `resolved_cfg.X` UNINDEXED reads on per-core fields with global
-    sister (fee_rate / fee_rate_taker / fee_rate_maker / slippage_pct). Per-core consumer should
-    read `cfg.cores[core_id].X` instead. Pre-fix HIGH-1/2/3/4 at .B.8 audit findings:
+    Catches `cfg.X` / `cfg->X` / `resolved_cfg.X` UNINDEXED reads on per-node fields with global
+    sister (fee_rate / fee_rate_taker / fee_rate_maker / slippage_pct). Per-node consumer should
+    read `cfg.nodes[node_id].X` instead. Pre-fix HIGH-1/2/3/4 at .B.8 audit findings:
     ControllerEventLoop.hpp:3605+3670+3042 + StrategyLifecycle.hpp:272 + ShardedSnapshot.hpp:249.
 
     Per v1.2 amendment: handles `resolved_cfg.X` aliased reads (stack-local copy from
@@ -504,12 +504,12 @@ def scan_check_10_violations(text: str, file_rel_path: str) -> list:
     """
     findings = []
 
-    # Build regex for per-core fields (escaped + alternation)
-    field_alt = '|'.join(re.escape(f) for f in CHECK_10_PER_CORE_FIELDS_WITH_GLOBAL_SISTER)
+    # Build regex for per-node fields (escaped + alternation)
+    field_alt = '|'.join(re.escape(f) for f in CHECK_10_PER_NODE_FIELDS_WITH_GLOBAL_SISTER)
     if not field_alt:
         return findings
 
-    # Match: cfg.X / cfg->X / resolved_cfg.X where X is per-core-with-global-sister field
+    # Match: cfg.X / cfg->X / resolved_cfg.X where X is per-node-with-global-sister field
     # Negative lookahead (?!\s*[\[.]) excludes cfg.X[Y] (indexed) and cfg.X.subfield (nested)
     cfg_unindexed_re = re.compile(
         r'\b(cfg|resolved_cfg)(\.|->)(' + field_alt + r')\b(?!\s*[\[.])'
@@ -554,22 +554,22 @@ def scan_check_10_violations(text: str, file_rel_path: str) -> list:
         # Doesn't handle string literals containing //, but those are rare in cfg-consumer code.
         line_no_comments = re.sub(r'//.*$', '', line)
 
-        # Find UNINDEXED-GLOBAL matches on per-core fields
+        # Find UNINDEXED-GLOBAL matches on per-node fields
         for m in cfg_unindexed_re.finditer(line_no_comments):
             container = m.group(1)  # 'cfg' or 'resolved_cfg'
             accessor = m.group(2)   # '.' or '->'
-            field = m.group(3)      # the per-core field name
+            field = m.group(3)      # the per-node field name
             findings.append((file_rel_path, line_num, container, accessor, field, current_fn))
 
     return findings
 
 
 def scan_check_9_violations(text: str, file_rel_path: str) -> list:
-    """Class 26 detection: cfg.core_overrides[X] + cfg.cores[Y] with X != Y within proximity.
+    """Class 26 detection: cfg.node_overrides[X] + cfg.nodes[Y] with X != Y within proximity.
 
-    The paired-access pattern `... ov.field ? ov.field : cfg.cores[Y].field` is
+    The paired-access pattern `... ov.field ? ov.field : cfg.nodes[Y].field` is
     semantically broken if Y != the override's X — both MUST reference the SAME
-    per-core slot. Pre-fix Async.hpp:814 + :853 had this exact shape (override
+    per-node slot. Pre-fix Async.hpp:814 + :853 had this exact shape (override
     slot=slot, fallback slot=i where i was the inner ring-pop counter).
 
     Strips macro definitions first to avoid X-macro callback false positives.
@@ -579,13 +579,13 @@ def scan_check_9_violations(text: str, file_rel_path: str) -> list:
     code = strip_macro_definitions(text)
     lines = code.split('\n')
 
-    override_pattern = re.compile(r'cfg\.core_overrides\[(\w+)\]')
-    base_pattern = re.compile(r'cfg\.cores\[(\w+)\]')
+    override_pattern = re.compile(r'cfg\.node_overrides\[(\w+)\]')
+    base_pattern = re.compile(r'cfg\.nodes\[(\w+)\]')
 
     for line_num, line in enumerate(lines, start=1):
         for ov_match in override_pattern.finditer(line):
             ov_symbol = ov_match.group(1)
-            # Look forward + backward PROXIMITY lines for cfg.cores[Y] pair
+            # Look forward + backward PROXIMITY lines for cfg.nodes[Y] pair
             start = max(0, line_num - 1 - CHECK_9_PROXIMITY_LINES)
             end = min(len(lines), line_num + CHECK_9_PROXIMITY_LINES)
             for j in range(start, end):
@@ -604,8 +604,8 @@ def scan_check_9_violations(text: str, file_rel_path: str) -> list:
 # + refactor-patterns/cfg-scope-discipline.md (the per-node-slice-is-canonical rule).
 # Canonical: A24 (.E.0.10) — EventLoop_RebuildOneCore's D6/D10/spike adaptations wrote the FLAT
 # resolved_cfg.{volume_multiplier,entry_offset_pct,spacing_multiplier} while the consumer reads
-# resolved_cfg.cores[slot] → the mutation was silently DEAD. The un-reintroducible close: a
-# per-shard mutation MUST write the cores[slot] slice, never the flat field.
+# resolved_cfg.nodes[slot] → the mutation was silently DEAD. The un-reintroducible close: a
+# per-shard mutation MUST write the nodes[slot] slice, never the flat field.
 CHECK_11_SCAN_FILES = [
     "CoreFrameworks/ControllerEventLoop.hpp",  # EventLoop_RebuildOneCore — the canonical per-shard rebuild
 ]
@@ -615,23 +615,23 @@ CHECK_11_BOOT_TIME_FN_NAME_PATTERNS = {"Boot", "Init", "Default", "Parse", "Norm
 CHECK_11_EXEMPTIONS = set()
 
 
-def scan_check_11_violations(text: str, file_rel_path: str, per_core_fields: set) -> list:
+def scan_check_11_violations(text: str, file_rel_path: str, per_node_fields: set) -> list:
     """A24 / H22 Class-44 cfg-mutation detection: a FLAT write of a per-node cfg field (one that
-    HAS a cores[] slice) inside a per-shard consumer = a silently-dead mutation (the consumer
+    HAS a nodes[] slice) inside a per-shard consumer = a silently-dead mutation (the consumer
     reads the slice, not the flat field).
 
-    Matches `<localcfg>.<field> [op]= ...` where <field> ∈ per_core_fields and the field comes
-    IMMEDIATELY after the dot → `<localcfg>.cores[...].<field>` does NOT match (the correct slice
-    write), nor does `<localcfg>.<field>[idx]` (a per-core array element). Excludes `==`,
+    Matches `<localcfg>.<field> [op]= ...` where <field> ∈ per_node_fields and the field comes
+    IMMEDIATELY after the dot → `<localcfg>.nodes[...].<field>` does NOT match (the correct slice
+    write), nor does `<localcfg>.<field>[idx]` (a per-node array element). Excludes `==`,
     boot/parse/populate fns (legit flat population), and (file,line) exemptions.
 
     Returns list of (file_rel_path, line_num, container, field, current_fn) tuples.
     """
     findings = []
-    if not per_core_fields:
+    if not per_node_fields:
         return findings
     # Longest-first alternation so a short field name can't shadow a longer one sharing its prefix.
-    field_alt = '|'.join(re.escape(f) for f in sorted(per_core_fields, key=len, reverse=True))
+    field_alt = '|'.join(re.escape(f) for f in sorted(per_node_fields, key=len, reverse=True))
     flat_write_re = re.compile(
         r'\b(\w*cfg)\.(' + field_alt + r')\s*(?:[-+*/|&^]?=)(?!=)'
     )
@@ -664,7 +664,7 @@ def scan_check_11_violations(text: str, file_rel_path: str, per_core_fields: set
 
 
 def main() -> int:
-    info("running per-core cfg registry integrity check...")
+    info("running per-node cfg registry integrity check...")
 
     # Load all three files
     cfg_reg_text = read_file(CFG_REG)
@@ -673,76 +673,76 @@ def main() -> int:
 
     failures = 0
 
-    # --- Check 1: FOREACH_PER_CORE_CFG_FIELD ↔ PerCoreCfg<F> struct field type sync ---
+    # --- Check 1: FOREACH_PER_NODE_CFG_FIELD ↔ PerNodeCfg<F> struct field type sync ---
     # Post-WIP2d-0.B: single registry. TYPE is the FIRST column of each row.
     # Verify every row's TYPE matches the struct field type generated via X-macro.
-    # (Auxiliary FOREACH_PER_CORE_FIELD_TYPE retired at WIP2d-0.B.)
-    cfg_field_body = extract_macro_body(cfg_reg_text, "FOREACH_PER_CORE_CFG_FIELD")
-    cfg_field_map = parse_foreach_per_core_cfg_field(cfg_field_body)
+    # (Auxiliary FOREACH_PER_NODE_FIELD_TYPE retired at WIP2d-0.B.)
+    cfg_field_body = extract_macro_body(cfg_reg_text, "FOREACH_PER_NODE_CFG_FIELD")
+    cfg_field_map = parse_foreach_per_node_cfg_field(cfg_field_body)
     cfg_field_names = set(cfg_field_map.keys())
 
     if len(cfg_field_map) == 0:
-        fail("Check 1 FAIL: FOREACH_PER_CORE_CFG_FIELD parsed 0 rows — row regex may be broken")
+        fail("Check 1 FAIL: FOREACH_PER_NODE_CFG_FIELD parsed 0 rows — row regex may be broken")
         failures += 1
     elif len(cfg_field_map) < 80:
-        fail(f"Check 1 FAIL: only {len(cfg_field_map)} per-core rows parsed (expected ~92) — registry might be incomplete or parser regex broken")
+        fail(f"Check 1 FAIL: only {len(cfg_field_map)} per-node rows parsed (expected ~92) — registry might be incomplete or parser regex broken")
         failures += 1
     else:
-        info(f"Check 1 PASS: {len(cfg_field_map)} per-core cfg fields parsed with TYPE column (single registry; auxiliary retired)")
+        info(f"Check 1 PASS: {len(cfg_field_map)} per-node cfg fields parsed with TYPE column (single registry; auxiliary retired)")
 
-    # --- Check 2: PerCoreCfg<F> body contains ONLY 2 X-macro invocations + nothing else ---
+    # --- Check 2: PerNodeCfg<F> body contains ONLY 2 X-macro invocations + nothing else ---
     # Post-WIP2d-0.B: both cfg-surface fields (92) AND runtime bitmap fields (5) come from X-macros.
-    # No manual fields permitted anywhere in PerCoreCfg<F> body.
-    per_core_manual = parse_per_core_cfg_body(ctrl_cfg_text)
-    per_core_manual_names = set(per_core_manual.keys())
+    # No manual fields permitted anywhere in PerNodeCfg<F> body.
+    per_node_manual = parse_per_node_cfg_body(ctrl_cfg_text)
+    per_node_manual_names = set(per_node_manual.keys())
 
-    if per_core_manual_names:
-        fail(f"Check 2 FAIL: PerCoreCfg<F> body contains FORBIDDEN manual fields outside X-macro expansions: {sorted(per_core_manual_names)}")
-        for name in sorted(per_core_manual_names):
-            typ, line = per_core_manual[name]
-            fail(f"  → ControllerConfig.hpp:{line}: '{typ} {name}' — add to FOREACH_PER_CORE_CFG_FIELD (cfg surface) OR FOREACH_PER_CORE_DOMAIN_BITMAP (runtime bitmap); no manual fields permitted")
+    if per_node_manual_names:
+        fail(f"Check 2 FAIL: PerNodeCfg<F> body contains FORBIDDEN manual fields outside X-macro expansions: {sorted(per_node_manual_names)}")
+        for name in sorted(per_node_manual_names):
+            typ, line = per_node_manual[name]
+            fail(f"  → ControllerConfig.hpp:{line}: '{typ} {name}' — add to FOREACH_PER_NODE_CFG_FIELD (cfg surface) OR FOREACH_PER_NODE_DOMAIN_BITMAP (runtime bitmap); no manual fields permitted")
         failures += 1
     else:
-        info(f"Check 2 PASS: PerCoreCfg<F> body contains ONLY FOREACH_PER_CORE_CFG_FIELD + FOREACH_PER_CORE_DOMAIN_BITMAP invocations (no manual fields)")
+        info(f"Check 2 PASS: PerNodeCfg<F> body contains ONLY FOREACH_PER_NODE_CFG_FIELD + FOREACH_PER_NODE_DOMAIN_BITMAP invocations (no manual fields)")
 
-    # --- Check 3: ControllerConfig uses FOREACH_MANUAL_PER_CORE_FIELD X-macro for parallel arrays ---
+    # --- Check 3: ControllerConfig uses FOREACH_MANUAL_PER_NODE_FIELD X-macro for parallel arrays ---
     # Post-WIP2d-0.B: parallel arrays come from X-macro expansion in ControllerConfig.hpp.
-    # No literal `<type> core_<name>[16];` declarations should exist outside the X-macro invocation.
-    manual_body = extract_macro_body(cfg_reg_text, "FOREACH_MANUAL_PER_CORE_FIELD")
-    manual_xmacro = parse_foreach_manual_per_core_field(manual_body)
+    # No literal `<type> node_<name>[16];` declarations should exist outside the X-macro invocation.
+    manual_body = extract_macro_body(cfg_reg_text, "FOREACH_MANUAL_PER_NODE_FIELD")
+    manual_xmacro = parse_foreach_manual_per_node_field(manual_body)
     manual_xmacro_names = set(manual_xmacro.keys())
 
     # Verify the X-macro invocation is present in ControllerConfig.hpp
     has_manual_xmacro_invocation = bool(re.search(
-        r'FOREACH_MANUAL_PER_CORE_FIELD\s*\(\s*EMIT_MANUAL_PER_CORE_DECL\s*\)',
+        r'FOREACH_MANUAL_PER_NODE_FIELD\s*\(\s*EMIT_MANUAL_PER_NODE_DECL\s*\)',
         ctrl_cfg_text,
     ))
     if not has_manual_xmacro_invocation:
-        fail("Check 3 FAIL: ControllerConfig.hpp missing FOREACH_MANUAL_PER_CORE_FIELD(EMIT_MANUAL_PER_CORE_DECL) invocation")
+        fail("Check 3 FAIL: ControllerConfig.hpp missing FOREACH_MANUAL_PER_NODE_FIELD(EMIT_MANUAL_PER_NODE_DECL) invocation")
         failures += 1
 
-    # Verify NO literal `<type> core_<name>[16];` declarations exist anymore (all X-macro generated)
+    # Verify NO literal `<type> node_<name>[16];` declarations exist anymore (all X-macro generated)
     parallel_arrays = parse_controller_config_parallel_arrays(ctrl_cfg_text)
     stray_decls = set(parallel_arrays.keys())
     if stray_decls:
         fail(f"Check 3 FAIL: stray manual parallel array declarations in ControllerConfig.hpp (must come from X-macro expansion only): {sorted(stray_decls)}")
         for name in sorted(stray_decls):
             typ, suffix, line = parallel_arrays[name]
-            fail(f"  → ControllerConfig.hpp:{line}: '{typ} {name}[16]{suffix}' — delete; add to FOREACH_MANUAL_PER_CORE_FIELD instead")
+            fail(f"  → ControllerConfig.hpp:{line}: '{typ} {name}[16]{suffix}' — delete; add to FOREACH_MANUAL_PER_NODE_FIELD instead")
         failures += 1
 
     if has_manual_xmacro_invocation and not stray_decls:
-        info(f"Check 3 PASS: {len(manual_xmacro_names)} parallel arrays declared exclusively via FOREACH_MANUAL_PER_CORE_FIELD X-macro")
+        info(f"Check 3 PASS: {len(manual_xmacro_names)} parallel arrays declared exclusively via FOREACH_MANUAL_PER_NODE_FIELD X-macro")
 
-    # --- Check 4: FOREACH_MANUAL_PER_CORE_FIELD ↔ MANUAL_FIELDS_INVENTORY.md bidirectional sync ---
+    # --- Check 4: FOREACH_MANUAL_PER_NODE_FIELD ↔ MANUAL_FIELDS_INVENTORY.md bidirectional sync ---
     inv_section_a = parse_inventory_section_a(inventory_text)
     only_in_xmacro = manual_xmacro_names - inv_section_a
     only_in_inv = inv_section_a - manual_xmacro_names
     if only_in_xmacro:
-        fail(f"Check 4 FAIL: in FOREACH_MANUAL_PER_CORE_FIELD but missing from MANUAL_FIELDS_INVENTORY.md Section A: {sorted(only_in_xmacro)}")
+        fail(f"Check 4 FAIL: in FOREACH_MANUAL_PER_NODE_FIELD but missing from MANUAL_FIELDS_INVENTORY.md Section A: {sorted(only_in_xmacro)}")
         failures += 1
     if only_in_inv:
-        fail(f"Check 4 FAIL: in MANUAL_FIELDS_INVENTORY.md Section A but missing from FOREACH_MANUAL_PER_CORE_FIELD: {sorted(only_in_inv)}")
+        fail(f"Check 4 FAIL: in MANUAL_FIELDS_INVENTORY.md Section A but missing from FOREACH_MANUAL_PER_NODE_FIELD: {sorted(only_in_inv)}")
         failures += 1
     if not only_in_xmacro and not only_in_inv:
         info(f"Check 4 PASS: {len(manual_xmacro_names)} Section A entries in sync between X-macro + inventory")
@@ -758,7 +758,7 @@ def main() -> int:
     # --- Check 5: No name duplication between registries ---
     duplicates = cfg_field_names & manual_xmacro_names
     if duplicates:
-        fail(f"Check 5 FAIL: name(s) appear in BOTH FOREACH_PER_CORE_CFG_FIELD + FOREACH_MANUAL_PER_CORE_FIELD: {sorted(duplicates)}")
+        fail(f"Check 5 FAIL: name(s) appear in BOTH FOREACH_PER_NODE_CFG_FIELD + FOREACH_MANUAL_PER_NODE_FIELD: {sorted(duplicates)}")
         fail("  → each name must be in EITHER the registry (for X-macro struct gen) OR the manual exemption inventory, NOT both")
         failures += 1
     else:
@@ -767,9 +767,9 @@ def main() -> int:
     # --- Check 6: Anti-pattern 1 consumer scan (informational; WARN) ---
     findings_ctrl = scan_anti_pattern_1(ctrl_cfg_text)
     if findings_ctrl:
-        warn(f"Check 6 INFO: anti-pattern 1 consumer shape detected (cfg.X + cfg.core_overrides[c].X same X) in ControllerConfig.hpp for fields: {sorted(set(findings_ctrl))}")
+        warn(f"Check 6 INFO: anti-pattern 1 consumer shape detected (cfg.X + cfg.node_overrides[c].X same X) in ControllerConfig.hpp for fields: {sorted(set(findings_ctrl))}")
         warn("  → cfg-scope-discipline.md § Anti-pattern 1 (global-default-with-override) FORBIDDEN")
-        warn("  → WIP2f deletion of core_overrides[16] makes the shape UNEXPRESSIBLE; refactor before WIP2g for safety-critical sites")
+        warn("  → WIP2f deletion of node_overrides[16] makes the shape UNEXPRESSIBLE; refactor before WIP2g for safety-critical sites")
 
     # --- Check 7: Subsystem-state cfg-mirror scan (Class 27 prevention) ---
     # Per DESIGN_SPECS/decision-time-data-binding-pattern.md + RECURRING_BUG_PATTERNS Class 27:
@@ -777,7 +777,7 @@ def main() -> int:
     # Required mitigation: pre-resolve onto in-flight object (Order/Position/Event) OR
     # register fallback cache via FOREACH_<SUBSYS>_CFG_CACHE. Exemptions in Section C.
     section_c_exemptions = parse_inventory_section_c(inventory_text)
-    cfg_field_name_set = set(cfg_field_map.keys())  # FOREACH_PER_CORE_CFG_FIELD names
+    cfg_field_name_set = set(cfg_field_map.keys())  # FOREACH_PER_NODE_CFG_FIELD names
     check_7_violations = []
     for subsys_name, subsys_path in SUBSYSTEM_STATE_TYPES_FOR_CLASS_27_SCAN.items():
         full_path = REPO_ROOT / subsys_path
@@ -808,15 +808,15 @@ def main() -> int:
     # --- Check 8: Cfg field categorization integrity (M7 4th canonical; v5.15.5.F.4d.1.B.4 v1.7.6 Cx-G) ---
     # Per `DESIGN_SPECS/framework-patterns/cfg-field-categorization-discipline.md` 4-category decision tree.
     # 3 flags:
-    #   Flag A: per-core registry row with 0 per-core consumers → wrong category (should be GLOBAL_ONLY or CFG-FLAG BITMAP BIT)
-    #   Flag B: per-core consumer scope reading global cfg field where per-core registry row exists → Class 25 scope-erosion
-    #   Flag C: per-core registry row WITHOUT NO_FLAT_FIELD bit + WITHOUT global manual struct field → walker compile-error candidate
+    #   Flag A: per-node registry row with 0 per-node consumers → wrong category (should be GLOBAL_ONLY or CFG-FLAG BITMAP BIT)
+    #   Flag B: per-node consumer scope reading global cfg field where per-node registry row exists → Class 25 scope-erosion
+    #   Flag C: per-node registry row WITHOUT NO_FLAT_FIELD bit + WITHOUT global manual struct field → walker compile-error candidate
     # Sister to /readiness Check 44 (plan-time enforcement); together = complete discipline coverage.
     #
     # Implementation note: Flag A requires comprehensive grep across production code (CoreFrameworks/ + Strategies/ +
-    # ML_Headers/ + MemHeaders/ + Backtest/ + DataStream/ + GUI/ + FixedPoint/) for `cfg.cores[*].<field>` patterns.
-    # Flag B requires fn-signature scan for `const PerCoreCfg<F>*` callers reading `cfg.<field>` globals.
-    # Flag C requires cross-ref of per-core registry rows against ControllerConfig<F> manual decl set.
+    # ML_Headers/ + MemHeaders/ + Backtest/ + DataStream/ + GUI/ + FixedPoint/) for `cfg.nodes[*].<field>` patterns.
+    # Flag B requires fn-signature scan for `const PerNodeCfg<F>*` callers reading `cfg.<field>` globals.
+    # Flag C requires cross-ref of per-node registry rows against ControllerConfig<F> manual decl set.
     #
     # Initial Check 8 implementation: detect cohort categorization violations via grep heuristic; full impl deferred to
     # sister mini-ship per Caramel "right not fast" + comprehensive-close discipline. This is INFRASTRUCTURE scaffold
@@ -827,9 +827,9 @@ def main() -> int:
 
     # --- Check 9: Class 26 paired-access mismatch detection (M7 4th canonical; v5.15.5.F.4d.1.B.7) ---
     # Per RECURRING_BUG_PATTERNS Class 26 + DESIGN_SPECS/meta-disciplines/structural-enforcement-when-memory-insufficient.md M7.
-    # The paired pattern `ov.field ? ov.field : cfg.cores[Y].field` is broken if Y != the override's X.
+    # The paired pattern `ov.field ? ov.field : cfg.nodes[Y].field` is broken if Y != the override's X.
     # Pre-fix Async.hpp:814+853 had exactly this bug (override slot=slot, fallback slot=i where i was
-    # the inner ring-pop counter from an enclosing for-loop). Silent per-core trading-logic miscalibration.
+    # the inner ring-pop counter from an enclosing for-loop). Silent per-node trading-logic miscalibration.
     # Sister: tests/controller_test.cpp Class 26 regression test (added at .B.7).
     check_9_violations = []
     for rel_path in CHECK_9_SCAN_FILES:
@@ -840,24 +840,24 @@ def main() -> int:
         file_text = read_file(full_path)
         check_9_violations.extend(scan_check_9_violations(file_text, rel_path))
     if check_9_violations:
-        fail(f"Check 9 FAIL: {len(check_9_violations)} Class 26 paired-access mismatch(es) — cfg.core_overrides[X] and cfg.cores[Y] with X != Y within {CHECK_9_PROXIMITY_LINES} lines:")
+        fail(f"Check 9 FAIL: {len(check_9_violations)} Class 26 paired-access mismatch(es) — cfg.node_overrides[X] and cfg.nodes[Y] with X != Y within {CHECK_9_PROXIMITY_LINES} lines:")
         for rel_path, ov_line, ov_sym, base_line, base_sym in check_9_violations:
-            fail(f"  → {rel_path}:{ov_line} uses cfg.core_overrides[{ov_sym}] but {rel_path}:{base_line} uses cfg.cores[{base_sym}]")
+            fail(f"  → {rel_path}:{ov_line} uses cfg.node_overrides[{ov_sym}] but {rel_path}:{base_line} uses cfg.nodes[{base_sym}]")
             fail(f"     Class 26 anti-pattern — paired access MUST share index symbol")
-            fail(f"     Fix: change cfg.cores[{base_sym}] → cfg.cores[{ov_sym}] OR rename loop variable for scope clarity")
-            fail(f"     See: DOCS/recurring-bug-patterns/class-26-global-consumer-reading-per-core-field.md")
+            fail(f"     Fix: change cfg.nodes[{base_sym}] → cfg.nodes[{ov_sym}] OR rename loop variable for scope clarity")
+            fail(f"     See: DOCS/recurring-bug-patterns/class-26-global-consumer-reading-per-node-field.md")
         failures += 1
     else:
         info(f"Check 9 PASS: {len(CHECK_9_SCAN_FILES)} file(s) scanned; no Class 26 paired-access mismatches (proximity={CHECK_9_PROXIMITY_LINES})")
 
-    # --- Check 10: Class 26 sub-shape B detection — UNINDEXED-GLOBAL per-core-migrated field reads
-    # at per-core consumer sites (M7 6th canonical; v5.15.5.F.4d.1.B.8). ---
+    # --- Check 10: Class 26 sub-shape B detection — UNINDEXED-GLOBAL per-node-migrated field reads
+    # at per-node consumer sites (M7 6th canonical; v5.15.5.F.4d.1.B.8). ---
     # Per RECURRING_BUG_PATTERNS Class 26 sub-shape B + DESIGN_SPECS/meta-disciplines/
     # structural-enforcement-when-memory-insufficient.md M7 6th canonical.
     # Sister to Check 9: same tool, same surface family, different detection signature.
-    # Catches cfg.X / cfg->X / resolved_cfg.X UNINDEXED on per-core-with-global-sister fields
-    # (fee_rate / fee_rate_taker / fee_rate_maker / slippage_pct). Per-core consumer should
-    # read cfg.cores[core_id].X instead.
+    # Catches cfg.X / cfg->X / resolved_cfg.X UNINDEXED on per-node-with-global-sister fields
+    # (fee_rate / fee_rate_taker / fee_rate_maker / slippage_pct). Per-node consumer should
+    # read cfg.nodes[node_id].X instead.
     # Sister: tests/controller_test.cpp Class 26 sub-shape B regression test section (added at .B.8 Phase E).
     check_10_violations = []
     for rel_path in CHECK_10_SCAN_FILES:
@@ -868,21 +868,21 @@ def main() -> int:
         file_text = read_file(full_path)
         check_10_violations.extend(scan_check_10_violations(file_text, rel_path))
     if check_10_violations:
-        fail(f"Check 10 FAIL: {len(check_10_violations)} Class 26 sub-shape B UNINDEXED-GLOBAL violation(s) — per-core consumer sites reading global cfg field without core_id index:")
+        fail(f"Check 10 FAIL: {len(check_10_violations)} Class 26 sub-shape B UNINDEXED-GLOBAL violation(s) — per-node consumer sites reading global cfg field without node_id index:")
         for rel_path, line_num, container, accessor, field, fn_name in check_10_violations:
             fn_ctx = f" in fn '{fn_name}'" if fn_name else ""
-            fail(f"  → {rel_path}:{line_num}{fn_ctx}: '{container}{accessor}{field}' UNINDEXED at per-core consumer site")
-            fail(f"     Class 26 sub-shape B anti-pattern — per-core consumer must read per-core slot")
-            fail(f"     Fix: change {container}{accessor}{field} → {container}{accessor}cores[<core_id>].{field}")
-            fail(f"     OR if legitimately global (Settings panel display / legacy single_core / boot-time): add to CHECK_10_SECTION_D_EXEMPTIONS at tools/check_per_core_registry_integrity.py")
-            fail(f"     See: DOCS/recurring-bug-patterns/class-26-global-consumer-reading-per-core-field.md § Sub-shape B")
+            fail(f"  → {rel_path}:{line_num}{fn_ctx}: '{container}{accessor}{field}' UNINDEXED at per-node consumer site")
+            fail(f"     Class 26 sub-shape B anti-pattern — per-node consumer must read per-node slot")
+            fail(f"     Fix: change {container}{accessor}{field} → {container}{accessor}nodes[<node_id>].{field}")
+            fail(f"     OR if legitimately global (Settings panel display / legacy single_core / boot-time): add to CHECK_10_SECTION_D_EXEMPTIONS at tools/check_per_node_registry_integrity.py")
+            fail(f"     See: DOCS/recurring-bug-patterns/class-26-global-consumer-reading-per-node-field.md § Sub-shape B")
         failures += 1
     else:
         info(f"Check 10 PASS: {len(CHECK_10_SCAN_FILES)} file(s) scanned; no Class 26 sub-shape B UNINDEXED-GLOBAL violations ({len(CHECK_10_SECTION_D_EXEMPTIONS)} Section D exemption(s) on file)")
 
     # --- Check 11: A24 / H22 — per-shard FLAT write of a per-node cfg field (Class 44 cfg-mutation) ---
     # Per RECURRING_BUG_PATTERNS Class 44 + the H22 spec per-node-purity-scale-invariance.md §"The mechanical guard".
-    # A per-shard mutation writing the flat resolved_cfg.<field> (instead of cores[slot].<field>) is silently
+    # A per-shard mutation writing the flat resolved_cfg.<field> (instead of nodes[slot].<field>) is silently
     # DEAD — the consumer reads the slice. Canonical: A24 (.E.0.10). The un-reintroducible structural close.
     check_11_violations = []
     for rel_path in CHECK_11_SCAN_FILES:
@@ -893,13 +893,13 @@ def main() -> int:
         file_text = read_file(full_path)
         check_11_violations.extend(scan_check_11_violations(file_text, rel_path, cfg_field_name_set))
     if check_11_violations:
-        fail(f"Check 11 FAIL: {len(check_11_violations)} A24/H22 Class-44 cfg-mutation violation(s) — per-shard FLAT write of a per-node cfg field (the consumer reads the cores[slot] slice → the mutation is silently DEAD):")
+        fail(f"Check 11 FAIL: {len(check_11_violations)} A24/H22 Class-44 cfg-mutation violation(s) — per-shard FLAT write of a per-node cfg field (the consumer reads the nodes[slot] slice → the mutation is silently DEAD):")
         for rel_path, line_num, container, field, fn_name in check_11_violations:
             fn_ctx = f" in fn '{fn_name}'" if fn_name else ""
             fail(f"  → {rel_path}:{line_num}{fn_ctx}: '{container}.{field} = ...' writes the FLAT field")
             fail(f"     A24 / H22 anti-pattern (Class 44 cfg-mutation) — a per-shard mutation must write the per-node slice")
-            fail(f"     Fix: change {container}.{field} → {container}.cores[<slot>].{field}")
-            fail(f"     OR if legitimately flat (boot/parse / global-only field): add to CHECK_11_EXEMPTIONS at tools/check_per_core_registry_integrity.py")
+            fail(f"     Fix: change {container}.{field} → {container}.nodes[<slot>].{field}")
+            fail(f"     OR if legitimately flat (boot/parse / global-only field): add to CHECK_11_EXEMPTIONS at tools/check_per_node_registry_integrity.py")
             fail(f"     See: DESIGN_SPECS/data-disciplines/per-node-purity-scale-invariance.md + RECURRING_BUG_PATTERNS Class 44")
         failures += 1
     else:
@@ -907,9 +907,9 @@ def main() -> int:
 
     # --- Final verdict ---
     if failures > 0:
-        fail(f"per-core cfg integrity check FAILED with {failures} violations — see errors above")
+        fail(f"per-node cfg integrity check FAILED with {failures} violations — see errors above")
         return 1
-    info(f"all structural checks PASS — per-core cfg discipline intact (Check 6 informational; Check 7 Class 27 prevention; Check 8 pending mechanical impl per cfg-field-categorization-discipline.md Stage 3 sister ship; Check 9 Class 26 sub-shape A paired-access mismatch detection; Check 10 Class 26 sub-shape B UNINDEXED-GLOBAL detection; Check 11 A24/H22 Class-44 cfg-mutation per-shard flat-write detection)")
+    info(f"all structural checks PASS — per-node cfg discipline intact (Check 6 informational; Check 7 Class 27 prevention; Check 8 pending mechanical impl per cfg-field-categorization-discipline.md Stage 3 sister ship; Check 9 Class 26 sub-shape A paired-access mismatch detection; Check 10 Class 26 sub-shape B UNINDEXED-GLOBAL detection; Check 11 A24/H22 Class-44 cfg-mutation per-shard flat-write detection)")
     return 0
 
 

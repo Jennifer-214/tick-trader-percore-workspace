@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """scan_class_44_cfg_orphan.py — full-codebase Class 44 cfg-flag-ORPHAN scanner (#10, `.E.0.10` Phase C).
 
-The standalone full-scan sibling of `check_per_core_registry_integrity.py` Check 11 (the targeted
+The standalone full-scan sibling of `check_per_node_registry_integrity.py` Check 11 (the targeted
 Class-44 cfg-MUTATION check) — exactly the two-tool shape Class 27 already uses (Check 7 +
 `scan_class_27_full.py`). This catches the Class-44 cfg-flag-ORPHAN sub-variant (A13/A14/A35/A36/A37):
 an operator-settable `MASK_*_CFG_*` flag with NO LIVE (sharded) reader — read ONLY on DEAD paths

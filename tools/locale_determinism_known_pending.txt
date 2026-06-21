@@ -15,6 +15,6 @@ MemHeaders/CfgGateRegistry.hpp:4
 ML_Headers/BanditAlgorithmRegistry.hpp:1
 ML_Headers/BarrierBlendModeRegistry.hpp:1
 ML_Headers/ConfidenceScore.hpp:1
-ML_Headers/CoreModelZoo.hpp:5
+ML_Headers/NodeModelZoo.hpp:5
 ML_Headers/ModelInference.hpp:7
 ML_Headers/StampBoundModelConstRegistry.hpp:3

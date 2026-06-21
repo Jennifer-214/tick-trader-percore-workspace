@@ -25,7 +25,7 @@ scope. Pairs with the X-macro struct generation discipline for layered defense.
 Cross-references:
   - DESIGN_SPECS/meta-registry-pattern-for-codebase-registry-discipline.md
   - CoreFrameworks/MetaRegistry.hpp (the FOREACH_REGISTRY definition)
-  - tools/check_per_core_registry_integrity.py (sister script for per-core surface)
+  - tools/check_per_node_registry_integrity.py (sister script for per-core surface)
 """
 
 import re

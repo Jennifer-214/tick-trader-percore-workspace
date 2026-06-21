@@ -15,7 +15,7 @@ check_forward_promise_audit.py
 check_fp_determinism.sh
 check_locale_determinism.sh
 check_meta_registry.py
-check_per_core_registry_integrity.py
+check_per_node_registry_integrity.py
 check_plan_body_symbol_existence.py
 check_session_docs.sh
 check_storage_t_coverage.py

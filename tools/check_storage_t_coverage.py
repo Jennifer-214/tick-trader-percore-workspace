@@ -7,7 +7,7 @@ When master cfg registries add a NEW STORAGE_T variant (e.g., `char[N]` for KIND
 consumer template fns `tt::cfg_*_field<T>` must have a branch covering the new variant —
 otherwise X-macro walker hits the row and compile fails at the missing branch.
 
-This script verifies that every STORAGE_T variant used in FOREACH_PER_CORE_CFG_FIELD +
+This script verifies that every STORAGE_T variant used in FOREACH_PER_NODE_CFG_FIELD +
 FOREACH_GLOBAL_CFG_FIELD has a covering branch in CfgFieldDispatch.hpp's tt:: family.
 
 Checks performed:
@@ -36,7 +36,7 @@ SCRIPT_DIR = Path(__file__).absolute().parent  # .absolute() not .resolve(): kee
 REPO_ROOT  = SCRIPT_DIR.parent
 
 REGISTRY_FILES = [
-    (REPO_ROOT / "CoreFrameworks/CfgFieldRegistry.hpp", "FOREACH_PER_CORE_CFG_FIELD"),
+    (REPO_ROOT / "CoreFrameworks/CfgFieldRegistry.hpp", "FOREACH_PER_NODE_CFG_FIELD"),
     (REPO_ROOT / "CoreFrameworks/CfgFieldRegistry.hpp", "FOREACH_GLOBAL_CFG_FIELD"),
 ]
 

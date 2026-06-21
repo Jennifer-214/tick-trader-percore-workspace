@@ -66,7 +66,7 @@ static inline Money MQ(double d) { return Money{ (__int128)llround(d * 1e8) }; }
 #include "../CoreFrameworks/EngineCommon.hpp"                // v5.15.5.F.4d.1.B.4 — shared train-serve helpers
 #include "../DataStream/EngineTUI.hpp"                       // v5.0.4 — topology populator tests
 #include "../CoreFrameworks/Reconcile.hpp"                   // v5.2.1 — live reconciliation tests
-#include "../ML_Headers/CoreModelZoo.hpp"                    // Track E.2 tests
+#include "../ML_Headers/NodeModelZoo.hpp"                    // Track E.2 tests
 #include "../ML_Headers/ThompsonBandit.hpp"                  // v5.14.10.A — Bayesian Thompson sampling bandit
 #include "../ML_Headers/BanditAlgorithmRegistry.hpp"         // v5.14.10.A — FOREACH_BANDIT_ALGORITHM dispatch registry
 #include "../CoreFrameworks/EnsembleHotSwap.hpp"              // v5.14.2 — EngineSharded_HotSwapEnsemble template
@@ -74,7 +74,7 @@ static inline Money MQ(double d) { return Money{ (__int128)llround(d * 1e8) }; }
 #include "../Backtest/PhaseTimers.hpp"                        // v5.10.0 Item A — phase timer tests
 #include "../MemHeaders/BuddyAllocator.hpp"                   // v5.11.13 — typo fix + O(1) order lookup tests
 #include "../MemHeaders/InitArena.hpp"                        // v5.11.22 — MAP_HUGETLB opt-in tests
-#include "../MemHeaders/CoreCtxSummaryFieldRegistry.hpp"     // v5.15.5.C.3 Phase 4 — FOREACH_CORE_CTX_SUMMARY_FIELD + JSON emit
+#include "../MemHeaders/NodeCtxSummaryFieldRegistry.hpp"     // v5.15.5.C.3 Phase 4 — FOREACH_CORE_CTX_SUMMARY_FIELD + JSON emit
 #include "../CoreFrameworks/PaperResetArchive.hpp"            // v5.15.5.C.3 Phase 6 — paper-reset archive helpers
 #include "../MemHeaders/LatencyHistogram.hpp"                 // v5.15.5.C.3 Phase 7.A — LatencyHistogram primitive
 #include "../DataStream/DepthReplayState.hpp"                // Track E.3 tests
@@ -88,7 +88,7 @@ static inline Money MQ(double d) { return Money{ (__int128)llround(d * 1e8) }; }
 #include "../MemHeaders/HealthLog.hpp"                        // v5.4.0 Phase 0.1 — structured operational diagnostic log
 #include "../MemHeaders/BitmapMacros.hpp"                     // v5.14.8.A.0.b — reusable BITMAP_* API
 #include "../MemHeaders/FailureModeRegistry.hpp"              // v5.14.8.B — FOREACH_FAILURE_MODE pseudo-registry
-#include "../MemHeaders/PerCoreStateFlagsRegistry.hpp"        // v5.14.9.B.2 — FOREACH_PER_CORE_STATE_FLAG
+#include "../MemHeaders/PerNodeStateFlagsRegistry.hpp"        // v5.14.9.B.2 — FOREACH_PER_CORE_STATE_FLAG
 #include "../MemHeaders/ArchFieldDriftRegistry.hpp"           // v5.15.1 — FOREACH_ARCH_FIELD_DRIFT
 #include "../CoreFrameworks/LiveReadiness.hpp"                // v5.15.2 — FOREACH_LIVE_READINESS_CHECK + helpers
 #include "../ML_Headers/StampBoundModelConstRegistry.hpp"     // v5.14.8.A.0.b — registry tests + presence column dispatch
@@ -158,12 +158,12 @@ static_assert(sizeof(CfgFieldDescriptor) <= 128,
               "v5.15.5.F.4b: CfgFieldDescriptor must fit two cache lines");
 static_assert(FIELD_IDX_GLOBAL_END > 0,
               "v5.15.5.F.4c.3: FOREACH_GLOBAL_CFG_FIELD must have at least one entry");
-static_assert(FIELD_IDX_PER_CORE_END > 0,
-              "v5.15.5.F.4c.3: FOREACH_PER_CORE_CFG_FIELD must have at least one entry");
+static_assert(FIELD_IDX_PER_NODE_END > 0,
+              "v5.15.5.F.4c.3: FOREACH_PER_NODE_CFG_FIELD must have at least one entry");
 static_assert(FIELD_IDX_GLOBAL_END == sizeof(g_global_cfg_field_descriptors) / sizeof(g_global_cfg_field_descriptors[0]),
               "v5.15.5.F.4c.3: g_global_cfg_field_descriptors size must match FIELD_IDX_GLOBAL_END");
-static_assert(FIELD_IDX_PER_CORE_END == sizeof(g_per_core_cfg_field_descriptors) / sizeof(g_per_core_cfg_field_descriptors[0]),
-              "v5.15.5.F.4c.3: g_per_core_cfg_field_descriptors size must match FIELD_IDX_PER_CORE_END");
+static_assert(FIELD_IDX_PER_NODE_END == sizeof(g_per_node_cfg_field_descriptors) / sizeof(g_per_node_cfg_field_descriptors[0]),
+              "v5.15.5.F.4c.3: g_per_node_cfg_field_descriptors size must match FIELD_IDX_PER_NODE_END");
 static_assert(STRAT_CAT_USES_FLOW_DATA < (1ull << 32),
               "v5.15.5.F.4b: StrategyCategory bitmap overflow guard");
 static_assert(OP_MODE_CAT_OFFLINE < (1u << 16),

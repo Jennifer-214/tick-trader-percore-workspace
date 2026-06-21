@@ -54,15 +54,15 @@ fail() { echo "  FAIL: $*"; FAIL_COUNT=$((FAIL_COUNT + 1)); }
 echo ""
 echo "=== Surface 1: cfg parser reads core_N_feature_mask ==="
 # Check that the cfg parser knows the field. If grep succeeds, field is wired.
-if grep -qE 'core_feature_mask' CoreFrameworks/ControllerConfig.hpp; then
+if grep -qE 'node_feature_mask' CoreFrameworks/ControllerConfig.hpp; then
     pass "cfg parser supports core_N_feature_mask field"
 else
-    fail "cfg parser does NOT define core_feature_mask field — wiring broken"
+    fail "cfg parser does NOT define node_feature_mask field — wiring broken"
 fi
 
 # Check engine.cfg.example or current engine.cfg has a sample entry
 if [ -f engine.cfg.example ]; then
-    if grep -qE '^#?\s*core_[0-9]+_feature_mask\s*=' engine.cfg.example; then
+    if grep -qE '^#?\s*node_[0-9]+_feature_mask\s*=' engine.cfg.example; then
         pass "engine.cfg.example documents core_N_feature_mask"
     else
         note "engine.cfg.example doesn't show core_N_feature_mask (operator may not"
@@ -112,17 +112,17 @@ else
 fi
 note ""
 note "  2. Edit engine.cfg, set:"
-note "       core_0_feature_mask = 0xDEADBEEFCAFEBABE  # any value != stamp's"
+note "       node_0_feature_mask = 0xDEADBEEFCAFEBABE  # any value != stamp's"
 note ""
 note "  3. Run engine pointing at this model:"
-note "       (set core_0_model_dir to the dir containing the model)"
+note "       (set node_0_model_dir to the dir containing the model)"
 note "       ./bin/engine_gui    # or engine_test"
 note ""
 note "  4. Watch stderr for:"
 note "       \"REFUSING ${MODEL_PATH} — feature_mask mismatch: stamp=...\""
 note ""
 note "  If load proceeds (no refusal log), the load-time check is broken."
-note "  Code site: ML_Headers/CoreModelZoo.hpp CoreModelZoo_TryLoadRole()"
+note "  Code site: ML_Headers/NodeModelZoo.hpp NodeModelZoo_TryLoadRole()"
 note "  with expected_feature_mask param, and verify_model_stamp() refusal."
 
 echo ""

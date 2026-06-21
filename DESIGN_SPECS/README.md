@@ -2,14 +2,14 @@
 
 **Auto-generated** by `tools/rebuild_doc_indexes.py`. Regenerate after adding/moving specs.
 
-Total: 178 specs across 13 types.
+Total: 179 specs across 13 types.
 
 Per-type catalog grouped by lifecycle stage. Cross-ref:
 - `doc-frontmatter-convention.md` (frontmatter schema)
 - `doc-tag-vocabulary.md` (tag canonical list)
 - CLAUDE.md § How to find anything (grep recipes)
 
-## refactor-pattern (24 specs)
+## refactor-pattern (25 specs)
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
@@ -31,6 +31,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/refactor-patterns/orchestration-helper-with-pod-args-pattern.md` | 3-first-canonical | framework-discipline, structural-fix | 2 |
 | `DESIGN_SPECS/refactor-patterns/post-parse-normalize-with-explicit-key-bitmap-pattern.md` | 3-first-canonical | framework-discipline, structural-fix | 3 |
 | `DESIGN_SPECS/refactor-patterns/registry-bitmap-set-discipline.md` | 3-first-canonical | structural-fix, framework-discipline, data-oriented-design | 4 |
+| `DESIGN_SPECS/refactor-patterns/rename-cascade-enumeration-tooling.md` | 2-draft | refactor-pattern, ci-tooling, bulk-rename, +3 | 3 |
 | `DESIGN_SPECS/refactor-patterns/rename-ship-methodology.md` | 3-first-canonical | refactor-pattern, doc-discipline, terminology-evolution, +1 | 2 |
 | `DESIGN_SPECS/refactor-patterns/shared-helper-extract-for-train-serve-mirror-close.md` | 2-draft | structural-fix, framework-discipline | 0 |
 | `DESIGN_SPECS/refactor-patterns/sliding-window-online-statistics-pattern.md` | 3-first-canonical | fixed-point-math, latency-discipline | 2 |

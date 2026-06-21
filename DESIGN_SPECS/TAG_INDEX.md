@@ -152,6 +152,10 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/meta-disciplines/backwards-compat-not-default-concern.md`
 
+### bulk-rename (1 files)
+
+- `DESIGN_SPECS/refactor-patterns/rename-cascade-enumeration-tooling.md`
+
 ### cache-line (1 files)
 
 - `DESIGN_SPECS/meta-disciplines/struct-change-cascade-impact-tooling.md`
@@ -192,9 +196,10 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/hierarchical-config-with-per-node-folders.md`
 
-### ci-tooling (2 files)
+### ci-tooling (3 files)
 
 - `DESIGN_SPECS/meta-disciplines/struct-change-cascade-impact-tooling.md`
+- `DESIGN_SPECS/refactor-patterns/rename-cascade-enumeration-tooling.md`
 - `DESIGN_SPECS/refactor-patterns/rename-ship-methodology.md`
 
 ### ci-tooling-surface (1 files)
@@ -1142,8 +1147,9 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/meta-disciplines/single-source-of-truth-discipline.md`
 
-### refactor-pattern (1 files)
+### refactor-pattern (2 files)
 
+- `DESIGN_SPECS/refactor-patterns/rename-cascade-enumeration-tooling.md`
 - `DESIGN_SPECS/refactor-patterns/rename-ship-methodology.md`
 
 ### repo-hygiene (1 files)
@@ -1257,9 +1263,10 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/crash-recovery-via-mmap-state-pattern.md`
 
-### static-analysis (1 files)
+### static-analysis (2 files)
 
 - `DESIGN_SPECS/meta-disciplines/struct-change-cascade-impact-tooling.md`
+- `DESIGN_SPECS/refactor-patterns/rename-cascade-enumeration-tooling.md`
 
 ### strategy-lifecycle (1 files)
 
@@ -1273,7 +1280,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/meta-disciplines/mechanical-verification-of-derived-code-facts.md`
 
-### structural-fix (81 files)
+### structural-fix (82 files)
 
 - `DESIGN_SPECS/audit-methodologies/static-latency-path-conformance-analysis.md`
 - `DESIGN_SPECS/concurrency-patterns/phase-separated-drainer-for-safe-cross-temporal-derives.md`
@@ -1333,6 +1340,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/refactor-patterns/orchestration-helper-with-pod-args-pattern.md`
 - `DESIGN_SPECS/refactor-patterns/post-parse-normalize-with-explicit-key-bitmap-pattern.md`
 - `DESIGN_SPECS/refactor-patterns/registry-bitmap-set-discipline.md`
+- `DESIGN_SPECS/refactor-patterns/rename-cascade-enumeration-tooling.md`
 - `DESIGN_SPECS/refactor-patterns/shared-helper-extract-for-train-serve-mirror-close.md`
 - `DESIGN_SPECS/refactor-patterns/slow-path-cfg-resolution-cache-pattern.md`
 - `DESIGN_SPECS/refactor-patterns/template-deferred-dependency-injection.md`
@@ -1388,8 +1396,9 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/multi-asset-class-symbol-pattern.md`
 
-### terminology-evolution (1 files)
+### terminology-evolution (2 files)
 
+- `DESIGN_SPECS/refactor-patterns/rename-cascade-enumeration-tooling.md`
 - `DESIGN_SPECS/refactor-patterns/rename-ship-methodology.md`
 
 ### test-discipline (1 files)
@@ -1572,7 +1581,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/hierarchical-config-validation-pattern.md`
 - `DESIGN_SPECS/framework-patterns/kernel-vs-userspace-networking-cfg-pattern.md`
 
-### boot-time (9 files)
+### boot-time (10 files)
 
 - `DESIGN_SPECS/data-disciplines/cpp17-inline-variable-for-header-shared-state.md`
 - `DESIGN_SPECS/data-disciplines/locale-determinism-discipline.md`
@@ -1581,6 +1590,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/meta-disciplines/dead-code-and-identifier-retirement-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/mechanical-verification-of-derived-code-facts.md`
 - `DESIGN_SPECS/meta-disciplines/train-serve-execution-layer-parity.md`
+- `DESIGN_SPECS/refactor-patterns/rename-cascade-enumeration-tooling.md`
 - `DESIGN_SPECS/refactor-patterns/rename-ship-methodology.md`
 - `DESIGN_SPECS/refactor-patterns/shared-helper-extract-for-train-serve-mirror-close.md`
 
@@ -1641,7 +1651,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/runtime-mutable-vs-boot-time-config-pattern.md`
 
-### ci-tooling (14 files)
+### ci-tooling (15 files)
 
 - `DESIGN_SPECS/audit-methodologies/audit-report-format.md`
 - `DESIGN_SPECS/audit-methodologies/static-latency-path-conformance-analysis.md`
@@ -1654,6 +1664,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/meta-disciplines/structural-enforcement-when-memory-insufficient.md`
 - `DESIGN_SPECS/refactor-patterns/bitmap-overflow-protection-discipline.md`
 - `DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-pattern.md`
+- `DESIGN_SPECS/refactor-patterns/rename-cascade-enumeration-tooling.md`
 - `claude-skills/dead-code-trace/SKILL.md`
 - `claude-skills/metadata-audit/SKILL.md`
 - `claude-skills/ship/SKILL.md`
@@ -2098,7 +2109,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/meta-disciplines/backwards-compat-not-default-concern.md`
 
-### registry (66 files)
+### registry (67 files)
 
 - `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md`
 - `DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md`
@@ -2147,6 +2158,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/refactor-patterns/cross-walker-struct-field-uniqueness-discipline.md`
 - `DESIGN_SPECS/refactor-patterns/orchestration-helper-with-pod-args-pattern.md`
 - `DESIGN_SPECS/refactor-patterns/registry-bitmap-set-discipline.md`
+- `DESIGN_SPECS/refactor-patterns/rename-cascade-enumeration-tooling.md`
 - `DESIGN_SPECS/refactor-patterns/rename-ship-methodology.md`
 - `DESIGN_SPECS/wire-format-patterns/pre-post-cfg-registry-split-for-emit-order-preservation.md`
 - `claude-skills/anti-spaghetti/SKILL.md`

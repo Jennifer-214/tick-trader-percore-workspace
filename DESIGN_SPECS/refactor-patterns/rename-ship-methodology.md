@@ -31,6 +31,7 @@ Symbol/terminology renames recur as dedicated ships (A.5 `FPN`→`FPN_Binary`; `
 ## Phase 2 — Enumeration freeze
 
 - Run the enumeration greps; **paste output VERBATIM into `plan_checks/`** (`feedback_paste_tool_output_dont_summarize`); wire `check_plan_enumeration_completeness.py` as the drop-guard.
+- **Mechanization (CODE-side):** `tools/cascade.py rename` is the enumerator — engine source **plus the compiler-blind apparatus** (`tools/`/`build.sh`/`.githooks/`, the surface a grep-only freeze forgets, where a stale regex commits GREEN) + the `#include`-cascade for file-basename renames + the expected-residual allowlist, classified by the Phase-3 buckets below. Sister to the `.md`-side executor `check_doc_rename_classification.py` (Phase 5). ENUMERATES only — the code rename stays the human's ONE mechanical commit (Phase 4; compiler = oracle). See `rename-cascade-enumeration-tooling.md` (TD-175a); the standing "a future rename left an apparatus regex dead" net rides `check_tools_inventory.py`'s `build.sh`-scan.
 - Produce the **expected-residual ALLOWLIST** (file:count) for surfaces that legitimately keep the old spelling (ship-history comment blocks, archived dirs, `experiments/` exemptions). Post-rename totality = "grep matches the allowlist EXACTLY", never "= 0 hits" (which fails on the first historical mention).
 - Plan-body counts are at-draft snapshots; the Step-1 freeze output is authoritative (counts rot between draft and code-time — D-144 generalization).
 

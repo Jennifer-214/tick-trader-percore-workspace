@@ -67,6 +67,24 @@ try:
 finally:
     shutil.rmtree(_tmpdir, ignore_errors=True)
 
+# (3) CHECK 2 via build.sh — a build.sh tool-ref to a nonexistent/untracked tool must go RED
+#     (gate R2 / TD-175a: closes the build.sh:271 `[ -f tools/X.py ]` silent-skip — a renamed tool whose
+#      build.sh ref isn't followed would otherwise commit GREEN; the rename-cascade apparatus-currency net).
+_repo = tempfile.mkdtemp()
+try:
+    os.makedirs(os.path.join(_repo, "tools"))
+    os.makedirs(os.path.join(_repo, "DOCS"))
+    with open(os.path.join(_repo, "DOCS", "TOOLS.md"), "w") as f:
+        f.write("# TOOLS\n\n| Tool | Disposition | Purpose |\n|---|---|---|\n")
+    with open(os.path.join(_repo, "build.sh"), "w") as f:
+        f.write('if [ -f tools/_zz_ghost_buildref.py ]; then python3 tools/_zz_ghost_buildref.py; fi\n')
+    red = run({"FOXML_REPO_ROOT": _repo}) != 0
+    print(f"  {'✅' if red else '❌'} (3) broken build.sh->tool reference — guard {'RED' if red else 'GREEN'} as expected")
+    if not red:
+        fail = 1
+finally:
+    shutil.rmtree(_repo, ignore_errors=True)
+
 print()
 print(" GREEN — tool-rot guard HAS TEETH." if not fail
       else " RED — the guard missed an injected violation (NO TEETH).")

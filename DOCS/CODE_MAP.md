@@ -4,7 +4,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-06-20 (commit 2baf0f6)
+**Last regenerated**: 2026-06-21 (commit b9ce419)
 
 ## CoreFrameworks/
 
@@ -22,12 +22,12 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### ControllerConfig.hpp
 
-- `Fee_Compute` — line 1367
-- `ControllerConfig_ResolveForCore` — line 1385
-- `ControllerConfig_PopulateCoresFromFlat` — line 1447
-- `ControllerConfig_NormalizeForMode` — line 2011
-- `ControllerConfig_IsLiveCapital` — line 2045
-- `ControllerConfig_Load` — line 2056
+- `Fee_Compute` — line 1346
+- `ControllerConfig_ResolveForCore` — line 1364
+- `ControllerConfig_PopulateCoresFromFlat` — line 1426
+- `ControllerConfig_NormalizeForMode` — line 1982
+- `ControllerConfig_IsLiveCapital` — line 2016
+- `ControllerConfig_Load` — line 2027
 
 ### ControllerEventLoop.hpp
 
@@ -233,8 +233,8 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `PortfolioController_Unpause` — line 1921
 - `PortfolioController_CycleRegime` — line 1932
 - `PortfolioController_HotReload` — line 1958
-- `PortfolioController_SaveSnapshot` — line 2035
-- `PortfolioController_LoadSnapshot` — line 2110
+- `PortfolioController_SaveSnapshot` — line 2029
+- `PortfolioController_LoadSnapshot` — line 2104
 
 ### Portfolio.hpp
 

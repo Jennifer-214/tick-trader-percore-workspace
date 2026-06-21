@@ -167,6 +167,7 @@ Output: cohort sibling list with overlap analysis (which functions touch BOTH th
 - `tools/gen_code_map.sh --byte-context <T>` — the ENFORCEMENT-target sites: `sizeof(T)` + the `memcmp`/`SHA`/`fwrite`/`HMAC` ops where a layout change breaks byte-equivalence.
 - `tools/gen_code_map.sh --composition <T>` — structs byte-affected by `T` via TRANSITIVE containment.
 - the type→sites reverse-index (`--types`/`--aliases`) — every struct-field / param / return referencing `T`.
+- **For a TOKEN/identifier RENAME** (not a type-byte change — e.g. Core→Node): `tools/cascade.py rename` is the TOKEN-blast sibling of `--composition`'s TYPE-blast — every site SPELLING the old token across engine src **+ the compiler-blind apparatus** (`tools/`/`build.sh`/`.githooks/`, where a stale regex commits GREEN) + the `#include`-cascade + the expected-residual allowlist, classified by rename-ship-methodology Phase-3 buckets (TD-175a; `rename-cascade-enumeration-tooling.md`).
 
 **PASTE the tool output verbatim** into the report — do NOT hand-summarize (the relocation/blast set is a tool output, not a paragraph; `feedback_paste_tool_output_dont_summarize` — the canonical R1-under-count failure was a summarize-and-drop of exactly this set). The grep passes (steps 2–3) COMPLEMENT this for non-type symbols + caller-flow; `gen_code_map` is the authoritative enumerator for the type surface.
 

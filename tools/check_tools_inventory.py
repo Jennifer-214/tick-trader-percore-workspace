@@ -72,7 +72,12 @@ def _referenced():
     if os.path.isdir(hooks):
         for root, _, files in os.walk(hooks):
             scan += [os.path.join(root, fn) for fn in files]
-    for fn in ("CLAUDE.md", "CLAUDE.local.md"):
+    # build.sh added 2026-06-21 (gate R2 / TD-175a): build.sh's file-existence + invoke guards string-match
+    # tool paths the compiler never sees — a renamed tool whose build.sh ref isn't followed silently SKIPS
+    # (the build.sh:271 short-circuit). Scanning build.sh makes that ref a CHECK-2 broken-ref RED instead of
+    # a green silent-skip (the rename-cascade apparatus-currency net). [NB: no literal tool path in this
+    # comment — REF_RE would match it + flag this very file, the self-reference the teeth caught at build.]
+    for fn in ("CLAUDE.md", "CLAUDE.local.md", "build.sh"):
         fp = os.path.join(REPO, fn)
         if os.path.isfile(fp):
             scan.append(fp)

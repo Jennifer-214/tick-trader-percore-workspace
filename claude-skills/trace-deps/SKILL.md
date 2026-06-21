@@ -230,6 +230,14 @@ list THAT function's callees. If any TRANSITIVE callee:
 Don't recurse beyond 1 level (combinatorial explosion;
 diminishing returns).
 
+**For a token/identifier RENAME plan** (Core→Node-style): the consumer
+enumeration across ALL file types — incl. the compiler-blind apparatus
+(`tools/`/`build.sh`/`.githooks/`) a plan-time grep forgets — is
+mechanized by `tools/cascade.py rename` (TD-175a;
+`rename-cascade-enumeration-tooling.md`). Run it + paste the worklist
+(`feedback_paste_tool_output_dont_summarize`); the compiler is the
+code-token oracle, cascade covers the surface it can't see.
+
 ### 6. Mirror data-flow audit (added 2026-05-09 — Class 18 prevention)
 
 If the plan body contains keywords:

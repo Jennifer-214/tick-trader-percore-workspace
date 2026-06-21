@@ -9,14 +9,14 @@ established: 2026-05-18
 
 # /readiness Check 17 — Model-load path changes → strict-mode integration test
 
-Trigger keywords: `CoreModelZoo`, `Model_Load`, `verify_model_stamp`,
+Trigger keywords: `NodeModelZoo`, `Model_Load`, `verify_model_stamp`,
 `ModelHandle`, `held_out_gate_strict`, `feature_scaler_present`,
 `scaler_load_failed`, `scaler_sha256`. When plan touches the model
 load path:
 
 - Verify the 3-tier strict-mode behavior (refuse / warn / skip)
   is preserved per `DOCS/CLAUDE_ML_INVARIANTS.md`.
-- For each new failure mode, verify a corresponding PerCoreSnap
+- For each new failure mode, verify a corresponding PerNodeSnap
   field surfaces it (the v5.9.0b `model_load_failed` /
   v5.9.3a `scaler_load_failed` pattern).
 - For each new failure mode, verify ML Status panel renders

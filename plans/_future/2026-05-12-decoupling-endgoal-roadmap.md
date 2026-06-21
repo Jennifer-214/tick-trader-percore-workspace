@@ -49,6 +49,14 @@ This roadmap's vision lands at the **`.E.2`** ship. Canonical references:
 
 ---
 
+## `.E.1`/`.E.2` breadcrumb (2026-06-21) — manual TP/SL adjustment: a `fox-cli` verb, or dropped? (OPEN — D-241)
+
+Operator design question surfaced the **control-boundary's sharpest case**, the complement to the publish-channel insight above. The GUI-drag adjustable TP/SL is **already inert on the sharded path** (TD-184 — the drag writes the *display* level `pos->take_profit_price`, but the hot exit gate reads `core->live_tp`/`live_sl`, never copied → a Class-2 display↔execution lie) AND the GUI itself **hard-deprecates at `.E.2`** (D-26 → `engine_gui` archived). So in the decoupled world there's no drag at all — manual exit-control becomes a **verb-or-nothing** choice on the `fox-cli` UDS command channel:
+- **(A) drop it** — TP/SL fully engine-managed (strategy + ratchet + regime); no exit-adjust verb. Matches the headless-autonomous-shard-farm direction.
+- **(B) keep it** as a `fox-cli adjust-exit` verb; engine side = the TD-184 `live_tp`/`live_sl` per-node wiring, command-triggered + validate-before-apply + reconciled with TD-189 (live-multiplier storage).
+
+**Positioning:** this is the canonical *control* complement to the `.E.0.10` *publish* breadcrumb — **publish** = mmap snapshot (viewers read); **control** = UDS verbs (fox-cli writes). The TP/SL-adjust verb is the litmus for how much write-control the decoupled boundary exposes at all. **Decide at `.E.2` before the D-52 verb set locks.** → decision-log **D-241**; homed in the `.E.2` plan (command-channel/verb-set §) + the **TD-184** ledger entry.
+
 ## Endgoal architecture (what success looks like)
 
 ```

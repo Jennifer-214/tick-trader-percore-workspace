@@ -297,7 +297,7 @@ All NEW specs that land across `.E` sub-sprint. Stage 2 DRAFT skeletons created 
 | Entry | Title | Source ship | Closure ship |
 |---|---|---|---|
 | **TECH_DEBT-142** (NEW `.D.1`) | **Doc-rename tool unsafe for `.E.1` code rename — needs symbol/AST tooling** | **`.D.1`** | **`.E.1`** |
-| TECH_DEBT-140 (NEW `.D.1`) | `engine_mode` vestigial cfg field | `.D.1` | `.E.0.1`/`.E.1` |
+| TECH_DEBT-140 (NEW `.D.1`) | `engine_mode` vestigial cfg field | `.D.1` | **`.E.1.1` ✓ CLOSED** (Phase 3, `b9ce419`) |
 | TECH_DEBT-141 (NEW `.D.1`) | `BacktestSharded_Run` → `Backtest_Run` unification | `.D.1` | `.E.1` |
 | TECH_DEBT-129 (existing) | Per-core drainer architecture | - | `.E.1` |
 | TECH_DEBT-135 (existing) | Class 11 regime_names sibling-array | - | `.E.1` (likely) |

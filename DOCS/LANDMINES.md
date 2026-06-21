@@ -234,6 +234,22 @@ watching it actually work).
 
 ---
 
+## Landmine 11 — dispatched subagents are hard-denied on compiler (`g++`) invocation; the MAIN agent can compile (set 2026-06-20, v5.15.5.F.4d.1.E.1.1 Phase 2)
+
+**Symptom:** a dispatched general-purpose subagent tasked with build/verification ("run `./build.sh test` + fresh asan/ubsan + conformance") reports it CANNOT run any C++-compiler-invoking command — every `g++` / `./build.sh asan` / `./build.sh test --clean` / forced recompile comes back "Permission to use Bash denied." Its MISSION (verify the build) fails not because the tree is broken but because it can't invoke the compiler. The SAME commands run fine from the MAIN agent.
+
+**Root cause:** a session-level PERMISSION policy denies compiler invocation to dispatched subagents (observed for general-purpose via the Agent tool). It's a permission rule, NOT a sandbox issue — `dangerouslyDisableSandbox: true` does NOT lift it. The main agent gets an interactive/pre-approved permission path; a subagent gets a hard auto-deny (it can't prompt the operator). Only an incremental no-op `./build.sh test` (relink+run, no recompilation) slipped through this session — which is why the verify-agent had a `controller_test` number at all but couldn't run a fresh build or the sanitizers.
+
+**Why it's non-obvious:** the agent still RETURNS a verdict, so it looks like it "ran" verification — but the compiler-gated parts were silently BLOCKED, not executed. A "build verified" from such an agent is HOLLOW; the denial is only visible if you read the agent's surprises/caveats.
+
+**Current mitigation:** RUN all compile/build/sanitizer/conformance/determinism gates from the MAIN agent, never a dispatched subagent. Dispatch subagents for READ-ONLY analysis (grep/read/git) only. If a subagent must REPORT build state, have the MAIN agent run `./build.sh` in the background → the subagent reads the output file's tail (it does NOT invoke the compiler itself).
+
+**Future-Claude debugging hint:** a dispatched subagent reports "can't run the build" / "permission denied on g++" → this, not a broken tree. Don't conclude the code is unbuildable; re-run the gate yourself. When designing a multi-agent verification fan-out, keep COMPILE/RUN in the main agent + give subagents the read-only half.
+
+**Reference:** v5.15.5.F.4d.1.E.1.1 Phase 2 state-audit (2026-06-20) — the dispatched DoD-verification agent was hard-denied on every compiler command while the main agent ran `build.sh test` + fresh asan/ubsan + conformance fine. Sub->1h to diagnose but recurring (every multi-agent session that dispatches build/verify work) + environment-specific, so it earns a durable entry (cf. Landmine 4's same carve-out). Sister: memory `feedback_adversarial_framing_default_for_checks` (re-ground a subagent's EVIDENCE — a "build verified" from a compiler-denied agent is hollow). CAVEAT: may be sandbox/permission-config-specific; re-confirm it still holds before relying on it.
+
+---
+
 ## How to add a new landmine
 
 When you encounter a non-obvious pitfall (segfault, race, parallelism

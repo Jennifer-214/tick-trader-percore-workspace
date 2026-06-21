@@ -38,6 +38,18 @@ applications: ["v5.15.5.F.4d.1.E.1.1 Core→Node rename (1st canonical — this 
 >   fitting — standing guards stay `check_`-prefixed); the broader apparatus→dead-`FOREACH` cross-check is a
 >   NOTED future increment (≈80% redundant with `check_meta_registry`; green until a future rename — building
 >   it now is the diminishing-returns slop `feedback_framework_layer_payoff_diminishing_returns` warns of).
+>
+> **Post-build completeness fix (a-class audit, 2026-06-21 — operator: "ensure the tool is finding all places").**
+> A V-class/adversarial completeness pass on the FIRST build (hand-list tokens + an identifier-START anchor)
+> found a **Class-33 under-enumeration**: it missed `CoreSlowState` (a top-level per-node struct), the ~50-member
+> `core_<stat>` field family, the `g_per_core_*` infra, embedded `*_core_id`, the `*_cores` node-count family,
+> a whole file (`EventLoopAggregates.hpp`), guard macros, and operator-facing format keys — **2118 → 3645 real
+> sites (~42% missed)**. Root cause: the START-anchor + a hand-list. Fix: the FAMILY-REGEX model + the
+> sub-word-boundary rule above + a selftest positive-control per family. Verified by a **mechanical
+> freeze ⊇ raw-`rg` file-set diff** (closes the AR-8 self-attestation the a-class flagged — the 33 residual
+> diffs are all PRESERVE-only `CoreFrameworks` files, zero real misses). **Lesson: an enumerator's completeness
+> is itself adversarially verified + mechanically cross-checked, never self-attested — the builder is
+> model-bounded (`feedback_capture_and_check_are_model_bounded`).**
 
 ## What it is (one line)
 
@@ -84,11 +96,18 @@ Tool A spec was RED-reviewed for) and BOTH cleared it independently:
 ## `cascade rename` — what it computes
 
 ### Inputs (config, not hardcoded — RE-DERIVE per rename; reusable)
-- **Token-set** (`.E.1.1`): `core_id`→`node_id`, `core_idx`→`node_idx`, `per_core_*`→`per_node_*`,
-  `.cores[`→`.nodes[`, `MAX_EXECUTION_CORES`→`MAX_EXECUTION_NODES`, `num_execution_cores`→
-  `num_execution_nodes`, `CoreContext`→`NodeContext`, `FOREACH_PER_CORE_CFG_FIELD`→`FOREACH_PER_NODE_CFG_FIELD`,
-  `CoreCtx*`/`CORE_CTX_*`, `CORE_STATE_FLAG`/`MASK_CORE_STATE_*`/`FOREACH_CORE_STATE_FLAG`, `CoreModelZoo`/
-  `CoreLatencyStats`/`PerCore*`/`MAX_GUI_CORES`, the `"core_"` cfg-key literal, + the 6 file basenames.
+- **Token-set = FAMILY REGEXES, not a hand-list** (the completeness model — see the post-build a-class fix
+  below). Each token is a regex matched at a SUB-WORD boundary `(?<![A-Za-z0-9])` that **allows a preceding
+  `_`** (so embedded compounds — `origin_core_id`, `g_per_core_cfg_field_descriptors`,
+  `saved_num_execution_cores` — ARE caught) but **blocks a preceding alnum** (so `score`/`record`/`encore`
+  are NOT). The families: `core_[a-z]…` (the `core_id`/`core_idx` + ~50-member `core_<stat>` field family) ·
+  `per_core…` · `Core[A-Z]…` (`CoreContext`/`CoreSlowState`/`CoreModelZoo`/`CoreSnap`/`CoreLatency*`) ·
+  `PerCore…` · `CORE_[A-Z]…` (`CORE_STATE_FLAG`/`_CTX`/`_MODEL_*` + the guard macros) · `PER_CORE…` ·
+  `\w+_cores\b` (`num_cores`/`effective_cores`/`registered_cores`/…) · `\.cores\[` · `core_%[dN]` (the
+  operator-facing key format strings) + explicit `FOREACH_PER_CORE`/`FOREACH_CORE`/`MAX_EXECUTION_CORES`/
+  `MAX_GUI_CORES`/`num_execution_cores`. Overlap-resolved per Class-36 (sort start-asc/longest-first, accept
+  non-overlapping → an inner token contained in a longer one is dropped). **Family patterns (not an
+  enumerated list) are load-bearing: a NEW `core_<stat>` field or `Core<Word>` type cannot silently escape.**
 - **PRESERVE-list (longest-first anchored, Class-36):** `ExecutionCore`/`ExecutionCore_Tick`/`ExecutionCore_*`,
   `CoreFrameworks`, `MULTICORE`, **`FoxML_Core`** (PRIMARY — naive `Core`→`Node` makes `FoxML_Node`),
   CPU-hardware `core` (`cpu_id`/SMT/"physical core"/"single-thread-per-core").

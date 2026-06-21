@@ -42,28 +42,31 @@ DOC_DIRS = ["DOCS", "DESIGN_SPECS", "plans/_cross-cutting", "claude-skills"]   #
 SRC_EXT = (".hpp", ".cpp", ".h")
 APPARATUS_EXT = (".py", ".sh", ".txt")
 
-# --- the rename token-set (RE-DERIVE counts per rename; this is the .E.1.1 set) ----------------------
-# kind: "ident"   -> match OLD at an identifier-start boundary, capture the whole identifier
-#       "literal" -> match OLD verbatim (member-access / quoted cfg-key)
-RENAME_TOKENS = [
-    ("FOREACH_PER_CORE_CFG_FIELD", "ident"),
-    ("FOREACH_CORE_STATE_FLAG", "ident"),
-    ("MASK_CORE_STATE", "ident"),
-    ("CORE_STATE_FLAG", "ident"),
-    ("CORE_CTX", "ident"),
-    ("MAX_EXECUTION_CORES", "ident"),
-    ("MAX_GUI_CORES", "ident"),
-    ("num_execution_cores", "ident"),
-    ("CoreContext", "ident"),          # also CoreContextDisplayMeta (both rename — Class-36 anchored)
-    ("CoreModelZoo", "ident"),
-    ("CoreLatencyStats", "ident"),
-    ("CoreCtx", "ident"),
-    ("PerCore", "ident"),
-    ("per_core", "ident"),
-    ("core_id", "ident"),
-    ("core_idx", "ident"),
-    (".cores[", "literal"),
-    ('"core_', "literal"),             # cfg-key literal (engine + GUI parsers)
+# --- the rename token-set (RE-DERIVE per rename; this is the .E.1.1 set) -----------------------------
+# Each entry is a full REGEX. Matching rule (COMPLETENESS FIX 2026-06-21, a-class audit — closes a Class-33
+# under-enumeration that missed CoreSlowState, the ~50 core_<stat> field family, g_per_core_* infra, embedded
+# *_core_id, the *_cores node-count family, EventLoopAggregates.hpp, guard macros, format-string keys):
+# tokens match at a SUB-WORD boundary — `(?<![A-Za-z0-9])` ALLOWS a preceding `_` (so embedded compounds like
+# `origin_core_id` / `g_per_core_cfg` / `saved_num_execution_cores` ARE caught) but BLOCKS a preceding alnum
+# (so `score`/`record`/`encore` are NOT). FAMILY patterns (not a hand-list) so a new `core_<stat>` field or
+# `Core<Word>` type cannot silently escape. PRESERVE is applied to the matched text; overlap-dedup (Class-36).
+RENAME_TOKEN_RX = [
+    # explicit macros / consts (longest — win the overlap-dedup for clear reporting)
+    r"(?<![A-Za-z0-9])FOREACH_PER_CORE[A-Za-z0-9_]*",
+    r"(?<![A-Za-z0-9])FOREACH_CORE[A-Za-z0-9_]*",
+    r"(?<![A-Za-z0-9])MAX_EXECUTION_CORES",
+    r"(?<![A-Za-z0-9])MAX_GUI_CORES",
+    r"(?<![A-Za-z0-9])num_execution_cores",
+    # family patterns — the Class-33 completeness fix
+    r"(?<![A-Za-z0-9])CORE_[A-Z][A-Za-z0-9_]*",     # CORE_STATE_FLAG/_CTX/_MODEL_*/_KILL*/_BUDGET + guard macros
+    r"(?<![A-Za-z0-9])PER_CORE[A-Za-z0-9_]*",        # PER_CORE_* + the PER_CORE_STATE_FLAGS_REGISTRY_HPP guard
+    r"(?<![A-Za-z0-9])PerCore[A-Za-z0-9_]*",         # PerCoreCfg/Overrides/Snap/FieldDef/StateFlagsRegistry
+    r"(?<![A-Za-z0-9])Core[A-Z][A-Za-z0-9_]*",       # CoreContext/CoreSlowState/CoreModelZoo/CoreSnap/CoreLatency*
+    r"(?<![A-Za-z0-9])per_core[A-Za-z0-9_]*",        # per_core_* + g_per_core_* (preceded by _)
+    r"(?<![A-Za-z0-9])core_[a-z][A-Za-z0-9_]*",      # core_id/idx + the ~50-member core_<stat> field family
+    r"\b[A-Za-z][A-Za-z0-9_]*_cores\b",              # num_cores/effective_cores/registered_cores/n_cores/...
+    r"\.cores\[",                                    # .cores[ member access
+    r"core_%[0-9A-Za-z]",                            # core_%d / %score_%u operator-facing key format strings
 ]
 
 # PRESERVE: a captured identifier equal to / prefixed by one of these is NOT a rename site (longest-first).
@@ -96,15 +99,7 @@ FILE_RENAMES = {
 # POST-rename expected residuals (informational; the V-class allowlist so a residual grep != 0 is OK).
 POST_RENAME_ALLOWLIST_NOTE = "node_id x3 @ CoreFrameworks/EngineSharded/Run.hpp:202/213 (helper commit 2b8bd6c — the intended target namespace, NOT a foreign collision)"
 
-IDENT = "A-Za-z0-9_"
-_compiled = []
-for old, kind in RENAME_TOKENS:
-    if kind == "ident":
-        # not preceded by an ident char; capture OLD + any trailing ident chars (the whole identifier)
-        rx = re.compile(r"(?<![%s])(%s[%s]*)" % (IDENT, re.escape(old), IDENT))
-    else:
-        rx = re.compile(re.escape(old))
-    _compiled.append((old, kind, rx))
+_compiled = [re.compile(rx) for rx in RENAME_TOKEN_RX]
 
 
 def _bucket(relpath: str) -> str:
@@ -167,18 +162,24 @@ def find_hits(include_docs: bool):
             line = raw   # do NOT strip comments — a token in a // or # comment IS a rename site
                          # (a stale "Walks FOREACH_PER_CORE_CFG_FIELD" comment must update). The human
                          # triages CODE vs COMMENT vs HISTORICAL per rename-ship-methodology Phase 3.
-            seen = set()   # dedupe overlapping token matches at the same start (core_id ⊃ core_idx)
-            for old, kind, rx in _compiled:
+            # collect all matches, then Class-36 overlap-resolution: sort by (start asc, longest first),
+            # greedily accept non-overlapping spans (an inner token contained in a longer one is skipped —
+            # CORE_CFG_FIELD inside FOREACH_PER_CORE_CFG_FIELD; but core_id inside origin_core_id is its OWN
+            # disjoint span and IS kept).
+            spans = []
+            for rx in _compiled:
                 for m in rx.finditer(line):
-                    if m.start() in seen:
-                        continue
-                    seen.add(m.start())
-                    ident = m.group(1) if kind == "ident" else old
-                    if kind == "ident" and _preserved(ident):
-                        preserved_n += 1
-                        continue
-                    b = _bucket(rel)
-                    worklist.setdefault(b, {}).setdefault(rel, []).append((i, ident))
+                    spans.append((m.start(), m.end(), m.group(0)))
+            spans.sort(key=lambda t: (t[0], -(t[1] - t[0])))
+            last_end = -1
+            for start, end, ident in spans:
+                if start < last_end:
+                    continue
+                last_end = end
+                if _preserved(ident):
+                    preserved_n += 1
+                    continue
+                worklist.setdefault(_bucket(rel), {}).setdefault(rel, []).append((i, ident))
     return worklist, preserved_n, excluded_n
 
 
@@ -270,6 +271,18 @@ def selftest():
             "struct ExecutionCore {};\n// FoxML_Core sister project\nint cpu_id;\n")
         (root / "experiments" / "per_core_sharding").mkdir(parents=True)
         (root / "experiments" / "per_core_sharding" / "x.hpp").write_text("int core_id;\nint per_core_x;\n")
+        # (1c) NEW token-family positive controls (the a-class completeness fix — each family that closed a
+        # Class-33 gap MUST be exercised, else the selftest is vacuously green for the very gap it closed)
+        # + false-positive guards for the relaxed lookbehind (score/record/encore must NEVER match).
+        (root / "CoreFrameworks" / "newclasses.hpp").write_text(
+            "struct CoreSlowState {};\n"                          # Core[A-Z] CamelCase type
+            "uint32_t core_wins; Money core_fees;\n"             # core_<stat> field family
+            "int num_cores = 4; int effective_cores;\n"          # *_cores node-count family
+            "int origin_core_id = ctx.core_id;\n"               # embedded *_core_id (preceded by _)
+            "auto* p = &g_per_core_cfg_field_descriptors[0];\n"  # embedded per_core (g_ prefix)
+            "#define CORE_MODEL_ZOO_HPP 1\n"                     # CORE_ guard macro
+            'snprintf(b, n, "%s/core_%d.csv", d, c);\n'          # core_%d operator-facing format key
+            "double score=1.0; int record_id=0; const char* encore=0;\n")  # FALSE-POS guards
         old_engine = os.environ.get("FOXML_ENGINE")
         os.environ["FOXML_ENGINE"] = str(root)
         try:
@@ -294,8 +307,18 @@ def selftest():
         code_idents = [d for f, lst in worklist.get("CODE-TOKEN", {}).items() for _, d in lst]
         if not any("CoreContext" in d for d in code_idents):
             failures.append("comment-resident control MISSED: // comment token (CoreContext) not flagged — comment-strip regression")
-        # (2) PRESERVE not flagged (no ExecutionCore/FoxML_Core/cpu_id in any bucket)
         all_idents = [d for files in worklist.values() for lst in files.values() for _, d in lst]
+        # (1c) NEW token-family controls — each MUST be caught (Class-33 completeness fix)
+        for need in ("CoreSlowState", "core_wins", "num_cores", "CORE_MODEL_ZOO_HPP", "core_%d"):
+            if not any(d == need for d in all_idents):
+                failures.append(f"NEW-class control MISSED: '{need}' not flagged (token-family regression)")
+        if not any(d.startswith("per_core_cfg") for d in all_idents):
+            failures.append("embedded control MISSED: g_per_core_cfg_field_descriptors (per_core after '_') not flagged")
+        # (1d) false-positive guards for the relaxed lookbehind: alnum-prefixed must NEVER match
+        for bad in ("score", "record", "encore"):
+            if any(bad in d for d in all_idents):
+                failures.append(f"false positive: alnum-prefixed '{bad}' flagged (lookbehind too loose)")
+        # (2) PRESERVE not flagged (no ExecutionCore/FoxML_Core/cpu_id in any bucket)
         for bad in ("ExecutionCore", "FoxML_Core", "cpu_id"):
             if any(d.startswith(bad) or d == bad for d in all_idents):
                 failures.append(f"false positive: PRESERVE token '{bad}' was flagged")

@@ -4,7 +4,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-06-21 (commit b9ce419)
+**Last regenerated**: 2026-06-21 (commit 1da1c1c)
 
 ## CoreFrameworks/
 
@@ -31,8 +31,8 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### ControllerEventLoop.hpp
 
-- `CoreSlowState_Init` — line 166
-- `CoreContextDisplayMeta_Init` — line 691
+- `NodeSlowState_Init` — line 166
+- `NodeContextDisplayMeta_Init` — line 691
 - `EventLoopState_ReconstructPerCoreFromEventLog` — line 835
 - `EventLoopState_Init` — line 906
 - `EventLoopState_InitLegacy` — line 963
@@ -75,15 +75,6 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `EventLoop_Unpause` — line 3742
 - `EventLoop_SlowPath` — line 3766
 - `EventLoop_RunController` — line 3791
-
-### CoreLatencyStats.hpp
-
-- `CoreLatencyStats_Init` — line 128 — stats mid-run without disabling them.
-- `CoreLatencyStats_Reset` — line 140
-- `CoreLatencyStats_Enable` — line 151
-- `CoreLatencyStats_Disable` — line 155
-- `CoreLatencyStats_Sample` — line 170 — rdtsc reading at sample time, used for "last seen" tracking in the TUI.
-- `CoreLatencyStats_Snapshot` — line 198 — skip the conversion (cycle counts only).
 
 ### EngineCommon.hpp
 
@@ -136,7 +127,16 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### ModelValidation.hpp
 
-- `CoreModelZoo_ValidateAgainstCfg` — line 136
+- `NodeModelZoo_ValidateAgainstCfg` — line 136
+
+### NodeLatencyStats.hpp
+
+- `NodeLatencyStats_Init` — line 128 — stats mid-run without disabling them.
+- `NodeLatencyStats_Reset` — line 140
+- `NodeLatencyStats_Enable` — line 151
+- `NodeLatencyStats_Disable` — line 155
+- `NodeLatencyStats_Sample` — line 170 — rdtsc reading at sample time, used for "last seen" tracking in the TUI.
+- `NodeLatencyStats_Snapshot` — line 198 — skip the conversion (cycle counts only).
 
 ### Notify.hpp
 
@@ -552,7 +552,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `ANSI_Section_Charts` — line 923
 - `ANSI_Section_Controls` — line 963
 - `ANSI_Section_Latency` — line 979
-- `ANSI_Section_PerCoreLatency` — line 1018 — per-core latency the moment they flip engine_mode=sharded.
+- `ANSI_Section_PerNodeLatency` — line 1018 — per-core latency the moment they flip engine_mode=sharded.
 - `ANSI_Section_RightPanel` — line 1058 — hidden on narrow terminals (< 100 columns)
 - `ANSI_Layout_Standard` — line 1119
 - `ANSI_Layout_Charts` — line 1165 — ANSI_Section_RightPanel(ab, s, h, w, start_time);
@@ -590,11 +590,6 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ## MemHeaders/
 
-### CoreCtxSummaryFieldRegistry.hpp
-
-- `Summary_EmitPerCoreEntry` — line 202
-- `Summary_EmitPerStrategy` — line 237
-
 ### DrainerConstants.hpp
 
 - `DrainerConstants_Init` — line 100
@@ -624,6 +619,11 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 - `LatencyHistogram_Reset` — line 119 — cross-thread races by contract — writer thread paused or not yet started).
 - `LatencyHistogram_Accumulate` — line 140 — entire instrumentation block per CLAUDE.md item 18).
+
+### NodeCtxSummaryFieldRegistry.hpp
+
+- `Summary_EmitPerCoreEntry` — line 202
+- `Summary_EmitPerStrategy` — line 237
 
 ### OmsPhasedDrain.hpp
 
@@ -738,48 +738,6 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `ConfidenceScorer_RecomputeRunningSums` — line 1053 — CommitPersistedFields tail; PortfolioController calls it explicitly.
 - `ConfidenceScorer_ShadowLoadLegacyV1` — line 1122 — Returns 0 on success; -1 on fread failure.
 
-### CoreModelZoo.hpp
-
-- `CoreModelZoo_Init` — line 103
-- `CoreModelZoo_TryLoadRole` — line 124
-- `CoreModelZoo_LoadFromDir` — line 579
-- `CoreModelZoo_LoadLegacy` — line 671
-- `CoreModelZoo_Free` — line 682
-- `CoreModelZoo_HasAny` — line 692
-- `CoreModelZoo_VerifyExpected` — line 720 — features in the pack, model crashes or produces garbage.
-- `EnsembleZoo_FinalizeCorrupt` — line 1155
-- `EnsembleModelZoo_Init` — line 1165
-- `EnsembleModelZoo_EnsurePrimary` — line 1258
-- `EnsembleModelZoo_RecordPrediction` — line 1300
-- `EnsembleModelZoo_UpdateDrift` — line 1329
-- `EnsembleModelZoo_TickRewardsFromLookback` — line 1382
-- `EnsembleModelZoo_TradeCloseReward` — line 1466
-- `EnsembleModelZoo_InitBandits` — line 1530
-- `EnsembleModelZoo_InitExitBandits` — line 1578
-- `EnsembleModelZoo_InitBuyThompsonBandits` — line 1633
-- `EnsembleModelZoo_InitExitThompsonBandits` — line 1685
-- `EnsembleModelZoo_SetDisabledHorizons` — line 1727
-- `EnsembleModelZoo_Free` — line 1755
-- `EnsembleModelZoo_LoadFromCfg` — line 1789
-- `EnsembleZoo_VerifyGridMemberConsistency` — line 2049
-- `EnsembleModelZoo_AutoDetectFromDir` — line 2119
-- `EnsembleModelZoo_ComputeBundleId` — line 2262
-- `EnsembleModelZoo_SaveBanditState` — line 2287
-- `EnsembleModelZoo_SaveExitBanditState` — line 2309
-- `EnsembleModelZoo_LoadBanditState` — line 2333
-- `EnsembleModelZoo_LoadExitBanditState` — line 2364
-- `EnsembleModelZoo_SaveThompsonState` — line 2407
-- `EnsembleModelZoo_SaveExitThompsonState` — line 2496
-- `EnsembleModelZoo_LoadThompsonState` — line 2579
-- `EnsembleModelZoo_LoadExitThompsonState` — line 2713
-- `EnsembleModelZoo_LoadBanditStateFromPath` — line 2842
-- `EnsembleModelZoo_SetBanditSaveInterval` — line 2869
-- `EnsembleModelZoo_MaybeSaveBanditPeriodic` — line 2887
-- `EnsembleModelZoo_PostLoadSetup` — line 3007
-- `EnsembleModelZoo_IsReadyForInference` — line 3026
-- `CoreModelZoo_PostLoadSetup` — line 3067
-- `CoreModelZoo_CheckStaleModel` — line 3100
-
 ### CostModel.hpp
 
 - `CostModel_Estimate` — line 56 — k1, k2, k3:     cost coefficients
@@ -889,6 +847,48 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `Model_IsLoaded` — line 1088
 - `ModelFeatures_Pack` — line 1116
 
+### NodeModelZoo.hpp
+
+- `NodeModelZoo_Init` — line 103
+- `NodeModelZoo_TryLoadRole` — line 124
+- `NodeModelZoo_LoadFromDir` — line 579
+- `NodeModelZoo_LoadLegacy` — line 671
+- `NodeModelZoo_Free` — line 682
+- `NodeModelZoo_HasAny` — line 692
+- `NodeModelZoo_VerifyExpected` — line 720 — features in the pack, model crashes or produces garbage.
+- `EnsembleZoo_FinalizeCorrupt` — line 1155
+- `EnsembleModelZoo_Init` — line 1165
+- `EnsembleModelZoo_EnsurePrimary` — line 1258
+- `EnsembleModelZoo_RecordPrediction` — line 1300
+- `EnsembleModelZoo_UpdateDrift` — line 1329
+- `EnsembleModelZoo_TickRewardsFromLookback` — line 1382
+- `EnsembleModelZoo_TradeCloseReward` — line 1466
+- `EnsembleModelZoo_InitBandits` — line 1530
+- `EnsembleModelZoo_InitExitBandits` — line 1578
+- `EnsembleModelZoo_InitBuyThompsonBandits` — line 1633
+- `EnsembleModelZoo_InitExitThompsonBandits` — line 1685
+- `EnsembleModelZoo_SetDisabledHorizons` — line 1727
+- `EnsembleModelZoo_Free` — line 1755
+- `EnsembleModelZoo_LoadFromCfg` — line 1789
+- `EnsembleZoo_VerifyGridMemberConsistency` — line 2049
+- `EnsembleModelZoo_AutoDetectFromDir` — line 2119
+- `EnsembleModelZoo_ComputeBundleId` — line 2262
+- `EnsembleModelZoo_SaveBanditState` — line 2287
+- `EnsembleModelZoo_SaveExitBanditState` — line 2309
+- `EnsembleModelZoo_LoadBanditState` — line 2333
+- `EnsembleModelZoo_LoadExitBanditState` — line 2364
+- `EnsembleModelZoo_SaveThompsonState` — line 2407
+- `EnsembleModelZoo_SaveExitThompsonState` — line 2496
+- `EnsembleModelZoo_LoadThompsonState` — line 2579
+- `EnsembleModelZoo_LoadExitThompsonState` — line 2713
+- `EnsembleModelZoo_LoadBanditStateFromPath` — line 2842
+- `EnsembleModelZoo_SetBanditSaveInterval` — line 2869
+- `EnsembleModelZoo_MaybeSaveBanditPeriodic` — line 2887
+- `EnsembleModelZoo_PostLoadSetup` — line 3007
+- `EnsembleModelZoo_IsReadyForInference` — line 3026
+- `NodeModelZoo_PostLoadSetup` — line 3067
+- `NodeModelZoo_CheckStaleModel` — line 3100
+
 ### PerArmFlagRegistry.hpp
 
 - `PerArmFlag_ToString` — line 149 — diagnostic panels.
@@ -988,7 +988,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `GUI_Panel_Account` — line 891 — PANEL: ACCOUNT (merged Portfolio + P&L + Risk)
 - `GUI_Panel_Config` — line 1130 — PANEL: CONFIG
 - `GUI_Panel_Positions` — line 1178 — PANEL: POSITIONS — proper table with aligned columns
-- `GUI_Panel_PerCorePnL` — line 1461 — Pure GUI thread, doesn't touch engine state.
+- `GUI_Panel_PerNodePnL` — line 1461 — Pure GUI thread, doesn't touch engine state.
 - `GUI_Panel_Stats` — line 1557 — PANEL: STATS
 - `GUI_Panel_Latency` — line 1647 — PANEL: LATENCY (conditional on LATENCY_PROFILING)
 - `GUI_Panel_MLIntelligence` — line 1703 — PANEL: ML INTELLIGENCE — bandit arms, confidence, cost, model info

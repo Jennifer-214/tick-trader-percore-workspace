@@ -2852,7 +2852,8 @@ related_specs: []
 - **Created:** 2026-05-28 by v5.15.5.F.4d.1.D.1 (doc-sweep ship; surfaced via rename-candidates running-list entry 2)
 - **Severity:** LOW
 - **Surface:** `engine.cfg` `engine_mode` field (values `sharded | single_core`) + its parser/consumer
-- **What's deferred:** With the legacy `single_core` mode deleted at `.E.0.1`, only `sharded` remains — `engine_mode` becomes vestigial (one surviving value). Delete the field + its parse/consume sites once `single_core` is gone.
+- **What's deferred:** With the legacy `single_core` mode now deleted, only `sharded` remains — `engine_mode` is vestigial (one surviving value). Delete the field + its parse/consume sites.
+- **disposition (2026-06-20, post-Phase-2):** THIS IS THE E.1.1 **Phase-3 ROOT EDIT** — delete the `engine_mode` registry row at `CfgFieldRegistry.hpp:393` (H17; auto-deletes the struct field + cascades enums/parser/readers) → closes TD-140 at Phase 3. **PREMISE CORRECTED:** single_core was deleted at `7eacb80` (E.1.1 Phase 2, 2026-06-20), NOT `.E.0.1` as the original 2026-05-28 body said. Cohort-sister of TD-185 (same single_core-deletion cohort; both annotated 2026-06-20 per `feedback_sister_cohort_amendment_completeness` — the one-more-sweep caught that TD-185 got annotated and TD-140 didn't).
 - **Why deferred (not effort-avoidance):** `.D.1` is a doc-only sweep (no engine code); `single_core` deletion is `.E.0.1`/`.E.1` scope. Deleting `engine_mode` before `single_core` is gone would be premature.
 - **Cost estimate:** ~1h; LOW risk; folds into the `single_core` deletion cohort.
 - **Trigger:** `.E.0.1` precursor (legacy `single_core` delete) OR `.E.1` Foundation.

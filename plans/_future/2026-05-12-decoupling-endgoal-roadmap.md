@@ -57,6 +57,15 @@ Operator design question surfaced the **control-boundary's sharpest case**, the 
 
 **Positioning:** this is the canonical *control* complement to the `.E.0.10` *publish* breadcrumb — **publish** = mmap snapshot (viewers read); **control** = UDS verbs (fox-cli writes). The TP/SL-adjust verb is the litmus for how much write-control the decoupled boundary exposes at all. **Decide at `.E.2` before the D-52 verb set locks.** → decision-log **D-241**; homed in the `.E.2` plan (command-channel/verb-set §) + the **TD-184** ledger entry.
 
+---
+
+## `.E.2` breadcrumb (2026-06-22) — backtest surface: CLI runner + read-only viewer (NOT a GUI utility) [OPEN — D-244]
+
+Operator design Q — the **backtest-tool** complement to the publish + control breadcrumbs above. Backtest is decoupled from LIVE (research, not the 24/7 capital engine), and the GUI hard-deprecates at `.E.2` (D-26) — so should backtest stay a GUI utility, or go CLI? **Same decoupling pattern as live: headless compute + read-only viewer + CLI control.**
+- **CLI runner is the core** — E.2's already-planned `foxml-train` (operator sketch `./foxmlsuite --backtest --config path`). Wins: SSH-friendly · scriptable/batchable · **reproducible** (`--config path` = the exact settings saved/versioned/re-runnable; a click-knobs GUI never captures what you ran) · lightweight (no SDL2/ImGui).
+- **The GUI-viewer-nice value survives as a read-only viewer on the backtest's OUTPUT artifacts** (equity curve / trades / metrics) — visual exploration without the backtest logic in the GUI. Not either/or.
+- **Positioning — the decoupling triad now has all three legs:** **publish** = mmap snapshot (`.E.0.10` breadcrumb) · **control** = UDS verbs (D-241 breadcrumb) · **compute/research** = the `foxml-train` CLI (this). The `.E.1.1` ③ config-compiler output (terminal + `config_error_log`) is the surface-agnostic seed that works for the CLI runner. **Decide at `.E.2`.** → decision-log **D-244**.
+
 ## Endgoal architecture (what success looks like)
 
 ```

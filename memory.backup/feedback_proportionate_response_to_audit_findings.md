@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: d6b9cf31-8bdc-41b7-aaf5-20e8983e9dfb
-  sister_specs: [feedback_enumerate_helper_signature_args_before_extract.md, feedback_implementation_detail_blindspot_recovery_via_taxonomy.md, feedback_prefer_action_parameterized_walker_over_per_consumer_walker_bodies.md, feedback_recheck_designspecs_on_pushback.md, feedback_tiered_audit_discipline_per_plan_scope.md, feedback_train_serve_execution_layer_meta_gap.md, feedback_address_med_low_findings_not_just_high_crit.md]
+  sister_specs: [feedback_enumerate_helper_signature_args_before_extract.md, feedback_implementation_detail_blindspot_recovery_via_taxonomy.md, feedback_prefer_action_parameterized_walker_over_per_consumer_walker_bodies.md, feedback_recheck_designspecs_on_pushback.md, feedback_tiered_audit_discipline_per_plan_scope.md, feedback_train_serve_execution_layer_meta_gap.md, feedback_address_med_low_findings_not_just_high_crit.md, feedback_surface_foundational_decisions_not_just_tactical.md]
   tags: [audit-methodology, scope-discipline]
 ---
 

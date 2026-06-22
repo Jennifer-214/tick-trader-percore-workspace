@@ -28207,9 +28207,10 @@ e3_skip_load:;
         check("v5.15.5.F.4d.1.A: CFG_COMPOSE_AUDIT_DECISIONS count = FOREACH_METADATA_BIT × 3",
               CFG_COMPOSE_AUDIT_DECISIONS_COUNT == FOREACH_METADATA_BIT_COUNT * COMPOSED_MASK_COUNT_AT_F4D1A);
 
-        // T7: FOREACH_METADATA_BIT enrollment count post-.A (was 11; +stamp_bound_cfg_derived = 12)
-        check("v5.15.5.F.4d.1.A: FOREACH_METADATA_BIT enrolls 12 bits post-.A",
-              FOREACH_METADATA_BIT_COUNT == 12);
+        // T7: FOREACH_METADATA_BIT enrollment count (was 11; +stamp_bound_cfg_derived = 12 at .A;
+        // +③ D-254 capital_bound_loss/gain = 14)
+        check("v5.15.5.F.4d.1.A→D-254: FOREACH_METADATA_BIT enrolls 14 bits",
+              FOREACH_METADATA_BIT_COUNT == 14);
     }
 
     {

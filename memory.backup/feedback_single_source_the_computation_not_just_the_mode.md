@@ -6,7 +6,7 @@ metadata:
   type: feedback
   tags: [ssot, audit-methodology]
   originSessionId: 3e806606-ac69-40fd-ac33-45906443bae4
-  sister_specs: [feedback_defer_to_source_authority_for_external_semantics.md, feedback_passing_test_is_not_verification.md, feedback_single_source_of_truth_discipline.md]
+  sister_specs: [feedback_defer_to_source_authority_for_external_semantics.md, feedback_passing_test_is_not_verification.md, feedback_single_source_of_truth_discipline.md, project_no_margin_trading.md]
 ---
 
 When the same money value is computed in more than one place (parallel accounting paths, per-core vs aggregate, live vs replay), single-source the FORMULA — not merely the rounding mode. A uniform rounding mode (half-even everywhere) does NOT make two paths agree if one computes `round((exit−entry)×qty)` (1 mul) and another `round(exit×qty) − round(entry×qty)` (2 muls): they diverge by 1 ULP. The complete fix is ONE shared helper (e.g. `Money_FillGross`) every path calls, so the values reconcile BY CONSTRUCTION, not by discipline.

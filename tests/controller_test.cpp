@@ -1727,6 +1727,40 @@ static void test_v5_15_5_F4c_cfg_field_dispatch() {
 //======================================================================================================
 // [MAIN]
 //======================================================================================================
+//======================================================================================================
+// [TEST: item-2 capital-migrate default contract (D-256)]
+//======================================================================================================
+// ADV-REFUTE: 2026-06-23 (item-2 migrate default-contract; the i-class + 2 a-class per-node-parser
+// re-vet adversarially verified the registry defaults produce byte-identical stored values to the
+// deleted manual defaults -- esp. min_hold_gain_pct DBL(0.1) percent-space -> cfg_assign_field /100 ->
+// 0.001 stored == MQ(0.001), the load-bearing case. No prior test asserted these 4 defaults, so the
+// build alone can't catch a silent registry-default drift. SSoT:
+// plan_checks/2026-06-23-E.1.1-item2-precoding-sweep.md.)
+static void test_item2_capital_migrate_defaults() {
+    printf("\n--- item-2: capital-migrate default contract (D-256) ---\n");
+    ControllerConfig<FP> cfg = ControllerConfig_Default<FP>();
+    check("starting_balance default == 1,000,000", Money_Eq(cfg.starting_balance, MQ(1000000.0)));
+    check("min_kill_loss default == $5", Money_Eq(cfg.min_kill_loss, MQ(5.0)));
+    check("min_sl_tp_ratio default == 0.5", Money_Eq(cfg.min_sl_tp_ratio, MQ(0.5)));
+    // load-bearing /100: KIND_DOUBLE_PCT DBL(0.1) -> stored fraction 0.001 (NOT 0.1)
+    check("min_hold_gain_pct default == 0.001 (/100)", Money_Eq(cfg.min_hold_gain_pct, MQ(0.001)));
+
+    // B1 (D-256) -- the founding-bug close for the migrated globals: a MALFORMED capital global now
+    // FATALs (unit-agnostic; meta=0, decoupled from the CAPITAL_BOUND bit-gate). Pre-B1 it warn-and-booted.
+    { FILE *fb = fopen("/tmp/test_item2_b1_bad.cfg", "w");
+      fprintf(fb, "starting_balance=banana\n"); fclose(fb);
+      ControllerConfig<FP> bad = ControllerConfig_Load<FP>("/tmp/test_item2_b1_bad.cfg");
+      check("B1: malformed starting_balance sets a capital fault (founding bug CLOSED)", bad.cfg_load_fault_flags != 0u);
+      check("B1: malformed starting_balance -> cfg_compile_ok() false", !cfg_compile_ok(bad));
+      remove("/tmp/test_item2_b1_bad.cfg"); }
+    // positive control (non-vacuity): a CLEAN global -> no capital fault, compile ok
+    { FILE *fg = fopen("/tmp/test_item2_b1_ok.cfg", "w");
+      fprintf(fg, "starting_balance=50000.0\n"); fclose(fg);
+      ControllerConfig<FP> good = ControllerConfig_Load<FP>("/tmp/test_item2_b1_ok.cfg");
+      check("B1: clean starting_balance -> cfg_compile_ok() true (positive control)", cfg_compile_ok(good));
+      remove("/tmp/test_item2_b1_ok.cfg"); }
+}
+
 int main() {
     // v5.11.0.A — Match engine's MXCSR state so snapshot tests for feature
     // compute don't silently diverge in subnormal territory. See
@@ -1748,6 +1782,7 @@ int main() {
     test_v5_15_5_F4b_cfg_field_dispatch();  // v5.15.5.F.4b — CfgFieldRegistry + tt:: dispatch
     test_v5_15_5_F4c_cfg_field_dispatch();  // v5.15.5.F.4c — KIND_INT/_BOOL dispatch + bitmap framework + tooltip stability
     test_config_parser();
+    test_item2_capital_migrate_defaults();
     test_portfolio_bitmap();
     test_portfolio_pnl();
     test_consolidation();

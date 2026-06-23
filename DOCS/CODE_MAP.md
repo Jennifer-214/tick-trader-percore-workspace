@@ -4,7 +4,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-06-22 (commit 03830e8)
+**Last regenerated**: 2026-06-23 (commit 98267be)
 
 ## CoreFrameworks/
 
@@ -22,12 +22,12 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### ControllerConfig.hpp
 
-- `Fee_Compute` — line 1378
-- `ControllerConfig_ResolveForCore` — line 1396
-- `ControllerConfig_PopulateCoresFromFlat` — line 1458
-- `ControllerConfig_NormalizeForMode` — line 2014
-- `ControllerConfig_IsLiveCapital` — line 2048
-- `ControllerConfig_Load` — line 2059
+- `Fee_Compute` — line 1383
+- `ControllerConfig_ResolveForCore` — line 1401
+- `ControllerConfig_PopulateCoresFromFlat` — line 1463
+- `ControllerConfig_NormalizeForMode` — line 2013
+- `ControllerConfig_IsLiveCapital` — line 2047
+- `ControllerConfig_Load` — line 2058
 
 ### ControllerEventLoop.hpp
 
@@ -1177,7 +1177,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ## Top-level files
 
-- `main.cpp` — 222 lines
+- `main.cpp` — 217 lines
 - `Version.hpp` — 1082 lines
 - `Limits.hpp` — 30 lines
 

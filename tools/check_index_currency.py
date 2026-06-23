@@ -29,8 +29,13 @@ from pathlib import Path
 
 # `status: active` ONLY inside frontmatter (anchored). Body prose must not count.
 ACTIVE_RE = re.compile(r'^status:\s*active\b', re.MULTILINE)
-# A handoff reference: `handoffs/<basename>.md`
-HANDOFF_REF_RE = re.compile(r'handoffs/([A-Za-z0-9._-]+\.md)')
+# A handoff reference: `handoffs/<basename>.md`. The char class is NON-ASCII-SAFE — a
+# filename step-marker like `③` MUST match (the `.E.1.1` bug: the old `[A-Za-z0-9._-]`
+# class silently dropped a `③`-named handoff → master_banner_pointer fell back to an older
+# ASCII-named ref → the guard reported a phantom STALE while the real pointer was current).
+# Excludes whitespace + markdown delimiters (backtick / paren-close / asterisk / angle) so a
+# `…handoff.md` (closing backtick or paren) ENDS the capture; non-greedy → each ref on a line matches.
+HANDOFF_REF_RE = re.compile(r'handoffs/([^\s`)*<>]+?\.md)')
 
 
 def repo_root() -> Path:
@@ -147,14 +152,17 @@ def selftest() -> int:
             body += "---\n\nbody mentions handoffs/decoy.md in prose\n"
             (hd / name).write_text(body)
 
-        wh("2026-01-01-live.md", "active")
+        # The live handoff carries a NON-ASCII `③` step-marker in its name — this is the
+        # `.E.1.1` regression's teeth: if HANDOFF_REF_RE can't match `③`, the master pointer
+        # reads as None/stale and this 'ok' assertion fails (the exact bug the fix closes).
+        wh("2026-01-01-③-live.md", "active")
         wh("2026-01-01-old.md", "superseded")
-        live = hd / "2026-01-01-live.md"
+        live = hd / "2026-01-01-③-live.md"
 
         master.write_text("# MASTER\n\n> **CURRENT STATE**\n"
-                          "> **Pickup -> `handoffs/2026-01-01-live.md` (the ACTIVE one).**\n")
+                          "> **Pickup -> `handoffs/2026-01-01-③-live.md` (the ACTIVE one).**\n")
         if check_sprint(live)[0] != "ok":
-            print("SELFTEST FAIL: matching pointer not 'ok'"); ok = False
+            print("SELFTEST FAIL: non-ASCII (③) matching pointer not 'ok' — regex dropped the marker"); ok = False
 
         master.write_text("# MASTER\n\n> **Pickup -> `handoffs/2026-01-01-old.md` (the ACTIVE one).**\n")
         if check_sprint(live)[0] != "stale":

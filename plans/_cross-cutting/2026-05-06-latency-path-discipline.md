@@ -349,6 +349,16 @@ Run this checklist before any PR that modifies `ExecutionCore_Tick`,
 
 If any item fails, the change isn't ready.
 
+### Register spills (the register-level latency leak) — added `.E.1.1` 2026-06-24
+
+**What.** When a hot function's simultaneously-live values exceed the CPU's ~16 general-purpose registers, the compiler SPILLS the excess to the stack — a store now (`mov %reg, -N(%rbp)`) and a reload later. Each spill is extra µops + memory traffic (even when L1-resident) + a lengthened dependency chain.
+
+**Why it's a hot-path concern.** It's the SAME working-set gradient as cache discipline, one rung up: register-resident > L1 > spill-to-stack. On a sub-µs branchless path a spill in the inner loop adds latency AND variance (the determinism enemy — H8). The usual trigger here is our 16B types: `Money` / `FPN_Binary<64>` cost **two** GP registers each, so holding several live at once exhausts the file fast; deep inlining + over-unrolling compound it.
+
+**Detection — ADVISORY, not a hard gate.** `tools/check_latency_path_conformance.py` counts spills (the `mov %reg,-0xNN(%rbp)`-beyond-preamble heuristic, `spills=N` in its readout). It is deliberately NOT strict-teeth'd: a frame-relative store isn't always a spill (a struct field written to a stack local looks identical), so a non-zero count is a SIGNAL to inspect the `-S` / `objdump` of the inner loop, not an auto-fail. Hand-confirm before calling it a regression.
+
+**Mitigation.** Shorten live ranges (reorder so a value dies before the next is born); hold fewer 16B `Money`/`FPN` values live at once (recompute-cheap can beat hold-live); split an over-pressured hot fn; `__restrict` to free aliasing-pinned registers; don't over-unroll. Same goal as the cache rung — keep the hot working set in the fastest tier.
+
 ---
 
 ## Anti-patterns observed historically

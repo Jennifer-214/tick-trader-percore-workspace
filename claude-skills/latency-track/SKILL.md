@@ -146,6 +146,7 @@ the diff hunks and classify each ADDED line:
 - New mask compute / branchless predicate
 - New memory load (especially uncached / cross-cache-line)
 - New writes that could cause false sharing
+- New register-pressure: more simultaneously-live locals on the hot path — ESPECIALLY several 16B `Money`/`FPN_Binary` values held live at once (TWO GP regs each) — can tip the fn into STACK SPILLS (store/reload µops + variance). Verify via `check_latency_path_conformance.py`'s `spills=N` (ADVISORY — inspect `-S` if it ROSE vs the pre-change build; not an auto-fail). See `latency-path-discipline.md` § Register spills.
 
 **Latency-neutral additions** (no entry needed):
 - Comments

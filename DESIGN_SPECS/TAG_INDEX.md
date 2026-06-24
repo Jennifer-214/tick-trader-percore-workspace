@@ -168,12 +168,13 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/capital-allocation-policy-pattern.md`
 
-### capital-safety (9 files)
+### capital-safety (10 files)
 
 - `DESIGN_SPECS/audit-methodologies/characterization-test-discipline.md`
 - `DESIGN_SPECS/data-disciplines/fill-path-completeness-and-normalization-discipline.md`
 - `DESIGN_SPECS/data-disciplines/per-node-position-ownership-model.md`
 - `DESIGN_SPECS/data-disciplines/per-node-purity-scale-invariance.md`
+- `DESIGN_SPECS/framework-patterns/config-compiler-validation-pattern.md`
 - `DESIGN_SPECS/framework-patterns/single-authority-predicate-for-mode-gating.md`
 - `DESIGN_SPECS/meta-disciplines/adversarial-pessimistic-simulation-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/representation-migration-completeness.md`
@@ -242,8 +243,9 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/runtime-mutable-vs-boot-time-config-pattern.md`
 
-### config-validation (1 files)
+### config-validation (2 files)
 
+- `DESIGN_SPECS/framework-patterns/config-compiler-validation-pattern.md`
 - `DESIGN_SPECS/framework-patterns/hierarchical-config-validation-pattern.md`
 
 ### conservative-bias (1 files)
@@ -506,7 +508,7 @@ This file is a snapshot for static browsing.
 - `claude-skills/accounting-audit/SKILL.md`
 - `claude-skills/patch-planner/SKILL.md`
 
-### framework-discipline (128 files)
+### framework-discipline (129 files)
 
 - `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md`
 - `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md`
@@ -531,6 +533,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/cfg-field-categorization-discipline.md`
 - `DESIGN_SPECS/framework-patterns/cluster-node-hierarchy-filesystem-layout-pattern.md`
 - `DESIGN_SPECS/framework-patterns/composed-filter-mask-pattern.md`
+- `DESIGN_SPECS/framework-patterns/config-compiler-validation-pattern.md`
 - `DESIGN_SPECS/framework-patterns/crash-recovery-action-policy-pattern.md`
 - `DESIGN_SPECS/framework-patterns/crash-recovery-via-mmap-state-pattern.md`
 - `DESIGN_SPECS/framework-patterns/curve-registry-pattern.md`
@@ -985,11 +988,12 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/data-disciplines/locale-determinism-discipline.md`
 
-### pattern-codification (22 files)
+### pattern-codification (23 files)
 
 - `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md`
 - `DESIGN_SPECS/framework-patterns/categorical-tag-applicability-pattern.md`
 - `DESIGN_SPECS/framework-patterns/cfg-derived-consumer-framework.md`
+- `DESIGN_SPECS/framework-patterns/config-compiler-validation-pattern.md`
 - `DESIGN_SPECS/framework-patterns/framework-composition-overview.md`
 - `DESIGN_SPECS/framework-patterns/heterogeneous-registry-pattern.md`
 - `DESIGN_SPECS/framework-patterns/manual-fields-inventory-pattern.md`
@@ -1252,8 +1256,9 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/concurrency-patterns/spsc-vs-blackboard-selection-criteria.md`
 
-### ssot (4 files)
+### ssot (5 files)
 
+- `DESIGN_SPECS/framework-patterns/config-compiler-validation-pattern.md`
 - `DESIGN_SPECS/framework-patterns/single-authority-predicate-for-mode-gating.md`
 - `DESIGN_SPECS/meta-disciplines/representation-migration-completeness.md`
 - `DESIGN_SPECS/meta-disciplines/single-source-of-truth-discipline.md`
@@ -1280,7 +1285,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/meta-disciplines/mechanical-verification-of-derived-code-facts.md`
 
-### structural-fix (82 files)
+### structural-fix (83 files)
 
 - `DESIGN_SPECS/audit-methodologies/static-latency-path-conformance-analysis.md`
 - `DESIGN_SPECS/concurrency-patterns/phase-separated-drainer-for-safe-cross-temporal-derives.md`
@@ -1297,6 +1302,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/cfg-derived-consumer-framework.md`
 - `DESIGN_SPECS/framework-patterns/cfg-field-categorization-discipline.md`
 - `DESIGN_SPECS/framework-patterns/composed-filter-mask-pattern.md`
+- `DESIGN_SPECS/framework-patterns/config-compiler-validation-pattern.md`
 - `DESIGN_SPECS/framework-patterns/display-execution-invariant-registry-pattern.md`
 - `DESIGN_SPECS/framework-patterns/manual-fields-inventory-pattern.md`
 - `DESIGN_SPECS/framework-patterns/meta-registry-pattern-for-codebase-registry-discipline.md`
@@ -1581,10 +1587,11 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/hierarchical-config-validation-pattern.md`
 - `DESIGN_SPECS/framework-patterns/kernel-vs-userspace-networking-cfg-pattern.md`
 
-### boot-time (10 files)
+### boot-time (11 files)
 
 - `DESIGN_SPECS/data-disciplines/cpp17-inline-variable-for-header-shared-state.md`
 - `DESIGN_SPECS/data-disciplines/locale-determinism-discipline.md`
+- `DESIGN_SPECS/framework-patterns/config-compiler-validation-pattern.md`
 - `DESIGN_SPECS/framework-patterns/postloadsetup-registry-pattern.md`
 - `DESIGN_SPECS/framework-patterns/single-authority-predicate-for-mode-gating.md`
 - `DESIGN_SPECS/meta-disciplines/dead-code-and-identifier-retirement-discipline.md`
@@ -1610,6 +1617,10 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/meta-disciplines/mechanical-verification-of-derived-code-facts.md`
 
+### capital-allocation (1 files)
+
+- `DESIGN_SPECS/framework-patterns/config-compiler-validation-pattern.md`
+
 ### capital-management (4 files)
 
 - `DESIGN_SPECS/framework-patterns/capital-allocation-policy-pattern.md`
@@ -1617,12 +1628,13 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/meta-disciplines/adversarial-pessimistic-simulation-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/backtest-paper-live-convergence-discipline.md`
 
-### cfg-flow (27 files)
+### cfg-flow (28 files)
 
 - `DESIGN_SPECS/data-disciplines/per-node-purity-scale-invariance.md`
 - `DESIGN_SPECS/framework-patterns/categorical-tag-applicability-pattern.md`
 - `DESIGN_SPECS/framework-patterns/cfg-derived-consumer-framework.md`
 - `DESIGN_SPECS/framework-patterns/cfg-field-categorization-discipline.md`
+- `DESIGN_SPECS/framework-patterns/config-compiler-validation-pattern.md`
 - `DESIGN_SPECS/framework-patterns/framework-composition-overview.md`
 - `DESIGN_SPECS/framework-patterns/metadata-bit-driven-derived-filter-framework.md`
 - `DESIGN_SPECS/framework-patterns/per-bit-per-core-override-pattern.md`
@@ -1940,6 +1952,10 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/ibkr-fa-structure-pattern.md`
 
+### multi-exchange-substrate (1 files)
+
+- `DESIGN_SPECS/framework-patterns/config-compiler-validation-pattern.md`
+
 ### network-io (1 files)
 
 - `DESIGN_SPECS/concurrency-patterns/io-uring-kernel-bypass-pattern.md`
@@ -2000,8 +2016,9 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/subsystem-designs/exit-chain-tp-sl-design.md`
 
-### parser (6 files)
+### parser (7 files)
 
+- `DESIGN_SPECS/framework-patterns/config-compiler-validation-pattern.md`
 - `DESIGN_SPECS/framework-patterns/universal-cfg-field-registry-pattern.md`
 - `DESIGN_SPECS/refactor-patterns/cfg-scope-discipline.md`
 - `DESIGN_SPECS/refactor-patterns/cfg-section-parser-state-machine.md`

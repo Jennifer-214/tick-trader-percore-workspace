@@ -2,7 +2,7 @@
 
 **Auto-generated** by `tools/rebuild_doc_indexes.py`. Regenerate after adding/moving specs.
 
-Total: 179 specs across 13 types.
+Total: 180 specs across 13 types.
 
 Per-type catalog grouped by lifecycle stage. Cross-ref:
 - `doc-frontmatter-convention.md` (frontmatter schema)
@@ -39,7 +39,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/refactor-patterns/template-deferred-dependency-injection.md` | 3-first-canonical | framework-discipline, structural-fix | 3 |
 | `DESIGN_SPECS/refactor-patterns/transient-aggregation-bitmap-pattern.md` | 3-first-canonical | data-oriented-design, branchless-discipline | 4 |
 
-## framework-pattern (69 specs)
+## framework-pattern (70 specs)
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
@@ -54,6 +54,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/framework-patterns/cfg-field-categorization-discipline.md` | 3-first-canonical | framework-discipline, data-oriented-design, structural-fix | 5 |
 | `DESIGN_SPECS/framework-patterns/cluster-node-hierarchy-filesystem-layout-pattern.md` | 3-first-canonical | framework-discipline, cluster-node-hierarchy, filesystem-layout, +1 | 0 |
 | `DESIGN_SPECS/framework-patterns/composed-filter-mask-pattern.md` | 3-first-canonical | framework-discipline, branchless-discipline, structural-fix | 3 |
+| `DESIGN_SPECS/framework-patterns/config-compiler-validation-pattern.md` | 3-first-canonical | framework-discipline, capital-safety, config-validation, +3 | 7 |
 | `DESIGN_SPECS/framework-patterns/crash-recovery-action-policy-pattern.md` | 2-draft | framework-discipline, crash-recovery, operator-policy | 0 |
 | `DESIGN_SPECS/framework-patterns/crash-recovery-via-mmap-state-pattern.md` | 3-first-canonical | framework-discipline, crash-recovery, mmap, +2 | 0 |
 | `DESIGN_SPECS/framework-patterns/curve-registry-pattern.md` | 3-first-canonical | framework-discipline, branchless-discipline | 3 |

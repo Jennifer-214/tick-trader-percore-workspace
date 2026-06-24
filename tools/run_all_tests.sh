@@ -50,6 +50,8 @@ run "determinism net (check_determinism)" HARD -- ./tools/check_determinism.sh
 run "latency-path conformance (check_latency_path_conformance)" HARD -- python3 ./tools/check_latency_path_conformance.py
 run "latency-conformance teeth (--selftest)"                    HARD -- python3 ./tools/check_latency_path_conformance.py --selftest
 run "rename-cascade teeth (cascade --selftest)"                 HARD -- bash ./tools/cascade_selftest.sh
+run "cfg-key/parser-prefix drift (check_cfg_key_prefix_drift)"  HARD -- python3 ./tools/check_cfg_key_prefix_drift.py
+run "cfg-key-prefix teeth (--selftest)"                         HARD -- python3 ./tools/check_cfg_key_prefix_drift.py --selftest
 
 # --- --full / --ci: sanitizer lanes (COMPOSE the canonical gate; do NOT reimplement the
 #     asan/ubsan/tsan build+run here — run_sanitizer_suite.sh owns the pinned run-conditions

@@ -1761,6 +1761,225 @@ static void test_item2_capital_migrate_defaults() {
       remove("/tmp/test_item2_b1_ok.cfg"); }
 }
 
+//======================================================================================================
+// [TEST: item-2 PER-NODE money-override malformed-capture (D-256 b/c)]
+//======================================================================================================
+// ADV-REFUTE: 2026-06-23 (item-2(b) per-node PCT + hand-rolled-money override flag-capture). B1 lives at
+// the WALKER (tt::cfg_parse_field) which does NOT reach the per-node override channel (_PARSE_OV_PCT + the
+// 3 hand-rolled money outliers fee_floor_mult/partial_exit_pct/tp2_mult) -- pre-fix those DISCARDED
+// Money_FromString().flags, so node_0_stop_loss_pct=banana silently stored 0 (SL off), uncaught between
+// item-2's globals and item-4's <=100% cap (which 0 passes). NON-VACUITY (the load-bearing control): the
+// EMPTY-value case (node_0_take_profit_pct=) MUST stay a CLEAN INHERIT, not a fault -- a blanket "any flag
+// -> fault" over-fires on the documented empty/0=inherit convention and is REFUTED by check (3) below
+// (Money_FromString("") flags MALFORMED via FP_SCAN_NO_DIGITS, so the val[0] guard is load-bearing).
+// Independent agent refute owed at the (5) V-class (this marker = self-authored non-vacuity reasoning).
+// SSoT: plan_checks/2026-06-23-E.1.1-item2-precoding-sweep.md (pins 1-7).
+static void test_item2_pernode_malformed() {
+    printf("\n--- item-2: per-node money-override malformed-capture (D-256 b/c) ---\n");
+    // (1) founding bug at the per-node PCT surface: a malformed override sets a capital fault + refuses boot
+    { FILE *fb = fopen("/tmp/test_item2_pn_bad.cfg", "w");
+      fprintf(fb, "node_0_take_profit_pct=banana\n"); fclose(fb);
+      ControllerConfig<FP> bad = ControllerConfig_Load<FP>("/tmp/test_item2_pn_bad.cfg");
+      check("per-node: malformed take_profit_pct override sets a capital fault", bad.cfg_load_fault_flags != 0u);
+      check("per-node: malformed override -> cfg_compile_ok() false", !cfg_compile_ok(bad));
+      remove("/tmp/test_item2_pn_bad.cfg"); }
+    // (2) the hand-rolled money outlier (partial_exit_pct) rides the SAME single-source helper -> faults too
+    { FILE *fb = fopen("/tmp/test_item2_pn_bad2.cfg", "w");
+      fprintf(fb, "node_0_partial_exit_pct=1,5\n"); fclose(fb);   // locale comma = malformed (FP_SCAN_BAD_CHAR)
+      ControllerConfig<FP> bad = ControllerConfig_Load<FP>("/tmp/test_item2_pn_bad2.cfg");
+      check("per-node: malformed partial_exit_pct (hand-rolled outlier) faults too", !cfg_compile_ok(bad));
+      remove("/tmp/test_item2_pn_bad2.cfg"); }
+    // (3) NON-VACUITY control: an EMPTY override = clean inherit, NOT a fault (the val[0] over-fire guard;
+    //     a blanket-fault regression FAILS here -- this is what makes (1)/(2) non-vacuous).
+    { FILE *fe = fopen("/tmp/test_item2_pn_empty.cfg", "w");
+      fprintf(fe, "node_0_take_profit_pct=\n"); fclose(fe);
+      ControllerConfig<FP> emp = ControllerConfig_Load<FP>("/tmp/test_item2_pn_empty.cfg");
+      check("per-node: EMPTY override = clean inherit, NOT a fault (non-vacuity control)", cfg_compile_ok(emp));
+      remove("/tmp/test_item2_pn_empty.cfg"); }
+    // (4) positive control + value path intact: a clean override stores the /100-scaled value, no fault
+    { FILE *fg = fopen("/tmp/test_item2_pn_ok.cfg", "w");
+      fprintf(fg, "node_0_take_profit_pct=5.0\n"); fclose(fg);
+      ControllerConfig<FP> good = ControllerConfig_Load<FP>("/tmp/test_item2_pn_ok.cfg");
+      check("per-node: clean override -> cfg_compile_ok() true (positive control)", cfg_compile_ok(good));
+      check("per-node: clean override value path intact (5.0 -> 0.05 stored)",
+            Money_Eq(good.node_overrides[0].take_profit_pct, MQ(0.05)));
+      remove("/tmp/test_item2_pn_ok.cfg"); }
+    // (5) RAW channel (FPN feature override): malformed -> the SAME shared fault (no atof silent-0)
+    { FILE *fb = fopen("/tmp/test_item2_pn_raw_bad.cfg", "w");
+      fprintf(fb, "node_0_momentum_r2_min=banana\n"); fclose(fb);
+      ControllerConfig<FP> bad = ControllerConfig_Load<FP>("/tmp/test_item2_pn_raw_bad.cfg");
+      check("per-node RAW: malformed momentum_r2_min override faults (no atof silent-0)", !cfg_compile_ok(bad));
+      remove("/tmp/test_item2_pn_raw_bad.cfg"); }
+    // (6) PIN-4 Class-48 CONTROL (load-bearing non-vacuity): winsor_pct_high=0 MUST stay 0=inherit, NOT be
+    //     clamped to its clamp_min=0.5. The in-macro flag-capture never clamps; routing this through
+    //     cfg_parse_field instead would floor 0->0.5 and DESTROY the inherit sentinel (the live Class-48).
+    { FILE *fz = fopen("/tmp/test_item2_pn_winsor0.cfg", "w");
+      fprintf(fz, "node_0_winsor_pct_high=0\n"); fclose(fz);
+      ControllerConfig<FP> wz = ControllerConfig_Load<FP>("/tmp/test_item2_pn_winsor0.cfg");
+      check("per-node RAW: winsor_pct_high=0 is a clean (non-faulting) value", cfg_compile_ok(wz));
+      check("per-node RAW: winsor_pct_high=0 stays 0=inherit, NOT clamped to 0.5 (Class-48 control)",
+            FPN_ToDouble(wz.node_overrides[0].winsor_pct_high) == 0.0);
+      remove("/tmp/test_item2_pn_winsor0.cfg"); }
+    // (7) RAW empty = clean inherit, NOT a fault (over-fire guard parity with the money channel)
+    { FILE *fe = fopen("/tmp/test_item2_pn_raw_empty.cfg", "w");
+      fprintf(fe, "node_0_winsor_pct_high=\n"); fclose(fe);
+      ControllerConfig<FP> emp = ControllerConfig_Load<FP>("/tmp/test_item2_pn_raw_empty.cfg");
+      check("per-node RAW: EMPTY override = clean inherit, NOT a fault", cfg_compile_ok(emp));
+      remove("/tmp/test_item2_pn_raw_empty.cfg"); }
+}
+
+//======================================================================================================
+// [TEST: item-2 PER-NODE legacy-array fold + malformed-capture (D-256 c/d)]
+//======================================================================================================
+// ADV-REFUTE: 2026-06-24 (item-2 c/d: the 7-strstr→exact-suffix fold + the 2 legacy CAPITAL arrays'
+// malformed-capture; verified against the 4-agent I→A design cascade). Two NON-VACUITY controls:
+// (a) the strstr→exact-suffix UNDER-FIRE FIX — a typo'd capital key (node_0_risk_pct_typo) must NO LONGER
+// substring-match _risk_pct and silently write slot 0 (the G5/G6 swallow-and-coerce bug the fold exists
+// to kill); a fold that left strstr in place FAILS check (3). (b) BEHAVIOR-PRESERVATION — the numeric
+// strategy fallback (node_0_strategy=3) and the explicit-set bitmap must survive the fold (safety-agent
+// pins). NOTE: an unknown node_ key is silently IGNORED here (the unknown-KEY refuse is task-#1's
+// clean-break, NOT item-2 — it must cover core_* too, per the safety a-class). SSoT: the item-2 sweep doc.
+static void test_item2_pernode_fold() {
+    printf("\n--- item-2: per-node legacy-array fold + malformed-capture (D-256 c/d) ---\n");
+    // (1) the 2 legacy CAPITAL arrays now malformed-capture (item-2c) — were bare Money_FromString().value
+    { FILE *fb = fopen("/tmp/test_item2_fold_risk_bad.cfg", "w");
+      fprintf(fb, "node_0_risk_pct=banana\n"); fclose(fb);
+      ControllerConfig<FP> bad = ControllerConfig_Load<FP>("/tmp/test_item2_fold_risk_bad.cfg");
+      check("fold: malformed node_0_risk_pct (legacy capital array) faults", !cfg_compile_ok(bad));
+      remove("/tmp/test_item2_fold_risk_bad.cfg"); }
+    { FILE *fb = fopen("/tmp/test_item2_fold_dd_bad.cfg", "w");
+      fprintf(fb, "node_1_max_drawdown_pct=1,5\n"); fclose(fb);   // locale comma = malformed
+      ControllerConfig<FP> bad = ControllerConfig_Load<FP>("/tmp/test_item2_fold_dd_bad.cfg");
+      check("fold: malformed node_1_max_drawdown_pct (legacy capital array) faults", !cfg_compile_ok(bad));
+      remove("/tmp/test_item2_fold_dd_bad.cfg"); }
+    // (2) NON-VACUITY: the strstr→exact-suffix under-fire fix — a typo'd capital key must NOT write slot 0
+    { FILE *ft = fopen("/tmp/test_item2_fold_typo.cfg", "w");
+      fprintf(ft, "node_0_risk_pct_typo=5.0\n"); fclose(ft);
+      ControllerConfig<FP> typo = ControllerConfig_Load<FP>("/tmp/test_item2_fold_typo.cfg");
+      check("fold: node_0_risk_pct_typo does NOT write node_risk_pct[0] (substring under-fire FIXED)",
+            Money_IsZero(typo.node_risk_pct[0]));
+      remove("/tmp/test_item2_fold_typo.cfg"); }
+    // (3) behavior-preservation: clean value stores, numeric + named strategy survive, bitmap set
+    { FILE *fg = fopen("/tmp/test_item2_fold_ok.cfg", "w");
+      fprintf(fg, "node_0_risk_pct=20.0\nnode_0_strategy=3\nnode_2_strategy=momentum\n"); fclose(fg);
+      ControllerConfig<FP> good = ControllerConfig_Load<FP>("/tmp/test_item2_fold_ok.cfg");
+      check("fold: clean node_0_risk_pct=20.0 -> 0.20 stored (value path intact)",
+            Money_Eq(good.node_risk_pct[0], MQ(0.20)));
+      check("fold: numeric strategy fallback node_0_strategy=3 preserved", good.node_strategies[0] == 3);
+      check("fold: named strategy node_2_strategy=momentum -> 1 preserved", good.node_strategies[2] == 1);
+      check("fold: node_strategies_explicit_set bitmap preserved (bits 0 + 2)",
+            (good.node_strategies_explicit_set & 0x5u) == 0x5u);
+      check("fold: clean cfg compiles ok (positive control)", cfg_compile_ok(good));
+      remove("/tmp/test_item2_fold_ok.cfg"); }
+}
+
+//======================================================================================================
+// [TEST: ③ B — global fee-rate malformed-capture (G1/G2)]
+//======================================================================================================
+// ADV-REFUTE: 2026-06-24 (③ B — the capital-money single-source extended to the GLOBAL fee_rate_maker/
+// taker, found by the swallow-and-coerce sweep as HIGH capital: they route AROUND cfg_compile_ok because
+// the explicitly_set side-effect forces them MANUAL-parsed, so the B1 walker never saw them; bare
+// Money_FromString(val).value discarded .flags → fee_rate_taker=1,5 → silent 0% fee = over-optimistic
+// P&L). Globals have no inherit sentinel → empty_is_fault=true (an empty fee is operator error, NOT 0%).
+// NON-VACUITY: the clean control (3) still parses + stores the /100-scaled value. SSoT: the swallow-and-
+// coerce 4-agent sweep 2026-06-24.
+static void test_item2_fee_rate_capture() {
+    printf("\n--- ③ B: global fee-rate malformed-capture (G1/G2) ---\n");
+    // (1) malformed fee → fault (the silent-0%-fee founding bug on the global fee surface)
+    { FILE *fb = fopen("/tmp/test_b_fee_bad.cfg", "w");
+      fprintf(fb, "fee_rate_taker=1,5\n"); fclose(fb);   // locale comma = malformed
+      ControllerConfig<FP> bad = ControllerConfig_Load<FP>("/tmp/test_b_fee_bad.cfg");
+      check("B: malformed fee_rate_taker faults (no silent 0% fee)", !cfg_compile_ok(bad));
+      remove("/tmp/test_b_fee_bad.cfg"); }
+    { FILE *fb = fopen("/tmp/test_b_fee_bad2.cfg", "w");
+      fprintf(fb, "fee_rate_maker=banana\n"); fclose(fb);
+      ControllerConfig<FP> bad = ControllerConfig_Load<FP>("/tmp/test_b_fee_bad2.cfg");
+      check("B: malformed fee_rate_maker faults", !cfg_compile_ok(bad));
+      remove("/tmp/test_b_fee_bad2.cfg"); }
+    // (2) EMPTY global fee = fault (no inherit for a global money field; empty_is_fault=true)
+    { FILE *fe = fopen("/tmp/test_b_fee_empty.cfg", "w");
+      fprintf(fe, "fee_rate_maker=\n"); fclose(fe);
+      ControllerConfig<FP> emp = ControllerConfig_Load<FP>("/tmp/test_b_fee_empty.cfg");
+      check("B: EMPTY fee_rate_maker faults (global has no inherit sentinel)", !cfg_compile_ok(emp));
+      remove("/tmp/test_b_fee_empty.cfg"); }
+    // (3) positive control + value path intact: clean fee parses, no fault, /100 scale preserved
+    { FILE *fg = fopen("/tmp/test_b_fee_ok.cfg", "w");
+      fprintf(fg, "fee_rate_maker=0.1\nfee_rate_taker=0.2\n"); fclose(fg);
+      ControllerConfig<FP> good = ControllerConfig_Load<FP>("/tmp/test_b_fee_ok.cfg");
+      check("B: clean fee_rates -> cfg_compile_ok true (positive control)", cfg_compile_ok(good));
+      check("B: clean fee_rate_maker=0.1 -> 0.001 stored (value path /100 intact)",
+            Money_Eq(good.fee_rate_maker, MQ(0.001)));
+      remove("/tmp/test_b_fee_ok.cfg"); }
+}
+
+//======================================================================================================
+// [TEST: ③ clean-break — unrecognized SHARDED key HARD-REFUSE (D-223/D-255)]
+//======================================================================================================
+// ADV-REFUTE: 2026-06-24 (the loop-tail unknown-key refuse, scoped to core_*/node_*). The LOAD-BEARING
+// non-vacuity is the FALSE-REFUSE-SAFETY control (3): a NON-sharded sibling-parser key (use_testnet, a
+// BinanceConfig key read from this SAME cfg file at main.cpp:75) must NOT be refused by ControllerConfig's
+// clean-break -- false-refusing a sibling parser's key would break boot. The core_ case carries the .E.1.1
+// migration message; the node_-typo case now FAULTS (it was the prior silent under-fire). The broader
+// global-unknown-key refuse is deliberately OUT of scope (needs the multi-parser unification, N1/#10).
+// SSoT: D-223/D-255 + the 4-agent gap cascade 2026-06-24.
+static void test_cleanbreak_unknown_key() {
+    printf("\n--- ③ clean-break: unrecognized SHARDED key refuse (D-223/D-255) ---\n");
+    // (1) RETIRED core_ prefix -> UNKNOWN_KEY fault + migration message (an un-migrated operator cfg)
+    { FILE *f = fopen("/tmp/test_cb_core.cfg", "w");
+      fprintf(f, "core_0_strategy=momentum\n"); fclose(f);
+      ControllerConfig<FP> c = ControllerConfig_Load<FP>("/tmp/test_cb_core.cfg");
+      check("clean-break: retired core_0_strategy key -> refuse", !cfg_compile_ok(c));
+      check("clean-break: the fault bit is UNKNOWN_KEY (not capital-malformed)",
+            (c.cfg_load_fault_flags & CFG_FAULT_UNKNOWN_KEY) != 0u);
+      remove("/tmp/test_cb_core.cfg"); }
+    // (2) typo'd + out-of-range node_ keys -> fault (was the silent under-fire)
+    { FILE *f = fopen("/tmp/test_cb_typo.cfg", "w");
+      fprintf(f, "node_0_risk_pct_typo=5.0\n"); fclose(f);
+      ControllerConfig<FP> c = ControllerConfig_Load<FP>("/tmp/test_cb_typo.cfg");
+      check("clean-break: node_0_risk_pct_typo (unrecognized per-node key) -> refuse", !cfg_compile_ok(c));
+      remove("/tmp/test_cb_typo.cfg"); }
+    { FILE *f = fopen("/tmp/test_cb_oor.cfg", "w");
+      fprintf(f, "node_99_risk_pct=20.0\n"); fclose(f);   // node index >= 16
+      ControllerConfig<FP> c = ControllerConfig_Load<FP>("/tmp/test_cb_oor.cfg");
+      check("clean-break: node_99_* (out-of-range node index) -> refuse", !cfg_compile_ok(c));
+      remove("/tmp/test_cb_oor.cfg"); }
+    // (3) FALSE-REFUSE-SAFETY control (the non-vacuity): a sibling-parser key (BinanceConfig use_testnet,
+    //     not core_/node_) must NOT be refused by ControllerConfig's clean-break.
+    { FILE *f = fopen("/tmp/test_cb_foreign.cfg", "w");
+      fprintf(f, "use_testnet=1\n"); fclose(f);
+      ControllerConfig<FP> c = ControllerConfig_Load<FP>("/tmp/test_cb_foreign.cfg");
+      check("clean-break: a foreign (BinanceConfig) key is NOT refused (false-refuse-safety control)",
+            cfg_compile_ok(c));
+      remove("/tmp/test_cb_foreign.cfg"); }
+    // (4) positive control: a clean cfg with a valid node_ key + a global compiles ok
+    { FILE *f = fopen("/tmp/test_cb_ok.cfg", "w");
+      fprintf(f, "node_0_strategy=mr\nstarting_balance=50000.0\n"); fclose(f);
+      ControllerConfig<FP> c = ControllerConfig_Load<FP>("/tmp/test_cb_ok.cfg");
+      check("clean-break: clean cfg (valid node_ + global) compiles ok (positive control)", cfg_compile_ok(c));
+      remove("/tmp/test_cb_ok.cfg"); }
+}
+
+//======================================================================================================
+// [TEST: N1 — parse_int_checked, the BinanceConfig venue-selector malformed detector]
+//======================================================================================================
+// ADV-REFUTE: 2026-06-24 (N1 — the second-boot-parser swallow). BinanceConfig_Load's use_testnet/
+// use_binance_us atoi-swallowed malformed→0, and 0 is the DANGEROUS value (use_testnet=0 = PRODUCTION) →
+// a typo silently flips testnet→PROD. The fix routes those through binance_cfg_selector → parse_int_checked
+// → a fault bit → main.cpp's boot gate refuses (the config-compiler model on the sibling parser). This
+// tests the LOAD-BEARING detector primitive directly (BinanceCrypto.hpp can't be included here — openssl);
+// the binance_cfg_selector wrapper + the main.cpp gate are build-verified by the engine compile, and the
+// full BinanceConfig_Load integration test is owed to the V-class (the openssl-linked DataStream side).
+static void test_n1_parse_int_checked() {
+    printf("\n--- N1: parse_int_checked (the venue-selector malformed detector) ---\n");
+    bool mf = false; long v = 0;
+    v = tt::parse_int_checked("banana", &mf); check("parse_int_checked: 'banana' -> MALFORMED (no silent->0)", mf);
+    v = tt::parse_int_checked("0", &mf);      check("parse_int_checked: '0' -> clean (PROD, explicitly chosen)", !mf && v == 0);
+    v = tt::parse_int_checked("1", &mf);      check("parse_int_checked: '1' -> clean (testnet)", !mf && v == 1);
+    v = tt::parse_int_checked("", &mf);       check("parse_int_checked: empty -> clean=default (NOT malformed)", !mf);
+    v = tt::parse_int_checked("1abc", &mf);   check("parse_int_checked: '1abc' (trailing garbage) -> MALFORMED", mf);
+    (void)v;
+}
+
 int main() {
     // v5.11.0.A — Match engine's MXCSR state so snapshot tests for feature
     // compute don't silently diverge in subnormal territory. See
@@ -1783,6 +2002,11 @@ int main() {
     test_v5_15_5_F4c_cfg_field_dispatch();  // v5.15.5.F.4c — KIND_INT/_BOOL dispatch + bitmap framework + tooltip stability
     test_config_parser();
     test_item2_capital_migrate_defaults();
+    test_item2_pernode_malformed();
+    test_item2_pernode_fold();
+    test_item2_fee_rate_capture();
+    test_cleanbreak_unknown_key();
+    test_n1_parse_int_checked();
     test_portfolio_bitmap();
     test_portfolio_pnl();
     test_consolidation();

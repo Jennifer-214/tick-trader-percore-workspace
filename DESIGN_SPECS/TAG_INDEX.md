@@ -215,6 +215,10 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/cluster-node-hierarchy-filesystem-layout-pattern.md`
 
+### codegen (1 files)
+
+- `DESIGN_SPECS/data-disciplines/register-spill-discipline.md`
+
 ### concurrency (21 files)
 
 - `DESIGN_SPECS/concurrency-patterns/concurrency-model-summary.md`
@@ -302,7 +306,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/portfolio-soa-vectorization-pattern.md`
 
-### data-oriented-design (37 files)
+### data-oriented-design (38 files)
 
 - `DESIGN_SPECS/concurrency-patterns/concurrency-model-summary.md`
 - `DESIGN_SPECS/concurrency-patterns/cross-thread-multiword-read-consistency-discipline.md`
@@ -319,6 +323,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/data-disciplines/per-node-purity-scale-invariance.md`
 - `DESIGN_SPECS/data-disciplines/per-snapshot-cluster-layout-pattern.md`
 - `DESIGN_SPECS/data-disciplines/raii-destructor-with-cluster-reorg-interaction.md`
+- `DESIGN_SPECS/data-disciplines/register-spill-discipline.md`
 - `DESIGN_SPECS/framework-patterns/bitmap-flag-api.md`
 - `DESIGN_SPECS/framework-patterns/cfg-field-categorization-discipline.md`
 - `DESIGN_SPECS/framework-patterns/enum-mode-flags-bitmap-lookup-pattern.md`
@@ -772,7 +777,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/refactor-patterns/critical-moment-determinism-over-average-latency.md`
 
-### latency-discipline (22 files)
+### latency-discipline (23 files)
 
 - `DESIGN_SPECS/audit-methodologies/static-latency-path-conformance-analysis.md`
 - `DESIGN_SPECS/concurrency-patterns/cross-thread-snapshot-publish-cluster-isolation.md`
@@ -784,6 +789,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/data-disciplines/function-struct-alignment-for-single-mov-access.md`
 - `DESIGN_SPECS/data-disciplines/hot-side-array-element-alignment-for-sparse-access.md`
 - `DESIGN_SPECS/data-disciplines/per-snapshot-cluster-layout-pattern.md`
+- `DESIGN_SPECS/data-disciplines/register-spill-discipline.md`
 - `DESIGN_SPECS/feature-patterns/runtime-toggleable-bench-gate-pattern.md`
 - `DESIGN_SPECS/refactor-patterns/branchless-dispatch-discipline.md`
 - `DESIGN_SPECS/refactor-patterns/branchless-math-kernel-pattern.md`
@@ -1793,7 +1799,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/meta-disciplines/body-content-enumeration-at-plan-time-discipline.md`
 
-### hot-path (56 files)
+### hot-path (57 files)
 
 - `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md`
 - `DESIGN_SPECS/audit-methodologies/characterization-test-discipline.md`
@@ -1811,6 +1817,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/data-disciplines/partner-core-bitmap-pattern.md`
 - `DESIGN_SPECS/data-disciplines/per-node-position-ownership-model.md`
 - `DESIGN_SPECS/data-disciplines/per-node-purity-scale-invariance.md`
+- `DESIGN_SPECS/data-disciplines/register-spill-discipline.md`
 - `DESIGN_SPECS/feature-patterns/runtime-toggleable-bench-gate-pattern.md`
 - `DESIGN_SPECS/framework-patterns/bitmap-flag-api.md`
 - `DESIGN_SPECS/framework-patterns/display-execution-invariant-registry-pattern.md`
@@ -2236,7 +2243,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/meta-disciplines/sister-cohort-amendment-completeness-discipline.md`
 - `claude-skills/capture-audit/SKILL.md`
 
-### slow-path (55 files)
+### slow-path (56 files)
 
 - `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md`
 - `DESIGN_SPECS/audit-methodologies/characterization-test-discipline.md`
@@ -2254,6 +2261,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/data-disciplines/per-node-purity-scale-invariance.md`
 - `DESIGN_SPECS/data-disciplines/per-snapshot-cluster-layout-pattern.md`
 - `DESIGN_SPECS/data-disciplines/raii-destructor-with-cluster-reorg-interaction.md`
+- `DESIGN_SPECS/data-disciplines/register-spill-discipline.md`
 - `DESIGN_SPECS/feature-patterns/per-horizon-barrier-blending-with-shadow-mode.md`
 - `DESIGN_SPECS/feature-patterns/runtime-toggleable-bench-gate-pattern.md`
 - `DESIGN_SPECS/feature-patterns/shadow-load-state-transition-pattern.md`

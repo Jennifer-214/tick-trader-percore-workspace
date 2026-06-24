@@ -5,7 +5,7 @@ version: 1.0
 established: 2026-05-18
 tags: [data-oriented-design, concurrency, latency-discipline]
 surface: [hot-path, slow-path]
-sister_specs: [concurrency-model-summary.md, multi-bit-state-encoding-pattern.md, bitmap-overflow-protection-discipline.md]
+sister_specs: [concurrency-model-summary.md, multi-bit-state-encoding-pattern.md, bitmap-overflow-protection-discipline.md, register-spill-discipline.md]
 applies_at_skills: [/hft-audit, /dod-audit, /blindspot-scan]
 ---
 

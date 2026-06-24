@@ -2,7 +2,7 @@
 
 **Auto-generated** by `tools/rebuild_doc_indexes.py`. Regenerate after adding/moving specs.
 
-Total: 180 specs across 13 types.
+Total: 181 specs across 13 types.
 
 Per-type catalog grouped by lifecycle stage. Cross-ref:
 - `doc-frontmatter-convention.md` (frontmatter schema)
@@ -135,13 +135,13 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/audit-methodologies/post-implementation-verification-v-class.md` | 2-draft | audit-methodology, verification, sanitizers, +3 | 3 |
 | `DESIGN_SPECS/audit-methodologies/static-latency-path-conformance-analysis.md` | 3-first-canonical | audit-methodology, latency-discipline, branchless-discipline, +2 | 0 |
 
-## data-discipline (15 specs)
+## data-discipline (16 specs)
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
 | `DESIGN_SPECS/data-disciplines/aggressive-memory-reduction-techniques.md` | 3-first-canonical | data-oriented-design, structural-fix, framework-discipline | 6 |
 | `DESIGN_SPECS/data-disciplines/cache-layout-discipline-for-hot-side-structs.md` | 3-first-canonical | data-oriented-design, latency-discipline, concurrency | 5 |
-| `DESIGN_SPECS/data-disciplines/cache-line-discipline.md` | 2-draft | data-oriented-design, concurrency, latency-discipline | 3 |
+| `DESIGN_SPECS/data-disciplines/cache-line-discipline.md` | 2-draft | data-oriented-design, concurrency, latency-discipline | 4 |
 | `DESIGN_SPECS/data-disciplines/cpp17-inline-variable-for-header-shared-state.md` | 3-first-canonical | cpp17, header-only, shared-state, +1 | 2 |
 | `DESIGN_SPECS/data-disciplines/decision-first-cluster-layout-pattern.md` | 3-first-canonical | data-oriented-design, latency-discipline | 4 |
 | `DESIGN_SPECS/data-disciplines/fill-path-completeness-and-normalization-discipline.md` | 2-draft | capital-safety, oms-drainer, fill-path, +3 | 0 |
@@ -153,6 +153,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/data-disciplines/per-node-purity-scale-invariance.md` | 3-first-canonical | data-oriented-design, scale-invariance, per-node-purity, +3 | 0 |
 | `DESIGN_SPECS/data-disciplines/per-snapshot-cluster-layout-pattern.md` | 3-first-canonical | data-oriented-design, concurrency, latency-discipline | 4 |
 | `DESIGN_SPECS/data-disciplines/raii-destructor-with-cluster-reorg-interaction.md` | 3-first-canonical | data-oriented-design, concurrency | 3 |
+| `DESIGN_SPECS/data-disciplines/register-spill-discipline.md` | 2-draft | data-oriented-design, latency-discipline, codegen | 2 |
 | `DESIGN_SPECS/data-disciplines/running-aggregate-vs-cycle-recompute-discipline.md` | 2-draft | data-discipline, running-aggregate, o1-compute, +2 | 0 |
 
 ## concurrency-pattern (12 specs)

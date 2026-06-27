@@ -1861,7 +1861,7 @@ static void test_item2_pernode_fold() {
       remove("/tmp/test_item2_fold_typo.cfg"); }
     // (3) behavior-preservation: clean value stores, numeric + named strategy survive, bitmap set
     { FILE *fg = fopen("/tmp/test_item2_fold_ok.cfg", "w");
-      fprintf(fg, "node_0_risk_pct=20.0\nnode_0_strategy=3\nnode_2_strategy=momentum\n"); fclose(fg);
+      fprintf(fg, "node_0_risk_pct=20.0\nnode_3_max_drawdown_pct=25.0\nnode_0_strategy=3\nnode_2_strategy=momentum\n"); fclose(fg);
       ControllerConfig<FP> good = ControllerConfig_Load<FP>("/tmp/test_item2_fold_ok.cfg");
       check("fold: clean node_0_risk_pct=20.0 -> 0.20 stored (value path intact)",
             Money_Eq(good.node_risk_pct[0], MQ(0.20)));
@@ -1870,6 +1870,18 @@ static void test_item2_pernode_fold() {
       check("fold: node_strategies_explicit_set bitmap preserved (bits 0 + 2)",
             (good.node_strategies_explicit_set & 0x5u) == 0x5u);
       check("fold: clean cfg compiles ok (positive control)", cfg_compile_ok(good));
+      // E.1.1 ③/B — legacy capital arrays merge into nodes[c] (raw-copy, last-wins over the copy walker,
+      // 0=inherit preserved). NON-VACUOUS: without the array-override sidecar (or if applied BEFORE the
+      // walker) nodes[c] holds the GLOBAL default (risk_pct 0.02 / max_dd 0.20), not the override / not 0,
+      // so all four of these fail.
+      check("B-merge: nodes[0].risk_pct == 0.20 (array override merged into nodes[c], not the global)",
+            Money_Eq(good.nodes[0].risk_pct, MQ(0.20)));
+      check("B-merge: nodes[1].risk_pct == 0 (no override -> 0=inherit raw-copied, NOT the global)",
+            Money_IsZero(good.nodes[1].risk_pct));
+      check("B-merge: nodes[3].max_drawdown_pct == 0.25 (array override merged into nodes[c])",
+            Money_Eq(good.nodes[3].max_drawdown_pct, MQ(0.25)));
+      check("B-merge: nodes[0].max_drawdown_pct == 0 (no override -> 0=inherit raw-copied)",
+            Money_IsZero(good.nodes[0].max_drawdown_pct));
       remove("/tmp/test_item2_fold_ok.cfg"); }
 }
 
@@ -6089,6 +6101,9 @@ int main() {
             ControllerConfig<64> cfg = stub_cfg();
             // Global threshold 10%, override core 0 to 5%
             cfg.node_max_drawdown_pct[0] = MQ(0.05);
+            // E.1.1 ③/B — the kill-switch now reads nodes[c].max_drawdown_pct; the legacy array override
+            // reaches it via the array-override merge in PopulateCoresFromFlat (mirrors real Load→Populate).
+            ControllerConfig_PopulateCoresFromFlat(&cfg);
             tt::EventLoop_RebuildAllParameters(&r->state, &rolling, &cfg);
             // Lose $80 = 8% — over 5% override but under 10% global
             r->state.nodes[0].node_realized = MQ(-80.0);

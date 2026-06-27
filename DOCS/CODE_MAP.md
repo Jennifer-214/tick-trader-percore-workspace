@@ -4,7 +4,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-06-23 (commit 98267be)
+**Last regenerated**: 2026-06-26 (commit be5d803)
 
 ## CoreFrameworks/
 
@@ -22,12 +22,12 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### ControllerConfig.hpp
 
-- `Fee_Compute` — line 1383
-- `ControllerConfig_ResolveForCore` — line 1401
-- `ControllerConfig_PopulateCoresFromFlat` — line 1463
-- `ControllerConfig_NormalizeForMode` — line 2013
-- `ControllerConfig_IsLiveCapital` — line 2047
-- `ControllerConfig_Load` — line 2058
+- `Fee_Compute` — line 1434
+- `ControllerConfig_ResolveForCore` — line 1452
+- `ControllerConfig_PopulateCoresFromFlat` — line 1514
+- `ControllerConfig_NormalizeForMode` — line 2064
+- `ControllerConfig_IsLiveCapital` — line 2098
+- `ControllerConfig_Load` — line 2109
 
 ### ControllerEventLoop.hpp
 
@@ -412,15 +412,15 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### BinanceCrypto.hpp
 
-- `BinanceStream_Init` — line 503 — (internally tracks whether its already been called)
-- `BinanceStream_Close` — line 577 — clean shutdown: send close frame, SSL shutdown, close socket, free resources
-- `BinanceStream_Reconnect` — line 613
-- `BinanceStream_Poll` — line 659 — returns OR'd combination of POLL_NONE, POLL_SOCKET, POLL_STDIN
-- `BinanceStream_ReadTick` — line 707
-- `BinanceStream_InWindDown` — line 794 — BinanceStream_ShouldReconnect: returns 1 if it's time to close and reconnect
-- `BinanceStream_ShouldReconnect` — line 807
-- `BinanceStream_HasPending` — line 823 — returns 1 if SSL has buffered data that can be read without blocking
-- `BinanceConfig_Load` — line 834 — same key=value format as ControllerConfig_Load, skips # comments and empty lines
+- `BinanceStream_Init` — line 504 — (internally tracks whether its already been called)
+- `BinanceStream_Close` — line 578 — clean shutdown: send close frame, SSL shutdown, close socket, free resources
+- `BinanceStream_Reconnect` — line 614
+- `BinanceStream_Poll` — line 660 — returns OR'd combination of POLL_NONE, POLL_SOCKET, POLL_STDIN
+- `BinanceStream_ReadTick` — line 708
+- `BinanceStream_InWindDown` — line 795 — BinanceStream_ShouldReconnect: returns 1 if it's time to close and reconnect
+- `BinanceStream_ShouldReconnect` — line 808
+- `BinanceStream_HasPending` — line 824 — returns 1 if SSL has buffered data that can be read without blocking
+- `BinanceConfig_Load` — line 857
 
 ### BinanceDepth.hpp
 
@@ -1078,7 +1078,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `HeldOutSplit_TrainEval` — line 1995 — functions it uses (WalkForward_Compute*, XGBoost_Compute*) are visible.
 - `ConfigField_Set` — line 2240 — handles both FPN_Binary and PCT fields (PCT keys are stored as decimal, value comes in as %).
 - `Backtest_RunSweep` — line 2344
-- `Backtest_RunHyperparamTrainSweep` — line 2434 — mean_val_correlation (regression). Stored as positive number; higher = better.
+- `Backtest_RunHyperparamTrainSweep` — line 2437 — mean_val_correlation (regression). Stored as positive number; higher = better.
 
 ### BacktestPanels.hpp
 
@@ -1177,7 +1177,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ## Top-level files
 
-- `main.cpp` — 217 lines
+- `main.cpp` — 225 lines
 - `Version.hpp` — 1082 lines
 - `Limits.hpp` — 30 lines
 

@@ -40,7 +40,7 @@ Full state body lives at `plans/v5.15-live-readiness/MASTER.md` + the in-flight 
 | Field | Value |
 |---|---|
 | Sprint | `v5.15-live-readiness` — see `plans/v5.15-live-readiness/MASTER.md` for full sprint state, ship pipeline, deferrals, post-paper-test work |
-| State: most-recent / in-flight / queued pipeline | → `plans/v5.15-live-readiness/MASTER.md` **top** (current SSoT — Ship B + `.E.0.10` in-flight + the `.E` pipeline) + the `status: active` handoff. **Evicted from always-loaded 2026-06-11 (TECH_DEBT-163): ephemeral STATE belongs in MASTER, not the timeless overlay** (doc-layer-separation). |
+| State: most-recent / in-flight / queued pipeline | → `plans/v5.15-live-readiness/MASTER.md` **top** (current SSoT — the in-flight ship + the `.E` pipeline) + the `status: active` handoff. **Evicted from always-loaded 2026-06-11 (TECH_DEBT-163): ephemeral STATE belongs in MASTER, not the timeless overlay** (doc-layer-separation). |
 | Meta-discipline registry | See `DOCS/DESIGN_PHILOSOPHY.md` § 11.5 for current M1..Mn catalog. Adding a new Mn → procedure in § 11.5 |
 | Anti-pattern catalog | See `DOCS/RECURRING_BUG_PATTERNS.md` for current Class 1..N catalog. Adding a new Class → include "False-positive surface" subsection per M3 |
 | Sprint-wide invariant | `CfgFieldDescriptor` schema LOCKED at `.F.4b` (Kind enum is GUI metadata only — NEVER drives storage; H13 + H14 consolidated) |

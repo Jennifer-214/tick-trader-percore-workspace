@@ -1,16 +1,16 @@
 # Memory index
 
-> Compressed under the always-loaded byte-budget guard (`tools/check_always_loaded_budget.py`). Each entry ≤200 chars; deep WHY/sisters/examples live in the memory file body.
+> Byte-budget-guarded (`check_always_loaded_budget.py`); entries ≤200 chars; deep WHY/sisters/examples in the file body.
 
 ## Process + collaboration
 
-> **Deep-technical / implementation-specific disciplines + NEW Tier-2 memories -> `MEMORY_EXTENDED.md`** (on-demand; the work-mode skills load it). This always-loaded index = the every-turn collaboration / judgment / audit-posture / user / project memories.
+> **Deep-technical / Tier-2 disciplines → `MEMORY_EXTENDED.md`** (on-demand; work-mode skills load it). This always-loaded index = every-turn collaboration / judgment / audit-posture / user / project memories.
 
 - [Prefer boundary-stable refactors over wide cascades](feedback_reduce_touch_sites.md) — keep public types unchanged; cascade only when the boundary type itself is the bug
 - [Bump Version.hpp every ship + rename plans when ship-order diverges](feedback_bump_version_per_ship.md) — every `vX.Y.Z` tag bumps Version.hpp in the same commit; rename the plan file (not Version.hpp) to keep filename+tag monotonic
 - [Defer is last-ditch, never effort-avoidance](feedback_no_defer_for_effort.md) — implement properly first time; "smaller scope" has failed 3/3 vs do-it-right
 - [Single-cycle exist+good; design once, maintain forever](feedback_design_once_maintain_forever.md) — take a piece exist→good in ONE cycle; don't re-traverse determinism-gated code; foundational/known-requirement only (unknown-unknowns still MVP)
-- [Opportunistic tech-debt closure — subsumption not adjacency](feedback_opportunistic_tech_debt_closure.md) — close debt a ship SUBSUMES (≈0 marginal cost); merely ADJACENT → cross-link + leave tracked; discriminator = marginal-cost, not surface-adjacency; BIDIRECTIONAL — also blocks deferring a NEW fix on adjacency (durable fix a later plan merely renames ≠ subsumed → close NOW)
+- [Opportunistic tech-debt closure — subsumption not adjacency](feedback_opportunistic_tech_debt_closure.md) — close debt a ship SUBSUMES (≈0 marginal cost); merely ADJACENT → cross-link + leave tracked; discriminator = marginal-cost not adjacency; BIDIRECTIONAL (also blocks deferring a NEW fix on adjacency)
 - [Deferral is merit, not effort/context](feedback_deferral_reasons_merit_not_effort_or_context.md) — do-now-vs-defer = correctness/scope/proof/marginal-cost; my effort or "we have context" is NOT a valid axis (relatability tell)
 - [Close-out-now over defer for small in-flight finds](feedback_close_out_now_over_defer_when_small.md) — small fixable found in-flight → close NOW; only genuinely-separate DELIVERABLES defer (D-159)
 - [Guards compound — enforcement is the highest-leverage investment](feedback_guards_compound_enforcement_is_leverage.md) — a guard protects a whole CLASS forever, no-thought; code is one instance, the guard is permanent leverage; convention-only on a capital/determinism surface = a hole to close
@@ -22,6 +22,7 @@
 - [Auto-route input to the matching skill](feedback_auto_route_input_to_matching_skill.md) — input/work-state matches a skill's trigger → SUGGEST the judgment skill (await greenlight, never silently fire) / FIRE the mechanical one; Layer B of skill-consult+routing
 - [Close the class structurally ≠ migrate every site](feedback_close_the_class_vs_migrate_every_site.md) — close a class via the primitive + an enforcing CI guard (new=build-error; existing KNOWN-PENDING, shrinking); the guard de-risks paced migration
 - [Verify every enumerated site at ship-close](feedback_verify_every_enumerated_site_at_close.md) — plan enumerates N sites → verify ALL N done before close; subset+assume-complete is the recurring gap
+- [Complete structural fix, not incremental (pre-live)](feedback_complete_structural_fix_not_incremental_prelive.md) — pre-live → whole fix in one cycle, not band-aid-now; drop the production-incremental default; phase-scoped
 - [Exhaustive capture + verify tracking at close](feedback_exhaustive_capture_and_verify_tracking.md) — list EVERY item its own row (no top-N/collapse), RUN the check each is actually ledgered, flip stale status to the SSoT, close cross-ref loops; operator caught 3 under-captures in one session
 - [Two foundations: determinism vs correctness](feedback_two_foundations_determinism_vs_correctness.md) — reproducibility (net-gating; freeze current behavior) vs exact-values (deliberate, regen the golden) = orthogonal; don't let "make it exact first" block the determinism net
 - [Defer to source authority for external semantics](feedback_defer_to_source_authority_for_external_semantics.md) — externally-DEFINED values (venue precision/fee-rounding/tick-lot; protocol widths) → mirror source-exact + GUARD + registry per source; never internalize a choice
@@ -86,17 +87,17 @@
 - [Passing test is not verification](feedback_passing_test_is_not_verification.md) — green ≠ verified; a passing test only proves its assertion holds on its input; adversarially verify your OWN test work before "done"
 - [Decision↔code binding](feedback_implement_reconcile_decision_code_binding.md) — a decided code-behavior is a CONTRACT; pin it with a NON-VACUOUS test + reconcile log+test in the same step on a deviation (D-218 NEW-1 drift; effort-driven silent deviation; structural-not-semantic audit gap)
 - [Single-source the computation not the mode](feedback_single_source_the_computation_not_just_the_mode.md) — money derived ≥2 ways → single-source the FORMULA not just the rounding mode; re-check "not a bug" under repr change
-- [Adversarial framing default for checks](feedback_adversarial_framing_default_for_checks.md) — audit/check/review default to ADVERSARIAL framing (FIND/REFUTE not confirm) + multiple independent agents that cross-check; the BINDING default for verification (2026-06-11) — self-check is the opt-out, with a stated reason; meta-anti-pattern AR-8 (self-attested verification); deep "why" → [[feedback_capture_and_check_are_model_bounded]] (MEMORY_EXTENDED)
+- [Adversarial framing default for checks](feedback_adversarial_framing_default_for_checks.md) — audit/check/review default to ADVERSARIAL (FIND/REFUTE not confirm) + independent cross-checking agents; BINDING default; self-check is the opt-out with a stated reason; AR-8 (self-attested verification); why → [[feedback_capture_and_check_are_model_bounded]]
 - [Golden-master over reimplemented oracle](feedback_golden_master_over_reimplemented_oracle.md) — validate by freezing REAL output + diff; NEVER a stub/reimplemented oracle (Class-18 mirror that drifts)
 - [Phased pre-rework correctness foundation + net-gating](feedback_phased_pre_rework_correctness_foundation.md) — high-risk multi-ship restructure: phase the foundation (bedrock→lock-current→root-GREEN→sweep→gate); the no-reintroduction guarantee is the NET, not the audits
 - [Enumerate the set before a categorical risk-dismissal](feedback_enumerate_set_before_categorical_claim.md) — before dismissing a risk via a property over a SET ("the rest are safe"), enumerate + verify each + name any non-conformer (Class-33)
-- [Don't generalize a substrate before its full input space is known](feedback_dont_generalize_substrate_before_input_space_known.md) — a substrate proven over CURRENT consumers ≠ general; enumerate PLANNED consumers' inputs before declaring universal (taker-output-pack ≠ universal-gate-model); premature generalization locks out the future (gate-substrate cascade `.E.0.10`)
+- [Don't generalize a substrate before its full input space is known](feedback_dont_generalize_substrate_before_input_space_known.md) — a substrate proven over CURRENT consumers ≠ general; enumerate PLANNED consumers' inputs before declaring universal; premature generalization locks out the future (gate-substrate cascade `.E.0.10`)
 - [Ground design claims in real code](feedback_ground_design_in_real_code.md) — design talk: Read+cite file:line for EXISTING-code claims (don't reconstruct from memory); show framing+reuse for NEW code
 - [Domain guards for bulk transforms](feedback_domain_guards_for_bulk_transforms.md) — error-driven migration consults the DOMAIN list first (compiler checks types not domains); integration smokes mandatory at encoding epochs
-- [Fold findings into the destination plan](feedback_fold_findings_into_destination_plan.md) — current work finds something belonging in a future/other plan → fold it INTO that plan as discovered; reactive, not scouting; folding TRACKS, it does NOT defer the FIX (the fix's do-vs-defer is the separate subsumption test, not adjacency)
+- [Fold findings into the destination plan](feedback_fold_findings_into_destination_plan.md) — work finds something belonging in another plan → fold it INTO that plan as discovered; reactive not scouting; folding TRACKS, does NOT defer the FIX (do-vs-defer is the separate subsumption test)
 - [MOOT-UNREACHABLE disposition for real-but-unreachable findings](feedback_moot_unreachable_disposition.md) — a code-real flaw whose trigger is structurally unreachable (+ bigger-issues-already-in-play if it fires) → pin the guarantee, don't patch; REQUIRES code-demonstrated unreachability NOT a vibe (the merit bar, not effort-avoidance); first applied A7 `.E.0.10`
 - [Micro-commits, compile-gated; never push broken code](feedback_micro_commits_compile_gated.md) — prefer small frequent commits at clean boundaries; each MUST compile (suite green ideally); WIP/partial in SCOPE ok, complete in COMPILATION; gate push on green; `wip(<ship>):` prefix mid-ship
-- [No unhomed debt — unhomed = code smell](feedback_no_unhomed_debt_code_smell.md) — every debt traces to a HOME (future plan / TECH_DEBT-with-trigger / register disposition) or closes NOW; homed-and-deferred is SAFE, unhomed rots; the floor under do-now-vs-defer; plans are binding AND living (update the owning plan with whatever touches its blast radius)
+- [No unhomed debt — unhomed = code smell](feedback_no_unhomed_debt_code_smell.md) — every debt traces to a HOME (future plan / TECH_DEBT-with-trigger / register disposition) or closes NOW; homed-deferred is SAFE, unhomed rots; the floor under do-now-vs-defer; plans are binding AND living
 
 ## User profile
 
@@ -107,6 +108,7 @@
 - [MVP→professional transition phase](user_mvp_to_professional_transition.md) — framework consolidation IS the deliberate work of the professionalization phase, not a detour
 - [Structure = externalized cognition + correctness risk-control](user_structure_is_correctness_risk_control_for_capital.md) — heavy apparatus = external memory for solo+AI + correctness risk-control for money code; burden of proof is on REMOVING a control
 - [Correctness-first, NOT ship-fast](user_correctness_first_not_ship_fast.md) — values correctness+planning over all; shifting from move-fast/break; when execution flails STOP+slow; wants "never skip thoroughness" in the workspace-template
+- [Top-down learner; proven elite drive; constraint is conditions not capability](user_learns_top_down_proven_competitive_drive.md) — reframe "backwards" as her native mode (how she climbed League); re-aim a proven engine, never "does she have it"; meds/capacity is the variable (no medical advice); by-hand core rewrite = next rung
 
 ## Project state
 
@@ -116,4 +118,4 @@
 - [foxml_suite refactor queued](project_foxml_suite_refactor_queued.md) — needs PRODUCER-side framework treatment; fire `/ml-audit` scoped to foxml_suite
 - [E-series is vision convergence, not scope balloon](project_e_series_is_vision_convergence_not_scope_balloon.md) — v5.15.5.F.4d.1.E (9 sub-ships) is year-old destination architecture, not planning-day enthusiasm; don't auto-flag scope expansion
 - [Engine core proven; engineering ONGOING but PHASED](project_engine_done_edge_is_the_frontier.md) — core works; major-structural NOW → optimize+extend after inflection; goal = a moldable shape; edge/alpha is the ultimate frontier
-- [Public repo is code-only; dev apparatus private](project_public_repo_is_code_only.md) — public = ONLY compile+run code (source+build+LICENSE/README); tests/tools/docs/skills/CI gitignore-in-place private; dev apparatus → `workspace-template` release later; alpha always private; spring-cleaning 2026-06-02; law in DESIGN_SPECS/meta-disciplines/public-private-boundary-and-ecosystem-discipline.md
+- [Public repo is code-only; dev apparatus private](project_public_repo_is_code_only.md) — public = ONLY compile+run code (source+build+LICENSE/README); tests/tools/docs/skills/CI gitignore-in-place private; dev apparatus → `workspace-template` later; alpha always private; law in public-private-boundary-and-ecosystem-discipline.md

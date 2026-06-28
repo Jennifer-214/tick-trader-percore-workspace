@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: user
   originSessionId: 4bc49d6d-1d4b-4f41-a70f-040936b0e5b7
-  sister_specs: [feedback_evaluate_options_on_robustness_latency_design_not_time.md, feedback_consult_on_audit_findings.md, user_deep_design_work_intrinsic_value.md]
+  sister_specs: [feedback_evaluate_options_on_robustness_latency_design_not_time.md, feedback_consult_on_audit_findings.md, user_deep_design_work_intrinsic_value.md, user_learns_top_down_proven_competitive_drive.md]
   tags: [user-profile, project-state]
 ---
 

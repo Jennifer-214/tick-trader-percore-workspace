@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: user
   originSessionId: 5a3e2327-0ab0-43ac-b92b-9fc591f00b51
-  sister_specs: [feedback_evaluate_options_on_robustness_latency_design_not_time.md, feedback_never_skip_thoroughness_unless_explicit.md, feedback_plan_right_not_fast.md, project_public_repo_is_code_only.md, user_adhd_deferred_reward_discipline.md, user_deep_design_work_intrinsic_value.md, feedback_micro_commits_compile_gated.md]
+  sister_specs: [feedback_evaluate_options_on_robustness_latency_design_not_time.md, feedback_never_skip_thoroughness_unless_explicit.md, feedback_plan_right_not_fast.md, project_public_repo_is_code_only.md, user_adhd_deferred_reward_discipline.md, user_deep_design_work_intrinsic_value.md, feedback_micro_commits_compile_gated.md, user_learns_top_down_proven_competitive_drive.md]
   tags: []
 ---
 

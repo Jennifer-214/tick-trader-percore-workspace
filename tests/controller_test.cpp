@@ -1843,6 +1843,32 @@ static void test_item2_pernode_malformed() {
 // max_drawdown_pct=999 silently disabling capital controls). Covers the per-node leg, the global-flat
 // leg (the F1 NON-VACUITY proof — a nodes[c]-only sweep would PASS the global cases), the GAIN cap, the
 // dollar floors + cross-field, the no-margin boundary, and the 0=inherit sentinel. Refuse-don't-clamp.
+// ③ C1/C2 (E.1.1, D-261) — feature-determinism tier: the ~47 FPN_Binary/float feature fields now route
+// through the CHECKED parser, so a malformed value faults (FEATURE_MALFORMED, distinct from capital) instead
+// of silently coercing to 0 (a reproducibility hole). Refuse-don't-coerce.
+static void test_item_c1c2_feature_malformed() {
+    printf("\n--- C1/C2: feature-field malformed-capture (D-261; refuse-don't-coerce) ---\n");
+    // malformed FEATURE (FPN_Binary) value -> FEATURE_MALFORMED fault -> refuse (no silent coerce-to-0)
+    { FILE *fb = fopen("/tmp/test_c1c2_feat_bad.cfg", "w");
+      fprintf(fb, "momentum_tp_mult=banana\n"); fclose(fb);
+      ControllerConfig<FP> bad = ControllerConfig_Load<FP>("/tmp/test_c1c2_feat_bad.cfg");
+      check("C1/C2: malformed feature momentum_tp_mult=banana -> fault (no silent coerce-to-0)",
+            !cfg_compile_ok(bad));
+      remove("/tmp/test_c1c2_feat_bad.cfg"); }
+    // clean feature value -> ok (positive control)
+    { FILE *fg = fopen("/tmp/test_c1c2_feat_ok.cfg", "w");
+      fprintf(fg, "momentum_tp_mult=2.0\n"); fclose(fg);
+      ControllerConfig<FP> good = ControllerConfig_Load<FP>("/tmp/test_c1c2_feat_ok.cfg");
+      check("C1/C2: clean feature momentum_tp_mult=2.0 -> ok (positive control)", cfg_compile_ok(good));
+      remove("/tmp/test_c1c2_feat_ok.cfg"); }
+    // EMPTY feature value -> clean (the inherit/default convention; only NON-EMPTY unparseable faults)
+    { FILE *fe = fopen("/tmp/test_c1c2_feat_empty.cfg", "w");
+      fprintf(fe, "momentum_tp_mult=\n"); fclose(fe);
+      ControllerConfig<FP> emp = ControllerConfig_Load<FP>("/tmp/test_c1c2_feat_empty.cfg");
+      check("C1/C2: EMPTY feature value -> clean (inherit, NOT a fault)", cfg_compile_ok(emp));
+      remove("/tmp/test_c1c2_feat_empty.cfg"); }
+}
+
 static void test_item4_capital_range_sweep() {
     printf("\n--- item-4: post-resolve capital value-range sweep (founding-bug closure) ---\n");
     // (1) per-node leg: node_0_risk_pct=999 (-> 9.99 > 1.0 LOSS cap) MUST fault
@@ -2088,6 +2114,7 @@ int main() {
     test_item2_pernode_malformed();
     test_item2_pernode_fold();
     test_item4_capital_range_sweep();
+    test_item_c1c2_feature_malformed();
     test_item2_fee_rate_capture();
     test_cleanbreak_unknown_key();
     test_n1_parse_int_checked();

@@ -52,6 +52,8 @@ run "latency-conformance teeth (--selftest)"                    HARD -- python3 
 run "rename-cascade teeth (cascade --selftest)"                 HARD -- bash ./tools/cascade_selftest.sh
 run "cfg-key/parser-prefix drift (check_cfg_key_prefix_drift)"  HARD -- python3 ./tools/check_cfg_key_prefix_drift.py
 run "cfg-key-prefix teeth (--selftest)"                         HARD -- python3 ./tools/check_cfg_key_prefix_drift.py --selftest
+run "cfg-gate caller-coverage (check_cfg_gate_caller_coverage)" HARD -- python3 ./tools/check_cfg_gate_caller_coverage.py
+run "cfg-gate-coverage teeth (--selftest)"                      HARD -- python3 ./tools/check_cfg_gate_caller_coverage.py --selftest
 
 # --- --full / --ci: sanitizer lanes (COMPOSE the canonical gate; do NOT reimplement the
 #     asan/ubsan/tsan build+run here — run_sanitizer_suite.sh owns the pinned run-conditions

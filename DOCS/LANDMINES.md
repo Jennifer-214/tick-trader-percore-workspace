@@ -152,6 +152,8 @@ watching it actually work).
 
 **Reference:** code-only-public spring cleaning (2026-06-02) · `DESIGN_SPECS/meta-disciplines/public-private-boundary-and-ecosystem-discipline.md` · `feedback_machine_portable_resolver_for_committed_tool_paths`.
 
+**Recurrence (2026-06-29, ③ item-6):** the NEW `check_cfg_gate_caller_coverage.py` hit the SAME trap — `Path(__file__).resolve()` landed in the workspace → the tool found ZERO `ControllerConfig_Load` callers (a Class-51 vacuous PASS, averted only because it WARN-exits on a zero-caller count). Fixed via a walk-up `_engine_root()` that asserts `CoreFrameworks/` + `main.cpp` and FAILS LOUD if not found (a stricter variant of the `.absolute()` fix — silent-wrong-dir becomes a loud abort). **The trap recurs for EVERY new engine-root-deriving tool** → the structural close is a CI grep flagging `__file__).resolve()` near engine-source dir names in `tools/*.py` (candidate guard, not yet built).
+
 ---
 
 ## Landmine 6 — zsh does NOT word-split unquoted vars in `for` loops (set 2026-06-02)

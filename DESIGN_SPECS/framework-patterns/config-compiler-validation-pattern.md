@@ -192,6 +192,22 @@ Parts 1+2 are the *substrate* (record + gate). Parts 3+4+5 are the three *captur
 
 ---
 
+## The out-of-range half — the post-resolve range sweep (item-4, the founding-bug closure)
+
+Parts 1-5 catch a MALFORMED value at the parse point. The HYBRID's other half catches a VALID-but-out-of-range value (`risk_pct=999`) at a **post-resolve sweep** — it can't be caught at parse (the value parses fine, and `0` is a legit sentinel a post-resolve sweep also can't distinguish from malformed, which is why the two are SEPARATE bits). `ControllerConfig_CapitalRangeSweep` runs in `ControllerConfig_Load` AFTER `PopulateCoresFromFlat` (nodes[c] resolved, 0=inherit collapsed) and sets `CFG_FAULT_CAPITAL_OUT_OF_RANGE`. Four reusable disciplines it adds:
+
+- **Enumerate from the registry, dispatch on the metadata bit.** The sweep is an `if-constexpr` X-macro walk over `FOREACH_PER_NODE_CFG_FIELD` reading `nodes[c].<name>`, branching on `CAPITAL_BOUND_LOSS`/`GAIN` (mirrors `EMIT_PER_NODE_COPY`). The per-node masks (`g_per_node_cfg_capital_bound_*`) are FIELD_IDX bitmaps with NO FIELD_IDX→`nodes[c]` accessor — the walk, not a mask read, is the feasible + forward-extensible mechanism.
+
+- **Deletable-by-construction global-flat leg.** Two fields (`risk_pct`/`max_drawdown_pct`) carry `0=inherit` in `nodes[c]` (the legacy-array channel), so an inheriting node's effective value is the GLOBAL flat — a `nodes[c]`-only sweep MISSES a global `risk_pct=999` (the founding bug via the most-common config). The global-flat checks are driven OFF `FOREACH_PER_NODE_ARRAY_OVERRIDE` (the SAME registry that defines those fields), so they AUTO-DISSOLVE when E.1.2 deletes the arrays — zero hand-cleanup ([[feedback_prefer_deletable_cascade_over_tombstone]]; D-278).
+
+- **Exhaustiveness tripwire.** A standalone per-field `static_assert` (`ALL_CAPITAL_BOUND_VARIANTS & ~CAPITAL_BOUND_SWEEP_HANDLED`) makes a future `CAPITAL_BOUND_*` variant tagged WITHOUT a sweep branch a COMPILE ERROR — "forgot the branch" becomes a build failure (vacuous until E.1.6 widens the variant set). **Keep it STANDALONE, never inside the walk's `if-constexpr else`** — a non-dependent `static_assert` in a discarded `if constexpr` branch fires at definition (it would reject every handled field).
+
+- **Caller coverage extends to range too.** The same gate (`cfg_capital_gate_ok`) covers the optimizer `config_override` path via a range-ENDPOINT probe (`BacktestEngine.hpp` — refuse the sweep range, don't silently skip points; `ConfigField_Set` mutates the flat without re-resolving, so the global-flat leg reading the fresh flat is what catches it).
+
+**Boot-time → branchless EXEMPT (H7/H20).** The sweep runs once at load, so a per-field `if`+operator-FATAL diagnostic (which NAMES the bad field) is preferred over a branchless mask-accumulate (which loses the field identity). REFUSE, never clamp — clamping an out-of-range capital value is the Class-52 swallow-and-coerce this whole pattern exists to kill (D2).
+
+---
+
 ## Robustness analysis
 
 ### What this closes
@@ -241,5 +257,6 @@ The ③ arc (`v5.15.5.F.4d.1.E.1.1`) is the first canonical application:
 - **B1** — unit-agnostic malformed-refuse (decouple from the cap bit).
 - **GAP-1** — gate the backtest optimizer's base cfg (caller coverage).
 - **N1** — `BinanceConfig_Load` sibling-parser reuse.
+- **item-4** — the post-resolve OUT_OF_RANGE sweep (`ControllerConfig_CapitalRangeSweep`): the if-constexpr walk + the deletable-by-construction global-flat leg + the exhaustiveness tripwire + the optimizer range-endpoint gate (the founding-bug closure for VALID-but-out-of-range capital; see "The out-of-range half" above; D-277).
 
 Each sub-ship is independently build-gated (micro-commits); a V-class verify gate runs on the shipped capital path. Codify Class 52 (swallow-and-coerce) + Class 53 (rename-completeness-gap) + this spec at ③ ship-close.

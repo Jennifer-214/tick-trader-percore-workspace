@@ -1839,6 +1839,77 @@ static void test_item2_pernode_malformed() {
 // strategy fallback (node_0_strategy=3) and the explicit-set bitmap must survive the fold (safety-agent
 // pins). NOTE: an unknown node_ key is silently IGNORED here (the unknown-KEY refuse is task-#1's
 // clean-break, NOT item-2 — it must cover core_* too, per the safety a-class). SSoT: the item-2 sweep doc.
+// ③ item-4 (E.1.1) — post-resolve CAPITAL VALUE-RANGE sweep: the founding bug (risk_pct=999 /
+// max_drawdown_pct=999 silently disabling capital controls). Covers the per-node leg, the global-flat
+// leg (the F1 NON-VACUITY proof — a nodes[c]-only sweep would PASS the global cases), the GAIN cap, the
+// dollar floors + cross-field, the no-margin boundary, and the 0=inherit sentinel. Refuse-don't-clamp.
+static void test_item4_capital_range_sweep() {
+    printf("\n--- item-4: post-resolve capital value-range sweep (founding-bug closure) ---\n");
+    // (1) per-node leg: node_0_risk_pct=999 (-> 9.99 > 1.0 LOSS cap) MUST fault
+    { FILE *fb = fopen("/tmp/test_item4_pn_risk.cfg", "w");
+      fprintf(fb, "node_0_risk_pct=999\n"); fclose(fb);
+      ControllerConfig<FP> bad = ControllerConfig_Load<FP>("/tmp/test_item4_pn_risk.cfg");
+      check("item-4: node_0_risk_pct=999 (per-node override) -> out-of-range fault", !cfg_compile_ok(bad));
+      remove("/tmp/test_item4_pn_risk.cfg"); }
+    // (2) GLOBAL leg (F1 NON-VACUITY): risk_pct=999 set GLOBALLY, all nodes inheriting (nodes[c]==0) MUST
+    //     fault. A nodes[c]-only sweep reads 0 and PASSES -> this is the test that fails WITHOUT the
+    //     global-flat leg (the founding bug via the most-common config: global risk, per-node default).
+    { FILE *fb = fopen("/tmp/test_item4_global_risk.cfg", "w");
+      fprintf(fb, "risk_pct=999\n"); fclose(fb);
+      ControllerConfig<FP> bad = ControllerConfig_Load<FP>("/tmp/test_item4_global_risk.cfg");
+      check("item-4: GLOBAL risk_pct=999 + nodes inherit -> fault (F1 global-flat leg, not nodes[c]-only)",
+            !cfg_compile_ok(bad));
+      // NON-VACUITY: nodes[0].risk_pct==0 proves the per-node walk read the inherit sentinel and PASSED,
+      // so the fault above can ONLY have come from the global-flat leg. Remove that leg -> this test goes green.
+      check("item-4: ...and nodes[0].risk_pct==0 (inherit) -> the global leg is what faulted (non-vacuity)",
+            Money_IsZero(bad.nodes[0].risk_pct));
+      remove("/tmp/test_item4_global_risk.cfg"); }
+    { FILE *fb = fopen("/tmp/test_item4_global_dd.cfg", "w");
+      fprintf(fb, "max_drawdown_pct=999\n"); fclose(fb);
+      ControllerConfig<FP> bad = ControllerConfig_Load<FP>("/tmp/test_item4_global_dd.cfg");
+      check("item-4: GLOBAL max_drawdown_pct=999 -> fault (dead kill-switch via the global path)",
+            !cfg_compile_ok(bad));
+      remove("/tmp/test_item4_global_dd.cfg"); }
+    // (3) GAIN side: take_profit_pct=1001 (-> 10.01 > 10.0 GAIN cap) faults
+    { FILE *fb = fopen("/tmp/test_item4_tp_over.cfg", "w");
+      fprintf(fb, "take_profit_pct=1001\n"); fclose(fb);
+      ControllerConfig<FP> bad = ControllerConfig_Load<FP>("/tmp/test_item4_tp_over.cfg");
+      check("item-4: take_profit_pct=1001 (over the 1000 GAIN cap) -> fault", !cfg_compile_ok(bad));
+      remove("/tmp/test_item4_tp_over.cfg"); }
+    // (4) dollar floors (D-269/N3)
+    { FILE *fb = fopen("/tmp/test_item4_sb0.cfg", "w");
+      fprintf(fb, "starting_balance=0\n"); fclose(fb);
+      ControllerConfig<FP> bad = ControllerConfig_Load<FP>("/tmp/test_item4_sb0.cfg");
+      check("item-4: starting_balance=0 -> fault (disarms both kills + is the return/exposure denominator)",
+            !cfg_compile_ok(bad));
+      remove("/tmp/test_item4_sb0.cfg"); }
+    { FILE *fb = fopen("/tmp/test_item4_mkl_gt_sb.cfg", "w");
+      fprintf(fb, "starting_balance=1000\nmin_kill_loss=2000\n"); fclose(fb);
+      ControllerConfig<FP> bad = ControllerConfig_Load<FP>("/tmp/test_item4_mkl_gt_sb.cfg");
+      check("item-4: min_kill_loss(2000) >= starting_balance(1000) -> fault (kill never trips, N3)",
+            !cfg_compile_ok(bad));
+      remove("/tmp/test_item4_mkl_gt_sb.cfg"); }
+    // (5) POSITIVE CONTROLS: in-range + exact-boundary values compile OK (non-vacuity the other way).
+    { FILE *fg = fopen("/tmp/test_item4_ok.cfg", "w");
+      fprintf(fg, "risk_pct=2\nmax_drawdown_pct=20\ntake_profit_pct=3\nstop_loss_pct=1.5\n"
+                  "starting_balance=10000\nmin_kill_loss=50\n"); fclose(fg);
+      ControllerConfig<FP> good = ControllerConfig_Load<FP>("/tmp/test_item4_ok.cfg");
+      check("item-4: clean in-range cfg compiles ok (positive control)", cfg_compile_ok(good));
+      remove("/tmp/test_item4_ok.cfg"); }
+    { FILE *fg = fopen("/tmp/test_item4_boundary.cfg", "w");
+      fprintf(fg, "risk_pct=100\ntake_profit_pct=1000\n"); fclose(fg);   // exactly the caps
+      ControllerConfig<FP> good = ControllerConfig_Load<FP>("/tmp/test_item4_boundary.cfg");
+      check("item-4: risk_pct=100 / take_profit_pct=1000 (exactly the caps) PASS (no-margin, inclusive)",
+            cfg_compile_ok(good));
+      remove("/tmp/test_item4_boundary.cfg"); }
+    // (6) inherit sentinel: per-strategy SL set + global stop_loss_pct=0 (inherit) is VALID, NOT a fault
+    { FILE *fg = fopen("/tmp/test_item4_inherit.cfg", "w");
+      fprintf(fg, "simpledip_sl_pct=2\nstop_loss_pct=0\n"); fclose(fg);
+      ControllerConfig<FP> good = ControllerConfig_Load<FP>("/tmp/test_item4_inherit.cfg");
+      check("item-4: stop_loss_pct=0 (inherit sentinel) + per-strategy SL set -> NOT a fault", cfg_compile_ok(good));
+      remove("/tmp/test_item4_inherit.cfg"); }
+}
+
 static void test_item2_pernode_fold() {
     printf("\n--- item-2: per-node legacy-array fold + malformed-capture (D-256 c/d) ---\n");
     // (1) the 2 legacy CAPITAL arrays now malformed-capture (item-2c) — were bare Money_FromString().value
@@ -2016,6 +2087,7 @@ int main() {
     test_item2_capital_migrate_defaults();
     test_item2_pernode_malformed();
     test_item2_pernode_fold();
+    test_item4_capital_range_sweep();
     test_item2_fee_rate_capture();
     test_cleanbreak_unknown_key();
     test_n1_parse_int_checked();

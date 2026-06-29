@@ -96,6 +96,16 @@ These get the strictest treatment — **removed**, never merely gated off. If a 
 toggleable, the toggle gates *entry into a live path*, never *which of two compiled paths runs* where one
 is meant to be dead.
 
+## Proactive complement — design for clean deletion (deletable-by-construction; D-278)
+
+Rules 1-3 are REACTIVE — what to do when you encounter dead code or a retired identifier. The proactive complement is to **design so that as few things as possible ever NEED Rules 1-3**: make internal deletion auto-cascade, and keep the tombstone-forcing surface small.
+
+- **Default to deletable-by-construction.** Structure internal designs (X-macro registries, derived masks, non-persisted fields) so deleting a "part" — a registry row, a field — cascades through every consumer automatically (the compiler regenerates them, or the dependent code vanishes WITH the row). Then deletion needs no tombstone and no hand-cleanup.
+- **Tombstoning (Rule 2 / H21) is FORCED only by external visibility — minimize that surface.** A persisted snapshot VERSION, a persisted/wire enum CODE, an HMAC body field, an operator's cfg key physically CANNOT be clean-deleted (old state / un-updated nodes carry the old meaning). Everything else CAN. So at design time, ask whether an identifier needs to cross the wire/persist line AT ALL; the fewer that do, the fewer tombstones ever accrue.
+- **The cascade should go the GOOD direction.** First canonical: item-4's global-flat capital checks ride `FOREACH_PER_NODE_ARRAY_OVERRIDE` (an internal, non-persisted registry). When E.1.2 deletes the legacy arrays, the checks VANISH for free — deleting the source registry removes its consumers, zero hand-cleanup. Contrast a hardcoded parallel list, which E.1.2 would have to find + delete by hand (and could forget).
+
+This COMPOSES with Rule 2, it does not weaken it: Rule 2 still governs the irreducible external surface absolutely (Knight Capital). The complement just shrinks how much surface that is. → memory `feedback_prefer_deletable_cascade_over_tombstone`; decision log D-278.
+
 ## Mechanization — the golden identifier-ledger guard (H21 enforcement)
 
 `tools/check_identifier_retirement.py` + `tools/identifier_ledger.txt`. Golden-master pattern

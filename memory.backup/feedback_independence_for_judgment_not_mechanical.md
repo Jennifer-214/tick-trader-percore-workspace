@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: c95ac2bd-d963-485c-b028-60d593bce711
-  sister_specs: [feedback_structural_enforcement_when_memory_insufficient.md, feedback_golden_master_over_reimplemented_oracle.md, feedback_runtime_executor_mode_for_judgment_skills.md, feedback_skill_edit_cohort_checklist.md, feedback_run_doc_ci_tools_first_never_hand_verify.md, feedback_auto_route_input_to_matching_skill.md, feedback_structure_judgment_loop_not_output.md, feedback_adversarial_framing_default_for_checks.md, feedback_passing_test_is_not_verification.md, feedback_a_class_i_class_fanout_vocab.md]
+  sister_specs: [feedback_structural_enforcement_when_memory_insufficient.md, feedback_golden_master_over_reimplemented_oracle.md, feedback_runtime_executor_mode_for_judgment_skills.md, feedback_skill_edit_cohort_checklist.md, feedback_run_doc_ci_tools_first_never_hand_verify.md, feedback_auto_route_input_to_matching_skill.md, feedback_structure_judgment_loop_not_output.md, feedback_adversarial_framing_default_for_checks.md, feedback_passing_test_is_not_verification.md, feedback_a_class_i_class_fanout_vocab.md, feedback_run_dedicated_audit_skills_not_just_armed_prompts.md]
   tags: [audit-methodology, meta-discipline]
 ---
 

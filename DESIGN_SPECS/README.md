@@ -21,7 +21,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/refactor-patterns/cfg-section-parser-state-machine.md` | 2-draft | framework-discipline, structural-fix | 2 |
 | `DESIGN_SPECS/refactor-patterns/critical-moment-determinism-over-average-latency.md` | 3-first-canonical | hot-path, determinism, branchless, +2 | 0 |
 | `DESIGN_SPECS/refactor-patterns/cross-walker-struct-field-uniqueness-discipline.md` | 2-draft | framework-discipline, structural-fix | 3 |
-| `DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md` | 5-claude-md | structural-fix, framework-discipline, latency-discipline | 2 |
+| `DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md` | 5-claude-md | structural-fix, framework-discipline, latency-discipline | 3 |
 | `DESIGN_SPECS/refactor-patterns/failure-attribution-buffer-pattern.md` | 2-draft | failure-observability, structural-fix, framework-discipline | 2 |
 | `DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-pattern.md` | 2-draft | cross-tool-decoupling, structural-fix, framework-discipline, +1 | 3 |
 | `DESIGN_SPECS/refactor-patterns/generic-ring-buffer-template-pattern.md` | 3-first-canonical | framework-discipline, structural-fix | 3 |

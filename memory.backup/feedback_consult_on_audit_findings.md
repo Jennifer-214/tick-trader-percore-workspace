@@ -1,11 +1,11 @@
 ---
 name: After pre-coding checks, ALWAYS consult Caramel before coding
-description: Audit findings → present to Caramel + list potential fixes + iterate together; do NOT auto-proceed to coding even if findings look "clearly addressable"
+description: Audit findings / any round of agents → present to Caramel + list potential fixes + iterate together; do NOT auto-proceed to ANY change or decision (incl. between rounds of multi-agent orchestration) even if findings look "clearly addressable"
 metadata:
   type: feedback
   originSessionId: 43a2b763-783f-4a6e-9b54-c3654977b44c
   tags: [operator-collaboration, audit-methodology]
-  sister_specs: [feedback_audit_canonical_sister_before_new_infra.md, feedback_audit_own_proposals_with_same_rigor.md, feedback_heavier_default_audit_posture_for_capital.md, feedback_implementation_detail_blindspot_recovery_via_taxonomy.md, feedback_plans_cite_sister_registry_inspection.md, feedback_sequential_audit_for_granular_operator_triage.md, feedback_test_change_enumeration_per_plan_body.md, project_anti_spaghetti_audit_cadence.md, user_public_work_attracts_hedge_funds.md, feedback_address_med_low_findings_not_just_high_crit.md]
+  sister_specs: [feedback_audit_canonical_sister_before_new_infra.md, feedback_audit_own_proposals_with_same_rigor.md, feedback_heavier_default_audit_posture_for_capital.md, feedback_implementation_detail_blindspot_recovery_via_taxonomy.md, feedback_plans_cite_sister_registry_inspection.md, feedback_sequential_audit_for_granular_operator_triage.md, feedback_test_change_enumeration_per_plan_body.md, project_anti_spaghetti_audit_cadence.md, user_public_work_attracts_hedge_funds.md, feedback_address_med_low_findings_not_just_high_crit.md, feedback_no_question_boxes.md]
 ---
 After running pre-coding checks (/trace-deps + /readiness + /parity-check
 + /merge-scan + /latency-track + any audit subagent), ALWAYS:
@@ -39,15 +39,25 @@ the iteration loop that keeps us aligned.
 
 **How to apply going forward:**
 - Pre-coding audit → write findings to `plans/plan_checks/` AS USUAL
-- Then BEFORE editing the plan or any code: present findings table to
-  Caramel via AskUserQuestion (or just text + clear "want me to do
-  X / Y / Z, or different direction?")
+- Then BEFORE editing the plan or any code: present the findings table to
+  Caramel as inline text (NEVER AskUserQuestion — see [[feedback_no_question_boxes]])
+  + a clear "want me to do X / Y / Z, or a different direction?"
 - Iterate until she gives explicit direction
 - Then amend plan + code per her direction
 
 This applies to ALL audits, not just /readiness. Same rule for
 /parity-check findings, /merge-scan suggestions, /latency-track adds,
 /plan-check verdicts.
+
+**Between ROUNDS OF AGENTS (standing; reinforced 2026-06-30).** The same gate
+covers multi-agent orchestration: after EVERY round of agents — a swarm, a
+`Workflow` phase, an I→A cascade — consult Caramel BEFORE making any change or
+DECISION; never auto-proceed from a finished round into edits, into locking a
+decision, or into the next committing step. Reinforced as always-on: *"as always
+between rounds of agents, consult with me before making any changes or decisions."*
+Note the breadth — it governs DECISIONS (locking a design call, freezing a layout,
+picking an option), not just code edits. Read-only investigative rounds may be
+chained, but their OUTPUT returns to her before anything acts on it.
 
 **Edge case:** trivially-mechanical findings (e.g., audit caught a
 typo in a doc) can be batched + reported alongside the substantive

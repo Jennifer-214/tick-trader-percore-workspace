@@ -7,6 +7,7 @@ tags: [data-oriented-design, scale-invariance, per-node-purity, capital-safety, 
 surface: [slow-path, hot-path, cfg-flow, oms-drainer, persistence, live-trading]
 sister_specs:
   - per-node-position-ownership-model.md
+  - decision-time-data-binding-pattern.md
 registry_id: H22
 canonical_instance: A1 (.E.0.10 warm-restart read global take_profit_pct vs the per-strategy override — CLOSED) + A24 (.E.0.10 RebuildOneCore mutates flat resolved_cfg; per-node consumer reads the cores[slot] slice — LANDED .E.0.10 engine f2ef5d6, D-211 option c + Check-11 guard)
 living_spec: true
@@ -90,6 +91,23 @@ must depend only on its own inputs.
    `tools/check_per_core_registry_integrity.py` **Check-11** (A24's un-reintroducible close). This is
    the mechanical enforcement of H22 at the cfg surface; it composes with the Class-44 detector (the
    codebase-wide "write-with-no-live-read" sweep).
+
+## Cross-tier ownership + field categories (the E.1.3 aggregator target)
+
+> **Forward-framed.** This names the ownership model the `.E.1` per-cluster aggregator (E.1.3) implements, and the HEAD co-write it closes — it is the TARGET, not a description of current HEAD (do NOT read it as an audit of live code).
+
+**Owner = the FINEST tier at which a value is INDEPENDENTLY DETERMINED** (the leaf authority) — independently determined at tier T = a pure function of tier-T-local inputs. Coarser tiers **DERIVE by aggregation** (O(1) reduce); they must NEVER co-write an independent accumulator for the same quantity. *(Corrects the naive "coarsest unit it varies with," which mis-points at deployment for an aggregate like `realized_pnl`.)*
+
+**HEAD open-gap this closes (the instance):** `oms->realized_pnl` and per-node `node_realized` are BOTH independently accumulated from the same `net` (`ControllerEventLoop.hpp:1948-1959`) — a live dual-accumulator co-write (Class-43-flavored; neither derived from the other). The E.1.3 aggregator makes the node the leaf owner and the deployment total a derived sum; this clause is that fix's rule, not a claim about HEAD.
+
+**Four facets of the model — each enforced at its EXISTING home (pointers, never restated here — a restatement is the Class-47 doc split-brain this fold exists to avoid):**
+
+- **Replica** — a copy of an owned value at any tier (incl. DOWNWARD coarse→fine = the per-node-locality mechanism), tagged with a motive `{hot-access | cross-thread-publish | per-node-locality}`; copy-only + kept fresh → `refactor-patterns/decision-time-data-binding-pattern.md` (replica-coherence, the freshness rule) + **H6** (cross-thread) + Class 27 (the stale-copy failure).
+- **Derived** — a pure function of other owned fields; recompute by default, or `cache(inputs…)` (name the inputs; re-derivable on load) → Class 43 + `meta-disciplines/single-source-of-truth-discipline.md`.
+- **Pipeline-staged** — one authority live per lifecycle stage, copy-forward (`intended_* : NodeContext → SubmitCommand → Order → Position`); a SEQUENCE of authorities, not concurrent duplicates.
+- **Capability vs current-config** — the tier a value CAN vary at (capability) vs the tier it DOES vary at (current storage); declare the current owner by live storage, reserve the finer slot → Class 24. *(`trading_mode`: deployment-global at HEAD, cluster-owned at `.E.1`, SHADOW a RESERVED per-node capability — unimplemented, so not per-node today.)*
+
+The four axes **owner ⊥ tier ⊥ thread ⊥ wire** are ORTHOGONAL — "hot AND persisted" (`take_profit_price`) is the NORMAL case, not a tension; the only real tension is a hot replica that RE-DERIVES instead of tracking its owner (→ the replica-coherence rule, Fight #4).
 
 ## Scale to N clusters (the next level up)
 

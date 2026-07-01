@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   tags: [audit-methodology, meta-discipline]
-  sister_specs: [feedback_document_as_you_go_over_catch_at_end.md, feedback_structural_enforcement_when_memory_insufficient.md, feedback_adversarial_framing_default_for_checks.md, feedback_sister_cohort_amendment_completeness.md, feedback_passing_test_is_not_verification.md, feedback_define_done_and_arm_scout_subagents.md, feedback_exhaustive_capture_and_verify_tracking.md, feedback_ground_design_in_real_code.md, feedback_mechanically_verify_derived_code_facts.md, feedback_rename_enumerator_is_world2_aid_compiler_is_world1.md]
+  sister_specs: [feedback_document_as_you_go_over_catch_at_end.md, feedback_structural_enforcement_when_memory_insufficient.md, feedback_adversarial_framing_default_for_checks.md, feedback_sister_cohort_amendment_completeness.md, feedback_passing_test_is_not_verification.md, feedback_define_done_and_arm_scout_subagents.md, feedback_exhaustive_capture_and_verify_tracking.md, feedback_ground_design_in_real_code.md, feedback_mechanically_verify_derived_code_facts.md, feedback_rename_enumerator_is_world2_aid_compiler_is_world1.md, feedback_synthesis_needs_its_own_adversarial_pass.md]
   originSessionId: eb863fe9-13c6-448b-b458-ba72b5419c75
 ---
 

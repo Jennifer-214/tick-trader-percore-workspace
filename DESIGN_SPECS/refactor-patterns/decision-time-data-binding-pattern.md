@@ -5,7 +5,7 @@ version: 1.0
 established: 2026-05-15
 tags: [structural-fix, framework-discipline, latency-discipline]
 surface: [oms-drainer, slow-path, hot-path, cfg-flow]
-sister_specs: [slow-path-cfg-resolution-cache-pattern.md, structural-fix-preferred-decision-framework.md]
+sister_specs: [slow-path-cfg-resolution-cache-pattern.md, structural-fix-preferred-decision-framework.md, per-node-purity-scale-invariance.md]
 applies_at_skills: []
 ---
 
@@ -520,3 +520,17 @@ The v1.2 "downstream READS the canonical value, never RECOMPUTES from a differen
 - **A1 (canonical):** warm-restart recomputed `live_tp`/`live_sl` from the GLOBAL `take_profit_pct`, while the fresh-entry dispatcher read the per-strategy override → a restored position exited at a different price than while live. Fixed by single-sourcing `ResolvePerFillTpPct`/`ResolvePerFillSlPct` for BOTH entry + restore.
 - **A25 (canonical):** post-fix, the event-log replay (`Portfolio_FromEventLog`) reconstructs `original_tp` from the expected-entry `e.tp` while the live path sets `fill×(1+tp_pct)` → live≠replay. Dispositioned **option (b)** (documented non-reproducible + F-059 freeze-flag — the binary snapshot is the PRIMARY recovery; the full single-source rides the `.E.1` venue-net reconcile per `data-disciplines/per-node-position-ownership-model.md`).
 - **Structural fix:** single-source the derivation BOTH paths call (the resolver-SSoT shape A1 established). The forward path and every reconstruct/replay/restore path must call the SAME resolver, not re-derive from a sibling field. Closes TECH_DEBT-186.
+
+---
+
+### Stage 3 amendment v1.4 — replica-coherence: the freshness half (Fight #4 / the hot-replica sibling; 2026-07-01)
+
+v1.3 (above) closed the **reconstruct-path** form (a recovery path re-deriving from a DIFFERENT source). Its **hot-replica sibling**: a value a hot path must arm BEFORE its owner's authoritative input exists (an async fill), so it arms from a proxy and then MUST re-sync. The general rule that subsumes both:
+
+**A replica TRACKS its owner** — it resolves to the SAME value the owner does, **computed from the SAME authoritative input via the SAME resolver the owner calls** (NOT re-derived from the owner's stored field — for a multi-word `Money`/`Position` owner that read would be a cross-thread TORN-READ), and it is **kept fresh**. It must never be:
+- **(a) independently re-derived from a DIFFERENT / proxy input** → drift [Class 45 reconstruct-from-sibling · Class 43 same-field-different-formula], nor
+- **(b) a STALE unrefreshed copy** → Class 27.
+
+**Fight #4 (canonical — the hot-replica form):** `ExecutionCore.live_tp` / `live_sl` arm from the DECISION tick (`ExecutionCore.hpp:543/549`) while the owner `Position.take_profit_price` is booked from the ACTUAL fill (`OrderManager.hpp:1199-1204`, A25), and NO post-fill re-sync closes the gap → live ≠ owner under slippage (TP fires early / SL fires late). `live_sl` additionally exposes the A25-**omitted** owner leg: `Position.stop_loss_price` is still decision-anchored — the complete fix mirrors A25's `per_fill_tp` with a `per_fill_sl` via the existing `ResolvePerFillSlPct` (TP and SL are sisters — reuse the A25 plumbing). Inert at `slippage_pct=0`; bites at configured paper-slippage or live real fills (a live-readiness bug).
+
+**Structural fix (the hot-replica shape):** arm optimistically from the proxy, then **re-sync to the owner's value once the owning event lands** — the un-resynced window is the bug, the optimistic arm is not. The re-sync is **PUBLISHED owner→hot** (the owning-event thread writes a seqlock slot + a confirm flag; the hot thread applies to its OWN field via a **branchless mask-select** on the read it already does — H7/H20, NO data-dependent branch on the exit path), NEVER a cross-thread read of the owner's multi-word field (torn-read) NOR a bare drainer store into the hot field (multi-writer). Homed as a fold-block in the E.1.3 mirror↔book coherence leaf; the field-level mechanics live there.

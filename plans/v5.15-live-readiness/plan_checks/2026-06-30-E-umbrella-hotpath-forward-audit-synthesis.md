@@ -61,7 +61,7 @@ The "25 data-dependent-warm branches" decomposes as **1 real** + **7 guarded-rar
 
 - **D1 (THE call):** Is `Position` FINAL at 128B? — route D-206 give-back through the existing persisted `stop_loss_price` `Money_Max` floor (no stored peak; 128B; restart-strictly-better) vs reserve a 16B peak. **Audit leans floor → Position FINAL @128B + owner_node_id free in pad.**
 - **D2:** delete the legacy `PortfolioController` snapshot (CONTROLLER=14) — orphaned post-single_core-deletion, untested capital path; H21 remove-dead-code.
-- **Seam-map drift:** the dependency-graph puts aggregator+torn-read at E.1.3; decision-log D (2026-06-15) puts it at E.1.4 — reconcile before either claims the torn-read close.
+- **Seam-map drift — RESOLVED (2026-07-01, D-288 sweep C1/C2):** NOT a live contradiction. D-225 (the same-day N=7 LOCK, 2026-06-15) supersedes D-223's pre-lock provisional map → aggregator + torn-read + kill-hierarchy = **E.1.3** (SPINE-2 coherence), reaffirmed by D-247/D-283. The only E.1.4 routing was D-223:1435's pre-lock C-class sweep (whose own STATUS says "NEXT: lock the seam map"). No re-adjudication owed. *(D1/D2 above are likewise RESOLVED — D1 → RESERVE the 16B peak / Position 192B per the A-CLASS ADVERSARIAL VERDICTS section + D-283; D2 → DELETE per D-289.)*
 - Lower-stakes: A34 → PULL; per-cluster mode → keep `cfg.trading_mode` SSoT; `NodeState.hot.mode` → delete; `MAX_NODES_PER_CLUSTER` ≤ `MAX_EXECUTION_NODES`.
 
 (Tech-debt cascade [27] + realign-risks [24] + the hot-path branch-roadmap [14] live verbatim in the raw workflow file; the load-bearing ones are folded above.)

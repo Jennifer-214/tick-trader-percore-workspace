@@ -1,0 +1,67 @@
+---
+type: future-design-note
+status: capture (decisions firmed + ideas documented; the leg-A select-drop is PROPOSED — pending the 2026-06-30 verify swarm)
+established: 2026-06-30
+hardware_context: i7-11850H (Tiger Lake-H, AVX-512 present) — NOT the i5-1035G4 the in-code bench comments cite
+related:
+  - E-umbrella hot-path forward audit (Workflow wcth0c1i6, 2026-06-30, 85 agents)
+  - subplans/2026-06-15-v5.15.5.F.4d.1.E.1.2-nodestate-soa-layout.md  # the imminent freeze; the ONE obligation below is for it
+  - decision-logs/v5.15.5.F.4d.1.E-architecture-v2.md  # D-229/D-233/D-234/D-235 + pending D-282+
+  - the optimization leaf (D-229 / #9 — no dedicated plan yet; THIS doc seeds it)
+---
+
+# Hot/Slow-path optimization architecture + future directions
+
+Capture of the 2026-06-30 design conversation. Two halves: **decisions firmed** (act on these at the optimization leaf, post-E.1.2) + **architectural ideas / futures** (parked, some need real hardware). The ONE thing here that touches the imminent E.1.2 freeze is decision #2's `sizeof(Money)`-parameterized constraint — everything else is optimization-leaf, after the freeze.
+
+## The architecture (recap — the WHY of the split)
+
+- A **node = 2 CPUs** (1 hot, 1 slow), **one position per node**.
+- **The split rationale (operator history):** the combined hot+slow path measured **4–8µs** — fatal for a sub-µs hot path. So everything heavy / branchy / variable-latency (rolling stats, regime classify, strategy rebuild, bandit select, the trailing ratchet, time-exit) lives on the **slow core**, and the **hot core** does nothing but execute pre-published gates and *buy/sell as fast as possible*. **100%-branchless on the slow path would itself blow the latency budget**, so the slow path is *deliberately* allowed to branch — that's the point of decoupling it.
+- **Handoff:** slow→hot via a **seqlock** (lock-free, H3). The `permission` atomic (`ExecutionCore.hpp:474`) is the slow→hot trade-authorization. The **exit decision + fire is 100% hot-core**; the slow core only sets the *levels* (incl. ratcheting the SL/TP up). The drainer submits the resulting TradeEvents to the venue.
+- The forward audit (2026-06-30) confirmed the split worked: the hot path came back **healthy** — the real optimization surface is the slow side.
+
+## Decisions firmed (2026-06-30)
+
+1. **Leg-A active-select is redundant → read `live_tp` directly (match leg B).** `[PROPOSED — pending the verify swarm below; gets a dedicated I→A before any code.]`
+   `ExecutionCore.hpp:337-338` (`Money tp = active ? core->live_tp : core->cached_params.sg_take_profit_price`) feeds ONLY `sg_fires_a` (`:420/427→:431`), which is consumed ONLY by the **active-masked** `can_exit_a = active & sg_fires_a` (`:477`) — so the `cached` branch computes a value that's discarded when inactive. **Leg B already reads `live_tp_b` directly** (`:446/:455`), no select, leaning on the same mask (`:478`). Dropping the leg-A select removes the branch entirely (no select/cmov/blend, no new field, no slow-path, no cross-core), takes a branch OFF the exit-decision read path (honors "protect the sell tail at all costs"), and may **fix the v4.7.3 zombie-SL foot-gun** (`:494-497` — the `cached` fallback "tracks current price → sl_hit never fires" on a dropped-exit-push position). Almost certainly **vestigial** (predates the active-mask + push-success fix). The `// CMOV verified in bench` comment is the stale one.
+
+2. **`Money` width = build-time per-market** (NOT runtime — it's a *type*; one width per binary keeps the wire/kernel/aggregation SSoT intact).
+   - **Crypto = 16B** (`__int128`, `FixedPoint<10,8>`) — required for the dynamic range: not single prices (a SHIB tick or BTC both fit a scaled int64) but the **accumulated balances + price×qty intermediates** (a whale notional blows past int64's ~9.2×10¹⁸).
+   - **Equities = 8B** (`int64`) viable → **halves the instruction count of every `Money` op** (128-bit `add`+`adc`→`add`, `cmp`+`sbb`→`cmp`, two-half mask-blend→one) + **8 per cache line vs 4**. The win is *scalar instruction-count* (cross-hardware, no SIMD) — NOT AVX throughput, because the per-node hot path is single-position (no N-walk to vectorize; that's a future multi-position-per-node thing, D-209 sub-pools, or the legacy centralized `PositionExitGate`).
+   - **⚑ E.1.2 FREEZE OBLIGATION (the only one in this doc):** keep the SoA relayout **`sizeof(Money)`-parameterized — never hardcode `16`** in offsets/strides/size-pins, so an 8B-equity build stays a *template instantiation* later instead of a re-architecture. ~Zero cost now; do NOT speculatively *build* 8B (no equity tick data yet). Verified scope: ~10 literal `16`/`128` asserts in `Portfolio.hpp:117,123-130,141,143` an 8B build would fail-compile on — pin the *relationship* (`offsetof == k*sizeof(Money)`), not the digit. (Nice novel-alt: derive the offset asserts from `FOREACH_POSITION_FIELD` so they're width-agnostic by construction — adopt if the SoA pass touches the assert generator anyway.)
+   - **The 8B-equities MIGRATION SHAPE — "what we'd need to do"** `[a whole epoch, like the 24B→16B Ship-A; gated on equity tick data we don't have — so this is future-problem documentation, not a plan]`:
+     1. **Range/overflow audit** — prove `int64` at the equity precision holds single values AND accumulated balances/notionals AND the price×qty intermediates (the wide multiply still needs a 128-bit *temp* via the certified `umul_128`/`divmul_pow10` kernels — only STORAGE narrows, not the math).
+     2. **A 2nd `FixedPoint<I,F>` money specialization** (the 8B `int64 v` layout) behind the build-time per-market switch; the whole `Money_*` op family routes through it.
+     3. **The wire epoch (H9/H21):** snapshot VERSIONs bump + HMAC stamp bodies relayout + golden regen (free — no live models, exactly like 24B→16B). `sizeof(Position)` collapses (7×16B → 7×8B) → the SoA strides + size-pins re-derive — **which is precisely why the freeze obligation above keeps them `sizeof(Money)`-parameterized.**
+     4. **Per-market build + determinism re-cert** (`±USE_NATIVE_128`, the H10 scalar-fallback byte-compare, the conformance analyzer).
+     5. **Payoff unlocked:** the scalar op-count halving + cache density now; a vectorized multi-position walk later (if/when nodes hold K>1 positions). Net: a tagged, gated, golden-regen'd numeric-core epoch ≈ the 24B→16B flip — deliberate, not casual.
+
+3. **SIMD stays OFF the hot path.** AVX warm-up (the upper-vector units idle on every steady hot tick — the only AVX user, the bandit/Thompson, runs on the **exit/slow path**, so the units are *never warm* when a hot tick would want them) + the frequency-license transition + the GP↔vector domain-crossing make a hot-path blend net-negative. SIMD's home is a **future fully-vectorized multi-position walk** (the 8B-equity world), not a lone scalar select. Register count (32 ZMM / 16 YMM) is not the constraint; warm-up/domain-crossing are.
+
+4. **ns-comments → instruction-counts.** The in-code latency claims (`ExecutionCore.hpp:334-336`, `:340-344` — "4 ns", "~40ns", "verified in bench_batch_floor") are **double-stale** (measured on the i5-1035G4 *and* the pre-Ship-B 24B FPN type). Delete them for the conformance analyzer's instruction-budget — exactly the D-233 direction (deterministic, cross-hardware, comparable). Fold into the same touch as #1.
+
+## Architectural ideas / future directions
+
+- **Fully-branchless slow path (D-235 goal).** Drive the slow path's *data-dependent-warm* branches toward zero (the conformance analyzer's branch-classifier is the progress meter). The reduction homes to the optimization leaf — NOT E.1.0/E.1.2. Audit note: the real slow-path p99 suspect may be **`RollingStats_Push`'s 14 register spills** (the only spilling probe), not branches — needs a PMU number; **and `EventLoop_RebuildOneCore` (the largest slow consumer, ~5-30µs) is a conformance-analyzer COVERAGE HOLE — absent from the 7-probe budget set → enroll it as a probe** (both are OPT-leaf items homed here); and the deque back-pop loops should be **allowlisted, not fixed-K restructured** (fixed-K is correctness-breaking + converts amortized-O(1)→unconditional-O(W)).
+
+- **Per-slow-task-core decomposition** `[needs real hardware; recurring thought — documented, NOT do-now]`. Pin each heavy slow task to its own core — 1 stats / 1 regime / 1 bandit / 1 inference — and pipeline them, vs today's single-slow-core-serial.
+  **[Verified 2026-06-30.]** The slow-task DAG is strictly **linear**: `rolling → regime → {inference + bandit-select, FUSED} → strategy → gates → publish` (the bandit *updates* at-fill, on the drainer thread — operator recollection confirmed). So the literal "1 core per task" is **mis-cut**: it splits rolling↔regime (dragging ~122KB of rolling buffers across cores per cadence = cache-coherence thrash) and can't separate the fused inference+bandit — net **increasing** latency. It's a *throughput* technique on a *latency*-oriented path that isn't saturated (slow path ~5-30µs ≪ 100µs budget), so it targets a bottleneck that doesn't exist yet. The **right shape, if/when the slow path saturates:** a coarse **2-way cut at the compact-struct seams** — buffer-heavy `{rolling + signals + inference}` co-located with its 272KB ‖ light `{classify + select + gates + publish}` fed only the small `RegimeSignals` + predictions. (Or an async inference pool *if* inference is the µs driver — but that breaks H22 purity, a real trade.) The node **identity already supports it** — only the CPU-topology helpers (`Run.hpp:213-215`, already documented as *the* override point) assume one slow core/node; `NodeContext` is agnostic. Hardware: single-node-K=4 fits the laptop as a dev/correctness config; production per-task needs **22-82 cores**. → revisit with the coarse cut when saturation actually shows up.
+
+- **Feature digit-clipping → 16-wide SWAR** `[research; dedicated session]`. Features are `FPN_Binary<64>` (64 fractional bits — *far* more than any decision boundary needs). Budget each feature down to its decision-relevant digits → fit `int32` → 16-wide AVX-512 *feature* SWAR. Constraints: **per-feature** (precision-sensitive features can't clip — the operator's "extreme-tail-end" limit; a mixed-width set doesn't SWAR cleanly, so payoff scales with how many features are clip-safe), and it MUST be **deterministic + identical train-and-serve** (H4/H9) or you get train-serve skew. Exotic (decision-relevant quantization / block-floating-point). Worth its own session.
+
+- **Colo-grade design aspiration.** Design the hot/slow paths as if co-located (sub-µs, zero-jitter) even without colo hardware — the public-AGPL / hedge-fund-visibility bar. The variance-over-mean priority (H20) is the expression of this.
+
+## Audit cross-reference (E-umbrella forward audit, 2026-06-30 — raw preserved at `plans/v5.15-live-readiness/plan_checks/raw/2026-06-30-E-umbrella-85agent-workflow-raw.txt`)
+
+- **HARD-freeze = `Position` + cap-symbols ONLY.** `NodeState`/`ClusterState`/`AggregatorState` are NOT wire-serialized (snapshot is field-projected; only `Position` is a raw struct-image `fwrite`) → growing them later is a recompile + size-pin bump, NOT a determinism epoch.
+- **Hot path:** 1 real every-tick branch (the select, decision #1) + 7 guarded-rare (allowlist) + 12 tool-flattening artifacts (cold-nested, the flat analyzer over-counts). The SoA relayout is **hot-path-inert** (the hot gate reads `ExecutionCore<F>`, never `Portfolio.positions[]`).
+- **H4 sketch landmine (must-fix before the freeze):** the `NodeState`/`ClusterState`/`AggregatorState` v0.1 sketches type money fields `FPN<F>` — a silent encoding epoch (FPN 2^F vs Money 10^8, both 16B → size-pins can't catch it) + a D-110 warm-restart corruption. Live code is already `Money`; only the sketch is wrong.
+- **F-096:** the partial-exit leg-split still uses `double` (`Async.hpp:842-851`, TD-167) — Money-ize it in the relayout.
+- **Full synthesis captured** → `plans/v5.15-live-readiness/plan_checks/2026-06-30-E-umbrella-hotpath-forward-audit-synthesis.md` (the durable distillate; verbatim 128-item raw preserved at `plan_checks/raw/2026-06-30-E-umbrella-85agent-workflow-raw.txt`).
+
+## Status / next
+
+- **Verify swarm DONE (3 I-class, 2026-06-30):** (1) select-drop → **do Option C (source-mask `sg_fires_a & -active`)**, not the literal drop — verified observably-equivalent; the `// CMOV` comment is stale (real `je`); (2) per-task-core → **coarse 2-way cut when saturated**, not literal-per-task (above); (3) E.1.2 freeze → clean, the ONE obligation = `sizeof(Money)`-parameterize the Position asserts (above).
+- **A-class pass DONE → D-282..D-286 (2026-06-30):** the audit's "only Position is wire-serialized" de-risking was **REFUTED** (A-1: `OrderEventLog` + the dead `PortfolioController` images are also raw-image epochs → use an explicit wire-surface LEDGER); **D1 RESOLVED → RESERVE the 16B peak, Position 128→192B** (A-2 refuted the floor-channel — D-206's learned/ATR ratchet needs a real persisted peak); select-drop → **Option C** decided (D-285). Still operator-gated: the E.1.2 reformalize + `/precoding-audit-gate` before any code. Nothing coded yet; the comments-are-point-in-time meta-pattern IS codified (SUBAGENT_ARMING §2.5 + the CODEGEN spec row + memory).
+- All hot/slow optimization homes to the **optimization leaf (D-229/#9), post-E.1.2**. The only E.1.2-freeze obligation is decision #2's `sizeof(Money)`-parameterized relayout.

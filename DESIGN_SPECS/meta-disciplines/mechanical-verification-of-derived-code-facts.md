@@ -17,6 +17,7 @@ applications:
   - 'ParameterSlot "~1KB memcpy ~20-30ns" for GateParameters<64> vs actual 192B/~4ns'
   - 'check_struct_size_budget.py false-RED of ExecutionCore (the guard reproducing the disease — the inverse)'
   - 'the LATENCY arm reshaped runtime-bench -> static instruction-budget conformance analyzer (D-233; check_latency_path_conformance.py) — a derived latency-fact reclassified from a runtime measurement to a STATIC proxy'
+  - 'stale "// CMOV verified in bench" vs the actual `je` (16B Money has no x86 128-bit cmov; comment written pre-Ship-B) — a CODEGEN derived-fact comment trusted by a subagent over the disassembly; armed into SUBAGENT_ARMING §2.5 (2026-06-30)'
 ---
 
 # Mechanical verification of derived code-facts (no hand-computed fact without a guard)
@@ -35,6 +36,7 @@ A **derived code-fact** — a quantity computed FROM the code's structure (struc
 | **CACHE**-residency | static budget (`sizeof` vs host-derived L1d/L2) **+** dynamic perf-counter (`L1-dcache-load-misses`) | static flags, **dynamic decides** |
 | **COMPLEXITY** (`O(...)`) | the static analyzer's instruction-count + loop-structure (the constant-iter / loop shape is visible in ASM) **+** a benchmark for input-scaling; a stale-comment lint | **static proxy** + runtime confirm |
 | **LATENCY** | the **static conformance analyzer** (`check_latency_path_conformance.py` — instruction-budget + branch-class from ASM, deterministic + gating); never hand-comment "~100-300µs" | **static (CI/pre-commit)** + dynamic PMU confirm (deferred) |
+| **CODEGEN** (cmov-vs-branch · "branchless" · vectorized · inlined) | the analyzer's branch-classification + `objdump` disassembly. A comment **asserting** codegen (`// CMOV-style`, `// branchless`) is a derived-fact RESTATEMENT — verify the ASM, never the comment; SURFACE+fix a stale one | **static (ASM)** |
 
 Priority gradient (the engine's general law): **compile-time `static_assert` > CI tool > convention.** If a number is kept in a comment at all, it **references the assert** (the SSoT), it does not restate it.
 

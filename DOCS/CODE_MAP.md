@@ -4,7 +4,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-06-28 (commit 9c93d1d)
+**Last regenerated**: 2026-06-29 (commit baf5e5a)
 
 ## CoreFrameworks/
 
@@ -22,47 +22,60 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### ControllerConfig.hpp
 
-- `Fee_Compute` — line 1434
-- `ControllerConfig_ResolveForCore` — line 1452
-- `ControllerConfig_PopulateCoresFromFlat` — line 1514
-- `ControllerConfig_NormalizeForMode` — line 2072
-- `ControllerConfig_IsLiveCapital` — line 2106
-- `ControllerConfig_Load` — line 2117
+- `ControllerConfig_CapitalRangeSweep` — line 1395
+- `Fee_Compute` — line 1540
+- `ControllerConfig_ResolveForCore` — line 1558
+- `ControllerConfig_PopulateCoresFromFlat` — line 1620
+- `ControllerConfig_NormalizeForMode` — line 2178
+- `ControllerConfig_IsLiveCapital` — line 2212
+- `ControllerConfig_Load` — line 2223
 
 ### ControllerEventLoop.hpp
 
-- `NodeContextDisplayMeta_Init` — line 705
-- `EventLoopState_ReconstructPerCoreFromEventLog` — line 851
-- `EventLoopState_Init` — line 940
-- `EventLoopState_InitLegacy` — line 998
-- `EventLoopState_Free` — line 1033
-- `EventLoopState_RegisterCore` — line 1087
-- `Sharded_LegSlot` — line 1137 — All slow-path / boot-time. Trivially inlined.
-- `EventLoopState_SetCoreStrategy` — line 1238
-- `EventLoopState_AttachTradeLog` — line 1265
-- `EventLoopState_AttachOms` — line 1283
-- `EventLoopState_Balance` — line 1301
-- `EventLoopState_SetIntendedParams` — line 1377
-- `EventLoop_DrainPostFillOneCore` — line 1435
-- `EventLoop_DrainPostFill` — line 1892
-- `EventLoop_OnEvent` — line 1939
-- `EventLoop_DrainEvents` — line 2108
-- `EventLoop_QueueParameters` — line 2144
-- `EventLoop_RebuildAllParameters` — line 2178
-- `EventLoop_UpdateRollingStateOneCore` — line 2270
-- `EventLoop_UpdateEmaPriceAllCores` — line 2317
-- `EventLoop_RebuildOneCore` — line 2336
-- `EventLoop_PushParameters` — line 3336
-- `EventLoopState_ConfigureKillSwitch` — line 3372
-- `EventLoop_ClearAllPermissions` — line 3382
-- `EventLoop_KillSwitchTrip` — line 3394
-- `EventLoop_KillSwitchEvaluate` — line 3425
-- `EventLoop_FlattenAll` — line 3606
-- `EventLoop_CheckWsStaleness` — line 3698
-- `EventLoop_TryClearRecovery` — line 3778
-- `EventLoop_TrailingSLRatchetOneCore` — line 3820
-- `EventLoop_BreakevenOnProfitOneCore` — line 3904
-- `EventLoop_RunController` — line 4005
+- `NodeSlowState_Init` — line 166
+- `NodeContextDisplayMeta_Init` — line 691
+- `EventLoopState_ReconstructPerCoreFromEventLog` — line 835
+- `EventLoopState_Init` — line 906
+- `EventLoopState_InitLegacy` — line 963
+- `EventLoopState_Free` — line 996
+- `EventLoopState_RegisterCore` — line 1049
+- `Sharded_LegSlot` — line 1099 — All slow-path / boot-time. Trivially inlined.
+- `Sharded_ValidatePartialExitCfg` — line 1136
+- `EventLoopState_SetCoreStrategy` — line 1188
+- `EventLoopState_AttachTradeLog` — line 1212
+- `EventLoopState_AttachOms` — line 1229
+- `EventLoopState_Balance` — line 1247
+- `EventLoopState_RealizedPnl` — line 1252
+- `EventLoopState_Portfolio` — line 1263
+- `EventLoopState_PortfolioMut` — line 1268
+- `EventLoopState_KsMinBalance` — line 1273
+- `EventLoopState_KsMaxDrawdownPct` — line 1278
+- `EventLoopState_KsPeakBalance` — line 1283
+- `EventLoopState_TradeLog` — line 1299
+- `EventLoopState_SetIntendedParams` — line 1314
+- `EventLoop_DrainPostFillOneCore` — line 1370
+- `EventLoop_DrainPostFill` — line 1799
+- `EventLoop_OnEvent` — line 1851
+- `EventLoop_DrainEvents` — line 2010
+- `EventLoop_QueueParameters` — line 2044
+- `EventLoop_RebuildAllParameters` — line 2077
+- `EventLoop_UpdateRollingStateOneCore` — line 2167
+- `EventLoop_UpdateEmaPriceAllCores` — line 2210
+- `EventLoop_RebuildOneCore` — line 2229
+- `EventLoop_PushParameters` — line 3161
+- `EventLoopState_ConfigureKillSwitch` — line 3196
+- `EventLoop_ClearAllPermissions` — line 3206
+- `EventLoop_KillSwitchTrip` — line 3217
+- `EventLoop_KillSwitchEvaluate` — line 3246
+- `EventLoop_TimeExitOneCore` — line 3320
+- `EventLoop_FlattenAll` — line 3415
+- `EventLoop_CheckWsStaleness` — line 3499
+- `EventLoop_TryClearRecovery` — line 3578
+- `EventLoop_TrailingSLRatchetOneCore` — line 3621
+- `EventLoop_BreakevenOnProfitOneCore` — line 3700
+- `EventLoop_Unpause` — line 3744
+- `EventLoop_SlowPath` — line 3768
+- `EventLoop_RunController` — line 3793
 
 ### EngineCommon.hpp
 
@@ -1066,7 +1079,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `HeldOutSplit_TrainEval` — line 1995 — functions it uses (WalkForward_Compute*, XGBoost_Compute*) are visible.
 - `ConfigField_Set` — line 2240 — handles both FPN_Binary and PCT fields (PCT keys are stored as decimal, value comes in as %).
 - `Backtest_RunSweep` — line 2344
-- `Backtest_RunHyperparamTrainSweep` — line 2437 — mean_val_correlation (regression). Stored as positive number; higher = better.
+- `Backtest_RunHyperparamTrainSweep` — line 2452 — mean_val_correlation (regression). Stored as positive number; higher = better.
 
 ### BacktestPanels.hpp
 

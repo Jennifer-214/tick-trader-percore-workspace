@@ -4,7 +4,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-07-03 (commit b10e778)
+**Last regenerated**: 2026-07-04 (commit 84d73e0)
 
 ## CoreFrameworks/
 
@@ -34,48 +34,50 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 - `NodeSlowState_Init` — line 166
 - `NodeContextDisplayMeta_Init` — line 691
-- `EventLoopState_ReconstructPerCoreFromEventLog` — line 835
-- `EventLoopState_Init` — line 906
-- `EventLoopState_InitLegacy` — line 963
-- `EventLoopState_Free` — line 996
-- `EventLoopState_RegisterCore` — line 1049
-- `Sharded_LegSlot` — line 1099 — All slow-path / boot-time. Trivially inlined.
-- `Sharded_ValidatePartialExitCfg` — line 1136
-- `EventLoopState_SetCoreStrategy` — line 1188
-- `EventLoopState_AttachTradeLog` — line 1212
-- `EventLoopState_AttachOms` — line 1229
-- `EventLoopState_Balance` — line 1247
-- `EventLoopState_RealizedPnl` — line 1252
-- `EventLoopState_Portfolio` — line 1263
-- `EventLoopState_PortfolioMut` — line 1268
-- `EventLoopState_KsMinBalance` — line 1273
-- `EventLoopState_KsMaxDrawdownPct` — line 1278
-- `EventLoopState_KsPeakBalance` — line 1283
-- `EventLoopState_TradeLog` — line 1299
-- `EventLoopState_SetIntendedParams` — line 1314
-- `EventLoop_DrainPostFillOneCore` — line 1370
-- `EventLoop_DrainPostFill` — line 1799
-- `EventLoop_OnEvent` — line 1851
-- `EventLoop_DrainEvents` — line 2010
-- `EventLoop_QueueParameters` — line 2044
-- `EventLoop_RebuildAllParameters` — line 2077
-- `EventLoop_UpdateRollingStateOneCore` — line 2167
-- `EventLoop_UpdateEmaPriceAllCores` — line 2210
-- `EventLoop_RebuildOneCore` — line 2229
-- `EventLoop_PushParameters` — line 3161
-- `EventLoopState_ConfigureKillSwitch` — line 3196
-- `EventLoop_ClearAllPermissions` — line 3206
-- `EventLoop_KillSwitchTrip` — line 3217
-- `EventLoop_KillSwitchEvaluate` — line 3246
-- `EventLoop_TimeExitOneCore` — line 3320
-- `EventLoop_FlattenAll` — line 3415
-- `EventLoop_CheckWsStaleness` — line 3499
-- `EventLoop_TryClearRecovery` — line 3578
-- `EventLoop_TrailingSLRatchetOneCore` — line 3621
-- `EventLoop_BreakevenOnProfitOneCore` — line 3700
-- `EventLoop_Unpause` — line 3744
-- `EventLoop_SlowPath` — line 3768
-- `EventLoop_RunController` — line 3793
+- `Sharded_SlotNode` — line 836 — early consumer precedes the definition (same tt namespace). (D-294)
+- `EventLoopState_ReconstructPerCoreFromEventLog` — line 839
+- `EventLoopState_Init` — line 911
+- `EventLoopState_InitLegacy` — line 968
+- `EventLoopState_Free` — line 1001
+- `EventLoopState_RegisterCore` — line 1054
+- `Sharded_LegSlot` — line 1104 — All slow-path / boot-time. Trivially inlined.
+- `Sharded_SlotNode` — line 1139 — ShardedSnapshot.hpp:219/272. GUI sites grandfathered for the E-series decouple. (D-294/D-295)
+- `Sharded_ValidatePartialExitCfg` — line 1152
+- `EventLoopState_SetCoreStrategy` — line 1204
+- `EventLoopState_AttachTradeLog` — line 1228
+- `EventLoopState_AttachOms` — line 1245
+- `EventLoopState_Balance` — line 1263
+- `EventLoopState_RealizedPnl` — line 1268
+- `EventLoopState_Portfolio` — line 1279
+- `EventLoopState_PortfolioMut` — line 1284
+- `EventLoopState_KsMinBalance` — line 1289
+- `EventLoopState_KsMaxDrawdownPct` — line 1294
+- `EventLoopState_KsPeakBalance` — line 1299
+- `EventLoopState_TradeLog` — line 1315
+- `EventLoopState_SetIntendedParams` — line 1330
+- `EventLoop_DrainPostFillOneCore` — line 1386
+- `EventLoop_DrainPostFill` — line 1815
+- `EventLoop_OnEvent` — line 1867
+- `EventLoop_DrainEvents` — line 2026
+- `EventLoop_QueueParameters` — line 2060
+- `EventLoop_RebuildAllParameters` — line 2093
+- `EventLoop_UpdateRollingStateOneCore` — line 2183
+- `EventLoop_UpdateEmaPriceAllCores` — line 2226
+- `EventLoop_RebuildOneCore` — line 2245
+- `EventLoop_PushParameters` — line 3177
+- `EventLoopState_ConfigureKillSwitch` — line 3212
+- `EventLoop_ClearAllPermissions` — line 3222
+- `EventLoop_KillSwitchTrip` — line 3233
+- `EventLoop_KillSwitchEvaluate` — line 3262
+- `EventLoop_TimeExitOneCore` — line 3336
+- `EventLoop_FlattenAll` — line 3431
+- `EventLoop_CheckWsStaleness` — line 3513
+- `EventLoop_TryClearRecovery` — line 3592
+- `EventLoop_TrailingSLRatchetOneCore` — line 3635
+- `EventLoop_BreakevenOnProfitOneCore` — line 3714
+- `EventLoop_Unpause` — line 3758
+- `EventLoop_SlowPath` — line 3782
+- `EventLoop_RunController` — line 3807
 
 ### EngineCommon.hpp
 

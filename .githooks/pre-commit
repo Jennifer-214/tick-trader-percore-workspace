@@ -406,6 +406,35 @@ if [ "${SKIP_ALIGNMENT_CHECK:-0}" != "1" ]; then
 fi
 
 # ============================================================================
+# CHECK P: full doc/plan floor on handoff/MASTER commits (check_session_docs.sh aggregator).
+# STRUCTURAL close of the recurring "operator catches a handoff/MASTER completeness gap the
+# piecemeal doc-checks miss" (AR-8 6-consecutive close-completeness recurrence; codified 2026-07-04).
+# Checks A-E run STAGED-SCOPED SUBSETS and do NOT include handoff-capture-completeness /
+# index-currency (MASTER<->handoff) / handoff-active-singleton. When a handoff or MASTER is staged,
+# run the WHOLE aggregator so a hand-written handoff that drops the Capture-completeness/TaskList
+# section, or a MASTER left stale vs the active handoff, CANNOT commit. The leverage guard so the
+# operator stops being the completeness gate (feedback_guards_compound_enforcement_is_leverage).
+# Rare trigger (handoff/MASTER staged = ~once/session) -> negligible friction.
+# ============================================================================
+if [ "${SKIP_DOC_AGGREGATOR_CHECK:-0}" != "1" ]; then
+    CSD_TOOL="${REPO_ROOT}/tools/check_session_docs.sh"
+    STAGED_HANDOFF=$(git diff --cached --name-only --diff-filter=ACM | grep -E 'handoffs/.*\.md$|(^|/)MASTER\.md$' || true)
+    if [ -n "$STAGED_HANDOFF" ] && [ -x "$CSD_TOOL" ]; then
+        echo "[pre-commit] Check P: full doc/plan floor (check_session_docs aggregator; staged handoff/MASTER)"
+        CSD_OUT=$("$CSD_TOOL" 2>&1); CSD_RC=$?
+        echo "$CSD_OUT" | tail -22
+        if [ "$CSD_RC" -ne 0 ]; then
+            echo "[pre-commit] Check P FAIL: the doc/plan floor is RED — a HARD check in check_session_docs failed"
+            echo "[pre-commit]   (handoff missing Capture-completeness/TaskList · MASTER<->handoff index-currency · one-way sister · …)."
+            echo "[pre-commit]   Re-run tools/check_session_docs.sh to see which, fix it — OR bypass with SKIP_DOC_AGGREGATOR_CHECK=1"
+            OVERALL_FAIL=1
+        else
+            echo "[pre-commit] Check P PASS"
+        fi
+    fi
+fi
+
+# ============================================================================
 # Overall exit
 # ============================================================================
 if [ "$OVERALL_FAIL" = "1" ]; then

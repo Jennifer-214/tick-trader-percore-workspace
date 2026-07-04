@@ -406,6 +406,32 @@ if [ "${SKIP_ALIGNMENT_CHECK:-0}" != "1" ]; then
 fi
 
 # ============================================================================
+# Check O: slot→node derive class-close guard (D-294/D-295/D-296, Y1). [ENGINE-repo check —
+# staged-scoped to CoreFrameworks/, so it is inert in the workspace repo; present here because
+# this hook is the SINGLE canonical source symlinked into BOTH repos (D-300).]
+# The logical node owning a portfolio slot is derived by Sharded_SlotNode(slot, partial_on)
+# (CoreFrameworks/ControllerEventLoop.hpp). A NEW open-coded (slot|idx)>>1 / >>partial derive
+# is the drift class that produced the :856 ungated-slot>>1 bug (per-node stats misattributed
+# to node/2 on warm-restart). Fires when a staged CoreFrameworks header could reintroduce it.
+# Tool: tools/check_slot_node_derive.py.
+# ============================================================================
+if [ "${SKIP_SLOT_DERIVE_CHECK:-0}" != "1" ]; then
+    SD_TOOL="${REPO_ROOT}/tools/check_slot_node_derive.py"
+    STAGED_SD=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^CoreFrameworks/.*\.hpp$' || true)
+    if [ -n "$STAGED_SD" ] && [ -f "$SD_TOOL" ]; then
+        echo "[pre-commit] Check O: slot→node derive class-close guard (open-coded (slot|idx)>> in CoreFrameworks)"
+        SD_OUT=$(python3 "$SD_TOOL" 2>&1); SD_RC=$?
+        echo "$SD_OUT" | tail -6
+        if [ "$SD_RC" -ne 0 ]; then
+            echo "[pre-commit] Check O FAIL: a NEW open-coded slot→node derive in the engine core — use Sharded_SlotNode(slot, partial_on) (ControllerEventLoop.hpp), OR grandfather with a trailing // SLOT_DERIVE_OK: <reason> — OR bypass with SKIP_SLOT_DERIVE_CHECK=1"
+            OVERALL_FAIL=1
+        else
+            echo "[pre-commit] Check O PASS"
+        fi
+    fi
+fi
+
+# ============================================================================
 # CHECK P: full doc/plan floor on handoff/MASTER commits (check_session_docs.sh aggregator).
 # STRUCTURAL close of the recurring "operator catches a handoff/MASTER completeness gap the
 # piecemeal doc-checks miss" (AR-8 6-consecutive close-completeness recurrence; codified 2026-07-04).

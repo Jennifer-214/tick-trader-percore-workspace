@@ -189,6 +189,14 @@ Invoke `/sync-workspace` via Skill tool. Pushes:
 
 If push fails (auth / merge conflict / etc.): surface to operator. Don't retry blindly.
 
+### Stage 7.5 — FINAL doc-floor gate (AFTER the handoff write — "re-run the floor as the LAST step") [NEW 2026-07-04, D-301]
+
+The 6-consecutive AR-8 miss: the Stage-2.0 + Stage-4.6 `check_session_docs` runs happen BEFORE Stage 6 writes the handoff — so a handoff that omits the Capture-completeness/TaskList section, or a MASTER left stale vs the NEW active handoff, is invisible to those earlier runs (the `.E.1.2` RED-floor-commit `64efd33`). Close the loop:
+
+1. **Re-run `check_session_docs.sh` HERE — after the handoff write + the sync — and READ IT FULL** (never grep-excerpt; a partial read of a green/red tool IS a self-attestation, per the meta-index S18/S20 lessons). Do NOT declare the close complete until it prints `SWEEP CLEAN`.
+2. **Structural backstop (D-299/D-300):** the workspace pre-commit hook now runs the full aggregator (**Check P**) when a handoff/MASTER is staged — so the Stage-7 sync COMMIT is itself gated (a broken handoff FAILS the commit, un-bypassable barring `SKIP_DOC_AGGREGATOR_CHECK`). If the sync commit succeeded WITH a `[pre-commit] Check P PASS` line, the floor was GREEN by construction. If the commit FAILED, fix the handoff/MASTER and re-commit — never `SKIP_` past it.
+3. **Fresh clone / gate unwired:** if Stage 7's commit showed NO `[pre-commit]` output, the hooks are UNWIRED (`core.hooksPath` unset) — run `tools/setup_hooks.sh` (idempotent) to wire both repos, then re-commit. See D-301.
+
 ### Stage 8 — Final close-out report
 
 Print structured report:

@@ -1,7 +1,7 @@
 ---
 type: refactor-pattern
 stage: 2-draft
-version: 1.2
+version: 1.3
 established: 2026-06-21
 tags: [refactor-pattern, ci-tooling, bulk-rename, terminology-evolution, static-analysis, structural-fix]
 surface: [registry, boot-time, ci-tooling]
@@ -133,6 +133,22 @@ incl. the 5 H19 `PARENT_NAME` refs + the `check_per_core_registry_integrity.py` 
 The human then does the rename in ONE mechanical commit (`rename-ship-methodology.md` Phase 4; compiler =
 code oracle; `check_doc_rename_classification.py` = the doc sweep, Phase 5). `cascade rename` re-run vs the
 allowlist + the `check_` guards green = Phase-6 totality.
+
+## `cascade registry <FOREACH_NAME>` — what it computes (v1.3, D-298)
+
+The blast radius of touching a SINGLE registry macro (rename / merge / delete / add-consumer), enumerated UPFRONT so consumers are found before the edit — not reactively after. Reuses the `rename`-mode scan infra (`iter_files` / `_bucket` / `_excluded`) over the SAME widened surface (engine source + the compiler-blind `tools/` / `.githooks/` + docs).
+
+Every reference to the given registry name is **role-classified**:
+- **DEFINITION** — the `#define FOREACH_NAME(X)` site.
+- **ENROLLMENT (H15)** — the `X(FOREACH_NAME, …)` row in the MetaRegistry (`FOREACH_REGISTRY`). The mode reports the **enrollment STATUS**: `ok` (enrolled), `XX` (DEFINED-but-not-enrolled → `test_meta_registry_coverage` WILL fail), or `--` (no definition found). This is the exact surface a rename/merge silently orphans — and the one the build does NOT catch.
+- **EXPANDER** — the `FOREACH_NAME(X)` walk sites (helpers, counts, AUTOPOPULATE bodies).
+- **REFERENCE** — comments + docs.
+
+Each hit is also path-bucketed; the **compiler-BLIND** (`tools/` / `.githooks/`) hits are flagged (the build's blind spot — the `rename`-mode value carried into the registry case).
+
+**Why it exists:** codified after the `.E.1.2` NodeCtx-registry unify (`FOREACH_NODE_CTX_INIT_FIELD` + `RESET_FIELD` → one `FOREACH_NODE_CTX_FIELD`) found the H15 enrollment + apparatus refs REACTIVELY (edit → grep → fix) — the 2nd such hit in one session. The build is the totality oracle for engine-source EXPANDER/DEFINITION sites (a rename slip red-builds), so `registry`'s unique value is the **H15 enrollment status + the compiler-blind surface**. Discipline: `feedback_run_cascade_upfront_for_rename_and_registry` (run it UPFRONT, never edit-then-grep). Non-vacuity: `--selftest` plants a fake registry (DEFINITION + ENROLLMENT + EXPANDER + a `tools/` BLIND ref) + an orphan-not-enrolled control; all must classify + the H15 flag must fire.
+
+**Caveat (in the tool's NOTE):** DERIVED names (`NAME_COUNT` / `_AUTOPOPULATE` / the helper fns) are SEPARATE tokens — they don't textually contain the registry name, so enumerate those separately if they also rename.
 
 ## H21 confirmation (gate MED-2 — rename-safe, NOT an epoch)
 The `CORE_STATE_FLAG_*` flags persist by **bit VALUE** (the `CoreContext.core_state_flags` uint8 bitmap →

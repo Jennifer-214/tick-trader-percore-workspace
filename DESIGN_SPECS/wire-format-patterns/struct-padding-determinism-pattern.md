@@ -189,6 +189,16 @@ For `alignas(N) struct X { ... };`, padding fields still work — they fill gaps
 
 Verified at the time: all 92 FPN core operation tests pass; all 67 consumer-site usages of `.sign` unaffected.
 
+### v5.15.5.F.4d.1.E.1.2 — Position `_pad_pos` (2nd canonical: explicit trailing-pad array + the RESET-path leak)
+
+`CoreFrameworks/Portfolio.hpp::Position<F>` — a registry-generated flat POD (128B = 2 cache lines), blob-serialized whole via `fwrite(positions, sizeof(Position<F>), 16)` (`ShardedSnapshotPersist.hpp`). Its `uint8_t _pad_pos[7]` (bytes 121-127, rounding the struct to 128B) was hand-declared **without** `= {0}` → the H12 hole: 7 indeterminate bytes/position reaching the snapshot wire (a determinism defect latent behind fresh-page-zero). This case adds two things the FPN reference didn't surface:
+
+**1. The RESET path is a SECOND leak site (subset-zeroing).** Unlike FPN (construction-only), `Position` has a `Position_Reset(p)` that clears a reused slot — and it was a hand-list of the 9 value fields that **skipped** `_pad_pos` (the A28 / TECH_DEBT-182 subset-zeroing class), despite its comment claiming "full-struct SSoT." A reset SSoT that hand-lists fields drifts: it silently misses the pad (and any future field). **Fix = value-init the whole struct** (`*p = Position<F>{};`) instead of a hand-list — it applies the registry DMIs AND zeroes the pad for free, and can never subset-zero. Value-init is the right reset for a **flat blob-serialized POD**; switch to an OMS-style registry-walker + per-field reset ONLY if the struct stops being a POD (a field whose reset-default ≠ construct-default, a SKIP_RESET / preserve-across-reuse field, or a non-`{}`-able member: atomic / ring / RAII). (D-295, "Option B.")
+
+**2. The construction fix is still Option A** (the DMI): `uint8_t _pad_pos[7] = {0};` — same reason as FPN. The DMI covers construction (incl. the `OrderManagerState<F> oms;` default-init path); the value-init reset covers slot reuse. Both are needed — construction is not always routed through `Reset`.
+
+**Guard-gap surfaced here (codification candidate).** `check_struct_alignment.py (c)` enforces that a byte-serialized struct carries a `static_assert(sizeof(T)==N)` size-pin — but NOT that its pad bytes are zero-init. So the H12 pad-zero is convention-only, not mechanically enforced: `Position` had its size-pin yet an uninit pad, and a tree grep found no explicit-pad-zero convention → the "Future application candidates" below may carry the same latent hole. **Strengthen the guard to also flag a byte-serialized struct whose trailing/inter-field pad lacks a `= {0}` initializer.**
+
 ### Future application candidates (audit findings)
 
 Audit pending in v5.14.11.B.0 for other structs in the codebase:

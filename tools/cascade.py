@@ -10,6 +10,12 @@ The operator's "cascade tool," answering "if I change X, what cascades?" — ON-
                         NOT mutate. (Gate R1: NO --apply over code — the compiler is the totality oracle for
                         code tokens [rename-ship-methodology Phase 4: human does ONE mechanical commit +
                         red-build]; a code --apply only adds a Class-36 silent-corruption surface.)
+  cascade.py registry <FOREACH_NAME>  ENUMERATE one registry macro's FULL footprint UPFRONT — role-classified
+                        (DEFINITION / H15-ENROLLMENT / EXPANDER / REFERENCE), the compiler-BLIND sites
+                        (tools/.githooks/) flagged, and the MetaRegistry enrollment status checked. The blast
+                        radius for a registry rename/rewrite, so consumers (esp. the H15 enrollment + the
+                        apparatus refs the build can't see) are found up front, not reactively.
+                        Spec: DESIGN_SPECS/refactor-patterns/rename-cascade-enumeration-tooling.md § registry-mode.
   cascade.py struct <T>  RESERVED -> .E.1.2 (the TD-175 AST struct-byte cascade, Tool A re-cut). Not built.
 
 Why it exists: the standing .E.1.0 gates RED-build an engine-SOURCE rename slip (compiler oracle), but a
@@ -251,6 +257,80 @@ def cmd_struct(args):
     return 0
 
 
+def _registry_footprint(name):
+    """Footprint of a registry macro `name` across the FULL surface (engine + apparatus + docs).
+    Returns (roles, enrolled, scanned): roles = {ROLE: [(rel, line_no, bucket, text)]} with ROLE ∈
+    {DEFINITION, ENROLLMENT, EXPANDER, REFERENCE}; enrolled = has an H15 MetaRegistry `X(name, ...)`
+    row; scanned = files read. Reuses the rename-mode scan infra (iter_files / _bucket / _excluded)."""
+    tok_rx    = re.compile(r'(?<![A-Za-z0-9_])' + re.escape(name) + r'(?![A-Za-z0-9_])')
+    def_rx    = re.compile(r'#\s*define\s+' + re.escape(name) + r'\b')
+    enroll_rx = re.compile(r'\bX\s*\(\s*' + re.escape(name) + r'\s*,')   # MetaRegistry X(FOREACH_*, ...) row
+    call_rx   = re.compile(re.escape(name) + r'\s*\(')                   # FOREACH_*(...) expansion / walk
+    roles = {"DEFINITION": [], "ENROLLMENT": [], "EXPANDER": [], "REFERENCE": []}
+    enrolled, scanned = False, 0
+    for f in iter_files(include_docs=True):
+        try:
+            rel = str(f.relative_to(ENGINE))
+        except ValueError:
+            rel = str(f)
+        if _excluded(rel):
+            continue
+        try:
+            lines = f.read_text(errors="replace").splitlines()
+        except Exception:
+            continue
+        scanned += 1
+        for i, line in enumerate(lines, 1):
+            if not tok_rx.search(line):
+                continue
+            if enroll_rx.search(line):
+                role, enrolled = "ENROLLMENT", True
+            elif def_rx.search(line):
+                role = "DEFINITION"
+            elif call_rx.search(line):
+                role = "EXPANDER"
+            else:
+                role = "REFERENCE"
+            roles[role].append((rel, i, _bucket(rel), line.strip()[:96]))
+    return roles, enrolled, scanned
+
+
+def cmd_registry(argv):
+    name = argv[0] if argv else ""
+    if not re.match(r'^[A-Za-z_][A-Za-z0-9_]*$', name):
+        print("usage: cascade.py registry <FOREACH_NAME>   (a registry macro identifier)")
+        return 2
+    roles, enrolled, scanned = _registry_footprint(name)
+    total   = sum(len(v) for v in roles.values())
+    defined = bool(roles["DEFINITION"])
+    print("=" * 78)
+    print(f"cascade registry — upfront footprint of `{name}`  (ENUMERATE-ONLY; the human migrates)")
+    print("=" * 78)
+    print(f"scan: engine+apparatus+docs  ·  {scanned} file(s)  ·  {total} ref(s)")
+    # H15 enrollment status — the exact thing a rename/rewrite silently drops (this session's miss)
+    if defined and not enrolled:
+        print("\n  XX H15: DEFINED but NOT enrolled in the MetaRegistry (no FOREACH_REGISTRY X-row) —")
+        print("        test_meta_registry_coverage will FAIL. Add/fix the X(...) enrollment.")
+    elif enrolled:
+        print("\n  ok H15: enrolled in the MetaRegistry (FOREACH_REGISTRY).")
+    else:
+        print("\n  -- H15: no definition found here (a consumer-only name, or a typo).")
+    for role in ("DEFINITION", "ENROLLMENT", "EXPANDER", "REFERENCE"):
+        hits = roles[role]
+        if not hits:
+            continue
+        blind = sum(1 for _, _, b, _ in hits if b == "TOOL-REGEX")
+        tag = f"   <-- {blind} compiler-BLIND (the build won't catch these)" if blind else ""
+        print(f"\n### {role} — {len(hits)} site(s){tag}")
+        for rel, i, bucket, txt in hits:
+            mark = " «BLIND»" if bucket == "TOOL-REGEX" else ""
+            print(f"  {rel}:{i}{mark}  {txt}")
+    print("\nNOTE: engine-source DEFINITION/EXPANDER sites are compiler-oracle'd (a rename slip red-builds).")
+    print("      The «BLIND» sites (tools/.githooks/) + the H15 enrollment are the co-migrate-by-hand set.")
+    print("      DERIVED names (NAME_COUNT / _AUTOPOPULATE / helper fns) are SEPARATE tokens — enumerate those too.")
+    return 0
+
+
 def selftest():
     """Non-vacuity teeth (Class 51): a positive control MUST be caught; false-positive guards MUST be spared."""
     global ENGINE
@@ -327,6 +407,36 @@ def selftest():
             for rel in files:
                 if "experiments/per_core_sharding/" in rel:
                     failures.append(f"false positive: excluded path flagged ({rel})")
+    # --- registry-mode teeth (the `registry` subcommand) — its OWN fixture tree ---
+    with tempfile.TemporaryDirectory(dir=str(ENGINE), prefix=".cascade_regtest_") as td2:
+        r2 = Path(td2)
+        (r2 / "MemHeaders").mkdir(parents=True)
+        (r2 / "CoreFrameworks").mkdir(parents=True)
+        (r2 / "tools").mkdir(parents=True)
+        (r2 / "MemHeaders" / "fakereg.hpp").write_text(
+            "#define FOREACH_FAKE_REG(X) X(a,1) X(b,2)\n"
+            "    FOREACH_FAKE_REG(SOME_WALKER)\n")                              # DEFINITION + EXPANDER
+        (r2 / "CoreFrameworks" / "fakemeta.hpp").write_text(
+            '    X(FOREACH_FAKE_REG                 , 1, FOREACH_REGISTRY, "fake") \\\n')  # ENROLLMENT (H15)
+        (r2 / "tools" / "fakescan.py").write_text("# a tool that scans FOREACH_FAKE_REG via regex\n")  # BLIND
+        (r2 / "MemHeaders" / "orphanreg.hpp").write_text("#define FOREACH_ORPHAN_REG(X) X(z,0)\n")   # unenrolled
+        saved2 = ENGINE
+        ENGINE = r2
+        try:
+            roles, enrolled, _ = _registry_footprint("FOREACH_FAKE_REG")
+            _, orph_enrolled, _ = _registry_footprint("FOREACH_ORPHAN_REG")
+        finally:
+            ENGINE = saved2
+        if not roles["DEFINITION"]:
+            failures.append("registry: DEFINITION site not found")
+        if not enrolled:
+            failures.append("registry: H15 ENROLLMENT (MetaRegistry X-row) not detected")
+        if not roles["EXPANDER"]:
+            failures.append("registry: EXPANDER (walk) site not found")
+        if not any(b == "TOOL-REGEX" for lst in roles.values() for _, _, b, _ in lst):
+            failures.append("registry: compiler-BLIND tools/ ref not flagged (the unique value)")
+        if orph_enrolled:
+            failures.append("registry: orphan (unenrolled) reg falsely reported enrolled — H15 flag broken")
     if failures:
         print("XX cascade --selftest FAIL:")
         for f in failures:
@@ -346,12 +456,14 @@ def main(argv):
         return selftest()
     if cmd == "rename":
         return cmd_rename(include_docs="--docs" in argv[1:])
+    if cmd == "registry":
+        return cmd_registry(argv[1:])
     if cmd == "struct":
         return cmd_struct(argv[1:])
     if cmd in ("-h", "--help"):
         print(__doc__)
         return 0
-    print(f"cascade.py: unknown subcommand '{cmd}' (expected: rename | struct | --selftest)")
+    print(f"cascade.py: unknown subcommand '{cmd}' (expected: rename | registry | struct | --selftest)")
     return 2
 
 

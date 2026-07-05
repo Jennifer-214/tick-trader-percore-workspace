@@ -86,6 +86,13 @@ def validate_file(path, categories, concern_vocab, surface_vocab):
     except (IOError, OSError):
         return [f"UNREADABLE: {path}"], 0
 
+    # Mixed-state gate (in-file whitelist — no external list to drift): a file with NO schema
+    # block is UN-CONVERTED → not policed (its pre-existing [SECTION] comments are prose, not
+    # tags). A [SCHEMA]_[v1] (which every block, incl. the top-of-file [FILE] block, carries)
+    # opts a file IN; [SCHEMA]_[exempt]_[reason] deliberately opts generated/third-party OUT.
+    if "[SCHEMA]_[" not in text or "[SCHEMA]_[exempt" in text:
+        return [], 0
+
     open_stack = []          # (category, name, lineno) awaiting [END_category]_[name]
     blocks_seen = 0
     for lineno, raw in enumerate(text.split("\n"), 1):
@@ -101,9 +108,10 @@ def validate_file(path, categories, concern_vocab, surface_vocab):
         #     continuation is treated as prose, not flagged — only STRUCTURED lines are checked.
         is_end = cat.startswith("END_")
         if not is_end and cat not in categories:
-            # Unknown token[0]: only flag if it LOOKS like a category (ALL_CAPS, no lowercase) —
-            # else it's an inline value/prose bracket. Keeps a half-converted tree quiet.
-            if cat.replace("_", "").isupper() and cat.isascii() and any(c.isalpha() for c in cat):
+            # Only flag a token with the CATEGORY FORM: single ALL_CAPS_UNDERSCORE word, no
+            # spaces. A multi-word bracket ([ENTRY OFFSET], [ROR REGRESSOR]) is a pre-existing
+            # section comment / prose → skipped. Keeps the un/half-converted tree quiet (graceful).
+            if re.fullmatch(r"[A-Z][A-Z_]+", cat):
                 violations.append(f"{path}:{lineno}  UNKNOWN category [{cat}]")
             continue
 
@@ -115,7 +123,9 @@ def validate_file(path, categories, concern_vocab, surface_vocab):
                 break
 
         # (2) closer bookkeeping
-        if cat in OPENERS:
+        if cat in OPENERS and (cat == "CODE" or (len(toks) > 1 and toks[1])):
+            # [CODE] is a nameless body-delimiter (always an opener); a bare [STRUCT] (no
+            # _[name]) is a pre-existing SECTION marker, not a unit-opener → not pushed.
             name = toks[1] if len(toks) > 1 else ""
             open_stack.append((cat, name, lineno))
             if cat != "CODE":
@@ -163,6 +173,47 @@ template <unsigned F> inline int Regime_Classify() { return 0; }
 //======================================================================
 // [END_FUNCTION]_[Regime_Classify]
 """, None),
+    ("clean STRUCT", """
+//======================================================================
+// [STRUCT]_[ExecutionCore]
+// [TAG]_[[HOT_PATH] [DATA_ORIENTED_DESIGN]]
+// [THREAD]_[[HOT_WRITER] [SLOW_READER]]
+// [SCHEMA]_[v1]
+//======================================================================
+// [CODE]
+template <unsigned F> struct alignas(64) ExecutionCore { };
+// [END_CODE]
+//======================================================================
+// [DERIVED]
+// [SIZE]_[192B]
+// [ALIGN]_[64]
+//======================================================================
+// [END_STRUCT]_[ExecutionCore]
+""", None),
+    ("clean REGISTRY", """
+//======================================================================
+// [REGISTRY]_[FOREACH_STRATEGY]
+// [TAG]_[[FRAMEWORK_DISCIPLINE]]
+// [SCHEMA]_[v1]
+//======================================================================
+// [CODE]
+#define FOREACH_STRATEGY(X) X(MEAN_REVERSION)
+// [END_CODE]
+//======================================================================
+// [DERIVED]
+// [ROW_COUNT]_[5]
+// [ENROLLED]_[MetaRegistry.hpp]
+//======================================================================
+// [END_REGISTRY]_[FOREACH_STRATEGY]
+""", None),
+    ("clean FILE (orient-only, no closer)", """
+//======================================================================
+// [FILE]_[ExecutionCore.hpp]
+// [TAG]_[[HOT_PATH]]
+// [SCHEMA]_[v1]
+// [OVERVIEW]_[per-node hot execution state + tick kernel]
+//======================================================================
+""", None),
     ("unknown category", "// [FUNCTON]_[typo]\n", "UNKNOWN category"),
     ("two categories one line", "// [FUNCTION]_[X] [TAG]_[[HOT_PATH]]\n", "TWO categories"),
     ("missing closer", "// [FUNCTION]_[Orphan]\n", "no matching [END_FUNCTION]"),
@@ -177,7 +228,7 @@ def run_selftest(categories, concern_vocab, surface_vocab):
     ok = True
     for label, src, expect in _SELFTEST:
         fd, p = tempfile.mkstemp(suffix=".hpp")
-        os.write(fd, src.encode()); os.close(fd)
+        os.write(fd, ("// [SCHEMA]_[v1]\n" + src).encode()); os.close(fd)   # opt the fixture in (gate)
         viols, _ = validate_file(p, categories, concern_vocab, surface_vocab)
         os.unlink(p)
         hit = expect is None and not viols
@@ -207,11 +258,10 @@ def main():
     if args.paths:
         files = [Path(p) for p in args.paths]
     else:
-        files = []
-        for d in ("CoreFrameworks", "Strategies", "ML_Headers", "FixedPoint",
-                  "MemHeaders", "DataStream", "GUI", "Backtest"):
-            files.extend((ENGINE / d).rglob("*.hpp"))
-            files.extend((ENGINE / d).rglob("*.cpp"))
+        # Scan EVERY source file (drift-proof — a new dir is auto-included), excluding
+        # vendored deps + build outputs. No hardcoded file/dir allow-list.
+        files = [p for p in list(ENGINE.rglob("*.hpp")) + list(ENGINE.rglob("*.cpp"))
+                 if not any(part == "vendor" or part.startswith("build") for part in p.parts)]
 
     all_v, blocks, checked = [], 0, 0
     for f in files:

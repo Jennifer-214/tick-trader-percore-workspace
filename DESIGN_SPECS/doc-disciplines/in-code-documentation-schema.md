@@ -86,9 +86,10 @@ rg -l '\[TAG\]_\[\[SLOW_PATH'  |  xargs rg -l '\[VERSION\]_\[v5.15'  |  xargs rg
 |---|---|---|---|
 | `[FILE]`/`[STRUCT]`/`[FUNCTION]`/`[REGISTRY]` | `_[name]` | the identifier | curated |
 | `[TAG]` | `_[[a] [b] …]` | doc-tag-vocab SURFACE + CONCERN axes (UPPER_SNAKE render) | curated |
+| `[SCOPE]` | `_[DEPLOYMENT\|CLUSTER\|NODE\|CORE]` | the shard SCALE-LEVEL the unit's state/logic lives at (glossary §15 · H22 scale-invariance; `ExecutionCore`/CPU-core = CORE) — plugin can flag an H22 violation (a per-NODE unit reading a `core_N_*`-overridden global) | curated |
 | `[WHY]` | `_ prose` | judgment | curated |
-| `[DIAGRAM]` | `_[kind]` + ASCII body | judgment (ASCII byte/data-flow map) | curated intent / DERIVED-checkable |
-| `[DERIVED]` family (size/deps/consumers/instr-budget/blast-radius) | `_[SUBCAT]_[val]` | **tool-refreshed in-comment** — generated from clangd / `gen_code_map`, CI-checked vs ground truth, NEVER hand-edited (D-307 fork b) | machine-derived |
+| `[DIAGRAM]` | `_[kind]` + ASCII body | judgment (ASCII byte-map / bit-map for packed fields / data-flow map) | curated intent / DERIVED-checkable |
+| `[DERIVED]` family (build-flags/size/align/cache-lines/straddle/branches/float/deps/consumers/tested-by/instr-budget/blast-radius) | `_[SUBCAT]_[val]` | **tool-refreshed in-comment** — generated from clangd / `gen_code_map`, CI-checked vs ground truth, NEVER hand-edited (D-307 fork b) | machine-derived |
 | `[ITERATIONS]` | `_[n]` | **DERIVED** — git-churn count (commits touching the unit) → hot-spot detector; tool-refreshed + CI-checked (D-306) | machine-derived |
 | `[DETAIL]` | `_ rich prose (block)` | judgment (`deep_dives` LR-narrative style; author's voice) | curated |
 | `[EDIT]` / `[VERSION]` | `_[[date-or-version]]` + prose below | judgment (`deep_dives` `[EDIT [14-03-26]]` style) | curated |
@@ -96,9 +97,20 @@ rg -l '\[TAG\]_\[\[SLOW_PATH'  |  xargs rg -l '\[VERSION\]_\[v5.15'  |  xargs rg
 | `[DIRECTIVE]` → `[LAT_EXEMPT]` (+ future `[H12_PAD]`/`[TODO]`) | `_[reason]` on the governed line | machine-read | curated |
 | `[FUTURE_WORK]` → `[TECH_DEBT]` `[PLAN]` | `_[SUBCAT]_[id]` | a tracked FORWARD pointer (code twin of a doc's future-expansion; must RESOLVE — CI) — distinct from `[REFERENCE]` which governs/explains (D-306) | curated |
 | `[SCHEMA]` | `_[vN]` | the convention version | meta |
-| `[END_*]` | `_[name]` | close delimiter | structural |
+| `[CODE]` / `[END_CODE]` | (none) | **body-range delimiter** — explicitly brackets the code body so the DERIVED size-tool + the plugin's cursor-position tracking read an exact PARSED range (the `====` bars are render-only, can't serve this) (D-306) | structural |
+| `[END_*]` | `_[name]` | close delimiter (`[END_FUNCTION]`/`[END_STRUCT]`/`[END_REGISTRY]`/`[END_CODE]`) | structural |
 
 Vocab is **1-line extensible** (per `doc-tag-vocabulary.md`); add tags at real use-sites, don't pre-enumerate. `[LATENCY_CRITICAL]` etc. are synonyms of existing SURFACE tags — fold, don't add.
+
+### Structural + concurrency annotations (register the vocab; apply as-encountered)
+
+Design classifications a tool can't infer — the author declares them. Register the known set so it's consistent + not forgotten (`doc-tag-vocabulary` is 1-line extensible); APPLY each at its first real unit during conversion, never pre-stamp. The byte/bit **breakdown** is the `[DIAGRAM]`'s job (byte-map + bit-map), NOT a per-field tag explosion.
+
+- **Packing (layout)** — `[BIT_PACKED]` (H14: manual `MASK_`/`SHIFT_`/`BITMAP_`/`MBS_` over `uint{8..64}_t`, never C++ bitfields) → the `[DIAGRAM]` carries the **bit-map** (what each bit / bit-group encodes). `[PADDING]` (H12 byte-equivalence).
+- **Cross-thread mechanism** — a curated `[SYNC]` line (mirrors `[THREAD]`): `[SYNC]_[SEQ_LOCK]` (slow→hot config cache) · `[SYNC]_[SPSC]` (producer→consumer ring) · `[SYNC]_[ATOMIC]` (cross-core flag/counter) · `[SYNC]_[LOCK_FREE]`.
+- **Wire / persistence** — `[TAG]` concern-values `[WIRE_FORMAT]` (H9 HMAC body) · `[PERSISTED]` (snapshot-serialized).
+
+A new sync primitive / packing scheme adds ONE vocab line at the first struct that needs it — the conversion surfaces it, so a forgotten annotation self-corrects (never a silent gap).
 
 ---
 
@@ -130,9 +142,13 @@ The comment block is the **interface** between this schema (the format) and `fox
 // [SCHEMA]_[v1]
 // [OVERVIEW]_[<one-line gist>]
 // [DIAGRAM]
-//   <hand-ASCII data-flow — -> <- | _ ^ v>
+//   <hand-ASCII — ASCII boxes (+--+ | +) + arrows (-> <- ^ v); NO Unicode glyphs>
+//======================================================================
+// [CODE]
 //======================================================================
 <signature> { <clean body — comments moved OUT> }
+//======================================================================
+// [END_CODE]
 //======================================================================
 // [COMMENT]
 //——————————————————————————————————————————————————————————
@@ -144,8 +160,11 @@ The comment block is the **interface** between this schema (the format) and `fox
 //======================================================================
 // [DERIVED]   (tool-refreshed by fox-symdeps; do NOT hand-edit)
 //----------------------------------------------------------------------
+// [BUILD]_[<canonical build.sh flags — e.g. -O3 -march=native; pins the asm-derived facts below>]
 // [SIZE]_[<n instr>]
 // [SIMD]_[<none|avx512>]
+// [FLOAT]_[<n · H4-exempt if feature-math>]
+// [BRANCHES]_[<data-dependent: n · H7/H20 branchless meter>]
 // [UPSTREAM]_[[<types>]]
 // [CONSUMERS]_[[<callers>]]
 //======================================================================
@@ -159,12 +178,17 @@ The comment block is the **interface** between this schema (the format) and `fox
 // [STRUCT]_[<Name>]
 //----------------------------------------------------------------------
 // [TAG]_[[<SURFACE>] [DATA_ORIENTED_DESIGN]]
+// [THREAD]_[[<HOT_WRITER> <SLOW_READER>]]   (CURATED — author-declared thread ownership; not clang-derivable)
 // [SCHEMA]_[v1]
 // [OVERVIEW]_[<layout-by-access-pattern gist>]
 // [DIAGRAM]
 //   line0: [<field:bytes>] .. = 64B    (byte-map; tool-verified vs offsetof)
 //======================================================================
+// [CODE]
+//======================================================================
 <struct> { … };
+//======================================================================
+// [END_CODE]
 //======================================================================
 // [COMMENT]
 //——————————————————————————————————————————————————————————
@@ -178,8 +202,10 @@ The comment block is the **interface** between this schema (the format) and `fox
 // [DERIVED]   (tool-refreshed)
 //----------------------------------------------------------------------
 // [SIZE]_[<N>B]
+// [ALIGN]_[<alignas — 64 for cross-thread, H6>]
+// [CACHE_LINES]_[<n 64B lines spanned>]
+// [STRADDLE]_[<none | field@off crosses a line → false-sharing risk>]
 // [ALIGNED_CONSUMERS]_[[<types>]]
-// [THREAD]_[[<HOT_WRITER> <SLOW_READER>]]
 //======================================================================
 // [END_STRUCT]_[<Name>]
 //======================================================================
@@ -194,7 +220,11 @@ The comment block is the **interface** between this schema (the format) and `fox
 // [SCHEMA]_[v1]
 // [OVERVIEW]_[<what it single-sources; add/drop = 1 row + a version bump>]
 //======================================================================
+// [CODE]
+//======================================================================
 #define FOREACH_<NAME>(X)  X(...)  …
+//======================================================================
+// [END_CODE]
 //======================================================================
 // [COMMENT]
 //——————————————————————————————————————————————————————————
@@ -231,6 +261,8 @@ The registry DERIVED — `[ROW_COUNT]` · `[ENROLLED]` (its MetaRegistry row, H1
 ---
 
 ## Worked examples
+
+> **Illustrative — NOT the golden fixture.** These show block SHAPE. The `[DERIVED]` numbers are hand-written placeholders (some stale — sizes predating the 16B core) and MUST NOT be frozen as the self-test golden: the committed golden is TOOL-GENERATED from the P2 pilots (`sizeof`/`offsetof`/analyzer), never hand-authored — hand-writing DERIVED is the Class-18 drift the schema bans. They also predate `[CODE]`/`[END_CODE]` framing + the cache/branch DERIVED tags (added at lock); the pilots render the current form.
 
 ### Function — `Regime_Classify` (Strategies/RegimeDetector.hpp)
 ```cpp
@@ -321,8 +353,9 @@ template <unsigned F> struct alignas(64) ExecutionCore { … };
 
 1. **Vocab** — every `[CATEGORY]` in the closed set; every `[TAG]`/`[REFERENCE]` value resolves (tag ∈ doc-tag-vocab; `[DECISION]_[D-306]`/`[DESIGN_SPEC]_[x]` EXISTS — `check_capture_audit`-shape → no dangling refs).
 2. **Section order** — blocks follow the ladder; out-of-order = fail.
-3. **DERIVED vs ground truth** — each `[DERIVED]` line diffed against its generator (`sizeof`/`offsetof`/`gen_code_map`/`calls_graph`/conformance/git); mismatch = build error.
+3. **DERIVED vs ground truth** — each `[DERIVED]` line diffed against its generator (`sizeof`/`offsetof`/`gen_code_map`/`calls_graph`/conformance/git); mismatch = build error. **DERIVED facts MUST be REPRODUCIBLE** (deterministic per binary — instruction count / cache spans / offsets / SIMD / branch class, the asm-derived ones pinned by a `[BUILD]` line naming the canonical `build.sh` flags — the count is meaningless without them): a machine-variable metric (measured **ns** — clock/turbo/voltage/core-interrupt dependent) is NEVER a drift-checked comment fact (it would false-RED in CI). **Instruction count (`[SIZE]_[instr]`) is the transferable latency proxy**; the H8 ns budget is a design constraint (`[REFERENCE]_[INVARIANT]_[H8]`); actual ns measurement lives on the separate measurement surfaces (dev-time `fox-bench` fingerprints / the runtime data+monitoring planes), never in this dev-plane comment.
 4. **Closers** — every `[STRUCT]`/`[FUNCTION]`/`[REGISTRY]` has a matching `[END_*]`.
+5. **Prose asserts no DERIVABLE fact** — curated `[WHY]`/`[DETAIL]` states the WHY (rationale/intent/history) but NEVER restates a machine-derivable WHAT. Codegen-keywords in prose (branchless / CMOV / no-spill / SIMD / inlined / a size or instr claim) are cross-checked against the corresponding DERIVED tag (`[BRANCHES]`/`[SIMD]`/`[SIZE]`…) — a contradiction FAILS the build. **Rationale (SSoT):** a derivable fact restated in prose is a second, UNCHECKED copy = a drift surface; the fact lives ONCE, in its DERIVED tag, and prose *references* it (`[BRANCHES]_[0]`) rather than *asserting* it ("branchless"). This structurally closes the **prose-lies-about-codegen** class (a stale "CMOV/branchless" comment relocating verbatim as a false claim CI never inspected — RBP-class candidate).
 
 ---
 

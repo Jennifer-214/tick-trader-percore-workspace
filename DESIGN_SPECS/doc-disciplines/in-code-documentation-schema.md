@@ -88,11 +88,13 @@ rg -l '\[TAG\]_\[\[SLOW_PATH'  |  xargs rg -l '\[VERSION\]_\[v5.15'  |  xargs rg
 | `[TAG]` | `_[[a] [b] …]` | doc-tag-vocab SURFACE + CONCERN axes (UPPER_SNAKE render) | curated |
 | `[WHY]` | `_ prose` | judgment | curated |
 | `[DIAGRAM]` | `_[kind]` + ASCII body | judgment (ASCII byte/data-flow map) | curated intent / DERIVED-checkable |
-| ~~`[DERIVED]` family~~ (size/deps/consumers/instr-budget/blast-radius) | — | **PLUGIN-owned — live from clangd; NEVER a comment tag** (D-307) | machine-live |
+| `[DERIVED]` family (size/deps/consumers/instr-budget/blast-radius) | `_[SUBCAT]_[val]` | **tool-refreshed in-comment** — generated from clangd / `gen_code_map`, CI-checked vs ground truth, NEVER hand-edited (D-307 fork b) | machine-derived |
+| `[ITERATIONS]` | `_[n]` | **DERIVED** — git-churn count (commits touching the unit) → hot-spot detector; tool-refreshed + CI-checked (D-306) | machine-derived |
 | `[DETAIL]` | `_ rich prose (block)` | judgment (`deep_dives` LR-narrative style; author's voice) | curated |
 | `[EDIT]` / `[VERSION]` | `_[[date-or-version]]` + prose below | judgment (`deep_dives` `[EDIT [14-03-26]]` style) | curated |
-| `[REFERENCE]` → `[DESIGN_SPEC]` `[MEMORY]` `[DECISION]` `[TECH_DEBT]` `[CLASS]` `[INVARIANT]` `[PLAN]` `[AUDIT]` `[DOC]` | `_[SUBCAT]_[id-or-path]` | workspace artifact id; `[DOC]` = path to a richer external writeup (doc-sync) | curated (pointer must RESOLVE — CI) |
+| `[REFERENCE]` → `[DESIGN_SPEC]` `[MEMORY]` `[DECISION]` `[TECH_DEBT]` `[CLASS]` `[INVARIANT]` `[PLAN]` `[AUDIT]` | `_[SUBCAT]_[id-or-path]` | workspace artifact id (pointer must RESOLVE — CI). `[DOC]`-sync DROPPED (D-307): rich prose lives in-comment as `[DETAIL]`, not a drift-prone external pointer | curated |
 | `[DIRECTIVE]` → `[LAT_EXEMPT]` (+ future `[H12_PAD]`/`[TODO]`) | `_[reason]` on the governed line | machine-read | curated |
+| `[FUTURE_WORK]` → `[TECH_DEBT]` `[PLAN]` | `_[SUBCAT]_[id]` | a tracked FORWARD pointer (code twin of a doc's future-expansion; must RESOLVE — CI) — distinct from `[REFERENCE]` which governs/explains (D-306) | curated |
 | `[SCHEMA]` | `_[vN]` | the convention version | meta |
 | `[END_*]` | `_[name]` | close delimiter | structural |
 
@@ -100,20 +102,20 @@ Vocab is **1-line extensible** (per `doc-tag-vocabulary.md`); add tags at real u
 
 ---
 
-## Two tiers — the human layer (comments) vs the machine layer (the plugin)
+## Two tiers — the CURATED layer (human-written) vs the DERIVED layer (tool-written, CI-checked)
 
-**Reframed 2026-07-05 (D-307), after reading `fox-symdeps.nvim`.** The plugin already derives the ENTIRE machine layer LIVE from ground truth (clangd + treesitter + `gen_code_map`): size, alignment, cache-line packing, vector-register fit, per-field layout, upstream `Uses`, role-classified `Consumers`, call directions, hot-path instruction budget, doc-mentions, byte-layout blast-radius. A DERIVED *comment* tier would MIRROR exactly what the plugin already shows = the **Class-18 anti-pattern this whole system exists to kill.** Resolution: **comments never carry derived facts.**
+**Reframed 2026-07-05 (D-307), after reading `fox-symdeps.nvim`.** The plugin already derives the ENTIRE machine layer LIVE from ground truth (clangd + treesitter + `gen_code_map`): size, alignment, cache-line packing, vector-register fit, per-field layout, upstream `Uses`, role-classified `Consumers`, call directions, hot-path instruction budget, doc-mentions, byte-layout blast-radius. The open question was whether to ALSO materialize those facts in-comment or leave them plugin-live-only — a *hand-written* DERIVED tier would MIRROR what the plugin shows = the **Class-18 anti-pattern this whole system exists to kill.** **Resolution (D-307, forks-resolved): DERIVED lives in-comment, but TOOL-REFRESHED** — generator-written from ground truth, CI-checked, never hand-edited. Class-18 only bites *hand* mirrors; a generated + build-gated snapshot cannot silently drift (the moment it does, CI goes red). So the fact is materialized where grep / GitHub / any editor sees it **without** the plugin, and the plugin fuses its live overlay on top.
 
-- **CURATED — the comment block** (humans write; the compiler can't know it): `[WHY]`, `[DETAIL]`, `[TAG]`, `[EDIT]`/`[VERSION]`, `[REFERENCE]` (incl. `[DOC]_[path]` sync), `[DIAGRAM]` (the author's mental model). Rationale, history, pointers — none mechanically derivable, so none drifts.
-- **DERIVED — the plugin's live overlay** (NOT comments): size/deps/consumers/instr-budget/blast-radius, from clangd. The plugin's HUD **fuses** the two — your curated block PLUS the live facts, side by side. That fusion IS the polished GUI.
+- **CURATED — the human layer** (humans write; the compiler can't know it): `[WHY]`, `[DETAIL]`, `[TAG]`, `[EDIT]`/`[VERSION]`, `[REFERENCE]`, `[DIAGRAM]` (the author's mental model). Rationale, history, pointers — none mechanically derivable, so none drifts.
+- **DERIVED — the tool layer** (the generator writes; CI verifies; NEVER hand-edited): size/deps/consumers/instr-budget/blast-radius, from clangd / `gen_code_map`, materialized in the block so it reads *without* the plugin. The plugin's HUD **fuses** its live overlay on top — your curated block PLUS the derived facts, always current. That fusion IS the polished GUI.
 
-**What this buys:** the drift surface DISAPPEARS — nothing tool-generated in comments to go stale → no DERIVED-regenerator, no DERIVED-CI-drift-check. The stale-comment class (TECH_DEBT-226/228) is solved by having **no mirror** — the fact lives once, at ground truth, surfaced live.
+**What this buys:** the drift surface is **contained**, not wished away — the mirror exists, but it is tool-owned + build-gated, so it cannot silently rot: a `[DERIVED]` line that diverges from ground truth is a red build, not a lie. The stale-comment class (TECH_DEBT-226/228) is solved not by *removing* the fact from the comment but by making it **generator-written + CI-verified** — `mechanical-verification-of-derived-code-facts` applied to comments. (Reversible per D-307: if the plugin's live overlay ever makes the in-comment copy redundant, drop back to plugin-live-only — the grammar is unchanged either way.)
 
 ### Division of labor (schema ↔ plugin) — the parallel-work contract
 
 The comment block is the **interface** between this schema (the format) and `fox-symdeps` (the consumer). Stable contract = **{closed category vocab · section ladder · one-category-per-line · the `====` bracket structure}**. Hold those stable and the two develop INDEPENDENTLY: changes *within* the contract (richer `[WHY]`, more examples) are free; changes *to* the contract (a new category, a new ladder slot) are the only coordination point — gated by a `[SCHEMA]_[vN]` bump. The plugin parses the block (one-rule grammar → group→tag→value) and overlays the live facts; the schema stays a minimal, co-evolving format. (H22-style clean seam: each side a pure function of the interface.)
 
-**Explicitly NOT done:** (a) mirroring any clangd-derivable fact in a comment (the plugin owns it); (b) commented-out old/new code as diffs (git owns the diff; `[EDIT]` + `[REFERENCE]_[DECISION]` own the what/why).
+**Explicitly NOT done:** (a) HAND-writing or hand-editing a derived fact — the generator owns the `[DERIVED]` block and a hand-edit that drifts from ground truth fails CI (the tool/plugin refreshes it); (b) commented-out old/new code as diffs (git owns the diff; `[EDIT]` + `[REFERENCE]_[DECISION]` own the what/why).
 
 ---
 

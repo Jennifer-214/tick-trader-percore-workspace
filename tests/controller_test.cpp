@@ -18,6 +18,7 @@
 #include "money_add_vectors.hpp"      // Ship-B P1b D-100 frozen fixture (Money_Add closure clamp)
 #include "money_parse_vectors.hpp"    // Ship-B P1c D-100 frozen fixture (Money_FromString incl. reject set)
 #include "money_cast_vectors.hpp"     // Ship-B P1c D-100 frozen fixture (Money_ToBinary / Money_FromBinary)
+#include "sharded_snapshot_v10_golden.hpp"  // E.1.2 Step-2 (D-305) frozen v10 snapshot byte-golden
 
 //======================================================================================================
 // [TEST 1: CONFIG PARSER]
@@ -6261,6 +6262,83 @@ int main() {
             return r;
         };
 
+        // E.1.2 Step-2 (D-305, golden-first): per-FIELD-distinct, NONZERO, ALL-64-confidence
+        // poison — the rigorous fixture behind the frozen byte-golden. Closes A4's
+        // zero-at-origin + confidence zero-desert: every persisted field gets a distinct
+        // nonzero value so a reorder / swap / drop of ANY field diverges the saved bytes.
+        // Generic lambda (build_state's return type R is a local struct, un-nameable here).
+        auto poison_persisted = [](auto* r, int num_nodes) {
+            for (int c = 0; c < num_nodes && c < 8; ++c) {
+                auto& n = r->state.nodes[c];
+                n.entries_processed  = (uint64_t)(101 + c);
+                n.exits_processed    = (uint64_t)(211 + c);
+                n.node_realized      = MQ(311.5 + c);
+                n.node_fees          = MQ(41.25 + c);
+                n.node_wins          = (uint32_t)(51 + c);
+                n.node_losses        = (uint32_t)(61 + c);
+                n.node_open_notional = MQ(701.0 + 5.0 * c);
+                n.node_peak_balance  = MQ(2601.0 + 100.0 * c);
+                n.node_dd_pct        = MQ(3.03 + 0.03 * c);
+                n.allocated_balance  = MQ(2501.0 + 25.0 * c);
+                n.node_gross_wins    = MQ(1201.0 + 10.0 * c);
+                n.node_gross_losses  = MQ(401.0 + 5.0 * c);
+                n.last_entry_price   = MQ(60001.0 + 100.0 * c);
+                if (c == 2) NODE_STATE_FLAG_SET(n, KILL_TRIPPED);
+                else        NODE_STATE_FLAG_CLR(n, KILL_TRIPPED);
+                n.node_ks_trips_total = (uint32_t)(71 + c);
+                n.regime_state.current_regime       = (1 + c);
+                n.regime_state.proposed_regime      = (2 + c);
+                n.regime_state.hysteresis_count     = (5 + c);
+                n.regime_state.hysteresis_threshold = (3 + c);
+                n.regime_state.last_strategy_id     = (1 + c);
+                n.regime_state.regime_start_tick    = (uint64_t)(1001 + c);
+                n.regime_state.regime_start_time    = (time_t)(1700000001 + c);
+                n.pnl_feeder.head  = (int)(1 + (c % 7));
+                n.pnl_feeder.count = (int)(1 + (c % 8));
+                for (int j = 0; j < MAX_WINDOW; ++j)
+                    n.pnl_feeder.price_samples[j] = FPN_FromDouble<64>((double)(70001 + c * 100 + j));
+                n.resolved_strategy_id  = (uint8_t)(c + 1);
+                n.last_entry_tick       = (uint64_t)(901 + c);
+                n.sl_cooldown_remaining = (uint32_t)(4 + c);
+                n.idle_cycles           = (uint32_t)(6 + c);
+                n.staged_prediction     = (double)(40001 + c);  // exact int-valued doubles →
+                n.active_prediction     = (double)(50001 + c);  // flag-invariant golden (no FP
+                n.last_confidence       = (double)(60001 + c);  // rounding to differ across -O2/-O3)
+                n.confidence.ic.predictions.head  = (5 + c);
+                n.confidence.ic.predictions.count = (10 + c);
+                n.confidence.ic.actuals.head      = (6 + c);
+                n.confidence.ic.actuals.count     = (11 + c);
+                n.confidence.rmse.window.head     = (7 + c);
+                n.confidence.rmse.window.count    = (12 + c);
+                // ALL 64 entries (not [0,4)) — 3 arrays with distinct nonzero bases so a
+                // predictions[k] <-> rmse[k] swap (A4's example) also diverges.
+                for (int j = 0; j < ROLLING_IC_MAX_WINDOW; ++j) {
+                    n.confidence.ic.predictions.samples[j] = (double)(1000001 + c * 1000 + j);
+                    n.confidence.ic.actuals.samples[j]     = (double)(2000001 + c * 1000 + j);
+                    n.confidence.rmse.window.samples[j]    = (double)(3000001 + c * 1000 + j);
+                }
+            }
+            // OMS persisted set (10 fields) + one live position (whole-file golden coverage).
+            r->oms.balance          = MQ(9837.42);
+            r->oms.realized_pnl     = MQ(-162.58);
+            BITMAP_SET(r->oms.oms_state_flags, tt::MASK_OMS_STATE_KILL_SWITCH_TRIPPED);
+            r->oms.ks_peak_balance  = MQ(11250.75);
+            r->oms.total_fees       = MQ(42.50);
+            r->oms.total_maker_fees = MQ(15.25);
+            r->oms.total_taker_fees = MQ(27.25);
+            r->oms.maker_fills_count = 7;
+            r->oms.taker_fills_count = 13;
+            r->oms.paper_session_start_us = 1700000000000000ULL;
+            r->oms.portfolio.positions[0].entry_price       = MQ(61234.56789012);
+            r->oms.portfolio.positions[0].quantity          = MQ(0.01234567);
+            r->oms.portfolio.positions[0].entry_fee         = MQ(0.75);
+            r->oms.portfolio.positions[0].take_profit_price = MQ(62000.0);
+            r->oms.portfolio.positions[0].stop_loss_price   = MQ(60500.0);
+            r->oms.portfolio.positions[0].original_tp       = MQ(62100.0);
+            r->oms.portfolio.positions[0].original_sl       = MQ(60400.0);
+            r->oms.portfolio.active_bitmap |= (uint16_t)1u;
+        };
+
         // ---- Test 1: missing file → load returns 0, state untouched ----
         {
             auto* r = build_state(2, 10000.0);
@@ -6269,6 +6347,52 @@ int main() {
                   loaded == 0);
             check("missing file: state untouched (balance still starting)",
                   fabs(Money_ToDouble(r->state.oms->balance) - 10000.0) < 1e-6);
+        }
+
+        // ---- Test 2G: FROZEN GOLDEN byte-identity (E.1.2 Step-2 refactor byte-truth net; D-305) ----
+        // Golden-first: freeze the v10 hand-loop output from the per-FIELD-distinct poison
+        // fixture so the upcoming serializer registry-ization can't silently move a byte.
+        // Header timestamp_us [12,20) masked. Positive control = Class-51 teeth.
+        {
+            auto* r = build_state(4, 10000.0);
+            poison_persisted(r, 4);
+            const char* gpath = "/tmp/ftv2_snapshot_golden.dat";
+            check("golden: save returns 1",
+                  tt::ShardedSnapshot_Save<64>(&r->state, gpath, 0) == 1);
+
+            static unsigned char gbuf[65536];
+            FILE* gf = fopen(gpath, "rb");
+            size_t gn = gf ? fread(gbuf, 1, sizeof(gbuf), gf) : 0;
+            if (gf) fclose(gf);
+            for (int i = 12; i < 20 && i < (int)gn; ++i) gbuf[i] = 0;  // mask timestamp_us
+
+#ifdef REGEN_SNAPSHOT_GOLDEN
+            printf("\n// ===== REGEN sharded_snapshot_v10_golden.hpp (len=%zu) =====\n", gn);
+            printf("static const unsigned char SHARDED_SNAPSHOT_V10_GOLDEN[] = {\n");
+            for (size_t i = 0; i < gn; ++i) {
+                printf("0x%02x,", gbuf[i]);
+                if ((i & 15) == 15) printf("\n");
+            }
+            printf("\n};\nstatic const unsigned long SHARDED_SNAPSHOT_V10_GOLDEN_LEN = %zuUL;\n", gn);
+            printf("// ===== END REGEN =====\n");
+#else
+            check("golden: byte length matches frozen v10",
+                  gn == SHARDED_SNAPSHOT_V10_GOLDEN_LEN);
+            check("golden: bytes byte-identical to frozen v10 (timestamp-masked)",
+                  gn == SHARDED_SNAPSHOT_V10_GOLDEN_LEN &&
+                  memcmp(gbuf, SHARDED_SNAPSHOT_V10_GOLDEN, gn) == 0);
+#endif
+            // Positive control: mutating one persisted+unmasked field MUST change the bytes.
+            r->state.nodes[1].node_realized = MQ(424242.42);
+            tt::ShardedSnapshot_Save<64>(&r->state, gpath, 0);
+            static unsigned char gbuf2[65536];
+            FILE* gf2 = fopen(gpath, "rb");
+            size_t gn2 = gf2 ? fread(gbuf2, 1, sizeof(gbuf2), gf2) : 0;
+            if (gf2) fclose(gf2);
+            for (int i = 12; i < 20 && i < (int)gn2; ++i) gbuf2[i] = 0;
+            check("golden positive-control: a persisted-field mutation changes the bytes",
+                  !(gn2 == gn && memcmp(gbuf, gbuf2, gn) == 0));
+            delete r;
         }
 
         // ---- Test 2: round trip preserves all per-core state ----

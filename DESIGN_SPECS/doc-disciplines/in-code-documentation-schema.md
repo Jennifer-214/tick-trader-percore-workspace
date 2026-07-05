@@ -64,7 +64,7 @@ rg -l '\[TAG\]_\[\[SLOW_PATH'  |  xargs rg -l '\[VERSION\]_\[v5.15'  |  xargs rg
   //   - [DECISION]_[D-188]
   ```
   **Parse:** a category line WITH value-brackets = inline; a category line with NO values = a block header whose values are the following `//   - [X]` lines (until the next `[CATEGORY]` or `====`/`——`/`----` bar). Grep finds the header AND each value either way. Block form ONLY when it would wrap.
-- **The TWO freeform content-regions** — a `[COMMENT]` partition body + a `[DIAGRAM]` body — span from their header to the next `[CATEGORY]` or bar (continuation lines need no prefix). These are the ONLY places prose sits un-bracketed; they are delimited *content*, not loose metadata. (Worked examples below predate the hybrid layout + full-bracketing — swept during P0.)
+- **The TWO freeform content-regions** — a `[COMMENT]` partition body + a `[DIAGRAM]` body — span from their header to the next `[CATEGORY]` or bar (continuation lines need no prefix). These are the ONLY places prose sits un-bracketed; they are delimited *content*, not loose metadata. (The templates + worked examples below are in the final hybrid form.)
 
 ## Coverage — what gets a block
 
@@ -117,28 +117,35 @@ The comment block is the **interface** between this schema (the format) and `fox
 
 ---
 
-## Templates (copy-paste skeletons)
+## Templates (copy-paste skeletons — HYBRID layout: orient-above / code / detail-below)
 
 ### Function
 ```cpp
 //======================================================================
 // [FUNCTION]_[<Name>]
-// [TAG]_[[<SURFACE>] [<CONCERN>]]   [SCHEMA]_[v1]
+//----------------------------------------------------------------------
+// [TAG]_[[<SURFACE>] [<CONCERN>]]
+// [SCHEMA]_[v1]
+// [OVERVIEW]_[<one-line gist>]
+// [DIAGRAM]
+//   <hand-ASCII data-flow — -> <- | _ ^ v>
 //======================================================================
-// [WHY]_ <one-paragraph rationale; extend-point if any>
-//----------------------------------------------------------------------
-// [DIAGRAM]_[<kind>]              (optional; data-flow for non-trivial fns)
-//   <ASCII>
-//----------------------------------------------------------------------
-// [DERIVED]   (auto; CI-checked; do NOT hand-edit)
-// [DATA_SIZE]_[<n instr>]   [SIMD]_[<none|avx512|…>]   [FLOAT]_[<n · H4-status>]
-// [DEP_CHAIN]_in_[[<types>]]  out_[[<types>]]
-// [CONSUMERS]_[[<callers>]]   [ITERATIONS]_[auto:git]
-//----------------------------------------------------------------------
-// [VERSION]_[<id>]_[<semantic what changed>]
-// [REFERENCE]_[<SUBCAT>]_[<id>]   [INVARIANT]_[[<H#>]]
+<signature> { <clean body — comments moved OUT> }
 //======================================================================
-<signature> { <clean body — terse inline comments only> }
+// [COMMENT]
+//——————————————————————————————————————————————————————————
+// [[<YYYY-MM-DD>] [<version>]]
+//----------------------------------------------------------------------
+// <what this version does + why — prose; the freeform region>
+// [SUPPORTING_DOCS]
+//   - [<SUBCAT>]_[<id>]
+//======================================================================
+// [DERIVED]   (tool-refreshed by fox-symdeps; do NOT hand-edit)
+//----------------------------------------------------------------------
+// [SIZE]_[<n instr>]
+// [SIMD]_[<none|avx512>]
+// [UPSTREAM]_[[<types>]]
+// [CONSUMERS]_[[<callers>]]
 //======================================================================
 // [END_FUNCTION]_[<Name>]
 //======================================================================
@@ -148,21 +155,29 @@ The comment block is the **interface** between this schema (the format) and `fox
 ```cpp
 //======================================================================
 // [STRUCT]_[<Name>]
-// [TAG]_[[<SURFACE>] [DATA_ORIENTED_DESIGN] …]   [SCHEMA]_[v1]
-//======================================================================
-// [WHY]_ <layout-by-access-pattern rationale>
 //----------------------------------------------------------------------
-// [DIAGRAM]_[<layout>]
-//   line0: [<field:bytes>]…= 64B   line1: …   (byte-map)
-//----------------------------------------------------------------------
-// [DERIVED]   (auto; CI-checked)
-// [DATA_SIZE]_[<N>B]   [ALIGNED_CONSUMERS]_[[<types needing this layout>]]
-// [THREAD]_[[<HOT_WRITER> <SLOW_READER> …>]]
-//----------------------------------------------------------------------
-// [VERSION]_[<id>]_[<what>]
-// [REFERENCE]_[DESIGN_SPEC]_[<spec>]   [INVARIANT]_[[<H#>]]
+// [TAG]_[[<SURFACE>] [DATA_ORIENTED_DESIGN]]
+// [SCHEMA]_[v1]
+// [OVERVIEW]_[<layout-by-access-pattern gist>]
+// [DIAGRAM]
+//   line0: [<field:bytes>] .. = 64B    (byte-map; tool-verified vs offsetof)
 //======================================================================
 <struct> { … };
+//======================================================================
+// [COMMENT]
+//——————————————————————————————————————————————————————————
+// [[<date>] [<version>]]
+//----------------------------------------------------------------------
+// <the layout decision + why>
+// [SUPPORTING_DOCS]
+//   - [DESIGN_SPEC]_[<spec>]
+//   - [INVARIANT]_[<H#>]
+//======================================================================
+// [DERIVED]   (tool-refreshed)
+//----------------------------------------------------------------------
+// [SIZE]_[<N>B]
+// [ALIGNED_CONSUMERS]_[[<types>]]
+// [THREAD]_[[<HOT_WRITER> <SLOW_READER>]]
 //======================================================================
 // [END_STRUCT]_[<Name>]
 //======================================================================
@@ -171,33 +186,41 @@ The comment block is the **interface** between this schema (the format) and `fox
 ### Registry (`FOREACH_*` X-macro) — the "registry map"
 ```cpp
 //======================================================================
-// [REGISTRY]_[FOREACH_REGIME_PERSIST_FIELD]
-// [TAG]_[[SLOW_PATH] [PERSISTENCE] [FRAMEWORK_DISCIPLINE]]   [SCHEMA]_[v1]
-//======================================================================
-// [WHY]_ single-source the RegimeState snapshot wire order; one row = one
-//        persisted field; add/drop = 1 row + a SHARDED version bump (H21).
+// [REGISTRY]_[<FOREACH_NAME>]
 //----------------------------------------------------------------------
-// [DIAGRAM]_[row-shape]   X(field, type, count) x7 -> FieldwiseWrite/Read/Commit
-//----------------------------------------------------------------------
-// [DERIVED]   (auto; CI-checked)
-// [ROW_COUNT]_[7]   [ENROLLED]_[MetaRegistry.hpp]
-// [CONSUMERS]_[[RegimeState_FieldwiseWrite] [_FieldwiseRead] [_CommitPersistedFields]]
-//----------------------------------------------------------------------
-// [VERSION]_[v5.15.5...E.1.2]_[created — registry-ize regime persist (D-305)]
-// [REFERENCE]_[DESIGN_SPEC]_[registry-tuple-as-single-source-of-truth]  [INVARIANT]_[[H15] [H21]]
+// [TAG]_[[<SURFACE>] [FRAMEWORK_DISCIPLINE]]
+// [SCHEMA]_[v1]
+// [OVERVIEW]_[<what it single-sources; add/drop = 1 row + a version bump>]
 //======================================================================
-#define FOREACH_REGIME_PERSIST_FIELD(X)  X(current_regime, int, 1)  …
+#define FOREACH_<NAME>(X)  X(...)  …
 //======================================================================
-// [END_REGISTRY]_[FOREACH_REGIME_PERSIST_FIELD]
+// [COMMENT]
+//——————————————————————————————————————————————————————————
+// [[<date>] [<version>]]
+//----------------------------------------------------------------------
+// <why the registry exists / what it drives>
+// [SUPPORTING_DOCS]
+//   - [DESIGN_SPEC]_[registry-tuple-as-single-source-of-truth]
+//   - [INVARIANT]_[H15]
+//   - [INVARIANT]_[H21]
+//======================================================================
+// [DERIVED]   (tool-refreshed)
+//----------------------------------------------------------------------
+// [ROW_COUNT]_[<n>]
+// [ENROLLED]_[MetaRegistry.hpp]
+// [CONSUMERS]_[[<the walkers that expand it>]]
+//======================================================================
+// [END_REGISTRY]_[<FOREACH_NAME>]
 //======================================================================
 ```
-The registry-specific DERIVED — `[ROW_COUNT]`, `[ENROLLED]` (its MetaRegistry row, H15), `[CONSUMERS]` (the walkers that expand it, grep-derived) — IS the "registry map": what it defines, who uses it, what it's for. Registries are the codebase's load-bearing pattern, so this is a first-class block (not a variant).
+The registry DERIVED — `[ROW_COUNT]` · `[ENROLLED]` (its MetaRegistry row, H15) · `[CONSUMERS]` (the walkers, grep-derived) — IS the "registry map." Registries are the codebase's load-bearing pattern, so this is a first-class block (not a variant).
 
-### File — `[FILE]_[<path>]` on the identity line + a role `[WHY]` + a data-flow `[DIAGRAM]` + it serves as the sub-file TOC anchor for the whole file.
+### File — `[FILE]_[<path>]` identity + an `[OVERVIEW]` role + a data-flow `[DIAGRAM]`; serves as the file's TOC anchor. (Orient-block only — no code body.)
 
 ### Variants for other unit types (anatomy-REUSE — tweak the `[DERIVED]`/`[REFERENCE]` set, NOT a new system; build each the first time a real unit needs it during conversion, do NOT pre-enumerate)
+- **Strategy** — `[STRATEGY]_[<name>]`; `[TAG]` its regime-fit + op-mode, `[REFERENCE]` its params/spec. A strategy is just another tagged unit (fits the hybrid block exactly); a strategy-dev plugin lens renders a strategy-shaped view of the same facts (operator's domain).
 - **Enum (persisted / wire CODES)** — `[ENUM]_[<name>]`; add `[REFERENCE]_[INVARIANT]_[H21]` + a tombstone note (Knight-Capital: append-only, never renumber/reuse a slot). The SHALT / halt-reason / regime / snapshot-version code enums live here.
-- **Foundational typedef** (`Money`, `FPN_Binary<F>`, `EngineMoneyT`) — `[TYPE]_[<name>]`; `[DATA_SIZE]_[<sizeof>]` + `[REFERENCE]` to the encoding epoch / H4. The money-type SSoT warrants a block; a throwaway alias does not.
+- **Foundational typedef** (`Money`, `FPN_Binary<F>`, `EngineMoneyT`) — `[TYPE]_[<name>]`; `[SIZE]_[<sizeof>]` + `[REFERENCE]` to the encoding epoch / H4. The money-type SSoT warrants a block; a throwaway alias does not.
 - **Macro** (`BITMAP_*` / `MBS_*` accessors) — LIGHT `[MACRO]_[<name>]` (no `[END]`; `[DERIVED]` = branchless?/expansion); most accessor macros stay terse-inline.
 - **Test group** (`controller_test` Phase blocks) — `[TEST]_[<name>]`; `[REFERENCE]` to the invariant/decision each verifies → navigation across the 3697-test suite.
 
@@ -211,33 +234,45 @@ The registry-specific DERIVED — `[ROW_COUNT]`, `[ENROLLED]` (its MetaRegistry 
 ```cpp
 //======================================================================
 // [FUNCTION]_[Regime_Classify]
-// [TAG]_[[SLOW_PATH] [ML_INFERENCE]]   [SCHEMA]_[v1]
-//======================================================================
-// [WHY]_ each signal +1 to a trending/volatile score, highest wins;
-//        hysteresis (hold N cycles) prevents flapping; RANGING default.
-//        Extend = +1 RegimeSignals field & +1 compare here.
 //----------------------------------------------------------------------
-// [DIAGRAM]_[signal-flow]
-//   RegimeSignals{slope x2, R2, ROR, vol, var-ratio} ─┐
-//   ControllerConfig{thresholds} ────────────────────┼─► trending_score
-//                                                     └─► volatile_score
-//                             highest ─► hysteresis ─► return regime
-//----------------------------------------------------------------------
-// [DERIVED]   (auto; CI-checked; do NOT hand-edit)
-// [DATA_SIZE]_[~480 instr]   [SIMD]_[none]   [FLOAT]_[18 · H4-exempt]
-// [DEP_CHAIN]_in_[[RegimeSignals] [ControllerConfig]]  out_[[RegimeState]]
-// [CONSUMERS]_[[EventLoop_RebuildOneCore] [StrategyParameters_Dispatch]]  [ITERATIONS]_[auto:git]
-//----------------------------------------------------------------------
-// [VERSION]_[v5.7.1]_[expose last_trending/volatile_score for entry-quality log]
-// [REFERENCE]_[AUDIT]_[latency-conformance-kernel]   [INVARIANT]_[[H4] [H8]]
-//   body: 1x [LAT_EXEMPT] env-gated cold-debug fprintf
+// [TAG]_[[SLOW_PATH] [ML_INFERENCE]]
+// [SCHEMA]_[v1]
+// [OVERVIEW]_[score-based regime classify — each signal +1, highest wins]
+// [DIAGRAM]
+//   RegimeSignals {slope, R2, ROR, vol, var}
+//          |
+//          v
+//     trend / vol score  --highest-->  hysteresis  -->  regime
 //======================================================================
 template <unsigned F>
 inline int Regime_Classify(RegimeState<F>* state, const RegimeSignals<F>* sig,
                            const ControllerConfig<F>* cfg) {
     if (sig->short_count < 64) return state->current_regime;   // cold start
-    // signal scoring -> hysteresis -> regime   (terse inline comments only)
+    // signal scoring -> hysteresis -> regime
 }
+//======================================================================
+// [COMMENT]
+//——————————————————————————————————————————————————————————
+// [[2026-04-01] [v5.7.1]]
+//----------------------------------------------------------------------
+// each signal +1 to a trending/volatile score, highest wins; hysteresis
+// (hold N cycles) stops it flapping, RANGING is the default. extend by
+// adding a RegimeSignals field + one compare here — the whole surface.
+// exposed last_trending/volatile_score so the entry-quality log reads the
+// real margin, not just the winning regime.
+// [SUPPORTING_DOCS]
+//   - [AUDIT]_[latency-conformance-kernel]
+//   - [INVARIANT]_[H4]
+//   - [INVARIANT]_[H8]
+//======================================================================
+// [DERIVED]   (tool-refreshed)
+//----------------------------------------------------------------------
+// [SIZE]_[~480 instr]
+// [SIMD]_[none]
+// [FLOAT]_[18 · H4-exempt]
+// [UPSTREAM]_[[RegimeSignals] [ControllerConfig]]
+// [CONSUMERS]_[[EventLoop_RebuildOneCore] [StrategyParameters_Dispatch]]
+//   body: 1x [LAT_EXEMPT] env-gated cold-debug fprintf
 //======================================================================
 // [END_FUNCTION]_[Regime_Classify]
 //======================================================================
@@ -247,23 +282,32 @@ inline int Regime_Classify(RegimeState<F>* state, const RegimeSignals<F>* sig,
 ```cpp
 //======================================================================
 // [STRUCT]_[ExecutionCore]
-// [TAG]_[[HOT_PATH] [DATA_ORIENTED_DESIGN] [CONCURRENCY]]   [SCHEMA]_[v1]
-//======================================================================
-// [WHY]_ layout by access pattern (H6): steady CMOV reads live_tp+live_sl
-//        each tick -> both fit line 0; permission cross-CPU -> own line.
 //----------------------------------------------------------------------
-// [DIAGRAM]_[cache-layout]
-//   line0: [active:1][active_b:1][pad:6][live_tp:24][live_sl:24][pad:8]=64B
+// [TAG]_[[HOT_PATH] [DATA_ORIENTED_DESIGN] [CONCURRENCY]]
+// [SCHEMA]_[v1]
+// [OVERVIEW]_[per-node hot execution state — layout-by-access-pattern (H6)]
+// [DIAGRAM]
+//   line0: [active:1][active_b:1][pad:6][live_tp:24][live_sl:24][pad:8] = 64B
 //   line2: [permission:1][pad:63]   <- false-sharing isolated
-//----------------------------------------------------------------------
-// [DERIVED]   (auto; CI-checked)
-// [DATA_SIZE]_[192B]   [ALIGNED_CONSUMERS]_[[ControllerEventLoop] [OrderManager]]
-// [THREAD]_[[HOT_WRITER] [SLOW_READER]]
-//----------------------------------------------------------------------
-// [VERSION]_[v5.11.1.5]_[live_tp/live_sl -> line 0 (Money 24B fit)]
-// [REFERENCE]_[DESIGN_SPEC]_[cache-line-discipline]   [INVARIANT]_[[H6]]
 //======================================================================
 template <unsigned F> struct alignas(64) ExecutionCore { … };
+//======================================================================
+// [COMMENT]
+//——————————————————————————————————————————————————————————
+// [[2026-05-11] [v5.11.1.5]]
+//----------------------------------------------------------------------
+// moved live_tp/live_sl into line 0 so the steady CMOV reads both in one
+// cache line — cut a tick from 2 loads to 1. permission sits cross-CPU so
+// it gets its own line (false-sharing isolation).
+// [SUPPORTING_DOCS]
+//   - [DESIGN_SPEC]_[cache-line-discipline]
+//   - [INVARIANT]_[H6]
+//======================================================================
+// [DERIVED]   (tool-refreshed; byte-map verified vs offsetof)
+//----------------------------------------------------------------------
+// [SIZE]_[192B]
+// [ALIGNED_CONSUMERS]_[[ControllerEventLoop] [OrderManager]]
+// [THREAD]_[[HOT_WRITER] [SLOW_READER]]
 //======================================================================
 // [END_STRUCT]_[ExecutionCore]
 //======================================================================

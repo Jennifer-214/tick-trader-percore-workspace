@@ -102,6 +102,18 @@ rg -l '\[TAG\]_\[\[SLOW_PATH'  |  xargs rg -l '\[VERSION\]_\[v5.15'  |  xargs rg
 
 Vocab is **1-line extensible** (per `doc-tag-vocabulary.md`); add tags at real use-sites, don't pre-enumerate. `[LATENCY_CRITICAL]` etc. are synonyms of existing SURFACE tags — fold, don't add.
 
+### Closed category set — machine-readable SSoT (the validator DERIVES from this, never mirrors it)
+
+`check_code_tag_blocks.py` parses THIS block for the closed set (single-source: folding a disposition category = adding one token here → the validator tracks it automatically, no code edit). Whitespace-separated tokens; `#`-comments ignored; `[END_*]` is validated by prefix, not listed. These are every token that appears as `token[0]` on a structured line (top-level categories + the DERIVED subcats that head their own lines + the curated structural annotations).
+
+```category-set
+FILE STRUCT FUNCTION REGISTRY STRATEGY ENUM TYPE MACRO TEST
+TAG SCOPE SCHEMA OVERVIEW WHY DETAIL DIAGRAM COMMENT SUPPORTING_DOCS EDIT VERSION REFERENCE DIRECTIVE FUTURE_WORK CODE
+DERIVED SIZE SIMD FLOAT BRANCHES BUILD ALIGN CACHE_LINES STRADDLE UPSTREAM CONSUMERS ROW_COUNT ENROLLED ALIGNED_CONSUMERS ITERATIONS
+THREAD SYNC BIT_PACKED PADDING WIRE_FORMAT PERSISTED LAT_EXEMPT
+```
+(Adopted disposition categories — `REGION` `INSTANTIATION` `COMPLEXITY` `APPLY_AFTER` `MUTATES` `SPILLS` `DOMAIN` `ROUNDING` `OVERFLOW` `FAULT_SIGNAL` `SEAM` `GATED_BY` `WIRE_VERSION` … — are added here as each is signed off, per the disposition doc.)
+
 ### Structural + concurrency annotations (register the vocab; apply as-encountered)
 
 Design classifications a tool can't infer — the author declares them. Register the known set so it's consistent + not forgotten (`doc-tag-vocabulary` is 1-line extensible); APPLY each at its first real unit during conversion, never pre-stamp. The byte/bit **breakdown** is the `[DIAGRAM]`'s job (byte-map + bit-map), NOT a per-field tag explosion.

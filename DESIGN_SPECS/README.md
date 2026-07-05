@@ -2,7 +2,7 @@
 
 **Auto-generated** by `tools/rebuild_doc_indexes.py`. Regenerate after adding/moving specs.
 
-Total: 181 specs across 13 types.
+Total: 182 specs across 13 types.
 
 Per-type catalog grouped by lifecycle stage. Cross-ref:
 - `doc-frontmatter-convention.md` (frontmatter schema)
@@ -184,12 +184,13 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md` | 5-claude-md | wire-format, framework-discipline, structural-fix, +1 | 6 |
 | `DESIGN_SPECS/wire-format-patterns/wire-format-canonical-body-invariants-helper.md` | 3-first-canonical | wire-format, framework-discipline, structural-fix | 3 |
 
-## doc-discipline (3 specs)
+## doc-discipline (4 specs)
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
 | `DESIGN_SPECS/doc-disciplines/categorical-triggers-in-always-loaded-docs.md` | 2-draft | doc-discipline, framework-discipline, structural-fix, +1 | 6 |
 | `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md` | 3-first-canonical | doc-discipline, structural-fix, pattern-codification, +1 | 6 |
+| `DESIGN_SPECS/doc-disciplines/in-code-documentation-schema.md` | 2-draft | doc-discipline, meta-discipline, ssot, +1 | 4 |
 | `DESIGN_SPECS/doc-disciplines/module-scoped-claude-md-pattern.md` | 2-draft | doc-discipline, framework-discipline, context-aware-loading | 2 |
 
 ## meta-discipline (31 specs)

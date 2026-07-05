@@ -56,15 +56,15 @@ rg -l '\[TAG\]_\[\[SLOW_PATH'  |  xargs rg -l '\[VERSION\]_\[v5.15'  |  xargs rg
 ## Line & wrapping rules (keep the parse trivial)
 
 - **ONE category per line.** Each structured line carries exactly one `[CATEGORY]` (token[0]) — NEVER two. This is what makes "token[0]=category, rest=values" hold; a second category on the line would force a vocab-aware segmenting parser (the complexity we're avoiding). So `[REFERENCE]_[AUDIT]_[…]` and `[REFERENCE]_[INVARIANT]_[[H4] [H8]]` are SEPARATE lines; `[TAG]` and `[SCHEMA]` are separate lines. One fact per line → one grep hit per fact.
-- **Value lists: inline when short, BLOCK when long.** A short list stays inline: `[CONSUMERS]_[[A] [B]]`. A list that would wrap past ~one line uses the block form — the category alone as a header, values on following indented value-only lines:
+- **All metadata is BRACKETED — no loose text.** Every tag value is wrapped: `[OVERVIEW]_[ring-buffer ingest …]`, NEVER `[OVERVIEW]_ ring-buffer …`. Freeform prose lives ONLY in the two delimited content-regions below.
+- **Value lists: inline when short, BLOCK (YAML-style) when long.** Short list inline: `[CONSUMERS]_[[A] [B]]`. A list that would wrap uses the block form — the category alone as a header, each value on a following `- `-prefixed line (YAML list marker):
   ```
-  // [CONSUMERS]
-  //   [ControllerEventLoop]
-  //   [OrderManager]
-  //   [BacktestSharded]
+  // [SUPPORTING_DOCS]
+  //   - [INVARIANT]_[H7]
+  //   - [DECISION]_[D-188]
   ```
-  **Parse:** a category line WITH value-brackets = inline; a category line with NO values = a block header whose values are the following `//   [X]` lines (until the next `[CATEGORY]` or `====`/`----` bar). Grep finds the header (`[CONSUMERS]`) AND each value (`[OrderManager]`) either way. Use the block form ONLY when it would wrap — zero bloat on short lists.
-- **`[WHY]` prose + `[DIAGRAM]` ASCII** are already block-content: they span from their category line to the next `[CATEGORY]` or bar (continuation lines need no prefix). (Worked examples below still show a few combined lines from the pre-refinement draft — swept to one-per-line as the draft matures.)
+  **Parse:** a category line WITH value-brackets = inline; a category line with NO values = a block header whose values are the following `//   - [X]` lines (until the next `[CATEGORY]` or `====`/`——`/`----` bar). Grep finds the header AND each value either way. Block form ONLY when it would wrap.
+- **The TWO freeform content-regions** — a `[COMMENT]` partition body + a `[DIAGRAM]` body — span from their header to the next `[CATEGORY]` or bar (continuation lines need no prefix). These are the ONLY places prose sits un-bracketed; they are delimited *content*, not loose metadata. (Worked examples below predate the hybrid layout + full-bracketing — swept during P0.)
 
 ## Coverage — what gets a block
 

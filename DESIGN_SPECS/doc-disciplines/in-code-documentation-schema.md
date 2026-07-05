@@ -109,7 +109,8 @@ Vocab is **1-line extensible** (per `doc-tag-vocabulary.md`); add tags at real u
 ```category-set
 FILE STRUCT FUNCTION REGISTRY STRATEGY ENUM TYPE MACRO TEST
 TAG SCOPE SCHEMA OVERVIEW WHY DETAIL DIAGRAM COMMENT SUPPORTING_DOCS EDIT VERSION REFERENCE DIRECTIVE FUTURE_WORK CODE
-DERIVED SIZE SIMD FLOAT BRANCHES BUILD ALIGN CACHE_LINES STRADDLE UPSTREAM CONSUMERS ROW_COUNT ENROLLED ALIGNED_CONSUMERS ITERATIONS
+DERIVED SIZE SIMD FLOAT BRANCHES BUILD ALIGN CACHE_LINES STRADDLE UPSTREAM CONSUMERS ROW_COUNT ENROLLED ALIGNED_CONSUMERS ITERATIONS BLAST_RADIUS
+CONTAINS TOC INCLUDES INCLUDED_BY BINARIES
 THREAD SYNC BIT_PACKED PADDING WIRE_FORMAT PERSISTED LAT_EXEMPT
 ```
 (Adopted disposition categories — `REGION` `INSTANTIATION` `COMPLEXITY` `APPLY_AFTER` `MUTATES` `SPILLS` `DOMAIN` `ROUNDING` `OVERFLOW` `FAULT_SIGNAL` `SEAM` `GATED_BY` `WIRE_VERSION` … — are added here as each is signed off, per the disposition doc.)
@@ -259,7 +260,8 @@ The comment block is the **interface** between this schema (the format) and `fox
 ```
 The registry DERIVED — `[ROW_COUNT]` · `[ENROLLED]` (its MetaRegistry row, H15) · `[CONSUMERS]` (the walkers, grep-derived) — IS the "registry map." Registries are the codebase's load-bearing pattern, so this is a first-class block (not a variant).
 
-### File — `[FILE]_[<path>]` identity + an `[OVERVIEW]` role + a data-flow `[DIAGRAM]`; serves as the file's TOC anchor. (Orient-block only — no code body.)
+### File — the top-of-file MAJOR OVERVIEW (the 7-axis readout at FILE granularity)
+`[FILE]_[<path>]` identity + `[TAG]_[[<component/domain>]]` (`[ENGINE]`/`[ML]`/`[GUI]`/`[XGBOOST]`/`[CORE]`… — vocab values, added as real files need them) + `[SCOPE]` (if the file is scale-bound) + `[SCHEMA]_[v1]` + `[OVERVIEW]` (what it's for) + a data-flow `[DIAGRAM]` + the **file-level graph**: `[CONTAINS]`/`[TOC]` (child units — the file's table-of-contents) · `[CONSUMERS]`/`[INCLUDED_BY]` (who uses it) · `[UPSTREAM]`/`[INCLUDES]` (what it pulls in) · `[BLAST_RADIUS]` (change-impact) · `[BINARIES]` (which build targets link it). Orient-block only (no code body). **Dual role:** the file's TOC anchor AND — via its `[SCHEMA]_[v1]` — the per-file conversion/whitelist marker (the CI validator polices a file only once it carries a `[FILE]` block; un-converted files are skipped, `[SCHEMA]_[exempt]_[reason]` opts one out). Same block anatomy as a function/struct → the tool + plugin parse per-FILE and per-UNIT uniformly.
 
 ### Variants for other unit types (anatomy-REUSE — tweak the `[DERIVED]`/`[REFERENCE]` set, NOT a new system; build each the first time a real unit needs it during conversion, do NOT pre-enumerate)
 - **Strategy** — `[STRATEGY]_[<name>]`; `[TAG]` its regime-fit + op-mode, `[REFERENCE]` its params/spec. A strategy is just another tagged unit (fits the hybrid block exactly); a strategy-dev plugin lens renders a strategy-shaped view of the same facts (operator's domain).

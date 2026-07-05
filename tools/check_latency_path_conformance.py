@@ -165,10 +165,10 @@ MANIFEST = [
         "params": "RegimeState<64>* a, const RegimeSignals<64>* b, const ControllerConfig<64>* c",
         "call": "Regime_Classify<64>(a, b, c)",
         "allowlist": [],
-        "allow": [
-            "RegimeDetector.hpp:642",  # TT_REGIME_DEBUG fprintf — env-gated cold debug (getenv :633 + (dbg_cycle&0xF)==0); diagnostic-only, known-pending
-            "FixedPointN.hpp:1418",    # fp2_to_double — feature/display double conversion (all 18 regime-score floats) — H4-exempt
-        ],
+        # Exemptions now travel WITH the code as `// [LAT_EXEMPT]` source markers (shift-robust; an
+        # E.1.2 insert shifted the old RegimeDetector.hpp:642 fprintf allow to :708 → false BLOCK):
+        #   · the TT_REGIME_DEBUG env-gated cold-debug fprintf  (Strategies/RegimeDetector.hpp)
+        #   · fp2_to_double — the feature/display double-conversion seam, all 18 regime-score floats  (FixedPoint/FixedPointN.hpp)
     },
     {   # ML ridge-blend weight kernel — bounded (1097 instr), NOT an orchestrator; its Cholesky sqrt
         # inlines to vsqrtsd (exemptable) rather than a libm `call sqrt`, so it's a clean gate-unit.
@@ -179,12 +179,8 @@ MANIFEST = [
         "allowlist": [],
         "allow": [
             "RidgeBlender.hpp",        # N=8 Cholesky risk-parity solve — feature-domain double math (Σ corr matrix, μ net-IC, weight renorm); not money
-            "FixedPointN.hpp:1405",    # fp2_from_double — feature↔double output-weight seam (FPN_FromDouble) — H4-exempt
-            "FixedPointN.hpp:1406",    # fp2_from_double (same seam)
-            "FixedPointN.hpp:1407",    # fp2_from_double (same seam)
-            "FixedPointN.hpp:1408",    # fp2_from_double (same seam)
-            "FixedPointN.hpp:1410",    # fp2_from_double (same seam)
-            "FixedPointN.hpp:1412",    # fp2_from_double (same seam)
+            # fp2_from_double — the feature↔double output-weight seam (FPN_FromDouble) — now exempt via
+            # `// [LAT_EXEMPT]` markers at the conversion ops in FixedPoint/FixedPointN.hpp (shift-robust; H4-exempt).
         ],
     },
     {   # ML confidence scorer — 3-factor IC×Freshness×Stability; bounded (64 instr). libm exp
@@ -322,7 +318,11 @@ def analyze(disasm, symbol="probe_fn"):
             continue
         sm = SRCLINE_RE.match(ln.strip())
         if sm:
-            cur_src = f"{os.path.basename(sm.group(1))}:{sm.group(2)}"
+            # Retain the FULL path (was basename-discarded) so the marker-reader can OPEN the file at
+            # this line — a `// [LAT_EXEMPT]` marker makes an exemption travel WITH the code (shift-robust)
+            # instead of a brittle absolute FILE:LINE that an unrelated insertion silently shifts out from
+            # under. Substring `allow` still matches (basename ⊂ fullpath); `_disp` basenames it for display.
+            cur_src = f"{sm.group(1)}:{sm.group(2)}"
             continue
         m = INSTR_RE.match(ln)
         if m:
@@ -477,6 +477,40 @@ def load_budgets():
     return {}
 
 
+def _disp(src):
+    """basename:line for HUMAN display. The full path is retained in `src` only so the marker-reader
+    can open the file; operators read the basename (matches the pre-shift-robust output)."""
+    if not src:
+        return "(no src)"
+    path, sep, lno = src.rpartition(":")
+    return f"{os.path.basename(path)}:{lno}" if (sep and path) else src
+
+
+def _has_lat_exempt_marker(srcfull):
+    """SHIFT-ROBUST exemption: True iff the resolved source line of `srcfull` (a `path:line` from
+    objdump -l) carries a `// [LAT_EXEMPT]` marker. The marker travels WITH the code, so an unrelated
+    insertion that shifts the line can never break the exemption — the brittleness the absolute
+    FILE:LINE `allow` had (an E.1.2 persist-delegate insert shifted a cold-debug fprintf :642→:708 →
+    false BLOCK). Fail-CLOSED: any error (missing file / non-numeric or out-of-range line / no path) →
+    False, so a marker we cannot actually READ never yields a phantom exemption."""
+    if not srcfull or ":" not in srcfull:
+        return False
+    path, _, lno = srcfull.rpartition(":")
+    if not path or not lno.isdigit():
+        return False
+    line_no = int(lno)
+    # objdump -l paths are absolute (may carry `..` segments the OS resolves) or compile-dir relative;
+    # try as-given, then ENGINE-rooted, so the reader works regardless of CWD / FOXML_ENGINE.
+    for p in ([path] if os.path.isabs(path) else [os.path.join(ENGINE, path), path]):
+        try:
+            with open(p, "r", errors="replace") as f:
+                lines = f.readlines()
+        except OSError:
+            continue
+        return 1 <= line_no <= len(lines) and bool(re.search(r"\[LAT_EXEMPT\]", lines[line_no - 1]))
+    return False
+
+
 def _unallowed(items, allow, key=lambda x: x):
     """Items whose `-l` source matches NO `allow` pattern — the per-row SOURCE-keyed exemption (D-237).
     ONE allowlist concept shared by float / div / forbidden, mirroring the data-dependent-branch
@@ -486,30 +520,42 @@ def _unallowed(items, allow, key=lambda x: x):
     return [x for x in items if not any(p and p in (key(x) or "") for p in allow)]
 
 
+def _unallowed_hard(a, row):
+    """The (float, div, forbidden) source-lists the HARD gate fires on — SINGLE SOURCE so the printed
+    summary counts can never disagree with the gate verdict. Exemption policy (D-237 + shift-robust):
+      · float / div  → source-`allow` substring (pure-feature FILES) OR a `// [LAT_EXEMPT]` marker.
+      · forbidden    → MARKER ONLY. NEVER a file-level (or any) `allow` — a file-level forbidden allow
+        is the 'mode-D' hole (a future malloc/stdio inlined from a feature-allowed file would silently
+        mask); the per-line marker keeps forbidden exemptions EXACT + shift-robust (it strictly replaces
+        the old brittle absolute FILE:LINE — the marker resolves at the CODE, never a fixed offset)."""
+    allow = (row or {}).get("allow", [])
+    uf = [s for s in _unallowed(a["float_srcs"], allow) if not _has_lat_exempt_marker(s)]
+    ud = [s for s in _unallowed(a["div_srcs"], allow) if not _has_lat_exempt_marker(s)]
+    uec = [c for c in a["ext_calls"] if not _has_lat_exempt_marker(c[2])]
+    return uf, ud, uec
+
+
 def _hard_findings(a, tier, row=None):
     """The HARD-invariant gate verdicts (independent of budgets), as (label, detail) — non-empty ⟹
-    RC=1. SINGLE SOURCE so --selftest asserts the GATE fires, not merely that a detector COUNTS (R-A:
-    the div detector counted/printed/teethed while main NEVER gated it — a pure-integer idiv exited
-    'clean'). float / div / forbidden are exempted by the row's source-`allow` list (D-237); indirect
-    + un-analyzed-warm gate ABSOLUTELY (not source-exemptable). div = H4/§5 (the certified path is the
-    branchless udiv256_qr reciprocal, never hardware idiv)."""
-    allow = (row or {}).get("allow", [])
-    # forbidden-calls (malloc/lock/stdio/throw) exempt ONLY by FILE:LINE — never a bare file-level
-    # pattern (the final-verify latent hole: a future malloc/stdio inlined from a file-level-allowed
-    # pure-feature file would silently mask). float/div keep file-level (pure-feature files); a
-    # forbidden exemption must name the exact line (the RegimeDetector.hpp:642 cold-debug idiom).
-    line_allow = [p for p in allow if isinstance(p, str) and re.search(r":\d+$", p)]
-    uf = _unallowed(a["float_srcs"], allow)
-    ud = _unallowed(a["div_srcs"], allow)
-    uec = _unallowed(a["ext_calls"], line_allow, key=lambda c: c[2])
+    RC=1. SINGLE SOURCE (with _unallowed_hard) so --selftest asserts the GATE fires, not merely that a
+    detector COUNTS (R-A: the div detector counted/printed/teethed while main NEVER gated it — a
+    pure-integer idiv exited 'clean'). Exemption: float/div by source-`allow` OR `// [LAT_EXEMPT]`
+    marker; forbidden by MARKER ONLY (mode-D closure — no file-level forbidden allow); indirect +
+    un-analyzed-warm gate ABSOLUTELY (not exemptable). div = H4/§5 (the certified path is the branchless
+    udiv256_qr reciprocal, never hardware idiv)."""
+    uf, ud, uec = _unallowed_hard(a, row)
     out = []
     if uf:
-        out.append(("H4", f"{len(uf)} non-exempt scalar-float on a {tier} money path (e.g. {uf[0]})"
+        out.append(("H4", f"{len(uf)} non-exempt scalar-float on a {tier} money path (e.g. {_disp(uf[0])})"
                     + (f"; {a['transitive_floats']} via a called helper" if a["transitive_floats"] else "")))
     if ud:
-        out.append(("H4/§5", f"{len(ud)} non-exempt div/idiv on a {tier} path — use the certified udiv256_qr (e.g. {ud[0]})"))
+        out.append(("H4/§5", f"{len(ud)} non-exempt div/idiv on a {tier} path — use the certified udiv256_qr (e.g. {_disp(ud[0])})"))
     if uec:
-        out.append(("H1/Rule2", f"forbidden calls: {[c[1] for c in uec][:8]}"))
+        # ALSO surface the resolved file:line + the fix hint so the operator adds the marker WHERE it
+        # travels with the code (vs the old FILE:LINE allow the E.1.2 insert shifted out from under).
+        locs = [_disp(c[2]) for c in uec if c[2]]
+        hint = ("  @ " + ", ".join(locs) + "  —  add `// [LAT_EXEMPT]` at " + locs[0]) if locs else ""
+        out.append(("H1/Rule2", f"forbidden calls: {[c[1] for c in uec][:8]}{hint}"))
     if a["indirect_calls"]:
         out.append(("H2", f"indirect/vtable call(s): {[c[1] for c in a['indirect_calls']][:8]}"))
     if a["unanalyzed_warm"]:
@@ -557,8 +603,8 @@ def main(argv):
         print(f"  branches: loop={a['branches']['loop']}  rare-cold={a['branches']['rare_cold']}  "
               f"DATA-DEPENDENT-WARM={dd}  (allowlisted={allow} → unallowed={unallowed})")
         allow = row.get("allow", [])
-        uf = len(_unallowed(a["float_srcs"], allow)); ud = len(_unallowed(a["div_srcs"], allow))
-        uec = len(_unallowed(a["ext_calls"], allow, key=lambda c: c[2]))
+        ufl, udl, uecl = _unallowed_hard(a, row)   # SINGLE SOURCE with the gate (source-`allow` + marker policy)
+        uf, ud, uec = len(ufl), len(udl), len(uecl)
         ftr = f"+{a['transitive_floats']}t" if a["transitive_floats"] else ""
         print(f"  H4 float={a['floats']}{ftr} (exempt→{a['floats'] - uf} unallowed→{uf})  "
               f"div={a['divs']} (unallowed→{ud})  spills={a['spills']}  "
@@ -578,12 +624,12 @@ def main(argv):
         if not a["branch_detail"]["data_dependent"]:
             print("      (none)")
         for addr, mn, ops, src in a["branch_detail"]["data_dependent"]:
-            print(f"      {addr:>6}:  {mn:<5} {ops:<22}  {src or '(no src)'}")
+            print(f"      {addr:>6}:  {mn:<5} {ops:<22}  {_disp(src)}")
         if show_asm:
             for cat in ("loop", "rare_cold"):
                 print(f"\n  ▸ {cat} branches:")
                 for addr, mn, ops, src in a["branch_detail"][cat]:
-                    print(f"      {addr:>6}:  {mn:<5} {ops:<22}  {src or '(no src)'}")
+                    print(f"      {addr:>6}:  {mn:<5} {ops:<22}  {_disp(src)}")
 
         # budget ratchet (report-only until --update-budgets sets a baseline)
         new_budgets[name] = {"instructions": a["instructions"], "data_dependent": dd}
@@ -662,8 +708,8 @@ def main(argv):
              lambda a: "H4/§5" in gates(a)                                      # un-allowed → REDs
                        and "H4/§5" not in gates(a, allow=["probe.cpp"])         # allow its source → exempt
                        and "H4/§5" in gates(a, allow=["OtherFile.hpp"])),       # a NON-matching allow does NOT suppress (precise, not a blanket mute)
-            ("forbidden NOT file-level-exemptable (file:line only)", {"headers": ["cstdio"], "params": "int x", "call": 'fprintf(stderr, "%d", x)'},
-             lambda a: "H1/Rule2" in gates(a, allow=["probe.cpp"])),            # a FILE-LEVEL allow must NOT mask a forbidden call (final-verify latent-hole close; file:line required)
+            ("forbidden NOT allow-exemptable (marker-only)", {"headers": ["cstdio"], "params": "int x", "call": 'fprintf(stderr, "%d", x)'},
+             lambda a: "H1/Rule2" in gates(a, allow=["probe.cpp"])),            # NO `allow` (file-level OR file:line) masks a forbidden call — marker-ONLY (mode-D closure; the shift-robust replacement)
         ]
         all_ok = True
         print("\n  --selftest (teeth — each asserts its GATE fires (RC), not just the detector count):")
@@ -673,6 +719,37 @@ def main(argv):
             ok = (e is None) and (a is not None) and want(a)
             print(f"      {'✅' if ok else '❌'} {name}" + (f"  (PROBE-FAIL: {e})" if e else ""))
             all_ok = all_ok and ok
+
+        # ── source-MARKER teeth (the shift-robust exemption — the crux of this fix). Can't ride the
+        # compile path: that probe's tempdir is DELETED by gate-time, so the marker-reader would find
+        # nothing. Drive the REAL gate (_hard_findings → _unallowed_hard → _has_lat_exempt_marker) with
+        # a synthetic analysis over a PERSISTENT marked fixture — exercises the whole marker mechanism. ──
+        import tempfile
+        def _fixture(fx_lines):
+            fd, path = tempfile.mkstemp(suffix=".hpp", dir=ENGINE, text=True)   # abs path (ENGINE is abspath)
+            with os.fdopen(fd, "w") as fh:
+                fh.write("\n".join(fx_lines) + "\n")
+            return path
+        def _a_forbidden(src):   # minimal analysis carrying ONE forbidden ext_call attributed to `src`
+            return {"float_srcs": [], "div_srcs": [], "ext_calls": [("100", "call <fprintf>", src)],
+                    "indirect_calls": [], "unanalyzed_warm": [], "transitive_floats": 0}
+        marked = _fixture(["// pad line 1", 'fprintf(stderr, "x");  // [LAT_EXEMPT]_[selftest]', "// pad line 3"])
+        shifted = _fixture(["// pad"] * 40 + ['fprintf(stderr, "x");  // [LAT_EXEMPT]_[selftest]'])  # SAME call, now line 41
+        marker_cases = [
+            ("marker: a forbidden line WITH `// [LAT_EXEMPT]` → exempt",
+             "H1/Rule2" not in gates(_a_forbidden(f"{marked}:2"))),
+            ("marker: a forbidden line WITHOUT the marker → RED",
+             "H1/Rule2" in gates(_a_forbidden(f"{marked}:1"))),
+            ("marker: a file-level `allow` does NOT exempt a forbidden call (mode-D closure)",
+             "H1/Rule2" in gates(_a_forbidden(f"{marked}:1"), allow=[os.path.basename(marked)])),
+            ("marker: SHIFT-ROBUST — the same marked call at a different line offset stays exempt",
+             "H1/Rule2" not in gates(_a_forbidden(f"{shifted}:41"))),
+        ]
+        for name, ok in marker_cases:
+            print(f"      {'✅' if ok else '❌'} {name}")
+            all_ok = all_ok and ok
+        os.remove(marked); os.remove(shifted)
+
         print("  --selftest:", "✅ ALL teeth fire" if all_ok
               else "❌ a detector did NOT fire — under-enumeration risk (D-234 lesson 3)")
         if not all_ok:

@@ -16,3 +16,6 @@ Thumbs.db
 # python artifacts (regenerated)
 __pycache__/
 *.pyc
+
+# fox-symdeps.nvim keeps its own private repo (own remote); workspace ignores it
+tools/plugins/fox-symdeps.nvim/

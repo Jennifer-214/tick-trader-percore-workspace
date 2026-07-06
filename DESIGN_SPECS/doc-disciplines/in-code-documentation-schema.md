@@ -142,7 +142,14 @@ Design classifications a tool can't infer — the author declares them. Register
 - **Packing (layout)** — `[BIT_PACKED]` (H14: manual `MASK_`/`SHIFT_`/`BITMAP_`/`MBS_` over `uint{8..64}_t`, never C++ bitfields) → the `[DIAGRAM]` carries the **bit-map** (what each bit / bit-group encodes). `[PADDING]` (H12 byte-equivalence).
 - **Cross-thread mechanism** — a curated `[SYNC]` line (mirrors `[THREAD]`): `[SYNC]_[SEQ_LOCK]` (slow→hot config cache) · `[SYNC]_[SPSC]` (producer→consumer ring) · `[SYNC]_[ATOMIC]` (cross-core flag/counter) · `[SYNC]_[LOCK_FREE]`.
 - **Wire / persistence** — `[TAG]` concern-values `[WIRE_FORMAT]` (H9 HMAC body) · `[PERSISTED]` (snapshot-serialized).
-- **Within-function sections** — `[SECTION]_[<label>]` (CURATED · code-local · OPTIONAL; D-329): marks a logical section inside a big multi-part function's `[CODE]` body — `// [SECTION]_[short window signals]`. It **stays in `[CODE]`** (it's a demarcation of the code, not unit-WHY) and simply *replaces the plain prose section-comment* with the same text made machine-navigable (label = the value; spaces OK). The plugin reads them as a **within-function TOC / jump-list** (the machine-readable form of the "demarcation points" idea). Use when a function has ≥3 distinct computational phases (e.g. `Regime_ComputeSignals` — short/long window · variance · ROR · flow · wave-1/2); a small single-purpose fn needs none. A one-line computation keeps its plain inline comment — `[SECTION]` is for the multi-line *groupings*.
+- **Within-function sections** — `[SECTION]_[<label>]` (CURATED · code-local · OPTIONAL; D-329): marks a logical section inside a big multi-part function's `[CODE]` body, **bar-wrapped** (`----` above + below, indented to the code — lighter than the `====` unit bars → clear hierarchy: `====` = unit boundary, `----` = section boundary):
+  ```cpp
+      //------------------------------------------------------------
+      // [SECTION]_[short window signals]
+      //------------------------------------------------------------
+      <phase body — its step-comments stay inline (D-326)>
+  ```
+  It **stays in `[CODE]`** (it demarcates the code, not unit-WHY) and *replaces the plain prose section-comment* with the same text made machine-navigable (label = the value; spaces OK). **The bars are load-bearing, not decoration:** the plugin reads them to detect where each section BEGINS + ENDS (the next `[SECTION]` bar implicitly ends the previous), driving a within-function TOC / jump-list — the machine-readable form of the "demarcation points" idea. Use when a function has ≥3 distinct computational phases (e.g. `Regime_ComputeSignals` — short/long window · variance · ROR · flow · wave-1/2); a small single-purpose fn needs none. A one-line computation keeps its plain inline comment — `[SECTION]` is for the multi-line *groupings*.
 
 A new sync primitive / packing scheme adds ONE vocab line at the first struct that needs it — the conversion surfaces it, so a forgotten annotation self-corrects (never a silent gap).
 
@@ -187,9 +194,13 @@ The comment block is the **interface** between this schema (the format) and `fox
 <signature> {
     // code-local comments STAY here, VERBATIM — a step-comment explains the line it sits on + helps
     // you read the code (D-326). ONLY the unit-level WHY (what the whole fn is + why) was lifted to [COMMENT].
-    // [SECTION]_[<first phase>]              // OPTIONAL (D-329): demarcate a phase of a big multi-part fn —
-    <phase-1 body — its step-comments stay>  //   the plugin reads these as a within-fn TOC / jump-list
+    //------------------------------------------------------------
+    // [SECTION]_[<first phase>]        // OPTIONAL (D-329): bar-wrapped phase of a big multi-part fn.
+    //------------------------------------------------------------  // the plugin reads the `----` bars as
+    <phase-1 body — its step-comments stay>                         // begin/end → a within-fn TOC / jump-list.
+    //------------------------------------------------------------
     // [SECTION]_[<next phase>]
+    //------------------------------------------------------------
     <phase-2 body>
 }
 //======================================================================

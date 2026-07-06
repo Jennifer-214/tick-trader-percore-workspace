@@ -109,13 +109,18 @@ Vocab is **1-line extensible** (per `doc-tag-vocabulary.md`); add tags at real u
 `check_code_tag_blocks.py` parses THIS block for the closed set (single-source: folding a disposition category = adding one token here → the validator tracks it automatically, no code edit). Whitespace-separated tokens; `#`-comments ignored; `[END_*]` is validated by prefix, not listed. These are every token that appears as `token[0]` on a structured line (top-level categories + the DERIVED subcats that head their own lines + the curated structural annotations).
 
 ```category-set
-FILE STRUCT FUNCTION REGISTRY STRATEGY ENUM TYPE MACRO TEST
-TAG SCOPE SCHEMA OVERVIEW WHY DETAIL DIAGRAM COMMENT SUPPORTING_DOCS EDIT VERSION REFERENCE DIRECTIVE FUTURE_WORK CODE SECTION
+# v2 GROWTH (2026-07-06, the D-fmt slate): + registry ROW/COLUMN sub-units · ASSERT unit variant ·
+# OUTDATED_INFO · REGION (cross-fn/beyond-function grouping) · SWAR (bit-pack sub-tag) · EXCLUDED (wire
+# field-absent) · SEAM (train↔serve) · the numeric-domain row. [FORMULA] is a [DIAGRAM] KIND, not a token[0].
+FILE STRUCT FUNCTION REGISTRY STRATEGY ENUM TYPE MACRO TEST ASSERT
+TAG SCOPE SCHEMA OVERVIEW WHY DETAIL DIAGRAM COMMENT SUPPORTING_DOCS EDIT VERSION REFERENCE DIRECTIVE FUTURE_WORK OUTDATED_INFO CODE SECTION REGION
 DERIVED SIZE SIMD FLOAT BRANCHES BUILD INSTANTIATION ALIGN CACHE_LINES STRADDLE UPSTREAM CONSUMERS ROW_COUNT ENROLLED ALIGNED_CONSUMERS ITERATIONS BLAST_RADIUS
+ROW COLUMN
 CONTAINS TOC INCLUDES INCLUDED_BY BINARIES
-THREAD SYNC BIT_PACKED PADDING WIRE_FORMAT PERSISTED LAT_EXEMPT
+THREAD SYNC BIT_PACKED SWAR PADDING WIRE_FORMAT PERSISTED EXCLUDED SEAM LAT_EXEMPT
+OVERFLOW ROUNDING DOMAIN PRECISION
 ```
-**Disposition categories NOT YET in the fence above** — `REGION` `COMPLEXITY` `APPLY_AFTER` `MUTATES` `SPILLS` `DOMAIN` `ROUNDING` `OVERFLOW` `FAULT_SIGNAL` `SEAM` `GATED_BY` `WIRE_VERSION` … These are PROPOSED for the variant surfaces (enum / wire / type / …). **The validator throws `UNKNOWN category` on each until it is folded into the ` ```category-set ` block above** — so **fold each WHEN its variant is first piloted**, not before (`WIRE_VERSION` in particular is an OPEN decision: full variant vs DERIVED-under-`[REFERENCE]` — pre-pilot decision #1). ⇒ the proven-surface pilot (function / struct / registry) stays clear of them by construction; a variant pilot folds the ones it needs first.
+**Disposition categories NOT YET in the fence above** — `COMPLEXITY` `APPLY_AFTER` `MUTATES` `SPILLS` `FAULT_SIGNAL` `GATED_BY` `WIRE_VERSION` … (the D-fmt-slate categories — `ROW`/`COLUMN`/`ASSERT`/`OUTDATED_INFO`/`REGION`/`SWAR`/`EXCLUDED`/`SEAM`/numeric-domain — are now **FOLDED** above, 2026-07-06). The rest stay PROPOSED for variant surfaces; **the validator throws `UNKNOWN category` until folded** — fold each WHEN its variant is first piloted (`WIRE_VERSION` resolves toward the **D-338 version grammar**).
 
 **`[INSTANTIATION]` FOLDED (D-318, standalone set-valued):** `[INSTANTIATION]_[[<args>] …]` — the concrete template-arg tuples a template unit is instantiated at (e.g. `FixedPoint` → `[[2,64] [10,8]]`, `RollingStats` → `[[128] [256] [512] [1024]]`). The DERIVED size/layout facts become PER-instantiation, and the plugin's size-probe reads it as its substitution list (fixes the injected-class-name probe failure — a bare `Foo<PARAM>` isn't sizeof-able). Chosen over folding into `[BUILD]`: `[BUILD]` pins compiler FLAGS (one set per file), `[INSTANTIATION]` pins template ARGS (a SET) — different axis + cardinality.
 
@@ -152,6 +157,21 @@ Design classifications a tool can't infer — the author declares them. Register
   It **stays in `[CODE]`** (it demarcates the code, not unit-WHY) and *replaces the plain prose section-comment* with the same text made machine-navigable (label = the value; spaces OK). **The bars are load-bearing, not decoration:** the plugin reads them to detect where each section BEGINS + ENDS (the next `[SECTION]` bar implicitly ends the previous), driving a within-function TOC / jump-list — the machine-readable form of the "demarcation points" idea. Use when a function has ≥3 distinct computational phases (e.g. `Regime_ComputeSignals` — short/long window · variance · ROR · flow · wave-1/2); a small single-purpose fn needs none. A one-line computation keeps its plain inline comment — `[SECTION]` is for the multi-line *groupings*.
 
 A new sync primitive / packing scheme adds ONE vocab line at the first struct that needs it — the conversion surfaces it, so a forgotten annotation self-corrects (never a silent gap).
+
+---
+
+## v2 grammar additions (the D-fmt slate — 2026-07-06; parse rule + ladder UNCHANGED, all additive)
+
+The 8 locked format decisions + the 3-survey taxonomy grow v1→v2. The fence above carries the new categories; these define their grammar. Detailed templates land as the surfaces are grown (see `format-input-space-taxonomy.md` for the exemplar each answers).
+
+- **SUB-TAGS (D-fmt-5) — a tag may carry a refining child:** `[PARENT]_[CHILD]` (`[BIT_PACKED]_[SWAR]` — manual `BITMAP_*`/`MBS_*` packing IS SIMD-within-a-register; auto-detected from the idiom). Parse unchanged (innermost-bracket, token[0]=parent). Generalizes to any category; `[SWAR]` is the first canonical.
+- **`[OUTDATED_INFO]` (D-fmt-6) — the stale-comment tombstone:** wraps a block whose content no longer reflects the code → CI **FLAGS** it → a **human deletes** it (NEVER auto — a mis-mark must not silently drop a load-bearing comment on a capital codebase). Sister to `[FUTURE_WORK]` (intentional scaffold kept) + the P4 rot-check gate.
+- **`[EDIT]`/`[VERSION]` grammar (D-fmt-1 + D-338) — parseable + sortable:** `[EDIT]_[<version>]_[<descriptor>]`, `<version>` following a canonical sortable grammar so the plugin DERIVES the version-timeline (no hand-tagging). Version-tags stay code-local. ⚠ **H21:** existing identifiers are historical/immutable — the grammar applies GOING FORWARD; history preserved, never renamed. A bare dev/ship "Phase H" is a VERSION identifier (this grammar), NOT a `[SECTION]`. Exact grammar = OPEN sub-decision.
+- **`[SECTION]`/`[REGION]` generalized (D-fmt-4 + survey):** (a) beyond function bodies — demarcate within a STRUCT (access-tier HOT/WARM/COLD or REQUIRED/OPTIONAL field-clusters), ENUM (tier), REGISTRY (row-group), or FILE scope (between units); (b) ONE sub-level of nesting (`[SECTION]` ⊃ `[SECTION]`); (c) absorbs the real bar styles (`===`/unbarred ALL-CAPS runs → canonical bars). A cross-file "Phase" is a `[SECTION]_[Phase N]` **label** (grep it for all sites); **`[REFERENCE]_[PHASE]` DROPPED** — the dep tools own the code-cascade (CODE_MAP/DAG/dep-trace, surfaced in the plugin per D-334).
+- **`[ROW]`/`[COLUMN]` registry sub-schema (survey gap #1, the biggest):** a `[REGISTRY]` carries `[COLUMN]_[<name>]_[<meaning>]` lines (tuple legend + per-column token-sets / metadata-bit keys) + `[ROW]`-scoped annotations (per-row rationale, group dividers, tombstones) that survive `\`-continuation. Detailed grammar: pending template growth.
+- **Bars = ASCII, 3 weights (D-fmt-2 + D-fmt-3):** `====` unit · `~~~~` sub · `----` section (the v1 Unicode `——` `[COMMENT]` separator → ASCII). `[DIAGRAM]` bodies are **ASCII-UML** (`+--+` boxes · `|`/`---` links · `>`/`v` arrows) — NO Unicode glyphs; a **diagram-helper tool** draws them (no hand-aligning `|`).
+- **`[DIAGRAM]_[formula]` (D-fmt-7):** a formula sub-kind of `[DIAGRAM]` — math laid out, plugin-displayable, and explicitly **EXEMPT** from the § CI "prose asserts no derivable fact" check (a formula is a *definition*, not a claimed derived value).
+- **Also folded (survey Tier-1/2, grammar pending template growth):** labeled `[COMMENT]_[<label>]` sub-sections · widened `[REFERENCE]` prefix-zoo (PARITY / SOURCE / finding-IDs / external URLs) · the `[ASSERT]` unit (static_assert-as-doc, layout-lock / epoch-tripwire / remediation-message) · the concurrency block (file-narrative + cluster `Writer=/Reader=` + per-field `producer:/consumer:`) · wire/persist completeness (per-field ordinals + `[EXCLUDED]` for documented-absent fields) · the numeric-domain row (`[OVERFLOW]`/`[ROUNDING]`/`[DOMAIN]`/`[PRECISION]`).
 
 ---
 

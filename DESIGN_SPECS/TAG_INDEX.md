@@ -294,6 +294,10 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/meta-disciplines/plan-decomposition-and-future-aware-agent-arming.md`
 
+### custom-ide (1 files)
+
+- `DESIGN_SPECS/doc-disciplines/in-code-doc-system-north-star.md`
+
 ### cycle-recompute (1 files)
 
 - `DESIGN_SPECS/data-disciplines/running-aggregate-vs-cycle-recompute-discipline.md`
@@ -387,11 +391,13 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/dynamic-library-strategy-loading-pattern.md`
 - `DESIGN_SPECS/framework-patterns/strategy-hot-reload-via-dlopen-pattern.md`
 
-### doc-discipline (36 files)
+### doc-discipline (38 files)
 
 - `DESIGN_SPECS/audit-methodologies/audit-report-format.md`
 - `DESIGN_SPECS/doc-disciplines/categorical-triggers-in-always-loaded-docs.md`
 - `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md`
+- `DESIGN_SPECS/doc-disciplines/format-input-space-taxonomy.md`
+- `DESIGN_SPECS/doc-disciplines/in-code-doc-system-north-star.md`
 - `DESIGN_SPECS/doc-disciplines/in-code-documentation-schema.md`
 - `DESIGN_SPECS/doc-disciplines/module-scoped-claude-md-pattern.md`
 - `DESIGN_SPECS/framework-patterns/framework-composition-overview.md`
@@ -724,6 +730,11 @@ This file is a snapshot for static browsing.
 ### implementation-contract (1 files)
 
 - `DESIGN_SPECS/framework-patterns/exchange-adapter-implementation-contract.md`
+
+### in-code-documentation (2 files)
+
+- `DESIGN_SPECS/doc-disciplines/format-input-space-taxonomy.md`
+- `DESIGN_SPECS/doc-disciplines/in-code-doc-system-north-star.md`
 
 ### instantiate (1 files)
 
@@ -1203,6 +1214,10 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/data-disciplines/per-node-purity-scale-invariance.md`
 - `DESIGN_SPECS/framework-patterns/single-authority-predicate-for-mode-gating.md`
 
+### schema-completion (1 files)
+
+- `DESIGN_SPECS/doc-disciplines/format-input-space-taxonomy.md`
+
 ### scope-discipline (1 files)
 
 - `DESIGN_SPECS/audit-methodologies/audit-finding-kind-taxonomy.md`
@@ -1412,6 +1427,11 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/multi-asset-class-symbol-pattern.md`
 
+### tag-system (2 files)
+
+- `DESIGN_SPECS/doc-disciplines/format-input-space-taxonomy.md`
+- `DESIGN_SPECS/doc-disciplines/in-code-doc-system-north-star.md`
+
 ### terminology-evolution (2 files)
 
 - `DESIGN_SPECS/refactor-patterns/rename-cascade-enumeration-tooling.md`
@@ -1429,6 +1449,10 @@ This file is a snapshot for static browsing.
 ### tls-resumption (1 files)
 
 - `DESIGN_SPECS/framework-patterns/tls-session-resumption-pattern.md`
+
+### tooling (1 files)
+
+- `DESIGN_SPECS/doc-disciplines/in-code-doc-system-north-star.md`
 
 ### trustworthy-sim (1 files)
 

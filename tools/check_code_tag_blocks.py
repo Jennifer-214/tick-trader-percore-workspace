@@ -13,9 +13,12 @@ vocab checks that are stable against the current grammar:
   3. [TAG] vocab        — [TAG] values resolve in doc-tag-vocabulary (UPPER_SNAKE↔lower-hyphen).
   4. One-category-per-line — token[0] is the only top-level CATEGORY on the line.
   5. Graceful degrade   — a malformed bracket / non-tag comment is skipped, never a crash.
-DEFERRED to the next increment (need grammar-final / generators): ladder-order,
-[REFERENCE]-resolution, DERIVED-vs-ground-truth drift, the prose-vs-DERIVED codegen lint
-(spec § CI-enforcement items 3 + 5).
+Increment 2 ADDS [REFERENCE]-resolution (spec § reference-subcats): every
+[REFERENCE]/[FUTURE_WORK]/[SUPPORTING_DOCS] id resolves against a frozen, workspace-rooted
+index (specs / memories / decisions / invariants / tech-debt / classes / plans); AUDIT is
+existence-unchecked (never red). Decoupled from the block-parse loop by design (D-317).
+DEFERRED still (need generators): ladder-order, DERIVED-vs-ground-truth drift, the
+prose-vs-DERIVED codegen lint (spec § CI-enforcement items 3 + 5).
 
 The parse rule is the ONE innermost-bracket regex, exactly as the plugin's tagadapter
 will use — so this validator and the plugin read the same grammar (unified surface).
@@ -33,7 +36,7 @@ from pathlib import Path
 
 # Reuse the SHARED vocab loader + engine root — one grammar, validated on docs AND code.
 sys.path.insert(0, str(Path(__file__).absolute().parent))
-from check_doc_metadata import load_vocabulary, ENGINE, WORKSPACE  # noqa: E402
+from check_doc_metadata import load_vocabulary, ENGINE, WORKSPACE, MEMORY_DIR  # noqa: E402
 
 # The innermost-bracket parse rule (spec § "The three invariants" #1). Non-innermost
 # list-grouping [[a] [b]] is skipped for free → token[0]=CATEGORY, rest=values.
@@ -47,6 +50,29 @@ MAJOR_BAR_RE = re.compile(r"^\s*//=+\s*$")
 # Grammar is locked; VALUES (under [TAG]/[REFERENCE]/[DERIVED]) grow in the vocab, not here.
 OPENERS = {"FUNCTION", "STRUCT", "REGISTRY", "CODE"}  # require a matching [END_*] (stable structural set)
 SCHEMA_PATH = WORKSPACE / "DESIGN_SPECS" / "doc-disciplines" / "in-code-documentation-schema.md"
+
+# --- [REFERENCE]-resolution (increment 2): frozen canonical ref-source paths ------------------
+# The directory layout is frozen (operator, 2026-07-05: "use path resolvers"), so every ref
+# source resolves from a WORKSPACE-rooted canonical path — NOT a bare find under ENGINE. WHY:
+# the engine-side DOCS/ symlinks in only individual files (TECH_DEBT.md yes, the tech-debt/
+# SUBDIR no), and DESIGN_SPECS/plans are whole-dir symlinks → a symlink-blind walk under ENGINE
+# silently misses sources. check_doc_metadata owns ENGINE/WORKSPACE/MEMORY_DIR (the path SSoT);
+# these derive the rest. A layout move = a one-line edit here (path-resolver discipline).
+CLAUDE_MD        = ENGINE / "CLAUDE.md"                        # Hard-Invariants table (symlinked from workspace)
+DESIGN_SPECS_DIR = WORKSPACE / "DESIGN_SPECS"
+PLANS_DIR        = WORKSPACE / "plans"
+CLASS_DOC        = WORKSPACE / "DOCS" / "RECURRING_BUG_PATTERNS.md"
+TECHDEBT_FILES   = [WORKSPACE / "DOCS" / "TECH_DEBT.md",
+                    *sorted((WORKSPACE / "DOCS" / "tech-debt").glob("*.md"))]  # the split ledger lives ONLY here
+
+# Closed [REFERENCE] subcat set (spec § reference-subcats SSoT). AUDIT → existence-unchecked:
+# audits are scattered (no single ledger), so the resolver NEVER reds on an [AUDIT] pointer.
+REF_SUBCATS = {"DESIGN_SPEC", "MEMORY", "DECISION", "INVARIANT", "TECH_DEBT", "CLASS", "PLAN", "AUDIT"}
+
+# Subcats that MUST be non-empty in a healthy repo: a vacuous load (0 ids) = a BROKEN source path,
+# NOT "no refs exist" — refusing to scan avoids the Class-51 false-green where every ref of a subcat
+# passes because its index silently loaded empty. AUDIT is legitimately None (existence-unchecked).
+REF_MUST_POPULATE = ("DESIGN_SPEC", "MEMORY", "DECISION", "INVARIANT", "TECH_DEBT", "CLASS", "PLAN")
 
 
 def load_categories():
@@ -73,6 +99,112 @@ def _upper_snake_to_vocab(tok):
     """Code renders tags UPPER_SNAKE ([SLOW_PATH]); the vocab stores lower-hyphen
     (slow-path). Deterministic map (D-306)."""
     return tok.strip().lower().replace("_", "-")
+
+
+def _basenames(paths):
+    """The set of file stems (basename minus .md) for a path iterable."""
+    return {p.stem for p in paths}
+
+
+def load_reference_index():
+    """Load-once membership sets for [REFERENCE]/[FUTURE_WORK]/[SUPPORTING_DOCS] id-resolution
+    — one per subcat, from the FROZEN workspace paths (spec § reference-subcats). Each value is
+    a set of valid ids (already normalized to its subcat's form); AUDIT → None (existence-
+    unchecked, never red). A subcat whose source fails to load also maps to None, so it is
+    SKIPPED rather than flagging every id as a false-dangling (graceful — mirrors validate_file)."""
+    def _read(p):
+        try:
+            return Path(p).read_text(encoding="utf-8", errors="replace")
+        except (IOError, OSError):
+            return ""
+    idx = {}
+    # INVARIANT — the leading H<n> cell of each Hard-Invariants table row in CLAUDE.md (H1..H22).
+    idx["INVARIANT"] = set(re.findall(r"^\|\s*\*{0,2}(H\d+)", _read(CLAUDE_MD), re.M)) or None
+    # DECISION — the DEFINING sentinels across the decision-log UNION (D-numbers restart per
+    # log, so resolve against the union; the C/F correction family resolves too). Membership only.
+    decisions = set()
+    for log in PLANS_DIR.glob("*/decision-logs/*.md"):
+        decisions.update(re.findall(r"<!--\s*[DCF/]+\s*:\s*([DCF]-\d+)\s*-->", _read(log)))
+    idx["DECISION"] = decisions or None
+    # DESIGN_SPEC / MEMORY — kebab / snake basenames.
+    idx["DESIGN_SPEC"] = _basenames(DESIGN_SPECS_DIR.rglob("*.md")) or None
+    idx["MEMORY"]      = (_basenames(MEMORY_DIR.glob("*.md")) if MEMORY_DIR else None) or None
+    # TECH_DEBT — padding-normalized ints (TECH_DEBT-005 ≡ TECH_DEBT-5); split ledger under WORKSPACE.
+    td = set()
+    for f in TECHDEBT_FILES:
+        td.update(int(n) for n in re.findall(r"TECH_DEBT-(\d+)", _read(f)))
+    idx["TECH_DEBT"] = td or None
+    # CLASS — bare ints, zero-pad-insensitive ("Class 0*<n>").
+    idx["CLASS"] = {int(n) for n in re.findall(r"\bClass 0*(\d+)\b", _read(CLASS_DOC))} or None
+    # PLAN — basenames (a "/"-bearing id is resolved as a path at check-time instead).
+    idx["PLAN"] = _basenames(PLANS_DIR.rglob("*.md")) or None
+    idx["AUDIT"] = None    # existence-unchecked (no single audit ledger)
+    return idx
+
+
+def _ref_resolves(subcat, rid, members):
+    """True if id `rid` is a member of `subcat`'s set, applying that subcat's normalization."""
+    rid = rid.strip()
+    if subcat in ("INVARIANT", "DECISION"):
+        return rid in members
+    if subcat in ("DESIGN_SPEC", "MEMORY"):
+        return (rid[:-3] if rid.endswith(".md") else rid) in members
+    if subcat in ("TECH_DEBT", "CLASS"):
+        m = re.search(r"(\d+)", rid)
+        return bool(m) and int(m.group(1)) in members
+    if subcat == "PLAN":
+        if "/" in rid:                                   # path-form → existence under the tree
+            return (PLANS_DIR / rid).exists() or (WORKSPACE / rid).exists()
+        return (rid[:-3] if rid.endswith(".md") else rid) in members
+    return True
+
+
+# A [SUPPORTING_DOCS] block-item line: `//   - [SUBCAT]_[id]` (the leading `- ` sits OUTSIDE the
+# brackets, so validate_file's TAG_LINE_RE — which needs `[` first — skips it; the resolver owns it).
+_BLOCK_ITEM_RE = re.compile(r"^\s*//\s*-\s*\[")
+
+
+def resolve_references(path, ref_index):
+    """Flag every [REFERENCE]/[FUTURE_WORK]/[SUPPORTING_DOCS] id that does NOT resolve to a real
+    workspace artifact. DECOUPLED from validate_file's block-parse loop (spec + D-317): the
+    resolver does NOT honor [COMMENT]/[DIAGRAM] prose state, because a [SUPPORTING_DOCS] block
+    lives INSIDE the [COMMENT] region — the block-parser skips it as prose, so a separate pass
+    must see it. Same mixed-state gate (un-converted / exempt file = not policed). AUDIT never
+    reds. Graceful: never raises."""
+    try:
+        text = Path(path).read_text(encoding="utf-8", errors="replace")
+    except (IOError, OSError):
+        return []
+    if "[SCHEMA]_[" not in text or "[SCHEMA]_[exempt" in text:
+        return []
+    viols = []
+    for lineno, raw in enumerate(text.split("\n"), 1):
+        if "//" not in raw:
+            continue
+        toks = _line_tokens(raw)
+        if not toks:
+            continue
+        if toks[0] in ("REFERENCE", "FUTURE_WORK"):
+            if len(toks) < 3:                     # need SUBCAT + ≥1 id, else malformed → skip (graceful)
+                continue
+            subcat, ids = toks[1], toks[2:]
+        elif toks[0] in REF_SUBCATS and _BLOCK_ITEM_RE.match(raw):
+            subcat, ids = toks[0], toks[1:]
+        else:
+            continue
+        if subcat == "AUDIT":                     # existence-unchecked (no ledger)
+            continue
+        if subcat not in REF_SUBCATS:
+            viols.append(f"{path}:{lineno}  UNKNOWN [REFERENCE] subcat [{subcat}]")
+            continue
+        members = ref_index.get(subcat)
+        if members is None:                       # source unavailable → don't emit false-danglings
+            continue
+        for rid in ids:
+            if not _ref_resolves(subcat, rid, members):
+                viols.append(f"{path}:{lineno}  dangling [{subcat}]_[{rid}] — no such "
+                             f"{subcat.lower().replace('_', '-')}")
+    return viols
 
 
 def _line_tokens(payload):
@@ -248,20 +380,44 @@ int freeform_ok() { return 0; }
     ("end with no open", "// [END_STRUCT]_[X]\n", "no open [STRUCT]"),
 ]
 
+# --- self-test for [REFERENCE]-resolution (live index; non-vacuous — a present id vs an
+#     absent one PROVE the resolver discriminates, exactly as the [TAG]-vocab case does) ---
+_REF_SELFTEST = [
+    ("ref INVARIANT valid (H4)",          "// [REFERENCE]_[INVARIANT]_[H4]\n", None),
+    ("ref INVARIANT dangling (H99)",      "// [REFERENCE]_[INVARIANT]_[H99]\n", "dangling"),
+    ("ref DECISION valid (D-306)",        "// [REFERENCE]_[DECISION]_[D-306]\n", None),
+    ("ref DECISION dangling (D-999999)",  "// [REFERENCE]_[DECISION]_[D-999999]\n", "dangling"),
+    ("ref DESIGN_SPEC valid (self)",      "// [REFERENCE]_[DESIGN_SPEC]_[in-code-documentation-schema]\n", None),
+    ("ref multi-id inline ([[H4] [H8]])", "// [REFERENCE]_[INVARIANT]_[[H4] [H8]]\n", None),
+    ("ref AUDIT never reds",              "// [REFERENCE]_[AUDIT]_[no-such-audit-index]\n", None),
+    ("supporting-docs block valid",       "// [SUPPORTING_DOCS]\n//   - [INVARIANT]_[H8]\n", None),
+    ("supporting-docs block dangling",    "// [SUPPORTING_DOCS]\n//   - [INVARIANT]_[H404]\n", "dangling"),
+]
+
 
 def run_selftest(categories, concern_vocab, surface_vocab):
     import tempfile, os
     ok = True
-    for label, src, expect in _SELFTEST:
-        fd, p = tempfile.mkstemp(suffix=".hpp")
-        os.write(fd, ("// [SCHEMA]_[v1]\n" + src).encode()); os.close(fd)   # opt the fixture in (gate)
-        viols, _ = validate_file(p, categories, concern_vocab, surface_vocab)
-        os.unlink(p)
-        hit = expect is None and not viols
-        hit = hit or (expect is not None and any(expect in v for v in viols))
-        print(f"  {'✅' if hit else '❌'} {label}: {len(viols)} violation(s)"
-              + ("" if hit else f"  EXPECTED ~'{expect}', GOT {viols}"))
-        ok = ok and hit
+
+    def _run(cases, checker):
+        nonlocal ok
+        for label, src, expect in cases:
+            fd, p = tempfile.mkstemp(suffix=".hpp")
+            os.write(fd, ("// [SCHEMA]_[v1]\n" + src).encode()); os.close(fd)   # opt the fixture in (gate)
+            viols = checker(p)
+            os.unlink(p)
+            hit = (expect is None and not viols) or (expect is not None and any(expect in v for v in viols))
+            print(f"  {'✅' if hit else '❌'} {label}: {len(viols)} violation(s)"
+                  + ("" if hit else f"  EXPECTED ~'{expect}', GOT {viols}"))
+            ok = ok and hit
+
+    _run(_SELFTEST, lambda p: validate_file(p, categories, concern_vocab, surface_vocab)[0])
+    ref_index = load_reference_index()
+    _vac = [k for k in REF_MUST_POPULATE if not ref_index.get(k)]
+    print(f"  {'✅' if not _vac else '❌'} ref-index non-vacuity: "
+          f"{'all subcats populated' if not _vac else str(_vac) + ' loaded 0 ids'}")
+    ok = ok and not _vac
+    _run(_REF_SELFTEST, lambda p: resolve_references(p, ref_index))
     return ok
 
 
@@ -289,6 +445,12 @@ def main():
         files = [p for p in list(ENGINE.rglob("*.hpp")) + list(ENGINE.rglob("*.cpp"))
                  if not any(part == "vendor" or part.startswith("build") for part in p.parts)]
 
+    ref_index = load_reference_index()          # frozen-path membership sets, loaded once
+    vacuous = [k for k in REF_MUST_POPULATE if not ref_index.get(k)]
+    if vacuous:                                 # a subcat that loaded 0 ids = a broken source path
+        print(f"ERROR: [REFERENCE] index vacuous — {vacuous} resolved 0 ids (broken source "
+              f"path?); refusing to scan — refs of these subcats would pass vacuously", file=sys.stderr)
+        return 2
     all_v, blocks, checked = [], 0, 0
     for f in files:
         if not f.exists():
@@ -296,6 +458,7 @@ def main():
         checked += 1
         v, b = validate_file(f, categories, concern_vocab, surface_vocab)
         all_v.extend(v); blocks += b
+        all_v.extend(resolve_references(f, ref_index))   # decoupled [REFERENCE]-resolution pass
 
     print(f"Scanned {checked} files; {blocks} tag-blocks; "
           f"{len(concern_vocab)} concern + {len(surface_vocab)} surface tags")

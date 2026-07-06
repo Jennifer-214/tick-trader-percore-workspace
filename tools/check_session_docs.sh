@@ -257,6 +257,16 @@ if [ "${SKIP_DECISION_COMPLETENESS_CHECK:-0}" != "1" ]; then
         python3 "$REPO_ROOT/tools/check_capture_audit.py" --check 13 --since "${DLOG_SINCE:-HEAD~8}"
 fi
 
+# --- ADVISORY: cache-layout gate (D-320 — cross-thread straddle = H6 false-sharing / [SIZE] drift) ---
+# INERT until structs are converted (mixed-state: no [STRUCT] block → early return, no clang). Layout
+# via clang -fdump-record-layouts reusing the fox-symdeps parser (nvim/clang-dependent) → ADVISORY: a
+# missing dep or a gate finding surfaces, never hard-blocks the doc sweep. Promote to HARD once
+# conversion lands + the run cadence is set (perf: one clang run when structs exist). Never auto-aligns.
+if [ "${SKIP_CACHE_LAYOUT_CHECK:-0}" != "1" ]; then
+    run_advisory "cache-layout gate (converted [STRUCT] blocks: cross-thread straddle = H6 false-sharing / [SIZE] drift)" \
+        python3 "$REPO_ROOT/tools/check_cache_layout.py"
+fi
+
 echo ""
 echo "=== SWEEP RESULTS ==="
 for r in "${RESULTS[@]}"; do echo "$r"; done

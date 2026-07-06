@@ -77,6 +77,18 @@ CI tool `check_doc_metadata.py` (queued at `.C` candidate ship) validates every 
 | `scale-invariance` | H22 per-node purity / horizontal scaling — a node's (and cluster's) state is a pure function of its OWN local inputs; the (N+1)th node requires ZERO change to existing per-shard logic |
 | `reconcile-recovery` | Boot/restart recovery semantics — venue-truth reconciliation, missed-fill replay, attribution, net-position reconstruction (vs overwrite/aggregate); the boot-reconcile-collapse class |
 | `future-expansion` | LIVING-spec discipline — a spec documents a FOUNDATION now + a planned mechanism DEFERRED to a real future need (build-when-earned, NOT speculative); the `§ Future expansion` section is the gated growth, built only when the need actually arrives |
+| `capital-bearing` | Unit whose correctness = MONEY (touches a position / balance / fee / P&L / price-qty) — the classify counterpart to `capital-safety` (the discipline). Code tag `[CAPITAL_BEARING]` (E.1.2.A) |
+| `non-capital` | Unit with NO money-correctness stake (feature math / telemetry / display). Code tag `[NON_CAPITAL]` |
+| `decimal` | Money repr — `FixedPoint<10,8>` decimal (venue-exact 8dp); the H4 money path. Code tag `[DECIMAL]` |
+| `binary-fp` | Feature repr — `FPN_Binary<F>` binary fixed-point; the H4 feature path. Code tag `[BINARY_FP]` |
+| `int` | Plain integer repr (counts / ids / offsets / bitmaps). Code tag `[INT]` |
+| `float-display-only` | `double`/`float` used for DISPLAY only — never on hot/slow math (H4). Code tag `[FLOAT_DISPLAY_ONLY]` |
+| `frozen` | Relies on staying byte-identical across changes — determinism baseline / wire-frozen body (regen DELIBERATELY, never casually). Code tag `[FROZEN]` |
+| `golden` | Protected by a golden-master fixture (sister to `frozen`). Code tag `[GOLDEN]` |
+| `critical` | Load-bearing on a capital / determinism / latency path — failure is high-impact. Code tag `[CRITICAL]` |
+| `supportive` | Auxiliary role — not on the critical path. Code tag `[SUPPORTIVE]` |
+| `helper` | A helper / utility unit (extracted shared logic). Code tag `[HELPER]` |
+| `entry-point` | A top-level entry point (boot / dispatch / main loop). Code tag `[ENTRY_POINT]` |
 
 ---
 
@@ -111,6 +123,12 @@ CI tool `check_doc_metadata.py` (queued at `.C` candidate ship) validates every 
 | `session-pickup` | Fresh-context onboarding / required reading / drift-check / TaskList recreation |
 | `skill-pipeline` | claude-skills SKILL.md spec / pre-coding gate / sister-skill composition |
 | `persistence` | Snapshot save/load / warm-restart recovery / RunHistory / ShardedSnapshot money-exact round-trip |
+| `engine` | Core trading-engine code (CoreFrameworks / Strategies / ExecutionCore / OMS) — the shipped hot/slow path. Code tag `[ENGINE]` |
+| `gui` | GUI component (ImGui panels / rendering) — broader than the `gui-thread` surface. Code tag `[GUI]` |
+| `ml` | ML component (features / model / inference / training) — broader than the `ml-inference` step. Code tag `[ML]` |
+| `data-plane` | The market-data ingest / fan-out / replication plane. Code tag `[DATA_PLANE]` |
+| `monitoring-plane` | The observability / telemetry / snapshot / metrics plane. Code tag `[MONITORING_PLANE]` |
+| `dev-plane` | Dev-apparatus (tools / tests / docs / CI) — NOT shipped engine code. Code tag `[DEV_PLANE]` |
 
 ---
 

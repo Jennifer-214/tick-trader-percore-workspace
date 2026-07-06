@@ -40,6 +40,8 @@ from check_doc_metadata import load_vocabulary, ENGINE, WORKSPACE  # noqa: E402
 BRACKET_RE = re.compile(r"\[([^\[\]]+)\]")
 # A structured tag-line: a // comment whose first non-space payload is a bracket token.
 TAG_LINE_RE = re.compile(r"^\s*//\s*(\[.*)$")
+# A ==== major bar closes a freeform content-region ([COMMENT]/[DIAGRAM] body).
+MAJOR_BAR_RE = re.compile(r"^\s*//=+\s*$")
 
 # Closed top-level CATEGORY set (spec § Category set + this session's D-308..D-313 folds).
 # Grammar is locked; VALUES (under [TAG]/[REFERENCE]/[DERIVED]) grow in the vocab, not here.
@@ -95,7 +97,13 @@ def validate_file(path, categories, concern_vocab, surface_vocab):
 
     open_stack = []          # (category, name, lineno) awaiting [END_category]_[name]
     blocks_seen = 0
+    in_prose = False         # inside a [COMMENT]/[DIAGRAM] freeform body → lines are PROSE (may
+                             # contain bracketed words / byte-maps), not tags; skip until a ==== bar
     for lineno, raw in enumerate(text.split("\n"), 1):
+        if in_prose:
+            if MAJOR_BAR_RE.match(raw):
+                in_prose = False
+            continue
         m = TAG_LINE_RE.match(raw)
         if not m:
             continue
@@ -152,6 +160,9 @@ def validate_file(path, categories, concern_vocab, surface_vocab):
                 v = _upper_snake_to_vocab(val)
                 if v and v not in concern_vocab and v not in surface_vocab:
                     violations.append(f"{path}:{lineno}  [TAG] value [{val}] not in doc-tag-vocabulary")
+
+        if cat in ("COMMENT", "DIAGRAM"):   # open a freeform prose body until the next ==== bar
+            in_prose = True
 
     for oc, on, ln in open_stack:
         violations.append(f"{path}:{ln}  [{oc}]_[{on}] has no matching [END_{oc}]")
@@ -213,6 +224,21 @@ template <unsigned F> struct alignas(64) ExecutionCore { };
 // [SCHEMA]_[v1]
 // [OVERVIEW]_[per-node hot execution state + tick kernel]
 //======================================================================
+""", None),
+    ("clean FREEFORM ([COMMENT] prose with bracketed category-words)", """
+//======================================================================
+// [FUNCTION]_[freeform_ok]
+// [SCHEMA]_[v1]
+//======================================================================
+// [CODE]
+int freeform_ok() { return 0; }
+// [END_CODE]
+//======================================================================
+// [COMMENT]
+// this prose mentions [CODE] and [COMMENT] and [DERIVED] in brackets — it is
+// freeform text, NOT tags, so it must NOT be parsed as categories.
+//======================================================================
+// [END_FUNCTION]_[freeform_ok]
 """, None),
     ("unknown category", "// [FUNCTON]_[typo]\n", "UNKNOWN category"),
     ("two categories one line", "// [FUNCTION]_[X] [TAG]_[[HOT_PATH]]\n", "TWO categories"),

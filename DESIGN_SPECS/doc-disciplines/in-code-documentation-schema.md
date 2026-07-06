@@ -100,7 +100,7 @@ rg -l '\[TAG\]_\[\[SLOW_PATH'  |  xargs rg -l '\[VERSION\]_\[v5.15'  |  xargs rg
 | `[CODE]` / `[END_CODE]` | (none) | **body-range delimiter** — explicitly brackets the code body so the DERIVED size-tool + the plugin's cursor-position tracking read an exact PARSED range (the `====` bars are render-only, can't serve this) (D-306) | structural |
 | `[END_*]` | `_[name]` | close delimiter (`[END_FUNCTION]`/`[END_STRUCT]`/`[END_REGISTRY]`/`[END_CODE]`) | structural |
 
-Vocab is **1-line extensible** (per `doc-tag-vocabulary.md`); add tags at real use-sites, don't pre-enumerate. `[LATENCY_CRITICAL]` etc. are synonyms of existing SURFACE tags — fold, don't add.
+Vocab is **1-line extensible** (per `doc-tag-vocabulary.md`); add tags at real use-sites, don't pre-enumerate. `[LATENCY_CRITICAL]` etc. are synonyms of existing SURFACE tags — fold, don't add. **⚠ The validator is LIVE (CI-wired):** a `[TAG]` value not yet in `doc-tag-vocabulary.md` throws `not in doc-tag-vocabulary` immediately. The component/plane family (`[ENGINE]`/`[ML]`/`[GUI]`/`[DATA_PLANE]`/`[DEV_PLANE]`/…) and the classify family (`[CAPITAL_BEARING]`/`[DECIMAL]`/`[DETERMINISTIC]`/`[BIT_PACKED]`/`[DRAINER]`/`[PERSISTED]`/`[FROZEN]`/`[GOLDEN]`/`[CRITICAL]`/…) are **NOT yet in the vocab, and several do NOT cleanly fold** (naming mismatch: `[DECIMAL]`↔`fixed-point-math`, `[CAPITAL_BEARING]`↔`capital-safety`, `[BIT_PACKED]`↔`bitmap-packed`). **Reconciling them (new-rows vs alias-existing) is a BLOCKING step-0 of the FIRST conversion** — a `[FILE]`/Money block reds until it's done. This is the vocab-reconcile (#14 by name, but ORDERING-wise it precedes conversion).
 
 ### Closed category set — machine-readable SSoT (the validator DERIVES from this, never mirrors it)
 
@@ -113,7 +113,23 @@ DERIVED SIZE SIMD FLOAT BRANCHES BUILD ALIGN CACHE_LINES STRADDLE UPSTREAM CONSU
 CONTAINS TOC INCLUDES INCLUDED_BY BINARIES
 THREAD SYNC BIT_PACKED PADDING WIRE_FORMAT PERSISTED LAT_EXEMPT
 ```
-(Adopted disposition categories — `REGION` `INSTANTIATION` `COMPLEXITY` `APPLY_AFTER` `MUTATES` `SPILLS` `DOMAIN` `ROUNDING` `OVERFLOW` `FAULT_SIGNAL` `SEAM` `GATED_BY` `WIRE_VERSION` … — are added here as each is signed off, per the disposition doc.)
+**Disposition categories NOT YET in the fence above** — `REGION` `INSTANTIATION` `COMPLEXITY` `APPLY_AFTER` `MUTATES` `SPILLS` `DOMAIN` `ROUNDING` `OVERFLOW` `FAULT_SIGNAL` `SEAM` `GATED_BY` `WIRE_VERSION` … These are PROPOSED for the variant surfaces (enum / wire / type / …). **The validator throws `UNKNOWN category` on each until it is folded into the ` ```category-set ` block above** — so **fold each WHEN its variant is first piloted**, not before (`WIRE_VERSION` in particular is an OPEN decision: full variant vs DERIVED-under-`[REFERENCE]` — pre-pilot decision #1). ⇒ the proven-surface pilot (function / struct / registry) stays clear of them by construction; a variant pilot folds the ones it needs first.
+
+### `[REFERENCE]` subcats — machine-readable SSoT + resolution table (the resolver DERIVES from this)
+
+`[REFERENCE]_[SUBCAT]_[id]` (and the `[SUPPORTING_DOCS]` block-form `- [SUBCAT]_[id]`) point at workspace artifacts; the resolver (`check_code_tag_blocks.py` `[REFERENCE]`-resolution increment) checks each id RESOLVES (dangling = CI red). Single-source like the category-set: a folded subcat = one row here, no validator code edit.
+
+```reference-subcats
+# SUBCAT       SOURCE (where the id resolves)                                   ID-FORM               NOTES
+DESIGN_SPEC    DESIGN_SPECS/**/<id>.md                                          kebab-basename (no .md)
+MEMORY         <memory-dir>/<id>.md                                             snake_basename (no .md)
+DECISION       UNION of plans/**/decision-logs/*.md ("D/C/F: D-<n>")            D-<n>                 D-numbers RESTART per log → resolve against the union; membership only
+INVARIANT      CLAUDE.md Hard-Invariants table                                  H<n>                  H1..H22
+TECH_DEBT      DOCS/TECH_DEBT.md + DOCS/tech-debt/{open,in-flight,closed}.md    TECH_DEBT-<n>
+CLASS          DOCS/RECURRING_BUG_PATTERNS.md ("Class <n>")                     <n> bare int          match zero-padded "Class 0*<n>"
+PLAN           plans/**/*.md                                                    path-or-basename
+AUDIT          EXISTENCE-UNCHECKED — audits are scattered (no single ledger)    free                  advisory-only until an audit index exists; resolver does NOT red on AUDIT
+```
 
 ### Structural + concurrency annotations (register the vocab; apply as-encountered)
 

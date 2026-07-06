@@ -4,7 +4,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-07-04 (commit 84d73e0)
+**Last regenerated**: 2026-07-05 (commit 8648e27)
 
 ## CoreFrameworks/
 
@@ -294,7 +294,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 ### ShardedSnapshotPersist.hpp
 
 - `ShardedSnapshot_Save` — line 116
-- `ShardedSnapshot_Load` — line 312
+- `ShardedSnapshot_Load` — line 307
 
 ### ShardedTradeLog.hpp
 
@@ -357,16 +357,19 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### RegimeDetector.hpp
 
-- `CumDelta_Init` — line 124
-- `CumDelta_Push` — line 132
-- `TickRate_Init` — line 164
-- `TickRate_Push` — line 172
-- `TickRate_CurrentZ` — line 199
-- `Regime_ComputeSignals` — line 223
-- `Regime_Init` — line 481
-- `Regime_Classify` — line 513
-- `Regime_ToStrategy` — line 667
-- `Regime_AdjustPositions` — line 685
+- `CumDelta_Init` — line 126
+- `CumDelta_Push` — line 134
+- `TickRate_Init` — line 166
+- `TickRate_Push` — line 174
+- `TickRate_CurrentZ` — line 201
+- `Regime_ComputeSignals` — line 225
+- `RegimeState_FieldwiseWrite` — line 505
+- `RegimeState_FieldwiseRead` — line 514
+- `RegimeState_CommitPersistedFields` — line 525
+- `Regime_Init` — line 547
+- `Regime_Classify` — line 579
+- `Regime_ToStrategy` — line 733
+- `Regime_AdjustPositions` — line 751
 
 ### SimpleDip.hpp
 
@@ -831,6 +834,12 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `SpreadState_Push` — line 440
 - `SpreadState_ZScore` — line 458
 - `SpreadState_Last` — line 473
+
+### LinearRegression3X.hpp
+
+- `RegressionFeederX_FieldwiseWrite` — line 71
+- `RegressionFeederX_FieldwiseRead` — line 80
+- `RegressionFeederX_CommitPersistedFields` — line 89
 
 ### ModelInference.hpp
 

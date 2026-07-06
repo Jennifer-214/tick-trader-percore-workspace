@@ -71,7 +71,7 @@ Then the 6-phase build (phase 2 = propagate to templates + the 3-surface alignme
 
 ## Capture-completeness + TaskList (close verification)
 
-**Decisions captured:** D-331…D-338 + D-fmt SLATE RESOLVED (decision-log). **New docs:** north-star + taxonomy (DESIGN_SPECS, indexed). **Schema:** v2 fence + grammar-additions. **Plan:** re-scoped to 6-phase. **Memories:** none new (all captures were decisions/design). **Independent review:** fired at close (deliverable-completeness + clobber-check across the 5 heavily-edited docs).
+**Decisions captured:** D-331…D-338 + D-fmt SLATE RESOLVED (decision-log). **New docs:** north-star + taxonomy (DESIGN_SPECS, indexed). **Schema:** v2 fence + grammar-additions. **Plan:** re-scoped to 6-phase. **Findings → ledger:** toolchain root-causes (RC-A…E; the asm + overlay audits) → tasks #9-18 · engine `RegimeDetector.hpp` `[STATE]`/`[INIT]` tag-scan fail → homed (§ Homed items above) · Check-P workspace-context false-RED → task #13 · plugin-found ~128B `date_time` cache-align straddler → task #18 · schema version-label lag (v1.0 frontmatter vs v2 body) → reconcile at the `[SCHEMA]` v2 bump (§ NEXT ACTION #9). **Memories:** none new (all captures were decisions/design). **Independent review:** fired at close (deliverable-completeness + clobber-check across the 5 heavily-edited docs).
 
 | # | status | task |
 |---|---|---|

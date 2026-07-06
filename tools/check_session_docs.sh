@@ -91,6 +91,16 @@ else
     RESULTS+=("  ⏭  HARD  DESIGN_SPECS index currency (SKIP_INDEX_CURRENCY=1)")
 fi
 
+# --- HARD 1c: in-code tag-block validator (E.1.2.A schema — self-test non-vacuity + full-tree scan) ---
+if [ "${SKIP_CODE_TAG_CHECK:-0}" != "1" ]; then
+    run_hard "code tag-blocks --selftest (non-vacuity)" \
+        python3 "$REPO_ROOT/tools/check_code_tag_blocks.py" --selftest
+    run_hard "code tag-blocks full-tree scan (in-file [SCHEMA] whitelist; mixed-state OK)" \
+        python3 "$REPO_ROOT/tools/check_code_tag_blocks.py"
+else
+    RESULTS+=("  ⏭  HARD  code tag-blocks (SKIP_CODE_TAG_CHECK=1)")
+fi
+
 # --- HARD 2: B-Plus plan-body symbol existence (the citation-error catcher) ---
 if [ "${SKIP_PLAN_BODY_CHECK:-0}" != "1" ]; then
     B_PLUS="$REPO_ROOT/tools/check_plan_body_symbol_existence.py"

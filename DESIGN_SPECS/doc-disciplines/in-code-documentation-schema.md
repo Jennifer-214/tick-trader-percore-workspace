@@ -78,7 +78,7 @@ rg -l '\[TAG\]_\[\[SLOW_PATH'  |  xargs rg -l '\[VERSION\]_\[v5.15'  |  xargs rg
 
 **Granularity:** one block per unit (struct / function / registry / file). Individual struct fields get OPTIONAL terse inline tags (`// hot read`, `// [H12_PAD]`), never prose. Nested types get their own block if non-trivial.
 
-**Inline field comments + sub-group headers STAY in `[CODE]` — verbatim (D-326).** Converting a unit relocates ONLY the *unit-level* WHY prose (what the whole unit is + why) to `[COMMENT]`. The existing per-field inline comments (`FPN_Binary<F> short_slope; // relative price slope`) and the sub-group section headers that organize the body (`// short window (128-tick)`, `// derived signals`) are **field-LOCAL documentation** — they stay inside `[CODE]`, unchanged. They are read *at the field*, where the reader needs them; stripping them out into `[COMMENT]` would destroy the field↔doc locality that makes a densely field-documented struct (e.g. `RegimeSignals` — 40+ signal fields, each annotated) readable at all. Rule of thumb: **does the comment explain the WHOLE unit (→ `[COMMENT]`) or a single field/sub-group (→ stays inline in `[CODE]`)?** Preserve-voice applies to both — verbatim on relocation, verbatim in place.
+**Code-local comments STAY in `[CODE]` — verbatim (D-326; generalized to function bodies 2026-07-06).** Converting a unit relocates ONLY the *unit-level* WHY prose (what the whole unit is + why) to `[COMMENT]`. Three kinds of comment are **code-LOCAL** and stay inside `[CODE]`, unchanged: (a) per-field inline comments (`FPN_Binary<F> short_slope; // relative price slope`); (b) **function-body step-comments** that explain the line they sit on (`// relative slope: normalize by price`, `// variance ratio…` throughout `Regime_ComputeSignals`); (c) sub-group section headers that organize the body (`// short window (128-tick)`, `// derived signals`). They are read *at the line*, where the reader needs them; stripping them into `[COMMENT]` would destroy the comment↔code locality that makes a densely-annotated unit — a 40-field struct (`RegimeSignals`) OR a step-commented function (`Regime_ComputeSignals`) — readable at all. **Rule of thumb: does the comment explain the WHOLE unit (→ `[COMMENT]`) or a single line / field / sub-group (→ stays inline in `[CODE]`)?** Preserve-voice applies to both — verbatim on relocation, verbatim in place. (The `[CODE]` body is only ever *wrapped*, never rewritten: nothing but the top-of-unit WHY moves.)
 
 ---
 
@@ -110,7 +110,7 @@ Vocab is **1-line extensible** (per `doc-tag-vocabulary.md`); add tags at real u
 
 ```category-set
 FILE STRUCT FUNCTION REGISTRY STRATEGY ENUM TYPE MACRO TEST
-TAG SCOPE SCHEMA OVERVIEW WHY DETAIL DIAGRAM COMMENT SUPPORTING_DOCS EDIT VERSION REFERENCE DIRECTIVE FUTURE_WORK CODE
+TAG SCOPE SCHEMA OVERVIEW WHY DETAIL DIAGRAM COMMENT SUPPORTING_DOCS EDIT VERSION REFERENCE DIRECTIVE FUTURE_WORK CODE SECTION
 DERIVED SIZE SIMD FLOAT BRANCHES BUILD INSTANTIATION ALIGN CACHE_LINES STRADDLE UPSTREAM CONSUMERS ROW_COUNT ENROLLED ALIGNED_CONSUMERS ITERATIONS BLAST_RADIUS
 CONTAINS TOC INCLUDES INCLUDED_BY BINARIES
 THREAD SYNC BIT_PACKED PADDING WIRE_FORMAT PERSISTED LAT_EXEMPT
@@ -142,6 +142,7 @@ Design classifications a tool can't infer — the author declares them. Register
 - **Packing (layout)** — `[BIT_PACKED]` (H14: manual `MASK_`/`SHIFT_`/`BITMAP_`/`MBS_` over `uint{8..64}_t`, never C++ bitfields) → the `[DIAGRAM]` carries the **bit-map** (what each bit / bit-group encodes). `[PADDING]` (H12 byte-equivalence).
 - **Cross-thread mechanism** — a curated `[SYNC]` line (mirrors `[THREAD]`): `[SYNC]_[SEQ_LOCK]` (slow→hot config cache) · `[SYNC]_[SPSC]` (producer→consumer ring) · `[SYNC]_[ATOMIC]` (cross-core flag/counter) · `[SYNC]_[LOCK_FREE]`.
 - **Wire / persistence** — `[TAG]` concern-values `[WIRE_FORMAT]` (H9 HMAC body) · `[PERSISTED]` (snapshot-serialized).
+- **Within-function sections** — `[SECTION]_[<label>]` (CURATED · code-local · OPTIONAL; D-329): marks a logical section inside a big multi-part function's `[CODE]` body — `// [SECTION]_[short window signals]`. It **stays in `[CODE]`** (it's a demarcation of the code, not unit-WHY) and simply *replaces the plain prose section-comment* with the same text made machine-navigable (label = the value; spaces OK). The plugin reads them as a **within-function TOC / jump-list** (the machine-readable form of the "demarcation points" idea). Use when a function has ≥3 distinct computational phases (e.g. `Regime_ComputeSignals` — short/long window · variance · ROR · flow · wave-1/2); a small single-purpose fn needs none. A one-line computation keeps its plain inline comment — `[SECTION]` is for the multi-line *groupings*.
 
 A new sync primitive / packing scheme adds ONE vocab line at the first struct that needs it — the conversion surfaces it, so a forgotten annotation self-corrects (never a silent gap).
 
@@ -183,7 +184,14 @@ The comment block is the **interface** between this schema (the format) and `fox
 //======================================================================
 // [CODE]
 //======================================================================
-<signature> { <clean body — comments moved OUT> }
+<signature> {
+    // code-local comments STAY here, VERBATIM — a step-comment explains the line it sits on + helps
+    // you read the code (D-326). ONLY the unit-level WHY (what the whole fn is + why) was lifted to [COMMENT].
+    // [SECTION]_[<first phase>]              // OPTIONAL (D-329): demarcate a phase of a big multi-part fn —
+    <phase-1 body — its step-comments stay>  //   the plugin reads these as a within-fn TOC / jump-list
+    // [SECTION]_[<next phase>]
+    <phase-2 body>
+}
 //======================================================================
 // [END_CODE]
 //======================================================================

@@ -4,7 +4,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-07-05 (commit 8648e27)
+**Last regenerated**: 2026-07-07 (commit d4812de)
 
 ## CoreFrameworks/
 
@@ -97,11 +97,11 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### ExecutionCore.hpp
 
-- `ExecutionCore_Init` — line 195
-- `ExecutionCore_SetParameters` — line 239
-- `ExecutionCore_SetPermission` — line 260
-- `ExecutionCore_Tick_Impl` — line 290
-- `ExecutionCore_Tick` — line 647
+- `ExecutionCore_Init` — line 202
+- `ExecutionCore_SetParameters` — line 246
+- `ExecutionCore_SetPermission` — line 267
+- `ExecutionCore_Tick_Impl` — line 297
+- `ExecutionCore_Tick` — line 654
 
 ### GateParameters.hpp
 
@@ -357,19 +357,19 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### RegimeDetector.hpp
 
-- `CumDelta_Init` — line 126
-- `CumDelta_Push` — line 134
-- `TickRate_Init` — line 166
-- `TickRate_Push` — line 174
-- `TickRate_CurrentZ` — line 201
-- `Regime_ComputeSignals` — line 225
-- `RegimeState_FieldwiseWrite` — line 505
-- `RegimeState_FieldwiseRead` — line 514
-- `RegimeState_CommitPersistedFields` — line 525
-- `Regime_Init` — line 547
-- `Regime_Classify` — line 579
-- `Regime_ToStrategy` — line 733
-- `Regime_AdjustPositions` — line 751
+- `CumDelta_Init` — line 199
+- `CumDelta_Push` — line 217
+- `TickRate_Init` — line 249
+- `TickRate_Push` — line 257
+- `TickRate_CurrentZ` — line 284
+- `Regime_ComputeSignals` — line 308
+- `RegimeState_FieldwiseWrite` — line 588
+- `RegimeState_FieldwiseRead` — line 597
+- `RegimeState_CommitPersistedFields` — line 608
+- `Regime_Init` — line 630
+- `Regime_Classify` — line 662
+- `Regime_ToStrategy` — line 816
+- `Regime_AdjustPositions` — line 834
 
 ### SimpleDip.hpp
 

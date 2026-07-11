@@ -5,7 +5,7 @@ version: 1.0
 established: 2026-07-05
 tags: [doc-discipline, meta-discipline, ssot, structural-fix]
 surface: [ci-tooling, doc-pipeline, test-infrastructure]
-sister_specs: [doc-tag-vocabulary.md, categorical-tag-applicability-pattern.md, mechanical-verification-of-derived-code-facts.md, file-size-split-discipline.md]
+sister_specs: [in-code-doc-system-north-star.md, format-input-space-taxonomy.md, doc-tag-vocabulary.md, categorical-tag-applicability-pattern.md, mechanical-verification-of-derived-code-facts.md, file-size-split-discipline.md]
 applies_at_skills: []
 ---
 
@@ -50,6 +50,40 @@ Reading top-down IS the comprehension path.
 ```
 rg -l '\[TAG\]_\[\[SLOW_PATH'  |  xargs rg -l '\[VERSION\]_\[v5.15'  |  xargs rg -l '\[REFERENCE\]_\[DESIGN_SPEC\]_\[cache'
 ```
+
+---
+
+## One skeleton — every unit type is the same block (the anti-adapter invariant · D-339)
+
+A COROLLARY of the three invariants, made explicit: there is exactly ONE unit skeleton, and **every** `[TYPE]` fills the same slots in the same ladder order. A registry is not a special case with its own parser — it is this skeleton with `[TYPE]=REGISTRY`.
+
+```
+[<TYPE>]_[name]            TYPE ∈ {FILE STRUCT FUNCTION REGISTRY ENUM TYPE MACRO TEST STRATEGY ASSERT}
+[TAG] · [SCOPE]            classify
+[OVERVIEW] · [DIAGRAM]     understand
+[COLUMN]…                  member-STRUCTURE legend, orient-region (registry tuple; optional)
+[CODE]                     the source, VERBATIM (D-326 code-local comments stay in place)
+   [SECTION]_[label]         universal IN-BODY grouping — the SAME tag for a struct field-band,
+                             a function phase, an enum tier, a registry row-group
+[END_CODE]
+[ROW]… / [FIELD]…          SPARSE member rationale, `[KIND]_[id]_[why]` — adjacent to the body,
+                           kept OUT of any `\`-continued macro (so the continuation is a non-issue)
+[COMMENT]                  curated unit-WHY
+[DERIVED]                  tool-written facts — the ONE slot that varies by type ↓
+[REFERENCE] · [END_<TYPE>]_[name]
+```
+
+**The only thing that varies by `[TYPE]` is the `[DERIVED]` axis-set — and that variance is a DECLARATIVE TABLE, never a parser branch.** The parser is type-agnostic (`check_code_tag_blocks.py` has zero `if TYPE ==` special-casing — its rule is *"exactly as the plugin's tagadapter"*); it runs the one innermost-bracket rule over the one skeleton. So there are **no per-type adapters between struct / function / registry**: CI, the plugin, and the CLI parse identically, and a fact-producer emits a type's facts by looking `[TYPE]` up here:
+
+| `[TYPE]` | `[DERIVED]` axis-set (what the fact-producer emits) | members addressed as |
+|---|---|---|
+| `[STRUCT]` | `SIZE` · `ALIGN` · `CACHE_LINES` · `STRADDLE` · `ALIGNED_CONSUMERS` · `THREAD` | `[FIELD]` inline (D-326); field-bands via `[SECTION]` |
+| `[FUNCTION]` | `SIZE`(instr) · `SIMD` · `FLOAT` · `BRANCHES` · `UPSTREAM` · `CONSUMERS` (pinned by `[BUILD]`) | phases via `[SECTION]` |
+| `[REGISTRY]` | `ROW_COUNT` · `ENROLLED` · `CONSUMERS` | `[ROW]` · `[COLUMN]`; row-groups via `[SECTION]` |
+| `[FILE]` | `CONTAINS`/`TOC` · `INCLUDES`/`UPSTREAM` · `INCLUDED_BY`/`CONSUMERS` · `BLAST_RADIUS` · `BINARIES` | child units via `[CONTAINS]` |
+| variants (`ENUM`/`TYPE`/`MACRO`/`TEST`/`STRATEGY`) | REUSE the anatomy; pick the subset when a real unit needs it (§ Variants) — never pre-enumerated | — |
+
+That table is the whole per-type surface. Adding a unit type = one row here (which facts to emit), never a new parser or adapter — the anti-Class-18 discipline (D-331 "one producer, N consumers"; D-337 "one core") realized at the grammar level: **one skeleton, one parser, N renderers.**
 
 ---
 
@@ -168,7 +202,11 @@ The 8 locked format decisions + the 3-survey taxonomy grow v1→v2. The fence ab
 - **`[OUTDATED_INFO]` (D-fmt-6) — the stale-comment tombstone:** wraps a block whose content no longer reflects the code → CI **FLAGS** it → a **human deletes** it (NEVER auto — a mis-mark must not silently drop a load-bearing comment on a capital codebase). Sister to `[FUTURE_WORK]` (intentional scaffold kept) + the P4 rot-check gate.
 - **`[EDIT]`/`[VERSION]` grammar (D-fmt-1 + D-338) — parseable + sortable:** `[EDIT]_[<version>]_[<descriptor>]`, `<version>` following a canonical sortable grammar so the plugin DERIVES the version-timeline (no hand-tagging). Version-tags stay code-local. ⚠ **H21:** existing identifiers are historical/immutable — the grammar applies GOING FORWARD; history preserved, never renamed. A bare dev/ship "Phase H" is a VERSION identifier (this grammar), NOT a `[SECTION]`. Exact grammar = OPEN sub-decision.
 - **`[SECTION]`/`[REGION]` generalized (D-fmt-4 + survey):** (a) beyond function bodies — demarcate within a STRUCT (access-tier HOT/WARM/COLD or REQUIRED/OPTIONAL field-clusters), ENUM (tier), REGISTRY (row-group), or FILE scope (between units); (b) ONE sub-level of nesting (`[SECTION]` ⊃ `[SECTION]`); (c) absorbs the real bar styles (`===`/unbarred ALL-CAPS runs → canonical bars). A cross-file "Phase" is a `[SECTION]_[Phase N]` **label** (grep it for all sites); **`[REFERENCE]_[PHASE]` DROPPED** — the dep tools own the code-cascade (CODE_MAP/DAG/dep-trace, surfaced in the plugin per D-334).
-- **`[ROW]`/`[COLUMN]` registry sub-schema (survey gap #1, the biggest):** a `[REGISTRY]` carries `[COLUMN]_[<name>]_[<meaning>]` lines (tuple legend + per-column token-sets / metadata-bit keys) + `[ROW]`-scoped annotations (per-row rationale, group dividers, tombstones) that survive `\`-continuation. Detailed grammar: pending template growth.
+- **`[ROW]`/`[COLUMN]` registry sub-schema (survey gap #1, the biggest) — GRAMMAR LANDED (D-339):** a `[REGISTRY]` documents its tuple + rows in the ORIENT region, so the `[CODE]` macro body stays byte-verbatim (D-326) and the `\`-continuation is a **non-issue** — nothing new is injected between the backslash-continued `X(...)` rows:
+  - **`[COLUMN]_[<name>]_[<meaning>]`** — one line per tuple column, in **tuple order** (listing order = the ordinal; position IS meaning in a positional macro, so no explicit numbering — same as how a struct lists its fields). An enumerated column appends its token/bit-set (`[COLUMN]_[meta]_[CfgFieldDescriptor OR-flags]_[[IS_BOOT_ONLY] [WARN_ON_CLAMP] …]`). The validator asserts `COLUMN-count == tuple-arity` → a dropped or added arg reds the build.
+  - **`[ROW]_[<id>]_[<why>]`** — SPARSE; only a row whose rationale exceeds its own payload gets one, addressed by the row's identity column (the `name` arg for a cfg field). `[ROW]_[TOMBSTONE]_[<retired-id>]` records a retired slot (H21 — append-only, never reused).
+  - **Group dividers = the universal `[SECTION]`** (NOT a registry-special tag): a band of rows is `[SECTION]_[<label>]`, the same tag a struct field-band or a function phase uses. The in-macro `/* === Group (n) === */` dividers stay VERBATIM in `[CODE]`; the plugin DERIVES the row-group TOC from them — no mirrored `[SECTION]` list (anti-Class-18).
+  - `ROW_COUNT` stays a `[DERIVED]` (tool-counted) fact; `[ROW]`/`[COLUMN]` are the CURATED legend + rationale over it. Worked example: § Worked examples → `FOREACH_GLOBAL_CFG_FIELD`.
 - **Bars = ASCII, 3 weights (D-fmt-2 + D-fmt-3):** `====` unit · `~~~~` sub · `----` section (the v1 Unicode `——` `[COMMENT]` separator → ASCII). `[DIAGRAM]` bodies are **ASCII-UML** (`+--+` boxes · `|`/`---` links · `>`/`v` arrows) — NO Unicode glyphs; a **diagram-helper tool** draws them (no hand-aligning `|`).
 - **`[DIAGRAM]_[formula]` (D-fmt-7):** a formula sub-kind of `[DIAGRAM]` — math laid out, plugin-displayable, and explicitly **EXEMPT** from the § CI "prose asserts no derivable fact" check (a formula is a *definition*, not a claimed derived value).
 - **Also folded (survey Tier-1/2, grammar pending template growth):** labeled `[COMMENT]_[<label>]` sub-sections · widened `[REFERENCE]` prefix-zoo (PARITY / SOURCE / finding-IDs / external URLs) · the `[ASSERT]` unit (static_assert-as-doc, layout-lock / epoch-tripwire / remediation-message) · the concurrency block (file-narrative + cluster `Writer=/Reader=` + per-field `producer:/consumer:`) · wire/persist completeness (per-field ordinals + `[EXCLUDED]` for documented-absent fields) · the numeric-domain row (`[OVERFLOW]`/`[ROUNDING]`/`[DOMAIN]`/`[PRECISION]`).
@@ -295,12 +333,21 @@ The comment block is the **interface** between this schema (the format) and `fox
 // [TAG]_[[<SURFACE>] [FRAMEWORK_DISCIPLINE]]
 // [SCHEMA]_[v1]
 // [OVERVIEW]_[<what it single-sources; add/drop = 1 row + a version bump>]
+// [COLUMN]_[<col1-name>]_[<meaning>]                     // tuple legend — listing order = ordinal (D-339)
+// [COLUMN]_[<col2-name>]_[<meaning>]_[<enum token/bit-set, if any>]
+// …one [COLUMN] per positional arg; validator checks count == tuple-arity…
 //======================================================================
 // [CODE]
 //======================================================================
-#define FOREACH_<NAME>(X)  X(...)  …
+#define FOREACH_<NAME>(X)                        \
+    /* === <Group label> (n) === */              \   // stays VERBATIM; plugin derives the row-group TOC
+    X(...)                                        \
+    X(...)                                        \
 //======================================================================
 // [END_CODE]
+//======================================================================
+// [ROW]_[<row-id>]_[<why — SPARSE; only rows needing rationale beyond their payload>]   (D-339)
+// [ROW]_[TOMBSTONE]_[<retired-id>]                       // retired slot, never reused (H21)
 //======================================================================
 // [COMMENT]
 //——————————————————————————————————————————————————————————
@@ -423,6 +470,66 @@ template <unsigned F> struct alignas(64) ExecutionCore { … };
 // [END_STRUCT]_[ExecutionCore]
 //======================================================================
 ```
+
+### Registry — `FOREACH_GLOBAL_CFG_FIELD` (CoreFrameworks/CfgFieldRegistry.hpp · the `[ROW]`/`[COLUMN]` exemplar)
+```cpp
+//======================================================================
+// [REGISTRY]_[FOREACH_GLOBAL_CFG_FIELD]
+//----------------------------------------------------------------------
+// [TAG]_[[ENGINE] [FRAMEWORK_DISCIPLINE]]
+// [SCHEMA]_[v1]
+// [OVERVIEW]_[47 global cfg fields — operator sets once engine-wide (not per-node); add a field = 1 row]
+// [COLUMN]_[STORAGE_T]_[C storage type]                        // listing order = tuple ordinal (D-339)
+// [COLUMN]_[KIND_TOKEN]_[GUI-metadata kind]_[[KIND_INT] [KIND_BOOL] [KIND_DOUBLE] [KIND_STRING] [KIND_FILE] [KIND_HEX] [KIND_RANGE]]
+// [COLUMN]_[name]_[cfg identifier → ControllerConfig<F> member (H17)]
+// [COLUMN]_[label]_[GUI display string]
+// [COLUMN]_[section]_[GUI bucket]_[[Operational] [Engine Timing] [Risk Management] […]]
+// [COLUMN]_[meta]_[CfgFieldDescriptor OR-flags]_[[IS_BOOT_ONLY] [WARN_ON_CLAMP] [DEPRECATED] [STAMP_BOUND_CFG_DERIVED]]
+// [COLUMN]_[payload]_[ctor matching KIND_TOKEN]_[[INT(def,min,max)] [BOOL(def)] [DOUBLE(def,min,max)] [RANGE(…)]]
+// [COLUMN]_[tooltip]_[operator help · nullptr = inherit GUI field_defs[]]
+// [COLUMN]_[STRAT/OP_MODE/REGIME/RISK_CAT]_[applicability filters · category tokens]
+// [COLUMN]_[storage_class]_[cfg storage tier]_[[STRUCT_CFG] […]]
+//======================================================================
+// [CODE]
+//======================================================================
+#define FOREACH_GLOBAL_CFG_FIELD(X)                                                \
+    /* === System / Operational (5) === */                                        \
+    X(uint16_t, KIND_INT, num_execution_nodes, "Execution Nodes", "Operational",  \
+      IS_BOOT_ONLY | WARN_ON_CLAMP, INT(1, 1, 16), "Number of shards. [1,16].", …) \
+    /* === Engine timing (5) === */                                               \
+    X(uint32_t, KIND_INT, poll_interval, "Poll Interval", "Engine Timing",        \
+      WARN_ON_CLAMP, INT(100, 1, 1000000), "Ticks between slow-path runs.", …)     \
+    /* … 45 more rows … */
+//======================================================================
+// [END_CODE]
+//======================================================================
+// [ROW]_[num_execution_nodes]_[cap 16 = the shard ceiling (H22 / Limits.hpp), not arbitrary]
+// [ROW]_[min_warmup_samples]_[caps at 128 = rolling-window size; >128 clamped at load]
+//   (SPARSE — most rows carry their per-row help in the tooltip column, not a [ROW])
+//======================================================================
+// [COMMENT]
+//——————————————————————————————————————————————————————————
+// [[2026-06-11] [v5.15.5.F.4d.1.E.1.1]]
+//----------------------------------------------------------------------
+// the engine-wide half of the cfg-field split; the per-node half is
+// FOREACH_PER_NODE_CFG_FIELD. one X-macro row → parser + GUI render +
+// tooltip + validation all auto-flow (H17). group dividers stay verbatim;
+// the plugin derives the section TOC from them.
+// [SUPPORTING_DOCS]
+//   - [DESIGN_SPEC]_[universal-cfg-field-registry-pattern]
+//   - [INVARIANT]_[H17]
+//   - [INVARIANT]_[H15]
+//======================================================================
+// [DERIVED]   (tool-refreshed)
+//----------------------------------------------------------------------
+// [ROW_COUNT]_[47]
+// [ENROLLED]_[MetaRegistry.hpp]
+// [CONSUMERS]_[[ControllerConfig_Load] [PerCoreCfg] [SettingsPanel] [CfgFieldDispatch]]
+//======================================================================
+// [END_REGISTRY]_[FOREACH_GLOBAL_CFG_FIELD]
+//======================================================================
+```
+The `[COLUMN]` tuple-legend (10 lines; the four `*_CAT` filters collapse to one) + `[SECTION]`-derived row-groups (the `/* === … === */` dividers, kept verbatim) + SPARSE `[ROW]` rationale all live in the orient/detail region — the `[CODE]` macro stays byte-verbatim, so a schema tag never meets the `\`-continuation.
 
 ---
 

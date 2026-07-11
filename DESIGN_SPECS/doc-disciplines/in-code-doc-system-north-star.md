@@ -5,6 +5,7 @@ established: 2026-07-06
 tags: [in-code-documentation, tag-system, tooling, custom-ide, doc-discipline]
 sister_specs:
   - in-code-documentation-schema.md
+  - format-input-space-taxonomy.md
 supersedes_sketch: decision-log D-330 (custom-IDE end state)
 ---
 

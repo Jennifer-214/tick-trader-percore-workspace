@@ -194,6 +194,24 @@ A new sync primitive / packing scheme adds ONE vocab line at the first struct th
 
 ---
 
+## The member model — three tiers (the D-339 sibling)
+
+D-339 gave the per-type NODE model (one skeleton + the `[DERIVED]`-axes table). This is its companion — the per-type MEMBER model: how a unit's internal parts bind, reconciled from D-309's `[REGION]` + D-339's `[ROW]`/`[COLUMN]` + D-340's nested units into ONE cross-type scheme (D-340).
+
+Individual fields / statements stay INLINE in `[CODE]` verbatim (D-326). Above that, a *structured* part sits at one of **three tiers** — the same three for every `[TYPE]`; only the tier-2 vocab differs (exactly like the `[DERIVED]`-axes table):
+
+| Tier | What it is | Tag(s) | Per-`[TYPE]` vocab |
+|---|---|---|---|
+| **1 · grouping** | a TOC divider; organizes, carries NO own facts | `[SECTION]` | fn phases · struct field-bands · registry row-groups · enum tiers |
+| **2 · fact-scoping member** | a sub-part that scopes its OWN facts | `[REGION]` · `[ROW]`+`[COLUMN]` · `[VALUE]` | struct → `[REGION]_[name]_[byte-range]` (+ bit-slot form) scoping own `[THREAD]`/`[SYNC]`/`[RESIDENCY]`/`[BIT_OCCUPANCY]` (D-309 #1) · registry → `[ROW]`+`[COLUMN]` (D-339) · enum → `[VALUE]` *(proposed; pending the `[ENUM]` dry-run + a fence-add)* |
+| **3 · nested sub-unit** | a rich nested type promoted to its OWN full block | via `[CONTAINS]` | nested `[ENUM]`/`[STRUCT]` (D-340) |
+
+**Promotion between tiers = the § Coverage proportionality bar** — trivial → stays inline · mid → tier 2 · rich → its own block (tier 3). The *same* member-grammar runs at every tier — `[KIND]_[id]_[why]`, sparse, id-addressed (the one D-339 innermost-bracket parse rule) — so there are **no per-type member adapters**, exactly as D-339 promised for nodes.
+
+**Each tier IS a plugin render** (why the model is shaped this way): tier 1 → the within-unit TOC / jump-list · tier-2 `[REGION]` → the byte-map regions overlay (`regions[]` in `facts.lua`, D-309) · `[ROW]`/`[COLUMN]` → the registry-tree / row-browser · tier 3 → cursor-track the innermost-enclosing unit. The three tiers are the render hierarchy the plugin walks — so the format and the plugin are one design, not two.
+
+---
+
 ## v2 grammar additions (the D-fmt slate — 2026-07-06; parse rule + ladder UNCHANGED, all additive)
 
 The 8 locked format decisions + the 3-survey taxonomy grow v1→v2. The fence above carries the new categories; these define their grammar. Detailed templates land as the surfaces are grown (see `format-input-space-taxonomy.md` for the exemplar each answers).
@@ -201,15 +219,18 @@ The 8 locked format decisions + the 3-survey taxonomy grow v1→v2. The fence ab
 - **SUB-TAGS (D-fmt-5) — a tag may carry a refining child:** `[PARENT]_[CHILD]` (`[BIT_PACKED]_[SWAR]` — manual `BITMAP_*`/`MBS_*` packing IS SIMD-within-a-register; auto-detected from the idiom). Parse unchanged (innermost-bracket, token[0]=parent). Generalizes to any category; `[SWAR]` is the first canonical.
 - **`[OUTDATED_INFO]` (D-fmt-6) — the stale-comment tombstone:** wraps a block whose content no longer reflects the code → CI **FLAGS** it → a **human deletes** it (NEVER auto — a mis-mark must not silently drop a load-bearing comment on a capital codebase). Sister to `[FUTURE_WORK]` (intentional scaffold kept) + the P4 rot-check gate.
 - **`[EDIT]`/`[VERSION]` grammar (D-fmt-1 + D-338) — parseable + sortable:** `[EDIT]_[<version>]_[<descriptor>]`, `<version>` following a canonical sortable grammar so the plugin DERIVES the version-timeline (no hand-tagging). Version-tags stay code-local. ⚠ **H21:** existing identifiers are historical/immutable — the grammar applies GOING FORWARD; history preserved, never renamed. A bare dev/ship "Phase H" is a VERSION identifier (this grammar), NOT a `[SECTION]`. Exact grammar = OPEN sub-decision.
-- **`[SECTION]`/`[REGION]` generalized (D-fmt-4 + survey):** (a) beyond function bodies — demarcate within a STRUCT (access-tier HOT/WARM/COLD or REQUIRED/OPTIONAL field-clusters), ENUM (tier), REGISTRY (row-group), or FILE scope (between units); (b) ONE sub-level of nesting (`[SECTION]` ⊃ `[SECTION]`); (c) absorbs the real bar styles (`===`/unbarred ALL-CAPS runs → canonical bars). A cross-file "Phase" is a `[SECTION]_[Phase N]` **label** (grep it for all sites); **`[REFERENCE]_[PHASE]` DROPPED** — the dep tools own the code-cascade (CODE_MAP/DAG/dep-trace, surfaced in the plugin per D-334).
+- **`[SECTION]` — tier-1 grouping (§ member model; D-fmt-4 + survey):** a TOC divider carrying NO own facts — demarcate within a STRUCT (field-bands), ENUM (tiers), REGISTRY (row-groups), FUNCTION (phases), or FILE scope (between units); ONE sub-level of nesting (`[SECTION]` ⊃ `[SECTION]`); absorbs the real bar styles (`===` / unbarred ALL-CAPS runs → canonical bars). A cross-file "Phase" is a `[SECTION]_[Phase N]` **label** (grep for all sites); **`[REFERENCE]_[PHASE]` DROPPED** — the dep tools own the code-cascade (CODE_MAP/DAG/dep-trace, surfaced in the plugin per D-334).
+- **`[REGION]` — tier-2 fact-scoping sub-unit (§ member model; D-309 #1, RECONCILED at D-340 — was under-framed here as a bare `[SECTION]` grouping):** the level between a block and an inline field-tag — `[REGION]_[<name>]_[<byte-range>]` (+ a per-bit-slot form) scoping its OWN `[THREAD]`/`[SYNC]`/`[RESIDENCY]`/`[BIT_OCCUPANCY]`. UNLIKE `[SECTION]` (which only groups), a `[REGION]` BINDS per-range facts that otherwise collapse to lossy scalars or un-greppable `[DIAGRAM]` prose (ExecutionCore's 10 regions over 0..68352; Order's packed bit-slots). Plugin: a region-grouping overlay on the byte-map (`regions[]` in `facts.lua`).
 - **`[ROW]`/`[COLUMN]` registry sub-schema (survey gap #1, the biggest) — GRAMMAR LANDED (D-339):** a `[REGISTRY]` documents its tuple + rows in the ORIENT region, so the `[CODE]` macro body stays byte-verbatim (D-326) and the `\`-continuation is a **non-issue** — nothing new is injected between the backslash-continued `X(...)` rows:
   - **`[COLUMN]_[<name>]_[<meaning>]`** — one line per tuple column, in **tuple order** (listing order = the ordinal; position IS meaning in a positional macro, so no explicit numbering — same as how a struct lists its fields). An enumerated column appends its token/bit-set (`[COLUMN]_[meta]_[CfgFieldDescriptor OR-flags]_[[IS_BOOT_ONLY] [WARN_ON_CLAMP] …]`). The validator asserts `COLUMN-count == tuple-arity` → a dropped or added arg reds the build.
   - **`[ROW]_[<id>]_[<why>]`** — SPARSE; only a row whose rationale exceeds its own payload gets one, addressed by the row's identity column (the `name` arg for a cfg field). `[ROW]_[TOMBSTONE]_[<retired-id>]` records a retired slot (H21 — append-only, never reused).
   - **Group dividers = the universal `[SECTION]`** (NOT a registry-special tag): a band of rows is `[SECTION]_[<label>]`, the same tag a struct field-band or a function phase uses. The in-macro `/* === Group (n) === */` dividers stay VERBATIM in `[CODE]`; the plugin DERIVES the row-group TOC from them — no mirrored `[SECTION]` list (anti-Class-18).
   - `ROW_COUNT` stays a `[DERIVED]` (tool-counted) fact; `[ROW]`/`[COLUMN]` are the CURATED legend + rationale over it. Worked example: § Worked examples → `FOREACH_GLOBAL_CFG_FIELD`.
+- **Nested units — a container's block may hold child blocks (D-340; dogfood-grounded on `CfgFieldDescriptor`):** a `[STRUCT]`/`[FILE]` whose body physically contains a non-trivial `[ENUM]`/`[STRUCT]` gets that child its OWN block, sited at the child's real location inside the parent's `[CODE]` (the parser is stack-based — `[END_TYPE]_[name]` matches by name, so nesting parses for free; the plugin resolves the INNERMOST enclosing unit at the cursor). The parent lists its children in `[CONTAINS]` (the `[FILE]` TOC generalized to any container). **Proportionality holds** — a trivial nested enum (a few obvious values) stays terse-inline, no block; only a rich nested unit (e.g. `MetadataFlag` — 15 bits + a tombstone) earns one. Layout DERIVED is unaffected: a nested *type* adds no bytes, only a *field* of it does — the tool computes `[SIZE]` correctly regardless of doc nesting.
+- **`[ASSERT]` unit — static_assert-as-doc (survey B gap #8/#13) — GRAMMAR LANDED (D-340):** a compile-time guard is a LIGHT unit (no `[END]`, like `[MACRO]`), sited on the `static_assert` it annotates: `[ASSERT]_[<FAMILY>]_[<expr>]` + `[WHY]_[<rationale — incl. the remediation the assert MESSAGE carries>]`. FAMILY is an extensible vocab; starter set `{LAYOUT_LOCK · BITMAP_OVERFLOW · EPOCH_TRIPWIRE · OVERLAP_EXCLUSION}` (1-line-add a new one at first use). **`[ASSERT]` ↔ `[DERIVED]` coexistence rule:** an `[ASSERT]_[LAYOUT_LOCK]_[sizeof(T) <= 128]` and the struct's `[SIZE]` DERIVED both name the size — **the assert ENFORCES (a bound; build-fails on violation), the DERIVED REPORTS (the actual value; tool-refreshed)** — complementary, not a mirror. (Phase-4 CI candidate: verify each `[ASSERT]_[…]_[expr]` matches a real `static_assert` on the following line so the doc can't drift from the guard.) Exemplar: § Worked examples → `CfgFieldDescriptor` (`LAYOUT_LOCK` size-pin + `BITMAP_OVERFLOW` metadata-flag guard).
 - **Bars = ASCII, 3 weights (D-fmt-2 + D-fmt-3):** `====` unit · `~~~~` sub · `----` section (the v1 Unicode `——` `[COMMENT]` separator → ASCII). `[DIAGRAM]` bodies are **ASCII-UML** (`+--+` boxes · `|`/`---` links · `>`/`v` arrows) — NO Unicode glyphs; a **diagram-helper tool** draws them (no hand-aligning `|`).
 - **`[DIAGRAM]_[formula]` (D-fmt-7):** a formula sub-kind of `[DIAGRAM]` — math laid out, plugin-displayable, and explicitly **EXEMPT** from the § CI "prose asserts no derivable fact" check (a formula is a *definition*, not a claimed derived value).
-- **Also folded (survey Tier-1/2, grammar pending template growth):** labeled `[COMMENT]_[<label>]` sub-sections · widened `[REFERENCE]` prefix-zoo (PARITY / SOURCE / finding-IDs / external URLs) · the `[ASSERT]` unit (static_assert-as-doc, layout-lock / epoch-tripwire / remediation-message) · the concurrency block (file-narrative + cluster `Writer=/Reader=` + per-field `producer:/consumer:`) · wire/persist completeness (per-field ordinals + `[EXCLUDED]` for documented-absent fields) · the numeric-domain row (`[OVERFLOW]`/`[ROUNDING]`/`[DOMAIN]`/`[PRECISION]`).
+- **Also folded (survey Tier-1/2, grammar pending template growth):** labeled `[COMMENT]_[<label>]` sub-sections · widened `[REFERENCE]` prefix-zoo (PARITY / SOURCE / finding-IDs / external URLs) · the concurrency block (file-narrative + cluster `Writer=/Reader=` + per-field `producer:/consumer:`) · wire/persist completeness (per-field ordinals + `[EXCLUDED]` for documented-absent fields) · the numeric-domain row (`[OVERFLOW]`/`[ROUNDING]`/`[DOMAIN]`/`[PRECISION]`).
 
 ---
 
@@ -229,6 +250,8 @@ The comment block is the **interface** between this schema (the format) and `fox
 **Plugin WRITE-role (D-319, bounded).** The plugin may WRITE, but only within the two tiers: **CURATED** (`[TAG]` / `[REFERENCE]` / `[WHY]` / `[OVERVIEW]` / `[DIAGRAM]`) = edit-assist (vocab-completion for `[TAG]`, live resolve-check for `[REFERENCE]`, `[SUPPORTING_DOCS]` insert); a whole block = **scaffold-generate** (DERIVED pre-filled from the fact-producers); **DERIVED** = **REGENERATE-only** from ground truth, NEVER hand-edited (a hand-edit that drifts is the Class-18 mirror this system exists to kill — DERIVED is effectively read-only in the buffer). Writers go through the SAME grammar + SAME fact-producers as the CI validator → a plugin-written block is CI-green by construction, and plugin-written DERIVED cannot disagree with CI-expected DERIVED (single-source the COMPUTATION, not two implementations). **Plugin writes, CI verifies — same grammar both sides.**
 
 **DERIVED — WRITTEN vs LIVE-PREVIEW (D-327).** Not every derived fact is *written* into the block; split by STABILITY. **WRITTEN** = facts stable under a pinned build: struct **layout** (`[SIZE]`-bytes / `[ALIGN]` / `[STRADDLE]` / `[CACHE_LINES]` — Itanium-ABI-fixed → refreshed by `check_cache_layout.py --fix`) + the **call-graph** (`[UPSTREAM]` / `[CONSUMERS]` — source-fixed → written by the plugin's `:FoxSymdepsDerived!`). **LIVE-PREVIEW-only, NEVER written** = facts that flip with compiler flags/version or are meaningless without a concrete instantiation: instruction-count, `[SIMD]` usage, `[BRANCHES]` count. Writing a volatile fact makes the committed source a *lie* on the next `-O`/`-march` change — or reads `0 instr` for an un-instantiated template (the observed `CumDelta_Init<F>` case) — churning CI for zero signal. The plugin SHOWS them live (`:FoxSymdepsDerived` preview + the HUD asm view, which is *why* it asks you to instantiate); the source carries only the stable subset. **Per-unit-type writer:** STRUCT → `--fix` (layout); FUNCTION → `:FoxSymdepsDerived!` (call-graph). The generator **MERGES** (keeps the other writer's facts — a struct's `--fix` `[SIZE]` survives a plugin `[UPSTREAM]` write, and vice-versa), never clobbers. Materially: I hand-add the CURATED structure (orient / `[CODE]` with inline comments preserved / `[COMMENT]` / an empty `[DERIVED]` skeleton); the TOOLS fill `[DERIVED]` — **zero hand-written derived facts** (the anti-Class-18 whole point).
+
+**DERIVED — the third disposition: `N/A_FOLDED` (D-340; dogfood-grounded on `cfg_compute_mask`).** Beyond WRITTEN vs LIVE-PREVIEW, a codegen axis can be *structurally absent*: a **compile-time-folded** unit has no runtime code to measure (`cfg_compute_mask` folds to a `.rodata` constant), so `[SIZE]_[instr]` / `[BRANCHES]` / `[SIMD]` are written `[<AXIS>]_[N/A_FOLDED]` — a reserved value (like `[SIMD]_[none]`) telling the tool + CI to SKIP measurement, never read `0`/garbage. The call-graph axes (`[UPSTREAM]` / `[CONSUMERS]`) still apply. **Enforcement (phase-4 CI):** a `consteval` unit's codegen axes MUST be `N/A_FOLDED` (guaranteed immediate); a `constexpr` unit's are `N/A_FOLDED` only when the tool confirms no runtime call site (else it has real codegen at the runtime use) — the tool knows constexpr/consteval-ness from the parse, so this is checkable, closing the "hide a real function behind N/A" hole.
 
 **Explicitly NOT done:** (a) HAND-writing or hand-editing a derived fact — the generator owns the `[DERIVED]` block and a hand-edit that drifts from ground truth fails CI (the tool/plugin refreshes it); (b) commented-out old/new code as diffs (git owns the diff; `[EDIT]` + `[REFERENCE]_[DECISION]` own the what/why).
 
@@ -379,6 +402,7 @@ The registry DERIVED — `[ROW_COUNT]` · `[ENROLLED]` (its MetaRegistry row, H1
 - **Foundational typedef** (`Money`, `FPN_Binary<F>`, `EngineMoneyT`) — `[TYPE]_[<name>]`; `[SIZE]_[<sizeof>]` + `[REFERENCE]` to the encoding epoch / H4. The money-type SSoT warrants a block; a throwaway alias does not.
 - **Macro** (`BITMAP_*` / `MBS_*` accessors) — LIGHT `[MACRO]_[<name>]` (no `[END]`; `[DERIVED]` = branchless?/expansion); most accessor macros stay terse-inline.
 - **Test group** (`controller_test` Phase blocks) — `[TEST]_[<name>]`; `[REFERENCE]` to the invariant/decision each verifies → navigation across the 3697-test suite.
+- **Compile-time guard** (`static_assert`) — LIGHT `[ASSERT]_[<FAMILY>]_[<expr>]` + `[WHY]` (no `[END]`), sited on the assert; FAMILY ∈ `{LAYOUT_LOCK · BITMAP_OVERFLOW · EPOCH_TRIPWIRE · OVERLAP_EXCLUSION}` (extensible). Coexists with a struct's `[SIZE]` DERIVED — the assert ENFORCES the bound, the DERIVED REPORTS the value (D-340). Size-pin / bitmap-overflow / encoding-epoch guards live here.
 
 **Boundary (same as the tag rule):** the 4 first-class blocks (function / struct / registry / file) cover ~90%; the variants fill in organically. Build a variant when a real unit needs it — pre-designing all of them is *template* sprawl, the very thing this kills at the comment level.
 
@@ -469,6 +493,43 @@ template <unsigned F> struct alignas(64) ExecutionCore { … };
 //======================================================================
 // [END_STRUCT]_[ExecutionCore]
 //======================================================================
+```
+
+### Struct with nested units + `[ASSERT]` — `CfgFieldDescriptor` (CoreFrameworks/CfgFieldRegistry.hpp · the nesting + guard exemplar, D-340)
+```cpp
+//======================================================================
+// [STRUCT]_[CfgFieldDescriptor]
+//----------------------------------------------------------------------
+// [TAG]_[[ENGINE] [DATA_ORIENTED_DESIGN]]
+// [SCHEMA]_[v2]
+// [OVERVIEW]_[per-field metadata record the 13-col X-macro materializes into; GUI+parser+validation; boot/60Hz cache-warm]
+// [CONTAINS]_[[ENUM]_[Kind] [ENUM]_[MetadataFlag] [ENUM]_[LivesInStruct]]   // nested units → own blocks, sited below
+//======================================================================
+// [CODE]
+//======================================================================
+struct CfgFieldDescriptor {
+    // [ENUM]_[MetadataFlag]        ← rich nested unit gets its OWN block, sited HERE (15 bits + a tombstone)
+    enum MetadataFlag : uint16_t { /* … its own block … */ };
+    enum Kind : uint8_t { … };      // trivial-ish → terse-inline unless it earns a block (proportionality)
+    //---- [SECTION]_[Header (8 bytes)] ----
+    Kind kind; uint16_t metadata_flags; uint16_t _reserved = 0;   // [DIRECTIVE]_[H12_PAD]
+    //---- [SECTION]_[Payload union (32 bytes)] ----
+    union { … } payload;
+};
+//======================================================================
+// [END_CODE]
+//======================================================================
+// [DERIVED]   [SIZE]_[<=128B]  [ALIGN]_[8]  [CACHE_LINES]_[2]  [STRADDLE]_[none]
+//======================================================================
+// [END_STRUCT]_[CfgFieldDescriptor]
+//======================================================================
+
+// [ASSERT]_[LAYOUT_LOCK]_[sizeof(CfgFieldDescriptor) <= 128]
+// [WHY]_[2 cache lines; GUI 60Hz cache-warm — assert ENFORCES the bound, [SIZE] DERIVED REPORTS the value]
+static_assert(sizeof(CfgFieldDescriptor) <= 128, "...");
+// [ASSERT]_[BITMAP_OVERFLOW]_[CAPITAL_BOUND_GAIN < (1u<<16)]
+// [WHY]_[MetadataFlag must fit uint16; the message carries the remediation: widen->uint32 at the highest bit]
+static_assert(CfgFieldDescriptor::CAPITAL_BOUND_GAIN < (1u << 16), "...");
 ```
 
 ### Registry — `FOREACH_GLOBAL_CFG_FIELD` (CoreFrameworks/CfgFieldRegistry.hpp · the `[ROW]`/`[COLUMN]` exemplar)

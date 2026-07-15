@@ -602,6 +602,121 @@ static_assert(CfgFieldDescriptor::CAPITAL_BOUND_GAIN < (1u << 16), "...");
 ```
 The `[COLUMN]` tuple-legend (10 lines; the four `*_CAT` filters collapse to one) + `[SECTION]`-derived row-groups (the `/* === … === */` dividers, kept verbatim) + SPARSE `[ROW]` rationale all live in the orient/detail region — the `[CODE]` macro stays byte-verbatim, so a schema tag never meets the `\`-continuation.
 
+### Enum — `OrderState` (CoreFrameworks/Order.hpp · persisted/wire CODE enum · D-341)
+```cpp
+//======================================================================
+// [ENUM]_[OrderState]
+//----------------------------------------------------------------------
+// [TAG]_[[ENGINE] [OMS_DRAINER] [PERSISTED]]
+// [SCHEMA]_[v2]
+// [OVERVIEW]_[order lifecycle state — packed into Order.flags_packed bits 2-5; codes are wire/persist-visible]
+// [REFERENCE]_[INVARIANT]_[H21]        ← codes 0..8 append-only + immutable
+//======================================================================
+// [CODE]
+//======================================================================
+enum OrderState : uint8_t {
+    //---- [SECTION]_[working] ----
+    ORDER_PENDING = 0,  // submitted to OMS, not yet on exchange      ← inline name=code//meaning STAYS (D-326)
+    ORDER_SUBMITTED = 1, ORDER_ACKNOWLEDGED = 2, ORDER_PARTIAL = 3,
+    //---- [SECTION]_[terminal] ----
+    ORDER_FILLED = 4, ORDER_REJECTED = 5, ORDER_CANCELED = 6, ORDER_TIMEOUT = 7,
+    //---- [SECTION]_[recovery] ----
+    ORDER_UNKNOWN = 8,  // lost tracking, needs reconciliation
+};
+//======================================================================
+// [END_CODE]
+//======================================================================
+// [VALUE]_[ORDER_UNKNOWN]_[the only non-terminal recovery sink — a reconcile pass resolves it]   (SPARSE, like [ROW])
+// [VALUE]_[TOMBSTONE]_[<retired>]_[<code>]   ← the form if a state retires (H21; code never reused)
+// [DERIVED]  [ROW_COUNT]_[9]  [SIZE]_[uint8]  [CONSUMERS]_[[Order.flags_packed] [OMS] [Reconcile]]
+// [END_ENUM]_[OrderState]
+//======================================================================
+```
+Members: values inline (D-326), `[SECTION]` groups the value-tiers, SPARSE `[VALUE]` only for the one that needs a why.
+
+### Type — `Money` = `FixedPoint<10,8>` (FixedPoint/FixedPointN.hpp · the money typedef + its guards · D-341)
+```cpp
+//======================================================================
+// [TYPE]_[Money]
+//----------------------------------------------------------------------
+// [TAG]_[[ENGINE] [CAPITAL_BEARING] [DECIMAL] [WIRE_FORMAT]]
+// [SCHEMA]_[v2]
+// [OVERVIEW]_[the money-domain alias = FixedPoint<10,8> — exact decimal at venue 8dp; op family Money_*]
+// [REFERENCE]_[DECISION]_[[D-176] [D-181]]        ← domain alias + the encoding-EPOCH flip
+// [REFERENCE]_[INVARIANT]_[[H4] [H9] [H12] [H21]]
+//======================================================================
+// [CODE]
+//======================================================================
+using Money = FixedPoint<10, 8>;                    // ALIASES the [STRUCT]_[FixedPoint<10,8>] specialization
+//======================================================================
+// [END_CODE]
+//======================================================================
+// [DERIVED]  [SIZE]_[16B]  [ALIGN]_[16]
+// [END_TYPE]_[Money]
+//----------------------------------------------------------------------
+// [ASSERT]_[LAYOUT_LOCK]_[sizeof(Money) == 16]                        [WHY]_[H9 wire pin — ~30 memcmp/SHA/HMAC sites; H21 bump on change]
+// [ASSERT]_[PADDING_FREE]_[has_unique_object_representations_v<Money>] [WHY]_[H12 — memcmp/SHA/HMAC need zero padding]
+// [ASSERT]_[EPOCH_TRIPWIRE]_[MONEY_ENCODING_EPOCH = is_fp_decimal_v<EngineMoneyT>]  [WHY]_[16B→16B flip invisible to sizeof]
+```
+
+### File — `CfgFieldRegistry.hpp` (the `[FILE]` orient block = the file's TOC + graph; no `[CODE]`)
+```cpp
+//======================================================================
+// [FILE]_[CoreFrameworks/CfgFieldRegistry.hpp]
+//----------------------------------------------------------------------
+// [TAG]_[[ENGINE] [FRAMEWORK_DISCIPLINE]]
+// [SCOPE]_[DEPLOYMENT]
+// [SCHEMA]_[v2]
+// [OVERVIEW]_[the universal cfg-field registry — two disjoint X-macro registries (global vs per-node), H17]
+// [CONTAINS]
+//   - [STRUCT]_[CfgFieldDescriptor] · [ENUM]_[MetadataFlag] / [Kind] / [LivesInStruct]
+//   - [REGISTRY]_[FOREACH_GLOBAL_CFG_FIELD] / [FOREACH_PER_NODE_CFG_FIELD] (+ 6 more FOREACH_*)
+//   - [FUNCTION]_[cfg_compute_mask] (+ the compose family) · [ENUM]_[CfgGlobalFieldIdx] / [CfgPerCoreFieldIdx]
+// [INCLUDES]_[[cstdint] [cstddef] [StrategyCategories.hpp] [OpModeCategories.hpp] [5× *CfgFlagRegistry.hpp]]
+// [DERIVED]  [BLAST_RADIUS]_[ControllerConfig · PerCoreCfg · SettingsPanel · parser · stamp]  [BINARIES]_[[engine] [engine_gui] [foxml_suite]]
+//======================================================================
+```
+Orient-only (no `[CODE]`); `[CONTAINS]` is the file's clickable TOC — and it's the tier-3 container of every unit above.
+
+### Macro — `BITMAP_IS_SET` (MemHeaders/BitmapMacros.hpp · LIGHT `[MACRO]`, no `[END]`)
+```cpp
+//----------------------------------------------------------------------
+// [MACRO]_[BITMAP_IS_SET]
+// [TAG]_[[ENGINE] [BIT_PACKED]]
+// [OVERVIEW]_[branchless single-bit test over a bitmap field]
+// [DERIVED]  [BRANCHES]_[0 — pure mask + compare]
+//----------------------------------------------------------------------
+#define BITMAP_IS_SET(field, mask)  (((field) & (mask)) != 0)
+```
+Most accessor macros stay terse-inline; a LIGHT `[MACRO]` block only when the WHY or a DERIVED (branchless?) earns it.
+
+### Test — `test_config_parser` (tests/controller_test.cpp · `[TEST]` = navigation across the suite)
+```cpp
+//----------------------------------------------------------------------
+// [TEST]_[test_config_parser]
+// [TAG]_[[ENGINE] [ENTRY_POINT]]
+// [OVERVIEW]_[engine.cfg parse → ControllerConfig fields + %-to-fraction coercion + missing-file defaults]
+// [REFERENCE]_[REGISTRY]_[FOREACH_GLOBAL_CFG_FIELD]     ← what it verifies
+//----------------------------------------------------------------------
+static void test_config_parser() {
+    // check("poll_interval parsed", cfg.poll_interval == 50);          ← check()s STAY inline (D-326)
+    // check("take_profit_pct parsed (5% -> 0.05)", fabs(tp-0.05)<0.001);
+    // check("missing file returns defaults", def.poll_interval == 100);
+}
+```
+`[REFERENCE]` links each test to the unit / invariant / decision it verifies → jump-nav across the ~3700-test suite.
+
+### Assert — standalone `[ASSERT]` guards (LIGHT units on `static_assert`s · the family set)
+```cpp
+// [ASSERT]_[LAYOUT_LOCK]_[sizeof(Order) == 64]              [WHY]_[wire/persist pin; H9 · H21 snapshot bump on change]
+static_assert(sizeof(Order) == 64, "...");
+// [ASSERT]_[BITMAP_OVERFLOW]_[HIGHEST_BIT < (1u<<16)]       [WHY]_[flags fit uint16; widen→uint32 at the top bit]
+// [ASSERT]_[OVERLAP_EXCLUSION]_[popcount(A & B) == 0]       [WHY]_[a row carries AT MOST ONE of {LOSS,GAIN} — else compile error]
+// [ASSERT]_[EPOCH_TRIPWIRE]_[trait-keyed guard]             [WHY]_[an encoding flip invisible to sizeof — the net]
+// [ASSERT]_[PADDING_FREE]_[has_unique_object_representations_v<T>]  [WHY]_[H12 — memcmp/SHA/HMAC need zero padding]
+```
+LIGHT (no `[END]`), sited on the assert; the assert ENFORCES the bound, the guarded unit's `[SIZE]` DERIVED REPORTS the value.
+
 ---
 
 ## CI enforcement (extend `check_doc_metadata.py` → also validates code)

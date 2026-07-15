@@ -149,7 +149,7 @@ Vocab is **1-line extensible** (per `doc-tag-vocabulary.md`); add tags at real u
 FILE STRUCT FUNCTION REGISTRY STRATEGY ENUM TYPE MACRO TEST ASSERT
 TAG SCOPE SCHEMA OVERVIEW WHY DETAIL DIAGRAM COMMENT SUPPORTING_DOCS EDIT VERSION REFERENCE DIRECTIVE FUTURE_WORK OUTDATED_INFO CODE SECTION REGION
 DERIVED SIZE SIMD FLOAT BRANCHES BUILD INSTANTIATION ALIGN CACHE_LINES STRADDLE UPSTREAM CONSUMERS ROW_COUNT ENROLLED ALIGNED_CONSUMERS ITERATIONS BLAST_RADIUS
-ROW COLUMN VALUE
+ROW COLUMN VALUE PARENT CHILDREN SIDECARS OVERRIDES
 CONTAINS TOC INCLUDES INCLUDED_BY BINARIES
 THREAD SYNC BIT_PACKED SWAR PADDING WIRE_FORMAT PERSISTED EXCLUDED SEAM LAT_EXEMPT
 OVERFLOW ROUNDING DOMAIN PRECISION
@@ -236,6 +236,7 @@ The 8 locked format decisions + the 3-survey taxonomy grow v1→v2. The fence ab
 - **`[APPLY_AFTER]` (D-309 #5, ADOPT · curated · CAPITAL-BEARING · D-342):** walker last-wins expansion ORDER that lives only in `[WHY]` prose today (early-apply re-arms the founding bug — `FOREACH_PER_NODE_ARRAY_OVERRIDE`). `[APPLY_AFTER]_[<other-walker>]` makes the sequencing queryable + CI-checkable.
 - **`[MUTATES]` (D-309 #6, DERIVED-TAG · D-342):** the WRITE half of the graph (`[UPSTREAM]`/`[CONSUMERS]` are reads-in + callers). A compact `[MUTATES]_[<N> fields]` (+ the key ones) materialized; the full write-set on plugin hover (no bulky drift-prone comment). Tool-derived (`writers.for_struct` already tracks it).
 - **`[WIRE_VERSION]` + paired-bump (D-309 #7, DERIVED-TAG · D-342):** "what do I bump if I touch it" — `[WIRE_VERSION]_[[SHARDED=10] [CONTROLLER=14]]` + a paired-bump note (Position is jointly gated; drifted live 6-vs-7). Materialized from a persist-site→version map, CI-checked vs `identifier_ledger.txt`.
+- **Registry topology `[PARENT]`/`[CHILDREN]`/`[SIDECARS]`/`[OVERRIDES]` (D-309 #3, DERIVED-TAG · D-344 — MISSED in the D-342 pass, CAUGHT by the plugin-alignment check):** the meta-registry hierarchy (H16 metadata-bit cohort / H18 sidecar-override / H19 parent-level — only H15 `[ENROLLED]` was covered before). Reproducible from `MetaRegistry` LEVEL/PARENT + `FIELD_IDX` + if-constexpr filters — no grammar change, a DERIVED tag + generator + CI. **Feeds the plugin's registry-tree / row-browser** (north-star §6.10 REGISTRY-SPECIAL + §7.5 5th-role) — the target whose data-need surfaced the miss.
 - **Clarifications — BLESS (D-309; the structure already holds · D-342):** (a) **multiple `[DIAGRAM]_[kind]` per block** (Order = byte-map + bit-map; MetaRegistry a registry-tree); (b) **`[DIRECTIVE]` on an `X()`-row inside `[CODE]`** (per-row tombstones — SHALT); (c) **`[CODE]`/`[END_CODE]` for NON-CONTIGUOUS units** — consts + struct + accessors across regions → multiple framed `[CODE]` segments per unit (the stack parser handles it), or the consts/accessors become tier-3 sub-blocks.
 
 ---

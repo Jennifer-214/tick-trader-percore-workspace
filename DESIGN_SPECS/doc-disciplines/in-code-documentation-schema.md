@@ -1,7 +1,8 @@
 ---
 type: doc-discipline
-stage: 2-draft
+stage: 3-first-canonical
 version: 1.0
+locked: 2026-07-14
 established: 2026-07-05
 tags: [doc-discipline, meta-discipline, ssot, structural-fix]
 surface: [ci-tooling, doc-pipeline, test-infrastructure]
@@ -13,7 +14,7 @@ applies_at_skills: []
 
 **Established:** 2026-07-05 (design captured in decision-log D-306; formalizes the `====`-block sketches Caramel began in the `deep_dives` folder). **Origin:** a one-line latency-tool `[LAT_EXEMPT]` marker generalized into a full navigable in-code documentation system for the in-house fox-symdeps dev environment.
 
-**Status:** Stage 2 DRAFT v1.0. First canonical of the `[DIRECTIVE]` axis = the `check_latency_path_conformance.py` `[LAT_EXEMPT]` marker. Full-convention first-canonical = the codebase conversion pass (deferred; see § Conversion + Rollout).
+**Status: LOCKED — `[SCHEMA]_[v1.0]`** (2026-07-14, D-346) — the first COMPLETE, rollout-ready release of the format. Frozen contract = the one parse rule + the ladder + the node model (D-339) + the member model (D-340) + the closed 76-token category set + the `[REFERENCE]`/`[ASSERT]`/`[DERIVED]` families. Verified before lock: all 14 taxonomy shapes covered (D-345) + every plugin target fed (D-344). *There was never a "v1 in the wild" — nothing was converted; the internal "v1 draft → v2 additions" iteration collapsed into this first release, so it's `v1.0`, not `v2`.* Codebase conversion = the deferred rollout (§ Conversion + Rollout; phases 2–6). **Reversible** via a `[SCHEMA]` version bump (nothing converted yet).
 
 ---
 
@@ -280,7 +281,7 @@ The comment block is the **interface** between this schema (the format) and `fox
 // [FUNCTION]_[<Name>]
 //----------------------------------------------------------------------
 // [TAG]_[[<SURFACE>] [<CONCERN>]]
-// [SCHEMA]_[v1]
+// [SCHEMA]_[v1.0]
 // [OVERVIEW]_[<one-line gist>]
 // [DIAGRAM]
 //   <hand-ASCII — ASCII boxes (+--+ | +) + arrows (-> <- ^ v); NO Unicode glyphs>
@@ -331,7 +332,7 @@ The comment block is the **interface** between this schema (the format) and `fox
 //----------------------------------------------------------------------
 // [TAG]_[[<SURFACE>] [DATA_ORIENTED_DESIGN]]
 // [THREAD]_[[<HOT_WRITER> <SLOW_READER>]]   (CURATED — author-declared thread ownership; not clang-derivable)
-// [SCHEMA]_[v1]
+// [SCHEMA]_[v1.0]
 // [OVERVIEW]_[<layout-by-access-pattern gist>]
 // [DIAGRAM]
 //   line0: [<field:bytes>] .. = 64B    (byte-map; tool-verified vs offsetof)
@@ -369,7 +370,7 @@ The comment block is the **interface** between this schema (the format) and `fox
 // [REGISTRY]_[<FOREACH_NAME>]
 //----------------------------------------------------------------------
 // [TAG]_[[<SURFACE>] [FRAMEWORK_DISCIPLINE]]
-// [SCHEMA]_[v1]
+// [SCHEMA]_[v1.0]
 // [OVERVIEW]_[<what it single-sources; add/drop = 1 row + a version bump>]
 // [COLUMN]_[<col1-name>]_[<meaning>]                     // tuple legend — listing order = ordinal (D-339)
 // [COLUMN]_[<col2-name>]_[<meaning>]_[<enum token/bit-set, if any>]
@@ -409,7 +410,7 @@ The comment block is the **interface** between this schema (the format) and `fox
 The registry DERIVED — `[ROW_COUNT]` · `[ENROLLED]` (its MetaRegistry row, H15) · `[CONSUMERS]` (the walkers, grep-derived) — IS the "registry map." Registries are the codebase's load-bearing pattern, so this is a first-class block (not a variant).
 
 ### File — the top-of-file MAJOR OVERVIEW (the 7-axis readout at FILE granularity)
-`[FILE]_[<path>]` identity + `[TAG]_[[<component/domain>]]` (`[ENGINE]`/`[ML]`/`[GUI]`/`[XGBOOST]`/`[CORE]`… — vocab values, added as real files need them) + `[SCOPE]` (if the file is scale-bound) + `[SCHEMA]_[v1]` + `[OVERVIEW]` (what it's for) + a data-flow `[DIAGRAM]` + the **file-level graph**: `[CONTAINS]`/`[TOC]` (child units — the file's table-of-contents) · `[CONSUMERS]`/`[INCLUDED_BY]` (who uses it) · `[UPSTREAM]`/`[INCLUDES]` (what it pulls in) · `[BLAST_RADIUS]` (change-impact) · `[BINARIES]` (which build targets link it). Orient-block only (no code body). **Dual role:** the file's TOC anchor AND — via its `[SCHEMA]_[v1]` — the per-file conversion/whitelist marker (the CI validator polices a file only once it carries a `[FILE]` block; un-converted files are skipped, `[SCHEMA]_[exempt]_[reason]` opts one out). Same block anatomy as a function/struct → the tool + plugin parse per-FILE and per-UNIT uniformly.
+`[FILE]_[<path>]` identity + `[TAG]_[[<component/domain>]]` (`[ENGINE]`/`[ML]`/`[GUI]`/`[XGBOOST]`/`[CORE]`… — vocab values, added as real files need them) + `[SCOPE]` (if the file is scale-bound) + `[SCHEMA]_[v1.0]` + `[OVERVIEW]` (what it's for) + a data-flow `[DIAGRAM]` + the **file-level graph**: `[CONTAINS]`/`[TOC]` (child units — the file's table-of-contents) · `[CONSUMERS]`/`[INCLUDED_BY]` (who uses it) · `[UPSTREAM]`/`[INCLUDES]` (what it pulls in) · `[BLAST_RADIUS]` (change-impact) · `[BINARIES]` (which build targets link it). Orient-block only (no code body). **Dual role:** the file's TOC anchor AND — via its `[SCHEMA]_[v1.0]` — the per-file conversion/whitelist marker (the CI validator polices a file only once it carries a `[FILE]` block; un-converted files are skipped, `[SCHEMA]_[exempt]_[reason]` opts one out). Same block anatomy as a function/struct → the tool + plugin parse per-FILE and per-UNIT uniformly.
 
 ### Variants for other unit types (anatomy-REUSE — tweak the `[DERIVED]`/`[REFERENCE]` set, NOT a new system; build each the first time a real unit needs it during conversion, do NOT pre-enumerate)
 - **Strategy** — `[STRATEGY]_[<name>]`; `[TAG]` its regime-fit + op-mode, `[REFERENCE]` its params/spec. A strategy is just another tagged unit (fits the hybrid block exactly); a strategy-dev plugin lens renders a strategy-shaped view of the same facts (operator's domain).
@@ -433,7 +434,7 @@ The registry DERIVED — `[ROW_COUNT]` · `[ENROLLED]` (its MetaRegistry row, H1
 // [FUNCTION]_[Regime_Classify]
 //----------------------------------------------------------------------
 // [TAG]_[[SLOW_PATH] [ML_INFERENCE]]
-// [SCHEMA]_[v1]
+// [SCHEMA]_[v1.0]
 // [OVERVIEW]_[score-based regime classify — each signal +1, highest wins]
 // [DIAGRAM]
 //   RegimeSignals {slope, R2, ROR, vol, var}
@@ -481,7 +482,7 @@ inline int Regime_Classify(RegimeState<F>* state, const RegimeSignals<F>* sig,
 // [STRUCT]_[ExecutionCore]
 //----------------------------------------------------------------------
 // [TAG]_[[HOT_PATH] [DATA_ORIENTED_DESIGN] [CONCURRENCY]]
-// [SCHEMA]_[v1]
+// [SCHEMA]_[v1.0]
 // [OVERVIEW]_[per-node hot execution state — layout-by-access-pattern (H6)]
 // [DIAGRAM]
 //   line0: [active:1][active_b:1][pad:6][live_tp:24][live_sl:24][pad:8] = 64B
@@ -516,7 +517,7 @@ template <unsigned F> struct alignas(64) ExecutionCore { … };
 // [STRUCT]_[CfgFieldDescriptor]
 //----------------------------------------------------------------------
 // [TAG]_[[ENGINE] [DATA_ORIENTED_DESIGN]]
-// [SCHEMA]_[v2]
+// [SCHEMA]_[v1.0]
 // [OVERVIEW]_[per-field metadata record the 13-col X-macro materializes into; GUI+parser+validation; boot/60Hz cache-warm]
 // [CONTAINS]_[[ENUM]_[Kind] [ENUM]_[MetadataFlag] [ENUM]_[LivesInStruct]]   // nested units → own blocks, sited below
 //======================================================================
@@ -553,7 +554,7 @@ static_assert(CfgFieldDescriptor::CAPITAL_BOUND_GAIN < (1u << 16), "...");
 // [REGISTRY]_[FOREACH_GLOBAL_CFG_FIELD]
 //----------------------------------------------------------------------
 // [TAG]_[[ENGINE] [FRAMEWORK_DISCIPLINE]]
-// [SCHEMA]_[v1]
+// [SCHEMA]_[v1.0]
 // [OVERVIEW]_[47 global cfg fields — operator sets once engine-wide (not per-node); add a field = 1 row]
 // [COLUMN]_[STORAGE_T]_[C storage type]                        // listing order = tuple ordinal (D-339)
 // [COLUMN]_[KIND_TOKEN]_[GUI-metadata kind]_[[KIND_INT] [KIND_BOOL] [KIND_DOUBLE] [KIND_STRING] [KIND_FILE] [KIND_HEX] [KIND_RANGE]]
@@ -613,7 +614,7 @@ The `[COLUMN]` tuple-legend (10 lines; the four `*_CAT` filters collapse to one)
 // [ENUM]_[OrderState]
 //----------------------------------------------------------------------
 // [TAG]_[[ENGINE] [OMS_DRAINER] [PERSISTED]]
-// [SCHEMA]_[v2]
+// [SCHEMA]_[v1.0]
 // [OVERVIEW]_[order lifecycle state — packed into Order.flags_packed bits 2-5; codes are wire/persist-visible]
 // [REFERENCE]_[INVARIANT]_[H21]        ← codes 0..8 append-only + immutable
 //======================================================================
@@ -645,7 +646,7 @@ Members: values inline (D-326), `[SECTION]` groups the value-tiers, SPARSE `[VAL
 // [TYPE]_[Money]
 //----------------------------------------------------------------------
 // [TAG]_[[ENGINE] [CAPITAL_BEARING] [DECIMAL] [WIRE_FORMAT]]
-// [SCHEMA]_[v2]
+// [SCHEMA]_[v1.0]
 // [OVERVIEW]_[the money-domain alias = FixedPoint<10,8> — exact decimal at venue 8dp; op family Money_*]
 // [REFERENCE]_[DECISION]_[[D-176] [D-181]]        ← domain alias + the encoding-EPOCH flip
 // [REFERENCE]_[INVARIANT]_[[H4] [H9] [H12] [H21]]
@@ -671,7 +672,7 @@ using Money = FixedPoint<10, 8>;                    // ALIASES the [STRUCT]_[Fix
 //----------------------------------------------------------------------
 // [TAG]_[[ENGINE] [FRAMEWORK_DISCIPLINE]]
 // [SCOPE]_[DEPLOYMENT]
-// [SCHEMA]_[v2]
+// [SCHEMA]_[v1.0]
 // [OVERVIEW]_[the universal cfg-field registry — two disjoint X-macro registries (global vs per-node), H17]
 // [CONTAINS]
 //   - [STRUCT]_[CfgFieldDescriptor] · [ENUM]_[MetadataFlag] / [Kind] / [LivesInStruct]
@@ -764,7 +765,7 @@ The `[WIRE_FIELD]` legend makes the venue contract greppable, and `[EXCLUDED]` t
 
 ## Schema evolution (`[SCHEMA]_[vN]`)
 
-The convention self-versions. When it evolves v1→v2, a migrator greps `[SCHEMA]_[v1]` blocks and upgrades them in place — no big-bang re-convert. A block without `[SCHEMA]` = un-migrated legacy (reported by the metadata audit). This is how the format changes safely over the codebase's life.
+The convention self-versions. When it evolves v1→v2, a migrator greps `[SCHEMA]_[v1.0]` blocks and upgrades them in place — no big-bang re-convert. A block without `[SCHEMA]` = un-migrated legacy (reported by the metadata audit). This is how the format changes safely over the codebase's life.
 
 ---
 

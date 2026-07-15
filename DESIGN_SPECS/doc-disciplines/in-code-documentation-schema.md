@@ -149,7 +149,7 @@ Vocab is **1-line extensible** (per `doc-tag-vocabulary.md`); add tags at real u
 FILE STRUCT FUNCTION REGISTRY STRATEGY ENUM TYPE MACRO TEST ASSERT
 TAG SCOPE SCHEMA OVERVIEW WHY DETAIL DIAGRAM COMMENT SUPPORTING_DOCS EDIT VERSION REFERENCE DIRECTIVE FUTURE_WORK OUTDATED_INFO CODE SECTION REGION
 DERIVED SIZE SIMD FLOAT BRANCHES BUILD INSTANTIATION ALIGN CACHE_LINES STRADDLE UPSTREAM CONSUMERS ROW_COUNT ENROLLED ALIGNED_CONSUMERS ITERATIONS BLAST_RADIUS
-ROW COLUMN VALUE PARENT CHILDREN SIDECARS OVERRIDES
+ROW COLUMN VALUE WIRE_FIELD PARENT CHILDREN SIDECARS OVERRIDES
 CONTAINS TOC INCLUDES INCLUDED_BY BINARIES
 THREAD SYNC BIT_PACKED SWAR PADDING WIRE_FORMAT PERSISTED EXCLUDED SEAM LAT_EXEMPT
 OVERFLOW ROUNDING DOMAIN PRECISION
@@ -173,6 +173,9 @@ TECH_DEBT      DOCS/TECH_DEBT.md + DOCS/tech-debt/{open,in-flight,closed}.md    
 CLASS          DOCS/RECURRING_BUG_PATTERNS.md ("Class <n>")                     <n> bare int          match zero-padded "Class 0*<n>"
 PLAN           plans/**/*.md                                                    path-or-basename
 AUDIT          EXISTENCE-UNCHECKED — audits are scattered (no single ledger)    free                  advisory-only until an audit index exists; resolver does NOT red on AUDIT
+PARITY         DOCS/PARITY_ISSUES.md ("id: PARITY-<n>")                         PARITY-<n>            (D-345 widened-[REFERENCE])
+SOURCE         EXISTENCE-UNCHECKED — external repo / venue docs / `.py:line`    free                  advisory (like AUDIT); provenance to a source-authority
+URL            EXISTENCE-UNCHECKED — external http(s) link                      free                  advisory; not resolved
 ```
 
 ### Structural + concurrency annotations (register the vocab; apply as-encountered)
@@ -204,7 +207,7 @@ Individual fields / statements stay INLINE in `[CODE]` verbatim (D-326). Above t
 | Tier | What it is | Tag(s) | Per-`[TYPE]` vocab |
 |---|---|---|---|
 | **1 · grouping** | a TOC divider; organizes, carries NO own facts | `[SECTION]` | fn phases · struct field-bands · registry row-groups · enum tiers |
-| **2 · fact-scoping member** | a sub-part that scopes its OWN facts | `[REGION]` · `[ROW]`+`[COLUMN]` · `[VALUE]` | struct → `[REGION]_[name]_[byte-range]` (+ bit-slot form) scoping own `[THREAD]`/`[SYNC]`/`[RESIDENCY]`/`[BIT_OCCUPANCY]` (D-309 #1) · registry → `[ROW]`+`[COLUMN]` (D-339) · enum → `[VALUE]` (SPARSE, like `[ROW]`; carries the wire-CODE per H21 — validated D-341) |
+| **2 · fact-scoping member** | a sub-part that scopes its OWN facts | `[REGION]` · `[ROW]`+`[COLUMN]` · `[VALUE]` · `[WIRE_FIELD]` | struct → `[REGION]_[name]_[byte-range]` (+ bit-slot form) scoping own `[THREAD]`/`[SYNC]`/`[RESIDENCY]`/`[BIT_OCCUPANCY]` (D-309 #1) · registry → `[ROW]`+`[COLUMN]` (D-339) · enum → `[VALUE]` (SPARSE, like `[ROW]`; carries the wire-CODE per H21 — D-341) · wire-parser → `[WIRE_FIELD]_[<key>]_[<meaning>]` (JSON key-map / FIX tag / CSV column; `[EXCLUDED]` for documented-absent fields; D-345) |
 | **3 · nested sub-unit** | a rich nested type promoted to its OWN full block | via `[CONTAINS]` | nested `[ENUM]`/`[STRUCT]` (D-340) |
 
 **Promotion between tiers = the § Coverage proportionality bar** — trivial → stays inline · mid → tier 2 · rich → its own block (tier 3). The *same* member-grammar runs at every tier — `[KIND]_[id]_[why]`, sparse, id-addressed (the one D-339 innermost-bracket parse rule) — so there are **no per-type member adapters**, exactly as D-339 promised for nodes.
@@ -231,7 +234,8 @@ The 8 locked format decisions + the 3-survey taxonomy grow v1→v2. The fence ab
 - **`[ASSERT]` unit — static_assert-as-doc (survey B gap #8/#13) — GRAMMAR LANDED (D-340):** a compile-time guard is a LIGHT unit (no `[END]`, like `[MACRO]`), sited on the `static_assert` it annotates: `[ASSERT]_[<FAMILY>]_[<expr>]` + `[WHY]_[<rationale — incl. the remediation the assert MESSAGE carries>]`. FAMILY is an extensible vocab; starter set `{LAYOUT_LOCK · BITMAP_OVERFLOW · EPOCH_TRIPWIRE · OVERLAP_EXCLUSION · PADDING_FREE}` (1-line-add a new one at first use). **`[ASSERT]` ↔ `[DERIVED]` coexistence rule:** an `[ASSERT]_[LAYOUT_LOCK]_[sizeof(T) <= 128]` and the struct's `[SIZE]` DERIVED both name the size — **the assert ENFORCES (a bound; build-fails on violation), the DERIVED REPORTS (the actual value; tool-refreshed)** — complementary, not a mirror. (Phase-4 CI candidate: verify each `[ASSERT]_[…]_[expr]` matches a real `static_assert` on the following line so the doc can't drift from the guard.) Exemplar: § Worked examples → `CfgFieldDescriptor` (`LAYOUT_LOCK` size-pin + `BITMAP_OVERFLOW` metadata-flag guard).
 - **Bars = ASCII, 3 weights (D-fmt-2 + D-fmt-3):** `====` unit · `~~~~` sub · `----` section (the v1 Unicode `——` `[COMMENT]` separator → ASCII). `[DIAGRAM]` bodies are **ASCII-UML** (`+--+` boxes · `|`/`---` links · `>`/`v` arrows) — NO Unicode glyphs; a **diagram-helper tool** draws them (no hand-aligning `|`).
 - **`[DIAGRAM]_[formula]` (D-fmt-7):** a formula sub-kind of `[DIAGRAM]` — math laid out, plugin-displayable, and explicitly **EXEMPT** from the § CI "prose asserts no derivable fact" check (a formula is a *definition*, not a claimed derived value).
-- **Also folded (survey Tier-1/2, grammar pending template growth):** labeled `[COMMENT]_[<label>]` sub-sections · widened `[REFERENCE]` prefix-zoo (PARITY / SOURCE / finding-IDs / external URLs) · the concurrency block (file-narrative + cluster `Writer=/Reader=` + per-field `producer:/consumer:`) · wire/persist completeness (per-field ordinals + `[EXCLUDED]` for documented-absent fields) · the numeric-domain row (`[OVERFLOW]`/`[ROUNDING]`/`[DOMAIN]`/`[PRECISION]`).
+- **`[WIRE_FIELD]` — wire/persist field-map (survey C flagship; D-345 — grounded on `BinanceUserData` executionReport):** a venue/persist unit (JSON parser · FIX table · CSV recorder) documents its field-map as tier-2 members — `[WIRE_FIELD]_[<key>]_[<meaning>]` (+ type/example): JSON is **key-addressed**, FIX/CSV are **ordinal-addressed** (position = the id, like `[COLUMN]`). A documented-absent field = `[EXCLUDED]_[<key>]_[<why-not-parsed>]` (Binance `"z"` cumulative-qty — currently unparsed, surfacing the A2 bug / TECH_DEBT-169). Version via `[WIRE_VERSION]` (H21 append-only keys). **Reuses the member model** — `[WIRE_FIELD]` is just the wire-parser's tier-2 vocab. The widened `[REFERENCE]` prefix-zoo (PARITY/SOURCE/URL — reference-subcats table) + the numeric-domain row (`[OVERFLOW]`/`[ROUNDING]`/`[DOMAIN]`/`[PRECISION]`, in-fence) close the rest of survey C.
+- **Still build-at-pilot (additive within v1.0 per § Extending — the categories exist + are usable NOW; only the canonical template grows at the first real pilot):** labeled `[COMMENT]_[<label>]` sub-sections · the concurrency block (file-narrative + cluster `Writer=/Reader=` + per-field `producer:/consumer:`).
 - **`[COMPLEXITY]` (D-309 #4, ADOPT · curated · D-342):** amortized / worst-case trip-count a straight-line `[SIZE]_[instr]` + `[BRANCHES]`-class both miss — `[COMPLEXITY]_[O(1) amortized / O(W) worst]` (e.g. `RollingStats` deque pops). Greppable + carries the bound; CURATED (a tool can't infer the amortized bound).
 - **`[APPLY_AFTER]` (D-309 #5, ADOPT · curated · CAPITAL-BEARING · D-342):** walker last-wins expansion ORDER that lives only in `[WHY]` prose today (early-apply re-arms the founding bug — `FOREACH_PER_NODE_ARRAY_OVERRIDE`). `[APPLY_AFTER]_[<other-walker>]` makes the sequencing queryable + CI-checkable.
 - **`[MUTATES]` (D-309 #6, DERIVED-TAG · D-342):** the WRITE half of the graph (`[UPSTREAM]`/`[CONSUMERS]` are reads-in + callers). A compact `[MUTATES]_[<N> fields]` (+ the key ones) materialized; the full write-set on plugin hover (no bulky drift-prone comment). Tool-derived (`writers.for_struct` already tracks it).
@@ -717,6 +721,34 @@ static_assert(sizeof(Order) == 64, "...");
 // [ASSERT]_[PADDING_FREE]_[has_unique_object_representations_v<T>]  [WHY]_[H12 — memcmp/SHA/HMAC need zero padding]
 ```
 LIGHT (no `[END]`), sited on the assert; the assert ENFORCES the bound, the guarded unit's `[SIZE]` DERIVED REPORTS the value.
+
+### Wire-parser — `ud_parse_execution_report` (DataStream/BinanceUserData.hpp · the JSON venue field-map · D-345)
+```cpp
+//======================================================================
+// [FUNCTION]_[ud_parse_execution_report]
+//----------------------------------------------------------------------
+// [TAG]_[[ENGINE] [OMS_DRAINER] [WIRE_FORMAT] [CAPITAL_BEARING]]
+// [SCHEMA]_[v1.0]
+// [OVERVIEW]_[parse a Binance executionReport JSON fill event → Command; returns 1 on x=="TRADE"]
+// [REFERENCE]_[SOURCE]_[Binance WS executionReport docs]     ← external venue contract (widened [REFERENCE])
+// [REFERENCE]_[INVARIANT]_[[H5] [H21]]                       ← no scalar JSON in the loop; keys append-only
+// ---- the venue field-map (tier-2 [WIRE_FIELD] members; key-addressed) ----
+// [WIRE_FIELD]_[e]_[event type = executionReport]   · [WIRE_FIELD]_[x]_[execution type — TRADE = fill]
+// [WIRE_FIELD]_[c]_[clientOrderId — our idempotency key (oms_<id>)]  · [WIRE_FIELD]_[i]_[exchange orderId]
+// [WIRE_FIELD]_[L]_[last executed price]            · [WIRE_FIELD]_[l]_[last executed quantity]
+// [WIRE_FIELD]_[n]_[commission amount]              · [WIRE_FIELD]_[N]_[commission asset]
+// [WIRE_FIELD]_[t]_[trade id (dedup)]               · [WIRE_FIELD]_[T]_[transaction time ms]
+// [EXCLUDED]_[z]_[cumulative filled qty — CURRENTLY UNPARSED (A2 / TECH_DEBT-169; the partial-fill bug, now VISIBLE)]
+//======================================================================
+// [CODE]
+//======================================================================
+static inline int ud_parse_execution_report(const char* json, int len, Command* cmd_out, uint64_t* trade_id_out) { … }
+//======================================================================
+// [END_CODE]
+// [END_FUNCTION]_[ud_parse_execution_report]
+//======================================================================
+```
+The `[WIRE_FIELD]` legend makes the venue contract greppable, and `[EXCLUDED]` turns a documented-absent field into a **visible gap** — here, the unparsed `"z"` *is* the A2 partial-fill bug surfaced in the doc layer.
 
 ---
 

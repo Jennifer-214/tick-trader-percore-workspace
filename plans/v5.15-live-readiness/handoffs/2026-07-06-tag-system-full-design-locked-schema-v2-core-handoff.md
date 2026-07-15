@@ -1,5 +1,5 @@
 ---
-status: active
+status: superseded   # superseded 2026-07-14 by 2026-07-14-E.1.2.A-schema-v1.0-locked-phase1-done-handoff.md — schema RELOCKED as [SCHEMA]_[v1.0] (D-346); this doc's "schema-v2" naming predates the relock.
 ship: E.1.2.A
 descriptor: full-design-locked-schema-v2-core-started
 engine_head: d4812de

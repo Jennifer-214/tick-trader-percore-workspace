@@ -807,4 +807,4 @@ The convention adopts at scale ONLY with a **scaffold generator**: an editor com
 
 ---
 
-**End of in-code-documentation-schema v1.0 DRAFT.** Formalizes D-306 + the deep_dives sketches. First-canonical full-convention application = the incremental codebase conversion (next session).
+**End of in-code-documentation-schema v1.0 — LOCKED 2026-07-14 (D-346).** Formalizes D-306 + the deep_dives sketches. First-canonical full-convention application = the incremental codebase conversion (next session).

@@ -15,7 +15,7 @@ so the snapshot stales when tags/units actually change, not on unrelated line dr
 `rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a
 conversion).
 
-Converted files: 52 · unit blocks: 301
+Converted files: 53 · unit blocks: 307
 
 ## [TAG] values → files
 
@@ -40,13 +40,14 @@ Converted files: 52 · unit blocks: 301
 - `CoreFrameworks/RiskCfgFlagRegistry.hpp`
 - `CoreFrameworks/SlowPathGateRegistry.hpp`
 
-### BOOT_TIME (22 files)
+### BOOT_TIME (23 files)
 
 - `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/ControllerConfig.hpp`
 - `CoreFrameworks/ControllerEventLoop.hpp`
 - `CoreFrameworks/EngineCommon.hpp`
 - `CoreFrameworks/EngineSharded/Boot.hpp`
+- `CoreFrameworks/EngineSharded/Run.hpp`
 - `CoreFrameworks/ExecutionCore.hpp`
 - `CoreFrameworks/GateParameters.hpp`
 - `CoreFrameworks/LiveReadiness.hpp`
@@ -65,11 +66,12 @@ Converted files: 52 · unit blocks: 301
 - `CoreFrameworks/ShardedTradeLog.hpp`
 - `CoreFrameworks/SystemInit.hpp`
 
-### CAPITAL_BEARING (15 files)
+### CAPITAL_BEARING (16 files)
 
 - `CoreFrameworks/ControllerConfig.hpp`
 - `CoreFrameworks/ControllerEventLoop.hpp`
 - `CoreFrameworks/EngineSharded/Async.hpp`
+- `CoreFrameworks/EngineSharded/Run.hpp`
 - `CoreFrameworks/EngineSharded/SlowPath.hpp`
 - `CoreFrameworks/ExecutionCore.hpp`
 - `CoreFrameworks/GateParameters.hpp`
@@ -99,11 +101,12 @@ Converted files: 52 · unit blocks: 301
 - `CoreFrameworks/StampBoundDerivedFilter.hpp`
 - `CoreFrameworks/TradeLogColRegistry.hpp`
 
-### CONCURRENCY (12 files)
+### CONCURRENCY (13 files)
 
 - `CoreFrameworks/ControllerEventLoop.hpp`
 - `CoreFrameworks/EngineSharded/Async.hpp`
 - `CoreFrameworks/EngineSharded/Boot.hpp`
+- `CoreFrameworks/EngineSharded/Run.hpp`
 - `CoreFrameworks/ExchangeAdapter.hpp`
 - `CoreFrameworks/ExecutionCore.hpp`
 - `CoreFrameworks/OrderEventLog.hpp`
@@ -168,7 +171,7 @@ Converted files: 52 · unit blocks: 301
 - `CoreFrameworks/StampBoundDerivedFilter.hpp`
 - `CoreFrameworks/SystemInit.hpp`
 
-### ENGINE (51 files)
+### ENGINE (52 files)
 
 - `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/CfgFieldDispatch.hpp`
@@ -178,6 +181,7 @@ Converted files: 52 · unit blocks: 301
 - `CoreFrameworks/EngineSharded.hpp`
 - `CoreFrameworks/EngineSharded/Async.hpp`
 - `CoreFrameworks/EngineSharded/Boot.hpp`
+- `CoreFrameworks/EngineSharded/Run.hpp`
 - `CoreFrameworks/EngineSharded/SlowPath.hpp`
 - `CoreFrameworks/EnsembleHotSwap.hpp`
 - `CoreFrameworks/EventLoopAggregates.hpp`
@@ -222,9 +226,10 @@ Converted files: 52 · unit blocks: 301
 - `CoreFrameworks/TradeLogColRegistry.hpp`
 - `Strategies/RegimeDetector.hpp`
 
-### ENTRY_POINT (2 files)
+### ENTRY_POINT (3 files)
 
 - `CoreFrameworks/EngineSharded.hpp`
+- `CoreFrameworks/EngineSharded/Run.hpp`
 - `CoreFrameworks/ExchangeAdapter.hpp`
 
 ### FLOAT_DISPLAY_ONLY (6 files)
@@ -270,11 +275,12 @@ Converted files: 52 · unit blocks: 301
 - `CoreFrameworks/Tick.hpp`
 - `CoreFrameworks/TradeEvent.hpp`
 
-### LIVE_TRADING (12 files)
+### LIVE_TRADING (13 files)
 
 - `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/ControllerConfig.hpp`
 - `CoreFrameworks/ControllerEventLoop.hpp`
+- `CoreFrameworks/EngineSharded/Run.hpp`
 - `CoreFrameworks/ExchangeAdapter.hpp`
 - `CoreFrameworks/ExecutionCore.hpp`
 - `CoreFrameworks/LiveReadiness.hpp`
@@ -300,9 +306,10 @@ Converted files: 52 · unit blocks: 301
 - `CoreFrameworks/ControllerEventLoop.hpp`
 - `CoreFrameworks/EngineCommon.hpp`
 
-### MONITORING_PLANE (11 files)
+### MONITORING_PLANE (12 files)
 
 - `CoreFrameworks/ControllerEventLoop.hpp`
+- `CoreFrameworks/EngineSharded/Run.hpp`
 - `CoreFrameworks/EventLoopAggregates.hpp`
 - `CoreFrameworks/MetricCompute.hpp`
 - `CoreFrameworks/NodeLatencyStats.hpp`
@@ -402,7 +409,7 @@ Converted files: 52 · unit blocks: 301
 - `OrderState` — `CoreFrameworks/Order.hpp`
 - `OrderType` — `CoreFrameworks/Order.hpp`
 
-### FILE (51)
+### FILE (52)
 
 - `CoreFrameworks/BinanceAdapter.hpp` — `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/CfgFieldDispatch.hpp` — `CoreFrameworks/CfgFieldDispatch.hpp`
@@ -412,6 +419,7 @@ Converted files: 52 · unit blocks: 301
 - `CoreFrameworks/EngineSharded.hpp` — `CoreFrameworks/EngineSharded.hpp`
 - `CoreFrameworks/EngineSharded/Async.hpp` — `CoreFrameworks/EngineSharded/Async.hpp`
 - `CoreFrameworks/EngineSharded/Boot.hpp` — `CoreFrameworks/EngineSharded/Boot.hpp`
+- `CoreFrameworks/EngineSharded/Run.hpp` — `CoreFrameworks/EngineSharded/Run.hpp`
 - `CoreFrameworks/EngineSharded/SlowPath.hpp` — `CoreFrameworks/EngineSharded/SlowPath.hpp`
 - `CoreFrameworks/EnsembleHotSwap.hpp` — `CoreFrameworks/EnsembleHotSwap.hpp`
 - `CoreFrameworks/EventLoopAggregates.hpp` — `CoreFrameworks/EventLoopAggregates.hpp`
@@ -456,7 +464,7 @@ Converted files: 52 · unit blocks: 301
 - `CoreFrameworks/TradeLogColRegistry.hpp` — `CoreFrameworks/TradeLogColRegistry.hpp`
 - `RegimeDetector.hpp` — `Strategies/RegimeDetector.hpp`
 
-### FUNCTION (166)
+### FUNCTION (171)
 
 - `BG_Evaluate` — `CoreFrameworks/GateParameters.hpp`
 - `BinanceAdapter_Get` — `CoreFrameworks/BinanceAdapter.hpp`
@@ -483,12 +491,17 @@ Converted files: 52 · unit blocks: 301
 - `EngineCommon_SlowPathCycleOneCore` — `CoreFrameworks/EngineCommon.hpp`
 - `EngineSharded_Async_DrainWithSubmit` — `CoreFrameworks/EngineSharded/Async.hpp`
 - `EngineSharded_Async_FanOut` — `CoreFrameworks/EngineSharded/Async.hpp`
+- `EngineSharded_CalibrateTscGhz` — `CoreFrameworks/EngineSharded/Run.hpp`
+- `EngineSharded_DumpLatency` — `CoreFrameworks/EngineSharded/Run.hpp`
 - `EngineSharded_ForceCloseOnShutdown` — `CoreFrameworks/ShardedLiveSafety.hpp`
 - `EngineSharded_HotSwapEnsemble` — `CoreFrameworks/EnsembleHotSwap.hpp`
 - `EngineSharded_OrphanRecovery` — `CoreFrameworks/ShardedLiveSafety.hpp`
+- `EngineSharded_PinThread` — `CoreFrameworks/EngineSharded/Run.hpp`
+- `EngineSharded_Run` — `CoreFrameworks/EngineSharded/Run.hpp`
 - `EngineSharded_SignalHandler` — `CoreFrameworks/EngineSharded/Boot.hpp`
 - `EngineSharded_SlowPath_DrainManualCloses` — `CoreFrameworks/EngineSharded/SlowPath.hpp`
 - `EngineSharded_SlowPath_DrainPostFill` — `CoreFrameworks/EngineSharded/SlowPath.hpp`
+- `EngineSharded_SmartSlowPathPins` — `CoreFrameworks/EngineSharded/Run.hpp`
 - `EventLoopState_Init` — `CoreFrameworks/ControllerEventLoop.hpp`
 - `EventLoopState_ReconstructPerCoreFromEventLog` — `CoreFrameworks/ControllerEventLoop.hpp`
 - `EventLoopState_RegisterCore` — `CoreFrameworks/ControllerEventLoop.hpp`

@@ -89,6 +89,7 @@
 | `test_check_doc_rename_classification.py` | TEST-HARNESS | test runner | — | tests for `check_doc_rename_classification.py` |
 | `test_check_plan_body_tests_section.py` | TEST-HARNESS | test runner | — | tests for `check_plan_body_tests_section.py` |
 | `test_memory_guard.py` | TEST-HARNESS | test runner | — | tests for the memory guard |
+| `test_foxtag_client.py` | TEST-HARNESS | test runner; manual | — | NEGATIVE self-test (teeth, D-137) for `foxtag_client.py` — hermetic stub-binary probes: missing binary / garbage JSON / malformed rows / nonzero-exit all degrade to the documented empty/None shapes (never a crash, never a fabricated result); valid output decodes exactly (the seam DISCRIMINATES) |
 | `chart.py` | ONE-OFF-MANUAL | — | n/a | metrics charting (operator viz) |
 | `feature_overlay.py` | ONE-OFF-MANUAL | — | n/a | feature-overlay viz (operator) |
 | `compare_scalers.sh` | ONE-OFF-MANUAL | — | n/a | scaler-comparison CLI wrapper (manual; `compare_scalers.cpp`) |

@@ -15,7 +15,7 @@ so the snapshot stales when tags/units actually change, not on unrelated line dr
 `rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a
 conversion).
 
-Converted files: 23 · unit blocks: 142
+Converted files: 27 · unit blocks: 154
 
 ## [TAG] values → files
 
@@ -32,8 +32,9 @@ Converted files: 23 · unit blocks: 142
 - `CoreFrameworks/Portfolio.hpp`
 - `CoreFrameworks/RiskCfgFlagRegistry.hpp`
 
-### BOOT_TIME (9 files)
+### BOOT_TIME (11 files)
 
+- `CoreFrameworks/EngineSharded/Boot.hpp`
 - `CoreFrameworks/ExecutionCore.hpp`
 - `CoreFrameworks/GateParameters.hpp`
 - `CoreFrameworks/NodeLatencyStats.hpp`
@@ -41,11 +42,13 @@ Converted files: 23 · unit blocks: 142
 - `CoreFrameworks/OrderManager.hpp`
 - `CoreFrameworks/ParameterSlot.hpp`
 - `CoreFrameworks/Portfolio.hpp`
+- `CoreFrameworks/ReconciliationLoop.hpp`
 - `CoreFrameworks/SPSCRing.hpp`
 - `CoreFrameworks/SystemInit.hpp`
 
-### CAPITAL_BEARING (8 files)
+### CAPITAL_BEARING (10 files)
 
+- `CoreFrameworks/EngineSharded/SlowPath.hpp`
 - `CoreFrameworks/ExecutionCore.hpp`
 - `CoreFrameworks/GateParameters.hpp`
 - `CoreFrameworks/Order.hpp`
@@ -53,6 +56,7 @@ Converted files: 23 · unit blocks: 142
 - `CoreFrameworks/OrderGates.hpp`
 - `CoreFrameworks/OrderManager.hpp`
 - `CoreFrameworks/Portfolio.hpp`
+- `CoreFrameworks/ReconciliationLoop.hpp`
 - `CoreFrameworks/TradeEvent.hpp`
 
 ### CFG_FLOW (4 files)
@@ -62,13 +66,15 @@ Converted files: 23 · unit blocks: 142
 - `CoreFrameworks/OpsCfgFlagRegistry.hpp`
 - `CoreFrameworks/RiskCfgFlagRegistry.hpp`
 
-### CONCURRENCY (8 files)
+### CONCURRENCY (10 files)
 
+- `CoreFrameworks/EngineSharded/Boot.hpp`
 - `CoreFrameworks/ExchangeAdapter.hpp`
 - `CoreFrameworks/ExecutionCore.hpp`
 - `CoreFrameworks/OrderEventLog.hpp`
 - `CoreFrameworks/OrderManager.hpp`
 - `CoreFrameworks/ParameterSlot.hpp`
+- `CoreFrameworks/ReconciliationLoop.hpp`
 - `CoreFrameworks/SPSCRing.hpp`
 - `CoreFrameworks/ShardedOrderLatency.hpp`
 - `CoreFrameworks/TradeEvent.hpp`
@@ -112,8 +118,11 @@ Converted files: 23 · unit blocks: 142
 - `CoreFrameworks/OrderEventLog.hpp`
 - `CoreFrameworks/SystemInit.hpp`
 
-### ENGINE (22 files)
+### ENGINE (26 files)
 
+- `CoreFrameworks/EngineSharded.hpp`
+- `CoreFrameworks/EngineSharded/Boot.hpp`
+- `CoreFrameworks/EngineSharded/SlowPath.hpp`
 - `CoreFrameworks/ExchangeAdapter.hpp`
 - `CoreFrameworks/ExecutionCore.hpp`
 - `CoreFrameworks/GateCfgFlagRegistry.hpp`
@@ -128,6 +137,7 @@ Converted files: 23 · unit blocks: 142
 - `CoreFrameworks/OrderManager.hpp`
 - `CoreFrameworks/ParameterSlot.hpp`
 - `CoreFrameworks/Portfolio.hpp`
+- `CoreFrameworks/ReconciliationLoop.hpp`
 - `CoreFrameworks/RiskCfgFlagRegistry.hpp`
 - `CoreFrameworks/SPSCRing.hpp`
 - `CoreFrameworks/ShardedOrderLatency.hpp`
@@ -137,8 +147,9 @@ Converted files: 23 · unit blocks: 142
 - `CoreFrameworks/TradeEvent.hpp`
 - `Strategies/RegimeDetector.hpp`
 
-### ENTRY_POINT (1 files)
+### ENTRY_POINT (2 files)
 
+- `CoreFrameworks/EngineSharded.hpp`
 - `CoreFrameworks/ExchangeAdapter.hpp`
 
 ### FLOAT_DISPLAY_ONLY (2 files)
@@ -150,6 +161,10 @@ Converted files: 23 · unit blocks: 142
 
 - `CoreFrameworks/MetaRegistry.hpp`
 - `Strategies/StrategyInterface.hpp`
+
+### GUI (1 files)
+
+- `CoreFrameworks/EngineSharded/SlowPath.hpp`
 
 ### HELPER (1 files)
 
@@ -166,11 +181,12 @@ Converted files: 23 · unit blocks: 142
 - `CoreFrameworks/Tick.hpp`
 - `CoreFrameworks/TradeEvent.hpp`
 
-### LIVE_TRADING (4 files)
+### LIVE_TRADING (5 files)
 
 - `CoreFrameworks/ExchangeAdapter.hpp`
 - `CoreFrameworks/ExecutionCore.hpp`
 - `CoreFrameworks/OrderManager.hpp`
+- `CoreFrameworks/ReconciliationLoop.hpp`
 - `CoreFrameworks/ShardedOrderLatency.hpp`
 
 ### ML (2 files)
@@ -185,8 +201,9 @@ Converted files: 23 · unit blocks: 142
 - `CoreFrameworks/ShardedOrderLatency.hpp`
 - `CoreFrameworks/SpSectionRegistry.hpp`
 
-### OMS_DRAINER (3 files)
+### OMS_DRAINER (4 files)
 
+- `CoreFrameworks/EngineSharded/SlowPath.hpp`
 - `CoreFrameworks/Order.hpp`
 - `CoreFrameworks/OrderEventLog.hpp`
 - `CoreFrameworks/OrderManager.hpp`
@@ -211,12 +228,13 @@ Converted files: 23 · unit blocks: 142
 
 - `CoreFrameworks/Portfolio.hpp`
 
-### SUPPORTIVE (4 files)
+### SUPPORTIVE (5 files)
 
 - `CoreFrameworks/Order.hpp`
 - `CoreFrameworks/OrderGates.hpp`
 - `CoreFrameworks/OrderManager.hpp`
 - `CoreFrameworks/Portfolio.hpp`
+- `CoreFrameworks/ReconciliationLoop.hpp`
 
 ## Unit blocks by [TYPE]
 
@@ -238,8 +256,11 @@ Converted files: 23 · unit blocks: 142
 - `OrderState` — `CoreFrameworks/Order.hpp`
 - `OrderType` — `CoreFrameworks/Order.hpp`
 
-### FILE (22)
+### FILE (26)
 
+- `CoreFrameworks/EngineSharded.hpp` — `CoreFrameworks/EngineSharded.hpp`
+- `CoreFrameworks/EngineSharded/Boot.hpp` — `CoreFrameworks/EngineSharded/Boot.hpp`
+- `CoreFrameworks/EngineSharded/SlowPath.hpp` — `CoreFrameworks/EngineSharded/SlowPath.hpp`
 - `CoreFrameworks/ExchangeAdapter.hpp` — `CoreFrameworks/ExchangeAdapter.hpp`
 - `CoreFrameworks/ExecutionCore.hpp` — `CoreFrameworks/ExecutionCore.hpp`
 - `CoreFrameworks/GateCfgFlagRegistry.hpp` — `CoreFrameworks/GateCfgFlagRegistry.hpp`
@@ -254,6 +275,7 @@ Converted files: 23 · unit blocks: 142
 - `CoreFrameworks/OrderManager.hpp` — `CoreFrameworks/OrderManager.hpp`
 - `CoreFrameworks/ParameterSlot.hpp` — `CoreFrameworks/ParameterSlot.hpp`
 - `CoreFrameworks/Portfolio.hpp` — `CoreFrameworks/Portfolio.hpp`
+- `CoreFrameworks/ReconciliationLoop.hpp` — `CoreFrameworks/ReconciliationLoop.hpp`
 - `CoreFrameworks/RiskCfgFlagRegistry.hpp` — `CoreFrameworks/RiskCfgFlagRegistry.hpp`
 - `CoreFrameworks/SPSCRing.hpp` — `CoreFrameworks/SPSCRing.hpp`
 - `CoreFrameworks/ShardedOrderLatency.hpp` — `CoreFrameworks/ShardedOrderLatency.hpp`
@@ -263,11 +285,14 @@ Converted files: 23 · unit blocks: 142
 - `CoreFrameworks/TradeEvent.hpp` — `CoreFrameworks/TradeEvent.hpp`
 - `RegimeDetector.hpp` — `Strategies/RegimeDetector.hpp`
 
-### FUNCTION (66)
+### FUNCTION (73)
 
 - `BG_Evaluate` — `CoreFrameworks/GateParameters.hpp`
 - `BuyGate` — `CoreFrameworks/OrderGates.hpp`
 - `CumDelta_Init` — `Strategies/RegimeDetector.hpp`
+- `EngineSharded_SignalHandler` — `CoreFrameworks/EngineSharded/Boot.hpp`
+- `EngineSharded_SlowPath_DrainManualCloses` — `CoreFrameworks/EngineSharded/SlowPath.hpp`
+- `EngineSharded_SlowPath_DrainPostFill` — `CoreFrameworks/EngineSharded/SlowPath.hpp`
 - `ExecutionCore_Init` — `CoreFrameworks/ExecutionCore.hpp`
 - `ExecutionCore_SetParameters` — `CoreFrameworks/ExecutionCore.hpp`
 - `ExecutionCore_SetPermission` — `CoreFrameworks/ExecutionCore.hpp`
@@ -321,6 +346,9 @@ Converted files: 23 · unit blocks: 142
 - `Portfolio_Save` — `CoreFrameworks/Portfolio.hpp`
 - `PositionExitGate` — `CoreFrameworks/Portfolio.hpp`
 - `Position_Reset` — `CoreFrameworks/Portfolio.hpp`
+- `ReconciliationLoop_Init` — `CoreFrameworks/ReconciliationLoop.hpp`
+- `ReconciliationLoop_Pass` — `CoreFrameworks/ReconciliationLoop.hpp`
+- `ReconciliationLoop_Shutdown` — `CoreFrameworks/ReconciliationLoop.hpp`
 - `SG_Evaluate` — `CoreFrameworks/GateParameters.hpp`
 - `SPSCRing_Depth` — `CoreFrameworks/SPSCRing.hpp`
 - `SPSCRing_Init` — `CoreFrameworks/SPSCRing.hpp`
@@ -331,6 +359,7 @@ Converted files: 23 · unit blocks: 142
 - `engine_set_mxcsr_ftz_daz` — `CoreFrameworks/SystemInit.hpp`
 - `handle_buy_fill` — `CoreFrameworks/OrderManager.hpp`
 - `handle_sell_fill` — `CoreFrameworks/OrderManager.hpp`
+- `reconcile_thread_body` — `CoreFrameworks/ReconciliationLoop.hpp`
 
 ### REGISTRY (7)
 
@@ -342,7 +371,7 @@ Converted files: 23 · unit blocks: 142
 - `FOREACH_SP_SECTION` — `CoreFrameworks/SpSectionRegistry.hpp`
 - `FOREACH_STRATEGY` — `Strategies/StrategyInterface.hpp`
 
-### STRUCT (25)
+### STRUCT (26)
 
 - `CumDeltaState` — `Strategies/RegimeDetector.hpp`
 - `DataStream` — `CoreFrameworks/OrderGates.hpp`
@@ -363,6 +392,7 @@ Converted files: 23 · unit blocks: 142
 - `Portfolio` — `CoreFrameworks/Portfolio.hpp`
 - `Position` — `CoreFrameworks/Portfolio.hpp`
 - `PositionEntryArgs` — `CoreFrameworks/Portfolio.hpp`
+- `ReconciliationLoopState` — `CoreFrameworks/ReconciliationLoop.hpp`
 - `RegimeSignals` — `Strategies/RegimeDetector.hpp`
 - `SPSCRing` — `CoreFrameworks/SPSCRing.hpp`
 - `ShardedOrderLatency` — `CoreFrameworks/ShardedOrderLatency.hpp`

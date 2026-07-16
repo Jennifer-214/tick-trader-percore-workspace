@@ -15,7 +15,7 @@ so the snapshot stales when tags/units actually change, not on unrelated line dr
 `rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a
 conversion).
 
-Converted files: 63 · unit blocks: 364
+Converted files: 75 · unit blocks: 389
 
 ## [TAG] values → files
 
@@ -26,8 +26,12 @@ Converted files: 63 · unit blocks: 364
 - `CoreFrameworks/MetricCompute.hpp`
 - `CoreFrameworks/ShardedBacktestDriver.hpp`
 
-### BINARY_FP (1 files)
+### BINARY_FP (5 files)
 
+- `ML_Headers/LinearRegressionSimple.hpp`
+- `ML_Headers/ROR_regressor.hpp`
+- `ML_Headers/ReciprocalLUT.hpp`
+- `ML_Headers/WelfordStats.hpp`
 - `Strategies/RegimeDetector.hpp`
 
 ### BITMAP_PACKED (10 files)
@@ -71,7 +75,7 @@ Converted files: 63 · unit blocks: 364
 - `CoreFrameworks/SystemInit.hpp`
 - `Strategies/StrategyLifecycle.hpp`
 
-### CAPITAL_BEARING (23 files)
+### CAPITAL_BEARING (24 files)
 
 - `CoreFrameworks/CfgFieldRegistry.hpp`
 - `CoreFrameworks/ControllerConfig.hpp`
@@ -91,6 +95,7 @@ Converted files: 63 · unit blocks: 364
 - `CoreFrameworks/ReconciliationLoop.hpp`
 - `CoreFrameworks/ShardedLiveSafety.hpp`
 - `CoreFrameworks/TradeEvent.hpp`
+- `ML_Headers/BarrierValidation.hpp`
 - `Strategies/MLStrategy.hpp`
 - `Strategies/MeanReversion.hpp`
 - `Strategies/Momentum.hpp`
@@ -176,7 +181,7 @@ Converted files: 63 · unit blocks: 364
 - `CoreFrameworks/Portfolio.hpp`
 - `CoreFrameworks/Tick.hpp`
 
-### DETERMINISM (9 files)
+### DETERMINISM (10 files)
 
 - `CoreFrameworks/CfgFieldDispatch.hpp`
 - `CoreFrameworks/CfgFieldRegistry.hpp`
@@ -187,8 +192,9 @@ Converted files: 63 · unit blocks: 364
 - `CoreFrameworks/ShardedSnapshotPersist.hpp`
 - `CoreFrameworks/StampBoundDerivedFilter.hpp`
 - `CoreFrameworks/SystemInit.hpp`
+- `ML_Headers/BuildFlags.hpp`
 
-### ENGINE (63 files)
+### ENGINE (75 files)
 
 - `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/CfgFieldDispatch.hpp`
@@ -243,6 +249,18 @@ Converted files: 63 · unit blocks: 364
 - `CoreFrameworks/Tick.hpp`
 - `CoreFrameworks/TradeEvent.hpp`
 - `CoreFrameworks/TradeLogColRegistry.hpp`
+- `ML_Headers/BarrierGate.hpp`
+- `ML_Headers/BarrierValidation.hpp`
+- `ML_Headers/BuildFlags.hpp`
+- `ML_Headers/CostModel.hpp`
+- `ML_Headers/ICVariantRegistry.hpp`
+- `ML_Headers/LinearRegressionSimple.hpp`
+- `ML_Headers/ROR_regressor.hpp`
+- `ML_Headers/ReciprocalLUT.hpp`
+- `ML_Headers/RewardTracker.hpp`
+- `ML_Headers/RollingWindowRegistry.hpp`
+- `ML_Headers/VolScaler.hpp`
+- `ML_Headers/WelfordStats.hpp`
 - `Strategies/MLStrategy.hpp`
 - `Strategies/MeanReversion.hpp`
 - `Strategies/Momentum.hpp`
@@ -269,7 +287,7 @@ Converted files: 63 · unit blocks: 364
 - `CoreFrameworks/ShardedSnapshot.hpp`
 - `CoreFrameworks/ShardedTradeLog.hpp`
 
-### FRAMEWORK_DISCIPLINE (10 files)
+### FRAMEWORK_DISCIPLINE (12 files)
 
 - `CoreFrameworks/CfgFieldDispatch.hpp`
 - `CoreFrameworks/CfgFieldRegistry.hpp`
@@ -278,6 +296,8 @@ Converted files: 63 · unit blocks: 364
 - `CoreFrameworks/SessionPhaseRegistry.hpp`
 - `CoreFrameworks/SlowPathGateRegistry.hpp`
 - `CoreFrameworks/TradeLogColRegistry.hpp`
+- `ML_Headers/ICVariantRegistry.hpp`
+- `ML_Headers/RollingWindowRegistry.hpp`
 - `Strategies/StrategyInterface.hpp`
 - `Strategies/StrategyLifecycle.hpp`
 - `Strategies/StrategyParameters.hpp`
@@ -331,15 +351,21 @@ Converted files: 63 · unit blocks: 364
 - `CoreFrameworks/OrderManager.hpp`
 - `Strategies/RegimeDetector.hpp`
 
-### ML_INFERENCE (5 files)
+### ML_INFERENCE (11 files)
 
 - `CoreFrameworks/CfgFieldDispatch.hpp`
 - `CoreFrameworks/ControllerEventLoop.hpp`
 - `CoreFrameworks/EngineCommon.hpp`
+- `ML_Headers/BarrierGate.hpp`
+- `ML_Headers/BarrierValidation.hpp`
+- `ML_Headers/BuildFlags.hpp`
+- `ML_Headers/CostModel.hpp`
+- `ML_Headers/ICVariantRegistry.hpp`
+- `ML_Headers/VolScaler.hpp`
 - `Strategies/MLStrategy.hpp`
 - `Strategies/StrategyParameters.hpp`
 
-### MONITORING_PLANE (14 files)
+### MONITORING_PLANE (15 files)
 
 - `CoreFrameworks/ControllerEventLoop.hpp`
 - `CoreFrameworks/EngineSharded/Run.hpp`
@@ -354,6 +380,7 @@ Converted files: 63 · unit blocks: 364
 - `CoreFrameworks/ShardedSnapshot.hpp`
 - `CoreFrameworks/SpSectionRegistry.hpp`
 - `CoreFrameworks/TradeLogColRegistry.hpp`
+- `ML_Headers/RewardTracker.hpp`
 - `Strategies/StrategyInterface.hpp`
 
 ### OMS_DRAINER (8 files)
@@ -372,7 +399,7 @@ Converted files: 63 · unit blocks: 364
 - `CoreFrameworks/ControllerConfig.hpp`
 - `CoreFrameworks/ParseFast.hpp`
 
-### PERSISTENCE (9 files)
+### PERSISTENCE (10 files)
 
 - `CoreFrameworks/CfgFieldDispatch.hpp`
 - `CoreFrameworks/ControllerEventLoop.hpp`
@@ -383,12 +410,13 @@ Converted files: 63 · unit blocks: 364
 - `CoreFrameworks/PortfolioController.hpp`
 - `CoreFrameworks/ShardedSnapshotPersist.hpp`
 - `CoreFrameworks/ShardedTradeLog.hpp`
+- `ML_Headers/RewardTracker.hpp`
 
 ### PRODUCER (1 files)
 
 - `CoreFrameworks/EngineSharded/Async.hpp`
 
-### SLOW_PATH (26 files)
+### SLOW_PATH (34 files)
 
 - `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/ControllerConfig.hpp`
@@ -408,6 +436,14 @@ Converted files: 63 · unit blocks: 364
 - `CoreFrameworks/ShardedTradeLog.hpp`
 - `CoreFrameworks/SlowPathGateRegistry.hpp`
 - `CoreFrameworks/SpSectionRegistry.hpp`
+- `ML_Headers/BarrierGate.hpp`
+- `ML_Headers/CostModel.hpp`
+- `ML_Headers/LinearRegressionSimple.hpp`
+- `ML_Headers/ROR_regressor.hpp`
+- `ML_Headers/ReciprocalLUT.hpp`
+- `ML_Headers/RollingWindowRegistry.hpp`
+- `ML_Headers/VolScaler.hpp`
+- `ML_Headers/WelfordStats.hpp`
 - `Strategies/MLStrategy.hpp`
 - `Strategies/MeanReversion.hpp`
 - `Strategies/Momentum.hpp`
@@ -454,7 +490,7 @@ Converted files: 63 · unit blocks: 364
 - `OrderType` — `CoreFrameworks/Order.hpp`
 - `StrategyCategory` — `Strategies/StrategyCategories.hpp`
 
-### FILE (63)
+### FILE (75)
 
 - `CoreFrameworks/BinanceAdapter.hpp` — `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/CfgFieldDispatch.hpp` — `CoreFrameworks/CfgFieldDispatch.hpp`
@@ -509,6 +545,18 @@ Converted files: 63 · unit blocks: 364
 - `CoreFrameworks/Tick.hpp` — `CoreFrameworks/Tick.hpp`
 - `CoreFrameworks/TradeEvent.hpp` — `CoreFrameworks/TradeEvent.hpp`
 - `CoreFrameworks/TradeLogColRegistry.hpp` — `CoreFrameworks/TradeLogColRegistry.hpp`
+- `ML_Headers/BarrierGate.hpp` — `ML_Headers/BarrierGate.hpp`
+- `ML_Headers/BarrierValidation.hpp` — `ML_Headers/BarrierValidation.hpp`
+- `ML_Headers/BuildFlags.hpp` — `ML_Headers/BuildFlags.hpp`
+- `ML_Headers/CostModel.hpp` — `ML_Headers/CostModel.hpp`
+- `ML_Headers/ICVariantRegistry.hpp` — `ML_Headers/ICVariantRegistry.hpp`
+- `ML_Headers/LinearRegressionSimple.hpp` — `ML_Headers/LinearRegressionSimple.hpp`
+- `ML_Headers/ROR_regressor.hpp` — `ML_Headers/ROR_regressor.hpp`
+- `ML_Headers/ReciprocalLUT.hpp` — `ML_Headers/ReciprocalLUT.hpp`
+- `ML_Headers/RewardTracker.hpp` — `ML_Headers/RewardTracker.hpp`
+- `ML_Headers/RollingWindowRegistry.hpp` — `ML_Headers/RollingWindowRegistry.hpp`
+- `ML_Headers/VolScaler.hpp` — `ML_Headers/VolScaler.hpp`
+- `ML_Headers/WelfordStats.hpp` — `ML_Headers/WelfordStats.hpp`
 - `RegimeDetector.hpp` — `Strategies/RegimeDetector.hpp`
 - `Strategies/MLStrategy.hpp` — `Strategies/MLStrategy.hpp`
 - `Strategies/MeanReversion.hpp` — `Strategies/MeanReversion.hpp`
@@ -520,9 +568,11 @@ Converted files: 63 · unit blocks: 364
 - `Strategies/StrategyLifecycle.hpp` — `Strategies/StrategyLifecycle.hpp`
 - `Strategies/StrategyParameters.hpp` — `Strategies/StrategyParameters.hpp`
 
-### FUNCTION (199)
+### FUNCTION (209)
 
 - `BG_Evaluate` — `CoreFrameworks/GateParameters.hpp`
+- `BUILD_FLAGS_HASH` — `ML_Headers/BuildFlags.hpp`
+- `BarrierGate_Compute` — `ML_Headers/BarrierGate.hpp`
 - `BinanceAdapter_Get` — `CoreFrameworks/BinanceAdapter.hpp`
 - `BinanceAdapter_GetBalancesImpl` — `CoreFrameworks/BinanceAdapter.hpp`
 - `BinanceAdapter_Init` — `CoreFrameworks/BinanceAdapter.hpp`
@@ -539,6 +589,7 @@ Converted files: 63 · unit blocks: 364
 - `ControllerConfig_NormalizeForMode` — `CoreFrameworks/ControllerConfig.hpp`
 - `ControllerConfig_PopulateCoresFromFlat` — `CoreFrameworks/ControllerConfig.hpp`
 - `ControllerConfig_ResolveForCore` — `CoreFrameworks/ControllerConfig.hpp`
+- `CostModel_Estimate` — `ML_Headers/CostModel.hpp`
 - `CumDelta_Init` — `Strategies/RegimeDetector.hpp`
 - `EmaCross_BuildParameters` — `Strategies/StrategyParameters.hpp`
 - `EngineCommon_ApplyBnbDiscount` — `CoreFrameworks/EngineCommon.hpp`
@@ -586,9 +637,11 @@ Converted files: 63 · unit blocks: 364
 - `ExitBuffer_PendingProceeds` — `CoreFrameworks/Portfolio.hpp`
 - `Fee_Compute` — `CoreFrameworks/ControllerConfig.hpp`
 - `GateParameters_Init` — `CoreFrameworks/GateParameters.hpp`
+- `GetReciprocalLUT` — `ML_Headers/ReciprocalLUT.hpp`
 - `HotSwap_ShadowLoad_Ensemble` — `CoreFrameworks/HotSwap.hpp`
 - `HotSwap_ShadowLoad_SingleZoo` — `CoreFrameworks/HotSwap.hpp`
 - `KillSwitch_Activate` — `CoreFrameworks/PortfolioController.hpp`
+- `LinearRegression_Fit` — `ML_Headers/LinearRegressionSimple.hpp`
 - `LiveReadiness_Verify` — `CoreFrameworks/LiveReadiness.hpp`
 - `MLStrategy_BuySignal` — `Strategies/MLStrategy.hpp`
 - `MLStrategy_ExitAdjust` — `Strategies/MLStrategy.hpp`
@@ -662,6 +715,7 @@ Converted files: 63 · unit blocks: 364
 - `Portfolio_Save` — `CoreFrameworks/Portfolio.hpp`
 - `PositionExitGate` — `CoreFrameworks/Portfolio.hpp`
 - `Position_Reset` — `CoreFrameworks/Portfolio.hpp`
+- `RORRegressor_Compute` — `ML_Headers/ROR_regressor.hpp`
 - `Reconcile_ApplyMissedFills` — `CoreFrameworks/Reconcile.hpp`
 - `Reconcile_AutoCancelStale` — `CoreFrameworks/Reconcile.hpp`
 - `Reconcile_Decide` — `CoreFrameworks/Reconcile.hpp`
@@ -672,6 +726,7 @@ Converted files: 63 · unit blocks: 364
 - `ReconciliationLoop_Init` — `CoreFrameworks/ReconciliationLoop.hpp`
 - `ReconciliationLoop_Pass` — `CoreFrameworks/ReconciliationLoop.hpp`
 - `ReconciliationLoop_Shutdown` — `CoreFrameworks/ReconciliationLoop.hpp`
+- `RewardTracker_Push` — `ML_Headers/RewardTracker.hpp`
 - `SG_Evaluate` — `CoreFrameworks/GateParameters.hpp`
 - `SPSCRing_Depth` — `CoreFrameworks/SPSCRing.hpp`
 - `SPSCRing_Init` — `CoreFrameworks/SPSCRing.hpp`
@@ -705,7 +760,10 @@ Converted files: 63 · unit blocks: 364
 - `Strategy_WriteRatchetSL` — `Strategies/StrategyLifecycle.hpp`
 - `Summary_WriteJson` — `CoreFrameworks/PaperResetArchive.hpp`
 - `TUI_CopySnapshotSharded` — `CoreFrameworks/ShardedSnapshot.hpp`
+- `VolScaler_Size` — `ML_Headers/VolScaler.hpp`
+- `Welford_Push` — `ML_Headers/WelfordStats.hpp`
 - `aggregate_zoo_drift` — `CoreFrameworks/LiveReadiness.hpp`
+- `barrier_is_corrupt` — `ML_Headers/BarrierValidation.hpp`
 - `cfg_assign_field` — `CoreFrameworks/CfgFieldDispatch.hpp`
 - `cfg_diff_field` — `CoreFrameworks/CfgFieldDispatch.hpp`
 - `cfg_drift_compare` — `CoreFrameworks/CfgFieldDispatch.hpp`
@@ -726,12 +784,13 @@ Converted files: 63 · unit blocks: 364
 
 - `SHARDED_SNAPSHOT_VERSION` — `CoreFrameworks/ShardedSnapshotPersist.hpp`
 
-### REGISTRY (23)
+### REGISTRY (25)
 
 - `FOREACH_BACKTEST_METRIC` — `CoreFrameworks/MetricCompute.hpp`
 - `FOREACH_GATE_CFG_FLAG` — `CoreFrameworks/GateCfgFlagRegistry.hpp`
 - `FOREACH_GLOBAL_CFG_FIELD` — `CoreFrameworks/CfgFieldRegistry.hpp`
 - `FOREACH_HALT_REASON` — `Strategies/StrategyInterface.hpp`
+- `FOREACH_IC_VARIANT` — `ML_Headers/ICVariantRegistry.hpp`
 - `FOREACH_LIFECYCLE_CFG_FLAG` — `CoreFrameworks/LifecycleCfgFlagRegistry.hpp`
 - `FOREACH_LIVE_READINESS_CHECK` — `CoreFrameworks/LiveReadiness.hpp`
 - `FOREACH_MANUAL_PER_NODE_FIELD` — `CoreFrameworks/CfgFieldRegistry.hpp`
@@ -744,6 +803,7 @@ Converted files: 63 · unit blocks: 364
 - `FOREACH_REGIME` — `Strategies/StrategyInterface.hpp`
 - `FOREACH_REGISTRY` — `CoreFrameworks/MetaRegistry.hpp`
 - `FOREACH_RISK_CFG_FLAG` — `CoreFrameworks/RiskCfgFlagRegistry.hpp`
+- `FOREACH_ROLLING_WINDOW` — `ML_Headers/RollingWindowRegistry.hpp`
 - `FOREACH_SESSION_PHASE` — `CoreFrameworks/SessionPhaseRegistry.hpp`
 - `FOREACH_SHALT` — `Strategies/StrategyInterface.hpp`
 - `FOREACH_SLOW_PATH_GATE` — `CoreFrameworks/SlowPathGateRegistry.hpp`
@@ -752,7 +812,7 @@ Converted files: 63 · unit blocks: 364
 - `FOREACH_TRADE_LOG_COL` — `CoreFrameworks/TradeLogColRegistry.hpp`
 - `PER_NODE_OVERRIDE_FIELDS` — `CoreFrameworks/ControllerConfig.hpp`
 
-### STRUCT (52)
+### STRUCT (53)
 
 - `BinanceAdapterState` — `CoreFrameworks/BinanceAdapter.hpp`
 - `CfgFieldDescriptor` — `CoreFrameworks/CfgFieldRegistry.hpp`
@@ -796,6 +856,7 @@ Converted files: 63 · unit blocks: 364
 - `ReconcileTrade` — `CoreFrameworks/Reconcile.hpp`
 - `ReconciliationLoopState` — `CoreFrameworks/ReconciliationLoop.hpp`
 - `RegimeSignals` — `Strategies/RegimeDetector.hpp`
+- `RewardTracker` — `ML_Headers/RewardTracker.hpp`
 - `SPSCRing` — `CoreFrameworks/SPSCRing.hpp`
 - `ShardedBacktestDriver` — `CoreFrameworks/ShardedBacktestDriver.hpp`
 - `ShardedOrderLatency` — `CoreFrameworks/ShardedOrderLatency.hpp`

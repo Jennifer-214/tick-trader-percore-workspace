@@ -149,6 +149,19 @@ inline CompileEntry flags_for(const fs::path& tu_abs) {
         }
         if (ef.lexically_normal().string() == want) { entry = &e; break; }
     }
+    if (!entry) {
+        // RC-B smarter header→TU pick: a HEADER has no DB entry — prefer the main.cpp entry
+        // (the engine's canonical whole-program TU: its flags see every subsystem) over a
+        // blind first-entry. Falls back to db[0] (the Lua's `entry or db[1]` behavior) when
+        // no main.cpp entry exists. No parity impact: exact matches (the parity TU) short-
+        // circuit above either way.
+        for (const JVal& e : db.arr) {
+            if (e.kind != JVal::OBJ) continue;
+            auto f = e.obj.find("file");
+            if (f != e.obj.end() && f->second.kind == JVal::STR &&
+                fs::path(f->second.str).filename() == "main.cpp") { entry = &e; break; }
+        }
+    }
     if (!entry) entry = &db.arr[0];                        // mirror: entry or db[1]
     auto d = entry->obj.find("directory");
     if (d != entry->obj.end() && d->second.kind == JVal::STR) out.directory = d->second.str;

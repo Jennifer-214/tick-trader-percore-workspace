@@ -127,14 +127,40 @@ the cache-gate's dependency policy):
 - **`ENGINE.rglob`-style scans do NOT descend directory symlinks** — the schema_golden fixture
   dir is added to the scan file-list EXPLICITLY (P3 catch; `engine_source_files`).
 
+## Python consumers (the binding — D-352)
+
+`tools/foxtag_client.py` is the ONE Python↔core seam: binary discovery, subprocess+JSON
+transport, decode, and error semantics in one module. Every Python tool imports it (never
+spawns the binary directly) and gates on `core_available()` with its Python path as fallback —
+a foxtag-less checkout keeps every gate alive. **pybind11 slots in BEHIND this same API** if
+in-process speed is ever needed; no consumer would change.
+
+Cut over (each parity-gated + soaked):
+- `check_cache_layout.py --backend auto` — layout facts from `foxtag layout` when built
+  (verified backend-identical vs the Lua emitter; drops the headless-nvim dependency).
+- `rebuild_doc_indexes.py` code-tag inventory — from `foxtag parity-dump` via
+  `foxtag_client.inventory()` (parity §2 proved it identical; `--check` stays green).
+
+Still Python-authoritative (deliberately): `check_code_tag_blocks.py` — the standing-CI
+validator itself; its cutover is the LAST one, after the others soak.
+
 ## Roadmap
 
-- **2c:** `foxtag update` (STRUCT `[DERIVED]` writer with D-327 merge semantics) · RC-B
-  compile-DB regeneration + smarter header→TU pick · the generalized drift-gate.
-- **Cutovers (each behind the parity gate + a soak):** `check_cache_layout.py` layout backend
-  (drops its headless-nvim dependency) · `check_code_tag_blocks.py` / `rebuild_doc_indexes.py`
-  scan backend · the plugin's `tagadapter.parse` via `foxtag unit` (phase 5, operator's session).
-- **Open (build at need):** pybind11 / FFI in-process bindings — CLI+JSON is the v0 binding.
+- **`foxtag update` as a core-native writer:** deliberately NOT built yet — the DERIVED
+  refresh-writer already exists, pure + self-tested, as `check_cache_layout.py --fix`
+  (`refresh_derived`), which now runs over the core's facts via the backend cutover. A second
+  writer implementation while the Python is authoritative would be the exact Class-18 drift
+  this system kills; the core-native `update` lands when the Python gate retires.
+- **RC-B residual:** the compile-DB itself (regen: `cmake -B build_clangd
+  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON .` at the engine root) is main-TU-grained; the core's
+  header→TU pick prefers the `main.cpp` entry for header lookups. Full per-header entries =
+  a plugin-session concern.
+- **Drift-gate generalization:** sequenced, not skipped — it generalizes when the
+  corresponding axes start being WRITTEN (the P6 conversion writes layout; call-graph +
+  [BUILD]-pinned codegen come with the plugin/P6). Today only layout is written → the
+  cache-gate covers it.
+- **Phase-5 seam (operator's session):** the plugin's `tagadapter.parse` via `foxtag unit`,
+  `facts.lua` via `foxtag layout`/`codegen` — all subprocess+JSON, ready now.
 
 Decisions: D-337 (the core), D-349 (increment 1 + migration contract), D-350 (layout + the
 stream-interleave catch), D-351 (codegen + the analyzer-baseline cross-check).

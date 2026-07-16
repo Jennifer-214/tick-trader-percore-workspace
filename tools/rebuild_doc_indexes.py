@@ -263,11 +263,13 @@ def gen_tag_index(specs, skills, memories=None):
 
 def collect_code_tags():
     """Code-side twin of collect_specs: scan the ENGINE tree for [SCHEMA]-opted-in tag-blocks.
-    Grammar + file-list come from check_code_tag_blocks (collect_file_tags / engine_source_files)
-    — ONE parser for validator and index, never a mirror (anti-Class-18). DOCS/ is skipped:
-    the template corpus there is copy-source, not converted code — the index reports the
-    CONVERSION state. Returns {engine-rel path: (units, tags)} for converted files only."""
-    from check_code_tag_blocks import engine_source_files, collect_file_tags, ENGINE
+    PREFERS the foxtag CORE via foxtag_client (D-352 — parity §2 proved the core's inventory
+    IDENTICAL to the Python collector's); falls back to the Python collector
+    (collect_file_tags / engine_source_files) so a foxtag-less checkout still regenerates.
+    ONE grammar either way (anti-Class-18). DOCS/ + schema_golden/ are skipped — copy-source
+    and fixture, not conversions; the index reports CONVERSION state.
+    Returns {engine-rel path: (units, tags)} for converted files only."""
+    from check_code_tag_blocks import ENGINE
     if not (ENGINE / "Version.hpp").is_file():
         # Class-51 net: a mis-derived root yields a PLAUSIBLE-but-wrong index (scanned the
         # workspace tree, found only the golden fixture — the 2026-07-15 detonation). Fail LOUD.
@@ -275,19 +277,40 @@ def collect_code_tags():
         # dir check can't discriminate).
         raise RuntimeError(f"code-tag index refused: ENGINE={ENGINE} is not the engine tree "
                            f"(no Version.hpp) — set FOXML_ENGINE")
+
+    def _skip(parts):
+        return any(part in ("DOCS", "schema_golden") for part in parts)
+
+    def _rel(f):
+        try:
+            return str(Path(f).relative_to(ENGINE))
+        except ValueError:
+            return str(f)
+
     out = {}
+    try:
+        from foxtag_client import core_available, inventory
+        use_core = core_available()
+    except ImportError:
+        use_core = False
+    if use_core:
+        units, tags = inventory()
+        for (f, t, n, ln) in units:
+            if _skip(Path(f).parts):
+                continue
+            out.setdefault(_rel(f), ([], []))[0].append((t, n, ln))
+        for (f, tg) in tags:
+            if _skip(Path(f).parts):
+                continue
+            out.setdefault(_rel(f), ([], []))[1].append(tg)
+        return out
+    from check_code_tag_blocks import engine_source_files, collect_file_tags
     for f in engine_source_files():
-        # DOCS/ = the template corpus (copy-source); schema_golden/ = the frozen fixture —
-        # neither is a CONVERSION, and this index reports conversion state.
-        if any(part in ("DOCS", "schema_golden") for part in f.parts):
+        if _skip(f.parts):
             continue
         units, tags = collect_file_tags(f)
         if units or tags:
-            try:
-                rel = str(f.relative_to(ENGINE))
-            except ValueError:
-                rel = str(f)
-            out[rel] = (units, tags)
+            out[_rel(f)] = (units, tags)
     return out
 
 

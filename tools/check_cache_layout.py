@@ -70,14 +70,31 @@ def parse_struct_blocks(path):
     return blocks
 
 
-def run_emitter(tu, names):
-    """Invoke the Lua layout emitter → {record: {size, align, straddlers}} ({} on failure)."""
+def run_emitter_nvim(tu, names):
+    """The original Lua layout emitter (headless nvim) → {record: {size, align, straddlers}}."""
     argv = ["nvim", "--headless", "--clean", "-u", "NONE", "-l", str(EMITTER), tu] + list(names)
     try:
         r = subprocess.run(argv, cwd=str(ENGINE), capture_output=True, text=True, timeout=300)
         return json.loads(r.stdout or "{}") if r.stdout.strip() else {}
     except (subprocess.SubprocessError, json.JSONDecodeError, OSError, ValueError):
         return {}
+
+
+def run_emitter(tu, names, backend="auto"):
+    """Layout facts via the chosen backend. `auto` (default) = the foxtag CORE when its binary
+    is built, else the Lua emitter — the PARITY-GATED cutover (D-352): foxtag became eligible
+    when tools/foxtag/parity_check.sh §4 passed straddler-exact on the 204-record census
+    (D-350); the Lua stays as the fallback so a foxtag-less checkout keeps the gate alive.
+    ONE Python↔core seam: the foxtag call routes through tools/foxtag_client.py."""
+    if backend != "nvim":
+        try:
+            from foxtag_client import layout as foxtag_layout, core_available
+            if backend == "foxtag" or core_available():
+                return foxtag_layout(tu, names)
+        except ImportError:
+            if backend == "foxtag":
+                return {}
+    return run_emitter_nvim(tu, names)
 
 
 def match_layout(name, layout):
@@ -184,6 +201,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--selftest", action="store_true", help="prove the gate decision fires (non-vacuity)")
     ap.add_argument("--tu", default="main.cpp", help="the TU to dump record layouts from")
+    ap.add_argument("--backend", choices=["auto", "nvim", "foxtag"], default="auto",
+                    help="layout fact source: the foxtag core (parity-gated cutover, D-352) "
+                         "or the Lua emitter; auto = foxtag when built, else nvim")
     ap.add_argument("--paths", nargs="*")
     ap.add_argument("--fix", action="store_true",
                     help="REFRESH mode — write the real [SIZE]/[ALIGN]/[CACHE_LINES]/[STRADDLE] into the blocks "
@@ -212,7 +232,7 @@ def main():
         print("No converted [STRUCT] blocks found — cache-layout gate inert (mixed-state OK).")
         return 0
 
-    layout = run_emitter(args.tu, [b["name"] for b in blocks])
+    layout = run_emitter(args.tu, [b["name"] for b in blocks], backend=args.backend)
     if not layout:
         # Emitter needs nvim + clang + a compile TU. Advisory (not a hard-fail) so a deps-less CI env
         # isn't blocked — but LOUD (never a silent vacuous pass). TECH_DEBT-231 (shared flag path).

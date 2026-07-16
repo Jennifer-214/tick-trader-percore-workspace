@@ -71,6 +71,39 @@ if [ "$PY_G" != "$CXX_G" ]; then
     echo "FAIL: grammar counts differ (py: $PY_G | cxx: $CXX_G)"; FAIL=1
 else echo "OK  : grammar counts identical ($CXX_G)"; fi
 
+# --- 4. LAYOUT-producer parity (foxtag layout vs emit_record_layout.lua on the same TU;
+# ---    needs nvim + clang++; SKIP-advisory when absent — mirrors the cache-gate's dep policy)
+if command -v nvim >/dev/null 2>&1 && command -v clang++ >/dev/null 2>&1 && [ -f "$ROOT/main.cpp" ]; then
+    ( cd "$ROOT" && nvim --headless --clean -u NONE -l tools/emit_record_layout.lua main.cpp ) \
+        > "$TMP/lua.layout" 2>"$TMP/lua.layout.err" || true
+    ( cd "$ROOT" && "$HERE/foxtag" layout main.cpp ) > "$TMP/cxx.layout" 2>"$TMP/cxx.layout.err" || true
+    if [ ! -s "$TMP/lua.layout" ] || [ ! -s "$TMP/cxx.layout" ]; then
+        echo "FAIL: layout producer(s) emitted nothing (lua: $(head -c120 "$TMP/lua.layout.err"); cxx: $(head -c120 "$TMP/cxx.layout.err"))"
+        FAIL=1
+    elif python3 - "$TMP/lua.layout" "$TMP/cxx.layout" <<'EOF'
+import json, sys
+a = json.load(open(sys.argv[1])); b = json.load(open(sys.argv[2]))
+def norm(d):
+    return {k: {"size": v.get("size"), "align": v.get("align"),
+                "straddlers": sorted((s["name"], s["off"], s["size"])
+                                     for s in (v.get("straddlers") or []))}
+            for k, v in d.items()}
+na, nb = norm(a), norm(b)
+if na == nb:
+    print(f"OK  : layout parity ({len(na)} records, straddler-exact)"); sys.exit(0)
+only_a, only_b = set(na) - set(nb), set(nb) - set(na)
+diff = [k for k in set(na) & set(nb) if na[k] != nb[k]]
+print(f"FAIL: layout differs — only-lua={len(only_a)} only-cxx={len(only_b)} value-diff={len(diff)}")
+for k in sorted(only_a)[:5]: print("  only-lua:", k)
+for k in sorted(only_b)[:5]: print("  only-cxx:", k)
+for k in sorted(diff)[:5]:   print("  diff:", k, "lua=", na[k], "cxx=", nb[k])
+sys.exit(1)
+EOF
+    then :; else FAIL=1; fi
+else
+    echo "SKIP: layout parity (nvim/clang++/main.cpp unavailable — advisory, mirrors the cache-gate)"
+fi
+
 # --- verdict -------------------------------------------------------------------
 if [ "$FAIL" = 0 ]; then echo "PARITY: PASS — the core matches the Python oracle"; exit 0
 else echo "PARITY: FAIL — the Python tools stay authoritative"; exit 1; fi

@@ -213,10 +213,13 @@ comment-stripped code diff clean (D-348). Phase 4 OPENED: the D-337 central core
 increment 1 LANDED — `tools/foxtag/` C++ parser + scanner + query engine, PARITY-PROVEN
 byte-identical to the Python validator on the full tree (the migration gate
 `foxtag/parity_check.sh`; ~19ms vs ~147ms); the `foxtag unit <file> <line>` JSON query
-fills the plugin's `tagadapter.parse` keystone via subprocess (D-349). Increment 2 = the
-fact-producer orchestrator: RC-A…E + compile-DB + `:FoxTagUpdate` + the generalized
-drift-gate. Plugin major-features work, overlays/asm half-broken (phase 5, operator's
-session).
+fills the plugin's `tagadapter.parse` keystone via subprocess (D-349). Increment 2a LANDED:
+`foxtag layout` — the LAYOUT fact-producer consolidated into the core, parity-proven
+straddler-exact vs `emit_record_layout.lua` on the 204-record census (D-350; the cache-gate's
+headless-nvim dependency becomes swappable behind the gate). Increment 2b = the CODEGEN
+producer (RC-A anchor / RC-C width-class / RC-E never-green) + `foxtag update` + the RC-B
+compile-DB story + the generalized drift-gate. Plugin major-features work, overlays/asm
+half-broken (phase 5, operator's session).
 
 **Phased path (each phase gates the next):**
 1. Complete the **schema** against the survey's input-space taxonomy.

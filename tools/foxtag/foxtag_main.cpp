@@ -9,9 +9,12 @@
 //   foxtag tags [paths...]         per-file [TAG] inventory
 //   foxtag grammar                 loaded grammar counts (SSoT-derived — sanity/parity)
 //   foxtag parity-dump             sorted U|/T| lines for parity_check.sh vs the Python collector
+//   foxtag layout <tu> [Name...]   LAYOUT fact-producer (clang record-layout dump -> JSON;
+//                                  same shape as emit_record_layout.lua — increment 2a)
 //   foxtag selftest                embedded structural teeth (RED cases must red)
 
 #include "foxtag.hpp"
+#include "foxtag_layout.hpp"
 
 #include <cstring>
 
@@ -208,6 +211,10 @@ int main(int argc, char** argv) {
         else paths.push_back(a);
     }
 
+    if (cmd == "layout") {
+        if (paths.empty()) { std::fprintf(stderr, "usage: foxtag layout <tu.cpp> [Struct ...]\n"); return 2; }
+        return cmd_layout(paths[0], vector<string>(paths.begin() + 1, paths.end()));
+    }
     if (cmd == "validate") return cmd_validate(g, idx, roots, paths);
     if (cmd == "units") return cmd_units(g, idx, roots, paths, json, f_type, f_tag, f_name);
     if (cmd == "unit") {

@@ -15,7 +15,7 @@ so the snapshot stales when tags/units actually change, not on unrelated line dr
 `rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a
 conversion).
 
-Converted files: 59 · unit blocks: 336
+Converted files: 63 · unit blocks: 364
 
 ## [TAG] values → files
 
@@ -43,7 +43,7 @@ Converted files: 59 · unit blocks: 336
 - `Strategies/OpModeCategories.hpp`
 - `Strategies/StrategyCategories.hpp`
 
-### BOOT_TIME (24 files)
+### BOOT_TIME (25 files)
 
 - `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/ControllerConfig.hpp`
@@ -69,8 +69,9 @@ Converted files: 59 · unit blocks: 336
 - `CoreFrameworks/ShardedSnapshotPersist.hpp`
 - `CoreFrameworks/ShardedTradeLog.hpp`
 - `CoreFrameworks/SystemInit.hpp`
+- `Strategies/StrategyLifecycle.hpp`
 
-### CAPITAL_BEARING (19 files)
+### CAPITAL_BEARING (23 files)
 
 - `CoreFrameworks/CfgFieldRegistry.hpp`
 - `CoreFrameworks/ControllerConfig.hpp`
@@ -90,7 +91,11 @@ Converted files: 59 · unit blocks: 336
 - `CoreFrameworks/ReconciliationLoop.hpp`
 - `CoreFrameworks/ShardedLiveSafety.hpp`
 - `CoreFrameworks/TradeEvent.hpp`
+- `Strategies/MLStrategy.hpp`
+- `Strategies/MeanReversion.hpp`
 - `Strategies/Momentum.hpp`
+- `Strategies/StrategyLifecycle.hpp`
+- `Strategies/StrategyParameters.hpp`
 
 ### CFG_FLOW (16 files)
 
@@ -183,7 +188,7 @@ Converted files: 59 · unit blocks: 336
 - `CoreFrameworks/StampBoundDerivedFilter.hpp`
 - `CoreFrameworks/SystemInit.hpp`
 
-### ENGINE (58 files)
+### ENGINE (63 files)
 
 - `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/CfgFieldDispatch.hpp`
@@ -238,11 +243,16 @@ Converted files: 59 · unit blocks: 336
 - `CoreFrameworks/Tick.hpp`
 - `CoreFrameworks/TradeEvent.hpp`
 - `CoreFrameworks/TradeLogColRegistry.hpp`
+- `Strategies/MLStrategy.hpp`
+- `Strategies/MeanReversion.hpp`
 - `Strategies/Momentum.hpp`
 - `Strategies/OpModeCategories.hpp`
 - `Strategies/RegimeDetector.hpp`
 - `Strategies/SimpleDip.hpp`
 - `Strategies/StrategyCategories.hpp`
+- `Strategies/StrategyInterface.hpp`
+- `Strategies/StrategyLifecycle.hpp`
+- `Strategies/StrategyParameters.hpp`
 
 ### ENTRY_POINT (3 files)
 
@@ -259,7 +269,7 @@ Converted files: 59 · unit blocks: 336
 - `CoreFrameworks/ShardedSnapshot.hpp`
 - `CoreFrameworks/ShardedTradeLog.hpp`
 
-### FRAMEWORK_DISCIPLINE (8 files)
+### FRAMEWORK_DISCIPLINE (10 files)
 
 - `CoreFrameworks/CfgFieldDispatch.hpp`
 - `CoreFrameworks/CfgFieldRegistry.hpp`
@@ -269,6 +279,8 @@ Converted files: 59 · unit blocks: 336
 - `CoreFrameworks/SlowPathGateRegistry.hpp`
 - `CoreFrameworks/TradeLogColRegistry.hpp`
 - `Strategies/StrategyInterface.hpp`
+- `Strategies/StrategyLifecycle.hpp`
+- `Strategies/StrategyParameters.hpp`
 
 ### FROZEN (1 files)
 
@@ -319,13 +331,15 @@ Converted files: 59 · unit blocks: 336
 - `CoreFrameworks/OrderManager.hpp`
 - `Strategies/RegimeDetector.hpp`
 
-### ML_INFERENCE (3 files)
+### ML_INFERENCE (5 files)
 
 - `CoreFrameworks/CfgFieldDispatch.hpp`
 - `CoreFrameworks/ControllerEventLoop.hpp`
 - `CoreFrameworks/EngineCommon.hpp`
+- `Strategies/MLStrategy.hpp`
+- `Strategies/StrategyParameters.hpp`
 
-### MONITORING_PLANE (13 files)
+### MONITORING_PLANE (14 files)
 
 - `CoreFrameworks/ControllerEventLoop.hpp`
 - `CoreFrameworks/EngineSharded/Run.hpp`
@@ -340,6 +354,7 @@ Converted files: 59 · unit blocks: 336
 - `CoreFrameworks/ShardedSnapshot.hpp`
 - `CoreFrameworks/SpSectionRegistry.hpp`
 - `CoreFrameworks/TradeLogColRegistry.hpp`
+- `Strategies/StrategyInterface.hpp`
 
 ### OMS_DRAINER (8 files)
 
@@ -373,7 +388,7 @@ Converted files: 59 · unit blocks: 336
 
 - `CoreFrameworks/EngineSharded/Async.hpp`
 
-### SLOW_PATH (21 files)
+### SLOW_PATH (26 files)
 
 - `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/ControllerConfig.hpp`
@@ -393,9 +408,14 @@ Converted files: 59 · unit blocks: 336
 - `CoreFrameworks/ShardedTradeLog.hpp`
 - `CoreFrameworks/SlowPathGateRegistry.hpp`
 - `CoreFrameworks/SpSectionRegistry.hpp`
+- `Strategies/MLStrategy.hpp`
+- `Strategies/MeanReversion.hpp`
 - `Strategies/Momentum.hpp`
 - `Strategies/RegimeDetector.hpp`
 - `Strategies/SimpleDip.hpp`
+- `Strategies/StrategyInterface.hpp`
+- `Strategies/StrategyLifecycle.hpp`
+- `Strategies/StrategyParameters.hpp`
 
 ### STRUCTURAL_FIX (1 files)
 
@@ -434,7 +454,7 @@ Converted files: 59 · unit blocks: 336
 - `OrderType` — `CoreFrameworks/Order.hpp`
 - `StrategyCategory` — `Strategies/StrategyCategories.hpp`
 
-### FILE (58)
+### FILE (63)
 
 - `CoreFrameworks/BinanceAdapter.hpp` — `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/CfgFieldDispatch.hpp` — `CoreFrameworks/CfgFieldDispatch.hpp`
@@ -490,12 +510,17 @@ Converted files: 59 · unit blocks: 336
 - `CoreFrameworks/TradeEvent.hpp` — `CoreFrameworks/TradeEvent.hpp`
 - `CoreFrameworks/TradeLogColRegistry.hpp` — `CoreFrameworks/TradeLogColRegistry.hpp`
 - `RegimeDetector.hpp` — `Strategies/RegimeDetector.hpp`
+- `Strategies/MLStrategy.hpp` — `Strategies/MLStrategy.hpp`
+- `Strategies/MeanReversion.hpp` — `Strategies/MeanReversion.hpp`
 - `Strategies/Momentum.hpp` — `Strategies/Momentum.hpp`
 - `Strategies/OpModeCategories.hpp` — `Strategies/OpModeCategories.hpp`
 - `Strategies/SimpleDip.hpp` — `Strategies/SimpleDip.hpp`
 - `Strategies/StrategyCategories.hpp` — `Strategies/StrategyCategories.hpp`
+- `Strategies/StrategyInterface.hpp` — `Strategies/StrategyInterface.hpp`
+- `Strategies/StrategyLifecycle.hpp` — `Strategies/StrategyLifecycle.hpp`
+- `Strategies/StrategyParameters.hpp` — `Strategies/StrategyParameters.hpp`
 
-### FUNCTION (182)
+### FUNCTION (199)
 
 - `BG_Evaluate` — `CoreFrameworks/GateParameters.hpp`
 - `BinanceAdapter_Get` — `CoreFrameworks/BinanceAdapter.hpp`
@@ -515,6 +540,7 @@ Converted files: 59 · unit blocks: 336
 - `ControllerConfig_PopulateCoresFromFlat` — `CoreFrameworks/ControllerConfig.hpp`
 - `ControllerConfig_ResolveForCore` — `CoreFrameworks/ControllerConfig.hpp`
 - `CumDelta_Init` — `Strategies/RegimeDetector.hpp`
+- `EmaCross_BuildParameters` — `Strategies/StrategyParameters.hpp`
 - `EngineCommon_ApplyBnbDiscount` — `CoreFrameworks/EngineCommon.hpp`
 - `EngineCommon_BootGlobal` — `CoreFrameworks/EngineCommon.hpp`
 - `EngineCommon_BootPerCore` — `CoreFrameworks/EngineCommon.hpp`
@@ -564,7 +590,15 @@ Converted files: 59 · unit blocks: 336
 - `HotSwap_ShadowLoad_SingleZoo` — `CoreFrameworks/HotSwap.hpp`
 - `KillSwitch_Activate` — `CoreFrameworks/PortfolioController.hpp`
 - `LiveReadiness_Verify` — `CoreFrameworks/LiveReadiness.hpp`
+- `MLStrategy_BuySignal` — `Strategies/MLStrategy.hpp`
+- `MLStrategy_ExitAdjust` — `Strategies/MLStrategy.hpp`
+- `ML_BuildParameters` — `Strategies/StrategyParameters.hpp`
+- `MeanReversion_Adapt` — `Strategies/MeanReversion.hpp`
+- `MeanReversion_BuildParameters` — `Strategies/StrategyParameters.hpp`
+- `MeanReversion_BuySignal` — `Strategies/MeanReversion.hpp`
+- `MeanReversion_ExitAdjust` — `Strategies/MeanReversion.hpp`
 - `Momentum_Adapt` — `Strategies/Momentum.hpp`
+- `Momentum_BuildParameters` — `Strategies/StrategyParameters.hpp`
 - `Momentum_BuySignal` — `Strategies/Momentum.hpp`
 - `Momentum_ExitAdjust` — `Strategies/Momentum.hpp`
 - `Money_FillGross` — `CoreFrameworks/Portfolio.hpp`
@@ -660,7 +694,15 @@ Converted files: 59 · unit blocks: 336
 - `ShardedTradeLog_Rotate` — `CoreFrameworks/ShardedTradeLog.hpp`
 - `ShardedTradeLog_WriteRow` — `CoreFrameworks/ShardedTradeLog.hpp`
 - `Sharded_SlotNode` — `CoreFrameworks/ControllerEventLoop.hpp`
+- `SimpleDip_BuildParameters` — `Strategies/StrategyParameters.hpp`
 - `SimpleDip_BuySignal` — `Strategies/SimpleDip.hpp`
+- `Strategy_AdaptPerCore` — `Strategies/StrategyLifecycle.hpp`
+- `Strategy_BuildParameters` — `Strategies/StrategyParameters.hpp`
+- `Strategy_ExitAdjustPerCore` — `Strategies/StrategyLifecycle.hpp`
+- `Strategy_FreePerCore` — `Strategies/StrategyLifecycle.hpp`
+- `Strategy_InitPerCore` — `Strategies/StrategyLifecycle.hpp`
+- `Strategy_SpacingOk` — `Strategies/StrategyParameters.hpp`
+- `Strategy_WriteRatchetSL` — `Strategies/StrategyLifecycle.hpp`
 - `Summary_WriteJson` — `CoreFrameworks/PaperResetArchive.hpp`
 - `TUI_CopySnapshotSharded` — `CoreFrameworks/ShardedSnapshot.hpp`
 - `aggregate_zoo_drift` — `CoreFrameworks/LiveReadiness.hpp`
@@ -684,11 +726,12 @@ Converted files: 59 · unit blocks: 336
 
 - `SHARDED_SNAPSHOT_VERSION` — `CoreFrameworks/ShardedSnapshotPersist.hpp`
 
-### REGISTRY (20)
+### REGISTRY (23)
 
 - `FOREACH_BACKTEST_METRIC` — `CoreFrameworks/MetricCompute.hpp`
 - `FOREACH_GATE_CFG_FLAG` — `CoreFrameworks/GateCfgFlagRegistry.hpp`
 - `FOREACH_GLOBAL_CFG_FIELD` — `CoreFrameworks/CfgFieldRegistry.hpp`
+- `FOREACH_HALT_REASON` — `Strategies/StrategyInterface.hpp`
 - `FOREACH_LIFECYCLE_CFG_FLAG` — `CoreFrameworks/LifecycleCfgFlagRegistry.hpp`
 - `FOREACH_LIVE_READINESS_CHECK` — `CoreFrameworks/LiveReadiness.hpp`
 - `FOREACH_MANUAL_PER_NODE_FIELD` — `CoreFrameworks/CfgFieldRegistry.hpp`
@@ -698,16 +741,18 @@ Converted files: 59 · unit blocks: 336
 - `FOREACH_PER_NODE_DOMAIN_BITMAP` — `CoreFrameworks/CfgFieldRegistry.hpp`
 - `FOREACH_PER_NODE_NO_FLAT_FIELD_SYNC` — `CoreFrameworks/CfgFieldRegistry.hpp`
 - `FOREACH_RECONCILE_MODE` — `CoreFrameworks/Reconcile.hpp`
+- `FOREACH_REGIME` — `Strategies/StrategyInterface.hpp`
 - `FOREACH_REGISTRY` — `CoreFrameworks/MetaRegistry.hpp`
 - `FOREACH_RISK_CFG_FLAG` — `CoreFrameworks/RiskCfgFlagRegistry.hpp`
 - `FOREACH_SESSION_PHASE` — `CoreFrameworks/SessionPhaseRegistry.hpp`
+- `FOREACH_SHALT` — `Strategies/StrategyInterface.hpp`
 - `FOREACH_SLOW_PATH_GATE` — `CoreFrameworks/SlowPathGateRegistry.hpp`
 - `FOREACH_SP_SECTION` — `CoreFrameworks/SpSectionRegistry.hpp`
 - `FOREACH_STRATEGY` — `Strategies/StrategyInterface.hpp`
 - `FOREACH_TRADE_LOG_COL` — `CoreFrameworks/TradeLogColRegistry.hpp`
 - `PER_NODE_OVERRIDE_FIELDS` — `CoreFrameworks/ControllerConfig.hpp`
 
-### STRUCT (49)
+### STRUCT (52)
 
 - `BinanceAdapterState` — `CoreFrameworks/BinanceAdapter.hpp`
 - `CfgFieldDescriptor` — `CoreFrameworks/CfgFieldRegistry.hpp`
@@ -720,6 +765,9 @@ Converted files: 59 · unit blocks: 336
 - `ExecutionCore` — `CoreFrameworks/ExecutionCore.hpp`
 - `ExitRecord` — `CoreFrameworks/Portfolio.hpp`
 - `GateParameters` — `CoreFrameworks/GateParameters.hpp`
+- `MLBuildContext` — `Strategies/StrategyParameters.hpp`
+- `MLStrategyState` — `Strategies/MLStrategy.hpp`
+- `MeanReversionState` — `Strategies/MeanReversion.hpp`
 - `MomentumState` — `Strategies/Momentum.hpp`
 - `NodeContext` — `CoreFrameworks/ControllerEventLoop.hpp`
 - `NodeContextDisplayMeta` — `CoreFrameworks/ControllerEventLoop.hpp`

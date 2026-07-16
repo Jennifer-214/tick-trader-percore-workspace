@@ -104,6 +104,45 @@ else
     echo "SKIP: layout parity (nvim/clang++/main.cpp unavailable — advisory, mirrors the cache-gate)"
 fi
 
+# --- 5. CODEGEN cross-check vs the conformance analyzer's ratchet baseline ---------------
+# --- (foxtag codegen with the ANALYZER's flags on manifest kernels must land the exact
+# ---  baselined instruction + data-dependent counts; skip-advisory without g++/objdump)
+BUDGETS="$TOOLS/lib/latency_path_budgets.json"
+if command -v g++ >/dev/null 2>&1 && command -v objdump >/dev/null 2>&1 && [ -f "$BUDGETS" ]; then
+    AFLAGS="-std=c++20 -O3 -march=native -I$ROOT"
+    run_kernel() {  # name headers params call
+        ( cd "$ROOT" && "$HERE/foxtag" codegen --header "$2" --params "$3" --call "$4" \
+              --flags "$AFLAGS" 2>"$TMP/cg.$1.err" ) > "$TMP/cg.$1.json" || true
+        python3 - "$1" "$TMP/cg.$1.json" "$BUDGETS" <<'EOF'
+import json, sys
+name, out, budgets = sys.argv[1], sys.argv[2], sys.argv[3]
+try:
+    got = json.load(open(out))
+except Exception:
+    print(f"FAIL: codegen {name} emitted no JSON (probe failed?)"); sys.exit(1)
+want = json.load(open(budgets)).get(name)
+if not want:
+    print(f"FAIL: no budget row for {name}"); sys.exit(1)
+gi, gd = got["instructions"], got["branches"]["data_dependent"]
+if gi == want["instructions"] and gd == want["data_dependent"]:
+    print(f"OK  : codegen {name} matches the analyzer baseline (instr={gi} data_dep={gd})")
+    sys.exit(0)
+print(f"FAIL: codegen {name} — instr={gi} (want {want['instructions']}) "
+      f"data_dep={gd} (want {want['data_dependent']})")
+sys.exit(1)
+EOF
+        [ $? -ne 0 ] && FAIL=1
+    }
+    run_kernel Regime_Classify "CoreFrameworks/ControllerEventLoop.hpp" \
+        'RegimeState<64>* a, const RegimeSignals<64>* b, const ControllerConfig<64>* c' \
+        'Regime_Classify<64>(a, b, c)'
+    run_kernel ConfidenceScorer_Compute "ML_Headers/ConfidenceScore.hpp" \
+        'ConfidenceScorer* a, double b' \
+        'ConfidenceScorer_Compute(a, b)'
+else
+    echo "SKIP: codegen cross-check (g++/objdump/budgets unavailable — advisory)"
+fi
+
 # --- verdict -------------------------------------------------------------------
 if [ "$FAIL" = 0 ]; then echo "PARITY: PASS — the core matches the Python oracle"; exit 0
 else echo "PARITY: FAIL — the Python tools stay authoritative"; exit 1; fi

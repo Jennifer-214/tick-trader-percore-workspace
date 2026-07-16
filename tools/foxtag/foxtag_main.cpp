@@ -11,10 +11,17 @@
 //   foxtag parity-dump             sorted U|/T| lines for parity_check.sh vs the Python collector
 //   foxtag layout <tu> [Name...]   LAYOUT fact-producer (clang record-layout dump -> JSON;
 //                                  same shape as emit_record_layout.lua — increment 2a)
+//   foxtag codegen --header H [--header H2...] --params 'SIG' --call 'EXPR'
+//          [--flags 'F1 F2...'] [--prelude 'CODE']
+//                                  CODEGEN fact-producer (g++ probe + objdump -> JSON; the
+//                                  RC-A instantiation anchor / RC-C width-class / RC-E
+//                                  never-green — increment 2b)
+//   foxtag codegen-selftest        known-shape probe teeth (branchless/loop/float/AVX/vacuous)
 //   foxtag selftest                embedded structural teeth (RED cases must red)
 
 #include "foxtag.hpp"
 #include "foxtag_layout.hpp"
+#include "foxtag_codegen.hpp"
 
 #include <cstring>
 
@@ -202,15 +209,34 @@ int main(int argc, char** argv) {
     vector<string> paths;
     bool json = false;
     string f_type, f_tag, f_name;
+    CodegenInput cg;
+    cg.engine_root = roots.engine;
     for (int i = 2; i < argc; ++i) {
         string a = argv[i];
         if (a == "--json") json = true;
         else if (a == "--type" && i + 1 < argc) f_type = argv[++i];
         else if (a == "--tag" && i + 1 < argc) f_tag = argv[++i];
         else if (a == "--name" && i + 1 < argc) f_name = argv[++i];
-        else paths.push_back(a);
+        else if (a == "--header" && i + 1 < argc) cg.headers.push_back(argv[++i]);
+        else if (a == "--params" && i + 1 < argc) cg.params = argv[++i];
+        else if (a == "--call" && i + 1 < argc) cg.call = argv[++i];
+        else if (a == "--prelude" && i + 1 < argc) cg.prelude = argv[++i];
+        else if (a == "--flags" && i + 1 < argc) {
+            std::istringstream ss(argv[++i]);
+            string tok;
+            while (ss >> tok) cg.flags.push_back(tok);
+        } else paths.push_back(a);
     }
 
+    if (cmd == "codegen") {
+        if (cg.call.empty()) {
+            std::fprintf(stderr, "usage: foxtag codegen --header H --params 'SIG' --call 'EXPR' "
+                                 "[--flags '...'] [--prelude '...']\n");
+            return 2;
+        }
+        return cmd_codegen(cg);
+    }
+    if (cmd == "codegen-selftest") return cmd_codegen_selftest(roots.engine);
     if (cmd == "layout") {
         if (paths.empty()) { std::fprintf(stderr, "usage: foxtag layout <tu.cpp> [Struct ...]\n"); return 2; }
         return cmd_layout(paths[0], vector<string>(paths.begin() + 1, paths.end()));

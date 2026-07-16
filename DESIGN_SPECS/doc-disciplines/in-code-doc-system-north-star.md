@@ -216,10 +216,14 @@ byte-identical to the Python validator on the full tree (the migration gate
 fills the plugin's `tagadapter.parse` keystone via subprocess (D-349). Increment 2a LANDED:
 `foxtag layout` — the LAYOUT fact-producer consolidated into the core, parity-proven
 straddler-exact vs `emit_record_layout.lua` on the 204-record census (D-350; the cache-gate's
-headless-nvim dependency becomes swappable behind the gate). Increment 2b = the CODEGEN
-producer (RC-A anchor / RC-C width-class / RC-E never-green) + `foxtag update` + the RC-B
-compile-DB story + the generalized drift-gate. Plugin major-features work, overlays/asm
-half-broken (phase 5, operator's session).
+headless-nvim dependency becomes swappable behind the gate). Increment 2b LANDED: `foxtag
+codegen` — the g++ probe producer with **RC-A (instantiation anchor) / RC-C (real SIMD
+width-class incl. scalar-xmm) / RC-E (never-green-on-vacuous) built in**, EXACT-match vs the
+conformance analyzer's ratchet baseline on real kernels (Regime_Classify 489 instr / 8
+data-dep; D-351). Tool docs: `tools/foxtag/README.md`. Remaining increment 2c = `foxtag
+update` (the D-327 STRUCT writer) + the RC-B compile-DB story + the generalized drift-gate —
+then the P6 CONVERSION's hard toolchain dependencies are met. Plugin major-features work,
+overlays/asm half-broken (phase 5, operator's session).
 
 **Phased path (each phase gates the next):**
 1. Complete the **schema** against the survey's input-space taxonomy.

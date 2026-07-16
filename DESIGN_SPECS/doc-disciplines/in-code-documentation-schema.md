@@ -275,6 +275,11 @@ The comment block is the **interface** between this schema (the format) and `fox
 
 ## Templates (copy-paste skeletons — HYBRID layout: orient-above / code / detail-below)
 
+> **Validator-green copy-source: `DOCS/CODE_TAG_TEMPLATES.hpp`** — one conforming block per
+> unit type (all 10), `[SCHEMA]`-opted-in so standing CI polices the corpus forever;
+> `/doc-create code-block <TYPE> <name>` scaffolds from it. The skeletons below are the
+> normative SHAPES; the corpus is the proven rendering. (P2 propagation, D-347.)
+
 ### Function
 ```cpp
 //======================================================================
@@ -304,7 +309,7 @@ The comment block is the **interface** between this schema (the format) and `fox
 // [END_CODE]
 //======================================================================
 // [COMMENT]
-//——————————————————————————————————————————————————————————
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // [[<YYYY-MM-DD>] [<version>]]
 //----------------------------------------------------------------------
 // <what this version does + why — prose; the freeform region>
@@ -344,7 +349,7 @@ The comment block is the **interface** between this schema (the format) and `fox
 // [END_CODE]
 //======================================================================
 // [COMMENT]
-//——————————————————————————————————————————————————————————
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // [[<date>] [<version>]]
 //----------------------------------------------------------------------
 // <the layout decision + why>
@@ -389,7 +394,7 @@ The comment block is the **interface** between this schema (the format) and `fox
 // [ROW]_[TOMBSTONE]_[<retired-id>]                       // retired slot, never reused (H21)
 //======================================================================
 // [COMMENT]
-//——————————————————————————————————————————————————————————
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // [[<date>] [<version>]]
 //----------------------------------------------------------------------
 // <why the registry exists / what it drives>
@@ -427,6 +432,8 @@ The registry DERIVED — `[ROW_COUNT]` · `[ENROLLED]` (its MetaRegistry row, H1
 ## Worked examples
 
 > **Illustrative — NOT the golden fixture.** These show block SHAPE. The `[DERIVED]` numbers are hand-written placeholders (some stale — sizes predating the 16B core) and MUST NOT be frozen as the self-test golden: the committed golden is TOOL-GENERATED from the P2 pilots (`sizeof`/`offsetof`/analyzer), never hand-authored — hand-writing DERIVED is the Class-18 drift the schema bans. They also predate `[CODE]`/`[END_CODE]` framing + the cache/branch DERIVED tags (added at lock); the pilots render the current form.
+>
+> **Known validator NON-CONFORMANCES below, kept as-written** (the validator-green rendering of every type is `DOCS/CODE_TAG_TEMPLATES.hpp`, standing-CI-policed — copy from THERE, not from here; P2 propagation, D-347): pre-vocab `[TAG]` values (`[BIT_PACKED]`/`[PERSISTED]` → write `[BITMAP_PACKED]`/`[PERSISTENCE]`; `[WIRE_FORMAT]` as a TAG value collides with the fence CATEGORY of the same name — v1.1 vocab-alias candidate) · multi-category single lines (`[DERIVED]  [SIZE]_[…]`, `[ASSERT]_[…]  [WHY]_[…]` — the one-category-per-line rule wants them split) · inline `[CONTAINS]` carrying unit-type values (use the block form) · `[REFERENCE]_[REGISTRY]` (REGISTRY is not a reference-subcat; point at the governing invariant/spec instead) · doubled `[WIRE_FIELD]` per line.
 
 ### Function — `Regime_Classify` (Strategies/RegimeDetector.hpp)
 ```cpp

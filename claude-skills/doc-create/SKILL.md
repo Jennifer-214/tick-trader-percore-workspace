@@ -46,6 +46,7 @@ Composes templates from `DESIGN_SPECS/`:
 - `/doc-create tech-debt <title>` — TECH_DEBT entry per ledger-entry-templates.md
 - `/doc-create bug-class <title>` — RECURRING_BUG_PATTERNS Class N entry
 - `/doc-create memory <title> <type>` — memory rule (feedback/user/project/reference)
+- `/doc-create code-block <TYPE> <name>` — in-code `[SCHEMA]_[v1.0]` tag-block for a code unit (E.1.2.A)
 
 ## Type variants
 
@@ -62,6 +63,7 @@ Composes templates from `DESIGN_SPECS/`:
 | `landmine` | `ledger-entry-templates.md § Landmine entry` | severity / debug_hours / root_cause |
 | `hot-path-changelog` | `ledger-entry-templates.md § Hot path changelog entry` | ship_tag / delta_ns / measurement_method |
 | `memory` | `plan-templates/memory-template.md` | memory-type (feedback/user/project/reference) / concern tags / sister_specs |
+| `code-block` | `DOCS/CODE_TAG_TEMPLATES.hpp` (per-type corpus — copy the matching unit-type block) | unit type ∈ {FILE STRUCT FUNCTION REGISTRY ENUM TYPE MACRO TEST STRATEGY ASSERT} / name / `[TAG]` values — then PROVE it: `python3 tools/check_code_tag_blocks.py --paths <file>` (grammar SSoT: `doc-disciplines/in-code-documentation-schema.md`) |
 
 ## Execution model
 

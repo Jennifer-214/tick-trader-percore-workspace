@@ -34,6 +34,9 @@
 //   7. Add cfg fields: NUM_ARMS, NUM_REGIMES, learning rate, save
 //      interval, per-arm initial threshold values
 //   8. ./build.sh test — should compile + dispatch correctly
+//   9. Refresh the [STRATEGY] tag-block's [TAG]/[OVERVIEW] values, then prove it:
+//      python3 tools/check_code_tag_blocks.py --paths Strategies/<Name>.hpp
+//      (grammar SSoT: in-code-documentation-schema.md; corpus: DOCS/CODE_TAG_TEMPLATES.hpp)
 //
 // EFFORT: ~3-4h scaffold (vs ~30 min for static variant).
 // Most time is the persistence + drainer reward hook plumbing,
@@ -62,7 +65,18 @@
 #include "StrategyInterface.hpp"
 
 //======================================================================================================
-// [STATE]
+// [STRATEGY]_[<Name>]
+//------------------------------------------------------------------------------------------------------
+// [TAG]_[[ENGINE] [SLOW_PATH] [ML]]
+// [SCHEMA]_[v1.0]
+// [OVERVIEW]_[online-learning strategy — Bandit-Exp3 weighted arm selection over parameter candidates, per-regime]
+// [REFERENCE]_[INVARIANT]_[H22]
+//======================================================================================================
+// [CODE]
+//======================================================================================================
+
+//======================================================================================================
+// [SECTION]_[STATE]
 //======================================================================================================
 // Per-core state. NUM_ARMS and NUM_REGIMES are compile-time constants;
 // keep them ≤ 16 to fit BanditLearning's AVX-512 codepath bytewise.
@@ -94,7 +108,7 @@ template <unsigned F> struct <Name>State {
 };
 
 //======================================================================================================
-// [INIT]
+// [SECTION]_[INIT]
 //======================================================================================================
 // Initialize uniform weights (1/NUM_ARMS per arm). Spread arm thresholds
 // from cfg or use sensible defaults. This is the only place that touches
@@ -136,7 +150,7 @@ inline void <Name>_Init(<Name>State<F> *state,
 }
 
 //======================================================================================================
-// [ADAPT]
+// [SECTION]_[ADAPT]
 //======================================================================================================
 // Per slow-path cycle. NO reward updates here (rewards arrive at trade-
 // close, not per-tick). Just:
@@ -175,7 +189,7 @@ inline void <Name>_Adapt(<Name>State<F> *state,
 }
 
 //======================================================================================================
-// [BUILD PARAMETERS — sharded]
+// [SECTION]_[BUILD PARAMETERS — sharded]
 //======================================================================================================
 // Use the ARM-SELECTED parameter (state->last_arm_idx[regime] →
 // state->arm_thresholds[selected]). Fill out gate parameters with that.
@@ -209,7 +223,7 @@ inline void <Name>_BuildParameters(
 }
 
 //======================================================================================================
-// [EXIT ADJUST — sharded]
+// [SECTION]_[EXIT ADJUST — sharded]
 //======================================================================================================
 // Same as static template — trail SL via Strategy_WriteRatchetSL etc.
 // See DOCS/STRATEGY_TEMPLATE.hpp for pattern.
@@ -229,7 +243,7 @@ inline void <Name>_ExitAdjustSharded(
 }
 
 //======================================================================================================
-// [REWARD UPDATE HOOK — called from drainer post-fill]
+// [SECTION]_[REWARD UPDATE HOOK — called from drainer post-fill]
 //======================================================================================================
 // Goes in <Name>_Bandit.hpp (separate file). Drainer's OrderManager_Tick
 // post-fill block calls this when a trade closes:
@@ -259,7 +273,7 @@ inline void <name>_Bandit_Update(<Name>State<F> *state, int regime_idx,
 }
 
 //======================================================================================================
-// [PERSISTENCE — atomic write + load on boot]
+// [SECTION]_[PERSISTENCE — atomic write + load on boot]
 //======================================================================================================
 // Goes in <Name>_Bandit.hpp. Mirrors v5.10.0a-final's bandit_state.json
 // pattern. JSON format: {"version": 1, "weights": [[r0a0, r0a1, ...], ...]}
@@ -279,7 +293,7 @@ inline void <name>_Bandit_LoadState(<Name>State<F> *state, const char *path) {
 }
 
 //======================================================================================================
-// [CFG FIELDS NEEDED]
+// [SECTION]_[CFG FIELDS NEEDED]
 //======================================================================================================
 //
 // Add to CoreFrameworks/ControllerConfig.hpp:
@@ -304,4 +318,10 @@ inline void <name>_Bandit_LoadState(<Name>State<F> *state, const char *path) {
 //   else if (strcmp(key, "<name>_bandit_save_interval") == 0) {
 //       cfg.<name>_bandit_save_interval = atoi(val);
 //   }
+//======================================================================================================
+// [END_CODE]
+//======================================================================================================
+// [DERIVED]   (tool-refreshed at conversion — leave empty; the tools fill it, D-327)
+//======================================================================================================
+// [END_STRATEGY]_[<Name>]
 //======================================================================================================

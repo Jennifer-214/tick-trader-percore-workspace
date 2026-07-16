@@ -59,6 +59,19 @@ Examples:
 | "operator" / "collaboration" / "feedback" | tags:operator-collaboration |
 | "structural fix" / "bug class" | tags:structural-fix |
 
+## Code-side twin (in-code `[TAG]` blocks — E.1.2.A)
+
+Converted engine units carry `[SCHEMA]_[v1.0]` tag-blocks (grammar SSoT:
+`DESIGN_SPECS/doc-disciplines/in-code-documentation-schema.md`) — the SAME compose recipes
+run over code:
+
+```bash
+rg -l '\[TAG\]_\[\[SLOW_PATH' --glob '*.hpp'     # code units tagged [SLOW_PATH]
+rg -n '\[REFERENCE\]_\[DESIGN_SPEC\]_\[cache'    # code -> workspace-doc back-references
+```
+
+Browsable snapshot: `DOCS/CODE_TAG_INDEX.md` (regen via `/index-rebuild`); `rg` stays the SSoT.
+
 ## Output format
 
 ```

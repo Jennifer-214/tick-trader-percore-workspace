@@ -201,7 +201,7 @@ Per-file-type thresholds + AI-driven workflow scoping rationale at `DESIGN_SPECS
 
 ## How to find anything (search guide)
 
-Doc system is institutional memory + type-tag driven + greppable. Top common queries below; full recipe catalog at `DESIGN_SPECS/meta-disciplines/doc-find-recipes.md` (queued via `/find` skill at `.C` candidate; manual `rg` for now). Tag vocabulary: `DESIGN_SPECS/meta-disciplines/doc-tag-vocabulary.md`. Frontmatter convention: `DESIGN_SPECS/meta-disciplines/doc-frontmatter-convention.md`. **Canonical terminology** (Cluster / Node / Deployment / ExecutionCore / per-node vs CPU-core): `DOCS/DESIGN_PHILOSOPHY.md` § 15 Glossary — the SSoT bridge for the `per-core`→`per-node` evolution.
+Doc system is institutional memory + type-tag driven + greppable. Top common queries below; full recipe catalog at `DESIGN_SPECS/meta-disciplines/doc-find-recipes.md` (queued via `/find` skill at `.C` candidate; manual `rg` for now). Tag vocabulary: `DESIGN_SPECS/meta-disciplines/doc-tag-vocabulary.md`. Frontmatter convention: `DESIGN_SPECS/meta-disciplines/doc-frontmatter-convention.md`. In-code tag-blocks (`[SCHEMA]_[v1.0]`): grammar SSoT `DESIGN_SPECS/doc-disciplines/in-code-documentation-schema.md` · validator `tools/check_code_tag_blocks.py` · copy-source `DOCS/CODE_TAG_TEMPLATES.hpp` · index `DOCS/CODE_TAG_INDEX.md`. **Canonical terminology** (Cluster / Node / Deployment / ExecutionCore / per-node vs CPU-core): `DOCS/DESIGN_PHILOSOPHY.md` § 15 Glossary — the SSoT bridge for the `per-core`→`per-node` evolution.
 
 **Top-3 most common queries:**
 

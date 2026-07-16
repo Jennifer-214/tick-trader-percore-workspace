@@ -25,6 +25,10 @@ Quarterly cadence audit catching doc-system drift mechanically:
 - Filesystem-path mismatches with `type:` frontmatter (post folder restructure)
 - File-size threshold violations (per `file-size-split-discipline.md`)
 - Dead cross-references (`sister_specs:` paths that don't exist)
+- Code-tag drift (the CODE-side twin, E.1.2.A): `python3 tools/check_code_tag_blocks.py`
+  full-tree (grammar / vocab / dangling `[REFERENCE]` ids) + `python3
+  tools/rebuild_doc_indexes.py --check` (DOCS/CODE_TAG_INDEX.md currency) — both also run
+  in standing CI; here they anchor the quarterly sweep
 
 Sister to `/anti-spaghetti` quarterly cadence — `/anti-spaghetti` audits CODE structure; this audits DOC structure.
 

@@ -18,10 +18,16 @@ loads_dynamically: [DESIGN_SPECS/meta-disciplines/doc-frontmatter-convention.md,
 
 Walks all docs with YAML frontmatter; aggregates by type / concern / surface / lifecycle; rewrites canonical index files mechanically.
 
+**Mechanical implementation: `python3 tools/rebuild_doc_indexes.py`** — RUN the tool (its
+`--check` mode is the standing currency guard in `check_session_docs`); the sections below
+describe what it generates.
+
 Eliminates the manual maintenance of:
 - CLAUDE.md "Skill suite" table (auto-generated from SKILL.md frontmatter)
 - DESIGN_SPECS/README.md (auto-generated from DESIGN_SPECS/*.md frontmatter)
 - DESIGN_SPECS/TAG_INDEX.md (auto-generated tag → files reverse-lookup snapshot)
+- DOCS/CODE_TAG_INDEX.md (the CODE-side twin — `[TAG]` values + unit blocks across converted
+  engine files, via the validator's shared grammar; E.1.2.A)
 - Memory file index in MEMORY.md (auto-generated from memory/*.md frontmatter)
 
 When a new spec/skill/memory lands, this skill regenerates the indexes — no manual edit of CLAUDE.md tables required.
@@ -32,6 +38,7 @@ When a new spec/skill/memory lands, this skill regenerates the indexes — no ma
 - `/index-rebuild --target claude-md` — regenerate CLAUDE.md skill suite table only
 - `/index-rebuild --target design-specs-readme` — regenerate DESIGN_SPECS/README.md only
 - `/index-rebuild --target tag-index` — regenerate DESIGN_SPECS/TAG_INDEX.md snapshot
+- `/index-rebuild --target code-tag-index` — regenerate DOCS/CODE_TAG_INDEX.md (code-side twin)
 - `/index-rebuild --target memory` — regenerate MEMORY.md index
 - `/index-rebuild --dry-run` — print proposed changes without writing
 

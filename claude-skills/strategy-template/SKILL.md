@@ -132,6 +132,12 @@ function signatures + canonical includes for THIS codebase's
 current state (consult current Version.hpp). Don't synthesize from
 memory; copy the template.
 
+Both templates ship with a conforming `[STRATEGY]` tag-block
+(`[SCHEMA]_[v1.0]`, E.1.2.A) — it copies along with the file. After the
+sed pass, refresh its `[TAG]`/`[OVERVIEW]` values and prove it:
+`python3 tools/check_code_tag_blocks.py --paths Strategies/<Name>.hpp`
+(per-type corpus: `DOCS/CODE_TAG_TEMPLATES.hpp`).
+
 If the template file is missing on a clone (it's gitignored), it's
 in the workspace at:
 - `/home/caramel/code/tick-trader-percore-workspace/DOCS/STRATEGY_TEMPLATE.hpp`

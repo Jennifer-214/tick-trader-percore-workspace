@@ -20,6 +20,10 @@
 //          <Name>_Adapt, <Name>_ExitAdjustSharded)
 //   5. Append the strategy color in GUI/DashboardPanels.hpp's strat_colors[]
 //   6. ./build.sh test   — should compile + dispatch correctly
+//   7. Refresh the [STRATEGY] tag-block's [TAG]/[OVERVIEW] values for your strategy, then
+//      prove it: python3 tools/check_code_tag_blocks.py --paths Strategies/<Name>.hpp
+//      (grammar SSoT: DESIGN_SPECS/doc-disciplines/in-code-documentation-schema.md;
+//       per-type corpus: DOCS/CODE_TAG_TEMPLATES.hpp)
 //
 // CONVENTIONS:
 //   - <Name> is PascalCase: MeanReversion, Momentum, etc.
@@ -40,7 +44,18 @@
 #include "StrategyInterface.hpp"
 
 //======================================================================================================
-// [STATE]
+// [STRATEGY]_[<Name>]
+//------------------------------------------------------------------------------------------------------
+// [TAG]_[[ENGINE] [SLOW_PATH]]
+// [SCHEMA]_[v1.0]
+// [OVERVIEW]_[<one-line gist — signal source + regime fit; fill at scaffold time>]
+// [REFERENCE]_[INVARIANT]_[H22]
+//======================================================================================================
+// [CODE]
+//======================================================================================================
+
+//======================================================================================================
+// [SECTION]_[STATE]
 //======================================================================================================
 // Per-core state. Allocated once per registered core during _InitPerCore.
 // Hold any mutable state your Adapt + BuildParameters logic needs across
@@ -58,7 +73,7 @@ template <unsigned F> struct <Name>State {
 };
 
 //======================================================================================================
-// [INIT]
+// [SECTION]_[INIT]
 //======================================================================================================
 // Called once per core after warmup completes. Set initial state from rolling
 // stats. Do NOT touch buy_conds — leave that to BuildParameters.
@@ -73,7 +88,7 @@ inline void <Name>_Init(<Name>State<F> *state,
 }
 
 //======================================================================================================
-// [ADAPT]
+// [SECTION]_[ADAPT]
 //======================================================================================================
 // Called every slow-path cycle. Update adaptive state based on current price,
 // portfolio P&L delta, and config. Return nothing — mutations land in `state`.
@@ -101,7 +116,7 @@ inline void <Name>_Adapt(<Name>State<F> *state,
 }
 
 //======================================================================================================
-// [BUILD PARAMETERS — sharded]
+// [SECTION]_[BUILD PARAMETERS — sharded]
 //======================================================================================================
 // THE CONTRACT WITH THE HOT PATH. Called per slow-path cycle. Emits the
 // GateParameters pack that the hot path's BG_Evaluate / SG_Evaluate consume.
@@ -148,7 +163,7 @@ inline void <Name>_BuildParameters(
 }
 
 //======================================================================================================
-// [EXIT ADJUST — sharded]
+// [SECTION]_[EXIT ADJUST — sharded]
 //======================================================================================================
 // Called per slow-path cycle for active positions on this core. Trail SL
 // and/or TP via Strategy_WriteRatchetSL / _WriteRatchetTP helpers (which
@@ -202,3 +217,11 @@ inline void <Name>_ExitAdjustSharded(
     (void)strat_state;
 }
 } // namespace tt
+
+//======================================================================================================
+// [END_CODE]
+//======================================================================================================
+// [DERIVED]   (tool-refreshed at conversion — leave empty; the tools fill it, D-327)
+//======================================================================================================
+// [END_STRATEGY]_[<Name>]
+//======================================================================================================

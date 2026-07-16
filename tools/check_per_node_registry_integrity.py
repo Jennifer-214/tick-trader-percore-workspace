@@ -463,22 +463,18 @@ CHECK_10_PER_NODE_FIELDS_WITH_GLOBAL_SISTER = {
 }
 
 # Section D exemptions — legitimate UNINDEXED-GLOBAL reads at per-node consumer sites.
-# Format: (file_rel_path, line_num) tuples.
-# Operator extends via MANUAL_FIELDS_INVENTORY.md Section D when new legitimate cases surface.
-CHECK_10_SECTION_D_EXEMPTIONS = {
-    # LEGACY single_core paths (per .B.7 audit Cat 8 LEGACY-KEEP verdict; caller is single_core PortfolioController)
-    # NOTE (Ship-A): these line anchors drifted 143/144 -> 145/146 across this session's .v-port edits above
-    # the site. Line-keyed exemptions are fragile (any edit above shifts them); flagged for a structural
-    # re-key (by file+field or a code-anchor comment) as a follow-up — see Ship-A learnings.
-    ("Strategies/private/EmaCross.hpp", 145),  # EmaCross_ExitAdjust legacy single_core fee_rate_taker (!IsZero guard)
-    ("Strategies/private/EmaCross.hpp", 146),  # ternary: fee_rate_taker : fee_rate (sister fallback) — gate keys here
-    # KEEP-AS-GLOBAL display sites (Settings panel operator-facing semantic; per-node deviations
-    # surfaced via per_node_count panel instead). Line numbers reflect post-.B.8 Phase B
-    # KEEP-AS-GLOBAL comment additions (lines shifted from original 139/330/331 to 142/343/344).
-    ("CoreFrameworks/ShardedSnapshot.hpp", 142),  # engine-wide headline fee_rate_pct display
-    ("CoreFrameworks/ShardedSnapshot.hpp", 343),  # Settings panel cfg_fee display
-    ("CoreFrameworks/ShardedSnapshot.hpp", 344),  # Settings panel cfg_slippage display
-}
+# STRUCTURAL RE-KEY (2026-07-16; the Ship-A follow-up): exemptions are keyed by an IN-CODE
+# ANCHOR MARKER, not (file, line) tuples. The old line-keyed set drifted on every comment
+# edit above a site (Ship-A saw 143/144 -> 145/146; the E.1.2.A tag-conversion sprint made
+# that a per-file event — its [FILE]/[FUNCTION] headers shift every line below them).
+#
+# Mechanism: a site is exempt when the KEEP-AS-GLOBAL token appears in a comment on the
+# violating line itself or within the KEEP_AS_GLOBAL_WINDOW lines above it. The marker
+# travels with the code (immune to line drift) and its comment text carries the WHY —
+# display semantic (Settings panel), LEGACY-KEEP verdict (single_core caller), etc.
+# Grep the marker for the live exemption inventory:  rg "KEEP-AS-GLOBAL" --type cpp
+KEEP_AS_GLOBAL_TOKEN = "KEEP-AS-GLOBAL"
+KEEP_AS_GLOBAL_WINDOW = 8  # governing comment block + a small statement group (Settings-panel cluster is 4 comment + 4 assignment lines)
 
 # Boot-time / parse-time fn-name patterns excluded from Check 10 (legitimate global cfg reads)
 CHECK_10_BOOT_TIME_FN_NAME_PATTERNS = {"Boot", "Init", "Default", "Parse", "Normalize"}
@@ -508,6 +504,18 @@ def scan_check_10_violations(text: str, file_rel_path: str) -> list:
     field_alt = '|'.join(re.escape(f) for f in CHECK_10_PER_NODE_FIELDS_WITH_GLOBAL_SISTER)
     if not field_alt:
         return findings
+
+    all_lines = text.split('\n')
+
+    def has_keep_as_global_marker(idx0: int) -> bool:
+        """Section D anchor-marker exemption: KEEP-AS-GLOBAL in a comment on the site line
+        (0-based idx0) or within KEEP_AS_GLOBAL_WINDOW lines above it. Comment-only match
+        ('//' required on the carrying line) so a string literal can't accidentally exempt."""
+        for j in range(max(0, idx0 - KEEP_AS_GLOBAL_WINDOW), idx0 + 1):
+            l = all_lines[j]
+            if KEEP_AS_GLOBAL_TOKEN in l and '//' in l and l.index('//') < l.index(KEEP_AS_GLOBAL_TOKEN):
+                return True
+        return False
 
     # Match: cfg.X / cfg->X / resolved_cfg.X where X is per-node-with-global-sister field
     # Negative lookahead (?!\s*[\[.]) excludes cfg.X[Y] (indexed) and cfg.X.subfield (nested)
@@ -541,8 +549,8 @@ def scan_check_10_violations(text: str, file_rel_path: str) -> list:
             if candidate not in ("if", "while", "for", "switch", "return", "sizeof", "alignof", "static_assert"):
                 current_fn = candidate
 
-        # Check Section D exemption (uses ORIGINAL source line_num for accurate match)
-        if (file_rel_path, line_num) in CHECK_10_SECTION_D_EXEMPTIONS:
+        # Section D exemption — in-code KEEP-AS-GLOBAL anchor marker (line-drift-immune)
+        if has_keep_as_global_marker(line_num - 1):
             continue
 
         # Boot-time / parse-time fn-name heuristic
@@ -874,11 +882,11 @@ def main() -> int:
             fail(f"  → {rel_path}:{line_num}{fn_ctx}: '{container}{accessor}{field}' UNINDEXED at per-node consumer site")
             fail(f"     Class 26 sub-shape B anti-pattern — per-node consumer must read per-node slot")
             fail(f"     Fix: change {container}{accessor}{field} → {container}{accessor}nodes[<node_id>].{field}")
-            fail(f"     OR if legitimately global (Settings panel display / legacy single_core / boot-time): add to CHECK_10_SECTION_D_EXEMPTIONS at tools/check_per_node_registry_integrity.py")
+            fail(f"     OR if legitimately global (Settings panel display / legacy single_core / boot-time): put a KEEP-AS-GLOBAL comment marker (with the WHY) on or within {KEEP_AS_GLOBAL_WINDOW} lines above the site")
             fail(f"     See: DOCS/recurring-bug-patterns/class-26-global-consumer-reading-per-node-field.md § Sub-shape B")
         failures += 1
     else:
-        info(f"Check 10 PASS: {len(CHECK_10_SCAN_FILES)} file(s) scanned; no Class 26 sub-shape B UNINDEXED-GLOBAL violations ({len(CHECK_10_SECTION_D_EXEMPTIONS)} Section D exemption(s) on file)")
+        info(f"Check 10 PASS: {len(CHECK_10_SCAN_FILES)} file(s) scanned; no Class 26 sub-shape B UNINDEXED-GLOBAL violations (Section D = in-code {KEEP_AS_GLOBAL_TOKEN} markers; rg the token for the inventory)")
 
     # --- Check 11: A24 / H22 — per-shard FLAT write of a per-node cfg field (Class 44 cfg-mutation) ---
     # Per RECURRING_BUG_PATTERNS Class 44 + the H22 spec per-node-purity-scale-invariance.md §"The mechanical guard".

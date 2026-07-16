@@ -209,8 +209,14 @@ landed — validator caught up to the locked contract + per-type template corpus
 (`DOCS/CODE_TAG_TEMPLATES.hpp`) + code-tag index + skills/CLAUDE.md alignment (D-347);
 dogfood corpus LANDED + PROVEN LOSSLESS — 4 real units (rich file-header / hot struct /
 registry slice / wire parser) converted in `tests/schema_golden/`, mechanical
-comment-stripped code diff clean (D-348). Toolchain ~half-wired (RC-A…E open — the next
-phase); plugin major-features work, overlays/asm half-broken (operator's session).
+comment-stripped code diff clean (D-348). Phase 4 OPENED: the D-337 central core
+increment 1 LANDED — `tools/foxtag/` C++ parser + scanner + query engine, PARITY-PROVEN
+byte-identical to the Python validator on the full tree (the migration gate
+`foxtag/parity_check.sh`; ~19ms vs ~147ms); the `foxtag unit <file> <line>` JSON query
+fills the plugin's `tagadapter.parse` keystone via subprocess (D-349). Increment 2 = the
+fact-producer orchestrator: RC-A…E + compile-DB + `:FoxTagUpdate` + the generalized
+drift-gate. Plugin major-features work, overlays/asm half-broken (phase 5, operator's
+session).
 
 **Phased path (each phase gates the next):**
 1. Complete the **schema** against the survey's input-space taxonomy.

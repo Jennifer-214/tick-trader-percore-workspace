@@ -15,7 +15,7 @@ so the snapshot stales when tags/units actually change, not on unrelated line dr
 `rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a
 conversion).
 
-Converted files: 37 · unit blocks: 181
+Converted files: 41 · unit blocks: 190
 
 ## [TAG] values → files
 
@@ -27,7 +27,7 @@ Converted files: 37 · unit blocks: 181
 
 - `Strategies/RegimeDetector.hpp`
 
-### BITMAP_PACKED (6 files)
+### BITMAP_PACKED (7 files)
 
 - `CoreFrameworks/GateCfgFlagRegistry.hpp`
 - `CoreFrameworks/LifecycleCfgFlagRegistry.hpp`
@@ -35,6 +35,7 @@ Converted files: 37 · unit blocks: 181
 - `CoreFrameworks/Order.hpp`
 - `CoreFrameworks/Portfolio.hpp`
 - `CoreFrameworks/RiskCfgFlagRegistry.hpp`
+- `CoreFrameworks/SlowPathGateRegistry.hpp`
 
 ### BOOT_TIME (13 files)
 
@@ -68,13 +69,14 @@ Converted files: 37 · unit blocks: 181
 - `CoreFrameworks/ShardedLiveSafety.hpp`
 - `CoreFrameworks/TradeEvent.hpp`
 
-### CFG_FLOW (7 files)
+### CFG_FLOW (8 files)
 
 - `CoreFrameworks/GateCfgFlagRegistry.hpp`
 - `CoreFrameworks/LifecycleCfgFlagRegistry.hpp`
 - `CoreFrameworks/OpsCfgFlagRegistry.hpp`
 - `CoreFrameworks/RiskCfgFlagRegistry.hpp`
 - `CoreFrameworks/SessionPhaseRegistry.hpp`
+- `CoreFrameworks/SlowPathGateRegistry.hpp`
 - `CoreFrameworks/StampBoundDerivedFilter.hpp`
 - `CoreFrameworks/TradeLogColRegistry.hpp`
 
@@ -92,11 +94,13 @@ Converted files: 37 · unit blocks: 181
 - `CoreFrameworks/ShardedOrderLatency.hpp`
 - `CoreFrameworks/TradeEvent.hpp`
 
-### CRITICAL (9 files)
+### CRITICAL (11 files)
 
 - `CoreFrameworks/EngineSharded/Async.hpp`
 - `CoreFrameworks/EnsembleHotSwap.hpp`
+- `CoreFrameworks/HotSwap.hpp`
 - `CoreFrameworks/LiveReadiness.hpp`
+- `CoreFrameworks/ModelValidation.hpp`
 - `CoreFrameworks/OrderManager.hpp`
 - `CoreFrameworks/ParameterSlot.hpp`
 - `CoreFrameworks/ParseFast.hpp`
@@ -138,7 +142,7 @@ Converted files: 37 · unit blocks: 181
 - `CoreFrameworks/StampBoundDerivedFilter.hpp`
 - `CoreFrameworks/SystemInit.hpp`
 
-### ENGINE (36 files)
+### ENGINE (40 files)
 
 - `CoreFrameworks/EngineSharded.hpp`
 - `CoreFrameworks/EngineSharded/Async.hpp`
@@ -150,16 +154,19 @@ Converted files: 37 · unit blocks: 181
 - `CoreFrameworks/ExecutionCore.hpp`
 - `CoreFrameworks/GateCfgFlagRegistry.hpp`
 - `CoreFrameworks/GateParameters.hpp`
+- `CoreFrameworks/HotSwap.hpp`
 - `CoreFrameworks/LifecycleCfgFlagRegistry.hpp`
 - `CoreFrameworks/LiveReadiness.hpp`
 - `CoreFrameworks/MetaRegistry.hpp`
 - `CoreFrameworks/MetricCompute.hpp`
+- `CoreFrameworks/ModelValidation.hpp`
 - `CoreFrameworks/NodeLatencyStats.hpp`
 - `CoreFrameworks/OpsCfgFlagRegistry.hpp`
 - `CoreFrameworks/Order.hpp`
 - `CoreFrameworks/OrderEventLog.hpp`
 - `CoreFrameworks/OrderGates.hpp`
 - `CoreFrameworks/OrderManager.hpp`
+- `CoreFrameworks/PaperResetArchive.hpp`
 - `CoreFrameworks/ParameterSlot.hpp`
 - `CoreFrameworks/ParseFast.hpp`
 - `CoreFrameworks/Portfolio.hpp`
@@ -169,6 +176,7 @@ Converted files: 37 · unit blocks: 181
 - `CoreFrameworks/SessionPhaseRegistry.hpp`
 - `CoreFrameworks/ShardedLiveSafety.hpp`
 - `CoreFrameworks/ShardedOrderLatency.hpp`
+- `CoreFrameworks/SlowPathGateRegistry.hpp`
 - `CoreFrameworks/SpSectionRegistry.hpp`
 - `CoreFrameworks/StampBoundDerivedFilter.hpp`
 - `CoreFrameworks/SystemInit.hpp`
@@ -189,11 +197,12 @@ Converted files: 37 · unit blocks: 181
 - `CoreFrameworks/MetricCompute.hpp`
 - `CoreFrameworks/NodeLatencyStats.hpp`
 
-### FRAMEWORK_DISCIPLINE (5 files)
+### FRAMEWORK_DISCIPLINE (6 files)
 
 - `CoreFrameworks/LiveReadiness.hpp`
 - `CoreFrameworks/MetaRegistry.hpp`
 - `CoreFrameworks/SessionPhaseRegistry.hpp`
+- `CoreFrameworks/SlowPathGateRegistry.hpp`
 - `CoreFrameworks/TradeLogColRegistry.hpp`
 - `Strategies/StrategyInterface.hpp`
 
@@ -231,18 +240,21 @@ Converted files: 37 · unit blocks: 181
 - `CoreFrameworks/ShardedLiveSafety.hpp`
 - `CoreFrameworks/ShardedOrderLatency.hpp`
 
-### ML (4 files)
+### ML (6 files)
 
 - `CoreFrameworks/EnsembleHotSwap.hpp`
+- `CoreFrameworks/HotSwap.hpp`
 - `CoreFrameworks/LiveReadiness.hpp`
+- `CoreFrameworks/ModelValidation.hpp`
 - `CoreFrameworks/OrderManager.hpp`
 - `Strategies/RegimeDetector.hpp`
 
-### MONITORING_PLANE (7 files)
+### MONITORING_PLANE (8 files)
 
 - `CoreFrameworks/EventLoopAggregates.hpp`
 - `CoreFrameworks/MetricCompute.hpp`
 - `CoreFrameworks/NodeLatencyStats.hpp`
+- `CoreFrameworks/PaperResetArchive.hpp`
 - `CoreFrameworks/SPSCRing.hpp`
 - `CoreFrameworks/ShardedOrderLatency.hpp`
 - `CoreFrameworks/SpSectionRegistry.hpp`
@@ -260,25 +272,29 @@ Converted files: 37 · unit blocks: 181
 
 - `CoreFrameworks/ParseFast.hpp`
 
-### PERSISTENCE (3 files)
+### PERSISTENCE (4 files)
 
 - `CoreFrameworks/Order.hpp`
 - `CoreFrameworks/OrderEventLog.hpp`
+- `CoreFrameworks/PaperResetArchive.hpp`
 - `CoreFrameworks/Portfolio.hpp`
 
 ### PRODUCER (1 files)
 
 - `CoreFrameworks/EngineSharded/Async.hpp`
 
-### SLOW_PATH (9 files)
+### SLOW_PATH (12 files)
 
 - `CoreFrameworks/EnsembleHotSwap.hpp`
 - `CoreFrameworks/EventLoopAggregates.hpp`
 - `CoreFrameworks/ExecutionCore.hpp`
+- `CoreFrameworks/HotSwap.hpp`
+- `CoreFrameworks/ModelValidation.hpp`
 - `CoreFrameworks/NodeLatencyStats.hpp`
 - `CoreFrameworks/OrderManager.hpp`
 - `CoreFrameworks/ParameterSlot.hpp`
 - `CoreFrameworks/Portfolio.hpp`
+- `CoreFrameworks/SlowPathGateRegistry.hpp`
 - `CoreFrameworks/SpSectionRegistry.hpp`
 - `Strategies/RegimeDetector.hpp`
 
@@ -316,7 +332,7 @@ Converted files: 37 · unit blocks: 181
 - `OrderState` — `CoreFrameworks/Order.hpp`
 - `OrderType` — `CoreFrameworks/Order.hpp`
 
-### FILE (36)
+### FILE (40)
 
 - `CoreFrameworks/EngineSharded.hpp` — `CoreFrameworks/EngineSharded.hpp`
 - `CoreFrameworks/EngineSharded/Async.hpp` — `CoreFrameworks/EngineSharded/Async.hpp`
@@ -328,16 +344,19 @@ Converted files: 37 · unit blocks: 181
 - `CoreFrameworks/ExecutionCore.hpp` — `CoreFrameworks/ExecutionCore.hpp`
 - `CoreFrameworks/GateCfgFlagRegistry.hpp` — `CoreFrameworks/GateCfgFlagRegistry.hpp`
 - `CoreFrameworks/GateParameters.hpp` — `CoreFrameworks/GateParameters.hpp`
+- `CoreFrameworks/HotSwap.hpp` — `CoreFrameworks/HotSwap.hpp`
 - `CoreFrameworks/LifecycleCfgFlagRegistry.hpp` — `CoreFrameworks/LifecycleCfgFlagRegistry.hpp`
 - `CoreFrameworks/LiveReadiness.hpp` — `CoreFrameworks/LiveReadiness.hpp`
 - `CoreFrameworks/MetaRegistry.hpp` — `CoreFrameworks/MetaRegistry.hpp`
 - `CoreFrameworks/MetricCompute.hpp` — `CoreFrameworks/MetricCompute.hpp`
+- `CoreFrameworks/ModelValidation.hpp` — `CoreFrameworks/ModelValidation.hpp`
 - `CoreFrameworks/NodeLatencyStats.hpp` — `CoreFrameworks/NodeLatencyStats.hpp`
 - `CoreFrameworks/OpsCfgFlagRegistry.hpp` — `CoreFrameworks/OpsCfgFlagRegistry.hpp`
 - `CoreFrameworks/Order.hpp` — `CoreFrameworks/Order.hpp`
 - `CoreFrameworks/OrderEventLog.hpp` — `CoreFrameworks/OrderEventLog.hpp`
 - `CoreFrameworks/OrderGates.hpp` — `CoreFrameworks/OrderGates.hpp`
 - `CoreFrameworks/OrderManager.hpp` — `CoreFrameworks/OrderManager.hpp`
+- `CoreFrameworks/PaperResetArchive.hpp` — `CoreFrameworks/PaperResetArchive.hpp`
 - `CoreFrameworks/ParameterSlot.hpp` — `CoreFrameworks/ParameterSlot.hpp`
 - `CoreFrameworks/ParseFast.hpp` — `CoreFrameworks/ParseFast.hpp`
 - `CoreFrameworks/Portfolio.hpp` — `CoreFrameworks/Portfolio.hpp`
@@ -347,6 +366,7 @@ Converted files: 37 · unit blocks: 181
 - `CoreFrameworks/SessionPhaseRegistry.hpp` — `CoreFrameworks/SessionPhaseRegistry.hpp`
 - `CoreFrameworks/ShardedLiveSafety.hpp` — `CoreFrameworks/ShardedLiveSafety.hpp`
 - `CoreFrameworks/ShardedOrderLatency.hpp` — `CoreFrameworks/ShardedOrderLatency.hpp`
+- `CoreFrameworks/SlowPathGateRegistry.hpp` — `CoreFrameworks/SlowPathGateRegistry.hpp`
 - `CoreFrameworks/SpSectionRegistry.hpp` — `CoreFrameworks/SpSectionRegistry.hpp`
 - `CoreFrameworks/StampBoundDerivedFilter.hpp` — `CoreFrameworks/StampBoundDerivedFilter.hpp`
 - `CoreFrameworks/SystemInit.hpp` — `CoreFrameworks/SystemInit.hpp`
@@ -355,7 +375,7 @@ Converted files: 37 · unit blocks: 181
 - `CoreFrameworks/TradeLogColRegistry.hpp` — `CoreFrameworks/TradeLogColRegistry.hpp`
 - `RegimeDetector.hpp` — `Strategies/RegimeDetector.hpp`
 
-### FUNCTION (84)
+### FUNCTION (88)
 
 - `BG_Evaluate` — `CoreFrameworks/GateParameters.hpp`
 - `BuyGate` — `CoreFrameworks/OrderGates.hpp`
@@ -376,12 +396,15 @@ Converted files: 37 · unit blocks: 181
 - `ExecutionCore_Tick_Impl` — `CoreFrameworks/ExecutionCore.hpp`
 - `ExitBuffer_PendingProceeds` — `CoreFrameworks/Portfolio.hpp`
 - `GateParameters_Init` — `CoreFrameworks/GateParameters.hpp`
+- `HotSwap_ShadowLoad_Ensemble` — `CoreFrameworks/HotSwap.hpp`
+- `HotSwap_ShadowLoad_SingleZoo` — `CoreFrameworks/HotSwap.hpp`
 - `LiveReadiness_Verify` — `CoreFrameworks/LiveReadiness.hpp`
 - `Money_FillGross` — `CoreFrameworks/Portfolio.hpp`
 - `NodeLatencyStats_Init` — `CoreFrameworks/NodeLatencyStats.hpp`
 - `NodeLatencyStats_Reset` — `CoreFrameworks/NodeLatencyStats.hpp`
 - `NodeLatencyStats_Sample` — `CoreFrameworks/NodeLatencyStats.hpp`
 - `NodeLatencyStats_Snapshot` — `CoreFrameworks/NodeLatencyStats.hpp`
+- `NodeModelZoo_ValidateAgainstCfg` — `CoreFrameworks/ModelValidation.hpp`
 - `OMS_DrainSubmit` — `CoreFrameworks/OrderManager.hpp`
 - `OMS_ExpectedFreeCash` — `CoreFrameworks/OrderManager.hpp`
 - `OMS_GuardTakerBoundFeeBasis` — `CoreFrameworks/OrderManager.hpp`
@@ -434,6 +457,7 @@ Converted files: 37 · unit blocks: 181
 - `STAMP_BOUND_CFG_emit_canonical_body` — `CoreFrameworks/StampBoundDerivedFilter.hpp`
 - `SellGate` — `CoreFrameworks/OrderGates.hpp`
 - `ShardedOrderLatency_Sample` — `CoreFrameworks/ShardedOrderLatency.hpp`
+- `Summary_WriteJson` — `CoreFrameworks/PaperResetArchive.hpp`
 - `aggregate_zoo_drift` — `CoreFrameworks/LiveReadiness.hpp`
 - `check_live_capital_gated_until_e` — `CoreFrameworks/LiveReadiness.hpp`
 - `engine_set_mxcsr_ftz_daz` — `CoreFrameworks/SystemInit.hpp`
@@ -442,7 +466,7 @@ Converted files: 37 · unit blocks: 181
 - `parse_double_fast` — `CoreFrameworks/ParseFast.hpp`
 - `reconcile_thread_body` — `CoreFrameworks/ReconciliationLoop.hpp`
 
-### REGISTRY (11)
+### REGISTRY (12)
 
 - `FOREACH_BACKTEST_METRIC` — `CoreFrameworks/MetricCompute.hpp`
 - `FOREACH_GATE_CFG_FLAG` — `CoreFrameworks/GateCfgFlagRegistry.hpp`
@@ -452,6 +476,7 @@ Converted files: 37 · unit blocks: 181
 - `FOREACH_REGISTRY` — `CoreFrameworks/MetaRegistry.hpp`
 - `FOREACH_RISK_CFG_FLAG` — `CoreFrameworks/RiskCfgFlagRegistry.hpp`
 - `FOREACH_SESSION_PHASE` — `CoreFrameworks/SessionPhaseRegistry.hpp`
+- `FOREACH_SLOW_PATH_GATE` — `CoreFrameworks/SlowPathGateRegistry.hpp`
 - `FOREACH_SP_SECTION` — `CoreFrameworks/SpSectionRegistry.hpp`
 - `FOREACH_STRATEGY` — `Strategies/StrategyInterface.hpp`
 - `FOREACH_TRADE_LOG_COL` — `CoreFrameworks/TradeLogColRegistry.hpp`

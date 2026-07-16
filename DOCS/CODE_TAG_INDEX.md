@@ -15,7 +15,7 @@ so the snapshot stales when tags/units actually change, not on unrelated line dr
 `rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a
 conversion).
 
-Converted files: 21 · unit blocks: 114
+Converted files: 23 · unit blocks: 142
 
 ## [TAG] values → files
 
@@ -23,29 +23,33 @@ Converted files: 21 · unit blocks: 114
 
 - `Strategies/RegimeDetector.hpp`
 
-### BITMAP_PACKED (5 files)
+### BITMAP_PACKED (6 files)
 
 - `CoreFrameworks/GateCfgFlagRegistry.hpp`
 - `CoreFrameworks/LifecycleCfgFlagRegistry.hpp`
 - `CoreFrameworks/OpsCfgFlagRegistry.hpp`
+- `CoreFrameworks/Order.hpp`
 - `CoreFrameworks/Portfolio.hpp`
 - `CoreFrameworks/RiskCfgFlagRegistry.hpp`
 
-### BOOT_TIME (8 files)
+### BOOT_TIME (9 files)
 
 - `CoreFrameworks/ExecutionCore.hpp`
 - `CoreFrameworks/GateParameters.hpp`
 - `CoreFrameworks/NodeLatencyStats.hpp`
+- `CoreFrameworks/OrderEventLog.hpp`
 - `CoreFrameworks/OrderManager.hpp`
 - `CoreFrameworks/ParameterSlot.hpp`
 - `CoreFrameworks/Portfolio.hpp`
 - `CoreFrameworks/SPSCRing.hpp`
 - `CoreFrameworks/SystemInit.hpp`
 
-### CAPITAL_BEARING (6 files)
+### CAPITAL_BEARING (8 files)
 
 - `CoreFrameworks/ExecutionCore.hpp`
 - `CoreFrameworks/GateParameters.hpp`
+- `CoreFrameworks/Order.hpp`
+- `CoreFrameworks/OrderEventLog.hpp`
 - `CoreFrameworks/OrderGates.hpp`
 - `CoreFrameworks/OrderManager.hpp`
 - `CoreFrameworks/Portfolio.hpp`
@@ -58,10 +62,11 @@ Converted files: 21 · unit blocks: 114
 - `CoreFrameworks/OpsCfgFlagRegistry.hpp`
 - `CoreFrameworks/RiskCfgFlagRegistry.hpp`
 
-### CONCURRENCY (7 files)
+### CONCURRENCY (8 files)
 
 - `CoreFrameworks/ExchangeAdapter.hpp`
 - `CoreFrameworks/ExecutionCore.hpp`
+- `CoreFrameworks/OrderEventLog.hpp`
 - `CoreFrameworks/OrderManager.hpp`
 - `CoreFrameworks/ParameterSlot.hpp`
 - `CoreFrameworks/SPSCRing.hpp`
@@ -76,11 +81,12 @@ Converted files: 21 · unit blocks: 114
 - `CoreFrameworks/SPSCRing.hpp`
 - `CoreFrameworks/SystemInit.hpp`
 
-### DATA_ORIENTED_DESIGN (7 files)
+### DATA_ORIENTED_DESIGN (8 files)
 
 - `CoreFrameworks/ExecutionCore.hpp`
 - `CoreFrameworks/GateParameters.hpp`
 - `CoreFrameworks/NodeLatencyStats.hpp`
+- `CoreFrameworks/Order.hpp`
 - `CoreFrameworks/OrderManager.hpp`
 - `CoreFrameworks/ParameterSlot.hpp`
 - `CoreFrameworks/SPSCRing.hpp`
@@ -91,19 +97,22 @@ Converted files: 21 · unit blocks: 114
 - `CoreFrameworks/OrderGates.hpp`
 - `CoreFrameworks/Tick.hpp`
 
-### DECIMAL (5 files)
+### DECIMAL (7 files)
 
 - `CoreFrameworks/GateParameters.hpp`
+- `CoreFrameworks/Order.hpp`
+- `CoreFrameworks/OrderEventLog.hpp`
 - `CoreFrameworks/OrderGates.hpp`
 - `CoreFrameworks/OrderManager.hpp`
 - `CoreFrameworks/Portfolio.hpp`
 - `CoreFrameworks/Tick.hpp`
 
-### DETERMINISM (1 files)
+### DETERMINISM (2 files)
 
+- `CoreFrameworks/OrderEventLog.hpp`
 - `CoreFrameworks/SystemInit.hpp`
 
-### ENGINE (20 files)
+### ENGINE (22 files)
 
 - `CoreFrameworks/ExchangeAdapter.hpp`
 - `CoreFrameworks/ExecutionCore.hpp`
@@ -113,6 +122,8 @@ Converted files: 21 · unit blocks: 114
 - `CoreFrameworks/MetaRegistry.hpp`
 - `CoreFrameworks/NodeLatencyStats.hpp`
 - `CoreFrameworks/OpsCfgFlagRegistry.hpp`
+- `CoreFrameworks/Order.hpp`
+- `CoreFrameworks/OrderEventLog.hpp`
 - `CoreFrameworks/OrderGates.hpp`
 - `CoreFrameworks/OrderManager.hpp`
 - `CoreFrameworks/ParameterSlot.hpp`
@@ -139,6 +150,10 @@ Converted files: 21 · unit blocks: 114
 
 - `CoreFrameworks/MetaRegistry.hpp`
 - `Strategies/StrategyInterface.hpp`
+
+### HELPER (1 files)
+
+- `CoreFrameworks/OrderEventLog.hpp`
 
 ### HOT_PATH (8 files)
 
@@ -170,12 +185,16 @@ Converted files: 21 · unit blocks: 114
 - `CoreFrameworks/ShardedOrderLatency.hpp`
 - `CoreFrameworks/SpSectionRegistry.hpp`
 
-### OMS_DRAINER (1 files)
+### OMS_DRAINER (3 files)
 
+- `CoreFrameworks/Order.hpp`
+- `CoreFrameworks/OrderEventLog.hpp`
 - `CoreFrameworks/OrderManager.hpp`
 
-### PERSISTENCE (1 files)
+### PERSISTENCE (3 files)
 
+- `CoreFrameworks/Order.hpp`
+- `CoreFrameworks/OrderEventLog.hpp`
 - `CoreFrameworks/Portfolio.hpp`
 
 ### SLOW_PATH (7 files)
@@ -192,28 +211,34 @@ Converted files: 21 · unit blocks: 114
 
 - `CoreFrameworks/Portfolio.hpp`
 
-### SUPPORTIVE (3 files)
+### SUPPORTIVE (4 files)
 
+- `CoreFrameworks/Order.hpp`
 - `CoreFrameworks/OrderGates.hpp`
 - `CoreFrameworks/OrderManager.hpp`
 - `CoreFrameworks/Portfolio.hpp`
 
 ## Unit blocks by [TYPE]
 
-### ASSERT (6)
+### ASSERT (8)
 
+- `EPOCH_TRIPWIRE` — `CoreFrameworks/OrderEventLog.hpp`
 - `EPOCH_TRIPWIRE` — `CoreFrameworks/Portfolio.hpp`
 - `LAYOUT_LOCK` — `CoreFrameworks/ExecutionCore.hpp`
 - `LAYOUT_LOCK` — `CoreFrameworks/GateParameters.hpp`
+- `LAYOUT_LOCK` — `CoreFrameworks/Order.hpp`
 - `LAYOUT_LOCK` — `CoreFrameworks/Portfolio.hpp`
 - `LAYOUT_LOCK` — `CoreFrameworks/Tick.hpp`
 - `LAYOUT_LOCK` — `CoreFrameworks/TradeEvent.hpp`
 
-### ENUM (1)
+### ENUM (4)
 
 - `CommandType` — `CoreFrameworks/OrderManager.hpp`
+- `OrderEventType` — `CoreFrameworks/OrderEventLog.hpp`
+- `OrderState` — `CoreFrameworks/Order.hpp`
+- `OrderType` — `CoreFrameworks/Order.hpp`
 
-### FILE (20)
+### FILE (22)
 
 - `CoreFrameworks/ExchangeAdapter.hpp` — `CoreFrameworks/ExchangeAdapter.hpp`
 - `CoreFrameworks/ExecutionCore.hpp` — `CoreFrameworks/ExecutionCore.hpp`
@@ -223,6 +248,8 @@ Converted files: 21 · unit blocks: 114
 - `CoreFrameworks/MetaRegistry.hpp` — `CoreFrameworks/MetaRegistry.hpp`
 - `CoreFrameworks/NodeLatencyStats.hpp` — `CoreFrameworks/NodeLatencyStats.hpp`
 - `CoreFrameworks/OpsCfgFlagRegistry.hpp` — `CoreFrameworks/OpsCfgFlagRegistry.hpp`
+- `CoreFrameworks/Order.hpp` — `CoreFrameworks/Order.hpp`
+- `CoreFrameworks/OrderEventLog.hpp` — `CoreFrameworks/OrderEventLog.hpp`
 - `CoreFrameworks/OrderGates.hpp` — `CoreFrameworks/OrderGates.hpp`
 - `CoreFrameworks/OrderManager.hpp` — `CoreFrameworks/OrderManager.hpp`
 - `CoreFrameworks/ParameterSlot.hpp` — `CoreFrameworks/ParameterSlot.hpp`
@@ -236,7 +263,7 @@ Converted files: 21 · unit blocks: 114
 - `CoreFrameworks/TradeEvent.hpp` — `CoreFrameworks/TradeEvent.hpp`
 - `RegimeDetector.hpp` — `Strategies/RegimeDetector.hpp`
 
-### FUNCTION (51)
+### FUNCTION (66)
 
 - `BG_Evaluate` — `CoreFrameworks/GateParameters.hpp`
 - `BuyGate` — `CoreFrameworks/OrderGates.hpp`
@@ -258,6 +285,17 @@ Converted files: 21 · unit blocks: 114
 - `OMS_GuardTakerBoundFeeBasis` — `CoreFrameworks/OrderManager.hpp`
 - `OMS_OpenPositionCost` — `CoreFrameworks/OrderManager.hpp`
 - `OMS_PushSubmit` — `CoreFrameworks/OrderManager.hpp`
+- `OrderEventLog_Append` — `CoreFrameworks/OrderEventLog.hpp`
+- `OrderEventLog_ApplyEvent` — `CoreFrameworks/OrderEventLog.hpp`
+- `OrderEventLog_AsyncWriterRoutine` — `CoreFrameworks/OrderEventLog.hpp`
+- `OrderEventLog_Free` — `CoreFrameworks/OrderEventLog.hpp`
+- `OrderEventLog_Init` — `CoreFrameworks/OrderEventLog.hpp`
+- `OrderEventLog_InitWithFile` — `CoreFrameworks/OrderEventLog.hpp`
+- `OrderEventLog_LoadFromDisk` — `CoreFrameworks/OrderEventLog.hpp`
+- `OrderEventLog_Reset` — `CoreFrameworks/OrderEventLog.hpp`
+- `OrderEventLog_StartAsyncWriter` — `CoreFrameworks/OrderEventLog.hpp`
+- `OrderEventLog_StopAsyncWriter` — `CoreFrameworks/OrderEventLog.hpp`
+- `OrderEvent_MakeFill` — `CoreFrameworks/OrderEventLog.hpp`
 - `OrderManager_AccountMakerTakerFee` — `CoreFrameworks/OrderManager.hpp`
 - `OrderManager_FillResultCallback` — `CoreFrameworks/OrderManager.hpp`
 - `OrderManager_HandleFill` — `CoreFrameworks/OrderManager.hpp`
@@ -268,12 +306,16 @@ Converted files: 21 · unit blocks: 114
 - `OrderManager_Shutdown` — `CoreFrameworks/OrderManager.hpp`
 - `OrderManager_Submit` — `CoreFrameworks/OrderManager.hpp`
 - `OrderManager_Tick` — `CoreFrameworks/OrderManager.hpp`
+- `Order_BindPreResolved` — `CoreFrameworks/Order.hpp`
+- `Order_Init` — `CoreFrameworks/Order.hpp`
+- `Order_WarnIfNotPreResolved` — `CoreFrameworks/Order.hpp`
 - `ParameterSlot_Init` — `CoreFrameworks/ParameterSlot.hpp`
 - `ParameterSlot_Read` — `CoreFrameworks/ParameterSlot.hpp`
 - `ParameterSlot_Write` — `CoreFrameworks/ParameterSlot.hpp`
 - `Portfolio_AddPositionWithExits` — `CoreFrameworks/Portfolio.hpp`
 - `Portfolio_CloseSlot` — `CoreFrameworks/Portfolio.hpp`
 - `Portfolio_ComputePnL` — `CoreFrameworks/Portfolio.hpp`
+- `Portfolio_FromEventLog` — `CoreFrameworks/OrderEventLog.hpp`
 - `Portfolio_Load` — `CoreFrameworks/Portfolio.hpp`
 - `Portfolio_OpenSlot` — `CoreFrameworks/Portfolio.hpp`
 - `Portfolio_Save` — `CoreFrameworks/Portfolio.hpp`
@@ -300,7 +342,7 @@ Converted files: 21 · unit blocks: 114
 - `FOREACH_SP_SECTION` — `CoreFrameworks/SpSectionRegistry.hpp`
 - `FOREACH_STRATEGY` — `Strategies/StrategyInterface.hpp`
 
-### STRUCT (20)
+### STRUCT (25)
 
 - `CumDeltaState` — `Strategies/RegimeDetector.hpp`
 - `DataStream` — `CoreFrameworks/OrderGates.hpp`
@@ -310,7 +352,12 @@ Converted files: 21 · unit blocks: 114
 - `GateParameters` — `CoreFrameworks/GateParameters.hpp`
 - `NodeLatencySnapshot` — `CoreFrameworks/NodeLatencyStats.hpp`
 - `NodeLatencyStats` — `CoreFrameworks/NodeLatencyStats.hpp`
+- `Order` — `CoreFrameworks/Order.hpp`
+- `OrderEvent` — `CoreFrameworks/OrderEventLog.hpp`
+- `OrderEventLog` — `CoreFrameworks/OrderEventLog.hpp`
+- `OrderEventLogFileHeader` — `CoreFrameworks/OrderEventLog.hpp`
 - `OrderManagerState` — `CoreFrameworks/OrderManager.hpp`
+- `OrderPreResolved` — `CoreFrameworks/Order.hpp`
 - `OrderResult` — `CoreFrameworks/ExchangeAdapter.hpp`
 - `ParameterSlot` — `CoreFrameworks/ParameterSlot.hpp`
 - `Portfolio` — `CoreFrameworks/Portfolio.hpp`

@@ -15,12 +15,13 @@ so the snapshot stales when tags/units actually change, not on unrelated line dr
 `rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a
 conversion).
 
-Converted files: 47 · unit blocks: 237
+Converted files: 50 · unit blocks: 264
 
 ## [TAG] values → files
 
-### BACKTEST (2 files)
+### BACKTEST (3 files)
 
+- `CoreFrameworks/EngineCommon.hpp`
 - `CoreFrameworks/MetricCompute.hpp`
 - `CoreFrameworks/ShardedBacktestDriver.hpp`
 
@@ -38,9 +39,10 @@ Converted files: 47 · unit blocks: 237
 - `CoreFrameworks/RiskCfgFlagRegistry.hpp`
 - `CoreFrameworks/SlowPathGateRegistry.hpp`
 
-### BOOT_TIME (18 files)
+### BOOT_TIME (20 files)
 
 - `CoreFrameworks/BinanceAdapter.hpp`
+- `CoreFrameworks/EngineCommon.hpp`
 - `CoreFrameworks/EngineSharded/Boot.hpp`
 - `CoreFrameworks/ExecutionCore.hpp`
 - `CoreFrameworks/GateParameters.hpp`
@@ -51,6 +53,7 @@ Converted files: 47 · unit blocks: 237
 - `CoreFrameworks/OrderManager.hpp`
 - `CoreFrameworks/ParameterSlot.hpp`
 - `CoreFrameworks/Portfolio.hpp`
+- `CoreFrameworks/Reconcile.hpp`
 - `CoreFrameworks/ReconciliationLoop.hpp`
 - `CoreFrameworks/SPSCRing.hpp`
 - `CoreFrameworks/ShardedBacktestDriver.hpp`
@@ -75,11 +78,14 @@ Converted files: 47 · unit blocks: 237
 - `CoreFrameworks/ShardedLiveSafety.hpp`
 - `CoreFrameworks/TradeEvent.hpp`
 
-### CFG_FLOW (8 files)
+### CFG_FLOW (11 files)
 
+- `CoreFrameworks/CfgFieldDispatch.hpp`
+- `CoreFrameworks/EngineCommon.hpp`
 - `CoreFrameworks/GateCfgFlagRegistry.hpp`
 - `CoreFrameworks/LifecycleCfgFlagRegistry.hpp`
 - `CoreFrameworks/OpsCfgFlagRegistry.hpp`
+- `CoreFrameworks/Reconcile.hpp`
 - `CoreFrameworks/RiskCfgFlagRegistry.hpp`
 - `CoreFrameworks/SessionPhaseRegistry.hpp`
 - `CoreFrameworks/SlowPathGateRegistry.hpp`
@@ -141,8 +147,9 @@ Converted files: 47 · unit blocks: 237
 - `CoreFrameworks/Portfolio.hpp`
 - `CoreFrameworks/Tick.hpp`
 
-### DETERMINISM (6 files)
+### DETERMINISM (7 files)
 
+- `CoreFrameworks/CfgFieldDispatch.hpp`
 - `CoreFrameworks/OrderEventLog.hpp`
 - `CoreFrameworks/ParseFast.hpp`
 - `CoreFrameworks/ShardedBacktestDriver.hpp`
@@ -150,9 +157,11 @@ Converted files: 47 · unit blocks: 237
 - `CoreFrameworks/StampBoundDerivedFilter.hpp`
 - `CoreFrameworks/SystemInit.hpp`
 
-### ENGINE (46 files)
+### ENGINE (49 files)
 
 - `CoreFrameworks/BinanceAdapter.hpp`
+- `CoreFrameworks/CfgFieldDispatch.hpp`
+- `CoreFrameworks/EngineCommon.hpp`
 - `CoreFrameworks/EngineSharded.hpp`
 - `CoreFrameworks/EngineSharded/Async.hpp`
 - `CoreFrameworks/EngineSharded/Boot.hpp`
@@ -180,6 +189,7 @@ Converted files: 47 · unit blocks: 237
 - `CoreFrameworks/ParameterSlot.hpp`
 - `CoreFrameworks/ParseFast.hpp`
 - `CoreFrameworks/Portfolio.hpp`
+- `CoreFrameworks/Reconcile.hpp`
 - `CoreFrameworks/ReconciliationLoop.hpp`
 - `CoreFrameworks/RiskCfgFlagRegistry.hpp`
 - `CoreFrameworks/SPSCRing.hpp`
@@ -213,8 +223,9 @@ Converted files: 47 · unit blocks: 237
 - `CoreFrameworks/ShardedSnapshot.hpp`
 - `CoreFrameworks/ShardedTradeLog.hpp`
 
-### FRAMEWORK_DISCIPLINE (6 files)
+### FRAMEWORK_DISCIPLINE (7 files)
 
+- `CoreFrameworks/CfgFieldDispatch.hpp`
 - `CoreFrameworks/LiveReadiness.hpp`
 - `CoreFrameworks/MetaRegistry.hpp`
 - `CoreFrameworks/SessionPhaseRegistry.hpp`
@@ -246,7 +257,7 @@ Converted files: 47 · unit blocks: 237
 - `CoreFrameworks/Tick.hpp`
 - `CoreFrameworks/TradeEvent.hpp`
 
-### LIVE_TRADING (9 files)
+### LIVE_TRADING (10 files)
 
 - `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/ExchangeAdapter.hpp`
@@ -254,6 +265,7 @@ Converted files: 47 · unit blocks: 237
 - `CoreFrameworks/LiveReadiness.hpp`
 - `CoreFrameworks/Notify.hpp`
 - `CoreFrameworks/OrderManager.hpp`
+- `CoreFrameworks/Reconcile.hpp`
 - `CoreFrameworks/ReconciliationLoop.hpp`
 - `CoreFrameworks/ShardedLiveSafety.hpp`
 - `CoreFrameworks/ShardedOrderLatency.hpp`
@@ -266,6 +278,11 @@ Converted files: 47 · unit blocks: 237
 - `CoreFrameworks/ModelValidation.hpp`
 - `CoreFrameworks/OrderManager.hpp`
 - `Strategies/RegimeDetector.hpp`
+
+### ML_INFERENCE (2 files)
+
+- `CoreFrameworks/CfgFieldDispatch.hpp`
+- `CoreFrameworks/EngineCommon.hpp`
 
 ### MONITORING_PLANE (10 files)
 
@@ -294,8 +311,9 @@ Converted files: 47 · unit blocks: 237
 
 - `CoreFrameworks/ParseFast.hpp`
 
-### PERSISTENCE (6 files)
+### PERSISTENCE (7 files)
 
+- `CoreFrameworks/CfgFieldDispatch.hpp`
 - `CoreFrameworks/Order.hpp`
 - `CoreFrameworks/OrderEventLog.hpp`
 - `CoreFrameworks/PaperResetArchive.hpp`
@@ -307,9 +325,10 @@ Converted files: 47 · unit blocks: 237
 
 - `CoreFrameworks/EngineSharded/Async.hpp`
 
-### SLOW_PATH (16 files)
+### SLOW_PATH (17 files)
 
 - `CoreFrameworks/BinanceAdapter.hpp`
+- `CoreFrameworks/EngineCommon.hpp`
 - `CoreFrameworks/EnsembleHotSwap.hpp`
 - `CoreFrameworks/EventLoopAggregates.hpp`
 - `CoreFrameworks/ExecutionCore.hpp`
@@ -361,9 +380,11 @@ Converted files: 47 · unit blocks: 237
 - `OrderState` — `CoreFrameworks/Order.hpp`
 - `OrderType` — `CoreFrameworks/Order.hpp`
 
-### FILE (46)
+### FILE (49)
 
 - `CoreFrameworks/BinanceAdapter.hpp` — `CoreFrameworks/BinanceAdapter.hpp`
+- `CoreFrameworks/CfgFieldDispatch.hpp` — `CoreFrameworks/CfgFieldDispatch.hpp`
+- `CoreFrameworks/EngineCommon.hpp` — `CoreFrameworks/EngineCommon.hpp`
 - `CoreFrameworks/EngineSharded.hpp` — `CoreFrameworks/EngineSharded.hpp`
 - `CoreFrameworks/EngineSharded/Async.hpp` — `CoreFrameworks/EngineSharded/Async.hpp`
 - `CoreFrameworks/EngineSharded/Boot.hpp` — `CoreFrameworks/EngineSharded/Boot.hpp`
@@ -391,6 +412,7 @@ Converted files: 47 · unit blocks: 237
 - `CoreFrameworks/ParameterSlot.hpp` — `CoreFrameworks/ParameterSlot.hpp`
 - `CoreFrameworks/ParseFast.hpp` — `CoreFrameworks/ParseFast.hpp`
 - `CoreFrameworks/Portfolio.hpp` — `CoreFrameworks/Portfolio.hpp`
+- `CoreFrameworks/Reconcile.hpp` — `CoreFrameworks/Reconcile.hpp`
 - `CoreFrameworks/ReconciliationLoop.hpp` — `CoreFrameworks/ReconciliationLoop.hpp`
 - `CoreFrameworks/RiskCfgFlagRegistry.hpp` — `CoreFrameworks/RiskCfgFlagRegistry.hpp`
 - `CoreFrameworks/SPSCRing.hpp` — `CoreFrameworks/SPSCRing.hpp`
@@ -410,7 +432,7 @@ Converted files: 47 · unit blocks: 237
 - `CoreFrameworks/TradeLogColRegistry.hpp` — `CoreFrameworks/TradeLogColRegistry.hpp`
 - `RegimeDetector.hpp` — `Strategies/RegimeDetector.hpp`
 
-### FUNCTION (120)
+### FUNCTION (140)
 
 - `BG_Evaluate` — `CoreFrameworks/GateParameters.hpp`
 - `BinanceAdapter_Get` — `CoreFrameworks/BinanceAdapter.hpp`
@@ -424,6 +446,11 @@ Converted files: 47 · unit blocks: 237
 - `BinanceAdapter_WorkerLoop` — `CoreFrameworks/BinanceAdapter.hpp`
 - `BuyGate` — `CoreFrameworks/OrderGates.hpp`
 - `CumDelta_Init` — `Strategies/RegimeDetector.hpp`
+- `EngineCommon_ApplyBnbDiscount` — `CoreFrameworks/EngineCommon.hpp`
+- `EngineCommon_BootGlobal` — `CoreFrameworks/EngineCommon.hpp`
+- `EngineCommon_BootPerCore` — `CoreFrameworks/EngineCommon.hpp`
+- `EngineCommon_SlowPathCycleAllCores` — `CoreFrameworks/EngineCommon.hpp`
+- `EngineCommon_SlowPathCycleOneCore` — `CoreFrameworks/EngineCommon.hpp`
 - `EngineSharded_Async_DrainWithSubmit` — `CoreFrameworks/EngineSharded/Async.hpp`
 - `EngineSharded_Async_FanOut` — `CoreFrameworks/EngineSharded/Async.hpp`
 - `EngineSharded_ForceCloseOnShutdown` — `CoreFrameworks/ShardedLiveSafety.hpp`
@@ -498,6 +525,13 @@ Converted files: 47 · unit blocks: 237
 - `Portfolio_Save` — `CoreFrameworks/Portfolio.hpp`
 - `PositionExitGate` — `CoreFrameworks/Portfolio.hpp`
 - `Position_Reset` — `CoreFrameworks/Portfolio.hpp`
+- `Reconcile_ApplyMissedFills` — `CoreFrameworks/Reconcile.hpp`
+- `Reconcile_AutoCancelStale` — `CoreFrameworks/Reconcile.hpp`
+- `Reconcile_Decide` — `CoreFrameworks/Reconcile.hpp`
+- `Reconcile_LogReport` — `CoreFrameworks/Reconcile.hpp`
+- `Reconcile_ParseMyTrades` — `CoreFrameworks/Reconcile.hpp`
+- `Reconcile_ParseOpenOrders` — `CoreFrameworks/Reconcile.hpp`
+- `Reconcile_SeedWatermark` — `CoreFrameworks/Reconcile.hpp`
 - `ReconciliationLoop_Init` — `CoreFrameworks/ReconciliationLoop.hpp`
 - `ReconciliationLoop_Pass` — `CoreFrameworks/ReconciliationLoop.hpp`
 - `ReconciliationLoop_Shutdown` — `CoreFrameworks/ReconciliationLoop.hpp`
@@ -525,6 +559,14 @@ Converted files: 47 · unit blocks: 237
 - `Summary_WriteJson` — `CoreFrameworks/PaperResetArchive.hpp`
 - `TUI_CopySnapshotSharded` — `CoreFrameworks/ShardedSnapshot.hpp`
 - `aggregate_zoo_drift` — `CoreFrameworks/LiveReadiness.hpp`
+- `cfg_assign_field` — `CoreFrameworks/CfgFieldDispatch.hpp`
+- `cfg_diff_field` — `CoreFrameworks/CfgFieldDispatch.hpp`
+- `cfg_drift_compare` — `CoreFrameworks/CfgFieldDispatch.hpp`
+- `cfg_drift_format_reason` — `CoreFrameworks/CfgFieldDispatch.hpp`
+- `cfg_emit_field` — `CoreFrameworks/CfgFieldDispatch.hpp`
+- `cfg_parse_field` — `CoreFrameworks/CfgFieldDispatch.hpp`
+- `cfg_populate_inf_field` — `CoreFrameworks/CfgFieldDispatch.hpp`
+- `cfg_save_field` — `CoreFrameworks/CfgFieldDispatch.hpp`
 - `check_live_capital_gated_until_e` — `CoreFrameworks/LiveReadiness.hpp`
 - `engine_set_mxcsr_ftz_daz` — `CoreFrameworks/SystemInit.hpp`
 - `handle_buy_fill` — `CoreFrameworks/OrderManager.hpp`
@@ -537,13 +579,14 @@ Converted files: 47 · unit blocks: 237
 
 - `SHARDED_SNAPSHOT_VERSION` — `CoreFrameworks/ShardedSnapshotPersist.hpp`
 
-### REGISTRY (12)
+### REGISTRY (13)
 
 - `FOREACH_BACKTEST_METRIC` — `CoreFrameworks/MetricCompute.hpp`
 - `FOREACH_GATE_CFG_FLAG` — `CoreFrameworks/GateCfgFlagRegistry.hpp`
 - `FOREACH_LIFECYCLE_CFG_FLAG` — `CoreFrameworks/LifecycleCfgFlagRegistry.hpp`
 - `FOREACH_LIVE_READINESS_CHECK` — `CoreFrameworks/LiveReadiness.hpp`
 - `FOREACH_OPS_CFG_FLAG` — `CoreFrameworks/OpsCfgFlagRegistry.hpp`
+- `FOREACH_RECONCILE_MODE` — `CoreFrameworks/Reconcile.hpp`
 - `FOREACH_REGISTRY` — `CoreFrameworks/MetaRegistry.hpp`
 - `FOREACH_RISK_CFG_FLAG` — `CoreFrameworks/RiskCfgFlagRegistry.hpp`
 - `FOREACH_SESSION_PHASE` — `CoreFrameworks/SessionPhaseRegistry.hpp`
@@ -552,7 +595,7 @@ Converted files: 47 · unit blocks: 237
 - `FOREACH_STRATEGY` — `Strategies/StrategyInterface.hpp`
 - `FOREACH_TRADE_LOG_COL` — `CoreFrameworks/TradeLogColRegistry.hpp`
 
-### STRUCT (34)
+### STRUCT (37)
 
 - `BinanceAdapterState` — `CoreFrameworks/BinanceAdapter.hpp`
 - `CumDeltaState` — `Strategies/RegimeDetector.hpp`
@@ -579,6 +622,9 @@ Converted files: 47 · unit blocks: 237
 - `Portfolio` — `CoreFrameworks/Portfolio.hpp`
 - `Position` — `CoreFrameworks/Portfolio.hpp`
 - `PositionEntryArgs` — `CoreFrameworks/Portfolio.hpp`
+- `ReconcileOpenOrder` — `CoreFrameworks/Reconcile.hpp`
+- `ReconcileResult` — `CoreFrameworks/Reconcile.hpp`
+- `ReconcileTrade` — `CoreFrameworks/Reconcile.hpp`
 - `ReconciliationLoopState` — `CoreFrameworks/ReconciliationLoop.hpp`
 - `RegimeSignals` — `Strategies/RegimeDetector.hpp`
 - `SPSCRing` — `CoreFrameworks/SPSCRing.hpp`

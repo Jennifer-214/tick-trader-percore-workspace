@@ -15,7 +15,7 @@ so the snapshot stales when tags/units actually change, not on unrelated line dr
 `rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a
 conversion).
 
-Converted files: 51 · unit blocks: 290
+Converted files: 52 · unit blocks: 301
 
 ## [TAG] values → files
 
@@ -40,9 +40,10 @@ Converted files: 51 · unit blocks: 290
 - `CoreFrameworks/RiskCfgFlagRegistry.hpp`
 - `CoreFrameworks/SlowPathGateRegistry.hpp`
 
-### BOOT_TIME (21 files)
+### BOOT_TIME (22 files)
 
 - `CoreFrameworks/BinanceAdapter.hpp`
+- `CoreFrameworks/ControllerConfig.hpp`
 - `CoreFrameworks/ControllerEventLoop.hpp`
 - `CoreFrameworks/EngineCommon.hpp`
 - `CoreFrameworks/EngineSharded/Boot.hpp`
@@ -64,8 +65,9 @@ Converted files: 51 · unit blocks: 290
 - `CoreFrameworks/ShardedTradeLog.hpp`
 - `CoreFrameworks/SystemInit.hpp`
 
-### CAPITAL_BEARING (14 files)
+### CAPITAL_BEARING (15 files)
 
+- `CoreFrameworks/ControllerConfig.hpp`
 - `CoreFrameworks/ControllerEventLoop.hpp`
 - `CoreFrameworks/EngineSharded/Async.hpp`
 - `CoreFrameworks/EngineSharded/SlowPath.hpp`
@@ -81,9 +83,10 @@ Converted files: 51 · unit blocks: 290
 - `CoreFrameworks/ShardedLiveSafety.hpp`
 - `CoreFrameworks/TradeEvent.hpp`
 
-### CFG_FLOW (12 files)
+### CFG_FLOW (13 files)
 
 - `CoreFrameworks/CfgFieldDispatch.hpp`
+- `CoreFrameworks/ControllerConfig.hpp`
 - `CoreFrameworks/ControllerEventLoop.hpp`
 - `CoreFrameworks/EngineCommon.hpp`
 - `CoreFrameworks/GateCfgFlagRegistry.hpp`
@@ -125,8 +128,9 @@ Converted files: 51 · unit blocks: 290
 - `CoreFrameworks/SPSCRing.hpp`
 - `CoreFrameworks/SystemInit.hpp`
 
-### DATA_ORIENTED_DESIGN (9 files)
+### DATA_ORIENTED_DESIGN (10 files)
 
+- `CoreFrameworks/ControllerConfig.hpp`
 - `CoreFrameworks/ControllerEventLoop.hpp`
 - `CoreFrameworks/ExecutionCore.hpp`
 - `CoreFrameworks/GateParameters.hpp`
@@ -153,9 +157,10 @@ Converted files: 51 · unit blocks: 290
 - `CoreFrameworks/Portfolio.hpp`
 - `CoreFrameworks/Tick.hpp`
 
-### DETERMINISM (7 files)
+### DETERMINISM (8 files)
 
 - `CoreFrameworks/CfgFieldDispatch.hpp`
+- `CoreFrameworks/ControllerConfig.hpp`
 - `CoreFrameworks/OrderEventLog.hpp`
 - `CoreFrameworks/ParseFast.hpp`
 - `CoreFrameworks/ShardedBacktestDriver.hpp`
@@ -163,10 +168,11 @@ Converted files: 51 · unit blocks: 290
 - `CoreFrameworks/StampBoundDerivedFilter.hpp`
 - `CoreFrameworks/SystemInit.hpp`
 
-### ENGINE (50 files)
+### ENGINE (51 files)
 
 - `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/CfgFieldDispatch.hpp`
+- `CoreFrameworks/ControllerConfig.hpp`
 - `CoreFrameworks/ControllerEventLoop.hpp`
 - `CoreFrameworks/EngineCommon.hpp`
 - `CoreFrameworks/EngineSharded.hpp`
@@ -264,9 +270,10 @@ Converted files: 51 · unit blocks: 290
 - `CoreFrameworks/Tick.hpp`
 - `CoreFrameworks/TradeEvent.hpp`
 
-### LIVE_TRADING (11 files)
+### LIVE_TRADING (12 files)
 
 - `CoreFrameworks/BinanceAdapter.hpp`
+- `CoreFrameworks/ControllerConfig.hpp`
 - `CoreFrameworks/ControllerEventLoop.hpp`
 - `CoreFrameworks/ExchangeAdapter.hpp`
 - `CoreFrameworks/ExecutionCore.hpp`
@@ -318,8 +325,9 @@ Converted files: 51 · unit blocks: 290
 - `CoreFrameworks/OrderManager.hpp`
 - `CoreFrameworks/ShardedTradeLog.hpp`
 
-### PARSER (1 files)
+### PARSER (2 files)
 
+- `CoreFrameworks/ControllerConfig.hpp`
 - `CoreFrameworks/ParseFast.hpp`
 
 ### PERSISTENCE (8 files)
@@ -337,9 +345,10 @@ Converted files: 51 · unit blocks: 290
 
 - `CoreFrameworks/EngineSharded/Async.hpp`
 
-### SLOW_PATH (18 files)
+### SLOW_PATH (19 files)
 
 - `CoreFrameworks/BinanceAdapter.hpp`
+- `CoreFrameworks/ControllerConfig.hpp`
 - `CoreFrameworks/ControllerEventLoop.hpp`
 - `CoreFrameworks/EngineCommon.hpp`
 - `CoreFrameworks/EnsembleHotSwap.hpp`
@@ -393,10 +402,11 @@ Converted files: 51 · unit blocks: 290
 - `OrderState` — `CoreFrameworks/Order.hpp`
 - `OrderType` — `CoreFrameworks/Order.hpp`
 
-### FILE (50)
+### FILE (51)
 
 - `CoreFrameworks/BinanceAdapter.hpp` — `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/CfgFieldDispatch.hpp` — `CoreFrameworks/CfgFieldDispatch.hpp`
+- `CoreFrameworks/ControllerConfig.hpp` — `CoreFrameworks/ControllerConfig.hpp`
 - `CoreFrameworks/ControllerEventLoop.hpp` — `CoreFrameworks/ControllerEventLoop.hpp`
 - `CoreFrameworks/EngineCommon.hpp` — `CoreFrameworks/EngineCommon.hpp`
 - `CoreFrameworks/EngineSharded.hpp` — `CoreFrameworks/EngineSharded.hpp`
@@ -446,7 +456,7 @@ Converted files: 51 · unit blocks: 290
 - `CoreFrameworks/TradeLogColRegistry.hpp` — `CoreFrameworks/TradeLogColRegistry.hpp`
 - `RegimeDetector.hpp` — `Strategies/RegimeDetector.hpp`
 
-### FUNCTION (159)
+### FUNCTION (166)
 
 - `BG_Evaluate` — `CoreFrameworks/GateParameters.hpp`
 - `BinanceAdapter_Get` — `CoreFrameworks/BinanceAdapter.hpp`
@@ -459,6 +469,12 @@ Converted files: 51 · unit blocks: 290
 - `BinanceAdapter_SubmitMarketSell` — `CoreFrameworks/BinanceAdapter.hpp`
 - `BinanceAdapter_WorkerLoop` — `CoreFrameworks/BinanceAdapter.hpp`
 - `BuyGate` — `CoreFrameworks/OrderGates.hpp`
+- `ControllerConfig_CapitalRangeSweep` — `CoreFrameworks/ControllerConfig.hpp`
+- `ControllerConfig_Default` — `CoreFrameworks/ControllerConfig.hpp`
+- `ControllerConfig_Load` — `CoreFrameworks/ControllerConfig.hpp`
+- `ControllerConfig_NormalizeForMode` — `CoreFrameworks/ControllerConfig.hpp`
+- `ControllerConfig_PopulateCoresFromFlat` — `CoreFrameworks/ControllerConfig.hpp`
+- `ControllerConfig_ResolveForCore` — `CoreFrameworks/ControllerConfig.hpp`
 - `CumDelta_Init` — `Strategies/RegimeDetector.hpp`
 - `EngineCommon_ApplyBnbDiscount` — `CoreFrameworks/EngineCommon.hpp`
 - `EngineCommon_BootGlobal` — `CoreFrameworks/EngineCommon.hpp`
@@ -498,6 +514,7 @@ Converted files: 51 · unit blocks: 290
 - `ExecutionCore_Tick` — `CoreFrameworks/ExecutionCore.hpp`
 - `ExecutionCore_Tick_Impl` — `CoreFrameworks/ExecutionCore.hpp`
 - `ExitBuffer_PendingProceeds` — `CoreFrameworks/Portfolio.hpp`
+- `Fee_Compute` — `CoreFrameworks/ControllerConfig.hpp`
 - `GateParameters_Init` — `CoreFrameworks/GateParameters.hpp`
 - `HotSwap_ShadowLoad_Ensemble` — `CoreFrameworks/HotSwap.hpp`
 - `HotSwap_ShadowLoad_SingleZoo` — `CoreFrameworks/HotSwap.hpp`
@@ -612,7 +629,7 @@ Converted files: 51 · unit blocks: 290
 
 - `SHARDED_SNAPSHOT_VERSION` — `CoreFrameworks/ShardedSnapshotPersist.hpp`
 
-### REGISTRY (13)
+### REGISTRY (14)
 
 - `FOREACH_BACKTEST_METRIC` — `CoreFrameworks/MetricCompute.hpp`
 - `FOREACH_GATE_CFG_FLAG` — `CoreFrameworks/GateCfgFlagRegistry.hpp`
@@ -627,10 +644,12 @@ Converted files: 51 · unit blocks: 290
 - `FOREACH_SP_SECTION` — `CoreFrameworks/SpSectionRegistry.hpp`
 - `FOREACH_STRATEGY` — `Strategies/StrategyInterface.hpp`
 - `FOREACH_TRADE_LOG_COL` — `CoreFrameworks/TradeLogColRegistry.hpp`
+- `PER_NODE_OVERRIDE_FIELDS` — `CoreFrameworks/ControllerConfig.hpp`
 
-### STRUCT (43)
+### STRUCT (45)
 
 - `BinanceAdapterState` — `CoreFrameworks/BinanceAdapter.hpp`
+- `ControllerConfig` — `CoreFrameworks/ControllerConfig.hpp`
 - `CumDeltaState` — `Strategies/RegimeDetector.hpp`
 - `DataStream` — `CoreFrameworks/OrderGates.hpp`
 - `EventLoopAggregates` — `CoreFrameworks/EventLoopAggregates.hpp`
@@ -656,6 +675,7 @@ Converted files: 51 · unit blocks: 290
 - `OrderResult` — `CoreFrameworks/ExchangeAdapter.hpp`
 - `ParameterSlot` — `CoreFrameworks/ParameterSlot.hpp`
 - `PendingSubmission` — `CoreFrameworks/BinanceAdapter.hpp`
+- `PerNodeCfg` — `CoreFrameworks/ControllerConfig.hpp`
 - `Portfolio` — `CoreFrameworks/Portfolio.hpp`
 - `Position` — `CoreFrameworks/Portfolio.hpp`
 - `PositionEntryArgs` — `CoreFrameworks/Portfolio.hpp`

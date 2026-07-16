@@ -53,6 +53,18 @@ from pathlib import Path
 # ENGINE derives from this file's location; WORKSPACE via env-override -> sibling-default ->
 # .exists()-guard. No $HOME hardcode in a committed public-AGPL tool (runs on any clone/PC).
 ENGINE = Path(os.environ.get("FOXML_ENGINE") or Path(__file__).absolute().parent.parent)
+if not (ENGINE / "Version.hpp").is_file():
+    # Shape check (the Landmine-5 class, caught live 2026-07-15): invoked from the WORKSPACE
+    # repo's own pre-commit hook, __file__ is workspace-side (tools/ is a REAL dir there) →
+    # the parent-derivation lands on the WORKSPACE and every engine-file cite false-MISSINGs
+    # ("file not found at engine root: main.cpp"). Version.hpp = the engine-root marker (the
+    # workspace mirrors CoreFrameworks/, so a dir check can't discriminate). Recover via the
+    # sibling-checkout convention; FOXML_ENGINE stays the explicit override. Shape-VERIFIED —
+    # the fallback is taken only when it IS the engine, never blindly. Sister fix:
+    # check_doc_metadata.py (same guard, same day).
+    _sibling_engine = ENGINE.parent / "FoxML_Trader_v2"
+    if (_sibling_engine / "Version.hpp").is_file():
+        ENGINE = _sibling_engine
 def _resolve_workspace_root():
     env = os.environ.get("FOXML_WORKSPACE")
     if env and Path(env).exists():

@@ -15,7 +15,7 @@ so the snapshot stales when tags/units actually change, not on unrelated line dr
 `rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a
 conversion).
 
-Converted files: 75 · unit blocks: 389
+Converted files: 87 · unit blocks: 415
 
 ## [TAG] values → files
 
@@ -26,15 +26,17 @@ Converted files: 75 · unit blocks: 389
 - `CoreFrameworks/MetricCompute.hpp`
 - `CoreFrameworks/ShardedBacktestDriver.hpp`
 
-### BINARY_FP (5 files)
+### BINARY_FP (7 files)
 
+- `ML_Headers/GateControlNetwork.hpp`
+- `ML_Headers/LinearRegression3X.hpp`
 - `ML_Headers/LinearRegressionSimple.hpp`
 - `ML_Headers/ROR_regressor.hpp`
 - `ML_Headers/ReciprocalLUT.hpp`
 - `ML_Headers/WelfordStats.hpp`
 - `Strategies/RegimeDetector.hpp`
 
-### BITMAP_PACKED (10 files)
+### BITMAP_PACKED (14 files)
 
 - `CoreFrameworks/CfgFieldRegistry.hpp`
 - `CoreFrameworks/GateCfgFlagRegistry.hpp`
@@ -44,6 +46,10 @@ Converted files: 75 · unit blocks: 389
 - `CoreFrameworks/Portfolio.hpp`
 - `CoreFrameworks/RiskCfgFlagRegistry.hpp`
 - `CoreFrameworks/SlowPathGateRegistry.hpp`
+- `ML_Headers/BarrierBlendModeRegistry.hpp`
+- `ML_Headers/EzooInitFlagRegistry.hpp`
+- `ML_Headers/MlCfgFlagRegistry.hpp`
+- `ML_Headers/PerArmFlagRegistry.hpp`
 - `Strategies/OpModeCategories.hpp`
 - `Strategies/StrategyCategories.hpp`
 
@@ -102,7 +108,7 @@ Converted files: 75 · unit blocks: 389
 - `Strategies/StrategyLifecycle.hpp`
 - `Strategies/StrategyParameters.hpp`
 
-### CFG_FLOW (16 files)
+### CFG_FLOW (18 files)
 
 - `CoreFrameworks/CfgFieldDispatch.hpp`
 - `CoreFrameworks/CfgFieldRegistry.hpp`
@@ -118,6 +124,8 @@ Converted files: 75 · unit blocks: 389
 - `CoreFrameworks/SlowPathGateRegistry.hpp`
 - `CoreFrameworks/StampBoundDerivedFilter.hpp`
 - `CoreFrameworks/TradeLogColRegistry.hpp`
+- `ML_Headers/BarrierBlendModeRegistry.hpp`
+- `ML_Headers/MlCfgFlagRegistry.hpp`
 - `Strategies/OpModeCategories.hpp`
 - `Strategies/StrategyCategories.hpp`
 
@@ -181,7 +189,7 @@ Converted files: 75 · unit blocks: 389
 - `CoreFrameworks/Portfolio.hpp`
 - `CoreFrameworks/Tick.hpp`
 
-### DETERMINISM (10 files)
+### DETERMINISM (14 files)
 
 - `CoreFrameworks/CfgFieldDispatch.hpp`
 - `CoreFrameworks/CfgFieldRegistry.hpp`
@@ -193,8 +201,12 @@ Converted files: 75 · unit blocks: 389
 - `CoreFrameworks/StampBoundDerivedFilter.hpp`
 - `CoreFrameworks/SystemInit.hpp`
 - `ML_Headers/BuildFlags.hpp`
+- `ML_Headers/CfgDriftCheckRegistry.hpp`
+- `ML_Headers/FeatureRegistryOverlay.hpp`
+- `ML_Headers/StampHelper.hpp`
+- `ML_Headers/ThompsonBandit.hpp`
 
-### ENGINE (75 files)
+### ENGINE (87 files)
 
 - `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/CfgFieldDispatch.hpp`
@@ -249,18 +261,30 @@ Converted files: 75 · unit blocks: 389
 - `CoreFrameworks/Tick.hpp`
 - `CoreFrameworks/TradeEvent.hpp`
 - `CoreFrameworks/TradeLogColRegistry.hpp`
+- `ML_Headers/BarrierBlendModeRegistry.hpp`
 - `ML_Headers/BarrierGate.hpp`
 - `ML_Headers/BarrierValidation.hpp`
 - `ML_Headers/BuildFlags.hpp`
+- `ML_Headers/CfgDriftCheckRegistry.hpp`
 - `ML_Headers/CostModel.hpp`
+- `ML_Headers/EzooInitFlagRegistry.hpp`
+- `ML_Headers/FeatureRegistryOverlay.hpp`
+- `ML_Headers/GateControlNetwork.hpp`
 - `ML_Headers/ICVariantRegistry.hpp`
+- `ML_Headers/LinearRegression3X.hpp`
 - `ML_Headers/LinearRegressionSimple.hpp`
+- `ML_Headers/MlCfgFlagRegistry.hpp`
+- `ML_Headers/PerArmFlagRegistry.hpp`
 - `ML_Headers/ROR_regressor.hpp`
 - `ML_Headers/ReciprocalLUT.hpp`
 - `ML_Headers/RewardTracker.hpp`
+- `ML_Headers/RollingTurnover.hpp`
 - `ML_Headers/RollingWindowRegistry.hpp`
+- `ML_Headers/StampHelper.hpp`
+- `ML_Headers/ThompsonBandit.hpp`
 - `ML_Headers/VolScaler.hpp`
 - `ML_Headers/WelfordStats.hpp`
+- `ML_Headers/bandit_dispatch_table.hpp`
 - `Strategies/MLStrategy.hpp`
 - `Strategies/MeanReversion.hpp`
 - `Strategies/Momentum.hpp`
@@ -287,7 +311,7 @@ Converted files: 75 · unit blocks: 389
 - `CoreFrameworks/ShardedSnapshot.hpp`
 - `CoreFrameworks/ShardedTradeLog.hpp`
 
-### FRAMEWORK_DISCIPLINE (12 files)
+### FRAMEWORK_DISCIPLINE (14 files)
 
 - `CoreFrameworks/CfgFieldDispatch.hpp`
 - `CoreFrameworks/CfgFieldRegistry.hpp`
@@ -296,8 +320,10 @@ Converted files: 75 · unit blocks: 389
 - `CoreFrameworks/SessionPhaseRegistry.hpp`
 - `CoreFrameworks/SlowPathGateRegistry.hpp`
 - `CoreFrameworks/TradeLogColRegistry.hpp`
+- `ML_Headers/CfgDriftCheckRegistry.hpp`
 - `ML_Headers/ICVariantRegistry.hpp`
 - `ML_Headers/RollingWindowRegistry.hpp`
+- `ML_Headers/bandit_dispatch_table.hpp`
 - `Strategies/StrategyInterface.hpp`
 - `Strategies/StrategyLifecycle.hpp`
 - `Strategies/StrategyParameters.hpp`
@@ -351,21 +377,32 @@ Converted files: 75 · unit blocks: 389
 - `CoreFrameworks/OrderManager.hpp`
 - `Strategies/RegimeDetector.hpp`
 
-### ML_INFERENCE (11 files)
+### ML_INFERENCE (22 files)
 
 - `CoreFrameworks/CfgFieldDispatch.hpp`
 - `CoreFrameworks/ControllerEventLoop.hpp`
 - `CoreFrameworks/EngineCommon.hpp`
+- `ML_Headers/BarrierBlendModeRegistry.hpp`
 - `ML_Headers/BarrierGate.hpp`
 - `ML_Headers/BarrierValidation.hpp`
 - `ML_Headers/BuildFlags.hpp`
+- `ML_Headers/CfgDriftCheckRegistry.hpp`
 - `ML_Headers/CostModel.hpp`
+- `ML_Headers/EzooInitFlagRegistry.hpp`
+- `ML_Headers/FeatureRegistryOverlay.hpp`
+- `ML_Headers/GateControlNetwork.hpp`
 - `ML_Headers/ICVariantRegistry.hpp`
+- `ML_Headers/MlCfgFlagRegistry.hpp`
+- `ML_Headers/PerArmFlagRegistry.hpp`
+- `ML_Headers/RollingTurnover.hpp`
+- `ML_Headers/StampHelper.hpp`
+- `ML_Headers/ThompsonBandit.hpp`
 - `ML_Headers/VolScaler.hpp`
+- `ML_Headers/bandit_dispatch_table.hpp`
 - `Strategies/MLStrategy.hpp`
 - `Strategies/StrategyParameters.hpp`
 
-### MONITORING_PLANE (15 files)
+### MONITORING_PLANE (16 files)
 
 - `CoreFrameworks/ControllerEventLoop.hpp`
 - `CoreFrameworks/EngineSharded/Run.hpp`
@@ -381,6 +418,7 @@ Converted files: 75 · unit blocks: 389
 - `CoreFrameworks/SpSectionRegistry.hpp`
 - `CoreFrameworks/TradeLogColRegistry.hpp`
 - `ML_Headers/RewardTracker.hpp`
+- `ML_Headers/RollingTurnover.hpp`
 - `Strategies/StrategyInterface.hpp`
 
 ### OMS_DRAINER (8 files)
@@ -399,7 +437,7 @@ Converted files: 75 · unit blocks: 389
 - `CoreFrameworks/ControllerConfig.hpp`
 - `CoreFrameworks/ParseFast.hpp`
 
-### PERSISTENCE (10 files)
+### PERSISTENCE (11 files)
 
 - `CoreFrameworks/CfgFieldDispatch.hpp`
 - `CoreFrameworks/ControllerEventLoop.hpp`
@@ -411,12 +449,13 @@ Converted files: 75 · unit blocks: 389
 - `CoreFrameworks/ShardedSnapshotPersist.hpp`
 - `CoreFrameworks/ShardedTradeLog.hpp`
 - `ML_Headers/RewardTracker.hpp`
+- `ML_Headers/StampHelper.hpp`
 
 ### PRODUCER (1 files)
 
 - `CoreFrameworks/EngineSharded/Async.hpp`
 
-### SLOW_PATH (34 files)
+### SLOW_PATH (36 files)
 
 - `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/ControllerConfig.hpp`
@@ -438,10 +477,12 @@ Converted files: 75 · unit blocks: 389
 - `CoreFrameworks/SpSectionRegistry.hpp`
 - `ML_Headers/BarrierGate.hpp`
 - `ML_Headers/CostModel.hpp`
+- `ML_Headers/LinearRegression3X.hpp`
 - `ML_Headers/LinearRegressionSimple.hpp`
 - `ML_Headers/ROR_regressor.hpp`
 - `ML_Headers/ReciprocalLUT.hpp`
 - `ML_Headers/RollingWindowRegistry.hpp`
+- `ML_Headers/ThompsonBandit.hpp`
 - `ML_Headers/VolScaler.hpp`
 - `ML_Headers/WelfordStats.hpp`
 - `Strategies/MLStrategy.hpp`
@@ -490,7 +531,7 @@ Converted files: 75 · unit blocks: 389
 - `OrderType` — `CoreFrameworks/Order.hpp`
 - `StrategyCategory` — `Strategies/StrategyCategories.hpp`
 
-### FILE (75)
+### FILE (87)
 
 - `CoreFrameworks/BinanceAdapter.hpp` — `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/CfgFieldDispatch.hpp` — `CoreFrameworks/CfgFieldDispatch.hpp`
@@ -545,18 +586,30 @@ Converted files: 75 · unit blocks: 389
 - `CoreFrameworks/Tick.hpp` — `CoreFrameworks/Tick.hpp`
 - `CoreFrameworks/TradeEvent.hpp` — `CoreFrameworks/TradeEvent.hpp`
 - `CoreFrameworks/TradeLogColRegistry.hpp` — `CoreFrameworks/TradeLogColRegistry.hpp`
+- `ML_Headers/BarrierBlendModeRegistry.hpp` — `ML_Headers/BarrierBlendModeRegistry.hpp`
 - `ML_Headers/BarrierGate.hpp` — `ML_Headers/BarrierGate.hpp`
 - `ML_Headers/BarrierValidation.hpp` — `ML_Headers/BarrierValidation.hpp`
 - `ML_Headers/BuildFlags.hpp` — `ML_Headers/BuildFlags.hpp`
+- `ML_Headers/CfgDriftCheckRegistry.hpp` — `ML_Headers/CfgDriftCheckRegistry.hpp`
 - `ML_Headers/CostModel.hpp` — `ML_Headers/CostModel.hpp`
+- `ML_Headers/EzooInitFlagRegistry.hpp` — `ML_Headers/EzooInitFlagRegistry.hpp`
+- `ML_Headers/FeatureRegistryOverlay.hpp` — `ML_Headers/FeatureRegistryOverlay.hpp`
+- `ML_Headers/GateControlNetwork.hpp` — `ML_Headers/GateControlNetwork.hpp`
 - `ML_Headers/ICVariantRegistry.hpp` — `ML_Headers/ICVariantRegistry.hpp`
+- `ML_Headers/LinearRegression3X.hpp` — `ML_Headers/LinearRegression3X.hpp`
 - `ML_Headers/LinearRegressionSimple.hpp` — `ML_Headers/LinearRegressionSimple.hpp`
+- `ML_Headers/MlCfgFlagRegistry.hpp` — `ML_Headers/MlCfgFlagRegistry.hpp`
+- `ML_Headers/PerArmFlagRegistry.hpp` — `ML_Headers/PerArmFlagRegistry.hpp`
 - `ML_Headers/ROR_regressor.hpp` — `ML_Headers/ROR_regressor.hpp`
 - `ML_Headers/ReciprocalLUT.hpp` — `ML_Headers/ReciprocalLUT.hpp`
 - `ML_Headers/RewardTracker.hpp` — `ML_Headers/RewardTracker.hpp`
+- `ML_Headers/RollingTurnover.hpp` — `ML_Headers/RollingTurnover.hpp`
 - `ML_Headers/RollingWindowRegistry.hpp` — `ML_Headers/RollingWindowRegistry.hpp`
+- `ML_Headers/StampHelper.hpp` — `ML_Headers/StampHelper.hpp`
+- `ML_Headers/ThompsonBandit.hpp` — `ML_Headers/ThompsonBandit.hpp`
 - `ML_Headers/VolScaler.hpp` — `ML_Headers/VolScaler.hpp`
 - `ML_Headers/WelfordStats.hpp` — `ML_Headers/WelfordStats.hpp`
+- `ML_Headers/bandit_dispatch_table.hpp` — `ML_Headers/bandit_dispatch_table.hpp`
 - `RegimeDetector.hpp` — `Strategies/RegimeDetector.hpp`
 - `Strategies/MLStrategy.hpp` — `Strategies/MLStrategy.hpp`
 - `Strategies/MeanReversion.hpp` — `Strategies/MeanReversion.hpp`
@@ -568,7 +621,7 @@ Converted files: 75 · unit blocks: 389
 - `Strategies/StrategyLifecycle.hpp` — `Strategies/StrategyLifecycle.hpp`
 - `Strategies/StrategyParameters.hpp` — `Strategies/StrategyParameters.hpp`
 
-### FUNCTION (209)
+### FUNCTION (216)
 
 - `BG_Evaluate` — `CoreFrameworks/GateParameters.hpp`
 - `BUILD_FLAGS_HASH` — `ML_Headers/BuildFlags.hpp`
@@ -635,12 +688,15 @@ Converted files: 75 · unit blocks: 389
 - `ExecutionCore_Tick` — `CoreFrameworks/ExecutionCore.hpp`
 - `ExecutionCore_Tick_Impl` — `CoreFrameworks/ExecutionCore.hpp`
 - `ExitBuffer_PendingProceeds` — `CoreFrameworks/Portfolio.hpp`
+- `FeatureOverlay_PostLoadVerify` — `ML_Headers/FeatureRegistryOverlay.hpp`
 - `Fee_Compute` — `CoreFrameworks/ControllerConfig.hpp`
+- `GCN_forward` — `ML_Headers/GateControlNetwork.hpp`
 - `GateParameters_Init` — `CoreFrameworks/GateParameters.hpp`
 - `GetReciprocalLUT` — `ML_Headers/ReciprocalLUT.hpp`
 - `HotSwap_ShadowLoad_Ensemble` — `CoreFrameworks/HotSwap.hpp`
 - `HotSwap_ShadowLoad_SingleZoo` — `CoreFrameworks/HotSwap.hpp`
 - `KillSwitch_Activate` — `CoreFrameworks/PortfolioController.hpp`
+- `LinearRegression3X_Fit` — `ML_Headers/LinearRegression3X.hpp`
 - `LinearRegression_Fit` — `ML_Headers/LinearRegressionSimple.hpp`
 - `LiveReadiness_Verify` — `CoreFrameworks/LiveReadiness.hpp`
 - `MLStrategy_BuySignal` — `Strategies/MLStrategy.hpp`
@@ -727,6 +783,7 @@ Converted files: 75 · unit blocks: 389
 - `ReconciliationLoop_Pass` — `CoreFrameworks/ReconciliationLoop.hpp`
 - `ReconciliationLoop_Shutdown` — `CoreFrameworks/ReconciliationLoop.hpp`
 - `RewardTracker_Push` — `ML_Headers/RewardTracker.hpp`
+- `RollingTurnover_Push` — `ML_Headers/RollingTurnover.hpp`
 - `SG_Evaluate` — `CoreFrameworks/GateParameters.hpp`
 - `SPSCRing_Depth` — `CoreFrameworks/SPSCRing.hpp`
 - `SPSCRing_Init` — `CoreFrameworks/SPSCRing.hpp`
@@ -751,6 +808,7 @@ Converted files: 75 · unit blocks: 389
 - `Sharded_SlotNode` — `CoreFrameworks/ControllerEventLoop.hpp`
 - `SimpleDip_BuildParameters` — `Strategies/StrategyParameters.hpp`
 - `SimpleDip_BuySignal` — `Strategies/SimpleDip.hpp`
+- `Stamp_AssembleAndEmit` — `ML_Headers/StampHelper.hpp`
 - `Strategy_AdaptPerCore` — `Strategies/StrategyLifecycle.hpp`
 - `Strategy_BuildParameters` — `Strategies/StrategyParameters.hpp`
 - `Strategy_ExitAdjustPerCore` — `Strategies/StrategyLifecycle.hpp`
@@ -760,6 +818,7 @@ Converted files: 75 · unit blocks: 389
 - `Strategy_WriteRatchetSL` — `Strategies/StrategyLifecycle.hpp`
 - `Summary_WriteJson` — `CoreFrameworks/PaperResetArchive.hpp`
 - `TUI_CopySnapshotSharded` — `CoreFrameworks/ShardedSnapshot.hpp`
+- `Thompson_Sample` — `ML_Headers/ThompsonBandit.hpp`
 - `VolScaler_Size` — `ML_Headers/VolScaler.hpp`
 - `Welford_Push` — `ML_Headers/WelfordStats.hpp`
 - `aggregate_zoo_drift` — `CoreFrameworks/LiveReadiness.hpp`
@@ -774,6 +833,7 @@ Converted files: 75 · unit blocks: 389
 - `cfg_save_field` — `CoreFrameworks/CfgFieldDispatch.hpp`
 - `check_live_capital_gated_until_e` — `CoreFrameworks/LiveReadiness.hpp`
 - `engine_set_mxcsr_ftz_daz` — `CoreFrameworks/SystemInit.hpp`
+- `g_buy_reward_dispatch` — `ML_Headers/bandit_dispatch_table.hpp`
 - `handle_buy_fill` — `CoreFrameworks/OrderManager.hpp`
 - `handle_sell_fill` — `CoreFrameworks/OrderManager.hpp`
 - `notify_worker_fn` — `CoreFrameworks/Notify.hpp`
@@ -784,9 +844,12 @@ Converted files: 75 · unit blocks: 389
 
 - `SHARDED_SNAPSHOT_VERSION` — `CoreFrameworks/ShardedSnapshotPersist.hpp`
 
-### REGISTRY (25)
+### REGISTRY (30)
 
 - `FOREACH_BACKTEST_METRIC` — `CoreFrameworks/MetricCompute.hpp`
+- `FOREACH_BARRIER_BLEND_MODE` — `ML_Headers/BarrierBlendModeRegistry.hpp`
+- `FOREACH_CFG_DRIFT_CHECK` — `ML_Headers/CfgDriftCheckRegistry.hpp`
+- `FOREACH_EZOO_INIT_FLAG` — `ML_Headers/EzooInitFlagRegistry.hpp`
 - `FOREACH_GATE_CFG_FLAG` — `CoreFrameworks/GateCfgFlagRegistry.hpp`
 - `FOREACH_GLOBAL_CFG_FIELD` — `CoreFrameworks/CfgFieldRegistry.hpp`
 - `FOREACH_HALT_REASON` — `Strategies/StrategyInterface.hpp`
@@ -794,7 +857,9 @@ Converted files: 75 · unit blocks: 389
 - `FOREACH_LIFECYCLE_CFG_FLAG` — `CoreFrameworks/LifecycleCfgFlagRegistry.hpp`
 - `FOREACH_LIVE_READINESS_CHECK` — `CoreFrameworks/LiveReadiness.hpp`
 - `FOREACH_MANUAL_PER_NODE_FIELD` — `CoreFrameworks/CfgFieldRegistry.hpp`
+- `FOREACH_ML_CFG_FLAG` — `ML_Headers/MlCfgFlagRegistry.hpp`
 - `FOREACH_OPS_CFG_FLAG` — `CoreFrameworks/OpsCfgFlagRegistry.hpp`
+- `FOREACH_PER_ARM_FLAG` — `ML_Headers/PerArmFlagRegistry.hpp`
 - `FOREACH_PER_NODE_ARRAY_OVERRIDE` — `CoreFrameworks/CfgFieldRegistry.hpp`
 - `FOREACH_PER_NODE_CFG_FIELD` — `CoreFrameworks/CfgFieldRegistry.hpp`
 - `FOREACH_PER_NODE_DOMAIN_BITMAP` — `CoreFrameworks/CfgFieldRegistry.hpp`
@@ -812,7 +877,7 @@ Converted files: 75 · unit blocks: 389
 - `FOREACH_TRADE_LOG_COL` — `CoreFrameworks/TradeLogColRegistry.hpp`
 - `PER_NODE_OVERRIDE_FIELDS` — `CoreFrameworks/ControllerConfig.hpp`
 
-### STRUCT (53)
+### STRUCT (55)
 
 - `BinanceAdapterState` — `CoreFrameworks/BinanceAdapter.hpp`
 - `CfgFieldDescriptor` — `CoreFrameworks/CfgFieldRegistry.hpp`
@@ -863,7 +928,9 @@ Converted files: 75 · unit blocks: 389
 - `ShardedTradeLog` — `CoreFrameworks/ShardedTradeLog.hpp`
 - `SimpleDipState` — `Strategies/SimpleDip.hpp`
 - `SlowPathTelemetry` — `CoreFrameworks/ControllerEventLoop.hpp`
+- `StampArgs` — `ML_Headers/StampHelper.hpp`
 - `SubmitCommand` — `CoreFrameworks/OrderManager.hpp`
+- `ThompsonBanditState` — `ML_Headers/ThompsonBandit.hpp`
 - `Tick` — `CoreFrameworks/Tick.hpp`
 - `TradeEvent` — `CoreFrameworks/TradeEvent.hpp`
 - `WsHeartbeatTelemetry` — `CoreFrameworks/ControllerEventLoop.hpp`

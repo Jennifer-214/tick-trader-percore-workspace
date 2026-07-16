@@ -204,8 +204,13 @@ PARITY / finding / spec / `[[memory]]`).
 
 ## 8. The gap-to-current + the phased path
 
-We are at: format proven on ONE comment-light file; toolchain ~half-wired (RC-A…E open);
-plugin major-features work, overlays/asm half-broken; no north-star (this doc closes that).
+We are at (updated 2026-07-15, D-348): format LOCKED `[SCHEMA]_[v1.0]` (D-346); propagation
+landed — validator caught up to the locked contract + per-type template corpus
+(`DOCS/CODE_TAG_TEMPLATES.hpp`) + code-tag index + skills/CLAUDE.md alignment (D-347);
+dogfood corpus LANDED + PROVEN LOSSLESS — 4 real units (rich file-header / hot struct /
+registry slice / wire parser) converted in `tests/schema_golden/`, mechanical
+comment-stripped code diff clean (D-348). Toolchain ~half-wired (RC-A…E open — the next
+phase); plugin major-features work, overlays/asm half-broken (operator's session).
 
 **Phased path (each phase gates the next):**
 1. Complete the **schema** against the survey's input-space taxonomy.

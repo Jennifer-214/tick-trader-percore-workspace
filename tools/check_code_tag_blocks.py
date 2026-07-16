@@ -255,9 +255,19 @@ def engine_source_files():
     """Every engine source file the tag tooling scans (drift-proof — a new dir is auto-included;
     vendored deps + build outputs excluded; no hardcoded file/dir allow-list). Shared by the
     validator scan (main) AND the code-tag-index generator (rebuild_doc_indexes) — one
-    file-list, never a second copy."""
-    return [p for p in list(ENGINE.rglob("*.hpp")) + list(ENGINE.rglob("*.cpp"))
-            if not any(part == "vendor" or part.startswith("build") for part in p.parts)]
+    file-list, never a second copy.
+
+    PLUS the schema-golden fixture dir, added EXPLICITLY: engine `tests/` is a whole-dir
+    symlink to the workspace, and ENGINE.rglob does NOT descend directory symlinks — so the
+    dogfood/golden fixtures would silently escape the standing full-tree scan (caught P3
+    2026-07-15: the scan count didn't move when 4 fixtures landed). The fixtures MUST stay
+    policed — they are the format's canonical conversions. Index/cache-gate consumers that
+    want conversions-only still exclude them by the `schema_golden` path part."""
+    files = [p for p in list(ENGINE.rglob("*.hpp")) + list(ENGINE.rglob("*.cpp"))
+             if not any(part == "vendor" or part.startswith("build") for part in p.parts)]
+    golden = WORKSPACE / "tests" / "schema_golden"
+    files += sorted(golden.glob("*.hpp")) + sorted(golden.glob("*.cpp"))
+    return files
 
 
 def collect_file_tags(path):

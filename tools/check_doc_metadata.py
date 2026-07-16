@@ -36,6 +36,18 @@ ENGINE = Path(os.environ.get("FOXML_ENGINE") or Path(__file__).absolute().parent
 # .resolve(): tools/ is symlinked from the private workspace; .resolve() follows it → ENGINE becomes the
 # WORKSPACE → the memory-dir slug doesn't exist → the guard silently scans 0 memories (a vacuous green).
 # See LANDMINES Landmine 5.
+if not (ENGINE / "Version.hpp").is_file():
+    # Shape check: Version.hpp is the engine-root SSoT marker — present at the engine root,
+    # ABSENT in the workspace (which mirrors CoreFrameworks/ etc. for module-doc backups, so a
+    # dir-name check can't discriminate). Failing it means __file__ was WORKSPACE-side (an
+    # importer whose sys.path entry .resolve()d the tools/ symlink, or the workspace repo's own
+    # Check P aggregator run) → the parent-derivation landed on the WORKSPACE. Recover via the
+    # sibling-checkout convention (mirror of check_session_docs.sh's WORKSPACE_ROOT
+    # sibling-default, reversed); FOXML_ENGINE env stays the explicit override for non-sibling
+    # layouts. Shape-VERIFIED — the fallback is taken only when it IS the engine, never blindly.
+    _sibling_engine = ENGINE.parent / "FoxML_Trader_v2"
+    if (_sibling_engine / "Version.hpp").is_file():
+        ENGINE = _sibling_engine
 def _resolve_workspace_root():
     env = os.environ.get("FOXML_WORKSPACE")
     if env and Path(env).exists():

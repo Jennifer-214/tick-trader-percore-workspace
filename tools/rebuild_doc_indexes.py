@@ -7,6 +7,8 @@ Regenerates:
 - CLAUDE.md "Skill suite" table (auto-generated from SKILL.md frontmatter `concern:`)
 - DESIGN_SPECS/README.md catalog (grouped by `type:` then `stage:`)
 - DESIGN_SPECS/TAG_INDEX.md (tag → files reverse-lookup snapshot)
+- DOCS/CODE_TAG_INDEX.md (the CODE-side twin — [TAG] values + unit blocks across converted
+  engine files, via check_code_tag_blocks' shared grammar; E.1.2.A §Propagation / task #14)
 
 Sister to:
 - tools/check_doc_metadata.py (validation; this tool generates indexes)
@@ -30,7 +32,9 @@ SPECS_DIR = WORKSPACE / "DESIGN_SPECS"
 SKILLS_DIR = WORKSPACE / "claude-skills"
 CLAUDE_MD = WORKSPACE / "CLAUDE.md"
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).absolute().parent))   # .absolute() NOT .resolve() — resolving
+# the tools/ symlink gives the imported SSoT modules a WORKSPACE-side __file__, mis-deriving ENGINE
+# (LANDMINES 5/7; check_doc_metadata now also shape-verifies, but don't re-arm the trap here).
 from check_doc_metadata import _resolve_memory_dir  # SSoT memory-dir resolver (D-89)
 MEMORY_DIR = _resolve_memory_dir()
 
@@ -257,6 +261,94 @@ def gen_tag_index(specs, skills, memories=None):
     return "\n".join(lines)
 
 
+def collect_code_tags():
+    """Code-side twin of collect_specs: scan the ENGINE tree for [SCHEMA]-opted-in tag-blocks.
+    Grammar + file-list come from check_code_tag_blocks (collect_file_tags / engine_source_files)
+    — ONE parser for validator and index, never a mirror (anti-Class-18). DOCS/ is skipped:
+    the template corpus there is copy-source, not converted code — the index reports the
+    CONVERSION state. Returns {engine-rel path: (units, tags)} for converted files only."""
+    from check_code_tag_blocks import engine_source_files, collect_file_tags, ENGINE
+    if not (ENGINE / "Version.hpp").is_file():
+        # Class-51 net: a mis-derived root yields a PLAUSIBLE-but-wrong index (scanned the
+        # workspace tree, found only the golden fixture — the 2026-07-15 detonation). Fail LOUD.
+        # Version.hpp = the engine-root marker (the workspace mirrors CoreFrameworks/, so a
+        # dir check can't discriminate).
+        raise RuntimeError(f"code-tag index refused: ENGINE={ENGINE} is not the engine tree "
+                           f"(no Version.hpp) — set FOXML_ENGINE")
+    out = {}
+    for f in engine_source_files():
+        # DOCS/ = the template corpus (copy-source); schema_golden/ = the frozen fixture —
+        # neither is a CONVERSION, and this index reports conversion state.
+        if any(part in ("DOCS", "schema_golden") for part in f.parts):
+            continue
+        units, tags = collect_file_tags(f)
+        if units or tags:
+            try:
+                rel = str(f.relative_to(ENGINE))
+            except ValueError:
+                rel = str(f)
+            out[rel] = (units, tags)
+    return out
+
+
+def gen_code_tag_index(code_tags):
+    total_units = sum(len(u) for u, _ in code_tags.values())
+    lines = [
+        "# Code-tag index (auto-generated snapshot)",
+        "",
+        "**Auto-generated** by `tools/rebuild_doc_indexes.py --target code-tag-index` — the",
+        "CODE-side twin of `DESIGN_SPECS/TAG_INDEX.md`. Canonical reverse-lookup is `rg` over",
+        "the engine tree:",
+        "",
+        "```bash",
+        "rg -l '\\[TAG\\]_\\[\\[SLOW_PATH' --glob '*.hpp'   # files tagged [SLOW_PATH]",
+        "rg -n '\\[FUNCTION\\]_\\['                         # converted function blocks (with lines)",
+        "```",
+        "",
+        "Snapshot for static browsing; regen via `/index-rebuild` (the `--check` currency guard",
+        "reds a stale copy). Line numbers are deliberately OMITTED — file-level granularity only,",
+        "so the snapshot stales when tags/units actually change, not on unrelated line drift;",
+        "`rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a",
+        "conversion).",
+        "",
+        f"Converted files: {len(code_tags)} · unit blocks: {total_units}",
+        "",
+        "## [TAG] values → files",
+        "",
+    ]
+    by_tag = defaultdict(set)
+    for rel, (_, tags) in code_tags.items():
+        for t in tags:
+            by_tag[t].add(rel)
+    if not by_tag:
+        lines.append("*(none yet — fills as E.1.2.A conversion lands)*")
+        lines.append("")
+    for tag in sorted(by_tag):
+        files = sorted(by_tag[tag])
+        lines.append(f"### {tag} ({len(files)} files)")
+        lines.append("")
+        for f in files:
+            lines.append(f"- `{f}`")
+        lines.append("")
+    lines.append("## Unit blocks by [TYPE]")
+    lines.append("")
+    by_type = defaultdict(set)
+    for rel, (units, _) in code_tags.items():
+        for utype, name, _lineno in units:
+            by_type[utype].add((name, rel))
+    if not by_type:
+        lines.append("*(none yet)*")
+        lines.append("")
+    for utype in sorted(by_type):
+        rows = sorted(by_type[utype])
+        lines.append(f"### {utype} ({len(rows)})")
+        lines.append("")
+        for name, rel in rows:
+            lines.append(f"- `{name}` — `{rel}`")
+        lines.append("")
+    return "\n".join(lines)
+
+
 def _read(path):
     try:
         with open(path, encoding="utf-8") as f:
@@ -267,7 +359,8 @@ def _read(path):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--target", choices=["claude-md", "readme", "tag-index", "all"], default="all")
+    p.add_argument("--target", choices=["claude-md", "readme", "tag-index", "code-tag-index", "all"],
+                   default="all")
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--check", action="store_true",
                    help="CURRENCY GUARD: exit 1 if any index is STALE (a regen would change it); "
@@ -323,6 +416,20 @@ def main():
             with open(tag_path, "w", encoding="utf-8") as f:
                 f.write(tag_content)
             print(f"Wrote {tag_path}")
+
+    if args.target in ("code-tag-index", "all"):
+        ct_content = gen_code_tag_index(collect_code_tags())
+        ct_path = WORKSPACE / "DOCS" / "CODE_TAG_INDEX.md"
+        if args.check:
+            if ct_content != _read(ct_path):
+                stale.append("DOCS/CODE_TAG_INDEX.md")
+        elif args.dry_run:
+            print("\n=== DOCS/CODE_TAG_INDEX.md (first 40 lines) ===")
+            print("\n".join(ct_content.split("\n")[:40]))
+        else:
+            with open(ct_path, "w", encoding="utf-8") as f:
+                f.write(ct_content)
+            print(f"Wrote {ct_path}")
 
     if args.check:
         if stale:

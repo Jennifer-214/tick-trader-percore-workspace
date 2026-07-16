@@ -15,7 +15,7 @@ so the snapshot stales when tags/units actually change, not on unrelated line dr
 `rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a
 conversion).
 
-Converted files: 15 · unit blocks: 101
+Converted files: 21 · unit blocks: 114
 
 ## [TAG] values → files
 
@@ -23,9 +23,13 @@ Converted files: 15 · unit blocks: 101
 
 - `Strategies/RegimeDetector.hpp`
 
-### BITMAP_PACKED (1 files)
+### BITMAP_PACKED (5 files)
 
+- `CoreFrameworks/GateCfgFlagRegistry.hpp`
+- `CoreFrameworks/LifecycleCfgFlagRegistry.hpp`
+- `CoreFrameworks/OpsCfgFlagRegistry.hpp`
 - `CoreFrameworks/Portfolio.hpp`
+- `CoreFrameworks/RiskCfgFlagRegistry.hpp`
 
 ### BOOT_TIME (8 files)
 
@@ -47,13 +51,21 @@ Converted files: 15 · unit blocks: 101
 - `CoreFrameworks/Portfolio.hpp`
 - `CoreFrameworks/TradeEvent.hpp`
 
-### CONCURRENCY (6 files)
+### CFG_FLOW (4 files)
+
+- `CoreFrameworks/GateCfgFlagRegistry.hpp`
+- `CoreFrameworks/LifecycleCfgFlagRegistry.hpp`
+- `CoreFrameworks/OpsCfgFlagRegistry.hpp`
+- `CoreFrameworks/RiskCfgFlagRegistry.hpp`
+
+### CONCURRENCY (7 files)
 
 - `CoreFrameworks/ExchangeAdapter.hpp`
 - `CoreFrameworks/ExecutionCore.hpp`
 - `CoreFrameworks/OrderManager.hpp`
 - `CoreFrameworks/ParameterSlot.hpp`
 - `CoreFrameworks/SPSCRing.hpp`
+- `CoreFrameworks/ShardedOrderLatency.hpp`
 - `CoreFrameworks/TradeEvent.hpp`
 
 ### CRITICAL (5 files)
@@ -91,18 +103,24 @@ Converted files: 15 · unit blocks: 101
 
 - `CoreFrameworks/SystemInit.hpp`
 
-### ENGINE (14 files)
+### ENGINE (20 files)
 
 - `CoreFrameworks/ExchangeAdapter.hpp`
 - `CoreFrameworks/ExecutionCore.hpp`
+- `CoreFrameworks/GateCfgFlagRegistry.hpp`
 - `CoreFrameworks/GateParameters.hpp`
+- `CoreFrameworks/LifecycleCfgFlagRegistry.hpp`
 - `CoreFrameworks/MetaRegistry.hpp`
 - `CoreFrameworks/NodeLatencyStats.hpp`
+- `CoreFrameworks/OpsCfgFlagRegistry.hpp`
 - `CoreFrameworks/OrderGates.hpp`
 - `CoreFrameworks/OrderManager.hpp`
 - `CoreFrameworks/ParameterSlot.hpp`
 - `CoreFrameworks/Portfolio.hpp`
+- `CoreFrameworks/RiskCfgFlagRegistry.hpp`
 - `CoreFrameworks/SPSCRing.hpp`
+- `CoreFrameworks/ShardedOrderLatency.hpp`
+- `CoreFrameworks/SpSectionRegistry.hpp`
 - `CoreFrameworks/SystemInit.hpp`
 - `CoreFrameworks/Tick.hpp`
 - `CoreFrameworks/TradeEvent.hpp`
@@ -133,21 +151,24 @@ Converted files: 15 · unit blocks: 101
 - `CoreFrameworks/Tick.hpp`
 - `CoreFrameworks/TradeEvent.hpp`
 
-### LIVE_TRADING (3 files)
+### LIVE_TRADING (4 files)
 
 - `CoreFrameworks/ExchangeAdapter.hpp`
 - `CoreFrameworks/ExecutionCore.hpp`
 - `CoreFrameworks/OrderManager.hpp`
+- `CoreFrameworks/ShardedOrderLatency.hpp`
 
 ### ML (2 files)
 
 - `CoreFrameworks/OrderManager.hpp`
 - `Strategies/RegimeDetector.hpp`
 
-### MONITORING_PLANE (2 files)
+### MONITORING_PLANE (4 files)
 
 - `CoreFrameworks/NodeLatencyStats.hpp`
 - `CoreFrameworks/SPSCRing.hpp`
+- `CoreFrameworks/ShardedOrderLatency.hpp`
+- `CoreFrameworks/SpSectionRegistry.hpp`
 
 ### OMS_DRAINER (1 files)
 
@@ -157,13 +178,14 @@ Converted files: 15 · unit blocks: 101
 
 - `CoreFrameworks/Portfolio.hpp`
 
-### SLOW_PATH (6 files)
+### SLOW_PATH (7 files)
 
 - `CoreFrameworks/ExecutionCore.hpp`
 - `CoreFrameworks/NodeLatencyStats.hpp`
 - `CoreFrameworks/OrderManager.hpp`
 - `CoreFrameworks/ParameterSlot.hpp`
 - `CoreFrameworks/Portfolio.hpp`
+- `CoreFrameworks/SpSectionRegistry.hpp`
 - `Strategies/RegimeDetector.hpp`
 
 ### STRUCTURAL_FIX (1 files)
@@ -191,24 +213,30 @@ Converted files: 15 · unit blocks: 101
 
 - `CommandType` — `CoreFrameworks/OrderManager.hpp`
 
-### FILE (14)
+### FILE (20)
 
 - `CoreFrameworks/ExchangeAdapter.hpp` — `CoreFrameworks/ExchangeAdapter.hpp`
 - `CoreFrameworks/ExecutionCore.hpp` — `CoreFrameworks/ExecutionCore.hpp`
+- `CoreFrameworks/GateCfgFlagRegistry.hpp` — `CoreFrameworks/GateCfgFlagRegistry.hpp`
 - `CoreFrameworks/GateParameters.hpp` — `CoreFrameworks/GateParameters.hpp`
+- `CoreFrameworks/LifecycleCfgFlagRegistry.hpp` — `CoreFrameworks/LifecycleCfgFlagRegistry.hpp`
 - `CoreFrameworks/MetaRegistry.hpp` — `CoreFrameworks/MetaRegistry.hpp`
 - `CoreFrameworks/NodeLatencyStats.hpp` — `CoreFrameworks/NodeLatencyStats.hpp`
+- `CoreFrameworks/OpsCfgFlagRegistry.hpp` — `CoreFrameworks/OpsCfgFlagRegistry.hpp`
 - `CoreFrameworks/OrderGates.hpp` — `CoreFrameworks/OrderGates.hpp`
 - `CoreFrameworks/OrderManager.hpp` — `CoreFrameworks/OrderManager.hpp`
 - `CoreFrameworks/ParameterSlot.hpp` — `CoreFrameworks/ParameterSlot.hpp`
 - `CoreFrameworks/Portfolio.hpp` — `CoreFrameworks/Portfolio.hpp`
+- `CoreFrameworks/RiskCfgFlagRegistry.hpp` — `CoreFrameworks/RiskCfgFlagRegistry.hpp`
 - `CoreFrameworks/SPSCRing.hpp` — `CoreFrameworks/SPSCRing.hpp`
+- `CoreFrameworks/ShardedOrderLatency.hpp` — `CoreFrameworks/ShardedOrderLatency.hpp`
+- `CoreFrameworks/SpSectionRegistry.hpp` — `CoreFrameworks/SpSectionRegistry.hpp`
 - `CoreFrameworks/SystemInit.hpp` — `CoreFrameworks/SystemInit.hpp`
 - `CoreFrameworks/Tick.hpp` — `CoreFrameworks/Tick.hpp`
 - `CoreFrameworks/TradeEvent.hpp` — `CoreFrameworks/TradeEvent.hpp`
 - `RegimeDetector.hpp` — `Strategies/RegimeDetector.hpp`
 
-### FUNCTION (50)
+### FUNCTION (51)
 
 - `BG_Evaluate` — `CoreFrameworks/GateParameters.hpp`
 - `BuyGate` — `CoreFrameworks/OrderGates.hpp`
@@ -257,16 +285,22 @@ Converted files: 15 · unit blocks: 101
 - `SPSCRing_TryPop` — `CoreFrameworks/SPSCRing.hpp`
 - `SPSCRing_TryPush` — `CoreFrameworks/SPSCRing.hpp`
 - `SellGate` — `CoreFrameworks/OrderGates.hpp`
+- `ShardedOrderLatency_Sample` — `CoreFrameworks/ShardedOrderLatency.hpp`
 - `engine_set_mxcsr_ftz_daz` — `CoreFrameworks/SystemInit.hpp`
 - `handle_buy_fill` — `CoreFrameworks/OrderManager.hpp`
 - `handle_sell_fill` — `CoreFrameworks/OrderManager.hpp`
 
-### REGISTRY (2)
+### REGISTRY (7)
 
+- `FOREACH_GATE_CFG_FLAG` — `CoreFrameworks/GateCfgFlagRegistry.hpp`
+- `FOREACH_LIFECYCLE_CFG_FLAG` — `CoreFrameworks/LifecycleCfgFlagRegistry.hpp`
+- `FOREACH_OPS_CFG_FLAG` — `CoreFrameworks/OpsCfgFlagRegistry.hpp`
 - `FOREACH_REGISTRY` — `CoreFrameworks/MetaRegistry.hpp`
+- `FOREACH_RISK_CFG_FLAG` — `CoreFrameworks/RiskCfgFlagRegistry.hpp`
+- `FOREACH_SP_SECTION` — `CoreFrameworks/SpSectionRegistry.hpp`
 - `FOREACH_STRATEGY` — `Strategies/StrategyInterface.hpp`
 
-### STRUCT (19)
+### STRUCT (20)
 
 - `CumDeltaState` — `Strategies/RegimeDetector.hpp`
 - `DataStream` — `CoreFrameworks/OrderGates.hpp`
@@ -284,6 +318,7 @@ Converted files: 15 · unit blocks: 101
 - `PositionEntryArgs` — `CoreFrameworks/Portfolio.hpp`
 - `RegimeSignals` — `Strategies/RegimeDetector.hpp`
 - `SPSCRing` — `CoreFrameworks/SPSCRing.hpp`
+- `ShardedOrderLatency` — `CoreFrameworks/ShardedOrderLatency.hpp`
 - `SubmitCommand` — `CoreFrameworks/OrderManager.hpp`
 - `Tick` — `CoreFrameworks/Tick.hpp`
 - `TradeEvent` — `CoreFrameworks/TradeEvent.hpp`

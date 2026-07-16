@@ -199,6 +199,9 @@ def main():
     else:
         files = [p for p in list(ENGINE.rglob("*.hpp")) + list(ENGINE.rglob("*.cpp"))
                  if not any(part == "vendor" or part.startswith("build") or part == "schema_golden"
+                            or part == "DOCS"   # DOCS/ = template corpus etc. — illustrative
+                                                # [STRUCT] DERIVED on non-compiled copy-source
+                                                # (sister to the schema_golden exclusion)
                             for part in p.parts)]
 
     blocks = []

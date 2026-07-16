@@ -4,7 +4,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-07-15 (commit d4812de)
+**Last regenerated**: 2026-07-15 (commit d5f8abd)
 
 ## CoreFrameworks/
 
@@ -97,11 +97,11 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### ExecutionCore.hpp
 
-- `ExecutionCore_Init` — line 202
-- `ExecutionCore_SetParameters` — line 246
-- `ExecutionCore_SetPermission` — line 267
-- `ExecutionCore_Tick_Impl` — line 297
-- `ExecutionCore_Tick` — line 654
+- `ExecutionCore_Init` — line 272
+- `ExecutionCore_SetParameters` — line 331
+- `ExecutionCore_SetPermission` — line 366
+- `ExecutionCore_Tick_Impl` — line 403
+- `ExecutionCore_Tick` — line 788
 
 ### GateParameters.hpp
 

@@ -4,96 +4,96 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-07-16 (commit 07c388e)
+**Last regenerated**: 2026-07-17 (commit 2b4a79b)
 
 ## CoreFrameworks/
 
 ### BinanceAdapter.hpp
 
-- `BinanceAdapter_WorkerLoop` — line 203 — shutdown_requested flips.
-- `BinanceAdapter_Init` — line 329 — 1; future commits scale up after the back-to-back stress test passes.
-- `BinanceAdapter_ShutdownState` — line 393 — without a successful Init (shutdown_requested is already 0 by default).
-- `BinanceAdapter_SubmitMarketBuy` — line 426 — holds with worker_count == 1.
-- `BinanceAdapter_SubmitMarketSell` — line 460
-- `BinanceAdapter_GetBalancesImpl` — line 505 — pausing submissions during a reconciliation pass.
-- `BinanceAdapter_QueryOrderImpl` — line 527
-- `BinanceAdapter_ShutdownImpl` — line 558
-- `BinanceAdapter_Get` — line 581
+- `BinanceAdapter_WorkerLoop` — line 198
+- `BinanceAdapter_Init` — line 322 — shutdown_requested flips.
+- `BinanceAdapter_ShutdownState` — line 398 — 1; future commits scale up after the back-to-back stress test passes.
+- `BinanceAdapter_SubmitMarketBuy` — line 431 — without a successful Init (shutdown_requested is already 0 by default).
+- `BinanceAdapter_SubmitMarketSell` — line 474 — holds with worker_count == 1.
+- `BinanceAdapter_GetBalancesImpl` — line 508
+- `BinanceAdapter_QueryOrderImpl` — line 543 — pausing submissions during a reconciliation pass.
+- `BinanceAdapter_ShutdownImpl` — line 574
+- `BinanceAdapter_Get` — line 593
 
 ### ControllerConfig.hpp
 
-- `ControllerConfig_CapitalRangeSweep` — line 1474
-- `Fee_Compute` — line 1631
-- `ControllerConfig_ResolveForCore` — line 1662
-- `ControllerConfig_PopulateCoresFromFlat` — line 1735
-- `ControllerConfig_NormalizeForMode` — line 2318
-- `ControllerConfig_IsLiveCapital` — line 2352
-- `ControllerConfig_Load` — line 2374
+- `ControllerConfig_CapitalRangeSweep` — line 1479
+- `Fee_Compute` — line 1608
+- `ControllerConfig_ResolveForCore` — line 1661
+- `ControllerConfig_PopulateCoresFromFlat` — line 1724
+- `ControllerConfig_NormalizeForMode` — line 2311
+- `ControllerConfig_IsLiveCapital` — line 2345
+- `ControllerConfig_Load` — line 2387
 
 ### ControllerEventLoop.hpp
 
-- `NodeSlowState_Init` — line 204
-- `NodeContextDisplayMeta_Init` — line 806
-- `Sharded_SlotNode` — line 982 — early consumer precedes the definition (same tt namespace). (D-294)
-- `EventLoopState_ReconstructPerCoreFromEventLog` — line 985
-- `EventLoopState_Init` — line 1068
-- `EventLoopState_InitLegacy` — line 1125
-- `EventLoopState_Free` — line 1158
-- `EventLoopState_RegisterCore` — line 1222
-- `Sharded_LegSlot` — line 1284 — All slow-path / boot-time. Trivially inlined.
-- `Sharded_SlotNode` — line 1321 — and ShardedSnapshot.hpp. GUI sites grandfathered for the E-series decouple. (D-294/D-295)
-- `Sharded_ValidatePartialExitCfg` — line 1334
-- `EventLoopState_SetCoreStrategy` — line 1397
-- `EventLoopState_AttachTradeLog` — line 1430
-- `EventLoopState_AttachOms` — line 1447
-- `EventLoopState_Balance` — line 1465
-- `EventLoopState_RealizedPnl` — line 1470
-- `EventLoopState_Portfolio` — line 1481
-- `EventLoopState_PortfolioMut` — line 1486
-- `EventLoopState_KsMinBalance` — line 1491
-- `EventLoopState_KsMaxDrawdownPct` — line 1496
-- `EventLoopState_KsPeakBalance` — line 1501
-- `EventLoopState_TradeLog` — line 1517
-- `EventLoopState_SetIntendedParams` — line 1532
-- `EventLoop_DrainPostFillOneCore` — line 1594
-- `EventLoop_DrainPostFill` — line 2023
-- `EventLoop_OnEvent` — line 2087
-- `EventLoop_DrainEvents` — line 2257
-- `EventLoop_QueueParameters` — line 2302
-- `EventLoop_RebuildAllParameters` — line 2346
-- `EventLoop_UpdateRollingStateOneCore` — line 2448
-- `EventLoop_UpdateEmaPriceAllCores` — line 2491
-- `EventLoop_RebuildOneCore` — line 2525
-- `EventLoop_PushParameters` — line 3469
-- `EventLoopState_ConfigureKillSwitch` — line 3515
-- `EventLoop_ClearAllPermissions` — line 3525
-- `EventLoop_KillSwitchTrip` — line 3536
-- `EventLoop_KillSwitchEvaluate` — line 3565
-- `EventLoop_TimeExitOneCore` — line 3651
-- `EventLoop_FlattenAll` — line 3757
-- `EventLoop_CheckWsStaleness` — line 3839
-- `EventLoop_TryClearRecovery` — line 3918
-- `EventLoop_TrailingSLRatchetOneCore` — line 3972
-- `EventLoop_BreakevenOnProfitOneCore` — line 4062
-- `EventLoop_Unpause` — line 4120
-- `EventLoop_SlowPath` — line 4144
-- `EventLoop_RunController` — line 4169
+- `NodeSlowState_Init` — line 184
+- `NodeContextDisplayMeta_Init` — line 786
+- `Sharded_SlotNode` — line 978 — early consumer precedes the definition (same tt namespace). (D-294)
+- `EventLoopState_ReconstructPerCoreFromEventLog` — line 981
+- `EventLoopState_Init` — line 1093
+- `EventLoopState_InitLegacy` — line 1150
+- `EventLoopState_Free` — line 1183
+- `EventLoopState_RegisterCore` — line 1244
+- `Sharded_LegSlot` — line 1318 — All slow-path / boot-time. Trivially inlined.
+- `Sharded_SlotNode` — line 1355 — and ShardedSnapshot.hpp. GUI sites grandfathered for the E-series decouple. (D-294/D-295)
+- `Sharded_ValidatePartialExitCfg` — line 1368
+- `EventLoopState_SetCoreStrategy` — line 1419
+- `EventLoopState_AttachTradeLog` — line 1466
+- `EventLoopState_AttachOms` — line 1483
+- `EventLoopState_Balance` — line 1501
+- `EventLoopState_RealizedPnl` — line 1506
+- `EventLoopState_Portfolio` — line 1517
+- `EventLoopState_PortfolioMut` — line 1522
+- `EventLoopState_KsMinBalance` — line 1527
+- `EventLoopState_KsMaxDrawdownPct` — line 1532
+- `EventLoopState_KsPeakBalance` — line 1537
+- `EventLoopState_TradeLog` — line 1553
+- `EventLoopState_SetIntendedParams` — line 1568
+- `EventLoop_DrainPostFillOneCore` — line 1586
+- `EventLoop_DrainPostFill` — line 2015
+- `EventLoop_OnEvent` — line 2104
+- `EventLoop_DrainEvents` — line 2288
+- `EventLoop_QueueParameters` — line 2331
+- `EventLoop_RebuildAllParameters` — line 2369
+- `EventLoop_UpdateRollingStateOneCore` — line 2476
+- `EventLoop_UpdateEmaPriceAllCores` — line 2519
+- `EventLoop_RebuildOneCore` — line 2565
+- `EventLoop_PushParameters` — line 3507
+- `EventLoopState_ConfigureKillSwitch` — line 3569
+- `EventLoop_ClearAllPermissions` — line 3579
+- `EventLoop_KillSwitchTrip` — line 3590
+- `EventLoop_KillSwitchEvaluate` — line 3619
+- `EventLoop_TimeExitOneCore` — line 3685
+- `EventLoop_FlattenAll` — line 3787
+- `EventLoop_CheckWsStaleness` — line 3869
+- `EventLoop_TryClearRecovery` — line 3948
+- `EventLoop_TrailingSLRatchetOneCore` — line 4013
+- `EventLoop_BreakevenOnProfitOneCore` — line 4111
+- `EventLoop_Unpause` — line 4185
+- `EventLoop_SlowPath` — line 4209
+- `EventLoop_RunController` — line 4234
 
 ### EngineCommon.hpp
 
-- `EngineCommon_ApplyBnbDiscount` — line 176
-- `EngineCommon_BootGlobal` — line 219
-- `EngineCommon_BootPerCore` — line 286
-- `EngineCommon_SlowPathCycleOneCore` — line 554
-- `EngineCommon_SlowPathCycleAllCores` — line 900
+- `EngineCommon_ApplyBnbDiscount` — line 162
+- `EngineCommon_BootGlobal` — line 207
+- `EngineCommon_BootPerCore` — line 261
+- `EngineCommon_SlowPathCycleOneCore` — line 518
+- `EngineCommon_SlowPathCycleAllCores` — line 903
 
 ### EnsembleHotSwap.hpp
 
-- `EngineSharded_HotSwapEnsemble` — line 61
+- `EngineSharded_HotSwapEnsemble` — line 35
 
 ### EventLoopAggregates.hpp
 
-- `EventLoop_GetAggregates` — line 161
+- `EventLoop_GetAggregates` — line 122
 
 ### ExecutionCore.hpp
 
@@ -105,14 +105,14 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### GateParameters.hpp
 
-- `BG_Evaluate` — line 212
-- `SG_Evaluate` — line 260
+- `BG_Evaluate` — line 214
+- `SG_Evaluate` — line 262
 - `GateParameters_Init` — line 291
 
 ### HotSwap.hpp
 
-- `HotSwap_ShadowLoad_Ensemble` — line 89
-- `HotSwap_ShadowLoad_SingleZoo` — line 237
+- `HotSwap_ShadowLoad_Ensemble` — line 68
+- `HotSwap_ShadowLoad_SingleZoo` — line 230
 
 ### LiveReadiness.hpp
 
@@ -130,42 +130,42 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### ModelValidation.hpp
 
-- `NodeModelZoo_ValidateAgainstCfg` — line 151
+- `NodeModelZoo_ValidateAgainstCfg` — line 131
 
 ### NodeLatencyStats.hpp
 
-- `NodeLatencyStats_Init` — line 181 — TSC frequency in GHz so it can do the conversion in one place).
-- `NodeLatencyStats_Reset` — line 213 — stats mid-run without disabling them.
-- `NodeLatencyStats_Enable` — line 229
-- `NodeLatencyStats_Disable` — line 233
-- `NodeLatencyStats_Sample` — line 247
-- `NodeLatencyStats_Snapshot` — line 289 — rdtsc reading at sample time, used for "last seen" tracking in the TUI.
+- `NodeLatencyStats_Init` — line 188
+- `NodeLatencyStats_Reset` — line 220 — stats mid-run without disabling them.
+- `NodeLatencyStats_Enable` — line 236
+- `NodeLatencyStats_Disable` — line 240
+- `NodeLatencyStats_Sample` — line 254
+- `NodeLatencyStats_Snapshot` — line 296 — rdtsc reading at sample time, used for "last seen" tracking in the TUI.
 
 ### Notify.hpp
 
-- `NotifyState_Init` — line 263
-- `Notify_Send` — line 296 — Cooldown gate uses CLOCK_MONOTONIC (NTP-jump-safe).
-- `NotifyState_Shutdown` — line 360 — Drain remaining events + join worker thread + free pthread resources.
-- `NotifyBackend_Stderr` — line 386
-- `Notify_ShellEscape` — line 480 — Document this for users; provide a wrapper script if needed.
-- `Notify_BuildCommand` — line 517 — overflowed before completion (still tries to run what fit).
-- `NotifyBackend_Command` — line 558
+- `NotifyState_Init` — line 266 — drains remaining events before exiting (per test sidecar Group 5).
+- `Notify_Send` — line 297
+- `NotifyState_Shutdown` — line 366 — Drain remaining events + join worker thread + free pthread resources.
+- `NotifyBackend_Stderr` — line 392
+- `Notify_ShellEscape` — line 472
+- `Notify_BuildCommand` — line 523 — Document this for users; provide a wrapper script if needed.
+- `NotifyBackend_Command` — line 572 — overflowed before completion (still tries to run what fit).
 
 ### OrderEventLog.hpp
 
-- `OrderEventLog_Init` — line 300
-- `OrderEventLog_Free` — line 366
-- `OrderEventLog_ApplyEvent` — line 415
-- `OrderEventLog_Append` — line 454
-- `OrderEventLog_AsyncWriterRoutine` — line 500
-- `OrderEventLog_StartAsyncWriter` — line 548
-- `OrderEventLog_StopAsyncWriter` — line 577
-- `OrderEventLog_InitWithFile` — line 607
-- `OrderEventLog_Reset` — line 692
-- `OrderEventLog_LoadFromDisk` — line 745
-- `OrderEvent_MakeFill` — line 845
-- `OrderEvent_MakeRejection` — line 877
-- `Portfolio_FromEventLog` — line 930
+- `OrderEventLog_Init` — line 320
+- `OrderEventLog_Free` — line 386
+- `OrderEventLog_ApplyEvent` — line 427
+- `OrderEventLog_Append` — line 475
+- `OrderEventLog_AsyncWriterRoutine` — line 526
+- `OrderEventLog_StartAsyncWriter` — line 574
+- `OrderEventLog_StopAsyncWriter` — line 603
+- `OrderEventLog_InitWithFile` — line 626
+- `OrderEventLog_Reset` — line 715
+- `OrderEventLog_LoadFromDisk` — line 771
+- `OrderEvent_MakeFill` — line 877
+- `OrderEvent_MakeRejection` — line 915
+- `Portfolio_FromEventLog` — line 954
 
 ### OrderGates.hpp
 
@@ -174,48 +174,48 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### Order.hpp
 
-- `Order_GetType` — line 289
-- `Order_SetType` — line 293
-- `Order_GetState` — line 299
-- `Order_SetState` — line 303
-- `Order_GetIsMaker` — line 309
-- `Order_SetIsMaker` — line 313
-- `Order_SetLeg` — line 323
-- `Order_SetRetryCount` — line 333
-- `Order_GetPreResolvedBound` — line 342
-- `Order_MarkPreResolvedBound` — line 346
-- `MBS_OrderBanditActiveState` — line 362
-- `MBS_OrderBanditRegime` — line 366
-- `MBS_OrderBanditChosenArm` — line 370
-- `MBS_OrderSetBanditContext` — line 374
-- `Order_Init` — line 406
-- `Order_BindPreResolved` — line 458
-- `Order_WarnIfNotPreResolved` — line 495
-- `Order_IsTerminal` — line 533
+- `Order_GetType` — line 302
+- `Order_SetType` — line 306
+- `Order_GetState` — line 312
+- `Order_SetState` — line 316
+- `Order_GetIsMaker` — line 322
+- `Order_SetIsMaker` — line 326
+- `Order_SetLeg` — line 336
+- `Order_SetRetryCount` — line 346
+- `Order_GetPreResolvedBound` — line 355
+- `Order_MarkPreResolvedBound` — line 359
+- `MBS_OrderBanditActiveState` — line 375
+- `MBS_OrderBanditRegime` — line 379
+- `MBS_OrderBanditChosenArm` — line 383
+- `MBS_OrderSetBanditContext` — line 387
+- `Order_Init` — line 411
+- `Order_BindPreResolved` — line 461
+- `Order_WarnIfNotPreResolved` — line 502
+- `Order_IsTerminal` — line 554
 
 ### OrderManager.hpp
 
-- `OrderManager_Init` — line 974
-- `OMS_PushSubmit` — line 1220
-- `OMS_DrainSubmit` — line 1262
-- `OrderManager_AccountMakerTakerFee` — line 1306
-- `OMS_GuardTakerBoundFeeBasis` — line 1340
-- `OrderManager_HandleFill` — line 1535
-- `OrderManager_ProcessFillCommand` — line 1603
-- `OMS_OpenPositionCost` — line 1724
-- `OMS_ExpectedFreeCash` — line 1761
-- `OrderManager_ProcessReconcile` — line 1795
-- `OrderManager_Tick` — line 1846
-- `OrderManager_Shutdown` — line 1886
-- `OrderManager_OpenCalibrationLog` — line 1918
-- `OrderManager_InflightCount` — line 1968
+- `OrderManager_Init` — line 938
+- `OMS_PushSubmit` — line 1232
+- `OMS_DrainSubmit` — line 1283
+- `OrderManager_AccountMakerTakerFee` — line 1323
+- `OMS_GuardTakerBoundFeeBasis` — line 1365
+- `OrderManager_HandleFill` — line 1568
+- `OrderManager_ProcessFillCommand` — line 1637
+- `OMS_OpenPositionCost` — line 1760
+- `OMS_ExpectedFreeCash` — line 1799
+- `OrderManager_ProcessReconcile` — line 1843
+- `OrderManager_Tick` — line 1890
+- `OrderManager_Shutdown` — line 1937
+- `OrderManager_OpenCalibrationLog` — line 1962
+- `OrderManager_InflightCount` — line 2022
 
 ### PaperResetArchive.hpp
 
 - `PaperResetArchive_FormatTimestamp` — line 101 — Uses localtime_r for thread safety. out_size should be >= 20.
 - `PaperResetArchive_FormatDirname` — line 112 — out_size should be >= 128 (typical ISO string + path overhead ~80 chars).
 - `PaperResetArchive_CreateDirectories` — line 130 — calling mkdir() incrementally.
-- `Summary_WriteJson` — line 184
+- `Summary_WriteJson` — line 167
 
 ### ParameterSlot.hpp
 
@@ -226,86 +226,86 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 ### PortfolioController.hpp
 
 - `PortfolioController_Init` — line 322
-- `KillSwitch_Activate` — line 585
-- `KillSwitch_Reset` — line 599
-- `Buying_Halt` — line 608
-- `PortfolioController_DrainExits` — line 809
-- `PortfolioController_StrategyBuySignal` — line 847
-- `PortfolioController_StrategyDispatch` — line 938
-- `PortfolioController_Tick` — line 995
-- `PortfolioController_Unpause` — line 2012
-- `PortfolioController_CycleRegime` — line 2023
-- `PortfolioController_HotReload` — line 2049
-- `PortfolioController_SaveSnapshot` — line 2133
-- `PortfolioController_LoadSnapshot` — line 2208
+- `KillSwitch_Activate` — line 580
+- `KillSwitch_Reset` — line 594
+- `Buying_Halt` — line 603
+- `PortfolioController_DrainExits` — line 810
+- `PortfolioController_StrategyBuySignal` — line 853
+- `PortfolioController_StrategyDispatch` — line 944
+- `PortfolioController_Tick` — line 999
+- `PortfolioController_Unpause` — line 2021
+- `PortfolioController_CycleRegime` — line 2032
+- `PortfolioController_HotReload` — line 2058
+- `PortfolioController_SaveSnapshot` — line 2142
+- `PortfolioController_LoadSnapshot` — line 2217
 
 ### Portfolio.hpp
 
-- `ExitBuffer_PendingProceeds` — line 268
-- `Portfolio_AddPositionWithExits` — line 369
-- `Portfolio_OpenSlot` — line 492
-- `Portfolio_OpenSlot` — line 528
-- `Money_FillGross` — line 558 — open-coding the 2-mul form at any site (was DrainPostFill :1536) re-introduces a 1-ULP divergence.
-- `Portfolio_CloseSlot` — line 577
-- `Portfolio_SlotActive` — line 590
-- `Portfolio_UpdatePosition` — line 600
-- `Portfolio_Save` — line 753
-- `Portfolio_Load` — line 807
+- `ExitBuffer_PendingProceeds` — line 285
+- `Portfolio_AddPositionWithExits` — line 394
+- `Portfolio_OpenSlot` — line 520
+- `Portfolio_OpenSlot` — line 563
+- `Money_FillGross` — line 588
+- `Portfolio_CloseSlot` — line 615
+- `Portfolio_SlotActive` — line 628
+- `Portfolio_UpdatePosition` — line 638
+- `Portfolio_Save` — line 797
+- `Portfolio_Load` — line 851
 
 ### Reconcile.hpp
 
-- `ReconcileMode_ToString` — line 199 — Mode → string for logging. Uses cfg_string field (operator-friendly).
-- `ReconcileMode_FromString` — line 212 — parse OR error). Accepts cfg_string values from registry.
-- `Reconcile_ApplyMissedFills` — line 280
-- `Reconcile_AutoCancelStale` — line 469
-- `Reconcile_ParseOpenOrders` — line 655 — Output: fills `out` array up to `out_cap`. Returns count parsed.
-- `Reconcile_ParseMyTrades` — line 698 — Output: fills `out` array up to `out_cap`. Returns count parsed.
-- `Reconcile_Decide` — line 751 — Outputs ReconcileResult with planned actions. Caller applies them.
-- `Reconcile_LogReport` — line 823 — 3. If refused_boot: caller exits / refuses to advance
+- `ReconcileMode_ToString` — line 159 — Mode → string for logging. Uses cfg_string field (operator-friendly).
+- `ReconcileMode_FromString` — line 172 — parse OR error). Accepts cfg_string values from registry.
+- `Reconcile_ApplyMissedFills` — line 242
+- `Reconcile_AutoCancelStale` — line 420
+- `Reconcile_ParseOpenOrders` — line 664
+- `Reconcile_ParseMyTrades` — line 710 — Output: fills `out` array up to `out_cap`. Returns count parsed.
+- `Reconcile_Decide` — line 754 — Output: fills `out` array up to `out_cap`. Returns count parsed.
+- `Reconcile_LogReport` — line 832 — Outputs ReconcileResult with planned actions. Caller applies them.
 
 ### ReconciliationLoop.hpp
 
-- `ReconciliationLoop_Pass` — line 126
-- `ReconciliationLoop_Init` — line 239
-- `ReconciliationLoop_Start` — line 274
-- `ReconciliationLoop_TriggerNow` — line 282
-- `ReconciliationLoop_Shutdown` — line 296
+- `ReconciliationLoop_Pass` — line 129
+- `ReconciliationLoop_Init` — line 249
+- `ReconciliationLoop_Start` — line 284
+- `ReconciliationLoop_TriggerNow` — line 292
+- `ReconciliationLoop_Shutdown` — line 306
 
 ### ShardedBacktestDriver.hpp
 
-- `ShardedBacktestDriver_Init` — line 171
-- `ShardedBacktest_RunTick` — line 230
-- `ShardedBacktest_Run` — line 443
+- `ShardedBacktestDriver_Init` — line 170
+- `ShardedBacktest_RunTick` — line 229
+- `ShardedBacktest_Run` — line 449
 
 ### ShardedLiveSafety.hpp
 
-- `EngineSharded_OrphanRecovery` — line 69 — expected positions, we can reconcile rather than blindly selling.
-- `EngineSharded_ForceCloseOnShutdown` — line 180
+- `EngineSharded_OrphanRecovery` — line 58
+- `EngineSharded_ForceCloseOnShutdown` — line 167
 
 ### ShardedOrderLatency.hpp
 
 - `ShardedOrderLatency_Reset` — line 78 — before the first order can fire.
-- `ShardedOrderLatency_Sample` — line 100 — race in a future thread-pool world; safe and cheap with one writer too.
+- `ShardedOrderLatency_Sample` — line 95
 
 ### ShardedSnapshot.hpp
 
-- `TUI_CopySnapshotSharded` — line 58
+- `TUI_CopySnapshotSharded` — line 54
 
 ### ShardedSnapshotPersist.hpp
 
-- `ShardedSnapshot_Save` — line 139
-- `ShardedSnapshot_Load` — line 343
+- `ShardedSnapshot_Save` — line 131
+- `ShardedSnapshot_Load` — line 333
 
 ### ShardedTradeLog.hpp
 
-- `ShardedTradeLog_FormatPerCoreFilename` — line 133 — the next consumer would silently drift. Helper makes drift impossible.
-- `ShardedTradeLog_WriteRow` — line 172 — non-fatal — aggregate file already has the row.
-- `ShardedTradeLog_Init` — line 204 — without a trade log, you just don't get the CSV.
-- `ShardedTradeLog_Flush` — line 302 — called once at engine shutdown.
-- `ShardedTradeLog_Rotate` — line 333 — the existing file open).
-- `ShardedTradeLog_Close` — line 408
-- `ShardedTradeLog_RecordEntry` — line 449
-- `ShardedTradeLog_RecordExit` — line 513
+- `ShardedTradeLog_FormatPerCoreFilename` — line 128
+- `ShardedTradeLog_WriteRow` — line 161 — the next consumer would silently drift. Helper makes drift impossible.
+- `ShardedTradeLog_Init` — line 204 — non-fatal — aggregate file already has the row.
+- `ShardedTradeLog_Flush` — line 309 — without a trade log, you just don't get the CSV.
+- `ShardedTradeLog_Rotate` — line 337 — called once at engine shutdown.
+- `ShardedTradeLog_Close` — line 423 — the existing file open).
+- `ShardedTradeLog_RecordEntry` — line 454
+- `ShardedTradeLog_RecordExit` — line 524
 
 ### SPSCRing.hpp
 
@@ -317,41 +317,41 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### SpSectionRegistry.hpp
 
-- `SP_SECTION_NAME` — line 57 — Auto-generated documentation strings (for tooltips, log headers, etc.).
-- `SP_SECTION_DOC` — line 65
+- `SP_SECTION_NAME` — line 52
+- `SP_SECTION_DOC` — line 60
 
 ### StampBoundDerivedFilter.hpp
 
-- `STAMP_BOUND_CFG_emit_canonical_body` — line 62 — .B activates real per-type emit via tt::cfg_emit_synthetic_field<T>.
+- `STAMP_BOUND_CFG_emit_canonical_body` — line 56
 
 ### TradeLogColRegistry.hpp
 
-- `TradeLog_EmitHeader` — line 73 — for the original 11 columns.
+- `TradeLog_EmitHeader` — line 70 — for the original 11 columns.
 
 ## Strategies/
 
 ### MeanReversion.hpp
 
 - `MeanReversion_Init` — line 99
-- `MeanReversion_Adapt` — line 151
-- `MeanReversion_BuySignal` — line 319
-- `MeanReversion_ExitAdjust` — line 471
-- `MeanReversion_ExitAdjustSharded` — line 578
+- `MeanReversion_Adapt` — line 138
+- `MeanReversion_BuySignal` — line 315
+- `MeanReversion_ExitAdjust` — line 461
+- `MeanReversion_ExitAdjustSharded` — line 568
 
 ### MLStrategy.hpp
 
 - `MLStrategy_Init` — line 80
 - `MLStrategy_Adapt` — line 112
 - `MLStrategy_Adapt_Canonical` — line 130
-- `MLStrategy_BuySignal` — line 157
-- `MLStrategy_ExitAdjust` — line 262
-- `MLStrategy_ExitAdjustSharded` — line 327
+- `MLStrategy_BuySignal` — line 153
+- `MLStrategy_ExitAdjust` — line 257
+- `MLStrategy_ExitAdjustSharded` — line 322
 
 ### Momentum.hpp
 
 - `Momentum_Init` — line 86
-- `Momentum_Adapt` — line 125
-- `Momentum_BuySignal` — line 216
+- `Momentum_Adapt` — line 119
+- `Momentum_BuySignal` — line 215
 - `Momentum_ExitAdjust` — line 305
 - `Momentum_ExitAdjustSharded` — line 386
 
@@ -383,26 +383,26 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `Strategy_SeedFromCfg` — line 76
 - `Strategy_SeedFromCfg` — line 81
 - `Strategy_SeedFromCfg` — line 95
-- `Strategy_FreePerCore` — line 129
-- `Strategy_InitPerCore` — line 132
-- `Strategy_AdaptPerCore` — line 206
-- `Strategy_WriteRatchetSL` — line 304
-- `Strategy_WriteRatchetTP` — line 344
-- `Strategy_ExitAdjustPerCore` — line 388
-- `Strategy_FreePerCore` — line 439
+- `Strategy_FreePerCore` — line 115
+- `Strategy_InitPerCore` — line 118
+- `Strategy_AdaptPerCore` — line 197
+- `Strategy_WriteRatchetSL` — line 291
+- `Strategy_WriteRatchetTP` — line 331
+- `Strategy_ExitAdjustPerCore` — line 380
+- `Strategy_FreePerCore` — line 443
 
 ### StrategyParameters.hpp
 
-- `Strategy_SpacingOk` — line 270
-- `Strategy_TpFloor` — line 289
-- `GateEgress_MaxPct` — line 313 — FinalizeEmit's range-validate AND the leg-B tp_pct_b clamp below (the A-class leg-B leak fix).
-- `GateParameters_FinalizeEmit` — line 316
-- `SimpleDip_BuildParameters` — line 414
+- `Strategy_SpacingOk` — line 267
+- `Strategy_TpFloor` — line 286
+- `GateEgress_MaxPct` — line 310 — FinalizeEmit's range-validate AND the leg-B tp_pct_b clamp below (the A-class leg-B leak fix).
+- `GateParameters_FinalizeEmit` — line 313
+- `SimpleDip_BuildParameters` — line 425
 - `MeanReversion_BuildParameters` — line 506
-- `Momentum_BuildParameters` — line 590
-- `EmaCross_BuildParameters` — line 717
-- `ML_BuildParameters` — line 843
-- `Strategy_BuildParameters` — line 1770
+- `Momentum_BuildParameters` — line 597
+- `EmaCross_BuildParameters` — line 727
+- `ML_BuildParameters` — line 841
+- `Strategy_BuildParameters` — line 1777
 
 ## Strategies/private/
 
@@ -418,153 +418,153 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### BinanceCrypto.hpp
 
-- `BinanceStream_Init` — line 504 — (internally tracks whether its already been called)
-- `BinanceStream_Close` — line 578 — clean shutdown: send close frame, SSL shutdown, close socket, free resources
-- `BinanceStream_Reconnect` — line 614
-- `BinanceStream_Poll` — line 660 — returns OR'd combination of POLL_NONE, POLL_SOCKET, POLL_STDIN
-- `BinanceStream_ReadTick` — line 708
-- `BinanceStream_InWindDown` — line 795 — BinanceStream_ShouldReconnect: returns 1 if it's time to close and reconnect
-- `BinanceStream_ShouldReconnect` — line 808
-- `BinanceStream_HasPending` — line 824 — returns 1 if SSL has buffered data that can be read without blocking
-- `BinanceConfig_Load` — line 857
+- `BinanceStream_Init` — line 575 — as a min-size sanity guard catches truncated frames without scanning.
+- `BinanceStream_Close` — line 648 — clean shutdown: send close frame, SSL shutdown, close socket, free resources
+- `BinanceStream_Reconnect` — line 683
+- `BinanceStream_Poll` — line 731
+- `BinanceStream_ReadTick` — line 795
+- `BinanceStream_InWindDown` — line 896 — returns 1 on success (out filled with price + volume), 0 on error/disconnect
+- `BinanceStream_ShouldReconnect` — line 909
+- `BinanceStream_HasPending` — line 924 — returns 1 if SSL has buffered data that can be read without blocking
+- `BinanceConfig_Load` — line 975
 
 ### BinanceDepth.hpp
 
-- `DepthStream_Init` — line 206
+- `DepthStream_Init` — line 275
 
 ### BinanceOrderAPI.hpp
 
-- `BinanceOrderAPI_Cleanup` — line 500
-- `BinanceOrderAPI_MarketBuy` — line 510 — fill_price_out/fill_qty_out receive actual execution values (NULL = don't care)
-- `BinanceOrderAPI_MarketSell` — line 574 — place a market sell order
-- `BinanceOrderAPI_CancelOrder` — line 654 — different operator semantics.
-- `BinanceOrderAPI_GetStatus` — line 688 — fills filled_qty and avg_price on success
-- `BinanceOrderAPI_LoadFilters` — line 737 — returns 1 on success, 0 on failure (caller should treat as fatal)
-- `BinanceOrderAPI_GetBalance` — line 772 — returns 1 on success, 0 on failure
-- `BinanceOrderAPI_GetOpenOrders` — line 804 — network-independent (testable without real REST calls).
-- `BinanceOrderAPI_GetMyTrades` — line 815 — the last-known-processed trade id to catch only new fills.
-- `BinanceOrderAPI_GetBalances` — line 831 — returns 1 on success, 0 on failure
-- `BinanceOrderAPI_SyncClock` — line 855 — re-sync clock offset (call periodically or after reconnect)
-- `BinanceOrderAPI_Init` — line 869 — must be called after Cleanup, ServerTime, SyncClock, LoadFilters are defined
+- `BinanceOrderAPI_Cleanup` — line 571
+- `BinanceOrderAPI_MarketBuy` — line 581 — fill_price_out/fill_qty_out receive actual execution values (NULL = don't care)
+- `BinanceOrderAPI_MarketSell` — line 645 — place a market sell order
+- `BinanceOrderAPI_CancelOrder` — line 725 — different operator semantics.
+- `BinanceOrderAPI_GetStatus` — line 759 — fills filled_qty and avg_price on success
+- `BinanceOrderAPI_LoadFilters` — line 808 — returns 1 on success, 0 on failure (caller should treat as fatal)
+- `BinanceOrderAPI_GetBalance` — line 843 — returns 1 on success, 0 on failure
+- `BinanceOrderAPI_GetOpenOrders` — line 875 — network-independent (testable without real REST calls).
+- `BinanceOrderAPI_GetMyTrades` — line 886 — the last-known-processed trade id to catch only new fills.
+- `BinanceOrderAPI_GetBalances` — line 902 — returns 1 on success, 0 on failure
+- `BinanceOrderAPI_SyncClock` — line 926 — re-sync clock offset (call periodically or after reconnect)
+- `BinanceOrderAPI_Init` — line 940 — must be called after Cleanup, ServerTime, SyncClock, LoadFilters are defined
 
 ### BinanceUserData.hpp
 
-- `BinanceUserData_Init` — line 583 — ws_result_queue: pointer into the OMS's dedicated WS SPSC ring
-- `BinanceUserData_Start` — line 622
-- `BinanceUserData_Shutdown` — line 631
+- `BinanceUserData_Init` — line 678
+- `BinanceUserData_Start` — line 714
+- `BinanceUserData_Shutdown` — line 720
 
 ### CalibLogColRegistry.hpp
 
-- `CalibLog_EmitHeader` — line 145 — pre-v5.14.10.D hand-coded header literal at OrderManager.hpp:1293-1295.
+- `CalibLog_EmitHeader` — line 177 — Adding a 9th arm later: append 4 more rows + bump BANDIT_MAX_ARMS at BanditLearning.hpp.
 
 ### DepthRecorder.hpp
 
-- `DepthRecorder_MkdirP` — line 64
-- `DepthRecorder_DateInt` — line 79
-- `DepthRecorder_OpenFile` — line 87
-- `DepthRecorder_PruneOld` — line 123
-- `DepthRecorder_Init` — line 158
-- `DepthRecorder_LogGap` — line 194 — disconnect time, or the current snapshot's timestamp_us).
-- `DepthRecorder_Write` — line 222
-- `DepthRecorder_Close` — line 275
+- `DepthRecorder_MkdirP` — line 95 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `DepthRecorder_DateInt` — line 110
+- `DepthRecorder_OpenFile` — line 118
+- `DepthRecorder_PruneOld` — line 154
+- `DepthRecorder_Init` — line 189
+- `DepthRecorder_LogGap` — line 225 — disconnect time, or the current snapshot's timestamp_us).
+- `DepthRecorder_Write` — line 253
+- `DepthRecorder_Close` — line 306
 
 ### DepthReplayState.hpp
 
-- `DepthReplay_DateInt` — line 77
-- `DepthReplayState_Init` — line 95
-- `DepthReplayState_Free` — line 130
-- `DepthReplayState_LoadDay` — line 163
-- `DepthReplayState_Advance` — line 280
-- `DepthReplayState_GetSnapshot` — line 305
+- `DepthReplay_DateInt` — line 112
+- `DepthReplayState_Init` — line 130
+- `DepthReplayState_Free` — line 165
+- `DepthReplayState_LoadDay` — line 198
+- `DepthReplayState_Advance` — line 315
+- `DepthReplayState_GetSnapshot` — line 340
 
 ### EngineTUI.hpp
 
-- `TUI_Init` — line 132
-- `TUI_Cleanup` — line 165
-- `TUI_Render` — line 188
-- `TUI_HandleInput` — line 575
-- `MLSnapshot_Populate` — line 695
-- `TUISnapshot_InitSeq` — line 1382 — populated" state) — this only initializes the sequence counter.
-- `TUISnapshot_Publish_Begin` — line 1397 — the new active.
-- `TUISnapshot_Publish_End` — line 1413 — Any subsequent reader sees the just-filled buffer as active.
-- `TUISnapshot_ReadInto` — line 1425 — effectively never observed.
-- `TUI_CopySnapshot` — line 1455
-- `TUI_CopySnapshot` — line 1461
-- `TUI_CopySnapshot` — line 1468
-- `TUI_PopulatePerCoreLatency` — line 1741
-- `TUI_PopulatePerCoreSlowPathLatency` — line 1788
-- `TUI_PopulateAdvancedTopology` — line 1826
-- `TUI_PopulateTopology` — line 1870 — poll_interval[i]    — per-core resolved poll cadence
-- `TUI_Render_Snapshot` — line 1906 — runs on TUI thread. reads only from snapshot (all doubles, no FPN_Binary).
-- `TUI_ReadKey` — line 2117
+- `TUI_Init` — line 169 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `TUI_Cleanup` — line 202
+- `TUI_Render` — line 230
+- `TUI_HandleInput` — line 622
+- `MLSnapshot_Populate` — line 765
+- `TUISnapshot_InitSeq` — line 1498 — populated" state) — this only initializes the sequence counter.
+- `TUISnapshot_Publish_Begin` — line 1513 — the new active.
+- `TUISnapshot_Publish_End` — line 1529 — Any subsequent reader sees the just-filled buffer as active.
+- `TUISnapshot_ReadInto` — line 1541 — effectively never observed.
+- `TUI_CopySnapshot` — line 1579
+- `TUI_CopySnapshot` — line 1585
+- `TUI_CopySnapshot` — line 1592
+- `TUI_PopulatePerCoreLatency` — line 1870
+- `TUI_PopulatePerCoreSlowPathLatency` — line 1917
+- `TUI_PopulateAdvancedTopology` — line 1955
+- `TUI_PopulateTopology` — line 1999 — poll_interval[i]    — per-core resolved poll cadence
+- `TUI_Render_Snapshot` — line 2056 — both dependencies are available.
+- `TUI_ReadKey` — line 2267
 
 ### FauxFIX.hpp
 
-- `FIX_ParseTag` — line 75 — returns the tag number, writes value start and length into out params
-- `FIX_ParseDouble` — line 106 — not meant to be fast, just correct enough for test data
-- `FIX_Parse` — line 182 — validates checksum if tag 10 is present
-- `FIX_BuildMarketDataMsg` — line 256 — writes into buf which must be at least FIX_MAX_MSG_LEN bytes
+- `FIX_ParseTag` — line 105 — returns the tag number, writes value start and length into out params
+- `FIX_ParseDouble` — line 136 — not meant to be fast, just correct enough for test data
+- `FIX_Parse` — line 212 — validates checksum if tag 10 is present
+- `FIX_BuildMarketDataMsg` — line 306 — let the caller filter by entry_type if they care
 
 ### MetricsLog.hpp
 
-- `MetricsLog_Init` — line 40
-- `MetricsLog_Close` — line 62
-- `MetricsLog_SlowPath` — line 85
-- `MetricsLog_Event` — line 139
+- `MetricsLog_Init` — line 56
+- `MetricsLog_Close` — line 78
+- `MetricsLog_SlowPath` — line 113
+- `MetricsLog_Event` — line 164
 
 ### MockGenerator.hpp
 
-- `MockRNG_Seed` — line 31
-- `MockRNG_Double` — line 42 — returns a double in [0.0, 1.0)
-- `MockRNG_Range` — line 47 — returns a double in [lo, hi)
-- `MockGenerator_Init` — line 75
-- `MockGenerator_NextTick` — line 88 — returns the length written to buf, and fills out the parsed message for convenience
-- `MockGenerator_Batch` — line 122 — buf is scratch space for building FIX messages (reused each tick)
+- `MockRNG_Seed` — line 44
+- `MockRNG_Double` — line 55 — returns a double in [0.0, 1.0)
+- `MockRNG_Range` — line 60 — returns a double in [lo, hi)
+- `MockGenerator_Init` — line 96
+- `MockGenerator_NextTick` — line 119 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `MockGenerator_Batch` — line 149 — buf is scratch space for building FIX messages (reused each tick)
 
 ### TickRecorder.hpp
 
-- `TickRecorder_MkdirP` — line 43
-- `TickRecorder_DateInt` — line 58
-- `TickRecorder_OpenFile` — line 71
-- `TickRecorder_PruneOld` — line 106
-- `TickRecorder_Init` — line 141
-- `TickRecorder_Push` — line 173
-- `TickRecorder_Close` — line 207
+- `TickRecorder_MkdirP` — line 74 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `TickRecorder_DateInt` — line 89
+- `TickRecorder_OpenFile` — line 102
+- `TickRecorder_PruneOld` — line 137
+- `TickRecorder_Init` — line 172
+- `TickRecorder_Push` — line 204
+- `TickRecorder_Close` — line 238
 
 ### TradeLog.hpp
 
-- `TradeLog_Init` — line 57
-- `TradeLog_Buy` — line 90
-- `TradeLog_Sell` — line 103
-- `TradeLog_Close` — line 115
-- `TradeLogBuffer_Init` — line 137
-- `TradeLogBuffer_PushBuy` — line 143 — hot path: push a record to the ring buffer (~10ns, no file I/O)
-- `TradeLogBuffer_PushSell` — line 162
-- `TradeLogBuffer_Drain` — line 184 — slow path: drain all buffered records to the CSV file
+- `TradeLog_Init` — line 100 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `TradeLog_Buy` — line 133
+- `TradeLog_Sell` — line 146
+- `TradeLog_Close` — line 158
+- `TradeLogBuffer_Init` — line 210 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `TradeLogBuffer_PushBuy` — line 216 — hot path: push a record to the ring buffer (~10ns, no file I/O)
+- `TradeLogBuffer_PushSell` — line 235
+- `TradeLogBuffer_Drain` — line 257 — slow path: drain all buffered records to the CSV file
 
 ### TUIAnsi.hpp
 
-- `ANSI_Section_Header` — line 330
-- `ANSI_Section_TopBar` — line 404
-- `ANSI_Section_Market` — line 435
-- `ANSI_Section_Regime` — line 479 — new section: shows R², vol_ratio, ror_slope that weren't in previous TUI backends
-- `ANSI_Section_BuyGate` — line 590
-- `ANSI_Section_Portfolio` — line 666
-- `ANSI_Section_PnL` — line 705
-- `ANSI_Section_Risk` — line 730
-- `ANSI_Section_Config` — line 758
-- `ANSI_Section_Stats` — line 785
-- `ANSI_Section_Positions` — line 846
-- `ANSI_Section_Charts` — line 923
-- `ANSI_Section_Controls` — line 963
-- `ANSI_Section_Latency` — line 979
-- `ANSI_Section_PerNodeLatency` — line 1018 — per-core latency the moment they flip engine_mode=sharded.
-- `ANSI_Section_RightPanel` — line 1058 — hidden on narrow terminals (< 100 columns)
-- `ANSI_Layout_Standard` — line 1119
-- `ANSI_Layout_Charts` — line 1165 — ANSI_Section_RightPanel(ab, s, h, w, start_time);
-- `ANSI_Layout_Compact` — line 1203
-- `ANSI_Layout_Render` — line 1218
-- `ANSI_Render` — line 1240 — call from TUI thread at desired FPS
+- `ANSI_Section_Header` — line 374
+- `ANSI_Section_TopBar` — line 448
+- `ANSI_Section_Market` — line 479
+- `ANSI_Section_Regime` — line 523 — new section: shows R², vol_ratio, ror_slope that weren't in previous TUI backends
+- `ANSI_Section_BuyGate` — line 634
+- `ANSI_Section_Portfolio` — line 710
+- `ANSI_Section_PnL` — line 749
+- `ANSI_Section_Risk` — line 774
+- `ANSI_Section_Config` — line 802
+- `ANSI_Section_Stats` — line 829
+- `ANSI_Section_Positions` — line 890
+- `ANSI_Section_Charts` — line 967
+- `ANSI_Section_Controls` — line 1007
+- `ANSI_Section_Latency` — line 1023
+- `ANSI_Section_PerNodeLatency` — line 1062 — per-core latency the moment they flip engine_mode=sharded.
+- `ANSI_Section_RightPanel` — line 1114 — hidden on narrow terminals (< 100 columns)
+- `ANSI_Layout_Standard` — line 1175
+- `ANSI_Layout_Charts` — line 1221 — ANSI_Section_RightPanel(ab, s, h, w, start_time);
+- `ANSI_Layout_Compact` — line 1259
+- `ANSI_Layout_Render` — line 1274
+- `ANSI_Render` — line 1296 — call from TUI thread at desired FPS
 
 ## FixedPoint/
 
@@ -598,99 +598,99 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### DrainerConstants.hpp
 
-- `DrainerConstants_Init` — line 100
+- `DrainerConstants_Init` — line 119
 
 ### HealthLog.hpp
 
-- `HealthLog_Singleton` — line 95 — Process-singleton. Engine init writes; all callers read.
-- `Health_LogConfigureWithRotation` — line 113 — directory still doesn't exist).
-- `Health_LogConfigure` — line 149
-- `Health_LogPruneRotated` — line 161 — Health_Log (would loop).
-- `Health_LogEnabled` — line 190 — "level <= min_level" emits.
-- `Health_Log` — line 201 — Returns 1 on success, 0 on i/o failure (ignored by most callers).
-- `Health_LogCriticalRateLimited` — line 319 — double-emit-once on race, not data corruption).
+- `HealthLog_Singleton` — line 132 — Process-singleton. Engine init writes; all callers read.
+- `Health_LogConfigureWithRotation` — line 150 — directory still doesn't exist).
+- `Health_LogConfigure` — line 186
+- `Health_LogPruneRotated` — line 198 — Health_Log (would loop).
+- `Health_LogEnabled` — line 227 — "level <= min_level" emits.
+- `Health_Log` — line 238 — Returns 1 on success, 0 on i/o failure (ignored by most callers).
+- `Health_LogCriticalRateLimited` — line 356 — double-emit-once on race, not data corruption).
 
 ### InitArena.hpp
 
-- `InitArena_Create` — line 69 — reservation gets a non-fatal degraded-but-functional path.
-- `InitArena_Alloc` — line 114 — are 8 (for plain structs) or 64 (for cache-line-aligned hot structures).
-- `InitArena_AllocOne` — line 139
-- `InitArena_Destroy` — line 145 — struct). After Destroy, the arena is empty and capacity=0.
-- `InitArena_Used` — line 162 — Introspection: how many bytes have been allocated from the arena so far.
-- `InitArena_Remaining` — line 168 — is unknown; this is an upper bound).
-- `InitArena_Owns` — line 180 — ctrl->rolling_long = nullptr;
-- `InitArena_Global` — line 199 — spawn and after they join.
+- `InitArena_Create` — line 107 — reservation gets a non-fatal degraded-but-functional path.
+- `InitArena_Alloc` — line 152 — are 8 (for plain structs) or 64 (for cache-line-aligned hot structures).
+- `InitArena_AllocOne` — line 177
+- `InitArena_Destroy` — line 183 — struct). After Destroy, the arena is empty and capacity=0.
+- `InitArena_Used` — line 200 — Introspection: how many bytes have been allocated from the arena so far.
+- `InitArena_Remaining` — line 206 — is unknown; this is an upper bound).
+- `InitArena_Owns` — line 218 — ctrl->rolling_long = nullptr;
+- `InitArena_Global` — line 237 — spawn and after they join.
 
 ### LatencyHistogram.hpp
 
-- `LatencyHistogram_Reset` — line 119 — cross-thread races by contract — writer thread paused or not yet started).
-- `LatencyHistogram_Accumulate` — line 140 — entire instrumentation block per CLAUDE.md item 18).
+- `LatencyHistogram_Reset` — line 167 — instrumentation overhead bound for bench gate ON-state.
+- `LatencyHistogram_Accumulate` — line 189
 
 ### NodeCtxSummaryFieldRegistry.hpp
 
-- `Summary_EmitPerCoreEntry` — line 202
-- `Summary_EmitPerStrategy` — line 237
+- `Summary_EmitPerCoreEntry` — line 239
+- `Summary_EmitPerStrategy` — line 280
 
 ### OmsPhasedDrain.hpp
 
-- `OmsDrainBuckets_Reset` — line 87 — Reset bucket counts. Called at top of DrainIntoBuckets each cycle.
-- `OrderType_IsClose` — line 102 — Returns: true if order is a CLOSE (SELL-direction); false if OPEN (BUY).
-- `OrderManager_DrainIntoBuckets` — line 225
-- `OrderManager_ProcessBucket_Closes` — line 256
-- `OrderManager_ProcessBucket_Opens` — line 272
-- `OrderManager_ProcessBucket_Reconciles` — line 285
+- `OmsDrainBuckets_Reset` — line 132
+- `OrderType_IsClose` — line 152
+- `OrderManager_DrainIntoBuckets` — line 276
+- `OrderManager_ProcessBucket_Closes` — line 333
+- `OrderManager_ProcessBucket_Opens` — line 349
+- `OrderManager_ProcessBucket_Reconciles` — line 362
 
 ### OmsPushExitHelper.hpp
 
-- `OMS_PushExitForSlot` — line 76
+- `OMS_PushExitForSlot` — line 77
 
 ### RunHistory.hpp
 
-- `RunHistory_Append` — line 76 — defense-in-depth for the HMAC/stamp-adjacent byte-equivalence path.)
+- `RunHistory_Append` — line 92 — defense-in-depth for the HMAC/stamp-adjacent byte-equivalence path.)
 
 ## ML_Headers/
 
 ### BanditAlgorithmRegistry.hpp
 
-- `BanditAlgo_Exp3_Apply` — line 91 — cfg=2 reassigns to Exp3_Drives_Thompson_Ghost_Apply per Option C wire-preserving expansion).
-- `BanditAlgo_Thompson_Apply` — line 94
-- `BanditAlgo_Exp3_Drives_Thompson_Ghost_Apply` — line 97
-- `BanditAlgo_Thompson_Drives_Exp3_Ghost_Apply` — line 100
-- `BanditAlgo_Blended_Apply` — line 103
-- `BanditAlgorithm_ToString` — line 230
-- `BanditAlgorithm_FromString` — line 242 — CRITICAL operator error — don't silently default).
-- `BanditAlgorithm_Apply` — line 267 — parse failure; the safe fallback is the bytewise-identical default path.
-- `BanditAlgo_Exp3_Apply` — line 296 — default). Thompson state + blend_alpha ignored.
-- `BanditAlgo_Thompson_Apply` — line 326 — + blend_alpha ignored. Posterior state advances (rng_state mutates) as part of sampling.
-- `BanditAlgo_Exp3_Drives_Thompson_Ghost_Apply` — line 354 — (Class 24 fix — pre-.F.4d Thompson never updated despite mode being settable).
-- `BanditAlgo_Thompson_Drives_Exp3_Ghost_Apply` — line 390 — Both bandits update from per-arm reward signal downstream (per-arm observability invariant).
-- `BanditAlgo_Blended_Apply` — line 421 — weights via cmov (H20 / Class 28 prevention). Per § J of .F.4d merged plan body.
+- `BanditAlgo_Exp3_Apply` — line 58 — cfg=2 reassigns to Exp3_Drives_Thompson_Ghost_Apply per Option C wire-preserving expansion).
+- `BanditAlgo_Thompson_Apply` — line 61
+- `BanditAlgo_Exp3_Drives_Thompson_Ghost_Apply` — line 64
+- `BanditAlgo_Thompson_Drives_Exp3_Ghost_Apply` — line 67
+- `BanditAlgo_Blended_Apply` — line 70
+- `BanditAlgorithm_ToString` — line 184
+- `BanditAlgorithm_FromString` — line 196 — CRITICAL operator error — don't silently default).
+- `BanditAlgorithm_Apply` — line 221 — parse failure; the safe fallback is the bytewise-identical default path.
+- `BanditAlgo_Exp3_Apply` — line 249 — default). Thompson state + blend_alpha ignored.
+- `BanditAlgo_Thompson_Apply` — line 279 — + blend_alpha ignored. Posterior state advances (rng_state mutates) as part of sampling.
+- `BanditAlgo_Exp3_Drives_Thompson_Ghost_Apply` — line 307 — (Class 24 fix — pre-.F.4d Thompson never updated despite mode being settable).
+- `BanditAlgo_Thompson_Drives_Exp3_Ghost_Apply` — line 343 — Both bandits update from per-arm reward signal downstream (per-arm observability invariant).
+- `BanditAlgo_Blended_Apply` — line 374 — weights via cmov (H20 / Class 28 prevention). Per § J of .F.4d merged plan body.
 
 ### BanditLearning.hpp
 
-- `BanditDisplayMeta_InitDefault` — line 86 — BanditDisplayMeta_SetArmName.
-- `BanditDisplayMeta_SetArmName` — line 98 — Set a custom human-readable name for an arm (display only).
-- `Bandit_Init` — line 133
-- `Bandit_InitDefault` — line 156 — convenience: init with default FoxML parameters
-- `Bandit_GetProbabilities` — line 185 — tests. Suppress asan here; ubsan + the normal -O3 build still exercise it. (TECH_DEBT-158 close-out.)
-- `Bandit_Select` — line 268 — returns arm index. use a PRNG or hardware RNG for the random value.
-- `Bandit_Update` — line 289 — with adaptive eta: min(eta_max, sqrt(ln(K) / (K * T)))
-- `Bandit_GetWeights` — line 335 — returns weights summing to 1.0 (for blending / display)
-- `Bandit_EffectiveBlend` — line 357 — steps >= min+ramp:             effective_blend = blend_ratio
-- `Bandit_BlendWeights` — line 366
-- `Bandit_Print` — line 399 — to print human-readable names.
-- `Bandit_SaveJSON` — line 451 — n_regimes (NUM_REGIMES). NULL → omits the field.
-- `Bandit_LoadJSON` — line 639 — caller's prior Bandit_Init call — load is overlay only.
+- `BanditDisplayMeta_InitDefault` — line 96 — BanditDisplayMeta_SetArmName.
+- `BanditDisplayMeta_SetArmName` — line 108 — Set a custom human-readable name for an arm (display only).
+- `Bandit_Init` — line 199
+- `Bandit_InitDefault` — line 222 — convenience: init with default FoxML parameters
+- `Bandit_GetProbabilities` — line 249 — tests. Suppress asan here; ubsan + the normal -O3 build still exercise it. (TECH_DEBT-158 close-out.)
+- `Bandit_Select` — line 341
+- `Bandit_Update` — line 379 — eta    = min(eta_max, sqrt(ln(K) / (K * T)))
+- `Bandit_GetWeights` — line 435
+- `Bandit_EffectiveBlend` — line 464 — final = (1 - effective_blend) * static + effective_blend * bandit
+- `Bandit_BlendWeights` — line 473
+- `Bandit_Print` — line 521 — steps >= min+ramp:             effective_blend = blend_ratio
+- `Bandit_SaveJSON` — line 567
+- `Bandit_LoadJSON` — line 800 — caller's prior Bandit_Init call — load is overlay only.
 
 ### BarrierBlendModeRegistry.hpp
 
-- `BarrierBlendMode_BlendDrives` — line 139 — mode is compile-time-known.
-- `BarrierBlendMode_DominantDrives` — line 143
-- `BarrierBlendMode_ShadowActive` — line 147
-- `BarrierBlendMode_IsLegacy` — line 151
-- `BarrierBlendMode_ToString` — line 162 — and stamp body cfg-drift comparison.
-- `BarrierBlendMode_FromString` — line 171
-- `BarrierBlendMode_Doc` — line 182
+- `BarrierBlendMode_BlendDrives` — line 135 — mode is compile-time-known.
+- `BarrierBlendMode_DominantDrives` — line 139
+- `BarrierBlendMode_ShadowActive` — line 143
+- `BarrierBlendMode_IsLegacy` — line 147
+- `BarrierBlendMode_ToString` — line 158 — and stamp body cfg-drift comparison.
+- `BarrierBlendMode_FromString` — line 167
+- `BarrierBlendMode_Doc` — line 178
 
 ### BarrierGate.hpp
 
@@ -698,51 +698,51 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### ConfidenceScore.hpp
 
-- `RollingWindow_Init` — line 93
-- `RollingWindow_Push` — line 102
-- `RollingIC_Init` — line 158 — v5.15.5.E.C — Init via generic RollingWindow_Init on both rings.
-- `RollingIC_Push` — line 167 — the parallel-array push semantics for the (prediction, actual) pair shape.
-- `RollingIC_Compute` — line 194 — RollingIC_Push). Read either; using predictions's metadata canonically.
-- `RollingRMSE_Init` — line 272
-- `RollingRMSE_Push` — line 295 — in controller_test.cpp.
-- `RollingRMSE_Compute` — line 318 — item 29 to 3 production sites.
-- `Confidence_Freshness` — line 332 — stability: 1 / (1 + RMSE)
-- `Confidence_Stability` — line 338
-- `Confidence_Compute` — line 342
-- `RollingFreshness_Init` — line 381
-- `RollingFreshness_Mark` — line 386
-- `RollingFreshness_Compute` — line 393 — or replay determinism), clamp to 1.0.
-- `RollingCapacity_Init` — line 410
-- `RollingCapacity_UpdateADV` — line 417
-- `RollingCapacity_Compute` — line 427
-- `ConfidenceScorer_Init` — line 510
-- `ConfidenceScorer_ComputeICVariant` — line 546 — New code + sites being refactored for variant choice use this dispatcher.
-- `ConfidenceScorer_InitComposite` — line 554 — explicit composite parameters. Useful for tests + v5.14.1.B cfg wiring.
-- `ConfidenceScorer_BindCompositeCfg` — line 583 — FPN_ToDouble(cfg.confidence_rmse_baseline));
-- `ConfidenceScorer_Update` — line 596 — feed a prediction + actual return pair (call after outcome is known)
-- `ConfidenceScorer_UpdateAndMark` — line 609 — when composite is disabled (composite path is opt-in via cfg).
-- `ConfidenceScorer_Compute` — line 618 — compute current confidence given data age
-- `ConfidenceScorer_ComputeComposite` — line 647 — ConfidenceScorer_Update).
-- `ConfidenceScorer_MarkPredict` — line 675 — fixture control.
-- `Confidence_DegradationScale_Off` — line 708 — Forward-declare curve compute fns so the dispatch table can reference them.
-- `Confidence_DegradationScale_Linear` — line 709
-- `Confidence_DegradationScale_Exp` — line 710
-- `Confidence_DegradationScale_Step` — line 711
-- `DegradationCurve_ToString` — line 744 — Auto-generated ToString — for cfg parser + GUI display.
-- `DegradationCurve_FromString` — line 755 — numeric ("1") forms; case-insensitive on string form. Returns -1 on miss.
-- `Confidence_DegradationScale_Off` — line 781 — when cfg.risk_degradation_curve=0 (default).
-- `Confidence_DegradationScale_Linear` — line 789 — To get ladder-bottom (factor=0), operator sets min_pct=0.0.
-- `Confidence_DegradationScale_Exp` — line 799 — as LINEAR.
-- `Confidence_DegradationScale_Step` — line 810 — without continuous-curve noise.
-- `Confidence_DegradationScale` — line 818 — out-of-range returns 1.0 (degrades safely to OFF behavior).
-- `DriftHistory_Init` — line 904
-- `DriftHistory_Push` — line 912 — + ts_us[idx], 2 separate cache lines 2048B apart).
-- `DriftHistory_CheckBreach` — line 930 — at typical 10-100Hz cadence.
-- `ConfidenceScorer_FieldwiseWrite` — line 1009
-- `ConfidenceScorer_FieldwiseRead` — line 1018
-- `ConfidenceScorer_CommitPersistedFields` — line 1030
-- `ConfidenceScorer_RecomputeRunningSums` — line 1053 — CommitPersistedFields tail; PortfolioController calls it explicitly.
-- `ConfidenceScorer_ShadowLoadLegacyV1` — line 1122 — Returns 0 on success; -1 on fread failure.
+- `RollingWindow_Init` — line 152
+- `RollingWindow_Push` — line 161
+- `RollingIC_Init` — line 265 — v5.15.5.E.C — Init via generic RollingWindow_Init on both rings.
+- `RollingIC_Push` — line 274 — the parallel-array push semantics for the (prediction, actual) pair shape.
+- `RollingIC_Compute` — line 315 — RollingIC_Push). Read either; using predictions's metadata canonically.
+- `RollingRMSE_Init` — line 439
+- `RollingRMSE_Push` — line 462 — in controller_test.cpp.
+- `RollingRMSE_Compute` — line 485 — pattern (the spec tracks its production sites).
+- `Confidence_Freshness` — line 513 — stability: 1 / (1 + RMSE)
+- `Confidence_Stability` — line 519
+- `Confidence_Compute` — line 523
+- `RollingFreshness_Init` — line 599
+- `RollingFreshness_Mark` — line 604
+- `RollingFreshness_Compute` — line 611 — or replay determinism), clamp to 1.0.
+- `RollingCapacity_Init` — line 666
+- `RollingCapacity_UpdateADV` — line 673
+- `RollingCapacity_Compute` — line 683
+- `ConfidenceScorer_Init` — line 818
+- `ConfidenceScorer_ComputeICVariant` — line 854 — New code + sites being refactored for variant choice use this dispatcher.
+- `ConfidenceScorer_InitComposite` — line 862 — explicit composite parameters. Useful for tests + v5.14.1.B cfg wiring.
+- `ConfidenceScorer_BindCompositeCfg` — line 892 — FPN_ToDouble(cfg.confidence_rmse_baseline));
+- `ConfidenceScorer_Update` — line 905 — feed a prediction + actual return pair (call after outcome is known)
+- `ConfidenceScorer_UpdateAndMark` — line 918 — when composite is disabled (composite path is opt-in via cfg).
+- `ConfidenceScorer_Compute` — line 927 — compute current confidence given data age
+- `ConfidenceScorer_ComputeComposite` — line 951 — stability_normalized = 1 - clamp(rmse / rmse_baseline, 0, 1)
+- `ConfidenceScorer_MarkPredict` — line 979 — fixture control.
+- `Confidence_DegradationScale_Off` — line 1052 — Forward-declare curve compute fns so the dispatch table can reference them.
+- `Confidence_DegradationScale_Linear` — line 1053
+- `Confidence_DegradationScale_Exp` — line 1054
+- `Confidence_DegradationScale_Step` — line 1055
+- `DegradationCurve_ToString` — line 1091 — Auto-generated ToString — for cfg parser + GUI display.
+- `DegradationCurve_FromString` — line 1102 — numeric ("1") forms; case-insensitive on string form. Returns -1 on miss.
+- `Confidence_DegradationScale_Off` — line 1127 — when cfg.risk_degradation_curve=0 (default).
+- `Confidence_DegradationScale_Linear` — line 1135 — To get ladder-bottom (factor=0), operator sets min_pct=0.0.
+- `Confidence_DegradationScale_Exp` — line 1145 — as LINEAR.
+- `Confidence_DegradationScale_Step` — line 1156 — without continuous-curve noise.
+- `Confidence_DegradationScale` — line 1164 — out-of-range returns 1.0 (degrades safely to OFF behavior).
+- `DriftHistory_Init` — line 1323
+- `DriftHistory_Push` — line 1331 — + ts_us[idx], 2 separate cache lines 2048B apart).
+- `DriftHistory_CheckBreach` — line 1349 — at typical 10-100Hz cadence.
+- `ConfidenceScorer_FieldwiseWrite` — line 1411
+- `ConfidenceScorer_FieldwiseRead` — line 1420
+- `ConfidenceScorer_CommitPersistedFields` — line 1432
+- `ConfidenceScorer_RecomputeRunningSums` — line 1455 — CommitPersistedFields tail; PortfolioController calls it explicitly.
+- `ConfidenceScorer_ShadowLoadLegacyV1` — line 1575
 
 ### CostModel.hpp
 
@@ -753,52 +753,52 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### EzooInitFlagRegistry.hpp
 
-- `EzooInitFlag_ToString` — line 135 — CRITICAL log lines + diagnostic panels.
+- `EzooInitFlag_ToString` — line 116 — CRITICAL log lines + diagnostic panels.
 
 ### FeatureRegistry.hpp
 
-- `ML_Compute_ShortSlope` — line 116
-- `ML_Compute_ShortR2` — line 121
-- `ML_Compute_ShortVariance` — line 126
-- `ML_Compute_LongSlope` — line 131
-- `ML_Compute_LongR2` — line 136
-- `ML_Compute_LongVariance` — line 141
-- `ML_Compute_VolRatio` — line 146
-- `ML_Compute_RorSlope` — line 151
-- `ML_Compute_VolumeSlope` — line 156
-- `ML_Compute_VolumeDelta` — line 161
-- `ML_Compute_EmaSmaSpread` — line 180
-- `ML_Compute_VwapDev` — line 185
-- `ML_Compute_PriceStddev` — line 190
-- `ML_Compute_PriceAvg` — line 195
-- `ML_Compute_VolumeAvg` — line 200
-- `ML_Compute_EmaAboveSma` — line 205
-- `ML_Compute_MidSlope` — line 212
-- `ML_Compute_MidR2` — line 217
-- `ML_Compute_CumDelta` — line 222
-- `ML_Compute_HourSin` — line 227
-- `ML_Compute_HourCos` — line 232
-- `ML_Compute_VolRegimeRatio` — line 237
-- `ML_Compute_TickRateZ` — line 242
-- `ML_Compute_DistToHigh` — line 247
-- `ML_Compute_DistToLow` — line 252
-- `ML_Compute_BookImbMeanShort` — line 257
-- `ML_Compute_BookImbMeanLong` — line 262
-- `ML_Compute_BookImbDrift` — line 267
-- `ML_Compute_Flow10s` — line 272
-- `ML_Compute_Flow1m` — line 277
-- `ML_Compute_Flow5m` — line 282
-- `ML_Compute_LargeTradeZ` — line 287
-- `ML_Compute_SpreadBps` — line 292
-- `ML_Compute_SpreadZscore` — line 297
-- `ML_Compute_RegimeTrendStrength` — line 328
-- `ML_Compute_RegimeVolZscore` — line 343
-- `ML_Compute_RegimeClassOneHot` — line 365
-- `ML_Compute_FracDiffPrice_d04` — line 436
-- `ML_Compute_FracDiffPrice_d05` — line 441
-- `ML_Compute_FracDiffPrice_d06` — line 446
-- `Features_PackAll` — line 679
-- `Features_PackAll` — line 761
+- `ML_Compute_ShortSlope` — line 159
+- `ML_Compute_ShortR2` — line 164
+- `ML_Compute_ShortVariance` — line 169
+- `ML_Compute_LongSlope` — line 174
+- `ML_Compute_LongR2` — line 179
+- `ML_Compute_LongVariance` — line 184
+- `ML_Compute_VolRatio` — line 189
+- `ML_Compute_RorSlope` — line 194
+- `ML_Compute_VolumeSlope` — line 199
+- `ML_Compute_VolumeDelta` — line 204
+- `ML_Compute_EmaSmaSpread` — line 223
+- `ML_Compute_VwapDev` — line 228
+- `ML_Compute_PriceStddev` — line 233
+- `ML_Compute_PriceAvg` — line 238
+- `ML_Compute_VolumeAvg` — line 243
+- `ML_Compute_EmaAboveSma` — line 248
+- `ML_Compute_MidSlope` — line 255
+- `ML_Compute_MidR2` — line 260
+- `ML_Compute_CumDelta` — line 265
+- `ML_Compute_HourSin` — line 270
+- `ML_Compute_HourCos` — line 275
+- `ML_Compute_VolRegimeRatio` — line 280
+- `ML_Compute_TickRateZ` — line 285
+- `ML_Compute_DistToHigh` — line 290
+- `ML_Compute_DistToLow` — line 295
+- `ML_Compute_BookImbMeanShort` — line 300
+- `ML_Compute_BookImbMeanLong` — line 305
+- `ML_Compute_BookImbDrift` — line 310
+- `ML_Compute_Flow10s` — line 315
+- `ML_Compute_Flow1m` — line 320
+- `ML_Compute_Flow5m` — line 325
+- `ML_Compute_LargeTradeZ` — line 330
+- `ML_Compute_SpreadBps` — line 335
+- `ML_Compute_SpreadZscore` — line 340
+- `ML_Compute_RegimeTrendStrength` — line 371
+- `ML_Compute_RegimeVolZscore` — line 386
+- `ML_Compute_RegimeClassOneHot` — line 408
+- `ML_Compute_FracDiffPrice_d04` — line 479
+- `ML_Compute_FracDiffPrice_d05` — line 484
+- `ML_Compute_FracDiffPrice_d06` — line 489
+- `Features_PackAll` — line 720
+- `Features_PackAll` — line 802
 
 ### FeatureRegistryOverlay.hpp
 
@@ -807,103 +807,103 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### FeatureStandardizer.hpp
 
-- `FeatureStandardizer_Init` — line 172 — recommended for clarity.
-- `FeatureStandardizer_Apply` — line 213 — MLStrategy.hpp:129, PortfolioController.hpp:1639/1806).
-- `FeatureStandardizer_Load` — line 256 — magic / num_features / embedded SHA.
-- `FeatureStandardizer_VerifyAgainstBuild` — line 356 — per held_out_gate_strict.
-- `FeatureStandardizer_FitWinsor` — line 396 — training-side cost. Slow-path slow.
-- `FeatureStandardizer_Compute` — line 434
-- `FeatureStandardizer_Persist` — line 474 — Returns 1 on success, 0 on I/O failure.
-- `FeatureStandardizer_Free` — line 536 — the struct so future use re-initializes).
+- `FeatureStandardizer_Init` — line 201
+- `FeatureStandardizer_Apply` — line 244 — recommended for clarity.
+- `FeatureStandardizer_Load` — line 316 — ---- the sidecar body field-map: tier-2 [WIRE_FIELD] members, ordinal-addressed (D-345) ----
+- `FeatureStandardizer_VerifyAgainstBuild` — line 432 — has_scaler=1 if all upstream checks (registry_hash match) pass.
+- `FeatureStandardizer_FitWinsor` — line 476 — training-side cost. Slow-path slow.
+- `FeatureStandardizer_Compute` — line 514
+- `FeatureStandardizer_Persist` — line 554 — Returns 1 on success, 0 on I/O failure.
+- `FeatureStandardizer_Free` — line 631 — Persist writes the sidecar via atomic write (.tmp + rename).
 
 ### FlowFeatures.hpp
 
-- `BookImbHistory_Init` — line 113
-- `BookImbHistory_Push` — line 123
-- `BookImbHistory_MeanLong` — line 153
-- `BookImbHistory_MeanShortFast` — line 170
-- `BookImbHistory_Last` — line 180
-- `BookImbHistory_MeanShort` — line 189
-- `FlowState_Init` — line 240
-- `FlowState_Push` — line 253 — Full RegimeSignals→FPN_Binary cascade is a v5.11 ship (large blast radius).
-- `LargeTradeState_Init` — line 333
-- `LargeTradeState_Push` — line 343
-- `LargeTradeState_ZScore` — line 366
-- `LargeTradeState_Last` — line 382
-- `SpreadState_Init` — line 430
-- `SpreadState_Push` — line 440
-- `SpreadState_ZScore` — line 458
-- `SpreadState_Last` — line 473
+- `BookImbHistory_Init` — line 159
+- `BookImbHistory_Push` — line 169
+- `BookImbHistory_MeanLong` — line 199
+- `BookImbHistory_MeanShortFast` — line 216
+- `BookImbHistory_Last` — line 226
+- `BookImbHistory_MeanShort` — line 235
+- `FlowState_Init` — line 328
+- `FlowState_Push` — line 341 — Full RegimeSignals→FPN_Binary cascade is a v5.11 ship (large blast radius).
+- `LargeTradeState_Init` — line 462
+- `LargeTradeState_Push` — line 472
+- `LargeTradeState_ZScore` — line 495
+- `LargeTradeState_Last` — line 511
+- `SpreadState_Init` — line 603
+- `SpreadState_Push` — line 613
+- `SpreadState_ZScore` — line 631
+- `SpreadState_Last` — line 646
 
 ### LinearRegression3X.hpp
 
-- `RegressionFeederX_FieldwiseWrite` — line 85
-- `RegressionFeederX_FieldwiseRead` — line 94
-- `RegressionFeederX_CommitPersistedFields` — line 103
+- `RegressionFeederX_FieldwiseWrite` — line 89
+- `RegressionFeederX_FieldwiseRead` — line 98
+- `RegressionFeederX_CommitPersistedFields` — line 107
 
 ### ModelInference.hpp
 
-- `FeatureLookback_Max` — line 225 — used by: ValidationSplit (purge gap), PortfolioController (warmup check)
-- `FeatureLookback_CountEnabled` — line 235 — count enabled features (for validation)
-- `Model_Init` — line 425
-- `Model_Load` — line 462
-- `Model_Predict_Normalized` — line 621
-- `Model_Predict_AtClass` — line 674
-- `Model_LoadAOT` — line 703
-- `Model_Predict_AOT` — line 717
-- `Model_Predict` — line 733
-- `Model_Predict_Ensemble` — line 827
-- `Model_Predict_Ensemble_Weighted` — line 900
-- `Model_PredictMulti` — line 1012
-- `Model_Free` — line 1067
-- `Model_IsLoaded` — line 1088
-- `ModelFeatures_Pack` — line 1116
+- `FeatureLookback_Max` — line 264
+- `FeatureLookback_CountEnabled` — line 274 — count enabled features (for validation)
+- `Model_Init` — line 500
+- `Model_Load` — line 548
+- `Model_Predict_Normalized` — line 683
+- `Model_Predict_AtClass` — line 746
+- `Model_LoadAOT` — line 809
+- `Model_Predict_AOT` — line 823
+- `Model_Predict` — line 867
+- `Model_Predict_Ensemble` — line 951
+- `Model_Predict_Ensemble_Weighted` — line 1037
+- `Model_PredictMulti` — line 1182
+- `Model_Free` — line 1258
+- `Model_IsLoaded` — line 1278
+- `ModelFeatures_Pack` — line 1301
 
 ### NodeModelZoo.hpp
 
-- `NodeModelZoo_Init` — line 103
-- `NodeModelZoo_TryLoadRole` — line 124
-- `NodeModelZoo_LoadFromDir` — line 579
-- `NodeModelZoo_LoadLegacy` — line 671
-- `NodeModelZoo_Free` — line 682
-- `NodeModelZoo_HasAny` — line 692
-- `NodeModelZoo_VerifyExpected` — line 720 — features in the pack, model crashes or produces garbage.
-- `EnsembleZoo_FinalizeCorrupt` — line 1155
-- `EnsembleModelZoo_Init` — line 1165
-- `EnsembleModelZoo_EnsurePrimary` — line 1258
-- `EnsembleModelZoo_RecordPrediction` — line 1300
-- `EnsembleModelZoo_UpdateDrift` — line 1329
-- `EnsembleModelZoo_TickRewardsFromLookback` — line 1382
-- `EnsembleModelZoo_TradeCloseReward` — line 1466
-- `EnsembleModelZoo_InitBandits` — line 1530
-- `EnsembleModelZoo_InitExitBandits` — line 1578
-- `EnsembleModelZoo_InitBuyThompsonBandits` — line 1633
-- `EnsembleModelZoo_InitExitThompsonBandits` — line 1685
-- `EnsembleModelZoo_SetDisabledHorizons` — line 1727
-- `EnsembleModelZoo_Free` — line 1755
-- `EnsembleModelZoo_LoadFromCfg` — line 1789
-- `EnsembleZoo_VerifyGridMemberConsistency` — line 2049
-- `EnsembleModelZoo_AutoDetectFromDir` — line 2119
-- `EnsembleModelZoo_ComputeBundleId` — line 2262
-- `EnsembleModelZoo_SaveBanditState` — line 2287
-- `EnsembleModelZoo_SaveExitBanditState` — line 2309
-- `EnsembleModelZoo_LoadBanditState` — line 2333
-- `EnsembleModelZoo_LoadExitBanditState` — line 2364
-- `EnsembleModelZoo_SaveThompsonState` — line 2407
-- `EnsembleModelZoo_SaveExitThompsonState` — line 2496
-- `EnsembleModelZoo_LoadThompsonState` — line 2579
-- `EnsembleModelZoo_LoadExitThompsonState` — line 2713
-- `EnsembleModelZoo_LoadBanditStateFromPath` — line 2842
-- `EnsembleModelZoo_SetBanditSaveInterval` — line 2869
-- `EnsembleModelZoo_MaybeSaveBanditPeriodic` — line 2887
-- `EnsembleModelZoo_PostLoadSetup` — line 3007
-- `EnsembleModelZoo_IsReadyForInference` — line 3026
-- `NodeModelZoo_PostLoadSetup` — line 3067
-- `NodeModelZoo_CheckStaleModel` — line 3100
+- `NodeModelZoo_Init` — line 157
+- `NodeModelZoo_TryLoadRole` — line 184
+- `NodeModelZoo_LoadFromDir` — line 662
+- `NodeModelZoo_LoadLegacy` — line 771
+- `NodeModelZoo_Free` — line 781
+- `NodeModelZoo_HasAny` — line 790
+- `NodeModelZoo_VerifyExpected` — line 828 — features in the pack, model crashes or produces garbage.
+- `EnsembleZoo_FinalizeCorrupt` — line 1357
+- `EnsembleModelZoo_Init` — line 1395
+- `EnsembleModelZoo_EnsurePrimary` — line 1488
+- `EnsembleModelZoo_RecordPrediction` — line 1544
+- `EnsembleModelZoo_UpdateDrift` — line 1573
+- `EnsembleModelZoo_TickRewardsFromLookback` — line 1626
+- `EnsembleModelZoo_TradeCloseReward` — line 1710
+- `EnsembleModelZoo_InitBandits` — line 1779
+- `EnsembleModelZoo_InitExitBandits` — line 1827
+- `EnsembleModelZoo_InitBuyThompsonBandits` — line 1882
+- `EnsembleModelZoo_InitExitThompsonBandits` — line 1934
+- `EnsembleModelZoo_SetDisabledHorizons` — line 1997
+- `EnsembleModelZoo_Free` — line 2025
+- `EnsembleModelZoo_LoadFromCfg` — line 2069
+- `EnsembleZoo_VerifyGridMemberConsistency` — line 2357
+- `EnsembleModelZoo_AutoDetectFromDir` — line 2427
+- `EnsembleModelZoo_ComputeBundleId` — line 2584
+- `EnsembleModelZoo_SaveBanditState` — line 2609
+- `EnsembleModelZoo_SaveExitBanditState` — line 2631
+- `EnsembleModelZoo_LoadBanditState` — line 2655
+- `EnsembleModelZoo_LoadExitBanditState` — line 2686
+- `EnsembleModelZoo_SaveThompsonState` — line 2743
+- `EnsembleModelZoo_SaveExitThompsonState` — line 2831
+- `EnsembleModelZoo_LoadThompsonState` — line 2914
+- `EnsembleModelZoo_LoadExitThompsonState` — line 3047
+- `EnsembleModelZoo_LoadBanditStateFromPath` — line 3190
+- `EnsembleModelZoo_SetBanditSaveInterval` — line 3217
+- `EnsembleModelZoo_MaybeSaveBanditPeriodic` — line 3235
+- `EnsembleModelZoo_PostLoadSetup` — line 3371
+- `EnsembleModelZoo_IsReadyForInference` — line 3390
+- `NodeModelZoo_PostLoadSetup` — line 3443
+- `NodeModelZoo_CheckStaleModel` — line 3478
 
 ### PerArmFlagRegistry.hpp
 
-- `PerArmFlag_ToString` — line 164 — diagnostic panels.
+- `PerArmFlag_ToString` — line 144 — diagnostic panels.
 
 ### RewardTracker.hpp
 
@@ -913,21 +913,21 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### RidgeBlender.hpp
 
-- `Cholesky_Solve` — line 150
-- `RidgeBlender_Compute` — line 285
-- `RidgeBlender_FinalizeCorrFromSums` — line 378
-- `RidgeBlender_BuildCorr` — line 474 — byte-determinism tests). Sister to Bandit_GetProbabilities. TECH_DEBT-158.
-- `RidgeBlender_UpdateOnline` — line 563
-- `RidgeBlender_BuildHistoryFromRing` — line 699
-- `RidgeBlender_OnlineCycleStep` — line 758
-- `RidgeWeights_Init` — line 806
+- `Cholesky_Solve` — line 186
+- `RidgeBlender_Compute` — line 329
+- `RidgeBlender_FinalizeCorrFromSums` — line 424
+- `RidgeBlender_BuildCorr` — line 541 — byte-determinism tests). Sister to Bandit_GetProbabilities. TECH_DEBT-158.
+- `RidgeBlender_UpdateOnline` — line 644
+- `RidgeBlender_BuildHistoryFromRing` — line 793
+- `RidgeBlender_OnlineCycleStep` — line 853
+- `RidgeWeights_Init` — line 945
 
 ### RollingStats.hpp
 
-- `RollingStats_Push` — line 205
-- `RollingStats_VolumeSignificant` — line 421
-- `RollingStats_EntrySpacing` — line 434
-- `RollingStats_BuyPrice` — line 451
+- `RollingStats_Push` — line 266
+- `RollingStats_VolumeSignificant` — line 517
+- `RollingStats_EntrySpacing` — line 542
+- `RollingStats_BuyPrice` — line 572
 
 ### RollingTurnover.hpp
 
@@ -942,25 +942,25 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### StampHelper.hpp
 
-- `Stamp_AssembleAndEmit` — line 176
+- `Stamp_AssembleAndEmit` — line 170
 
 ### ThompsonBandit.hpp
 
-- `Thompson_RawToUniform` — line 143 — Muller's log(0) handling).
-- `Thompson_BoxMuller_Pair` — line 155 — Caller must ensure u1, u2 ∈ [0, 1).
-- `Thompson_Init` — line 173 — applied if caller passes <= 0 for prior/observation precision.
-- `Thompson_InitDefault` — line 192 — Typical for unit tests + boot-time init before cfg fields wire in (.B).
-- `Thompson_Update` — line 212 — No-op for invalid arm (defensive).
-- `Thompson_Sample` — line 290 — Mutates tb->rng_state (advances the PRNG); not thread-safe.
-- `Thompson_GetProbabilities` — line 337 — are zeroed.
-- `Thompson_GetSoftmaxWeights` — line 390 — are zeroed. Defensive on nullptr / degenerate n_arms < 2.
+- `Thompson_RawToUniform` — line 153 — Muller's log(0) handling).
+- `Thompson_BoxMuller_Pair` — line 165 — Caller must ensure u1, u2 ∈ [0, 1).
+- `Thompson_Init` — line 183 — applied if caller passes <= 0 for prior/observation precision.
+- `Thompson_InitDefault` — line 202 — Typical for unit tests + boot-time init before cfg fields wire in (.B).
+- `Thompson_Update` — line 222 — No-op for invalid arm (defensive).
+- `Thompson_Sample` — line 300 — Mutates tb->rng_state (advances the PRNG); not thread-safe.
+- `Thompson_GetProbabilities` — line 347 — are zeroed.
+- `Thompson_GetSoftmaxWeights` — line 400 — are zeroed. Defensive on nullptr / degenerate n_arms < 2.
 
 ### VolScaler.hpp
 
-- `VolScaler_Size` — line 60 — positive = long, negative = short (we only go long in current engine)
-- `VolScaler_SizeDefault` — line 75 — convenience: scale with default parameters
-- `VolScaler_InverseAlpha` — line 83 — useful for: "what alpha does this position size imply?"
-- `VolScaler_RawZ` — line 91 — raw z-score without clipping (for analytics / display)
+- `VolScaler_Size` — line 50 — default parameters (from FoxML DEFAULT_CONFIG)
+- `VolScaler_SizeDefault` — line 65 — convenience: scale with default parameters
+- `VolScaler_InverseAlpha` — line 73 — useful for: "what alpha does this position size imply?"
+- `VolScaler_RawZ` — line 81 — raw z-score without clipping (for analytics / display)
 
 ### WelfordStats.hpp
 

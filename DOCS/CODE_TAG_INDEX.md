@@ -15,16 +15,20 @@ so the snapshot stales when tags/units actually change, not on unrelated line dr
 `rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a
 conversion).
 
-Converted files: 98 · unit blocks: 626
+Converted files: 137 · unit blocks: 828
 
 ## [TAG] values → files
 
-### BACKTEST (4 files)
+### BACKTEST (8 files)
 
 - `CoreFrameworks/ControllerEventLoop.hpp`
 - `CoreFrameworks/EngineCommon.hpp`
 - `CoreFrameworks/MetricCompute.hpp`
 - `CoreFrameworks/ShardedBacktestDriver.hpp`
+- `DataStream/DepthReplayState.hpp`
+- `DataStream/FauxFIX.hpp`
+- `DataStream/MockGenerator.hpp`
+- `DataStream/TradeLog.hpp`
 
 ### BINARY_FP (9 files)
 
@@ -38,7 +42,7 @@ Converted files: 98 · unit blocks: 626
 - `ML_Headers/WelfordStats.hpp`
 - `Strategies/RegimeDetector.hpp`
 
-### BITMAP_PACKED (16 files)
+### BITMAP_PACKED (22 files)
 
 - `CoreFrameworks/CfgFieldRegistry.hpp`
 - `CoreFrameworks/GateCfgFlagRegistry.hpp`
@@ -54,10 +58,16 @@ Converted files: 98 · unit blocks: 626
 - `ML_Headers/MlCfgFlagRegistry.hpp`
 - `ML_Headers/ModelInference.hpp`
 - `ML_Headers/PerArmFlagRegistry.hpp`
+- `MemHeaders/BitmapMacros.hpp`
+- `MemHeaders/NodeStateFlagRegistry.hpp`
+- `MemHeaders/OmsExitPredictorMetaRegistry.hpp`
+- `MemHeaders/OmsStateFlagRegistry.hpp`
+- `MemHeaders/PerNodeStateFlagsRegistry.hpp`
+- `MemHeaders/PoolAllocator.hpp`
 - `Strategies/OpModeCategories.hpp`
 - `Strategies/StrategyCategories.hpp`
 
-### BOOT_TIME (29 files)
+### BOOT_TIME (37 files)
 
 - `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/ControllerConfig.hpp`
@@ -83,13 +93,21 @@ Converted files: 98 · unit blocks: 626
 - `CoreFrameworks/ShardedSnapshotPersist.hpp`
 - `CoreFrameworks/ShardedTradeLog.hpp`
 - `CoreFrameworks/SystemInit.hpp`
+- `DataStream/BinanceCrypto.hpp`
+- `DataStream/BinanceOrderAPI.hpp`
+- `DataStream/BinanceUserData.hpp`
+- `DataStream/EngineTUI.hpp`
 - `ML_Headers/BanditLearning.hpp`
 - `ML_Headers/FeatureStandardizer.hpp`
 - `ML_Headers/RidgeBlender.hpp`
 - `ML_Headers/RollingStats.hpp`
+- `MemHeaders/InitArena.hpp`
+- `MemHeaders/LatencyHistogram.hpp`
+- `MemHeaders/NodeCtxInitRegistry.hpp`
+- `MemHeaders/OmsFieldRegistry.hpp`
 - `Strategies/StrategyLifecycle.hpp`
 
-### CAPITAL_BEARING (24 files)
+### CAPITAL_BEARING (28 files)
 
 - `CoreFrameworks/CfgFieldRegistry.hpp`
 - `CoreFrameworks/ControllerConfig.hpp`
@@ -109,14 +127,18 @@ Converted files: 98 · unit blocks: 626
 - `CoreFrameworks/ReconciliationLoop.hpp`
 - `CoreFrameworks/ShardedLiveSafety.hpp`
 - `CoreFrameworks/TradeEvent.hpp`
+- `DataStream/BinanceOrderAPI.hpp`
+- `DataStream/BinanceUserData.hpp`
 - `ML_Headers/BarrierValidation.hpp`
+- `MemHeaders/OmsPushExitHelper.hpp`
+- `MemHeaders/PositionFieldRegistry.hpp`
 - `Strategies/MLStrategy.hpp`
 - `Strategies/MeanReversion.hpp`
 - `Strategies/Momentum.hpp`
 - `Strategies/StrategyLifecycle.hpp`
 - `Strategies/StrategyParameters.hpp`
 
-### CFG_FLOW (18 files)
+### CFG_FLOW (20 files)
 
 - `CoreFrameworks/CfgFieldDispatch.hpp`
 - `CoreFrameworks/CfgFieldRegistry.hpp`
@@ -132,12 +154,14 @@ Converted files: 98 · unit blocks: 626
 - `CoreFrameworks/SlowPathGateRegistry.hpp`
 - `CoreFrameworks/StampBoundDerivedFilter.hpp`
 - `CoreFrameworks/TradeLogColRegistry.hpp`
+- `DataStream/BinanceCrypto.hpp`
 - `ML_Headers/BarrierBlendModeRegistry.hpp`
 - `ML_Headers/MlCfgFlagRegistry.hpp`
+- `MemHeaders/CfgGateRegistry.hpp`
 - `Strategies/OpModeCategories.hpp`
 - `Strategies/StrategyCategories.hpp`
 
-### CONCURRENCY (14 files)
+### CONCURRENCY (20 files)
 
 - `CoreFrameworks/ControllerEventLoop.hpp`
 - `CoreFrameworks/EngineSharded/Async.hpp`
@@ -152,7 +176,13 @@ Converted files: 98 · unit blocks: 626
 - `CoreFrameworks/SPSCRing.hpp`
 - `CoreFrameworks/ShardedOrderLatency.hpp`
 - `CoreFrameworks/TradeEvent.hpp`
+- `DataStream/BinanceDepth.hpp`
+- `DataStream/BinanceUserData.hpp`
+- `DataStream/EngineTUI.hpp`
 - `ML_Headers/RollingStats.hpp`
+- `MemHeaders/BitmapMacros.hpp`
+- `MemHeaders/LatencyHistogram.hpp`
+- `MemHeaders/OmsPhasedDrain.hpp`
 
 ### CRITICAL (11 files)
 
@@ -168,7 +198,7 @@ Converted files: 98 · unit blocks: 626
 - `CoreFrameworks/SPSCRing.hpp`
 - `CoreFrameworks/SystemInit.hpp`
 
-### DATA_ORIENTED_DESIGN (17 files)
+### DATA_ORIENTED_DESIGN (22 files)
 
 - `CoreFrameworks/ControllerConfig.hpp`
 - `CoreFrameworks/ControllerEventLoop.hpp`
@@ -187,6 +217,11 @@ Converted files: 98 · unit blocks: 626
 - `ML_Headers/NodeModelZoo.hpp`
 - `ML_Headers/RidgeBlender.hpp`
 - `ML_Headers/RollingStats.hpp`
+- `MemHeaders/BuddyAllocator.hpp`
+- `MemHeaders/DrainerConstants.hpp`
+- `MemHeaders/InitArena.hpp`
+- `MemHeaders/LatencyHistogram.hpp`
+- `MemHeaders/PoolAllocator.hpp`
 
 ### DATA_PLANE (3 files)
 
@@ -204,7 +239,7 @@ Converted files: 98 · unit blocks: 626
 - `CoreFrameworks/Portfolio.hpp`
 - `CoreFrameworks/Tick.hpp`
 
-### DETERMINISM (22 files)
+### DETERMINISM (28 files)
 
 - `CoreFrameworks/CfgFieldDispatch.hpp`
 - `CoreFrameworks/CfgFieldRegistry.hpp`
@@ -215,6 +250,9 @@ Converted files: 98 · unit blocks: 626
 - `CoreFrameworks/ShardedSnapshotPersist.hpp`
 - `CoreFrameworks/StampBoundDerivedFilter.hpp`
 - `CoreFrameworks/SystemInit.hpp`
+- `DataStream/DepthRecorder.hpp`
+- `DataStream/MockGenerator.hpp`
+- `DataStream/TickRecorder.hpp`
 - `ML_Headers/BanditLearning.hpp`
 - `ML_Headers/BuildFlags.hpp`
 - `ML_Headers/CfgDriftCheckRegistry.hpp`
@@ -228,8 +266,11 @@ Converted files: 98 · unit blocks: 626
 - `ML_Headers/StampBoundModelConstRegistry.hpp`
 - `ML_Headers/StampHelper.hpp`
 - `ML_Headers/ThompsonBandit.hpp`
+- `MemHeaders/CfgGateRegistry.hpp`
+- `MemHeaders/HmacSha256.hpp`
+- `MemHeaders/RunHistory.hpp`
 
-### ENGINE (98 files)
+### ENGINE (137 files)
 
 - `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/CfgFieldDispatch.hpp`
@@ -284,6 +325,21 @@ Converted files: 98 · unit blocks: 626
 - `CoreFrameworks/Tick.hpp`
 - `CoreFrameworks/TradeEvent.hpp`
 - `CoreFrameworks/TradeLogColRegistry.hpp`
+- `DataStream/BinanceCrypto.hpp`
+- `DataStream/BinanceDepth.hpp`
+- `DataStream/BinanceOrderAPI.hpp`
+- `DataStream/BinanceUserData.hpp`
+- `DataStream/CalibLogColRegistry.hpp`
+- `DataStream/DepthRecorder.hpp`
+- `DataStream/DepthReplayState.hpp`
+- `DataStream/EngineTUI.hpp`
+- `DataStream/FauxFIX.hpp`
+- `DataStream/MetricsLog.hpp`
+- `DataStream/MockGenerator.hpp`
+- `DataStream/TUIAnsi.hpp`
+- `DataStream/TickRecorder.hpp`
+- `DataStream/TradeLog.hpp`
+- `DataStream/WebSocketUtil.hpp`
 - `ML_Headers/BanditAlgorithmRegistry.hpp`
 - `ML_Headers/BanditLearning.hpp`
 - `ML_Headers/BarrierBlendModeRegistry.hpp`
@@ -319,6 +375,30 @@ Converted files: 98 · unit blocks: 626
 - `ML_Headers/VolScaler.hpp`
 - `ML_Headers/WelfordStats.hpp`
 - `ML_Headers/bandit_dispatch_table.hpp`
+- `MemHeaders/ArchFieldDriftRegistry.hpp`
+- `MemHeaders/BitmapMacros.hpp`
+- `MemHeaders/BuddyAllocator.hpp`
+- `MemHeaders/CfgGateRegistry.hpp`
+- `MemHeaders/DebugLog.hpp`
+- `MemHeaders/DisplayMetaRegistry.hpp`
+- `MemHeaders/DrainerConstants.hpp`
+- `MemHeaders/FailureModeRegistry.hpp`
+- `MemHeaders/HealthLog.hpp`
+- `MemHeaders/HmacSha256.hpp`
+- `MemHeaders/InitArena.hpp`
+- `MemHeaders/LatencyHistogram.hpp`
+- `MemHeaders/NodeCtxInitRegistry.hpp`
+- `MemHeaders/NodeCtxSummaryFieldRegistry.hpp`
+- `MemHeaders/NodeStateFlagRegistry.hpp`
+- `MemHeaders/OmsExitPredictorMetaRegistry.hpp`
+- `MemHeaders/OmsFieldRegistry.hpp`
+- `MemHeaders/OmsPhasedDrain.hpp`
+- `MemHeaders/OmsPushExitHelper.hpp`
+- `MemHeaders/OmsStateFlagRegistry.hpp`
+- `MemHeaders/PerNodeStateFlagsRegistry.hpp`
+- `MemHeaders/PoolAllocator.hpp`
+- `MemHeaders/PositionFieldRegistry.hpp`
+- `MemHeaders/RunHistory.hpp`
 - `Strategies/MLStrategy.hpp`
 - `Strategies/MeanReversion.hpp`
 - `Strategies/Momentum.hpp`
@@ -345,7 +425,7 @@ Converted files: 98 · unit blocks: 626
 - `CoreFrameworks/ShardedSnapshot.hpp`
 - `CoreFrameworks/ShardedTradeLog.hpp`
 
-### FRAMEWORK_DISCIPLINE (20 files)
+### FRAMEWORK_DISCIPLINE (33 files)
 
 - `CoreFrameworks/CfgFieldDispatch.hpp`
 - `CoreFrameworks/CfgFieldRegistry.hpp`
@@ -354,6 +434,7 @@ Converted files: 98 · unit blocks: 626
 - `CoreFrameworks/SessionPhaseRegistry.hpp`
 - `CoreFrameworks/SlowPathGateRegistry.hpp`
 - `CoreFrameworks/TradeLogColRegistry.hpp`
+- `DataStream/CalibLogColRegistry.hpp`
 - `ML_Headers/BanditAlgorithmRegistry.hpp`
 - `ML_Headers/CfgDriftCheckRegistry.hpp`
 - `ML_Headers/ConfidenceScore.hpp`
@@ -364,6 +445,18 @@ Converted files: 98 · unit blocks: 626
 - `ML_Headers/RollingWindowRegistry.hpp`
 - `ML_Headers/StampBoundModelConstRegistry.hpp`
 - `ML_Headers/bandit_dispatch_table.hpp`
+- `MemHeaders/ArchFieldDriftRegistry.hpp`
+- `MemHeaders/CfgGateRegistry.hpp`
+- `MemHeaders/DisplayMetaRegistry.hpp`
+- `MemHeaders/FailureModeRegistry.hpp`
+- `MemHeaders/NodeCtxInitRegistry.hpp`
+- `MemHeaders/NodeCtxSummaryFieldRegistry.hpp`
+- `MemHeaders/NodeStateFlagRegistry.hpp`
+- `MemHeaders/OmsExitPredictorMetaRegistry.hpp`
+- `MemHeaders/OmsFieldRegistry.hpp`
+- `MemHeaders/OmsStateFlagRegistry.hpp`
+- `MemHeaders/PerNodeStateFlagsRegistry.hpp`
+- `MemHeaders/PositionFieldRegistry.hpp`
 - `Strategies/StrategyInterface.hpp`
 - `Strategies/StrategyLifecycle.hpp`
 - `Strategies/StrategyParameters.hpp`
@@ -392,7 +485,7 @@ Converted files: 98 · unit blocks: 626
 - `CoreFrameworks/Tick.hpp`
 - `CoreFrameworks/TradeEvent.hpp`
 
-### LIVE_TRADING (13 files)
+### LIVE_TRADING (18 files)
 
 - `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/ControllerConfig.hpp`
@@ -407,6 +500,11 @@ Converted files: 98 · unit blocks: 626
 - `CoreFrameworks/ReconciliationLoop.hpp`
 - `CoreFrameworks/ShardedLiveSafety.hpp`
 - `CoreFrameworks/ShardedOrderLatency.hpp`
+- `DataStream/BinanceCrypto.hpp`
+- `DataStream/BinanceDepth.hpp`
+- `DataStream/BinanceOrderAPI.hpp`
+- `DataStream/BinanceUserData.hpp`
+- `DataStream/WebSocketUtil.hpp`
 
 ### ML (6 files)
 
@@ -417,11 +515,13 @@ Converted files: 98 · unit blocks: 626
 - `CoreFrameworks/OrderManager.hpp`
 - `Strategies/RegimeDetector.hpp`
 
-### ML_INFERENCE (31 files)
+### ML_INFERENCE (37 files)
 
 - `CoreFrameworks/CfgFieldDispatch.hpp`
 - `CoreFrameworks/ControllerEventLoop.hpp`
 - `CoreFrameworks/EngineCommon.hpp`
+- `DataStream/CalibLogColRegistry.hpp`
+- `DataStream/EngineTUI.hpp`
 - `ML_Headers/BanditAlgorithmRegistry.hpp`
 - `ML_Headers/BanditLearning.hpp`
 - `ML_Headers/BarrierBlendModeRegistry.hpp`
@@ -448,10 +548,14 @@ Converted files: 98 · unit blocks: 626
 - `ML_Headers/ThompsonBandit.hpp`
 - `ML_Headers/VolScaler.hpp`
 - `ML_Headers/bandit_dispatch_table.hpp`
+- `MemHeaders/ArchFieldDriftRegistry.hpp`
+- `MemHeaders/CfgGateRegistry.hpp`
+- `MemHeaders/FailureModeRegistry.hpp`
+- `MemHeaders/OmsExitPredictorMetaRegistry.hpp`
 - `Strategies/MLStrategy.hpp`
 - `Strategies/StrategyParameters.hpp`
 
-### MONITORING_PLANE (17 files)
+### MONITORING_PLANE (28 files)
 
 - `CoreFrameworks/ControllerEventLoop.hpp`
 - `CoreFrameworks/EngineSharded/Run.hpp`
@@ -466,12 +570,23 @@ Converted files: 98 · unit blocks: 626
 - `CoreFrameworks/ShardedSnapshot.hpp`
 - `CoreFrameworks/SpSectionRegistry.hpp`
 - `CoreFrameworks/TradeLogColRegistry.hpp`
+- `DataStream/EngineTUI.hpp`
+- `DataStream/MetricsLog.hpp`
+- `DataStream/TUIAnsi.hpp`
 - `ML_Headers/BanditLearning.hpp`
 - `ML_Headers/RewardTracker.hpp`
 - `ML_Headers/RollingTurnover.hpp`
+- `MemHeaders/BuddyAllocator.hpp`
+- `MemHeaders/DebugLog.hpp`
+- `MemHeaders/DisplayMetaRegistry.hpp`
+- `MemHeaders/FailureModeRegistry.hpp`
+- `MemHeaders/HealthLog.hpp`
+- `MemHeaders/LatencyHistogram.hpp`
+- `MemHeaders/NodeCtxSummaryFieldRegistry.hpp`
+- `MemHeaders/PerNodeStateFlagsRegistry.hpp`
 - `Strategies/StrategyInterface.hpp`
 
-### OMS_DRAINER (8 files)
+### OMS_DRAINER (14 files)
 
 - `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/ControllerEventLoop.hpp`
@@ -481,13 +596,19 @@ Converted files: 98 · unit blocks: 626
 - `CoreFrameworks/OrderEventLog.hpp`
 - `CoreFrameworks/OrderManager.hpp`
 - `CoreFrameworks/ShardedTradeLog.hpp`
+- `MemHeaders/DrainerConstants.hpp`
+- `MemHeaders/OmsExitPredictorMetaRegistry.hpp`
+- `MemHeaders/OmsFieldRegistry.hpp`
+- `MemHeaders/OmsPhasedDrain.hpp`
+- `MemHeaders/OmsPushExitHelper.hpp`
+- `MemHeaders/OmsStateFlagRegistry.hpp`
 
 ### PARSER (2 files)
 
 - `CoreFrameworks/ControllerConfig.hpp`
 - `CoreFrameworks/ParseFast.hpp`
 
-### PERSISTENCE (17 files)
+### PERSISTENCE (29 files)
 
 - `CoreFrameworks/CfgFieldDispatch.hpp`
 - `CoreFrameworks/ControllerEventLoop.hpp`
@@ -498,6 +619,12 @@ Converted files: 98 · unit blocks: 626
 - `CoreFrameworks/PortfolioController.hpp`
 - `CoreFrameworks/ShardedSnapshotPersist.hpp`
 - `CoreFrameworks/ShardedTradeLog.hpp`
+- `DataStream/CalibLogColRegistry.hpp`
+- `DataStream/DepthRecorder.hpp`
+- `DataStream/DepthReplayState.hpp`
+- `DataStream/MetricsLog.hpp`
+- `DataStream/TickRecorder.hpp`
+- `DataStream/TradeLog.hpp`
 - `ML_Headers/BanditLearning.hpp`
 - `ML_Headers/ConfidenceScore.hpp`
 - `ML_Headers/FeatureStandardizer.hpp`
@@ -506,12 +633,18 @@ Converted files: 98 · unit blocks: 626
 - `ML_Headers/NodeModelZoo.hpp`
 - `ML_Headers/RewardTracker.hpp`
 - `ML_Headers/StampHelper.hpp`
+- `MemHeaders/CfgGateRegistry.hpp`
+- `MemHeaders/HealthLog.hpp`
+- `MemHeaders/HmacSha256.hpp`
+- `MemHeaders/OmsFieldRegistry.hpp`
+- `MemHeaders/PositionFieldRegistry.hpp`
+- `MemHeaders/RunHistory.hpp`
 
 ### PRODUCER (1 files)
 
 - `CoreFrameworks/EngineSharded/Async.hpp`
 
-### SLOW_PATH (45 files)
+### SLOW_PATH (46 files)
 
 - `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/ControllerConfig.hpp`
@@ -550,6 +683,7 @@ Converted files: 98 · unit blocks: 626
 - `ML_Headers/ThompsonBandit.hpp`
 - `ML_Headers/VolScaler.hpp`
 - `ML_Headers/WelfordStats.hpp`
+- `MemHeaders/NodeStateFlagRegistry.hpp`
 - `Strategies/MLStrategy.hpp`
 - `Strategies/MeanReversion.hpp`
 - `Strategies/Momentum.hpp`
@@ -574,9 +708,14 @@ Converted files: 98 · unit blocks: 626
 
 ## Unit blocks by [TYPE]
 
-### ASSERT (21)
+### ASSERT (36)
 
 - `BITMAP_OVERFLOW` — `ML_Headers/NodeModelZoo.hpp`
+- `BITMAP_OVERFLOW` — `MemHeaders/FailureModeRegistry.hpp`
+- `BITMAP_OVERFLOW` — `MemHeaders/NodeStateFlagRegistry.hpp`
+- `BITMAP_OVERFLOW` — `MemHeaders/OmsExitPredictorMetaRegistry.hpp`
+- `BITMAP_OVERFLOW` — `MemHeaders/OmsStateFlagRegistry.hpp`
+- `BITMAP_OVERFLOW` — `MemHeaders/PerNodeStateFlagsRegistry.hpp`
 - `EPOCH_TRIPWIRE` — `CoreFrameworks/OrderEventLog.hpp`
 - `EPOCH_TRIPWIRE` — `CoreFrameworks/Portfolio.hpp`
 - `EPOCH_TRIPWIRE` — `CoreFrameworks/ShardedSnapshotPersist.hpp`
@@ -588,14 +727,24 @@ Converted files: 98 · unit blocks: 626
 - `LAYOUT_LOCK` — `CoreFrameworks/Portfolio.hpp`
 - `LAYOUT_LOCK` — `CoreFrameworks/Tick.hpp`
 - `LAYOUT_LOCK` — `CoreFrameworks/TradeEvent.hpp`
+- `LAYOUT_LOCK` — `DataStream/EngineTUI.hpp`
 - `LAYOUT_LOCK` — `ML_Headers/BanditLearning.hpp`
 - `LAYOUT_LOCK` — `ML_Headers/ConfidenceScore.hpp`
 - `LAYOUT_LOCK` — `ML_Headers/FlowFeatures.hpp`
 - `LAYOUT_LOCK` — `ML_Headers/ModelInference.hpp`
 - `LAYOUT_LOCK` — `ML_Headers/NodeModelZoo.hpp`
 - `LAYOUT_LOCK` — `ML_Headers/RollingStats.hpp`
+- `LAYOUT_LOCK` — `MemHeaders/DrainerConstants.hpp`
+- `LAYOUT_LOCK` — `MemHeaders/LatencyHistogram.hpp`
+- `LAYOUT_LOCK` — `MemHeaders/OmsExitPredictorMetaRegistry.hpp`
+- `LAYOUT_LOCK` — `MemHeaders/OmsStateFlagRegistry.hpp`
 - `OVERLAP_EXCLUSION` — `CoreFrameworks/CfgFieldRegistry.hpp`
 - `REGISTRY_COVERAGE` — `CoreFrameworks/CfgFieldRegistry.hpp`
+- `REGISTRY_COVERAGE` — `DataStream/CalibLogColRegistry.hpp`
+- `REGISTRY_COVERAGE` — `MemHeaders/DisplayMetaRegistry.hpp`
+- `REGISTRY_COVERAGE` — `MemHeaders/NodeCtxInitRegistry.hpp`
+- `REGISTRY_COVERAGE` — `MemHeaders/NodeCtxSummaryFieldRegistry.hpp`
+- `REGISTRY_COVERAGE` — `MemHeaders/OmsFieldRegistry.hpp`
 - `REGISTRY_COVERAGE` — `Strategies/StrategyInterface.hpp`
 
 ### ENUM (8)
@@ -609,7 +758,7 @@ Converted files: 98 · unit blocks: 626
 - `OrderType` — `CoreFrameworks/Order.hpp`
 - `StrategyCategory` — `Strategies/StrategyCategories.hpp`
 
-### FILE (98)
+### FILE (137)
 
 - `CoreFrameworks/BinanceAdapter.hpp` — `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/CfgFieldDispatch.hpp` — `CoreFrameworks/CfgFieldDispatch.hpp`
@@ -664,6 +813,21 @@ Converted files: 98 · unit blocks: 626
 - `CoreFrameworks/Tick.hpp` — `CoreFrameworks/Tick.hpp`
 - `CoreFrameworks/TradeEvent.hpp` — `CoreFrameworks/TradeEvent.hpp`
 - `CoreFrameworks/TradeLogColRegistry.hpp` — `CoreFrameworks/TradeLogColRegistry.hpp`
+- `DataStream/BinanceCrypto.hpp` — `DataStream/BinanceCrypto.hpp`
+- `DataStream/BinanceDepth.hpp` — `DataStream/BinanceDepth.hpp`
+- `DataStream/BinanceOrderAPI.hpp` — `DataStream/BinanceOrderAPI.hpp`
+- `DataStream/BinanceUserData.hpp` — `DataStream/BinanceUserData.hpp`
+- `DataStream/CalibLogColRegistry.hpp` — `DataStream/CalibLogColRegistry.hpp`
+- `DataStream/DepthRecorder.hpp` — `DataStream/DepthRecorder.hpp`
+- `DataStream/DepthReplayState.hpp` — `DataStream/DepthReplayState.hpp`
+- `DataStream/EngineTUI.hpp` — `DataStream/EngineTUI.hpp`
+- `DataStream/FauxFIX.hpp` — `DataStream/FauxFIX.hpp`
+- `DataStream/MetricsLog.hpp` — `DataStream/MetricsLog.hpp`
+- `DataStream/MockGenerator.hpp` — `DataStream/MockGenerator.hpp`
+- `DataStream/TUIAnsi.hpp` — `DataStream/TUIAnsi.hpp`
+- `DataStream/TickRecorder.hpp` — `DataStream/TickRecorder.hpp`
+- `DataStream/TradeLog.hpp` — `DataStream/TradeLog.hpp`
+- `DataStream/WebSocketUtil.hpp` — `DataStream/WebSocketUtil.hpp`
 - `ML_Headers/BanditAlgorithmRegistry.hpp` — `ML_Headers/BanditAlgorithmRegistry.hpp`
 - `ML_Headers/BanditLearning.hpp` — `ML_Headers/BanditLearning.hpp`
 - `ML_Headers/BarrierBlendModeRegistry.hpp` — `ML_Headers/BarrierBlendModeRegistry.hpp`
@@ -699,6 +863,30 @@ Converted files: 98 · unit blocks: 626
 - `ML_Headers/VolScaler.hpp` — `ML_Headers/VolScaler.hpp`
 - `ML_Headers/WelfordStats.hpp` — `ML_Headers/WelfordStats.hpp`
 - `ML_Headers/bandit_dispatch_table.hpp` — `ML_Headers/bandit_dispatch_table.hpp`
+- `MemHeaders/ArchFieldDriftRegistry.hpp` — `MemHeaders/ArchFieldDriftRegistry.hpp`
+- `MemHeaders/BitmapMacros.hpp` — `MemHeaders/BitmapMacros.hpp`
+- `MemHeaders/BuddyAllocator.hpp` — `MemHeaders/BuddyAllocator.hpp`
+- `MemHeaders/CfgGateRegistry.hpp` — `MemHeaders/CfgGateRegistry.hpp`
+- `MemHeaders/DebugLog.hpp` — `MemHeaders/DebugLog.hpp`
+- `MemHeaders/DisplayMetaRegistry.hpp` — `MemHeaders/DisplayMetaRegistry.hpp`
+- `MemHeaders/DrainerConstants.hpp` — `MemHeaders/DrainerConstants.hpp`
+- `MemHeaders/FailureModeRegistry.hpp` — `MemHeaders/FailureModeRegistry.hpp`
+- `MemHeaders/HealthLog.hpp` — `MemHeaders/HealthLog.hpp`
+- `MemHeaders/HmacSha256.hpp` — `MemHeaders/HmacSha256.hpp`
+- `MemHeaders/InitArena.hpp` — `MemHeaders/InitArena.hpp`
+- `MemHeaders/LatencyHistogram.hpp` — `MemHeaders/LatencyHistogram.hpp`
+- `MemHeaders/NodeCtxInitRegistry.hpp` — `MemHeaders/NodeCtxInitRegistry.hpp`
+- `MemHeaders/NodeCtxSummaryFieldRegistry.hpp` — `MemHeaders/NodeCtxSummaryFieldRegistry.hpp`
+- `MemHeaders/NodeStateFlagRegistry.hpp` — `MemHeaders/NodeStateFlagRegistry.hpp`
+- `MemHeaders/OmsExitPredictorMetaRegistry.hpp` — `MemHeaders/OmsExitPredictorMetaRegistry.hpp`
+- `MemHeaders/OmsFieldRegistry.hpp` — `MemHeaders/OmsFieldRegistry.hpp`
+- `MemHeaders/OmsPhasedDrain.hpp` — `MemHeaders/OmsPhasedDrain.hpp`
+- `MemHeaders/OmsPushExitHelper.hpp` — `MemHeaders/OmsPushExitHelper.hpp`
+- `MemHeaders/OmsStateFlagRegistry.hpp` — `MemHeaders/OmsStateFlagRegistry.hpp`
+- `MemHeaders/PerNodeStateFlagsRegistry.hpp` — `MemHeaders/PerNodeStateFlagsRegistry.hpp`
+- `MemHeaders/PoolAllocator.hpp` — `MemHeaders/PoolAllocator.hpp`
+- `MemHeaders/PositionFieldRegistry.hpp` — `MemHeaders/PositionFieldRegistry.hpp`
+- `MemHeaders/RunHistory.hpp` — `MemHeaders/RunHistory.hpp`
 - `RegimeDetector.hpp` — `Strategies/RegimeDetector.hpp`
 - `Strategies/MLStrategy.hpp` — `Strategies/MLStrategy.hpp`
 - `Strategies/MeanReversion.hpp` — `Strategies/MeanReversion.hpp`
@@ -710,8 +898,10 @@ Converted files: 98 · unit blocks: 626
 - `Strategies/StrategyLifecycle.hpp` — `Strategies/StrategyLifecycle.hpp`
 - `Strategies/StrategyParameters.hpp` — `Strategies/StrategyParameters.hpp`
 
-### FUNCTION (290)
+### FUNCTION (363)
 
+- `ANSI_Layout_Render` — `DataStream/TUIAnsi.hpp`
+- `ANSI_Section_Header` — `DataStream/TUIAnsi.hpp`
 - `BG_Evaluate` — `CoreFrameworks/GateParameters.hpp`
 - `BUILD_FLAGS_HASH` — `ML_Headers/BuildFlags.hpp`
 - `Bandit_BlendWeights` — `ML_Headers/BanditLearning.hpp`
@@ -733,8 +923,16 @@ Converted files: 98 · unit blocks: 626
 - `BinanceAdapter_SubmitMarketBuy` — `CoreFrameworks/BinanceAdapter.hpp`
 - `BinanceAdapter_SubmitMarketSell` — `CoreFrameworks/BinanceAdapter.hpp`
 - `BinanceAdapter_WorkerLoop` — `CoreFrameworks/BinanceAdapter.hpp`
+- `BinanceConfig_Load` — `DataStream/BinanceCrypto.hpp`
+- `BinanceOrderAPI_MarketBuy` — `DataStream/BinanceOrderAPI.hpp`
+- `BinanceStream_InWindDown` — `DataStream/BinanceCrypto.hpp`
+- `BinanceStream_Init` — `DataStream/BinanceCrypto.hpp`
+- `BinanceStream_Poll` — `DataStream/BinanceCrypto.hpp`
+- `BinanceStream_ReadTick` — `DataStream/BinanceCrypto.hpp`
+- `BinanceUserData_Init` — `DataStream/BinanceUserData.hpp`
 - `BookImbHistory_Push` — `ML_Headers/FlowFeatures.hpp`
 - `BuyGate` — `CoreFrameworks/OrderGates.hpp`
+- `CalibLog_EmitHeader` — `DataStream/CalibLogColRegistry.hpp`
 - `Cholesky_Solve` — `ML_Headers/RidgeBlender.hpp`
 - `ConfidenceScorer_Compute` — `ML_Headers/ConfidenceScore.hpp`
 - `ConfidenceScorer_ComputeComposite` — `ML_Headers/ConfidenceScore.hpp`
@@ -748,6 +946,9 @@ Converted files: 98 · unit blocks: 626
 - `ControllerConfig_ResolveForCore` — `CoreFrameworks/ControllerConfig.hpp`
 - `CostModel_Estimate` — `ML_Headers/CostModel.hpp`
 - `CumDelta_Init` — `Strategies/RegimeDetector.hpp`
+- `DepthRecorder_Write` — `DataStream/DepthRecorder.hpp`
+- `DepthReplayState_Advance` — `DataStream/DepthReplayState.hpp`
+- `DrainerConstants_Init` — `MemHeaders/DrainerConstants.hpp`
 - `DriftHistory_CheckBreach` — `ML_Headers/ConfidenceScore.hpp`
 - `EmaCross_BuildParameters` — `Strategies/StrategyParameters.hpp`
 - `EngineCommon_ApplyBnbDiscount` — `CoreFrameworks/EngineCommon.hpp`
@@ -802,6 +1003,9 @@ Converted files: 98 · unit blocks: 626
 - `ExecutionCore_Tick` — `CoreFrameworks/ExecutionCore.hpp`
 - `ExecutionCore_Tick_Impl` — `CoreFrameworks/ExecutionCore.hpp`
 - `ExitBuffer_PendingProceeds` — `CoreFrameworks/Portfolio.hpp`
+- `FIX_BuildMarketDataMsg` — `DataStream/FauxFIX.hpp`
+- `FIX_Parse` — `DataStream/FauxFIX.hpp`
+- `FIX_ToDataStream` — `DataStream/FauxFIX.hpp`
 - `FeatureLookback_Max` — `ML_Headers/ModelInference.hpp`
 - `FeatureOverlay_PostLoadVerify` — `ML_Headers/FeatureRegistryOverlay.hpp`
 - `FeatureStandardizer_Apply` — `ML_Headers/FeatureStandardizer.hpp`
@@ -815,13 +1019,19 @@ Converted files: 98 · unit blocks: 626
 - `GCN_forward` — `ML_Headers/GateControlNetwork.hpp`
 - `GateParameters_Init` — `CoreFrameworks/GateParameters.hpp`
 - `GetReciprocalLUT` — `ML_Headers/ReciprocalLUT.hpp`
+- `Health_Log` — `MemHeaders/HealthLog.hpp`
 - `HotSwap_ShadowLoad_Ensemble` — `CoreFrameworks/HotSwap.hpp`
 - `HotSwap_ShadowLoad_SingleZoo` — `CoreFrameworks/HotSwap.hpp`
+- `InitArena_Alloc` — `MemHeaders/InitArena.hpp`
 - `KillSwitch_Activate` — `CoreFrameworks/PortfolioController.hpp`
 - `LargeTradeState_Push` — `ML_Headers/FlowFeatures.hpp`
+- `LatencyHistogram_Accumulate` — `MemHeaders/LatencyHistogram.hpp`
+- `LatencyHistogram_Percentile` — `MemHeaders/LatencyHistogram.hpp`
+- `LatencyHistogram_Reset` — `MemHeaders/LatencyHistogram.hpp`
 - `LinearRegression3X_Fit` — `ML_Headers/LinearRegression3X.hpp`
 - `LinearRegression_Fit` — `ML_Headers/LinearRegressionSimple.hpp`
 - `LiveReadiness_Verify` — `CoreFrameworks/LiveReadiness.hpp`
+- `LoadSecrets` — `DataStream/BinanceOrderAPI.hpp`
 - `MLStrategy_BuySignal` — `Strategies/MLStrategy.hpp`
 - `MLStrategy_ExitAdjust` — `Strategies/MLStrategy.hpp`
 - `ML_BuildParameters` — `Strategies/StrategyParameters.hpp`
@@ -829,6 +1039,9 @@ Converted files: 98 · unit blocks: 626
 - `MeanReversion_BuildParameters` — `Strategies/StrategyParameters.hpp`
 - `MeanReversion_BuySignal` — `Strategies/MeanReversion.hpp`
 - `MeanReversion_ExitAdjust` — `Strategies/MeanReversion.hpp`
+- `MetricsLog_SlowPath` — `DataStream/MetricsLog.hpp`
+- `MockGenerator_NextTick` — `DataStream/MockGenerator.hpp`
+- `MockRNG_Next` — `DataStream/MockGenerator.hpp`
 - `ModelFeatures_Pack` — `ML_Headers/ModelInference.hpp`
 - `Model_Free` — `ML_Headers/ModelInference.hpp`
 - `Model_Init` — `ML_Headers/ModelInference.hpp`
@@ -868,7 +1081,9 @@ Converted files: 98 · unit blocks: 626
 - `OMS_ExpectedFreeCash` — `CoreFrameworks/OrderManager.hpp`
 - `OMS_GuardTakerBoundFeeBasis` — `CoreFrameworks/OrderManager.hpp`
 - `OMS_OpenPositionCost` — `CoreFrameworks/OrderManager.hpp`
+- `OMS_PushExitForSlot` — `MemHeaders/OmsPushExitHelper.hpp`
 - `OMS_PushSubmit` — `CoreFrameworks/OrderManager.hpp`
+- `OmsDrainBuckets_Reset` — `MemHeaders/OmsPhasedDrain.hpp`
 - `OrderEventLog_Append` — `CoreFrameworks/OrderEventLog.hpp`
 - `OrderEventLog_ApplyEvent` — `CoreFrameworks/OrderEventLog.hpp`
 - `OrderEventLog_AsyncWriterRoutine` — `CoreFrameworks/OrderEventLog.hpp`
@@ -881,15 +1096,19 @@ Converted files: 98 · unit blocks: 626
 - `OrderEventLog_StopAsyncWriter` — `CoreFrameworks/OrderEventLog.hpp`
 - `OrderEvent_MakeFill` — `CoreFrameworks/OrderEventLog.hpp`
 - `OrderManager_AccountMakerTakerFee` — `CoreFrameworks/OrderManager.hpp`
+- `OrderManager_DrainIntoBuckets` — `MemHeaders/OmsPhasedDrain.hpp`
 - `OrderManager_FillResultCallback` — `CoreFrameworks/OrderManager.hpp`
 - `OrderManager_HandleFill` — `CoreFrameworks/OrderManager.hpp`
 - `OrderManager_Init` — `CoreFrameworks/OrderManager.hpp`
 - `OrderManager_OpenCalibrationLog` — `CoreFrameworks/OrderManager.hpp`
+- `OrderManager_ProcessBucket_Closes` — `MemHeaders/OmsPhasedDrain.hpp`
 - `OrderManager_ProcessFillCommand` — `CoreFrameworks/OrderManager.hpp`
 - `OrderManager_ProcessReconcile` — `CoreFrameworks/OrderManager.hpp`
 - `OrderManager_Shutdown` — `CoreFrameworks/OrderManager.hpp`
 - `OrderManager_Submit` — `CoreFrameworks/OrderManager.hpp`
 - `OrderManager_Tick` — `CoreFrameworks/OrderManager.hpp`
+- `OrderPool_Allocate` — `MemHeaders/PoolAllocator.hpp`
+- `OrderType_IsClose` — `MemHeaders/OmsPhasedDrain.hpp`
 - `Order_BindPreResolved` — `CoreFrameworks/Order.hpp`
 - `Order_Init` — `CoreFrameworks/Order.hpp`
 - `Order_WarnIfNotPreResolved` — `CoreFrameworks/Order.hpp`
@@ -942,6 +1161,7 @@ Converted files: 98 · unit blocks: 626
 - `RollingStats_VolumeSignificant` — `ML_Headers/RollingStats.hpp`
 - `RollingTurnover_Push` — `ML_Headers/RollingTurnover.hpp`
 - `RollingWindow_Push` — `ML_Headers/ConfidenceScore.hpp`
+- `RunHistory_Append` — `MemHeaders/RunHistory.hpp`
 - `SG_Evaluate` — `CoreFrameworks/GateParameters.hpp`
 - `SPSCRing_Depth` — `CoreFrameworks/SPSCRing.hpp`
 - `SPSCRing_Init` — `CoreFrameworks/SPSCRing.hpp`
@@ -975,13 +1195,35 @@ Converted files: 98 · unit blocks: 626
 - `Strategy_InitPerCore` — `Strategies/StrategyLifecycle.hpp`
 - `Strategy_SpacingOk` — `Strategies/StrategyParameters.hpp`
 - `Strategy_WriteRatchetSL` — `Strategies/StrategyLifecycle.hpp`
+- `Summary_EmitPerCoreEntry` — `MemHeaders/NodeCtxSummaryFieldRegistry.hpp`
+- `Summary_EmitPerStrategy` — `MemHeaders/NodeCtxSummaryFieldRegistry.hpp`
 - `Summary_WriteJson` — `CoreFrameworks/PaperResetArchive.hpp`
+- `TUISnapshot_Publish_Begin` — `DataStream/EngineTUI.hpp`
+- `TUI_CopySnapshot` — `DataStream/EngineTUI.hpp`
 - `TUI_CopySnapshotSharded` — `CoreFrameworks/ShardedSnapshot.hpp`
+- `TUI_HandleInput` — `DataStream/EngineTUI.hpp`
+- `TUI_Init` — `DataStream/EngineTUI.hpp`
+- `TUI_PopulatePerCoreLatency` — `DataStream/EngineTUI.hpp`
+- `TUI_Render` — `DataStream/EngineTUI.hpp`
+- `TUI_Render_Snapshot` — `DataStream/EngineTUI.hpp`
 - `Thompson_Sample` — `ML_Headers/ThompsonBandit.hpp`
+- `TickRecorder_Push` — `DataStream/TickRecorder.hpp`
+- `TradeLogBuffer_PushBuy` — `DataStream/TradeLog.hpp`
+- `TradeLog_Init` — `DataStream/TradeLog.hpp`
 - `VolScaler_Size` — `ML_Headers/VolScaler.hpp`
 - `Welford_Push` — `ML_Headers/WelfordStats.hpp`
+- `_node_ctx_init_value_fields` — `MemHeaders/NodeCtxInitRegistry.hpp`
+- `_oms_init_value_fields` — `MemHeaders/OmsFieldRegistry.hpp`
+- `_strategy_str` — `DataStream/TradeLog.hpp`
+- `ab_goto` — `DataStream/TUIAnsi.hpp`
 - `aggregate_zoo_drift` — `CoreFrameworks/LiveReadiness.hpp`
 - `barrier_is_corrupt` — `ML_Headers/BarrierValidation.hpp`
+- `binance_json_extract` — `DataStream/BinanceOrderAPI.hpp`
+- `binance_parse_trade` — `DataStream/BinanceCrypto.hpp`
+- `binance_rest_request` — `DataStream/BinanceOrderAPI.hpp`
+- `binance_ws_read_frame` — `DataStream/BinanceCrypto.hpp`
+- `buddy_alloc_bytes` — `MemHeaders/BuddyAllocator.hpp`
+- `buddy_diag_snapshot` — `MemHeaders/BuddyAllocator.hpp`
 - `cfg_assign_field` — `CoreFrameworks/CfgFieldDispatch.hpp`
 - `cfg_diff_field` — `CoreFrameworks/CfgFieldDispatch.hpp`
 - `cfg_drift_compare` — `CoreFrameworks/CfgFieldDispatch.hpp`
@@ -991,36 +1233,79 @@ Converted files: 98 · unit blocks: 626
 - `cfg_populate_inf_field` — `CoreFrameworks/CfgFieldDispatch.hpp`
 - `cfg_save_field` — `CoreFrameworks/CfgFieldDispatch.hpp`
 - `check_live_capital_gated_until_e` — `CoreFrameworks/LiveReadiness.hpp`
+- `depth_parse_json` — `DataStream/BinanceDepth.hpp`
+- `depth_thread_fn` — `DataStream/BinanceDepth.hpp`
+- `drift_check_from_derived` — `MemHeaders/CfgGateRegistry.hpp`
 - `engine_set_mxcsr_ftz_daz` — `CoreFrameworks/SystemInit.hpp`
 - `ezoo_set_per_arm_barrier` — `ML_Headers/NodeModelZoo.hpp`
 - `g_buy_reward_dispatch` — `ML_Headers/bandit_dispatch_table.hpp`
 - `handle_buy_fill` — `CoreFrameworks/OrderManager.hpp`
 - `handle_sell_fill` — `CoreFrameworks/OrderManager.hpp`
+- `hmac_sha256_hex` — `MemHeaders/HmacSha256.hpp`
+- `json_emit_value` — `MemHeaders/NodeCtxSummaryFieldRegistry.hpp`
+- `latency_bucket_index` — `MemHeaders/LatencyHistogram.hpp`
+- `lookup_populate` — `MemHeaders/CfgGateRegistry.hpp`
 - `notify_worker_fn` — `CoreFrameworks/Notify.hpp`
 - `parse_double_fast` — `CoreFrameworks/ParseFast.hpp`
+- `parse_stamp_cfg_to_derived` — `MemHeaders/CfgGateRegistry.hpp`
+- `populate_inference_cfg_from_derived` — `MemHeaders/CfgGateRegistry.hpp`
+- `populate_stamp_cfg_from_derived` — `MemHeaders/CfgGateRegistry.hpp`
 - `reconcile_thread_body` — `CoreFrameworks/ReconciliationLoop.hpp`
+- `sha256_bytes` — `MemHeaders/HmacSha256.hpp`
 - `sha256_file_hex` — `ML_Headers/ModelInference.hpp`
+- `sha256_file_hex_inproc` — `MemHeaders/HmacSha256.hpp`
 - `stamp_write_for_model` — `ML_Headers/ModelInference.hpp`
+- `tui_thread_fn` — `DataStream/EngineTUI.hpp`
+- `ud_keepalive_thread` — `DataStream/BinanceUserData.hpp`
+- `ud_obtain_listen_key` — `DataStream/BinanceUserData.hpp`
+- `ud_parse_execution_report` — `DataStream/BinanceUserData.hpp`
+- `ud_ws_read_frame` — `DataStream/BinanceUserData.hpp`
+- `ud_ws_thread` — `DataStream/BinanceUserData.hpp`
 - `verify_model_stamp` — `ML_Headers/ModelInference.hpp`
+- `ws_read_frame` — `DataStream/WebSocketUtil.hpp`
 
-### MACRO (1)
+### MACRO (19)
 
+- `*_FROM_DERIVED wrappers` — `MemHeaders/CfgGateRegistry.hpp`
+- `BITMAP_* (single-thread)` — `MemHeaders/BitmapMacros.hpp`
+- `BITMAP_ATOMIC_*` — `MemHeaders/BitmapMacros.hpp`
+- `BITMAP_BIT_* + POPCOUNT + FIRST` — `MemHeaders/BitmapMacros.hpp`
+- `CALIB_LOG_EMIT_ROW` — `DataStream/CalibLogColRegistry.hpp`
+- `FOREACH_STAMP_BOUND_DERIVED_COHORT` — `MemHeaders/CfgGateRegistry.hpp`
+- `LOG_DEBUG_HOT` — `MemHeaders/DebugLog.hpp`
+- `MBS_*` — `MemHeaders/BitmapMacros.hpp`
+- `NODE_CTX_*_AUTOPOPULATE` — `MemHeaders/NodeCtxInitRegistry.hpp`
+- `NODE_STATE_FLAG_*` — `MemHeaders/NodeStateFlagRegistry.hpp`
+- `OMS_*_AUTOPOPULATE` — `MemHeaders/OmsFieldRegistry.hpp`
+- `OMS_META_*` — `MemHeaders/OmsExitPredictorMetaRegistry.hpp`
+- `OMS_PROJECT_*` — `MemHeaders/OmsFieldRegistry.hpp`
+- `OMS_RESET_PER_SLOT_EXIT_PREDICTOR` — `MemHeaders/OmsExitPredictorMetaRegistry.hpp`
+- `OMS_STATE_FLAG_*` — `MemHeaders/OmsStateFlagRegistry.hpp`
+- `OMS_STATE_MULTI_BIT_*` — `MemHeaders/OmsStateFlagRegistry.hpp`
 - `SHARDED_SNAPSHOT_VERSION` — `CoreFrameworks/ShardedSnapshotPersist.hpp`
+- `STAMP_RESULT_DERIVED_FIELDS_AUTO_GEN` — `MemHeaders/CfgGateRegistry.hpp`
+- `STATE_FLAG_*` — `MemHeaders/PerNodeStateFlagsRegistry.hpp`
 
-### REGISTRY (41)
+### REGISTRY (58)
 
+- `FOREACH_ARCH_FIELD_DRIFT` — `MemHeaders/ArchFieldDriftRegistry.hpp`
 - `FOREACH_BACKTEST_METRIC` — `CoreFrameworks/MetricCompute.hpp`
 - `FOREACH_BANDIT_ALGORITHM` — `ML_Headers/BanditAlgorithmRegistry.hpp`
 - `FOREACH_BANDIT_SIDE` — `ML_Headers/bandit_dispatch_table.hpp`
 - `FOREACH_BARRIER_BLEND_MODE` — `ML_Headers/BarrierBlendModeRegistry.hpp`
+- `FOREACH_CALIB_LOG_COL` — `DataStream/CalibLogColRegistry.hpp`
 - `FOREACH_CFG_DRIFT_CHECK` — `ML_Headers/CfgDriftCheckRegistry.hpp`
+- `FOREACH_CFG_GATE_PER_NODE` — `MemHeaders/CfgGateRegistry.hpp`
 - `FOREACH_CONFIDENCE_PERSIST_FIELD` — `ML_Headers/ConfidenceScore.hpp`
 - `FOREACH_DEGRADATION_CURVE` — `ML_Headers/ConfidenceScore.hpp`
+- `FOREACH_DISPLAY_META_FIELD` — `MemHeaders/DisplayMetaRegistry.hpp`
 - `FOREACH_ENSEMBLE_POST_LOAD` — `ML_Headers/NodeModelZoo.hpp`
 - `FOREACH_EZOO_INIT_FLAG` — `ML_Headers/EzooInitFlagRegistry.hpp`
+- `FOREACH_FAILURE_MODE` — `MemHeaders/FailureModeRegistry.hpp`
 - `FOREACH_FEATURE` — `ML_Headers/FeatureRegistry.hpp`
 - `FOREACH_FEEDER_PERSIST_FIELD` — `ML_Headers/LinearRegression3X.hpp`
 - `FOREACH_GATE_CFG_FLAG` — `CoreFrameworks/GateCfgFlagRegistry.hpp`
+- `FOREACH_GATE_DIAG_PAIR` — `MemHeaders/DisplayMetaRegistry.hpp`
 - `FOREACH_GLOBAL_CFG_FIELD` — `CoreFrameworks/CfgFieldRegistry.hpp`
 - `FOREACH_HALT_REASON` — `Strategies/StrategyInterface.hpp`
 - `FOREACH_IC_VARIANT` — `ML_Headers/ICVariantRegistry.hpp`
@@ -1030,12 +1315,22 @@ Converted files: 98 · unit blocks: 626
 - `FOREACH_MANUAL_PER_NODE_FIELD` — `CoreFrameworks/CfgFieldRegistry.hpp`
 - `FOREACH_METADATA_BIT` — `CoreFrameworks/CfgFieldRegistry.hpp`
 - `FOREACH_ML_CFG_FLAG` — `ML_Headers/MlCfgFlagRegistry.hpp`
+- `FOREACH_NODE_CTX_FIELD` — `MemHeaders/NodeCtxInitRegistry.hpp`
+- `FOREACH_NODE_CTX_SUMMARY_FIELD` — `MemHeaders/NodeCtxSummaryFieldRegistry.hpp`
+- `FOREACH_NODE_STATE_FLAG` — `MemHeaders/NodeStateFlagRegistry.hpp`
+- `FOREACH_OMS_FIELD` — `MemHeaders/OmsFieldRegistry.hpp`
+- `FOREACH_OMS_META_SLOT` — `MemHeaders/OmsExitPredictorMetaRegistry.hpp`
+- `FOREACH_OMS_PER_SLOT_FIELD` — `MemHeaders/OmsFieldRegistry.hpp`
+- `FOREACH_OMS_STATE_FLAG` — `MemHeaders/OmsStateFlagRegistry.hpp`
+- `FOREACH_OMS_STATE_MULTI_BIT` — `MemHeaders/OmsStateFlagRegistry.hpp`
 - `FOREACH_OPS_CFG_FLAG` — `CoreFrameworks/OpsCfgFlagRegistry.hpp`
 - `FOREACH_PER_ARM_FLAG` — `ML_Headers/PerArmFlagRegistry.hpp`
 - `FOREACH_PER_NODE_ARRAY_OVERRIDE` — `CoreFrameworks/CfgFieldRegistry.hpp`
 - `FOREACH_PER_NODE_CFG_FIELD` — `CoreFrameworks/CfgFieldRegistry.hpp`
 - `FOREACH_PER_NODE_DOMAIN_BITMAP` — `CoreFrameworks/CfgFieldRegistry.hpp`
 - `FOREACH_PER_NODE_NO_FLAT_FIELD_SYNC` — `CoreFrameworks/CfgFieldRegistry.hpp`
+- `FOREACH_PER_NODE_STATE_FLAG` — `MemHeaders/PerNodeStateFlagsRegistry.hpp`
+- `FOREACH_POSITION_FIELD` — `MemHeaders/PositionFieldRegistry.hpp`
 - `FOREACH_RECONCILE_MODE` — `CoreFrameworks/Reconcile.hpp`
 - `FOREACH_REGIME` — `Strategies/StrategyInterface.hpp`
 - `FOREACH_REGISTRY` — `CoreFrameworks/MetaRegistry.hpp`
@@ -1047,37 +1342,58 @@ Converted files: 98 · unit blocks: 626
 - `FOREACH_SLOW_PATH_GATE` — `CoreFrameworks/SlowPathGateRegistry.hpp`
 - `FOREACH_SP_SECTION` — `CoreFrameworks/SpSectionRegistry.hpp`
 - `FOREACH_STAMP_BOUND_MODEL_CONST` — `ML_Headers/StampBoundModelConstRegistry.hpp`
+- `FOREACH_STAMP_RESULT_FIELD_EXCLUSION` — `MemHeaders/CfgGateRegistry.hpp`
 - `FOREACH_STRATEGY` — `Strategies/StrategyInterface.hpp`
 - `FOREACH_TRADE_LOG_COL` — `CoreFrameworks/TradeLogColRegistry.hpp`
 - `PER_NODE_OVERRIDE_FIELDS` — `CoreFrameworks/ControllerConfig.hpp`
 
-### STRUCT (81)
+### STRUCT (111)
 
+- `AnsiBuf` — `DataStream/TUIAnsi.hpp`
 - `BanditDisplayMeta` — `ML_Headers/BanditLearning.hpp`
 - `BanditState` — `ML_Headers/BanditLearning.hpp`
 - `BinanceAdapterState` — `CoreFrameworks/BinanceAdapter.hpp`
+- `BinanceConfig` — `DataStream/BinanceCrypto.hpp`
+- `BinanceOrderAPI` — `DataStream/BinanceOrderAPI.hpp`
+- `BinanceStream` — `DataStream/BinanceCrypto.hpp`
+- `BinanceUserDataState` — `DataStream/BinanceUserData.hpp`
 - `BookImbalanceHistory` — `ML_Headers/FlowFeatures.hpp`
+- `BookSnapshot` — `DataStream/BinanceDepth.hpp`
+- `BuddyAllocatorState` — `MemHeaders/BuddyAllocator.hpp`
 - `CfgFieldDescriptor` — `CoreFrameworks/CfgFieldRegistry.hpp`
 - `ConfidenceScorer` — `ML_Headers/ConfidenceScore.hpp`
 - `ControllerConfig` — `CoreFrameworks/ControllerConfig.hpp`
 - `CumDeltaState` — `Strategies/RegimeDetector.hpp`
 - `DataStream` — `CoreFrameworks/OrderGates.hpp`
+- `DepthRecorder` — `DataStream/DepthRecorder.hpp`
+- `DepthReplayState` — `DataStream/DepthReplayState.hpp`
+- `DepthSharedState` — `DataStream/BinanceDepth.hpp`
+- `DepthStream` — `DataStream/BinanceDepth.hpp`
+- `DrainerConstants` — `MemHeaders/DrainerConstants.hpp`
 - `DriftHistory` — `ML_Headers/ConfidenceScore.hpp`
 - `DriftSample` — `ML_Headers/ConfidenceScore.hpp`
+- `EngineTUI` — `DataStream/EngineTUI.hpp`
 - `EnsembleModelZoo` — `ML_Headers/NodeModelZoo.hpp`
 - `EventLoopAggregates` — `CoreFrameworks/EventLoopAggregates.hpp`
 - `EventLoopState` — `CoreFrameworks/ControllerEventLoop.hpp`
 - `ExchangeAdapter` — `CoreFrameworks/ExchangeAdapter.hpp`
 - `ExecutionCore` — `CoreFrameworks/ExecutionCore.hpp`
 - `ExitRecord` — `CoreFrameworks/Portfolio.hpp`
+- `FIX_ParsedMessage` — `DataStream/FauxFIX.hpp`
 - `FeatureComputeCtx` — `ML_Headers/FeatureRegistry.hpp`
 - `FeatureStandardizer` — `ML_Headers/FeatureStandardizer.hpp`
 - `FlowState` — `ML_Headers/FlowFeatures.hpp`
 - `GateParameters` — `CoreFrameworks/GateParameters.hpp`
+- `HealthLogState` — `MemHeaders/HealthLog.hpp`
+- `InitArena` — `MemHeaders/InitArena.hpp`
 - `LargeTradeState` — `ML_Headers/FlowFeatures.hpp`
+- `LatencyHistogram` — `MemHeaders/LatencyHistogram.hpp`
 - `MLBuildContext` — `Strategies/StrategyParameters.hpp`
+- `MLSnapshot` — `DataStream/EngineTUI.hpp`
 - `MLStrategyState` — `Strategies/MLStrategy.hpp`
 - `MeanReversionState` — `Strategies/MeanReversion.hpp`
+- `MetricsLog` — `DataStream/MetricsLog.hpp`
+- `MockGenerator` — `DataStream/MockGenerator.hpp`
 - `ModelHandle` — `ML_Headers/ModelInference.hpp`
 - `ModelStampResult` — `ML_Headers/ModelInference.hpp`
 - `MomentumState` — `Strategies/Momentum.hpp`
@@ -1090,11 +1406,14 @@ Converted files: 98 · unit blocks: 626
 - `NotifyCommandState` — `CoreFrameworks/Notify.hpp`
 - `NotifyEvent` — `CoreFrameworks/Notify.hpp`
 - `NotifyState` — `CoreFrameworks/Notify.hpp`
+- `OmsDrainBuckets` — `MemHeaders/OmsPhasedDrain.hpp`
+- `OmsInitCtx` — `MemHeaders/OmsFieldRegistry.hpp`
 - `Order` — `CoreFrameworks/Order.hpp`
 - `OrderEvent` — `CoreFrameworks/OrderEventLog.hpp`
 - `OrderEventLog` — `CoreFrameworks/OrderEventLog.hpp`
 - `OrderEventLogFileHeader` — `CoreFrameworks/OrderEventLog.hpp`
 - `OrderManagerState` — `CoreFrameworks/OrderManager.hpp`
+- `OrderPool` — `MemHeaders/PoolAllocator.hpp`
 - `OrderPreResolved` — `CoreFrameworks/Order.hpp`
 - `OrderResult` — `CoreFrameworks/ExchangeAdapter.hpp`
 - `ParameterSlot` — `CoreFrameworks/ParameterSlot.hpp`
@@ -1130,7 +1449,14 @@ Converted files: 98 · unit blocks: 626
 - `StampArgs` — `ML_Headers/StampHelper.hpp`
 - `StampInferenceCfgInputs` — `ML_Headers/ModelInference.hpp`
 - `SubmitCommand` — `CoreFrameworks/OrderManager.hpp`
+- `SymbolFilters` — `DataStream/BinanceOrderAPI.hpp`
+- `TUIPositionSnap` — `DataStream/EngineTUI.hpp`
+- `TUISharedState` — `DataStream/EngineTUI.hpp`
+- `TUISnapshot` — `DataStream/EngineTUI.hpp`
 - `ThompsonBanditState` — `ML_Headers/ThompsonBandit.hpp`
 - `Tick` — `CoreFrameworks/Tick.hpp`
+- `TickRecorder` — `DataStream/TickRecorder.hpp`
 - `TradeEvent` — `CoreFrameworks/TradeEvent.hpp`
+- `TradeLog` — `DataStream/TradeLog.hpp`
+- `TradeLogBuffer` — `DataStream/TradeLog.hpp`
 - `WsHeartbeatTelemetry` — `CoreFrameworks/ControllerEventLoop.hpp`

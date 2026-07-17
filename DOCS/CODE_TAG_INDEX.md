@@ -15,7 +15,7 @@ so the snapshot stales when tags/units actually change, not on unrelated line dr
 `rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a
 conversion).
 
-Converted files: 96 · unit blocks: 572
+Converted files: 97 · unit blocks: 597
 
 ## [TAG] values → files
 
@@ -38,7 +38,7 @@ Converted files: 96 · unit blocks: 572
 - `ML_Headers/WelfordStats.hpp`
 - `Strategies/RegimeDetector.hpp`
 
-### BITMAP_PACKED (15 files)
+### BITMAP_PACKED (16 files)
 
 - `CoreFrameworks/CfgFieldRegistry.hpp`
 - `CoreFrameworks/GateCfgFlagRegistry.hpp`
@@ -52,6 +52,7 @@ Converted files: 96 · unit blocks: 572
 - `ML_Headers/ConfidenceScore.hpp`
 - `ML_Headers/EzooInitFlagRegistry.hpp`
 - `ML_Headers/MlCfgFlagRegistry.hpp`
+- `ML_Headers/ModelInference.hpp`
 - `ML_Headers/PerArmFlagRegistry.hpp`
 - `Strategies/OpModeCategories.hpp`
 - `Strategies/StrategyCategories.hpp`
@@ -167,7 +168,7 @@ Converted files: 96 · unit blocks: 572
 - `CoreFrameworks/SPSCRing.hpp`
 - `CoreFrameworks/SystemInit.hpp`
 
-### DATA_ORIENTED_DESIGN (15 files)
+### DATA_ORIENTED_DESIGN (16 files)
 
 - `CoreFrameworks/ControllerConfig.hpp`
 - `CoreFrameworks/ControllerEventLoop.hpp`
@@ -182,6 +183,7 @@ Converted files: 96 · unit blocks: 572
 - `CoreFrameworks/Tick.hpp`
 - `ML_Headers/ConfidenceScore.hpp`
 - `ML_Headers/FlowFeatures.hpp`
+- `ML_Headers/ModelInference.hpp`
 - `ML_Headers/RidgeBlender.hpp`
 - `ML_Headers/RollingStats.hpp`
 
@@ -201,7 +203,7 @@ Converted files: 96 · unit blocks: 572
 - `CoreFrameworks/Portfolio.hpp`
 - `CoreFrameworks/Tick.hpp`
 
-### DETERMINISM (20 files)
+### DETERMINISM (21 files)
 
 - `CoreFrameworks/CfgFieldDispatch.hpp`
 - `CoreFrameworks/CfgFieldRegistry.hpp`
@@ -219,12 +221,13 @@ Converted files: 96 · unit blocks: 572
 - `ML_Headers/FeatureRegistryOverlay.hpp`
 - `ML_Headers/FeatureStandardizer.hpp`
 - `ML_Headers/FlowFeatures.hpp`
+- `ML_Headers/ModelInference.hpp`
 - `ML_Headers/RidgeBlender.hpp`
 - `ML_Headers/StampBoundModelConstRegistry.hpp`
 - `ML_Headers/StampHelper.hpp`
 - `ML_Headers/ThompsonBandit.hpp`
 
-### ENGINE (96 files)
+### ENGINE (97 files)
 
 - `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/CfgFieldDispatch.hpp`
@@ -298,6 +301,7 @@ Converted files: 96 · unit blocks: 572
 - `ML_Headers/LinearRegression3X.hpp`
 - `ML_Headers/LinearRegressionSimple.hpp`
 - `ML_Headers/MlCfgFlagRegistry.hpp`
+- `ML_Headers/ModelInference.hpp`
 - `ML_Headers/PerArmFlagRegistry.hpp`
 - `ML_Headers/ROR_regressor.hpp`
 - `ML_Headers/ReciprocalLUT.hpp`
@@ -409,7 +413,7 @@ Converted files: 96 · unit blocks: 572
 - `CoreFrameworks/OrderManager.hpp`
 - `Strategies/RegimeDetector.hpp`
 
-### ML_INFERENCE (29 files)
+### ML_INFERENCE (30 files)
 
 - `CoreFrameworks/CfgFieldDispatch.hpp`
 - `CoreFrameworks/ControllerEventLoop.hpp`
@@ -430,6 +434,7 @@ Converted files: 96 · unit blocks: 572
 - `ML_Headers/GateControlNetwork.hpp`
 - `ML_Headers/ICVariantRegistry.hpp`
 - `ML_Headers/MlCfgFlagRegistry.hpp`
+- `ML_Headers/ModelInference.hpp`
 - `ML_Headers/PerArmFlagRegistry.hpp`
 - `ML_Headers/RidgeBlender.hpp`
 - `ML_Headers/RollingTurnover.hpp`
@@ -477,7 +482,7 @@ Converted files: 96 · unit blocks: 572
 - `CoreFrameworks/ControllerConfig.hpp`
 - `CoreFrameworks/ParseFast.hpp`
 
-### PERSISTENCE (15 files)
+### PERSISTENCE (16 files)
 
 - `CoreFrameworks/CfgFieldDispatch.hpp`
 - `CoreFrameworks/ControllerEventLoop.hpp`
@@ -492,6 +497,7 @@ Converted files: 96 · unit blocks: 572
 - `ML_Headers/ConfidenceScore.hpp`
 - `ML_Headers/FeatureStandardizer.hpp`
 - `ML_Headers/LinearRegression3X.hpp`
+- `ML_Headers/ModelInference.hpp`
 - `ML_Headers/RewardTracker.hpp`
 - `ML_Headers/StampHelper.hpp`
 
@@ -499,7 +505,7 @@ Converted files: 96 · unit blocks: 572
 
 - `CoreFrameworks/EngineSharded/Async.hpp`
 
-### SLOW_PATH (43 files)
+### SLOW_PATH (44 files)
 
 - `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/ControllerConfig.hpp`
@@ -528,6 +534,7 @@ Converted files: 96 · unit blocks: 572
 - `ML_Headers/FlowFeatures.hpp`
 - `ML_Headers/LinearRegression3X.hpp`
 - `ML_Headers/LinearRegressionSimple.hpp`
+- `ML_Headers/ModelInference.hpp`
 - `ML_Headers/ROR_regressor.hpp`
 - `ML_Headers/ReciprocalLUT.hpp`
 - `ML_Headers/RidgeBlender.hpp`
@@ -560,11 +567,12 @@ Converted files: 96 · unit blocks: 572
 
 ## Unit blocks by [TYPE]
 
-### ASSERT (17)
+### ASSERT (19)
 
 - `EPOCH_TRIPWIRE` — `CoreFrameworks/OrderEventLog.hpp`
 - `EPOCH_TRIPWIRE` — `CoreFrameworks/Portfolio.hpp`
 - `EPOCH_TRIPWIRE` — `CoreFrameworks/ShardedSnapshotPersist.hpp`
+- `EPOCH_TRIPWIRE` — `ML_Headers/ModelInference.hpp`
 - `LAYOUT_LOCK` — `CoreFrameworks/ExecutionCore.hpp`
 - `LAYOUT_LOCK` — `CoreFrameworks/GateParameters.hpp`
 - `LAYOUT_LOCK` — `CoreFrameworks/Order.hpp`
@@ -575,6 +583,7 @@ Converted files: 96 · unit blocks: 572
 - `LAYOUT_LOCK` — `ML_Headers/BanditLearning.hpp`
 - `LAYOUT_LOCK` — `ML_Headers/ConfidenceScore.hpp`
 - `LAYOUT_LOCK` — `ML_Headers/FlowFeatures.hpp`
+- `LAYOUT_LOCK` — `ML_Headers/ModelInference.hpp`
 - `LAYOUT_LOCK` — `ML_Headers/RollingStats.hpp`
 - `OVERLAP_EXCLUSION` — `CoreFrameworks/CfgFieldRegistry.hpp`
 - `REGISTRY_COVERAGE` — `CoreFrameworks/CfgFieldRegistry.hpp`
@@ -591,7 +600,7 @@ Converted files: 96 · unit blocks: 572
 - `OrderType` — `CoreFrameworks/Order.hpp`
 - `StrategyCategory` — `Strategies/StrategyCategories.hpp`
 
-### FILE (96)
+### FILE (97)
 
 - `CoreFrameworks/BinanceAdapter.hpp` — `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/CfgFieldDispatch.hpp` — `CoreFrameworks/CfgFieldDispatch.hpp`
@@ -665,6 +674,7 @@ Converted files: 96 · unit blocks: 572
 - `ML_Headers/LinearRegression3X.hpp` — `ML_Headers/LinearRegression3X.hpp`
 - `ML_Headers/LinearRegressionSimple.hpp` — `ML_Headers/LinearRegressionSimple.hpp`
 - `ML_Headers/MlCfgFlagRegistry.hpp` — `ML_Headers/MlCfgFlagRegistry.hpp`
+- `ML_Headers/ModelInference.hpp` — `ML_Headers/ModelInference.hpp`
 - `ML_Headers/PerArmFlagRegistry.hpp` — `ML_Headers/PerArmFlagRegistry.hpp`
 - `ML_Headers/ROR_regressor.hpp` — `ML_Headers/ROR_regressor.hpp`
 - `ML_Headers/ReciprocalLUT.hpp` — `ML_Headers/ReciprocalLUT.hpp`
@@ -690,7 +700,7 @@ Converted files: 96 · unit blocks: 572
 - `Strategies/StrategyLifecycle.hpp` — `Strategies/StrategyLifecycle.hpp`
 - `Strategies/StrategyParameters.hpp` — `Strategies/StrategyParameters.hpp`
 
-### FUNCTION (259)
+### FUNCTION (274)
 
 - `BG_Evaluate` — `CoreFrameworks/GateParameters.hpp`
 - `BUILD_FLAGS_HASH` — `ML_Headers/BuildFlags.hpp`
@@ -773,6 +783,7 @@ Converted files: 96 · unit blocks: 572
 - `ExecutionCore_Tick` — `CoreFrameworks/ExecutionCore.hpp`
 - `ExecutionCore_Tick_Impl` — `CoreFrameworks/ExecutionCore.hpp`
 - `ExitBuffer_PendingProceeds` — `CoreFrameworks/Portfolio.hpp`
+- `FeatureLookback_Max` — `ML_Headers/ModelInference.hpp`
 - `FeatureOverlay_PostLoadVerify` — `ML_Headers/FeatureRegistryOverlay.hpp`
 - `FeatureStandardizer_Apply` — `ML_Headers/FeatureStandardizer.hpp`
 - `FeatureStandardizer_Compute` — `ML_Headers/FeatureStandardizer.hpp`
@@ -799,6 +810,17 @@ Converted files: 96 · unit blocks: 572
 - `MeanReversion_BuildParameters` — `Strategies/StrategyParameters.hpp`
 - `MeanReversion_BuySignal` — `Strategies/MeanReversion.hpp`
 - `MeanReversion_ExitAdjust` — `Strategies/MeanReversion.hpp`
+- `ModelFeatures_Pack` — `ML_Headers/ModelInference.hpp`
+- `Model_Free` — `ML_Headers/ModelInference.hpp`
+- `Model_Init` — `ML_Headers/ModelInference.hpp`
+- `Model_Load` — `ML_Headers/ModelInference.hpp`
+- `Model_LoadAOT` — `ML_Headers/ModelInference.hpp`
+- `Model_Predict` — `ML_Headers/ModelInference.hpp`
+- `Model_PredictMulti` — `ML_Headers/ModelInference.hpp`
+- `Model_Predict_AtClass` — `ML_Headers/ModelInference.hpp`
+- `Model_Predict_Ensemble` — `ML_Headers/ModelInference.hpp`
+- `Model_Predict_Ensemble_Weighted` — `ML_Headers/ModelInference.hpp`
+- `Model_Predict_Normalized` — `ML_Headers/ModelInference.hpp`
 - `Momentum_Adapt` — `Strategies/Momentum.hpp`
 - `Momentum_BuildParameters` — `Strategies/StrategyParameters.hpp`
 - `Momentum_BuySignal` — `Strategies/Momentum.hpp`
@@ -951,12 +973,15 @@ Converted files: 96 · unit blocks: 572
 - `notify_worker_fn` — `CoreFrameworks/Notify.hpp`
 - `parse_double_fast` — `CoreFrameworks/ParseFast.hpp`
 - `reconcile_thread_body` — `CoreFrameworks/ReconciliationLoop.hpp`
+- `sha256_file_hex` — `ML_Headers/ModelInference.hpp`
+- `stamp_write_for_model` — `ML_Headers/ModelInference.hpp`
+- `verify_model_stamp` — `ML_Headers/ModelInference.hpp`
 
 ### MACRO (1)
 
 - `SHARDED_SNAPSHOT_VERSION` — `CoreFrameworks/ShardedSnapshotPersist.hpp`
 
-### REGISTRY (39)
+### REGISTRY (40)
 
 - `FOREACH_BACKTEST_METRIC` — `CoreFrameworks/MetricCompute.hpp`
 - `FOREACH_BANDIT_ALGORITHM` — `ML_Headers/BanditAlgorithmRegistry.hpp`
@@ -972,6 +997,7 @@ Converted files: 96 · unit blocks: 572
 - `FOREACH_GLOBAL_CFG_FIELD` — `CoreFrameworks/CfgFieldRegistry.hpp`
 - `FOREACH_HALT_REASON` — `Strategies/StrategyInterface.hpp`
 - `FOREACH_IC_VARIANT` — `ML_Headers/ICVariantRegistry.hpp`
+- `FOREACH_LEGACY_PREFIXED_KEY` — `ML_Headers/ModelInference.hpp`
 - `FOREACH_LIFECYCLE_CFG_FLAG` — `CoreFrameworks/LifecycleCfgFlagRegistry.hpp`
 - `FOREACH_LIVES_IN_STRUCT` — `CoreFrameworks/CfgFieldRegistry.hpp`
 - `FOREACH_LIVE_READINESS_CHECK` — `CoreFrameworks/LiveReadiness.hpp`
@@ -998,7 +1024,7 @@ Converted files: 96 · unit blocks: 572
 - `FOREACH_TRADE_LOG_COL` — `CoreFrameworks/TradeLogColRegistry.hpp`
 - `PER_NODE_OVERRIDE_FIELDS` — `CoreFrameworks/ControllerConfig.hpp`
 
-### STRUCT (73)
+### STRUCT (76)
 
 - `BanditDisplayMeta` — `ML_Headers/BanditLearning.hpp`
 - `BanditState` — `ML_Headers/BanditLearning.hpp`
@@ -1024,6 +1050,8 @@ Converted files: 96 · unit blocks: 572
 - `MLBuildContext` — `Strategies/StrategyParameters.hpp`
 - `MLStrategyState` — `Strategies/MLStrategy.hpp`
 - `MeanReversionState` — `Strategies/MeanReversion.hpp`
+- `ModelHandle` — `ML_Headers/ModelInference.hpp`
+- `ModelStampResult` — `ML_Headers/ModelInference.hpp`
 - `MomentumState` — `Strategies/Momentum.hpp`
 - `NodeContext` — `CoreFrameworks/ControllerEventLoop.hpp`
 - `NodeContextDisplayMeta` — `CoreFrameworks/ControllerEventLoop.hpp`
@@ -1068,6 +1096,7 @@ Converted files: 96 · unit blocks: 572
 - `SlowPathTelemetry` — `CoreFrameworks/ControllerEventLoop.hpp`
 - `SpreadState` — `ML_Headers/FlowFeatures.hpp`
 - `StampArgs` — `ML_Headers/StampHelper.hpp`
+- `StampInferenceCfgInputs` — `ML_Headers/ModelInference.hpp`
 - `SubmitCommand` — `CoreFrameworks/OrderManager.hpp`
 - `ThompsonBanditState` — `ML_Headers/ThompsonBandit.hpp`
 - `Tick` — `CoreFrameworks/Tick.hpp`

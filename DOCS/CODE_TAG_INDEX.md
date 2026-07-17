@@ -15,12 +15,23 @@ so the snapshot stales when tags/units actually change, not on unrelated line dr
 `rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a
 conversion).
 
-Converted files: 137 · unit blocks: 828
+Converted files: 163 · unit blocks: 1029
 
 ## [TAG] values → files
 
-### BACKTEST (8 files)
+### BACKTEST (19 files)
 
+- `Backtest/BacktestEngine.hpp`
+- `Backtest/BacktestPanels.hpp`
+- `Backtest/BacktestSharded.hpp`
+- `Backtest/BacktestSnapshot.hpp`
+- `Backtest/Fingerprint.hpp`
+- `Backtest/HeldOutSplit.hpp`
+- `Backtest/LabelFunctions.hpp`
+- `Backtest/OverfitDetection.hpp`
+- `Backtest/PhaseTimers.hpp`
+- `Backtest/ValidationSplit.hpp`
+- `Backtest/XGBHyperparams.hpp`
 - `CoreFrameworks/ControllerEventLoop.hpp`
 - `CoreFrameworks/EngineCommon.hpp`
 - `CoreFrameworks/MetricCompute.hpp`
@@ -161,7 +172,7 @@ Converted files: 137 · unit blocks: 828
 - `Strategies/OpModeCategories.hpp`
 - `Strategies/StrategyCategories.hpp`
 
-### CONCURRENCY (20 files)
+### CONCURRENCY (22 files)
 
 - `CoreFrameworks/ControllerEventLoop.hpp`
 - `CoreFrameworks/EngineSharded/Async.hpp`
@@ -179,6 +190,8 @@ Converted files: 137 · unit blocks: 828
 - `DataStream/BinanceDepth.hpp`
 - `DataStream/BinanceUserData.hpp`
 - `DataStream/EngineTUI.hpp`
+- `GUI/CandleAccumulator.hpp`
+- `GUI/GuiThread.hpp`
 - `ML_Headers/RollingStats.hpp`
 - `MemHeaders/BitmapMacros.hpp`
 - `MemHeaders/LatencyHistogram.hpp`
@@ -239,8 +252,12 @@ Converted files: 137 · unit blocks: 828
 - `CoreFrameworks/Portfolio.hpp`
 - `CoreFrameworks/Tick.hpp`
 
-### DETERMINISM (28 files)
+### DETERMINISM (33 files)
 
+- `Backtest/BacktestEngine.hpp`
+- `Backtest/BacktestSharded.hpp`
+- `Backtest/Fingerprint.hpp`
+- `Backtest/HeldOutSplit.hpp`
 - `CoreFrameworks/CfgFieldDispatch.hpp`
 - `CoreFrameworks/CfgFieldRegistry.hpp`
 - `CoreFrameworks/ControllerConfig.hpp`
@@ -269,9 +286,20 @@ Converted files: 137 · unit blocks: 828
 - `MemHeaders/CfgGateRegistry.hpp`
 - `MemHeaders/HmacSha256.hpp`
 - `MemHeaders/RunHistory.hpp`
+- `Version.hpp`
 
-### ENGINE (137 files)
+### ENGINE (150 files)
 
+- `Backtest/BacktestEngine.hpp`
+- `Backtest/BacktestSharded.hpp`
+- `Backtest/BacktestSnapshot.hpp`
+- `Backtest/Fingerprint.hpp`
+- `Backtest/HeldOutSplit.hpp`
+- `Backtest/LabelFunctions.hpp`
+- `Backtest/OverfitDetection.hpp`
+- `Backtest/PhaseTimers.hpp`
+- `Backtest/ValidationSplit.hpp`
+- `Backtest/XGBHyperparams.hpp`
 - `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/CfgFieldDispatch.hpp`
 - `CoreFrameworks/CfgFieldRegistry.hpp`
@@ -340,6 +368,7 @@ Converted files: 137 · unit blocks: 828
 - `DataStream/TickRecorder.hpp`
 - `DataStream/TradeLog.hpp`
 - `DataStream/WebSocketUtil.hpp`
+- `Limits.hpp`
 - `ML_Headers/BanditAlgorithmRegistry.hpp`
 - `ML_Headers/BanditLearning.hpp`
 - `ML_Headers/BarrierBlendModeRegistry.hpp`
@@ -409,6 +438,8 @@ Converted files: 137 · unit blocks: 828
 - `Strategies/StrategyInterface.hpp`
 - `Strategies/StrategyLifecycle.hpp`
 - `Strategies/StrategyParameters.hpp`
+- `Strategies/private/EmaCross.hpp`
+- `Version.hpp`
 
 ### ENTRY_POINT (3 files)
 
@@ -425,8 +456,9 @@ Converted files: 137 · unit blocks: 828
 - `CoreFrameworks/ShardedSnapshot.hpp`
 - `CoreFrameworks/ShardedTradeLog.hpp`
 
-### FRAMEWORK_DISCIPLINE (33 files)
+### FRAMEWORK_DISCIPLINE (36 files)
 
+- `Backtest/LabelFunctions.hpp`
 - `CoreFrameworks/CfgFieldDispatch.hpp`
 - `CoreFrameworks/CfgFieldRegistry.hpp`
 - `CoreFrameworks/LiveReadiness.hpp`
@@ -435,6 +467,8 @@ Converted files: 137 · unit blocks: 828
 - `CoreFrameworks/SlowPathGateRegistry.hpp`
 - `CoreFrameworks/TradeLogColRegistry.hpp`
 - `DataStream/CalibLogColRegistry.hpp`
+- `GUI/GuiThread.hpp`
+- `GUI/SettingsPanel.hpp`
 - `ML_Headers/BanditAlgorithmRegistry.hpp`
 - `ML_Headers/CfgDriftCheckRegistry.hpp`
 - `ML_Headers/ConfidenceScore.hpp`
@@ -465,9 +499,22 @@ Converted files: 137 · unit blocks: 828
 
 - `CoreFrameworks/StampBoundDerivedFilter.hpp`
 
-### GUI (1 files)
+### GUI (14 files)
 
+- `Backtest/BacktestPanels.hpp`
 - `CoreFrameworks/EngineSharded/SlowPath.hpp`
+- `GUI/CandleAccumulator.hpp`
+- `GUI/ChartPanel.hpp`
+- `GUI/DashboardPanels.hpp`
+- `GUI/EngineHeaderPanel.hpp`
+- `GUI/FoxmlTheme.hpp`
+- `GUI/GuiThread.hpp`
+- `GUI/LogViewerPanel.hpp`
+- `GUI/MLStatusPanel.hpp`
+- `GUI/SettingsPanel.hpp`
+- `GUI/StrategyQualityPanel.hpp`
+- `GUI/TradeHistoryPanel.hpp`
+- `GUI/TradeReader.hpp`
 
 ### HELPER (2 files)
 
@@ -506,8 +553,15 @@ Converted files: 137 · unit blocks: 828
 - `DataStream/BinanceUserData.hpp`
 - `DataStream/WebSocketUtil.hpp`
 
-### ML (6 files)
+### ML (13 files)
 
+- `Backtest/BacktestEngine.hpp`
+- `Backtest/BacktestPanels.hpp`
+- `Backtest/HeldOutSplit.hpp`
+- `Backtest/LabelFunctions.hpp`
+- `Backtest/OverfitDetection.hpp`
+- `Backtest/ValidationSplit.hpp`
+- `Backtest/XGBHyperparams.hpp`
 - `CoreFrameworks/EnsembleHotSwap.hpp`
 - `CoreFrameworks/HotSwap.hpp`
 - `CoreFrameworks/LiveReadiness.hpp`
@@ -644,7 +698,7 @@ Converted files: 137 · unit blocks: 828
 
 - `CoreFrameworks/EngineSharded/Async.hpp`
 
-### SLOW_PATH (46 files)
+### SLOW_PATH (47 files)
 
 - `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/ControllerConfig.hpp`
@@ -692,6 +746,7 @@ Converted files: 137 · unit blocks: 828
 - `Strategies/StrategyInterface.hpp`
 - `Strategies/StrategyLifecycle.hpp`
 - `Strategies/StrategyParameters.hpp`
+- `Strategies/private/EmaCross.hpp`
 
 ### STRUCTURAL_FIX (1 files)
 
@@ -758,8 +813,19 @@ Converted files: 137 · unit blocks: 828
 - `OrderType` — `CoreFrameworks/Order.hpp`
 - `StrategyCategory` — `Strategies/StrategyCategories.hpp`
 
-### FILE (137)
+### FILE (163)
 
+- `Backtest/BacktestEngine.hpp` — `Backtest/BacktestEngine.hpp`
+- `Backtest/BacktestPanels.hpp` — `Backtest/BacktestPanels.hpp`
+- `Backtest/BacktestSharded.hpp` — `Backtest/BacktestSharded.hpp`
+- `Backtest/BacktestSnapshot.hpp` — `Backtest/BacktestSnapshot.hpp`
+- `Backtest/Fingerprint.hpp` — `Backtest/Fingerprint.hpp`
+- `Backtest/HeldOutSplit.hpp` — `Backtest/HeldOutSplit.hpp`
+- `Backtest/LabelFunctions.hpp` — `Backtest/LabelFunctions.hpp`
+- `Backtest/OverfitDetection.hpp` — `Backtest/OverfitDetection.hpp`
+- `Backtest/PhaseTimers.hpp` — `Backtest/PhaseTimers.hpp`
+- `Backtest/ValidationSplit.hpp` — `Backtest/ValidationSplit.hpp`
+- `Backtest/XGBHyperparams.hpp` — `Backtest/XGBHyperparams.hpp`
 - `CoreFrameworks/BinanceAdapter.hpp` — `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/CfgFieldDispatch.hpp` — `CoreFrameworks/CfgFieldDispatch.hpp`
 - `CoreFrameworks/CfgFieldRegistry.hpp` — `CoreFrameworks/CfgFieldRegistry.hpp`
@@ -828,6 +894,19 @@ Converted files: 137 · unit blocks: 828
 - `DataStream/TickRecorder.hpp` — `DataStream/TickRecorder.hpp`
 - `DataStream/TradeLog.hpp` — `DataStream/TradeLog.hpp`
 - `DataStream/WebSocketUtil.hpp` — `DataStream/WebSocketUtil.hpp`
+- `GUI/CandleAccumulator.hpp` — `GUI/CandleAccumulator.hpp`
+- `GUI/ChartPanel.hpp` — `GUI/ChartPanel.hpp`
+- `GUI/DashboardPanels.hpp` — `GUI/DashboardPanels.hpp`
+- `GUI/EngineHeaderPanel.hpp` — `GUI/EngineHeaderPanel.hpp`
+- `GUI/FoxmlTheme.hpp` — `GUI/FoxmlTheme.hpp`
+- `GUI/GuiThread.hpp` — `GUI/GuiThread.hpp`
+- `GUI/LogViewerPanel.hpp` — `GUI/LogViewerPanel.hpp`
+- `GUI/MLStatusPanel.hpp` — `GUI/MLStatusPanel.hpp`
+- `GUI/SettingsPanel.hpp` — `GUI/SettingsPanel.hpp`
+- `GUI/StrategyQualityPanel.hpp` — `GUI/StrategyQualityPanel.hpp`
+- `GUI/TradeHistoryPanel.hpp` — `GUI/TradeHistoryPanel.hpp`
+- `GUI/TradeReader.hpp` — `GUI/TradeReader.hpp`
+- `Limits.hpp` — `Limits.hpp`
 - `ML_Headers/BanditAlgorithmRegistry.hpp` — `ML_Headers/BanditAlgorithmRegistry.hpp`
 - `ML_Headers/BanditLearning.hpp` — `ML_Headers/BanditLearning.hpp`
 - `ML_Headers/BarrierBlendModeRegistry.hpp` — `ML_Headers/BarrierBlendModeRegistry.hpp`
@@ -897,13 +976,27 @@ Converted files: 137 · unit blocks: 828
 - `Strategies/StrategyInterface.hpp` — `Strategies/StrategyInterface.hpp`
 - `Strategies/StrategyLifecycle.hpp` — `Strategies/StrategyLifecycle.hpp`
 - `Strategies/StrategyParameters.hpp` — `Strategies/StrategyParameters.hpp`
+- `Strategies/private/EmaCross.hpp` — `Strategies/private/EmaCross.hpp`
+- `Version.hpp` — `Version.hpp`
 
-### FUNCTION (363)
+### FUNCTION (495)
 
 - `ANSI_Layout_Render` — `DataStream/TUIAnsi.hpp`
 - `ANSI_Section_Header` — `DataStream/TUIAnsi.hpp`
 - `BG_Evaluate` — `CoreFrameworks/GateParameters.hpp`
 - `BUILD_FLAGS_HASH` — `ML_Headers/BuildFlags.hpp`
+- `BacktestData_Load` — `Backtest/BacktestEngine.hpp`
+- `BacktestData_ValidateSort` — `Backtest/BacktestEngine.hpp`
+- `BacktestSharded_Run` — `Backtest/BacktestSharded.hpp`
+- `BacktestSnapshot_Copy` — `Backtest/BacktestSnapshot.hpp`
+- `BacktestStats_Compute` — `Backtest/BacktestEngine.hpp`
+- `BacktestStats_ComputeFromEquity` — `Backtest/BacktestEngine.hpp`
+- `Backtest_ComputeLabelsFromSamples` — `Backtest/BacktestEngine.hpp`
+- `Backtest_Run` — `Backtest/BacktestEngine.hpp`
+- `Backtest_RunFullValidation` — `Backtest/BacktestEngine.hpp`
+- `Backtest_RunHyperparamTrainSweep` — `Backtest/BacktestEngine.hpp`
+- `Backtest_RunSweep` — `Backtest/BacktestEngine.hpp`
+- `Backtest_RunWalkForward` — `Backtest/BacktestEngine.hpp`
 - `Bandit_BlendWeights` — `ML_Headers/BanditLearning.hpp`
 - `Bandit_GetProbabilities` — `ML_Headers/BanditLearning.hpp`
 - `Bandit_GetWeights` — `ML_Headers/BanditLearning.hpp`
@@ -933,11 +1026,22 @@ Converted files: 137 · unit blocks: 828
 - `BookImbHistory_Push` — `ML_Headers/FlowFeatures.hpp`
 - `BuyGate` — `CoreFrameworks/OrderGates.hpp`
 - `CalibLog_EmitHeader` — `DataStream/CalibLogColRegistry.hpp`
+- `CandleAccumulator_Destroy` — `GUI/CandleAccumulator.hpp`
+- `CandleAccumulator_Init` — `GUI/CandleAccumulator.hpp`
+- `CandleAccumulator_Push` — `GUI/CandleAccumulator.hpp`
+- `CandleAccumulator_PushWithTime` — `GUI/CandleAccumulator.hpp`
+- `CandleAccumulator_SetInterval` — `GUI/CandleAccumulator.hpp`
+- `CandleAccumulator_Snapshot` — `GUI/CandleAccumulator.hpp`
+- `ChartState_Prepare` — `GUI/ChartPanel.hpp`
 - `Cholesky_Solve` — `ML_Headers/RidgeBlender.hpp`
+- `Comparison_Free` — `Backtest/BacktestPanels.hpp`
+- `Comparison_Init` — `Backtest/BacktestPanels.hpp`
+- `Comparison_SaveRun` — `Backtest/BacktestPanels.hpp`
 - `ConfidenceScorer_Compute` — `ML_Headers/ConfidenceScore.hpp`
 - `ConfidenceScorer_ComputeComposite` — `ML_Headers/ConfidenceScore.hpp`
 - `ConfidenceScorer_ShadowLoadLegacyV1` — `ML_Headers/ConfidenceScore.hpp`
 - `Confidence_Compute` — `ML_Headers/ConfidenceScore.hpp`
+- `ConfigField_Set` — `Backtest/BacktestEngine.hpp`
 - `ControllerConfig_CapitalRangeSweep` — `CoreFrameworks/ControllerConfig.hpp`
 - `ControllerConfig_Default` — `CoreFrameworks/ControllerConfig.hpp`
 - `ControllerConfig_Load` — `CoreFrameworks/ControllerConfig.hpp`
@@ -946,16 +1050,22 @@ Converted files: 137 · unit blocks: 828
 - `ControllerConfig_ResolveForCore` — `CoreFrameworks/ControllerConfig.hpp`
 - `CostModel_Estimate` — `ML_Headers/CostModel.hpp`
 - `CumDelta_Init` — `Strategies/RegimeDetector.hpp`
+- `DataPanel_Init` — `Backtest/BacktestPanels.hpp`
+- `DataPanel_Scan` — `Backtest/BacktestPanels.hpp`
 - `DepthRecorder_Write` — `DataStream/DepthRecorder.hpp`
 - `DepthReplayState_Advance` — `DataStream/DepthReplayState.hpp`
 - `DrainerConstants_Init` — `MemHeaders/DrainerConstants.hpp`
 - `DriftHistory_CheckBreach` — `ML_Headers/ConfidenceScore.hpp`
 - `EmaCross_BuildParameters` — `Strategies/StrategyParameters.hpp`
+- `EmaCross_BuySignal` — `Strategies/private/EmaCross.hpp`
+- `EmaCross_ExitAdjust` — `Strategies/private/EmaCross.hpp`
+- `EmaCross_ExitAdjustSharded` — `Strategies/private/EmaCross.hpp`
 - `EngineCommon_ApplyBnbDiscount` — `CoreFrameworks/EngineCommon.hpp`
 - `EngineCommon_BootGlobal` — `CoreFrameworks/EngineCommon.hpp`
 - `EngineCommon_BootPerCore` — `CoreFrameworks/EngineCommon.hpp`
 - `EngineCommon_SlowPathCycleAllCores` — `CoreFrameworks/EngineCommon.hpp`
 - `EngineCommon_SlowPathCycleOneCore` — `CoreFrameworks/EngineCommon.hpp`
+- `EngineHeader_Render` — `GUI/EngineHeaderPanel.hpp`
 - `EngineSharded_Async_DrainWithSubmit` — `CoreFrameworks/EngineSharded/Async.hpp`
 - `EngineSharded_Async_FanOut` — `CoreFrameworks/EngineSharded/Async.hpp`
 - `EngineSharded_CalibrateTscGhz` — `CoreFrameworks/EngineSharded/Run.hpp`
@@ -1015,15 +1125,55 @@ Converted files: 137 · unit blocks: 828
 - `FeatureStandardizer_Load` — `ML_Headers/FeatureStandardizer.hpp`
 - `FeatureStandardizer_VerifyAgainstBuild` — `ML_Headers/FeatureStandardizer.hpp`
 - `Fee_Compute` — `CoreFrameworks/ControllerConfig.hpp`
+- `Fingerprint_Compute` — `Backtest/Fingerprint.hpp`
+- `Fingerprint_HashFile` — `Backtest/Fingerprint.hpp`
 - `FlowState_Push` — `ML_Headers/FlowFeatures.hpp`
+- `Foxml_ApplyTheme` — `GUI/FoxmlTheme.hpp`
 - `GCN_forward` — `ML_Headers/GateControlNetwork.hpp`
+- `GUI_EquityChart` — `GUI/ChartPanel.hpp`
+- `GUI_LivePnLChart` — `GUI/ChartPanel.hpp`
+- `GUI_Panel_Account` — `GUI/DashboardPanels.hpp`
+- `GUI_Panel_BuyGate` — `GUI/DashboardPanels.hpp`
+- `GUI_Panel_Comparison` — `Backtest/BacktestPanels.hpp`
+- `GUI_Panel_Config` — `GUI/DashboardPanels.hpp`
+- `GUI_Panel_DataBrowser` — `Backtest/BacktestPanels.hpp`
+- `GUI_Panel_Header` — `GUI/DashboardPanels.hpp`
+- `GUI_Panel_Latency` — `GUI/DashboardPanels.hpp`
+- `GUI_Panel_LogViewer` — `GUI/LogViewerPanel.hpp`
+- `GUI_Panel_MLIntelligence` — `GUI/DashboardPanels.hpp`
+- `GUI_Panel_Market` — `GUI/DashboardPanels.hpp`
+- `GUI_Panel_Optimizer` — `Backtest/BacktestPanels.hpp`
+- `GUI_Panel_PastRuns` — `Backtest/BacktestPanels.hpp`
+- `GUI_Panel_PerNodePnL` — `GUI/DashboardPanels.hpp`
+- `GUI_Panel_Positions` — `GUI/DashboardPanels.hpp`
+- `GUI_Panel_Results` — `Backtest/BacktestPanels.hpp`
+- `GUI_Panel_RunControl` — `Backtest/BacktestPanels.hpp`
+- `GUI_Panel_Settings` — `GUI/SettingsPanel.hpp`
+- `GUI_Panel_Stats` — `GUI/DashboardPanels.hpp`
+- `GUI_Panel_StrategyQuality` — `GUI/StrategyQualityPanel.hpp`
+- `GUI_Panel_TopBar` — `GUI/DashboardPanels.hpp`
+- `GUI_Panel_TradeHistory` — `GUI/TradeHistoryPanel.hpp`
+- `GUI_Panel_Training` — `Backtest/BacktestPanels.hpp`
+- `GUI_PriceChart` — `GUI/ChartPanel.hpp`
+- `GUI_R2Bar` — `GUI/DashboardPanels.hpp`
+- `GUI_RenderDashboard` — `GUI/DashboardPanels.hpp`
+- `GUI_VolumeChart` — `GUI/ChartPanel.hpp`
 - `GateParameters_Init` — `CoreFrameworks/GateParameters.hpp`
 - `GetReciprocalLUT` — `ML_Headers/ReciprocalLUT.hpp`
+- `Gui_BeginFrame` — `GUI/GuiThread.hpp`
+- `Gui_HandleKeys` — `GUI/GuiThread.hpp`
+- `Gui_Init` — `GUI/GuiThread.hpp`
+- `Gui_SetupDefaultLayout` — `GUI/GuiThread.hpp`
+- `Gui_Shutdown` — `GUI/GuiThread.hpp`
 - `Health_Log` — `MemHeaders/HealthLog.hpp`
+- `HeldOutSplit_GenToken` — `Backtest/HeldOutSplit.hpp`
+- `HeldOutSplit_Make` — `Backtest/HeldOutSplit.hpp`
+- `HeldOutSplit_TrainEval` — `Backtest/BacktestEngine.hpp`
 - `HotSwap_ShadowLoad_Ensemble` — `CoreFrameworks/HotSwap.hpp`
 - `HotSwap_ShadowLoad_SingleZoo` — `CoreFrameworks/HotSwap.hpp`
 - `InitArena_Alloc` — `MemHeaders/InitArena.hpp`
 - `KillSwitch_Activate` — `CoreFrameworks/PortfolioController.hpp`
+- `LabeledValue` — `GUI/DashboardPanels.hpp`
 - `LargeTradeState_Push` — `ML_Headers/FlowFeatures.hpp`
 - `LatencyHistogram_Accumulate` — `MemHeaders/LatencyHistogram.hpp`
 - `LatencyHistogram_Percentile` — `MemHeaders/LatencyHistogram.hpp`
@@ -1032,6 +1182,9 @@ Converted files: 137 · unit blocks: 828
 - `LinearRegression_Fit` — `ML_Headers/LinearRegressionSimple.hpp`
 - `LiveReadiness_Verify` — `CoreFrameworks/LiveReadiness.hpp`
 - `LoadSecrets` — `DataStream/BinanceOrderAPI.hpp`
+- `LogViewer_Init` — `GUI/LogViewerPanel.hpp`
+- `LogViewer_Refresh` — `GUI/LogViewerPanel.hpp`
+- `MLStatus_Render` — `GUI/MLStatusPanel.hpp`
 - `MLStrategy_BuySignal` — `Strategies/MLStrategy.hpp`
 - `MLStrategy_ExitAdjust` — `Strategies/MLStrategy.hpp`
 - `ML_BuildParameters` — `Strategies/StrategyParameters.hpp`
@@ -1084,6 +1237,7 @@ Converted files: 137 · unit blocks: 828
 - `OMS_PushExitForSlot` — `MemHeaders/OmsPushExitHelper.hpp`
 - `OMS_PushSubmit` — `CoreFrameworks/OrderManager.hpp`
 - `OmsDrainBuckets_Reset` — `MemHeaders/OmsPhasedDrain.hpp`
+- `OptimizerPanel_Init` — `Backtest/BacktestPanels.hpp`
 - `OrderEventLog_Append` — `CoreFrameworks/OrderEventLog.hpp`
 - `OrderEventLog_ApplyEvent` — `CoreFrameworks/OrderEventLog.hpp`
 - `OrderEventLog_AsyncWriterRoutine` — `CoreFrameworks/OrderEventLog.hpp`
@@ -1112,9 +1266,20 @@ Converted files: 137 · unit blocks: 828
 - `Order_BindPreResolved` — `CoreFrameworks/Order.hpp`
 - `Order_Init` — `CoreFrameworks/Order.hpp`
 - `Order_WarnIfNotPreResolved` — `CoreFrameworks/Order.hpp`
+- `OverfitDetection_Check` — `Backtest/OverfitDetection.hpp`
+- `OverfitDetection_CheckRegression` — `Backtest/OverfitDetection.hpp`
 - `ParameterSlot_Init` — `CoreFrameworks/ParameterSlot.hpp`
 - `ParameterSlot_Read` — `CoreFrameworks/ParameterSlot.hpp`
 - `ParameterSlot_Write` — `CoreFrameworks/ParameterSlot.hpp`
+- `PastRun_MetricLabel` — `Backtest/BacktestPanels.hpp`
+- `PastRun_ParseHorizon` — `Backtest/BacktestPanels.hpp`
+- `PastRuns_DeleteDir` — `Backtest/BacktestPanels.hpp`
+- `PastRuns_Init` — `Backtest/BacktestPanels.hpp`
+- `PastRuns_LoadOne` — `Backtest/BacktestPanels.hpp`
+- `PastRuns_Scan` — `Backtest/BacktestPanels.hpp`
+- `PastRuns_ScanOneDir` — `Backtest/BacktestPanels.hpp`
+- `PhaseTimer_Summary` — `Backtest/PhaseTimers.hpp`
+- `PnlColor` — `GUI/DashboardPanels.hpp`
 - `PortfolioController_DrainExits` — `CoreFrameworks/PortfolioController.hpp`
 - `PortfolioController_Init` — `CoreFrameworks/PortfolioController.hpp`
 - `PortfolioController_SaveSnapshot` — `CoreFrameworks/PortfolioController.hpp`
@@ -1130,6 +1295,7 @@ Converted files: 137 · unit blocks: 828
 - `Portfolio_Save` — `CoreFrameworks/Portfolio.hpp`
 - `PositionExitGate` — `CoreFrameworks/Portfolio.hpp`
 - `Position_Reset` — `CoreFrameworks/Portfolio.hpp`
+- `PurgeGap_Compute` — `Backtest/ValidationSplit.hpp`
 - `RORRegressor_Compute` — `ML_Headers/ROR_regressor.hpp`
 - `Reconcile_ApplyMissedFills` — `CoreFrameworks/Reconcile.hpp`
 - `Reconcile_AutoCancelStale` — `CoreFrameworks/Reconcile.hpp`
@@ -1141,6 +1307,7 @@ Converted files: 137 · unit blocks: 828
 - `ReconciliationLoop_Init` — `CoreFrameworks/ReconciliationLoop.hpp`
 - `ReconciliationLoop_Pass` — `CoreFrameworks/ReconciliationLoop.hpp`
 - `ReconciliationLoop_Shutdown` — `CoreFrameworks/ReconciliationLoop.hpp`
+- `ResultsPnlColor` — `Backtest/BacktestPanels.hpp`
 - `RewardTracker_Push` — `ML_Headers/RewardTracker.hpp`
 - `RidgeBlender_BuildCorr` — `ML_Headers/RidgeBlender.hpp`
 - `RidgeBlender_BuildHistoryFromRing` — `ML_Headers/RidgeBlender.hpp`
@@ -1161,14 +1328,24 @@ Converted files: 137 · unit blocks: 828
 - `RollingStats_VolumeSignificant` — `ML_Headers/RollingStats.hpp`
 - `RollingTurnover_Push` — `ML_Headers/RollingTurnover.hpp`
 - `RollingWindow_Push` — `ML_Headers/ConfidenceScore.hpp`
+- `RunControl_Init` — `Backtest/BacktestPanels.hpp`
+- `RunControl_Start` — `Backtest/BacktestPanels.hpp`
 - `RunHistory_Append` — `MemHeaders/RunHistory.hpp`
 - `SG_Evaluate` — `CoreFrameworks/GateParameters.hpp`
+- `SHA256_Update` — `Backtest/Fingerprint.hpp`
 - `SPSCRing_Depth` — `CoreFrameworks/SPSCRing.hpp`
 - `SPSCRing_Init` — `CoreFrameworks/SPSCRing.hpp`
 - `SPSCRing_TryPop` — `CoreFrameworks/SPSCRing.hpp`
 - `SPSCRing_TryPush` — `CoreFrameworks/SPSCRing.hpp`
 - `STAMP_BOUND_CFG_emit_canonical_body` — `CoreFrameworks/StampBoundDerivedFilter.hpp`
+- `SamplesSnapshot_Compute` — `Backtest/BacktestPanels.hpp`
+- `SectionHeader` — `GUI/DashboardPanels.hpp`
 - `SellGate` — `CoreFrameworks/OrderGates.hpp`
+- `Settings_Init` — `GUI/SettingsPanel.hpp`
+- `Settings_Load` — `GUI/SettingsPanel.hpp`
+- `Settings_RenderGlobalTab` — `GUI/SettingsPanel.hpp`
+- `Settings_RenderPerCoreTab` — `GUI/SettingsPanel.hpp`
+- `Settings_RescanModels` — `GUI/SettingsPanel.hpp`
 - `ShardedBacktestDriver_Init` — `CoreFrameworks/ShardedBacktestDriver.hpp`
 - `ShardedBacktest_Run` — `CoreFrameworks/ShardedBacktestDriver.hpp`
 - `ShardedBacktest_RunTick` — `CoreFrameworks/ShardedBacktestDriver.hpp`
@@ -1184,10 +1361,13 @@ Converted files: 137 · unit blocks: 828
 - `ShardedTradeLog_Rotate` — `CoreFrameworks/ShardedTradeLog.hpp`
 - `ShardedTradeLog_WriteRow` — `CoreFrameworks/ShardedTradeLog.hpp`
 - `Sharded_SlotNode` — `CoreFrameworks/ControllerEventLoop.hpp`
+- `SharedBacktest_FromHistorical` — `Backtest/BacktestSharded.hpp`
 - `SimpleDip_BuildParameters` — `Strategies/StrategyParameters.hpp`
 - `SimpleDip_BuySignal` — `Strategies/SimpleDip.hpp`
 - `SpreadState_Push` — `ML_Headers/FlowFeatures.hpp`
 - `Stamp_AssembleAndEmit` — `ML_Headers/StampHelper.hpp`
+- `StrategyQuality_Init` — `GUI/StrategyQualityPanel.hpp`
+- `StrategyQuality_Refresh` — `GUI/StrategyQualityPanel.hpp`
 - `Strategy_AdaptPerCore` — `Strategies/StrategyLifecycle.hpp`
 - `Strategy_BuildParameters` — `Strategies/StrategyParameters.hpp`
 - `Strategy_ExitAdjustPerCore` — `Strategies/StrategyLifecycle.hpp`
@@ -1208,15 +1388,26 @@ Converted files: 137 · unit blocks: 828
 - `TUI_Render_Snapshot` — `DataStream/EngineTUI.hpp`
 - `Thompson_Sample` — `ML_Headers/ThompsonBandit.hpp`
 - `TickRecorder_Push` — `DataStream/TickRecorder.hpp`
+- `TradeData_Init` — `GUI/TradeReader.hpp`
+- `TradeData_Refresh` — `GUI/TradeReader.hpp`
+- `TradeHistory_Init` — `GUI/TradeHistoryPanel.hpp`
+- `TradeHistory_Refresh` — `GUI/TradeHistoryPanel.hpp`
 - `TradeLogBuffer_PushBuy` — `DataStream/TradeLog.hpp`
 - `TradeLog_Init` — `DataStream/TradeLog.hpp`
+- `TrainingPanel_Init` — `Backtest/BacktestPanels.hpp`
+- `ValidationSplit_Generate` — `Backtest/ValidationSplit.hpp`
 - `VolScaler_Size` — `ML_Headers/VolScaler.hpp`
+- `WalkForward_ComputeAccuracy` — `Backtest/BacktestEngine.hpp`
 - `Welford_Push` — `ML_Headers/WelfordStats.hpp`
+- `XGBHyperparams_Apply` — `Backtest/XGBHyperparams.hpp`
+- `XGBoost_ComputeScalePosWeight` — `Backtest/BacktestEngine.hpp`
 - `_node_ctx_init_value_fields` — `MemHeaders/NodeCtxInitRegistry.hpp`
 - `_oms_init_value_fields` — `MemHeaders/OmsFieldRegistry.hpp`
 - `_strategy_str` — `DataStream/TradeLog.hpp`
 - `ab_goto` — `DataStream/TUIAnsi.hpp`
 - `aggregate_zoo_drift` — `CoreFrameworks/LiveReadiness.hpp`
+- `any_node_uses_strategy` — `GUI/SettingsPanel.hpp`
+- `backtest_worker_fn` — `Backtest/BacktestPanels.hpp`
 - `barrier_is_corrupt` — `ML_Headers/BarrierValidation.hpp`
 - `binance_json_extract` — `DataStream/BinanceOrderAPI.hpp`
 - `binance_parse_trade` — `DataStream/BinanceCrypto.hpp`
@@ -1231,30 +1422,51 @@ Converted files: 137 · unit blocks: 828
 - `cfg_emit_field` — `CoreFrameworks/CfgFieldDispatch.hpp`
 - `cfg_parse_field` — `CoreFrameworks/CfgFieldDispatch.hpp`
 - `cfg_populate_inf_field` — `CoreFrameworks/CfgFieldDispatch.hpp`
+- `cfg_render_and_persist` — `GUI/SettingsPanel.hpp`
+- `cfg_render_field` — `GUI/SettingsPanel.hpp`
 - `cfg_save_field` — `CoreFrameworks/CfgFieldDispatch.hpp`
+- `cfg_write_field` — `GUI/SettingsPanel.hpp`
 - `check_live_capital_gated_until_e` — `CoreFrameworks/LiveReadiness.hpp`
+- `collect_multi_horizon_worker_fn` — `Backtest/BacktestPanels.hpp`
+- `csv_field` — `GUI/TradeReader.hpp`
 - `depth_parse_json` — `DataStream/BinanceDepth.hpp`
 - `depth_thread_fn` — `DataStream/BinanceDepth.hpp`
 - `drift_check_from_derived` — `MemHeaders/CfgGateRegistry.hpp`
 - `engine_set_mxcsr_ftz_daz` — `CoreFrameworks/SystemInit.hpp`
 - `ezoo_set_per_arm_barrier` — `ML_Headers/NodeModelZoo.hpp`
+- `fullvalidation_worker_fn` — `Backtest/BacktestPanels.hpp`
 - `g_buy_reward_dispatch` — `ML_Headers/bandit_dispatch_table.hpp`
+- `global_section_strategy` — `GUI/SettingsPanel.hpp`
+- `gui_thread_fn` — `GUI/GuiThread.hpp`
 - `handle_buy_fill` — `CoreFrameworks/OrderManager.hpp`
 - `handle_sell_fill` — `CoreFrameworks/OrderManager.hpp`
 - `hmac_sha256_hex` — `MemHeaders/HmacSha256.hpp`
+- `hp_sweep_worker_fn` — `Backtest/BacktestPanels.hpp`
 - `json_emit_value` — `MemHeaders/NodeCtxSummaryFieldRegistry.hpp`
 - `latency_bucket_index` — `MemHeaders/LatencyHistogram.hpp`
 - `lookup_populate` — `MemHeaders/CfgGateRegistry.hpp`
+- `mh_per_horizon_parallel_worker` — `Backtest/BacktestPanels.hpp`
+- `mh_run_one_horizon_fv` — `Backtest/BacktestPanels.hpp`
 - `notify_worker_fn` — `CoreFrameworks/Notify.hpp`
+- `optimizer_worker_fn` — `Backtest/BacktestPanels.hpp`
 - `parse_double_fast` — `CoreFrameworks/ParseFast.hpp`
+- `parse_kv_line` — `Backtest/BacktestPanels.hpp`
 - `parse_stamp_cfg_to_derived` — `MemHeaders/CfgGateRegistry.hpp`
+- `past_runs_unlink_cb` — `Backtest/BacktestPanels.hpp`
+- `per_node_field_strategy` — `GUI/SettingsPanel.hpp`
+- `per_node_field_visible` — `GUI/SettingsPanel.hpp`
 - `populate_inference_cfg_from_derived` — `MemHeaders/CfgGateRegistry.hpp`
 - `populate_stamp_cfg_from_derived` — `MemHeaders/CfgGateRegistry.hpp`
 - `reconcile_thread_body` — `CoreFrameworks/ReconciliationLoop.hpp`
+- `settings_strategy_name_to_id` — `GUI/SettingsPanel.hpp`
 - `sha256_bytes` — `MemHeaders/HmacSha256.hpp`
 - `sha256_file_hex` — `ML_Headers/ModelInference.hpp`
 - `sha256_file_hex_inproc` — `MemHeaders/HmacSha256.hpp`
+- `sq_parse_kv` — `GUI/StrategyQualityPanel.hpp`
+- `sq_tail_read` — `GUI/StrategyQualityPanel.hpp`
 - `stamp_write_for_model` — `ML_Headers/ModelInference.hpp`
+- `train_model_worker_fn` — `Backtest/BacktestPanels.hpp`
+- `train_multi_horizon_worker_fn` — `Backtest/BacktestPanels.hpp`
 - `tui_thread_fn` — `DataStream/EngineTUI.hpp`
 - `ud_keepalive_thread` — `DataStream/BinanceUserData.hpp`
 - `ud_obtain_listen_key` — `DataStream/BinanceUserData.hpp`
@@ -1262,6 +1474,7 @@ Converted files: 137 · unit blocks: 828
 - `ud_ws_read_frame` — `DataStream/BinanceUserData.hpp`
 - `ud_ws_thread` — `DataStream/BinanceUserData.hpp`
 - `verify_model_stamp` — `ML_Headers/ModelInference.hpp`
+- `walkforward_worker_fn` — `Backtest/BacktestPanels.hpp`
 - `ws_read_frame` — `DataStream/WebSocketUtil.hpp`
 
 ### MACRO (19)
@@ -1286,7 +1499,7 @@ Converted files: 137 · unit blocks: 828
 - `STAMP_RESULT_DERIVED_FIELDS_AUTO_GEN` — `MemHeaders/CfgGateRegistry.hpp`
 - `STATE_FLAG_*` — `MemHeaders/PerNodeStateFlagsRegistry.hpp`
 
-### REGISTRY (58)
+### REGISTRY (60)
 
 - `FOREACH_ARCH_FIELD_DRIFT` — `MemHeaders/ArchFieldDriftRegistry.hpp`
 - `FOREACH_BACKTEST_METRIC` — `CoreFrameworks/MetricCompute.hpp`
@@ -1324,6 +1537,7 @@ Converted files: 137 · unit blocks: 828
 - `FOREACH_OMS_STATE_FLAG` — `MemHeaders/OmsStateFlagRegistry.hpp`
 - `FOREACH_OMS_STATE_MULTI_BIT` — `MemHeaders/OmsStateFlagRegistry.hpp`
 - `FOREACH_OPS_CFG_FLAG` — `CoreFrameworks/OpsCfgFlagRegistry.hpp`
+- `FOREACH_PANEL` — `GUI/GuiThread.hpp`
 - `FOREACH_PER_ARM_FLAG` — `ML_Headers/PerArmFlagRegistry.hpp`
 - `FOREACH_PER_NODE_ARRAY_OVERRIDE` — `CoreFrameworks/CfgFieldRegistry.hpp`
 - `FOREACH_PER_NODE_CFG_FIELD` — `CoreFrameworks/CfgFieldRegistry.hpp`
@@ -1344,12 +1558,16 @@ Converted files: 137 · unit blocks: 828
 - `FOREACH_STAMP_BOUND_MODEL_CONST` — `ML_Headers/StampBoundModelConstRegistry.hpp`
 - `FOREACH_STAMP_RESULT_FIELD_EXCLUSION` — `MemHeaders/CfgGateRegistry.hpp`
 - `FOREACH_STRATEGY` — `Strategies/StrategyInterface.hpp`
+- `FOREACH_TARGET` — `Backtest/LabelFunctions.hpp`
 - `FOREACH_TRADE_LOG_COL` — `CoreFrameworks/TradeLogColRegistry.hpp`
 - `PER_NODE_OVERRIDE_FIELDS` — `CoreFrameworks/ControllerConfig.hpp`
 
-### STRUCT (111)
+### STRUCT (152)
 
 - `AnsiBuf` — `DataStream/TUIAnsi.hpp`
+- `BacktestResults` — `Backtest/BacktestEngine.hpp`
+- `BacktestRunConfig` — `Backtest/BacktestEngine.hpp`
+- `BacktestStats` — `Backtest/BacktestEngine.hpp`
 - `BanditDisplayMeta` — `ML_Headers/BanditLearning.hpp`
 - `BanditState` — `ML_Headers/BanditLearning.hpp`
 - `BinanceAdapterState` — `CoreFrameworks/BinanceAdapter.hpp`
@@ -1360,18 +1578,28 @@ Converted files: 137 · unit blocks: 828
 - `BookImbalanceHistory` — `ML_Headers/FlowFeatures.hpp`
 - `BookSnapshot` — `DataStream/BinanceDepth.hpp`
 - `BuddyAllocatorState` — `MemHeaders/BuddyAllocator.hpp`
+- `Candle` — `GUI/CandleAccumulator.hpp`
+- `CandleAccumulator` — `GUI/CandleAccumulator.hpp`
+- `CandleSnapshot` — `GUI/CandleAccumulator.hpp`
+- `CfgFieldDef` — `GUI/SettingsPanel.hpp`
 - `CfgFieldDescriptor` — `CoreFrameworks/CfgFieldRegistry.hpp`
+- `ChartSettings` — `GUI/ChartPanel.hpp`
+- `ChartState` — `GUI/ChartPanel.hpp`
+- `ComparisonState` — `Backtest/BacktestPanels.hpp`
 - `ConfidenceScorer` — `ML_Headers/ConfidenceScore.hpp`
 - `ControllerConfig` — `CoreFrameworks/ControllerConfig.hpp`
 - `CumDeltaState` — `Strategies/RegimeDetector.hpp`
+- `DataPanelState` — `Backtest/BacktestPanels.hpp`
 - `DataStream` — `CoreFrameworks/OrderGates.hpp`
 - `DepthRecorder` — `DataStream/DepthRecorder.hpp`
 - `DepthReplayState` — `DataStream/DepthReplayState.hpp`
 - `DepthSharedState` — `DataStream/BinanceDepth.hpp`
 - `DepthStream` — `DataStream/BinanceDepth.hpp`
+- `DragState` — `GUI/ChartPanel.hpp`
 - `DrainerConstants` — `MemHeaders/DrainerConstants.hpp`
 - `DriftHistory` — `ML_Headers/ConfidenceScore.hpp`
 - `DriftSample` — `ML_Headers/ConfidenceScore.hpp`
+- `EmaCrossState` — `Strategies/private/EmaCross.hpp`
 - `EngineTUI` — `DataStream/EngineTUI.hpp`
 - `EnsembleModelZoo` — `ML_Headers/NodeModelZoo.hpp`
 - `EventLoopAggregates` — `CoreFrameworks/EventLoopAggregates.hpp`
@@ -1383,11 +1611,18 @@ Converted files: 137 · unit blocks: 828
 - `FeatureComputeCtx` — `ML_Headers/FeatureRegistry.hpp`
 - `FeatureStandardizer` — `ML_Headers/FeatureStandardizer.hpp`
 - `FlowState` — `ML_Headers/FlowFeatures.hpp`
+- `FullValidationResults` — `Backtest/BacktestEngine.hpp`
 - `GateParameters` — `CoreFrameworks/GateParameters.hpp`
+- `GlobalCfgRenderTable` — `GUI/SettingsPanel.hpp`
+- `GuiContext` — `GUI/GuiThread.hpp`
 - `HealthLogState` — `MemHeaders/HealthLog.hpp`
+- `HeldOutSplit` — `Backtest/HeldOutSplit.hpp`
+- `HeldOutTrainEvalResult` — `Backtest/BacktestEngine.hpp`
+- `HistoricalTick` — `Backtest/LabelFunctions.hpp`
 - `InitArena` — `MemHeaders/InitArena.hpp`
 - `LargeTradeState` — `ML_Headers/FlowFeatures.hpp`
 - `LatencyHistogram` — `MemHeaders/LatencyHistogram.hpp`
+- `LogViewer` — `GUI/LogViewerPanel.hpp`
 - `MLBuildContext` — `Strategies/StrategyParameters.hpp`
 - `MLSnapshot` — `DataStream/EngineTUI.hpp`
 - `MLStrategyState` — `Strategies/MLStrategy.hpp`
@@ -1408,6 +1643,8 @@ Converted files: 137 · unit blocks: 828
 - `NotifyState` — `CoreFrameworks/Notify.hpp`
 - `OmsDrainBuckets` — `MemHeaders/OmsPhasedDrain.hpp`
 - `OmsInitCtx` — `MemHeaders/OmsFieldRegistry.hpp`
+- `OptimizerPanelState` — `Backtest/BacktestPanels.hpp`
+- `OptimizerResults` — `Backtest/BacktestEngine.hpp`
 - `Order` — `CoreFrameworks/Order.hpp`
 - `OrderEvent` — `CoreFrameworks/OrderEventLog.hpp`
 - `OrderEventLog` — `CoreFrameworks/OrderEventLog.hpp`
@@ -1416,16 +1653,24 @@ Converted files: 137 · unit blocks: 828
 - `OrderPool` — `MemHeaders/PoolAllocator.hpp`
 - `OrderPreResolved` — `CoreFrameworks/Order.hpp`
 - `OrderResult` — `CoreFrameworks/ExchangeAdapter.hpp`
+- `OverfitReport` — `Backtest/OverfitDetection.hpp`
 - `ParameterSlot` — `CoreFrameworks/ParameterSlot.hpp`
+- `PastRun` — `Backtest/BacktestPanels.hpp`
+- `PastRunsState` — `Backtest/BacktestPanels.hpp`
 - `PendingSubmission` — `CoreFrameworks/BinanceAdapter.hpp`
 - `PerArmBarriers` — `ML_Headers/NodeModelZoo.hpp`
 - `PerArmDrift` — `ML_Headers/NodeModelZoo.hpp`
 - `PerNodeCfg` — `CoreFrameworks/ControllerConfig.hpp`
+- `PerNodeCfgRenderTable` — `GUI/SettingsPanel.hpp`
+- `PerNodeFieldDef` — `GUI/SettingsPanel.hpp`
+- `PhaseTimer` — `Backtest/PhaseTimers.hpp`
+- `PhaseTimerSnapshot` — `Backtest/PhaseTimers.hpp`
 - `Portfolio` — `CoreFrameworks/Portfolio.hpp`
 - `PortfolioController` — `CoreFrameworks/PortfolioController.hpp`
 - `Position` — `CoreFrameworks/Portfolio.hpp`
 - `PositionEntryArgs` — `CoreFrameworks/Portfolio.hpp`
 - `PredictionRecord` — `ML_Headers/NodeModelZoo.hpp`
+- `PurgedSplit` — `Backtest/ValidationSplit.hpp`
 - `ReconcileOpenOrder` — `CoreFrameworks/Reconcile.hpp`
 - `ReconcileResult` — `CoreFrameworks/Reconcile.hpp`
 - `ReconcileTrade` — `CoreFrameworks/Reconcile.hpp`
@@ -1439,7 +1684,10 @@ Converted files: 137 · unit blocks: 828
 - `RollingRMSE` — `ML_Headers/ConfidenceScore.hpp`
 - `RollingStats` — `ML_Headers/RollingStats.hpp`
 - `RollingWindow` — `ML_Headers/ConfidenceScore.hpp`
+- `RunControlState` — `Backtest/BacktestPanels.hpp`
 - `SPSCRing` — `CoreFrameworks/SPSCRing.hpp`
+- `SamplesSnapshot` — `Backtest/BacktestPanels.hpp`
+- `SettingsState` — `GUI/SettingsPanel.hpp`
 - `ShardedBacktestDriver` — `CoreFrameworks/ShardedBacktestDriver.hpp`
 - `ShardedOrderLatency` — `CoreFrameworks/ShardedOrderLatency.hpp`
 - `ShardedTradeLog` — `CoreFrameworks/ShardedTradeLog.hpp`
@@ -1448,6 +1696,8 @@ Converted files: 137 · unit blocks: 828
 - `SpreadState` — `ML_Headers/FlowFeatures.hpp`
 - `StampArgs` — `ML_Headers/StampHelper.hpp`
 - `StampInferenceCfgInputs` — `ML_Headers/ModelInference.hpp`
+- `StrategyQualityAggregate` — `GUI/StrategyQualityPanel.hpp`
+- `StrategyQualityState` — `GUI/StrategyQualityPanel.hpp`
 - `SubmitCommand` — `CoreFrameworks/OrderManager.hpp`
 - `SymbolFilters` — `DataStream/BinanceOrderAPI.hpp`
 - `TUIPositionSnap` — `DataStream/EngineTUI.hpp`
@@ -1456,7 +1706,13 @@ Converted files: 137 · unit blocks: 828
 - `ThompsonBanditState` — `ML_Headers/ThompsonBandit.hpp`
 - `Tick` — `CoreFrameworks/Tick.hpp`
 - `TickRecorder` — `DataStream/TickRecorder.hpp`
+- `TradeData` — `GUI/TradeReader.hpp`
 - `TradeEvent` — `CoreFrameworks/TradeEvent.hpp`
+- `TradeHistory` — `GUI/TradeHistoryPanel.hpp`
+- `TradeHistoryEntry` — `GUI/TradeHistoryPanel.hpp`
 - `TradeLog` — `DataStream/TradeLog.hpp`
 - `TradeLogBuffer` — `DataStream/TradeLog.hpp`
+- `TrainingPanelState` — `Backtest/BacktestPanels.hpp`
+- `WalkForwardResults` — `Backtest/BacktestEngine.hpp`
 - `WsHeartbeatTelemetry` — `CoreFrameworks/ControllerEventLoop.hpp`
+- `XGBHyperparams` — `Backtest/XGBHyperparams.hpp`

@@ -10731,10 +10731,13 @@ e3_skip_load:;
         check("v5.2.0: missing stamp → valid == -1", r.valid == -1);
 
         // Test 2: well-formed stamp with empty secret (dev mode) → ACCEPT
+        // (stamp_format_version=3 added at the TECH_DEBT-237 floor: fixtures must be
+        // epoch-current to keep exercising their ORIGINAL target checks.)
         f = fopen(stamp_path, "w");
         if (f) {
             fprintf(f,
                 "model_format_version=12\n"
+                "stamp_format_version=3\n"
                 "model_sha256=%s\n"
                 "trained_on=2026-04-29\n"
                 "wf_mean_val=0.55\n"
@@ -10756,6 +10759,7 @@ e3_skip_load:;
         if (f) {
             fprintf(f,
                 "model_format_version=12\n"
+                "stamp_format_version=3\n"
                 "model_sha256=%s\n"
                 "gap=0.15\n"               // wider than threshold
                 "gap_threshold=0.05\n"
@@ -10770,6 +10774,7 @@ e3_skip_load:;
         if (f) {
             fprintf(f,
                 "model_format_version=12\n"
+                "stamp_format_version=3\n"
                 "model_sha256=deadbeef0000000000000000000000000000000000000000000000000000beef\n"
                 "gap=0.02\n"
                 "gap_threshold=0.05\n"
@@ -10784,6 +10789,7 @@ e3_skip_load:;
         if (f) {
             fprintf(f,
                 "model_format_version=12\n"
+                "stamp_format_version=3\n"
                 "model_sha256=%s\n"
                 "gap=0.02\n"
                 "gap_threshold=0.05\n"
@@ -10798,7 +10804,7 @@ e3_skip_load:;
         // Generate the actual signature to embed
         char canonical_body[1024];
         snprintf(canonical_body, sizeof(canonical_body),
-            "model_format_version=12\nmodel_sha256=%s\ngap=0.02\ngap_threshold=0.05\n",
+            "model_format_version=12\nstamp_format_version=3\nmodel_sha256=%s\ngap=0.02\ngap_threshold=0.05\n",
             actual_sha);
         char hmac_cmd[2048];
         snprintf(hmac_cmd, sizeof(hmac_cmd),
@@ -10818,6 +10824,69 @@ e3_skip_load:;
         }
         r = verify_model_stamp(model_path, "real-secret-key", 0.05, 12);
         check("v5.2.0: valid HMAC signature → accept", r.valid == 1);
+
+        // ── TECH_DEBT-237 (2026-07-17): the pre-epoch stamp FLOOR (verify check 0c) ──
+        // Ship-B S-4/D-174: stamps below the decimal epoch (stamp_format_version < 3,
+        // INCLUDING absent = 0) carry binary-era money encodings → UNCONDITIONAL refuse.
+        // Adversarial shape: each test CONSTRUCTS the bypass the phantom comment allowed
+        // (otherwise-valid body, dev-mode leniency) and proves the floor closes it.
+        // Also the FOREACH_LEGACY_PREFIXED_KEY re-introduction guard (layer retired, TD-238).
+
+        // Floor 1: explicit pre-epoch version (v2, the 16B-binary era) → HARD refuse,
+        // even in dev mode (empty secret) with an otherwise-pristine body.
+        f = fopen(stamp_path, "w");
+        if (f) {
+            fprintf(f,
+                "model_format_version=12\n"
+                "stamp_format_version=2\n"
+                "model_sha256=%s\n"
+                "gap=0.02\n"
+                "gap_threshold=0.05\n"
+                "signature=devmode-not-checked\n", actual_sha);
+            fclose(f);
+        }
+        r = verify_model_stamp(model_path, "", 0.05, 12);
+        check("TD-237: pre-epoch v2 stamp → HARD refuse (valid == 0, not -1)",
+              r.valid == 0);
+        check("TD-237: pre-epoch refusal names the class (reason mentions pre-epoch)",
+              strstr(r.reason, "pre-epoch") != nullptr);
+
+        // Floor 2: stamp_format_version ABSENT (pre-v5.9.0 shape; parses as 0) → refuse.
+        // This is yesterday's Test-2 body — the exact stamp the phantom floor admitted.
+        f = fopen(stamp_path, "w");
+        if (f) {
+            fprintf(f,
+                "model_format_version=12\n"
+                "model_sha256=%s\n"
+                "gap=0.02\n"
+                "gap_threshold=0.05\n"
+                "signature=devmode-not-checked\n", actual_sha);
+            fclose(f);
+        }
+        r = verify_model_stamp(model_path, "", 0.05, 12);
+        check("TD-237: version-absent (pre-v5.9.0) stamp → HARD refuse (valid == 0)",
+              r.valid == 0);
+        check("TD-237: absent-version refusal is the floor, not missing-stamp (-1)",
+              r.valid != -1);
+
+        // Floor 3: v1 with a legacy-prefixed key — the retired layer's input shape.
+        // Refused at the floor BEFORE any key dispatch could matter; guards against
+        // re-introducing the FOREACH_LEGACY_PREFIXED_KEY layer (H21 tombstone).
+        f = fopen(stamp_path, "w");
+        if (f) {
+            fprintf(f,
+                "model_format_version=12\n"
+                "stamp_format_version=1\n"
+                "model_sha256=%s\n"
+                "inference_cfg_fee_rate_maker=0.001\n"
+                "gap=0.02\n"
+                "gap_threshold=0.05\n"
+                "signature=devmode-not-checked\n", actual_sha);
+            fclose(f);
+        }
+        r = verify_model_stamp(model_path, "", 0.05, 12);
+        check("TD-237/TD-238: v1 legacy-key stamp → HARD refuse at the floor",
+              r.valid == 0 && strstr(r.reason, "pre-epoch") != nullptr);
 
         // Cleanup
         unlink(model_path);
@@ -15288,8 +15357,9 @@ e3_skip_load:;
     // (cfg_derived::populate_stamp_cfg_from_derived<F> at CfgGateRegistry.hpp) auto-flows ALL
     // STAMP_BOUND_CFG_DERIVED-flagged fields from master registry — adding a new cfg field is 1 row
     // in FOREACH_PER_CORE_CFG_FIELD or FOREACH_GLOBAL_CFG_FIELD; all consumers auto-extend. Drift
-    // impossible by construction. Sister coverage: in-process Phase F SOFT bump fixture test
-    // (Step 5; v1 stamps load on v2 engine via FOREACH_LEGACY_PREFIXED_KEY back-compat).
+    // impossible by construction. (The once-cited "Phase F SOFT bump fixture test" never actually
+    // landed — rg-verified at the TECH_DEBT-237 fix ship; the pre-epoch floor tests below are the
+    // standing coverage: v1/v2 stamps REFUSE at verify_model_stamp check 0c, layer retired TD-238.)
 
     printf("\n--- EXTENSIBILITY: v5.9.5h — XGBoost hyperparam ownership ---\n");
     {

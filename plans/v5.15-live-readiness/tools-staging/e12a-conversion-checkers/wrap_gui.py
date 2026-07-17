@@ -34,14 +34,20 @@ def wrap_file(cfg):
         lines0[ai[0]+1:ai[0]+1] = [""] + fb
         src = "\n".join(lines0)
     lines = src.split("\n")
-    # 2) strip section banners (heading + adjacent == bars)
+    # 2) strip section banners: heading + opening bar(s) + the bar below +
+    #    the closing bar after any contiguous prose (keep the prose)
+    isbar = lambda s: re.match(r'^//={20,}\s*$', s) is not None
     for heading in cfg.get("banners", []):
         idx=[i for i,l in enumerate(lines) if l.rstrip()==heading]
         assert len(idx)==1, f"{path}: banner {heading!r} x{len(idx)}"
-        i=idx[0]; lo=hi=i
-        if i-1>=0 and re.match(r'^//={20,}\s*$', lines[i-1]): lo=i-1
-        if i+1<len(lines) and re.match(r'^//={20,}\s*$', lines[i+1]): hi=i+1
-        del lines[lo:hi+1]
+        i=idx[0]; rm={i}
+        j=i-1
+        while j>=0 and isbar(lines[j]): rm.add(j); j-=1          # opening bar(s)
+        j=i+1
+        if j<len(lines) and isbar(lines[j]): rm.add(j); j+=1     # bar below heading
+        while j<len(lines) and lines[j].lstrip().startswith("//") and not isbar(lines[j]): j+=1  # prose
+        if j<len(lines) and isbar(lines[j]): rm.add(j)           # closing bar after prose
+        for k in sorted(rm, reverse=True): del lines[k]
     # 3) locate units
     defkw = re.compile(r'^(struct|static inline|static void|void|bool|int|inline|static ImVec4|static ImU32|static const char)\b')
     located=[]
@@ -52,8 +58,13 @@ def wrap_file(cfg):
             if kind=="struct":
                 if re.match(rf'^struct\s+{re.escape(name)}\b', l): sig=i;break
             else:
-                if re.search(rf'\b{re.escape(name)}\s*\(', l): sig=i;break
+                # skip a forward-declaration (single-line sig ending in ';')
+                if re.search(rf'\b{re.escape(name)}\s*\(', l) and not l.rstrip().endswith(";"):
+                    sig=i;break
         assert sig is not None, f"{path}: sig not found {name}"
+        # pull a preceding `template <...>` line into the unit (it belongs in [CODE])
+        while sig-1>=0 and re.match(r'^template\s*<', lines[sig-1]):
+            sig-=1
         close=None
         for j in range(sig+1,len(lines)):
             if re.match(r'^\}', lines[j]): close=j;break

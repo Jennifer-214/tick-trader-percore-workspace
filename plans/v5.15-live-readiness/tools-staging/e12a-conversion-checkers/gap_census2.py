@@ -15,6 +15,9 @@ for f in sorted(conv):
     a = 0
     for i, l in enumerate(lines):
         if re.match(r'^\s*static_assert\s*\(', l) and not in_code[i]:
+            # macro-body assert (previous line ends with backslash-continuation):
+            # fires at EXPANSION, not file scope — not taggable, not counted
+            if i > 0 and lines[i-1].rstrip().endswith("\\"): continue
             if "[ASSERT]" not in "\n".join(lines[max(0,i-3):i]): a += 1
     h = 0
     thin = re.compile(r'^\s*//-{8,}\s*$')

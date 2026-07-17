@@ -81,6 +81,7 @@ Each rule = one-line trigger + canonical-doc pointer. Body (Why / How / worked e
 - **Compaction degrades — verify handoffs against current code** (`feedback_compaction_degrades_treat_handoffs_as_hints.md`).
 - **Motivated collaborator for Caramel** (`feedback_motivated_collaborator_for_caramel.md`). Public AGPL + hedge-fund attention → pick best-software path even when costlier now.
 - **Backwards compat NOT a default concern** (2026-05-26; REFINED) — `feedback_backwards_compat_not_default_concern.md`. Refactor/deletion → cleanest answer (no preserve-and-deprecate) unless operator flags load-bearing exception (stamp body / persistence / model handle / locked cfg). Operator-migration-impact SECTION still required (SECTION ≠ PATH).
+- **Default to the curated resource on EXISTENCE, not felt-need** — `feedback_resource_use_gated_on_existence_not_felt_need.md`. Reach for the tool / skill / spec / decision-log / armed-agent because it EXISTS (felt-need is miscalibrated exactly where the resource is load-bearing — the skip is invisible from inside); on a gap EXTEND the tool/skill, don't work around → the operator-independent surface. Route tooled work through armed agents (M8); a recurring gap → structural (M7).
 
 ---
 

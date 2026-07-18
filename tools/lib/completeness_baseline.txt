@@ -1,15 +1,12 @@
 # check_conversion_completeness grandfathered baseline (stable file|sig|name keys).
 # A finding NOT in here fails; regenerate (--write-baseline) to SHRINK as cleanup lands.
-Backtest/BacktestEngine.hpp|C1|LabelGuard
 Backtest/BacktestEngine.hpp|C1|OptimizerRange
-Backtest/BacktestEngine.hpp|C1|PhaseGuard
 Backtest/BacktestEngine.hpp|C1|WalkForwardFoldResult
 Backtest/BacktestPanels.hpp|C2|CollectMultiHorizonWorkerArgs
 Backtest/BacktestPanels.hpp|C2|FullValidationWorkerArgs
 Backtest/BacktestPanels.hpp|C2|HyperparamSweepWorkerArgs
 Backtest/BacktestPanels.hpp|C2|MultiHorizonParallelJob
 Backtest/BacktestPanels.hpp|C2|MultiHorizonWorkerArgs
-Backtest/BacktestSharded.hpp|C1|FeatureCollectCtx
 Backtest/Fingerprint.hpp|C1|SHA256_State
 Backtest/LabelFunctions.hpp|C1|LabelDef
 CoreFrameworks/CfgFieldRegistry.hpp|C2|CfgMaskArray
@@ -21,16 +18,10 @@ CoreFrameworks/OrderManager.hpp|C2|Command
 CoreFrameworks/Portfolio.hpp|C2|ExitBuffer
 CoreFrameworks/PortfolioController.hpp|C1|StrategyStats
 CoreFrameworks/PortfolioController.hpp|C2|GateReasonDef
-CoreFrameworks/ShardedSnapshotPersist.hpp|C1|NodeSnap
 DataStream/EngineTUI.hpp|C1|PerNodeSnap
 DataStream/MockGenerator.hpp|C1|MockGeneratorConfig
 DataStream/TradeLog.hpp|C1|TradeLogRecord
 GUI/TradeReader.hpp|C2|TradeMarker
-MemHeaders/BuddyAllocator.hpp|C1|BuddyDiagSnapshot
-MemHeaders/CfgGateRegistry.hpp|C2|FOREACH_STAMP_BOUND_DERIVED_COHORT
-MemHeaders/NodeCtxSummaryFieldRegistry.hpp|C1|StratAgg
-MemHeaders/PoolAllocator.hpp|C1|CurrentOrder
-MemHeaders/RunHistory.hpp|C1|RunHistoryEntry
 Strategies/RegimeDetector.hpp|C2|FOREACH_REGIME_PERSIST_FIELD
 Strategies/RegimeDetector.hpp|C2|RegimeState
 Strategies/RegimeDetector.hpp|C2|TickRateState

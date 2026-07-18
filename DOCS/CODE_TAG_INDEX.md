@@ -15,7 +15,7 @@ so the snapshot stales when tags/units actually change, not on unrelated line dr
 `rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a
 conversion).
 
-Converted files: 164 · unit blocks: 1074
+Converted files: 164 · unit blocks: 1078
 
 ## [TAG] values → files
 
@@ -244,7 +244,7 @@ Converted files: 164 · unit blocks: 1074
 - `CoreFrameworks/OrderGates.hpp`
 - `CoreFrameworks/Tick.hpp`
 
-### DECIMAL (8 files)
+### DECIMAL (9 files)
 
 - `CoreFrameworks/GateParameters.hpp`
 - `CoreFrameworks/Order.hpp`
@@ -254,6 +254,7 @@ Converted files: 164 · unit blocks: 1074
 - `CoreFrameworks/Portfolio.hpp`
 - `CoreFrameworks/Tick.hpp`
 - `FixedPoint/FixedPointN.hpp`
+- `MemHeaders/PoolAllocator.hpp`
 
 ### DEPRECATED (1 files)
 
@@ -1528,7 +1529,7 @@ Converted files: 164 · unit blocks: 1074
 - `STAMP_RESULT_DERIVED_FIELDS_AUTO_GEN` — `MemHeaders/CfgGateRegistry.hpp`
 - `STATE_FLAG_*` — `MemHeaders/PerNodeStateFlagsRegistry.hpp`
 
-### REGISTRY (60)
+### REGISTRY (61)
 
 - `FOREACH_ARCH_FIELD_DRIFT` — `MemHeaders/ArchFieldDriftRegistry.hpp`
 - `FOREACH_BACKTEST_METRIC` — `CoreFrameworks/MetricCompute.hpp`
@@ -1584,6 +1585,7 @@ Converted files: 164 · unit blocks: 1074
 - `FOREACH_SINGLE_ZOO_POST_LOAD` — `ML_Headers/NodeModelZoo.hpp`
 - `FOREACH_SLOW_PATH_GATE` — `CoreFrameworks/SlowPathGateRegistry.hpp`
 - `FOREACH_SP_SECTION` — `CoreFrameworks/SpSectionRegistry.hpp`
+- `FOREACH_STAMP_BOUND_DERIVED_COHORT` — `MemHeaders/CfgGateRegistry.hpp`
 - `FOREACH_STAMP_BOUND_MODEL_CONST` — `ML_Headers/StampBoundModelConstRegistry.hpp`
 - `FOREACH_STAMP_RESULT_FIELD_EXCLUSION` — `MemHeaders/CfgGateRegistry.hpp`
 - `FOREACH_STRATEGY` — `Strategies/StrategyInterface.hpp`
@@ -1591,7 +1593,7 @@ Converted files: 164 · unit blocks: 1074
 - `FOREACH_TRADE_LOG_COL` — `CoreFrameworks/TradeLogColRegistry.hpp`
 - `PER_NODE_OVERRIDE_FIELDS` — `CoreFrameworks/ControllerConfig.hpp`
 
-### STRUCT (171)
+### STRUCT (174)
 
 - `AnsiBuf` — `DataStream/TUIAnsi.hpp`
 - `BacktestResults` — `Backtest/BacktestEngine.hpp`
@@ -1608,6 +1610,7 @@ Converted files: 164 · unit blocks: 1074
 - `BookImbalanceHistory` — `ML_Headers/FlowFeatures.hpp`
 - `BookSnapshot` — `DataStream/BinanceDepth.hpp`
 - `BuddyAllocatorState` — `MemHeaders/BuddyAllocator.hpp`
+- `BuddyDiagSnapshot` — `MemHeaders/BuddyAllocator.hpp`
 - `Candle` — `GUI/CandleAccumulator.hpp`
 - `CandleAccumulator` — `GUI/CandleAccumulator.hpp`
 - `CandleSnapshot` — `GUI/CandleAccumulator.hpp`
@@ -1620,6 +1623,7 @@ Converted files: 164 · unit blocks: 1074
 - `ConfidenceScorerLegacyV1` — `ML_Headers/ConfidenceScore.hpp`
 - `ControllerConfig` — `CoreFrameworks/ControllerConfig.hpp`
 - `CumDeltaState` — `Strategies/RegimeDetector.hpp`
+- `CurrentOrder` — `MemHeaders/PoolAllocator.hpp`
 - `DataPanelState` — `Backtest/BacktestPanels.hpp`
 - `DataStream` — `CoreFrameworks/OrderGates.hpp`
 - `DepthRecorder` — `DataStream/DepthRecorder.hpp`
@@ -1730,6 +1734,7 @@ Converted files: 164 · unit blocks: 1074
 - `RollingTurnover` — `ML_Headers/RollingTurnover.hpp`
 - `RollingWindow` — `ML_Headers/ConfidenceScore.hpp`
 - `RunControlState` — `Backtest/BacktestPanels.hpp`
+- `RunHistoryEntry` — `MemHeaders/RunHistory.hpp`
 - `SPSCRing` — `CoreFrameworks/SPSCRing.hpp`
 - `SamplesSnapshot` — `Backtest/BacktestPanels.hpp`
 - `SettingsState` — `GUI/SettingsPanel.hpp`

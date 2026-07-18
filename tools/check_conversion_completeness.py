@@ -17,6 +17,9 @@ Checks (HARD):
 Proportionality (schema § Coverage): a TRIVIAL struct — <= 3 POD fields, no alignas, no method/operator —
 stays terse-inline and is EXEMPT (e.g. a 2-field {q,r} return-type struct). Only NON-TRIVIAL units must
 be blocked. A def that HAS its own block (by name) — including a legit tier-3 nested block (D-340) — passes.
+A FUNCTION-LOCAL struct (declared inside a function's body braces — a stack impl-detail, not a navigable
+unit the plugin browses) is EXEMPT too (2026-07-18); a namespace-scope struct merely sited under a mega
+[FUNCTION] block (RegressionFeederX / the GCN structs, at brace-depth 0) STAYS flagged.
 
 Non-vacuity: --selftest asserts the canonical-COMPLETE reference (ExecutionCore.hpp) scans CLEAN and the
 known half-conversion (GateControlNetwork.hpp) is FLAGGED — so a broken checker cannot pass silently.
@@ -55,6 +58,20 @@ def same_registry_family(a, b):
     return shared >= 2
 
 def is_schema_file(text): return bool(re.search(r"^// \[SCHEMA\]_\[v1", text, re.M))
+
+def inside_function_body(lines, host_open, ln):
+    """True iff the def at `ln` sits INSIDE its enclosing [FUNCTION] host's C++ body braces (a
+    function-LOCAL struct — a stack impl-detail, not a navigable unit the plugin browses → EXEMPT),
+    vs merely sited under the doc-block at brace-depth 0 (a real namespace-scope struct lumped in a
+    mega [FUNCTION] block — RegressionFeederX / the GCN structs — which STAY flagged). Net brace count
+    of the code between the host header and the def: >=1 ⇒ an unclosed function signature encloses it.
+    Comments stripped; the engine corpus is well-formed C++. Fires ONLY under a [FUNCTION] host, so a
+    D-340 tier-3 nested type inside a [STRUCT] host stays flagged (it IS a navigable unit)."""
+    depth = 0
+    for i in range(host_open + 1, ln):
+        code = lines[i].split("//", 1)[0]
+        depth += code.count("{") - code.count("}")
+    return depth >= 1
 
 def parse_blocks(lines):
     """Return [{type,name,base,open,end,has_derived}] — end is the matching [END_<type>]_[name] line
@@ -130,6 +147,8 @@ def check_file(path):
             host = min(enclosing, key=lambda b: b["end"] - b["open"])       # innermost enclosing unit
             if kind == "REGISTRY" and host["type"] == "REGISTRY" and same_registry_family(name, host["name"]):
                 continue                                                     # same-family sub-registry variant → rides the parent block (policy #1)
+            if kind == "STRUCT" and host["type"] == "FUNCTION" and inside_function_body(lines, host["open"], ln):
+                continue                                                     # FUNCTION-LOCAL struct (stack impl-detail, not a navigable unit) → EXEMPT (2026-07-18)
             findings.append(("C1", ln + 1, name, f"{kind.lower()} `{name}` lumped inside [{host['type']}]_[{host['name']}] — needs its own block"))
         else:
             findings.append(("C2", ln + 1, name, f"non-trivial {kind.lower()} `{name}` at file scope has NO block"))
@@ -158,6 +177,19 @@ def selftest():
     os.unlink(p)
     print(f"  {'✅' if bf else '❌'} synthetic known-bad: a 6-field struct lumped in a [FUNCTION] block is FLAGGED (C1)"
           + ("" if bf else " — NOT flagged")); ok &= bool(bf)
+    # FUNCTION-LOCAL exemption (2026-07-18): a 6-field struct declared INSIDE a function's body braces is a
+    # stack impl-detail, NOT a navigable unit → must NOT be flagged (vs DemoLumped6 above, at brace-depth 0
+    # under the same doc-block, which STAYS flagged — proves the exemption is scoped, not a blanket hole).
+    loc_src = ("// [SCHEMA]_[v1.0]\n// [FUNCTION]_[demo_fn2]\n// [CODE]\n"
+               "inline void demo_fn2() {\n"
+               "    struct DemoLocal6 {\n"
+               "        int a;\n        int b;\n        int c;\n        int d;\n        int e;\n        int f;\n    };\n"
+               "    DemoLocal6 x{};\n    (void)x;\n}\n// [END_CODE]\n// [END_FUNCTION]_[demo_fn2]\n")
+    fd2, p2 = tempfile.mkstemp(suffix=".hpp"); os.write(fd2, loc_src.encode()); os.close(fd2)
+    lf = [f for f in check_file(Path(p2)) if "DemoLocal6" in f[2]]
+    os.unlink(p2)
+    print(f"  {'✅' if not lf else '❌'} function-LOCAL struct (inside a fn body) EXEMPT (not a navigable unit)"
+          + ("" if not lf else f" — wrongly flagged {lf}")); ok &= not lf
     # a trivial 2-field return struct must NOT be flagged (proportionality)
     triv = [f for f in check_file(ENGINE / "FixedPoint/FixedPointN.hpp")
             if any(t in f[2] for t in ("u256","udiv_qr_t","divmul_qr","MoneyParse"))]

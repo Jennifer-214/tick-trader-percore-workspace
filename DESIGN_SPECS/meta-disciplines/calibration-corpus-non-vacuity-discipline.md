@@ -34,6 +34,15 @@ A **live** broken file gets FIXED and stops being broken — so a selftest ancho
 
 Each new error class the operator or an audit surfaces -> a new synthetic BROKEN fixture + a tool check that flags it + a `--selftest` row that asserts it. This is how the guards stay calibrated to catch OTHER errors, not just the already-known ones — the corpus is the institutional memory of "every way this has been seen to break." A guard is only as trustworthy as the breadth of broken fixtures it has proven it flags.
 
+## Writer/transform tools additionally assert IDEMPOTENCY + ROUND-TRIP
+
+A guard READS; a WRITER (`--fix` / `--apply` / `update` / a scaffold-generator) MUTATES. A writer's `--selftest` asserts the two non-vacuity halves above (golden-COMPLETE stays clean, golden-BROKEN is flagged) PLUS two writer-specific properties, because a writer has failure modes a read-only guard can't have:
+
+- **Idempotency** — running the writer TWICE on its own output is a NO-OP (0 changes / byte-identical). A writer that INSERTS or APPENDS without a present-check double-writes on re-run (a `[SIZE]` tag twice; the FPN `--apply` → `FPN_Binary_Binary`) — invisible to a one-pass selftest, but it bites the moment the writer is re-fired by standing CI or a **pre-commit auto-`--fix`** (exactly the 1:1-auto-sync use, D-365). See `DOCS/RECURRING_BUG_PATTERNS.md` **Class 56**.
+- **Round-trip** — the writer's OUTPUT re-parses CLEAN through the VALIDATOR (the one-producer-N-consumers gate). A writer that emits malformed grammar silently poisons every downstream consumer (CI gate + plugin + doc-viewer); assert it by running the validator (`check_code_tag_blocks.validate_file`) on the writer's output inside the selftest, not just eyeballing it.
+
+**First canonical:** `check_cache_layout.py --selftest` (E.1.2.A) — the `refresh_derived` present-or-insert asserts {REWRITE · INSERT · **IDEMPOTENT** (2nd `--fix` = 0) · COVERAGE-BOUND (un-probed struct untouched, D-363) · **ROUND-TRIP** (output re-parses through `check_code_tag_blocks`)}. This idempotency proof is the **precondition** for wiring a writer into a pre-commit auto-`--fix`: you cannot safely auto-run a writer in CI until it is provably a no-op on unchanged input.
+
 ## Home + shared SSoT
 
 `tests/schema_golden/` holds the golden-COMPLETE dogfood corpus; a sister golden-BROKEN set + a shared `calibration_fixtures.py` that EVERY tool's `--selftest` imports is the single source (so a new fixture is added once and every guard's selftest sees it — one-fixture-set, N guards; the `doc-intelligence-toolchain-architecture` "one core, N consumers" thesis applied to the test layer). *(Status 2026-07-17: the shared importer is Phase-C+ work; the completeness gate's in-line synthetic `DemoLumped6` is the proto-application, D-362.)*

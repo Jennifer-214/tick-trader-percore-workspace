@@ -252,6 +252,24 @@ watching it actually work).
 
 ---
 
+## Landmine 12 — editing a memory file with malformed YAML frontmatter → the harness CLOBBERS the frontmatter to a stub (set 2026-07-18, E.1.2.A)
+
+**Symptom:** after an Edit/Write to a memory file (`~/.claude/projects/<proj>/memory/*.md`), its FRONTMATTER is silently replaced with a minimal stub — `name: ""`, every field (description / type / tags / sister_specs) GONE, and `originSessionId` overwritten with the CURRENT session's id. The BODY survives intact; only the frontmatter is lost. Surfaces as a `check_session_docs.sh` red — "MISSING type field" / the memory bidirectional+index HARD check — but ONLY because that check is scoped to session-TOUCHED files, so it fires the moment you edit the (already latently-defective) file.
+
+**Root cause:** the harness's memory subsystem RE-SAVES a memory file after you modify it. If the frontmatter YAML is MALFORMED — e.g. a stray `    []` line dangling under a flow-style `sister_specs: [a, b, c]` (a `.E.0.4` memory-migration artifact) — the harness's YAML parser chokes and writes a FALLBACK stub, dropping every field. The trigger is the pre-existing bad YAML, not your edit's content; your edit merely pulls the file into the harness's re-save path. (A harness-interaction cousin of the symlink-topology family — Landmines 5/7/9/10 — but the harness memory-store, not a workspace symlink, is the actor.)
+
+**Why it's non-obvious:** the Edit/Write returns "success" and the BODY is correct, so nothing looks wrong until the next doc-CI sweep — and even then "MISSING type field" reads like a you-authored-it-wrong error, not a silent clobber of fields that were fine 10 seconds earlier.
+
+**Current mitigation (2026-07-18):** the specific `[]` defect was swept corpus-wide — 0 malformed `[]` lines + 0 `name: ""` stubs remain (fixed `feedback_process_weight_by_surface_blast_radius` [restored from an in-session pre-edit Read] + `feedback_auto_route_input_to_matching_skill`). Removing the `[]` in the SAME edit is safe: the harness re-parses the post-edit CLEAN YAML and keeps it.
+
+**Proper practice (future-Claude):** after ANY Edit/Write to a memory file, RE-READ its frontmatter to confirm it held (name + type + tags present; not a `name: ""` stub). If clobbered, restore from the pre-edit content — an in-session earlier Read is the most reliable source (git may not track the memory dir) — with CLEAN, well-formed YAML. NEVER leave malformed YAML in a memory frontmatter: it is a latent clobber-trigger that fires on the next edit. `check_session_docs.sh` (memory bidirectional+index) is the backstop, but it only fires on touched files, so a latent defect sits silent until someone edits that file.
+
+**Future-Claude debugging hint:** a memory shows `name: ""` + the current session's `originSessionId`, or the doc-CI reds "MISSING type field" on a memory you just edited → it was clobbered on save; restore the real frontmatter (in-session Read / workspace backup) with valid YAML, and grep the corpus for other `^\s*\[\]\s*$` triggers before they bite.
+
+**Reference:** E.1.2.A (2026-07-18) — hit when the D-365 process-weight carve-out edit clobbered `feedback_process_weight_by_surface_blast_radius`; caught by `check_session_docs.sh`, restored + the `[]` class swept (2/2). Sub->1h to diagnose but harness-specific + recurring (every future memory edit over a latent defect), so it earns a durable entry (cf. Landmines 4/11 same carve-out). Sister: the symlink-topology landmines 5/7/9/10.
+
+---
+
 ## How to add a new landmine
 
 When you encounter a non-obvious pitfall (segfault, race, parallelism

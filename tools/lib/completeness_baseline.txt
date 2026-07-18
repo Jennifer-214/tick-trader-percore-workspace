@@ -18,10 +18,6 @@ CoreFrameworks/OrderManager.hpp|C2|Command
 CoreFrameworks/Portfolio.hpp|C2|ExitBuffer
 CoreFrameworks/PortfolioController.hpp|C1|StrategyStats
 CoreFrameworks/PortfolioController.hpp|C2|GateReasonDef
-DataStream/EngineTUI.hpp|C1|PerNodeSnap
-DataStream/MockGenerator.hpp|C1|MockGeneratorConfig
-DataStream/TradeLog.hpp|C1|TradeLogRecord
-GUI/TradeReader.hpp|C2|TradeMarker
 Strategies/RegimeDetector.hpp|C2|FOREACH_REGIME_PERSIST_FIELD
 Strategies/RegimeDetector.hpp|C2|RegimeState
 Strategies/RegimeDetector.hpp|C2|TickRateState

@@ -15,7 +15,7 @@ so the snapshot stales when tags/units actually change, not on unrelated line dr
 `rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a
 conversion).
 
-Converted files: 164 · unit blocks: 1078
+Converted files: 164 · unit blocks: 1082
 
 ## [TAG] values → files
 
@@ -1593,7 +1593,7 @@ Converted files: 164 · unit blocks: 1078
 - `FOREACH_TRADE_LOG_COL` — `CoreFrameworks/TradeLogColRegistry.hpp`
 - `PER_NODE_OVERRIDE_FIELDS` — `CoreFrameworks/ControllerConfig.hpp`
 
-### STRUCT (174)
+### STRUCT (178)
 
 - `AnsiBuf` — `DataStream/TUIAnsi.hpp`
 - `BacktestResults` — `Backtest/BacktestEngine.hpp`
@@ -1670,6 +1670,7 @@ Converted files: 164 · unit blocks: 1078
 - `MeanReversionState` — `Strategies/MeanReversion.hpp`
 - `MetricsLog` — `DataStream/MetricsLog.hpp`
 - `MockGenerator` — `DataStream/MockGenerator.hpp`
+- `MockGeneratorConfig` — `DataStream/MockGenerator.hpp`
 - `ModelHandle` — `ML_Headers/ModelInference.hpp`
 - `ModelStampResult` — `ML_Headers/ModelInference.hpp`
 - `MomentumState` — `Strategies/Momentum.hpp`
@@ -1704,6 +1705,7 @@ Converted files: 164 · unit blocks: 1078
 - `PerNodeCfg` — `CoreFrameworks/ControllerConfig.hpp`
 - `PerNodeCfgRenderTable` — `GUI/SettingsPanel.hpp`
 - `PerNodeFieldDef` — `GUI/SettingsPanel.hpp`
+- `PerNodeSnap` — `DataStream/EngineTUI.hpp`
 - `PhaseTimer` — `Backtest/PhaseTimers.hpp`
 - `PhaseTimerSnapshot` — `Backtest/PhaseTimers.hpp`
 - `Portfolio` — `CoreFrameworks/Portfolio.hpp`
@@ -1763,6 +1765,8 @@ Converted files: 164 · unit blocks: 1078
 - `TradeHistoryEntry` — `GUI/TradeHistoryPanel.hpp`
 - `TradeLog` — `DataStream/TradeLog.hpp`
 - `TradeLogBuffer` — `DataStream/TradeLog.hpp`
+- `TradeLogRecord` — `DataStream/TradeLog.hpp`
+- `TradeMarker` — `GUI/TradeReader.hpp`
 - `TradingCosts` — `ML_Headers/CostModel.hpp`
 - `TrainingPanelState` — `Backtest/BacktestPanels.hpp`
 - `WalkForwardResults` — `Backtest/BacktestEngine.hpp`

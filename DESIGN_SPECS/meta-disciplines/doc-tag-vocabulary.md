@@ -89,6 +89,8 @@ CI tool `check_doc_metadata.py` (queued at `.C` candidate ship) validates every 
 | `supportive` | Auxiliary role — not on the critical path. Code tag `[SUPPORTIVE]` |
 | `helper` | A helper / utility unit (extracted shared logic). Code tag `[HELPER]` |
 | `entry-point` | A top-level entry point (boot / dispatch / main loop). Code tag `[ENTRY_POINT]` |
+| `deprecated` | Unit discouraged / superseded but still LIVE (a successor exists; kept for compat — e.g. the `*_LegacyV1` wire-compat readers). Code tag `[DEPRECATED]` (E.1.2.A) — MARK, never delete (H21 tombstone sister; `[OUTDATED_INFO]` is for stale COMMENTS, this is for whole UNITS). Browsable: `foxtag units --tag DEPRECATED`. |
+| `marked-for-deletion` | Unit scheduled for removal — dead/rotted, no live consumer OR a retirement is planned. Code tag `[MARKED_FOR_DELETION]` (E.1.2.A) — the deletion QUEUE; a human deletes, never auto (capital codebase). |
 
 ---
 

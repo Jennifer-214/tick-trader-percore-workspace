@@ -73,6 +73,7 @@ CLAUDE_MD        = ENGINE / "CLAUDE.md"                        # Hard-Invariants
 DESIGN_SPECS_DIR = WORKSPACE / "DESIGN_SPECS"
 PLANS_DIR        = WORKSPACE / "plans"
 CLASS_DOC        = WORKSPACE / "DOCS" / "RECURRING_BUG_PATTERNS.md"
+CLASS_SUBFILE_DIR = WORKSPACE / "DOCS" / "recurring-bug-patterns"             # per-class subfiles (class-NN-*.md, file-size-split Stage-3)
 TECHDEBT_FILES   = [WORKSPACE / "DOCS" / "TECH_DEBT.md",
                     *sorted((WORKSPACE / "DOCS" / "tech-debt").glob("*.md"))]  # the split ledger lives ONLY here
 PARITY_DOC       = WORKSPACE / "DOCS" / "PARITY_ISSUES.md"                    # "id: PARITY-<n>" rows (D-345)
@@ -168,8 +169,16 @@ def load_reference_index():
     for f in TECHDEBT_FILES:
         td.update(int(n) for n in re.findall(r"TECH_DEBT-(\d+)", _read(f)))
     idx["TECH_DEBT"] = td or None
-    # CLASS — bare ints, zero-pad-insensitive ("Class 0*<n>").
-    idx["CLASS"] = {int(n) for n in re.findall(r"\bClass 0*(\d+)\b", _read(CLASS_DOC))} or None
+    # CLASS — bare ints, zero-pad-insensitive. UNION of the main catalog's inline "Class <n>" mentions
+    # AND the per-class subfile names (recurring-bug-patterns/class-NN-*.md, the file-size-split Stage-3
+    # structure): a subfile-only class (e.g. 23) is NOT spelled in the main doc, so globbing the subfile
+    # numbers is what makes every [CLASS]_[N] resolve — else corpus-wide false-dangling.
+    class_nums = {int(n) for n in re.findall(r"\bClass 0*(\d+)\b", _read(CLASS_DOC))}
+    for _p in CLASS_SUBFILE_DIR.glob("class-*.md"):
+        _m = re.match(r"class-(\d+)", _p.name)
+        if _m:
+            class_nums.add(int(_m.group(1)))
+    idx["CLASS"] = class_nums or None
     # PLAN — basenames (a "/"-bearing id is resolved as a path at check-time instead).
     idx["PLAN"] = _basenames(PLANS_DIR.rglob("*.md")) or None
     # PARITY — padding-normalized ints from the parity ledger ("id: PARITY-<n>"; D-345 widening).
@@ -529,6 +538,8 @@ _REF_SELFTEST = [
     ("ref PARITY valid (PARITY-001)",     "// [REFERENCE]_[PARITY]_[PARITY-001]\n", None),
     ("ref PARITY dangling (PARITY-999999)", "// [REFERENCE]_[PARITY]_[PARITY-999999]\n", "dangling"),
     ("ref SOURCE never reds (advisory, D-345)", "// [REFERENCE]_[SOURCE]_[FoxML_Core scaler.py:142]\n", None),
+    ("ref CLASS valid, subfile-only (23)", "// [REFERENCE]_[CLASS]_[23]\n", None),   # guards the subfile glob
+    ("ref CLASS dangling (999999)",       "// [REFERENCE]_[CLASS]_[999999]\n", "dangling"),
     ("ref unknown subcat (REGISTRY not in fence)", "// [REFERENCE]_[REGISTRY]_[FOREACH_STRATEGY]\n",
      "UNKNOWN [REFERENCE] subcat"),
     ("supporting-docs block valid",       "// [SUPPORTING_DOCS]\n//   - [INVARIANT]_[H8]\n", None),

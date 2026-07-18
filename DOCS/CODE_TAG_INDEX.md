@@ -15,7 +15,7 @@ so the snapshot stales when tags/units actually change, not on unrelated line dr
 `rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a
 conversion).
 
-Converted files: 163 · unit blocks: 1029
+Converted files: 164 · unit blocks: 1056
 
 ## [TAG] values → files
 
@@ -41,8 +41,9 @@ Converted files: 163 · unit blocks: 1029
 - `DataStream/MockGenerator.hpp`
 - `DataStream/TradeLog.hpp`
 
-### BINARY_FP (9 files)
+### BINARY_FP (10 files)
 
+- `FixedPoint/FixedPointN.hpp`
 - `ML_Headers/FlowFeatures.hpp`
 - `ML_Headers/GateControlNetwork.hpp`
 - `ML_Headers/LinearRegression3X.hpp`
@@ -118,7 +119,7 @@ Converted files: 163 · unit blocks: 1029
 - `MemHeaders/OmsFieldRegistry.hpp`
 - `Strategies/StrategyLifecycle.hpp`
 
-### CAPITAL_BEARING (28 files)
+### CAPITAL_BEARING (29 files)
 
 - `CoreFrameworks/CfgFieldRegistry.hpp`
 - `CoreFrameworks/ControllerConfig.hpp`
@@ -140,6 +141,7 @@ Converted files: 163 · unit blocks: 1029
 - `CoreFrameworks/TradeEvent.hpp`
 - `DataStream/BinanceOrderAPI.hpp`
 - `DataStream/BinanceUserData.hpp`
+- `FixedPoint/FixedPointN.hpp`
 - `ML_Headers/BarrierValidation.hpp`
 - `MemHeaders/OmsPushExitHelper.hpp`
 - `MemHeaders/PositionFieldRegistry.hpp`
@@ -242,7 +244,7 @@ Converted files: 163 · unit blocks: 1029
 - `CoreFrameworks/OrderGates.hpp`
 - `CoreFrameworks/Tick.hpp`
 
-### DECIMAL (7 files)
+### DECIMAL (8 files)
 
 - `CoreFrameworks/GateParameters.hpp`
 - `CoreFrameworks/Order.hpp`
@@ -251,8 +253,9 @@ Converted files: 163 · unit blocks: 1029
 - `CoreFrameworks/OrderManager.hpp`
 - `CoreFrameworks/Portfolio.hpp`
 - `CoreFrameworks/Tick.hpp`
+- `FixedPoint/FixedPointN.hpp`
 
-### DETERMINISM (33 files)
+### DETERMINISM (34 files)
 
 - `Backtest/BacktestEngine.hpp`
 - `Backtest/BacktestSharded.hpp`
@@ -270,6 +273,7 @@ Converted files: 163 · unit blocks: 1029
 - `DataStream/DepthRecorder.hpp`
 - `DataStream/MockGenerator.hpp`
 - `DataStream/TickRecorder.hpp`
+- `FixedPoint/FixedPointN.hpp`
 - `ML_Headers/BanditLearning.hpp`
 - `ML_Headers/BuildFlags.hpp`
 - `ML_Headers/CfgDriftCheckRegistry.hpp`
@@ -288,7 +292,7 @@ Converted files: 163 · unit blocks: 1029
 - `MemHeaders/RunHistory.hpp`
 - `Version.hpp`
 
-### ENGINE (150 files)
+### ENGINE (151 files)
 
 - `Backtest/BacktestEngine.hpp`
 - `Backtest/BacktestSharded.hpp`
@@ -368,6 +372,7 @@ Converted files: 163 · unit blocks: 1029
 - `DataStream/TickRecorder.hpp`
 - `DataStream/TradeLog.hpp`
 - `DataStream/WebSocketUtil.hpp`
+- `FixedPoint/FixedPointN.hpp`
 - `Limits.hpp`
 - `ML_Headers/BanditAlgorithmRegistry.hpp`
 - `ML_Headers/BanditLearning.hpp`
@@ -763,7 +768,7 @@ Converted files: 163 · unit blocks: 1029
 
 ## Unit blocks by [TYPE]
 
-### ASSERT (36)
+### ASSERT (38)
 
 - `BITMAP_OVERFLOW` — `ML_Headers/NodeModelZoo.hpp`
 - `BITMAP_OVERFLOW` — `MemHeaders/FailureModeRegistry.hpp`
@@ -783,6 +788,7 @@ Converted files: 163 · unit blocks: 1029
 - `LAYOUT_LOCK` — `CoreFrameworks/Tick.hpp`
 - `LAYOUT_LOCK` — `CoreFrameworks/TradeEvent.hpp`
 - `LAYOUT_LOCK` — `DataStream/EngineTUI.hpp`
+- `LAYOUT_LOCK` — `FixedPoint/FixedPointN.hpp`
 - `LAYOUT_LOCK` — `ML_Headers/BanditLearning.hpp`
 - `LAYOUT_LOCK` — `ML_Headers/ConfidenceScore.hpp`
 - `LAYOUT_LOCK` — `ML_Headers/FlowFeatures.hpp`
@@ -794,6 +800,7 @@ Converted files: 163 · unit blocks: 1029
 - `LAYOUT_LOCK` — `MemHeaders/OmsExitPredictorMetaRegistry.hpp`
 - `LAYOUT_LOCK` — `MemHeaders/OmsStateFlagRegistry.hpp`
 - `OVERLAP_EXCLUSION` — `CoreFrameworks/CfgFieldRegistry.hpp`
+- `PADDING_FREE` — `FixedPoint/FixedPointN.hpp`
 - `REGISTRY_COVERAGE` — `CoreFrameworks/CfgFieldRegistry.hpp`
 - `REGISTRY_COVERAGE` — `DataStream/CalibLogColRegistry.hpp`
 - `REGISTRY_COVERAGE` — `MemHeaders/DisplayMetaRegistry.hpp`
@@ -813,7 +820,7 @@ Converted files: 163 · unit blocks: 1029
 - `OrderType` — `CoreFrameworks/Order.hpp`
 - `StrategyCategory` — `Strategies/StrategyCategories.hpp`
 
-### FILE (163)
+### FILE (164)
 
 - `Backtest/BacktestEngine.hpp` — `Backtest/BacktestEngine.hpp`
 - `Backtest/BacktestPanels.hpp` — `Backtest/BacktestPanels.hpp`
@@ -894,6 +901,7 @@ Converted files: 163 · unit blocks: 1029
 - `DataStream/TickRecorder.hpp` — `DataStream/TickRecorder.hpp`
 - `DataStream/TradeLog.hpp` — `DataStream/TradeLog.hpp`
 - `DataStream/WebSocketUtil.hpp` — `DataStream/WebSocketUtil.hpp`
+- `FixedPoint/FixedPointN.hpp` — `FixedPoint/FixedPointN.hpp`
 - `GUI/CandleAccumulator.hpp` — `GUI/CandleAccumulator.hpp`
 - `GUI/ChartPanel.hpp` — `GUI/ChartPanel.hpp`
 - `GUI/DashboardPanels.hpp` — `GUI/DashboardPanels.hpp`
@@ -979,7 +987,7 @@ Converted files: 163 · unit blocks: 1029
 - `Strategies/private/EmaCross.hpp` — `Strategies/private/EmaCross.hpp`
 - `Version.hpp` — `Version.hpp`
 
-### FUNCTION (495)
+### FUNCTION (510)
 
 - `ANSI_Layout_Render` — `DataStream/TUIAnsi.hpp`
 - `ANSI_Section_Header` — `DataStream/TUIAnsi.hpp`
@@ -1210,7 +1218,14 @@ Converted files: 163 · unit blocks: 1029
 - `Momentum_BuildParameters` — `Strategies/StrategyParameters.hpp`
 - `Momentum_BuySignal` — `Strategies/Momentum.hpp`
 - `Momentum_ExitAdjust` — `Strategies/Momentum.hpp`
+- `Money_Div` — `FixedPoint/FixedPointN.hpp`
 - `Money_FillGross` — `CoreFrameworks/Portfolio.hpp`
+- `Money_FromBinary` — `FixedPoint/FixedPointN.hpp`
+- `Money_FromString` — `FixedPoint/FixedPointN.hpp`
+- `Money_Mul` — `FixedPoint/FixedPointN.hpp`
+- `Money_QuantizeToStep` — `FixedPoint/FixedPointN.hpp`
+- `Money_ToBinary` — `FixedPoint/FixedPointN.hpp`
+- `Money_ToCString` — `FixedPoint/FixedPointN.hpp`
 - `NodeLatencyStats_Init` — `CoreFrameworks/NodeLatencyStats.hpp`
 - `NodeLatencyStats_Reset` — `CoreFrameworks/NodeLatencyStats.hpp`
 - `NodeLatencyStats_Sample` — `CoreFrameworks/NodeLatencyStats.hpp`
@@ -1431,9 +1446,12 @@ Converted files: 163 · unit blocks: 1029
 - `csv_field` — `GUI/TradeReader.hpp`
 - `depth_parse_json` — `DataStream/BinanceDepth.hpp`
 - `depth_thread_fn` — `DataStream/BinanceDepth.hpp`
+- `divmul_pow10` — `FixedPoint/FixedPointN.hpp`
 - `drift_check_from_derived` — `MemHeaders/CfgGateRegistry.hpp`
 - `engine_set_mxcsr_ftz_daz` — `CoreFrameworks/SystemInit.hpp`
 - `ezoo_set_per_arm_barrier` — `ML_Headers/NodeModelZoo.hpp`
+- `fp2_div` — `FixedPoint/FixedPointN.hpp`
+- `fp2_mul` — `FixedPoint/FixedPointN.hpp`
 - `fullvalidation_worker_fn` — `Backtest/BacktestPanels.hpp`
 - `g_buy_reward_dispatch` — `ML_Headers/bandit_dispatch_table.hpp`
 - `global_section_strategy` — `GUI/SettingsPanel.hpp`
@@ -1447,6 +1465,9 @@ Converted files: 163 · unit blocks: 1029
 - `lookup_populate` — `MemHeaders/CfgGateRegistry.hpp`
 - `mh_per_horizon_parallel_worker` — `Backtest/BacktestPanels.hpp`
 - `mh_run_one_horizon_fv` — `Backtest/BacktestPanels.hpp`
+- `money_from_double_payload` — `FixedPoint/FixedPointN.hpp`
+- `money_round_half_even` — `FixedPoint/FixedPointN.hpp`
+- `money_scale_down_pow10` — `FixedPoint/FixedPointN.hpp`
 - `notify_worker_fn` — `CoreFrameworks/Notify.hpp`
 - `optimizer_worker_fn` — `Backtest/BacktestPanels.hpp`
 - `parse_double_fast` — `CoreFrameworks/ParseFast.hpp`
@@ -1473,6 +1494,8 @@ Converted files: 163 · unit blocks: 1029
 - `ud_parse_execution_report` — `DataStream/BinanceUserData.hpp`
 - `ud_ws_read_frame` — `DataStream/BinanceUserData.hpp`
 - `ud_ws_thread` — `DataStream/BinanceUserData.hpp`
+- `udiv256_qr` — `FixedPoint/FixedPointN.hpp`
+- `umul_128x128_256` — `FixedPoint/FixedPointN.hpp`
 - `verify_model_stamp` — `ML_Headers/ModelInference.hpp`
 - `walkforward_worker_fn` — `Backtest/BacktestPanels.hpp`
 - `ws_read_frame` — `DataStream/WebSocketUtil.hpp`
@@ -1562,7 +1585,7 @@ Converted files: 163 · unit blocks: 1029
 - `FOREACH_TRADE_LOG_COL` — `CoreFrameworks/TradeLogColRegistry.hpp`
 - `PER_NODE_OVERRIDE_FIELDS` — `CoreFrameworks/ControllerConfig.hpp`
 
-### STRUCT (152)
+### STRUCT (155)
 
 - `AnsiBuf` — `DataStream/TUIAnsi.hpp`
 - `BacktestResults` — `Backtest/BacktestEngine.hpp`
@@ -1608,8 +1631,11 @@ Converted files: 163 · unit blocks: 1029
 - `ExecutionCore` — `CoreFrameworks/ExecutionCore.hpp`
 - `ExitRecord` — `CoreFrameworks/Portfolio.hpp`
 - `FIX_ParsedMessage` — `DataStream/FauxFIX.hpp`
+- `FPN_Binary<64>` — `FixedPoint/FixedPointN.hpp`
 - `FeatureComputeCtx` — `ML_Headers/FeatureRegistry.hpp`
 - `FeatureStandardizer` — `ML_Headers/FeatureStandardizer.hpp`
+- `FixedPoint<10,8>` — `FixedPoint/FixedPointN.hpp`
+- `FixedPoint<2,64>` — `FixedPoint/FixedPointN.hpp`
 - `FlowState` — `ML_Headers/FlowFeatures.hpp`
 - `FullValidationResults` — `Backtest/BacktestEngine.hpp`
 - `GateParameters` — `CoreFrameworks/GateParameters.hpp`
@@ -1716,3 +1742,9 @@ Converted files: 163 · unit blocks: 1029
 - `WalkForwardResults` — `Backtest/BacktestEngine.hpp`
 - `WsHeartbeatTelemetry` — `CoreFrameworks/ControllerEventLoop.hpp`
 - `XGBHyperparams` — `Backtest/XGBHyperparams.hpp`
+
+### TYPE (3)
+
+- `MONEY_ENCODING_EPOCH` — `FixedPoint/FixedPointN.hpp`
+- `Money` — `FixedPoint/FixedPointN.hpp`
+- `fp_domain_traits` — `FixedPoint/FixedPointN.hpp`

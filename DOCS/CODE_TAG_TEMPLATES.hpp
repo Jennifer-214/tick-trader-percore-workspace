@@ -23,6 +23,11 @@
 //   SHAPE. The cache-layout gate skips DOCS/ for exactly this reason. Do not copy values.
 // ⚠ The schema doc's § Worked examples predate the lock in places (Unicode bars, multi-
 //   category lines, pre-vocab [TAG] values); THIS file is the validator-green rendering.
+// ⚠ TEMPLATE SPECIALIZATIONS — name the block by the REAL identifier, NOT an underscore alias:
+//   e.g. [STRUCT]_[FixedPoint<2,64>] / [FUNCTION]_[Foo<64>]. The parser accepts the <...> (it sits
+//   INSIDE the value brackets — the innermost-bracket rule captures `FixedPoint<2,64>` whole), and
+//   check_cache_layout matches it template-tolerantly (splits the record name on `<`), so the
+//   layout DERIVED still resolves. First canonical: FixedPoint/FixedPointN.hpp (P6.128).
 //
 //======================================================================================================
 #pragma once

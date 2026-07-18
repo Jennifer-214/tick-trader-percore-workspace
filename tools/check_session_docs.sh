@@ -101,6 +101,20 @@ else
     RESULTS+=("  ⏭  HARD  code tag-blocks (SKIP_CODE_TAG_CHECK=1)")
 fi
 
+# --- HARD 1d: in-code conversion COMPLETENESS gate (E.1.2.A — coverage: every unit warranting a block HAS one) ---
+# Non-vacuity selftest (ExecutionCore clean + GateControlNetwork flagged + trivial return-structs exempt) +
+# baseline mode: a NEW lumped/un-blocked unit FAILS; the grandfathered gaps live in
+# tools/lib/completeness_baseline.txt (shrinks as the Phase-C cleanup lands, per the plan's § COMPLETENESS-GATE).
+# Catches the GateControlNetwork class — a struct/registry buried in another unit's [CODE], invisible to the validator.
+if [ "${SKIP_COMPLETENESS_CHECK:-0}" != "1" ]; then
+    run_hard "conversion completeness --selftest (non-vacuity)" \
+        python3 "$REPO_ROOT/tools/check_conversion_completeness.py" --selftest
+    run_hard "conversion completeness (baseline — a NEW lumped/missing unit = fail)" \
+        python3 "$REPO_ROOT/tools/check_conversion_completeness.py" --baseline "$REPO_ROOT/tools/lib/completeness_baseline.txt"
+else
+    RESULTS+=("  ⏭  HARD  conversion completeness (SKIP_COMPLETENESS_CHECK=1)")
+fi
+
 # --- HARD 2: B-Plus plan-body symbol existence (the citation-error catcher) ---
 if [ "${SKIP_PLAN_BODY_CHECK:-0}" != "1" ]; then
     B_PLUS="$REPO_ROOT/tools/check_plan_body_symbol_existence.py"

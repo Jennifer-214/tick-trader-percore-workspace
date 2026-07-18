@@ -15,7 +15,7 @@ so the snapshot stales when tags/units actually change, not on unrelated line dr
 `rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a
 conversion).
 
-Converted files: 164 · unit blocks: 1091
+Converted files: 164 · unit blocks: 1100
 
 ## [TAG] values → files
 
@@ -1598,7 +1598,7 @@ Converted files: 164 · unit blocks: 1091
 - `FOREACH_TRADE_LOG_COL` — `CoreFrameworks/TradeLogColRegistry.hpp`
 - `PER_NODE_OVERRIDE_FIELDS` — `CoreFrameworks/ControllerConfig.hpp`
 
-### STRUCT (187)
+### STRUCT (196)
 
 - `AnsiBuf` — `DataStream/TUIAnsi.hpp`
 - `BacktestResults` — `Backtest/BacktestEngine.hpp`
@@ -1625,6 +1625,7 @@ Converted files: 164 · unit blocks: 1091
 - `CfgMaskArray` — `CoreFrameworks/CfgFieldRegistry.hpp`
 - `ChartSettings` — `GUI/ChartPanel.hpp`
 - `ChartState` — `GUI/ChartPanel.hpp`
+- `CollectMultiHorizonWorkerArgs` — `Backtest/BacktestPanels.hpp`
 - `Command` — `CoreFrameworks/OrderManager.hpp`
 - `ComparisonState` — `Backtest/BacktestPanels.hpp`
 - `ConfidenceScorer` — `ML_Headers/ConfidenceScore.hpp`
@@ -1661,6 +1662,7 @@ Converted files: 164 · unit blocks: 1091
 - `FlowState` — `ML_Headers/FlowFeatures.hpp`
 - `FoldResult` — `CoreFrameworks/OrderEventLog.hpp`
 - `FullValidationResults` — `Backtest/BacktestEngine.hpp`
+- `FullValidationWorkerArgs` — `Backtest/BacktestPanels.hpp`
 - `GCN_input` — `ML_Headers/GateControlNetwork.hpp`
 - `GCN_network` — `ML_Headers/GateControlNetwork.hpp`
 - `GateParameters` — `CoreFrameworks/GateParameters.hpp`
@@ -1671,7 +1673,9 @@ Converted files: 164 · unit blocks: 1091
 - `HeldOutSplit` — `Backtest/HeldOutSplit.hpp`
 - `HeldOutTrainEvalResult` — `Backtest/BacktestEngine.hpp`
 - `HistoricalTick` — `Backtest/LabelFunctions.hpp`
+- `HyperparamSweepWorkerArgs` — `Backtest/BacktestPanels.hpp`
 - `InitArena` — `MemHeaders/InitArena.hpp`
+- `LabelDef` — `Backtest/LabelFunctions.hpp`
 - `LargeTradeState` — `ML_Headers/FlowFeatures.hpp`
 - `LatencyHistogram` — `MemHeaders/LatencyHistogram.hpp`
 - `LogViewer` — `GUI/LogViewerPanel.hpp`
@@ -1685,6 +1689,8 @@ Converted files: 164 · unit blocks: 1091
 - `ModelHandle` — `ML_Headers/ModelInference.hpp`
 - `ModelStampResult` — `ML_Headers/ModelInference.hpp`
 - `MomentumState` — `Strategies/Momentum.hpp`
+- `MultiHorizonParallelJob` — `Backtest/BacktestPanels.hpp`
+- `MultiHorizonWorkerArgs` — `Backtest/BacktestPanels.hpp`
 - `NodeContext` — `CoreFrameworks/ControllerEventLoop.hpp`
 - `NodeContextDisplayMeta` — `CoreFrameworks/ControllerEventLoop.hpp`
 - `NodeLatencySnapshot` — `CoreFrameworks/NodeLatencyStats.hpp`
@@ -1697,6 +1703,7 @@ Converted files: 164 · unit blocks: 1091
 - `OmsDrainBuckets` — `MemHeaders/OmsPhasedDrain.hpp`
 - `OmsInitCtx` — `MemHeaders/OmsFieldRegistry.hpp`
 - `OptimizerPanelState` — `Backtest/BacktestPanels.hpp`
+- `OptimizerRange` — `Backtest/BacktestEngine.hpp`
 - `OptimizerResults` — `Backtest/BacktestEngine.hpp`
 - `Order` — `CoreFrameworks/Order.hpp`
 - `OrderEvent` — `CoreFrameworks/OrderEventLog.hpp`
@@ -1749,6 +1756,7 @@ Converted files: 164 · unit blocks: 1091
 - `RollingWindow` — `ML_Headers/ConfidenceScore.hpp`
 - `RunControlState` — `Backtest/BacktestPanels.hpp`
 - `RunHistoryEntry` — `MemHeaders/RunHistory.hpp`
+- `SHA256_State` — `Backtest/Fingerprint.hpp`
 - `SPSCRing` — `CoreFrameworks/SPSCRing.hpp`
 - `SamplesSnapshot` — `Backtest/BacktestPanels.hpp`
 - `SettingsState` — `GUI/SettingsPanel.hpp`
@@ -1783,6 +1791,7 @@ Converted files: 164 · unit blocks: 1091
 - `TradeMarker` — `GUI/TradeReader.hpp`
 - `TradingCosts` — `ML_Headers/CostModel.hpp`
 - `TrainingPanelState` — `Backtest/BacktestPanels.hpp`
+- `WalkForwardFoldResult` — `Backtest/BacktestEngine.hpp`
 - `WalkForwardResults` — `Backtest/BacktestEngine.hpp`
 - `WelfordTracker` — `ML_Headers/WelfordStats.hpp`
 - `WsHeartbeatTelemetry` — `CoreFrameworks/ControllerEventLoop.hpp`

@@ -1,14 +1,5 @@
 # check_conversion_completeness grandfathered baseline (stable file|sig|name keys).
 # A finding NOT in here fails; regenerate (--write-baseline) to SHRINK as cleanup lands.
-Backtest/BacktestEngine.hpp|C1|OptimizerRange
-Backtest/BacktestEngine.hpp|C1|WalkForwardFoldResult
-Backtest/BacktestPanels.hpp|C2|CollectMultiHorizonWorkerArgs
-Backtest/BacktestPanels.hpp|C2|FullValidationWorkerArgs
-Backtest/BacktestPanels.hpp|C2|HyperparamSweepWorkerArgs
-Backtest/BacktestPanels.hpp|C2|MultiHorizonParallelJob
-Backtest/BacktestPanels.hpp|C2|MultiHorizonWorkerArgs
-Backtest/Fingerprint.hpp|C1|SHA256_State
-Backtest/LabelFunctions.hpp|C1|LabelDef
 Strategies/RegimeDetector.hpp|C2|FOREACH_REGIME_PERSIST_FIELD
 Strategies/RegimeDetector.hpp|C2|RegimeState
 Strategies/RegimeDetector.hpp|C2|TickRateState

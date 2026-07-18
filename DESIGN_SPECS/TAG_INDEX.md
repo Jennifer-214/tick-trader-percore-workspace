@@ -61,7 +61,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/concurrency-patterns/structured-audit-log-pattern.md`
 
-### audit-methodology (84 files)
+### audit-methodology (85 files)
 
 - `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md`
 - `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md`
@@ -72,6 +72,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/audit-methodologies/post-implementation-verification-v-class.md`
 - `DESIGN_SPECS/audit-methodologies/static-latency-path-conformance-analysis.md`
 - `DESIGN_SPECS/meta-disciplines/audit-driven-sub-sprint-trajectory-verification.md`
+- `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/definition-of-done-and-armed-scout-verification.md`
 - `DESIGN_SPECS/meta-disciplines/fix-toward-future-trajectory-not-static-state.md`
 - `DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md`
@@ -461,7 +462,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/dynamic-library-strategy-loading-pattern.md`
 - `DESIGN_SPECS/framework-patterns/strategy-hot-reload-via-dlopen-pattern.md`
 
-### doc-discipline (51 files)
+### doc-discipline (53 files)
 
 - `DESIGN_SPECS/audit-methodologies/audit-report-format.md`
 - `DESIGN_SPECS/doc-disciplines/categorical-triggers-in-always-loaded-docs.md`
@@ -470,9 +471,11 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/doc-disciplines/in-code-doc-system-north-star.md`
 - `DESIGN_SPECS/doc-disciplines/in-code-documentation-schema.md`
 - `DESIGN_SPECS/doc-disciplines/module-scoped-claude-md-pattern.md`
+- `DESIGN_SPECS/framework-patterns/doc-intelligence-toolchain-architecture.md`
 - `DESIGN_SPECS/framework-patterns/framework-composition-overview.md`
 - `DESIGN_SPECS/ledger-templates/ledger-entry-templates.md`
 - `DESIGN_SPECS/meta-disciplines/body-content-enumeration-at-plan-time-discipline.md`
+- `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/doc-frontmatter-convention.md`
 - `DESIGN_SPECS/meta-disciplines/doc-tag-vocabulary.md`
 - `DESIGN_SPECS/meta-disciplines/handoff-active-state-machine.md`
@@ -619,7 +622,7 @@ This file is a snapshot for static browsing.
 
 - `memory/feedback_forward_decl_at_global_scope_not_namespace.md`
 
-### framework-discipline (141 files)
+### framework-discipline (142 files)
 
 - `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md`
 - `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md`
@@ -650,6 +653,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/curve-registry-pattern.md`
 - `DESIGN_SPECS/framework-patterns/dev-vs-production-thread-topology-pattern.md`
 - `DESIGN_SPECS/framework-patterns/display-execution-invariant-registry-pattern.md`
+- `DESIGN_SPECS/framework-patterns/doc-intelligence-toolchain-architecture.md`
 - `DESIGN_SPECS/framework-patterns/dual-axis-y3-dispatch-pattern.md`
 - `DESIGN_SPECS/framework-patterns/dual-format-metrics-publication-pattern.md`
 - `DESIGN_SPECS/framework-patterns/dynamic-library-strategy-loading-pattern.md`
@@ -1515,10 +1519,11 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/concurrency-patterns/spsc-vs-blackboard-selection-criteria.md`
 
-### ssot (12 files)
+### ssot (13 files)
 
 - `DESIGN_SPECS/doc-disciplines/in-code-documentation-schema.md`
 - `DESIGN_SPECS/framework-patterns/config-compiler-validation-pattern.md`
+- `DESIGN_SPECS/framework-patterns/doc-intelligence-toolchain-architecture.md`
 - `DESIGN_SPECS/framework-patterns/single-authority-predicate-for-mode-gating.md`
 - `DESIGN_SPECS/meta-disciplines/representation-migration-completeness.md`
 - `DESIGN_SPECS/meta-disciplines/single-source-of-truth-discipline.md`
@@ -1547,11 +1552,12 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/dynamic-library-strategy-loading-pattern.md`
 
-### structural-enforcement (1 files)
+### structural-enforcement (2 files)
 
+- `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/mechanical-verification-of-derived-code-facts.md`
 
-### structural-fix (100 files)
+### structural-fix (101 files)
 
 - `DESIGN_SPECS/audit-methodologies/static-latency-path-conformance-analysis.md`
 - `DESIGN_SPECS/concurrency-patterns/phase-separated-drainer-for-safe-cross-temporal-derives.md`
@@ -1571,6 +1577,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/composed-filter-mask-pattern.md`
 - `DESIGN_SPECS/framework-patterns/config-compiler-validation-pattern.md`
 - `DESIGN_SPECS/framework-patterns/display-execution-invariant-registry-pattern.md`
+- `DESIGN_SPECS/framework-patterns/doc-intelligence-toolchain-architecture.md`
 - `DESIGN_SPECS/framework-patterns/manual-fields-inventory-pattern.md`
 - `DESIGN_SPECS/framework-patterns/meta-registry-pattern-for-codebase-registry-discipline.md`
 - `DESIGN_SPECS/framework-patterns/metadata-bit-driven-derived-filter-framework.md`
@@ -1703,6 +1710,10 @@ This file is a snapshot for static browsing.
 - `memory/feedback_passing_test_is_not_verification.md`
 - `memory/feedback_test_change_enumeration_per_plan_body.md`
 
+### test-infrastructure (1 files)
+
+- `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md`
+
 ### thread-topology (2 files)
 
 - `DESIGN_SPECS/framework-patterns/dev-vs-production-thread-topology-pattern.md`
@@ -1749,9 +1760,10 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/concurrency-patterns/userspace-tls-pattern.md`
 
-### verification (2 files)
+### verification (3 files)
 
 - `DESIGN_SPECS/audit-methodologies/post-implementation-verification-v-class.md`
+- `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/mechanical-verification-of-derived-code-facts.md`
 
 ### viewer (1 files)
@@ -1972,14 +1984,16 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/runtime-mutable-vs-boot-time-config-pattern.md`
 
-### ci-tooling (16 files)
+### ci-tooling (18 files)
 
 - `DESIGN_SPECS/audit-methodologies/audit-report-format.md`
 - `DESIGN_SPECS/audit-methodologies/static-latency-path-conformance-analysis.md`
 - `DESIGN_SPECS/doc-disciplines/in-code-documentation-schema.md`
 - `DESIGN_SPECS/feature-patterns/runtime-toggleable-bench-gate-pattern.md`
+- `DESIGN_SPECS/framework-patterns/doc-intelligence-toolchain-architecture.md`
 - `DESIGN_SPECS/framework-patterns/meta-registry-pattern-for-codebase-registry-discipline.md`
 - `DESIGN_SPECS/framework-patterns/registry-coverage-ci-check-pattern.md`
+- `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/canonical-sister-extension-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/definition-of-done-and-armed-scout-verification.md`
 - `DESIGN_SPECS/meta-disciplines/sister-cohort-amendment-completeness-discipline.md`
@@ -2031,11 +2045,12 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/dev-vs-production-thread-topology-pattern.md`
 
-### doc-pipeline (6 files)
+### doc-pipeline (7 files)
 
 - `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md`
 - `DESIGN_SPECS/doc-disciplines/in-code-documentation-schema.md`
 - `DESIGN_SPECS/doc-disciplines/module-scoped-claude-md-pattern.md`
+- `DESIGN_SPECS/framework-patterns/doc-intelligence-toolchain-architecture.md`
 - `DESIGN_SPECS/meta-disciplines/sister-cohort-amendment-completeness-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/structural-enforcement-when-memory-insufficient.md`
 - `claude-skills/capture-audit/SKILL.md`
@@ -2656,12 +2671,13 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/native-tui-via-mmap-readonly-pattern.md`
 
-### test-infrastructure (8 files)
+### test-infrastructure (9 files)
 
 - `DESIGN_SPECS/audit-methodologies/audit-report-format.md`
 - `DESIGN_SPECS/data-disciplines/cpp17-inline-variable-for-header-shared-state.md`
 - `DESIGN_SPECS/doc-disciplines/in-code-documentation-schema.md`
 - `DESIGN_SPECS/framework-patterns/registry-coverage-ci-check-pattern.md`
+- `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/definition-of-done-and-armed-scout-verification.md`
 - `claude-skills/dead-code-trace/SKILL.md`
 - `claude-skills/strategy-template/SKILL.md`

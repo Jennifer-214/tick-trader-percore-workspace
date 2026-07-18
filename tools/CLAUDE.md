@@ -29,9 +29,12 @@ of ONE core**, so the grammar + facts exist in exactly one implementation.
   per-consumer, behind the gate, with a soak. **PASS ≠ cutover done; it means cutover is ALLOWED.**
 - **Every guard asserts its own non-vacuity (anti-Class-51).** Each checker carries a `--selftest` that
   PROVES it flags a planted known-bad AND passes a known-good. Canonical references: **ExecutionCore.hpp**
-  = a COMPLETE conversion (must scan clean) · **GateControlNetwork.hpp** = the lumped-unit half-conversion
-  (must be flagged) · **CODE_TAG_TEMPLATES.hpp** = the validator-green template corpus. A guard that can't
-  fail on a planted defect is vacuously-green.
+  = a COMPLETE conversion (must scan clean) · a **SYNTHETIC golden-broken fixture** (the completeness gate's
+  in-code `DemoLumped6` — a 6-field struct lumped in a `[FUNCTION]` block) = must be flagged; it is
+  corpus-independent BY DESIGN, so it survived the Phase-C cleanup that CONVERTED the original
+  `GateControlNetwork.hpp` exemplar (now the clean worked-template) · **CODE_TAG_TEMPLATES.hpp** = the
+  validator-green template corpus. A guard that can't fail on a planted defect is vacuously-green. Standing
+  calibration fixtures are SYNTHETIC/frozen — a live broken file gets fixed and stops being broken (D-362).
 - **Comments-only + lossless; MARK, never delete.** Conversions/cleanups change ZERO code bytes
   (`lossless.py`-gated — comment-stripped diff == git HEAD). A rotted/legacy/deletion-candidate UNIT gets
   a `[DEPRECATED]` / `[MARKED_FOR_DELETION]` marker (sister to `[OUTDATED_INFO]` for stale COMMENTS + the

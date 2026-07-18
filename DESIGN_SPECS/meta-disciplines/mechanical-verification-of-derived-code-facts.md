@@ -8,6 +8,8 @@ sister_specs:
   - meta-disciplines/structural-enforcement-when-memory-insufficient.md
   - data-disciplines/cache-line-discipline.md
   - audit-methodologies/static-latency-path-conformance-analysis.md
+  - meta-disciplines/calibration-corpus-non-vacuity-discipline.md
+  - framework-patterns/doc-intelligence-toolchain-architecture.md
 sister_docs:
   - DOCS/RECURRING_BUG_PATTERNS.md  # Class 51 (vacuously-green guard) + its inverse (false-RED)
 applications:
@@ -18,6 +20,7 @@ applications:
   - 'check_struct_size_budget.py false-RED of ExecutionCore (the guard reproducing the disease — the inverse)'
   - 'the LATENCY arm reshaped runtime-bench -> static instruction-budget conformance analyzer (D-233; check_latency_path_conformance.py) — a derived latency-fact reclassified from a runtime measurement to a STATIC proxy'
   - 'stale "// CMOV verified in bench" vs the actual `je` (16B Money has no x86 128-bit cmov; comment written pre-Ship-B) — a CODEGEN derived-fact comment trusted by a subagent over the disassembly; armed into SUBAGENT_ARMING §2.5 (2026-06-30)'
+  - 'check_cache_layout.py --fix refreshed 0 [DERIVED] for leaf ML structs — the EMITTER is bounded by its probe TU (main.cpp); empty != wrong, it is coverage (D-363; E.1.2.A)'
 ---
 
 # Mechanical verification of derived code-facts (no hand-computed fact without a guard)
@@ -45,6 +48,10 @@ Priority gradient (the engine's general law): **compile-time `static_assert` > C
 ## The INVERSE failure — don't over-correct into a false-RED
 
 A guard can *reproduce* the disease: `check_struct_size_budget.py`'s whole-struct-vs-L1d check **false-RED'd `ExecutionCore`** (66.8KB) — a *cache-disciplined* struct (hot cluster in cache line 0; the 64KB is an embedded `event_ring` **write-drain FIFO** with no residency requirement; cold fields deliberately tail-placed). A guard that cries wolf on correct code is the **inverse of the vacuously-green guard** (Class 51). **Fix:** a *static* guard FLAGS for review; the residency VERDICT is *dynamic*. Tier a struct by what it should **honestly** fit, and route the un-static-decidable part (hot-working-set ≤ L1d) to **measurement**, not a `sizeof` verdict.
+
+## Coverage-boundedness of the EMITTER — empty != wrong (D-363)
+
+The verify-side of this discipline (a guard that CHECKS a fact) has a producer twin: the **emitter** that WRITES the fact (`check_cache_layout.py --fix` materializing `[SIZE]`/`[ALIGN]` into a `[STRUCT]` block from `-fdump-record-layouts`). An emitter's coverage is **bounded by its probe TU**: a struct's fact is written ONLY if that struct is laid out in the probe translation unit. `--fix --tu main.cpp` refreshed **0** for a leaf struct (`RollingTurnover`, `TradingCosts`) that main.cpp never materializes, and for a template (`WelfordTracker<F>`) never instantiated at a concrete `F` (the `[INSTANTIATION]` axis, D-318). This is **coverage, not drift** — an empty `[DERIVED]` is *honestly absent*, not *wrongly stated* (unlike the ~1.5MB hand-comment, which asserts a false number). The gate MUST distinguish them: an ABSENT-because-uncovered fact is **advisory** (extend the emitter — the C4-advisory of `in-code-documentation-schema.md`), a PRESENT-but-drifted fact is a **hard fail**. Full emitter coverage = a dedicated all-headers probe TU (`#include` every header + instantiate templates at their real `F`), gated for its corpus-wide blast radius (a newly-surfaced cross-thread straddle is a genuine H6 finding, NOT auto-suppressed). See D-327 (WRITTEN-vs-LIVE-PREVIEW) + D-363.
 
 ## Why a guard, not memory (M7)
 

@@ -15,7 +15,7 @@ so the snapshot stales when tags/units actually change, not on unrelated line dr
 `rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a
 conversion).
 
-Converted files: 164 · unit blocks: 1060
+Converted files: 164 · unit blocks: 1074
 
 ## [TAG] values → files
 
@@ -254,6 +254,10 @@ Converted files: 164 · unit blocks: 1060
 - `CoreFrameworks/Portfolio.hpp`
 - `CoreFrameworks/Tick.hpp`
 - `FixedPoint/FixedPointN.hpp`
+
+### DEPRECATED (1 files)
+
+- `ML_Headers/ConfidenceScore.hpp`
 
 ### DETERMINISM (34 files)
 
@@ -1587,7 +1591,7 @@ Converted files: 164 · unit blocks: 1060
 - `FOREACH_TRADE_LOG_COL` — `CoreFrameworks/TradeLogColRegistry.hpp`
 - `PER_NODE_OVERRIDE_FIELDS` — `CoreFrameworks/ControllerConfig.hpp`
 
-### STRUCT (157)
+### STRUCT (171)
 
 - `AnsiBuf` — `DataStream/TUIAnsi.hpp`
 - `BacktestResults` — `Backtest/BacktestEngine.hpp`
@@ -1595,6 +1599,7 @@ Converted files: 164 · unit blocks: 1060
 - `BacktestStats` — `Backtest/BacktestEngine.hpp`
 - `BanditDisplayMeta` — `ML_Headers/BanditLearning.hpp`
 - `BanditState` — `ML_Headers/BanditLearning.hpp`
+- `BarrierGateResult` — `ML_Headers/BarrierGate.hpp`
 - `BinanceAdapterState` — `CoreFrameworks/BinanceAdapter.hpp`
 - `BinanceConfig` — `DataStream/BinanceCrypto.hpp`
 - `BinanceOrderAPI` — `DataStream/BinanceOrderAPI.hpp`
@@ -1612,6 +1617,7 @@ Converted files: 164 · unit blocks: 1060
 - `ChartState` — `GUI/ChartPanel.hpp`
 - `ComparisonState` — `Backtest/BacktestPanels.hpp`
 - `ConfidenceScorer` — `ML_Headers/ConfidenceScore.hpp`
+- `ConfidenceScorerLegacyV1` — `ML_Headers/ConfidenceScore.hpp`
 - `ControllerConfig` — `CoreFrameworks/ControllerConfig.hpp`
 - `CumDeltaState` — `Strategies/RegimeDetector.hpp`
 - `DataPanelState` — `Backtest/BacktestPanels.hpp`
@@ -1635,6 +1641,7 @@ Converted files: 164 · unit blocks: 1060
 - `FIX_ParsedMessage` — `DataStream/FauxFIX.hpp`
 - `FPN_Binary<64>` — `FixedPoint/FixedPointN.hpp`
 - `FeatureComputeCtx` — `ML_Headers/FeatureRegistry.hpp`
+- `FeatureLookback` — `ML_Headers/ModelInference.hpp`
 - `FeatureStandardizer` — `ML_Headers/FeatureStandardizer.hpp`
 - `FixedPoint<10,8>` — `FixedPoint/FixedPointN.hpp`
 - `FixedPoint<2,64>` — `FixedPoint/FixedPointN.hpp`
@@ -1701,18 +1708,26 @@ Converted files: 164 · unit blocks: 1060
 - `PositionEntryArgs` — `CoreFrameworks/Portfolio.hpp`
 - `PredictionRecord` — `ML_Headers/NodeModelZoo.hpp`
 - `PurgedSplit` — `Backtest/ValidationSplit.hpp`
+- `RORRegressor` — `ML_Headers/ROR_regressor.hpp`
 - `ReconcileOpenOrder` — `CoreFrameworks/Reconcile.hpp`
 - `ReconcileResult` — `CoreFrameworks/Reconcile.hpp`
 - `ReconcileTrade` — `CoreFrameworks/Reconcile.hpp`
 - `ReconciliationLoopState` — `CoreFrameworks/ReconciliationLoop.hpp`
 - `RegimeSignals` — `Strategies/RegimeDetector.hpp`
+- `RegressionFeederX` — `ML_Headers/LinearRegression3X.hpp`
+- `RewardRecord` — `ML_Headers/RewardTracker.hpp`
 - `RewardTracker` — `ML_Headers/RewardTracker.hpp`
 - `RidgeWeights` — `ML_Headers/RidgeBlender.hpp`
 - `RollingCapacity` — `ML_Headers/ConfidenceScore.hpp`
+- `RollingCapacity_LegacyV1` — `ML_Headers/ConfidenceScore.hpp`
 - `RollingFreshness` — `ML_Headers/ConfidenceScore.hpp`
+- `RollingFreshness_LegacyV1` — `ML_Headers/ConfidenceScore.hpp`
 - `RollingIC` — `ML_Headers/ConfidenceScore.hpp`
+- `RollingIC_LegacyV1` — `ML_Headers/ConfidenceScore.hpp`
 - `RollingRMSE` — `ML_Headers/ConfidenceScore.hpp`
+- `RollingRMSE_LegacyV1` — `ML_Headers/ConfidenceScore.hpp`
 - `RollingStats` — `ML_Headers/RollingStats.hpp`
+- `RollingTurnover` — `ML_Headers/RollingTurnover.hpp`
 - `RollingWindow` — `ML_Headers/ConfidenceScore.hpp`
 - `RunControlState` — `Backtest/BacktestPanels.hpp`
 - `SPSCRing` — `CoreFrameworks/SPSCRing.hpp`
@@ -1726,6 +1741,7 @@ Converted files: 164 · unit blocks: 1060
 - `SpreadState` — `ML_Headers/FlowFeatures.hpp`
 - `StampArgs` — `ML_Headers/StampHelper.hpp`
 - `StampInferenceCfgInputs` — `ML_Headers/ModelInference.hpp`
+- `StampWriteResult` — `ML_Headers/ModelInference.hpp`
 - `StrategyQualityAggregate` — `GUI/StrategyQualityPanel.hpp`
 - `StrategyQualityState` — `GUI/StrategyQualityPanel.hpp`
 - `SubmitCommand` — `CoreFrameworks/OrderManager.hpp`
@@ -1742,8 +1758,10 @@ Converted files: 164 · unit blocks: 1060
 - `TradeHistoryEntry` — `GUI/TradeHistoryPanel.hpp`
 - `TradeLog` — `DataStream/TradeLog.hpp`
 - `TradeLogBuffer` — `DataStream/TradeLog.hpp`
+- `TradingCosts` — `ML_Headers/CostModel.hpp`
 - `TrainingPanelState` — `Backtest/BacktestPanels.hpp`
 - `WalkForwardResults` — `Backtest/BacktestEngine.hpp`
+- `WelfordTracker` — `ML_Headers/WelfordStats.hpp`
 - `WsHeartbeatTelemetry` — `CoreFrameworks/ControllerEventLoop.hpp`
 - `XGBHyperparams` — `Backtest/XGBHyperparams.hpp`
 

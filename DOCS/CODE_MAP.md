@@ -4,7 +4,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-07-17 (commit 2b4a79b)
+**Last regenerated**: 2026-07-17 (commit e9a8ab8)
 
 ## CoreFrameworks/
 
@@ -408,11 +408,11 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### EmaCross.hpp
 
-- `EmaCross_Init` — line 34
-- `EmaCross_Adapt` — line 46
-- `EmaCross_BuySignal` — line 58
-- `EmaCross_ExitAdjust` — line 109
-- `EmaCross_ExitAdjustSharded` — line 187
+- `EmaCross_Init` — line 68
+- `EmaCross_Adapt` — line 83
+- `EmaCross_BuySignal` — line 101
+- `EmaCross_ExitAdjust` — line 163
+- `EmaCross_ExitAdjustSharded` — line 252
 
 ## DataStream/
 
@@ -570,29 +570,29 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### FixedPointN.hpp
 
-- `FPN_BlendOnMask` — line 511
-- `Money_Mul` — line 1583 — into the overflow mask -> saturate + flag (never garbage-as-value).
-- `Money_Div` — line 1607 — NEVER __udivti3 (constant 128-trip cmov loop).
-- `Money_Add` — line 1627 — integer ops with a closure clamp + S-17 flag). Branchless mask-select clamp by the result sign.
-- `Money_Add` — line 1635
-- `Money_FromString` — line 1791
-- `Money_FromBinary` — line 1833 — threshold would be a wrong gate — load-bearing, per the fold).
-- `Money_Zero` — line 1850 — lower to cmov (same shape as fp2_min/max); BlendOnMask mirrors the live <64> mask-select.
-- `Money_Negate` — line 1851
-- `Money_Abs` — line 1852
-- `Money_Min` — line 1853
-- `Money_Max` — line 1854
-- `Money_IsZero` — line 1855
-- `Money_Lt` — line 1856
-- `Money_Le` — line 1857
-- `Money_Eq` — line 1858
-- `Money_Gt` — line 1859
-- `Money_Ge` — line 1860
-- `Money_QuantizeToStep` — line 1867 — NEVER a plain wide divide (no __udivti3 on any path).
-- `Money_BlendOnMask` — line 1876
-- `Money_FromInt` — line 1881 — Money_FromInt: whole-unit int -> money (i*10^8), clamp+flag past the closure ceiling.
-- `Money_ToDouble` — line 1890 — Money_ToDouble — DISPLAY-ONLY (H4-exempt): GUI/diag/inf-bridge consumption. Never accounting.
-- `Money_ToCString` — line 1915 — quantize). Returns chars written (excl. NUL); 0 on insufficient cap (needs <= 32).
+- `FPN_BlendOnMask` — line 687
+- `Money_Mul` — line 1874
+- `Money_Div` — line 1915
+- `Money_Add` — line 1952 — integer ops with a closure clamp + S-17 flag). Branchless mask-select clamp by the result sign.
+- `Money_Add` — line 1960
+- `Money_FromString` — line 2124
+- `Money_FromBinary` — line 2205
+- `Money_Zero` — line 2234 — lower to cmov (same shape as fp2_min/max); BlendOnMask mirrors the live <64> mask-select.
+- `Money_Negate` — line 2235
+- `Money_Abs` — line 2236
+- `Money_Min` — line 2237
+- `Money_Max` — line 2238
+- `Money_IsZero` — line 2239
+- `Money_Lt` — line 2240
+- `Money_Le` — line 2241
+- `Money_Eq` — line 2242
+- `Money_Gt` — line 2243
+- `Money_Ge` — line 2244
+- `Money_QuantizeToStep` — line 2257
+- `Money_BlendOnMask` — line 2279 — NEVER a plain wide divide (no __udivti3 on any path).
+- `Money_FromInt` — line 2284 — Money_FromInt: whole-unit int -> money (i*10^8), clamp+flag past the closure ceiling.
+- `Money_ToDouble` — line 2293 — Money_ToDouble — DISPLAY-ONLY (H4-exempt): GUI/diag/inf-bridge consumption. Never accounting.
+- `Money_ToCString` — line 2358
 
 ## MemHeaders/
 
@@ -975,223 +975,223 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### CandleAccumulator.hpp
 
-- `CandleAccumulator_Init` — line 34
-- `CandleAccumulator_Push` — line 41 — called from engine thread on every tick
-- `CandleAccumulator_PushWithTime` — line 86 — instead of using wall-clock time(NULL)
-- `CandleAccumulator_Snapshot` — line 132
-- `CandleAccumulator_SetInterval` — line 157 — reset accumulator with new interval (clears all candle data)
-- `CandleAccumulator_Destroy` — line 168
+- `CandleAccumulator_Init` — line 86 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `CandleAccumulator_Push` — line 108 — called from engine thread on every tick
+- `CandleAccumulator_PushWithTime` — line 168 — instead of using wall-clock time(NULL)
+- `CandleAccumulator_Snapshot` — line 246 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `CandleAccumulator_SetInterval` — line 286 — reset accumulator with new interval (clears all candle data)
+- `CandleAccumulator_Destroy` — line 312
 
 ### ChartPanel.hpp
 
-- `ChartState_Prepare` — line 67
-- `GUI_PriceChart` — line 144
-- `GUI_VolumeChart` — line 1166 — VOLUME CHART — separate dockable window
-- `GUI_LivePnLChart` — line 1284 — LIVE P&L — streaming chart from pnl_history ring buffer
-- `GUI_EquityChart` — line 1344 — EQUITY CURVE — separate dockable window (only renders with trade data)
+- `ChartState_Prepare` — line 116 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `GUI_PriceChart` — line 222 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `GUI_VolumeChart` — line 1256
+- `GUI_LivePnLChart` — line 1386
+- `GUI_EquityChart` — line 1458
 
 ### DashboardPanels.hpp
 
-- `GUI_R2Bar` — line 28 — slope_dir: positive slope → green, negative → red, near zero → neutral
-- `GUI_Panel_Header` — line 71 — PANEL: HEADER — fox kaomoji, version, state, uptime, session
-- `GUI_Panel_TopBar` — line 196 — PANEL: TOP BAR — key metrics at a glance
-- `GUI_Panel_Market` — line 233 — PANEL: MARKET (merged Market Structure + Regime Signals)
-- `GUI_Panel_BuyGate` — line 439 — PANEL: BUY GATE
-- `GUI_Panel_Account` — line 891 — PANEL: ACCOUNT (merged Portfolio + P&L + Risk)
-- `GUI_Panel_Config` — line 1130 — PANEL: CONFIG
-- `GUI_Panel_Positions` — line 1178 — PANEL: POSITIONS — proper table with aligned columns
-- `GUI_Panel_PerNodePnL` — line 1461 — Pure GUI thread, doesn't touch engine state.
-- `GUI_Panel_Stats` — line 1557 — PANEL: STATS
-- `GUI_Panel_Latency` — line 1647 — PANEL: LATENCY (conditional on LATENCY_PROFILING)
-- `GUI_Panel_MLIntelligence` — line 1703 — PANEL: ML INTELLIGENCE — bandit arms, confidence, cost, model info
-- `GUI_RenderDashboard` — line 1888
+- `GUI_R2Bar` — line 61 — slope_dir: positive slope → green, negative → red, near zero → neutral
+- `GUI_Panel_Header` — line 146
+- `GUI_Panel_TopBar` — line 283
+- `GUI_Panel_Market` — line 332
+- `GUI_Panel_BuyGate` — line 550
+- `GUI_Panel_Account` — line 1014
+- `GUI_Panel_Config` — line 1265
+- `GUI_Panel_Positions` — line 1325
+- `GUI_Panel_PerNodePnL` — line 1619 — Pure GUI thread, doesn't touch engine state.
+- `GUI_Panel_Stats` — line 1727
+- `GUI_Panel_Latency` — line 1829
+- `GUI_Panel_MLIntelligence` — line 1894
+- `GUI_RenderDashboard` — line 2094
 
 ### EngineHeaderPanel.hpp
 
-- `EngineHeader_Render` — line 38 — nullptr (legacy callers), only the 3 build-time fields render.
+- `EngineHeader_Render` — line 36 — nullptr (legacy callers), only the 3 build-time fields render.
 
 ### FoxmlTheme.hpp
 
-- `Foxml_ApplyTheme` — line 45
+- `Foxml_ApplyTheme` — line 63
 
 ### GuiThread.hpp
 
-- `Gui_Init` — line 85 — GUI INIT
-- `Gui_Shutdown` — line 222 — GUI SHUTDOWN
-- `Gui_BeginFrame` — line 235 — GUI FRAME
-- `Gui_EndFrame` — line 259
-- `Gui_SetupDefaultLayout` — line 274 — chart 60% left, dashboard panels stacked 40% right
-- `Gui_HandleKeys` — line 324 — GUI KEYBOARD — same controls as ANSI TUI
+- `Gui_Init` — line 134 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `Gui_Shutdown` — line 282
+- `Gui_BeginFrame` — line 306
+- `Gui_EndFrame` — line 330
+- `Gui_SetupDefaultLayout` — line 355
+- `Gui_HandleKeys` — line 416
 
 ### LogViewerPanel.hpp
 
-- `LogViewer_Init` — line 22
-- `LogViewer_Refresh` — line 28
-- `GUI_Panel_LogViewer` — line 57
+- `LogViewer_Init` — line 57 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `LogViewer_Refresh` — line 78
+- `GUI_Panel_LogViewer` — line 122
 
 ### MLStatusPanel.hpp
 
-- `MLStatus_Render` — line 38 — nullptr; the row is rendered only when a swap is actually pending.
+- `MLStatus_Render` — line 36 — nullptr; the row is rendered only when a swap is actually pending.
 
 ### SettingsPanel.hpp
 
-- `Settings_RescanModels` — line 803 — stays free of opendir/stat (per /readiness check 17 hardening).
-- `Settings_Init` — line 861 — so Settings_Load knows where to read.
-- `Settings_Load` — line 871
-- `Settings_RenderGlobalTab` — line 1019 — GLOBAL TAB — renders the auto-generated field_defs[] layout
-- `Settings_RenderPerCoreTab` — line 1249
-- `GUI_Panel_Settings` — line 1683 — running cores, not cfg-only intent — engine doesn't add/remove cores live.
+- `Settings_RescanModels` — line 929 — stays free of opendir/stat (per /readiness check 17 hardening).
+- `Settings_Init` — line 1017 — so Settings_Load knows where to read.
+- `Settings_Load` — line 1042
+- `Settings_RenderGlobalTab` — line 1232
+- `Settings_RenderPerCoreTab` — line 1504
+- `GUI_Panel_Settings` — line 1950 — running cores, not cfg-only intent — engine doesn't add/remove cores live.
 
 ### StrategyQualityPanel.hpp
 
-- `StrategyQuality_Init` — line 60 — log path is passed at render time via GUI_Panel_StrategyQuality).
-- `StrategyQuality_Refresh` — line 160
-- `GUI_Panel_StrategyQuality` — line 237
+- `StrategyQuality_Init` — line 94 — log path is passed at render time via GUI_Panel_StrategyQuality).
+- `StrategyQuality_Refresh` — line 239
+- `GUI_Panel_StrategyQuality` — line 331
 
 ### TradeHistoryPanel.hpp
 
-- `TradeHistory_Init` — line 35
-- `TradeHistory_Refresh` — line 40
-- `GUI_Panel_TradeHistory` — line 172
+- `TradeHistory_Init` — line 87 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `TradeHistory_Refresh` — line 107
+- `GUI_Panel_TradeHistory` — line 254
 
 ### TradeReader.hpp
 
-- `TradeData_Init` — line 39
-- `TradeData_Refresh` — line 76
+- `TradeData_Init` — line 74 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `TradeData_Refresh` — line 141
 
 ## Backtest/
 
 ### BacktestEngine.hpp
 
-- `BacktestData_DetectFormat` — line 61 — timestamp_us,price,quantity,is_buyer_maker
-- `BacktestData_Load` — line 68
-- `HistoricalTick_CmpByTime` — line 141 — Caller in STRICT mode should treat -1 as "abort run".
-- `BacktestData_ValidateSort` — line 149
-- `BacktestResults_Init` — line 275
-- `BacktestResults_Free` — line 287
-- `BacktestResults_Reset` — line 315 — against zero capacity (defense-in-depth) but this is the load-bearing fix.
-- `BacktestResults_EnsureCapacity` — line 338 — grow sample buffers by 2x when full
-- `BacktestResults_EnsureEquityCapacity` — line 365 — array, so silent truncation produces wrong Sharpe / max DD / return.
-- `XGBoost_ComputeScalePosWeight` — line 398 — (0.0 = negative, 1.0 = positive, 0.5 = neutral and already filtered).
-- `XGBoost_ComputeMulticlassWeights` — line 430 — receives per-class sample counts so caller can log them.
-- `BacktestStats_Compute` — line 466 — fabs() inconsistency + 2-site max_drawdown reimplementation.
-- `BacktestStats_ComputeFromEquity` — line 499 — sharpe — needs equity curve data too
-- `BacktestSharded_Run` — line 537
-- `Backtest_ComputeLabelsFromSamples` — line 585 — through samples; no per-file O(N) sample scans.
-- `Backtest_Run` — line 845 — equity curve).
-- `HeldOutSplit_TrainEval` — line 966 — helper has visibility into WalkForward_Compute* and XGBoost_Compute* funcs.
-- `Backtest_RunWalkForward` — line 1050 — behavior bytewise.
-- `Backtest_RunFullValidation` — line 1059
-- `WalkForward_ComputeAccuracy` — line 1267 — uses > 0.5f for truth so neutral (0.5) labels are never counted as positive
-- `WalkForward_ComputeMulticlassAccuracy` — line 1314 — argmax over each row, compare to integer truth (rounded from label float).
-- `WalkForward_ComputeMSE` — line 1333 — regression: mean squared error. Lower = better. Sensitive to outliers.
-- `WalkForward_ComputeCorrelation` — line 1349 — gets low MSE on small-magnitude targets while having zero predictive power).
-- `Backtest_RunWalkForward` — line 1373
-- `HeldOutSplit_TrainEval` — line 1995 — functions it uses (WalkForward_Compute*, XGBoost_Compute*) are visible.
-- `ConfigField_Set` — line 2240 — handles both FPN_Binary and PCT fields (PCT keys are stored as decimal, value comes in as %).
-- `Backtest_RunSweep` — line 2344
-- `Backtest_RunHyperparamTrainSweep` — line 2452 — mean_val_correlation (regression). Stored as positive number; higher = better.
+- `BacktestData_DetectFormat` — line 80 — timestamp_us,price,quantity,is_buyer_maker
+- `BacktestData_Load` — line 87
+- `HistoricalTick_CmpByTime` — line 171 — Caller in STRICT mode should treat -1 as "abort run".
+- `BacktestData_ValidateSort` — line 179
+- `BacktestResults_Init` — line 345
+- `BacktestResults_Free` — line 357
+- `BacktestResults_Reset` — line 385 — against zero capacity (defense-in-depth) but this is the load-bearing fix.
+- `BacktestResults_EnsureCapacity` — line 408 — grow sample buffers by 2x when full
+- `BacktestResults_EnsureEquityCapacity` — line 435 — array, so silent truncation produces wrong Sharpe / max DD / return.
+- `XGBoost_ComputeScalePosWeight` — line 467 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `XGBoost_ComputeMulticlassWeights` — line 499 — receives per-class sample counts so caller can log them.
+- `BacktestStats_Compute` — line 556 — (0.0 = negative, 1.0 = positive, 0.5 = neutral and already filtered).
+- `BacktestStats_ComputeFromEquity` — line 600
+- `BacktestSharded_Run` — line 643
+- `Backtest_ComputeLabelsFromSamples` — line 698 — through samples; no per-file O(N) sample scans.
+- `Backtest_Run` — line 969 — equity curve).
+- `HeldOutSplit_TrainEval` — line 1122 — helper has visibility into WalkForward_Compute* and XGBoost_Compute* funcs.
+- `Backtest_RunWalkForward` — line 1221 — behavior bytewise.
+- `Backtest_RunFullValidation` — line 1239
+- `WalkForward_ComputeAccuracy` — line 1462 — uses > 0.5f for truth so neutral (0.5) labels are never counted as positive
+- `WalkForward_ComputeMulticlassAccuracy` — line 1509 — argmax over each row, compare to integer truth (rounded from label float).
+- `WalkForward_ComputeMSE` — line 1528 — regression: mean squared error. Lower = better. Sensitive to outliers.
+- `WalkForward_ComputeCorrelation` — line 1544 — gets low MSE on small-magnitude targets while having zero predictive power).
+- `Backtest_RunWalkForward` — line 1582
+- `HeldOutSplit_TrainEval` — line 2216 — functions it uses (WalkForward_Compute*, XGBoost_Compute*) are visible.
+- `ConfigField_Set` — line 2472 — handles both FPN_Binary and PCT fields (PCT keys are stored as decimal, value comes in as %).
+- `Backtest_RunSweep` — line 2603 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `Backtest_RunHyperparamTrainSweep` — line 2722 — mean_val_correlation (regression). Stored as positive number; higher = better.
 
 ### BacktestPanels.hpp
 
-- `DataPanel_Init` — line 52
-- `DataPanel_Scan` — line 57
-- `RunControl_Init` — line 158
-- `SamplesSnapshot_Compute` — line 169 — only when running==0, giving a safe happens-before relationship.
-- `RunControl_Start` — line 335
-- `GUI_Panel_DataBrowser` — line 375
-- `GUI_Panel_RunControl` — line 474
-- `GUI_Panel_Results` — line 523
-- `PastRuns_Init` — line 733
-- `PastRuns_LoadOne` — line 773 — scan one run directory's metadata files
-- `PastRuns_DeleteDir` — line 875
-- `PastRun_ParseHorizon` — line 886 — out_horizon_ticks = 0).
-- `PastRuns_ScanOneDir` — line 925
-- `PastRuns_Scan` — line 947
-- `PastRun_MetricLabel` — line 1017 — label-type-aware metric label
-- `GUI_Panel_PastRuns` — line 1027 — Pass NULL to keep pre-v5.11.57 behavior (devmode-only).
-- `Comparison_Init` — line 1900
-- `Comparison_Free` — line 1904
-- `Comparison_SaveRun` — line 1911
-- `GUI_Panel_Comparison` — line 1952
-- `OptimizerPanel_Init` — line 2102
-- `GUI_Panel_Optimizer` — line 2140
-- `TrainingPanel_Init` — line 2550
-- `GUI_Panel_Training` — line 4164
+- `DataPanel_Init` — line 81 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `DataPanel_Scan` — line 101
+- `RunControl_Init` — line 245 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `SamplesSnapshot_Compute` — line 271 — only when running==0, giving a safe happens-before relationship.
+- `RunControl_Start` — line 482
+- `GUI_Panel_DataBrowser` — line 534
+- `GUI_Panel_RunControl` — line 645
+- `GUI_Panel_Results` — line 721
+- `PastRuns_Init` — line 994 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `PastRuns_LoadOne` — line 1064 — scan one run directory's metadata files
+- `PastRuns_DeleteDir` — line 1196
+- `PastRun_ParseHorizon` — line 1222 — out_horizon_ticks = 0).
+- `PastRuns_ScanOneDir` — line 1276
+- `PastRuns_Scan` — line 1313
+- `PastRun_MetricLabel` — line 1398 — label-type-aware metric label
+- `GUI_Panel_PastRuns` — line 1423 — Pass NULL to keep pre-v5.11.57 behavior (devmode-only).
+- `Comparison_Init` — line 2311
+- `Comparison_Free` — line 2330
+- `Comparison_SaveRun` — line 2352
+- `GUI_Panel_Comparison` — line 2405
+- `OptimizerPanel_Init` — line 2584 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `GUI_Panel_Optimizer` — line 2649
+- `TrainingPanel_Init` — line 3088 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `GUI_Panel_Training` — line 4819
 
 ### BacktestSharded.hpp
 
 - `SharedBacktest_FromHistorical` — line 81
-- `BacktestSharded_Run` — line 105 — aggregates results.
+- `BacktestSharded_Run` — line 113
 
 ### BacktestSnapshot.hpp
 
-- `BacktestSnapshot_Copy` — line 20
+- `BacktestSnapshot_Copy` — line 35
 
 ### Fingerprint.hpp
 
-- `SHA256_Init` — line 78
-- `SHA256_Update` — line 85
-- `SHA256_Final` — line 103
-- `SHA256_ToHex` — line 125 — convenience: hash to hex string (65 bytes including null terminator)
-- `Fingerprint_HashFile` — line 140 — streams file through SHA256 in 64KB chunks — handles multi-GB files.
-- `Fingerprint_Compute` — line 174
-- `Fingerprint_Short` — line 203 — short fingerprint (first 12 hex chars) for display
+- `SHA256_Init` — line 93
+- `SHA256_Update` — line 100
+- `SHA256_Final` — line 118
+- `SHA256_ToHex` — line 140 — convenience: hash to hex string (65 bytes including null terminator)
+- `Fingerprint_HashFile` — line 165
+- `Fingerprint_Compute` — line 210
+- `Fingerprint_Short` — line 239 — short fingerprint (first 12 hex chars) for display
 
 ### HeldOutSplit.hpp
 
-- `HeldOutSplit_GenToken` — line 77 — non-reproducible by construction. Removed.
-- `HeldOutSplit_Make` — line 92
-- `HeldOutSplit_TestAccessAllowed` — line 125
-- `HeldOutSplit_Unlock` — line 132 — Logs unlock event to stderr — caller can also Notify_Send for audit trail.
-- `HeldOutSplit_Relock` — line 154 — not _Relock.
+- `HeldOutSplit_GenToken` — line 109 — non-reproducible by construction. Removed.
+- `HeldOutSplit_Make` — line 137
+- `HeldOutSplit_TestAccessAllowed` — line 172 — refuse-if-locked checks).
+- `HeldOutSplit_Unlock` — line 178 — Logs unlock event to stderr — caller can also Notify_Send for audit trail.
+- `HeldOutSplit_Relock` — line 200 — not _Relock.
 
 ### LabelFunctions.hpp
 
-- `Label_WinLoss` — line 79 — no trade was entered at that point.
-- `Label_Barrier` — line 100 — same as win/loss but with configurable asymmetric barriers.
-- `Label_ForwardPnl` — line 118 — useful for regression (predict magnitude, not just direction).
-- `Label_Regime` — line 135 — useful for training a regime classifier model.
-- `Label_VolBarrier` — line 158 — source: ~/FoxML/private/DATA_PROCESSING/targets/barrier.py
-- `LabelType_NumClasses` — line 431 — ≥2 = multiclass softmax       (label values 0..K-1 as floats)
-- `LabelType_IsBinary` — line 436
-- `LabelType_IsRegression` — line 440
-- `LabelType_IsMulticlass` — line 444
+- `Label_WinLoss` — line 108 — no trade was entered at that point.
+- `Label_Barrier` — line 130 — same as win/loss but with configurable asymmetric barriers.
+- `Label_ForwardPnl` — line 149 — useful for regression (predict magnitude, not just direction).
+- `Label_Regime` — line 170 — MILD_TREND (4) exceeds num_class=4; tracked as TECH_DEBT-241.
+- `Label_VolBarrier` — line 194 — source: ~/FoxML/private/DATA_PROCESSING/targets/barrier.py
+- `LabelType_NumClasses` — line 469 — ≥2 = multiclass softmax       (label values 0..K-1 as floats)
+- `LabelType_IsBinary` — line 474
+- `LabelType_IsRegression` — line 478
+- `LabelType_IsMulticlass` — line 482
 
 ### OverfitDetection.hpp
 
-- `OverfitDetection_CheckDefaults` — line 136 — convenience: check with default FoxML thresholds
-- `OverfitDetection_CountOverfit` — line 225 — returns: number of folds flagged as overfit
-- `OverfitDetection_Print` — line 236 — print report (for logging / debugging)
+- `OverfitDetection_CheckDefaults` — line 154 — convenience: check with default FoxML thresholds
+- `OverfitDetection_CountOverfit` — line 268 — returns: number of folds flagged as overfit
+- `OverfitDetection_Print` — line 279 — print report (for logging / debugging)
 
 ### PhaseTimers.hpp
 
-- `PhaseTimer_Global` — line 48 — header inline-only (no separate .cpp).
-- `PhaseTimer_Reset` — line 59
-- `PhaseTimer_Summary` — line 75 — wf_eval / held_out_eval since it's nested inside both.
-- `PhaseTimer_PopulateSnapshot` — line 117
+- `PhaseTimer_Global` — line 85 — header inline-only (no separate .cpp).
+- `PhaseTimer_Reset` — line 96
+- `PhaseTimer_Summary` — line 112 — wf_eval / held_out_eval since it's nested inside both.
+- `PhaseTimer_PopulateSnapshot` — line 166
 
 ### ValidationSplit.hpp
 
-- `PurgeGap_Compute` — line 66 — first test tick to prevent any form of temporal leakage.
-- `PurgeGap_ComputeExplicit` — line 73 — overload: caller provides explicit max_lookback (for testing or custom feature sets)
-- `ValidationSplit_Generate` — line 126 — returns: number of valid folds generated (may be < n_splits if early folds skipped)
-- `ValidationSplit_GenerateExplicit` — line 230 — used by walk-forward when splitting in non-neutral sample space where raw lookback doesn't apply
-- `ValidationSplit_Verify` — line 296 — returns 1 if all folds are clean, 0 if leakage detected
-- `ValidationSplit_Print` — line 317 — print fold summary (for logging / debugging)
+- `PurgeGap_Compute` — line 83 — first test tick to prevent any form of temporal leakage.
+- `PurgeGap_ComputeExplicit` — line 90 — overload: caller provides explicit max_lookback (for testing or custom feature sets)
+- `ValidationSplit_Generate` — line 147 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `ValidationSplit_GenerateExplicit` — line 251 — used by walk-forward when splitting in non-neutral sample space where raw lookback doesn't apply
+- `ValidationSplit_Verify` — line 315 — production leakage guard; this standalone form is available for tests)
+- `ValidationSplit_Print` — line 336 — print fold summary (for logging / debugging)
 
 ### XGBHyperparams.hpp
 
-- `XGBHyperparams_Defaults` — line 52 — modify the returned struct in-place.
-- `XGBHyperparams_Apply` — line 62 — use 1 (deterministic per-fold output). Caller chooses.
+- `XGBHyperparams_Defaults` — line 91 — modify the returned struct in-place.
+- `XGBHyperparams_Apply` — line 102 — WF/HeldOut/full-validation; both default 4, boot-only). Caller chooses.
 
 ---
 
 ## Top-level files
 
 - `main.cpp` — 225 lines
-- `Version.hpp` — 1141 lines
-- `Limits.hpp` — 30 lines
+- `Version.hpp` — 1148 lines
+- `Limits.hpp` — 37 lines
 
 ## Conventions
 

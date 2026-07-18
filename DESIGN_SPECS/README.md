@@ -2,7 +2,7 @@
 
 **Auto-generated** by `tools/rebuild_doc_indexes.py`. Regenerate after adding/moving specs.
 
-Total: 184 specs across 15 types.
+Total: 186 specs across 15 types.
 
 Per-type catalog grouped by lifecycle stage. Cross-ref:
 - `doc-frontmatter-convention.md` (frontmatter schema)
@@ -39,7 +39,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/refactor-patterns/template-deferred-dependency-injection.md` | 3-first-canonical | framework-discipline, structural-fix | 3 |
 | `DESIGN_SPECS/refactor-patterns/transient-aggregation-bitmap-pattern.md` | 3-first-canonical | data-oriented-design, branchless-discipline | 4 |
 
-## framework-pattern (70 specs)
+## framework-pattern (71 specs)
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
@@ -60,6 +60,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/framework-patterns/curve-registry-pattern.md` | 3-first-canonical | framework-discipline, branchless-discipline | 3 |
 | `DESIGN_SPECS/framework-patterns/dev-vs-production-thread-topology-pattern.md` | 3-first-canonical | framework-discipline, thread-topology, dev-mode, +3 | 0 |
 | `DESIGN_SPECS/framework-patterns/display-execution-invariant-registry-pattern.md` | 3-first-canonical | framework-discipline, structural-fix | 3 |
+| `DESIGN_SPECS/framework-patterns/doc-intelligence-toolchain-architecture.md` | 3-first-canonical | framework-discipline, ssot, doc-discipline, +1 | 4 |
 | `DESIGN_SPECS/framework-patterns/dual-axis-y3-dispatch-pattern.md` | 3-first-canonical | framework-discipline, branchless-discipline | 3 |
 | `DESIGN_SPECS/framework-patterns/dual-format-metrics-publication-pattern.md` | 3-first-canonical | framework-discipline, metrics-publication, mmap, +2 | 0 |
 | `DESIGN_SPECS/framework-patterns/dynamic-library-strategy-loading-pattern.md` | 3-first-canonical | framework-discipline, dlopen, abi-versioning, +1 | 0 |
@@ -193,7 +194,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/doc-disciplines/in-code-documentation-schema.md` | 3-first-canonical | doc-discipline, meta-discipline, ssot, +1 | 6 |
 | `DESIGN_SPECS/doc-disciplines/module-scoped-claude-md-pattern.md` | 2-draft | doc-discipline, framework-discipline, context-aware-loading | 2 |
 
-## meta-discipline (31 specs)
+## meta-discipline (32 specs)
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
@@ -202,6 +203,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/meta-disciplines/backtest-paper-live-convergence-discipline.md` | 3-first-canonical | meta-discipline, strategy-lifecycle, backtest-to-live, +1 | 0 |
 | `DESIGN_SPECS/meta-disciplines/backwards-compat-not-default-concern.md` | 3-first-canonical | meta-discipline, backwards-compat, breaking-changes, +2 | 0 |
 | `DESIGN_SPECS/meta-disciplines/body-content-enumeration-at-plan-time-discipline.md` | 3-first-canonical | meta-discipline, plan-template, framework-discipline, +1 | 0 |
+| `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md` | 2-draft | audit-methodology, verification, structural-enforcement, +2 | 3 |
 | `DESIGN_SPECS/meta-disciplines/canonical-sister-extension-discipline.md` | 3-first-canonical | meta-discipline, framework-discipline, pattern-codification, +2 | 5 |
 | `DESIGN_SPECS/meta-disciplines/dead-code-and-identifier-retirement-discipline.md` | 5-claude-md | meta-discipline, structural-fix, framework-discipline, +1 | 4 |
 | `DESIGN_SPECS/meta-disciplines/definition-of-done-and-armed-scout-verification.md` | 3-first-canonical | audit-methodology, meta-discipline, session-continuity, +2 | 0 |

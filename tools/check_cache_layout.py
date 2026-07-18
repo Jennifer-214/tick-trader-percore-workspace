@@ -31,8 +31,9 @@ import argparse
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).absolute().parent))
-from check_code_tag_blocks import _line_tokens, TAG_LINE_RE  # noqa: E402  (one grammar, reused)
-from check_doc_metadata import ENGINE                        # noqa: E402  (path SSoT)
+from check_code_tag_blocks import (_line_tokens, TAG_LINE_RE,       # noqa: E402  (one grammar, reused)
+                                   validate_file, load_categories)  # (selftest round-trip: writer output re-parses clean)
+from check_doc_metadata import ENGINE, load_vocabulary             # noqa: E402  (path SSoT + [TAG] vocab)
 
 EMITTER = Path(__file__).absolute().parent / "emit_record_layout.lua"
 
@@ -127,15 +128,51 @@ def gate_struct(struct, layout_rec):
 
 
 # --- REFRESH (the 4th verb — write the LAYOUT DERIVED tags from truth; the D-319 refresh-writer) ---
+_LAYOUT_AXES = ("SIZE", "ALIGN", "CACHE_LINES", "STRADDLE")   # canonical order (schema § STRUCT [DERIVED] axis-set)
+
+
 def _fmt_straddle(straddlers):
     return "none" if not straddlers else " · ".join(f"{s['name']}@{s['off']}" for s in straddlers)
 
 
+def _axis_value(cat, rec):
+    """The WRITTEN value for one layout axis from a matched emitter record (the D-327 WRITTEN set —
+    Itanium-ABI-fixed; NEVER the volatile codegen quartet instr/SIMD/BRANCHES)."""
+    return {
+        "SIZE": f"{rec['size']}B",
+        "ALIGN": str(rec.get("align", "")),
+        "CACHE_LINES": str(-(-rec["size"] // 64)),          # ceil(size / 64)
+        "STRADDLE": _fmt_straddle(rec.get("straddlers")),
+    }[cat]
+
+
 def refresh_derived(text, layout):
-    """Rewrite each converted [STRUCT] block's LAYOUT DERIVED tags — `[SIZE]`/`[ALIGN]`/
-    `[CACHE_LINES]`/`[STRADDLE]` — to match the real layout. PURE (unit-testable with mock layout);
-    only the DERIVED (tool-owned) tags are touched, never curated ones. Returns (new_text, n_changed)."""
-    lines, cur, changed = text.split("\n"), None, 0
+    """REWRITE-or-INSERT each covered [STRUCT] block's LAYOUT DERIVED tags — `[SIZE]`/`[ALIGN]`/
+    `[CACHE_LINES]`/`[STRADDLE]` — to match the real layout.
+      - A tag ALREADY present in the block's `[DERIVED]` is REWRITTEN in place (the original behavior).
+      - A tag ABSENT from it is INSERTED (canonical order) right under the `[DERIVED]` line — so an
+        EMPTY `[DERIVED]` gets FILLED, not silently skipped (the D-363 reason `--fix` used to fill 0).
+    IDEMPOTENT: once inserted an axis is present, so a 2nd run rewrites-in-place = a no-op (guards the
+    FPN non-idempotent-`--apply` class — .E.0.8 postmortem). PURE (unit-testable with mock layout).
+    Only the DERIVED (tool-owned) COMMENT tags are touched — NEVER a curated tag, NEVER a code line
+    (H21/H12: layout is reported; fields are never reordered). COVERAGE-BOUNDED (D-363): a struct
+    absent from `layout` has cur=None → neither rewritten nor inserted (never writes empty/garbage
+    facts for an un-probed struct — that stays a C4 emitter-coverage gap, not a wrong fact).
+    Returns (new_text, n_changed)."""
+    lines, changed = text.split("\n"), 0
+    cur = None                       # matched layout rec for the open [STRUCT], else None (coverage gate)
+    d_anchor, d_lead, seen = None, "", set()   # open block's [DERIVED] line idx / its indent / axes present
+    inserts = []                     # (anchor_idx, [new_lines]); applied AFTER the walk, bottom-up (index-stable)
+
+    def _close_block():
+        """Queue the missing-axis inserts for the [DERIVED] block we're leaving."""
+        nonlocal changed
+        if cur is not None and d_anchor is not None:
+            missing = [a for a in _LAYOUT_AXES if a not in seen]
+            if missing:
+                inserts.append((d_anchor, [f"{d_lead}// [{a}]_[{_axis_value(a, cur)}]" for a in missing]))
+                changed += len(missing)
+
     for i, raw in enumerate(lines):
         m = TAG_LINE_RE.match(raw)
         if not m:
@@ -145,20 +182,24 @@ def refresh_derived(text, layout):
             continue
         cat = toks[0]
         if cat == "STRUCT" and len(toks) > 1:
-            cur = match_layout(toks[1], layout)
+            _close_block()                                   # defensive (a well-formed block closes at END_STRUCT)
+            cur, d_anchor, seen = match_layout(toks[1], layout), None, set()
         elif cat.startswith("END_STRUCT"):
-            cur = None
-        elif cur is not None and cat in ("SIZE", "ALIGN", "CACHE_LINES", "STRADDLE"):
-            val = {
-                "SIZE": f"{cur['size']}B",
-                "ALIGN": str(cur.get("align", "")),
-                "CACHE_LINES": str(-(-cur["size"] // 64)),          # ceil(size / 64)
-                "STRADDLE": _fmt_straddle(cur.get("straddlers")),
-            }[cat]
-            new = re.sub(r"(\[" + cat + r"\]_\[)[^\]]*(\])", r"\g<1>" + val + r"\g<2>", raw, count=1)
+            _close_block()
+            cur, d_anchor, seen = None, None, set()
+        elif cur is not None and cat == "DERIVED":
+            d_anchor, d_lead, seen = i, raw[:len(raw) - len(raw.lstrip())], set()   # anchor + match its indent
+        elif cur is not None and d_anchor is not None and cat in _LAYOUT_AXES:
+            seen.add(cat)                                    # present → rewrite in place (idempotent no-op if equal)
+            new = re.sub(r"(\[" + cat + r"\]_\[)[^\]]*(\])",
+                         r"\g<1>" + _axis_value(cat, cur) + r"\g<2>", raw, count=1)
             if new != raw:
                 lines[i] = new
                 changed += 1
+    _close_block()                                           # EOF safety (malformed / missing END_STRUCT)
+
+    for anchor_idx, new_lines in sorted(inserts, reverse=True):   # bottom-up so earlier indices stay valid
+        lines[anchor_idx + 1:anchor_idx + 1] = new_lines
     return "\n".join(lines), changed
 
 
@@ -188,12 +229,44 @@ def run_selftest():
         hit = (expect is None and not v) or (expect is not None and any(x["kind"] == expect for x in v))
         print(f"  {'✅' if hit else '❌'} {label}: {len(v)} violation(s)")
         ok = ok and hit
-    # refresh: a block with stale [SIZE]/[STRADDLE] → rewritten to the mock truth (the 4th verb)
-    fixture = ("// [SCHEMA]_[v1]\n// [STRUCT]_[X]\n// [SIZE]_[999B]\n// [STRADDLE]_[bogus]\n"
-               "// [END_STRUCT]_[X]\n")
-    new, n = refresh_derived(fixture, {"X": {"size": 64, "align": 64, "straddlers": []}})
-    r_ok = "[SIZE]_[64B]" in new and "[STRADDLE]_[none]" in new and n == 2
-    print(f"  {'✅' if r_ok else '❌'} refresh: stale [SIZE]/[STRADDLE] rewritten to truth ({n} tag(s) changed)")
+    # refresh (the 4th verb): calibration corpus for the REWRITE + INSERT paths (golden-broken →
+    # must change; golden-complete → must be a no-op). Non-vacuity per calibration-corpus-discipline.
+    import tempfile, os
+    mock = {"X": {"size": 64, "align": 64, "straddlers": []}}   # ceil(64/64)=1 cache line; no straddle
+    # (a) REWRITE — a COMPLETE [DERIVED] with STALE values → all 4 corrected IN PLACE, 0 inserted
+    #     (each axis stays single — proves rewrite doesn't duplicate a present tag)
+    rewrite_fx = ("// [SCHEMA]_[v1]\n// [STRUCT]_[X]\n// [DERIVED]\n"
+                  "// [SIZE]_[999B]\n// [ALIGN]_[8]\n// [CACHE_LINES]_[9]\n// [STRADDLE]_[bogus]\n"
+                  "// [END_STRUCT]_[X]\n")
+    rw, n_rw = refresh_derived(rewrite_fx, mock)
+    rw_ok = (n_rw == 4 and "[SIZE]_[64B]" in rw and "[ALIGN]_[64]" in rw
+             and "[CACHE_LINES]_[1]" in rw and "[STRADDLE]_[none]" in rw
+             and rw.count("[SIZE]_[") == 1 and rw.count("[STRADDLE]_[") == 1)
+    # (b) INSERT — an EMPTY [DERIVED] gets the full quartet inserted (the D-363 fill-0 fix)
+    empty_fx = "// [SCHEMA]_[v1]\n// [STRUCT]_[X]\n// [DERIVED]\n// [END_STRUCT]_[X]\n"
+    ins, n_ins = refresh_derived(empty_fx, mock)
+    ins_ok = (n_ins == 4 and "[SIZE]_[64B]" in ins and "[ALIGN]_[64]" in ins
+              and "[CACHE_LINES]_[1]" in ins and "[STRADDLE]_[none]" in ins)
+    # (c) IDEMPOTENCY — a 2nd --fix on the filled output is a NO-OP (the FPN non-idempotent-apply guard)
+    ins2, n_ins2 = refresh_derived(ins, mock)
+    idem_ok = (n_ins2 == 0 and ins2 == ins)
+    # (d) COVERAGE-BOUNDEDNESS (D-363) — a struct ABSENT from layout is neither rewritten nor filled
+    absent, n_absent = refresh_derived(empty_fx, {"OTHER": {"size": 32, "align": 8, "straddlers": []}})
+    cov_ok = (n_absent == 0 and absent == empty_fx)
+    # (e) ROUND-TRIP — the writer's output must re-parse CLEAN through the validator (no malformed grammar
+    #     silently emitted into the corpus — the one-producer-N-consumers correctness gate)
+    cats = load_categories()
+    cv, sv = load_vocabulary()
+    fd, p = tempfile.mkstemp(suffix=".hpp"); os.write(fd, ins.encode()); os.close(fd)
+    rt_viols = validate_file(p, cats, cv, sv)[0] if cats else ["categories unloadable"]
+    os.unlink(p)
+    rt_ok = not rt_viols
+    r_ok = rw_ok and ins_ok and idem_ok and cov_ok and rt_ok
+    print(f"  {'✅' if rw_ok else '❌'} refresh REWRITE: stale [SIZE]/[STRADDLE] → truth ({n_rw} changed)")
+    print(f"  {'✅' if ins_ok else '❌'} refresh INSERT: empty [DERIVED] → quartet filled ({n_ins} inserted)")
+    print(f"  {'✅' if idem_ok else '❌'} refresh IDEMPOTENT: 2nd --fix is a no-op ({n_ins2} changed)")
+    print(f"  {'✅' if cov_ok else '❌'} refresh COVERAGE-BOUND: un-probed struct untouched ({n_absent} changed)")
+    print(f"  {'✅' if rt_ok else '❌'} refresh ROUND-TRIP: inserted quartet re-parses clean ({len(rt_viols)} violation(s))")
     return ok and r_ok
 
 

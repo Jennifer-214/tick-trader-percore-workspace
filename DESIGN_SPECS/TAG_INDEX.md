@@ -250,8 +250,9 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/hierarchical-config-with-per-node-folders.md`
 
-### ci-tooling (3 files)
+### ci-tooling (4 files)
 
+- `DESIGN_SPECS/framework-patterns/isolated-per-struct-layout-probe.md`
 - `DESIGN_SPECS/meta-disciplines/struct-change-cascade-impact-tooling.md`
 - `DESIGN_SPECS/refactor-patterns/rename-cascade-enumeration-tooling.md`
 - `DESIGN_SPECS/refactor-patterns/rename-ship-methodology.md`
@@ -462,7 +463,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/dynamic-library-strategy-loading-pattern.md`
 - `DESIGN_SPECS/framework-patterns/strategy-hot-reload-via-dlopen-pattern.md`
 
-### doc-discipline (53 files)
+### doc-discipline (54 files)
 
 - `DESIGN_SPECS/audit-methodologies/audit-report-format.md`
 - `DESIGN_SPECS/doc-disciplines/categorical-triggers-in-always-loaded-docs.md`
@@ -473,6 +474,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/doc-disciplines/module-scoped-claude-md-pattern.md`
 - `DESIGN_SPECS/framework-patterns/doc-intelligence-toolchain-architecture.md`
 - `DESIGN_SPECS/framework-patterns/framework-composition-overview.md`
+- `DESIGN_SPECS/framework-patterns/isolated-per-struct-layout-probe.md`
 - `DESIGN_SPECS/ledger-templates/ledger-entry-templates.md`
 - `DESIGN_SPECS/meta-disciplines/body-content-enumeration-at-plan-time-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md`
@@ -622,7 +624,7 @@ This file is a snapshot for static browsing.
 
 - `memory/feedback_forward_decl_at_global_scope_not_namespace.md`
 
-### framework-discipline (142 files)
+### framework-discipline (143 files)
 
 - `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md`
 - `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md`
@@ -671,6 +673,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/hierarchical-config-with-per-node-folders.md`
 - `DESIGN_SPECS/framework-patterns/hybrid-reconciliation-cadence-pattern.md`
 - `DESIGN_SPECS/framework-patterns/ibkr-fa-structure-pattern.md`
+- `DESIGN_SPECS/framework-patterns/isolated-per-struct-layout-probe.md`
 - `DESIGN_SPECS/framework-patterns/kernel-vs-userspace-networking-cfg-pattern.md`
 - `DESIGN_SPECS/framework-patterns/kill-switch-hierarchical-pattern.md`
 - `DESIGN_SPECS/framework-patterns/manual-fields-inventory-pattern.md`
@@ -1558,7 +1561,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/mechanical-verification-of-derived-code-facts.md`
 
-### structural-fix (101 files)
+### structural-fix (102 files)
 
 - `DESIGN_SPECS/audit-methodologies/static-latency-path-conformance-analysis.md`
 - `DESIGN_SPECS/concurrency-patterns/phase-separated-drainer-for-safe-cross-temporal-derives.md`
@@ -1579,6 +1582,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/config-compiler-validation-pattern.md`
 - `DESIGN_SPECS/framework-patterns/display-execution-invariant-registry-pattern.md`
 - `DESIGN_SPECS/framework-patterns/doc-intelligence-toolchain-architecture.md`
+- `DESIGN_SPECS/framework-patterns/isolated-per-struct-layout-probe.md`
 - `DESIGN_SPECS/framework-patterns/manual-fields-inventory-pattern.md`
 - `DESIGN_SPECS/framework-patterns/meta-registry-pattern-for-codebase-registry-discipline.md`
 - `DESIGN_SPECS/framework-patterns/metadata-bit-driven-derived-filter-framework.md`
@@ -1986,13 +1990,14 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/runtime-mutable-vs-boot-time-config-pattern.md`
 
-### ci-tooling (18 files)
+### ci-tooling (19 files)
 
 - `DESIGN_SPECS/audit-methodologies/audit-report-format.md`
 - `DESIGN_SPECS/audit-methodologies/static-latency-path-conformance-analysis.md`
 - `DESIGN_SPECS/doc-disciplines/in-code-documentation-schema.md`
 - `DESIGN_SPECS/feature-patterns/runtime-toggleable-bench-gate-pattern.md`
 - `DESIGN_SPECS/framework-patterns/doc-intelligence-toolchain-architecture.md`
+- `DESIGN_SPECS/framework-patterns/isolated-per-struct-layout-probe.md`
 - `DESIGN_SPECS/framework-patterns/meta-registry-pattern-for-codebase-registry-discipline.md`
 - `DESIGN_SPECS/framework-patterns/registry-coverage-ci-check-pattern.md`
 - `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md`
@@ -2047,12 +2052,13 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/dev-vs-production-thread-topology-pattern.md`
 
-### doc-pipeline (7 files)
+### doc-pipeline (8 files)
 
 - `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md`
 - `DESIGN_SPECS/doc-disciplines/in-code-documentation-schema.md`
 - `DESIGN_SPECS/doc-disciplines/module-scoped-claude-md-pattern.md`
 - `DESIGN_SPECS/framework-patterns/doc-intelligence-toolchain-architecture.md`
+- `DESIGN_SPECS/framework-patterns/isolated-per-struct-layout-probe.md`
 - `DESIGN_SPECS/meta-disciplines/sister-cohort-amendment-completeness-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/structural-enforcement-when-memory-insufficient.md`
 - `claude-skills/capture-audit/SKILL.md`

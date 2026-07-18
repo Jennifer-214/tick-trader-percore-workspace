@@ -2,7 +2,7 @@
 
 **Auto-generated** by `tools/rebuild_doc_indexes.py`. Regenerate after adding/moving specs.
 
-Total: 186 specs across 15 types.
+Total: 187 specs across 15 types.
 
 Per-type catalog grouped by lifecycle stage. Cross-ref:
 - `doc-frontmatter-convention.md` (frontmatter schema)
@@ -39,7 +39,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/refactor-patterns/template-deferred-dependency-injection.md` | 3-first-canonical | framework-discipline, structural-fix | 3 |
 | `DESIGN_SPECS/refactor-patterns/transient-aggregation-bitmap-pattern.md` | 3-first-canonical | data-oriented-design, branchless-discipline | 4 |
 
-## framework-pattern (71 specs)
+## framework-pattern (72 specs)
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
@@ -78,6 +78,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/framework-patterns/hierarchical-config-with-per-node-folders.md` | 3-first-canonical | framework-discipline, hierarchical-config, per-node-folders, +1 | 0 |
 | `DESIGN_SPECS/framework-patterns/hybrid-reconciliation-cadence-pattern.md` | 2-draft | framework-discipline, reconciliation, hybrid-cadence | 0 |
 | `DESIGN_SPECS/framework-patterns/ibkr-fa-structure-pattern.md` | 2-draft | framework-discipline, ibkr, financial-advisor, +1 | 0 |
+| `DESIGN_SPECS/framework-patterns/isolated-per-struct-layout-probe.md` | 3-first-canonical | framework-discipline, doc-discipline, ci-tooling, +1 | 4 |
 | `DESIGN_SPECS/framework-patterns/kernel-vs-userspace-networking-cfg-pattern.md` | 2-draft | framework-discipline, networking-stack, cfg-driven, +1 | 0 |
 | `DESIGN_SPECS/framework-patterns/kill-switch-hierarchical-pattern.md` | 3-first-canonical | framework-discipline, kill-switch, safety, +2 | 0 |
 | `DESIGN_SPECS/framework-patterns/manual-fields-inventory-pattern.md` | 3-first-canonical | framework-discipline, structural-fix, pattern-codification | 4 |

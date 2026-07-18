@@ -28,6 +28,15 @@ of ONE core**, so the grammar + facts exist in exactly one implementation.
   set `:27` + `[DERIVED]`-axis render `:63-92`, zero `foxtag` calls), so a new unit-type / DERIVED axis
   needs a manual plugin edit until it consumes `foxtag grammar`/`foxtag unit` (D-349) or a `parity_check.sh`
   plugin section guards it. → `doc-intelligence-toolchain-architecture.md` § grammar-propagation (D-365).
+- **PLANE is a first-class discipline-gate; this toolchain self-hosts (D-367).** `[ENGINE]`/`[DATA_PLANE]`/
+  `[MONITORING_PLANE]`/`[DEV_PLANE]` are a first-class GATING axis (path-derived value, a `FOREACH_PLANE`
+  registry of `{constraints · valid [TAG] vocab · [DERIVED] axis-set}`). This toolchain is `[DEV_PLANE]` —
+  functionality-over-latency; the engine H1–H22 / straddle-gate / register-fit do NOT apply here, but the
+  toolchain still earns ENGINE-grade rigor because it's one-producer-N-consumers (a wrong fact fans out).
+  Going-forward: the toolchain SELF-HOSTS — foxtag C++ tagged (same `//`), the Python checkers (`#`) + Lua
+  plugin (`--`) after the multi-comment-syntax parser lands. DEV_PLANE `[DERIVED]` is pipeline-reality
+  (grammar-fences-read / parity-status / call-graph), never the engine's compiled-reality axes.
+  → `doc-intelligence-toolchain-architecture.md` § plane-first-class (D-367).
 - **Migration contract (D-349) — Python is CI-AUTHORITATIVE until a gated cutover.** The Python tools
   (`check_code_tag_blocks` / `check_cache_layout` / `check_conversion_completeness` / `rebuild_doc_indexes`)
   are authoritative. No consumer cuts over to foxtag until `tools/foxtag/parity_check.sh` PASSES for it —

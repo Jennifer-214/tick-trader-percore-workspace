@@ -241,6 +241,20 @@ overlays/asm half-broken (phase 5, operator's session).
 4. **Rework the plugin** UX (cursor-track / drawer / collapsed / context-gate / popout).
 5. **Convert** the codebase (mechanical, byte-identical) — *only now* is it truly mechanical.
 
+## 8.5 · Planes are first-class + the toolchain self-hosts (D-367, 2026-07-18)
+
+A late-breaking design commitment that reshapes the substrate: the `[TAG]` plane values
+(`[ENGINE]`/`[DATA_PLANE]`/`[MONITORING_PLANE]`/`[DEV_PLANE]`) become a **first-class,
+discipline-GATING axis** — each plane a distinct constraint profile (engine = H1–H22 + latency;
+toolchain/dev-plane = functionality-not-latency; monitoring = engine-like-minus-hot-path) — via a
+**`FOREACH_PLANE` registry** (`{constraints · valid [TAG] vocab · [DERIVED] axis-set}`, path-derived
+value, structural gating). The **skeleton stays universal**; the **vocabulary is plane-scoped** — and the
+`[DERIVED]` axes are a *different kind* per plane (engine = compiled-reality size/straddle/asm; toolchain =
+pipeline-reality grammar-fences/parity/call-graph). This is what lets **the toolchain self-host in its own
+system** (a **multi-comment-syntax parser** — `//`/`#`/`--` — is the V1 enabler; foxtag C++ is free). The
+toolchain earns ENGINE-grade rigor precisely because it's one-producer-N-consumers — a wrong fact fans out
+to every consumer. → `doc-intelligence-toolchain-architecture.md` § plane-first-class; decision log D-367.
+
 ## 9. Non-goals / boundaries
 
 - **Not** a substitute for the engine/edge work — this is the toolchain we build *in*.

@@ -6,7 +6,7 @@ locked: 2026-07-14
 established: 2026-07-05
 tags: [doc-discipline, meta-discipline, ssot, structural-fix]
 surface: [ci-tooling, doc-pipeline, test-infrastructure]
-sister_specs: [in-code-doc-system-north-star.md, format-input-space-taxonomy.md, doc-tag-vocabulary.md, categorical-tag-applicability-pattern.md, mechanical-verification-of-derived-code-facts.md, file-size-split-discipline.md]
+sister_specs: [in-code-doc-system-north-star.md, format-input-space-taxonomy.md, doc-tag-vocabulary.md, categorical-tag-applicability-pattern.md, mechanical-verification-of-derived-code-facts.md, doc-intelligence-toolchain-architecture.md, file-size-split-discipline.md]
 applies_at_skills: []
 ---
 

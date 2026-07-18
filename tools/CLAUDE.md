@@ -85,3 +85,7 @@ file AND cross-link it here.
 - The engine invariants (H1–H22) do NOT govern here (dev-plane) — but the tools **enforce** them in the
   engine. Root `CLAUDE.md` § "How to find anything" indexes the doc system; the schema SSoT + the sprint
   plan carry the full grammar + roadmap.
+- The toolchain's architectural thesis (one-parser-N-consumers · grammar-derived · the D-349 migration
+  contract) is codified at `DESIGN_SPECS/framework-patterns/doc-intelligence-toolchain-architecture.md`;
+  the every-guard-asserts-non-vacuity discipline at
+  `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md`.

@@ -267,7 +267,79 @@ def run_selftest():
     print(f"  {'✅' if idem_ok else '❌'} refresh IDEMPOTENT: 2nd --fix is a no-op ({n_ins2} changed)")
     print(f"  {'✅' if cov_ok else '❌'} refresh COVERAGE-BOUND: un-probed struct untouched ({n_absent} changed)")
     print(f"  {'✅' if rt_ok else '❌'} refresh ROUND-TRIP: inserted quartet re-parses clean ({len(rt_viols)} violation(s))")
+    # --- (f) ISOLATE helpers (D-363 step-2): the probe-source generator + template detection (PURE) ---
+    iso_src = _isolate_probe_source("Backtest/LabelFunctions.hpp",
+                                    [{"name": "Plain", "is_template": False},
+                                     {"name": "Tmpl", "is_template": True}])
+    iso_ok = ('#include "Backtest/LabelFunctions.hpp"' in iso_src and "using namespace tt;" in iso_src
+              and "#include <cmath>" in iso_src and "sizeof(Plain)]" in iso_src
+              and "sizeof(Tmpl<64>)]" in iso_src)               # non-template bare · template at F=64
+    fd, tp = tempfile.mkstemp(suffix=".hpp")
+    os.write(fd, b"namespace tt {\ntemplate<unsigned F> struct Tmpl { int x; };\nstruct Plain { int y; };\n}\n")
+    os.close(fd)
+    tmpl_ok = bool(_struct_is_template(tp, "Tmpl")) and not _struct_is_template(tp, "Plain")
+    os.unlink(tp)
+    r_ok = r_ok and iso_ok and tmpl_ok
+    print(f"  {'✅' if iso_ok else '❌'} isolate probe-source: prelude + using-tt + sizeof(Plain)/sizeof(Tmpl<64>)")
+    print(f"  {'✅' if tmpl_ok else '❌'} isolate template-detect: Tmpl=template · Plain=not")
     return ok and r_ok
+
+
+# --- ISOLATE (D-363 step-2): materialize EVERY converted [STRUCT] via per-header sizeof-forcing probes.
+#     `main.cpp` only lays out the structs it USES/instantiates; an isolated per-header TU with a `sizeof`
+#     forcer per struct lays them ALL out — 1:1 with the binary by ABI determinism (D-321). `using namespace
+#     tt;` resolves global AND tt:: names uniformly; templates instantiate at F=64 (extra params ride
+#     defaults). Reuses run_emitter (one producer, D-337). ---
+_ISOLATE_PRELUDE = "#include <cmath>\n#include <cstdint>\n#include <cstddef>\n"
+
+
+def _struct_is_template(path, name):
+    """True if `name`'s C++ decl in `path` is a template (needs <64> args to be sizeof-able)."""
+    try:
+        text = Path(path).read_text(encoding="utf-8", errors="replace")
+    except (IOError, OSError):
+        return False
+    return bool(re.search(r"template\s*<[^;{]*>\s*(?:inline\s+)?(?:struct|class)\s+"
+                          + re.escape(name) + r"\b", text))
+
+
+def _isolate_probe_source(rel_header, structs):
+    """The per-header isolated TU: prelude (RC-B std-dep hygiene) + the header + `using namespace tt;`
+    + one `sizeof`-forcer per [STRUCT] (templates at F=64). sizeof forces layout with no ctor needed."""
+    out = [_ISOLATE_PRELUDE, f'#include "{rel_header}"', "using namespace tt;"]
+    for i, s in enumerate(structs):
+        qual = f"{s['name']}<64>" if s.get("is_template") else s["name"]
+        out.append(f"char _fox_probe_{i}[sizeof({qual})];")
+    out.append("int main() { return 0; }")
+    return "\n".join(out) + "\n"
+
+
+def isolate_layouts(files, backend="auto"):
+    """Materialize every converted [STRUCT] via per-header isolated sizeof-forcing probes (D-363 step-2) —
+    covers the structs main.cpp under-instantiates. Returns the merged {record: {size, align, straddlers}}.
+    The probe TU lives at the engine root (quoted includes + the compile_commands symlink resolve there;
+    flags fall back to main.cpp's via flags_for db[1])."""
+    by_header, eng = {}, ENGINE.resolve()
+    for f in files:
+        p = Path(f)
+        if not p.exists():
+            continue
+        try:
+            rel = str(p.resolve().relative_to(eng))
+        except ValueError:
+            continue                                    # outside the engine tree (schema_golden etc.) — skip
+        for b in parse_struct_blocks(f):
+            b["is_template"] = _struct_is_template(f, b["name"])
+            by_header.setdefault(rel, []).append(b)
+    merged, probe = {}, ENGINE / "_fox_isolate_probe.cpp"
+    try:
+        for rel_header, structs in sorted(by_header.items()):
+            probe.write_text(_isolate_probe_source(rel_header, structs), encoding="utf-8")
+            merged.update(run_emitter(str(probe), [s["name"] for s in structs], backend=backend) or {})
+    finally:
+        if probe.exists():
+            probe.unlink()
+    return merged
 
 
 def main():
@@ -281,6 +353,9 @@ def main():
     ap.add_argument("--fix", action="store_true",
                     help="REFRESH mode — write the real [SIZE]/[ALIGN]/[CACHE_LINES]/[STRADDLE] into the blocks "
                          "(the tool-owned DERIVED tags only; NEVER reorders fields — H21/H12)")
+    ap.add_argument("--isolate", action="store_true",
+                    help="materialize EVERY converted [STRUCT] via per-header sizeof-forcing probes "
+                         "(D-363 step-2: covers structs main.cpp under-instantiates), instead of --tu")
     args = ap.parse_args()
 
     if args.selftest:
@@ -305,7 +380,8 @@ def main():
         print("No converted [STRUCT] blocks found — cache-layout gate inert (mixed-state OK).")
         return 0
 
-    layout = run_emitter(args.tu, [b["name"] for b in blocks], backend=args.backend)
+    layout = (isolate_layouts(files, backend=args.backend) if args.isolate
+              else run_emitter(args.tu, [b["name"] for b in blocks], backend=args.backend))
     if not layout:
         # Emitter needs nvim + clang + a compile TU. Advisory (not a hard-fail) so a deps-less CI env
         # isn't blocked — but LOUD (never a silent vacuous pass). TECH_DEBT-231 (shared flag path).

@@ -110,6 +110,7 @@ That table is the whole per-type surface. Adding a unit type = one row here (whi
 | `FOREACH_*` X-macro registry | **YES — `[REGISTRY]` shape** | row-count = DERIVED; MetaRegistry enrollment = `[REFERENCE]`; the wire/section it drives = `[TAG]` |
 | File (a `.hpp`/`.cpp` header) | **YES — `[FILE]` shape** | a data-flow `[DIAGRAM]` + the file's role; the "sub-file" TOC anchor |
 | Trivial struct (≤3 POD fields) / one-liner / obvious getter | **NO** — terse inline only | proportionality: ceremony on the trivial is its own sprawl |
+| **Function-LOCAL struct** (declared inside a function's body braces) | **NO** — EXEMPT (D-364) | a stack impl-detail, NOT a navigable unit — the tag-browser lists real structures + cursor-track resolves to the enclosing fn. DISTINCT from a namespace-scope struct merely SITED under a mega `[FUNCTION]` block (`RegressionFeederX`, the GCN structs — brace-depth 0), which DOES get a block. `check_conversion_completeness.py` enforces (brace-depth test). |
 
 **Granularity:** one block per unit (struct / function / registry / file). Individual struct fields get OPTIONAL terse inline tags (`// hot read`, `// [H12_PAD]`), never prose. Nested types get their own block if non-trivial.
 

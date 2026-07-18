@@ -191,7 +191,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 |---|---|---|---|
 | `DESIGN_SPECS/doc-disciplines/categorical-triggers-in-always-loaded-docs.md` | 2-draft | doc-discipline, framework-discipline, structural-fix, +1 | 6 |
 | `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md` | 3-first-canonical | doc-discipline, structural-fix, pattern-codification, +1 | 6 |
-| `DESIGN_SPECS/doc-disciplines/in-code-documentation-schema.md` | 3-first-canonical | doc-discipline, meta-discipline, ssot, +1 | 6 |
+| `DESIGN_SPECS/doc-disciplines/in-code-documentation-schema.md` | 3-first-canonical | doc-discipline, meta-discipline, ssot, +1 | 7 |
 | `DESIGN_SPECS/doc-disciplines/module-scoped-claude-md-pattern.md` | 2-draft | doc-discipline, framework-discipline, context-aware-loading | 2 |
 
 ## meta-discipline (32 specs)

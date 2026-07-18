@@ -22,7 +22,12 @@ of ONE core**, so the grammar + facts exist in exactly one implementation.
   capability = a foxtag producer/command consumed by all — not a private re-parse.
 - **Grammar DERIVED, never hardcoded.** The category set + reference-subcats are read from the schema's
   ```-fences at runtime; the `[TAG]` vocab from `doc-tag-vocabulary.md`. Fold a fence/vocab row → every
-  tool tracks it, **zero code edits**. NEVER hardcode the grammar into a tool.
+  tool tracks it, **zero code edits**. NEVER hardcode the grammar into a tool. `foxtag grammar` emits the
+  fence-derived grammar as data — the seam a consumer reads instead of hardcoding. **Watch-point:** the
+  nvim plugin is NOT yet fence-derived — `tag_grammar_adapter.lua` is a native-Lua mirror (hardcoded `UNIT`
+  set `:27` + `[DERIVED]`-axis render `:63-92`, zero `foxtag` calls), so a new unit-type / DERIVED axis
+  needs a manual plugin edit until it consumes `foxtag grammar`/`foxtag unit` (D-349) or a `parity_check.sh`
+  plugin section guards it. → `doc-intelligence-toolchain-architecture.md` § grammar-propagation (D-365).
 - **Migration contract (D-349) — Python is CI-AUTHORITATIVE until a gated cutover.** The Python tools
   (`check_code_tag_blocks` / `check_cache_layout` / `check_conversion_completeness` / `rebuild_doc_indexes`)
   are authoritative. No consumer cuts over to foxtag until `tools/foxtag/parity_check.sh` PASSES for it —

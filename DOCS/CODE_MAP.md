@@ -4,7 +4,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-07-17 (commit e9a8ab8)
+**Last regenerated**: 2026-07-18 (commit c36e96b)
 
 ## CoreFrameworks/
 
@@ -22,13 +22,13 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### ControllerConfig.hpp
 
-- `ControllerConfig_CapitalRangeSweep` — line 1479
-- `Fee_Compute` — line 1608
-- `ControllerConfig_ResolveForCore` — line 1661
-- `ControllerConfig_PopulateCoresFromFlat` — line 1724
-- `ControllerConfig_NormalizeForMode` — line 2311
-- `ControllerConfig_IsLiveCapital` — line 2345
-- `ControllerConfig_Load` — line 2387
+- `ControllerConfig_CapitalRangeSweep` — line 1496
+- `Fee_Compute` — line 1625
+- `ControllerConfig_ResolveForCore` — line 1678
+- `ControllerConfig_PopulateCoresFromFlat` — line 1741
+- `ControllerConfig_NormalizeForMode` — line 2328
+- `ControllerConfig_IsLiveCapital` — line 2362
+- `ControllerConfig_Load` — line 2404
 
 ### ControllerEventLoop.hpp
 
@@ -130,7 +130,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### ModelValidation.hpp
 
-- `NodeModelZoo_ValidateAgainstCfg` — line 131
+- `NodeModelZoo_ValidateAgainstCfg` — line 147
 
 ### NodeLatencyStats.hpp
 
@@ -165,12 +165,12 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `OrderEventLog_LoadFromDisk` — line 771
 - `OrderEvent_MakeFill` — line 877
 - `OrderEvent_MakeRejection` — line 915
-- `Portfolio_FromEventLog` — line 954
+- `Portfolio_FromEventLog` — line 970
 
 ### OrderGates.hpp
 
-- `Gate_Zero` — line 91
-- `Gate_ZeroAll` — line 98
+- `Gate_Zero` — line 107
+- `Gate_ZeroAll` — line 114
 
 ### Order.hpp
 
@@ -195,20 +195,20 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### OrderManager.hpp
 
-- `OrderManager_Init` — line 938
-- `OMS_PushSubmit` — line 1232
-- `OMS_DrainSubmit` — line 1283
-- `OrderManager_AccountMakerTakerFee` — line 1323
-- `OMS_GuardTakerBoundFeeBasis` — line 1365
-- `OrderManager_HandleFill` — line 1568
-- `OrderManager_ProcessFillCommand` — line 1637
-- `OMS_OpenPositionCost` — line 1760
-- `OMS_ExpectedFreeCash` — line 1799
-- `OrderManager_ProcessReconcile` — line 1843
-- `OrderManager_Tick` — line 1890
-- `OrderManager_Shutdown` — line 1937
-- `OrderManager_OpenCalibrationLog` — line 1962
-- `OrderManager_InflightCount` — line 2022
+- `OrderManager_Init` — line 956
+- `OMS_PushSubmit` — line 1250
+- `OMS_DrainSubmit` — line 1301
+- `OrderManager_AccountMakerTakerFee` — line 1341
+- `OMS_GuardTakerBoundFeeBasis` — line 1383
+- `OrderManager_HandleFill` — line 1586
+- `OrderManager_ProcessFillCommand` — line 1655
+- `OMS_OpenPositionCost` — line 1778
+- `OMS_ExpectedFreeCash` — line 1817
+- `OrderManager_ProcessReconcile` — line 1861
+- `OrderManager_Tick` — line 1908
+- `OrderManager_Shutdown` — line 1955
+- `OrderManager_OpenCalibrationLog` — line 1980
+- `OrderManager_InflightCount` — line 2040
 
 ### PaperResetArchive.hpp
 
@@ -225,32 +225,32 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### PortfolioController.hpp
 
-- `PortfolioController_Init` — line 322
-- `KillSwitch_Activate` — line 580
-- `KillSwitch_Reset` — line 594
-- `Buying_Halt` — line 603
-- `PortfolioController_DrainExits` — line 810
-- `PortfolioController_StrategyBuySignal` — line 853
-- `PortfolioController_StrategyDispatch` — line 944
-- `PortfolioController_Tick` — line 999
-- `PortfolioController_Unpause` — line 2021
-- `PortfolioController_CycleRegime` — line 2032
-- `PortfolioController_HotReload` — line 2058
-- `PortfolioController_SaveSnapshot` — line 2142
-- `PortfolioController_LoadSnapshot` — line 2217
+- `PortfolioController_Init` — line 354
+- `KillSwitch_Activate` — line 612
+- `KillSwitch_Reset` — line 626
+- `Buying_Halt` — line 635
+- `PortfolioController_DrainExits` — line 842
+- `PortfolioController_StrategyBuySignal` — line 885
+- `PortfolioController_StrategyDispatch` — line 976
+- `PortfolioController_Tick` — line 1031
+- `PortfolioController_Unpause` — line 2053
+- `PortfolioController_CycleRegime` — line 2064
+- `PortfolioController_HotReload` — line 2090
+- `PortfolioController_SaveSnapshot` — line 2174
+- `PortfolioController_LoadSnapshot` — line 2249
 
 ### Portfolio.hpp
 
-- `ExitBuffer_PendingProceeds` — line 285
-- `Portfolio_AddPositionWithExits` — line 394
-- `Portfolio_OpenSlot` — line 520
-- `Portfolio_OpenSlot` — line 563
-- `Money_FillGross` — line 588
-- `Portfolio_CloseSlot` — line 615
-- `Portfolio_SlotActive` — line 628
-- `Portfolio_UpdatePosition` — line 638
-- `Portfolio_Save` — line 797
-- `Portfolio_Load` — line 851
+- `ExitBuffer_PendingProceeds` — line 301
+- `Portfolio_AddPositionWithExits` — line 410
+- `Portfolio_OpenSlot` — line 536
+- `Portfolio_OpenSlot` — line 579
+- `Money_FillGross` — line 604
+- `Portfolio_CloseSlot` — line 631
+- `Portfolio_SlotActive` — line 644
+- `Portfolio_UpdatePosition` — line 654
+- `Portfolio_Save` — line 813
+- `Portfolio_Load` — line 867
 
 ### Reconcile.hpp
 
@@ -484,19 +484,19 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `TUI_Render` — line 230
 - `TUI_HandleInput` — line 622
 - `MLSnapshot_Populate` — line 765
-- `TUISnapshot_InitSeq` — line 1498 — populated" state) — this only initializes the sequence counter.
-- `TUISnapshot_Publish_Begin` — line 1513 — the new active.
-- `TUISnapshot_Publish_End` — line 1529 — Any subsequent reader sees the just-filled buffer as active.
-- `TUISnapshot_ReadInto` — line 1541 — effectively never observed.
-- `TUI_CopySnapshot` — line 1579
-- `TUI_CopySnapshot` — line 1585
-- `TUI_CopySnapshot` — line 1592
-- `TUI_PopulatePerCoreLatency` — line 1870
-- `TUI_PopulatePerCoreSlowPathLatency` — line 1917
-- `TUI_PopulateAdvancedTopology` — line 1955
-- `TUI_PopulateTopology` — line 1999 — poll_interval[i]    — per-core resolved poll cadence
-- `TUI_Render_Snapshot` — line 2056 — both dependencies are available.
-- `TUI_ReadKey` — line 2267
+- `TUISnapshot_InitSeq` — line 1514 — populated" state) — this only initializes the sequence counter.
+- `TUISnapshot_Publish_Begin` — line 1529 — the new active.
+- `TUISnapshot_Publish_End` — line 1545 — Any subsequent reader sees the just-filled buffer as active.
+- `TUISnapshot_ReadInto` — line 1557 — effectively never observed.
+- `TUI_CopySnapshot` — line 1595
+- `TUI_CopySnapshot` — line 1601
+- `TUI_CopySnapshot` — line 1608
+- `TUI_PopulatePerCoreLatency` — line 1886
+- `TUI_PopulatePerCoreSlowPathLatency` — line 1933
+- `TUI_PopulateAdvancedTopology` — line 1971
+- `TUI_PopulateTopology` — line 2015 — poll_interval[i]    — per-core resolved poll cadence
+- `TUI_Render_Snapshot` — line 2072 — both dependencies are available.
+- `TUI_ReadKey` — line 2283
 
 ### FauxFIX.hpp
 
@@ -517,9 +517,9 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `MockRNG_Seed` — line 44
 - `MockRNG_Double` — line 55 — returns a double in [0.0, 1.0)
 - `MockRNG_Range` — line 60 — returns a double in [lo, hi)
-- `MockGenerator_Init` — line 96
-- `MockGenerator_NextTick` — line 119 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
-- `MockGenerator_Batch` — line 149 — buf is scratch space for building FIX messages (reused each tick)
+- `MockGenerator_Init` — line 113
+- `MockGenerator_NextTick` — line 136 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `MockGenerator_Batch` — line 166 — buf is scratch space for building FIX messages (reused each tick)
 
 ### TickRecorder.hpp
 
@@ -533,14 +533,14 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### TradeLog.hpp
 
-- `TradeLog_Init` — line 100 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
-- `TradeLog_Buy` — line 133
-- `TradeLog_Sell` — line 146
-- `TradeLog_Close` — line 158
-- `TradeLogBuffer_Init` — line 210 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
-- `TradeLogBuffer_PushBuy` — line 216 — hot path: push a record to the ring buffer (~10ns, no file I/O)
-- `TradeLogBuffer_PushSell` — line 235
-- `TradeLogBuffer_Drain` — line 257 — slow path: drain all buffered records to the CSV file
+- `TradeLog_Init` — line 116 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `TradeLog_Buy` — line 149
+- `TradeLog_Sell` — line 162
+- `TradeLog_Close` — line 174
+- `TradeLogBuffer_Init` — line 226 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `TradeLogBuffer_PushBuy` — line 232 — hot path: push a record to the ring buffer (~10ns, no file I/O)
+- `TradeLogBuffer_PushSell` — line 251
+- `TradeLogBuffer_Drain` — line 273 — slow path: drain all buffered records to the CSV file
 
 ### TUIAnsi.hpp
 
@@ -646,7 +646,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### RunHistory.hpp
 
-- `RunHistory_Append` — line 92 — defense-in-depth for the HMAC/stamp-adjacent byte-equivalence path.)
+- `RunHistory_Append` — line 109 — defense-in-depth for the HMAC/stamp-adjacent byte-equivalence path.)
 
 ## ML_Headers/
 
@@ -694,62 +694,62 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### BarrierGate.hpp
 
-- `BarrierGate_Compute` — line 52 — compute barrier gate value from peak/valley predictions
+- `BarrierGate_Compute` — line 70 — compute barrier gate value from peak/valley predictions
 
 ### ConfidenceScore.hpp
 
-- `RollingWindow_Init` — line 152
-- `RollingWindow_Push` — line 161
-- `RollingIC_Init` — line 265 — v5.15.5.E.C — Init via generic RollingWindow_Init on both rings.
-- `RollingIC_Push` — line 274 — the parallel-array push semantics for the (prediction, actual) pair shape.
-- `RollingIC_Compute` — line 315 — RollingIC_Push). Read either; using predictions's metadata canonically.
-- `RollingRMSE_Init` — line 439
-- `RollingRMSE_Push` — line 462 — in controller_test.cpp.
-- `RollingRMSE_Compute` — line 485 — pattern (the spec tracks its production sites).
-- `Confidence_Freshness` — line 513 — stability: 1 / (1 + RMSE)
-- `Confidence_Stability` — line 519
-- `Confidence_Compute` — line 523
-- `RollingFreshness_Init` — line 599
-- `RollingFreshness_Mark` — line 604
-- `RollingFreshness_Compute` — line 611 — or replay determinism), clamp to 1.0.
-- `RollingCapacity_Init` — line 666
-- `RollingCapacity_UpdateADV` — line 673
-- `RollingCapacity_Compute` — line 683
-- `ConfidenceScorer_Init` — line 818
-- `ConfidenceScorer_ComputeICVariant` — line 854 — New code + sites being refactored for variant choice use this dispatcher.
-- `ConfidenceScorer_InitComposite` — line 862 — explicit composite parameters. Useful for tests + v5.14.1.B cfg wiring.
-- `ConfidenceScorer_BindCompositeCfg` — line 892 — FPN_ToDouble(cfg.confidence_rmse_baseline));
-- `ConfidenceScorer_Update` — line 905 — feed a prediction + actual return pair (call after outcome is known)
-- `ConfidenceScorer_UpdateAndMark` — line 918 — when composite is disabled (composite path is opt-in via cfg).
-- `ConfidenceScorer_Compute` — line 927 — compute current confidence given data age
-- `ConfidenceScorer_ComputeComposite` — line 951 — stability_normalized = 1 - clamp(rmse / rmse_baseline, 0, 1)
-- `ConfidenceScorer_MarkPredict` — line 979 — fixture control.
-- `Confidence_DegradationScale_Off` — line 1052 — Forward-declare curve compute fns so the dispatch table can reference them.
-- `Confidence_DegradationScale_Linear` — line 1053
-- `Confidence_DegradationScale_Exp` — line 1054
-- `Confidence_DegradationScale_Step` — line 1055
-- `DegradationCurve_ToString` — line 1091 — Auto-generated ToString — for cfg parser + GUI display.
-- `DegradationCurve_FromString` — line 1102 — numeric ("1") forms; case-insensitive on string form. Returns -1 on miss.
-- `Confidence_DegradationScale_Off` — line 1127 — when cfg.risk_degradation_curve=0 (default).
-- `Confidence_DegradationScale_Linear` — line 1135 — To get ladder-bottom (factor=0), operator sets min_pct=0.0.
-- `Confidence_DegradationScale_Exp` — line 1145 — as LINEAR.
-- `Confidence_DegradationScale_Step` — line 1156 — without continuous-curve noise.
-- `Confidence_DegradationScale` — line 1164 — out-of-range returns 1.0 (degrades safely to OFF behavior).
-- `DriftHistory_Init` — line 1323
-- `DriftHistory_Push` — line 1331 — + ts_us[idx], 2 separate cache lines 2048B apart).
-- `DriftHistory_CheckBreach` — line 1349 — at typical 10-100Hz cadence.
-- `ConfidenceScorer_FieldwiseWrite` — line 1411
-- `ConfidenceScorer_FieldwiseRead` — line 1420
-- `ConfidenceScorer_CommitPersistedFields` — line 1432
-- `ConfidenceScorer_RecomputeRunningSums` — line 1455 — CommitPersistedFields tail; PortfolioController calls it explicitly.
-- `ConfidenceScorer_ShadowLoadLegacyV1` — line 1575
+- `RollingWindow_Init` — line 153
+- `RollingWindow_Push` — line 162
+- `RollingIC_Init` — line 266 — v5.15.5.E.C — Init via generic RollingWindow_Init on both rings.
+- `RollingIC_Push` — line 275 — the parallel-array push semantics for the (prediction, actual) pair shape.
+- `RollingIC_Compute` — line 316 — RollingIC_Push). Read either; using predictions's metadata canonically.
+- `RollingRMSE_Init` — line 440
+- `RollingRMSE_Push` — line 463 — in controller_test.cpp.
+- `RollingRMSE_Compute` — line 486 — pattern (the spec tracks its production sites).
+- `Confidence_Freshness` — line 514 — stability: 1 / (1 + RMSE)
+- `Confidence_Stability` — line 520
+- `Confidence_Compute` — line 524
+- `RollingFreshness_Init` — line 600
+- `RollingFreshness_Mark` — line 605
+- `RollingFreshness_Compute` — line 612 — or replay determinism), clamp to 1.0.
+- `RollingCapacity_Init` — line 667
+- `RollingCapacity_UpdateADV` — line 674
+- `RollingCapacity_Compute` — line 684
+- `ConfidenceScorer_Init` — line 819
+- `ConfidenceScorer_ComputeICVariant` — line 855 — New code + sites being refactored for variant choice use this dispatcher.
+- `ConfidenceScorer_InitComposite` — line 863 — explicit composite parameters. Useful for tests + v5.14.1.B cfg wiring.
+- `ConfidenceScorer_BindCompositeCfg` — line 893 — FPN_ToDouble(cfg.confidence_rmse_baseline));
+- `ConfidenceScorer_Update` — line 906 — feed a prediction + actual return pair (call after outcome is known)
+- `ConfidenceScorer_UpdateAndMark` — line 919 — when composite is disabled (composite path is opt-in via cfg).
+- `ConfidenceScorer_Compute` — line 928 — compute current confidence given data age
+- `ConfidenceScorer_ComputeComposite` — line 952 — stability_normalized = 1 - clamp(rmse / rmse_baseline, 0, 1)
+- `ConfidenceScorer_MarkPredict` — line 980 — fixture control.
+- `Confidence_DegradationScale_Off` — line 1053 — Forward-declare curve compute fns so the dispatch table can reference them.
+- `Confidence_DegradationScale_Linear` — line 1054
+- `Confidence_DegradationScale_Exp` — line 1055
+- `Confidence_DegradationScale_Step` — line 1056
+- `DegradationCurve_ToString` — line 1092 — Auto-generated ToString — for cfg parser + GUI display.
+- `DegradationCurve_FromString` — line 1103 — numeric ("1") forms; case-insensitive on string form. Returns -1 on miss.
+- `Confidence_DegradationScale_Off` — line 1128 — when cfg.risk_degradation_curve=0 (default).
+- `Confidence_DegradationScale_Linear` — line 1136 — To get ladder-bottom (factor=0), operator sets min_pct=0.0.
+- `Confidence_DegradationScale_Exp` — line 1146 — as LINEAR.
+- `Confidence_DegradationScale_Step` — line 1157 — without continuous-curve noise.
+- `Confidence_DegradationScale` — line 1165 — out-of-range returns 1.0 (degrades safely to OFF behavior).
+- `DriftHistory_Init` — line 1324
+- `DriftHistory_Push` — line 1332 — + ts_us[idx], 2 separate cache lines 2048B apart).
+- `DriftHistory_CheckBreach` — line 1350 — at typical 10-100Hz cadence.
+- `ConfidenceScorer_FieldwiseWrite` — line 1412
+- `ConfidenceScorer_FieldwiseRead` — line 1421
+- `ConfidenceScorer_CommitPersistedFields` — line 1433
+- `ConfidenceScorer_RecomputeRunningSums` — line 1456 — CommitPersistedFields tail; PortfolioController calls it explicitly.
+- `ConfidenceScorer_ShadowLoadLegacyV1` — line 1655 — [DERIVED]   (tool-refreshed — do NOT hand-edit; check_cache_layout --fix owns these)
 
 ### CostModel.hpp
 
-- `CostModel_Estimate` — line 71 — k1, k2, k3:     cost coefficients
-- `CostModel_EstimateDefault` — line 98 — convenience: estimate with default coefficients
-- `CostModel_Breakeven` — line 108 — cost is in bps, divide by 10000 to get decimal return
-- `CostModel_ShouldTrade` — line 113 — should we trade? returns 1 if expected alpha > breakeven
+- `CostModel_Estimate` — line 89 — k1, k2, k3:     cost coefficients
+- `CostModel_EstimateDefault` — line 116 — convenience: estimate with default coefficients
+- `CostModel_Breakeven` — line 126 — cost is in bps, divide by 10000 to get decimal return
+- `CostModel_ShouldTrade` — line 131 — should we trade? returns 1 if expected alpha > breakeven
 
 ### EzooInitFlagRegistry.hpp
 
@@ -837,27 +837,27 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### LinearRegression3X.hpp
 
-- `RegressionFeederX_FieldwiseWrite` — line 89
-- `RegressionFeederX_FieldwiseRead` — line 98
-- `RegressionFeederX_CommitPersistedFields` — line 107
+- `RegressionFeederX_FieldwiseWrite` — line 105
+- `RegressionFeederX_FieldwiseRead` — line 114
+- `RegressionFeederX_CommitPersistedFields` — line 123
 
 ### ModelInference.hpp
 
-- `FeatureLookback_Max` — line 264
-- `FeatureLookback_CountEnabled` — line 274 — count enabled features (for validation)
-- `Model_Init` — line 500
-- `Model_Load` — line 548
-- `Model_Predict_Normalized` — line 683
-- `Model_Predict_AtClass` — line 746
-- `Model_LoadAOT` — line 809
-- `Model_Predict_AOT` — line 823
-- `Model_Predict` — line 867
-- `Model_Predict_Ensemble` — line 951
-- `Model_Predict_Ensemble_Weighted` — line 1037
-- `Model_PredictMulti` — line 1182
-- `Model_Free` — line 1258
-- `Model_IsLoaded` — line 1278
-- `ModelFeatures_Pack` — line 1301
+- `FeatureLookback_Max` — line 280
+- `FeatureLookback_CountEnabled` — line 290 — count enabled features (for validation)
+- `Model_Init` — line 516
+- `Model_Load` — line 564
+- `Model_Predict_Normalized` — line 699
+- `Model_Predict_AtClass` — line 762
+- `Model_LoadAOT` — line 825
+- `Model_Predict_AOT` — line 839
+- `Model_Predict` — line 883
+- `Model_Predict_Ensemble` — line 967
+- `Model_Predict_Ensemble_Weighted` — line 1053
+- `Model_PredictMulti` — line 1198
+- `Model_Free` — line 1274
+- `Model_IsLoaded` — line 1294
+- `ModelFeatures_Pack` — line 1317
 
 ### NodeModelZoo.hpp
 
@@ -907,9 +907,9 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### RewardTracker.hpp
 
-- `RewardTracker_Init` — line 70 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
-- `RewardTracker_Push` — line 75
-- `RewardTracker_DrainCSV` — line 92 — append all pending records to CSV, then clear
+- `RewardTracker_Init` — line 87 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `RewardTracker_Push` — line 92
+- `RewardTracker_DrainCSV` — line 109 — append all pending records to CSV, then clear
 
 ### RidgeBlender.hpp
 
@@ -931,14 +931,14 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### RollingTurnover.hpp
 
-- `RollingTurnover_Init` — line 60 — Validates window + topk; clamps to safe range. Zero-init buffers.
-- `RollingTurnover_Push` — line 127 — exactly K bits. Yields [0, 1] range.
-- `RollingTurnover_Compute` — line 159 — until profiler flags this as load-bearing.
+- `RollingTurnover_Init` — line 78 — Validates window + topk; clamps to safe range. Zero-init buffers.
+- `RollingTurnover_Push` — line 145 — exactly K bits. Yields [0, 1] range.
+- `RollingTurnover_Compute` — line 177 — until profiler flags this as load-bearing.
 
 ### ROR_regressor.hpp
 
-- `RORRegressor_Init` — line 50
-- `RORRegressor_Push` — line 72
+- `RORRegressor_Init` — line 68
+- `RORRegressor_Push` — line 90
 
 ### StampHelper.hpp
 
@@ -964,12 +964,12 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### WelfordStats.hpp
 
-- `Welford_Init` — line 43
-- `Welford_Push` — line 55
-- `Welford_Variance` — line 83
-- `Welford_Stddev` — line 92
-- `Welford_ZScore` — line 100
-- `Welford_Reset` — line 109
+- `Welford_Init` — line 61
+- `Welford_Push` — line 73
+- `Welford_Variance` — line 101
+- `Welford_Stddev` — line 110
+- `Welford_ZScore` — line 118
+- `Welford_Reset` — line 127
 
 ## GUI/
 
@@ -1056,8 +1056,8 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### TradeReader.hpp
 
-- `TradeData_Init` — line 74 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
-- `TradeData_Refresh` — line 141
+- `TradeData_Init` — line 90 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `TradeData_Refresh` — line 157
 
 ## Backtest/
 
@@ -1079,18 +1079,18 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `BacktestSharded_Run` — line 643
 - `Backtest_ComputeLabelsFromSamples` — line 698 — through samples; no per-file O(N) sample scans.
 - `Backtest_Run` — line 969 — equity curve).
-- `HeldOutSplit_TrainEval` — line 1122 — helper has visibility into WalkForward_Compute* and XGBoost_Compute* funcs.
-- `Backtest_RunWalkForward` — line 1221 — behavior bytewise.
-- `Backtest_RunFullValidation` — line 1239
-- `WalkForward_ComputeAccuracy` — line 1462 — uses > 0.5f for truth so neutral (0.5) labels are never counted as positive
-- `WalkForward_ComputeMulticlassAccuracy` — line 1509 — argmax over each row, compare to integer truth (rounded from label float).
-- `WalkForward_ComputeMSE` — line 1528 — regression: mean squared error. Lower = better. Sensitive to outliers.
-- `WalkForward_ComputeCorrelation` — line 1544 — gets low MSE on small-magnitude targets while having zero predictive power).
-- `Backtest_RunWalkForward` — line 1582
-- `HeldOutSplit_TrainEval` — line 2216 — functions it uses (WalkForward_Compute*, XGBoost_Compute*) are visible.
-- `ConfigField_Set` — line 2472 — handles both FPN_Binary and PCT fields (PCT keys are stored as decimal, value comes in as %).
-- `Backtest_RunSweep` — line 2603 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
-- `Backtest_RunHyperparamTrainSweep` — line 2722 — mean_val_correlation (regression). Stored as positive number; higher = better.
+- `HeldOutSplit_TrainEval` — line 1138 — helper has visibility into WalkForward_Compute* and XGBoost_Compute* funcs.
+- `Backtest_RunWalkForward` — line 1237 — behavior bytewise.
+- `Backtest_RunFullValidation` — line 1255
+- `WalkForward_ComputeAccuracy` — line 1478 — uses > 0.5f for truth so neutral (0.5) labels are never counted as positive
+- `WalkForward_ComputeMulticlassAccuracy` — line 1525 — argmax over each row, compare to integer truth (rounded from label float).
+- `WalkForward_ComputeMSE` — line 1544 — regression: mean squared error. Lower = better. Sensitive to outliers.
+- `WalkForward_ComputeCorrelation` — line 1560 — gets low MSE on small-magnitude targets while having zero predictive power).
+- `Backtest_RunWalkForward` — line 1598
+- `HeldOutSplit_TrainEval` — line 2232 — functions it uses (WalkForward_Compute*, XGBoost_Compute*) are visible.
+- `ConfigField_Set` — line 2488 — handles both FPN_Binary and PCT fields (PCT keys are stored as decimal, value comes in as %).
+- `Backtest_RunSweep` — line 2635 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `Backtest_RunHyperparamTrainSweep` — line 2754 — mean_val_correlation (regression). Stored as positive number; higher = better.
 
 ### BacktestPanels.hpp
 
@@ -1098,26 +1098,26 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `DataPanel_Scan` — line 101
 - `RunControl_Init` — line 245 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
 - `SamplesSnapshot_Compute` — line 271 — only when running==0, giving a safe happens-before relationship.
-- `RunControl_Start` — line 482
-- `GUI_Panel_DataBrowser` — line 534
-- `GUI_Panel_RunControl` — line 645
-- `GUI_Panel_Results` — line 721
-- `PastRuns_Init` — line 994 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
-- `PastRuns_LoadOne` — line 1064 — scan one run directory's metadata files
-- `PastRuns_DeleteDir` — line 1196
-- `PastRun_ParseHorizon` — line 1222 — out_horizon_ticks = 0).
-- `PastRuns_ScanOneDir` — line 1276
-- `PastRuns_Scan` — line 1313
-- `PastRun_MetricLabel` — line 1398 — label-type-aware metric label
-- `GUI_Panel_PastRuns` — line 1423 — Pass NULL to keep pre-v5.11.57 behavior (devmode-only).
-- `Comparison_Init` — line 2311
-- `Comparison_Free` — line 2330
-- `Comparison_SaveRun` — line 2352
-- `GUI_Panel_Comparison` — line 2405
-- `OptimizerPanel_Init` — line 2584 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
-- `GUI_Panel_Optimizer` — line 2649
-- `TrainingPanel_Init` — line 3088 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
-- `GUI_Panel_Training` — line 4819
+- `RunControl_Start` — line 498
+- `GUI_Panel_DataBrowser` — line 550
+- `GUI_Panel_RunControl` — line 661
+- `GUI_Panel_Results` — line 737
+- `PastRuns_Init` — line 1010 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `PastRuns_LoadOne` — line 1080 — scan one run directory's metadata files
+- `PastRuns_DeleteDir` — line 1212
+- `PastRun_ParseHorizon` — line 1238 — out_horizon_ticks = 0).
+- `PastRuns_ScanOneDir` — line 1292
+- `PastRuns_Scan` — line 1329
+- `PastRun_MetricLabel` — line 1414 — label-type-aware metric label
+- `GUI_Panel_PastRuns` — line 1439 — Pass NULL to keep pre-v5.11.57 behavior (devmode-only).
+- `Comparison_Init` — line 2327
+- `Comparison_Free` — line 2346
+- `Comparison_SaveRun` — line 2368
+- `GUI_Panel_Comparison` — line 2421
+- `OptimizerPanel_Init` — line 2600 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `GUI_Panel_Optimizer` — line 2665
+- `TrainingPanel_Init` — line 3104 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `GUI_Panel_Training` — line 4899
 
 ### BacktestSharded.hpp
 
@@ -1130,13 +1130,13 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### Fingerprint.hpp
 
-- `SHA256_Init` — line 93
-- `SHA256_Update` — line 100
-- `SHA256_Final` — line 118
-- `SHA256_ToHex` — line 140 — convenience: hash to hex string (65 bytes including null terminator)
-- `Fingerprint_HashFile` — line 165
-- `Fingerprint_Compute` — line 210
-- `Fingerprint_Short` — line 239 — short fingerprint (first 12 hex chars) for display
+- `SHA256_Init` — line 109
+- `SHA256_Update` — line 116
+- `SHA256_Final` — line 134
+- `SHA256_ToHex` — line 156 — convenience: hash to hex string (65 bytes including null terminator)
+- `Fingerprint_HashFile` — line 181
+- `Fingerprint_Compute` — line 226
+- `Fingerprint_Short` — line 255 — short fingerprint (first 12 hex chars) for display
 
 ### HeldOutSplit.hpp
 
@@ -1153,10 +1153,10 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `Label_ForwardPnl` — line 149 — useful for regression (predict magnitude, not just direction).
 - `Label_Regime` — line 170 — MILD_TREND (4) exceeds num_class=4; tracked as TECH_DEBT-241.
 - `Label_VolBarrier` — line 194 — source: ~/FoxML/private/DATA_PROCESSING/targets/barrier.py
-- `LabelType_NumClasses` — line 469 — ≥2 = multiclass softmax       (label values 0..K-1 as floats)
-- `LabelType_IsBinary` — line 474
-- `LabelType_IsRegression` — line 478
-- `LabelType_IsMulticlass` — line 482
+- `LabelType_NumClasses` — line 485 — ≥2 = multiclass softmax       (label values 0..K-1 as floats)
+- `LabelType_IsBinary` — line 490
+- `LabelType_IsRegression` — line 494
+- `LabelType_IsMulticlass` — line 498
 
 ### OverfitDetection.hpp
 

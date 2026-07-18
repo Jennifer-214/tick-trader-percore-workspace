@@ -26,6 +26,16 @@ Code = hub, `[TAG]`/`[REFERENCE]` = edges, workspace docs (decisions/specs/invar
 
 The closed category set + the `[REFERENCE]` sub-cats are read at RUNTIME from the schema's ` ```category-set ` / ` ```reference-subcats ` fences; the `[TAG]` vocab from `doc-tag-vocabulary.md`. Fold a fence/vocab row -> **every** tool tracks it with zero code edits. NEVER hardcode the grammar into a tool (that forks the SSoT — the drift this whole system exists to kill). `foxtag.hpp` states it verbatim: *"GRAMMAR IS NEVER HARDCODED (anti-Class-18)."*
 
+## Vocab/grammar propagation stays 1:1 — `foxtag grammar` is the SSoT-emitter seam (the plugin is the watch-point)
+
+Adding vocab (a `[TAG]` value / a category / a `[REFERENCE]` subcat / a `[DERIVED]` axis) MUST be a ONE-site fold — one row in the schema fence or `doc-tag-vocabulary.md` — that every consumer inherits, NOT an N-site manual sync (the anti-Class-18 thesis applied to the grammar ITSELF, not just the facts). Mechanism:
+
+- **Producers READ the fence at runtime.** The Python checkers (`load_categories` / `load_vocabulary` / `load_ref_subcats`) and the `foxtag` core both derive the grammar from the schema fences → a folded row tracks for free, zero code edits. **`foxtag grammar` emits the fence-derived grammar as data** — the SSoT-emitter a downstream consumer reads instead of hardcoding.
+- **Every consumer is fence-derived OR parity-gated.** `parity_check.sh` §3 gates Python↔foxtag `grammar`. A consumer that hardcodes any grammar slice AND sits outside the parity loop is a **Class-18 drift site** — it silently lags the next fold.
+- **The plugin (`fox-symdeps.nvim`) is the current watch-point.** It makes ZERO `foxtag` calls and is a native-Lua mirror: `tag_grammar_adapter.lua` self-describes as mirroring the Python parse rule (`:1-6`), and hardcodes the unit-type set (`UNIT`, `:27`) + the `[DERIVED]`-axis rendering + drift-checks (`format_derived` / `verify`, `:63-92`). The parse RULE is grammar-agnostic (a new *category* needs no plugin edit), but a new *unit type* or *DERIVED axis* does, and the parse-rule mirror must track the Python one. **The 1:1 fix (D-349 direction):** the plugin consumes `foxtag grammar` (category/unit/axis sets) + `foxtag unit <file> <line>` (parse) as a thin subprocess client, retiring the mirror → a fence fold reaches the plugin for free. Interim guard until then: a **plugin↔foxtag grammar parity section in `parity_check.sh`** (a hardcoded plugin set that diverges from `foxtag grammar` REDs).
+
+**Standing rule:** a new consumer of the tag grammar reads `foxtag grammar` / `foxtag unit`, or earns a `parity_check.sh` section. No consumer holds grammar the fence doesn't feed it. (Decision log D-365; the vocab-side twin of the D-349 fact-side migration contract below.)
+
 ## The migration contract — Python CI-authoritative until a parity-gated cutover (D-349)
 
 The system carries TWO implementations of the parse/producer layer during its build-out: the Python checkers (authoritative) and the C++ `foxtag` core (the destination). The contract that keeps this from being a two-implementations-drift hazard:

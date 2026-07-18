@@ -15,7 +15,7 @@ so the snapshot stales when tags/units actually change, not on unrelated line dr
 `rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a
 conversion).
 
-Converted files: 164 · unit blocks: 1056
+Converted files: 164 · unit blocks: 1060
 
 ## [TAG] values → files
 
@@ -768,7 +768,7 @@ Converted files: 164 · unit blocks: 1056
 
 ## Unit blocks by [TYPE]
 
-### ASSERT (38)
+### ASSERT (39)
 
 - `BITMAP_OVERFLOW` — `ML_Headers/NodeModelZoo.hpp`
 - `BITMAP_OVERFLOW` — `MemHeaders/FailureModeRegistry.hpp`
@@ -792,6 +792,7 @@ Converted files: 164 · unit blocks: 1056
 - `LAYOUT_LOCK` — `ML_Headers/BanditLearning.hpp`
 - `LAYOUT_LOCK` — `ML_Headers/ConfidenceScore.hpp`
 - `LAYOUT_LOCK` — `ML_Headers/FlowFeatures.hpp`
+- `LAYOUT_LOCK` — `ML_Headers/GateControlNetwork.hpp`
 - `LAYOUT_LOCK` — `ML_Headers/ModelInference.hpp`
 - `LAYOUT_LOCK` — `ML_Headers/NodeModelZoo.hpp`
 - `LAYOUT_LOCK` — `ML_Headers/RollingStats.hpp`
@@ -987,7 +988,7 @@ Converted files: 164 · unit blocks: 1056
 - `Strategies/private/EmaCross.hpp` — `Strategies/private/EmaCross.hpp`
 - `Version.hpp` — `Version.hpp`
 
-### FUNCTION (510)
+### FUNCTION (511)
 
 - `ANSI_Layout_Render` — `DataStream/TUIAnsi.hpp`
 - `ANSI_Section_Header` — `DataStream/TUIAnsi.hpp`
@@ -1137,6 +1138,7 @@ Converted files: 164 · unit blocks: 1056
 - `Fingerprint_HashFile` — `Backtest/Fingerprint.hpp`
 - `FlowState_Push` — `ML_Headers/FlowFeatures.hpp`
 - `Foxml_ApplyTheme` — `GUI/FoxmlTheme.hpp`
+- `GCN_backward` — `ML_Headers/GateControlNetwork.hpp`
 - `GCN_forward` — `ML_Headers/GateControlNetwork.hpp`
 - `GUI_EquityChart` — `GUI/ChartPanel.hpp`
 - `GUI_LivePnLChart` — `GUI/ChartPanel.hpp`
@@ -1585,7 +1587,7 @@ Converted files: 164 · unit blocks: 1056
 - `FOREACH_TRADE_LOG_COL` — `CoreFrameworks/TradeLogColRegistry.hpp`
 - `PER_NODE_OVERRIDE_FIELDS` — `CoreFrameworks/ControllerConfig.hpp`
 
-### STRUCT (155)
+### STRUCT (157)
 
 - `AnsiBuf` — `DataStream/TUIAnsi.hpp`
 - `BacktestResults` — `Backtest/BacktestEngine.hpp`
@@ -1638,6 +1640,8 @@ Converted files: 164 · unit blocks: 1056
 - `FixedPoint<2,64>` — `FixedPoint/FixedPointN.hpp`
 - `FlowState` — `ML_Headers/FlowFeatures.hpp`
 - `FullValidationResults` — `Backtest/BacktestEngine.hpp`
+- `GCN_input` — `ML_Headers/GateControlNetwork.hpp`
+- `GCN_network` — `ML_Headers/GateControlNetwork.hpp`
 - `GateParameters` — `CoreFrameworks/GateParameters.hpp`
 - `GlobalCfgRenderTable` — `GUI/SettingsPanel.hpp`
 - `GuiContext` — `GUI/GuiThread.hpp`

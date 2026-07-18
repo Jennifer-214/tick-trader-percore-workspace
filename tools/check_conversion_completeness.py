@@ -141,15 +141,23 @@ def converted_files():
     return sorted(Path(p) for p in out.split("\n") if p.strip())
 
 def selftest():
+    import tempfile, os
     ok = True
     ref = ENGINE / "CoreFrameworks/ExecutionCore.hpp"
-    bad = ENGINE / "ML_Headers/GateControlNetwork.hpp"
     rf = check_file(ref)
     print(f"  {'✅' if not rf else '❌'} canonical-complete ExecutionCore.hpp scans CLEAN"
           + ("" if not rf else f" — got {rf}")); ok &= not rf
-    bf = [f for f in check_file(bad) if f[0] == "C1" and ("GCN_input" in f[2] or "GCN_network" in f[2])]
-    print(f"  {'✅' if len(bf) >= 2 else '❌'} known half-conversion GateControlNetwork.hpp FLAGS GCN_input+GCN_network (C1)"
-          + ("" if len(bf) >= 2 else f" — got {bf}")); ok &= len(bf) >= 2
+    # SYNTHETIC known-bad (corpus-INDEPENDENT — survives the Phase-C cleanup of the real GateControlNetwork):
+    # a non-trivial 6-field struct lumped inside a [FUNCTION] block's [CODE] must be flagged C1.
+    bad_src = ("// [SCHEMA]_[v1.0]\n// [FUNCTION]_[demo_fn]\n// [CODE]\n"
+               "template <unsigned F> struct DemoLumped6 {\n"
+               "    int a;\n    int b;\n    int c;\n    int d;\n    int e;\n    int f;\n};\n"
+               "inline void demo_fn() {}\n// [END_CODE]\n// [END_FUNCTION]_[demo_fn]\n")
+    fd, p = tempfile.mkstemp(suffix=".hpp"); os.write(fd, bad_src.encode()); os.close(fd)
+    bf = [f for f in check_file(Path(p)) if f[0] == "C1" and "DemoLumped6" in f[2]]
+    os.unlink(p)
+    print(f"  {'✅' if bf else '❌'} synthetic known-bad: a 6-field struct lumped in a [FUNCTION] block is FLAGGED (C1)"
+          + ("" if bf else " — NOT flagged")); ok &= bool(bf)
     # a trivial 2-field return struct must NOT be flagged (proportionality)
     triv = [f for f in check_file(ENGINE / "FixedPoint/FixedPointN.hpp")
             if any(t in f[2] for t in ("u256","udiv_qr_t","divmul_qr","MoneyParse"))]

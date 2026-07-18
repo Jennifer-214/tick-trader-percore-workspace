@@ -32,8 +32,6 @@ ML_Headers/ConfidenceScore.hpp|C2|RollingCapacity_LegacyV1
 ML_Headers/ConfidenceScore.hpp|C2|RollingIC_LegacyV1
 ML_Headers/ConfidenceScore.hpp|C2|RollingRMSE_LegacyV1
 ML_Headers/CostModel.hpp|C1|TradingCosts
-ML_Headers/GateControlNetwork.hpp|C1|GCN_input
-ML_Headers/GateControlNetwork.hpp|C1|GCN_network
 ML_Headers/LinearRegression3X.hpp|C1|RegressionFeederX
 ML_Headers/ModelInference.hpp|C2|FeatureLookback
 ML_Headers/ModelInference.hpp|C2|StampWriteResult

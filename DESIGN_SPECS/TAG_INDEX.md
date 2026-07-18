@@ -1115,7 +1115,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/data-disciplines/fill-path-completeness-and-normalization-discipline.md`
 
-### operator-collaboration (40 files)
+### operator-collaboration (41 files)
 
 - `DESIGN_SPECS/meta-disciplines/canonical-sister-extension-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/session-decision-log-discipline.md`
@@ -1156,6 +1156,7 @@ This file is a snapshot for static browsing.
 - `memory/feedback_surface_operator_migration_path_proactively.md`
 - `memory/user_adhd_deferred_reward_discipline.md`
 - `memory/user_deep_design_work_intrinsic_value.md`
+- `memory/user_owns_core_design_meet_confidence_genuinely.md`
 - `memory/user_structure_is_correctness_risk_control_for_capital.md`
 
 ### operator-policy (1 files)
@@ -1744,11 +1745,12 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/exchange-adapter-tt-dispatch-pattern.md`
 
-### user-profile (5 files)
+### user-profile (6 files)
 
 - `memory/user_adhd_deferred_reward_discipline.md`
 - `memory/user_deep_design_work_intrinsic_value.md`
 - `memory/user_mvp_to_professional_transition.md`
+- `memory/user_owns_core_design_meet_confidence_genuinely.md`
 - `memory/user_public_work_attracts_hedge_funds.md`
 - `memory/user_structure_is_correctness_risk_control_for_capital.md`
 

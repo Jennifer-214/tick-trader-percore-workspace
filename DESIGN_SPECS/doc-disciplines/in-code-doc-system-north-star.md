@@ -106,6 +106,14 @@ pinned to `[BUILD]`/`[INSTANTIATION]` per D-327).
   asmdiff/sizeprobe hardcode clang while engine ships g++. Wire recordlayout; g++ for codegen.
 - **RC-E (safety):** branchtag paints `✓ branchless` on 0-instruction headers — a *false*
   all-clear on a branchless-discipline engine. Guard the empty-parse case; never green on nothing.
+- **RC-D′ (per-function cache-line access density — operator-flagged 2026-07-18):** the
+  *"distinct 64B lines per function"* overlay shows an identical `L0…L10 (11)` for every function
+  under a struct, where 11 = the *enclosing struct's* line span (NotifyEvent 656 B → 11) — i.e. the
+  per-FUNCTION density isn't computed; the render falls back to the struct's line count (a
+  placeholder, "nothing real shown"). RC-D-family (`facts.derived` doesn't emit a per-function
+  access-density axis) OR a render fallback — undiagnosed. Deferred to the plugin session (E.1.2.A
+  plan § KNOWN PLUGIN DISPLAY GAP; the FUNCTION analogue of the per-struct layout the C4 probe-TU
+  materializes — fix alongside).
 
 ## 6. Layer 3 — The plugin (the nvim surface)
 

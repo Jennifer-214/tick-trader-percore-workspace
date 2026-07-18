@@ -9,15 +9,6 @@ Backtest/BacktestPanels.hpp|C2|MultiHorizonParallelJob
 Backtest/BacktestPanels.hpp|C2|MultiHorizonWorkerArgs
 Backtest/Fingerprint.hpp|C1|SHA256_State
 Backtest/LabelFunctions.hpp|C1|LabelDef
-CoreFrameworks/CfgFieldRegistry.hpp|C2|CfgMaskArray
-CoreFrameworks/ControllerConfig.hpp|C1|PerNodeOverrides
-CoreFrameworks/ModelValidation.hpp|C2|StderrLog
-CoreFrameworks/OrderEventLog.hpp|C2|FoldResult
-CoreFrameworks/OrderGates.hpp|C2|BuySideGateConditions
-CoreFrameworks/OrderManager.hpp|C2|Command
-CoreFrameworks/Portfolio.hpp|C2|ExitBuffer
-CoreFrameworks/PortfolioController.hpp|C1|StrategyStats
-CoreFrameworks/PortfolioController.hpp|C2|GateReasonDef
 Strategies/RegimeDetector.hpp|C2|FOREACH_REGIME_PERSIST_FIELD
 Strategies/RegimeDetector.hpp|C2|RegimeState
 Strategies/RegimeDetector.hpp|C2|TickRateState

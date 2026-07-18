@@ -15,7 +15,7 @@ so the snapshot stales when tags/units actually change, not on unrelated line dr
 `rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a
 conversion).
 
-Converted files: 164 · unit blocks: 1082
+Converted files: 164 · unit blocks: 1091
 
 ## [TAG] values → files
 
@@ -41,8 +41,9 @@ Converted files: 164 · unit blocks: 1082
 - `DataStream/MockGenerator.hpp`
 - `DataStream/TradeLog.hpp`
 
-### BINARY_FP (10 files)
+### BINARY_FP (11 files)
 
+- `CoreFrameworks/OrderGates.hpp`
 - `FixedPoint/FixedPointN.hpp`
 - `ML_Headers/FlowFeatures.hpp`
 - `ML_Headers/GateControlNetwork.hpp`
@@ -244,14 +245,16 @@ Converted files: 164 · unit blocks: 1082
 - `CoreFrameworks/OrderGates.hpp`
 - `CoreFrameworks/Tick.hpp`
 
-### DECIMAL (9 files)
+### DECIMAL (11 files)
 
+- `CoreFrameworks/ControllerConfig.hpp`
 - `CoreFrameworks/GateParameters.hpp`
 - `CoreFrameworks/Order.hpp`
 - `CoreFrameworks/OrderEventLog.hpp`
 - `CoreFrameworks/OrderGates.hpp`
 - `CoreFrameworks/OrderManager.hpp`
 - `CoreFrameworks/Portfolio.hpp`
+- `CoreFrameworks/PortfolioController.hpp`
 - `CoreFrameworks/Tick.hpp`
 - `FixedPoint/FixedPointN.hpp`
 - `MemHeaders/PoolAllocator.hpp`
@@ -526,18 +529,20 @@ Converted files: 164 · unit blocks: 1082
 - `GUI/TradeHistoryPanel.hpp`
 - `GUI/TradeReader.hpp`
 
-### HELPER (2 files)
+### HELPER (3 files)
 
 - `CoreFrameworks/LiveReadiness.hpp`
+- `CoreFrameworks/ModelValidation.hpp`
 - `CoreFrameworks/OrderEventLog.hpp`
 
-### HOT_PATH (8 files)
+### HOT_PATH (9 files)
 
 - `CoreFrameworks/ExecutionCore.hpp`
 - `CoreFrameworks/GateParameters.hpp`
 - `CoreFrameworks/NodeLatencyStats.hpp`
 - `CoreFrameworks/OrderGates.hpp`
 - `CoreFrameworks/ParameterSlot.hpp`
+- `CoreFrameworks/Portfolio.hpp`
 - `CoreFrameworks/SPSCRing.hpp`
 - `CoreFrameworks/Tick.hpp`
 - `CoreFrameworks/TradeEvent.hpp`
@@ -1593,7 +1598,7 @@ Converted files: 164 · unit blocks: 1082
 - `FOREACH_TRADE_LOG_COL` — `CoreFrameworks/TradeLogColRegistry.hpp`
 - `PER_NODE_OVERRIDE_FIELDS` — `CoreFrameworks/ControllerConfig.hpp`
 
-### STRUCT (178)
+### STRUCT (187)
 
 - `AnsiBuf` — `DataStream/TUIAnsi.hpp`
 - `BacktestResults` — `Backtest/BacktestEngine.hpp`
@@ -1611,13 +1616,16 @@ Converted files: 164 · unit blocks: 1082
 - `BookSnapshot` — `DataStream/BinanceDepth.hpp`
 - `BuddyAllocatorState` — `MemHeaders/BuddyAllocator.hpp`
 - `BuddyDiagSnapshot` — `MemHeaders/BuddyAllocator.hpp`
+- `BuySideGateConditions` — `CoreFrameworks/OrderGates.hpp`
 - `Candle` — `GUI/CandleAccumulator.hpp`
 - `CandleAccumulator` — `GUI/CandleAccumulator.hpp`
 - `CandleSnapshot` — `GUI/CandleAccumulator.hpp`
 - `CfgFieldDef` — `GUI/SettingsPanel.hpp`
 - `CfgFieldDescriptor` — `CoreFrameworks/CfgFieldRegistry.hpp`
+- `CfgMaskArray` — `CoreFrameworks/CfgFieldRegistry.hpp`
 - `ChartSettings` — `GUI/ChartPanel.hpp`
 - `ChartState` — `GUI/ChartPanel.hpp`
+- `Command` — `CoreFrameworks/OrderManager.hpp`
 - `ComparisonState` — `Backtest/BacktestPanels.hpp`
 - `ConfidenceScorer` — `ML_Headers/ConfidenceScore.hpp`
 - `ConfidenceScorerLegacyV1` — `ML_Headers/ConfidenceScore.hpp`
@@ -1641,6 +1649,7 @@ Converted files: 164 · unit blocks: 1082
 - `EventLoopState` — `CoreFrameworks/ControllerEventLoop.hpp`
 - `ExchangeAdapter` — `CoreFrameworks/ExchangeAdapter.hpp`
 - `ExecutionCore` — `CoreFrameworks/ExecutionCore.hpp`
+- `ExitBuffer` — `CoreFrameworks/Portfolio.hpp`
 - `ExitRecord` — `CoreFrameworks/Portfolio.hpp`
 - `FIX_ParsedMessage` — `DataStream/FauxFIX.hpp`
 - `FPN_Binary<64>` — `FixedPoint/FixedPointN.hpp`
@@ -1650,10 +1659,12 @@ Converted files: 164 · unit blocks: 1082
 - `FixedPoint<10,8>` — `FixedPoint/FixedPointN.hpp`
 - `FixedPoint<2,64>` — `FixedPoint/FixedPointN.hpp`
 - `FlowState` — `ML_Headers/FlowFeatures.hpp`
+- `FoldResult` — `CoreFrameworks/OrderEventLog.hpp`
 - `FullValidationResults` — `Backtest/BacktestEngine.hpp`
 - `GCN_input` — `ML_Headers/GateControlNetwork.hpp`
 - `GCN_network` — `ML_Headers/GateControlNetwork.hpp`
 - `GateParameters` — `CoreFrameworks/GateParameters.hpp`
+- `GateReasonDef` — `CoreFrameworks/PortfolioController.hpp`
 - `GlobalCfgRenderTable` — `GUI/SettingsPanel.hpp`
 - `GuiContext` — `GUI/GuiThread.hpp`
 - `HealthLogState` — `MemHeaders/HealthLog.hpp`
@@ -1705,6 +1716,7 @@ Converted files: 164 · unit blocks: 1082
 - `PerNodeCfg` — `CoreFrameworks/ControllerConfig.hpp`
 - `PerNodeCfgRenderTable` — `GUI/SettingsPanel.hpp`
 - `PerNodeFieldDef` — `GUI/SettingsPanel.hpp`
+- `PerNodeOverrides` — `CoreFrameworks/ControllerConfig.hpp`
 - `PerNodeSnap` — `DataStream/EngineTUI.hpp`
 - `PhaseTimer` — `Backtest/PhaseTimers.hpp`
 - `PhaseTimerSnapshot` — `Backtest/PhaseTimers.hpp`
@@ -1749,8 +1761,10 @@ Converted files: 164 · unit blocks: 1082
 - `StampArgs` — `ML_Headers/StampHelper.hpp`
 - `StampInferenceCfgInputs` — `ML_Headers/ModelInference.hpp`
 - `StampWriteResult` — `ML_Headers/ModelInference.hpp`
+- `StderrLog` — `CoreFrameworks/ModelValidation.hpp`
 - `StrategyQualityAggregate` — `GUI/StrategyQualityPanel.hpp`
 - `StrategyQualityState` — `GUI/StrategyQualityPanel.hpp`
+- `StrategyStats` — `CoreFrameworks/PortfolioController.hpp`
 - `SubmitCommand` — `CoreFrameworks/OrderManager.hpp`
 - `SymbolFilters` — `DataStream/BinanceOrderAPI.hpp`
 - `TUIPositionSnap` — `DataStream/EngineTUI.hpp`

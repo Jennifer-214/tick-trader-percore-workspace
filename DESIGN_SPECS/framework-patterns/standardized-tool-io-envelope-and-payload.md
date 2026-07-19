@@ -67,9 +67,18 @@ A gitignored, latest-wins directory where a tool drops its latest envelope (`gra
 
 - **Per-item versioning (D-379).** Each first-class artifact carries its OWN version, evolving independently — THREE envelope axes: `envelope_version` (the envelope format) · `schema_version` (the tag grammar the vocab speaks) · a per-`kind` payload-schema version (each record-set kind, carried in its self-describing schema). Plus `TOOLCHAIN_VERSION` (the product) + each DESIGN_SPEC's `version:`. A consumer checks only the axis it depends on; a kind evolves without perturbing others. The toolchain artifacts are first-class alongside engine code → engine-grade per-item tracking (removes solo-engineer decision-fatigue; externalized cognition).
 
+## Typing lock (D-380) — the shapes, decided at the `0.1.5` informing pass
+
+After the enumerate-first grounding, the substrate shape is LOCKED (decision **D-380**):
+
+1. **Serialization = single-doc plain JSON.** NOT NDJSON (a streaming style; `.toolbus/` is a small latest-wins file read whole → one wrapped doc holds the envelope metadata NDJSON has nowhere to put). NOT YAML (a C++/Lua dependency the JSON path avoids; non-deterministic to emit byte-identically → breaks content-hash/staleness; a machine-ONLY bus has no use for YAML's human-authoring win — the human surfaces [frontmatter · the `[TAG]` grammar] keep their own formats).
+2. **Payload = uniform record-set TABLE.** `{schema, rows}` — the schema IS the fixed field-layout (a record-set = an X-macro registry / `FOREACH_CFG_FIELD` serialized; the `SHIFT_*`/`MASK_*` "each slot a defined purpose" discipline, for records). Name is a COLUMN, not a map-key; rows sorted for determinism. `layout`/`fields`' map→rows reshape lands at each producer's GATED cutover (D-349), leaving their parity-proven shapes untouched until then.
+3. **Schema-as-DATA registry (the mechanism for D-379's per-kind versioning).** ONE emit helper READS each kind's schema+version from a **language-neutral registry** — a data file BOTH the C++ core AND the Python tools read, NEVER a per-language hardcode (a C++-hardcoded schema + a Python copy would BE the Class-18 mirror the system exists to kill). The toolchain's "grammar-DERIVED, never hardcoded" law, raised one level to the payload + CI-gate schemas. Add/evolve a kind = a registry row; every producer + consumer tracks it. Start minimal (`grammar/1` + `verdict/1` so the gates have a target), grow per kind — generalizes beyond tool-I/O to the CI gates + tag/vocab rules (same definition-as-data discipline).
+4. **Comments-only-never-code.** Tooling writes comments / `[DERIVED]` fact-blocks / index-docs ONLY — NEVER engine logic. `codegen` is read-only + LIVE-only (never persisted — flips with `-O`/`-march`). Auto-generated engine code is a Knight-adjacent trust hole on a capital path → structurally excluded.
+
 ## Discipline / open
 
-- **Payload typing is DRAFT** — the exact type system + nesting rules are locked at the `0.1.5` dive by ENUMERATING all planned payloads (grammar/units/layout/fields/codegen/verdict/register-fit) first, never guessed (`feedback_dont_generalize_substrate_before_input_space_known`).
+- **Payload typing LOCKED (D-380)** — single-doc JSON · uniform record-set table · schema-as-DATA registry · comments-only-never-code (§ "Typing lock (D-380)" above), locked at the `0.1.5` informing pass AFTER enumerating all payloads first, never guessed (`feedback_dont_generalize_substrate_before_input_space_known`). The concrete `foxtag grammar --json` envelope + the registry land at the `0.1.5` build (sidecar `subplans/2026-07-19-E.1.2.B-sidecar-0.1.5-tool-io-substrate.md`); an armed I→A cascade gates it.
 - **Generalize on cohort** — this spec promotes to first-canonical when `grammar --json` lands; to a cohort stage when the 2nd tool speaks the envelope. Don't build a universal protocol ahead of the consumers.
 
 ## Cross-references

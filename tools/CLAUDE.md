@@ -52,7 +52,11 @@ of ONE core**, so the grammar + facts exist in exactly one implementation.
 - **Comments-only + lossless; MARK, never delete.** Conversions/cleanups change ZERO code bytes
   (`lossless.py`-gated — comment-stripped diff == git HEAD). A rotted/legacy/deletion-candidate UNIT gets
   a `[DEPRECATED]` / `[MARKED_FOR_DELETION]` marker (sister to `[OUTDATED_INFO]` for stale COMMENTS + the
-  H21 tombstone discipline) — **never a code deletion.**
+  H21 tombstone discipline) — **never a code deletion.** **Tooling WRITES comments / `[DERIVED]` fact-blocks /
+  index-docs ONLY — it NEVER generates or rewrites engine LOGIC (D-380).** `codegen` (instr/branch/SIMD) is
+  read-only + LIVE-only (never persisted — flips with `-O`/`-march`); `check_cache_layout --fix` rewrites the
+  derived COMMENT, never the struct. Auto-generated engine code is a Knight-adjacent trust hole on a capital
+  path (same verification burden as hand-written → buys nothing); operator-skepticism is the calibrated posture.
 - **The schema is LOCKED (`[SCHEMA]_[v1.0]`, D-346).** A grammar change = a `[SCHEMA]_[vN]` bump,
   coordinated across foxtag + the validator + the plugin (the stable contract = {closed vocab · section
   ladder · one-category-per-line · the `====` block structure}). Don't drift a tool off the locked grammar.
@@ -68,6 +72,13 @@ of ONE core**, so the grammar + facts exist in exactly one implementation.
   remembered N-step ritual (that's what drifts). The CI gates READ (red on drift); the update skill WRITES (how you
   fix drift). Never a hook that silently rewrites files ("flag-not-auto", per `[OUTDATED_INFO]`). Spec:
   `framework-patterns/one-action-toolchain-update-orchestrator.md`.
+- **Tool-I/O = ONE envelope + schema-as-DATA registry (D-376/D-380).** Every producer/gate emits the standardized
+  `{envelope, payload:{schema, rows}}` (single-doc JSON) via ONE emit helper that READS each `kind`'s schema+version
+  from a **language-neutral registry** (a data file BOTH the C++ core + the Python tools read — NEVER a per-language
+  hardcode, which would be the Class-18 mirror). `status.findings` unifies producers + gates. Add/evolve a kind = 1
+  registry row; every producer+consumer tracks it. `.toolbus/` = the gitignored latest-wins rendezvous. The
+  "grammar-DERIVED, never hardcoded" law raised to payload + gate schemas. Spec:
+  `framework-patterns/standardized-tool-io-envelope-and-payload.md`.
 
 ## Where things live
 

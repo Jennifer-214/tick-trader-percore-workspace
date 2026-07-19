@@ -13,8 +13,8 @@ DELIBERATELY SEPARATE from the tag VALIDATOR (check_code_tag_blocks.py / foxtag)
 a corpus-COHESION property, not a per-block grammar rule — keeping it out of the parity-gated
 `validate` path leaves foxtag<->Python byte-parity intact (adding it there would re-break parity).
 
-WIP exemption: `Strategies/RegimeDetector.hpp` (the operator's in-flight pilot) is skipped until it
-converts; its version strings clear then (sister to its accepted [STATE]/[INIT] reds).
+WIP exemption: NONE — `WIP_EXEMPT` is empty (RegimeDetector.hpp converted 2026-07-18), so the WHOLE
+corpus is version-checked (HARD-zero). The set stays as the documented seam for any future WIP pilot.
 
 Exit: 0 clean · 1 drift · 2 script error / selftest fail.
 Usage:

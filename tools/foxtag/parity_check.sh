@@ -71,6 +71,39 @@ if [ "$PY_G" != "$CXX_G" ]; then
     echo "FAIL: grammar counts differ (py: $PY_G | cxx: $CXX_G)"; FAIL=1
 else echo "OK  : grammar counts identical ($CXX_G)"; fi
 
+# --- 3b. grammar SETS parity BY MEMBERS (D-384 — the vocab sets + the node-model, not counts; closes
+# ---     the previously-ungated node-model hole. The volatile envelope frame [git_head/version/status]
+# ---     is EXCLUDED — only payload row members + the closable column are diffed vs the Python oracle.)
+CXX_GJSON=$( cd "$ROOT" && "$HERE/foxtag" grammar --json )
+( cd "$ROOT" && python3 - "$CXX_GJSON" <<'EOF'
+import sys, json, pathlib
+sys.path.insert(0, str(pathlib.Path("tools").absolute()))
+from check_code_tag_blocks import load_categories, load_ref_subcats, OPENERS, UNIT_TYPES
+from check_doc_metadata import load_vocabulary
+env = json.loads(sys.argv[1])
+pay = env["payload"]
+def members(t): return set(r[0] for r in pay[t]["rows"])
+concern, surface = load_vocabulary()
+want = {"categories": set(load_categories()), "ref_subcats": set(load_ref_subcats()),
+        "concern": set(concern), "surface": set(surface), "unit_types": set(UNIT_TYPES)}
+fail = False
+for t, w in want.items():
+    g = members(t)
+    if g != w:
+        print(f"FAIL: grammar[{t}] members differ — only-cxx={sorted(g-w)} only-py={sorted(w-g)}"); fail = True
+# the closable column: unit_types rows flagged closable must equal OPENERS ∩ UNIT_TYPES (CODE excluded)
+closable_cxx = set(r[0] for r in pay["unit_types"]["rows"] if r[1])
+closable_py = set(OPENERS) & set(UNIT_TYPES)
+if closable_cxx != closable_py:
+    print(f"FAIL: grammar[unit_types.closable] differ — only-cxx={sorted(closable_cxx-closable_py)} "
+          f"only-py={sorted(closable_py-closable_cxx)}"); fail = True
+if fail: sys.exit(1)
+print(f"OK  : grammar SETS parity BY MEMBERS ({sum(len(members(t)) for t in want)} members / "
+      f"{len(want)} tables + closable[{len(closable_cxx)}])")
+sys.exit(0)
+EOF
+) || FAIL=1
+
 # --- 4. LAYOUT-producer parity (foxtag layout vs emit_record_layout.lua on the same TU;
 # ---    needs nvim + clang++; SKIP-advisory when absent — mirrors the cache-gate's dep policy)
 if command -v nvim >/dev/null 2>&1 && command -v clang++ >/dev/null 2>&1 && [ -f "$ROOT/main.cpp" ]; then

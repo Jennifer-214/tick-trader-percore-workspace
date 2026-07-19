@@ -21,92 +21,9 @@
 
 namespace foxtag {
 
-//======================================================================
-// minimal JSON reader (for compile_commands.json — strings/arrays/objects)
-//======================================================================
-
-struct JVal {
-    enum Kind { STR, ARR, OBJ, OTHER } kind = OTHER;
-    string str;
-    vector<JVal> arr;
-    std::map<string, JVal> obj;
-};
-
-inline void json_skip_ws(const string& t, size_t& i) {
-    while (i < t.size() && (t[i] == ' ' || t[i] == '\t' || t[i] == '\n' || t[i] == '\r')) ++i;
-}
-
-inline string json_parse_string(const string& t, size_t& i) {
-    string out;
-    ++i;                                        // opening quote
-    while (i < t.size() && t[i] != '"') {
-        char c = t[i++];
-        if (c != '\\') { out += c; continue; }
-        if (i >= t.size()) break;
-        char e = t[i++];
-        switch (e) {
-            case 'n': out += '\n'; break;
-            case 't': out += '\t'; break;
-            case 'r': out += '\r'; break;
-            case 'b': out += '\b'; break;
-            case 'f': out += '\f'; break;
-            case 'u': {
-                if (i + 4 <= t.size()) {
-                    unsigned v = (unsigned)std::stoul(t.substr(i, 4), nullptr, 16);
-                    i += 4;
-                    if (v < 0x80) out += (char)v;
-                    else if (v < 0x800) { out += (char)(0xC0 | (v >> 6)); out += (char)(0x80 | (v & 0x3F)); }
-                    else { out += (char)(0xE0 | (v >> 12)); out += (char)(0x80 | ((v >> 6) & 0x3F));
-                           out += (char)(0x80 | (v & 0x3F)); }
-                }
-                break;
-            }
-            default: out += e;                   // covers \" \\ \/
-        }
-    }
-    if (i < t.size()) ++i;                       // closing quote
-    return out;
-}
-
-inline JVal json_parse(const string& t, size_t& i) {
-    JVal v;
-    json_skip_ws(t, i);
-    if (i >= t.size()) return v;
-    char c = t[i];
-    if (c == '"') { v.kind = JVal::STR; v.str = json_parse_string(t, i); return v; }
-    if (c == '[') {
-        v.kind = JVal::ARR;
-        ++i;
-        json_skip_ws(t, i);
-        while (i < t.size() && t[i] != ']') {
-            v.arr.push_back(json_parse(t, i));
-            json_skip_ws(t, i);
-            if (i < t.size() && t[i] == ',') { ++i; json_skip_ws(t, i); }
-        }
-        if (i < t.size()) ++i;
-        return v;
-    }
-    if (c == '{') {
-        v.kind = JVal::OBJ;
-        ++i;
-        json_skip_ws(t, i);
-        while (i < t.size() && t[i] != '}') {
-            if (t[i] != '"') break;
-            string key = json_parse_string(t, i);
-            json_skip_ws(t, i);
-            if (i < t.size() && t[i] == ':') ++i;
-            v.obj[key] = json_parse(t, i);
-            json_skip_ws(t, i);
-            if (i < t.size() && t[i] == ',') { ++i; json_skip_ws(t, i); }
-        }
-        if (i < t.size()) ++i;
-        return v;
-    }
-    // number / true / false / null — consumed, unused
-    while (i < t.size() && t[i] != ',' && t[i] != '}' && t[i] != ']' &&
-           t[i] != ' ' && t[i] != '\n' && t[i] != '\t' && t[i] != '\r') ++i;
-    return v;
-}
+// NOTE (E.1.2.B 0.1.5): the JSON reader (JVal / json_skip_ws / json_parse_string / json_parse)
+// was PROMOTED UP into foxtag.hpp so the core grammar-envelope emit can reuse it; this file gets
+// it via `#include "foxtag.hpp"` (line 18). Do not re-declare here.
 
 //======================================================================
 // compile_commands lookup (mirror sizeprobe.flags_for: upward find; match

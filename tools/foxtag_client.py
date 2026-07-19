@@ -106,3 +106,17 @@ def inventory():
         elif len(parts) == 3 and parts[0] == "T":
             tags.append((parts[1], parts[2]))
     return units, tags
+
+
+def grammar():
+    """The GRAMMAR envelope (E.1.2.B 0.1.5): payload tables categories/ref_subcats/concern/surface +
+    the node-model `unit_types` (with a `closable` column). {} on failure. The foxtag C++ core emits
+    the SAME standardized envelope toolio.py builds (the "two readers, one source" model, D-382);
+    parity_check.sh §3b keeps the payload sets byte-honest with the Python authority."""
+    out, rc = _run(["grammar", "--json"])
+    if rc != 0 or not out.strip():
+        return {}
+    try:
+        return json.loads(out)
+    except json.JSONDecodeError:
+        return {}

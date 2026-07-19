@@ -124,9 +124,94 @@ static int cmd_parity_dump(const Grammar& g, const RefIndex& idx, const Roots& r
     return 0;
 }
 
-static int cmd_grammar(const Grammar& g) {
-    std::printf("categories=%zu ref_subcats=%zu concern=%zu surface=%zu\n",
-                g.categories.size(), g.ref_subcats.size(), g.concern.size(), g.surface.size());
+// trim ALL surrounding whitespace incl. '\n' (foxtag's strip() intentionally keeps '\n' for the
+// single-line tag parser; file contents like TOOLCHAIN_VERSION / .git/HEAD carry a trailing newline).
+static string trim_all(const string& s) {
+    size_t a = s.find_first_not_of(" \t\r\n");
+    if (a == string::npos) return {};
+    return s.substr(a, s.find_last_not_of(" \t\r\n") - a + 1);
+}
+
+// resolve the engine repo HEAD via a .git/HEAD read (no `git` subprocess); "" if unresolvable
+// (packed-refs) — staleness metadata only, excluded from the by-members parity.
+static string git_head_of(const Roots& roots) {
+    string head = trim_all(read_file(roots.engine / ".git" / "HEAD"));
+    if (starts_with(head, "ref:")) {
+        string ref = trim_all(head.substr(4));
+        return trim_all(read_file(roots.engine / ".git" / ref));
+    }
+    return head;                                               // detached HEAD = the SHA directly
+}
+
+static int cmd_grammar(const Grammar& g, const Roots& roots, bool json) {
+    if (!json) {
+        std::printf("categories=%zu ref_subcats=%zu concern=%zu surface=%zu\n",
+                    g.categories.size(), g.ref_subcats.size(), g.concern.size(), g.surface.size());
+        return 0;                                              // bare form byte-identical (parity §3)
+    }
+    // --json: the standardized tool-I/O envelope (E.1.2.B 0.1.5 / D-382/D-384). The C++ half of the
+    // "two readers, one source" model — the per-table `schema` is READ from the shared registry (never a
+    // literal → no drift), schema_version is DERIVED, TOOLCHAIN_VERSION is read; parity_check keeps it
+    // byte-honest with toolio.py. RC-E discipline: loud-fail, never a silent-empty fact.
+    if (g.schema_version.empty()) {
+        std::fprintf(stderr, "ERROR: [SCHEMA] version underived from the spec SSoT\n"); return 2;
+    }
+    string tcv = trim_all(read_file(roots.engine / "tools" / "TOOLCHAIN_VERSION"));
+    if (tcv.empty()) {
+        std::fprintf(stderr, "ERROR: tools/TOOLCHAIN_VERSION missing or empty\n"); return 2;
+    }
+    string reg_text = read_file(roots.engine / "tools" / "lib" / "toolio_schemas.json");
+    if (reg_text.empty()) {
+        std::fprintf(stderr, "ERROR: tools/lib/toolio_schemas.json unreadable\n"); return 2;
+    }
+    size_t ri = 0;
+    JVal reg = json_parse(reg_text, ri);
+    const JVal* tables = nullptr;
+    if (auto it = reg.obj.find("grammar/1"); it != reg.obj.end())
+        if (auto jt = it->second.obj.find("tables"); jt != it->second.obj.end())
+            tables = &jt->second;
+    if (!tables) {
+        std::fprintf(stderr, "ERROR: grammar/1.tables missing in toolio_schemas.json\n"); return 2;
+    }
+    // the registry-declared column list for a table, as a JSON array string (schema sourced from SSoT)
+    auto reg_schema = [&](const string& t) -> string {
+        string s = "[";
+        if (auto it = tables->obj.find(t); it != tables->obj.end())
+            for (size_t k = 0; k < it->second.arr.size(); ++k) {
+                if (k) s += ",";
+                s += "\"" + json_escape(it->second.arr[k].str) + "\"";
+            }
+        return s + "]";
+    };
+    auto table_1col = [&](const string& t, const set<string>& names) -> string {
+        string s = "\"" + t + "\":{\"schema\":" + reg_schema(t) + ",\"rows\":[";
+        bool first = true;
+        for (const string& n : names) { if (!first) s += ","; s += "[\"" + json_escape(n) + "\"]"; first = false; }
+        return s + "]}";
+    };
+    // unit_types carries a `closable` column (closable = name in openers()); openers() is NOT a
+    // separate table (D-384 — CODE in openers but not unit_types; the plugin derives closable here).
+    string ut = "\"unit_types\":{\"schema\":" + reg_schema("unit_types") + ",\"rows\":[";
+    bool ut_first = true;
+    for (const string& n : unit_types()) {
+        if (!ut_first) ut += ",";
+        ut += "[\"" + json_escape(n) + "\"," + (openers().count(n) ? "true" : "false") + "]";
+        ut_first = false;
+    }
+    ut += "]}";
+
+    string out = "{\"envelope_version\":\"1.0\",\"kind\":\"grammar\",\"schema_version\":\"" +
+                 json_escape(g.schema_version) + "\",\"payload_schema_version\":\"grammar/1\","
+                 "\"producer\":{\"tool\":\"foxtag\",\"version\":\"" + json_escape(tcv) +
+                 "\",\"command\":\"grammar\",\"args\":[\"--json\"]},"
+                 "\"status\":{\"ok\":true,\"code\":0,\"findings\":[]},"
+                 "\"target\":{\"paths\":[],\"git_head\":\"" + json_escape(git_head_of(roots)) + "\"},"
+                 "\"payload\":{" +
+                 table_1col("categories", g.categories) + "," +
+                 table_1col("ref_subcats", g.ref_subcats) + "," +
+                 table_1col("concern", g.concern) + "," +
+                 table_1col("surface", g.surface) + "," + ut + "}}";
+    std::printf("%s\n", out.c_str());
     return 0;
 }
 
@@ -252,7 +337,7 @@ int main(int argc, char** argv) {
         return cmd_unit_at(g, idx, paths[0], std::atoi(paths[1].c_str()));
     }
     if (cmd == "tags") return cmd_tags(g, idx, roots, paths);
-    if (cmd == "grammar") return cmd_grammar(g);
+    if (cmd == "grammar") return cmd_grammar(g, roots, json);
     if (cmd == "parity-dump") return cmd_parity_dump(g, idx, roots);
     if (cmd == "selftest") return cmd_selftest(g, idx);
     std::fprintf(stderr, "unknown command: %s\n", cmd.c_str());

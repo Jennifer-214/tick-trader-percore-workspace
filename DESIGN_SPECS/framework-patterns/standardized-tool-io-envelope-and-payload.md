@@ -58,6 +58,13 @@ A gitignored, latest-wins directory where a tool drops its latest envelope (`gra
 3. Other foxtag commands (`units`/`layout`/`fields`/`codegen`) + the `check_*` producers adopt the envelope **behind `parity_check`** (D-349 — PASS ≠ cutover; per-consumer, gated).
 4. `foxtag_client.py` grows function-call helpers (`grammar()`, `units()`, …) returning parsed payloads; pybind11 slots behind the same API later.
 
+## Payload kinds + integrity (D-378)
+
+- **The `kind` set is a registered VOCABULARY** (SSoT'd like the tag categories) — adding a payload kind is 1 row, every consumer tracks it; never hardcoded per tool.
+- **Graph-shaped facts are kinds too.** A call-graph / dependency-DAG / trace / reference-graph / blast-radius is a payload whose record-set is EDGES (`{from, to, edge_kind}`) — no special graph infrastructure (a graph is rows of edges under the uniform model). These already EXIST scattered — the plugin's clangd call-hierarchy · `CODE_MAP` · `gen_code_map` · foxtag's `RefIndex` — but are not yet unified foxtag payload kinds; the `0.1.5` enumeration catalogs them. Starter kind set: `grammar · units · layout · fields · codegen · verdict · callgraph · depgraph · refgraph · blast_radius · instantiation`.
+- **One write path, one read path.** A shared envelope-EMIT helper in `foxtag` + `foxtag_client` (the write-side SSoT, sibling to `foxroots`) + the uniform record-set READER. "Same read/write mechanism" is literally ONE code path each, not N hand-rolled emitters.
+- **Integrity = caching, NOT crypto.** An OPTIONAL `content_hash` (SHA-256) in the envelope for cache / dedup / staleness (a consumer or multi-step chain checks "did this change?" without diffing). **NOT HMAC:** HMAC authenticates capital-bearing WIRE data against tampering — the ENGINE's H9 (stamps/snapshots; a real adversary + cross-binary determinism). The `.toolbus/` is local, gitignored, regenerable, no wire, no capital → nothing to authenticate; HMAC there solves a problem the dev-plane doesn't have. Content-hash yes; HMAC + a bespoke binary parser no — the payload is JSON, the record-set reader IS the parser.
+
 ## Discipline / open
 
 - **Payload typing is DRAFT** — the exact type system + nesting rules are locked at the `0.1.5` dive by ENUMERATING all planned payloads (grammar/units/layout/fields/codegen/verdict/register-fit) first, never guessed (`feedback_dont_generalize_substrate_before_input_space_known`).

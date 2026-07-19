@@ -27,15 +27,12 @@ import argparse
 from pathlib import Path
 from collections import defaultdict
 
-WORKSPACE = Path("/home/caramel/code/tick-trader-percore-workspace")
+sys.path.insert(0, str(Path(__file__).absolute().parent))   # .absolute() NOT .resolve(): resolving the tools/
+# symlink gives the imported SSoT modules a WORKSPACE-side __file__, mis-deriving ENGINE (Landmines 5/7).
+from foxroots import WORKSPACE, _resolve_memory_dir  # SSoT roots + memory-dir resolver (E.1.2.B 0.1; D-89)
 SPECS_DIR = WORKSPACE / "DESIGN_SPECS"
 SKILLS_DIR = WORKSPACE / "claude-skills"
 CLAUDE_MD = WORKSPACE / "CLAUDE.md"
-
-sys.path.insert(0, str(Path(__file__).absolute().parent))   # .absolute() NOT .resolve() — resolving
-# the tools/ symlink gives the imported SSoT modules a WORKSPACE-side __file__, mis-deriving ENGINE
-# (LANDMINES 5/7; check_doc_metadata now also shape-verifies, but don't re-arm the trap here).
-from check_doc_metadata import _resolve_memory_dir  # SSoT memory-dir resolver (D-89)
 MEMORY_DIR = _resolve_memory_dir()
 
 CONCERN_LABEL = {

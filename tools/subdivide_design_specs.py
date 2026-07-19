@@ -40,9 +40,8 @@ import argparse
 import subprocess
 from pathlib import Path
 
-WORKSPACE = Path("/home/caramel/code/tick-trader-percore-workspace")
-ENGINE = Path("/home/caramel/code/FoxML_Trader_v2")
-MEMORY = Path("/home/caramel/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory")
+sys.path.insert(0, str(Path(__file__).absolute().parent))  # so `from foxroots import ...` resolves (Landmine 5)
+from foxroots import ENGINE, WORKSPACE, MEMORY_DIR as MEMORY  # SSoT roots (E.1.2.B 0.1)
 SPECS_DIR = WORKSPACE / "DESIGN_SPECS"
 
 TYPE_TO_SUBDIR = {

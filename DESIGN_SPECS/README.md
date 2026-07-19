@@ -2,7 +2,7 @@
 
 **Auto-generated** by `tools/rebuild_doc_indexes.py`. Regenerate after adding/moving specs.
 
-Total: 187 specs across 15 types.
+Total: 189 specs across 15 types.
 
 Per-type catalog grouped by lifecycle stage. Cross-ref:
 - `doc-frontmatter-convention.md` (frontmatter schema)
@@ -39,7 +39,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/refactor-patterns/template-deferred-dependency-injection.md` | 3-first-canonical | framework-discipline, structural-fix | 3 |
 | `DESIGN_SPECS/refactor-patterns/transient-aggregation-bitmap-pattern.md` | 3-first-canonical | data-oriented-design, branchless-discipline | 4 |
 
-## framework-pattern (72 specs)
+## framework-pattern (73 specs)
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
@@ -88,6 +88,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/framework-patterns/multi-asset-class-symbol-pattern.md` | 2-draft | framework-discipline, multi-asset, symbol-normalization, +1 | 0 |
 | `DESIGN_SPECS/framework-patterns/multi-state-dispatch-with-per-state-update-metadata.md` | 3-first-canonical | framework-discipline, branchless-discipline, structural-fix | 3 |
 | `DESIGN_SPECS/framework-patterns/native-tui-via-mmap-readonly-pattern.md` | 3-first-canonical | framework-discipline, tui, notcurses, +3 | 0 |
+| `DESIGN_SPECS/framework-patterns/one-action-toolchain-update-orchestrator.md` | 2-draft | framework-pattern, dev-plane, ssot, +2 | 0 |
 | `DESIGN_SPECS/framework-patterns/per-bit-per-core-override-pattern.md` | 3-first-canonical | framework-discipline, branchless-discipline, data-oriented-design | 3 |
 | `DESIGN_SPECS/framework-patterns/per-cluster-producer-pattern.md` | 3-first-canonical | framework-discipline, per-cluster-producer, market-data-fan-out, +1 | 0 |
 | `DESIGN_SPECS/framework-patterns/per-cluster-shared-resource-pattern.md` | 3-first-canonical | framework-discipline, per-cluster-resources, thread-topology, +1 | 0 |
@@ -186,7 +187,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md` | 5-claude-md | wire-format, framework-discipline, structural-fix, +1 | 6 |
 | `DESIGN_SPECS/wire-format-patterns/wire-format-canonical-body-invariants-helper.md` | 3-first-canonical | wire-format, framework-discipline, structural-fix | 3 |
 
-## doc-discipline (4 specs)
+## doc-discipline (5 specs)
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
@@ -194,6 +195,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md` | 3-first-canonical | doc-discipline, structural-fix, pattern-codification, +1 | 6 |
 | `DESIGN_SPECS/doc-disciplines/in-code-documentation-schema.md` | 3-first-canonical | doc-discipline, meta-discipline, ssot, +1 | 7 |
 | `DESIGN_SPECS/doc-disciplines/module-scoped-claude-md-pattern.md` | 2-draft | doc-discipline, framework-discipline, context-aware-loading | 2 |
+| `DESIGN_SPECS/doc-disciplines/toolchain-semantic-versioning.md` | 2-draft | doc-discipline, dev-plane, versioning, +1 | 0 |
 
 ## meta-discipline (32 specs)
 

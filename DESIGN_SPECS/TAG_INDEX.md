@@ -458,12 +458,17 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/dev-vs-production-thread-topology-pattern.md`
 
+### dev-plane (2 files)
+
+- `DESIGN_SPECS/doc-disciplines/toolchain-semantic-versioning.md`
+- `DESIGN_SPECS/framework-patterns/one-action-toolchain-update-orchestrator.md`
+
 ### dlopen (2 files)
 
 - `DESIGN_SPECS/framework-patterns/dynamic-library-strategy-loading-pattern.md`
 - `DESIGN_SPECS/framework-patterns/strategy-hot-reload-via-dlopen-pattern.md`
 
-### doc-discipline (54 files)
+### doc-discipline (55 files)
 
 - `DESIGN_SPECS/audit-methodologies/audit-report-format.md`
 - `DESIGN_SPECS/doc-disciplines/categorical-triggers-in-always-loaded-docs.md`
@@ -472,6 +477,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/doc-disciplines/in-code-doc-system-north-star.md`
 - `DESIGN_SPECS/doc-disciplines/in-code-documentation-schema.md`
 - `DESIGN_SPECS/doc-disciplines/module-scoped-claude-md-pattern.md`
+- `DESIGN_SPECS/doc-disciplines/toolchain-semantic-versioning.md`
 - `DESIGN_SPECS/framework-patterns/doc-intelligence-toolchain-architecture.md`
 - `DESIGN_SPECS/framework-patterns/framework-composition-overview.md`
 - `DESIGN_SPECS/framework-patterns/isolated-per-struct-layout-probe.md`
@@ -519,6 +525,10 @@ This file is a snapshot for static browsing.
 - `memory/feedback_skill_edit_cohort_checklist.md`
 - `memory/feedback_terminology_evolution_bridge_not_history_rewrite.md`
 - `memory/project_engine_clauder_md_is_symlink.md`
+
+### doc-pipeline (1 files)
+
+- `DESIGN_SPECS/framework-patterns/one-action-toolchain-update-orchestrator.md`
 
 ### dpdk (2 files)
 
@@ -769,6 +779,10 @@ This file is a snapshot for static browsing.
 - `memory/feedback_run_doc_ci_tools_first_never_hand_verify.md`
 - `memory/feedback_structural_fix_for_recurring_class.md`
 - `memory/feedback_verify_every_enumerated_site_at_close.md`
+
+### framework-pattern (1 files)
+
+- `DESIGN_SPECS/framework-patterns/one-action-toolchain-update-orchestrator.md`
 
 ### future-aware (1 files)
 
@@ -1523,11 +1537,13 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/concurrency-patterns/spsc-vs-blackboard-selection-criteria.md`
 
-### ssot (13 files)
+### ssot (15 files)
 
 - `DESIGN_SPECS/doc-disciplines/in-code-documentation-schema.md`
+- `DESIGN_SPECS/doc-disciplines/toolchain-semantic-versioning.md`
 - `DESIGN_SPECS/framework-patterns/config-compiler-validation-pattern.md`
 - `DESIGN_SPECS/framework-patterns/doc-intelligence-toolchain-architecture.md`
+- `DESIGN_SPECS/framework-patterns/one-action-toolchain-update-orchestrator.md`
 - `DESIGN_SPECS/framework-patterns/single-authority-predicate-for-mode-gating.md`
 - `DESIGN_SPECS/meta-disciplines/representation-migration-completeness.md`
 - `DESIGN_SPECS/meta-disciplines/single-source-of-truth-discipline.md`
@@ -1561,7 +1577,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/mechanical-verification-of-derived-code-facts.md`
 
-### structural-fix (102 files)
+### structural-fix (103 files)
 
 - `DESIGN_SPECS/audit-methodologies/static-latency-path-conformance-analysis.md`
 - `DESIGN_SPECS/concurrency-patterns/phase-separated-drainer-for-safe-cross-temporal-derives.md`
@@ -1588,6 +1604,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/metadata-bit-driven-derived-filter-framework.md`
 - `DESIGN_SPECS/framework-patterns/multi-action-registry-walker-family.md`
 - `DESIGN_SPECS/framework-patterns/multi-state-dispatch-with-per-state-update-metadata.md`
+- `DESIGN_SPECS/framework-patterns/one-action-toolchain-update-orchestrator.md`
 - `DESIGN_SPECS/framework-patterns/per-instance-registry-pattern.md`
 - `DESIGN_SPECS/framework-patterns/persisted-struct-with-ephemeral-field-coexistence-pattern.md`
 - `DESIGN_SPECS/framework-patterns/postloadsetup-registry-pattern.md`
@@ -1771,6 +1788,10 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/audit-methodologies/post-implementation-verification-v-class.md`
 - `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/mechanical-verification-of-derived-code-facts.md`
+
+### versioning (1 files)
+
+- `DESIGN_SPECS/doc-disciplines/toolchain-semantic-versioning.md`
 
 ### viewer (1 files)
 
@@ -1990,15 +2011,17 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/runtime-mutable-vs-boot-time-config-pattern.md`
 
-### ci-tooling (19 files)
+### ci-tooling (21 files)
 
 - `DESIGN_SPECS/audit-methodologies/audit-report-format.md`
 - `DESIGN_SPECS/audit-methodologies/static-latency-path-conformance-analysis.md`
 - `DESIGN_SPECS/doc-disciplines/in-code-documentation-schema.md`
+- `DESIGN_SPECS/doc-disciplines/toolchain-semantic-versioning.md`
 - `DESIGN_SPECS/feature-patterns/runtime-toggleable-bench-gate-pattern.md`
 - `DESIGN_SPECS/framework-patterns/doc-intelligence-toolchain-architecture.md`
 - `DESIGN_SPECS/framework-patterns/isolated-per-struct-layout-probe.md`
 - `DESIGN_SPECS/framework-patterns/meta-registry-pattern-for-codebase-registry-discipline.md`
+- `DESIGN_SPECS/framework-patterns/one-action-toolchain-update-orchestrator.md`
 - `DESIGN_SPECS/framework-patterns/registry-coverage-ci-check-pattern.md`
 - `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/canonical-sister-extension-discipline.md`
@@ -2052,13 +2075,15 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/dev-vs-production-thread-topology-pattern.md`
 
-### doc-pipeline (8 files)
+### doc-pipeline (10 files)
 
 - `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md`
 - `DESIGN_SPECS/doc-disciplines/in-code-documentation-schema.md`
 - `DESIGN_SPECS/doc-disciplines/module-scoped-claude-md-pattern.md`
+- `DESIGN_SPECS/doc-disciplines/toolchain-semantic-versioning.md`
 - `DESIGN_SPECS/framework-patterns/doc-intelligence-toolchain-architecture.md`
 - `DESIGN_SPECS/framework-patterns/isolated-per-struct-layout-probe.md`
+- `DESIGN_SPECS/framework-patterns/one-action-toolchain-update-orchestrator.md`
 - `DESIGN_SPECS/meta-disciplines/sister-cohort-amendment-completeness-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/structural-enforcement-when-memory-insufficient.md`
 - `claude-skills/capture-audit/SKILL.md`

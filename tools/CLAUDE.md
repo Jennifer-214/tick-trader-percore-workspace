@@ -56,6 +56,18 @@ of ONE core**, so the grammar + facts exist in exactly one implementation.
 - **The schema is LOCKED (`[SCHEMA]_[v1.0]`, D-346).** A grammar change = a `[SCHEMA]_[vN]` bump,
   coordinated across foxtag + the validator + the plugin (the stable contract = {closed vocab · section
   ladder · one-category-per-line · the `====` block structure}). Don't drift a tool off the locked grammar.
+- **Toolchain VERSIONING — semver `X.Y.Z`, MAJOR tied to the `[SCHEMA]` contract (D-373).** The toolchain is a
+  dev-plane PRODUCT: `MAJOR.MINOR.PATCH`, where a `[SCHEMA]_[vN]` grammar bump = the MAJOR (it ripples to every
+  consumer); MINOR = a new surface/producer/capability (incl. additive vocab rows — they don't bump the schema);
+  PATCH = a fix. One SSoT `tools/TOOLCHAIN_VERSION` every surface reports (foxtag `--version` · plugin
+  `:checkhealth` · CI banner). `0.x` until the cohesive V1 → `1.0.0`. NOT the engine's wire-bound `.F.4d` cadence
+  (that constraint doesn't apply here). Spec: `doc-disciplines/toolchain-semantic-versioning.md`.
+- **UPDATE is ONE codified action; GATES stay verify-only (D-374).** Propagating a change
+  (vocab/grammar/derived-facts/indexes/parity) is a single orchestrated skill — regenerate all WRITTEN derived state
+  + indexes from ground truth in dependency order, IDEMPOTENTLY (D-369 stamp-on-change), verify-after — NOT a
+  remembered N-step ritual (that's what drifts). The CI gates READ (red on drift); the update skill WRITES (how you
+  fix drift). Never a hook that silently rewrites files ("flag-not-auto", per `[OUTDATED_INFO]`). Spec:
+  `framework-patterns/one-action-toolchain-update-orchestrator.md`.
 
 ## Where things live
 

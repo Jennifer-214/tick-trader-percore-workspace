@@ -32,35 +32,17 @@ import re
 import sys
 from pathlib import Path
 
-SCRIPT_DIR = Path(__file__).absolute().parent  # .absolute() not .resolve(): keep the engine path, don't follow the workspace symlink (machine-portable)
-
-
-def _engine_root() -> Path:
-    """Locate the ENGINE root (the dir holding CoreFrameworks/MetaRegistry.hpp + the SCAN_DIRS source),
-    robust to the `engine/tools -> workspace/tools` symlink (the tool physically lives in the workspace;
-    the engine source does NOT). Fast path: invoked via the engine symlink path, SCRIPT_DIR.parent IS the
-    engine root. Fallback: invoked via the WORKSPACE path (e.g. the workspace pre-commit hook), the engine
-    is the SIBLING whose `tools/` symlink resolves back to our real tools dir — identify it precisely (so a
-    different sibling repo can't match). If nothing matches, keep the invocation root so a GENUINE
-    MetaRegistry.hpp deletion still fails LOUD (parse_foreach_registry -> exit 2), never a silent skip.
-    Fixes the workspace-invocation false `exit 2` surfaced at the E.1.2.A close (2026-07-18)."""
-    invoked_root = SCRIPT_DIR.parent
-    if (invoked_root / "CoreFrameworks/MetaRegistry.hpp").exists():
-        return invoked_root
-    real_tools = Path(__file__).resolve().parent
-    for sib in sorted(real_tools.parent.parent.iterdir()):
-        try:
-            link = sib / "tools"
-            if link.is_symlink() and link.resolve() == real_tools \
-               and (sib / "CoreFrameworks/MetaRegistry.hpp").exists():
-                return sib
-        except OSError:
-            continue
-    return invoked_root
-
-
-REPO_ROOT  = _engine_root()
-META_REG   = REPO_ROOT / "CoreFrameworks/MetaRegistry.hpp"
+# Engine root = the CANONICAL machine-portable resolver from check_doc_metadata (honors $FOXML_ENGINE +
+# recovers when __file__ landed WORKSPACE-side via the tools/ symlink, shape-checked on Version.hpp —
+# Landmine 5; feedback_machine_portable_resolver_for_committed_tool_paths). This tool was the lone STRAGGLER
+# that rolled its own `Path(__file__).parent.parent`, which false-`exit 2`'d ("MetaRegistry.hpp not found")
+# when invoked via the workspace path (the workspace pre-commit) where that parent resolves to the WORKSPACE
+# (no CoreFrameworks/). Switched to the SSoT resolver 2026-07-19 so it resolves identically to every other
+# engine-scanning tool (check_code_tag_blocks / check_schema_version / check_cache_layout all import ENGINE).
+sys.path.insert(0, str(Path(__file__).absolute().parent))
+from check_doc_metadata import ENGINE               # noqa: E402  (the one engine-root SSoT)
+REPO_ROOT = ENGINE
+META_REG  = REPO_ROOT / "CoreFrameworks/MetaRegistry.hpp"
 
 # Directories to scan for FOREACH_<X> macro definitions
 SCAN_DIRS = [
@@ -142,41 +124,25 @@ def parse_foreach_registry() -> dict:
     return result
 
 
-def main() -> int:
-    info("scanning codebase for FOREACH_<X> macros + cross-checking against FOREACH_REGISTRY...")
+def evaluate_registry(codebase_macros: set, registry_entries: dict):
+    """Pure Check 1/2/3 comparison — the testable CORE that both `main()` and `--selftest` call (SSoT; no
+    duplicated logic). Returns (failures, passes): lists of message strings; empty `failures` == clean.
 
-    codebase_macros = scan_codebase_foreach_macros()
-    info(f"  found {len(codebase_macros)} FOREACH_<X> macros in codebase")
-
-    registry_entries = parse_foreach_registry()
-    info(f"  found {len(registry_entries)} entries in FOREACH_REGISTRY")
-
-    failures = 0
-
-    # Check 1: every codebase macro is in FOREACH_REGISTRY (or exempted)
-    # FATAL since .E.0.10 (2026-06-11): the transition window closed — all macros are now enrolled, so a
-    # NEW unregistered macro is a hard CI failure per H15 ("adding a registry without enrollment fails CI
-    # Check"). The 2 stragglers (FOREACH_LEGACY_PREFIXED_KEY / FOREACH_STAMP_RESULT_FIELD_EXCLUSION) slipped
-    # precisely because this was warn-only past its .F.4d promote-milestone — the warn WAS the hole. Close
-    # a future one by a row in CoreFrameworks/MetaRegistry.hpp, or (if genuinely not a registry) EXEMPTIONS.
-    unregistered = codebase_macros - set(registry_entries.keys()) - EXEMPTIONS - {"FOREACH_REGISTRY"}
+    Check 1: every codebase FOREACH_<X> macro is registered (or exempted) — FATAL since .E.0.10 (the
+      transition window closed; a NEW unregistered macro is a hard H15 CI failure).
+    Check 2: every FOREACH_REGISTRY row has a real #define (registered-but-missing = a registry bug).
+    Check 3: LEVEL/PARENT topology (LEVEL 0 => ROOT_NONE; LEVEL>0 => a real non-root parent)."""
+    failures, passes = [], []
+    unregistered = codebase_macros - set(registry_entries) - EXEMPTIONS - {"FOREACH_REGISTRY"}
     if unregistered:
-        for name in sorted(unregistered):
-            fail(f"Check 1 FAIL: codebase macro `{name}` not in FOREACH_REGISTRY — add a row in CoreFrameworks/MetaRegistry.hpp (or document as EXEMPTION in tools/check_meta_registry.py)")
-        failures += 1
+        failures += [f"Check 1 FAIL: codebase macro `{n}` not in FOREACH_REGISTRY — add a row in CoreFrameworks/MetaRegistry.hpp (or document as EXEMPTION in tools/check_meta_registry.py)" for n in sorted(unregistered)]
     else:
-        info(f"Check 1 PASS: all codebase FOREACH_<X> macros registered in FOREACH_REGISTRY (or exempted)")
-
-    # Check 2: every FOREACH_REGISTRY entry corresponds to an actual #define (FATAL — registered-but-missing is a registry bug)
-    missing_definitions = set(registry_entries.keys()) - codebase_macros - {"FOREACH_REGISTRY"}
-    if missing_definitions:
-        fail(f"Check 2 FAIL: FOREACH_REGISTRY rows have no matching #define in codebase: {sorted(missing_definitions)}")
-        fail("  → delete the row OR add the missing #define")
-        failures += 1
+        passes.append("Check 1 PASS: all codebase FOREACH_<X> macros registered in FOREACH_REGISTRY (or exempted)")
+    missing = set(registry_entries) - codebase_macros - {"FOREACH_REGISTRY"}
+    if missing:
+        failures.append(f"Check 2 FAIL: FOREACH_REGISTRY rows have no matching #define in codebase: {sorted(missing)} — delete the row OR add the missing #define")
     else:
-        info(f"Check 2 PASS: all {len(registry_entries)} FOREACH_REGISTRY rows match a real #define")
-
-    # Check 3: LEVEL/PARENT discipline
+        passes.append(f"Check 2 PASS: all {len(registry_entries)} FOREACH_REGISTRY rows match a real #define")
     issues = []
     for name, (level, parent) in registry_entries.items():
         if level == 0:
@@ -188,19 +154,49 @@ def main() -> int:
             elif parent not in registry_entries and parent != "FOREACH_REGISTRY":
                 issues.append(f"  {name}: PARENT='{parent}' not found in FOREACH_REGISTRY")
     if issues:
-        fail(f"Check 3 FAIL: LEVEL/PARENT discipline violations:")
-        for issue in issues:
-            fail(issue)
-        failures += 1
+        failures.append("Check 3 FAIL: LEVEL/PARENT discipline violations:\n" + "\n".join(issues))
     else:
-        info(f"Check 3 PASS: LEVEL/PARENT discipline valid across {len(registry_entries)} rows")
+        passes.append(f"Check 3 PASS: LEVEL/PARENT discipline valid across {len(registry_entries)} rows")
+    return failures, passes
 
-    if failures > 0:
-        fail(f"meta-registry check FAILED with {failures} violations")
+
+def main() -> int:
+    info("scanning codebase for FOREACH_<X> macros + cross-checking against FOREACH_REGISTRY...")
+    codebase_macros = scan_codebase_foreach_macros()
+    info(f"  found {len(codebase_macros)} FOREACH_<X> macros in codebase")
+    registry_entries = parse_foreach_registry()
+    info(f"  found {len(registry_entries)} entries in FOREACH_REGISTRY")
+    failures, passes = evaluate_registry(codebase_macros, registry_entries)
+    for p in passes:
+        info(p)
+    for f in failures:
+        fail(f)
+    if failures:
+        fail(f"meta-registry check FAILED with {len(failures)} violations")
         return 1
     info("all meta-registry structural checks PASS — codebase-wide registry discipline intact")
     return 0
 
 
+def _selftest() -> int:
+    """D-137 discoverable negative self-test (teeth): each Check flags its own violation + a clean set
+    passes, AND the canonical ENGINE resolver LOCATES the real registry — the regression guard for the
+    2026-07-19 canonical-resolver fix (the straggler that false-`exit 2`'d from the workspace path)."""
+    clean = {"FOREACH_ROOT": (0, "ROOT_NONE"), "FOREACH_CHILD": (1, "FOREACH_ROOT")}
+    f, _ = evaluate_registry({"FOREACH_ROOT", "FOREACH_CHILD", "FOREACH_ORPHAN"}, clean)
+    assert any("FOREACH_ORPHAN" in m for m in f), "Check 1 teeth: an unregistered macro was not flagged"
+    f, _ = evaluate_registry({"FOREACH_ROOT"}, clean)          # FOREACH_CHILD row present but no #define
+    assert any("FOREACH_CHILD" in m for m in f), "Check 2 teeth: a registry row w/o #define was not flagged"
+    f, _ = evaluate_registry({"FOREACH_BAD"}, {"FOREACH_BAD": (0, "NOT_ROOT_NONE")})
+    assert any("Check 3" in m for m in f), "Check 3 teeth: a LEVEL/PARENT violation was not flagged"
+    f, _ = evaluate_registry({"FOREACH_ROOT", "FOREACH_CHILD"}, clean)
+    assert not f, f"a clean set should PASS but flagged: {f}"
+    assert META_REG.exists(), f"ENGINE path-resolution regression: registry not found at {META_REG} (ENGINE={ENGINE}) — the 2026-07-19 canonical-resolver fix must keep locating it"
+    print("check_meta_registry.py --selftest: PASS — Check 1/2/3 teeth + clean-pass + ENGINE path-resolution")
+    return 0
+
+
 if __name__ == "__main__":
+    if "--selftest" in sys.argv:
+        sys.exit(_selftest())
     sys.exit(main())

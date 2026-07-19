@@ -8,7 +8,7 @@ sister_specs: [meta-disciplines/mechanical-verification-of-derived-code-facts.md
 sister_docs:
   - tools/check_cache_layout.py   # the first-canonical --isolate implementation
 applications:
-  - 'check_cache_layout.py --isolate (E.1.2.A C4 step-2, D-363/D-368) — per-header sizeof-forcing probes materialize every converted [STRUCT] main.cpp under-instantiates; proven across global / tt:: / template / multi-instantiation'
+  - 'check_cache_layout.py --isolate (E.1.2.A C4 step-2/3, D-363/D-368) — per-header sizeof-forcing probes materialize every converted [STRUCT] main.cpp under-instantiates; corpus-wide fill landed (engine 9939ed6). Proven across global / tt:: / single-instantiation template + explicit-instantiation (space-normalized); multi-instantiation REFUSED not guessed (D-370; per-instantiation emit = Task #15)'
 ---
 
 # Isolated per-struct layout probe — materialize ANY struct's layout in isolation, 1:1 with the binary
@@ -52,7 +52,9 @@ A struct's layout is a PURE FUNCTION of `(its definition · the layout-relevant 
 
 ## Edge-cases
 
-- **Templates** — detect via the `template<…>` decl; instantiate at real `F=64` (extra params on defaults). Multi-instantiation (`RollingStats<64>`/`<64,256>`/…) — the layout matcher strips `<…>` to the bare name; pick the primary instantiation (or `[INSTANTIATION]`-key each).
+- **Templates** — detect via the `template<…>` decl; instantiate at real `F=64` (extra params on defaults). A block binds to a record two ways (`match_layout`, D-370), and it **refuses to guess** rather than write a wrong fact:
+  - **Explicit-instantiation name** (`[STRUCT]_[FixedPoint<2,64>]` — a separate block per instantiation) → matched EXACTLY, space-insensitive: clang emits `FixedPoint<2, 64>` with a space, so normalize both sides before comparing. Each instantiation fills its own layout.
+  - **Bare name** (`[STRUCT]_[RollingStats]`) → matched by base name (strip `<…>`). If the template is laid out at MULTIPLE widths (>1 record — `RollingStats<64,{128,256,512,1024}>` = 8640/16832/33216/65984B), the matcher returns **None**: a single `[SIZE]` would be an ARBITRARY WRONG pick, so the writer skips it — the block keeps its `[INSTANTIATION]` tag + empty layout = a tracked C4-remainder, NEVER a wrong fact (sister to the coverage-bounded skip for an un-probed struct). **Per-instantiation emit** (probe each declared tuple → keyed facts, collapsed where uniform) is the target (Task #15), gated on `[INSTANTIATION]` carrying the full sizeof-able tuple (a multi-PARAM template like `RollingStats<F,W>` currently lists only `W`).
 - **RC-B header-hygiene** — a header leaning on a transitive std include fails standalone; the common `<cmath>/<cstdint>/<cstddef>` prelude covers most; extend per-header as they surface.
 - **Non-instantiable-via-ctor structs** — `sizeof` needs no ctor, so private-ctor / required-arg / abstract structs still materialize (a *variable* would not — this is why `sizeof`-forcing, not a variable).
 

@@ -36,6 +36,8 @@ Adding vocab (a `[TAG]` value / a category / a `[REFERENCE]` subcat / a `[DERIVE
 
 **Standing rule:** a new consumer of the tag grammar reads `foxtag grammar` / `foxtag unit`, or earns a `parity_check.sh` section. No consumer holds grammar the fence doesn't feed it. (Decision log D-365; the vocab-side twin of the D-349 fact-side migration contract below.)
 
+**Corollary — a corpus-COHESION check goes in a SEPARATE sibling, never inside the parity-gated path.** A property that spans blocks (a `[SCHEMA]` version-pin, a cross-field register-fit, any "hold the whole corpus consistent" rule) is NOT a per-block grammar rule — folding it into the parity-gated producer (`validate_file` / the `layout` JSON) makes ONE implementation flag what the other doesn't and **re-breaks the Python↔foxtag byte-parity gate.** So add it as a separate check, or a new `foxtag <cmd>` *beside* `validate`/`layout` (whose parity payload stays untouched). Applied twice 2026-07-18 (D-371): `check_schema_version.py` (kept OUT of `validate_file`) + `foxtag fields` (added beside `layout`, its parity JSON shape unchanged → `parity_check.sh` still PASS). The cohesion property is real and worth gating — it just gates from its own sibling seam, not by widening the parity-locked one.
+
 ## The migration contract — Python CI-authoritative until a parity-gated cutover (D-349)
 
 The system carries TWO implementations of the parse/producer layer during its build-out: the Python checkers (authoritative) and the C++ `foxtag` core (the destination). The contract that keeps this from being a two-implementations-drift hazard:

@@ -24,7 +24,9 @@ compiled-reality facts (size, layout, call-graph, codegen class) *derived by too
 kept honest by CI*. A shared toolchain produces those facts once; a CI gate re-derives
 them on every change and red-builds on drift; an nvim plugin surfaces + edits it all at
 the cursor; a pop-out viewer floats referenced docs beside the code. **The code becomes
-the IDE** — self-documenting, self-verifying, navigable. A format designed **once**, so it
+the IDE** — self-documenting, self-verifying, navigable — with the plugin as a **non-CLI application of the whole
+toolchain** (every producer/query editor-native, not just a render surface; the scope-increased V1 —
+D-372 / §6 / §8.6). A format designed **once**, so it
 never has to be re-standardized across a career of projects.
 
 ## 2. Why (the payoff — in priority order)
@@ -116,9 +118,18 @@ pinned to `[BUILD]`/`[INSTANTIATION]` per D-327).
   materializes — fix alongside).
 - **RC-F (per-FIELD facts + register-fit / access-cost axis — operator-envisioned 2026-07-18, grounded in `Learning_cpp/projects/deep_dives`; the axis SURFACES the existing `data-disciplines/function-struct-alignment-for-single-mov-access.md` discipline + rides the `framework-patterns/isolated-per-struct-layout-probe.md` producer):** two linked capabilities. **(a) Per-field slice on a field's card** — opening a card for one field (`cached_seq`) shows THAT field's own size / offset / which 64B line(s) it occupies + its straddle, NOT the enclosing struct's aggregate (the same bug shape as RC-D′; the producer already has the per-field offsets — the struct card renders `@0 @4 @8 @16 @144`). **(b) Access-cost / register-fit DERIVED axis** — classify each field: a naturally-aligned scalar of register width (1/2/4/8 B GPR · 16/32/64 B XMM/YMM/ZMM, `offset mod size == 0`) loads/stores in a SINGLE aligned `mov`; a bit-packed sub-byte field (`MBS_*`/`BITMAP_*` shift+mask) or a misaligned one needs an extract (shift + and) — the "40-instructions → 1 `mov`" the operator demonstrated (de Bruijn `×0x01010101` single-`imul` packing; the `(~A & B) == B` branchless gate). **The equation:** single-mov ⟺ `size ∈ {1,2,4,8,16,32,64}` ∧ `offset mod size == 0`. The tool flags shift-mask fields + computes the register-aligned reconfiguration that would make access single-mov. **Honest tension (H14 / `latency-vs-cache-decision-framework.md`):** the engine bit-packs DELIBERATELY for cache footprint / L1 residency — single-mov alignment TRADES bytes for access-instructions, so the axis SHOWS BOTH costs (access-ops AND byte/cache-line footprint) per field; the operator decides, the tool NEVER blindly unpacks. A genuinely new compiled-reality axis — "is this field a single `mov`, and what layout would make it one" surfaced at edit-time (the H6/H7/H14 disciplines made visible where you edit). Homed as a task; the per-field-slice half (a) subsumes RC-D′ / Task #10.
 
-## 6. Layer 3 — The plugin (the nvim surface)
+## 6. Layer 3 — The plugin (the nvim surface → a NON-CLI application of the whole toolchain, D-372)
 
-**Target UX:**
+**Scope [D-372, 2026-07-19 — the V1 completion mark, EXPANDED]:** the plugin is no longer merely a
+render/navigate surface — it is a **NON-CLI APPLICATION of the WHOLE toolchain**. Everything you would do via
+`foxtag <cmd>` or the `check_*` scripts is available editor-native + keyboard-first: browse units · query
+facts · **invoke the producers to REFRESH DERIVED in place** (not only render pre-computed facts) · navigate
+refs · surface gate results. The Target-UX below is the render/navigate portion of that fuller application;
+**V1 completion now REQUIRES this app-level scope**, not only the render surface. This is the custom-IDE
+endgame (§8.5 / §8.6 / D-330) made the PRIMARY plugin goal — and it is what makes the toolchain *felt*
+("matters"). Full scope + sequencing (plugin-first) + open questions → §8.6 + decision log **D-372**.
+
+**Target UX (the render/navigate portion of the app above):**
 - **Cursor-tracking by enclosing unit** — resolve the unit from the outer↔`[END_X]` block,
   so the HUD/panel/derived work anywhere inside a unit, not only on the symbol name.
   *(Most current HUD/panel functionality reworks around this.)*
@@ -238,8 +249,8 @@ overlays/asm half-broken (phase 5, operator's session).
 1. Complete the **schema** against the survey's input-space taxonomy.
 2. Stand up the **dogfood corpus**; prove the format lossless on it.
 3. Fix the **toolchain** (RC-A…E) + build `:FoxTagUpdate` + generalize the drift-gate.
-4. **Rework the plugin** UX (cursor-track / drawer / collapsed / context-gate / popout).
-5. **Convert** the codebase (mechanical, byte-identical) — *only now* is it truly mechanical.
+4. **Rework the plugin** UX (cursor-track / drawer / collapsed / context-gate / popout) — **scope-increased (D-372) to the plugin as a NON-CLI application of the whole toolchain** (§6 / §8.6); now the plugin-FIRST priority in the sequencing.
+5. **Convert** the codebase (mechanical, byte-identical) — *only now* is it truly mechanical. *(DONE 2026-07-18 — corpus 100% green; the phased path above predates the D-372 V1 redefinition, which §8.6 governs.)*
 
 ## 8.5 · Planes are first-class + the toolchain self-hosts (D-367, 2026-07-18)
 

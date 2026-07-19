@@ -1,0 +1,12 @@
+# import-from-core lint baseline (E.1.2.B 0.1 / D-375) — tools STILL rolling their own repo-root.
+# The CLASS is structurally CLOSED: a NEW roller REDs immediately (check_import_from_core.py). These
+# grandfathered tools use the portable `FOXML_ENGINE or Path(__file__).parent.parent` pattern but lack
+# foxroots' Version.hpp shape-check + Landmine-5 sibling recovery, so they migrate to `from foxroots
+# import ...` paced. Remove a line when its tool migrates; shrink to empty = class fully migrated.
+check_slot_node_derive.py
+check_money_gross_single_source.py
+foxtag_client.py
+cascade.py
+check_struct_alignment.py
+check_forward_promise_audit.py
+check_plan_body_symbol_existence.py

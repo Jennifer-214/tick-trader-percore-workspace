@@ -184,6 +184,14 @@ else
     RESULTS+=("  ⏭  HARD  tools-inventory enrollment (SKIP_TOOLS_INVENTORY_CHECK=1)")
 fi
 
+# --- HARD 4b: import-from-core lint (E.1.2.B 0.1 / D-375 — no NEW roll-your-own repo-root; 7 grandfathered) ---
+if [ "${SKIP_IMPORT_FROM_CORE_CHECK:-0}" != "1" ]; then
+    run_hard "import-from-core lint (no NEW roll-your-own repo-root)" \
+        python3 "$REPO_ROOT/tools/check_import_from_core.py"
+else
+    RESULTS+=("  ⏭  HARD  import-from-core lint (SKIP_IMPORT_FROM_CORE_CHECK=1)")
+fi
+
 # --- HARD 5: always-loaded doc context budget (the silent-truncation guard) ---
 if [ "${SKIP_DOC_BUDGET_CHECK:-0}" != "1" ]; then
     run_hard "always-loaded doc budget (CLAUDE.md/local + MEMORY.md vs harness caps)" \

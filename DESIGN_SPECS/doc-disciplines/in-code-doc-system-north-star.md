@@ -255,6 +255,36 @@ system** (a **multi-comment-syntax parser** — `//`/`#`/`--` — is the V1 enab
 toolchain earns ENGINE-grade rigor precisely because it's one-producer-N-consumers — a wrong fact fans out
 to every consumer. → `doc-intelligence-toolchain-architecture.md` § plane-first-class; decision log D-367.
 
+## 8.6 · V1 = the whole toolchain, live on every surface (D-372, 2026-07-19)
+
+The felt gap that redefines V1: the tooling + docs EXIST but "feel like none of it matters" — because
+consumption is uneven (strong in CI, thin in the plugin, V1 pending). So V1 is no longer just "schema +
+producers + render + conversion" — it is the toolchain **pervasively consumed from ONE core**, live on the
+surface that fits each capability:
+
+- **One core, no reinvention** — `tools/foxtag/` + `check_doc_metadata` ARE the core; every CLI tool /
+  plugin / CI consumer PULLS from it, none rolls its own. The 2026-07-19 `check_meta_registry.py` straggler
+  (rolled its own `Path(__file__)` root → false `exit 2`) is the anti-pattern; enforce with an
+  import-from-core lint. A `tools/core/` reorg is optional — the substance is the D-349 migration + the
+  discipline, not the directory name.
+- **CLI** — every producer/query standalone (`foxtag <cmd>` + the `check_*` scripts). ~done.
+- **Local CI (NO GitHub dependency)** — pre-commit + session-close + a NEW **pre-push** heavier gate; keeps
+  the in-code `[SCHEMA]` docs SYNCED-WITH-CODE automatically (DERIVED auto-refresh + completeness/version
+  gating). The operator's "a CI script that doesn't require pushes to github." ~done at commit/close;
+  pre-push is the clean add.
+- **Plugin = a NON-CLI application of the WHOLE toolchain** *(scope increase)* — the editor-native front-end
+  (browse units / query facts / refresh DERIVED / navigate refs / surface gate-results, keyboard-native) =
+  the custom-IDE endgame (§8.5, D-330) promoted to the PRIMARY plugin goal. This is what makes the toolchain
+  *felt* — used IN the editor, not only via CLI/CI.
+- **Sequencing: plugin-first** — land plugin V1 consuming the EXISTING producers before building more
+  north-star producers (#12–14), so it pays off fast (`feedback_framework_layer_payoff_diminishing_returns`).
+  Re-prioritizes #7/#8/#10 (plugin lane) AHEAD of #12–14.
+
+Proposed surface split (operator UNSURE — open): PRODUCERS (`layout`/`units`/`fields`/register-fit) →
+plugin + CLI; GATES (schema-version / meta-registry / completeness) → CI/commit/push, not the plugin. Full
+decision + all open questions (the split, the `tools/core/` rename, the pre-push scope, the plugin
+feature-set, the lint) → decision log **D-372**.
+
 ## 9. Non-goals / boundaries
 
 - **Not** a substitute for the engine/edge work — this is the toolchain we build *in*.

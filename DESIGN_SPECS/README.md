@@ -2,7 +2,7 @@
 
 **Auto-generated** by `tools/rebuild_doc_indexes.py`. Regenerate after adding/moving specs.
 
-Total: 189 specs across 15 types.
+Total: 190 specs across 15 types.
 
 Per-type catalog grouped by lifecycle stage. Cross-ref:
 - `doc-frontmatter-convention.md` (frontmatter schema)
@@ -39,7 +39,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/refactor-patterns/template-deferred-dependency-injection.md` | 3-first-canonical | framework-discipline, structural-fix | 3 |
 | `DESIGN_SPECS/refactor-patterns/transient-aggregation-bitmap-pattern.md` | 3-first-canonical | data-oriented-design, branchless-discipline | 4 |
 
-## framework-pattern (73 specs)
+## framework-pattern (74 specs)
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
@@ -109,6 +109,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/framework-patterns/slot-state-foreach-registry-with-storage-routing.md` | 3-first-canonical | framework-discipline, structural-fix, data-oriented-design | 3 |
 | `DESIGN_SPECS/framework-patterns/slow-path-gate-registry-pattern.md` | 3-first-canonical | framework-discipline, structural-fix | 3 |
 | `DESIGN_SPECS/framework-patterns/stamp-vs-runtime-drift-detection-registry.md` | 3-first-canonical | framework-discipline, wire-format, structural-fix | 3 |
+| `DESIGN_SPECS/framework-patterns/standardized-tool-io-envelope-and-payload.md` | 2-draft | framework-pattern, dev-plane, ssot, +2 | 0 |
 | `DESIGN_SPECS/framework-patterns/strategy-hot-reload-via-dlopen-pattern.md` | 3-first-canonical | framework-discipline, hot-reload, dlopen, +2 | 0 |
 | `DESIGN_SPECS/framework-patterns/tls-session-resumption-pattern.md` | 3-first-canonical | framework-discipline, tls-resumption, reconnect-optimization | 0 |
 | `DESIGN_SPECS/framework-patterns/type-erased-per-core-resource-handle-pattern.md` | 3-first-canonical | framework-discipline, concurrency, structural-fix | 2 |

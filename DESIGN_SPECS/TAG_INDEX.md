@@ -33,6 +33,10 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/event-sourced-aggregator-o1-pattern.md`
 - `DESIGN_SPECS/framework-patterns/global-aggregator-readonly-pattern.md`
 
+### ai-plane (1 files)
+
+- `DESIGN_SPECS/framework-patterns/standardized-tool-io-envelope-and-payload.md`
+
 ### anti-pattern-index (1 files)
 
 - `DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md`
@@ -458,10 +462,11 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/dev-vs-production-thread-topology-pattern.md`
 
-### dev-plane (2 files)
+### dev-plane (3 files)
 
 - `DESIGN_SPECS/doc-disciplines/toolchain-semantic-versioning.md`
 - `DESIGN_SPECS/framework-patterns/one-action-toolchain-update-orchestrator.md`
+- `DESIGN_SPECS/framework-patterns/standardized-tool-io-envelope-and-payload.md`
 
 ### dlopen (2 files)
 
@@ -526,9 +531,10 @@ This file is a snapshot for static browsing.
 - `memory/feedback_terminology_evolution_bridge_not_history_rewrite.md`
 - `memory/project_engine_clauder_md_is_symlink.md`
 
-### doc-pipeline (1 files)
+### doc-pipeline (2 files)
 
 - `DESIGN_SPECS/framework-patterns/one-action-toolchain-update-orchestrator.md`
+- `DESIGN_SPECS/framework-patterns/standardized-tool-io-envelope-and-payload.md`
 
 ### dpdk (2 files)
 
@@ -780,9 +786,10 @@ This file is a snapshot for static browsing.
 - `memory/feedback_structural_fix_for_recurring_class.md`
 - `memory/feedback_verify_every_enumerated_site_at_close.md`
 
-### framework-pattern (1 files)
+### framework-pattern (2 files)
 
 - `DESIGN_SPECS/framework-patterns/one-action-toolchain-update-orchestrator.md`
+- `DESIGN_SPECS/framework-patterns/standardized-tool-io-envelope-and-payload.md`
 
 ### future-aware (1 files)
 
@@ -1537,7 +1544,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/concurrency-patterns/spsc-vs-blackboard-selection-criteria.md`
 
-### ssot (15 files)
+### ssot (16 files)
 
 - `DESIGN_SPECS/doc-disciplines/in-code-documentation-schema.md`
 - `DESIGN_SPECS/doc-disciplines/toolchain-semantic-versioning.md`
@@ -1545,6 +1552,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/doc-intelligence-toolchain-architecture.md`
 - `DESIGN_SPECS/framework-patterns/one-action-toolchain-update-orchestrator.md`
 - `DESIGN_SPECS/framework-patterns/single-authority-predicate-for-mode-gating.md`
+- `DESIGN_SPECS/framework-patterns/standardized-tool-io-envelope-and-payload.md`
 - `DESIGN_SPECS/meta-disciplines/representation-migration-completeness.md`
 - `DESIGN_SPECS/meta-disciplines/single-source-of-truth-discipline.md`
 - `DESIGN_SPECS/subsystem-designs/exit-chain-tp-sl-design.md`
@@ -2011,7 +2019,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/runtime-mutable-vs-boot-time-config-pattern.md`
 
-### ci-tooling (21 files)
+### ci-tooling (22 files)
 
 - `DESIGN_SPECS/audit-methodologies/audit-report-format.md`
 - `DESIGN_SPECS/audit-methodologies/static-latency-path-conformance-analysis.md`
@@ -2023,6 +2031,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/meta-registry-pattern-for-codebase-registry-discipline.md`
 - `DESIGN_SPECS/framework-patterns/one-action-toolchain-update-orchestrator.md`
 - `DESIGN_SPECS/framework-patterns/registry-coverage-ci-check-pattern.md`
+- `DESIGN_SPECS/framework-patterns/standardized-tool-io-envelope-and-payload.md`
 - `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/canonical-sister-extension-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/definition-of-done-and-armed-scout-verification.md`
@@ -2075,7 +2084,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/dev-vs-production-thread-topology-pattern.md`
 
-### doc-pipeline (10 files)
+### doc-pipeline (11 files)
 
 - `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md`
 - `DESIGN_SPECS/doc-disciplines/in-code-documentation-schema.md`
@@ -2084,6 +2093,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/doc-intelligence-toolchain-architecture.md`
 - `DESIGN_SPECS/framework-patterns/isolated-per-struct-layout-probe.md`
 - `DESIGN_SPECS/framework-patterns/one-action-toolchain-update-orchestrator.md`
+- `DESIGN_SPECS/framework-patterns/standardized-tool-io-envelope-and-payload.md`
 - `DESIGN_SPECS/meta-disciplines/sister-cohort-amendment-completeness-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/structural-enforcement-when-memory-insufficient.md`
 - `claude-skills/capture-audit/SKILL.md`

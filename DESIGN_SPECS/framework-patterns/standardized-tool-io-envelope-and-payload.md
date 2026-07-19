@@ -1,0 +1,72 @@
+---
+type: framework-pattern
+stage: 2-draft
+version: 1.0
+established: 2026-07-19
+tags: [framework-pattern, dev-plane, ssot, doc-pipeline, ai-plane]
+surface: [ci-tooling, doc-pipeline]
+sister_specs: []
+applies_at_skills: []
+---
+
+# Standardized tool-I/O — the envelope + the uniform payload (the machine serialization of the tag system)
+
+**Established:** 2026-07-19 (decision-log **D-376** envelope+payload, **D-377** `.toolbus/`; E.1.2.B `0.1.5`). **Stage: 2-DRAFT** — the envelope shape is locked as the direction; the exact payload typing is validated at the `0.1.5` dive against all enumerated payloads. First canonical: `foxtag grammar --json`.
+
+## Problem
+
+The toolchain's producers (foxtag `units`/`layout`/`codegen`/`fields`; `check_register_fit`; …) and gates (`check_*` validators) each emit a bespoke shape — so a consumer needs N readers, tools can't be chained, and the plugin/AI can't consume outputs uniformly. The "felt like none of it matters" gap (D-372) is partly *this*: the facts exist but nothing composes them. The fix is ONE format every tool speaks, so a single read/write mechanism serves all — and multi-step composition + native CLI/plugin/AI use fall out for free.
+
+## Two layers
+
+### 1. The ENVELOPE (outer, uniform)
+
+```json
+{
+  "envelope_version": "1.0",
+  "kind": "grammar",
+  "schema_version": "v1.0",
+  "producer": { "tool": "foxtag", "version": "0.1.0", "command": "grammar", "args": ["--json"] },
+  "status":   { "ok": true, "code": 0, "findings": [] },
+  "target":   { "paths": [], "git_head": "4c076ed" },
+  "payload":  { }
+}
+```
+
+- **`status.findings` UNIFIES producers + gates.** A gate is just `kind:"verdict"` with its findings (`{file,line,severity,message,kind}`) in `status` and an empty payload. So the plugin's gate-verdicts-as-`vim.diagnostic` and the AI acting on structured findings read the SAME shape as any producer output. One shape, every tool — this is what makes multi-step composition real.
+- **`schema_version`** = the D-373 `[SCHEMA]` compat gate (a chained tool refuses an incompatible payload). **`target.git_head`** = staleness detection (is this fact current for HEAD?). **`producer`** = provenance for chaining / caching / debug. **`envelope_version`** = the format's own version (additive — add fields without breaking v1 readers).
+
+### 2. The PAYLOAD (inner, uniform — the deeper standardization)
+
+The payload is **one or more NAMED RECORD-SETS.** Each record-set declares a field *schema* (name + type, drawn from the tag vocab where it applies) + *rows*; a field value may nest another record-set.
+
+- `grammar` → tables `{categories, unit_types, derived_axes, ladder, …}`
+- `units` → a `units` table (rows = unit records) · `layout` → a `fields` table · `verdict` → a `findings` table
+
+**One writer emits `{schema, rows}`; one reader walks `{schema, rows}` — for ANY tool.** That is "the same read/write mechanism, general enough for all tools."
+
+**This IS the tag system's machine serialization.** The vocab doc (`doc-tag-vocabulary.md`) is the field dictionary; the in-code `//[CATEGORY]_[value]` tags and these JSON record-sets are two serializations of the ONE vocabulary. Adopting the I/O format EXTENDS the tag system to tool-I/O — they are one system ("the code side of the vocab doc, alongside the tag system"). A record-set can *be* a vocab set (the `categories` table's rows ARE the vocab categories).
+
+## `.toolbus/` — the rendezvous (D-377)
+
+A gitignored, latest-wins directory where a tool drops its latest envelope (`grammar.json`, `layout--ExecutionCore.json`). **Cache, not IPC:** latest-wins · gitignored · regenerable (no history, no GC); staleness is free (`target.git_head`). Read by the plugin (vocab without a subprocess per keystroke), the AI (one canonical location), and multi-step chains. The dev-plane twin of the decoupling endgame's published-state dir. Run-scoping/history deferred until a concrete consumer needs it.
+
+## Adoption (behind parity, ALONGSIDE the tag system)
+
+1. `foxtag grammar --json` — the **1st canonical envelope** (unblocks the plugin: derive `UNIT` set + axes from the payload, killing the hardcoded Lua mirror).
+2. Stand up `.toolbus/`; the plugin + AI read from it.
+3. Other foxtag commands (`units`/`layout`/`fields`/`codegen`) + the `check_*` producers adopt the envelope **behind `parity_check`** (D-349 — PASS ≠ cutover; per-consumer, gated).
+4. `foxtag_client.py` grows function-call helpers (`grammar()`, `units()`, …) returning parsed payloads; pybind11 slots behind the same API later.
+
+## Discipline / open
+
+- **Payload typing is DRAFT** — the exact type system + nesting rules are locked at the `0.1.5` dive by ENUMERATING all planned payloads (grammar/units/layout/fields/codegen/verdict/register-fit) first, never guessed (`feedback_dont_generalize_substrate_before_input_space_known`).
+- **Generalize on cohort** — this spec promotes to first-canonical when `grammar --json` lands; to a cohort stage when the 2nd tool speaks the envelope. Don't build a universal protocol ahead of the consumers.
+
+## Cross-references
+
+- Decision log: **D-376** (envelope + payload) · **D-377** (`.toolbus/`) · D-337/D-349 (one-core / migration) · D-373 (`schema_version`) · D-372/D-375 (V1 / AI-plane).
+- Sister (prose): `in-code-documentation-schema.md` (the in-code tag serialization — the sibling of this machine serialization) · `doc-intelligence-toolchain-architecture.md` (the one-core thesis) · `toolchain-semantic-versioning.md` (`schema_version` / `producer.version`) · `TECH_DEBT-176` (tool-composition / unified runner, the consumer of this substrate) · the decoupling endgame's `headless-engine-viewer-split-pattern` (the engine sibling of `.toolbus/`).
+- Applied at: E.1.2.B `0.1.5`.
+
+**End — Stage 2 DRAFT.** Reciprocal `sister_specs` links + index enrollment land at first-canonical (`0.1.5`).

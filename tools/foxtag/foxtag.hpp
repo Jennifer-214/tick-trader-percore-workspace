@@ -438,6 +438,18 @@ inline RefIndex load_ref_index(const Roots& roots) {
             }
             pos = pos + 6;
         }
+        // + the per-class subfiles (recurring-bug-patterns/class-NN-*.md, file-size-split Stage-3):
+        // a subfile-only class (e.g. 23) is NEVER spelled "Class N" inline in the main doc, so glob the
+        // subfile numbers too — else corpus-wide false-dangling (mirrors check_code_tag_blocks.py's
+        // CLASS_SUBFILE_DIR union; foxtag<->Python CLASS-resolution parity).
+        std::error_code cec;
+        for (auto& e : fs::directory_iterator(roots.workspace / "DOCS" / "recurring-bug-patterns", cec)) {
+            string fn = e.path().filename().string();
+            if (fn.compare(0, 6, "class-") != 0) continue;
+            size_t k = 6, m = k;
+            while (m < fn.size() && fn[m] >= '0' && fn[m] <= '9') ++m;
+            if (m > k) cs.insert(std::stol(fn.substr(k, m - k)));
+        }
         if (!cs.empty()) idx.int_sets["CLASS"] = std::move(cs);
     }
     // PARITY — DOCS/PARITY_ISSUES.md: ^id:\s*PARITY-(\d+)

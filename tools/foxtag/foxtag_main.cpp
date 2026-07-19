@@ -137,22 +137,22 @@ struct Case { const char* label; const char* src; const char* expect; };  // exp
 
 static const Case SELFTEST[] = {
     {"clean FUNCTION",
-     "// [SCHEMA]_[v1]\n// [FUNCTION]_[F]\n// [TAG]_[[SLOW_PATH]]\n// [CODE]\nint f();\n"
+     "// [SCHEMA]_[v1.0]\n// [FUNCTION]_[F]\n// [TAG]_[[SLOW_PATH]]\n// [CODE]\nint f();\n"
      "// [END_CODE]\n// [END_FUNCTION]_[F]\n", nullptr},
     {"clean NESTED (STRUCT holds ENUM child)",
-     "// [SCHEMA]_[v1]\n// [STRUCT]_[O]\n// [CODE]\n// [ENUM]_[I]\n// [CODE]\nenum I { A };\n"
+     "// [SCHEMA]_[v1.0]\n// [STRUCT]_[O]\n// [CODE]\n// [ENUM]_[I]\n// [CODE]\nenum I { A };\n"
      "// [END_CODE]\n// [END_ENUM]_[I]\n// [END_CODE]\n// [END_STRUCT]_[O]\n", nullptr},
-    {"unknown category", "// [SCHEMA]_[v1]\n// [FUNCTON]_[typo]\n", "UNKNOWN category"},
-    {"two categories", "// [SCHEMA]_[v1]\n// [FUNCTION]_[X] [TAG]_[[HOT_PATH]]\n", "TWO categories"},
-    {"missing closer", "// [SCHEMA]_[v1]\n// [FUNCTION]_[Orphan]\n", "no matching [END_FUNCTION]"},
-    {"missing END_ENUM", "// [SCHEMA]_[v1]\n// [ENUM]_[Orphan]\n", "no matching [END_ENUM]"},
-    {"name mismatch", "// [SCHEMA]_[v1]\n// [FUNCTION]_[A]\n// [END_FUNCTION]_[B]\n", "name mismatch"},
-    {"end with no open", "// [SCHEMA]_[v1]\n// [END_STRUCT]_[X]\n", "no open [STRUCT]"},
-    {"bad tag value", "// [SCHEMA]_[v1]\n// [TAG]_[[NOT_A_REAL_SURFACE_TAG]]\n",
+    {"unknown category", "// [SCHEMA]_[v1.0]\n// [FUNCTON]_[typo]\n", "UNKNOWN category"},
+    {"two categories", "// [SCHEMA]_[v1.0]\n// [FUNCTION]_[X] [TAG]_[[HOT_PATH]]\n", "TWO categories"},
+    {"missing closer", "// [SCHEMA]_[v1.0]\n// [FUNCTION]_[Orphan]\n", "no matching [END_FUNCTION]"},
+    {"missing END_ENUM", "// [SCHEMA]_[v1.0]\n// [ENUM]_[Orphan]\n", "no matching [END_ENUM]"},
+    {"name mismatch", "// [SCHEMA]_[v1.0]\n// [FUNCTION]_[A]\n// [END_FUNCTION]_[B]\n", "name mismatch"},
+    {"end with no open", "// [SCHEMA]_[v1.0]\n// [END_STRUCT]_[X]\n", "no open [STRUCT]"},
+    {"bad tag value", "// [SCHEMA]_[v1.0]\n// [TAG]_[[NOT_A_REAL_SURFACE_TAG]]\n",
      "not in doc-tag-vocabulary"},
-    {"ref dangling INVARIANT", "// [SCHEMA]_[v1]\n// [REFERENCE]_[INVARIANT]_[H999]\n", "dangling"},
-    {"ref valid INVARIANT", "// [SCHEMA]_[v1]\n// [REFERENCE]_[INVARIANT]_[H4]\n", nullptr},
-    {"ref unknown subcat", "// [SCHEMA]_[v1]\n// [REFERENCE]_[REGISTRY]_[X]\n",
+    {"ref dangling INVARIANT", "// [SCHEMA]_[v1.0]\n// [REFERENCE]_[INVARIANT]_[H999]\n", "dangling"},
+    {"ref valid INVARIANT", "// [SCHEMA]_[v1.0]\n// [REFERENCE]_[INVARIANT]_[H4]\n", nullptr},
+    {"ref unknown subcat", "// [SCHEMA]_[v1.0]\n// [REFERENCE]_[REGISTRY]_[X]\n",
      "UNKNOWN [REFERENCE] subcat"},
 };
 

@@ -1,11 +1,11 @@
 // Golden fixture — a hand-authored reference block of each first-class type. The CI scan
-// validates it (it carries [SCHEMA]_[v1] → in-scope); it is the committed format-by-example
+// validates it (it carries [SCHEMA]_[v1.0] → in-scope); it is the committed format-by-example
 // + a regression guard (a schema change that breaks it goes RED in check_session_docs).
 //======================================================================
 // [FILE]_[tests/schema_golden/golden_example.hpp]
 //----------------------------------------------------------------------
 // [TAG]_[[DATA_ORIENTED_DESIGN]]
-// [SCHEMA]_[v1]
+// [SCHEMA]_[v1.0]
 // [OVERVIEW]_[the committed golden fixture — one valid block of each first-class type; the format SSoT-by-example]
 // [DIAGRAM]
 //   input --> [golden_add] --> sum
@@ -19,7 +19,7 @@
 // [FUNCTION]_[golden_add]
 //----------------------------------------------------------------------
 // [TAG]_[[HOT_PATH] [DATA_ORIENTED_DESIGN]]
-// [SCHEMA]_[v1]
+// [SCHEMA]_[v1.0]
 // [OVERVIEW]_[branchless add — the golden function exemplar]
 // [DIAGRAM]
 //   a --+--> sum
@@ -53,7 +53,7 @@ inline int golden_add(int a, int b) { return a + b; }
 //----------------------------------------------------------------------
 // [TAG]_[[HOT_PATH] [DATA_ORIENTED_DESIGN]]
 // [THREAD]_[[HOT_WRITER] [SLOW_READER]]
-// [SCHEMA]_[v1]
+// [SCHEMA]_[v1.0]
 // [OVERVIEW]_[layout-by-access-pattern exemplar — one cache line]
 // [DIAGRAM]
 //   line0: [count:8][pad:56] = 64B

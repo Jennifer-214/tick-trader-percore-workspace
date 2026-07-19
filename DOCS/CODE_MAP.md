@@ -97,11 +97,11 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### ExecutionCore.hpp
 
-- `ExecutionCore_Init` — line 272
-- `ExecutionCore_SetParameters` — line 331
-- `ExecutionCore_SetPermission` — line 366
-- `ExecutionCore_Tick_Impl` — line 403
-- `ExecutionCore_Tick` — line 788
+- `ExecutionCore_Init` — line 270
+- `ExecutionCore_SetParameters` — line 329
+- `ExecutionCore_SetPermission` — line 364
+- `ExecutionCore_Tick_Impl` — line 401
+- `ExecutionCore_Tick` — line 786
 
 ### GateParameters.hpp
 

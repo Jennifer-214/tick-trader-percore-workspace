@@ -70,6 +70,14 @@ The `[TAG]` plane values — `[ENGINE]` / `[DATA_PLANE]` / `[MONITORING_PLANE]` 
 
 **Why the toolchain earns ENGINE-grade rigor (the self-hosting rationale).** The toolchain is one-producer-N-consumers: a wrong toolchain fact fans out to the CI gate AND the plugin AND the doc-viewer at once — so getting it right is *almost more* critical than the engine, NOT "apparatus = light" (the `feedback_process_weight_by_surface_blast_radius` carve-out). Self-hosting closes the loop: the tool that keeps the engine's docs honest is itself doc-maintained + CI-gated in the same system. Boundary: the plane distinction IS the engine/toolchain line; core-vs-tools within the toolchain (foxtag-core vs checkers/plugin) is a `[TAG]` value (`CORE`/`CONSUMER`), not a sub-plane. (Decision log D-367; sibling of the `[SCOPE]` scale-level axis, H22.)
 
+## Provenance + freshness — every auto-written fact carries `[ORIGIN]_[AUTO]` + `[UPDATED]` (D-369)
+
+A fact-producer stamps two metadata tags on what it writes: **`[ORIGIN]_[AUTO]`** (machine-written — regenerable, never hand-edit; `[ORIGIN]_[MANUAL]` marks curated content a producer must never clobber) + **`[UPDATED]_[YYYY-MM-DD]`** (freshness). This turns the old free-text `(tool-refreshed — do NOT hand-edit)` note (and its drift-prone `(… emitter cannot probe this yet, D-327)` variants) into structured, machine-readable provenance — the same "structured tag > prose" move the whole toolchain rests on, applied to the toolchain's OWN output.
+
+**`[UPDATED]` is stamped ONLY on a real value-change** — a no-op refresh does not restamp. This preserves every writer's idempotency (the CI "run the producer, expect 0-diff" currency check + the Class-56 non-idempotent-writer guard): a naive every-run timestamp would make each run rewrite the whole corpus. ISO-8601 date (canonical/sortable, H9 sibling).
+
+Both auto-writers honor it: `check_cache_layout --fix` (struct layout) and the plugin's `:FoxSymdepsDerived!` (call-graph), each MERGE-preserving the other's facts (the D-327 WRITTEN-vs-LIVE contract). Grammar fold = one `category-set` fence edit (validator auto-derives, D-365); ADDITIVE (existing blocks stay green un-stamped, the writers backfill on refresh). Full record: schema § category-set + § WRITTEN-vs-LIVE; decision log D-369.
+
 ## Sister disciplines
 
 - `in-code-documentation-schema.md` — the LOCKED grammar this toolchain is built over.

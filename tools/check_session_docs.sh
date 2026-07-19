@@ -101,6 +101,17 @@ else
     RESULTS+=("  ⏭  HARD  code tag-blocks (SKIP_CODE_TAG_CHECK=1)")
 fi
 
+# --- HARD 1c-2: [SCHEMA] version cohesion (D-371 — every converted [SCHEMA]_[ver] == the LOCKED
+# version, the value SSoT-derived from the spec's "Status: LOCKED — [SCHEMA]_[v1.0]" line; catches
+# the v1-vs-v1.0 drift the validator's prefix gate can't see; RegimeDetector WIP exempt). Kept OUT
+# of the parity-gated validator so foxtag<->Python validate byte-parity stays intact. ---
+if [ "${SKIP_SCHEMA_VERSION_CHECK:-0}" != "1" ]; then
+    run_hard "schema-version cohesion ([SCHEMA]_[ver] == locked; SSoT-derived, D-346)" \
+        python3 "$REPO_ROOT/tools/check_schema_version.py"
+else
+    RESULTS+=("  ⏭  HARD  schema-version cohesion (SKIP_SCHEMA_VERSION_CHECK=1)")
+fi
+
 # --- HARD 1d: in-code conversion COMPLETENESS gate (E.1.2.A — coverage: every unit warranting a block HAS one) ---
 # Non-vacuity selftest (ExecutionCore clean + GateControlNetwork flagged + trivial return-structs exempt) +
 # baseline mode: a NEW lumped/un-blocked unit FAILS; the grandfathered gaps live in

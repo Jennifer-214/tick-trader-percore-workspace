@@ -26,6 +26,7 @@ Usage:
 import re
 import sys
 import json
+import datetime
 import subprocess
 import argparse
 from pathlib import Path
@@ -99,12 +100,23 @@ def run_emitter(tu, names, backend="auto"):
 
 
 def match_layout(name, layout):
-    """Match a block's [STRUCT] name to an emitter record (namespace / template tolerant)."""
-    for rec, v in layout.items():
-        base = rec.split("<", 1)[0].split("::")[-1]
-        if base == name or rec == name:
+    """Match a block's [STRUCT] name to its emitter record (namespace / template tolerant).
+    Two-stage, and it REFUSES to guess when a single value would be wrong:
+      1. EXACT (explicit-instantiation) name — `FixedPoint<2,64>` matches the record `FixedPoint<2, 64>`
+         modulo clang's argument spacing (space-normalized compare). This is the per-instantiation
+         block form (FixedPoint<2,64> vs <10,8> are separate blocks → each fills its own layout).
+      2. BARE (un-parametrized) name — `RollingStats` matches by base name. If the template is laid
+         out at MULTIPLE widths (>1 record, e.g. RollingStats<64,{128,256,512,1024}>), returns None:
+         a single [SIZE] would be an ARBITRARY WRONG PICK. The block keeps its [INSTANTIATION] tag +
+         empty layout = a tracked C4-remainder (per-instantiation emit is the future), NEVER a wrong
+         fact. (Sister to the coverage-bounded None for an un-probed struct — both → skip, no write.)"""
+    nspace = name.replace(" ", "")
+    for rec, v in layout.items():                          # stage 1: exact, space-insensitive
+        if rec.replace(" ", "") == nspace:
             return v
-    return None
+    hits = [v for rec, v in layout.items()                 # stage 2: bare base-name; ambiguous → refuse
+            if rec.split("<", 1)[0].split("::")[-1] == name]
+    return hits[0] if len(hits) == 1 else None
 
 
 def gate_struct(struct, layout_rec):
@@ -129,6 +141,7 @@ def gate_struct(struct, layout_rec):
 
 # --- REFRESH (the 4th verb — write the LAYOUT DERIVED tags from truth; the D-319 refresh-writer) ---
 _LAYOUT_AXES = ("SIZE", "ALIGN", "CACHE_LINES", "STRADDLE")   # canonical order (schema § STRUCT [DERIVED] axis-set)
+_META_ORIGIN = "AUTO"                                         # provenance value the writer stamps (D-369)
 
 
 def _fmt_straddle(straddlers):
@@ -146,32 +159,59 @@ def _axis_value(cat, rec):
     }[cat]
 
 
-def refresh_derived(text, layout):
+def refresh_derived(text, layout, today=None):
     """REWRITE-or-INSERT each covered [STRUCT] block's LAYOUT DERIVED tags — `[SIZE]`/`[ALIGN]`/
-    `[CACHE_LINES]`/`[STRADDLE]` — to match the real layout.
-      - A tag ALREADY present in the block's `[DERIVED]` is REWRITTEN in place (the original behavior).
-      - A tag ABSENT from it is INSERTED (canonical order) right under the `[DERIVED]` line — so an
-        EMPTY `[DERIVED]` gets FILLED, not silently skipped (the D-363 reason `--fix` used to fill 0).
-    IDEMPOTENT: once inserted an axis is present, so a 2nd run rewrites-in-place = a no-op (guards the
-    FPN non-idempotent-`--apply` class — .E.0.8 postmortem). PURE (unit-testable with mock layout).
-    Only the DERIVED (tool-owned) COMMENT tags are touched — NEVER a curated tag, NEVER a code line
-    (H21/H12: layout is reported; fields are never reordered). COVERAGE-BOUNDED (D-363): a struct
-    absent from `layout` has cur=None → neither rewritten nor inserted (never writes empty/garbage
-    facts for an un-probed struct — that stays a C4 emitter-coverage gap, not a wrong fact).
-    Returns (new_text, n_changed)."""
+    `[CACHE_LINES]`/`[STRADDLE]` — to match the real layout, and stamp the PROVENANCE + FRESHNESS
+    metadata `[ORIGIN]_[AUTO]` + `[UPDATED]_[ISO-date]` (D-369).
+      - A layout tag present in the block's `[DERIVED]` is REWRITTEN in place; one absent is INSERTED
+        (canonical order) under the `[DERIVED]` line — so an EMPTY `[DERIVED]` gets FILLED (D-363).
+      - `[ORIGIN]_[AUTO]` is inserted if absent (the producer OWNS these facts). Provenance is now a
+        structured tag, so the redundant `(tool-refreshed … cannot probe yet, D-327)` PROSE on the
+        `[DERIVED]` line is STRIPPED once ORIGIN carries it (retires the stale-annotation contradiction).
+      - `[UPDATED]` is stamped with `today` ONLY on a real value-change (a layout tag was written or
+        filled this run); a no-op refresh LEAVES it — this KEEPS THE WRITER IDEMPOTENT (the Class-56
+        guard + the CI "run --fix, expect 0-diff" currency check; a naive every-run stamp would rewrite
+        the whole corpus each run). Backfilled once (today) if absent even without a value-change.
+    IDEMPOTENT after the first fill: once ORIGIN/UPDATED + the quartet are present + current, a 2nd run
+    is a no-op. PURE (unit-testable — pass a fixed `today`). COVERAGE-BOUNDED (D-363): a struct absent
+    from `layout` has cur=None → untouched (never empty/garbage facts for an un-probed struct — that
+    stays a C4 emitter-coverage gap, not a wrong fact). Only DERIVED (tool-owned) COMMENT tags are
+    touched — NEVER a curated tag, NEVER a code line (H21/H12: layout is reported; fields never
+    reordered). Returns (new_text, n_changed)."""
+    stamp = today or datetime.date.today().isoformat()
     lines, changed = text.split("\n"), 0
     cur = None                       # matched layout rec for the open [STRUCT], else None (coverage gate)
-    d_anchor, d_lead, seen = None, "", set()   # open block's [DERIVED] line idx / its indent / axes present
+    d_anchor, d_lead, seen = None, "", set()   # [DERIVED] line idx / its indent / layout axes present
+    has_origin = has_updated = False           # provenance/freshness tags present in the open block?
+    updated_idx = None                         # line idx of an existing [UPDATED] (to restamp in place)
+    layout_wrote = False                       # a layout axis was REWRITTEN in place this block
     inserts = []                     # (anchor_idx, [new_lines]); applied AFTER the walk, bottom-up (index-stable)
 
     def _close_block():
-        """Queue the missing-axis inserts for the [DERIVED] block we're leaving."""
+        """At the block boundary: stamp ORIGIN/UPDATED, retire stale prose, queue the missing-axis inserts."""
         nonlocal changed
-        if cur is not None and d_anchor is not None:
-            missing = [a for a in _LAYOUT_AXES if a not in seen]
-            if missing:
-                inserts.append((d_anchor, [f"{d_lead}// [{a}]_[{_axis_value(a, cur)}]" for a in missing]))
-                changed += len(missing)
+        if cur is None or d_anchor is None:
+            return
+        missing = [a for a in _LAYOUT_AXES if a not in seen]
+        value_changed = layout_wrote or bool(missing)       # a real layout fact was written/filled this run
+        meta = []
+        if not has_origin:
+            meta.append(f"{d_lead}// [ORIGIN]_[{_META_ORIGIN}]")
+        if value_changed and has_updated:                    # restamp an existing [UPDATED] in place (only on change)
+            nu = re.sub(r"(\[UPDATED\]_\[)[^\]]*(\])", r"\g<1>" + stamp + r"\g<2>", lines[updated_idx], count=1)
+            if nu != lines[updated_idx]:
+                lines[updated_idx] = nu
+                changed += 1
+        elif not has_updated:                                # stamp today (on change), or backfill once if absent
+            meta.append(f"{d_lead}// [UPDATED]_[{stamp}]")
+        stripped = re.sub(r"(//\s*\[DERIVED\])\s*\(.*\)\s*$", r"\1", lines[d_anchor])
+        if stripped != lines[d_anchor]:                      # retire the now-redundant (…) provenance prose
+            lines[d_anchor] = stripped
+            changed += 1
+        block = meta + [f"{d_lead}// [{a}]_[{_axis_value(a, cur)}]" for a in missing]
+        if block:
+            inserts.append((d_anchor, block))                # meta leads, then the missing axes (canonical order)
+            changed += len(block)
 
     for i, raw in enumerate(lines):
         m = TAG_LINE_RE.match(raw)
@@ -184,11 +224,18 @@ def refresh_derived(text, layout):
         if cat == "STRUCT" and len(toks) > 1:
             _close_block()                                   # defensive (a well-formed block closes at END_STRUCT)
             cur, d_anchor, seen = match_layout(toks[1], layout), None, set()
+            has_origin = has_updated = False; updated_idx = None; layout_wrote = False
         elif cat.startswith("END_STRUCT"):
             _close_block()
             cur, d_anchor, seen = None, None, set()
+            has_origin = has_updated = False; updated_idx = None; layout_wrote = False
         elif cur is not None and cat == "DERIVED":
             d_anchor, d_lead, seen = i, raw[:len(raw) - len(raw.lstrip())], set()   # anchor + match its indent
+            has_origin = has_updated = False; updated_idx = None; layout_wrote = False
+        elif cur is not None and d_anchor is not None and cat == "ORIGIN":
+            has_origin = True
+        elif cur is not None and d_anchor is not None and cat == "UPDATED":
+            has_updated, updated_idx = True, i
         elif cur is not None and d_anchor is not None and cat in _LAYOUT_AXES:
             seen.add(cat)                                    # present → rewrite in place (idempotent no-op if equal)
             new = re.sub(r"(\[" + cat + r"\]_\[)[^\]]*(\])",
@@ -196,6 +243,7 @@ def refresh_derived(text, layout):
             if new != raw:
                 lines[i] = new
                 changed += 1
+                layout_wrote = True
     _close_block()                                           # EOF safety (malformed / missing END_STRUCT)
 
     for anchor_idx, new_lines in sorted(inserts, reverse=True):   # bottom-up so earlier indices stay valid
@@ -229,44 +277,70 @@ def run_selftest():
         hit = (expect is None and not v) or (expect is not None and any(x["kind"] == expect for x in v))
         print(f"  {'✅' if hit else '❌'} {label}: {len(v)} violation(s)")
         ok = ok and hit
-    # refresh (the 4th verb): calibration corpus for the REWRITE + INSERT paths (golden-broken →
-    # must change; golden-complete → must be a no-op). Non-vacuity per calibration-corpus-discipline.
+    # refresh (the 4th verb): calibration corpus — golden-broken → must change; golden-complete → must
+    # be a no-op; provenance/freshness stamped (D-369). Non-vacuity per calibration-corpus-discipline.
     import tempfile, os
     mock = {"X": {"size": 64, "align": 64, "straddlers": []}}   # ceil(64/64)=1 cache line; no straddle
-    # (a) REWRITE — a COMPLETE [DERIVED] with STALE values → all 4 corrected IN PLACE, 0 inserted
-    #     (each axis stays single — proves rewrite doesn't duplicate a present tag)
-    rewrite_fx = ("// [SCHEMA]_[v1]\n// [STRUCT]_[X]\n// [DERIVED]\n"
+    TODAY, OLD = "2026-07-18", "2000-01-01"                     # fixed dates → deterministic selftest
+    # (a) INSERT — an EMPTY [DERIVED] gets ORIGIN + UPDATED(today) + the quartet (D-363 fill + D-369 stamp)
+    empty_fx = "// [SCHEMA]_[v1.0]\n// [STRUCT]_[X]\n// [DERIVED]\n// [END_STRUCT]_[X]\n"
+    ins, n_ins = refresh_derived(empty_fx, mock, today=TODAY)
+    ins_ok = (n_ins == 6 and "[ORIGIN]_[AUTO]" in ins and f"[UPDATED]_[{TODAY}]" in ins
+              and "[SIZE]_[64B]" in ins and "[ALIGN]_[64]" in ins
+              and "[CACHE_LINES]_[1]" in ins and "[STRADDLE]_[none]" in ins)
+    # (b) IDEMPOTENCY — a 2nd --fix on the filled output is a NO-OP; UPDATED NOT restamped (Class-56 guard)
+    ins2, n_ins2 = refresh_derived(ins, mock, today="2099-12-31")
+    idem_ok = (n_ins2 == 0 and ins2 == ins)
+    # (c) REWRITE + RESTAMP — stale axes + an OLD [UPDATED] → axes corrected AND the date bumped to today
+    rewrite_fx = ("// [SCHEMA]_[v1.0]\n// [STRUCT]_[X]\n// [DERIVED]\n// [ORIGIN]_[AUTO]\n"
+                  f"// [UPDATED]_[{OLD}]\n"
                   "// [SIZE]_[999B]\n// [ALIGN]_[8]\n// [CACHE_LINES]_[9]\n// [STRADDLE]_[bogus]\n"
                   "// [END_STRUCT]_[X]\n")
-    rw, n_rw = refresh_derived(rewrite_fx, mock)
-    rw_ok = (n_rw == 4 and "[SIZE]_[64B]" in rw and "[ALIGN]_[64]" in rw
-             and "[CACHE_LINES]_[1]" in rw and "[STRADDLE]_[none]" in rw
-             and rw.count("[SIZE]_[") == 1 and rw.count("[STRADDLE]_[") == 1)
-    # (b) INSERT — an EMPTY [DERIVED] gets the full quartet inserted (the D-363 fill-0 fix)
-    empty_fx = "// [SCHEMA]_[v1]\n// [STRUCT]_[X]\n// [DERIVED]\n// [END_STRUCT]_[X]\n"
-    ins, n_ins = refresh_derived(empty_fx, mock)
-    ins_ok = (n_ins == 4 and "[SIZE]_[64B]" in ins and "[ALIGN]_[64]" in ins
-              and "[CACHE_LINES]_[1]" in ins and "[STRADDLE]_[none]" in ins)
-    # (c) IDEMPOTENCY — a 2nd --fix on the filled output is a NO-OP (the FPN non-idempotent-apply guard)
-    ins2, n_ins2 = refresh_derived(ins, mock)
-    idem_ok = (n_ins2 == 0 and ins2 == ins)
-    # (d) COVERAGE-BOUNDEDNESS (D-363) — a struct ABSENT from layout is neither rewritten nor filled
-    absent, n_absent = refresh_derived(empty_fx, {"OTHER": {"size": 32, "align": 8, "straddlers": []}})
+    rw, n_rw = refresh_derived(rewrite_fx, mock, today=TODAY)
+    rw_ok = (n_rw == 5 and "[SIZE]_[64B]" in rw and "[STRADDLE]_[none]" in rw
+             and f"[UPDATED]_[{TODAY}]" in rw and f"[UPDATED]_[{OLD}]" not in rw
+             and rw.count("[SIZE]_[") == 1 and rw.count("[ORIGIN]_[") == 1)
+    # (d) STAMP-ON-CHANGE — a CORRECT block with an OLD [UPDATED] → NO restamp (freshness+idempotency crux)
+    stable_fx = ("// [SCHEMA]_[v1.0]\n// [STRUCT]_[X]\n// [DERIVED]\n// [ORIGIN]_[AUTO]\n"
+                 f"// [UPDATED]_[{OLD}]\n"
+                 "// [SIZE]_[64B]\n// [ALIGN]_[64]\n// [CACHE_LINES]_[1]\n// [STRADDLE]_[none]\n"
+                 "// [END_STRUCT]_[X]\n")
+    stab, n_stab = refresh_derived(stable_fx, mock, today=TODAY)
+    stab_ok = (n_stab == 0 and stab == stable_fx and f"[UPDATED]_[{OLD}]" in stab)
+    # (e) PROSE RETIRE — a stale "(… cannot probe yet, D-327)" note is STRIPPED once ORIGIN carries provenance
+    prose_fx = ("// [SCHEMA]_[v1.0]\n// [STRUCT]_[X]\n"
+                "// [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet, D-327)\n"
+                "// [END_STRUCT]_[X]\n")
+    pr, n_pr = refresh_derived(prose_fx, mock, today=TODAY)
+    prose_ok = ("cannot probe" not in pr and "(tool-refreshed" not in pr
+                and "[ORIGIN]_[AUTO]" in pr and "// [DERIVED]\n" in pr)
+    # (f) COVERAGE-BOUNDEDNESS (D-363) — a struct ABSENT from layout is neither rewritten nor filled
+    absent, n_absent = refresh_derived(empty_fx, {"OTHER": {"size": 32, "align": 8, "straddlers": []}}, today=TODAY)
     cov_ok = (n_absent == 0 and absent == empty_fx)
-    # (e) ROUND-TRIP — the writer's output must re-parse CLEAN through the validator (no malformed grammar
-    #     silently emitted into the corpus — the one-producer-N-consumers correctness gate)
+    # (g) ROUND-TRIP — the writer's output must re-parse CLEAN (ORIGIN/UPDATED are valid categories now)
     cats = load_categories()
     cv, sv = load_vocabulary()
     fd, p = tempfile.mkstemp(suffix=".hpp"); os.write(fd, ins.encode()); os.close(fd)
     rt_viols = validate_file(p, cats, cv, sv)[0] if cats else ["categories unloadable"]
     os.unlink(p)
     rt_ok = not rt_viols
-    r_ok = rw_ok and ins_ok and idem_ok and cov_ok and rt_ok
-    print(f"  {'✅' if rw_ok else '❌'} refresh REWRITE: stale [SIZE]/[STRADDLE] → truth ({n_rw} changed)")
-    print(f"  {'✅' if ins_ok else '❌'} refresh INSERT: empty [DERIVED] → quartet filled ({n_ins} inserted)")
-    print(f"  {'✅' if idem_ok else '❌'} refresh IDEMPOTENT: 2nd --fix is a no-op ({n_ins2} changed)")
+    # (h) MATCH — explicit-instantiation name matches its record modulo clang spacing; a bare
+    #     multi-instantiation name REFUSES to guess (None → skip; no arbitrary wrong single [SIZE]).
+    match_exact  = match_layout("FixedPoint<2,64>", {"FixedPoint<2, 64>": {"size": 16}})
+    match_multi  = match_layout("RollingStats", {"RollingStats<64, 128>": {"size": 8640},
+                                                 "RollingStats<64, 1024>": {"size": 65984}})
+    match_single = match_layout("CurrentOrder", {"CurrentOrder<64>": {"size": 48}})
+    match_ok = (bool(match_exact) and match_exact.get("size") == 16
+                and match_multi is None and match_single is not None)
+    r_ok = ins_ok and idem_ok and rw_ok and stab_ok and prose_ok and cov_ok and rt_ok and match_ok
+    print(f"  {'✅' if match_ok else '❌'} match_layout: exact-instantiation spacing + multi-instantiation refusal")
+    print(f"  {'✅' if ins_ok else '❌'} refresh INSERT: empty [DERIVED] → ORIGIN+UPDATED+quartet ({n_ins} written)")
+    print(f"  {'✅' if idem_ok else '❌'} refresh IDEMPOTENT: 2nd --fix no-op, UPDATED not restamped ({n_ins2} changed)")
+    print(f"  {'✅' if rw_ok else '❌'} refresh REWRITE+RESTAMP: stale axes → truth, UPDATED → today ({n_rw} changed)")
+    print(f"  {'✅' if stab_ok else '❌'} refresh STAMP-ON-CHANGE: correct block → UPDATED left at old date ({n_stab} changed)")
+    print(f"  {'✅' if prose_ok else '❌'} refresh PROSE-RETIRE: stale (…D-327) note stripped; ORIGIN carries it")
     print(f"  {'✅' if cov_ok else '❌'} refresh COVERAGE-BOUND: un-probed struct untouched ({n_absent} changed)")
-    print(f"  {'✅' if rt_ok else '❌'} refresh ROUND-TRIP: inserted quartet re-parses clean ({len(rt_viols)} violation(s))")
+    print(f"  {'✅' if rt_ok else '❌'} refresh ROUND-TRIP: output re-parses clean ({len(rt_viols)} violation(s))")
     # --- (f) ISOLATE helpers (D-363 step-2): the probe-source generator + template detection (PURE) ---
     iso_src = _isolate_probe_source("Backtest/LabelFunctions.hpp",
                                     [{"name": "Plain", "is_template": False},

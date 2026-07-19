@@ -129,6 +129,7 @@ That table is the whole per-type surface. Adding a unit type = one row here (whi
 | `[DIAGRAM]` | `_[kind]` + ASCII body | judgment (ASCII byte-map / bit-map for packed fields / data-flow map) | curated intent / DERIVED-checkable |
 | `[DERIVED]` family (build-flags/size/align/cache-lines/straddle/branches/float/deps/consumers/tested-by/instr-budget/blast-radius) | `_[SUBCAT]_[val]` | **tool-refreshed in-comment** — generated from clangd / `gen_code_map`, CI-checked vs ground truth, NEVER hand-edited (D-307 fork b) | machine-derived |
 | `[ITERATIONS]` | `_[n]` | **DERIVED** — git-churn count (commits touching the unit) → hot-spot detector; tool-refreshed + CI-checked (D-306) | machine-derived |
+| `[ORIGIN]` / `[UPDATED]` | `[ORIGIN]_[AUTO\|MANUAL]` · `[UPDATED]_[YYYY-MM-DD]` | **provenance + freshness** (D-369) — a fact-producer stamps `[ORIGIN]_[AUTO]` (owned/regenerable) + `[UPDATED]`-on-value-change; `[MANUAL]` = curated, a writer must NEVER clobber. Structured replacement for the ad-hoc "(tool-refreshed…)" prose. ISO-8601 date; stamp-on-change preserves writer idempotency (Class-56) | machine-derived |
 | `[DETAIL]` | `_ rich prose (block)` | judgment (`deep_dives` LR-narrative style; author's voice) | curated |
 | `[EDIT]` / `[VERSION]` | `_[[date-or-version]]` + prose below | judgment (`deep_dives` `[EDIT [14-03-26]]` style) | curated |
 | `[REFERENCE]` → `[DESIGN_SPEC]` `[MEMORY]` `[DECISION]` `[TECH_DEBT]` `[CLASS]` `[INVARIANT]` `[PLAN]` `[AUDIT]` | `_[SUBCAT]_[id-or-path]` | workspace artifact id (pointer must RESOLVE — CI). `[DOC]`-sync DROPPED (D-307): rich prose lives in-comment as `[DETAIL]`, not a drift-prone external pointer | curated |
@@ -151,6 +152,9 @@ Vocab is **1-line extensible** (per `doc-tag-vocabulary.md`); add tags at real u
 FILE STRUCT FUNCTION REGISTRY STRATEGY ENUM TYPE MACRO TEST ASSERT
 TAG SCOPE SCHEMA OVERVIEW WHY DETAIL DIAGRAM COMMENT SUPPORTING_DOCS EDIT VERSION REFERENCE DIRECTIVE FUTURE_WORK OUTDATED_INFO CODE SECTION REGION
 DERIVED SIZE SIMD FLOAT BRANCHES BUILD INSTANTIATION ALIGN CACHE_LINES STRADDLE UPSTREAM CONSUMERS ROW_COUNT ENROLLED ALIGNED_CONSUMERS ITERATIONS BLAST_RADIUS
+# PROVENANCE + FRESHNESS (D-369): who auto-wrote a fact + when. Cross-cuts DERIVED + the auto NON-DERIVED
+# fields (CONSUMERS/UPSTREAM/CONTAINS/TOC). ORIGIN_[AUTO|MANUAL]; UPDATED_[ISO-date], stamped on value-change.
+ORIGIN UPDATED
 ROW COLUMN VALUE WIRE_FIELD PARENT CHILDREN SIDECARS OVERRIDES
 CONTAINS TOC INCLUDES INCLUDED_BY BINARIES
 THREAD SYNC BIT_PACKED SWAR PADDING WIRE_FORMAT PERSISTED EXCLUDED SEAM LAT_EXEMPT
@@ -264,6 +268,8 @@ The comment block is the **interface** between this schema (the format) and `fox
 
 **DERIVED — WRITTEN vs LIVE-PREVIEW (D-327).** Not every derived fact is *written* into the block; split by STABILITY. **WRITTEN** = facts stable under a pinned build: struct **layout** (`[SIZE]`-bytes / `[ALIGN]` / `[STRADDLE]` / `[CACHE_LINES]` — Itanium-ABI-fixed → refreshed by `check_cache_layout.py --fix`) + the **call-graph** (`[UPSTREAM]` / `[CONSUMERS]` — source-fixed → written by the plugin's `:FoxSymdepsDerived!`). **LIVE-PREVIEW-only, NEVER written** = facts that flip with compiler flags/version or are meaningless without a concrete instantiation: instruction-count, `[SIMD]` usage, `[BRANCHES]` count. Writing a volatile fact makes the committed source a *lie* on the next `-O`/`-march` change — or reads `0 instr` for an un-instantiated template (the observed `CumDelta_Init<F>` case) — churning CI for zero signal. The plugin SHOWS them live (`:FoxSymdepsDerived` preview + the HUD asm view, which is *why* it asks you to instantiate); the source carries only the stable subset. **Per-unit-type writer:** STRUCT → `--fix` (layout); FUNCTION → `:FoxSymdepsDerived!` (call-graph). The generator **MERGES** (keeps the other writer's facts — a struct's `--fix` `[SIZE]` survives a plugin `[UPSTREAM]` write, and vice-versa), never clobbers. Materially: I hand-add the CURATED structure (orient / `[CODE]` with inline comments preserved / `[COMMENT]` / an empty `[DERIVED]` skeleton); the TOOLS fill `[DERIVED]` — **zero hand-written derived facts** (the anti-Class-18 whole point).
 
+**PROVENANCE + FRESHNESS — every auto-written fact carries `[ORIGIN]_[AUTO]` + `[UPDATED]` (D-369).** A fact-producer stamps two metadata tags on what it writes: **`[ORIGIN]_[AUTO]`** (machine-written — regenerable, never hand-edit; `[ORIGIN]_[MANUAL]` marks curated content a producer must never clobber) + **`[UPDATED]_[YYYY-MM-DD]`** (freshness). This turns the old free-text `(tool-refreshed — do NOT hand-edit)` note (and the drift-prone `(… emitter cannot probe this yet, D-327)` variants) into structured, machine-readable provenance — the same "structured tag > prose" move the whole schema rests on, applied to the tools' OWN output. **`[UPDATED]` is stamped ONLY on a real value-change** — a no-op refresh does not restamp; this preserves each writer's idempotency (the "run the producer, expect 0-diff" currency check + the Class-56 non-idempotent-writer guard), where a naive every-run timestamp would rewrite the whole corpus each run. ISO-8601 date (canonical/sortable — H9 sibling). Both auto-writers honor it — `check_cache_layout --fix` (struct layout) + the plugin's `:FoxSymdepsDerived!` (call-graph) — each MERGE-preserving the other's facts. ADDITIVE grammar: existing blocks stay CI-green un-stamped; the writers populate `[ORIGIN]`/`[UPDATED]` as they refresh, and a later completeness flip can require them.
+
 **DERIVED — the third disposition: `N/A_FOLDED` (D-340; dogfood-grounded on `cfg_compute_mask`).** Beyond WRITTEN vs LIVE-PREVIEW, a codegen axis can be *structurally absent*: a **compile-time-folded** unit has no runtime code to measure (`cfg_compute_mask` folds to a `.rodata` constant), so `[SIZE]_[instr]` / `[BRANCHES]` / `[SIMD]` are written `[<AXIS>]_[N/A_FOLDED]` — a reserved value (like `[SIMD]_[none]`) telling the tool + CI to SKIP measurement, never read `0`/garbage. The call-graph axes (`[UPSTREAM]` / `[CONSUMERS]`) still apply. **Enforcement (phase-4 CI):** a `consteval` unit's codegen axes MUST be `N/A_FOLDED` (guaranteed immediate); a `constexpr` unit's are `N/A_FOLDED` only when the tool confirms no runtime call site (else it has real codegen at the runtime use) — the tool knows constexpr/consteval-ness from the parse, so this is checkable, closing the "hide a real function behind N/A" hole.
 
 **Refinement A — stale DERIVED-class facts are DROPPED, not relocated (D-309 · D-342).** A hand-written DERIVED-class fact (a byte-map, a size, a version, a row-shape) that has gone stale is BOTH a preserve-voice candidate AND a DERIVED fact — resolution: **the conversion DROPS it, never relocates it** (Position's stale 24B/192B byte-map that contradicts its own `static_assert(==128)` is deleted, not carried forward). Only rationale / history / author-voice is preserved verbatim; byte-maps / sizes / versions / row-shapes are TOOL-REGENERATED.
@@ -317,8 +323,10 @@ The comment block is the **interface** between this schema (the format) and `fox
 // [SUPPORTING_DOCS]
 //   - [<SUBCAT>]_[<id>]
 //======================================================================
-// [DERIVED]   (tool-refreshed by fox-symdeps; do NOT hand-edit)
+// [DERIVED]
 //----------------------------------------------------------------------
+// [ORIGIN]_[AUTO]                 (fact-producer-owned — regenerated, never hand-edit; D-369)
+// [UPDATED]_[<YYYY-MM-DD>]        (stamped only on a value-change — keeps the writer idempotent)
 // [BUILD]_[<canonical build.sh flags — e.g. -O3 -march=native; pins the asm-derived facts below>]
 // [SIZE]_[<n instr>]
 // [SIMD]_[<none|avx512>]

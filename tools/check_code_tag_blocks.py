@@ -325,7 +325,7 @@ def validate_file(path, categories, concern_vocab, surface_vocab):
 
     # Mixed-state gate (in-file whitelist — no external list to drift): a file with NO schema
     # block is UN-CONVERTED → not policed (its pre-existing [SECTION] comments are prose, not
-    # tags). A [SCHEMA]_[v1] (which every block, incl. the top-of-file [FILE] block, carries)
+    # tags). A [SCHEMA]_[v1.0] (which every block, incl. the top-of-file [FILE] block, carries)
     # opts a file IN; [SCHEMA]_[exempt]_[reason] deliberately opts generated/third-party OUT.
     if "[SCHEMA]_[" not in text or "[SCHEMA]_[exempt" in text:
         return [], 0
@@ -411,7 +411,7 @@ _SELFTEST = [
 //======================================================================
 // [FUNCTION]_[Regime_Classify]
 // [TAG]_[[SLOW_PATH] [ML_INFERENCE]]
-// [SCHEMA]_[v1]
+// [SCHEMA]_[v1.0]
 //======================================================================
 // [CODE]
 template <unsigned F> inline int Regime_Classify() { return 0; }
@@ -424,7 +424,7 @@ template <unsigned F> inline int Regime_Classify() { return 0; }
 // [STRUCT]_[ExecutionCore]
 // [TAG]_[[HOT_PATH] [DATA_ORIENTED_DESIGN]]
 // [THREAD]_[[HOT_WRITER] [SLOW_READER]]
-// [SCHEMA]_[v1]
+// [SCHEMA]_[v1.0]
 //======================================================================
 // [CODE]
 template <unsigned F> struct alignas(64) ExecutionCore { };
@@ -440,7 +440,7 @@ template <unsigned F> struct alignas(64) ExecutionCore { };
 //======================================================================
 // [REGISTRY]_[FOREACH_STRATEGY]
 // [TAG]_[[FRAMEWORK_DISCIPLINE]]
-// [SCHEMA]_[v1]
+// [SCHEMA]_[v1.0]
 //======================================================================
 // [CODE]
 #define FOREACH_STRATEGY(X) X(MEAN_REVERSION)
@@ -456,14 +456,14 @@ template <unsigned F> struct alignas(64) ExecutionCore { };
 //======================================================================
 // [FILE]_[ExecutionCore.hpp]
 // [TAG]_[[HOT_PATH]]
-// [SCHEMA]_[v1]
+// [SCHEMA]_[v1.0]
 // [OVERVIEW]_[per-node hot execution state + tick kernel]
 //======================================================================
 """, None),
     ("clean FREEFORM ([COMMENT] prose with bracketed category-words)", """
 //======================================================================
 // [FUNCTION]_[freeform_ok]
-// [SCHEMA]_[v1]
+// [SCHEMA]_[v1.0]
 //======================================================================
 // [CODE]
 int freeform_ok() { return 0; }
@@ -479,7 +479,7 @@ int freeform_ok() { return 0; }
 //======================================================================
 // [ENUM]_[OrderState]
 // [TAG]_[[ENGINE] [OMS_DRAINER]]
-// [SCHEMA]_[v1]
+// [SCHEMA]_[v1.0]
 //======================================================================
 // [CODE]
 enum OrderState : uint8_t { ORDER_PENDING = 0 };
@@ -491,7 +491,7 @@ enum OrderState : uint8_t { ORDER_PENDING = 0 };
     ("clean TYPE (foundational alias)", """
 //======================================================================
 // [TYPE]_[Money]
-// [SCHEMA]_[v1]
+// [SCHEMA]_[v1.0]
 //======================================================================
 // [CODE]
 using Money = FixedPoint<10, 8>;
@@ -502,7 +502,7 @@ using Money = FixedPoint<10, 8>;
     ("clean NESTED (STRUCT body holds a full ENUM child block, D-340 stack parse)", """
 //======================================================================
 // [STRUCT]_[Outer]
-// [SCHEMA]_[v1]
+// [SCHEMA]_[v1.0]
 //======================================================================
 // [CODE]
 struct Outer {
@@ -555,7 +555,7 @@ def run_selftest(categories, concern_vocab, surface_vocab):
         nonlocal ok
         for label, src, expect in cases:
             fd, p = tempfile.mkstemp(suffix=".hpp")
-            os.write(fd, ("// [SCHEMA]_[v1]\n" + src).encode()); os.close(fd)   # opt the fixture in (gate)
+            os.write(fd, ("// [SCHEMA]_[v1.0]\n" + src).encode()); os.close(fd)   # opt the fixture in (gate)
             viols = checker(p)
             os.unlink(p)
             hit = (expect is None and not viols) or (expect is not None and any(expect in v for v in viols))

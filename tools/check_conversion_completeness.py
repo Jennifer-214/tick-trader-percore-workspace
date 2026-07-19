@@ -29,7 +29,7 @@ Exit: 0 = clean · 1 = coverage gap(s) · 2 = selftest failed.
 import re, sys, subprocess, argparse
 from pathlib import Path
 
-ENGINE = Path("/home/caramel/code/FoxML_Trader_v2")
+from foxroots import ENGINE  # SSoT resolver (E.1.2.B 0.1) — was a hardcoded absolute path: a portability-dead HARD gate (feedback_machine_portable_resolver)
 
 OPEN_RE    = re.compile(r"^\s*//\s*\[(FILE|STRUCT|FUNCTION|REGISTRY|ENUM|TYPE|MACRO|TEST|STRATEGY|ASSERT)\]_\[(.+?)\]\s*$")
 END_RE     = re.compile(r"^\s*//\s*\[END_(\w+)\]_\[(.+?)\]\s*$")

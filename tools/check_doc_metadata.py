@@ -28,65 +28,20 @@ import sys
 import argparse
 from pathlib import Path
 
-# Machine-portable roots (per feedback_machine_portable_resolver_for_committed_tool_paths):
-# ENGINE derives from this file's location (<engine>/tools/check_*.py); WORKSPACE via
-# env-override -> sibling-default -> .exists()-guard. No $HOME hardcode in a committed,
-# public-AGPL tool — runs on any clone / any PC / SSH-grid node.
-ENGINE = Path(os.environ.get("FOXML_ENGINE") or Path(__file__).absolute().parent.parent)  # .absolute() NOT
-# .resolve(): tools/ is symlinked from the private workspace; .resolve() follows it → ENGINE becomes the
-# WORKSPACE → the memory-dir slug doesn't exist → the guard silently scans 0 memories (a vacuous green).
-# See LANDMINES Landmine 5.
-if not (ENGINE / "Version.hpp").is_file():
-    # Shape check: Version.hpp is the engine-root SSoT marker — present at the engine root,
-    # ABSENT in the workspace (which mirrors CoreFrameworks/ etc. for module-doc backups, so a
-    # dir-name check can't discriminate). Failing it means __file__ was WORKSPACE-side (an
-    # importer whose sys.path entry .resolve()d the tools/ symlink, or the workspace repo's own
-    # Check P aggregator run) → the parent-derivation landed on the WORKSPACE. Recover via the
-    # sibling-checkout convention (mirror of check_session_docs.sh's WORKSPACE_ROOT
-    # sibling-default, reversed); FOXML_ENGINE env stays the explicit override for non-sibling
-    # layouts. Shape-VERIFIED — the fallback is taken only when it IS the engine, never blindly.
-    _sibling_engine = ENGINE.parent / "FoxML_Trader_v2"
-    if (_sibling_engine / "Version.hpp").is_file():
-        ENGINE = _sibling_engine
-def _resolve_workspace_root():
-    env = os.environ.get("FOXML_WORKSPACE")
-    if env and Path(env).exists():
-        return Path(env)
-    sibling = ENGINE.parent / "tick-trader-percore-workspace"
-    return sibling if sibling.exists() else ENGINE
-WORKSPACE = _resolve_workspace_root()
+# Machine-portable roots — imported from the SSoT resolver (E.1.2.B 0.1 / D-375). ENGINE / WORKSPACE /
+# MEMORY_DIR + _resolve_memory_dir were extracted verbatim into tools/foxroots.py so every tool reads ONE
+# resolver ("one core, no reinvention"; the import-from-core lint REDs a roll-your-own root). Re-exported
+# here for importers that still pull them via `from check_doc_metadata import ENGINE/WORKSPACE/MEMORY_DIR`.
+from foxroots import ENGINE, WORKSPACE, MEMORY_DIR, _resolve_memory_dir  # noqa: F401,E402 (re-export)
 
 VOCAB_PATH = WORKSPACE / "DESIGN_SPECS" / "meta-disciplines" / "doc-tag-vocabulary.md"
 CONVENTION_PATH = WORKSPACE / "DESIGN_SPECS" / "meta-disciplines" / "doc-frontmatter-convention.md"
 
 
-def _resolve_memory_dir():
-    """Resolve the Claude Code institutional-memory dir (machine-portable; D-89 fork 1).
-
-    Order: $FOXML_MEMORY_DIR override -> the local Claude Code projects store
-    derived from the engine repo path -> None if absent. Designed so the guard
-    runs today on one machine AND a multi-machine / SSH-grid node just exports
-    FOXML_MEMORY_DIR (no $HOME hardcode baked into a committed tool). Cross-node
-    memory *sync* itself is a separate concern (forward-promise).
-
-    NOTE: memory doc-system fields (tags/sister_specs) live nested under the
-    harness-native `metadata:` block (harness-durable). parse_frontmatter is a
-    FLAT line parser, so it already surfaces those indented keys as top-level --
-    no metadata-aware parsing needed. If parse_frontmatter is ever upgraded to
-    real nested YAML, teach it to flatten memory `metadata.*` (D-89).
-    """
-    override = os.environ.get("FOXML_MEMORY_DIR")
-    if override:
-        p = Path(override)
-        return p if p.exists() else None
-    # Claude Code keys its per-project memory dir by the project's absolute path
-    # with '/' and '_' both mapped to '-'. Derive from ENGINE; do not hardcode $HOME.
-    project_id = str(ENGINE).replace("/", "-").replace("_", "-")
-    p = Path.home() / ".claude" / "projects" / project_id / "memory"
-    return p if p.exists() else None
-
-
-MEMORY_DIR = _resolve_memory_dir()
+# NOTE (D-89, moved with _resolve_memory_dir to foxroots): memory doc-system fields (tags/sister_specs)
+# live nested under the harness-native `metadata:` block; parse_frontmatter (below) is a FLAT line parser,
+# so it already surfaces those indented keys as top-level. If parse_frontmatter is ever upgraded to real
+# nested YAML, teach it to flatten memory `metadata.*`. (_resolve_memory_dir + MEMORY_DIR now come from foxroots.)
 
 
 def _memory_ref_exists(ref_clean):

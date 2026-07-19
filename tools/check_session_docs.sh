@@ -103,7 +103,7 @@ fi
 
 # --- HARD 1c-2: [SCHEMA] version cohesion (D-371 — every converted [SCHEMA]_[ver] == the LOCKED
 # version, the value SSoT-derived from the spec's "Status: LOCKED — [SCHEMA]_[v1.0]" line; catches
-# the v1-vs-v1.0 drift the validator's prefix gate can't see; RegimeDetector WIP exempt). Kept OUT
+# the v1-vs-v1.0 drift the validator's prefix gate can't see; WIP_EXEMPT now empty, whole corpus). Kept OUT
 # of the parity-gated validator so foxtag<->Python validate byte-parity stays intact. ---
 if [ "${SKIP_SCHEMA_VERSION_CHECK:-0}" != "1" ]; then
     run_hard "schema-version cohesion ([SCHEMA]_[ver] == locked; SSoT-derived, D-346)" \

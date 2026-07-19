@@ -510,4 +510,69 @@ inline int cmd_layout(const string& tu, const vector<string>& names) {
     return 0;
 }
 
+// per-field layout facts for the register-fit analyzer (RC-F, D-366) — the SAME clang dump as
+// `layout`, but exposes EVERY field {name, type, off, size} (size via the shared field_size
+// resolver) instead of only the straddlers. A SEPARATE command so `layout`'s parity-gated JSON
+// shape is unchanged (parity_check.sh §4 stays valid); the analyzer computes access-cost on top.
+inline int cmd_fields(const string& tu, const vector<string>& names) {
+    fs::path tu_abs = fs::absolute(tu).lexically_normal();
+    CompileEntry ce = flags_for(tu_abs);
+    if (!ce.ok) {
+        std::fprintf(stderr, "no compile_commands flags for %s\n", tu.c_str());
+        return 2;
+    }
+    vector<string> argv = {"clang++", "-fsyntax-only", "-ferror-limit=0",
+                           "-Xclang", "-fdump-record-layouts"};
+    for (const string& f : layout_flag_subset(ce.args)) argv.push_back(f);
+    argv.push_back(tu_abs.string());
+    string cmd;
+    if (!ce.directory.empty()) cmd = "cd " + shell_quote(ce.directory) + " && ";
+    for (size_t i = 0; i < argv.size(); ++i) cmd += (i ? " " : "") + shell_quote(argv[i]);
+    string dump = run_capture_split(cmd);
+
+    vector<Record> records = parse_record_dump(dump);
+    if (records.empty()) {
+        std::fprintf(stderr, "no record layouts in dump (clang failed?)\n");
+        return 2;
+    }
+    std::map<string, long> by;                             // record-name -> size (mirror straddlers()'s `by`)
+    for (const Record& r : records)
+        if (r.size >= 0) {
+            by[canon_type(r.name)] = r.size;
+            by[strip_ns(canon_type(r.name))] = r.size;
+        }
+    auto wanted = [&](const Record& r) {
+        if (names.empty()) return true;
+        string base = r.name.substr(0, r.name.find('<'));
+        string nons = strip_ns(base);
+        for (const string& w : names)
+            if (w == r.name || w == base || w == nons) return true;
+        return false;
+    };
+    vector<const Record*> sel;
+    for (const Record& r : records)
+        if (wanted(r) && !r.fields.empty() && !layout_noise(r.name)) sel.push_back(&r);
+    std::sort(sel.begin(), sel.end(),
+              [](const Record* a, const Record* b) { return a->name < b->name; });
+
+    string j = "{";
+    for (size_t i = 0; i < sel.size(); ++i) {
+        const Record& r = *sel[i];
+        if (i) j += ",";
+        j += "\"" + json_escape(r.name) + "\":{\"size\":" + std::to_string(r.size) +
+             ",\"align\":" + std::to_string(r.align) + ",\"fields\":[";
+        for (size_t k = 0; k < r.fields.size(); ++k) {
+            const RecField& f = r.fields[k];
+            if (k) j += ",";
+            j += "{\"name\":\"" + json_escape(f.name) + "\",\"type\":\"" + json_escape(f.type) +
+                 "\",\"off\":" + std::to_string(f.off) +
+                 ",\"size\":" + std::to_string(field_size(f.type, by)) + "}";
+        }
+        j += "]}";
+    }
+    j += "}";
+    std::printf("%s\n", j.c_str());
+    return 0;
+}
+
 } // namespace foxtag

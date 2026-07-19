@@ -48,6 +48,17 @@ def layout(tu, names=()):
         return {}
 
 
+def fields(tu, names=()):
+    """Per-field layout facts: {record: {size, align, fields:[{name,type,off,size}]}} ({} on failure).
+    The RC-F (D-366) per-field register-fit producer — same clang dump as layout(), ALL fields exposed
+    (via the shared field_size resolver), a SEPARATE command so layout()'s parity-gated shape is untouched."""
+    out, _ = _run(["fields", str(tu)] + list(names))
+    try:
+        return json.loads(out) if out.strip() else {}
+    except json.JSONDecodeError:
+        return {}
+
+
 def codegen(headers, params, call, flags=None, prelude=None):
     """CODEGEN facts (RC-A anchored probe): {instructions, branches{...}, floats, simd{...}, ...}
     or None on probe failure / RC-E vacuous (the core refuses a verdict — never green-on-nothing).

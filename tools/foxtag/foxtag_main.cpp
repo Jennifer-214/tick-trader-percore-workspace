@@ -241,6 +241,10 @@ int main(int argc, char** argv) {
         if (paths.empty()) { std::fprintf(stderr, "usage: foxtag layout <tu.cpp> [Struct ...]\n"); return 2; }
         return cmd_layout(paths[0], vector<string>(paths.begin() + 1, paths.end()));
     }
+    if (cmd == "fields") {
+        if (paths.empty()) { std::fprintf(stderr, "usage: foxtag fields <tu.cpp> [Struct ...]\n"); return 2; }
+        return cmd_fields(paths[0], vector<string>(paths.begin() + 1, paths.end()));
+    }
     if (cmd == "validate") return cmd_validate(g, idx, roots, paths);
     if (cmd == "units") return cmd_units(g, idx, roots, paths, json, f_type, f_tag, f_name);
     if (cmd == "unit") {

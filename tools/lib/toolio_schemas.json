@@ -1,0 +1,17 @@
+{
+  "_comment": "Tool-I/O payload COLUMN schemas + the cross-cutting findings schema — NOT the tag vocab (the tag VALUES live in doc-tag-vocabulary.md + the [SCHEMA] fences). E.1.2.B 0.1.5 / D-380/D-382/D-384. Read by tools/toolio.py (Python) AND the foxtag C++ core (same file, via json_parse) — the language-neutral SSoT, never a per-language hardcode. Add/evolve a kind = a row here; every emitter+consumer tracks it.",
+
+  "grammar/1": {
+    "tables": {
+      "categories":  ["name"],
+      "ref_subcats": ["name"],
+      "concern":     ["name"],
+      "surface":     ["name"],
+      "unit_types":  ["name", "closable"]
+    }
+  },
+
+  "findings/1": {
+    "table": ["file", "line", "severity", "message", "kind"]
+  }
+}

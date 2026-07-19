@@ -33,7 +33,33 @@ import sys
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).absolute().parent  # .absolute() not .resolve(): keep the engine path, don't follow the workspace symlink (machine-portable)
-REPO_ROOT  = SCRIPT_DIR.parent
+
+
+def _engine_root() -> Path:
+    """Locate the ENGINE root (the dir holding CoreFrameworks/MetaRegistry.hpp + the SCAN_DIRS source),
+    robust to the `engine/tools -> workspace/tools` symlink (the tool physically lives in the workspace;
+    the engine source does NOT). Fast path: invoked via the engine symlink path, SCRIPT_DIR.parent IS the
+    engine root. Fallback: invoked via the WORKSPACE path (e.g. the workspace pre-commit hook), the engine
+    is the SIBLING whose `tools/` symlink resolves back to our real tools dir — identify it precisely (so a
+    different sibling repo can't match). If nothing matches, keep the invocation root so a GENUINE
+    MetaRegistry.hpp deletion still fails LOUD (parse_foreach_registry -> exit 2), never a silent skip.
+    Fixes the workspace-invocation false `exit 2` surfaced at the E.1.2.A close (2026-07-18)."""
+    invoked_root = SCRIPT_DIR.parent
+    if (invoked_root / "CoreFrameworks/MetaRegistry.hpp").exists():
+        return invoked_root
+    real_tools = Path(__file__).resolve().parent
+    for sib in sorted(real_tools.parent.parent.iterdir()):
+        try:
+            link = sib / "tools"
+            if link.is_symlink() and link.resolve() == real_tools \
+               and (sib / "CoreFrameworks/MetaRegistry.hpp").exists():
+                return sib
+        except OSError:
+            continue
+    return invoked_root
+
+
+REPO_ROOT  = _engine_root()
 META_REG   = REPO_ROOT / "CoreFrameworks/MetaRegistry.hpp"
 
 # Directories to scan for FOREACH_<X> macro definitions

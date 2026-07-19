@@ -1,5 +1,3 @@
 # check_conversion_completeness grandfathered baseline (stable file|sig|name keys).
 # A finding NOT in here fails; regenerate (--write-baseline) to SHRINK as cleanup lands.
-Strategies/RegimeDetector.hpp|C2|FOREACH_REGIME_PERSIST_FIELD
-Strategies/RegimeDetector.hpp|C2|RegimeState
-Strategies/RegimeDetector.hpp|C2|TickRateState
+

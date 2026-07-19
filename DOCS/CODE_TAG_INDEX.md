@@ -15,7 +15,7 @@ so the snapshot stales when tags/units actually change, not on unrelated line dr
 `rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a
 conversion).
 
-Converted files: 164 · unit blocks: 1100
+Converted files: 164 · unit blocks: 1104
 
 ## [TAG] values → files
 
@@ -214,7 +214,7 @@ Converted files: 164 · unit blocks: 1100
 - `CoreFrameworks/SPSCRing.hpp`
 - `CoreFrameworks/SystemInit.hpp`
 
-### DATA_ORIENTED_DESIGN (22 files)
+### DATA_ORIENTED_DESIGN (23 files)
 
 - `CoreFrameworks/ControllerConfig.hpp`
 - `CoreFrameworks/ControllerEventLoop.hpp`
@@ -238,6 +238,7 @@ Converted files: 164 · unit blocks: 1100
 - `MemHeaders/InitArena.hpp`
 - `MemHeaders/LatencyHistogram.hpp`
 - `MemHeaders/PoolAllocator.hpp`
+- `Strategies/RegimeDetector.hpp`
 
 ### DATA_PLANE (3 files)
 
@@ -677,7 +678,7 @@ Converted files: 164 · unit blocks: 1100
 - `CoreFrameworks/ControllerConfig.hpp`
 - `CoreFrameworks/ParseFast.hpp`
 
-### PERSISTENCE (29 files)
+### PERSISTENCE (30 files)
 
 - `CoreFrameworks/CfgFieldDispatch.hpp`
 - `CoreFrameworks/ControllerEventLoop.hpp`
@@ -708,6 +709,7 @@ Converted files: 164 · unit blocks: 1100
 - `MemHeaders/OmsFieldRegistry.hpp`
 - `MemHeaders/PositionFieldRegistry.hpp`
 - `MemHeaders/RunHistory.hpp`
+- `Strategies/RegimeDetector.hpp`
 
 ### PRODUCER (1 files)
 
@@ -998,7 +1000,7 @@ Converted files: 164 · unit blocks: 1100
 - `Strategies/private/EmaCross.hpp` — `Strategies/private/EmaCross.hpp`
 - `Version.hpp` — `Version.hpp`
 
-### FUNCTION (511)
+### FUNCTION (512)
 
 - `ANSI_Layout_Render` — `DataStream/TUIAnsi.hpp`
 - `ANSI_Section_Header` — `DataStream/TUIAnsi.hpp`
@@ -1334,6 +1336,7 @@ Converted files: 164 · unit blocks: 1100
 - `ReconciliationLoop_Init` — `CoreFrameworks/ReconciliationLoop.hpp`
 - `ReconciliationLoop_Pass` — `CoreFrameworks/ReconciliationLoop.hpp`
 - `ReconciliationLoop_Shutdown` — `CoreFrameworks/ReconciliationLoop.hpp`
+- `Regime_Init` — `Strategies/RegimeDetector.hpp`
 - `ResultsPnlColor` — `Backtest/BacktestPanels.hpp`
 - `RewardTracker_Push` — `ML_Headers/RewardTracker.hpp`
 - `RidgeBlender_BuildCorr` — `ML_Headers/RidgeBlender.hpp`
@@ -1534,7 +1537,7 @@ Converted files: 164 · unit blocks: 1100
 - `STAMP_RESULT_DERIVED_FIELDS_AUTO_GEN` — `MemHeaders/CfgGateRegistry.hpp`
 - `STATE_FLAG_*` — `MemHeaders/PerNodeStateFlagsRegistry.hpp`
 
-### REGISTRY (61)
+### REGISTRY (62)
 
 - `FOREACH_ARCH_FIELD_DRIFT` — `MemHeaders/ArchFieldDriftRegistry.hpp`
 - `FOREACH_BACKTEST_METRIC` — `CoreFrameworks/MetricCompute.hpp`
@@ -1582,6 +1585,7 @@ Converted files: 164 · unit blocks: 1100
 - `FOREACH_POSITION_FIELD` — `MemHeaders/PositionFieldRegistry.hpp`
 - `FOREACH_RECONCILE_MODE` — `CoreFrameworks/Reconcile.hpp`
 - `FOREACH_REGIME` — `Strategies/StrategyInterface.hpp`
+- `FOREACH_REGIME_PERSIST_FIELD` — `Strategies/RegimeDetector.hpp`
 - `FOREACH_REGISTRY` — `CoreFrameworks/MetaRegistry.hpp`
 - `FOREACH_RISK_CFG_FLAG` — `CoreFrameworks/RiskCfgFlagRegistry.hpp`
 - `FOREACH_ROLLING_WINDOW` — `ML_Headers/RollingWindowRegistry.hpp`
@@ -1598,7 +1602,7 @@ Converted files: 164 · unit blocks: 1100
 - `FOREACH_TRADE_LOG_COL` — `CoreFrameworks/TradeLogColRegistry.hpp`
 - `PER_NODE_OVERRIDE_FIELDS` — `CoreFrameworks/ControllerConfig.hpp`
 
-### STRUCT (196)
+### STRUCT (198)
 
 - `AnsiBuf` — `DataStream/TUIAnsi.hpp`
 - `BacktestResults` — `Backtest/BacktestEngine.hpp`
@@ -1739,6 +1743,7 @@ Converted files: 164 · unit blocks: 1100
 - `ReconcileTrade` — `CoreFrameworks/Reconcile.hpp`
 - `ReconciliationLoopState` — `CoreFrameworks/ReconciliationLoop.hpp`
 - `RegimeSignals` — `Strategies/RegimeDetector.hpp`
+- `RegimeState` — `Strategies/RegimeDetector.hpp`
 - `RegressionFeederX` — `ML_Headers/LinearRegression3X.hpp`
 - `RewardRecord` — `ML_Headers/RewardTracker.hpp`
 - `RewardTracker` — `ML_Headers/RewardTracker.hpp`
@@ -1780,6 +1785,7 @@ Converted files: 164 · unit blocks: 1100
 - `TUISnapshot` — `DataStream/EngineTUI.hpp`
 - `ThompsonBanditState` — `ML_Headers/ThompsonBandit.hpp`
 - `Tick` — `CoreFrameworks/Tick.hpp`
+- `TickRateState` — `Strategies/RegimeDetector.hpp`
 - `TickRecorder` — `DataStream/TickRecorder.hpp`
 - `TradeData` — `GUI/TradeReader.hpp`
 - `TradeEvent` — `CoreFrameworks/TradeEvent.hpp`

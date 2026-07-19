@@ -31,7 +31,7 @@ sys.path.insert(0, str(Path(__file__).absolute().parent))
 from check_code_tag_blocks import SCHEMA_PATH        # noqa: E402  (the spec SSoT — one path source)
 from check_doc_metadata import ENGINE                # noqa: E402  (engine root — the corpus scan base)
 
-WIP_EXEMPT = {"Strategies/RegimeDetector.hpp"}       # operator's in-flight pilot; clears on conversion
+WIP_EXEMPT = set()                                   # (was RegimeDetector.hpp — converted 2026-07-18; corpus HARD-zero)
 _SCHEMA_RE = re.compile(r"\[SCHEMA\]_\[([^\]]+)\]")
 
 

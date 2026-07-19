@@ -77,8 +77,16 @@ of ONE core**, so the grammar + facts exist in exactly one implementation.
   from a **language-neutral registry** (a data file BOTH the C++ core + the Python tools read — NEVER a per-language
   hardcode, which would be the Class-18 mirror). `status.findings` unifies producers + gates. Add/evolve a kind = 1
   registry row; every producer+consumer tracks it. `.toolbus/` = the gitignored latest-wins rendezvous. The
-  "grammar-DERIVED, never hardcoded" law raised to payload + gate schemas. Spec:
+  "grammar-DERIVED, never hardcoded" law raised to payload + gate schemas. `foxtag <cmd> --json` emits the
+  COMPLETE self-describing envelope (D-382; the frame data-driven off the registry — two readers, one source,
+  the `Version.hpp` model), so a direct subprocess consumer gets a full envelope. Spec:
   `framework-patterns/standardized-tool-io-envelope-and-payload.md`.
+- **Toolchain / tag-system change → run the armed I→A agent sweep BEFORE implementing (D-383).** The toolchain +
+  the in-code tag system are one-producer-N-consumers: a change to the tool-I/O / schema registry / vocab /
+  `[SCHEMA]` grammar fans out across foxtag + the `check_*` family + the plugin + every tagged unit — a local-looking
+  edit can ripple. Rerun the armed I→A cascade (scaled to the change; arm per `DOCS/SUBAGENT_ARMING.md`) scoped to the
+  WIDER toolchain + tag-system blast radius, not just the edited file, before coding. Correctness-critical despite
+  dev-plane (a wrong fact fans out). Re-fires on a materially-corrected shape.
 
 ## Where things live
 

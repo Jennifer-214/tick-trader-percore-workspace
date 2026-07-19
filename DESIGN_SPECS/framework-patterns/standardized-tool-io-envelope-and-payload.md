@@ -40,7 +40,7 @@ The toolchain's producers (foxtag `units`/`layout`/`codegen`/`fields`; `check_re
 
 The payload is **one or more NAMED RECORD-SETS.** Each record-set declares a field *schema* (name + type, drawn from the tag vocab where it applies) + *rows*; a field value may nest another record-set.
 
-- `grammar` → tables `{categories, unit_types, derived_axes, ladder, …}`
+- `grammar` → tables `{categories, ref_subcats, concern, surface, unit_types, openers}` (**O3**, D-382 — the 4 real `Grammar` members + the node-model set from the `unit_types()`/`openers()` free fns; `derived_axes`/`ladder` DEFER — no producer yet)
 - `units` → a `units` table (rows = unit records) · `layout` → a `fields` table · `verdict` → a `findings` table
 
 **One writer emits `{schema, rows}`; one reader walks `{schema, rows}` — for ANY tool.** That is "the same read/write mechanism, general enough for all tools."

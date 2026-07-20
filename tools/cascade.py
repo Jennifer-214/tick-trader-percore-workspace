@@ -36,7 +36,13 @@ import sys
 import tempfile
 from pathlib import Path
 
-ENGINE = Path(os.environ.get("FOXML_ENGINE") or Path(__file__).absolute().parent.parent)
+import os as _os, sys as _sys
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from foxroots import ENGINE as _FOXROOTS_ENGINE   # noqa: E402  (the ONE repo-root resolver)
+# MIGRATED 2026-07-20 to the foxroots SSoT (D-375). A hand-rolled walk-up from __file__
+# resolves to the WORKSPACE through the `tools/` DIRECTORY SYMLINK; foxroots adds the
+# Version.hpp MARKER check + sibling recovery that makes it correct from either path.
+ENGINE = _FOXROOTS_ENGINE
 
 # --- scan surface -----------------------------------------------------------------------------------
 ENGINE_SRC_DIRS = ["CoreFrameworks", "Strategies", "ML_Headers", "Backtest", "DataStream",

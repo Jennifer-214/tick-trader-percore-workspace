@@ -3,10 +3,9 @@
 # grandfathered tools use the portable `FOXML_ENGINE or Path(__file__).parent.parent` pattern but lack
 # foxroots' Version.hpp shape-check + Landmine-5 sibling recovery, so they migrate to `from foxroots
 # import ...` paced. Remove a line when its tool migrates; shrink to empty = class fully migrated.
-check_slot_node_derive.py
-check_money_gross_single_source.py
-foxtag_client.py
-cascade.py
-check_struct_alignment.py
-check_forward_promise_audit.py
-check_plan_body_symbol_existence.py
+#
+# EMPTY as of 2026-07-20 — the roll-your-own-root class is FULLY MIGRATED. All 7 grandfathered
+# pathlib rollers moved to `from foxroots import ENGINE`, and the lint was widened the same day
+# to cover the os.path spelling it had been blind to (4 more tools, 3 of them measurably broken
+# through the tools/ symlink). Keep this file: a future roller REDs as NEW, and an empty
+# baseline is the proof the class is closed rather than merely tracked.

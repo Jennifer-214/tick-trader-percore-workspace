@@ -52,7 +52,13 @@ from pathlib import Path
 # Machine-portable roots (per feedback_machine_portable_resolver_for_committed_tool_paths):
 # ENGINE derives from this file's location; WORKSPACE via env-override -> sibling-default ->
 # .exists()-guard. No $HOME hardcode in a committed public-AGPL tool (runs on any clone/PC).
-ENGINE = Path(os.environ.get("FOXML_ENGINE") or Path(__file__).absolute().parent.parent)
+import os as _os, sys as _sys
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from foxroots import ENGINE as _FOXROOTS_ENGINE   # noqa: E402  (the ONE repo-root resolver)
+# MIGRATED 2026-07-20 to the foxroots SSoT (D-375). A hand-rolled walk-up from __file__
+# resolves to the WORKSPACE through the `tools/` DIRECTORY SYMLINK; foxroots adds the
+# Version.hpp MARKER check + sibling recovery that makes it correct from either path.
+ENGINE = _FOXROOTS_ENGINE
 if not (ENGINE / "Version.hpp").is_file():
     # Shape check (the Landmine-5 class, caught live 2026-07-15): invoked from the WORKSPACE
     # repo's own pre-commit hook, __file__ is workspace-side (tools/ is a REAL dir there) →

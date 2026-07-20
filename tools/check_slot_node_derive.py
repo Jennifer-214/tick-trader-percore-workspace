@@ -25,7 +25,13 @@ import pathlib
 # Engine root via .absolute() — NOT .resolve(): tools/ is a symlink to the workspace, so
 # .resolve() would follow it to the stub CoreFrameworks and vacuously pass (LANDMINES 5/7).
 # FOXML_ENGINE override lets an out-of-tree caller point at the engine explicitly.
-ENGINE = pathlib.Path(os.environ.get("FOXML_ENGINE") or pathlib.Path(__file__).absolute().parent.parent)
+import os as _os, sys as _sys
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from foxroots import ENGINE as _FOXROOTS_ENGINE   # noqa: E402  (the ONE repo-root resolver)
+# MIGRATED 2026-07-20 to the foxroots SSoT (D-375). A hand-rolled walk-up from __file__
+# resolves to the WORKSPACE through the `tools/` DIRECTORY SYMLINK; foxroots adds the
+# Version.hpp MARKER check + sibling recovery that makes it correct from either path.
+ENGINE = _FOXROOTS_ENGINE
 SCAN_DIRS = ["CoreFrameworks"]
 OK_MARK = "SLOT_DERIVE_OK"
 

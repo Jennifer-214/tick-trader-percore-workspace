@@ -19,8 +19,13 @@ import subprocess
 from pathlib import Path
 
 FOXTAG_BIN = Path(__file__).absolute().parent / "foxtag" / "foxtag"
-_ENGINE = Path(__file__).absolute().parent.parent   # tools/foxtag_client.py -> engine root
-                                                    # (.absolute() NOT .resolve() — Landmine 5)
+import os as _os, sys as _sys
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from foxroots import ENGINE as _FOXROOTS_ENGINE   # noqa: E402  (the ONE repo-root resolver)
+# MIGRATED 2026-07-20 to the foxroots SSoT (D-375). A hand-rolled walk-up from __file__
+# resolves to the WORKSPACE through the `tools/` DIRECTORY SYMLINK; foxroots adds the
+# Version.hpp MARKER check + sibling recovery that makes it correct from either path.
+_ENGINE = _FOXROOTS_ENGINE   # foxroots owns the .absolute()-not-.resolve() Landmine-5 caveat now
 
 
 def core_available():

@@ -63,7 +63,13 @@ from typing import Optional, Callable, List, Tuple
 # ENGINE_ROOT derives from this file's location; WORKSPACE_ROOT + MEMORY_DIR via
 # env-override -> derived-default -> .exists()-guard. No $HOME hardcode in a committed,
 # public-AGPL tool — runs on any clone / any PC / SSH-grid node.
-ENGINE_ROOT = Path(os.environ.get("FOXML_ENGINE") or Path(__file__).absolute().parent.parent)
+import os as _os, sys as _sys
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from foxroots import ENGINE as _FOXROOTS_ENGINE   # noqa: E402  (the ONE repo-root resolver)
+# MIGRATED 2026-07-20 to the foxroots SSoT (D-375). A hand-rolled walk-up from __file__
+# resolves to the WORKSPACE through the `tools/` DIRECTORY SYMLINK; foxroots adds the
+# Version.hpp MARKER check + sibling recovery that makes it correct from either path.
+ENGINE_ROOT = _FOXROOTS_ENGINE
 def _resolve_workspace_root():
     env = os.environ.get("FOXML_WORKSPACE")
     if env and Path(env).exists():

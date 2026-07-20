@@ -23,7 +23,13 @@ import pathlib
 
 # Landmine 5: tools/ is symlinked to the workspace — .resolve() would follow the symlink to the
 # WRONG (workspace) root, where CoreFrameworks/ doesn't exist. .absolute() keeps the engine path.
-ROOT = pathlib.Path(__file__).absolute().parent.parent
+import os as _os, sys as _sys
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from foxroots import ENGINE as _FOXROOTS_ENGINE   # noqa: E402  (the ONE repo-root resolver)
+# MIGRATED 2026-07-20 to the foxroots SSoT (D-375). A hand-rolled walk-up from __file__
+# resolves to the WORKSPACE through the `tools/` DIRECTORY SYMLINK; foxroots adds the
+# Version.hpp MARKER check + sibling recovery that makes it correct from either path.
+ROOT = _FOXROOTS_ENGINE
 if not (ROOT / "CoreFrameworks").exists():
     print(f"FAIL: cannot locate the engine tree (CoreFrameworks/ not under {ROOT})")
     sys.exit(2)

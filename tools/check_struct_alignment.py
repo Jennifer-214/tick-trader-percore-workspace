@@ -40,7 +40,13 @@ from pathlib import Path
 
 # .absolute() (NOT .resolve()) keeps the engine symlink path; FOXML_ENGINE override lets the teeth-proof
 # self-test point the scan at a temp tree (LANDMINES 5/7).
-ENGINE = Path(os.environ.get("FOXML_ENGINE") or Path(__file__).absolute().parent.parent)
+import os as _os, sys as _sys
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from foxroots import ENGINE as _FOXROOTS_ENGINE   # noqa: E402  (the ONE repo-root resolver)
+# MIGRATED 2026-07-20 to the foxroots SSoT (D-375). A hand-rolled walk-up from __file__
+# resolves to the WORKSPACE through the `tools/` DIRECTORY SYMLINK; foxroots adds the
+# Version.hpp MARKER check + sibling recovery that makes it correct from either path.
+ENGINE = _FOXROOTS_ENGINE
 SCAN_DIRS = ["CoreFrameworks", "ML_Headers", "Strategies", "FixedPoint", "MemHeaders",
              "DataStream", "Backtest", "GUI", "tests"]
 MAX_ALIGN_T = 16  # what malloc/calloc/realloc guarantee

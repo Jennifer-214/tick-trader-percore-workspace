@@ -972,3 +972,39 @@ Documented in:
 - `tick-trader-percore-workspace/DOCS/SKILLS_HIERARCHY.md` (Layer 1 entry)
 - This file
 - Canonical example handoffs: `plans/<sprint-dir>/handoffs/*-handoff.md` — each committed handoff is a real ship's generated output. Reference the most recent multi-session ship handoff (one with WIP-checkpoint commits in its "Ship state across sessions" section) for canonical multi-session output shape.
+
+## ⚠️ WHAT A HANDOFF MUST NOT CONTAIN (added 2026-07-20)
+
+### No volatile counts in prose
+
+A raw count is stale **on the very commit that records it**. Measured, in one close: `26 commits`
+→ corrected to `24` → already `25` by the next commit → and a separate stale `98 enrolled` survived
+**two** self-directed consistency sweeps. Patching the value is not the fix; the value is the bug.
+
+| instead of | write |
+|---|---|
+| "24 commits" | ``window `<start-sha>..HEAD` `` + `git log --oneline <sha>..HEAD \| wc -l` |
+| "100 tools enrolled" | "tools-inventory clean" (a STATE, not a tally) |
+| "24 HARD + 6 ADV" | "sweep clean" |
+| "8 dangling ids" | the ids NAMED individually — `TECH_DEBT-101, -102, …` |
+
+**The rule:** a fact is safe in prose when it is an ANCHOR (a SHA, an ID, a state) and unsafe when
+it is a TALLY. Every handoff carries a **RE-DERIVE block** listing the commands that recompute
+anything actionable — without it, a stale figure is indistinguishable from a current one, and the
+reader who most needs the document is the one least able to check it.
+
+`check_close_out_completeness.py` enforces this: volatile counts outside code fences are flagged,
+a missing re-derive block is HIGH.
+
+### It must CONTAIN a judgment-check ledger and an independent-review verdict
+
+- **Judgment ledger** — `/capture-audit` checks 2/3/5/6/7/9/10/12 in explicit `Check N` form, each
+  with a verdict. They are tool-backed by nothing and have twice been skipped in silence.
+- **Independent review** — an `a-class` adversarial pass, default-REFUTED, recorded. Per AR-8 the
+  maker does not grade their own artifact; self-review of a handoff failed four consecutive times
+  in one close, including a sweep that missed what the two sweeps before it had introduced.
+
+**Why this belongs to the HANDOFF specifically:** it is the one artifact that must survive a
+context boundary. Every other document has a live author who can notice it is wrong. This one is
+read by someone who cannot.
+

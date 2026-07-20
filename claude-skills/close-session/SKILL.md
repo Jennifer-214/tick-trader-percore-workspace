@@ -261,6 +261,56 @@ LAYER 2 (spawned sub-agent — the one exception):
 
 If reading this spec inside an Explore subagent: return error. `/close-session` is only invoked from main session because it orchestrates handoff writing + workspace push (mutating effects).
 
+
+## ⚠️ Stage 5 — THE JUDGMENT HALF (added 2026-07-20 after a 4x recurrence)
+
+**Why this stage exists, stated so it cannot be skipped by feeling done.** The close-out has a
+MECHANICAL half and a JUDGMENT half. The mechanical half is gated by `check_session_docs.sh`. The
+judgment half was gated by NOTHING, and it was skipped in **two consecutive sessions** — both times
+the only detector was the operator asking. In the second, a 22-commit session shipped with ZERO
+commits to four owed auto-write ledgers while the sweep stayed green throughout, *because none of
+those files is mechanically gated*. A green from a partially-mechanised ritual is evidence about
+the mechanised half only.
+
+### 5.1 — RUN the mechanical enforcer, do not assume it
+
+```
+python3 tools/check_close_out_completeness.py --since <session-start-sha>
+```
+
+Covers: auto-write ledger coverage · volatile counts in the handoff · a RE-DERIVE block ·
+a judgment-check ledger · an independent-review record. HIGH findings BLOCK the close.
+
+### 5.2 — ANSWER all eight judgment checks EXPLICITLY, in the handoff
+
+`/capture-audit` checks **2 · 3 · 5 · 6 · 7 · 9 · 10 · 12** are tool-backed by nothing. Record a
+verdict per check in the handoff **in `Check N` form** so a skip is VISIBLE rather than invisible.
+"Nothing found" is a valid verdict; *silence is not*. The enforcer greps for this ledger.
+
+### 5.3 — NO VOLATILE COUNTS in the handoff
+
+A raw count is stale **on the commit that records it**. Observed: `26 commits` → corrected to `24`
+→ already `25` by the next commit; and a stale `98 enrolled` survived TWO self-sweeps. This is not
+a value to patch better — it is unfixable by writing a better number.
+
+Anchor to a **SHA range** (`window 2167d9d..HEAD`) or a **state** ("baseline EMPTY", "pin EXACT"),
+and give the reader the commands to RE-DERIVE anything actionable. Name things by ID, not by count:
+"8 dangling ids" rots; `TECH_DEBT-101, -102, …` does not.
+
+### 5.4 — INDEPENDENT ADVERSARIAL REVIEW of the handoff (AR-8), MANDATORY
+
+**The maker does not grade their own artifact.** Self-checking a handoff failed FOUR CONSECUTIVE
+TIMES in one close — and the third failure was the *sweep for stale values* missing a stale value
+the first two introduced. A long handoff is typically patched many times and never re-read whole,
+so internal contradiction accumulates exactly where the reader cannot see it.
+
+Spawn an `a-class` agent, default-REFUTED, and tell it explicitly that a "looks fine" verdict is
+almost certainly a miss. Point it at: internal contradictions between sections · claims false at
+HEAD · contradictions with the plan body / MASTER / ledgers / decision log · stale volatile values ·
+anything a fresh session would get wrong by following the document literally.
+
+Record the verdict in the handoff. The enforcer greps for it.
+
 ## Sister disciplines
 
 - `/accept-handoff` — RECEIVER side of handoff cycle; this skill is SENDER side

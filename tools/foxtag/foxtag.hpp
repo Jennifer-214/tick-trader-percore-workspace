@@ -44,12 +44,30 @@ using std::set;
 // small helpers
 //======================================================================
 
-inline string read_file(const fs::path& p) {
+// Read a file, DISTINGUISHING failure from emptiness. The bare `read_file` below cannot: it
+// returns {} for "unreadable", "is a directory", and "genuinely empty" alike — and on Linux an
+// ifstream on a DIRECTORY opens truthy and then reads nothing, so `foxtag validate DOCS` counted
+// the directory as a scanned file, found 0 tag-blocks, and reported "All tag-blocks valid" rc=0
+// while the Python twin reported UNREADABLE rc=1. That was the T1 divergence half of
+// build-blocker 1. The directory case is now handled upstream by resolve_paths (a directory
+// EXPANDS per the contract); this checked form covers what remains — permissions, special files,
+// and a file that vanishes mid-run.
+inline bool read_file_checked(const fs::path& p, string& out) {
+    std::error_code ec;
+    if (!fs::is_regular_file(p, ec)) return false;
     std::ifstream f(p, std::ios::binary);
-    if (!f) return {};
+    if (!f) return false;
     std::ostringstream ss;
     ss << f.rdbuf();
-    return ss.str();
+    if (f.bad()) return false;
+    out = ss.str();
+    return true;
+}
+
+inline string read_file(const fs::path& p) {
+    string s;
+    read_file_checked(p, s);   // absence/failure still collapses to {} for callers that
+    return s;                  // legitimately treat "no content" as "nothing to do"
 }
 
 inline vector<string> split_lines(const string& text) {
@@ -781,40 +799,201 @@ inline FileResult parse_file(const string& path_str, const Grammar& g, const Ref
 // path parts, NO dir-symlink descent, PLUS the schema_golden fixture dir)
 //======================================================================
 
-inline bool excluded_part(const fs::path& p) {
-    for (const auto& part : p)
-        if (part.string() == "vendor" || starts_with(part.string(), "build")) return true;
+//======================================================================
+// CORPUS CONTRACT — the C++ half of the two-reader model (D-393).
+//
+// Membership rules live in tools/lib/corpus_contract.json and are read by BOTH this core and
+// the Python checker family, exactly as toolio_schemas.json already is (D-380/D-382). The rules
+// are DATA so two hand-written walkers cannot drift on extensions, exclusions, symlink policy,
+// sort order, or path-argument semantics.
+//
+// ⚠️ _encoding_law: EVERY scalar in that file is a STRING, booleans included, because JVal has
+// Kind {STR, ARR, OBJ, OTHER} and NO bool/number kind — a bare `true` would parse as OTHER with
+// an EMPTY string, a SILENT wrong-read on exactly one of the two readers. Compare with == "true".
+//======================================================================
+
+struct CorpusProfile {
+    vector<string> extensions;
+    set<string>    exclude_parts;
+    vector<string> exclude_prefixes;
+    vector<string> extra_roots;
+    bool           ok = false;
+};
+
+// Loaded once per process. A missing/unparseable contract is a HARD failure at the call site —
+// never a silent fallback to hardcoded rules, which is the drift the contract exists to kill.
+inline JVal& corpus_contract_raw(const Roots& roots, bool* loaded_ok = nullptr) {
+    static JVal cached;
+    static bool tried = false, good = false;
+    if (!tried) {
+        tried = true;
+        string text = read_file(roots.engine / "tools" / "lib" / "corpus_contract.json");
+        if (!text.empty()) {
+            size_t i = 0;
+            cached = json_parse(text, i);
+            good = (cached.kind == JVal::OBJ);
+        }
+    }
+    if (loaded_ok) *loaded_ok = good;
+    return cached;
+}
+
+inline CorpusProfile corpus_profile(const Roots& roots, const string& name) {
+    CorpusProfile p;
+    bool ok = false;
+    JVal& c = corpus_contract_raw(roots, &ok);
+    if (!ok) return p;
+    auto pit = c.obj.find("profiles");
+    if (pit == c.obj.end()) return p;
+    auto nit = pit->second.obj.find(name);
+    if (nit == pit->second.obj.end()) return p;
+    const JVal& prof = nit->second;
+
+    auto strvec = [](const JVal& v) {
+        vector<string> out;
+        for (const auto& e : v.arr) if (e.kind == JVal::STR) out.push_back(e.str);
+        return out;
+    };
+    auto field = [&](const char* k) -> const JVal* {
+        auto it = prof.obj.find(k);
+        return it == prof.obj.end() ? nullptr : &it->second;
+    };
+    if (const JVal* v = field("extensions"))                 p.extensions      = strvec(*v);
+    if (const JVal* v = field("exclude_path_parts"))         for (auto& s : strvec(*v)) p.exclude_parts.insert(s);
+    if (const JVal* v = field("exclude_path_part_prefixes")) p.exclude_prefixes = strvec(*v);
+    if (const JVal* v = field("extra_roots"))                p.extra_roots      = strvec(*v);
+    p.ok = !p.extensions.empty();
+    return p;
+}
+
+inline bool excluded_part(const fs::path& p, const CorpusProfile& prof) {
+    for (const auto& part : p) {
+        const string s = part.string();
+        if (prof.exclude_parts.count(s)) return true;
+        for (const auto& pre : prof.exclude_prefixes) if (starts_with(s, pre)) return true;
+    }
     return false;
 }
 
-inline vector<string> scan_files(const Roots& roots) {
-    vector<string> hpp, cpp;
+inline bool has_extension(const fs::path& p, const CorpusProfile& prof) {
+    const string ext = p.extension().string();
+    for (const auto& e : prof.extensions) if (ext == e) return true;
+    return false;
+}
+
+// `sort.within_root` = bytewise-ascending RELATIVE path. NEVER a whole-list sort over ABSOLUTE
+// paths: the corpus spans two roots and both tools honour FOXML_ENGINE/FOXML_WORKSPACE, so an
+// absolute sort would make the interleave depend on CHECKOUT LAYOUT (C-396 #3). std::string's
+// operator< compares as unsigned char and UTF-8 is order-preserving, so this agrees bytewise
+// with Python's sorted() — no custom comparator on either side.
+inline void sort_within_root(vector<string>& files, const fs::path& root) {
+    const string prefix = root.string() + "/";
+    std::sort(files.begin(), files.end(), [&](const string& a, const string& b) {
+        const string ra = starts_with(a, prefix) ? a.substr(prefix.size()) : a;
+        const string rb = starts_with(b, prefix) ? b.substr(prefix.size()) : b;
+        return ra < rb;
+    });
+}
+
+// Enumerate ONE root by the profile's extensions + exclusions. Symlink policy is DECLARED, not
+// accidental (C-396 #2 — symlinks are the dominant membership-divergence axis here):
+// follow_file_symlinks=true / follow_dir_symlinks=false. recursive_directory_iterator does not
+// follow directory symlinks by default, which is exactly what the contract declares and what
+// Python's rglob does — the two walkers match by rule, not by luck.
+inline vector<string> walk_root(const fs::path& base, const CorpusProfile& prof, bool recursive) {
+    vector<string> out;
     std::error_code ec;
-    for (auto it = fs::recursive_directory_iterator(
-             roots.engine, fs::directory_options::skip_permission_denied, ec);
-         it != fs::recursive_directory_iterator(); it.increment(ec)) {
-        if (ec) break;
-        if (!it->is_regular_file(ec)) continue;
-        const fs::path& p = it->path();
-        string ext = p.extension().string();
-        if (ext != ".hpp" && ext != ".cpp") continue;
-        if (excluded_part(p)) continue;
-        (ext == ".hpp" ? hpp : cpp).push_back(p.string());
-    }
-    std::sort(hpp.begin(), hpp.end());
-    std::sort(cpp.begin(), cpp.end());
-    vector<string> files = hpp;
-    files.insert(files.end(), cpp.begin(), cpp.end());
-    fs::path golden = roots.workspace / "tests" / "schema_golden";
-    vector<string> gf;
-    if (fs::is_directory(golden, ec))
-        for (auto& e : fs::directory_iterator(golden, ec)) {
-            string ext = e.path().extension().string();
-            if (ext == ".hpp" || ext == ".cpp") gf.push_back(e.path().string());
+    if (!fs::is_directory(base, ec)) return out;
+    if (recursive) {
+        for (auto it = fs::recursive_directory_iterator(
+                 base, fs::directory_options::skip_permission_denied, ec);
+             it != fs::recursive_directory_iterator(); it.increment(ec)) {
+            if (ec) break;
+            if (!it->is_regular_file(ec)) continue;
+            const fs::path& p = it->path();
+            if (!has_extension(p, prof) || excluded_part(p, prof)) continue;
+            out.push_back(p.string());
         }
-    std::sort(gf.begin(), gf.end());
-    files.insert(files.end(), gf.begin(), gf.end());
+    } else {
+        for (auto& e : fs::directory_iterator(base, ec)) {
+            const fs::path& p = e.path();
+            if (!has_extension(p, prof) || excluded_part(p, prof)) continue;
+            out.push_back(p.string());
+        }
+    }
+    return out;
+}
+
+// The SCAN population — gitignore-blind BY DESIGN (D-393 pt 2: a real source file is real
+// whether or not it is distributed). NOT the PIN population a golden commits to; that one is
+// git-tracked only (D-396). Do not conflate them.
+inline vector<string> scan_files(const Roots& roots, const string& profile = "validate") {
+    CorpusProfile prof = corpus_profile(roots, profile);
+    if (!prof.ok) return {};   // caller MUST treat empty-with-bad-contract as a hard failure
+
+    vector<string> files = walk_root(roots.engine, prof, true);
+    sort_within_root(files, roots.engine);
+
+    // extra roots, in DECLARED order (`sort.root_order`), each sorted within itself
+    bool ok = false;
+    JVal& c = corpus_contract_raw(roots, &ok);
+    auto defs = ok ? c.obj.find("extra_root_defs") : c.obj.end();
+    for (const auto& name : prof.extra_roots) {
+        if (!ok || defs == c.obj.end()) break;
+        auto dit = defs->second.obj.find(name);
+        if (dit == defs->second.obj.end()) continue;
+        const JVal& d = dit->second;
+        auto get = [&](const char* k) -> string {
+            auto i = d.obj.find(k);
+            return (i == d.obj.end() || i->second.kind != JVal::STR) ? string() : i->second.str;
+        };
+        const string which = get("root");
+        const fs::path base = (which == "workspace" ? roots.workspace : roots.engine) / get("path");
+        vector<string> gf = walk_root(base, prof, get("recursive") == "true");
+        sort_within_root(gf, base);
+        files.insert(files.end(), gf.begin(), gf.end());
+    }
     return files;
+}
+
+//======================================================================
+// PATH-ARGUMENT RESOLUTION — the build-blocker-1 seam (C-395 #1).
+//
+// The vacuous-green did NOT live in the enumerator: the explicit-paths branch BYPASSED it
+// entirely, so fixing only the enumerator leaves the blocker fully open while LOOKING done.
+//   · directory     -> expand-by-profile (the same rules the enumerator uses)
+//   · missing       -> FAIL rc=2, loudly. Never a silent skip.
+//   · regular_file  -> accept-verbatim; extension filter deliberately NOT applied, because an
+//                      explicit path is an OPERATOR ASSERTION.
+//   · outside_roots -> accept-verbatim, so ad-hoc probes keep working.
+// Returns false and fills `err` when any path is missing; the caller exits 2.
+//======================================================================
+inline bool resolve_paths(const Roots& roots, const vector<string>& paths,
+                          const string& profile, vector<string>& out, string& err) {
+    CorpusProfile prof = corpus_profile(roots, profile);
+    if (!prof.ok) { err = "corpus contract unreadable or profile '" + profile + "' missing"; return false; }
+    vector<string> missing;
+    std::error_code ec;
+    for (const auto& raw : paths) {
+        fs::path p(raw);
+        if (!fs::exists(p, ec)) { missing.push_back(raw); continue; }
+        if (fs::is_directory(p, ec)) {
+            vector<string> got = walk_root(p, prof, true);
+            sort_within_root(got, p);
+            out.insert(out.end(), got.begin(), got.end());
+        } else {
+            out.push_back(raw);
+        }
+    }
+    if (!missing.empty()) {
+        err = "path(s) do not exist:";
+        for (const auto& m : missing) err += " " + m;
+        err += "\n  (corpus contract: path_arguments.missing = fail-rc-2 — a missing path is a "
+               "REAL failure, never 'nothing to scan'. A silent skip here is what let "
+               "`validate /nonexistent/x.hpp` return rc=0 on both implementations.)";
+        return false;
+    }
+    return true;
 }
 
 //======================================================================

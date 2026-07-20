@@ -35,6 +35,7 @@ Usage:
 """
 import re
 import sys
+import json
 import argparse
 from pathlib import Path
 
@@ -260,23 +261,177 @@ def _line_tokens(payload):
     return [m.group(1).strip() for m in BRACKET_RE.finditer(payload)]
 
 
-def engine_source_files():
-    """Every engine source file the tag tooling scans (drift-proof — a new dir is auto-included;
-    vendored deps + build outputs excluded; no hardcoded file/dir allow-list). Shared by the
-    validator scan (main) AND the code-tag-index generator (rebuild_doc_indexes) — one
-    file-list, never a second copy.
+_CORPUS_CONTRACT = None
 
-    PLUS the schema-golden fixture dir, added EXPLICITLY: engine `tests/` is a whole-dir
-    symlink to the workspace, and ENGINE.rglob does NOT descend directory symlinks — so the
-    dogfood/golden fixtures would silently escape the standing full-tree scan (caught P3
-    2026-07-15: the scan count didn't move when 4 fixtures landed). The fixtures MUST stay
-    policed — they are the format's canonical conversions. Index/cache-gate consumers that
-    want conversions-only still exclude them by the `schema_golden` path part."""
-    files = [p for p in list(ENGINE.rglob("*.hpp")) + list(ENGINE.rglob("*.cpp"))
-             if not any(part == "vendor" or part.startswith("build") for part in p.parts)]
-    golden = WORKSPACE / "tests" / "schema_golden"
-    files += sorted(golden.glob("*.hpp")) + sorted(golden.glob("*.cpp"))
+
+def corpus_contract():
+    """The corpus-membership CONTRACT (`tools/lib/corpus_contract.json`), loaded once.
+
+    Single-sourced membership rules read by BOTH this Python family AND the foxtag C++ core
+    (D-393) — the same two-reader model `toolio_schemas.json` already proves in-tree. The rules
+    live in DATA so the two hand-written walkers cannot drift on extensions, exclusions, symlink
+    policy, sort order, or path-argument semantics.
+
+    ⚠️ `_encoding_law`: EVERY scalar in that file is a STRING, including booleans. The C++ `JVal`
+    has Kind {STR, ARR, OBJ, OTHER} and no bool/number kind, so a bare `true` reads as an EMPTY
+    STRING on the C++ side — silently. Never "clean up" the JSON to native types, and always
+    compare booleans here as `== "true"`.
+
+    A missing/unparseable contract is a HARD failure, never a silent default: a consumer that
+    invents its own rules when the contract is absent is exactly the drift the contract exists
+    to kill (sister to `membership_pin._missing_golden_is_a_HARD_FAILURE`)."""
+    global _CORPUS_CONTRACT
+    if _CORPUS_CONTRACT is None:
+        path = Path(__file__).absolute().parent / "lib" / "corpus_contract.json"
+        try:
+            _CORPUS_CONTRACT = json.loads(path.read_text(encoding="utf-8"))
+        except (IOError, OSError) as e:
+            raise SystemExit(f"FATAL: corpus contract unreadable at {path}: {e}")
+        except json.JSONDecodeError as e:
+            raise SystemExit(f"FATAL: corpus contract is not valid JSON ({path}): {e}")
+    return _CORPUS_CONTRACT
+
+
+def _contract_root(name):
+    """Resolve a contract root NAME ('engine'/'workspace') to a Path via the foxroots SSoT.
+    The contract stores `$ENGINE`/`$WORKSPACE` as literal substitution tokens (plain string
+    replace, NEVER regex — foxtag hand-parses and carries zero std::regex, so regex semantics
+    in this file would CREATE parity risk; D-393 pt 4)."""
+    return {"engine": ENGINE, "workspace": WORKSPACE}[name]
+
+
+def _profile(name):
+    c = corpus_contract()
+    try:
+        return c["profiles"][name]
+    except KeyError:
+        raise SystemExit(f"FATAL: unknown corpus profile {name!r}; "
+                         f"contract declares {sorted(c['profiles'])}")
+
+
+def _excluded(path, prof):
+    """Contract exclusion test — exact path PARTS plus path-part PREFIXES."""
+    parts = set(prof.get("exclude_path_parts", []))
+    prefixes = tuple(prof.get("exclude_path_part_prefixes", []))
+    return any(p in parts or (prefixes and p.startswith(prefixes)) for p in Path(path).parts)
+
+
+def _walk(base, prof, recursive=True):
+    """Enumerate one root by the profile's extensions + exclusions.
+
+    Symlink policy is DECLARED, not accidental (C-396 #2 — symlinks are the dominant
+    membership-divergence axis in this repo): `follow_file_symlinks: true` /
+    `follow_dir_symlinks: false` describe what `rglob` already does — it YIELDS file symlinks
+    but does NOT descend directory symlinks. Declaring them is what lets a third implementation
+    be checked against a written rule. Flipping dir-following was MEASURED at +29 files (the
+    whole test suite), which is why `extra_roots` is the surgical mechanism instead."""
+    out = []
+    for ext in prof["extensions"]:
+        out += list(base.rglob("*" + ext) if recursive else base.glob("*" + ext))
+    return [p for p in out if not _excluded(p, prof)]
+
+
+def _sorted_within_root(files, root):
+    """`sort.within_root` = bytewise-ascending RELATIVE path.
+
+    NEVER a whole-list sort over ABSOLUTE paths: the corpus spans two absolute roots and both
+    tools honour FOXML_ENGINE/FOXML_WORKSPACE, so an absolute sort would make the interleave
+    depend on CHECKOUT LAYOUT (C-396 #3). Sorting by the relative path keeps ordering a
+    property of the corpus, not of where it happens to be checked out.
+
+    Python's str comparison is by code point and C++ `std::string::operator<` compares as
+    unsigned char; UTF-8 is order-preserving, so the two agree bytewise with no custom
+    comparator on either side."""
+    return sorted(files, key=lambda p: str(p.relative_to(root)))
+
+
+def engine_source_files(profile="validate"):
+    """Every source file the tag tooling scans, per the CONTRACT (`corpus_contract()`).
+
+    Drift-proof — a new dir is auto-included; vendored deps + build outputs excluded; no
+    hardcoded file/dir allow-list. Shared by the validator scan (main) AND the code-tag-index
+    generator (rebuild_doc_indexes) — one file-list, never a second copy.
+
+    `profile` selects the membership rules; the arg is DEFAULTED so every existing caller is
+    source-compatible:
+      · `validate`      — the BROAD population: everything carrying tag grammar, including
+                          illustrative copy-source. Adds the schema-golden fixture dir.
+      · `derived_facts` — COMPILED reality only; a STRICT SUBSET of `validate`. Additionally
+                          excludes `DOCS` and `schema_golden`.
+
+    ⚠️ The profile split is LOAD-BEARING, not cosmetic (C-396 #1). `DOCS/` and `schema_golden`
+    hold ILLUSTRATIVE `[STRUCT]` `[DERIVED]` on NON-COMPILED copy-source. Flatten them into
+    `derived_facts` and the standing cache-layout gate REDs immediately — `ExecutionCore` `[SIZE]`
+    says 192B against a real sizeof of 68352B — and the natural-looking "fix" writes 68352B into
+    a COPY-PASTE TEMPLATE, propagating a wrong derived fact into every future conversion. Do NOT
+    collapse the profiles as over-engineering.
+
+    The schema-golden fixture dir is named EXPLICITLY because engine `tests/` is a whole-dir
+    symlink and rglob does not descend dir symlinks — so the dogfood/golden fixtures would
+    silently escape the standing full-tree scan (caught P3 2026-07-15: the scan count didn't
+    move when 4 fixtures landed). The fixtures MUST stay policed — they are the format's
+    canonical conversions.
+
+    ⚠️ This returns the SCAN population, which is gitignore-blind BY DESIGN (D-393 pt 2: a real
+    source file is real whether or not it is distributed). It is NOT the PIN population a golden
+    commits to — that one is git-tracked only (D-396). Do not conflate them."""
+    c = corpus_contract()
+    prof = _profile(profile)
+
+    files = _sorted_within_root(_walk(ENGINE, prof), ENGINE)
+
+    # extra roots, in DECLARED order (`sort.root_order`), each sorted within itself
+    for name in prof.get("extra_roots", []):
+        try:
+            d = c["extra_root_defs"][name]
+        except KeyError:
+            raise SystemExit(f"FATAL: profile {profile!r} names extra_root {name!r} "
+                             f"with no entry in extra_root_defs")
+        base = _contract_root(d["root"]) / d["path"]
+        if not base.is_dir():
+            continue
+        files += _sorted_within_root(
+            _walk(base, prof, recursive=(d.get("recursive", "false") == "true")), base)
     return files
+
+
+class PathResolutionError(Exception):
+    """Raised when a path argument violates the contract. Callers exit rc=2."""
+
+
+def resolve_paths(paths, profile="validate"):
+    """Contract `path_arguments` semantics — the ONE place explicit path args are interpreted.
+
+    THE BUILD-BLOCKER-1 SEAM (C-395 #1). The vacuous-green did NOT live in the enumerator: the
+    `--paths` branch BYPASSES it entirely, so fixing only the enumerator leaves the blocker
+    fully open while LOOKING done. Every consumer routes explicit paths through here.
+
+      · directory      → expand-by-profile (the same rules the enumerator uses)
+      · missing        → FAIL rc=2, loudly. Never a silent skip.
+      · regular_file   → accept-verbatim; the extension filter is deliberately NOT applied,
+                         because an explicit path is an OPERATOR ASSERTION.
+      · outside_roots  → accept-verbatim, so ad-hoc probes keep working.
+
+    Only the MISSING case is loud. rc=2 is mechanically free — verified that no CI caller passes
+    a path argument at all — and it is the established loud-fail code on this surface, not a new
+    convention."""
+    prof = _profile(profile)
+    out, missing = [], []
+    for raw in paths:
+        p = Path(raw)
+        if not p.exists():
+            missing.append(str(raw))
+        elif p.is_dir():
+            out += _sorted_within_root(_walk(p, prof), p)
+        else:
+            out.append(p)
+    if missing:
+        raise PathResolutionError(
+            "path(s) do not exist: " + ", ".join(missing) +
+            "\n  (corpus contract: path_arguments.missing = fail-rc-2 — a missing path is a "
+            "REAL failure, never 'nothing to scan'. A silent skip here is what let "
+            "`validate /nonexistent/x.hpp` return rc=0 on both implementations.)")
+    return out
 
 
 def collect_file_tags(path):
@@ -595,8 +750,14 @@ def main():
         print(f"check_code_tag_blocks --selftest ({len(categories)} categories from spec; non-vacuity):")
         return 0 if run_selftest(categories, concern_vocab, surface_vocab) else 2
 
+    # Both branches now resolve through the CONTRACT — the --paths branch used to bypass the
+    # enumerator entirely, which is where the vacuous-green actually lived (C-395 #1).
     if args.paths:
-        files = [Path(p) for p in args.paths]
+        try:
+            files = resolve_paths(args.paths, profile="validate")
+        except PathResolutionError as e:
+            print(f"ERROR: {e}", file=sys.stderr)
+            return 2
     else:
         files = engine_source_files()   # drift-proof shared file-list (also feeds the code-tag index)
 
@@ -609,6 +770,11 @@ def main():
     all_v, blocks, checked = [], 0, 0
     for f in files:
         if not f.exists():
+            # Was a SILENT `continue` — the Python twin of foxtag_main.cpp's silent skip, and
+            # half of why a missing path returned rc=0 on both implementations. Both branches
+            # now resolve through the contract, so reaching here means a file vanished BETWEEN
+            # resolution and scan: a real anomaly, reported as a violation rather than dropped.
+            all_v.append(f"VANISHED: {f} (present at resolution, gone at scan)")
             continue
         checked += 1
         v, b = validate_file(f, categories, concern_vocab, surface_vocab)

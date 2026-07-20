@@ -29,12 +29,38 @@ using namespace foxtag;
 
 static int cmd_validate(const Grammar& g, const RefIndex& idx, const Roots& roots,
                         const vector<string>& paths) {
-    vector<string> files = paths.empty() ? scan_files(roots) : paths;
+    // Both branches resolve through the CONTRACT. Explicit paths used to be passed through
+    // VERBATIM, bypassing every membership rule — that bypass, not the enumerator, is where the
+    // vacuous-green lived (C-395 #1).
+    vector<string> files;
+    if (paths.empty()) {
+        files = scan_files(roots);
+        if (files.empty()) {
+            std::fprintf(stderr, "ERROR: corpus contract unreadable at "
+                                 "tools/lib/corpus_contract.json, or it yielded an EMPTY corpus.\n"
+                                 "  Refusing to report success over nothing — an empty scan that "
+                                 "exits 0 is a vacuously-green gate (Class-51).\n");
+            return 2;
+        }
+    } else {
+        string err;
+        if (!resolve_paths(roots, paths, "validate", files, err)) {
+            std::fprintf(stderr, "ERROR: %s\n", err.c_str());
+            return 2;
+        }
+    }
     vector<string> all_v;
     long blocks = 0, checked = 0;
     for (const string& f : files) {
         std::error_code ec;
-        if (!fs::exists(f, ec)) continue;
+        if (!fs::exists(f, ec)) {
+            // Was a SILENT `continue` — the C++ twin of the Python skip, and the common-mode
+            // half of build-blocker 1 (BOTH sides returned rc=0 on a missing path, so parity was
+            // structurally blind to it). Paths are contract-resolved now, so reaching here means
+            // a file vanished BETWEEN resolution and scan: an anomaly, reported not dropped.
+            all_v.push_back("VANISHED: " + f + " (present at resolution, gone at scan)");
+            continue;
+        }
         ++checked;
         FileResult r = parse_file(f, g, idx);
         blocks += r.blocks;

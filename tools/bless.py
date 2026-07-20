@@ -1,11 +1,19 @@
 #!/usr/bin/env python3
-"""bless.py — the ONE re-bless path for every output golden (D-394).
+"""bless.py — the ONE re-bless path for every committed baseline artifact (D-394).
 
 A golden answers exactly one question: *is the output still what we blessed?* It is not an
 exception list (those grandfather things that are WRONG and shrink toward zero) and not a ratchet
 (that bounds a metric). A golden pins something that is RIGHT. Conflating them is how a gate
 quietly stops meaning anything — hence `tools/goldens/` as its own directory, and hence this as
 the only way to rewrite one.
+
+**This module is the re-bless CONTROL, not a claim that everything it guards is a golden.** The
+taxonomy above stays intact — the corpus lists are goldens, `latency_path_budgets.json` is a
+ratchet, `identifier_ledger.txt` is an append-only identity ledger, and they have genuinely
+different lifecycles. What they share is that each is a COMMITTED baseline whose rewrite must be
+a deliberate human act, because "an agent fixed the red by re-baselining" is the one move that
+makes any of them meaningless. Route a new artifact here for the control; keep its lifecycle
+distinct in its own docs.
 
 WHY THIS IS SHARED RATHER THAN PER-TOOL (TECH_DEBT-255). Two goldens already live in this tree
 and they disagreed on re-bless safety: `check_identifier_retirement.py --update` rewrites the H21

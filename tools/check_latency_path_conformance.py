@@ -652,10 +652,29 @@ def main(argv):
 
     if update:
         missing = [r["name"] for r in MANIFEST if r["name"] not in new_budgets]
-        os.makedirs(os.path.dirname(BUDGETS_SIDECAR), exist_ok=True)
-        with open(BUDGETS_SIDECAR, "w") as f:
-            json.dump(new_budgets, f, indent=2)
-        print(f"\n  ✅ budgets written ({len(new_budgets)}/{len(MANIFEST)} manifest rows) → {os.path.relpath(BUDGETS_SIDECAR, ENGINE)}")
+        # Re-baselining goes through the SHARED bless path (D-394), the same control the corpus
+        # golden and the H21 identifier ledger use: a TTY is required, the per-line diff is SHOWN
+        # with what the ratchet currently holds, a typed confirmation is demanded, and a
+        # non-interactive caller is HARD-REFUSED rc=2. Previously this was an unconditional
+        # json.dump — no diff, no confirmation — so an agent could "fix the red by re-baselining",
+        # which is the one move that makes a ratchet meaningless (TECH_DEBT-255's sibling).
+        #
+        # ⚠️ A RATCHET IS NOT A GOLDEN, and the taxonomy stays intact: a golden asks *is the
+        # output still what we blessed*, a ratchet asks *has this metric regressed past its
+        # ceiling*, and they have different lifecycles. What they SHARE is the re-bless control —
+        # bless.py is the confirmation mechanism, not a claim that everything it guards is a
+        # golden. → calibration-corpus-non-vacuity-discipline.md § blessed-output lifecycle.
+        #
+        # Callers enumerated before tightening: --update-budgets has NO automated caller.
+        # .githooks/pre-commit:280 only PRINTS it as an operator instruction; Check N itself
+        # invokes the VERIFY path, which is untouched.
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import bless as bless_mod
+        lines = json.dumps(new_budgets, indent=2).splitlines()
+        brc = bless_mod.bless(BUDGETS_SIDECAR, lines, "latency-budgets")
+        if brc != 0:
+            return max(rc, brc)
+        print(f"\n  ✅ budgets current ({len(new_budgets)}/{len(MANIFEST)} manifest rows) → {os.path.relpath(BUDGETS_SIDECAR, ENGINE)}")
         if missing:   # reviewer-caught: a skipped row was silently dropped from the ratchet
             print(f"  ⚠️  INCOMPLETE BASELINE — rows skipped (probe-fail / non-vacuity) with NO ratchet: "
                   f"{missing}. Fix them (e.g. the slow-path callee-symbol follow) before trusting the "

@@ -429,12 +429,21 @@ def main():
     memories = collect_memories()
     print(f"Loaded {len(skills)} skills + {len(specs)} DESIGN_SPECS + {len(memories)} memories")
 
-    stale = []  # populated only in --check mode
+    stale = []   # populated only in --check mode
+    errors = []  # LOCATOR failures — the guard could not evaluate its target AT ALL
 
     if args.target in ("claude-md", "all"):
         ok, result = update_claude_md_skill_table(skills)
         if not ok:
-            print(f"ERROR: {result}", file=sys.stderr)
+            # A locator miss is NOT "nothing to report" — it is the guard going BLIND, and it
+            # must never read as a pass. This branch previously printed to stderr and fell
+            # through, so `--check` exited 0 with "✅ indexes current" while its anchor had
+            # moved: one hyphen in the CLAUDE.md heading disarmed a HARD gate (check_session_docs.sh).
+            # Class-51 vacuous-green. rc=2 = "could not evaluate" per the established
+            # missing-golden idiom (check_corpus_membership / bless.py), distinct from rc=1 = "stale".
+            # This target is the ONLY one that must LOCATE a region it does not generate; the
+            # other three regenerate-and-compare wholesale and are structurally immune.
+            errors.append(f"CLAUDE.md skill suite table — {result}")
         elif args.check:
             if result != _read(CLAUDE_MD):
                 stale.append("CLAUDE.md skill suite table")
@@ -487,6 +496,15 @@ def main():
             with open(ct_path, "w", encoding="utf-8") as f:
                 f.write(ct_content)
             print(f"Wrote {ct_path}")
+
+    # Checked in EVERY mode, before any verdict: a target we could not even locate means the
+    # run did not do what it claims, whether it was checking, dry-running or writing.
+    if errors:
+        print("LOCATOR FAILURE — a target region could not be found, so it was neither "
+              "checked nor written:\n  " + "\n  ".join(errors)
+              + "\n  (the anchor moved, or the doc was restructured — fix the locator, do NOT "
+                "assume 'no change needed')", file=sys.stderr)
+        return 2
 
     if args.check:
         if stale:

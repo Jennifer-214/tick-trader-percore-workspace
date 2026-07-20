@@ -565,16 +565,65 @@ def _read_safe(path: Path) -> str:
         return ''
 
 
+# ── Citable-ID anchors — ONE resolver, not twelve regexes ───────────────────────────────────
+# These ledgers spell an entry's anchor THREE ways, and this file hand-rolled `^id: <NS>-N` at
+# TWELVE sites — a spelling absent from 102 of 201 open TECH_DEBT entries. The gate therefore
+# read "no entry" for ids plainly present: TECH_DEBT-186 sits in closed.md and was flagged
+# HIGH "Write TECH_DEBT-186 entry to closed.md". The open.md leg failed the DANGEROUS way —
+# it passed VACUOUSLY for every invisible id, certifying a still-open item as moved.
+#
+# The three spellings are NOT interchangeable per namespace, so the anchor is a UNION rather
+# than a pick: every TECH_DEBT entry carries a `###` heading, but 10 of 41 PARITY entries live
+# in ```yaml fences with no heading at all. Int-normalized because 95 of 258 defining headings
+# are zero-padded (`-016` and `-16` are one id).
+#
+# This is deliberately a LOCAL union, not `from citable_ids import defining_index`: that
+# resolver returns (path, lineno) and cannot supply the entry BLOCK BOUNDARIES the wontfix /
+# trigger checks below need, and it is un-memoized (~24 ms/call). Migrating onto it is a
+# separate refactor once it grows a block API — tracked, not silently skipped.
+_SPELLINGS = (r'### ', r'id: ', r'- \*\*id:\*\* ')
+
+
+def _anchor(ns: str, n) -> str:
+    """Regex matching ANY spelling of this namespace's defining anchor for id `n`."""
+    d = int(str(n).lstrip('0') or '0')
+    return '(?:' + '|'.join(rf'^{s}{ns}-0*{d}\b' for s in _SPELLINGS) + ')'
+
+
+def _has_entry(ns: str, n, text: str) -> bool:
+    return re.search(_anchor(ns, n), text, re.MULTILINE) is not None
+
+
+def _entry_block(ns: str, n, text: str):
+    """Entry body, anchor → next DIFFERENT id's anchor. None if absent.
+
+    Terminating on the next anchor of a *different* id matters: an entry carrying both a
+    heading and an `id:` line would otherwise be truncated at its own second spelling,
+    silently emptying the body that `wontfix` / `trigger` then search.
+    """
+    start = re.search(_anchor(ns, n), text, re.MULTILINE)
+    if start is None:
+        return None
+    any_anchor = re.compile('|'.join(rf'^{s}{ns}-(\d+)\b' for s in _SPELLINGS), re.MULTILINE)
+    d = int(str(n).lstrip('0') or '0')
+    end = len(text)
+    for m in any_anchor.finditer(text, start.end()):
+        if int(next(g for g in m.groups() if g is not None)) != d:
+            end = m.start()
+            break
+    return text[start.start():end]
+
+
 def verify_tech_debt_closed(match, source_file, source_line, promised_vs_landed):
     """Verify TECH_DEBT-N has entry in closed.md."""
     n = match.group(1)
     if not TECH_DEBT_CLOSED.exists():
         return None
     closed_text = _read_safe(TECH_DEBT_CLOSED)
-    if re.search(rf'^id: TECH_DEBT-{n}\b', closed_text, re.MULTILINE):
+    if _has_entry('TECH_DEBT', n, closed_text):
         return None  # CLEAN
     open_text = _read_safe(TECH_DEBT_OPEN)
-    if re.search(rf'^id: TECH_DEBT-{n}\b', open_text, re.MULTILINE):
+    if _has_entry('TECH_DEBT', n, open_text):
         return Finding('HIGH', f'TECH_DEBT-{n} NEW+CLOSED',
                        source_file, source_line, (n,),
                        'closed.md (currently in open.md)', 'open.md',
@@ -592,9 +641,9 @@ def verify_tech_debt_open_or_closed(match, source_file, source_line, promised_vs
     n = match.group(1)
     open_text = _read_safe(TECH_DEBT_OPEN)
     closed_text = _read_safe(TECH_DEBT_CLOSED)
-    if re.search(rf'^id: TECH_DEBT-{n}\b', open_text, re.MULTILINE):
+    if _has_entry('TECH_DEBT', n, open_text):
         return None
-    if re.search(rf'^id: TECH_DEBT-{n}\b', closed_text, re.MULTILINE):
+    if _has_entry('TECH_DEBT', n, closed_text):
         return None
     return Finding('HIGH', f'TECH_DEBT-{n} NEW (no entry)',
                    source_file, source_line, (n,),
@@ -607,16 +656,13 @@ def verify_tech_debt_wontfix(match, source_file, source_line, promised_vs_landed
     """Verify TECH_DEBT-N entry has status: wontfix-per-ai-workflow."""
     n = match.group(1)
     closed_text = _read_safe(TECH_DEBT_CLOSED)
-    # Find the entry block
-    entry_pattern = rf'^id: TECH_DEBT-{n}\b.*?(?=^id: TECH_DEBT-|\Z)'
-    entry_match = re.search(entry_pattern, closed_text, re.MULTILINE | re.DOTALL)
-    if entry_match is None:
+    entry_text = _entry_block('TECH_DEBT', n, closed_text)
+    if entry_text is None:
         return Finding('HIGH', f'TECH_DEBT-{n} wontfix-per-ai-workflow',
                        source_file, source_line, (n,),
                        'closed.md', None,
                        f'Write TECH_DEBT-{n} entry to closed.md with status: wontfix-per-ai-workflow',
                        promised_vs_landed)
-    entry_text = entry_match.group(0)
     if 'wontfix-per-ai-workflow' not in entry_text:
         return Finding('HIGH', f'TECH_DEBT-{n} wontfix-per-ai-workflow',
                        source_file, source_line, (n,),
@@ -631,11 +677,9 @@ def verify_tech_debt_trigger_updated(match, source_file, source_line, promised_v
     """Verify TECH_DEBT-N entry trigger field has been updated (heuristic: recent ledger edit)."""
     n = match.group(1)
     open_text = _read_safe(TECH_DEBT_OPEN)
-    entry_pattern = rf'^id: TECH_DEBT-{n}\b.*?(?=^id: TECH_DEBT-|\Z)'
-    entry_match = re.search(entry_pattern, open_text, re.MULTILINE | re.DOTALL)
-    if entry_match is None:
+    entry_text = _entry_block('TECH_DEBT', n, open_text)
+    if entry_text is None:
         return None  # not in open.md; might be closed (verify_tech_debt_closed handles)
-    entry_text = entry_match.group(0)
     if 'trigger:' not in entry_text:
         return Finding('MED', f'TECH_DEBT-{n} trigger updated',
                        source_file, source_line, (n,),
@@ -650,7 +694,7 @@ def verify_parity_open(match, source_file, source_line, promised_vs_landed):
     """Verify PARITY-N entry exists in PARITY_ISSUES.md."""
     n = match.group(1)
     parity_text = _read_safe(PARITY_ISSUES)
-    if re.search(rf'^id: PARITY-{n}\b', parity_text, re.MULTILINE):
+    if _has_entry('PARITY', n, parity_text):
         return None
     return Finding('HIGH', f'PARITY-{n} NEW',
                    source_file, source_line, (n,),
@@ -663,15 +707,13 @@ def verify_parity_closed(match, source_file, source_line, promised_vs_landed):
     """Verify PARITY-N entry has status: closed in PARITY_ISSUES.md."""
     n = match.group(1)
     parity_text = _read_safe(PARITY_ISSUES)
-    entry_pattern = rf'^id: PARITY-{n}\b.*?(?=^id: PARITY-|\Z)'
-    entry_match = re.search(entry_pattern, parity_text, re.MULTILINE | re.DOTALL)
-    if entry_match is None:
+    entry_text = _entry_block('PARITY', n, parity_text)
+    if entry_text is None:
         return Finding('HIGH', f'PARITY-{n} CLOSED',
                        source_file, source_line, (n,),
                        f'PARITY_ISSUES.md entry id: PARITY-{n}', None,
                        f'Write PARITY-{n} entry to PARITY_ISSUES.md',
                        promised_vs_landed)
-    entry_text = entry_match.group(0)
     if not re.search(r'^status:\s*closed\b', entry_text, re.MULTILINE):
         return Finding('HIGH', f'PARITY-{n} CLOSED',
                        source_file, source_line, (n,),
@@ -687,15 +729,14 @@ def verify_documented_risk(match, source_file, source_line, promised_vs_landed):
     parity_text = _read_safe(PARITY_ISSUES)
     if parity_id:
         # Specific PARITY-N
-        entry_pattern = rf'^id: PARITY-{parity_id}\b.*?(?=^id: PARITY-|\Z)'
-        entry_match = re.search(entry_pattern, parity_text, re.MULTILINE | re.DOTALL)
-        if entry_match is None:
+        entry_text = _entry_block('PARITY', parity_id, parity_text)
+        if entry_text is None:
             return Finding('HIGH', f'DOCUMENTED-RISK PARITY-{parity_id}',
                            source_file, source_line, (parity_id,),
                            f'PARITY-{parity_id} entry with severity: documented-risk', None,
                            f'Write PARITY-{parity_id} entry with severity: documented-risk',
                            promised_vs_landed)
-        if 'documented-risk' not in entry_match.group(0):
+        if 'documented-risk' not in entry_text:
             return Finding('HIGH', f'DOCUMENTED-RISK PARITY-{parity_id}',
                            source_file, source_line, (parity_id,),
                            'severity: documented-risk', 'severity: other',
@@ -879,7 +920,7 @@ def verify_forward_advisory_landed(match, source_file, source_line, promised_vs_
                        'Verify forward advisory references valid PARITY entry',
                        promised_vs_landed)
     for pid in parity_ids:
-        if not re.search(rf'^id: PARITY-{pid}\b', parity_text, re.MULTILINE):
+        if not _has_entry('PARITY', pid, parity_text):
             return Finding('HIGH', f'Forward advisory references PARITY-{pid}',
                            source_file, source_line, (pid,),
                            f'PARITY-{pid} entry in PARITY_ISSUES.md', None,
@@ -1174,9 +1215,51 @@ def emit_json(findings: List[Finding]) -> None:
 # main()
 # ============================================================================
 
+def selftest() -> int:
+    """NON-VACUITY TEETH — prove the verifiers can go BOTH green and red.
+
+    Why this exists: for months these verifiers hand-rolled `^id: <NS>-N`, a spelling absent
+    from 102 of 201 open TECH_DEBT entries. Every run stayed CLEAN — not because the ledger
+    was healthy, but because the gate could not SEE half of it. A real run proves nothing when
+    it matches zero sentinels (the wired `--since HEAD~5` invocation routinely matches none),
+    so the corpus can never be the teeth. These cases are.
+
+    Each case is an id whose TRUE state is known and pinned. Both directions are asserted:
+    a present id must come back CLEAN, an absent one must FLAG. Testing only the clean
+    direction is how the original blindness survived every green run it ever had.
+    """
+    fake = lambda n: re.match(r'(\d+)', n)
+    cases = [
+        # (fn,                              id,     expect_finding, why this id is pinned here)
+        (verify_tech_debt_closed,           '186',  False, 'bold `- **id:**` spelling, IS closed — the live false HIGH'),
+        (verify_tech_debt_closed,           '9999', True,  'absent everywhere — must still flag'),
+        (verify_tech_debt_open_or_closed,   '186',  False, 'present via bold spelling'),
+        (verify_tech_debt_open_or_closed,   '016',  False, 'zero-padded heading, bare id line'),
+        (verify_tech_debt_open_or_closed,   '9999', True,  'the VACUOUS-PASS leg must still red'),
+        (verify_parity_open,                '39',   False, 'cited bare, defined as PARITY-039'),
+        (verify_parity_open,                '039',  False, 'padded spelling of the same id'),
+        (verify_parity_open,                '9999', True,  'absent — must flag'),
+    ]
+    failures = 0
+    for fn, n, expect, why in cases:
+        got = fn(fake(n), 'selftest', 0, None) is not None
+        ok = (got == expect)
+        failures += (not ok)
+        print(f"  {'PASS' if ok else 'FAIL'}  {fn.__name__}({n}) "
+              f"{'flagged' if got else 'clean':>7} (want {'flagged' if expect else 'clean'}) — {why}")
+    # A selftest whose corpus stopped containing its fixtures would silently assert nothing.
+    if not _has_entry('TECH_DEBT', '186', _read_safe(TECH_DEBT_CLOSED)):
+        print("  FAIL  fixture TECH_DEBT-186 no longer resolves — re-pin the selftest ids")
+        failures += 1
+    print(f"[forward-promise selftest] {'ALL TEETH PASS' if not failures else f'{failures} FAILURE(S)'}")
+    return 1 if failures else 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(
         description='Check 11 forward-promise auto-write verification')
+    ap.add_argument('--selftest', action='store_true',
+                    help='Run non-vacuity teeth (both directions) and exit')
     ap.add_argument('--since', default=None,
                     help='Git ref scope filter (e.g., v5.15.5.F.4d.1.B.6)')
     ap.add_argument('--strict', action='store_true',
@@ -1186,6 +1269,9 @@ def main() -> int:
     ap.add_argument('--include-archived', action='store_true',
                     help='Bypass ARCHIVED_EXCLUSIONS')
     args = ap.parse_args()
+
+    if args.selftest:
+        return selftest()
 
     findings = scan_for_forward_promises(args.since, args.include_archived)
 

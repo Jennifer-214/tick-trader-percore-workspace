@@ -658,8 +658,10 @@ If `/accept-handoff` returns BLOCK findings: address them before continuing.
    | Predecessor tag GPG-signed | `git tag --verify <predecessor-tag>` | Signature valid |
    | CHANGELOG.md row landed | `rg "^### <predecessor-tag>" DOCS/CHANGELOG.md` | Returns 1 match |
    | Postmortem file exists | `ls plans/<sprint>/postmortems/<date>-<predecessor-tag>-postmortem.md` | File exists |
-   | TECH_DEBT closures actually moved | For each `TECH_DEBT-N` closure cited: `rg "id: TECH_DEBT-N" tick-trader-percore-workspace/DOCS/tech-debt/closed.md` AND `rg "id: TECH_DEBT-N" tick-trader-percore-workspace/DOCS/tech-debt/open.md` | First returns match; second returns NO match |
-   | PARITY closures marked closed | For each `PARITY-NNN`: `rg -A3 "^id: PARITY-NNN" tick-trader-percore-workspace/DOCS/PARITY_ISSUES.md` | Shows `status: closed` |
+   | TECH_DEBT closures actually moved | For each `TECH_DEBT-N` closure cited, run against BOTH ledgers: `rg -n -e "^### TECH_DEBT-0*N\b" -e "^id: TECH_DEBT-0*N\b" -e "^- \*\*id:\*\* TECH_DEBT-0*N\b" <ledger>` | Match in `closed.md`; NO match in `open.md` |
+   | PARITY closures marked closed | For each `PARITY-NNN`: `rg -n -A3 -e "^### PARITY-0*NNN\b" -e "^id: PARITY-0*NNN\b" tick-trader-percore-workspace/DOCS/PARITY_ISSUES.md` | Shows `status: closed` |
+
+   > **⚠️ Three spellings + `0*` — do NOT simplify.** The ledgers anchor entries three ways and ~37% of headings are zero-padded; the previous `rg "id: TECH_DEBT-N"` matched none of the 109 bold-form entries, so leg 1 false-BLOCKed correctly-closed items and leg 2 passed **vacuously**. Mechanical equivalent + pinned cases: `tools/check_forward_promise_audit.py --selftest`.
    | DESIGN_SPECS Stage promotions | For each cited Stage X→Y: `grep "^stage:" tick-trader-percore-workspace/DESIGN_SPECS/<path>.md` | Shows promoted stage |
    | NEW memory files exist + indexed | For each cited memory: `ls ~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/<name>.md` AND `grep <name>.md ~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/MEMORY.md ~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/MEMORY_EXTENDED.md` | Both succeed (indexed in either) |
    | NEW going-forward rules cited | For each rule: `grep -A2 "<rule-title>" CLAUDE.local.md DOCS/GOING_FORWARD_RULES.md` | Returns match (Tier-0 in CLAUDE.local.md; Code&design/Process/Docs in GOING_FORWARD_RULES.md) |

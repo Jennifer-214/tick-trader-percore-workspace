@@ -128,6 +128,13 @@ run_hard "schema-version guard teeth (drifted [SCHEMA]_[v1] flagged; locked pass
 run_hard "tool-I/O envelope teeth (emit/read/validate incl. negative controls)" \
     bash "$REPO_ROOT/tools/toolio_selftest.sh"
 
+# --- ADV: close-out completeness (M8 / TECH_DEBT-250) — auto-write ledger coverage ---
+# ADVISORY, not HARD, and deliberately: it fires on a WINDOW, so mid-session runs would red
+# constantly. Its job is to be LOUD at close, not to block work. The judgment half of the
+# close-out ritual has no other detector — twice now the only trigger was operator pushback.
+run_advisory "close-out completeness (auto-write ledgers touched across the session window)" \
+    python3 "$REPO_ROOT/tools/check_close_out_completeness.py" --since HEAD~20 --min-commits 8
+
 # --- HARD 1c-1: H21 identifier-retirement guard TEETH (D-137 negative self-test) ---
 # The guard itself runs at pre-commit Check H, but its negative self-test ran NOWHERE — and its
 # version-decrease tooth sat broken for an unknown period, hardcoding SHARDED_SNAPSHOT_VERSION|8

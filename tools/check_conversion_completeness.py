@@ -30,6 +30,9 @@ import re, sys, subprocess, argparse
 from pathlib import Path
 
 from foxroots import ENGINE  # SSoT resolver (E.1.2.B 0.1) — was a hardcoded absolute path: a portability-dead HARD gate (feedback_machine_portable_resolver)
+sys.path.insert(0, str(Path(__file__).absolute().parent))
+from check_code_tag_blocks import (corpus_contract, engine_source_files,   # noqa: E402  (corpus contract SSoT — D-393; closes TECH_DEBT-245)
+                                   resolve_paths, PathResolutionError)
 
 OPEN_RE    = re.compile(r"^\s*//\s*\[(FILE|STRUCT|FUNCTION|REGISTRY|ENUM|TYPE|MACRO|TEST|STRATEGY|ASSERT)\]_\[(.+?)\]\s*$")
 END_RE     = re.compile(r"^\s*//\s*\[END_(\w+)\]_\[(.+?)\]\s*$")
@@ -155,9 +158,43 @@ def check_file(path):
     return sorted(findings, key=lambda f: f[1])
 
 def converted_files():
-    out = subprocess.run(["rg","-l","--glob","*.hpp","--glob","*.cpp", r"^// \[SCHEMA\]_\[v1", str(ENGINE)],
-                         capture_output=True, text=True).stdout
-    return sorted(Path(p) for p in out.split("\n") if p.strip())
+    """The CONVERTED subset of the `validate` corpus, per the contract (D-393).
+
+    ⚠️ CLOSES TECH_DEBT-245. This used to shell out to `rg -l` WITHOUT `--no-ignore`, so the gate
+    was BLIND to gitignored-but-real source: a gitignored file was never scanned, and "0 gaps"
+    therefore meant *unverified*, not *clean*. Measured at the swap: the enumerator sees 9 files
+    rg did not — `Strategies/private/EmaCross.hpp` (a real, gitignored, 294-line source file),
+    the 3 file-symlinked `DOCS/*TEMPLATE*.hpp`, and the 5 `schema_golden` fixtures (unreachable
+    for rg because engine `tests/` is a DIRECTORY SYMLINK and rg follows neither symlink kind
+    without `-L`). All 9 scan clean today, so this closes the hole without moving the baseline —
+    but "clean" is now a measurement rather than an assumption.
+
+    `.gitignore` is never an input to corpus membership (D-393 pt 2): distribution is a
+    DISTRIBUTION concern, membership is a TOOLING concern, and nobody ever chose to couple them
+    — it was a side effect of rg's default.
+
+    Profile is `validate`, not `derived_facts`: this gate asks "does everything carrying tag
+    grammar carry it COMPLETELY", which is the broad population including illustrative
+    copy-source. `derived_facts` is declared COMPILED-reality-only and would be the wrong
+    contract to read here. Keeping schema_golden in also honours the P3 catch (2026-07-15) —
+    those fixtures are the format's canonical conversions and MUST stay policed.
+
+    The selector is the contract's anchored `line_prefix`, matched with startswith(): a
+    line-start literal test, deliberately expressible with NO regex engine so the C++ hand-parser
+    needs no new machinery (D-393 pt 4). An UNANCHORED match also hits selftest STRING LITERALS
+    and prose — it reported `foxtag_main.cpp` as converted when it is not, a FALSE finding during
+    `0.1.5`."""
+    sel = corpus_contract()["selectors"]["converted"]
+    prefix = sel["line_prefix"]
+    out = []
+    for p in engine_source_files(profile="validate"):
+        try:
+            text = p.read_text(encoding="utf-8", errors="replace")
+        except (IOError, OSError):
+            continue
+        if any(line.startswith(prefix) for line in text.splitlines()):
+            out.append(p)
+    return out
 
 def selftest():
     import tempfile, os
@@ -199,6 +236,40 @@ def selftest():
            and same_registry_family("FOREACH_STAMP_BOUND_MODEL_CONST_PRE_CFG", "FOREACH_STAMP_BOUND_MODEL_CONST")
            and not same_registry_family("FOREACH_CFG_DRIFT_CHECK", "FOREACH_FEATURE"))
     print(f"  {'✅' if fam else '❌'} same-family sub-registry variants EXEMPT, unrelated NOT (policy #1)"); ok &= fam
+
+    # NON-VACUITY TOOTH for the TECH_DEBT-245 close: the enumerator must NOT consult .gitignore.
+    # This gate used to shell out to `rg -l` without --no-ignore, so a gitignored-but-real source
+    # file was never read — and a guard cannot RED on input it never reads (Class-51). Without
+    # this assertion the fix is unfalsifiable: swapping back to an ignore-respecting enumerator
+    # would leave every other check green.
+    #
+    # SYNTHETIC + frozen, per the calibration-corpus discipline — a live gitignored file gets
+    # fixed and stops proving anything. Builds a throwaway tree whose .gitignore hides an
+    # UN-CONVERTED lumped struct, then asserts (a) the contract walk still yields it and (b) the
+    # gate FLAGS it. A tooth that only proved (a) would show the file is listed while saying
+    # nothing about whether it is judged.
+    # ⚠️ The ignore rule MUST be DIRECTORY-level (`private/`), not file-level. Measured: ripgrep
+    # skips a gitignored DIRECTORY but still returns a file-level-ignored file, so a file-level
+    # fixture makes this tooth VACUOUS — it would pass against the very rg enumerator it exists
+    # to catch. Directory-level is also the real-world shape (`.gitignore:167 Strategies/private/`
+    # is what hid the live instance). Verified discriminating: rg sees 0, the contract walk sees 1.
+    with tempfile.TemporaryDirectory() as td:
+        tdp = Path(td)
+        (tdp / ".gitignore").write_text("private/\n")
+        (tdp / "private").mkdir()
+        (tdp / "private" / "hidden.hpp").write_text(
+            "// [SCHEMA]_[v1.0]\n// [FUNCTION]_[hidden_fn]\n// [CODE]\n"
+            "template <unsigned F> struct HiddenLumped6 {\n"
+            "    int a;\n    int b;\n    int c;\n    int d;\n    int e;\n    int f;\n};\n"
+            "inline void hidden_fn() {}\n// [END_CODE]\n// [END_FUNCTION]_[hidden_fn]\n")
+        walked = [p.name for p in resolve_paths([str(tdp)], profile="validate")]
+        seen = "hidden.hpp" in walked
+        flagged = [f for f in check_file(tdp / "private" / "hidden.hpp")
+                   if f[0] == "C1" and "HiddenLumped6" in f[2]]
+        gi = seen and bool(flagged)
+        print(f"  {'✅' if gi else '❌'} GITIGNORED source is still enumerated AND judged "
+              f"(TECH_DEBT-245 non-vacuity: .gitignore is not a membership input, D-393 pt 2)"
+              + ("" if gi else f" — enumerated={seen} flagged={bool(flagged)}")); ok &= gi
     return ok
 
 def finding_key(rel, sig, name): return f"{rel}|{sig}|{name}"   # STABLE across line drift (name, not line)
@@ -213,7 +284,17 @@ def main():
     if a.selftest:
         print("check_conversion_completeness --selftest (non-vacuity):")
         sys.exit(0 if selftest() else 2)
-    files = [Path(p) for p in a.paths] if a.paths else converted_files()
+    # Explicit paths route through the contract resolver. This tool was the ONLY one of the four
+    # that already failed on a missing path — but via an UNCAUGHT FileNotFoundError traceback
+    # (rc=1), not a stated contract. All consumers now agree: rc=2 with the same message.
+    if a.paths:
+        try:
+            files = resolve_paths(a.paths, profile="validate")
+        except PathResolutionError as e:
+            print(f"ERROR: {e}", file=sys.stderr)
+            sys.exit(2)
+    else:
+        files = converted_files()
     rows = []   # (key, rel, sig, ln, name, msg)
     for f in files:
         rel = f.relative_to(ENGINE) if str(f).startswith(str(ENGINE)) else f

@@ -31,6 +31,8 @@ import argparse
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).absolute().parent))
+from check_code_tag_blocks import (engine_source_files, resolve_paths,        # noqa: E402  (corpus contract SSoT — D-393)
+                                   PathResolutionError)
 from check_cache_layout import (parse_struct_blocks, _isolate_probe_source,   # noqa: E402  (shared probe)
                                 _struct_is_template, ENGINE)
 
@@ -106,9 +108,9 @@ def run_selftest():
 
 
 def corpus_files():
-    return [p for p in list(ENGINE.rglob("*.hpp")) + list(ENGINE.rglob("*.cpp"))
-            if not any(part == "vendor" or part.startswith("build")
-                       or part == "schema_golden" or part == "DOCS" for part in p.parts)]
+    """The `derived_facts` corpus, from the CONTRACT — no longer a fourth private copy of the
+    walk (D-393: membership is single-sourced, never synchronized across N enumerators)."""
+    return engine_source_files(profile="derived_facts")
 
 
 def main():
@@ -122,7 +124,16 @@ def main():
         print("check_register_fit --selftest (access-cost core; PURE):")
         return 0 if run_selftest() else 2
 
-    files = [Path(p) for p in args.paths] if args.paths else corpus_files()
+    # Explicit paths route through the contract resolver — a missing path is rc=2, not a silent
+    # empty scan (C-395 #1: this branch is where the vacuous-green lived, not the enumerator).
+    if args.paths:
+        try:
+            files = resolve_paths(args.paths, profile="derived_facts")
+        except PathResolutionError as e:
+            print(f"ERROR: {e}", file=sys.stderr)
+            return 2
+    else:
+        files = corpus_files()
     recs = isolate_fields(files)
     if not recs:
         print("no per-field facts (foxtag core unavailable, or no converted [STRUCT]s in scope).")

@@ -28,7 +28,8 @@ import argparse
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).absolute().parent))
-from check_code_tag_blocks import SCHEMA_PATH        # noqa: E402  (the spec SSoT — one path source)
+from check_code_tag_blocks import (SCHEMA_PATH,      # noqa: E402  (the spec SSoT — one path source)
+                                   engine_source_files, resolve_paths, PathResolutionError)
 from check_doc_metadata import ENGINE                # noqa: E402  (engine root — the corpus scan base)
 
 WIP_EXEMPT = set()                                   # (was RegimeDetector.hpp — converted 2026-07-18; corpus HARD-zero)
@@ -70,16 +71,26 @@ def scan(files, locked):
 
 
 def corpus_files():
-    """Opted-in source + tool fixtures (.hpp/.cpp/.py), minus vendor/build*/schema_golden/DOCS —
-    same exclusion family as check_cache_layout; .py included so a TOOL-fixture drift (the origin
-    of the 2026-07-18 incident) is caught too."""
-    out = []
-    for ext in ("*.hpp", "*.cpp", "*.py"):
-        out += list(ENGINE.rglob(ext))
-    return [p for p in out
-            if not any(part == "vendor" or part.startswith("build")
-                       or part == "schema_golden" or part == "DOCS"
-                       for part in p.parts)]
+    """The `derived_facts` corpus, from the CONTRACT — no longer a private copy of the walk
+    (D-393: membership is single-sourced, never synchronized across N enumerators).
+
+    ⚠️ This function previously claimed to scan `.py` too, "so a TOOL-fixture drift is caught
+    too". That claim was FALSE and is removed rather than restated: `ENGINE.rglob("*.py")`
+    yields exactly one path (a vendored `imgui_lldb.py`) which the vendor exclusion then drops,
+    so ZERO `.py` were ever scanned — in a HARD-wired gate whose stated purpose was precisely
+    that coverage. The 61 real toolchain `.py` live under `tools/`, a DIRECTORY SYMLINK, and
+    neither rglob nor recursive_directory_iterator descends one.
+
+    The gap is REAL and still OPEN — it is recorded as `deferred.python_sources` in
+    `corpus_contract.json` with `status: TOMBSTONE — NOT closed` (TECH_DEBT-253), so the
+    contract is now the one place that states what this gate does and does not cover. Closing it
+    needs the `#`-comment anchored selector plus self-exclusion for the checkers' own detection
+    lines; naively adding `tools/` as a root yields 12 non-locked matches across 4 files, nearly
+    all FALSE POSITIVES from the checkers matching their own format strings — which would RED a
+    HARD gate with garbage, the fastest way to get it bypassed.
+
+    Until then: read this gate's green as covering `.hpp`/`.cpp` ONLY."""
+    return engine_source_files(profile="derived_facts")
 
 
 def run_selftest():
@@ -121,7 +132,16 @@ def main():
         print("WARNING: could not derive the locked [SCHEMA] version from the spec SSoT — "
               "check skipped (LOUD, never a silent vacuous pass).", file=sys.stderr)
         return 0
-    files = [Path(p) for p in args.paths] if args.paths else corpus_files()
+    # Explicit paths route through the contract resolver — a missing path is rc=2, not a silent
+    # empty scan (C-395 #1). This gate is wired HARD, so a vacuous pass here is expensive.
+    if args.paths:
+        try:
+            files = resolve_paths(args.paths, profile="derived_facts")
+        except PathResolutionError as e:
+            print(f"ERROR: {e}", file=sys.stderr)
+            return 2
+    else:
+        files = corpus_files()
     viols = scan(files, locked)
     if viols:
         print(f"SCHEMA-VERSION DRIFT ({len(viols)}) — locked = [{locked}] (D-346):")

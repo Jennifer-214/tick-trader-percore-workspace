@@ -32,6 +32,8 @@ import argparse
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).absolute().parent))
+from check_code_tag_blocks import (engine_source_files, resolve_paths,        # noqa: E402  (corpus contract SSoT — D-393)
+                                   PathResolutionError)
 from check_code_tag_blocks import (_line_tokens, TAG_LINE_RE,       # noqa: E402  (one grammar, reused)
                                    validate_file, load_categories)  # (selftest round-trip: writer output re-parses clean)
 from check_doc_metadata import ENGINE, load_vocabulary             # noqa: E402  (path SSoT + [TAG] vocab)
@@ -436,15 +438,22 @@ def main():
         print("check_cache_layout --selftest (gate decision logic; mock layout):")
         return 0 if run_selftest() else 2
 
+    # The `derived_facts` corpus, from the CONTRACT — no longer a private copy of the walk
+    # (D-393). The DOCS/ + schema_golden exclusions that used to be spelled out here are now
+    # declared in `profiles.derived_facts.exclude_path_parts`, with the rationale preserved
+    # verbatim in that profile's `_why_the_extra_exclusions_are_LOAD_BEARING`: those dirs hold
+    # ILLUSTRATIVE [STRUCT] [DERIVED] on NON-COMPILED copy-source, and flattening them into the
+    # broad profile REDs this gate immediately — ExecutionCore [SIZE] 192B against a real sizeof
+    # of 68352B — whereupon the natural-looking "fix" writes 68352B into a COPY-PASTE TEMPLATE
+    # and propagates a wrong derived fact into every future conversion.
     if args.paths:
-        files = [Path(p) for p in args.paths]
+        try:
+            files = resolve_paths(args.paths, profile="derived_facts")
+        except PathResolutionError as e:
+            print(f"ERROR: {e}", file=sys.stderr)
+            return 2
     else:
-        files = [p for p in list(ENGINE.rglob("*.hpp")) + list(ENGINE.rglob("*.cpp"))
-                 if not any(part == "vendor" or part.startswith("build") or part == "schema_golden"
-                            or part == "DOCS"   # DOCS/ = template corpus etc. — illustrative
-                                                # [STRUCT] DERIVED on non-compiled copy-source
-                                                # (sister to the schema_golden exclusion)
-                            for part in p.parts)]
+        files = engine_source_files(profile="derived_facts")
 
     blocks = []
     for f in files:

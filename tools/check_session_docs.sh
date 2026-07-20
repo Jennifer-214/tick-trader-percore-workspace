@@ -112,6 +112,22 @@ else
     RESULTS+=("  ⏭  HARD  schema-version cohesion (SKIP_SCHEMA_VERSION_CHECK=1)")
 fi
 
+# --- HARD 1b-9: the four D-137 selftest wrappers that NOTHING invoked ---
+# Each of these is the non-vacuity proof for a gate that IS wired HARD, and each was listed in
+# DOCS/TOOLS.md as STANDING-CI "via the tool's --selftest" -- a claim that was simply false: no
+# call-site existed in check_session_docs, the hook, or any umbrella runner. They passed when run
+# by hand today, but that is luck, not coverage: a tooth nobody exercises rots silently, which is
+# exactly how the H21 version-decrease tooth sat dead (see 1c-1 below).
+# 355ms for all four. → DESIGN_SPECS/meta-disciplines/advertised-capability-never-exercised.md
+run_hard "corpus-membership guard teeth (ADD/DELETE/RENAME/REORDER flagged; absent golden = HARD)" \
+    bash "$REPO_ROOT/tools/check_corpus_membership_selftest.sh"
+run_hard "import-from-core lint teeth (planted rollers in BOTH spellings flagged; own-dir passes)" \
+    bash "$REPO_ROOT/tools/check_import_from_core_selftest.sh"
+run_hard "schema-version guard teeth (drifted [SCHEMA]_[v1] flagged; locked passes; exempt opts out)" \
+    bash "$REPO_ROOT/tools/check_schema_version_selftest.sh"
+run_hard "tool-I/O envelope teeth (emit/read/validate incl. negative controls)" \
+    bash "$REPO_ROOT/tools/toolio_selftest.sh"
+
 # --- HARD 1c-1: H21 identifier-retirement guard TEETH (D-137 negative self-test) ---
 # The guard itself runs at pre-commit Check H, but its negative self-test ran NOWHERE — and its
 # version-decrease tooth sat broken for an unknown period, hardcoding SHARDED_SNAPSHOT_VERSION|8

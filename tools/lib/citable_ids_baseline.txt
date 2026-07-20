@@ -1,10 +1,13 @@
 # check_capture_audit Check 14 — citable-ID grandfathered baseline (stable cls|msg keys).
-# A finding NOT in here FAILS. This file is deliverable (f)'s worklist: shrinking it to EMPTY
-# is the ID-triage corpus. Generated 2026-07-20 at the guard's first complete enumeration —
-# the first time D-389's dangling-ID class has been mechanically bounded rather than grepped.
-cited-but-undefined|BLINDSPOT `B16` is CITED but has no defining row
-cited-but-undefined|CLASS `0` is CITED but has no defining row
-cited-but-undefined|INVARIANT `H23` is CITED but has no defining row
+# A finding NOT in here FAILS. Shrinking this to EMPTY is deliverable (f), the ID-triage corpus.
+#
+# DE-NOISED 2026-07-20 before baselining, so the triage corpus starts as SIGNAL:
+#   - scope collisions removed: T13-T19 were TEST ids, H23 a PROPOSED invariant, Class 0 a
+#     format template. Citations are now resolved only for distinctively-prefixed namespaces
+#     (TECH_DEBT- / PARITY- / AR-WH-PL-CP-), per AR-14's false-positive surface.
+#   - frozen records excluded: a postmortem or plan_check citing a then-real id is a TRUTHFUL
+#     artifact, not a defect (D-390: stop the corpus getting worse, do not rewrite history).
+# 18 raw dangling -> 8 real. Definition-side checks (double-definition, gaps) are unaffected.
 cited-but-undefined|PARITY `39` is CITED but has no defining row
 cited-but-undefined|TECH_DEBT `101` is CITED but has no defining row
 cited-but-undefined|TECH_DEBT `102` is CITED but has no defining row
@@ -13,13 +16,6 @@ cited-but-undefined|TECH_DEBT `104` is CITED but has no defining row
 cited-but-undefined|TECH_DEBT `125` is CITED but has no defining row
 cited-but-undefined|TECH_DEBT `128` is CITED but has no defining row
 cited-but-undefined|TECH_DEBT `16` is CITED but has no defining row
-cited-but-undefined|TECH_DEBT `47` is CITED but has no defining row
-cited-but-undefined|TECH_DEBT `48` is CITED but has no defining row
-cited-but-undefined|TOOLCHAIN `T13` is CITED but has no defining row
-cited-but-undefined|TOOLCHAIN `T14` is CITED but has no defining row
-cited-but-undefined|TOOLCHAIN `T15` is CITED but has no defining row
-cited-but-undefined|TOOLCHAIN `T18` is CITED but has no defining row
-cited-but-undefined|TOOLCHAIN `T19` is CITED but has no defining row
 defined-twice|DECISION `C-1` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
 defined-twice|DECISION `C-2` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
 defined-twice|DECISION `C-3` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)

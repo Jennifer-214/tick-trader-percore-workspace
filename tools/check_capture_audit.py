@@ -324,7 +324,23 @@ CITATION_ROOTS = [
 # log, so a bare `D-7` cannot be resolved without knowing which log the citing doc means, and
 # guessing would manufacture false positives at scale. Cross-log D-collisions are still REPORTED
 # by class 2 (they are definition-side, which is unambiguous).
-VERIFIED_NS = ["TECH_DEBT", "CLASS", "INVARIANT", "META", "TOOLCHAIN", "ANTIPATTERN", "BLINDSPOT", "PARITY"]
+# Derived from the registry's `citations_verifiable` flag — DATA, not a hardcoded list, so the
+# rationale lives beside the namespace it governs. Only DISTINCTIVELY-PREFIXED ids get their
+# citations resolved; short letter+digit tokens collide with test ids / finding ids / work-item
+# ids / forward-references, which AR-14's false-positive surface says must NOT be mechanized.
+# DEFINITION-side checks (double-definition, gaps, reservations) run for EVERY namespace — those
+# read the SSoT directly and carry no ambiguity.
+def _verified_namespaces():
+    try:
+        import json
+        reg = json.loads((Path(__file__).absolute().parent / "lib" /
+                          "citable_id_namespaces.json").read_text())["namespaces"]
+        return [ns for ns, s in reg.items() if s.get("citations_verifiable") == "true"]
+    except Exception:
+        return ["TECH_DEBT", "PARITY", "ANTIPATTERN"]      # the distinctive-prefix set
+
+
+VERIFIED_NS = _verified_namespaces()
 
 TOMBSTONE_RE = re.compile(r"RESERVED|TOMBSTONE|RETIRED|DEPRECATED|withdrawn|WITHDRAWN|superseded|SUPERSEDED|MOOT|renumber", re.I)
 
@@ -346,8 +362,20 @@ def _citable_findings(idx):
     docs = [(p, _read(p)) for p in _iter_docs()]
     corpus_lines = [ln for _, txt in docs for ln in txt.splitlines()]
 
-    # ── 1. CITED-BUT-UNDEFINED ────────────────────────────────────────────────────────────────
+    # ── 1. CITED-BUT-UNDEFINED (LIVE surfaces only) ──────────────────────────────────────────
+    # A citation inside a FROZEN RECORD (postmortem / plan_check / superseded handoff / archived)
+    # is not a claim about the present — it is a truthful artifact of what was true when written.
+    # Flagging it would rewrite history to satisfy a linter, which D-390 explicitly rejected:
+    # "the guard's job is to stop the corpus getting WORSE, not to rewrite history."
+    try:
+        import json as _json
+        _frozen = tuple(_json.loads((Path(__file__).absolute().parent / "lib" /
+                        "citable_id_namespaces.json").read_text()).get("frozen_record_paths", []))
+    except Exception:
+        _frozen = ("/postmortems/", "/plan_checks/", "/handoffs/", "/archived/")
     for p, _txt in docs:
+        if any(seg in str(p) for seg in _frozen):
+            continue
         cites = citations_in(_txt)
         for ns in VERIFIED_NS:
             known = idx.get(ns, {})

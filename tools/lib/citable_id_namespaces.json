@@ -1,14 +1,9 @@
 {
   "_comment": "CITABLE-ID NAMESPACE REGISTRY — the DEFINING FORM of every global citable-ID namespace (H / M / T / AR-WH-PL-CP / B / TECH_DEBT / PARITY / Class / D-C-F). Single-sourced DATA read by the Python resolver (tools/citable_ids.py) and, once it grows a consumer, by the foxtag C++ core and the nvim plugin's [REFERENCE] doc-viewer — the 'ONE RESOLVER, THREE CONSUMERS' shape D-390 specifies. TECH_DEBT-249 / D-389.",
-
   "_encoding_law": "ALL SCALARS ARE STRINGS — booleans included. The shared C++ reader (foxtag.hpp JVal) has Kind {STR, ARR, OBJ, OTHER} and NO bool/number kind, so a bare `true` parses as OTHER with an EMPTY string — a SILENT wrong-read, not an error. Measured 2026-07-19 with a compiled probe. tools/lib/toolio_schemas.json and corpus_contract.json both obey this. Do NOT 'clean this up' to native JSON types.",
-
   "_why_NO_REGEXES": "Deliberately declarative — anchor kind + literal prefix + flags — with ZERO regex syntax, and this is the load-bearing constraint rather than a style choice. `foxtag` contains no std::regex; it hand-parses char-by-char. D-393 pt 4 REFUTED a shared registry for the ref-index precisely because that one would have carried extraction REGEXES, which would CREATE parity risk instead of removing it. Every row here is expressible as: does the line start with X, is the ID bold, is there a Y after it. A hand-parser can honour that with startswith() and a digit scan. If a future namespace genuinely needs a regex, it does NOT belong in this file — give it a defining form a hand-parser can read, or keep it Python-side and say so.",
-
   "_defining_form_not_mention": "Every row anchors on the form that DECLARES an entry — a table row, a heading, a sentinel, a filename. NEVER a prose mention. A membership set built from mentions cannot go red: cite a nonexistent TECH_DEBT-999 in the same file that defines the set and it resolves. That is exactly why CI never saw the 8 dangling citations D-389 found (Class-51, in the resolver itself).",
-
   "registry_version": "1",
-
   "namespaces": {
     "INVARIANT": {
       "_use": "Hard invariants H1..H22 — the CLAUDE.md table is the SSoT.",
@@ -19,7 +14,9 @@
       "bold": "optional",
       "requires_after": "|",
       "id_type": "string",
-      "_why_bold_optional": "H15/H18/H19/H21/H22 are BOLD rows; H1-H14 are not. A pattern requiring `|` immediately after the number silently dropped 6 of 22 — caught by checking the resolved count against the known H1..H22 range instead of trusting the match."
+      "_why_bold_optional": "H15/H18/H19/H21/H22 are BOLD rows; H1-H14 are not. A pattern requiring `|` immediately after the number silently dropped 6 of 22 — caught by checking the resolved count against the known H1..H22 range instead of trusting the match.",
+      "citations_verifiable": "false",
+      "_why_citations_verifiable": "SCOPE COLLISION. `H23` appears in prose as a PROPOSED-but-unwritten invariant and in audit synthesis text. Verifying bare `Hn` citations manufactures findings from forward-references."
     },
     "META": {
       "_use": "Meta-disciplines M1..M10 — DESIGN_PHILOSOPHY § 11.5 is the SSoT.",
@@ -30,7 +27,9 @@
       "bold": "required",
       "requires_after": "—",
       "id_type": "string",
-      "_why_bold_REQUIRED": "LOAD-BEARING, not cosmetic. DESIGN_PHILOSOPHY carries the § 11.5 DEFINING table (`| **M1 — …**`) AND a cross-reference index further down (`| M1 — … |`, plain). Treating bold as optional matched BOTH and reported 8 of 10 meta-disciplines as DOUBLE-DEFINED — every one a false positive. Shipping that would have made the guard's first run pure noise, which is the fastest way to get a guard ignored (M3)."
+      "_why_bold_REQUIRED": "LOAD-BEARING, not cosmetic. DESIGN_PHILOSOPHY carries the § 11.5 DEFINING table (`| **M1 — …**`) AND a cross-reference index further down (`| M1 — … |`, plain). Treating bold as optional matched BOTH and reported 8 of 10 meta-disciplines as DOUBLE-DEFINED — every one a false positive. Shipping that would have made the guard's first run pure noise, which is the fastest way to get a guard ignored (M3).",
+      "citations_verifiable": "false",
+      "_why_citations_verifiable": "SCOPE COLLISION, named verbatim in AR-14's false-positive surface: `M1`-`M9` are meta-disciplines globally but MEDIUM finding IDs inside audit reports."
     },
     "TOOLCHAIN": {
       "_use": "Dev-plane toolchain invariants T1..T12 — the tools/CLAUDE.md T-index is the SSoT.",
@@ -40,17 +39,26 @@
       "id_body": "digits",
       "bold": "optional",
       "requires_after": "|",
-      "id_type": "string"
+      "id_type": "string",
+      "citations_verifiable": "false",
+      "_why_citations_verifiable": "SCOPE COLLISION, MEASURED 2026-07-20: `T7-T18` are TEST ids in `test_v5_15_5_F4c_cfg_field_dispatch`, not toolchain invariants. Five of the guard's first-run 'dangling' findings (T13/T14/T15/T18/T19) were this."
     },
     "ANTIPATTERN": {
       "_use": "Meta-anti-patterns AR-n / WH-n / PL-n / CP-n — the index table is the SSoT.",
       "source": "$WORKSPACE/DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md",
       "anchor": "table-row",
-      "prefix_any": ["AR-", "WH-", "PL-", "CP-"],
+      "prefix_any": [
+        "AR-",
+        "WH-",
+        "PL-",
+        "CP-"
+      ],
       "id_body": "digits",
       "bold": "required",
       "id_type": "string",
-      "_note": "One doc owns FOUR namespaces, which is why it carries `owns_namespace: [AR, WH, PL, CP]` rather than a singular `registry_id:` — see doc-frontmatter-convention.md."
+      "_note": "One doc owns FOUR namespaces, which is why it carries `owns_namespace: [AR, WH, PL, CP]` rather than a singular `registry_id:` — see doc-frontmatter-convention.md.",
+      "citations_verifiable": "true",
+      "_why_citations_verifiable": "Distinctive `AR-`/`WH-`/`PL-`/`CP-` prefixes."
     },
     "BLINDSPOT": {
       "_use": "Implementation-blindspot pillars B1..Bn — the taxonomy's headings are the SSoT.",
@@ -59,7 +67,9 @@
       "heading_level": "3",
       "prefix": "B",
       "id_body": "digits",
-      "id_type": "string"
+      "id_type": "string",
+      "citations_verifiable": "false",
+      "_why_citations_verifiable": "SCOPE COLLISION, named verbatim in AR-14: `B12`-`B17` are pillars globally but work-item IDs inside one synthesis doc."
     },
     "TECH_DEBT": {
       "_use": "TECH_DEBT-n entries across the split ledger.",
@@ -75,7 +85,9 @@
       "id_body": "digits",
       "id_type": "int",
       "_why_int": "Padding-insensitive: TECH_DEBT-005 and TECH_DEBT-5 are the SAME id, so normalising to int is what makes them resolve to one entry rather than two.",
-      "_hardened_2026_07_20": "Was a by-MENTION scan (`TECH_DEBT-(\\d+)` over raw ledger text). Measured at the flip: by-mention 248 vs by-defining 247 — the single dropped id is TECH_DEBT-101, which has NO defining row anywhere and is cited from ZERO engine sources, so nothing newly REDs. It is one of D-389's 8 dangling citations, i.e. the flip immediately surfaces a real defect the old set was structurally incapable of reporting."
+      "_hardened_2026_07_20": "Was a by-MENTION scan (`TECH_DEBT-(\\d+)` over raw ledger text). Measured at the flip: by-mention 248 vs by-defining 247 — the single dropped id is TECH_DEBT-101, which has NO defining row anywhere and is cited from ZERO engine sources, so nothing newly REDs. It is one of D-389's 8 dangling citations, i.e. the flip immediately surfaces a real defect the old set was structurally incapable of reporting.",
+      "citations_verifiable": "true",
+      "_why_citations_verifiable": "Distinctive multi-char prefix `TECH_DEBT-`; a bare mention cannot plausibly mean anything else."
     },
     "PARITY": {
       "_use": "PARITY-n ledger entries.",
@@ -83,7 +95,9 @@
       "anchor": "field",
       "field_prefix": "id: PARITY-",
       "id_body": "digits",
-      "id_type": "int"
+      "id_type": "int",
+      "citations_verifiable": "true",
+      "_why_citations_verifiable": "Distinctive `PARITY-` prefix."
     },
     "CLASS": {
       "_use": "Recurring-bug-pattern classes — the per-class FILENAME is the defining form.",
@@ -92,15 +106,24 @@
       "filename_prefix": "class-",
       "id_body": "digits",
       "id_type": "int",
-      "_dropped_text_union": "The predecessor ALSO unioned prose mentions of `Class N` from the catalog. Measured 2026-07-20: the union adds NOTHING (56 == 56) while making the set unable to go red. Dropped — a redundant leg that only costs falsifiability is strictly worse than no leg."
+      "_dropped_text_union": "The predecessor ALSO unioned prose mentions of `Class N` from the catalog. Measured 2026-07-20: the union adds NOTHING (56 == 56) while making the set unable to go red. Dropped — a redundant leg that only costs falsifiability is strictly worse than no leg.",
+      "citations_verifiable": "false",
+      "_why_citations_verifiable": "SCOPE COLLISION: `Class 0` was matched out of a table describing the literal FORMAT `\"Class <n>\"`. Definition-side checks (double-definition, gaps) still apply; only CITATION resolution is skipped."
     },
     "DECISION": {
       "_use": "Decision-log entries D-n / C-n / F-n.",
       "directory_glob": "$WORKSPACE/plans/*/decision-logs",
       "anchor": "html-sentinel",
-      "sentinel_open_any": ["<!-- D/C/F:", "<!-- D:"],
+      "sentinel_open_any": [
+        "<!-- D/C/F:",
+        "<!-- D:"
+      ],
       "sentinel_close": "-->",
-      "prefix_any": ["D-", "C-", "F-"],
+      "prefix_any": [
+        "D-",
+        "C-",
+        "F-"
+      ],
       "id_body": "digits",
       "id_exact": "true",
       "_why_two_sentinel_forms": "MEASURED 2026-07-20 against the predecessor regex: 429 sentinels use `<!-- D/C/F:` and 19 use the shorter `<!-- D:`. A parser matching only the long form silently DROPPED 5 real ids including D-372..D-379 — the origin decisions of this very ship.",
@@ -111,5 +134,14 @@
       "citations_unverifiable": "true",
       "_why_citations_unverifiable": "A bare `D-7` in prose cannot be resolved without knowing which log the citing doc means, and guessing would manufacture false positives at scale. Definition-side collisions ARE still reported (unambiguous); citation-side resolution is deliberately skipped rather than faked."
     }
-  }
+  },
+  "_citation_verification_law": "A namespace's CITATIONS are mechanically verified only when its id form is DISTINCTIVE enough that a bare mention cannot plausibly mean something else. Short letter+digit tokens (H23 / M8 / T13 / B16 / Class 7) collide with test ids, work-item ids, finding ids, section labels and forward-references to not-yet-written entries. AR-14's false-positive surface states this outright: scope overlap 'must NOT be mechanized — a checker cannot tell scopes apart; forcing it produces the noise that gets guards ignored.' The guard's FIRST run proved the point on itself: 8 of 18 'dangling citations' were scope collisions, and had they been baselined the ID-triage corpus would have started life half-noise. DEFINITION-side checks (double-definition, sequence-gap, reservation) are UNAFFECTED — those read the SSoT directly and carry no ambiguity.",
+  "frozen_record_paths": [
+    "/postmortems/",
+    "/plan_checks/",
+    "/handoffs/",
+    "/archived/",
+    "/capture-audit-reports/"
+  ],
+  "_why_frozen_record_paths": "A citation inside a FROZEN RECORD is not a claim about the present — it is a truthful artifact of what was true when written. A postmortem citing a then-real TECH_DEBT id is CORRECT, and 'fixing' it would rewrite history to satisfy a linter. The operator settled this scoping at D-390: 'for historical data thats no longer current i guess its not extremely critical' and 'a frozen record citing a then-real path is a truthful artifact; the guard's job is to stop the corpus getting WORSE, not to rewrite history.' So citations are resolved ONLY on LIVE surfaces — the current MASTER, in-flight plan bodies, the open/in-flight ledgers, ROADMAPs, decision logs, CLAUDE.md, DESIGN_SPECS. Measured 2026-07-20: of 10 dangling ids, 7 were cited exclusively from frozen records (a prior sprint's MASTER, a postmortem, May plan_checks, a superseded handoff) and 3 were genuinely LIVE. Flagging all 10 would have made the triage corpus 70% history-rewriting."
 }

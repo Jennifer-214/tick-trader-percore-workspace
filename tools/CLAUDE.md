@@ -88,6 +88,36 @@ of ONE core**, so the grammar + facts exist in exactly one implementation.
   WIDER toolchain + tag-system blast radius, not just the edited file, before coding. Correctness-critical despite
   dev-plane (a wrong fact fans out). Re-fires on a materially-corrected shape.
 
+## Tool invariants + gotchas (facts that live ONLY in the source — add new ones HERE)
+
+Harvested 2026-07-19 from E.1.2.B `0.1.5`/`0.3`, where **each of these cost a debug cycle or produced
+a FALSE finding**. If you discover a tool behaviour that is not derivable from its `--help` or its
+docstring, write it here — that is the entire point of this section.
+
+- **`foxtag` is CWD-SENSITIVE — run it from the ENGINE ROOT.** It resolves the corpus relative to
+  `cwd`; a consumer inheriting some other cwd (an editor, a hook) fails with *"cannot resolve the
+  engine root."* Resolve the root by **MARKER** (`Version.hpp`) + sibling probe, **never** by walking
+  up from the binary — `tools/` is a SYMLINK, so a path-walk lands in the WORKSPACE, which has no
+  marker (Landmine 5). Worked references: `nodemodel.lua` (Lua), `foxroots.py` (Python).
+- **The "is this file converted?" selector is ANCHORED: `^// \[SCHEMA\]_\[v1`.** An UNanchored
+  `rg '\[SCHEMA\]_\[v1'` ALSO matches selftest fixture **string literals** (`"// [SCHEMA]_[v1.0]\n…"`
+  inside `SELFTEST[]`) and prose — it will report `foxtag_main.cpp` as converted when it is not.
+  This produced a false in-session finding; verify by READING what matched, not by counting matches
+  (`feedback_verify_by_context_not_count`).
+- **`check_conversion_completeness` covers STRUCTS + FOREACH registries ONLY** (C1 lumped · C2
+  missing-block · C3 missing-`[DERIVED]`). **FUNCTIONS are never checked for a missing block** — a
+  latent hole: function-level tag coverage can drift and stay green indefinitely.
+- **That same gate is BLIND to gitignored source** — it enumerates via `rg` WITHOUT `--no-ignore`, so
+  a gitignored-but-real file is never scanned; "0 gaps" then means *unverified*, not *clean*
+  (TECH_DEBT-245).
+- **`tools/lib/*_baseline.txt` are EXCEPTION lists, NOT goldens.** They grandfather known-bad findings
+  (shrinking). They do **not** pin a tool's OUTPUT — and **no tool pins its output today**, so a
+  change to what a tool EMITS passes every gate provided both implementations change together
+  (D-386 adopts output goldens to close exactly this).
+- **`[DERIVED]` is required for `[STRUCT]` blocks, not for functions.** Function facts (call-graph,
+  branches, SIMD) are shown **LIVE** by the plugin (D-307/D-327), so a struct-less file legitimately
+  carries zero `[DERIVED]` — that is not a gap.
+
 ## Where things live
 
 | Piece | Path |

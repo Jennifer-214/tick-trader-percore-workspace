@@ -32,7 +32,7 @@ This catalog does **not** re-number or duplicate the meta-disciplines that alrea
 
 | Existing meta-shape family | Canonical home | Relationship here |
 |---|---|---|
-| **M1-M7** audit-methodology gaps | `DOCS/DESIGN_PHILOSOPHY.md` § 11.5 | POINTED-TO (no re-number) |
+| **M1-M10** audit-methodology gaps | `DOCS/DESIGN_PHILOSOPHY.md` § 11.5 | POINTED-TO (no re-number) |
 | **B14-B19** implementation-blindspot pillars | `meta-disciplines/implementation-layer-blindspot-taxonomy.md` | POINTED-TO |
 | **Workspace-hygiene checks** | `/capture-audit` (11 checks) + `/metadata-audit` | POINTED-TO |
 | **Cascade / sister-cohort** | `feedback_sister_cohort_amendment_completeness` + M7 | POINTED-TO (CP-1 makes it mechanical) |

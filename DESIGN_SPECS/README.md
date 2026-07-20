@@ -2,7 +2,7 @@
 
 **Auto-generated** by `tools/rebuild_doc_indexes.py`. Regenerate after adding/moving specs.
 
-Total: 190 specs across 15 types.
+Total: 191 specs across 15 types.
 
 Per-type catalog grouped by lifecycle stage. Cross-ref:
 - `doc-frontmatter-convention.md` (frontmatter schema)
@@ -198,10 +198,11 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/doc-disciplines/module-scoped-claude-md-pattern.md` | 2-draft | doc-discipline, framework-discipline, context-aware-loading | 2 |
 | `DESIGN_SPECS/doc-disciplines/toolchain-semantic-versioning.md` | 2-draft | doc-discipline, dev-plane, versioning, +1 | 0 |
 
-## meta-discipline (32 specs)
+## meta-discipline (33 specs)
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
+| `DESIGN_SPECS/meta-disciplines/acceptance-oracle-totality-before-delegation.md` | 3-first-canonical | audit-methodology, meta-discipline, delegation, +3 | 0 |
 | `DESIGN_SPECS/meta-disciplines/adversarial-pessimistic-simulation-discipline.md` | 3-first-canonical | meta-discipline, backtest, paper-mode, +3 | 0 |
 | `DESIGN_SPECS/meta-disciplines/audit-driven-sub-sprint-trajectory-verification.md` | 3-first-canonical | audit-methodology, sub-sprint-discipline, plan-trajectory-verification, +2 | 0 |
 | `DESIGN_SPECS/meta-disciplines/backtest-paper-live-convergence-discipline.md` | 3-first-canonical | meta-discipline, strategy-lifecycle, backtest-to-live, +1 | 0 |

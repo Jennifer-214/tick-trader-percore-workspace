@@ -15,6 +15,6 @@ established: 2026-05-18
 
 **What to verify:** for each referenced sister-registry column/bit, `rg "#define FOREACH_<sister>\(X\)"` to read the current sig at HEAD. Verify column count + position matches plan body assumption. If sister sig was migrated but cohort siblings deferred without rationale → flag for cohort-migration sub-step in plan body.
 
-**Cross-references:** `DESIGN_SPECS/meta-disciplines/canonical-sister-extension-discipline.md` § Temporal evolution + cohort migration. `DESIGN_PHILOSOPHY.md` § 11.5 M1. `feedback_verify_sister_registry_parity_pre_coding` (memory rule).
+**Cross-references:** `DESIGN_SPECS/meta-disciplines/canonical-sister-extension-discipline.md` § Temporal evolution + cohort migration. `DESIGN_PHILOSOPHY.md` § 11.5 M1. `feedback_audit_canonical_sister_before_new_infra` + `feedback_enumerate_consumers_before_registry_row_deletion` (repointed 2026-07-19 — this line previously cited `feedback_verify_sister_registry_parity_pre_coding`, a memory that has never existed: a WH-5 dangling-cite instance) (memory rule).
 
 **Effort:** 2-5 min per audit (one grep per sister registry).

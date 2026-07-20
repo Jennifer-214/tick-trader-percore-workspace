@@ -64,6 +64,19 @@ audit-driven pre-coding gate):
   question) — re-fire against amended scope BEFORE coding starts. Sister to
   feedback_iteration_spiral_signals_audit_meta_gap (3+ amendment cycles =
   audit-methodology-gap signal) + feedback_operator_pushback_as_audit_signal
+- **TRAIN↔SERVE EXECUTION-LAYER PARITY (M5)** — any ship touching
+  `EngineSharded.hpp` BOOT ordering or the SLOW-PATH-CYCLE body, or that
+  changes what the LIVE driver does relative to the BACKTEST driver. Load
+  `DESIGN_SPECS/meta-disciplines/train-serve-execution-layer-parity.md` and
+  audit the two drivers' boot-call sets + per-cycle bodies for asymmetry.
+  Cfg / stamp / wire-format audits do NOT cover this layer, and neither does
+  any SHAPE audit — the spec's worked example is 4 CRITs that **6 audits
+  missed**, including a kill_switch dead for 14+ months and
+  `Strategy_InitPerCore` never called in backtest since v5.4. (Amendment
+  added 2026-07-19: § 11.5's M5 row had claimed this trigger since
+  codification, but it had never been encoded here — the spec was cited by
+  ZERO skills, so the highest-capital meta-discipline was unreachable from
+  any gate. Found by the E.1.2.B close-out codification sweep.)
   (operator "are you sure?" → STOP do code analysis). Codified at v5.15.5.F.4d.1.B.4
   v1.7.6 mid-cycle after Path 1 → Path 2 → Path 2 v3 → Path 2 v4 flip-flopping
   proved planning-time audit re-fire missing as structural enforcement.

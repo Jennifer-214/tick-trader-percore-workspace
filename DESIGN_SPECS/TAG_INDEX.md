@@ -65,7 +65,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/concurrency-patterns/structured-audit-log-pattern.md`
 
-### audit-methodology (85 files)
+### audit-methodology (86 files)
 
 - `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md`
 - `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md`
@@ -75,6 +75,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/audit-methodologies/characterization-test-discipline.md`
 - `DESIGN_SPECS/audit-methodologies/post-implementation-verification-v-class.md`
 - `DESIGN_SPECS/audit-methodologies/static-latency-path-conformance-analysis.md`
+- `DESIGN_SPECS/meta-disciplines/acceptance-oracle-totality-before-delegation.md`
 - `DESIGN_SPECS/meta-disciplines/audit-driven-sub-sprint-trajectory-verification.md`
 - `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/definition-of-done-and-armed-scout-verification.md`
@@ -430,6 +431,10 @@ This file is a snapshot for static browsing.
 ### definition-of-done (1 files)
 
 - `DESIGN_SPECS/audit-methodologies/post-implementation-verification-v-class.md`
+
+### delegation (1 files)
+
+- `DESIGN_SPECS/meta-disciplines/acceptance-oracle-totality-before-delegation.md`
 
 ### deletion-discipline (5 files)
 
@@ -1006,7 +1011,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/per-node-paper-mode-flag-pattern.md`
 
-### meta-discipline (49 files)
+### meta-discipline (50 files)
 
 - `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md`
 - `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md`
@@ -1015,6 +1020,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/doc-disciplines/categorical-triggers-in-always-loaded-docs.md`
 - `DESIGN_SPECS/doc-disciplines/in-code-documentation-schema.md`
 - `DESIGN_SPECS/framework-patterns/meta-registry-pattern-for-codebase-registry-discipline.md`
+- `DESIGN_SPECS/meta-disciplines/acceptance-oracle-totality-before-delegation.md`
 - `DESIGN_SPECS/meta-disciplines/adversarial-pessimistic-simulation-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/backtest-paper-live-convergence-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/backwards-compat-not-default-concern.md`
@@ -1585,7 +1591,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/mechanical-verification-of-derived-code-facts.md`
 
-### structural-fix (103 files)
+### structural-fix (104 files)
 
 - `DESIGN_SPECS/audit-methodologies/static-latency-path-conformance-analysis.md`
 - `DESIGN_SPECS/concurrency-patterns/phase-separated-drainer-for-safe-cross-temporal-derives.md`
@@ -1628,6 +1634,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/universal-cfg-field-registry-pattern.md`
 - `DESIGN_SPECS/framework-patterns/universal-registry-bitmap-dispatcher-pattern.md`
 - `DESIGN_SPECS/framework-patterns/x-macro-registry-with-presence-dispatch.md`
+- `DESIGN_SPECS/meta-disciplines/acceptance-oracle-totality-before-delegation.md`
 - `DESIGN_SPECS/meta-disciplines/dead-code-and-identifier-retirement-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/definition-of-done-and-armed-scout-verification.md`
 - `DESIGN_SPECS/meta-disciplines/representation-migration-completeness.md`
@@ -1714,6 +1721,10 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/meta-disciplines/plan-decomposition-and-future-aware-agent-arming.md`
 - `DESIGN_SPECS/meta-disciplines/plan-hierarchy-and-sub-master-decomposition.md`
 
+### subagent-arming (1 files)
+
+- `DESIGN_SPECS/meta-disciplines/acceptance-oracle-totality-before-delegation.md`
+
 ### submit-protocol (1 files)
 
 - `DESIGN_SPECS/framework-patterns/per-exchange-submit-protocol-selection.md`
@@ -1791,9 +1802,10 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/concurrency-patterns/userspace-tls-pattern.md`
 
-### verification (3 files)
+### verification (4 files)
 
 - `DESIGN_SPECS/audit-methodologies/post-implementation-verification-v-class.md`
+- `DESIGN_SPECS/meta-disciplines/acceptance-oracle-totality-before-delegation.md`
 - `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/mechanical-verification-of-derived-code-facts.md`
 
@@ -2019,7 +2031,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/runtime-mutable-vs-boot-time-config-pattern.md`
 
-### ci-tooling (22 files)
+### ci-tooling (23 files)
 
 - `DESIGN_SPECS/audit-methodologies/audit-report-format.md`
 - `DESIGN_SPECS/audit-methodologies/static-latency-path-conformance-analysis.md`
@@ -2032,6 +2044,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/one-action-toolchain-update-orchestrator.md`
 - `DESIGN_SPECS/framework-patterns/registry-coverage-ci-check-pattern.md`
 - `DESIGN_SPECS/framework-patterns/standardized-tool-io-envelope-and-payload.md`
+- `DESIGN_SPECS/meta-disciplines/acceptance-oracle-totality-before-delegation.md`
 - `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/canonical-sister-extension-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/definition-of-done-and-armed-scout-verification.md`
@@ -2441,6 +2454,10 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/meta-disciplines/structural-enforcement-when-memory-insufficient.md`
 - `claude-skills/capture-audit/SKILL.md`
 
+### plan-time (1 files)
+
+- `DESIGN_SPECS/meta-disciplines/acceptance-oracle-totality-before-delegation.md`
+
 ### planning (4 files)
 
 - `DESIGN_SPECS/meta-disciplines/audit-driven-sub-sprint-trajectory-verification.md`
@@ -2694,6 +2711,10 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/dynamic-library-strategy-loading-pattern.md`
 
+### subagent-delegation (1 files)
+
+- `DESIGN_SPECS/meta-disciplines/acceptance-oracle-totality-before-delegation.md`
+
 ### submit-dispatch (1 files)
 
 - `DESIGN_SPECS/framework-patterns/per-node-paper-mode-flag-pattern.md`
@@ -2714,12 +2735,13 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/native-tui-via-mmap-readonly-pattern.md`
 
-### test-infrastructure (9 files)
+### test-infrastructure (10 files)
 
 - `DESIGN_SPECS/audit-methodologies/audit-report-format.md`
 - `DESIGN_SPECS/data-disciplines/cpp17-inline-variable-for-header-shared-state.md`
 - `DESIGN_SPECS/doc-disciplines/in-code-documentation-schema.md`
 - `DESIGN_SPECS/framework-patterns/registry-coverage-ci-check-pattern.md`
+- `DESIGN_SPECS/meta-disciplines/acceptance-oracle-totality-before-delegation.md`
 - `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/definition-of-done-and-armed-scout-verification.md`
 - `claude-skills/dead-code-trace/SKILL.md`

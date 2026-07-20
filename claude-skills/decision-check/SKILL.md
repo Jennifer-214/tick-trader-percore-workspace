@@ -42,6 +42,19 @@ Before committing to a non-trivial design/fix DECISION — especially one that *
 
 ## Workflow (Layer-1 orchestrator — composes by reference; never auto-proceeds)
 
+### Stage 0 — CLASSIFY THE ACCEPTANCE ORACLE (M10; MANDATORY before any dispatch; added 2026-07-19)
+
+Before firing ANY agent, state — in one line, out loud — **what would catch a wrong answer**, and classify it:
+
+- **TOTAL** — fails on ANY deviation: byte-identity against a reference implementation, an output golden, parity of two independent implementations, a round-trip identity. → the check **is** the review; accept the delegate's work on green and spend the saved review budget making another oracle total.
+- **PARTIAL** — covers a subset of "correct": unit tests, a green build, a lint/CI sweep, "the feature works". → delegation is still fine, but a **context-carrying hand-review of the diff before commit is MANDATORY**, and it must be budgeted here, not treated as optional polish. **Re-running the delegate's own commands is NOT verification** — it reproduces the blind spot exactly.
+
+If you cannot name the oracle, you do not have one; build it before dispatching. **Assume PARTIAL until demonstrated otherwise** — in this codebase the checks are partial nearly everywhere (TECH_DEBT-245/246 are two holes in a single gate enumerator).
+
+The discriminator is NOT test count or coverage — it is **whether the check has an independent reference to disagree with**. A thousand hand-written assertions are PARTIAL; one diff against an independently-produced artifact is TOTAL.
+
+This applies to the orchestrator's OWN findings too: a finding reported as a *count* of matches rather than read-and-classified matches is a partial check misleading its own auditor. → `DESIGN_SPECS/meta-disciplines/acceptance-oracle-totality-before-delegation.md` (M10) · memory `feedback_delegate_on_total_oracle_handreview_on_partial` · `/readiness` Check 47 · D-385.
+
 ### Stage 1 — INVESTIGATE (map the surface, ground the options)
 Fire ONE investigative agent (general-purpose; the `/dependency-chain-trace` / `/trace-deps` / `/finding-analyzer` lens): trace the decision's surface — every site/consumer touched, the blast radius, the options + their *real* cost, re-grounded against CURRENT code (AR-3: cited line numbers are hints — verify). Output: a grounded surface map + (if none was given) a recommendation.
 

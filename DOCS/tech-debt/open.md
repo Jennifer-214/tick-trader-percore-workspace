@@ -3974,3 +3974,27 @@ entry that silently rewrites its own evidence cannot be audited afterwards.*
 - **Also corrected:** `advertised-capability-never-exercised.md` listed "a skill" among honest cadences. **A skill is not a cadence — nothing fires a skill.** That line is what licensed this whole gap.
 - **Trigger:** next apparatus-plane ship; item 1 sooner if any `CoreFrameworks/` cfg work lands first.
 - **Cross-ref:** TECH_DEBT-250 (the close-out enforcer) · `advertised-capability-never-exercised.md` · `feedback_resource_use_gated_on_existence_not_felt_need` (the operator-side twin) · D-404.
+
+### TECH_DEBT-262 — DERIVED-FACT DRIFT: the one structural class behind every defect found in the 0.2 close
+
+- **id:** TECH_DEBT-262 · **severity:** high (it is the generator, not an instance) · **opened:** 2026-07-20 · **status:** open · **surface_tags:** [doc-discipline, ssot, m7, class-51, ci-tooling]
+- **The finding.** Three consecutive review passes over the `0.2` close produced nine defects. Classified by SHAPE rather than by symptom, **all nine are the same defect**: a fact stated in TWO places, where one is DERIVED from the other, with no mechanical link between them. Not nine problems — one problem, nine times.
+
+  | instance | derived thing | source of truth |
+  |---|---|---|
+  | handoff paste block | the pasted NEXT-ACTION summary | the NEXT ACTION section |
+  | `citable_ids.py` summary | raw double-def count | `active_sites()` / `--check 14` |
+  | `TECH_DEBT-249` premise | "no content anywhere" | D-401 / the actual repo |
+  | decision-log NAV index | the D-num table | the `<!-- D/C/F -->` sentinels |
+  | `DOCS/TOOLS.md` "Invoked by" | the claimed trigger | the real call-sites |
+  | `memory.backup/` | the mirror | the live memory dir |
+  | handoff tallies | every count in prose | the re-derive command |
+  | `TECH_DEBT-250` status | "still unbuilt" | the file on disk |
+  | close-out selftest | assertions on pattern LABELS | the matched text |
+
+- **Why it recurs despite being "known".** `feedback_single_source_of_truth_discipline` already codifies this for CODE. It has no MECHANICAL enforcement on the DOC plane, so every derived doc-fact is convention-only — and convention loses at exactly the moment context is long and the edit is local. **Per M7 this has now earned structural enforcement**: it recurred ~9 times in one session with the memory in place.
+- **Compaction is NOT the cause.** Long context explains why *I* failed to notice them; it does not explain why they *exist*. 5 of 9 predate this session entirely, and one (`TOOLS.md` invocation truth) had 4 instances fixed reactively one day earlier and reopened immediately. A defect class that regenerates after a manual sweep is structural by definition.
+- **What already closed** (this session, each a point-fix of one instance): CHECK 4 invocation-truth · `check_sync_owed` memory-mirror detection · `VOLATILE_COUNT_PATTERNS` for tallies · single-sourcing the supersede exemption onto one call site. **Each closed ONE row of the table.** None closes the class.
+- **The shape of the real fix (NOT designed yet — do not implement from this line).** A general derived-fact guard: a way to declare "X is derived from Y" and have CI verify the pair. Candidate mechanism: a `<!-- DERIVED-FROM: <cmd> -->` marker whose block must match that command's output, which would cover the NAV index, the paste block, the tallies, and TOOLS.md's column with one primitive. **Design it before building it** — a half-general mechanism here would itself become a derived fact that drifts.
+- **Trigger:** next apparatus-plane ship, BEFORE more point-fixes. Each point-fix is cheap and correct and leaves the generator running.
+- **Cross-ref:** TECH_DEBT-261 (SKILL-ONLY tools — the sibling class: capability that exists but is never triggered) · `feedback_single_source_of_truth_discipline` (the memory this outgrew) · `feedback_name_members_never_tallies_in_docs` (D-402, one instance) · D-400/D-401/D-404 · `advertised-capability-never-exercised.md`.

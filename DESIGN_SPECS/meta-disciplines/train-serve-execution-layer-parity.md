@@ -18,6 +18,7 @@ applies_at_skills:
   - /precoding-audit-gate (extended audit_set; HIGH-RISK ships touching boot or slow-path-cycle)
   - /train-serve-asymmetry-sweep (NEW; parameterized by layer keyword at .B.4)
   - /readiness (NEW Check 40: train-serve mirror verification for boot Init/Bind/Configure calls)
+registry_id: M5        # the ID this doc is the canonical body for (D-389)
 ---
 
 # Train-serve execution-layer parity (M5 meta-discipline)

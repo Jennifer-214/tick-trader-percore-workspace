@@ -13,6 +13,8 @@ pillars:
   - B15: unconditionalization-latent-assumption-audit (Stage 2 DRAFT 1st instance at v5.15.5.F.4d.1.B.4)
   - B17: forward-decl-namespace-shadow (Stage 3 first canonical promoted at v5.15.5.F.4d.1.B.7 — 2 canonical applications at v5.15.5.F.4d.1.B.6 Phase B.3 SlowPath.hpp + Phase B.2 Async.hpp; Class 34 recurrence_count 2 = threshold met per pattern-codification-lifecycle.md; sister to Class 34)
   - B18: block-scope-statics-inaccessible-from-hoisted-fns (Stage 2 DRAFT 1st-instance at v5.15.5.F.4d.1.B.6 Phase B.2 fan_out hoist; sister to Class 35)
+registry_id: M4        # the ID this doc is the canonical body for (D-389)
+owns_namespace: [B]   # canonical registry FOR these namespaces (D-389 / 2026-07-20)
 ---
 
 # Implementation-layer blind-spot taxonomy

@@ -8,6 +8,7 @@ tags: [wire-format, framework-discipline, structural-fix, cross-tool-decoupling]
 surface: [wire-format, ml-inference, parser, cross-tool]
 sister_specs: [wire-format-canonical-body-invariants-helper.md, struct-padding-determinism-pattern.md, avx512-byte-determinism-pattern.md, framework-driven-cli-binary-pattern.md, autopopulate-pattern-for-production-caller-class.md, pre-post-cfg-registry-split-for-emit-order-preservation.md]
 applies_at_skills: [/parity-check]
+registry_id: M2        # the ID this doc is the canonical body for (D-389)
 ---
 
 # Wire-format byte-preservation discipline (HMAC chain protection)

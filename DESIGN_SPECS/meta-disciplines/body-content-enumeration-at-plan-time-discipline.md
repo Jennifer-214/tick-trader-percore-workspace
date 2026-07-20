@@ -14,6 +14,7 @@ sister_specs:
 audit_tier: framework-pattern
 applies_at_skills: [/readiness, /capture-audit, /plan-draft]
 first_canonical_application: v5.15.5.F.4d.1.B.4 WIP-12 (EngineCommon_SlowPathCycleOneCore extract — body-content args enumerated at v1.7.3 helper-signature gate; HIGH-1 + N-6 sister-canonical reuse decisions captured pre-coding)
+registry_id: M6        # the ID this doc is the canonical body for (D-389)
 ---
 
 # Body-content arg enumeration at plan-time discipline (M6)

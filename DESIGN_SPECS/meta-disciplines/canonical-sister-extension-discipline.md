@@ -12,6 +12,7 @@ ci_tooling_surface_canonicals:
   - 1st (.B.7 Check 9 in check_per_core_registry_integrity.py — paired-access mismatch detector; per-node code layer)
   - 2nd (.B.8 Check 10 in check_per_core_registry_integrity.py — UNINDEXED-GLOBAL detector; same per-node code layer; sister extension at same surface)
   - 3rd (.D Check 11 in NEW check_forward_promise_audit.py — forward-promise auto-write verification at cross-doc layer; sister extension at DIFFERENT surface axis but same M7 canonical lineage; demonstrates the discipline applies across surface boundaries)
+registry_id: M1        # the ID this doc is the canonical body for (D-389)
 ---
 
 # Canonical sister extension discipline

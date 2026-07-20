@@ -66,7 +66,25 @@ registry_id: M10        # the ID this doc is the canonical body for
 
 **Why:** citable IDs are how this knowledge base cross-references itself, and until 2026-07-19 nothing verified that an ID means exactly one thing. It didn't: `M9` was claimed by two disciplines and `D-1`..`D-13` by two decision logs with diverging content (**AR-14**; H21's failure mode on the doc plane). `registry_id` is the machine-readable anchor that lets a checker resolve ID → canonical doc and flag a double-claim.
 
-**Honest status:** the field currently has **zero consumers** and sits at **2-of-192** adoption (`definition-of-done-and-armed-scout-verification.md` = M8, `per-node-purity-scale-invariance.md` = H22, plus `acceptance-oracle-totality-before-delegation.md` = M10 as of this change). It was an ad-hoc convention nothing read — so it was never *breaking* anything; it was simply inert. Backfilling it on ID-bearing specs is a prerequisite for **TECH_DEBT-249**'s guard, which will key off it. Until that guard ships this field is documentation-only, and `check_doc_metadata.py` does not yet require it. Do not treat its presence as verified.
+### It is the REVERSE map, and most namespaces do not need it
+
+`registry_id` answers *"which doc is the BODY of this ID?"* — **not** *"where is this ID declared?"* Those are different questions, and conflating them is what made the field look like it needed 190 rows.
+
+Every namespace already has a **defining-form anchor** that a checker reads directly, per TECH_DEBT-249's parse spec: `Hn` ← the `CLAUDE.md` table · `Mn` ← § 11.5 · **`Class N` ← the FILENAME glob `class-(\d+)-*.md`** · `AR`/`WH`/`PL`/`CP` ← the index table · `Bn` ← `^### (B\d+)` · `Tn` ← the `tools/CLAUDE.md` table · `TECH_DEBT-nnn` ← `^### TECH_DEBT-(\d+)`. Where the declaration and the body are the SAME artifact — every `Class N` file, for instance — `registry_id` is **redundant**, and adding it is duplicate infrastructure, not coverage.
+
+So the field belongs **only** on a doc that is the canonical body of an ID declared *somewhere else*. In practice that is the `Mn` specs (declared in § 11.5, bodied in `DESIGN_SPECS/`) and any `Hn` whose table row cites a spec as its body.
+
+### `owns_namespace:` — for INDEX docs (added 2026-07-20)
+
+A singular `registry_id` cannot express a doc that is the registry for a whole namespace. `meta-anti-pattern-index.md` is the canonical body for **every** `AR-n`, `WH-n`, `PL-n` and `CP-n` — dozens of IDs — and forcing it to name one would be a lie, while listing all of them would rot on every addition.
+
+```yaml
+owns_namespace: [AR, WH, PL, CP]   # this doc is the registry FOR these namespaces
+```
+
+Owning *an ID* and being *the registry for a namespace* are different relationships; a checker resolving `AR-15` should land on the index via the namespace claim, not fail to find a `registry_id: AR-15` that will never exist.
+
+**Honest status (2026-07-20):** the field still has **zero consumers** — `check_doc_metadata.py` does not require it and TECH_DEBT-249's guard is unbuilt. Adoption is now **10 docs**, which is close to the true population rather than a fraction of 192: `M1`, `M2`, `M4`, `M5`, `M6`, `M7`, `M8`, `M10`, `H22`, plus this doc's own example. Deliberately absent: **M3** (has no spec at all — codification is PARTIAL, TECH_DEBT-248) and **M9** (its body is the multi-ID index, which wants `owns_namespace`, not `registry_id`). Until the guard ships this is documentation-only — do not treat its presence as verified.
 
 ## Per-doc-type extra fields
 

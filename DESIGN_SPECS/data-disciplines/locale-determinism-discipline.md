@@ -6,7 +6,7 @@ version: v1.0
 established: 2026-05-31
 sprint: v5.15-live-readiness
 landing_ship: v5.15.5.F.4d.1.E.0.1
-purpose: Process-wide SSoT for locale-determinism — one locale authority (the boot pin), global setlocale forbidden elsewhere, thread-local uselocale for emit defense-in-depth, and the tt:: parse + to_chars emit families as the locale-immune IO primitives. The superset that wire-format § 5b (emit-layer pinning) is one slice of.
+purpose: 'Process-wide SSoT for locale-determinism — one locale authority (the boot pin), global setlocale forbidden elsewhere, thread-local uselocale for emit defense-in-depth, and the tt:: parse + to_chars emit families as the locale-immune IO primitives. The superset that wire-format § 5b (emit-layer pinning) is one slice of.'
 tags: [determinism, locale, parsing, wire-format, process-state, concurrency, h5, h9]
 surface: [boot-time, slow-path, ml-inference, wire-format, replay]
 sister_specs:

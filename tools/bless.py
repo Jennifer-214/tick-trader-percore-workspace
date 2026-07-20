@@ -83,6 +83,48 @@ def _isatty():
         return False
 
 
+def confirm_mutation(label, action, noun="record", out=sys.stdout):
+    """The D-394 confirmation contract, as ONE implementation shared by every mutating writer.
+
+    Returns 0 only if a human at a terminal typed the exact phrase; 2 on refusal, abort, or
+    any non-interactive context.
+
+    WHY THIS IS A FUNCTION AND NOT A COPIED BLOCK. TECH_DEBT-255 was opened because
+    `check_identifier_retirement --update` rewrote the H21 ledger with no diff and no
+    confirmation — the OPPOSITE posture to bless() sitting beside it. It was closed by
+    migrating that one writer here. `check_tech_debt.py --close` — which MOVES entries
+    between the tech-debt ledgers — was never enumerated, so the class was not actually
+    closed (found 2026-07-20 by firing it accidentally during a read-only verification; it
+    silently moved TECH_DEBT-016). Re-typing this prompt at each writer is what let the two
+    postures diverge in the first place, so the contract lives in exactly one place.
+
+    The CALLER must already have printed what is changing. This gates the act; it does not
+    describe it — a confirmation whose reader has not been shown the change is theatre.
+    """
+    # non-TTY = hard refuse. Fail fast; never prompt into a pipe.
+    if not _isatty():
+        print(f"[bless] REFUSED (rc=2): this mutation requires an interactive terminal.\n"
+              f"  D-394: the {noun} may only be rewritten by a human who has SEEN the change above.\n"
+              f"  There is deliberately no --yes/--force. If you are an agent or a CI step: this\n"
+              f"  is not a permission problem to route around — the refusal IS the control that\n"
+              f"  keeps this {noun} a total acceptance oracle rather than something that matches\n"
+              f"  by construction.", file=out)
+        return 2
+
+    # Typed confirmation — not y/n. Typing the word is the point: it cannot be fat-fingered
+    # past, and it makes the act deliberate rather than reflexive.
+    print(f"  Type  bless {label}  to {action}, or anything else to abort.", file=out)
+    try:
+        answer = input("  > ").strip()
+    except (EOFError, KeyboardInterrupt):
+        print(f"\n[bless] aborted — {noun} unchanged.", file=out)
+        return 2
+    if answer != f"bless {label}":
+        print(f"[bless] aborted — {noun} unchanged.", file=out)
+        return 2
+    return 0
+
+
 def bless(golden_path, resolved, label, out=sys.stdout):
     """Re-bless one golden under the D-394 contract. Returns an rc — 0 wrote or was already
     current, 2 refused."""
@@ -124,28 +166,10 @@ def bless(golden_path, resolved, label, out=sys.stdout):
             print(f"  ⚠️  {dels} entr{'y' if dels == 1 else 'ies'} would be REMOVED from the "
                   f"blessed record. If that was not deliberate, answer no.\n", file=out)
 
-    # (2) non-TTY = hard refuse. Fail fast; never prompt into a pipe.
-    if not _isatty():
-        print(f"[bless] REFUSED (rc=2): re-blessing requires an interactive terminal.\n"
-              f"  D-394: a golden may only be rewritten by a human who has SEEN the diff above.\n"
-              f"  There is deliberately no --yes/--force. If you are an agent or a CI step: this\n"
-              f"  is not a permission problem to route around — the refusal IS the control that\n"
-              f"  keeps this golden a total acceptance oracle rather than something that matches\n"
-              f"  by construction.", file=out)
-        return 2
-
-    # (1) typed confirmation — not y/n. Typing the word is the point: it cannot be fat-fingered
-    # past, and it makes the act deliberate rather than reflexive.
-    print(f"  Type  bless {label}  to overwrite the blessed record, or anything else to abort.",
-          file=out)
-    try:
-        answer = input("  > ").strip()
-    except (EOFError, KeyboardInterrupt):
-        print("\n[bless] aborted — golden unchanged.", file=out)
-        return 2
-    if answer != f"bless {label}":
-        print("[bless] aborted — golden unchanged.", file=out)
-        return 2
+    # (1)+(2) the refusal + typed confirmation, via the ONE shared implementation below.
+    rc = confirm_mutation(label, "overwrite the blessed record", noun="golden", out=out)
+    if rc != 0:
+        return rc
 
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text("\n".join(str(x) for x in resolved) + "\n", encoding="utf-8")
@@ -202,6 +226,34 @@ def selftest(out=sys.stdout):
         params = set(inspect.signature(bless).parameters)
         check("bless() exposes no confirmation-bypass parameter",
               not (params & {"yes", "force", "assume_yes", "no_confirm", "batch", "interactive"}))
+
+        # The SHARED contract gets its own teeth. bless()'s refusals above exercise it only
+        # through one caller; check_tech_debt --close is the second, and a contract proven
+        # via a single call site is how the two postures diverged before TECH_DEBT-255.
+        check("confirm_mutation() non-TTY => rc=2 (the refusal, tested directly)",
+              confirm_mutation("x", "do the thing", out=open(os.devnull, "w")) == 2)
+        cm_params = set(inspect.signature(confirm_mutation).parameters)
+        check("confirm_mutation() exposes no confirmation-bypass parameter",
+              not (cm_params & {"yes", "force", "assume_yes", "no_confirm", "batch", "interactive"}))
+        # Non-vacuity of the refusal itself: it must be the TTY check doing the work, not a
+        # constant return. With a terminal faked, the same call must reach the PROMPT instead.
+        _real_isatty = globals()["_isatty"]
+        try:
+            globals()["_isatty"] = lambda: True
+            reached_prompt = False
+            import builtins
+            _real_input = builtins.input
+            def _spy(*a, **k):
+                nonlocal reached_prompt
+                reached_prompt = True
+                return "wrong answer"
+            builtins.input = _spy
+            rc_tty = confirm_mutation("x", "do the thing", out=open(os.devnull, "w"))
+            builtins.input = _real_input
+            check("confirm_mutation() with a TTY reaches the prompt and rejects a wrong phrase",
+                  reached_prompt and rc_tty == 2)
+        finally:
+            globals()["_isatty"] = _real_isatty
     return ok
 
 

@@ -34,6 +34,11 @@ import os, re, sys, subprocess, datetime
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from foxroots import ENGINE as _FOXROOTS_ENGINE   # noqa: E402  (the ONE repo-root resolver — D-375)
+# The ONE D-394 confirmation contract, shared with bless(). Imported HARD, never wrapped in a
+# try/except fallback: a soft import would silently restore write-by-default the moment it broke,
+# which is precisely the posture TECH_DEBT-255 exists to prevent. If this import fails, --close
+# must fail too.
+from bless import confirm_mutation as _confirm   # noqa: E402
 # FIXED 2026-07-20 (import-from-core lint widened to the os.path spelling): a hand-rolled
 # walk-up from __file__ resolves to the WORKSPACE through the `tools/` DIRECTORY SYMLINK.
 # This one happened to still work because it only reads workspace-side files, but it is the
@@ -138,19 +143,47 @@ def close(n, dry_run):
     open_p, closed_p = os.path.join(d, "open.md"), os.path.join(d, "closed.md")
     with open(open_p) as f:
         text = f.read()
-    m = re.search(r'(?m)^### TECH_DEBT-' + re.escape(str(n)) + r'\b', text)
+    # Zero-pad tolerant: 95 of 258 defining headings are padded, so `--close 16` errored out
+    # while `--close 016` silently WROTE — the safe spelling failing and the dangerous one
+    # succeeding is the worst possible split. One id, one meaning, either spelling.
+    d_id = int(str(n).lstrip('0') or '0')
+    m = re.search(r'(?m)^### TECH_DEBT-0*' + str(d_id) + r'\b', text)
     if not m:
         sys.exit(f"[tech-debt] TECH_DEBT-{n} not found in open.md (already closed? wrong id?)")
     nxt = re.search(r'(?m)^### TECH_DEBT-\d+\b', text[m.end():])
     end = m.end() + nxt.start() if nxt else len(text)
     block = text[m.start():end].rstrip() + "\n"
     today = datetime.date.today().isoformat()
-    stamped = re.sub(r'(?m)^(status:\s*).*$', r'\1closed', block, count=1)
+    # The ledger spells status TWO ways: a bare `status: open` line, and inline in the bold id
+    # row (`· **status:** open ·`). Stamping only the bare form moved bold entries to closed.md
+    # still reading `status: open` — a closed entry that every status query still counts as open.
+    stamped, hits = re.subn(r'(?m)^(status:\s*)\S+', r'\1closed', block, count=1)
+    if not hits:
+        stamped, hits = re.subn(r'(\*\*status:\*\*\s*)\S+', r'\1closed', block, count=1)
+    if not hits:
+        sys.exit(f"[tech-debt] TECH_DEBT-{n}: no status field found in either spelling — "
+                 f"refusing to move an entry whose status cannot be stamped.")
     stamped = stamped.rstrip() + f"\n- **Closed:** {today} (moved open → closed via check_tech_debt.py --close)\n"
     if dry_run:
         print(f"[tech-debt] DRY-RUN would move TECH_DEBT-{n} (open → closed.md), stamping closed:{today}:\n")
         print(block)
         return 0
+
+    # D-394 confirmation — this MUTATES two ledgers and there is no undo but git. It previously
+    # wrote by default with no diff and no prompt: the same posture TECH_DEBT-255 was opened
+    # against for check_identifier_retirement --update, which was migrated here while THIS
+    # sibling writer went unenumerated. Shown-then-confirmed, via the one shared contract.
+    print(f"[tech-debt] TECH_DEBT-{d_id} would move open.md → closed.md, stamped closed:{today}.")
+    print(f"  the entry being moved ({len(block.splitlines())} lines):\n")
+    for ln in block.splitlines()[:12]:
+        print(f"    {ln}")
+    if len(block.splitlines()) > 12:
+        print(f"    … {len(block.splitlines()) - 12} more lines")
+    print("")
+    rc = _confirm(f"close-{d_id}", "move this entry to closed.md", noun="ledger")
+    if rc != 0:
+        return rc
+
     with open(open_p, "w") as f:
         f.write(text[:m.start()] + text[end:])
     with open(closed_p, "a") as f:

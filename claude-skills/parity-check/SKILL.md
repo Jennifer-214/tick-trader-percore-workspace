@@ -599,6 +599,22 @@ are intact:
 
 ## Map-update suggestions (post-audit)
 
+## Section F — CROSS-TOOL EMIT-SITE ENUMERATION (added 2026-07-19 — meta-discipline M2)
+
+Fires whenever the audited change touches a **wire format, a persisted body, or an HMAC-signed payload**. Engine code is NOT the whole emit surface: a format is also written by processes that never link the engine, and those drift silently because no engine test covers them.
+
+**Enumerate EVERY writer of the format, not just the engine one:**
+
+1. **In-engine emitters** — the obvious ones (`Persist`, snapshot writers, stamp emit).
+2. **CLI tools** — anything under `tools/` that writes or rewrites the format (`rg -l '<format-marker>' tools/`).
+3. **Training / offline scripts** — model-stamp writers, feature-scaler emitters, any Python that produces an artifact the engine later READS.
+4. **Recording / replay tools** — tick and depth recorders, replay fixture generators.
+5. **Test fixtures + goldens** — a golden encoding the OLD layout turns a real break into a green run (the vacuous-guard shape).
+
+For each: name the file, confirm it round-trips against the SAME canonical writer, and state whether it needs a migration. **An emitter you cannot name is an emitter you have not checked.**
+
+→ `DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md` **Layer 7** · `DESIGN_PHILOSOPHY.md` § 11.5 **M2** · H9. *(§ 11.5's M2 row claimed a `/parity-check` amendment here since codification. It had never landed — the skill had zero occurrences of `cross-tool` / `emit-site`. Found by the `E.1.2.B` close-out sweep.)*
+
 Same as /readiness:
 
 - **CODE_MAP.md regen** if audit found new functions to add

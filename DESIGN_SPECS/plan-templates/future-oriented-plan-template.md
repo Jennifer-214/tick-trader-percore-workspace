@@ -236,6 +236,26 @@ For each NEW framework infrastructure proposed by this ship (X-macro registry / 
 
 ---
 
+## Wire-format / persisted-body emit surface (M2 — REQUIRED when the ship touches a wire format, a persisted body, or an HMAC-signed payload; omit the section entirely otherwise)
+
+**Format(s) touched:** `<name>` — the canonical writer at `<file:line>`.
+
+**EVERY emitter enumerated** (engine code is not the whole surface — a format is also written by processes that never link the engine, and those drift silently because no engine test covers them):
+
+| # | Emitter | File | Links the engine? | Migration needed? |
+|---|---|---|---|---|
+| 1 | in-engine writer | | yes | |
+| 2 | CLI tool (`rg -l '<marker>' tools/`) | | no | |
+| 3 | training / offline script | | no | |
+| 4 | recording / replay tool | | no | |
+| 5 | test fixture or golden encoding the layout | | n/a | |
+
+**An emitter you cannot name is an emitter you have not checked.** A golden or fixture still encoding the OLD layout turns a real break into a green run — enumerate those explicitly rather than assuming the suite covers them.
+
+**Byte-preservation statement:** how H9 is held across the change (canonical writer unchanged / all emitters migrated together / epoch break declared with the regeneration step named).
+
+→ `DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md` **Layer 7** · `/parity-check` **Section F** · `DESIGN_PHILOSOPHY.md` § 11.5 **M2** · H9. *(Section added 2026-07-19 — § 11.5's M2 row had claimed this template carried a wire-format section since codification; it never did. Found by the `E.1.2.B` close-out sweep.)*
+
 ## Tests changed
 
 Per `feedback_test_change_enumeration_per_plan_body` (M7 discipline). Required for plan bodies where the Coding sequence section touches files in `tests/`. `/readiness` Check 45 verifies the section exists + 3 sub-categories enumerated.

@@ -425,6 +425,16 @@ When enumerating consumer sites for a struct-gen migration or type-unification m
 
 ## Cross-references
 
+## COHORT-PARITY verification (added 2026-07-19 — meta-discipline M1)
+
+When the traced surface is a registry / descriptor / X-macro table that has **sister registries** (a cohort sharing a shape — same column set, same consumer pattern, same auto-flow), the trace is INCOMPLETE until the cohort is enumerated:
+
+1. **Enumerate the cohort** — every sister sharing the shape, by name and file:line. Do not assert "the others are the same"; open each (`feedback_enumerate_set_before_categorical_claim` / **M9**).
+2. **Verify shape parity AT HEAD** — a plan citing a column on a sister registry must be checked against the sister's CURRENT definition, not its remembered one. Sister registries drift independently, and a column that existed when the pattern was written may be gone.
+3. **Name the migration disposition per sibling** — if the traced registry's signature changes, each cohort sibling is MIGRATED, DEFERRED-with-rationale, or NOT-APPLICABLE-with-reason. A silent omission is the Class-14 sister-registry-shape-drift instance M1 exists to prevent.
+
+`/readiness` Check 36 covers the plan-time half; this covers the trace-time half. → `DESIGN_SPECS/framework-patterns/canonical-sister-extension-discipline.md` § Temporal evolution + cohort migration · `DESIGN_PHILOSOPHY.md` § 11.5 **M1**. *(§ 11.5's M1 row claimed a `/trace-deps` cohort-parity amendment since codification; it had never landed. Found by the `E.1.2.B` close-out sweep.)*
+
 - `/readiness` Check 19 — calls this skill for deep dives
 - `/parity-check` Section L — post-coding sister; greps all
   callers of newly-extended fields

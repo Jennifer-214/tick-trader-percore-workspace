@@ -21,6 +21,7 @@ Each pattern has:
 - **Detection** — exact grep / script to find new instances
 - **Known instances** — file:line of past occurrences + commit that fixed
 - **Prevention** — what to add to readiness/dust skills or to tests
+- **False-positive surface** — REQUIRED (meta-discipline **M3**; mandate added 2026-07-19). The legitimate sibling patterns that MATCH this class's textual shape but are semantically DIFFERENT, and how to tell them apart. A class without this field generates recurrence reports against correct code, and a detector that cries wolf gets ignored — which costs more than the class it catches. *(Practice has been live since class-25; § 11.5's M3 row claimed this template required it, but the requirement was never actually written here. Found by the `E.1.2.B` close-out codification sweep. Classes 1-24 predate the field — backfill is separate, tracked TECH_DEBT-251.)*
 
 When a new instance is found, add it under "Known instances" with
 the fix commit. When a new class emerges (>2 fixes of the same

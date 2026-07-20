@@ -81,15 +81,97 @@ AUTO_WRITE_SURFACES = [
 #                     nothing. Twice in a row they simply never ran, and both times the only
 #                     detector was operator pushback.
 
+# A VOLATILE noun is one whose count changes as work proceeds. Matching is SHAPE-BASED — a digit
+# adjacent to one of these nouns — rather than a list of phrases I happened to have seen.
+#
+# WHY THE REDESIGN. The first version enumerated exact phrases (`\d+ commits`, `\d+ tools enrolled`,
+# ...) drawn from the specific failures of one session. Measured against the 9 findings an independent
+# review actually raised against that same session's handoff, it caught **1**. It missed `22-commit`
+# (hyphen, singular) while matching `22 commits`; it missed `3 of 7 deliverables`, `405 sentinels`,
+# `837-id`, `70% false`. Enumerating instances instead of the shape is the hardcoded-trigger
+# anti-pattern, and a guard built from the last failure catches only the last failure.
+VOLATILE_NOUNS = (
+    r"commits?|tools?|ids?|findings?|entries|entry|sentinels?|deliverables?|checks?|"
+    r"violations?|dangling|specs?|memories|memory|skills?|"
+    r"tests?|files?|sites?|blocks?|rows?|ledgers?|gates?|HARD|ADV"
+)
 VOLATILE_COUNT_PATTERNS = [
-    (r"\b\d+\s+commits\b",          "commit count"),
-    (r"\b\d+\s+tools?\s+enrolled\b", "tools-enrolled count"),
-    (r"\b\d+\s+HARD\b",            "HARD-check count"),
-    (r"\b\d+\s+ADV\b",             "ADV-check count"),
-    (r"\b\d+\s+baselined\b",       "baseline size"),
-    (r"\b\d+\s+ids\s+indexed\b",   "id-index size"),
+    # `24 commits` · `22-commit` · `837-id` · `405 sentinels` — digit ADJACENT to a volatile noun,
+    # hyphen or space, singular or plural. This one pattern replaces the whole enumerated list.
+    (rf"(?<![-\w.])\d+[\s-]+(?:{VOLATILE_NOUNS})\b", "volatile count (digit + volatile noun)"),
+    # `3 of 7 deliverables` · `3 of 7` — the progress tally. THE most dangerous shape: it stays
+    # numerically correct while its MEMBERSHIP rotates, so no proofread catches it (D-402).
+    (r"\b\d+\s+of\s+\d+\b", "progress tally (`N of M`) — name the members instead"),
+    # `up from 400` · `400 → 405` · `145→141` — a delta invites arithmetic that goes stale on BOTH
+    # sides. The observed instance asserted `400 + 19 = 405`.
+    (r"\bup\s+from\s+\d+\b|\b\d+\s*(?:→|->)\s*\d+\b", "count delta"),
+    # `70% false` · `84% of the deliverable` — a percentage is a tally with the denominator hidden,
+    # which is how one got transplanted onto an unrelated measurement.
+    (r"\b\d+(?:\.\d+)?%", "percentage (a tally with a hidden denominator)"),
+    # `(e)→(f)→(g)→(d)` — a volatile ORDER carrying no digits, so every numeric pattern above
+    # misses it. It went stale the moment (e) landed and was replicated into three documents.
+    (r"\([a-z]\)\s*(?:→|->)\s*\([a-z]\)", "deliverable-order sequence"),
 ]
+
+# CATEGORICAL ABSENCE claims — not counts at all, and the class that produced the worst finding.
+# A handoff asserted 8 ids had "no content anywhere" and escalated them to the operator; 3 of 3
+# searched had recoverable content on disk. What was VERIFIED was "no defining row in any ledger
+# FILE"; what was WRITTEN was "no content anywhere". Promoting a narrow verified fact to a broad
+# claim is AR-15, and here it would have written permanent falsehoods into an append-only ledger.
+#
+# The check does not ban the claim — it requires the claim to CARRY ITS SEARCH. An absence is only
+# a fact relative to a named search space (M9: enumerate the set before a categorical claim).
+ABSENCE_CLAIM_PATTERNS = [
+    (r"\bno\s+\w+\s+anywhere\b",                    "absence claim: `no ... anywhere`"),
+    (r"\bexists?\s+in\s+NO\b|\bin\s+no\s+\w+\s+file\b", "absence claim: `exists in NO ...`"),
+    (r"\bverified\s+absent\b",                       "absence claim: `verified absent`"),
+    (r"\bnothing\s+(?:found|exists|remains)\b",        "absence claim: `nothing found`"),
+    (r"\bunrecoverable\b|\bcontent\s+is\s+lost\b",   "absence claim: `unrecoverable`"),
+    (r"\bnever\s+(?:existed|written|recorded)\b",      "absence claim: `never existed`"),
+]
+# Evidence that an absence claim was actually SEARCHED rather than assumed. Any one of these
+# adjacent to the claim discharges it.
+SEARCH_EVIDENCE = (r"\brg\b|\bgrep\b|\bsearched\b|--check|\bglob\b|`plans/|"
+                   r"\benumerat|\bre-derive|\bscanned\b")
 JUDGMENT_CHECKS = ["2", "3", "5", "6", "7", "9", "10", "12"]
+
+
+# Quoting a stale value as HISTORY is legitimate and necessary — a postmortem that cannot restate
+# what the document used to say is not a postmortem. Two discharges, both deliberately narrow:
+#   · a markdown blockquote (`> ...`) — quoting, not asserting
+#   · an explicit `<!-- VOLATILE-OK: reason -->` on the line or the one before it
+# A blanket SKIP_ env var would silence the whole check; these silence one instance and demand a
+# reason, which is the difference between an escape hatch and an off switch.
+DISCHARGE_MARKER = re.compile(r"<!--\s*VOLATILE-OK:", re.I)
+# A whole POSTMORTEM section legitimately restates stale values throughout — "it said 3 of 7 while
+# its membership rotated" is the finding, not a defect. Per-line markers on twenty such lines is
+# noise that trains the writer to stop reading them, so the discharge is available at SECTION scope:
+# `<!-- VOLATILE-OK-SECTION: reason -->` holds until the next markdown heading. Still narrow (it
+# ends at a heading, and it demands a reason) — unlike an env-var bypass, which ends nowhere.
+SECTION_DISCHARGE = re.compile(r"<!--\s*VOLATILE-OK-SECTION:", re.I)
+
+
+def _in_discharged_section(prose, pos):
+    """True when the most recent of {section-discharge marker, heading} is the marker."""
+    head = prose.rfind("\n#", 0, pos)
+    mark = max(m.start() for m in SECTION_DISCHARGE.finditer(prose[:pos])) \
+        if SECTION_DISCHARGE.search(prose[:pos]) else -1
+    return mark > head
+
+
+def _discharged(prose, pos):
+    """True when the match sits in a blockquote or carries an explicit VOLATILE-OK marker."""
+    line_start = prose.rfind("\n", 0, pos) + 1
+    line_end = prose.find("\n", pos)
+    line = prose[line_start:line_end if line_end != -1 else len(prose)]
+    if line.lstrip().startswith(">"):
+        return True
+    if DISCHARGE_MARKER.search(line):
+        return True
+    if _in_discharged_section(prose, pos):
+        return True
+    prev_start = prose.rfind("\n", 0, line_start - 1) + 1
+    return bool(DISCHARGE_MARKER.search(prose[prev_start:line_start]))
 
 
 def _strip_code_fences(text):
@@ -116,11 +198,34 @@ def check_handoff_quality(handoff: Path, quiet=False):
 
     for pat, what in VOLATILE_COUNT_PATTERNS:
         for m in re.finditer(pat, prose):
+            if _discharged(prose, m.start()):
+                continue
             line_no = prose[:m.start()].count("\n") + 1
             findings.append(("MED",
                 f"volatile {what} in prose: {m.group(0)!r} (~prose line {line_no}) — anchor it to a "
                 f"SHA range or move it into a re-derive block; a count is stale on the commit that "
                 f"records it"))
+
+    # ── CATEGORICAL ABSENCE claims must carry their search (AR-15 / M9) ────────────────────────
+    # Highest-severity class in this tool: an unsearched absence claim does not merely go stale, it
+    # sends the reader to act on something false. The instance that motivated it would have written
+    # "content unrecoverable" tombstones over content that was sitting in the repo.
+    for pat, what in ABSENCE_CLAIM_PATTERNS:
+        for m in re.finditer(pat, prose, re.I):
+            if _discharged(prose, m.start()):
+                continue
+            line_no = prose[:m.start()].count("\n") + 1
+            # Discharge the claim if the SAME paragraph shows the search that backs it.
+            para_start = prose.rfind("\n\n", 0, m.start())
+            para_end = prose.find("\n\n", m.end())
+            para = prose[para_start if para_start != -1 else 0:
+                         para_end if para_end != -1 else len(prose)]
+            if re.search(SEARCH_EVIDENCE, para, re.I):
+                continue
+            findings.append(("HIGH",
+                f"{what} with NO search shown: {m.group(0)!r} (~prose line {line_no}) — an absence "
+                f"is only a fact relative to a NAMED search space. State what was searched "
+                f"(`rg`, the glob, the file set), or the reader inherits an assumption as a fact"))
 
     if not re.search(r"re-?derive", raw, re.I):
         findings.append(("HIGH",
@@ -278,6 +383,51 @@ def selftest():
         missing = Path(td) / "gone.md"
         chk("an ABSENT handoff is a HIGH finding, not a silent pass",
             any(s == "HIGH" for s, _ in check_handoff_quality(missing)))
+
+        # ── REGRESSION LOCK: the 9 findings an independent review raised against a handoff that
+        # this tool had already passed. The first pattern set caught ONE of them. These are the
+        # acceptance oracle — a future simplification that drops coverage fails HERE, loudly.
+        oracle = [
+            ("3 of 7 deliverables done",                "progress tally"),
+            ("remaining order is (e)->(f)->(g)->(d)",   "deliverable-order sequence"),
+            ("A 22-commit session shipped",             "hyphenated commit count"),
+            ("now sees all 405 sentinels, up from 400", "count delta"),
+            ("Check 14 was 70% false positives",        "percentage"),
+            ("8 dangling ids, each VERIFIED",           "truncated-scope count"),
+            ("these ids have no content anywhere",      "unsearched absence claim"),
+            ("the 837-id set golden",                   "hyphenated id count"),
+            ("98 tools enrolled",                       "the count that survived 2 self-sweeps"),
+        ]
+        pats = [(re.compile(pt, re.I), w) for pt, w in
+                VOLATILE_COUNT_PATTERNS + ABSENCE_CLAIM_PATTERNS]
+        hit = [s for s, _ in oracle if any(r.search(s) for r, _ in pats)]
+        chk(f"REGRESSION LOCK: all 9 real review findings still caught (got {len(hit)}/9)",
+            len(hit) == 9)
+
+        # FALSE-POSITIVE control. Over-broad patterns are how a guard gets bypassed wholesale,
+        # and a bypassed guard protects nothing — so the clean cases matter as much as the dirty.
+        clean = ["the fix removes 2 moving parts", "H21 is the invariant here",
+                 "see D-402 and TECH_DEBT-250", "engine HEAD is 4c076ed",
+                 "window 2167d9d..HEAD", "Check 14 PASS", "AR-8 applies"]
+        clean += ["the D-394 gate is TTY-only", "a 1-line forwarding tombstone",
+                  "TECH_DEBT-250 is closed", "H22 scale-invariance", "Check 14 indexed it"]
+        fp = [s for s in clean if any(r.search(s) for r, _ in pats)]
+        chk(f"no FALSE POSITIVES on anchors/ids/invariants (got {fp})", not fp)
+        chk("an ID's digits are an ANCHOR, never a tally (D-394 / TECH_DEBT-250 / H22)",
+            not any(r.search("the D-394 gate and TECH_DEBT-250 and H22") for r, _ in pats))
+
+        chk("a blockquote DISCHARGES (quoting history is not asserting it)",
+            _discharged("> it used to say 24 commits", 20))
+        chk("an explicit VOLATILE-OK marker DISCHARGES",
+            _discharged("<!-- VOLATILE-OK: postmortem -->\nit said 24 commits", 45))
+        chk("a VOLATILE-OK-SECTION discharges until the next heading",
+            _discharged("<!-- VOLATILE-OK-SECTION: postmortem -->\nit said 24 commits", 45))
+        chk("a section discharge ENDS at the next heading (scope is bounded)",
+            not _discharged("<!-- VOLATILE-OK-SECTION: pm -->\nx\n\n# New\n\nnow 24 commits", 48))
+        chk("plain prose is NOT discharged (else the hatch is an off switch)",
+            not _discharged("plain prose says 24 commits", 20))
+        chk("an absence claim SHOWING its search is discharged",
+            not any("absence" in msg for _, msg in check_handoff_quality(good)))
     return ok
 
 

@@ -1,6 +1,6 @@
 ---
 type: framework-pattern
-stage: 2-draft
+stage: 3-first-canonical
 version: 1.0
 established: 2026-07-19
 tags: [framework-pattern, dev-plane, ssot, doc-pipeline, ai-plane]
@@ -11,7 +11,7 @@ applies_at_skills: []
 
 # Standardized tool-I/O — the envelope + the uniform payload (the machine serialization of the tag system)
 
-**Established:** 2026-07-19 (decision-log **D-376** envelope+payload, **D-377** `.toolbus/`; E.1.2.B `0.1.5`). **Stage: 2-DRAFT** — the envelope shape is locked as the direction; the exact payload typing is validated at the `0.1.5` dive against all enumerated payloads. First canonical: `foxtag grammar --json`.
+**Established:** 2026-07-19 (decision-log **D-376** envelope+payload, **D-377** `.toolbus/`; E.1.2.B `0.1.5`). **Stage: 3-FIRST-CANONICAL** (promoted 2026-07-19 — `0.1.5` SHIPPED the first canonical and proved it byte-identical across the C++ and Python readers, incl. key order; the payload typing was validated at the dive and locked by D-380/D-384). First canonical: `foxtag grammar --json`.
 
 ## Problem
 

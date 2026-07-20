@@ -65,7 +65,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/concurrency-patterns/structured-audit-log-pattern.md`
 
-### audit-methodology (39 files)
+### audit-methodology (40 files)
 
 - `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md`
 - `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md`
@@ -76,6 +76,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/audit-methodologies/post-implementation-verification-v-class.md`
 - `DESIGN_SPECS/audit-methodologies/static-latency-path-conformance-analysis.md`
 - `DESIGN_SPECS/meta-disciplines/acceptance-oracle-totality-before-delegation.md`
+- `DESIGN_SPECS/meta-disciplines/advertised-capability-never-exercised.md`
 - `DESIGN_SPECS/meta-disciplines/audit-driven-sub-sprint-trajectory-verification.md`
 - `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/definition-of-done-and-armed-scout-verification.md`
@@ -204,9 +205,10 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/hierarchical-config-with-per-node-folders.md`
 
-### ci-tooling (5 files)
+### ci-tooling (6 files)
 
 - `DESIGN_SPECS/framework-patterns/isolated-per-struct-layout-probe.md`
+- `DESIGN_SPECS/meta-disciplines/advertised-capability-never-exercised.md`
 - `DESIGN_SPECS/meta-disciplines/differential-to-absolute-gate-contract-widening.md`
 - `DESIGN_SPECS/meta-disciplines/struct-change-cascade-impact-tooling.md`
 - `DESIGN_SPECS/refactor-patterns/rename-cascade-enumeration-tooling.md`
@@ -410,7 +412,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/dynamic-library-strategy-loading-pattern.md`
 - `DESIGN_SPECS/framework-patterns/strategy-hot-reload-via-dlopen-pattern.md`
 
-### doc-discipline (42 files)
+### doc-discipline (43 files)
 
 - `DESIGN_SPECS/audit-methodologies/audit-report-format.md`
 - `DESIGN_SPECS/doc-disciplines/categorical-triggers-in-always-loaded-docs.md`
@@ -424,6 +426,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/framework-composition-overview.md`
 - `DESIGN_SPECS/framework-patterns/isolated-per-struct-layout-probe.md`
 - `DESIGN_SPECS/ledger-templates/ledger-entry-templates.md`
+- `DESIGN_SPECS/meta-disciplines/advertised-capability-never-exercised.md`
 - `DESIGN_SPECS/meta-disciplines/body-content-enumeration-at-plan-time-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/doc-frontmatter-convention.md`
@@ -514,8 +517,9 @@ This file is a snapshot for static browsing.
 - `claude-skills/ml-audit/SKILL.md`
 - `claude-skills/test-strength-audit/SKILL.md`
 
-### false-green (1 files)
+### false-green (2 files)
 
+- `DESIGN_SPECS/meta-disciplines/advertised-capability-never-exercised.md`
 - `DESIGN_SPECS/meta-disciplines/differential-to-absolute-gate-contract-widening.md`
 
 ### filesystem-layout (1 files)
@@ -1537,10 +1541,11 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/concurrency-patterns/userspace-tls-pattern.md`
 
-### verification (5 files)
+### verification (6 files)
 
 - `DESIGN_SPECS/audit-methodologies/post-implementation-verification-v-class.md`
 - `DESIGN_SPECS/meta-disciplines/acceptance-oracle-totality-before-delegation.md`
+- `DESIGN_SPECS/meta-disciplines/advertised-capability-never-exercised.md`
 - `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/differential-to-absolute-gate-contract-widening.md`
 - `DESIGN_SPECS/meta-disciplines/mechanical-verification-of-derived-code-facts.md`
@@ -1762,7 +1767,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/runtime-mutable-vs-boot-time-config-pattern.md`
 
-### ci-tooling (24 files)
+### ci-tooling (25 files)
 
 - `DESIGN_SPECS/audit-methodologies/audit-report-format.md`
 - `DESIGN_SPECS/audit-methodologies/static-latency-path-conformance-analysis.md`
@@ -1776,6 +1781,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/registry-coverage-ci-check-pattern.md`
 - `DESIGN_SPECS/framework-patterns/standardized-tool-io-envelope-and-payload.md`
 - `DESIGN_SPECS/meta-disciplines/acceptance-oracle-totality-before-delegation.md`
+- `DESIGN_SPECS/meta-disciplines/advertised-capability-never-exercised.md`
 - `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/canonical-sister-extension-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/definition-of-done-and-armed-scout-verification.md`
@@ -1829,7 +1835,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/dev-vs-production-thread-topology-pattern.md`
 
-### doc-pipeline (11 files)
+### doc-pipeline (12 files)
 
 - `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md`
 - `DESIGN_SPECS/doc-disciplines/in-code-documentation-schema.md`
@@ -1839,6 +1845,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/isolated-per-struct-layout-probe.md`
 - `DESIGN_SPECS/framework-patterns/one-action-toolchain-update-orchestrator.md`
 - `DESIGN_SPECS/framework-patterns/standardized-tool-io-envelope-and-payload.md`
+- `DESIGN_SPECS/meta-disciplines/advertised-capability-never-exercised.md`
 - `DESIGN_SPECS/meta-disciplines/sister-cohort-amendment-completeness-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/structural-enforcement-when-memory-insufficient.md`
 - `claude-skills/capture-audit/SKILL.md`
@@ -2467,13 +2474,14 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/native-tui-via-mmap-readonly-pattern.md`
 
-### test-infrastructure (11 files)
+### test-infrastructure (12 files)
 
 - `DESIGN_SPECS/audit-methodologies/audit-report-format.md`
 - `DESIGN_SPECS/data-disciplines/cpp17-inline-variable-for-header-shared-state.md`
 - `DESIGN_SPECS/doc-disciplines/in-code-documentation-schema.md`
 - `DESIGN_SPECS/framework-patterns/registry-coverage-ci-check-pattern.md`
 - `DESIGN_SPECS/meta-disciplines/acceptance-oracle-totality-before-delegation.md`
+- `DESIGN_SPECS/meta-disciplines/advertised-capability-never-exercised.md`
 - `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/definition-of-done-and-armed-scout-verification.md`
 - `DESIGN_SPECS/meta-disciplines/differential-to-absolute-gate-contract-widening.md`

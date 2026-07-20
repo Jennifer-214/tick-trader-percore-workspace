@@ -4,7 +4,7 @@ stage: 3-first-canonical
 established: 2026-07-17
 tags: [audit-methodology, verification, structural-enforcement, test-infrastructure, doc-discipline]
 surface: [ci-tooling, test-infrastructure]
-sister_specs: [meta-disciplines/mechanical-verification-of-derived-code-facts.md, audit-methodologies/static-latency-path-conformance-analysis.md, meta-disciplines/structural-enforcement-when-memory-insufficient.md, meta-disciplines/differential-to-absolute-gate-contract-widening.md]
+sister_specs: [meta-disciplines/mechanical-verification-of-derived-code-facts.md, audit-methodologies/static-latency-path-conformance-analysis.md, meta-disciplines/structural-enforcement-when-memory-insufficient.md, meta-disciplines/differential-to-absolute-gate-contract-widening.md, meta-disciplines/advertised-capability-never-exercised.md]
 sister_docs:
   - DOCS/RECURRING_BUG_PATTERNS.md   # Class 51 (vacuously-green guard) — the anti-pattern this discipline prevents
   - tools/goldens/README.md          # the golden / exception-baseline / ratchet / rules taxonomy, at the point of confusion (D-395: enrolled here rather than re-minted as a spec)

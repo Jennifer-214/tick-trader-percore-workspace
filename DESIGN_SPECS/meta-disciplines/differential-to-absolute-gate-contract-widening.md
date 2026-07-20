@@ -4,7 +4,7 @@ stage: 3-first-canonical
 established: 2026-07-20
 tags: [audit-methodology, verification, structural-enforcement, ci-tooling, false-green]
 surface: [ci-tooling, test-infrastructure]
-sister_specs: [meta-disciplines/calibration-corpus-non-vacuity-discipline.md, meta-disciplines/mechanical-verification-of-derived-code-facts.md, meta-disciplines/acceptance-oracle-totality-before-delegation.md]
+sister_specs: [meta-disciplines/calibration-corpus-non-vacuity-discipline.md, meta-disciplines/mechanical-verification-of-derived-code-facts.md, meta-disciplines/acceptance-oracle-totality-before-delegation.md, meta-disciplines/advertised-capability-never-exercised.md]
 sister_docs:
   - DOCS/RECURRING_BUG_PATTERNS.md   # Class 51 — a widened differential gate is a NEW way to be vacuously green
 applications:

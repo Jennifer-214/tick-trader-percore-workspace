@@ -109,4 +109,4 @@ After the enumerate-first grounding, the substrate shape is LOCKED (decision **D
 - Sister (prose): `in-code-documentation-schema.md` (the in-code tag serialization — the sibling of this machine serialization) · `doc-intelligence-toolchain-architecture.md` (the one-core thesis) · `toolchain-semantic-versioning.md` (`schema_version` / `producer.version`) · `TECH_DEBT-176` (tool-composition / unified runner, the consumer of this substrate) · the decoupling endgame's `headless-engine-viewer-split-pattern` (the engine sibling of `.toolbus/`).
 - Applied at: E.1.2.B `0.1.5`.
 
-**End — Stage 2 DRAFT.** Reciprocal `sister_specs` links + index enrollment land at first-canonical (`0.1.5`).
+**End — Stage 3 FIRST-CANONICAL** (promoted 2026-07-19; footer corrected 2026-07-20 — the promotion had updated the frontmatter and the header line but left this footer reading `Stage 2 DRAFT`, the same header-only shape as the plan body's version bump). First canonical: `foxtag grammar --json`, shipped at `0.1.5` and proven byte-identical across the C++ and Python readers incl. key order.

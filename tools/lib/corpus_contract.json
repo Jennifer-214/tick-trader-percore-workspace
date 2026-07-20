@@ -53,7 +53,8 @@
       "follow_dir_symlinks": "false",
       "extra_roots": ["schema_golden"],
       "membership_golden": "goldens/corpus--PROFILE.txt",
-      "_expected_at_contract_v1": "202 = 197 engine-walk (incl. the 3 file-symlinked DOCS templates) + 5 schema_golden"
+      "_expected_at_contract_v1": "200 = 195 engine-walk (incl. the 3 file-symlinked DOCS templates) + 5 schema_golden",
+      "_expected_is_ADVISORY_not_gated": "This counts the SCAN population, which is gitignore-blind by design (D-393 pt 2) and therefore includes UNTRACKED files that come and go. It is documentation, NOT a gate — the gate is `membership_golden`, which pins the git-tracked PIN population and is stable. CORRECTED 2026-07-20: read 202 until two compile-probe scratch files (`tmpfsvq5cyu.cpp`, `tmpo0ujx6rw/probe.cpp`) were deleted from the engine root, at which point the true walk was 195+5=200. That is D-396's scratch-contamination defect surviving in the SCAN half after being fixed in the PIN half — the pin was re-blessed tracked-only, this field was not re-measured. Do not treat a mismatch here as a failure; re-measure it, or expect it to drift again the next time a probe is interrupted."
     },
     "derived_facts": {
       "_use": "check_cache_layout.py · check_register_fit.py · check_schema_version.py — COMPILED reality only. STRICT SUBSET of `validate`.",
@@ -64,7 +65,7 @@
       "follow_dir_symlinks": "false",
       "extra_roots": [],
       "membership_golden": "goldens/corpus--PROFILE.txt",
-      "_expected_at_contract_v1": "194 = 197 engine-walk minus the 3 DOCS templates",
+      "_expected_at_contract_v1": "192 = 195 engine-walk minus the 3 DOCS templates (ADVISORY, not gated — see the same field under `validate`)",
       "_why_the_extra_exclusions_are_LOAD_BEARING": "NOT cosmetic. check_cache_layout.py:442-446 documents it in-source: DOCS/ and schema_golden hold ILLUSTRATIVE [STRUCT] [DERIVED] on non-compiled copy-source. Measured: flatten these into `validate` and the STANDING-CI cache-layout gate REDs immediately — [size-drift] ExecutionCore: [SIZE] says 192B but real sizeof = 68352B; CfgFieldDescriptor 128B vs 104B. The trap: the natural-looking fix is refreshing those tags, which writes 68352B into a COPY-PASTE TEMPLATE and propagates a wrong derived fact into every future conversion — Class-18 through the front door. This profile split is the guard. DO NOT collapse it as over-engineering. (C-396 item 1.)"
     }
   },

@@ -13,7 +13,14 @@ import subprocess
 import sys
 import tempfile
 
-REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from foxroots import ENGINE as _FOXROOTS_ENGINE   # noqa: E402  (the ONE repo-root resolver — D-375)
+# FIXED 2026-07-20 (import-from-core lint widened to the os.path spelling): a hand-rolled
+# walk-up from __file__ resolves to the WORKSPACE through the `tools/` DIRECTORY SYMLINK.
+# This one happened to still work because it only reads workspace-side files, but it is the
+# same latent shape that broke three sibling tools outright — so it migrates rather than
+# getting grandfathered (the baseline is meant to SHRINK).
+REPO = str(_FOXROOTS_ENGINE)
 GUARD = os.path.join(REPO, "tools", "check_tools_inventory.py")
 fail = 0
 

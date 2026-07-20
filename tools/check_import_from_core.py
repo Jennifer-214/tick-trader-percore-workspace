@@ -37,8 +37,26 @@ SELF_EXEMPT = {"foxroots.py", "check_import_from_core.py"}
 # ROOT / REPO / MEMORY (+ _ENGINE / ENGINE_ROOT …). Does NOT match a bare `Path(__file__).parent`
 # (own-dir / sys.path setup — legit).
 ROLL_OWN_ROOT = re.compile(
-    r"^\s*_?[A-Za-z]*(?:ENGINE|WORKSPACE|ROOT|REPO|MEMORY)[A-Za-z_]*\s*=.*Path\(\s*__file__\s*\).*parent\s*\.\s*parent"
+    r"^\s*_?[A-Za-z]*(?:ENGINE|WORKSPACE|ROOT|REPO|MEMORY)[A-Za-z_]*\s*=.*"
+    r"(?:"
+    r"Path\(\s*__file__\s*\).*parent\s*\.\s*parent"          # pathlib spelling
+    r"|"
+    r"os\.path\.dirname\s*\(\s*os\.path\.dirname\s*\("       # os.path: nested dirname
+    r"|"
+    r"os\.path\.join\s*\(\s*os\.path\.dirname\s*\(\s*__file__\s*\)\s*,\s*['\"]\.\."  # os.path: join with ".."
+    r")"
 )
+# ⚠️ WIDENED 2026-07-20 to cover the os.path SPELLING. The pattern previously matched only the
+# pathlib form, so the class it exists to close was structurally open on the other half of the
+# language: FOUR tools rolled their own root via os.path and the lint reported "no NEW violations"
+# throughout. Three of them were MEASURABLY BROKEN — invoked through the `tools/` DIRECTORY
+# SYMLINK they resolved to the WORKSPACE and died on the first engine source they read (rc=2 via
+# the workspace path vs rc=0 via the engine path), including check_latency_path_conformance,
+# a HARD pre-commit gate, and check_identifier_retirement, the H21 Knight-Capital guard.
+# This is the AR-7 shape — structural-pattern false-completeness: the guard was real, its REACH
+# was not, and "the class is structurally closed" was true only of the spelling someone thought
+# to write a regex for. A detector that covers one syntactic variant of a two-variant language
+# feature has not closed a class; it has closed a dialect.
 # VIOLATION 2 — a hardcoded absolute repo path ($HOME-baked → dies on any clone / grid node).
 HARDCODED_ABS = re.compile(r"""Path\(\s*['"]/(?:home|Users|root)/""")
 
@@ -108,14 +126,30 @@ def selftest():
     ok = True
     bad_root = "ENGINE = Path(__file__).absolute().parent.parent\n"
     bad_abs = 'WORKSPACE = Path("/home/someone/repo")\n'
+    # os.path SPELLINGS — the half this lint was blind to until 2026-07-20. Four real tools rolled
+    # their own root this way while the lint reported "no NEW violations", and three of them were
+    # measurably broken through the `tools/` symlink. Both os.path forms get a planted case, so the
+    # widening is PROVEN rather than merely written.
+    bad_ospath_nested = "ENGINE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))\n"
+    bad_ospath_join = 'REPO_ROOT = os.environ.get("X") or os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))\n'
+    # Own-DIR resolution (no walk-up) stays LEGIT — it is how a tool finds its own siblings, and
+    # flagging it would make the lint noisy enough to get bypassed.
+    good_owndir = "HERE = os.path.dirname(os.path.abspath(__file__))\n"
     good = "from foxroots import ENGINE\nsys.path.insert(0, str(Path(__file__).absolute().parent))\n"
     with tempfile.TemporaryDirectory() as d:
         dp = Path(d)
         (dp / "planted_root.py").write_text(bad_root)
         (dp / "planted_abs.py").write_text(bad_abs)
+        (dp / "planted_ospath_nested.py").write_text(bad_ospath_nested)
+        (dp / "planted_ospath_join.py").write_text(bad_ospath_join)
+        (dp / "clean_owndir.py").write_text(good_owndir)
         (dp / "clean_good.py").write_text(good)
         new_v, _, _ = scan_tools(dp, baseline=set())
-        for want in ("planted_root.py", "planted_abs.py"):
+        owndir_clean = "clean_owndir.py" not in new_v
+        print(f"  {'✅' if owndir_clean else '❌'} own-DIR resolution clean_owndir.py PASSES (not a root walk-up)")
+        ok = ok and owndir_clean
+        for want in ("planted_root.py", "planted_abs.py",
+                     "planted_ospath_nested.py", "planted_ospath_join.py"):
             hit = want in new_v
             print(f"  {'✅' if hit else '❌'} planted-bad {want} is FLAGGED")
             ok = ok and hit

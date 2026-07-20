@@ -14,7 +14,15 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 FAIL=0
 
-bash "$HERE/build.sh" >/dev/null
+# BB-2: the build's rc was UNCHECKED here. A failed build left a STALE foxtag binary in place and
+# every section below then compared the Python oracle against yesterday's core — agreeing, and
+# passing, while proving nothing about the code actually in the tree.
+if ! bash "$HERE/build.sh" >/dev/null 2>"$TMP/build.err"; then
+    echo "FAIL: foxtag build failed — every section below would compare against a STALE binary"
+    sed 's/^/    /' "$TMP/build.err" | head -20
+    echo "PARITY: FAIL — build broken; the Python tools stay authoritative"
+    exit 1
+fi
 
 # --- 1. validate parity ------------------------------------------------------
 ( cd "$ROOT" && python3 "$TOOLS/check_code_tag_blocks.py" ) > "$TMP/py.out"; PY_RC=$?
@@ -35,6 +43,38 @@ else echo "OK  : violations identical ($(wc -l < "$TMP/py.viol") line(s))"; fi
 if [ "$PY_RC" != "$CXX_RC" ]; then
     echo "FAIL: exit codes differ (py=$PY_RC cxx=$CXX_RC)"; FAIL=1
 else echo "OK  : exit codes identical ($PY_RC)"; fi
+
+# BB-2 / F-393 — THE VALIDITY LEG. Everything above this line is DIFFERENTIAL: it proves the two
+# implementations AGREE, and says nothing about whether they are RIGHT. Two implementations
+# agreeing that the corpus is broken printed "OK : exit codes identical (1)" and reached
+# PARITY: PASS. Symmetric bilateral failure (both exit 2, empty stdout) was indistinguishable
+# from bilateral success.
+#
+# ⚠️ SEQUENCING (C-391 iii): this was NOT a defect while parity_check.sh stayed manual — the
+# division of labour was correct, with check_session_docs.sh holding validity. Proven by planting
+# an invalid [TAG]: parity printed PASS while the sweep went SWEEP FAILED on the same corpus. It
+# becomes a false-green the moment this script is wired as a standing tools-gate, which is why
+# F-393 is a hard PRECONDITION of that wiring rather than a follow-up to it. Landing it now,
+# before the wiring, is the whole point.
+#
+# This is also the "promoting a DIFFERENTIAL gate to an ABSOLUTE gate WIDENS its contract"
+# shape — the one thing the 0.2 precedent sweep found with no existing spec (D-395).
+if [ "$PY_RC" != "0" ]; then
+    echo "FAIL: validity — the Python oracle itself reports the corpus INVALID (rc=$PY_RC)."
+    echo "      Agreement is not correctness: both implementations can agree the corpus is broken."
+    sed 's/^/    /' "$TMP/py.out" | head -12
+    FAIL=1
+else echo "OK  : validity — the Python oracle reports the corpus VALID (rc=0), not merely matched"; fi
+
+# NON-EMPTINESS on the compared artifacts (the :132-133 / :160 idiom). Two empty outputs diff
+# clean, so without this a bilateral crash reads as perfect agreement.
+if [ ! -s "$TMP/py.out" ] || [ ! -s "$TMP/cxx.out" ]; then
+    echo "FAIL: validate produced NO output on one/both sides (py=$(wc -c <"$TMP/py.out")B cxx=$(wc -c <"$TMP/cxx.out")B) — a vacuous comparison"
+    FAIL=1
+elif ! grep -q '^Scanned [1-9]' "$TMP/py.out"; then
+    echo "FAIL: validate scanned ZERO files — an empty corpus is a broken enumerator, not a clean one"
+    FAIL=1
+else echo "OK  : non-vacuity — both sides produced output over a non-empty corpus"; fi
 
 # --- 1b. PATH-ARGUMENT parity (E.1.2.B 0.2 / BB-1 / D-393 as amended by C-395) -------------
 # --- §1 invokes BOTH tools bare (:20-21), so every path-argument divergence was structurally
@@ -102,7 +142,12 @@ EOF
 ) > "$TMP/py.dump"
 ( cd "$ROOT" && "$HERE/foxtag" parity-dump ) > "$TMP/cxx.dump"
 
-if ! diff -q "$TMP/py.dump" "$TMP/cxx.dump" >/dev/null; then
+# BB-2 non-emptiness: a bilateral crash yields two empty dumps, which diff clean and would print
+# "identical (0 row(s))" — agreement over nothing.
+if [ ! -s "$TMP/py.dump" ] || [ ! -s "$TMP/cxx.dump" ]; then
+    echo "FAIL: unit/tag inventory EMPTY on one/both sides (py=$(wc -l <"$TMP/py.dump") cxx=$(wc -l <"$TMP/cxx.dump") rows) — a vacuous comparison"
+    FAIL=1
+elif ! diff -q "$TMP/py.dump" "$TMP/cxx.dump" >/dev/null; then
     echo "FAIL: unit/tag inventory differs:"; diff "$TMP/py.dump" "$TMP/cxx.dump" | head -30 || true; FAIL=1
 else echo "OK  : unit/tag inventory identical ($(wc -l < "$TMP/py.dump") row(s))"; fi
 

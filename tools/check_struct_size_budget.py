@@ -38,7 +38,15 @@ import sys
 import tempfile
 
 # ── machine-portable engine-root resolver (per feedback_machine_portable_resolver) ──
-ENGINE = os.environ.get("FOXML_ENGINE") or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from foxroots import ENGINE as _FOXROOTS_ENGINE   # noqa: E402  (the ONE repo-root resolver — D-375)
+# FIXED 2026-07-20 — was a hand-rolled walk-up from __file__, which is Landmine-5: `tools/`
+# is a DIRECTORY SYMLINK, so it resolved to the WORKSPACE when invoked through that path and
+# the tool then failed on every engine source it tried to read (measured: rc=2 via the
+# workspace path vs rc=0 via the engine path). foxroots adds the Version.hpp MARKER check +
+# sibling recovery this lacked. The import-from-core lint did not catch it because its
+# pattern only matched the pathlib spelling, never the os.path one (now widened).
+ENGINE = str(_FOXROOTS_ENGINE)
 
 
 def host_cache_bytes(level_getconf, fallback):

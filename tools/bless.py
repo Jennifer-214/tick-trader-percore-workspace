@@ -98,10 +98,14 @@ def bless(golden_path, resolved, label, out=sys.stdout):
     # reader approve without ever learning what they are discarding.
     if status == DRIFT:
         want = [ln.strip() for ln in p.read_text(encoding="utf-8").splitlines() if ln.strip()]
+        # Count the SAME way on both sides. Reporting a filtered `want` against a raw `resolved`
+        # made a blank-line-bearing golden look like it had gained 8 entries when it had gained
+        # one — a comparison that misleads its own reader is the whole failure mode here.
+        got_n = sum(1 for x in resolved if str(x).strip())
         adds = sum(1 for d in diff if d.startswith("+") and not d.startswith("+++"))
         dels = sum(1 for d in diff if d.startswith("-") and not d.startswith("---"))
         print(f"\n  currently blessed : {len(want)} entries  ({p})", file=out)
-        print(f"  resolved now      : {len(resolved)} entries", file=out)
+        print(f"  resolved now      : {got_n} entries", file=out)
         print(f"  change            : +{adds} / -{dels}\n", file=out)
         for d in diff:
             print(f"  {d}", file=out)

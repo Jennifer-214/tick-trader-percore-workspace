@@ -112,6 +112,16 @@ else
     RESULTS+=("  ⏭  HARD  schema-version cohesion (SKIP_SCHEMA_VERSION_CHECK=1)")
 fi
 
+# --- HARD 1c-1: H21 identifier-retirement guard TEETH (D-137 negative self-test) ---
+# The guard itself runs at pre-commit Check H, but its negative self-test ran NOWHERE — and its
+# version-decrease tooth sat broken for an unknown period, hardcoding SHARDED_SNAPSHOT_VERSION|8
+# against a ledger that had moved to |10, so the sed was a no-op and the case proved nothing.
+# An unwired self-test is how a tooth rots unnoticed; wiring it is the structural close (M7).
+# Safe to run in a standing sweep since 2026-07-20: it plants defects in a throwaway COPY via
+# IDENTIFIER_LEDGER and asserts the tracked golden was never mutated.
+run_hard "identifier-retirement guard teeth (renumber/version-decrease/silent-removal all RED; H21)" \
+    bash "$REPO_ROOT/tools/check_identifier_retirement_selftest.sh"
+
 # --- HARD 1c-2: corpus MEMBERSHIP pin (E.1.2.B 0.2 / D-386 + D-396) ---
 # The contract states the RULES; this proves they still resolve to the same FILES. Different
 # failure surfaces: a rule can stay valid while a file silently leaves the corpus and stops being

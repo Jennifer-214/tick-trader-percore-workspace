@@ -32,7 +32,14 @@ tech-debt dir is resolved by following the DOCS/TECH_DEBT.md symlink into the wo
 """
 import os, re, sys, subprocess, datetime
 
-REPO_ROOT = os.environ.get("FOXML_REPO_ROOT") or os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from foxroots import ENGINE as _FOXROOTS_ENGINE   # noqa: E402  (the ONE repo-root resolver — D-375)
+# FIXED 2026-07-20 (import-from-core lint widened to the os.path spelling): a hand-rolled
+# walk-up from __file__ resolves to the WORKSPACE through the `tools/` DIRECTORY SYMLINK.
+# This one happened to still work because it only reads workspace-side files, but it is the
+# same latent shape that broke three sibling tools outright — so it migrates rather than
+# getting grandfathered (the baseline is meant to SHRINK).
+REPO_ROOT = os.environ.get("FOXML_REPO_ROOT") or str(_FOXROOTS_ENGINE)
 
 
 def _tech_debt_dir():

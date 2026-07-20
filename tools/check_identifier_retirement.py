@@ -39,13 +39,39 @@ USAGE
   check_identifier_retirement.py --update   regenerate the ledger from current code (after an intentional ADD/tombstone)
   check_identifier_retirement.py --print    print the parsed current map; do not compare
 
-Machine-portable: repo root from $FOXML_REPO_ROOT or derived from this file's
-location (feedback_machine_portable_resolver_for_committed_tool_paths).
+Machine-portable: the engine root comes from the `foxroots` SSoT
+(feedback_machine_portable_resolver_for_committed_tool_paths).
 """
 import os, re, sys
 
-REPO_ROOT = os.environ.get("FOXML_REPO_ROOT") or os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-LEDGER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "identifier_ledger.txt")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from foxroots import ENGINE   # noqa: E402  (the ONE repo-root resolver — D-375)
+
+# ⚠️ FIXED 2026-07-20 — this was:
+#     REPO_ROOT = os.environ.get("FOXML_REPO_ROOT") or os.path.abspath(
+#         os.path.join(os.path.dirname(__file__), ".."))
+# which is Landmine-5 verbatim: `tools/` is a DIRECTORY SYMLINK, so walking up from this file's
+# location lands in the WORKSPACE, which has no CoreFrameworks/. Invoked through the workspace
+# path the tool died with FileNotFoundError on the very first source it tried to parse — i.e. the
+# H21 Knight-Capital guard was BROKEN on one of its two reachable paths.
+#
+# It hid because pre-commit Check H only fires when a matching file is STAGED
+# (`^(CoreFrameworks/|ML_Headers/|Strategies/|MemHeaders/|tools/(identifier_ledger\.txt|
+# check_identifier_retirement\.py))`), and engine-side commits resolve the engine root correctly.
+# The failure needed a WORKSPACE-side commit touching this tool — which is exactly what closing
+# TECH_DEBT-255 produced. A guard reachable two ways and tested one way.
+#
+# foxroots adds what the hand-rolled version lacked: a `Version.hpp` MARKER shape-check plus
+# sibling recovery, so it resolves correctly through the symlink from either repo.
+REPO_ROOT = os.environ.get("FOXML_REPO_ROOT") or str(ENGINE)
+# IDENTIFIER_LEDGER overrides the ledger path — used ONLY by the negative self-test, so it can
+# plant defects in a throwaway COPY instead of mutating the tracked golden in place. The previous
+# selftest edited the real file and restored it via an EXIT trap; that works until it doesn't
+# (a SIGKILL mid-run leaves a corrupted H21 golden in the working tree), and the risk is exactly
+# what kept the selftest out of the standing sweep — which is how its version-decrease tooth sat
+# broken unnoticed. Removing the mutation makes it safe to wire.
+LEDGER = os.environ.get("IDENTIFIER_LEDGER") or os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "identifier_ledger.txt")
 
 # Enrolled identifier sources. Add a row to enroll a new registry.
 #   (category, file_relative_to_repo_root, kind, name_or_macro, opts)
@@ -206,11 +232,17 @@ def load_ledger():
     return frozen
 
 
-def write_ledger(current):
+def ledger_lines(current):
+    """The ledger's full desired content, as lines. Split out from the writer so the SAME lines
+    can be handed to the shared bless helper for a diff-and-confirm instead of being written
+    unconditionally (TECH_DEBT-255)."""
     lines = [
         "# identifier_ledger.txt — the tombstone golden (check_identifier_retirement.py).",
         "# Persistence/wire-visible identifier -> value. NEVER renumber/reuse/drop a row;",
         "# tombstone retired slots (RESERVED/LEGACY_/DEPRECATED) and keep the row. ADD = append.",
+        # NOTE: do NOT add header lines here casually. This list IS the blessed content, so any
+        # change to it drifts the golden and can then only be cleared by an interactive re-bless
+        # (D-394). A comment is not worth making a human sit through a confirmation prompt.
         "# Regenerate after an intentional ADD/tombstone: tools/check_identifier_retirement.py --update",
         "# format: category|identifier|value",
         "",
@@ -219,8 +251,12 @@ def write_ledger(current):
         for name in sorted(current[cat], key=lambda n: (current[cat][n], n)):
             lines.append(f"{cat}|{name}|{current[cat][name]}")
         lines.append("")
+    return lines
+
+
+def write_ledger(current):
     with open(LEDGER, "w") as f:
-        f.write("\n".join(lines).rstrip() + "\n")
+        f.write("\n".join(ledger_lines(current)).rstrip() + "\n")
 
 
 def compare(frozen, current):
@@ -275,10 +311,32 @@ def main():
         return 0
 
     if arg == "--update":
-        write_ledger(current)
-        n = sum(len(v) for v in current.values())
-        print(f"[identifier-retirement] ledger regenerated: {n} identifiers across {len(current)} categories -> {LEDGER}")
-        return 0
+        # TECH_DEBT-255 CLOSED. This used to be `write_ledger(current); return 0` — the H21
+        # tombstone golden rewritten with NO diff and NO confirmation. So the tool enforcing
+        # "never renumber, never reuse, never silently drop a persistence/wire identifier" — the
+        # Knight-Capital discipline, $440M in 45 minutes — could have its own record
+        # rubber-stamped by any caller, including a delegated agent that "fixed the red by
+        # re-baselining". That is the failure this guard exists to prevent, applied to the guard.
+        #
+        # Now routed through the ONE shared bless path (D-394), the same one the corpus golden
+        # uses: a TTY is required, the per-file diff is SHOWN with what the ledger currently
+        # holds and how many rows would be REMOVED, a typed confirmation is demanded, and a
+        # non-interactive caller is HARD-REFUSED rc=2. Per D-385/M10 that makes a delegated agent
+        # structurally incapable of re-blessing this ledger.
+        #
+        # It also inherits no-op ⇒ NO WRITE (D-369): `--update` on an unchanged ledger now leaves
+        # the file byte-identical instead of rewriting it every time, so a "run the producer,
+        # expect 0-diff" currency check finally means something here.
+        #
+        # SAFE TO TIGHTEN — callers enumerated first (the enumerate-before-flipping discipline):
+        # `--update` has NO automated caller. `.githooks/pre-commit:360` only PRINTS it as an
+        # instruction, the ledger header mentions it in a comment, and
+        # check_identifier_retirement_selftest.sh manipulates the ledger directly with cp/sed
+        # rather than invoking it. It is operator-invoked only, which is exactly the usage the
+        # TTY gate is built for.
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import bless as bless_mod
+        return bless_mod.bless(LEDGER, ledger_lines(current), "identifier-ledger")
 
     frozen = load_ledger()
     if frozen is None:

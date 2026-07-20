@@ -308,7 +308,7 @@ def _selftest():
 # speed while making a TOTAL oracle PARTIAL — complete solely if a four-case blast-radius
 # analysis is exhaustive, which is reasoning rather than a check. 14s once per commit, accepted.
 from citable_ids import (defining_index, citations_in, sequence_gaps,   # noqa: E402
-                         _read, WORKSPACE)
+                         active_sites, _read, WORKSPACE)
 CITABLE_BASELINE = Path(__file__).absolute().parent / "lib" / "citable_ids_baseline.txt"
 CITABLE_GOLDEN   = Path(__file__).absolute().parent / "goldens" / "citable-ids.txt"
 
@@ -391,7 +391,10 @@ def _citable_findings(idx):
 
     # ── 2. DEFINED-TWICE ──────────────────────────────────────────────────────────────────────
     for ns, entries in sorted(idx.items()):
-        for rid, sites in sorted(entries.items(), key=lambda kv: str(kv[0])):
+        for rid, all_sites in sorted(entries.items(), key=lambda kv: str(kv[0])):
+            # A definition in a SUPERSEDED doc is not a competing meaning — it is the previous
+            # home of a meaning that moved. Drop those, but only while a live site survives.
+            sites = active_sites(ns, all_sites)
             if len(sites) > 1:
                 where = " | ".join(f"{Path(s).name}:{l}" for s, l in sites)
                 findings.append(("defined-twice", "HIGH", where,

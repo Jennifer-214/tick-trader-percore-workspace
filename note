@@ -1,0 +1,1 @@
+split off files to edit in a temp directoyr, and recompile there or ananlyze cache line breaking or anything else before remerging into the actual directory

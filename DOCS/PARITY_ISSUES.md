@@ -1523,6 +1523,30 @@ related_specs:
 ---
 
 ```yaml
+id: PARITY-039
+title: warm-restart recomputes TP/SL from the GLOBAL take_profit_pct while live entry uses the per-strategy override
+surface_tags: [snapshot-restore, tp-sl, per-strategy-override, scale-invariance, slow-path, warm-restart]
+severity: high
+parity_axis: live entry TP/SL vs post-warm-restart restored TP/SL (same position, same node)
+status: closed
+detected_at: v5.15.5.F.4d.1.E.0.10 (2026-06-11; Net-1 adversarial money-surface bug-hunt, 5 surface-blind agents)
+related_specs:
+  - DESIGN_SPECS/data-disciplines/per-node-purity-scale-invariance.md (H22 — this is instance A1)
+  - plan_checks/E.0.10-finding-disposition-register.md § bug-hunt A1
+```
+**Symptom:** A SimpleDip/MR/EmaCross position exits at a DIFFERENT TP/SL after a warm restart than it would have while live — whenever the per-strategy override is set.
+
+**Root cause:** snapshot-restore recomputed `live_tp` / `live_sl` / `live_tp_b` from the GLOBAL `take_profit_pct` (`ShardedSnapshotPersist.hpp:653`), while the live entry path uses the per-strategy override (`simpledip/mr/emacross_tp_pct`, `StrategyParameters.hpp:327`). `ControllerConfig_ResolveForCore` (`:1383`) did not fold the override, so the two paths read different sources for the same quantity.
+
+**Why it is H22 (not merely a restore bug):** this is the canonical **A1** violation of per-node purity — a per-shard path reading a GLOBAL cfg field that HAS a `core_N_*` override. The scale-invariance discipline exists because of this class.
+
+**Resolution:** FIXED 2026-06-11 in `.E.0.10`. Single-sourced via `ResolvePerFillTpPct` / `ResolvePerFillSlPct` across BOTH entry and restore. SimpleDip+MR cohort char-tests GREEN; suite 3368/0; 3-agent independent refute returned SOUND/CORRECT; sealed by orchestrator on the `ResolveForCore` read with 2 agents converged. Momentum/ML were unaffected (`out->tp_pct == take_profit_pct`). TECH_DEBT-168 closed with it.
+
+**Provenance of THIS entry (2026-07-20):** the finding was recorded only as an audit-log bullet in this file (see the 2026-06-11 line in the Audit log below) and never given a defining `id:` row, so `PARITY-039` read as CITED-BUT-UNDEFINED to the citable-ID guard while its content sat in the same file. Every field above is transcribed from that bullet and the disposition register it cites — no history was reconstructed. The formatting defect, not the finding, was what was missing.
+
+---
+
+```yaml
 id: PARITY-040
 title: trail anchor original_tp non-reproducible across event-log replay (live fill-priced vs replay e.tp expected-entry-priced)
 surface_tags: [oms, event-log-replay, trail-stop, original_tp, decision-time-binding, reconstruct-path, class-45]

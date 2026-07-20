@@ -157,6 +157,47 @@ def _norm(spec, raw):
     return raw
 
 
+_SUPERSEDED_CACHE = {}
+
+
+def is_superseded(path):
+    """True when a doc's frontmatter marks it `status: superseded`.
+
+    Read from the FRONTMATTER rather than a path/name convention: a superseded log keeps its
+    filename, so any name-based guess would be wrong the moment a log is superseded in place.
+    Only the first 40 lines are scanned — frontmatter is at the top by definition, and a body
+    mention of the word (`this supersedes D-7`) must NOT mark the whole file."""
+    key = str(path)
+    if key not in _SUPERSEDED_CACHE:
+        hit = False
+        for line in _read(Path(path)).splitlines()[:40]:
+            s = line.strip()
+            if s.startswith("status:") and "superseded" in s:
+                hit = True
+                break
+        _SUPERSEDED_CACHE[key] = hit
+    return _SUPERSEDED_CACHE[key]
+
+
+def active_sites(ns, sites):
+    """Drop defining sites in SUPERSEDED docs, provided at least one live site survives.
+
+    WHY this is not a loosened check. An id defined in both a superseded log and its successor
+    is not two competing meanings — it is one meaning that MOVED, which is the correct outcome
+    of superseding a log. Reporting it is a Class-51 inversion: the guard fires on conformance,
+    the operator learns the corpus is noise, and the real collisions get ignored with it.
+
+    The `at least one live site survives` clause is load-bearing. If EVERY site is superseded the
+    id has no live home, which is a genuine defect and stays reported — silence there would be
+    the opposite failure. Exemption is opt-in per namespace (`supersede_exempt`) so it can never
+    silently widen to a namespace whose sources have no supersede lifecycle."""
+    spec = _registry()["namespaces"].get(ns, {})
+    if spec.get("supersede_exempt") != "true" or len(sites) < 2:
+        return sites
+    live = [(s, l) for s, l in sites if not is_superseded(s)]
+    return live if live else sites
+
+
 def defining_index():
     """{namespace: {id: [(path, lineno)]}} — every entry, with EVERY site that defines it.
 

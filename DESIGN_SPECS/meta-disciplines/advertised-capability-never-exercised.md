@@ -12,7 +12,7 @@ applications:
   - 'check_schema_version.py — the docstring claimed .py coverage "so a TOOL-fixture drift is caught too"; measured ZERO .py ever scanned, in a HARD-wired gate (TECH_DEBT-253)'
   - 'stage: 6-cadence-locked — a documented vocab value advertised as a grep recipe in CLAUDE.md with ZERO users corpus-wide (TECH_DEBT-254 (c))'
   - 'registry_id: — documented in doc-frontmatter-convention.md with ZERO consumers; inert convention nothing read (TECH_DEBT-249)'
-  - 'fox-symdeps.nvim — features listed in TAG-INTEGRATION.md that do not work in practice (branchless tags, floating panels overwritten by git-blame virtual text); the plugin advertised a surface it never delivered (operator-observed 2026-07-20)'
+  - 'check_corpus_membership_selftest.sh / check_import_from_core_selftest.sh / check_schema_version_selftest.sh / toolio_selftest.sh — all four listed STANDING-CI in DOCS/TOOLS.md as running "via the tool''s --selftest"; NO call-site existed anywhere. Found by sweeping the inventory against this spec one commit after writing it — and one of the four had been created, and its false claim written, by the author earlier the same session (E.1.2.B 0.2)'
 ---
 
 # Advertised capability, never exercised
@@ -62,6 +62,18 @@ That last one is the subtle case and worth stating plainly: *a capability too sl
 ## Sequencing note — this class front-runs its own fix
 
 The capability is usually discovered broken *while being relied upon for something else*, which creates pressure to patch it inline and move on. Resist proportionally: patching restores the capability but leaves the class open, and the class is what produced five instances in one session. The wiring is the deliverable.
+
+## False-positive surface (M3)
+
+**A capability that WORKS but is unpolished is NOT this pattern.** The `fox-symdeps.nvim` feature set was initially recorded here as an instance and that was **wrong** — the operator corrected it: those features work, they want taste and refinement, not repair.
+
+The distinction is load-bearing. Misfiling polish as brokenness inflates a debt register with things that are merely not-yet-lovely, and a register that cries wolf gets ignored — which is the same end-state this spec exists to prevent, reached from the opposite direction.
+
+**The test is binary and empirical: has it RUN end to end and produced its claimed output?** If yes, any remaining complaint is QUALITY — route it to a UX/polish backlog, not to a correctness register. If no, it is this pattern regardless of how good the code looks.
+
+Two further non-instances:
+- **A deliberately-staged capability** that is documented as landing later and is *marked as such where it is advertised* — that is end-state 3, not a defect.
+- **A rarely-fired guard that DOES fire on its trigger** (a tombstone check that only runs when an identifier is retired) — rare invocation is not absent invocation.
 
 ## Sister disciplines
 

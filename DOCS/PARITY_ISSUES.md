@@ -1581,3 +1581,40 @@ When `/parity-check` finds a new issue:
 5. Reference in commit message of the closing ship
 6. Move to FIXED only after a follow-up `/parity-check` confirms
    regression-free
+
+---
+
+id: PARITY-041
+title: corpus enumeration order diverged THREE ways (contract=merged-bytewise / Python=unsorted readdir / C++=hpp-grouped) with every gate structurally blind to it
+surface_tags: [toolchain, corpus-contract, foxtag, two-walker, ordering, doc-tag-system]
+severity: med
+parity_axis: Python `engine_source_files()` order vs C++ `scan_files()` order vs the contract's declared `sort.within_root`
+status: closed
+detected_at: E.1.2.B `0.2` (2026-07-20, at BB-1 pickup — found by reading both walkers, not by any gate)
+closed_at: E.1.2.B `0.2` (2026-07-20, commit `ee28ef2`)
+
+**The divergence.** Three different orderings coexisted: `corpus_contract.json` declares
+`sort.within_root = bytewise-ascending-relative-path` (MERGED); `check_code_tag_blocks.engine_source_files()`
+returned raw `rglob` readdir order (**UNSORTED** — verified: first three were `Version.hpp`,
+`Licensing.hpp`, `Limits.hpp`); `foxtag.hpp scan_files()` sorted `.hpp` and `.cpp` SEPARATELY then
+concatenated (**GROUPED**, not merged).
+
+**Why every gate was blind.** `parity_check.sh:24-25` sorts both legs before diffing, and §2's
+parity-dump sorts its rows — so ordering is washed out everywhere it is compared. The membership
+GOLDEN pins order exactly, but it could not discriminate either: the tracked engine corpus holds
+only 2 `.cpp`, both lowercase-rooted (`main.cpp`), so merged-bytewise and hpp-grouped **coincide by
+accident**. A single `.cpp` under a capitalised directory (`CoreFrameworks/Foo.cpp`) would have
+broken the coincidence and RED'd one reader against the golden.
+
+**Closure.** Both walkers now read `sort.within_root` from the contract. Verified BY CONSEQUENCE
+rather than by reading that both call the same function: planted violations in `Bravo.cpp` and
+`Charlie.hpp` (whose merged and grouped orders differ) and read the UNSORTED violation-emission
+order — both emit `Bravo.cpp` first. Probe confirmed discriminating (the old grouped rule yields
+`Charlie.hpp` first), so it is not a vacuous check.
+
+**Lesson for the ledger.** Two hand-written walkers over one corpus will diverge on ordering, and
+ordering is the axis a diff-based parity gate cannot see. Single-source the RULE, then prove
+agreement on an artifact that is order-SENSITIVE.
+
+**Related:** D-393 / C-396 item 3 (the sort clause) · `differential-to-absolute-gate-contract-widening.md`
+· TECH_DEBT-245.

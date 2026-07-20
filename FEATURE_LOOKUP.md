@@ -1203,3 +1203,54 @@ cfg dump.
 - **Paper-test sanity**: set `risk_pct=999` (or `=banana`, or `stop_loss_pct=0`) in `engine.cfg` → the engine REFUSES to boot with a named-field diagnostic, does NOT trade. A valid cfg boots normally (no behavior change). Edit `engine.cfg` to `risk_pct=999` while running → the reload warns + keeps the old (good) config.
 - **Gotchas**: the 2 legacy capital arrays (`node_risk_pct[]`/`node_max_drawdown_pct[]`) merge into `nodes[c]` with 0=inherit preserved (the B-merge), so the sweep needs the global-flat leg for an INHERITING node (F1) · feature fields (~47 FPN/float) fault on the DISTINCT FEATURE_MALFORMED bit, not the capital bits · the hot-reload restores boot-only `starting_balance` AFTER Load, so it re-runs the sweep on the MERGED cfg (else `min_kill_loss<starting_balance` false-negatives).
 - **Related**: RBP Class 52 (swallow-and-coerce) / 54 (validation-asymmetry) / 55 (dual-source-storage) · `config-compiler-validation-pattern.md` · D-242/D-253/D-256/D-279/D-280 · TECH_DEBT-212 (the founding finding; capital subset closed, non-capital → E.2).
+
+### Tools parity gate — pre-commit Check T (v5.15.5.F.4d.1.E.1.2.B `0.2`+)
+
+**What** — `parity_check.sh` runs automatically on any commit that stages a toolchain file. It was
+MANUAL-only before, so the toolchain — a one-producer-N-consumers surface where a wrong fact fans
+out — was the one plane with no standing gate.
+**Cfg flags** — none. Trigger-scoped by staged path (`tools/foxtag/`, the six corpus consumers,
+`bless.py`, `foxroots`/`toolio`, `lib/{corpus_contract,toolio_schemas}.json`, `goldens/`).
+**Fallback** — `SKIP_TOOLS_PARITY_CHECK=1` bypasses it.
+**Where to verify** — commit a `tools/foxtag/*` change; the hook prints `[pre-commit] Check T`.
+**Paper-test sanity** — ~25s when it fires, nothing on unrelated commits. The foxtag build is
+cached; the cost is nvim/clang/objdump.
+**Gotchas** — a PASS now means AGREEMENT **and** validity. The validity leg (`PY_RC == 0`, not
+merely `== CXX_RC`) landed BEFORE the wiring on purpose: without it, two implementations agreeing
+the corpus is broken printed `OK : exit codes identical (1)` and still reached PASS.
+**Related** — D-387(3) · F-393/BB-2 · `differential-to-absolute-gate-contract-widening.md`.
+
+### `--bless` — the ONE re-bless control for every committed baseline (v5.15.5.F.4d.1.E.1.2.B `0.2`+)
+
+**What** — `tools/bless.py`. Rewriting ANY committed baseline (the corpus goldens, the H21
+identifier ledger, the latency ratchet) now requires an interactive terminal, shows the per-file
+diff plus what the record currently holds and how many entries would be REMOVED, and demands a
+**typed confirmation** (`bless <label>`, not y/n).
+**Cfg flags** — none, deliberately. **There is NO `--yes`/`--force`.**
+**Fallback** — none. Non-interactive callers are HARD-REFUSED `rc=2`; it fails fast rather than
+blocking on stdin, so it cannot wedge a pipeline.
+**Where to verify** — `python3 tools/check_identifier_retirement.py --update` in a pipe → refusal;
+in a terminal → diff + prompt.
+**Paper-test sanity** — a no-op re-bless is `rc=0` and leaves the file **byte-identical** (D-369),
+so "run the producer, expect 0-diff" still holds.
+**Gotchas** — this is the CONTROL, not a claim that everything it guards is a golden. A golden asks
+*is the output still what we blessed*; a ratchet asks *has this metric regressed past its ceiling*;
+an append-only ledger asks *has an identifier been reused*. Different lifecycles, one control.
+**Why it exists** — per D-385/M10 a delegated agent is now structurally INCAPABLE of blessing a
+baseline, which is what keeps a golden a TOTAL acceptance oracle instead of something that matches
+by construction. **Related** — D-394 · TECH_DEBT-255 (closed) · `tools/goldens/README.md`.
+
+### Citable-ID integrity — capture-audit Check 14 (v5.15.5.F.4d.1.E.1.2.B `0.2`+)
+
+**What** — every cited `TECH_DEBT-n` / `PARITY-n` / `AR-n`-family id must resolve to exactly one
+defining row, and no id may silently disappear from the corpus.
+**Cfg flags** — none. Runs inside `check_capture_audit.py` (hook + `check_session_docs`).
+**Fallback** — `SKIP_DOC_FLOOR_CHECK=1` bypasses the whole doc-floor block.
+**Where to verify** — `python3 tools/check_capture_audit.py --check 14`.
+**Paper-test sanity** — ~14s, once per commit, green-on-new against a 51-key baseline.
+**Gotchas** — citations are resolved ONLY for distinctively-prefixed namespaces. Short bare tokens
+(`H23`, `M8`, `T13`, `B16`, `Class 7`) are NOT verified because they collide with test ids, finding
+ids and forward-references — AR-14's false-positive surface says that must not be mechanized.
+Citations inside frozen records (postmortems, plan_checks, superseded handoffs) are also skipped: a
+frozen record citing a then-real id is a truthful artifact, not a defect.
+**Related** — D-399 · TECH_DEBT-249 · H21 (this is H21 on the doc plane).

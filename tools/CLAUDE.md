@@ -199,6 +199,46 @@ concealed a REAL defect in the artifacts landed that same session.*
   `categories` moved 76→78 with PASS throughout). Wiring an `A==B` check as a standing gate silently
   widens its contract from AGREEMENT to VALIDITY — the thing it was never written to assert.
 
+*Harvested 2026-07-20 (wave 4) from the `0.2` gate-layer build. Every one cost a wrong turn, a
+dead tooth, or a false finding IN THIS SESSION — none is derivable from a `--help` or a docstring.*
+
+- **⚠️ ripgrep SKIPS a gitignored DIRECTORY but RETURNS a file-level-ignored FILE.** Measured: a
+  `.gitignore` containing `private/` hides `private/x.hpp` from `rg`; a `.gitignore` containing
+  `hidden.hpp` does NOT hide it. This made the first TECH_DEBT-245 non-vacuity tooth **vacuous** —
+  it planted a file-level ignore, so it would have passed against the very rg-based enumerator it
+  existed to catch. **Any gitignore fixture must use a DIRECTORY rule**, which is also the
+  real-world shape (`.gitignore:167 Strategies/private/`).
+- **`DOCS/TECH_DEBT.md` is an INDEX, not a ledger.** It holds the format template and the
+  entry-to-sub-file map; the actual entries live in `DOCS/tech-debt/{open,in-flight,closed}.md`.
+  A `^### TECH_DEBT-` scan over it returns ~1 row. Do not read a low count there as data loss
+  (TECH_DEBT-219 tracks the split).
+- **MASTER banners APPEND; plan-body banners PREPEND.** `check_index_currency.py:82` takes the
+  **LAST** `handoffs/*.md` reference on a `Pickup`/`ACTIVE one` line, because "banners append
+  progress lines". Prepending a MASTER banner therefore leaves the check reading a SUPERSEDED
+  pointer — the new banner is invisible to it. The plan body's convention is the opposite
+  (prepend, preserve prior), so the two files take opposite rules.
+- **`DESIGN_PHILOSOPHY.md` contains BOTH a §11.5 DEFINING table (`| **M1 — …**`, bold) and a
+  cross-reference index (`| M1 — … |`, plain).** A meta-discipline regex with optional bold matches
+  both and reports 8 of 10 M-numbers as DOUBLE-DEFINED — all false. The bold is load-bearing.
+- **`CLAUDE.md`'s Hard-Invariants table mixes bold and plain rows** — H15/H18/H19/H21/H22 are bold,
+  H1-H14 are not. A pattern requiring `|` immediately after the digits silently drops 6 of 22.
+  **Check any namespace count against its KNOWN range** rather than trusting the match.
+- **`check_capture_audit.py` runs ONCE per commit, not per staged file** — trigger-gated at
+  `.githooks/pre-commit:193` on a memory/skill/index/decision-log path match. Cost added there is
+  paid once, which is why a 14s corpus-wide check is affordable in it.
+- **`check_plan_body_symbol_existence.py --all` is UNRUNNABLE** — 886 plan files, 259 with cpp
+  fences, **1237 blocks × ~451ms per `g++` probe = 9.3 min**, so it times out. The staged-file path
+  is milliseconds. TECH_DEBT-259; do not reach for `--all` expecting an answer.
+- **`parity_check.sh` costs ~25s and the foxtag BUILD is not the cost** — it is cached. The time is
+  nvim + clang + objdump in the plugin/layout/codegen sections.
+- **A Python combined-alternation regex with NAMED groups wrapping inner captures returns the OUTER
+  match first.** `next(g for g in m.groups() if g is not None)` yields the whole match
+  (`"TECH_DEBT-114"`), not the id body — `int()` then explodes. Use `m.lastgroup` and re-apply that
+  namespace's own pattern. This turned an 8-pass-to-1-pass optimisation into a behaviour change.
+- **A perf fix that changes results is a behaviour change wearing a perf costume.** Two separate
+  optimisations of the Check-14 scan each altered the finding count (145 → 141) while barely moving
+  the clock. Both reverted. Diff the FINDINGS, not just the runtime, after any tuning.
+
 ## Where things live
 
 | Piece | Path |

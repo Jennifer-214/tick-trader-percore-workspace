@@ -291,3 +291,23 @@ Auto-write contract: this doc is the canonical home for
 operational landmines that recur. Don't bury them in postmortems
 (those get rotated) or chat memory (compacted away). Surface them
 here so they survive context decay.
+
+## Landmine 13 — ripgrep SKIPS a gitignored DIRECTORY but RETURNS a file-level-ignored FILE (set 2026-07-20, E.1.2.B `0.2`)
+
+**The trap.** A `.gitignore` containing `private/` hides `private/x.hpp` from `rg`. A `.gitignore`
+containing `hidden.hpp` does **not** hide `hidden.hpp` from `rg`. Both are "gitignored" as far as
+`git check-ignore` is concerned — `git check-ignore -v hidden.hpp` confirms the rule matches — but
+ripgrep's behaviour differs by rule KIND.
+
+**What it cost.** The non-vacuity tooth written to prove TECH_DEBT-245's fix used a FILE-level
+ignore fixture. It passed. It would also have passed against the **unfixed** rg-based enumerator,
+because rg returns file-level-ignored files anyway — so the tooth proved nothing about the thing it
+was written to prove. A negative test that cannot fail on its target is the exact Class-51 shape,
+planted inside the guard built to close Class-51.
+
+**How to avoid it.** Any fixture asserting gitignore behaviour MUST use a **directory** rule. That
+is also the real-world shape here — the live instance was `.gitignore:167 Strategies/private/`.
+Verify discrimination explicitly: `rg` must see 0 and the replacement enumerator must see 1.
+
+**Related:** TECH_DEBT-245 (closed) · `calibration-corpus-non-vacuity-discipline.md` (the tooth
+needs a tooth) · Class-51.

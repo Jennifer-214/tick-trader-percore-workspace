@@ -104,6 +104,53 @@ sys.exit(0)
 EOF
 ) || FAIL=1
 
+# --- 3c. PLUGIN node-model parity (E.1.2.B 0.3 / D-349 cutover gate) ----------------------
+# --- The nvim plugin DERIVES its unit/closable set from `foxtag grammar --json` instead of
+# --- hardcoding it. This diffs what the plugin actually derives against what foxtag emits —
+# --- not a tautology: it gates the plugin's decode layer (column indexing, row handling, the
+# --- closable-only opener filter), and post-delete it proves no hardcoded set crept back.
+# --- NON-VACUITY (D-384): a SKIP is not a PASS. We assert a positive comparison count, and the
+# --- verdict records ran-vs-skipped, so the copy-delete can only be gated on a real run.
+PLUGIN_DIR="$ROOT/tools/plugins/fox-symdeps.nvim"
+PLUGIN_PARITY="skipped"
+if command -v nvim >/dev/null 2>&1 && [ -f "$PLUGIN_DIR/tests/emit_nodemodel.lua" ]; then
+    ( cd "$PLUGIN_DIR" && nvim --headless --clean -u NONE -l tests/emit_nodemodel.lua ) \
+        > "$TMP/plugin.nm" 2>"$TMP/plugin.nm.err" || true
+    ( cd "$ROOT" && "$HERE/foxtag" grammar --json ) > "$TMP/cxx.gjson" 2>/dev/null || true
+    if [ ! -s "$TMP/plugin.nm" ]; then
+        echo "FAIL: plugin node-model emitted nothing ($(head -c160 "$TMP/plugin.nm.err"))"
+        FAIL=1
+    elif python3 - "$TMP/plugin.nm" "$TMP/cxx.gjson" <<'EOF'
+import json, sys
+plug = json.load(open(sys.argv[1]))
+env  = json.load(open(sys.argv[2]))
+ut   = env["payload"]["unit_types"]
+ci   = {c: i for i, c in enumerate(ut["schema"])}
+want = {r[ci["name"]]: bool(r[ci["closable"]]) for r in ut["rows"]}
+got  = {k: bool(v) for k, v in plug["unit_types"].items()}
+# NON-VACUITY: an empty comparison is a FAIL, never a silent pass.
+if not want or not got:
+    print(f"FAIL: vacuous plugin parity — foxtag types={len(want)} plugin types={len(got)}"); sys.exit(1)
+fail = False
+if got != want:
+    only_p = sorted(set(got) - set(want)); only_f = sorted(set(want) - set(got))
+    diff   = sorted(k for k in set(got) & set(want) if got[k] != want[k])
+    print(f"FAIL: plugin node-model differs — only-plugin={only_p} only-foxtag={only_f} closable-diff={diff}")
+    fail = True
+# the closable-only opener set the plugin actually scans with
+want_open = sorted(k for k, v in want.items() if v)
+got_open  = sorted(plug["openers"])
+if got_open != want_open:
+    print(f"FAIL: plugin openers differ — plugin={got_open} foxtag={want_open}"); fail = True
+if fail: sys.exit(1)
+print(f"OK  : plugin node-model parity BY MEMBERS ({len(want)} types compared, {len(want_open)} closable) [RAN]")
+sys.exit(0)
+EOF
+    then PLUGIN_PARITY="ran"; else FAIL=1; PLUGIN_PARITY="ran"; fi
+else
+    echo "SKIP: plugin node-model parity (nvim/emitter unavailable — the Lua copy-DELETE must NOT be gated on this)"
+fi
+
 # --- 4. LAYOUT-producer parity (foxtag layout vs emit_record_layout.lua on the same TU;
 # ---    needs nvim + clang++; SKIP-advisory when absent — mirrors the cache-gate's dep policy)
 if command -v nvim >/dev/null 2>&1 && command -v clang++ >/dev/null 2>&1 && [ -f "$ROOT/main.cpp" ]; then
@@ -177,5 +224,8 @@ else
 fi
 
 # --- verdict -------------------------------------------------------------------
-if [ "$FAIL" = 0 ]; then echo "PARITY: PASS — the core matches the Python oracle"; exit 0
-else echo "PARITY: FAIL — the Python tools stay authoritative"; exit 1; fi
+if [ "$FAIL" = 0 ]; then
+    echo "PARITY: PASS — the core matches the Python oracle (plugin node-model: $PLUGIN_PARITY)"
+    [ "$PLUGIN_PARITY" = "ran" ] || echo "  NOTE: plugin section SKIPPED — this run does NOT authorize deleting the Lua node-model copies (D-349/D-384)"
+    exit 0
+else echo "PARITY: FAIL — the Python tools stay authoritative (plugin node-model: $PLUGIN_PARITY)"; exit 1; fi

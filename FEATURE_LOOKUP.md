@@ -1254,3 +1254,26 @@ ids and forward-references — AR-14's false-positive surface says that must not
 Citations inside frozen records (postmortems, plan_checks, superseded handoffs) are also skipped: a
 frozen record citing a then-real id is a truthful artifact, not a defect.
 **Related** — D-399 · TECH_DEBT-249 · H21 (this is H21 on the doc plane).
+
+### `--close` is TTY-gated — the tech-debt ledger writer joins the D-394 contract (v5.15.5.F.4d.1.E.1.2.B `0.2`+)
+
+**What** — `tools/check_tech_debt.py --close N` moves a TECH_DEBT entry `open.md` → `closed.md`. It
+now SHOWS the entry, then demands a typed confirmation at an interactive terminal, and HARD-REFUSES
+`rc=2` when there is no TTY. Previously it wrote **by default** (`--dry-run` was opt-in, no diff, no
+prompt). Same contract as `--bless`, via one shared `bless.confirm_mutation()`.
+**Cfg flags** — none. `--dry-run` still prints the move without writing and needs no terminal.
+**Fallback** — none, deliberately: there is no `--yes` / `--force`. If you need the move in a script,
+you do not — a ledger move is a human act.
+**Where to verify** — `python3 tools/check_tech_debt.py --close 016` from a pipe → `rc=2`, ledgers
+byte-unchanged. `bash tools/check_tech_debt_selftest.sh` asserts exactly that.
+**Paper-test sanity** — instant; the refusal path does no I/O.
+**Gotchas** — the id is now ZERO-PAD NORMALIZED, so `--close 16` and `--close 016` reach the same
+entry. Before this, `--close 16` errored "not found" while `--close 016` silently WROTE — the safe
+spelling failing while the dangerous one succeeded. Also, closing an entry whose `status:` field
+cannot be stamped (neither the bare `status:` line nor the bold `· **status:** ·` form present) now
+REFUSES rather than moving an entry that would read `open` inside `closed.md`.
+**If you are an agent and hit the rc=2** — that is the control working as designed (D-385/M10: a
+delegated agent must be structurally incapable of rewriting the record). Do not route around it; ask
+Caramel to run it.
+**Related** — D-407 · D-394 (the contract) · TECH_DEBT-255 (closed over an un-enumerated set; this
+was the missed writer) · Landmine 15 · Class-51 mode F.

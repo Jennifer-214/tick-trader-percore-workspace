@@ -172,6 +172,33 @@ recollection; each one cost a wrong assumption somewhere in this ship.*
   `codegen-selftest`, `layout`, and `fields`. **Four producers are undiscoverable from `--help`** — enumerate
   from the dispatcher, not the usage line.
 
+*Harvested 2026-07-19 (wave 3) from the `0.2` precedent + anti-pattern sweeps. Each of these caused or
+concealed a REAL defect in the artifacts landed that same session.*
+
+- **⚠️ ALL SCALARS IN A SHARED JSON DATA FILE MUST BE STRINGS — including booleans and integers.**
+  `foxtag.hpp`'s `JVal` has `Kind {STR, ARR, OBJ, OTHER}` and **no bool/number kind**, so a bare `true`
+  or `150` parses as `OTHER` with an **EMPTY string** — a *silent* wrong-read, not an error. Measured
+  with a compiled probe: the C++ side read `follow_file_symlinks` as empty while Python read it fine,
+  which would have made the load-bearing clause invisible to exactly one of the two readers.
+  `tools/lib/toolio_schemas.json` already obeys this (zero bare scalars) — that is the parser's
+  constraint, not a style choice. **Do NOT "clean up" a contract file to native JSON types.**
+- **A GOLDEN pins a different population than the ENUMERATOR scans.** The enumerator is gitignore-blind
+  (a real source file is real whether or not it ships); a golden is a **committed, distributed** artifact
+  and must pin **git-TRACKED entries only**, or it resolves differently on every machine. The first
+  corpus golden pinned 31 untracked entries including two **mkstemp random-named** scratch files, so a
+  fresh clone diverged 31 lines unconditionally — re-instantiating, one layer up, the machine-local-path
+  class that `0.1` closed. **Any committed pin: ask "does this resolve identically on a fresh clone?"**
+- **A substitution token in a data file MUST be documented beside the others.** `corpus_contract.json`
+  used `PROFILE` in a path template while documenting only `$ENGINE`/`$WORKSPACE` — so each of the two
+  readers would have had to GUESS the rule, which is the exact divergence axis a shared contract exists
+  to eliminate. **If a data file has two substitution conventions, name both in the same place.**
+- **A consumer that cannot find its golden/baseline MUST loud-fail, never treat absence as "nothing to
+  compare".** Absence-passes-silently is Class-51 planted in the guard layer itself.
+- **Parity is DIFFERENTIAL and a golden is ABSOLUTE — they are complements, not duplicates.** Parity
+  proves the two implementations AGREE; it cannot see common-mode corruption of a shared SSoT (evidenced:
+  `categories` moved 76→78 with PASS throughout). Wiring an `A==B` check as a standing gate silently
+  widens its contract from AGREEMENT to VALIDITY — the thing it was never written to assert.
+
 ## Where things live
 
 | Piece | Path |

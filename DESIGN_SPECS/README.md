@@ -2,7 +2,7 @@
 
 **Auto-generated** by `tools/rebuild_doc_indexes.py`. Regenerate after adding/moving specs.
 
-Total: 191 specs across 15 types.
+Total: 192 specs across 15 types.
 
 Per-type catalog grouped by lifecycle stage. Cross-ref:
 - `doc-frontmatter-convention.md` (frontmatter schema)
@@ -198,7 +198,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/doc-disciplines/module-scoped-claude-md-pattern.md` | 2-draft | doc-discipline, framework-discipline, context-aware-loading | 2 |
 | `DESIGN_SPECS/doc-disciplines/toolchain-semantic-versioning.md` | 2-draft | doc-discipline, dev-plane, versioning, +1 | 0 |
 
-## meta-discipline (33 specs)
+## meta-discipline (34 specs)
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
@@ -208,10 +208,11 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/meta-disciplines/backtest-paper-live-convergence-discipline.md` | 3-first-canonical | meta-discipline, strategy-lifecycle, backtest-to-live, +1 | 0 |
 | `DESIGN_SPECS/meta-disciplines/backwards-compat-not-default-concern.md` | 3-first-canonical | meta-discipline, backwards-compat, breaking-changes, +2 | 0 |
 | `DESIGN_SPECS/meta-disciplines/body-content-enumeration-at-plan-time-discipline.md` | 3-first-canonical | meta-discipline, plan-template, framework-discipline, +1 | 0 |
-| `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md` | 2-draft | audit-methodology, verification, structural-enforcement, +2 | 3 |
+| `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md` | 3-first-canonical | audit-methodology, verification, structural-enforcement, +2 | 4 |
 | `DESIGN_SPECS/meta-disciplines/canonical-sister-extension-discipline.md` | 3-first-canonical | meta-discipline, framework-discipline, pattern-codification, +2 | 5 |
 | `DESIGN_SPECS/meta-disciplines/dead-code-and-identifier-retirement-discipline.md` | 5-claude-md | meta-discipline, structural-fix, framework-discipline, +1 | 4 |
 | `DESIGN_SPECS/meta-disciplines/definition-of-done-and-armed-scout-verification.md` | 3-first-canonical | audit-methodology, meta-discipline, session-continuity, +2 | 0 |
+| `DESIGN_SPECS/meta-disciplines/differential-to-absolute-gate-contract-widening.md` | 3-first-canonical | audit-methodology, verification, structural-enforcement, +2 | 3 |
 | `DESIGN_SPECS/meta-disciplines/doc-frontmatter-convention.md` | 3-first-canonical | doc-discipline, meta-discipline, framework-discipline | 3 |
 | `DESIGN_SPECS/meta-disciplines/doc-tag-vocabulary.md` | 3-first-canonical | doc-discipline, meta-discipline, framework-discipline | 3 |
 | `DESIGN_SPECS/meta-disciplines/fix-toward-future-trajectory-not-static-state.md` | 2-draft | audit-methodology, design-discipline, future-oriented, +1 | 3 |

@@ -65,7 +65,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/concurrency-patterns/structured-audit-log-pattern.md`
 
-### audit-methodology (86 files)
+### audit-methodology (87 files)
 
 - `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md`
 - `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md`
@@ -79,6 +79,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/meta-disciplines/audit-driven-sub-sprint-trajectory-verification.md`
 - `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/definition-of-done-and-armed-scout-verification.md`
+- `DESIGN_SPECS/meta-disciplines/differential-to-absolute-gate-contract-widening.md`
 - `DESIGN_SPECS/meta-disciplines/fix-toward-future-trajectory-not-static-state.md`
 - `DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md`
 - `DESIGN_SPECS/meta-disciplines/iteration-spiral-signals-audit-meta-gap.md`
@@ -255,9 +256,10 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/hierarchical-config-with-per-node-folders.md`
 
-### ci-tooling (4 files)
+### ci-tooling (5 files)
 
 - `DESIGN_SPECS/framework-patterns/isolated-per-struct-layout-probe.md`
+- `DESIGN_SPECS/meta-disciplines/differential-to-absolute-gate-contract-widening.md`
 - `DESIGN_SPECS/meta-disciplines/struct-change-cascade-impact-tooling.md`
 - `DESIGN_SPECS/refactor-patterns/rename-cascade-enumeration-tooling.md`
 - `DESIGN_SPECS/refactor-patterns/rename-ship-methodology.md`
@@ -606,6 +608,10 @@ This file is a snapshot for static browsing.
 - `claude-skills/accounting-audit/SKILL.md`
 - `claude-skills/ml-audit/SKILL.md`
 - `claude-skills/test-strength-audit/SKILL.md`
+
+### false-green (1 files)
+
+- `DESIGN_SPECS/meta-disciplines/differential-to-absolute-gate-contract-widening.md`
 
 ### filesystem-layout (1 files)
 
@@ -1586,9 +1592,10 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/dynamic-library-strategy-loading-pattern.md`
 
-### structural-enforcement (2 files)
+### structural-enforcement (3 files)
 
 - `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md`
+- `DESIGN_SPECS/meta-disciplines/differential-to-absolute-gate-contract-widening.md`
 - `DESIGN_SPECS/meta-disciplines/mechanical-verification-of-derived-code-facts.md`
 
 ### structural-fix (104 files)
@@ -1802,11 +1809,12 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/concurrency-patterns/userspace-tls-pattern.md`
 
-### verification (4 files)
+### verification (5 files)
 
 - `DESIGN_SPECS/audit-methodologies/post-implementation-verification-v-class.md`
 - `DESIGN_SPECS/meta-disciplines/acceptance-oracle-totality-before-delegation.md`
 - `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md`
+- `DESIGN_SPECS/meta-disciplines/differential-to-absolute-gate-contract-widening.md`
 - `DESIGN_SPECS/meta-disciplines/mechanical-verification-of-derived-code-facts.md`
 
 ### versioning (1 files)
@@ -2031,7 +2039,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/runtime-mutable-vs-boot-time-config-pattern.md`
 
-### ci-tooling (23 files)
+### ci-tooling (24 files)
 
 - `DESIGN_SPECS/audit-methodologies/audit-report-format.md`
 - `DESIGN_SPECS/audit-methodologies/static-latency-path-conformance-analysis.md`
@@ -2048,6 +2056,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/canonical-sister-extension-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/definition-of-done-and-armed-scout-verification.md`
+- `DESIGN_SPECS/meta-disciplines/differential-to-absolute-gate-contract-widening.md`
 - `DESIGN_SPECS/meta-disciplines/sister-cohort-amendment-completeness-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/structural-enforcement-when-memory-insufficient.md`
 - `DESIGN_SPECS/refactor-patterns/bitmap-overflow-protection-discipline.md`
@@ -2735,7 +2744,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/native-tui-via-mmap-readonly-pattern.md`
 
-### test-infrastructure (10 files)
+### test-infrastructure (11 files)
 
 - `DESIGN_SPECS/audit-methodologies/audit-report-format.md`
 - `DESIGN_SPECS/data-disciplines/cpp17-inline-variable-for-header-shared-state.md`
@@ -2744,6 +2753,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/meta-disciplines/acceptance-oracle-totality-before-delegation.md`
 - `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/definition-of-done-and-armed-scout-verification.md`
+- `DESIGN_SPECS/meta-disciplines/differential-to-absolute-gate-contract-widening.md`
 - `claude-skills/dead-code-trace/SKILL.md`
 - `claude-skills/strategy-template/SKILL.md`
 - `claude-skills/test-strength-audit/SKILL.md`

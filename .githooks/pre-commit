@@ -18,6 +18,7 @@
 #  - Check F (determinism net: FP golden + locale guard + replay-locale)    at v5.15.5.F.4d.1.E.0.1
 #  - Check G (doc-system frontmatter on changed .md; folded from legacy hook) at v5.15.5.F.4d.1.E.0.1
 #  - Check N (latency-path conformance: static ASM instr-budget + H4/H7/H20/H1/H2 gate) at v5.15.5.F.4d.1.E.1.0
+#  - Check T (tools parity gate: foxtag <-> Python agreement + the validity leg) at v5.15.5.F.4d.1.E.1.2.B 0.2
 #
 # Bypass via env vars (use sparingly):
 #   SKIP_PLAN_BODY_CHECK=1     — bypass Check A (B-Plus)
@@ -28,6 +29,7 @@
 #   SKIP_DETERMINISM_CHECK=1   — bypass Check F (determinism net)
 #   SKIP_DOC_METADATA_CHECK=1  — bypass Check G (doc frontmatter on changed .md)
 #   SKIP_LATENCY_CONFORMANCE_CHECK=1 — bypass Check N (latency-path conformance)
+#   SKIP_TOOLS_PARITY_CHECK=1  — bypass Check T (tools parity gate: foxtag <-> Python)
 #   SKIP_ALL_CHECKS=1          — bypass all
 
 if [ "${SKIP_ALL_CHECKS:-0}" = "1" ]; then
@@ -283,6 +285,43 @@ if [ "${SKIP_LATENCY_CONFORMANCE_CHECK:-0}" != "1" ]; then
     fi
 else
     echo "[pre-commit] SKIP_LATENCY_CONFORMANCE_CHECK=1; skipping latency-path conformance"
+fi
+
+# ============================================================================
+# CHECK T: the TOOLS gate (E.1.2.B 0.2 / D-387(3)) — foxtag <-> Python parity, the path-argument
+# contract seam, and the validity leg. Scoped to staged toolchain files so unrelated commits stay
+# fast (~25s when it fires; the foxtag build is cached, the cost is nvim/clang/objdump).
+#
+# DIVISION OF LABOUR (deliberate, NOT a parallel gate_check.sh): check_session_docs.sh gates
+# docs/plans + the corpus; this gates the TOOLS. The toolchain is one-producer-N-consumers, so a
+# wrong fact fans out — which is why it earns a gate at all despite being dev-plane.
+#
+# ⚠️ WIRING THIS WIDENED ITS CONTRACT from AGREEMENT to VALIDITY, and the legs that make that
+# honest are a PRECONDITION, not a follow-up — they landed first (F-393/BB-2: the PY_RC == 0
+# validity leg, non-emptiness asserts on the compared artifacts, and build.sh's rc checked).
+# Before those, two implementations agreeing the corpus was broken printed "exit codes identical
+# (1)" and still reached PARITY: PASS, so wiring it then would have shipped a window in which a
+# green gate certified a failing corpus.
+# → DESIGN_SPECS/meta-disciplines/differential-to-absolute-gate-contract-widening.md
+# ============================================================================
+if [ "${SKIP_TOOLS_PARITY_CHECK:-0}" != "1" ]; then
+    PARITY_TOOL="$REPO_ROOT/tools/foxtag/parity_check.sh"
+    STAGED_TOOLS=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^tools/(foxtag/|check_code_tag_blocks\.py|check_cache_layout\.py|check_conversion_completeness\.py|check_schema_version\.py|check_register_fit\.py|check_corpus_membership\.py|bless\.py|foxroots\.py|toolio\.py|lib/(corpus_contract|toolio_schemas)\.json|goldens/)' || true)
+    if [ -n "$STAGED_TOOLS" ] && [ -f "$PARITY_TOOL" ]; then
+        echo "[pre-commit] Check T: tools parity gate (staged toolchain change detected)"
+        PARITY_OUT=$(bash "$PARITY_TOOL" 2>&1); PARITY_RC=$?
+        echo "$PARITY_OUT" | tail -20
+        if [ "$PARITY_RC" -ne 0 ]; then
+            echo "[pre-commit] Check T FAIL: the foxtag core and the Python oracle disagree, or the corpus itself is invalid."
+            echo "[pre-commit]   A PASS here means AGREEMENT *and* validity — read which leg failed above."
+            echo "[pre-commit]   Python stays CI-AUTHORITATIVE until parity is green (T4/D-349) — OR bypass with SKIP_TOOLS_PARITY_CHECK=1"
+            OVERALL_FAIL=1
+        else
+            echo "[pre-commit] Check T PASS"
+        fi
+    fi
+else
+    echo "[pre-commit] SKIP_TOOLS_PARITY_CHECK=1; skipping the tools parity gate"
 fi
 
 # ============================================================================

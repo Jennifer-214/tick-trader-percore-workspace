@@ -24,6 +24,14 @@ if ! bash "$HERE/build.sh" >/dev/null 2>"$TMP/build.err"; then
     exit 1
 fi
 
+# WIRED as a standing gate 2026-07-20 (D-387(3)): pre-commit **Check T**, trigger-scoped to
+# staged toolchain files. Before that it was MANUAL-only and pre-commit never ran it.
+# What wiring changed is not this script's assertions but what a PASS is taken to MEAN — see the
+# validity leg in §1 and `differential-to-absolute-gate-contract-widening.md`. The legs landed
+# FIRST, deliberately: wiring before them would have shipped a window in which a green gate
+# certified a corpus that was failing validation.
+# Bypass: SKIP_TOOLS_PARITY_CHECK=1.
+
 # --- 1. validate parity ------------------------------------------------------
 ( cd "$ROOT" && python3 "$TOOLS/check_code_tag_blocks.py" ) > "$TMP/py.out"; PY_RC=$?
 ( cd "$ROOT" && "$HERE/foxtag" validate ) > "$TMP/cxx.out"; CXX_RC=$?

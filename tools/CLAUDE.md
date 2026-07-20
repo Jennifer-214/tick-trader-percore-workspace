@@ -17,6 +17,26 @@ of ONE core**, so the grammar + facts exist in exactly one implementation.
 
 ## Load-bearing disciplines (the toolchain's own invariants — do NOT break)
 
+**T-index — cite these by ID.** An UNNUMBERED rule cannot be quoted into a review, a spec, or an agent
+prompt — which is exactly how T2/T4 got rediscovered the hard way in E.1.2.B `0.3`. The engine has
+H1–H22; this is the dev-plane's equivalent. (Bodies are the bullets below; the gotchas that are only
+in the source are the section after.)
+
+| ID | Invariant | Anchor |
+|---|---|---|
+| **T1** | ONE parser, N consumers — a re-implementation is a Class-18 mirror | D-337 |
+| **T2** | Grammar DERIVED at runtime, never hardcoded into a tool | D-365 |
+| **T3** | PLANE is a first-class gate; this toolchain is `[DEV_PLANE]` and self-hosts | D-367 |
+| **T4** | Migration contract — Python stays CI-AUTHORITATIVE until a gated, soaked cutover (**PASS ≠ cutover done**) | D-349 |
+| **T5** | Every guard asserts its OWN non-vacuity (planted-bad REDs **and** known-good passes) | Class-51 |
+| **T6** | Comments-only + lossless; MARK never delete; tooling writes comments/docs, **NEVER engine logic** | D-380 |
+| **T7** | The schema is LOCKED `[SCHEMA]_[v1.0]` — a grammar change is a `[SCHEMA]_[vN]` bump | D-346 |
+| **T8** | Toolchain semver `X.Y.Z`, MAJOR tied to the `[SCHEMA]` contract; ONE `TOOLCHAIN_VERSION` SSoT | D-373 |
+| **T9** | UPDATE is ONE codified action; GATES stay verify-only (flag-not-auto) | D-374 |
+| **T10** | Tool-I/O = ONE envelope + a schema-as-DATA registry — read, never hardcoded | D-376/D-380 |
+| **T11** | A toolchain/tag-system change runs the armed I→A sweep BEFORE implementation | D-383 |
+| **T12** | Delegate implementation only where the acceptance oracle is TOTAL; PARTIAL ⇒ hand-review before commit | D-385 |
+
 - **ONE parser, N consumers (D-337).** `foxtag` is the single tag-parser + fact-producer + query
   engine. A checker/plugin/skill that RE-implements block-parsing is a **Class-18 mirror**. A new
   capability = a foxtag producer/command consumed by all — not a private re-parse.

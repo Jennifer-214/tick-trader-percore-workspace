@@ -429,8 +429,12 @@ def selftest():
         bad.write_text("# handoff\n\nThis session had 24 commits and 100 tools enrolled.\n")
         f = check_handoff_quality(bad)
         kinds = " ".join(m for _, m in f)
-        chk("planted VOLATILE COUNT is flagged", "volatile commit count" in kinds)
-        chk("planted volatile tools-enrolled count is flagged", "tools-enrolled" in kinds)
+        # Assert on the MATCHED TEXT, not the pattern's label. These two teeth silently broke when
+        # the labels changed during the shape-based redesign — the detection was fine the whole
+        # time, the assertions were stale. A tooth coupled to a human-readable label fails for a
+        # reason that has nothing to do with what it guards.
+        chk("planted VOLATILE COUNT is flagged", "24 commits" in kinds)
+        chk("planted volatile tools-enrolled count is flagged", "100 tools" in kinds)
         chk("missing RE-DERIVE block is flagged HIGH",
             any(s == "HIGH" and "RE-DERIVE" in m for s, m in f))
         chk("missing JUDGMENT-CHECK ledger is flagged HIGH",

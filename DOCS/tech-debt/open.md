@@ -3818,7 +3818,28 @@ sister_debt: TECH_DEBT-154 (the maker-fee guard, which uses the __builtin_expect
   - **The by-mention hole is CLOSED.** TECH_DEBT membership was a raw-text scan, so a set that admits anything it has SEEN could not go red — Class-51 inside the resolver, and the reason CI never saw this class. Now defining-form only; measured 248 by-mention vs 247 by-defining, the one drop being the genuinely-dangling `TECH_DEBT-101`.
   - **⚠️ The first run was 70% NOISE, and de-noising it was the real work.** 18 raw dangling citations reduced to **8 real**: (i) SCOPE COLLISIONS — `T13`-`T19` are TEST ids (`T7-T18` in a cfg-field-dispatch test), `H23` is a PROPOSED-but-unwritten invariant, `Class 0` came from a table describing the literal format `"Class <n>"`. AR-14's false-positive surface already says scope overlap MUST NOT be mechanized; citations are now resolved only for distinctively-prefixed namespaces (`TECH_DEBT-`/`PARITY-`/`AR-WH-PL-CP-`), recorded as `citations_verifiable` per namespace in the registry. (ii) FROZEN RECORDS — a postmortem or plan_check citing a then-real id is a TRUTHFUL artifact; D-390 settled that the guard's job is to stop the corpus getting WORSE, not to rewrite history.
   - **What remains for (f), with its live citation site — 8 ids, all VERIFIED to have no defining row in ANY ledger file:** `TECH_DEBT-16` (prior sprint `v5.14` MASTER + 2 subplans) · `-101` (both ledgers + the decision log) · `-102`/`-103`/`-104` (the `B.3-legacy-empty-out` subplan) · `-125` (the LIVE `ROADMAP-2026-05-17-to-paper-test.md` + decision log) · `-128` (the `B.6-enginesharded-subfolder-split` subplan) · `PARITY-39` (`PARITY_ISSUES.md` itself + MASTER).
-  - **⚠️ NOT dispositioned, deliberately.** `DOCS/TECH_DEBT.md` turned out to be an INDEX, not a ledger, and these ids have **no content anywhere** — so writing a tombstone body would be INVENTING history. That is the same fabrication class this session caught in `_build_ref_index()`. Each disposition needs the operator's knowledge of what the id WAS, or an explicit decision to tombstone-as-unknown per H21 (reserve the slot, never reuse, content unrecoverable). Sequencing note: TECH_DEBT-219 (the ledger SPLIT, `TECH_DEBT.md` frozen) is the likely root cause and should be read alongside.
+  - **⚠️⚠️ CORRECTED 2026-07-20 (D-401) — THE PREMISE BELOW IS REFUTED. READ THIS FIRST.**
+
+The paragraph that follows claims these ids have **"no content anywhere"** and that any tombstone
+would be inventing history. **That is false, and it was verified false by search.** What had actually
+been checked was "no defining row in any *ledger file*" — true. What was written was "no content
+anywhere" — never searched for. Promoting the narrow verified fact to the broad claim is **AR-15**.
+
+**3 of 3 ids searched had recoverable content, and all three are now DEFINED:**
+- `PARITY-39` → a full entry in `DOCS/PARITY_ISSUES.md` that had never been given an `id:` row
+- `TECH_DEBT-16` → a complete body drafted at `v5.14.9-soft-risk-degradation-ladder.md:912` under
+  "entry shape (auto-write per CLAUDE.local.md)", never transcribed
+- `TECH_DEBT-101` → already re-homed to `TECH_DEBT-238`; only a forwarding pointer was missing
+
+Acting on the paragraph below would write "content unrecoverable" over recoverable history into an
+**append-only** ledger — making H21 the invariant the action VIOLATES rather than the one it invokes.
+**Before escalating any remaining id, search outside the four ledger `sources`** (`plans/**`,
+decision logs, prior-sprint MASTERs). Live corpus: re-derive with `--check 14`.
+
+*The original text is left below UNEDITED, per this ledger's don't-erase-history convention — an
+entry that silently rewrites its own evidence cannot be audited afterwards.*
+
+**⚠️ NOT dispositioned, deliberately.** `DOCS/TECH_DEBT.md` turned out to be an INDEX, not a ledger, and these ids have **no content anywhere** — so writing a tombstone body would be INVENTING history. That is the same fabrication class this session caught in `_build_ref_index()`. Each disposition needs the operator's knowledge of what the id WAS, or an explicit decision to tombstone-as-unknown per H21 (reserve the slot, never reuse, content unrecoverable). Sequencing note: TECH_DEBT-219 (the ledger SPLIT, `TECH_DEBT.md` frozen) is the likely root cause and should be read alongside.
 
 ### TECH_DEBT-250 — `check_close_out_completeness.py` (M8 step 5 / AR-8): documented as overdue across 6+ sessions, BUILT + WIRED 2026-07-20
 

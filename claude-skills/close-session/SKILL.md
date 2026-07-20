@@ -301,7 +301,7 @@ commits to four owed auto-write ledgers while the sweep stayed green throughout,
 those files is mechanically gated*. A green from a partially-mechanised ritual is evidence about
 the mechanised half only.
 
-### 5.1 — RUN the mechanical enforcer, do not assume it
+### 6.5.1 — RUN the mechanical enforcer, do not assume it
 
 ```
 python3 tools/check_close_out_completeness.py --since <session-start-sha>
@@ -310,13 +310,13 @@ python3 tools/check_close_out_completeness.py --since <session-start-sha>
 Covers: auto-write ledger coverage · volatile counts in the handoff · a RE-DERIVE block ·
 a judgment-check ledger · an independent-review record. HIGH findings BLOCK the close.
 
-### 5.2 — ANSWER all eight judgment checks EXPLICITLY, in the handoff
+### 6.5.2 — ANSWER all eight judgment checks EXPLICITLY, in the handoff
 
 `/capture-audit` checks **2 · 3 · 5 · 6 · 7 · 9 · 10 · 12** are tool-backed by nothing. Record a
 verdict per check in the handoff **in `Check N` form** so a skip is VISIBLE rather than invisible.
 "Nothing found" is a valid verdict; *silence is not*. The enforcer greps for this ledger.
 
-### 5.3 — NO VOLATILE COUNTS in the handoff
+### 6.5.3 — NO VOLATILE COUNTS in the handoff
 
 A raw count is stale **on the commit that records it**. Observed: `26 commits` → corrected to `24`
 → already `25` by the next commit; and a stale `98 enrolled` survived TWO self-sweeps. This is not
@@ -326,7 +326,7 @@ Anchor to a **SHA range** (`window 2167d9d..HEAD`) or a **state** ("baseline EMP
 and give the reader the commands to RE-DERIVE anything actionable. Name things by ID, not by count:
 "8 dangling ids" rots; `TECH_DEBT-101, -102, …` does not.
 
-### 5.4 — INDEPENDENT ADVERSARIAL REVIEW of the handoff (AR-8), MANDATORY
+### 6.5.4 — INDEPENDENT ADVERSARIAL REVIEW of the handoff (AR-8), MANDATORY
 
 **The maker does not grade their own artifact.** Self-checking a handoff failed FOUR CONSECUTIVE
 TIMES in one close — and the third failure was the *sweep for stale values* missing a stale value

@@ -326,9 +326,20 @@ if __name__ == "__main__":
     total = 0
     for ns in sorted(idx):
         n = len(idx[ns])
-        dupes = sum(1 for v in idx[ns].values() if len(v) > 1)
+        # Apply the D-400 supersede exemption here TOO. This summary previously counted RAW
+        # double-definitions while check_capture_audit's findings path applied active_sites(),
+        # so the two tools the handoff tells you to run gave OPPOSITE answers on (f)'s worklist:
+        # 23 DECISION collisions here, zero there. A reader taking this number as the worklist
+        # would re-open a fork D-400 settled. One exemption, two consumers -> one call site.
+        dupes = sum(1 for v in idx[ns].values() if len(active_sites(ns, v)) > 1)
+        raw = sum(1 for v in idx[ns].values() if len(v) > 1)
+        exempt = raw - dupes
         total += n
-        print(f"  {ns:<12} {n:>4} ids" + (f"   ⚠️ {dupes} DOUBLE-DEFINED" if dupes else ""))
+        note = f"   ⚠️ {dupes} DOUBLE-DEFINED" if dupes else ""
+        if exempt:
+            note += f"   ({exempt} supersede-exempt, D-400)" if dupes else \
+                    f"   ({exempt} double-defined, ALL supersede-exempt per D-400)"
+        print(f"  {ns:<12} {n:>4} ids" + note)
     print(f"  {'TOTAL':<12} {total:>4}")
     # non-vacuity: an index that resolves nothing is a broken resolver, not an empty corpus.
     sys.exit(0 if total > 50 else 2)

@@ -343,8 +343,28 @@ FN_REGEX='^[[:space:]]*((static[[:space:]]+)?inline[[:space:]]+)([A-Za-z_<>:&* ]
     echo "- Lowercase helpers (\`fan_out\`, \`drain_with_submit\`) are local to a function and not in this map"
     echo "- ALL_CAPS macros are not in this map; see headers directly"
 
-} > "$OUT"
+} > "$OUT.tmp"
 
-# Final stats
-fn_count=$(grep -c "^- \`" "$OUT" || echo 0)
-echo "[gen_code_map] wrote $OUT — $fn_count functions indexed across ${#SUBSYSTEMS[@]} subsystems"
+# STAMP-ON-CHANGE (D-369) — only replace OUT if the CONTENT actually differs, ignoring the
+# "Last regenerated" line (whose date + commit move on every run by construction).
+#
+# This tool previously rewrote OUT unconditionally, so a NO-OP regen still bumped the stamp and
+# left DOCS/CODE_MAP.md modified in the working tree. Two costs: the "run the producer, expect
+# 0-diff" currency check can never pass for it, and — worse — the file shows dirty after every
+# single pickup, which is exactly the diff noise that trains a reader to stop looking at a file.
+# A stamp that moves when nothing moved is not provenance, it is churn.
+#
+# The retained stamp stays TRUE when content is unchanged: it says this content was generated on
+# date X against commit Y, and that remains the case regardless of how many times the producer is
+# re-run over identical input.
+if [ -f "$OUT" ] \
+   && diff -q <(grep -v '^\*\*Last regenerated\*\*:' "$OUT") \
+              <(grep -v '^\*\*Last regenerated\*\*:' "$OUT.tmp") >/dev/null 2>&1; then
+    rm -f "$OUT.tmp"
+    fn_count=$(grep -c "^- \`" "$OUT" || echo 0)
+    echo "[gen_code_map] $OUT already current — $fn_count functions, no write (stamp-on-change, D-369)"
+else
+    mv "$OUT.tmp" "$OUT"
+    fn_count=$(grep -c "^- \`" "$OUT" || echo 0)
+    echo "[gen_code_map] wrote $OUT — $fn_count functions indexed across ${#SUBSYSTEMS[@]} subsystems"
+fi

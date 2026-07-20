@@ -11,6 +11,14 @@
     "_note": "$ENGINE / $WORKSPACE are literal-token substitutions (plain string replace, NOT regex). Python: tools/foxroots.py ENGINE/WORKSPACE. C++: foxtag.hpp Roots.engine/.workspace."
   },
 
+  "membership_pin": {
+    "_law": "Membership is pinned by a GOLDEN FILE LIST, never by a count. Each profile names its golden at `membership_golden`; the resolved list must match it EXACTLY (order included) or the gate REDs. Re-blessing is an EXPLICIT act that SHOWS the per-file diff (D-386).",
+    "_why_not_a_count": "MEASURED, from this repo's own history: commit `1da1c1c` (the Core→Node mechanical rename) moved SIX files' identities — CoreLatencyStats.hpp -> NodeLatencyStats.hpp, CoreModelZoo.hpp -> NodeModelZoo.hpp, +4 — with the tracked count going 167 -> 167, **DELTA ZERO**. A count-only pin is structurally blind to renames, and to any swap (delete one, add one, nets to zero). The closing irony: that same rename is what produced the dead `CoreLatencyStats.hpp` citations B-Plus still flags today — i.e. the change a count-pin would miss is exactly the change that generates the doc-rot `0.2` (g) exists to catch.",
+    "_why_not_a_floor": "The `min_files: 150` this replaces was a hand-picked constant that only caught catastrophic collapse — it would sail past 202 -> 160. Flagged by the a-class; replaced rather than defended.",
+    "_churn_makes_this_cheap": "MEASURED: tracked .hpp/.cpp held at 166 across the last 80 commits, and was 167 a month/150 commits earlier — roughly ONE net change per month. So the bless is rare, and each firing is a real deliberate event (a source file added or removed) that SHOULD demand a nod. An ADD that REDs is mild friction; a DELETE that does NOT red is a hole. The pin trades a little of the first to eliminate the second.",
+    "_first_golden": "This is the toolchain's FIRST output golden — a sorted text list, no volatile frame, no ABI, no dates, no absolute paths (stored root-relative). It proves D-386's mechanism on the cheapest possible artifact before the harder producers adopt it."
+  },
+
   "sort": {
     "within_root": "bytewise-ascending-relative-path",
     "root_order": ["engine", "extra_roots-in-declared-order"],
@@ -32,7 +40,7 @@
       "follow_file_symlinks": "true",
       "follow_dir_symlinks": "false",
       "extra_roots": ["schema_golden"],
-      "min_files": "150",
+      "membership_golden": "goldens/corpus--PROFILE.txt",
       "_expected_at_contract_v1": "202 = 197 engine-walk (incl. the 3 file-symlinked DOCS templates) + 5 schema_golden"
     },
     "derived_facts": {
@@ -43,7 +51,7 @@
       "follow_file_symlinks": "true",
       "follow_dir_symlinks": "false",
       "extra_roots": [],
-      "min_files": "150",
+      "membership_golden": "goldens/corpus--PROFILE.txt",
       "_expected_at_contract_v1": "194 = 197 engine-walk minus the 3 DOCS templates",
       "_why_the_extra_exclusions_are_LOAD_BEARING": "NOT cosmetic. check_cache_layout.py:442-446 documents it in-source: DOCS/ and schema_golden hold ILLUSTRATIVE [STRUCT] [DERIVED] on non-compiled copy-source. Measured: flatten these into `validate` and the STANDING-CI cache-layout gate REDs immediately — [size-drift] ExecutionCore: [SIZE] says 192B but real sizeof = 68352B; CfgFieldDescriptor 128B vs 104B. The trap: the natural-looking fix is refreshing those tags, which writes 68352B into a COPY-PASTE TEMPLATE and propagates a wrong derived fact into every future conversion — Class-18 through the front door. This profile split is the guard. DO NOT collapse it as over-engineering. (C-396 item 1.)"
     }

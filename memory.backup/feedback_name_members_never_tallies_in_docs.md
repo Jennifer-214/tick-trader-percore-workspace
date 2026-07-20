@@ -33,5 +33,5 @@ telling the reader to stop re-deriving. In the same close a commit count was wro
 
 **Enforced, not remembered** ([[feedback_structural_enforcement_when_memory_insufficient]]): the
 `VOLATILE_COUNT_PATTERNS` check in `tools/check_close_out_completeness.py` flags tallies in handoff
-prose while allowing them inside code fences; `/close-session` Stage 5.3 makes it part of the close.
+prose while allowing them inside code fences; `/close-session` Stage 6.5.3 makes it part of the close.
 Decision **D-402**.

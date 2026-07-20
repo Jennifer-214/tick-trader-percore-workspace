@@ -179,9 +179,38 @@ Invoke `/handoff <ship-tag>` via Skill tool. `/handoff` internally runs its own 
 
 If `/handoff` errors (e.g., plan body has substantial gaps): HALT and surface to operator.
 
-### Stage 7 — `/sync-workspace` (push everything)
+### Stage 6.5 — THE JUDGMENT HALF (MANDATORY; full text in the ⚠️ section below)
 
-Invoke `/sync-workspace` via Skill tool. Pushes:
+The handoff now EXISTS (Stage 6), so it can be judged. Run, in order:
+
+```bash
+python3 tools/check_close_out_completeness.py     # both halves; ADVISORY exit, HIGH findings are not
+```
+
+1. **Every auto-write surface** touched or explained (mechanical; the tool decides).
+2. **Answer all 8 judgment checks explicitly**, in greppable `Check N` form, in the handoff.
+3. **No volatile counts in prose** — anchors only. Discharge history with `VOLATILE-OK`, never by
+   deleting the check.
+4. **Independent adversarial review of the handoff** (AR-8). NOT the author. Record the verdict.
+
+**Do not proceed to Stage 7 with HIGH findings open.** A push freezes the handoff as the thing the
+next session reads. → full rationale in the ⚠️ Stage 6.5 section below.
+
+### Stage 7 — `/sync-workspace` (push everything) — **INVOKE THE SKILL; DO NOT HAND-ROLL**
+
+> **⚠️ Observed 2026-07-20.** This stage was hand-rolled — `cp` the memory files, `git commit`,
+> `git push` — because that *looks* equivalent. It is not. `/sync-workspace` runs
+> `tools/migrate_memory_frontmatter.py --apply` (canonicalizes the block/inline frontmatter the
+> harness mangles on agent-written memories, and re-derives sister links from body `[[links]]`) and
+> then gates on `tools/check_doc_metadata.py --bidirectional --memories`. Hand-rolling skipped both.
+> When finally run, the canonicalizer healed **7 files — 4 of which the manual pass never opened.**
+>
+> The skip was invisible because hand-fixing WORKED every time it was tried. That is the signature of
+> this whole gap class: the tool is not FASTER than the hand version, it is CORRECT where the hand
+> version is merely plausible. Reach for the skill because it EXISTS, not because you feel the need
+> (`feedback_resource_use_gated_on_existence_not_felt_need`).
+
+Invoke `/sync-workspace` via the Skill tool. Pushes:
 - Plans (decision log + plan body + handoff doc + plan_checks audit synthesis docs)
 - Memory backups
 - CLAUDE.local.md backup
@@ -262,7 +291,7 @@ LAYER 2 (spawned sub-agent — the one exception):
 If reading this spec inside an Explore subagent: return error. `/close-session` is only invoked from main session because it orchestrates handoff writing + workspace push (mutating effects).
 
 
-## ⚠️ Stage 5 — THE JUDGMENT HALF (added 2026-07-20 after a 4x recurrence)
+## ⚠️ Stage 6.5 — THE JUDGMENT HALF (added 2026-07-20 after a 4x recurrence)
 
 **Why this stage exists, stated so it cannot be skipped by feeling done.** The close-out has a
 MECHANICAL half and a JUDGMENT half. The mechanical half is gated by `check_session_docs.sh`. The

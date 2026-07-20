@@ -264,6 +264,59 @@ def _commit_count(since, repo):
         return 0
 
 
+def check_sync_owed(live=None, backup=None, ws=None):
+    """Detect the EVIDENCE that /sync-workspace has not run, rather than trusting that it did.
+
+    Prescribing "invoke the skill" is a memory-based control, and memory-based controls at the close
+    are exactly what keep failing here. Two mechanical tells, both cheap:
+
+      1. `memory.backup/` differs from the LIVE memory dir. The live dir is the source of truth and
+         lives outside any repo ($HOME/.claude); the backup is the only off-machine copy. A drift
+         means either sync never ran, or it ran before the last memory edit. It is also the exact
+         signature of a HAND-ROLLED sync: `cp` mirrors bytes but skips the canonicalizer that
+         rewrites frontmatter and re-derives sister links, so a hand-copied backup can be
+         byte-identical to a file the tool would have CHANGED.
+      2. Unpushed commits in the workspace. A close that ends with work only on this machine has not
+         closed — the next session, or the next machine, sees none of it.
+
+    Neither is fatal on its own (both are legitimate mid-session states), so both report rather than
+    block. The point is that the skip becomes VISIBLE, which is the whole failure mode."""
+    findings = []
+    ws = Path(ws) if ws else WORKSPACE   # the ONE resolver (D-375); already imported above
+    live = Path(live) if live else (
+        Path.home() / ".claude/projects/-home-caramel-code-FoxML-Trader-v2/memory")
+    backup = Path(backup) if backup else (ws / "memory.backup")
+    if live.is_dir() and backup.is_dir():
+        drift = []
+        for f in sorted(live.glob("*.md")):
+            b = backup / f.name
+            if not b.is_file() or b.read_text() != f.read_text():
+                drift.append(f.name)
+        orphan = [b.name for b in sorted(backup.glob("*.md")) if not (live / b.name).is_file()]
+        if drift:
+            findings.append(("MED",
+                f"memory.backup DRIFT vs the live memory dir ({len(drift)} file(s), e.g. "
+                f"{', '.join(drift[:3])}) — /sync-workspace has not run since the last memory edit. "
+                f"A hand-rolled `cp` sync also skips migrate_memory_frontmatter.py, which is what "
+                f"canonicalizes frontmatter and re-derives sister links"))
+        if orphan:
+            findings.append(("MED",
+                f"memory.backup holds {len(orphan)} file(s) with no live counterpart "
+                f"({', '.join(orphan[:3])}) — a deleted memory, or a backup written by hand"))
+    try:
+        import subprocess
+        r = subprocess.run(["git", "-C", str(ws), "rev-list", "--count", "@{u}..HEAD"],
+                           capture_output=True, text=True, timeout=15)
+        n = int((r.stdout or "0").strip() or 0)
+        if n:
+            findings.append(("MED",
+                f"workspace has {n} UNPUSHED commit(s) — a close that leaves work on one machine "
+                f"has not closed; run /sync-workspace (Stage 7)"))
+    except Exception:
+        pass  # no remote / not a repo / git unavailable — not this tool's business to diagnose
+    return findings
+
+
 def run(since, min_commits, explain, quiet):
     repo = WORKSPACE
     n = _commit_count(since, repo)
@@ -297,6 +350,9 @@ def run(since, min_commits, explain, quiet):
             active = h
             break
     hq = check_handoff_quality(active)
+    # Sync-owed is part of the close, not a separate ritual: a handoff nobody can read is not a
+    # handoff. Detected from EVIDENCE (backup drift, unpushed commits) rather than trusted.
+    hq += check_sync_owed()
     if hq:
         print(f"\n[close-out] handoff quality — {len(hq)} finding(s) on "
               f"{active.name if active else '(none)'}:")
@@ -426,6 +482,26 @@ def selftest():
             not _discharged("<!-- VOLATILE-OK-SECTION: pm -->\nx\n\n# New\n\nnow 24 commits", 48))
         chk("plain prose is NOT discharged (else the hatch is an off switch)",
             not _discharged("plain prose says 24 commits", 20))
+        # ── sync-owed teeth. Plant a REAL drift; a detector never observed firing is precisely
+        # what this tool exists to catch, and it would be self-refuting to ship one here.
+        lv, bk = Path(td) / "live", Path(td) / "bak"
+        lv.mkdir(); bk.mkdir()
+        (lv / "a.md").write_text("same")
+        (bk / "a.md").write_text("same")
+        chk("IN-SYNC memory dirs produce NO drift finding (negative control)",
+            not any("DRIFT" in msg for _, msg in check_sync_owed(lv, bk, td)))
+        (lv / "b.md").write_text("new memory, never synced")
+        chk("a memory file MISSING from the backup is detected",
+            any("DRIFT" in msg for _, msg in check_sync_owed(lv, bk, td)))
+        (bk / "b.md").write_text("stale content")
+        chk("a memory file whose backup CONTENT differs is detected (the hand-`cp` signature)",
+            any("DRIFT" in msg for _, msg in check_sync_owed(lv, bk, td)))
+        (bk / "b.md").write_text("new memory, never synced")
+        (bk / "ghost.md").write_text("deleted upstream")
+        chk("an ORPHAN backup with no live counterpart is detected",
+            any("orphan" in msg or "no live counterpart" in msg
+                for _, msg in check_sync_owed(lv, bk, td)))
+
         chk("an absence claim SHOWING its search is discharged",
             not any("absence" in msg for _, msg in check_handoff_quality(good)))
     return ok

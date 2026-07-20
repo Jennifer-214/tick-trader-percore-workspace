@@ -1,6 +1,6 @@
 ---
 type: meta-discipline
-stage: 3-first-canonical
+stage: 4-cohort
 established: 2026-07-17
 tags: [audit-methodology, verification, structural-enforcement, test-infrastructure, doc-discipline]
 surface: [ci-tooling, test-infrastructure]
@@ -15,6 +15,9 @@ applications:
   - 'check_corpus_membership.py --selftest — planted ADD / DELETE / count-unchanged RENAME / REORDER each FLAGGED, absent golden is a HARD failure, and the git-tracked PIN filter proven non-trivial (E.1.2.B 0.2; the blessed-output first canonical)'
   - 'bless.py --selftest — all three refusal paths proven (non-TTY drift, non-TTY create, no bypass parameter) plus no-op-does-not-write (D-394/D-369)'
   - 'check_identifier_retirement_selftest.sh — every plant ASSERTED after its version-decrease tooth was found DEAD (a stale hardcoded anchor made the sed a no-op, so the case proved nothing); now value-derived and wired into check_session_docs (E.1.2.B 0.2)'
+  - 'rebuild_doc_indexes.py — a HARD gate returning 0 + "indexes current" whenever its heading-LOCATOR missed; a planted one-character heading change proved the vacuity, and locator failures now return rc=2 in every mode (E.1.2.B 0.2, D-405; Class-51 mode E first canonical)'
+  - 'check_forward_promise_audit.py --selftest NEW — 8 both-direction cases, built because the WIRED invocation (--since HEAD~5) routinely matches ZERO sentinels, so a real run proves nothing and the corpus can never BE the teeth; verified RED against the pre-fix anchor (E.1.2.B 0.2; Class-51 mode F)'
+  - 'check_tech_debt_selftest.sh — the MUTATING --close path had no tooth at all; now asserts rc=2 AND both ledgers byte-identical. The byte assertion first shipped VACUOUS (a hardcoded path made md5sum error, both hashes empty, "" = "" compared equal) and now resolves the path FROM THE TOOL and fails loudly if unresolvable — a vacuous tooth inside the tooth written to catch vacuity (E.1.2.B 0.2, D-407)'
 ---
 
 # Calibration corpus — every guard asserts its own non-vacuity against {golden-COMPLETE x golden-BROKEN}

@@ -311,3 +311,58 @@ Verify discrimination explicitly: `rg` must see 0 and the replacement enumerator
 
 **Related:** TECH_DEBT-245 (closed) · `calibration-corpus-non-vacuity-discipline.md` (the tooth
 needs a tooth) · Class-51.
+
+## Landmine 14 — the tech-debt ledgers spell one anchor THREE ways, and PARITY is not symmetric with TECH_DEBT (set 2026-07-20, E.1.2.B `0.2`)
+
+**The trap.** An entry's defining anchor is written three ways — `### TECH_DEBT-N` (heading),
+`id: TECH_DEBT-N` (bare), `- **id:** TECH_DEBT-N` (bold) — and roughly **37% of defining headings
+are ZERO-PADDED** (`TECH_DEBT-016`). Any single-spelling grep is half-blind, and the two namespaces
+do **not** share a safe shortcut: every TECH_DEBT entry has a `###` heading, but **10 of 41 PARITY
+entries live in ```yaml fences with no heading at all**. So "just anchor on the heading" is correct
+for TECH_DEBT and silently wrong for PARITY.
+
+**What it cost.** Three separate live defects, all shipped and all green: a pre-commit gate
+(`check_forward_promise_audit.py`) blind to 102 of 201 open entries, emitting a HIGH telling you to
+write an entry that already existed — and passing **vacuously** in the other leg, which certifies a
+still-open item as moved; two SKILL.md prose recipes with the same pattern, run literally by a human
+or agent, producing a false BLOCK; and `check_tech_debt.py --close`, where the SAFE spelling
+(`--close 16`) errored while the DANGEROUS one (`--close 016`) silently rewrote both ledgers. The
+orchestrator's own greps returned 0 for every id until the format was actually inspected — a
+uniform-zero result is the tell.
+
+**How to avoid it.** Match the UNION with padding tolerance:
+```
+NS=TECH_DEBT; N=245     # or NS=PARITY
+rg -n -e "^### $NS-0*$N\b" -e "^id: $NS-0*$N\b" -e "^- \*\*id:\*\* $NS-0*$N\b" <ledger>
+```
+(the namespace is a VARIABLE deliberately — writing the literal `<NS>-0` inline creates a string the
+citable-ID scanner reads as a citation to id `0`, which is how this very entry first went RED)
+(`-e` repeated rather than alternation, so it survives a markdown table cell). Better: import the
+resolver — `_anchor`/`_has_entry`/`_entry_block` in `check_forward_promise_audit.py`, whose
+`--selftest` pins these exact cases. **And never trust a zero/empty result from an anchor grep until
+you have looked at what the anchor actually looks like in the file.**
+
+**Related:** Class-51 mode F (half-blind anchor) · D-405 (locate-vs-derive) · D-407 · TECH_DEBT-263
+(the resolver has 1 of ~7 consumers) · TECH_DEBT-262 (the parent generator).
+
+## Landmine 15 — `check_tech_debt.py --close` MUTATES two ledgers; it was write-by-default (set 2026-07-20, E.1.2.B `0.2`)
+
+**The trap.** `--close N` moves an entry `open.md` → `closed.md` with no undo but git. Until
+2026-07-20 it wrote **by default** — `--dry-run` was opt-in, no diff was shown, and there was no
+confirmation. Nothing in its `--help` suggested a read-only probe was unsafe.
+
+**What it cost.** It was fired during a **read-only verification** — to check a claim that the tool
+was zero-pad-blind — and silently moved TECH_DEBT-016, an entry transcribed into `open.md` earlier
+that same session. Caught only because the output wording differed from the agent report being
+verified; reverted with `git checkout`. The agent's report had shown a `--dry-run` invocation and
+the flag was dropped when the command was retyped.
+
+**How to avoid it.** It now routes through `bless.confirm_mutation()` and HARD-REFUSES `rc=2`
+non-interactively, so this specific trap is closed. The general lesson stands: **before running any
+tool flag during verification, check whether it writes** — `--close`, `--fix`, `--apply`,
+`--update`, `--bless` all mutate somewhere in this toolchain. Prefer `--dry-run` and confirm the
+output says DRY-RUN. **If you are an agent and hit the rc=2 refusal: that is the control working,
+not a permission problem to route around.**
+
+**Related:** D-407 · TECH_DEBT-255 (closed over an un-enumerated set — this was the missed writer) ·
+D-394 (the TTY contract) · Class-51.

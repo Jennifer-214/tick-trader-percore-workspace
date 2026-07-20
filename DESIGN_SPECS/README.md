@@ -209,7 +209,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/meta-disciplines/backtest-paper-live-convergence-discipline.md` | 3-first-canonical | meta-discipline, strategy-lifecycle, backtest-to-live, +1 | 0 |
 | `DESIGN_SPECS/meta-disciplines/backwards-compat-not-default-concern.md` | 3-first-canonical | meta-discipline, backwards-compat, breaking-changes, +2 | 0 |
 | `DESIGN_SPECS/meta-disciplines/body-content-enumeration-at-plan-time-discipline.md` | 3-first-canonical | meta-discipline, plan-template, framework-discipline, +1 | 0 |
-| `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md` | 3-first-canonical | audit-methodology, verification, structural-enforcement, +2 | 5 |
+| `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md` | 4-cohort | audit-methodology, verification, structural-enforcement, +2 | 5 |
 | `DESIGN_SPECS/meta-disciplines/canonical-sister-extension-discipline.md` | 3-first-canonical | meta-discipline, framework-discipline, pattern-codification, +2 | 5 |
 | `DESIGN_SPECS/meta-disciplines/dead-code-and-identifier-retirement-discipline.md` | 5-claude-md | meta-discipline, structural-fix, framework-discipline, +1 | 4 |
 | `DESIGN_SPECS/meta-disciplines/definition-of-done-and-armed-scout-verification.md` | 3-first-canonical | audit-methodology, meta-discipline, session-continuity, +2 | 0 |

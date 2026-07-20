@@ -174,8 +174,8 @@ Parse the handoff body's `## What landed at <predecessor-tag> ship close (PREDEC
 | Predecessor tag GPG-signed | `git tag --verify <predecessor-tag>` | Signature valid (skip if signing not configured) |
 | CHANGELOG.md row landed | `rg "^### <predecessor-tag>" DOCS/CHANGELOG.md` | Returns ≥1 match |
 | Postmortem file exists | `ls <postmortem-path>` | File exists |
-| TECH_DEBT closures moved | For each `TECH_DEBT-N` claimed closed, run against BOTH ledgers: `rg -n -e "^### TECH_DEBT-0*N\b" -e "^id: TECH_DEBT-0*N\b" -e "^- \*\*id:\*\* TECH_DEBT-0*N\b" <ledger>` | Match in `closed.md`; NO match in `open.md` |
-| PARITY closures marked | For each `PARITY-NNN` claimed closed: `rg -n -A3 -e "^### PARITY-0*NNN\b" -e "^id: PARITY-0*NNN\b" tick-trader-percore-workspace/DOCS/PARITY_ISSUES.md` | Shows `status: closed` |
+| TECH_DEBT closures moved | For each id claimed closed, set `NS=TECH_DEBT; N=<id>` then run against BOTH ledgers: `rg -n -e "^### $NS-0*$N\b" -e "^id: $NS-0*$N\b" -e "^- \*\*id:\*\* $NS-0*$N\b" <ledger>` | Match in `closed.md`; NO match in `open.md` |
+| PARITY closures marked | Same command with `NS=PARITY; N=<id>`, against `tick-trader-percore-workspace/DOCS/PARITY_ISSUES.md` (add `-A3`) | Shows `status: closed` |
 
 > **⚠️ Why the three spellings + the `0*`, and do NOT simplify this back.** These ledgers spell an entry's anchor three ways (`### TECH_DEBT-N`, `id: TECH_DEBT-N`, `- **id:** TECH_DEBT-N`) and ~37% of defining headings are zero-padded. The recipe here previously read `rg "id: TECH_DEBT-N"`, which matches **none** of the 109 bold-form entries — so leg 1 failed on correctly-closed items (a false BLOCK) and, worse, **leg 2 passed vacuously**, certifying a still-open item as moved. Verified 2026-07-20 against `TECH_DEBT-245`/`-186`. The mechanical equivalent is `tools/check_forward_promise_audit.py`, whose `--selftest` pins these exact cases.
 | DESIGN_SPECS Stage promotions | For each cited Stage X→Y: `grep "^stage:" tick-trader-percore-workspace/DESIGN_SPECS/<path>.md` | Shows promoted stage |

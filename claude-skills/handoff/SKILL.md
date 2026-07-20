@@ -658,8 +658,8 @@ If `/accept-handoff` returns BLOCK findings: address them before continuing.
    | Predecessor tag GPG-signed | `git tag --verify <predecessor-tag>` | Signature valid |
    | CHANGELOG.md row landed | `rg "^### <predecessor-tag>" DOCS/CHANGELOG.md` | Returns 1 match |
    | Postmortem file exists | `ls plans/<sprint>/postmortems/<date>-<predecessor-tag>-postmortem.md` | File exists |
-   | TECH_DEBT closures actually moved | For each `TECH_DEBT-N` closure cited, run against BOTH ledgers: `rg -n -e "^### TECH_DEBT-0*N\b" -e "^id: TECH_DEBT-0*N\b" -e "^- \*\*id:\*\* TECH_DEBT-0*N\b" <ledger>` | Match in `closed.md`; NO match in `open.md` |
-   | PARITY closures marked closed | For each `PARITY-NNN`: `rg -n -A3 -e "^### PARITY-0*NNN\b" -e "^id: PARITY-0*NNN\b" tick-trader-percore-workspace/DOCS/PARITY_ISSUES.md` | Shows `status: closed` |
+   | TECH_DEBT closures actually moved | For each closure cited, set `NS=TECH_DEBT; N=<id>` then run against BOTH ledgers: `rg -n -e "^### $NS-0*$N\b" -e "^id: $NS-0*$N\b" -e "^- \*\*id:\*\* $NS-0*$N\b" <ledger>` | Match in `closed.md`; NO match in `open.md` |
+   | PARITY closures marked closed | Same command with `NS=PARITY; N=<id>`, against `tick-trader-percore-workspace/DOCS/PARITY_ISSUES.md` (add `-A3`) | Shows `status: closed` |
 
    > **⚠️ Three spellings + `0*` — do NOT simplify.** The ledgers anchor entries three ways and ~37% of headings are zero-padded; the previous `rg "id: TECH_DEBT-N"` matched none of the 109 bold-form entries, so leg 1 false-BLOCKed correctly-closed items and leg 2 passed **vacuously**. Mechanical equivalent + pinned cases: `tools/check_forward_promise_audit.py --selftest`.
    | DESIGN_SPECS Stage promotions | For each cited Stage X→Y: `grep "^stage:" tick-trader-percore-workspace/DESIGN_SPECS/<path>.md` | Shows promoted stage |

@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   tags: [structural-fix, scope-discipline, operator-collaboration]
-  sister_specs: [feedback_structural_fix_for_recurring_class.md, feedback_design_once_maintain_forever.md, feedback_close_the_class_vs_migrate_every_site.md, feedback_heavier_default_audit_posture_for_capital.md, feedback_opportunistic_tech_debt_closure.md, feedback_structure_judgment_loop_not_output.md, feedback_prefer_deletable_cascade_over_tombstone.md, feedback_process_weight_by_surface_blast_radius.md, feedback_resource_use_gated_on_existence_not_felt_need.md]
+  sister_specs: [feedback_structural_fix_for_recurring_class.md, feedback_design_once_maintain_forever.md, feedback_close_the_class_vs_migrate_every_site.md, feedback_heavier_default_audit_posture_for_capital.md, feedback_opportunistic_tech_debt_closure.md, feedback_structure_judgment_loop_not_output.md, feedback_prefer_deletable_cascade_over_tombstone.md, feedback_process_weight_by_surface_blast_radius.md, feedback_resource_use_gated_on_existence_not_felt_need.md, differential-to-absolute-gate-contract-widening.md, advertised-capability-never-exercised.md]
   originSessionId: 404732ed-f74c-4c1d-a12d-3dad513c1be2
 ---
 

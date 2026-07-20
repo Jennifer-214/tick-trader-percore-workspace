@@ -6,7 +6,7 @@ metadata:
   type: feedback
   tags: [audit-methodology, scope-discipline]
   originSessionId: 3e806606-ac69-40fd-ac33-45906443bae4
-  sister_specs: [feedback_enumerate_set_before_categorical_claim.md, feedback_passing_test_is_not_verification.md, feedback_run_doc_ci_tools_first_never_hand_verify.md, feedback_tag_disposition_at_fix_time.md, feedback_delegate_on_total_oracle_handreview_on_partial.md, feedback_script_transforms_need_output_eyeball.md, project_workspace_remote_gone_commit_only.md]
+  sister_specs: [feedback_enumerate_set_before_categorical_claim.md, feedback_passing_test_is_not_verification.md, feedback_run_doc_ci_tools_first_never_hand_verify.md, feedback_tag_disposition_at_fix_time.md, feedback_delegate_on_total_oracle_handreview_on_partial.md, feedback_script_transforms_need_output_eyeball.md, project_workspace_remote_gone_commit_only.md, feedback_name_members_never_tallies_in_docs.md]
 ---
 
 To verify a claim ("X is removed", "Y is closed", "Z still exists"), **read what each match/ref IS** — never conclude from the COUNT of a token. grep-count lies in *both* directions:

@@ -16,3 +16,13 @@ When you dismiss or bound a risk (or scope) by claiming a property holds over a 
 **Worked instance (`.E.0.1` R1, 2026-05-29):** R1 rated "enabling the native build surfaces more native/generic divergence" as LOW because "non-sqrt native ops are exact integer = identical to generic." That blanket claim was never checked against the actual native-specialization list — which includes `FPN_FromDouble<64>`/`FPN_ToDouble<64>`, which round-trip `double` (NOT exact-integer) and sit on the cfg→FPN ingest path. The categorical dismissal hid the single most-likely divergence. Caught only by operator pushback ("look at the block again") — i.e., the operator did the enumeration I should have.
 
 **How to apply:** when a risk section / scope rationale / self-audit contains "the [other / rest / remaining / non-X] are [property]" → STOP, list the actual members, check each against [property], and name any non-conforming member explicitly with its disposition. Highest-value in the risk pillar of the 4-pillar self-audit ([[feedback_audit_own_proposals_with_same_rigor]]) and in plan risk sections. This is [[feedback_enumerate_consumers_before_registry_row_deletion]] (Class 33) lifted from the DELETION layer to the RISK-ASSESSMENT/scoping layer — same enumeration discipline. Reinforced by [[feedback_operator_pushback_as_audit_signal]] (a pushback that catches an un-enumerated claim IS the signal). If it recurs DESPITE this memory → escalate to a `/readiness` or `/precoding-audit-gate` mechanical check (M7: flag risk-section phrasings of the form "the rest are <property>" for enumeration). **Cataloged as AR-1** in `DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md` (the META anti-pattern catalog; this discipline is the standing **M8-candidate** if the shape recurs).
+
+**Corollary — "content is lost" is a categorical claim too** (2026-07-20, `E.1.2.B 0.2`): a handoff
+declared 8 ledger ids had "no content anywhere" and escalated them to the operator. What had actually
+been verified was "no defining row in any *ledger file*" — true, tool-checked. Searching `plans/**`,
+decision logs and prior-sprint MASTERs resolved **3 of 3 attempted**: one full entry missing only its
+`id:` row, one complete body drafted in a plan and never transcribed, one already re-homed elsewhere.
+Promoting a verified-narrow finding to a broad claim is **AR-15** (structure verified, consequence
+assumed); here it would have written "content unrecoverable" tombstones over recoverable history into
+an append-only ledger — making H21 the invariant the action violated rather than the one it invoked.
+**Before declaring anything absent, name the set you searched.** [[feedback_ground_design_in_real_code]]

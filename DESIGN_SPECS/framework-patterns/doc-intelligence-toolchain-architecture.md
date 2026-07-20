@@ -38,6 +38,32 @@ Adding vocab (a `[TAG]` value / a category / a `[REFERENCE]` subcat / a `[DERIVE
 
 **Corollary — a corpus-COHESION check goes in a SEPARATE sibling, never inside the parity-gated path.** A property that spans blocks (a `[SCHEMA]` version-pin, a cross-field register-fit, any "hold the whole corpus consistent" rule) is NOT a per-block grammar rule — folding it into the parity-gated producer (`validate_file` / the `layout` JSON) makes ONE implementation flag what the other doesn't and **re-breaks the Python↔foxtag byte-parity gate.** So add it as a separate check, or a new `foxtag <cmd>` *beside* `validate`/`layout` (whose parity payload stays untouched). Applied twice 2026-07-18 (D-371): `check_schema_version.py` (kept OUT of `validate_file`) + `foxtag fields` (added beside `layout`, its parity JSON shape unchanged → `parity_check.sh` still PASS). The cohesion property is real and worth gating — it just gates from its own sibling seam, not by widening the parity-locked one.
 
+## The corpus contract — membership is SINGLE-SOURCED, and `.gitignore` is never an input to it (D-393)
+
+The grammar-DERIVED law above answers *"what do the tags mean."* This answers the question underneath it: ***"which files are the corpus."*** Same law, one level down — and it was violated three ways at once.
+
+**The defect shape (found 2026-07-19 by the `0.2` armed sweep): THREE enumerators, none authoritative.**
+
+| Enumerator | How | Defect |
+|---|---|---|
+| `check_code_tag_blocks.py:263` `engine_source_files()` | `rglob("*.hpp") + rglob("*.cpp")`, exclude `vendor`/`build*`, add `tests/schema_golden` | **unsorted** for the engine portion → cross-machine ordering hazard |
+| `check_conversion_completeness.py:158` | `subprocess rg -l …` | **gitignore-blind** — `rg` honours `.gitignore` by default (TECH_DEBT-245) |
+| `foxtag.hpp:790` `scan_files(roots)` | C++ walk | sorted, but a third independent definition |
+
+They disagreed on ordering, on gitignored files, and on **path-argument semantics** — which surfaced as a live vacuous-green: `foxtag validate <dir>` returned `rc=0 "All tag-blocks valid"` with five tagged files sitting in that directory (it scanned one, found none), and a **nonexistent path returned `rc=0` on BOTH tools**. The directory case is a T1 divergence (Python `rc=1`); the missing-path case is **common-mode**, so `parity_check.sh` is structurally blind to it — it invokes both with no path arguments.
+
+**The rule.**
+
+1. **One contract, read by every consumer:** roots (via `foxroots`) · extensions · an **explicit** exclusion list · extra roots · **bytewise sort** · the anchored converted-file selector (`^// \[SCHEMA\]_\[v1`) · and **path-argument semantics — a DIRECTORY expands by the same rules; a MISSING path loud-fails `rc=2` everywhere.** Correct path handling then *falls out of the contract* instead of being patched per-tool.
+2. **`.gitignore` is NEVER an implicit input to corpus membership.** Gitignore is a **DISTRIBUTION** concern; membership is a **TOOLING** concern. Nobody chose to couple them — it is a side effect of `rg`'s default, and it made "0 gaps" mean *unverified* rather than *clean*. Exclusions must be **explicit and stated in the contract**. *(The 2026-07-06 all-private pivot independently retired the other half of the motivation: source was gitignored-in-place to keep a public repo code-only, and that law is now superseded — see `public-private-boundary-and-ecosystem-discipline.md`. A surviving ignore must be justified by a CURRENT reason — build artifacts, generated files, secrets — never by corpus intent.)*
+3. **EXTEND, don't mint.** `engine_source_files()` already exists, is exported, and already has two consumers — `DOCS/TOOLS.md` describes it as *"one grammar, **one file-list**."* This completes that extraction; it does not add a parallel helper.
+4. **Portable data only — this is the `toolio_schemas.json` shape, NOT the ref-index shape.** A shared registry was correctly REFUTED for the ref-index (C-392), because that one would carry extraction **regexes** and `foxtag` contains zero `std::regex` — it hand-parses char-by-char, so importing regex semantics would *create* parity risk. A corpus contract carries extensions, path globs, a prefix anchor, and a sort rule: all declarative, trivially portable to both languages. **Know which of these two shapes you are proposing before invoking "single-source it."**
+5. **Sequencing honours D-349/T4.** Single-source the RULES now; **Python stays CI-authoritative.** Promoting the enumerator into the core as a `foxtag corpus --json` producer is the declared convergence target — corpus membership is a FACT per the fact-vs-workflow boundary (D-384) and D-378 already catalogs payload kinds — but it is a gated cutover behind `parity_check.sh`, not a same-increment move.
+
+**What one fix closes:** the vacuous-green · the directory-arg T1 divergence · the common-mode missing-path hole · TECH_DEBT-245 · the ordering hazard · and the anchored-selector gotcha that produced a **false finding** during `0.1.5`. TECH_DEBT-246 (functions never checked for a missing block) is adjacent — the shared enumerator is its *precondition*, not its fix.
+
+**The generalizable lesson.** When two implementations must agree on something, the something gets **single-sourced**, not synchronized. A fork framed as *"make tool A match tool B"* vs *"make tool B match tool A"* is a signal that the shared definition is missing — both branches are patches. (Operator, rejecting exactly that framing: *"these both seem like incomplete ideas, that dont really fit in with the unified core."*)
+
 ## The migration contract — Python CI-authoritative until a parity-gated cutover (D-349)
 
 The system carries TWO implementations of the parse/producer layer during its build-out: the Python checkers (authoritative) and the C++ `foxtag` core (the destination). The contract that keeps this from being a two-implementations-drift hazard:

@@ -18,6 +18,35 @@ The governing rule for what lives in a PUBLIC project repo vs the PRIVATE worksp
 and how the workspace becomes a reusable ecosystem. Decided 2026-06-02 (Caramel) during
 the v5.15 "spring cleaning" pass on `FoxML_Trader_v2`.
 
+> ## ⚠️ SUPERSEDED AS A GOING-FORWARD LAW — 2026-07-19
+>
+> **Everything went ALL-PRIVATE on 2026-07-06.** All repos migrated to the `Jennifer-214`
+> GitHub account and were set private; there is **no live public repo** for the code-only law
+> below to govern. Confirmed by Caramel 2026-07-19: *"its all private repos… ill eventually make
+> something public or make people sign NDAs or something."*
+>
+> **What this means for a reader:**
+> - **The law below is HISTORICAL.** It accurately describes the 2026-06-02 → 2026-07-06 regime and
+>   the public snapshot that still exists from it. **Do NOT apply it as a constraint on new work** —
+>   going-forward development is unconstrained by a public/private split, so private-only material
+>   (exotic approaches, operator apparatus, full docs) may live wherever it fits best.
+> - **The `.gitignore`-in-place mechanism it describes is now legacy motivation.** Paths were ignored
+>   to keep a public repo code-only. That rationale is dead. Ignores that remain should be justified
+>   by a CURRENT reason (build artifacts, generated files, secrets) — not by this law.
+>   → This directly matters to tooling: **`.gitignore` must never be an implicit input to corpus
+>   membership** (the TECH_DEBT-245 shape — see D-393 / `doc-intelligence-toolchain-architecture.md`
+>   § "The corpus contract").
+> - **The ecosystem section below still stands** — the workspace-as-reusable-template thesis is
+>   independent of whether any given repo is public.
+>
+> **Re-publication is an OPEN question, not a settled boundary.** Caramel has floated a future public
+> surface and/or NDA-gated access. When that is decided it earns a NEW decision entry and this spec is
+> rewritten around it — the old law should not be silently reactivated as the default.
+>
+> Sisters: memory `project_public_repo_is_code_only` (records the pivot) · D-390 mechanism 3 (content
+> staleness — this spec read `status: active` describing a dead regime for ~2 weeks, which is exactly
+> the shape the `0.2` (g) supersede-check is being built to catch).
+
 ## The law
 
 > **A public project repo contains ONLY what someone needs to COMPILE-AND-RUN the code.**

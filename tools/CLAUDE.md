@@ -114,6 +114,37 @@ Harvested 2026-07-19 from E.1.2.B `0.1.5`/`0.3`, where **each of these cost a de
 a FALSE finding**. If you discover a tool behaviour that is not derivable from its `--help` or its
 docstring, write it here — that is the entire point of this section.
 
+- **The tech-debt ledgers spell an entry's anchor THREE ways — a one-spelling grep is HALF-BLIND.**
+  `### TECH_DEBT-N` (heading, always present) · `id: TECH_DEBT-N` (bare) · `- **id:** TECH_DEBT-N`
+  (bold). Measured 2026-07-20: bare 99 / bold 94 in `open.md`, bare 39 / bold 15 in `closed.md`.
+  **PARITY is not symmetric** — 10 of its 41 entries live in ```yaml fences with **no heading at
+  all**, so "just anchor on the heading" is correct for TECH_DEBT and wrong for PARITY. Match the
+  UNION. And **~37% of defining headings are ZERO-PADDED** (`TECH_DEBT-016`), so normalize through
+  `int()` — `-16` and `-016` are one id. This cost three separate live defects: a pre-commit gate
+  emitting HIGH findings for entries that exist, two SKILL.md prose recipes producing a false
+  BLOCK *and* a vacuous PASS, and `--close 16` erroring while `--close 016` silently WROTE.
+  Reference implementation: `_anchor`/`_has_entry`/`_entry_block` in `check_forward_promise_audit.py`.
+- **`check_tech_debt.py --close` MUTATES two ledgers and is now TTY-gated — `--dry-run` first.**
+  It moves an entry `open.md` → `closed.md` with no undo but git. Until 2026-07-20 it wrote **by
+  default** with no diff and no prompt (found by firing it during a read-only verification; it
+  silently moved TECH_DEBT-016). It now routes through `bless.confirm_mutation()` and HARD-REFUSES
+  `rc=2` non-interactively, like every other mutating writer. **If you are an agent: the refusal is
+  the control, not a permission problem to route around.**
+- **A `--check` that cannot LOCATE its target must not return 0.** `rebuild_doc_indexes.py` found
+  the CLAUDE.md skill table via a regex hardcoding the heading text; on a miss it printed to stderr
+  and fell through, so the wired HARD gate printed *"✅ indexes current"* and exited 0. One hyphen
+  in that heading disarmed it. Locator failures now return **rc=2 ("could not evaluate")**, distinct
+  from rc=1 ("stale") — the same idiom as a missing golden. **General rule: 3 of that tool's 4
+  targets regenerate-and-byte-compare and are structurally immune; only the one that must locate a
+  region it does not generate could go blind. Prefer derive-and-compare over locate-and-check.**
+- **`bless.confirm_mutation(label, action, noun)` is the ONE D-394 confirmation contract.** Import
+  it; never re-type the prompt. TECH_DEBT-255 existed *because* two writers had opposite postures,
+  and re-typing is how they diverged. Import it **HARD** — a `try/except` fallback would silently
+  restore write-by-default the moment it broke.
+- **`citable_ids.defining_index()` is UN-MEMOIZED — ~24 ms per call.** Fine once; a per-id loop over
+  the 251 TECH_DEBT ids is ≈4.7 s. It also returns `(path, lineno)` only, so it **cannot** give you
+  entry BLOCK boundaries — placement questions yes, body questions no. Memoize before migrating
+  consumers onto it.
 - **`foxtag` is CWD-SENSITIVE — run it from the ENGINE ROOT.** It resolves the corpus relative to
   `cwd`; a consumer inheriting some other cwd (an editor, a hook) fails with *"cannot resolve the
   engine root."* Resolve the root by **MARKER** (`Version.hpp`) + sibling probe, **never** by walking

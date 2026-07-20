@@ -15,7 +15,7 @@ For sprint state, going-forward rules, and operator-collaboration discipline, se
 
 ## Design philosophy + priorities
 
-Headline summary of design principles + priority gradients. Deep discussion + WHY context + worked examples lives in `DOCS/DESIGN_PHILOSOPHY.md` (master settings portal; 14 sections + § 11.5 meta-discipline registry). Load DESIGN_PHILOSOPHY when designing rather than implementing, or when a 1-liner here isn't enough — every principle below has an inline `→ § N` cross-ref to the deep-dive.
+Headline summary of design principles + priority gradients. Deep discussion + WHY context + worked examples lives in `DOCS/DESIGN_PHILOSOPHY.md` (master settings portal; § 11.5 is the meta-discipline registry). Load DESIGN_PHILOSOPHY when designing rather than implementing, or when a 1-liner here isn't enough — every principle below has an inline `→ § N` cross-ref to the deep-dive.
 
 ### End state (vision)
 
@@ -270,7 +270,7 @@ If you can't find the answer at the layer you're looking at, go DOWN the hierarc
 
 | When working on... | Read |
 |---|---|
-| Cold-pickup / WHY any principle / contributor onboarding / cross-family trade-off / new pattern codification | `DOCS/DESIGN_PHILOSOPHY.md` (master settings portal; 14 sections with cross-ref index) |
+| Cold-pickup / WHY any principle / contributor onboarding / cross-family trade-off / new pattern codification | `DOCS/DESIGN_PHILOSOPHY.md` (master settings portal; carries a § cross-ref index) |
 | Reusable architectural pattern catalog (80+ patterns; tagged by surface/concern/lifecycle/applications) | `DESIGN_SPECS/README.md` |
 | Bug class catalog + detection signatures (30+ recurring anti-pattern classes) | `DOCS/RECURRING_BUG_PATTERNS.md` |
 | Operator-collaboration rules (how Claude should engage with the operator on this codebase) | `~/.claude/projects/-home-caramel-code-FoxML-Trader-v2/memory/MEMORY.md` |

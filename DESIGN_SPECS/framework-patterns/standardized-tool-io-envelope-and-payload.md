@@ -46,6 +46,27 @@ The payload is **one or more NAMED RECORD-SETS.** Each record-set declares a fie
 
 **One writer emits `{schema, rows}`; one reader walks `{schema, rows}` — for ANY tool.** That is "the same read/write mechanism, general enough for all tools." Every PAYLOAD kind is uniformly `{tables:{…}}` (no per-kind container special-case); `status.findings` — the cross-cutting channel every envelope carries — has its schema ONCE at the envelope level (`findings/1`, D-384), so `read`/`validate` stay genuinely uniform over payloads with zero kind-branching.
 
+> ### ⚠️ KNOWN GAP as built at `0.1.5` — the FRAME is not validated (found 2026-07-19, D-392)
+>
+> The paragraph above describes the PAYLOAD contract, and that half holds. **The envelope FRAME is
+> validated by nothing.** `tools/toolio.py` implements the reader as literally `def read(env): return
+> env["payload"]` — `emit()` builds the frame, `read()` discards it. So `envelope_version`,
+> `schema_version` (the D-346-LOCKED grammar version), `payload_schema_version`, `producer.*`, and
+> `status.*` — **the three independent D-379 version axes this whole spec exists to carry** — are
+> checked by no consumer, and `parity_check.sh` §3b projects straight past them into `payload`.
+>
+> **Demonstrated, not theorized:** an envelope carrying nine simultaneous frame corruptions
+> (`envelope_version`→`99.0`, unregistered `payload_schema_version`, wrong locked `schema_version`,
+> `producer.tool`→`not-foxtag`, `status.ok`→`false`) passes §3b unchanged.
+>
+> Consequence for readers of this spec: **a well-specified frame is not a self-validating one.** The
+> compat gate D-373/D-379 describe ("a chain refuses an incompatible payload") is currently
+> aspirational — nothing refuses anything. Closing this is `E.1.2.B` `0.2` work: a `validate()` that
+> checks the frame against the registry, plus the redacting normalizer (C-386) that pins the frame's
+> contract fields in a golden while redacting only the genuinely volatile values
+> (`target.git_head` · `producer.version`). **Do not build a consumer that trusts the frame until this
+> lands.**
+
 **This IS the tag system's machine serialization.** The vocab doc (`doc-tag-vocabulary.md`) is the field dictionary; the in-code `//[CATEGORY]_[value]` tags and these JSON record-sets are two serializations of the ONE vocabulary. Adopting the I/O format EXTENDS the tag system to tool-I/O — they are one system ("the code side of the vocab doc, alongside the tag system"). A record-set can *be* a vocab set (the `categories` table's rows ARE the vocab categories).
 
 ## `.toolbus/` — the rendezvous (D-377)

@@ -138,6 +138,40 @@ docstring, write it here — that is the entire point of this section.
   branches, SIMD) are shown **LIVE** by the plugin (D-307/D-327), so a struct-less file legitimately
   carries zero `[DERIVED]` — that is not a gap.
 
+*Harvested 2026-07-19 from the `0.2` armed I→A sweep (D-392). Each is a VERIFIED code property, not a
+recollection; each one cost a wrong assumption somewhere in this ship.*
+
+- **`toolio.read()` DISCARDS the envelope frame — nothing validates the tool-I/O contract.** It is
+  literally `return env["payload"]`. So `envelope_version` / `schema_version` / `payload_schema_version` /
+  `producer` / `status` — the three D-379 version axes `0.1.5` exists to carry — are checked by **no one**.
+  Demonstrated: an envelope with 9 simultaneous frame corruptions (wrong locked `schema_version`,
+  unregistered payload kind, `status.ok:false`) passes `parity_check.sh` §3b unchanged. **Do not assume the
+  envelope is self-validating because it is well-specified** — emit builds the frame, read drops it.
+- **`parity_check.sh` §1 compares exit codes for EQUALITY, never for ZERO** (`:35-37`). Both validators
+  failing identically prints `OK  : exit codes identical (1)` and the run still reaches `PARITY: PASS`.
+  The gate can certify a corpus that is failing validation, and symmetric bilateral failure (both exit 2,
+  empty stdout) is indistinguishable from bilateral success. **A green parity run is NOT a green corpus.**
+- **`tools/lib/` is a GUARD BLIND SPOT — the rule is `tools/` = CODE, `tools/lib/` = DATA.**
+  `check_tools_inventory.py:46-47` and `check_import_from_core.py:74` both glob **non-recursively**, so a
+  `.py` placed under `tools/lib/` is exempt from inventory enrollment AND the roll-your-own-root lint.
+  `tools/lib/` is deliberately code-free today (baselines · the ratchet · input lists · the schema registry).
+  D-384 #4 moved `toolio.py` out for exactly this reason; C-389 re-applies it. **Never put a guard where the
+  guards cannot see it.**
+- **The citable-ID resolver exists TWICE — Python AND C++, and both feed the parity-diffed surface.**
+  `check_code_tag_blocks.py:155-206` (by-mention at `:170`) and `foxtag.hpp:406 RefIndex` / `:432
+  load_ref_index` / `:583 ref_resolves` → `validate` at `:766`. `parity_check.sh:20-21` diffs `validate`, so
+  **changing the membership rule on one side alone REDs parity.** Any ref-index change is lockstep, or the
+  source spec moves to a language-neutral registry both read.
+- **Parity is DIFFERENTIAL — it proves agreement, never correctness.** Common-mode corruption of a shared
+  SSoT is invisible by construction: both sides derive the grammar from the same fences (T2), so deleting
+  vocab rows keeps them agreeing and the gate stays green. The record shows the mechanism — `categories`
+  moved 76→78 across the gate's lifetime with PASS throughout. **This is why D-386 output goldens are the
+  COMPLEMENT to parity, not merely more of it.**
+- **`foxtag --help` under-reports its own producers.** The usage string (`foxtag_main.cpp:274`) lists
+  `validate|units|unit|tags|grammar|parity-dump|selftest`, but the dispatcher also implements `codegen`,
+  `codegen-selftest`, `layout`, and `fields`. **Four producers are undiscoverable from `--help`** — enumerate
+  from the dispatcher, not the usage line.
+
 ## Where things live
 
 | Piece | Path |

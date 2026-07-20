@@ -1,6 +1,7 @@
 ---
 type: north-star
 status: draft-v0.1
+stage: 3-first-canonical   # the tag system it describes SHIPPED (E.1.2.A schema lock + full corpus conversion); §6/§7.5/§8.5/§8.6 are cited as the governing target UX by the live E.1.2.B plan body
 established: 2026-07-06
 tags: [in-code-documentation, tag-system, tooling, custom-ide, doc-discipline]
 sister_specs:

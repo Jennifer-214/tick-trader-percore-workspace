@@ -1,6 +1,7 @@
 ---
 type: input-space-taxonomy
 status: accumulating (1 of 3 surveys landed)
+stage: 2-draft   # explicitly self-describes as accumulating (1 of 3 surveys landed), so it has not earned a first-canonical claim
 established: 2026-07-06
 tags: [in-code-documentation, tag-system, schema-completion, doc-discipline]
 sister_specs:

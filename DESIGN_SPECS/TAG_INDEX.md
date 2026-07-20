@@ -65,7 +65,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/concurrency-patterns/structured-audit-log-pattern.md`
 
-### audit-methodology (87 files)
+### audit-methodology (39 files)
 
 - `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md`
 - `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md`
@@ -106,54 +106,6 @@ This file is a snapshot for static browsing.
 - `claude-skills/second-opinion/SKILL.md`
 - `claude-skills/test-strength-audit/SKILL.md`
 - `claude-skills/trace-deps/SKILL.md`
-- `memory/feedback_a_class_i_class_fanout_vocab.md`
-- `memory/feedback_address_med_low_findings_not_just_high_crit.md`
-- `memory/feedback_adversarial_framing_default_for_checks.md`
-- `memory/feedback_arm_subagents_plan_and_future_aware.md`
-- `memory/feedback_audit_canonical_sister_before_new_infra.md`
-- `memory/feedback_audit_own_proposals_with_same_rigor.md`
-- `memory/feedback_capture_and_check_are_model_bounded.md`
-- `memory/feedback_comments_point_in_time_verify_against_code.md`
-- `memory/feedback_consult_indexes_before_full_reads.md`
-- `memory/feedback_consult_on_audit_findings.md`
-- `memory/feedback_domain_guards_for_bulk_transforms.md`
-- `memory/feedback_enumerate_set_before_categorical_claim.md`
-- `memory/feedback_future_headache_vs_optimization_scope_framework.md`
-- `memory/feedback_golden_master_over_reimplemented_oracle.md`
-- `memory/feedback_ground_design_in_real_code.md`
-- `memory/feedback_guard_matrix_bounds_foundation_hardening.md`
-- `memory/feedback_heavier_default_audit_posture_for_capital.md`
-- `memory/feedback_implementation_detail_blindspot_recovery_via_taxonomy.md`
-- `memory/feedback_independence_for_judgment_not_mechanical.md`
-- `memory/feedback_iteration_spiral_signals_audit_meta_gap.md`
-- `memory/feedback_lead_with_architectural_merit_not_operator_tone.md`
-- `memory/feedback_metadata_audit_quarterly.md`
-- `memory/feedback_never_skip_thoroughness_unless_explicit.md`
-- `memory/feedback_operator_pushback_as_audit_signal.md`
-- `memory/feedback_passing_test_is_not_verification.md`
-- `memory/feedback_paste_tool_output_dont_summarize.md`
-- `memory/feedback_phased_pre_rework_correctness_foundation.md`
-- `memory/feedback_plans_cite_sister_registry_inspection.md`
-- `memory/feedback_proactive_novel_alternative_consideration.md`
-- `memory/feedback_process_weight_by_surface_blast_radius.md`
-- `memory/feedback_proportionate_response_to_audit_findings.md`
-- `memory/feedback_recascade_audit_on_corrected_shape.md`
-- `memory/feedback_recheck_designspecs_on_pushback.md`
-- `memory/feedback_rename_enumerator_is_world2_aid_compiler_is_world1.md`
-- `memory/feedback_run_doc_ci_tools_first_never_hand_verify.md`
-- `memory/feedback_runtime_executor_mode_for_judgment_skills.md`
-- `memory/feedback_sequential_audit_for_granular_operator_triage.md`
-- `memory/feedback_single_source_the_computation_not_just_the_mode.md`
-- `memory/feedback_structure_judgment_loop_not_output.md`
-- `memory/feedback_tag_disposition_at_fix_time.md`
-- `memory/feedback_tiered_audit_discipline_per_plan_scope.md`
-- `memory/feedback_train_serve_execution_layer_meta_gap.md`
-- `memory/feedback_two_foundations_determinism_vs_correctness.md`
-- `memory/feedback_unconditionalization_latent_assumption_audit.md`
-- `memory/feedback_verify_by_context_not_count.md`
-- `memory/feedback_verify_every_enumerated_site_at_close.md`
-- `memory/feedback_verify_symbol_existence_at_plan_drafting_time.md`
-- `memory/project_anti_spaghetti_audit_cadence.md`
 
 ### avx-512 (1 files)
 
@@ -170,10 +122,6 @@ This file is a snapshot for static browsing.
 ### backwards-compat (1 files)
 
 - `DESIGN_SPECS/meta-disciplines/backwards-compat-not-default-concern.md`
-
-### block-scope-statics (1 files)
-
-- `memory/feedback_enumerate_block_scope_statics_before_hoist.md`
 
 ### boot-time-check (1 files)
 
@@ -276,13 +224,6 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/cluster-node-hierarchy-filesystem-layout-pattern.md`
 
-### code-loc-counting (4 files)
-
-- `memory/feedback_count_code_loc_not_total_lines.md`
-- `memory/feedback_dont_measure_structural_work_by_loc.md`
-- `memory/feedback_file_size_split_discipline.md`
-- `memory/feedback_plan_body_length_no_target_loc.md`
-
 ### codegen (1 files)
 
 - `DESIGN_SPECS/data-disciplines/register-spill-discipline.md`
@@ -332,11 +273,9 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/meta-disciplines/iteration-spiral-signals-audit-meta-gap.md`
 
-### cpp17 (3 files)
+### cpp17 (1 files)
 
 - `DESIGN_SPECS/data-disciplines/cpp17-inline-variable-for-header-shared-state.md`
-- `memory/feedback_cpp17_inline_variable_for_shared_state_across_tus.md`
-- `memory/feedback_forward_decl_at_global_scope_not_namespace.md`
 
 ### crash-recovery (2 files)
 
@@ -355,11 +294,10 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/meta-disciplines/audit-driven-sub-sprint-trajectory-verification.md`
 
-### cross-tool-decoupling (3 files)
+### cross-tool-decoupling (2 files)
 
 - `DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-pattern.md`
 - `DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md`
-- `memory/feedback_machine_portable_resolver_for_committed_tool_paths.md`
 
 ### currency-check (1 files)
 
@@ -438,14 +376,6 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/meta-disciplines/acceptance-oracle-totality-before-delegation.md`
 
-### deletion-discipline (5 files)
-
-- `memory/feedback_archived_changelog_preservation_discipline.md`
-- `memory/feedback_enumerate_consumers_before_registry_row_deletion.md`
-- `memory/feedback_multi_surface_deletion_ordering_discipline.md`
-- `memory/feedback_operator_facing_doc_cohort_at_cfg_deletion.md`
-- `memory/feedback_unconditionalization_latent_assumption_audit.md`
-
 ### deletion-scope (1 files)
 
 - `DESIGN_SPECS/meta-disciplines/backwards-compat-not-default-concern.md`
@@ -480,7 +410,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/dynamic-library-strategy-loading-pattern.md`
 - `DESIGN_SPECS/framework-patterns/strategy-hot-reload-via-dlopen-pattern.md`
 
-### doc-discipline (55 files)
+### doc-discipline (42 files)
 
 - `DESIGN_SPECS/audit-methodologies/audit-report-format.md`
 - `DESIGN_SPECS/doc-disciplines/categorical-triggers-in-always-loaded-docs.md`
@@ -524,19 +454,6 @@ This file is a snapshot for static browsing.
 - `claude-skills/ship/SKILL.md`
 - `claude-skills/sync-models/SKILL.md`
 - `claude-skills/sync-workspace/SKILL.md`
-- `memory/feedback_categorical_triggers_over_hardcoded_refs.md`
-- `memory/feedback_claude_md_guidelines_not_stuff_to_do.md`
-- `memory/feedback_count_code_loc_not_total_lines.md`
-- `memory/feedback_document_as_you_go_over_catch_at_end.md`
-- `memory/feedback_file_size_split_discipline.md`
-- `memory/feedback_fold_findings_into_destination_plan.md`
-- `memory/feedback_ground_design_in_real_code.md`
-- `memory/feedback_metadata_audit_quarterly.md`
-- `memory/feedback_operator_facing_doc_cohort_at_cfg_deletion.md`
-- `memory/feedback_sister_cohort_amendment_completeness.md`
-- `memory/feedback_skill_edit_cohort_checklist.md`
-- `memory/feedback_terminology_evolution_bridge_not_history_rewrite.md`
-- `memory/project_engine_clauder_md_is_symlink.md`
 
 ### doc-pipeline (2 files)
 
@@ -572,18 +489,6 @@ This file is a snapshot for static browsing.
 ### encryption-offload (1 files)
 
 - `DESIGN_SPECS/concurrency-patterns/ktls-kernel-tls-pattern.md`
-
-### enumeration-discipline (9 files)
-
-- `memory/feedback_enumerate_block_scope_statics_before_hoist.md`
-- `memory/feedback_enumerate_consumers_before_registry_row_deletion.md`
-- `memory/feedback_enumerate_helper_signature_args_before_extract.md`
-- `memory/feedback_enumerate_set_before_categorical_claim.md`
-- `memory/feedback_multi_surface_deletion_ordering_discipline.md`
-- `memory/feedback_paste_tool_output_dont_summarize.md`
-- `memory/feedback_rename_enumerator_is_world2_aid_compiler_is_world1.md`
-- `memory/feedback_sister_cohort_amendment_completeness.md`
-- `memory/feedback_test_change_enumeration_per_plan_body.md`
 
 ### event-sourcing (1 files)
 
@@ -647,11 +552,7 @@ This file is a snapshot for static browsing.
 - `claude-skills/accounting-audit/SKILL.md`
 - `claude-skills/patch-planner/SKILL.md`
 
-### forward-decl-shadow (1 files)
-
-- `memory/feedback_forward_decl_at_global_scope_not_namespace.md`
-
-### framework-discipline (143 files)
+### framework-discipline (131 files)
 
 - `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md`
 - `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md`
@@ -784,18 +685,6 @@ This file is a snapshot for static browsing.
 - `claude-skills/second-opinion/SKILL.md`
 - `claude-skills/strategy-template/SKILL.md`
 - `claude-skills/trace-deps/SKILL.md`
-- `memory/feedback_audit_canonical_sister_before_new_infra.md`
-- `memory/feedback_auto_route_input_to_matching_skill.md`
-- `memory/feedback_categorize_by_consumer_pattern_not_field_name.md`
-- `memory/feedback_cfg_field_categorization_at_registry_add_time.md`
-- `memory/feedback_defer_to_source_authority_for_external_semantics.md`
-- `memory/feedback_enumerate_consumers_before_registry_row_deletion.md`
-- `memory/feedback_framework_layer_payoff_diminishing_returns.md`
-- `memory/feedback_plans_cite_sister_registry_inspection.md`
-- `memory/feedback_prefer_action_parameterized_walker_over_per_consumer_walker_bodies.md`
-- `memory/feedback_run_doc_ci_tools_first_never_hand_verify.md`
-- `memory/feedback_structural_fix_for_recurring_class.md`
-- `memory/feedback_verify_every_enumerated_site_at_close.md`
 
 ### framework-pattern (2 files)
 
@@ -844,10 +733,9 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/concurrency-patterns/dpdk-userspace-networking-pattern.md`
 
-### header-only (2 files)
+### header-only (1 files)
 
 - `DESIGN_SPECS/data-disciplines/cpp17-inline-variable-for-header-shared-state.md`
-- `memory/feedback_cpp17_inline_variable_for_shared_state_across_tus.md`
 
 ### headless-service (1 files)
 
@@ -886,10 +774,6 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/doc-disciplines/format-input-space-taxonomy.md`
 - `DESIGN_SPECS/doc-disciplines/in-code-doc-system-north-star.md`
-
-### inline-variable (1 files)
-
-- `memory/feedback_cpp17_inline_variable_for_shared_state_across_tus.md`
 
 ### instantiate (1 files)
 
@@ -974,15 +858,11 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/built-in-observability-pattern.md`
 
-### ledger-discipline (7 files)
+### ledger-discipline (3 files)
 
 - `DESIGN_SPECS/ledger-templates/ledger-entry-templates.md`
 - `claude-skills/latency-track/SKILL.md`
 - `claude-skills/ship/SKILL.md`
-- `memory/feedback_archived_changelog_preservation_discipline.md`
-- `memory/feedback_bump_version_per_ship.md`
-- `memory/feedback_forward_promise_auto_write_verification.md`
-- `memory/feedback_tag_disposition_at_fix_time.md`
 
 ### linker-deduplication (1 files)
 
@@ -1017,7 +897,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/per-node-paper-mode-flag-pattern.md`
 
-### meta-discipline (50 files)
+### meta-discipline (34 files)
 
 - `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md`
 - `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md`
@@ -1053,22 +933,6 @@ This file is a snapshot for static browsing.
 - `claude-skills/blindspot-scan/SKILL.md`
 - `claude-skills/capture-audit/SKILL.md`
 - `claude-skills/second-opinion/SKILL.md`
-- `memory/feedback_auto_route_input_to_matching_skill.md`
-- `memory/feedback_capture_and_check_are_model_bounded.md`
-- `memory/feedback_categorical_triggers_over_hardcoded_refs.md`
-- `memory/feedback_guard_matrix_bounds_foundation_hardening.md`
-- `memory/feedback_implementation_detail_blindspot_recovery_via_taxonomy.md`
-- `memory/feedback_independence_for_judgment_not_mechanical.md`
-- `memory/feedback_iteration_spiral_signals_audit_meta_gap.md`
-- `memory/feedback_phased_pre_rework_correctness_foundation.md`
-- `memory/feedback_process_weight_by_surface_blast_radius.md`
-- `memory/feedback_run_doc_ci_tools_first_never_hand_verify.md`
-- `memory/feedback_structural_enforcement_when_memory_insufficient.md`
-- `memory/feedback_train_serve_execution_layer_meta_gap.md`
-- `memory/feedback_two_foundations_determinism_vs_correctness.md`
-- `memory/feedback_verify_every_enumerated_site_at_close.md`
-- `memory/project_engine_done_edge_is_the_frontier.md`
-- `memory/project_no_live_models_dev_test_only.md`
 
 ### meta-error-tracking (1 files)
 
@@ -1086,16 +950,10 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/dual-format-metrics-publication-pattern.md`
 
-### migration-discipline (8 files)
+### migration-discipline (2 files)
 
 - `DESIGN_SPECS/meta-disciplines/representation-migration-completeness.md`
 - `DESIGN_SPECS/meta-disciplines/struct-change-cascade-impact-tooling.md`
-- `memory/feedback_archived_changelog_preservation_discipline.md`
-- `memory/feedback_close_the_class_vs_migrate_every_site.md`
-- `memory/feedback_domain_guards_for_bulk_transforms.md`
-- `memory/feedback_proactive_rename_candidate_surfacing.md`
-- `memory/feedback_surface_operator_migration_path_proactively.md`
-- `memory/feedback_terminology_evolution_bridge_not_history_rewrite.md`
 
 ### mirror-prevention (1 files)
 
@@ -1151,7 +1009,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/data-disciplines/fill-path-completeness-and-normalization-discipline.md`
 
-### operator-collaboration (41 files)
+### operator-collaboration (11 files)
 
 - `DESIGN_SPECS/meta-disciplines/canonical-sister-extension-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/session-decision-log-discipline.md`
@@ -1164,36 +1022,6 @@ This file is a snapshot for static browsing.
 - `claude-skills/ship/SKILL.md`
 - `claude-skills/sync-models/SKILL.md`
 - `claude-skills/sync-workspace/SKILL.md`
-- `memory/feedback_address_user_as_caramel.md`
-- `memory/feedback_audit_own_proposals_with_same_rigor.md`
-- `memory/feedback_auto_pick_future_oriented.md`
-- `memory/feedback_auto_route_input_to_matching_skill.md`
-- `memory/feedback_backwards_compat_not_default_concern.md`
-- `memory/feedback_close_out_now_over_defer_when_small.md`
-- `memory/feedback_consult_on_audit_findings.md`
-- `memory/feedback_deferral_reasons_merit_not_effort_or_context.md`
-- `memory/feedback_design_once_maintain_forever.md`
-- `memory/feedback_evaluate_options_on_robustness_latency_design_not_time.md`
-- `memory/feedback_guards_compound_enforcement_is_leverage.md`
-- `memory/feedback_lead_with_architectural_merit_not_operator_tone.md`
-- `memory/feedback_listen_and_execute_simply.md`
-- `memory/feedback_motivated_collaborator_for_caramel.md`
-- `memory/feedback_never_skip_thoroughness_unless_explicit.md`
-- `memory/feedback_no_defer_for_effort.md`
-- `memory/feedback_no_question_boxes.md`
-- `memory/feedback_operator_pushback_as_audit_signal.md`
-- `memory/feedback_opportunistic_tech_debt_closure.md`
-- `memory/feedback_plan_right_not_fast.md`
-- `memory/feedback_process_weight_by_surface_blast_radius.md`
-- `memory/feedback_recheck_designspecs_on_pushback.md`
-- `memory/feedback_runtime_executor_mode_for_judgment_skills.md`
-- `memory/feedback_sequential_audit_for_granular_operator_triage.md`
-- `memory/feedback_structure_judgment_loop_not_output.md`
-- `memory/feedback_surface_operator_migration_path_proactively.md`
-- `memory/user_adhd_deferred_reward_discipline.md`
-- `memory/user_deep_design_work_intrinsic_value.md`
-- `memory/user_owns_core_design_meet_confidence_genuinely.md`
-- `memory/user_structure_is_correctness_risk_control_for_capital.md`
 
 ### operator-policy (1 files)
 
@@ -1295,7 +1123,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/meta-disciplines/plan-hierarchy-and-sub-master-decomposition.md`
 
-### plan-template (14 files)
+### plan-template (13 files)
 
 - `DESIGN_SPECS/ledger-templates/ledger-entry-templates.md`
 - `DESIGN_SPECS/meta-disciplines/body-content-enumeration-at-plan-time-discipline.md`
@@ -1310,7 +1138,6 @@ This file is a snapshot for static browsing.
 - `claude-skills/plan-context-sweep/SKILL.md`
 - `claude-skills/plan-draft/SKILL.md`
 - `claude-skills/readiness/SKILL.md`
-- `memory/feedback_new_plans_use_future_oriented_template.md`
 
 ### plan-trajectory-verification (1 files)
 
@@ -1319,22 +1146,6 @@ This file is a snapshot for static browsing.
 ### planning (1 files)
 
 - `DESIGN_SPECS/meta-disciplines/plan-hierarchy-and-sub-master-decomposition.md`
-
-### planning-discipline (13 files)
-
-- `memory/feedback_address_med_low_findings_not_just_high_crit.md`
-- `memory/feedback_auto_pick_future_oriented.md`
-- `memory/feedback_new_plans_use_future_oriented_template.md`
-- `memory/feedback_no_mvp_for_plumbing_only_for_unknown_unknowns.md`
-- `memory/feedback_plan_body_length_no_target_loc.md`
-- `memory/feedback_plan_right_not_fast.md`
-- `memory/feedback_plans_cite_sister_registry_inspection.md`
-- `memory/feedback_plans_have_explicit_end_goal.md`
-- `memory/feedback_session_decision_log_discipline.md`
-- `memory/feedback_test_change_enumeration_per_plan_body.md`
-- `memory/feedback_tiered_audit_discipline_per_plan_scope.md`
-- `memory/feedback_verify_symbol_existence_at_plan_drafting_time.md`
-- `memory/project_e_series_is_vision_convergence_not_scope_balloon.md`
 
 ### post-coding (1 files)
 
@@ -1359,17 +1170,6 @@ This file is a snapshot for static browsing.
 ### production-mode (1 files)
 
 - `DESIGN_SPECS/framework-patterns/dev-vs-production-thread-topology-pattern.md`
-
-### project-state (8 files)
-
-- `memory/feedback_bump_version_per_ship.md`
-- `memory/project_anti_spaghetti_audit_cadence.md`
-- `memory/project_e_series_is_vision_convergence_not_scope_balloon.md`
-- `memory/project_engine_clauder_md_is_symlink.md`
-- `memory/project_engine_done_edge_is_the_frontier.md`
-- `memory/project_foxml_suite_refactor_queued.md`
-- `memory/user_mvp_to_professional_transition.md`
-- `memory/user_public_work_attracts_hedge_funds.md`
 
 ### prometheus (2 files)
 
@@ -1406,17 +1206,9 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/tls-session-resumption-pattern.md`
 
-### refactor-discipline (9 files)
+### refactor-discipline (1 files)
 
 - `DESIGN_SPECS/meta-disciplines/single-source-of-truth-discipline.md`
-- `memory/feedback_avoid_substring_replace_all_on_member_access.md`
-- `memory/feedback_enumerate_block_scope_statics_before_hoist.md`
-- `memory/feedback_enumerate_helper_signature_args_before_extract.md`
-- `memory/feedback_machine_portable_resolver_for_committed_tool_paths.md`
-- `memory/feedback_prefer_action_parameterized_walker_over_per_consumer_walker_bodies.md`
-- `memory/feedback_reduce_touch_sites.md`
-- `memory/feedback_rename_enumerator_is_world2_aid_compiler_is_world1.md`
-- `memory/project_foxml_suite_refactor_queued.md`
 
 ### refactor-pattern (2 files)
 
@@ -1466,32 +1258,9 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/doc-disciplines/format-input-space-taxonomy.md`
 
-### scope-discipline (24 files)
+### scope-discipline (1 files)
 
 - `DESIGN_SPECS/audit-methodologies/audit-finding-kind-taxonomy.md`
-- `memory/feedback_address_med_low_findings_not_just_high_crit.md`
-- `memory/feedback_auto_pick_future_oriented.md`
-- `memory/feedback_backwards_compat_not_default_concern.md`
-- `memory/feedback_close_out_now_over_defer_when_small.md`
-- `memory/feedback_close_the_class_vs_migrate_every_site.md`
-- `memory/feedback_consult_indexes_before_full_reads.md`
-- `memory/feedback_deferral_reasons_merit_not_effort_or_context.md`
-- `memory/feedback_design_once_maintain_forever.md`
-- `memory/feedback_document_as_you_go_over_catch_at_end.md`
-- `memory/feedback_dont_measure_structural_work_by_loc.md`
-- `memory/feedback_evaluate_options_on_robustness_latency_design_not_time.md`
-- `memory/feedback_framework_layer_payoff_diminishing_returns.md`
-- `memory/feedback_future_headache_vs_optimization_scope_framework.md`
-- `memory/feedback_guard_matrix_bounds_foundation_hardening.md`
-- `memory/feedback_guards_compound_enforcement_is_leverage.md`
-- `memory/feedback_heavier_default_audit_posture_for_capital.md`
-- `memory/feedback_listen_and_execute_simply.md`
-- `memory/feedback_no_defer_for_effort.md`
-- `memory/feedback_no_mvp_for_plumbing_only_for_unknown_unknowns.md`
-- `memory/feedback_opportunistic_tech_debt_closure.md`
-- `memory/feedback_overengineering_boundary_when_future_easier.md`
-- `memory/feedback_proportionate_response_to_audit_findings.md`
-- `memory/feedback_verify_by_context_not_count.md`
 
 ### seqlock (1 files)
 
@@ -1505,14 +1274,9 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/fix-session-management-pattern.md`
 
-### session-continuity (6 files)
+### session-continuity (1 files)
 
 - `DESIGN_SPECS/meta-disciplines/definition-of-done-and-armed-scout-verification.md`
-- `memory/feedback_compaction_degrades_treat_handoffs_as_hints.md`
-- `memory/feedback_forward_promise_auto_write_verification.md`
-- `memory/feedback_session_decision_log_discipline.md`
-- `memory/feedback_sister_cohort_amendment_completeness.md`
-- `memory/feedback_skill_edit_cohort_checklist.md`
 
 ### session-management (1 files)
 
@@ -1526,10 +1290,9 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/per-node-paper-mode-flag-pattern.md`
 
-### shared-state (2 files)
+### shared-state (1 files)
 
 - `DESIGN_SPECS/data-disciplines/cpp17-inline-variable-for-header-shared-state.md`
-- `memory/feedback_cpp17_inline_variable_for_shared_state_across_tus.md`
 
 ### sidecar (1 files)
 
@@ -1556,7 +1319,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/concurrency-patterns/spsc-vs-blackboard-selection-criteria.md`
 
-### ssot (16 files)
+### ssot (10 files)
 
 - `DESIGN_SPECS/doc-disciplines/in-code-documentation-schema.md`
 - `DESIGN_SPECS/doc-disciplines/toolchain-semantic-versioning.md`
@@ -1568,12 +1331,6 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/meta-disciplines/representation-migration-completeness.md`
 - `DESIGN_SPECS/meta-disciplines/single-source-of-truth-discipline.md`
 - `DESIGN_SPECS/subsystem-designs/exit-chain-tp-sl-design.md`
-- `memory/feedback_defer_to_source_authority_for_external_semantics.md`
-- `memory/feedback_golden_master_over_reimplemented_oracle.md`
-- `memory/feedback_machine_portable_resolver_for_committed_tool_paths.md`
-- `memory/feedback_single_source_of_truth_discipline.md`
-- `memory/feedback_single_source_the_computation_not_just_the_mode.md`
-- `memory/feedback_tag_disposition_at_fix_time.md`
 
 ### state-persistence (1 files)
 
@@ -1598,7 +1355,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/meta-disciplines/differential-to-absolute-gate-contract-widening.md`
 - `DESIGN_SPECS/meta-disciplines/mechanical-verification-of-derived-code-facts.md`
 
-### structural-fix (104 files)
+### structural-fix (88 files)
 
 - `DESIGN_SPECS/audit-methodologies/static-latency-path-conformance-analysis.md`
 - `DESIGN_SPECS/concurrency-patterns/phase-separated-drainer-for-safe-cross-temporal-derives.md`
@@ -1688,22 +1445,6 @@ This file is a snapshot for static browsing.
 - `claude-skills/registry-fit-audit/SKILL.md`
 - `claude-skills/strategy-template/SKILL.md`
 - `claude-skills/trace-deps/SKILL.md`
-- `memory/feedback_audit_canonical_sister_before_new_infra.md`
-- `memory/feedback_categorize_by_consumer_pattern_not_field_name.md`
-- `memory/feedback_cfg_field_categorization_at_registry_add_time.md`
-- `memory/feedback_close_the_class_vs_migrate_every_site.md`
-- `memory/feedback_design_once_maintain_forever.md`
-- `memory/feedback_domain_guards_for_bulk_transforms.md`
-- `memory/feedback_golden_master_over_reimplemented_oracle.md`
-- `memory/feedback_guards_compound_enforcement_is_leverage.md`
-- `memory/feedback_paste_tool_output_dont_summarize.md`
-- `memory/feedback_phased_pre_rework_correctness_foundation.md`
-- `memory/feedback_reduce_touch_sites.md`
-- `memory/feedback_rename_enumerator_is_world2_aid_compiler_is_world1.md`
-- `memory/feedback_single_source_of_truth_discipline.md`
-- `memory/feedback_structural_enforcement_when_memory_insufficient.md`
-- `memory/feedback_structural_fix_for_recurring_class.md`
-- `memory/feedback_wire_context_vs_cfg_file_parser_separation.md`
 
 ### structured-logging (1 files)
 
@@ -1750,13 +1491,9 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/refactor-patterns/rename-cascade-enumeration-tooling.md`
 - `DESIGN_SPECS/refactor-patterns/rename-ship-methodology.md`
 
-### test-discipline (5 files)
+### test-discipline (1 files)
 
 - `DESIGN_SPECS/audit-methodologies/characterization-test-discipline.md`
-- `memory/feedback_domain_guards_for_bulk_transforms.md`
-- `memory/feedback_golden_master_over_reimplemented_oracle.md`
-- `memory/feedback_passing_test_is_not_verification.md`
-- `memory/feedback_test_change_enumeration_per_plan_body.md`
 
 ### test-infrastructure (1 files)
 
@@ -1792,15 +1529,6 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/exchange-adapter-tt-dispatch-pattern.md`
 
-### user-profile (6 files)
-
-- `memory/user_adhd_deferred_reward_discipline.md`
-- `memory/user_deep_design_work_intrinsic_value.md`
-- `memory/user_mvp_to_professional_transition.md`
-- `memory/user_owns_core_design_meet_confidence_genuinely.md`
-- `memory/user_public_work_attracts_hedge_funds.md`
-- `memory/user_structure_is_correctness_risk_control_for_capital.md`
-
 ### userspace-networking (1 files)
 
 - `DESIGN_SPECS/concurrency-patterns/dpdk-userspace-networking-pattern.md`
@@ -1833,7 +1561,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/concurrency-patterns/persistent-ws-connection-management-pattern.md`
 
-### wire-format (19 files)
+### wire-format (14 files)
 
 - `DESIGN_SPECS/data-disciplines/locale-determinism-discipline.md`
 - `DESIGN_SPECS/framework-patterns/calibration-log-column-registry.md`
@@ -1849,11 +1577,6 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/wire-format-patterns/wire-format-canonical-body-invariants-helper.md`
 - `claude-skills/ml-audit/SKILL.md`
 - `claude-skills/parity-check/SKILL.md`
-- `memory/feedback_defer_to_source_authority_for_external_semantics.md`
-- `memory/feedback_train_serve_execution_layer_meta_gap.md`
-- `memory/feedback_two_foundations_determinism_vs_correctness.md`
-- `memory/feedback_wire_context_vs_cfg_file_parser_separation.md`
-- `memory/project_no_live_models_dev_test_only.md`
 
 ### wontfix-rationale (1 files)
 

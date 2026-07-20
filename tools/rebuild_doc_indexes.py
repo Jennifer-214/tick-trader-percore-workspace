@@ -56,6 +56,10 @@ TYPE_ORDER = [
     "audit-methodology", "data-discipline", "concurrency-pattern",
     "wire-format-pattern", "doc-discipline", "meta-discipline",
     "plan-template", "ledger-template", "architecture-overview",
+    # Promoted into the canonical order 2026-07-20 (TECH_DEBT-254): these are real one-off
+    # categories that the render loop was silently dropping, not typos. `north-star` in
+    # particular is cited by the active plan body while being unreachable from the catalog.
+    "subsystem-design", "north-star", "input-space-taxonomy",
 ]
 
 
@@ -71,8 +75,14 @@ def parse_frontmatter(path):
     if end == -1:
         return None
     fields = {}
-    for line in content[4:end].split("\n"):
-        line = line.strip()
+    for raw in content[4:end].split("\n"):
+        # TOP-LEVEL keys only. Stripping first would erase the very indentation that marks a key
+        # as NESTED, so `metadata:` → `  type: feedback` in memory-template.md was read as a
+        # top-level `type: feedback` and rendered a phantom spec-type into the catalog. A parser
+        # that flattens structure reports fields the document never declared (TECH_DEBT-254).
+        if raw[:1] in (" ", "\t"):
+            continue
+        line = raw.strip()
         if not line or line.startswith("#"):
             continue
         if ":" in line:
@@ -178,7 +188,13 @@ def gen_design_specs_readme(specs):
         "",
         "**Auto-generated** by `tools/rebuild_doc_indexes.py`. Regenerate after adding/moving specs.",
         "",
-        f"Total: {len(specs)} specs across {len(by_type)} types.",
+        # Count what is actually RENDERED, never a separately-derived total. `len(by_type)`
+        # included the "unknown" bucket, so the header could claim a type the catalog does not
+        # show — the same claimed-vs-rendered gap in miniature, and the reason "15 types / 11
+        # sections" went unnoticed for so long: two numbers, two sources, neither checking the
+        # other. One source of truth, computed from the render set.
+        f"Total: {sum(len(v) for t, v in by_type.items() if t != 'unknown')} specs across "
+        f"{len([t for t in by_type if t != 'unknown' and by_type[t]])} types.",
         "",
         "Per-type catalog grouped by lifecycle stage. Cross-ref:",
         "- `doc-frontmatter-convention.md` (frontmatter schema)",
@@ -186,7 +202,28 @@ def gen_design_specs_readme(specs):
         "- CLAUDE.md § How to find anything (grep recipes)",
         "",
     ]
-    for spec_type in TYPE_ORDER:
+    # Render the CANONICAL types first, then EVERY remaining type alphabetically. The loop used
+    # to iterate TYPE_ORDER alone, so any spec whose `type:` was not in that hardcoded list was
+    # SILENTLY DROPPED from the catalog — the README claimed "15 types" while rendering 11, and
+    # `in-code-doc-system-north-star.md` (cited by the active plan body) was one of the dropped
+    # ones. A spec that exists but is unrendered is unreachable by every documented discovery
+    # path, which is the same outcome as never having written it (TECH_DEBT-254).
+    if by_type.get("unknown"):
+        # Named, not dropped. These are docs with no top-level `type:` — usually a TEMPLATE whose
+        # frontmatter is example content meant to be copied (memory-template.md), which is why
+        # giving it spec frontmatter would corrupt the thing it exists to be. They are excluded
+        # from the catalog and from its totals, but the exclusion is SAID so it stays a decision.
+        print(f"[rebuild_doc_indexes] NOTE — {len(by_type['unknown'])} doc(s) with no top-level "
+              f"`type:`, excluded from the catalog + its totals: "
+              f"{', '.join(sorted(str(p).rsplit('/', 1)[-1] for p, _ in by_type['unknown']))}")
+    extra_types = sorted(t for t in by_type if t not in TYPE_ORDER and t != "unknown")
+    if extra_types:
+        # LOUD, not silent: an unlisted type is either a real new category that belongs in
+        # TYPE_ORDER, or a typo. Either way a human should see it — the failure mode being
+        # closed is precisely a drop nobody noticed.
+        print(f"[rebuild_doc_indexes] NOTE — {len(extra_types)} type(s) outside TYPE_ORDER, "
+              f"rendered at the end; promote to TYPE_ORDER or fix the typo: {', '.join(extra_types)}")
+    for spec_type in TYPE_ORDER + extra_types:
         rows = by_type.get(spec_type, [])
         if not rows:
             continue

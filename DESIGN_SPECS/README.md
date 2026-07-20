@@ -2,7 +2,7 @@
 
 **Auto-generated** by `tools/rebuild_doc_indexes.py`. Regenerate after adding/moving specs.
 
-Total: 192 specs across 15 types.
+Total: 191 specs across 14 types.
 
 Per-type catalog grouped by lifecycle stage. Cross-ref:
 - `doc-frontmatter-convention.md` (frontmatter schema)
@@ -251,3 +251,21 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
 | `DESIGN_SPECS/ledger-templates/ledger-entry-templates.md` | 2-draft | ledger-discipline, plan-template, doc-discipline | 2 |
+
+## subsystem-design (1 specs)
+
+| Spec | Stage | Tags | Sister count |
+|---|---|---|---|
+| `DESIGN_SPECS/subsystem-designs/exit-chain-tp-sl-design.md` | 3-first-canonical | capital-safety, data-oriented-design, structural-fix, +1 | 0 |
+
+## north-star (1 specs)
+
+| Spec | Stage | Tags | Sister count |
+|---|---|---|---|
+| `DESIGN_SPECS/doc-disciplines/in-code-doc-system-north-star.md` | 3-first-canonical   # the tag system it describes SHIPPED (E.1.2.A schema lock + full corpus conversion); §6/§7.5/§8.5/§8.6 are cited as the governing target UX by the live E.1.2.B plan body | in-code-documentation, tag-system, tooling, +2 | 0 |
+
+## input-space-taxonomy (1 specs)
+
+| Spec | Stage | Tags | Sister count |
+|---|---|---|---|
+| `DESIGN_SPECS/doc-disciplines/format-input-space-taxonomy.md` | 2-draft   # explicitly self-describes as accumulating (1 of 3 surveys landed), so it has not earned a first-canonical claim | in-code-documentation, tag-system, schema-completion, +1 | 0 |

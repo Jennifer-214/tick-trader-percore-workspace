@@ -114,6 +114,19 @@ Harvested 2026-07-19 from E.1.2.B `0.1.5`/`0.3`, where **each of these cost a de
 a FALSE finding**. If you discover a tool behaviour that is not derivable from its `--help` or its
 docstring, write it here — that is the entire point of this section.
 
+- **Re-blessing the citable-ID golden: use the ONE-LINER, not a heredoc — and you can DEFER it.**
+  Pasting a heredoc into interactive zsh drops you at a `heredoc>` continuation prompt. This runs
+  as a single command from the engine root:
+  ```
+  python3 -c "import sys;sys.path.insert(0,'tools');from citable_ids import defining_index;import bless as b;idx=defining_index();sys.exit(b.bless('tools/goldens/citable-ids.txt',sorted(f'{ns}|{r}' for ns,e in idx.items() for r in e),'citable-ids'))"
+  ```
+  **A helper script does NOT belong in `tools/`** — every `tools/*.py` must be enrolled in
+  `DOCS/TOOLS.md` or the tools-inventory HARD gate fails (learned the hard way 2026-07-20;
+  TECH_DEBT-244 de-sprawl). **CADENCE: the golden's job is catching REMOVALS.** Additions are legal
+  under H21 and `--check 14` stays green regardless, so an un-blessed addition is an unprotected
+  slot, NOT a defect. Bless at SHIP CLOSE, not every session — and check the REMOVALS count first;
+  it is the only alarming number. No agent can do this for you: `bless.py` HARD-REFUSES
+  non-interactively by D-394, and that refusal is the control (D-385/M10).
 - **The tech-debt ledgers spell an entry's anchor THREE ways — a one-spelling grep is HALF-BLIND.**
   `### TECH_DEBT-N` (heading, always present) · `id: TECH_DEBT-N` (bare) · `- **id:** TECH_DEBT-N`
   (bold). Measured 2026-07-20: bare 99 / bold 94 in `open.md`, bare 39 / bold 15 in `closed.md`.

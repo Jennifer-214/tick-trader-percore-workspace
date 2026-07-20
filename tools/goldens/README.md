@@ -22,10 +22,33 @@ them is one `ls` away from being read as "just another baseline" and casually re
 A golden is **not** an exception list. An exception list grandfathers things that are *wrong*; a
 golden pins something that is *right*. Conflating them is how a gate quietly stops meaning anything.
 
+## ⚠️ SCAN population ≠ PIN population (corrected 2026-07-19)
+
+A golden is a **committed, distributed** artifact. It must resolve identically on a fresh clone, a CI
+runner, and a second machine. So the pin covers **git-tracked entries only** — while the *enumerator*
+stays gitignore-blind per D-393 pt 2, because a real source file is real whether or not it ships.
+
+**Why this clause exists — a measured defect, caught adversarially AFTER the first bless.** The
+initial pin contained **31 of 197 engine entries that were not git-tracked**, including two ephemeral
+scratch files: `tmpfsvq5cyu.cpp` (an **mkstemp random name** — not reproducible even on the same
+machine across runs) and `tmpo0ujx6rw/probe.cpp`. A fresh clone resolved 166 against 197 pinned → an
+unconditional 31-line RED.
+
+That **re-instantiated, one layer up, the exact class `0.1` closed**: `check_conversion_completeness.py:32`'s
+hardcoded `ENGINE = Path("/home/caramel/…")` — *"a portability-dead HARD CI gate running green only
+because this machine's path matches the literal."* Machine-local **path** became machine-local
+**content**. It also falsified the plan's own acceptance criterion #4 — *"a clone at a different path
+scans correctly"* — inside the artifact committed under it.
+
+Splitting the populations **preserves D-393 pt 2 verbatim** rather than amending it: gitignore-blindness
+is correct for a locally-resolved scan set and fatal for a distributed pin. Those were always two
+questions; only one file was answering both.
+
 ## Why the corpus lists are the FIRST goldens
 
-`corpus--validate.txt` (202) and `corpus--derived_facts.txt` (194) pin the resolved membership of
-each profile in `tools/lib/corpus_contract.json`.
+`corpus--validate.txt` (**171** = 166 engine-tracked + 5 workspace `schema_golden` fixtures) and
+`corpus--derived_facts.txt` (**166**) pin the resolved PIN-population membership of each profile in
+`tools/lib/corpus_contract.json`. Both are reproducible from the two repos' tracked contents alone.
 
 They were chosen as the first goldens because they are the cheapest possible proof of D-386's
 mechanism: a sorted text list with **no volatile frame, no ABI dependence, no dates, and no absolute
@@ -52,7 +75,7 @@ the change that generates the doc-rot `0.2` (g) exists to catch.**
 
 ## Cost of the pin
 
-Tracked `.hpp`/`.cpp` held at 166 across the last 80 commits, and was 167 a month (150 commits)
+The PIN population is exactly the tracked population the cost model was measured on. Tracked `.hpp`/`.cpp` held at 166 across the last 80 commits, and was 167 a month (150 commits)
 earlier — roughly **one net change per month**. So a bless fires rarely, and each firing is a real
 deliberate event that should demand a nod.
 

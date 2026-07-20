@@ -56,6 +56,18 @@ sister_specs: [<paths to related DESIGN_SPECS>]
 
 ---
 
+## `registry_id:` — REQUIRED on any doc that OWNS a citable ID (added 2026-07-19, D-389)
+
+A doc that defines an entry in a citable-ID namespace — `Hn` hard invariant · `Mn` meta-discipline · `Class N` anti-pattern · `AR-n`/`WH-n` meta-anti-pattern · `Tn` toolchain invariant · `Bn` blindspot pillar — MUST declare that ID in frontmatter:
+
+```yaml
+registry_id: M10        # the ID this doc is the canonical body for
+```
+
+**Why:** citable IDs are how this knowledge base cross-references itself, and until 2026-07-19 nothing verified that an ID means exactly one thing. It didn't: `M9` was claimed by two disciplines and `D-1`..`D-13` by two decision logs with diverging content (**AR-14**; H21's failure mode on the doc plane). `registry_id` is the machine-readable anchor that lets a checker resolve ID → canonical doc and flag a double-claim.
+
+**Honest status:** the field currently has **zero consumers** and sits at **2-of-192** adoption (`definition-of-done-and-armed-scout-verification.md` = M8, `per-node-purity-scale-invariance.md` = H22, plus `acceptance-oracle-totality-before-delegation.md` = M10 as of this change). It was an ad-hoc convention nothing read — so it was never *breaking* anything; it was simply inert. Backfilling it on ID-bearing specs is a prerequisite for **TECH_DEBT-249**'s guard, which will key off it. Until that guard ships this field is documentation-only, and `check_doc_metadata.py` does not yet require it. Do not treat its presence as verified.
+
 ## Per-doc-type extra fields
 
 ### DESIGN_SPECS/*.md

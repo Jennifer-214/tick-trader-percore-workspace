@@ -128,6 +128,14 @@ run_hard "schema-version guard teeth (drifted [SCHEMA]_[v1] flagged; locked pass
 run_hard "tool-I/O envelope teeth (emit/read/validate incl. negative controls)" \
     bash "$REPO_ROOT/tools/toolio_selftest.sh"
 
+# Wired 2026-07-20 after CHECK 4 (invocation truth) proved DOCS/TOOLS.md CLAIMED these fired here
+# and they did not. Two teeth that existed, were enrolled, were advertised as gated -- and had
+# never run from any trigger. Fixing the WIRING rather than the row, because the teeth are real.
+run_hard "add_vocab teeth (tag-vocabulary mutation guarded)" \
+    bash "$REPO_ROOT/tools/add_vocab_selftest.sh"
+run_hard "register-fit teeth (finding-register shape guarded)" \
+    bash "$REPO_ROOT/tools/check_register_fit_selftest.sh"
+
 # --- ADV: close-out completeness (M8 / TECH_DEBT-250) — auto-write ledger coverage ---
 # ADVISORY, not HARD, and deliberately: it fires on a WINDOW, so mid-session runs would red
 # constantly. Its job is to be LOUD at close, not to block work. The judgment half of the

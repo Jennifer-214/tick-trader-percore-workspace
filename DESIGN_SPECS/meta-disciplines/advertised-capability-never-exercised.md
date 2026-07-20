@@ -53,7 +53,7 @@ That last one is the subtle case and worth stating plainly: *a capability too sl
 
 **Exercise it, or retire it — and if it is genuinely for-later, say so in the artifact that advertises it.** The three honest end-states:
 
-1. **Wire it to a cadence.** Standing CI, a hook, a skill, a quarterly audit. An invocation is the only thing that keeps a capability real.
+1. **Wire it to a cadence. Standing CI, a hook, a scheduled sweep, a quarterly audit. **NOT a skill** — corrected 2026-07-20: a skill is not a cadence, because *nothing fires a skill*. It runs when a human types the slash-command, which is the same reliability as remembering. `migrate_memory_frontmatter.py` was "wired to a skill" and still did not run twice in one session, while the hand-rolled substitute looked identical to success. Listing a skill here is what licensed that gap (TECH_DEBT-261).
 2. **Retire it AND its advertisements together.** Removing the value while leaving the grep recipe is the same defect one layer up; the recipe now points at nothing. The pair must die together.
 3. **Mark it explicitly unproven.** If it must exist before it can be exercised, say so where it is advertised — `check_schema_version`'s `.py` gap is now a TOMBSTONE in the corpus contract rather than a claim in a docstring, so the gate no longer advertises coverage it does not have.
 

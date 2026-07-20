@@ -17,6 +17,7 @@ Machine-portable roots (per feedback_machine_portable_resolver_for_committed_too
 FOXML_REPO_ROOT / FOXML_WORKSPACE env overrides → else derived from this file + sibling default.
 """
 import os
+from pathlib import Path
 import re
 import sys
 import glob
@@ -114,6 +115,28 @@ def _tested(on_disk):
     return t
 
 
+def _rows_with_invoked_by():
+    """{tool_name: invoked-by cell} for every enrolled row that names one.
+
+    The column is column 3 of the markdown table. Parsed positionally rather than by header match
+    because the header wording has drifted across sprints while the position has not."""
+    out = {}
+    try:
+        text = Path(INVENTORY).read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return out
+    for line in text.splitlines():
+        if not line.startswith("|"):
+            continue
+        cells = [c.strip() for c in line.split("|")[1:-1]]
+        if len(cells) < 3:
+            continue
+        m = re.match(r"`([^`]+)`", cells[0])
+        if m:
+            out[m.group(1)] = cells[2]
+    return out
+
+
 def main():
     if not os.path.isfile(INVENTORY):
         print("[check_tools_inventory] FAIL — inventory missing: DOCS/TOOLS.md")
@@ -168,6 +191,60 @@ def main():
         print(f"[check_tools_inventory] CLEAN — {len(on_disk)} tools enrolled; "
               f"{len(off_disk_ok)} PLANNED/RETIRED tracked; no broken refs; "
               f"{len(tested)} verified, {len(pending)} known-pending a self-test (D-137 shrinking).")
+
+    # ── CHECK 4 — INVOCATION TRUTH ────────────────────────────────────────────────────────────
+    # DOCS/TOOLS.md:5 declares: "Key metric: INVOCATION (a real `bash/python tools/x` call-site),
+    # NOT a prose mention — per D-115." That metric was unenforced. CHECK 1 proves a row exists,
+    # CHECK 2 proves refs aren't broken, CHECK 3 proves teeth EXIST — none proved the "Invoked by"
+    # column is TRUE. An independent audit found 7 rows claiming a mechanical trigger that has zero
+    # call-sites for that tool, one day after a sweep fixed 4 of the same kind reactively.
+    #
+    # A false "Invoked by" is worse than a missing one: it is the reason a tool gets ASSUMED covered
+    # and never wired, which is how a guard ends up advertised-but-never-exercised.
+    TRIGGER_FILES = {
+        "hook": Path(REPO) / ".githooks" / "pre-commit",
+        "check_session_docs": Path(REPO) / "tools" / "check_session_docs.sh",
+        "run_all_tests": Path(REPO) / "tools" / "run_all_tests.sh",
+    }
+    trigger_text = {}
+    for key, path in TRIGGER_FILES.items():
+        try:
+            trigger_text[key] = path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            trigger_text[key] = ""
+
+    # TRANSITIVITY: the hook invokes check_session_docs.sh (Check P), so anything that aggregator
+    # runs IS hook-triggered. Flagging those would be a false positive, and a noisy guard is an
+    # ignored guard (M3) — the failure this whole check exists to prevent, one level up.
+    if "check_session_docs" in trigger_text["hook"]:
+        trigger_text["hook"] += "\n" + trigger_text["check_session_docs"]
+
+    liars = []
+    for name, row in _rows_with_invoked_by().items():
+        if name not in on_disk:
+            continue                      # PLANNED / RETIRED — CHECK 1 owns those
+        stem = name.rsplit(".", 1)[0]
+        # WRAPPER EQUIVALENCE: `X_selftest.sh` is satisfied by a call to `X --selftest`. The wrapper
+        # exists for discoverability (D-137); running the parent's teeth directly is the SAME teeth,
+        # so demanding the wrapper specifically would flag working wiring.
+        alts = [stem]
+        if stem.endswith("_selftest"):
+            alts.append(stem[: -len("_selftest")])
+        for key, text in trigger_text.items():
+            if key not in row.lower():
+                continue                  # this row doesn't claim that trigger
+            if not any(re.search(rf"\b{re.escape(a)}\b", text) for a in alts):
+                liars.append((name, key))
+
+    if liars:
+        print(f"[check_tools_inventory] FAIL — {len(liars)} row(s) CLAIM a mechanical trigger that "
+              f"has no call-site for that tool:")
+        for name, key in liars:
+            print(f"    {name}  → row says '{key}', but {key} never invokes it")
+        print("    Fix the WIRING (add the call-site) or fix the ROW (state the real trigger).")
+        print("    A false 'Invoked by' is why a tool gets assumed-covered and never wired.")
+        rc = 1
+
     return rc
 
 

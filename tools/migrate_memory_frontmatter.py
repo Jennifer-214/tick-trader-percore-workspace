@@ -273,6 +273,8 @@ def process_file(path, neighbors):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--apply", action="store_true", help="write changes (default: dry-run)")
+    ap.add_argument("--check", action="store_true",
+                      help="exit 1 if any file is non-canonical (gate mode; implies dry-run)")
     ap.add_argument("--dry-run", action="store_true", help="print unified diffs, no writes")
     ap.add_argument("--report", action="store_true", help="tags/links status per file")
     ap.add_argument("--paths", nargs="*", help="specific memory files (default: all)")
@@ -357,6 +359,16 @@ def main():
           f"{missing_tags} still need tags; {len(all_unresolved)} files with unresolved [[links]]")
     for name, unr in all_unresolved:
         print(f"  INFO dangling [[link]] in {name}: {unr} (forward-ref to an unwritten memory; non-fatal)")
+    # --check: a GATE mode. Non-zero when the corpus is not already canonical, so a CI wiring can
+    # go red. Without this the tool returns 0 unconditionally and any gate built on it is
+    # vacuously green (Class 51) -- which is why `--dry-run` must NOT be what gets wired.
+    # Dangling [[links]] stay INFO in every mode: the memory system deliberately allows forward-refs
+    # to unwritten memories, so failing on them would gate correct usage.
+    if getattr(args, "check", False) and changed:
+        print(f"\n[check] FAIL — {changed} memory file(s) are NOT canonical. Run:\n"
+              f"        python3 tools/migrate_memory_frontmatter.py --apply\n"
+              f"        (or /sync-workspace, which runs it and then gates on check_doc_metadata)")
+        return 1
     return 0   # dangling [[links]] are INFO (the memory system allows forward-refs); non-zero reserved for real errors (no mem dir -> 2)
 
 

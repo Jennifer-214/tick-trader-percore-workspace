@@ -286,6 +286,22 @@ def check_sync_owed(live=None, backup=None, ws=None):
     live = Path(live) if live else (
         Path.home() / ".claude/projects/-home-caramel-code-FoxML-Trader-v2/memory")
     backup = Path(backup) if backup else (ws / "memory.backup")
+    # CANONICALITY, not byte-equality. An independent audit refuted the first version of this
+    # check: it byte-compared backup vs live, so a HAND-ROLLED `cp` sync produced zero drift and
+    # the check went green -- blind to the exact failure it was built for. The refutation was
+    # already written in this function's own docstring and not followed. Ask the canonicalizer.
+    import subprocess
+    try:
+        r = subprocess.run(["python3", str(Path(__file__).parent / "migrate_memory_frontmatter.py"),
+                            "--check"], capture_output=True, text=True, timeout=60)
+        if r.returncode == 1:
+            findings.append(("MED",
+                "memory frontmatter is NOT canonical — migrate_memory_frontmatter.py --check is RED. "
+                "A hand-rolled `cp` sync mirrors bytes but skips the canonicalizer, so the backup can "
+                "be byte-identical to a file the tool would have CHANGED. Run /sync-workspace"))
+    except Exception:
+        pass
+
     if live.is_dir() and backup.is_dir():
         drift = []
         for f in sorted(live.glob("*.md")):

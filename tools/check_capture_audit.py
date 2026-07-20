@@ -26,7 +26,7 @@ CONVENTIONS (mirror check_doc_metadata.py): machine-portable resolver (env | scr
 exit 1 on any violation (CI-gating); minimal line-scan (no yaml dep).
 
 USAGE
-  python3 tools/check_capture_audit.py                 # default-all HARD checks (1/4/8)
+  python3 tools/check_capture_audit.py                 # default-all HARD checks (1/4/8/14)
   python3 tools/check_capture_audit.py --check 1|4|8|13 # one check (13 = advisory completeness)
   python3 tools/check_capture_audit.py --check 13 --since HEAD~8   # decision-completeness over a window
   python3 tools/check_capture_audit.py --selftest      # unit-test Check 13 cross-ref logic, then exit

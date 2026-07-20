@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 9f2efedc-135a-42ff-a6c6-e3c32c03b1af
-  sister_specs: [feedback_consult_on_audit_findings.md, feedback_delegate_on_total_oracle_handreview_on_partial.md, feedback_independence_for_judgment_not_mechanical.md]
+  sister_specs: [feedback_consult_on_audit_findings.md, feedback_delegate_on_total_oracle_handreview_on_partial.md, feedback_independence_for_judgment_not_mechanical.md, feedback_passing_test_is_not_verification.md, feedback_structure_judgment_loop_not_output.md]
   tags: []
   modified: 2026-07-20T06:27:00.088Z
 ---

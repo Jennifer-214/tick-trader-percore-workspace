@@ -4,13 +4,8 @@ description: "In any doc that outlives the session (handoff/plan/MASTER/ledger),
 metadata: 
   node_type: memory
   type: feedback
-  sister_specs: 
-    - feedback_verify_by_context_not_count.md
-    - feedback_document_as_you_go_over_catch_at_end.md
-    - feedback_compaction_degrades_treat_handoffs_as_hints.md
-  tags: 
-    - doc-discipline
-    - audit-methodology
+  sister_specs: [feedback_verify_by_context_not_count.md, feedback_document_as_you_go_over_catch_at_end.md, feedback_compaction_degrades_treat_handoffs_as_hints.md, feedback_structural_enforcement_when_memory_insufficient.md]
+  tags: [doc-discipline, audit-methodology]
   originSessionId: 02ae3d48-4a67-4f96-88a8-929a8f516698
   modified: 2026-07-20T14:59:58.606Z
 ---

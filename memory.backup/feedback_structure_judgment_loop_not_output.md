@@ -4,7 +4,7 @@ description: "Caramel's apparatus thesis (codified 2026-06-09, mid-A.5; D-166): 
 metadata: 
   node_type: memory
   type: feedback
-  sister_specs: [feedback_guards_compound_enforcement_is_leverage.md, feedback_independence_for_judgment_not_mechanical.md, user_structure_is_correctness_risk_control_for_capital.md, feedback_run_doc_ci_tools_first_never_hand_verify.md, feedback_define_done_and_arm_scout_subagents.md, feedback_resource_use_gated_on_existence_not_felt_need.md]
+  sister_specs: [feedback_guards_compound_enforcement_is_leverage.md, feedback_independence_for_judgment_not_mechanical.md, user_structure_is_correctness_risk_control_for_capital.md, feedback_run_doc_ci_tools_first_never_hand_verify.md, feedback_define_done_and_arm_scout_subagents.md, feedback_resource_use_gated_on_existence_not_felt_need.md, feedback_delegate_via_locked_spec_at_implementation.md]
   tags: [operator-collaboration, audit-methodology]
   originSessionId: 687aa85a-836d-488f-8cb8-2ee60d314782
 ---

@@ -1,0 +1,115 @@
+{
+  "_comment": "CITABLE-ID NAMESPACE REGISTRY — the DEFINING FORM of every global citable-ID namespace (H / M / T / AR-WH-PL-CP / B / TECH_DEBT / PARITY / Class / D-C-F). Single-sourced DATA read by the Python resolver (tools/citable_ids.py) and, once it grows a consumer, by the foxtag C++ core and the nvim plugin's [REFERENCE] doc-viewer — the 'ONE RESOLVER, THREE CONSUMERS' shape D-390 specifies. TECH_DEBT-249 / D-389.",
+
+  "_encoding_law": "ALL SCALARS ARE STRINGS — booleans included. The shared C++ reader (foxtag.hpp JVal) has Kind {STR, ARR, OBJ, OTHER} and NO bool/number kind, so a bare `true` parses as OTHER with an EMPTY string — a SILENT wrong-read, not an error. Measured 2026-07-19 with a compiled probe. tools/lib/toolio_schemas.json and corpus_contract.json both obey this. Do NOT 'clean this up' to native JSON types.",
+
+  "_why_NO_REGEXES": "Deliberately declarative — anchor kind + literal prefix + flags — with ZERO regex syntax, and this is the load-bearing constraint rather than a style choice. `foxtag` contains no std::regex; it hand-parses char-by-char. D-393 pt 4 REFUTED a shared registry for the ref-index precisely because that one would have carried extraction REGEXES, which would CREATE parity risk instead of removing it. Every row here is expressible as: does the line start with X, is the ID bold, is there a Y after it. A hand-parser can honour that with startswith() and a digit scan. If a future namespace genuinely needs a regex, it does NOT belong in this file — give it a defining form a hand-parser can read, or keep it Python-side and say so.",
+
+  "_defining_form_not_mention": "Every row anchors on the form that DECLARES an entry — a table row, a heading, a sentinel, a filename. NEVER a prose mention. A membership set built from mentions cannot go red: cite a nonexistent TECH_DEBT-999 in the same file that defines the set and it resolves. That is exactly why CI never saw the 8 dangling citations D-389 found (Class-51, in the resolver itself).",
+
+  "registry_version": "1",
+
+  "namespaces": {
+    "INVARIANT": {
+      "_use": "Hard invariants H1..H22 — the CLAUDE.md table is the SSoT.",
+      "source": "$ENGINE/CLAUDE.md",
+      "anchor": "table-row",
+      "prefix": "H",
+      "id_body": "digits",
+      "bold": "optional",
+      "requires_after": "|",
+      "id_type": "string",
+      "_why_bold_optional": "H15/H18/H19/H21/H22 are BOLD rows; H1-H14 are not. A pattern requiring `|` immediately after the number silently dropped 6 of 22 — caught by checking the resolved count against the known H1..H22 range instead of trusting the match."
+    },
+    "META": {
+      "_use": "Meta-disciplines M1..M10 — DESIGN_PHILOSOPHY § 11.5 is the SSoT.",
+      "source": "$WORKSPACE/DOCS/DESIGN_PHILOSOPHY.md",
+      "anchor": "table-row",
+      "prefix": "M",
+      "id_body": "digits",
+      "bold": "required",
+      "requires_after": "—",
+      "id_type": "string",
+      "_why_bold_REQUIRED": "LOAD-BEARING, not cosmetic. DESIGN_PHILOSOPHY carries the § 11.5 DEFINING table (`| **M1 — …**`) AND a cross-reference index further down (`| M1 — … |`, plain). Treating bold as optional matched BOTH and reported 8 of 10 meta-disciplines as DOUBLE-DEFINED — every one a false positive. Shipping that would have made the guard's first run pure noise, which is the fastest way to get a guard ignored (M3)."
+    },
+    "TOOLCHAIN": {
+      "_use": "Dev-plane toolchain invariants T1..T12 — the tools/CLAUDE.md T-index is the SSoT.",
+      "source": "$WORKSPACE/tools/CLAUDE.md",
+      "anchor": "table-row",
+      "prefix": "T",
+      "id_body": "digits",
+      "bold": "optional",
+      "requires_after": "|",
+      "id_type": "string"
+    },
+    "ANTIPATTERN": {
+      "_use": "Meta-anti-patterns AR-n / WH-n / PL-n / CP-n — the index table is the SSoT.",
+      "source": "$WORKSPACE/DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md",
+      "anchor": "table-row",
+      "prefix_any": ["AR-", "WH-", "PL-", "CP-"],
+      "id_body": "digits",
+      "bold": "required",
+      "id_type": "string",
+      "_note": "One doc owns FOUR namespaces, which is why it carries `owns_namespace: [AR, WH, PL, CP]` rather than a singular `registry_id:` — see doc-frontmatter-convention.md."
+    },
+    "BLINDSPOT": {
+      "_use": "Implementation-blindspot pillars B1..Bn — the taxonomy's headings are the SSoT.",
+      "source": "$WORKSPACE/DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md",
+      "anchor": "heading",
+      "heading_level": "3",
+      "prefix": "B",
+      "id_body": "digits",
+      "id_type": "string"
+    },
+    "TECH_DEBT": {
+      "_use": "TECH_DEBT-n entries across the split ledger.",
+      "sources": [
+        "$WORKSPACE/DOCS/TECH_DEBT.md",
+        "$WORKSPACE/DOCS/tech-debt/open.md",
+        "$WORKSPACE/DOCS/tech-debt/in-flight.md",
+        "$WORKSPACE/DOCS/tech-debt/closed.md"
+      ],
+      "anchor": "heading",
+      "heading_level": "3",
+      "prefix": "TECH_DEBT-",
+      "id_body": "digits",
+      "id_type": "int",
+      "_why_int": "Padding-insensitive: TECH_DEBT-005 and TECH_DEBT-5 are the SAME id, so normalising to int is what makes them resolve to one entry rather than two.",
+      "_hardened_2026_07_20": "Was a by-MENTION scan (`TECH_DEBT-(\\d+)` over raw ledger text). Measured at the flip: by-mention 248 vs by-defining 247 — the single dropped id is TECH_DEBT-101, which has NO defining row anywhere and is cited from ZERO engine sources, so nothing newly REDs. It is one of D-389's 8 dangling citations, i.e. the flip immediately surfaces a real defect the old set was structurally incapable of reporting."
+    },
+    "PARITY": {
+      "_use": "PARITY-n ledger entries.",
+      "source": "$WORKSPACE/DOCS/PARITY_ISSUES.md",
+      "anchor": "field",
+      "field_prefix": "id: PARITY-",
+      "id_body": "digits",
+      "id_type": "int"
+    },
+    "CLASS": {
+      "_use": "Recurring-bug-pattern classes — the per-class FILENAME is the defining form.",
+      "directory": "$WORKSPACE/DOCS/recurring-bug-patterns",
+      "anchor": "filename",
+      "filename_prefix": "class-",
+      "id_body": "digits",
+      "id_type": "int",
+      "_dropped_text_union": "The predecessor ALSO unioned prose mentions of `Class N` from the catalog. Measured 2026-07-20: the union adds NOTHING (56 == 56) while making the set unable to go red. Dropped — a redundant leg that only costs falsifiability is strictly worse than no leg."
+    },
+    "DECISION": {
+      "_use": "Decision-log entries D-n / C-n / F-n.",
+      "directory_glob": "$WORKSPACE/plans/*/decision-logs",
+      "anchor": "html-sentinel",
+      "sentinel_open_any": ["<!-- D/C/F:", "<!-- D:"],
+      "sentinel_close": "-->",
+      "prefix_any": ["D-", "C-", "F-"],
+      "id_body": "digits",
+      "id_exact": "true",
+      "_why_two_sentinel_forms": "MEASURED 2026-07-20 against the predecessor regex: 429 sentinels use `<!-- D/C/F:` and 19 use the shorter `<!-- D:`. A parser matching only the long form silently DROPPED 5 real ids including D-372..D-379 — the origin decisions of this very ship.",
+      "_why_id_exact": "The id must be prefix+digits and NOTHING else. Taking everything between the delimiters over-accepted `DD-1`, `F-2-AMEND` and `P-1` as decision ids — junk that would then be reported as dangling citations forever. A resolver that admits malformed ids manufactures its own false findings.",
+      "id_type": "string",
+      "per_file": "true",
+      "_why_per_file": "D-numbers RESTART per log, so the index is kept per-file and never unioned. A union would mask exactly the cross-log collision D-389 found — D-1..D-13 defined in TWO logs with genuinely opposite content (D-7 = ImGui stays vs hard-deprecated).",
+      "citations_unverifiable": "true",
+      "_why_citations_unverifiable": "A bare `D-7` in prose cannot be resolved without knowing which log the citing doc means, and guessing would manufacture false positives at scale. Definition-side collisions ARE still reported (unambiguous); citation-side resolution is deliberately skipped rather than faked."
+    }
+  }
+}

@@ -116,6 +116,21 @@ def check_index_sync(quiet):
 
 # ---------------------------------------------------------------------------
 # Check 4 — decision-log sentinel matching (D/C/F id -> STATUS)
+# The accepted sentinel OPENERS come from the citable-id namespace registry (tools/lib/
+# citable_id_namespaces.json), so Check 4 and the Check-14 resolver cannot drift apart.
+def _dcf_regex():
+    try:
+        import json
+        reg = json.loads((Path(__file__).absolute().parent / "lib" /
+                          "citable_id_namespaces.json").read_text())
+        opens = reg["namespaces"]["DECISION"].get("sentinel_open_any") or ["<!-- D/C/F:"]
+    except Exception:
+        opens = ["<!-- D/C/F:", "<!-- D:"]        # registry unreadable: cover both, never fewer
+    alt = "|".join(re.escape(o.replace("<!--", "").strip()) for o in opens)
+    return re.compile(r"<!--\s*(?:" + alt + r")\s*([\w.-]+)\s*-->")
+
+
+_DCF_RE = _dcf_regex()
 # ---------------------------------------------------------------------------
 def check_sentinels(quiet, workspace):
     # scan all decision logs in the active sprint(s); a D/C/F block must be followed by a STATUS
@@ -129,7 +144,11 @@ def check_sentinels(quiet, workspace):
         lines = dl.read_text(encoding="utf-8").splitlines()
         pending_id = None
         for i, ln in enumerate(lines):
-            m = re.search(r"<!--\s*D/C/F:\s*([\w.-]+)\s*-->", ln)
+            # REWIRED 2026-07-20 to the shared defining-form spec. This line used to hardcode
+            # only `<!-- D/C/F:` and therefore skipped the 19 sentinels using the shorter
+            # `<!-- D:` form — D-372..D-381 among them, never once checked for a paired STATUS.
+            # The registry knows both forms; there is now ONE parser for this defining form.
+            m = _DCF_RE.search(ln)
             if m:
                 # if a previous D/C/F id is still awaiting its STATUS, it's unmatched
                 if pending_id is not None:
@@ -273,9 +292,169 @@ def _selftest():
     return 0 if ok else 1
 
 
+
+# ============================================================================
+# Check 14 — CITABLE-ID INTEGRITY (TECH_DEBT-249 / D-389 / D-399)
+# ============================================================================
+# FOLDED here rather than shipped standalone, and the argument is a DELETION: Check 4 below
+# carried a SECOND parser over the same `<!-- D/C/F: … -->` defining form this resolver reads —
+# and it hardcoded only the long sentinel form, silently skipping 19 sentinels including
+# D-372..D-381, this ship's own origin decisions. Folding kills the duplicate parser and closes
+# that gap as a side effect (feedback_structural_fix_over_belt_and_suspenders: the test is
+# add-vs-remove moving parts).
+#
+# Scans the FULL corpus every run. A diff-scoped design was built and measured (~150ms vs ~14s)
+# and REJECTED (D-399): the baseline already gives green-on-new, so diff-scoping bought only
+# speed while making a TOTAL oracle PARTIAL — complete solely if a four-case blast-radius
+# analysis is exhaustive, which is reasoning rather than a check. 14s once per commit, accepted.
+from citable_ids import (defining_index, citations_in, sequence_gaps,   # noqa: E402
+                         _read, WORKSPACE)
+CITABLE_BASELINE = Path(__file__).absolute().parent / "lib" / "citable_ids_baseline.txt"
+CITABLE_GOLDEN   = Path(__file__).absolute().parent / "goldens" / "citable-ids.txt"
+
+# Docs whose PROSE is scanned for citations. The predecessor resolver only looked inside CODE
+# tag-blocks, which is why 8 dangling TECH_DEBT ids lived in workspace prose untouched for months.
+CITATION_ROOTS = [
+    WORKSPACE / "DOCS",
+    WORKSPACE / "DESIGN_SPECS",
+    WORKSPACE / "plans",
+]
+
+# Namespaces whose citations we VERIFY. DECISION is excluded on purpose: D-numbers restart per
+# log, so a bare `D-7` cannot be resolved without knowing which log the citing doc means, and
+# guessing would manufacture false positives at scale. Cross-log D-collisions are still REPORTED
+# by class 2 (they are definition-side, which is unambiguous).
+VERIFIED_NS = ["TECH_DEBT", "CLASS", "INVARIANT", "META", "TOOLCHAIN", "ANTIPATTERN", "BLINDSPOT", "PARITY"]
+
+TOMBSTONE_RE = re.compile(r"RESERVED|TOMBSTONE|RETIRED|DEPRECATED|withdrawn|WITHDRAWN|superseded|SUPERSEDED|MOOT|renumber", re.I)
+
+
+def _iter_docs():
+    for root in CITATION_ROOTS:
+        if root.is_dir():
+            for p in sorted(root.rglob("*.md")):
+                yield p
+
+
+def _citable_findings(idx):
+    findings = []   # (cls, severity, where, msg)
+
+    # Read the corpus ONCE. The first cut re-read every doc inside the per-namespace gap loop —
+    # O(namespaces x corpus), 17s for a check that should be ~2s. A guard slow enough to be
+    # unwelcome in the gate that should host it ends up unwired, which is how a capability becomes
+    # advertised-but-never-exercised. Perf here is a correctness-of-placement concern.
+    docs = [(p, _read(p)) for p in _iter_docs()]
+    corpus_lines = [ln for _, txt in docs for ln in txt.splitlines()]
+
+    # ── 1. CITED-BUT-UNDEFINED ────────────────────────────────────────────────────────────────
+    for p, _txt in docs:
+        cites = citations_in(_txt)
+        for ns in VERIFIED_NS:
+            known = idx.get(ns, {})
+            if not known:
+                continue                      # a namespace whose SSoT failed to load: SKIP, never
+                                              # flag every citation as dangling (graceful, mirrors
+                                              # the predecessor resolver's posture)
+            for rid, lines in cites.get(ns, {}).items():
+                if rid not in known:
+                    findings.append(("cited-but-undefined", "HIGH",
+                                     f"{p.relative_to(WORKSPACE)}:{lines[0]}",
+                                     f"{ns} `{rid}` is CITED but has no defining row"))
+
+    # ── 2. DEFINED-TWICE ──────────────────────────────────────────────────────────────────────
+    for ns, entries in sorted(idx.items()):
+        for rid, sites in sorted(entries.items(), key=lambda kv: str(kv[0])):
+            if len(sites) > 1:
+                where = " | ".join(f"{Path(s).name}:{l}" for s, l in sites)
+                findings.append(("defined-twice", "HIGH", where,
+                                 f"{ns} `{rid}` defined at {len(sites)} sites — "
+                                 f"one id must mean exactly one thing (H21 on the doc plane)"))
+
+    # ── 3. SEQUENCE-GAP without a tombstone ───────────────────────────────────────────────────
+    # A gap is a CANDIDATE, not a defect: retiring an id with a tombstone is the H21-correct
+    # outcome. Only an UNEXPLAINED hole is reported.
+    for ns in ("TECH_DEBT", "CLASS", "PARITY", "INVARIANT", "META", "TOOLCHAIN", "BLINDSPOT"):
+        gaps = sequence_gaps(idx, ns)
+        if not gaps:
+            continue
+        for n in gaps:
+            pat = re.compile(rf"\b{ns}[- ]0*{n}\b", re.I) if ns != "CLASS" \
+                  else re.compile(rf"\bClass 0*{n}\b", re.I)
+            ctx = [ln for ln in corpus_lines if pat.search(ln)]
+            if not any(TOMBSTONE_RE.search(ln) for ln in ctx):
+                findings.append(("sequence-gap", "MED", f"{ns} range",
+                                 f"{ns} slot `{n}` is MISSING with no tombstone/retirement note — "
+                                 f"an empty reusable slot is the H21 hazard"))
+
+    # ── 4. RESERVATION with no SSoT row ───────────────────────────────────────────────────────
+    # `registry_id:` / `owns_namespace:` claim an id in frontmatter; that id must exist.
+    for p in sorted((WORKSPACE / "DESIGN_SPECS").rglob("*.md")):
+        head = _read(p)[:1500]
+        m = re.search(r"^registry_id:\s*(\S+)", head, re.M)
+        if not m:
+            continue
+        rid = m.group(1)
+        ns = ("INVARIANT" if rid.startswith("H") else
+              "META" if rid.startswith("M") else
+              "TOOLCHAIN" if rid.startswith("T") else
+              "BLINDSPOT" if rid.startswith("B") else None)
+        if ns and rid not in idx.get(ns, {}):
+            findings.append(("reservation-no-ssot", "HIGH",
+                             str(p.relative_to(WORKSPACE)),
+                             f"declares `registry_id: {rid}` but no defining row exists for it"))
+    return findings
+
+
+
+
+def check_citable_ids(quiet, workspace):
+    idx = defining_index()
+    total = sum(len(v) for v in idx.values())
+    if total < 50:
+        print(f"  [Check 14] FAIL — the defining-form index resolved only {total} ids; that is a "
+              f"broken SSoT path, not a clean corpus. Refusing to report green over an empty set.")
+        return 1
+
+    # ID-SET GOLDEN (H21 on the doc plane): the citation scan only notices a REMOVED id if
+    # something still cites it, so an id deleted together with its last citation would vanish
+    # silently. The golden makes any disappearance a tracked diff.
+    if CITABLE_GOLDEN.is_file():
+        want = {l.strip() for l in CITABLE_GOLDEN.read_text().splitlines() if l.strip()}
+        got = {f"{ns}|{rid}" for ns, e in idx.items() for rid in e}
+        gone = sorted(want - got)
+        if gone:
+            print(f"  [Check 14] FAIL — {len(gone)} citable id(s) DISAPPEARED from the defining "
+                  f"index with no tombstone: {gone[:8]}")
+            print(f"             An id slot must be RETIRED deliberately, never dropped (H21). If "
+                  f"intentional, re-bless: python3 tools/bless.py (TTY-gated)")
+            return 1
+
+    findings = _citable_findings(idx)
+    base = set()
+    if CITABLE_BASELINE.is_file():
+        base = {l.strip() for l in CITABLE_BASELINE.read_text().splitlines()
+                if l.strip() and not l.startswith("#")}
+    new = [f for f in findings if f"{f[0]}|{f[3]}" not in base]
+    hi = [f for f in new if f[1] == "HIGH"]
+
+    if hi:
+        print(f"  [Check 14] FAIL — {len(hi)} NEW citable-ID violation(s) "
+              f"({len(findings)} total, {len(base)} baselined):")
+        for _, sev, where, msg in hi[:12]:
+            print(f"      [{sev}] {where} — {msg}")
+        if len(hi) > 12:
+            print(f"      ... and {len(hi) - 12} more")
+        return 1
+    if not quiet:
+        med = len([f for f in new if f[1] == "MED"])
+        print(f"  [Check 14] PASS — citable-ID integrity ({total} ids indexed BY DEFINING FORM; "
+              f"{len(base)} baselined; {med} new MED advisory)")
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser(description="Mechanical half of /capture-audit (Checks 1/4/8).")
-    ap.add_argument("--check", type=int, choices=[1, 4, 8, 13], help="run only one check")
+    ap.add_argument("--check", type=int, choices=[1, 4, 8, 13, 14], help="run only one check")
     ap.add_argument("--quiet", action="store_true", help="only failures + summary")
     ap.add_argument("--since", default="HEAD~8",
                     help="session window for Check 13 decision-completeness (default HEAD~8)")
@@ -298,6 +477,8 @@ def main():
         rc |= check_sentinels(args.quiet, workspace)
     if args.check in (None, 8):
         rc |= check_skill_linkage(args.quiet, engine, workspace)
+    if args.check in (None, 14):
+        rc |= check_citable_ids(args.quiet, workspace)
     # Check 13 is ADVISORY + EXPLICIT-ONLY — deliberately NOT in the default-all set so the
     # aggregator's HARD `--quiet` run (Checks 1/4/8) never trips on this heuristic. Via --check 13.
     if args.check == 13:

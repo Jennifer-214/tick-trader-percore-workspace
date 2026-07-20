@@ -112,6 +112,17 @@ else
     RESULTS+=("  ⏭  HARD  schema-version cohesion (SKIP_SCHEMA_VERSION_CHECK=1)")
 fi
 
+# --- HARD 1c-2: corpus MEMBERSHIP pin (E.1.2.B 0.2 / D-386 + D-396) ---
+# The contract states the RULES; this proves they still resolve to the same FILES. Different
+# failure surfaces: a rule can stay valid while a file silently leaves the corpus and stops being
+# checked. Pinned as a LIST, not a count — commit 1da1c1c moved SIX files' identities with the
+# tracked count going 167 -> 167, delta ZERO, so a count pin is blind to renames and to any swap.
+# Deliberately NOT folded into the parity-gated validator: a corpus-spanning property inside
+# `validate` would make one implementation flag what the other does not and re-break byte-parity
+# (the :39 corollary; same call made at D-371 for check_schema_version and `foxtag fields`).
+run_hard "corpus membership pin (resolved file-list == blessed golden, order incl.; D-386/D-396)" \
+    python3 "$REPO_ROOT/tools/check_corpus_membership.py"
+
 # --- HARD 1d: in-code conversion COMPLETENESS gate (E.1.2.A — coverage: every unit warranting a block HAS one) ---
 # Non-vacuity selftest (ExecutionCore clean + GateControlNetwork flagged + trivial return-structs exempt) +
 # baseline mode: a NEW lumped/un-blocked unit FAILS; the grandfathered gaps live in

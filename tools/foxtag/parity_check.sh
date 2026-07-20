@@ -36,6 +36,57 @@ if [ "$PY_RC" != "$CXX_RC" ]; then
     echo "FAIL: exit codes differ (py=$PY_RC cxx=$CXX_RC)"; FAIL=1
 else echo "OK  : exit codes identical ($PY_RC)"; fi
 
+# --- 1b. PATH-ARGUMENT parity (E.1.2.B 0.2 / BB-1 / D-393 as amended by C-395) -------------
+# --- §1 invokes BOTH tools bare (:20-21), so every path-argument divergence was structurally
+# --- ungated — and that is exactly where build-blocker 1 lived. Two distinct shapes:
+# ---   MISSING path  — rc=0 silent on BOTH. COMMON-MODE, so a differential gate is blind to it
+# ---                   by construction; only a contract or a golden could ever catch it.
+# ---   DIRECTORY     — a genuine T1 divergence (Python rc=1 UNREADABLE vs foxtag rc=0 "valid"),
+# ---                   which §1 could have caught had it ever passed a path.
+# --- Both are now contract-resolved (path_arguments: missing=fail-rc-2, directory=expand-by-
+# --- profile, regular_file=accept-verbatim), and stdout/stderr are byte-identical across the
+# --- two readers, so this diffs them exactly the way §1 diffs the bare scan.
+# --- NON-VACUITY (T5/D-384): a SKIP is not a PASS. Every case asserts a POSITIVE signal before
+# --- comparing — a scanned-file count > 0 for the expanding cases, a non-empty message for the
+# --- failing one — so two identically-empty outputs can never read as agreement. The verdict
+# --- records ran-vs-skipped.
+PATHARG_PARITY="skipped"
+PA_DIR="DOCS"                                  # 3 file-symlinked *TEMPLATE*.hpp — a real expansion
+PA_FILE="DOCS/CODE_TAG_TEMPLATES.hpp"          # accept-verbatim
+PA_MISSING="$TMP/definitely-not-here.hpp"      # must NOT exist
+if [ -d "$ROOT/$PA_DIR" ] && [ -f "$ROOT/$PA_FILE" ] && [ ! -e "$PA_MISSING" ]; then
+    PATHARG_PARITY="ran"
+    pa_case() {   # $1 = label, $2 = expected rc, $3.. = path args
+        local label="$1" want_rc="$2"; shift 2
+        ( cd "$ROOT" && python3 "$TOOLS/check_code_tag_blocks.py" --paths "$@" ) \
+            > "$TMP/pa.py" 2>&1; local prc=$?
+        ( cd "$ROOT" && "$HERE/foxtag" validate "$@" ) > "$TMP/pa.cxx" 2>&1; local crc=$?
+        if [ ! -s "$TMP/pa.py" ] || [ ! -s "$TMP/pa.cxx" ]; then
+            echo "FAIL: path-arg '$label' produced NO output on one/both sides (py=$(wc -c <"$TMP/pa.py")B cxx=$(wc -c <"$TMP/pa.cxx")B) — a vacuous comparison"
+            FAIL=1; return
+        fi
+        if [ "$prc" != "$want_rc" ] || [ "$crc" != "$want_rc" ]; then
+            echo "FAIL: path-arg '$label' rc mismatch vs contract (want=$want_rc py=$prc cxx=$crc)"
+            FAIL=1; return
+        fi
+        if ! diff -q "$TMP/pa.py" "$TMP/pa.cxx" >/dev/null; then
+            echo "FAIL: path-arg '$label' output differs:"; diff "$TMP/pa.py" "$TMP/pa.cxx" | head -12; FAIL=1; return
+        fi
+        echo "OK  : path-arg $label — identical output, both rc=$want_rc [RAN]"
+    }
+    # The expanding cases must actually SCAN something, else "identical" is two empty scans.
+    pa_scanned=$( cd "$ROOT" && "$HERE/foxtag" validate "$PA_DIR" | sed -n 's/^Scanned \([0-9]*\) files.*/\1/p' )
+    if [ "${pa_scanned:-0}" -lt 1 ]; then
+        echo "FAIL: path-arg directory case scanned 0 files — the comparison would be vacuous"; FAIL=1
+    else
+        pa_case "directory (expand-by-profile, $pa_scanned files)" 0 "$PA_DIR"
+    fi
+    pa_case "regular file (accept-verbatim)" 0 "$PA_FILE"
+    pa_case "MISSING (fail-rc-2, common-mode blind spot)" 2 "$PA_MISSING"
+else
+    echo "SKIP: path-argument parity (fixture paths unavailable) — this run does NOT gate BB-1"
+fi
+
 # --- 2. unit/tag inventory parity ---------------------------------------------
 ( cd "$ROOT" && python3 - <<'EOF'
 import sys, pathlib
@@ -225,7 +276,8 @@ fi
 
 # --- verdict -------------------------------------------------------------------
 if [ "$FAIL" = 0 ]; then
-    echo "PARITY: PASS — the core matches the Python oracle (plugin node-model: $PLUGIN_PARITY)"
+    echo "PARITY: PASS — the core matches the Python oracle (plugin node-model: $PLUGIN_PARITY; path-args: $PATHARG_PARITY)"
     [ "$PLUGIN_PARITY" = "ran" ] || echo "  NOTE: plugin section SKIPPED — this run does NOT authorize deleting the Lua node-model copies (D-349/D-384)"
+    [ "$PATHARG_PARITY" = "ran" ] || echo "  NOTE: path-argument section SKIPPED — this run does NOT gate the BB-1 contract seam (a PASS here says nothing about path handling)"
     exit 0
-else echo "PARITY: FAIL — the Python tools stay authoritative (plugin node-model: $PLUGIN_PARITY)"; exit 1; fi
+else echo "PARITY: FAIL — the Python tools stay authoritative (plugin node-model: $PLUGIN_PARITY; path-args: $PATHARG_PARITY)"; exit 1; fi

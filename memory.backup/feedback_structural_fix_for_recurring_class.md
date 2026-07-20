@@ -5,7 +5,8 @@ metadata:
   type: feedback
   originSessionId: 43a2b763-783f-4a6e-9b54-c3654977b44c
   tags: [structural-fix, framework-discipline]
-  sister_specs: [feedback_audit_canonical_sister_before_new_infra.md, feedback_categorical_triggers_over_hardcoded_refs.md, feedback_close_the_class_vs_migrate_every_site.md, feedback_multi_surface_deletion_ordering_discipline.md, feedback_new_plans_use_future_oriented_template.md, feedback_prefer_action_parameterized_walker_over_per_consumer_walker_bodies.md, feedback_single_source_of_truth_discipline.md, feedback_structural_enforcement_when_memory_insufficient.md, feedback_unconditionalization_latent_assumption_audit.md, feedback_verify_symbol_existence_at_plan_drafting_time.md, feedback_guards_compound_enforcement_is_leverage.md, feedback_prefer_deletable_cascade_over_tombstone.md]
+  sister_specs: [feedback_audit_canonical_sister_before_new_infra.md, feedback_categorical_triggers_over_hardcoded_refs.md, feedback_close_the_class_vs_migrate_every_site.md, feedback_multi_surface_deletion_ordering_discipline.md, feedback_new_plans_use_future_oriented_template.md, feedback_prefer_action_parameterized_walker_over_per_consumer_walker_bodies.md, feedback_single_source_of_truth_discipline.md, feedback_structural_enforcement_when_memory_insufficient.md, feedback_unconditionalization_latent_assumption_audit.md, feedback_verify_symbol_existence_at_plan_drafting_time.md, feedback_guards_compound_enforcement_is_leverage.md, feedback_prefer_deletable_cascade_over_tombstone.md, feedback_enumerate_set_before_categorical_claim.md, feedback_structural_fix_over_belt_and_suspenders.md, feedback_tag_disposition_at_fix_time.md]
+  modified: 2026-07-20T01:45:56.003Z
 ---
 When `/parity-check`, `/merge-scan`, or any audit surfaces a recurring
 pattern (Class 18 mirror, parallel boot↔backtest↔hot-swap paths,
@@ -41,6 +42,8 @@ Option 2 → Option 3; bash CLI catch-up → C++ wrapper deferral).
    + architecturally clean, do it now. If genuinely separate concern,
    defer with TECH_DEBT.md entry (queryable, surfaced by /readiness
    Check 25).
+
+**COROLLARY — patching one instance without SWEEPING its class is itself the anti-pattern (added 2026-07-19, E.1.2.B):** the moment you fix an instance, run the sweep that enumerates its siblings, in the same session. Worked example: a dangling `TECH_DEBT-101` citation (an ID cited in prose with no ledger entry) was found once and re-homed once — `closed.md:1300` is literally titled *"cited TECH_DEBT-101 exists in NO ledger file — re-homed here"* — and the class was never swept. **Eight siblings survived** (`-016/-047/-048/-102/-103/-104/-125/-128`), one of them live in the CURRENT decision log, plus 5 split-brain entries defined in both `open.md` and `closed.md`. A single-instance patch reads as closure and *suppresses* the sweep, so the class goes quiet instead of getting fixed. If the sweep is too big to run now, the finding is not "fixed" — it is a TECH_DEBT entry with the sweep as its trigger. Sister: [[feedback_enumerate_set_before_categorical_claim]] (M9 — that one governs CLAIMS over an un-enumerated set; this governs ACTIONS on one member of it) · [[feedback_tag_disposition_at_fix_time]].
 
 **Cross-references:**
 - `CLAUDE.local.md` going-forward rule (structural fix preferred)

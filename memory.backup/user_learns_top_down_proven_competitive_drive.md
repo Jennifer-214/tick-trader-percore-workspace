@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: user
   originSessionId: e760250d-1c16-4936-a5cd-da4ce456ca15
-  sister_specs: [user_adhd_deferred_reward_discipline.md, user_correctness_first_not_ship_fast.md, user_deep_design_work_intrinsic_value.md, user_public_work_attracts_hedge_funds.md]
+  sister_specs: [user_adhd_deferred_reward_discipline.md, user_correctness_first_not_ship_fast.md, user_deep_design_work_intrinsic_value.md, user_public_work_attracts_hedge_funds.md, user_owns_core_design_meet_confidence_genuinely.md]
   tags: []
 ---
 

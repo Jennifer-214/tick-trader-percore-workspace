@@ -6,7 +6,6 @@ metadata:
   type: feedback
   tags: [operator-collaboration, meta-discipline, framework-discipline]
   sister_specs: [feedback_independence_for_judgment_not_mechanical.md, feedback_process_weight_by_surface_blast_radius.md, feedback_define_done_and_arm_scout_subagents.md]
-    []
   originSessionId: 730312a8-1185-4682-b01f-544206cbcd6d
 ---
 

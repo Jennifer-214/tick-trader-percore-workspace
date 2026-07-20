@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 48cf1e7d-3242-4daf-951a-a95b831f0804
+  sister_specs: [feedback_passing_test_is_not_verification.md, feedback_run_doc_ci_tools_first_never_hand_verify.md, feedback_verify_by_context_not_count.md]
+  tags: []
 ---
 
 Caramel (2026-07-16, mid E.1.2.A P6): *"the python scripts to change stuff is usually fine, its just what i see causing the most issues or stuff, keep that in mind."* Said after the normalize pass — the batch-era scripted conversions were the source of every artifact class the pass fixed (wholesale-wrapped banners, mismatched bars, one copied-not-moved duplication).

@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 0db74d46-3db5-4bdf-beae-8075dc081b3f
-  sister_specs: [feedback_design_once_maintain_forever.md, feedback_no_defer_for_effort.md, feedback_no_mvp_for_plumbing_only_for_unknown_unknowns.md]
+  sister_specs: [feedback_design_once_maintain_forever.md, feedback_no_defer_for_effort.md, feedback_no_mvp_for_plumbing_only_for_unknown_unknowns.md, feedback_structural_fix_over_belt_and_suspenders.md]
   tags: []
 ---
 

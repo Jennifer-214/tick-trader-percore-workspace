@@ -6,7 +6,7 @@ metadata:
   type: feedback
   tags: [audit-methodology, scope-discipline]
   originSessionId: 3e806606-ac69-40fd-ac33-45906443bae4
-  sister_specs: [feedback_run_doc_ci_tools_first_never_hand_verify.md]
+  sister_specs: [feedback_run_doc_ci_tools_first_never_hand_verify.md, feedback_match_anomaly_to_decision_log_before_escalating.md, feedback_resource_use_gated_on_existence_not_felt_need.md]
 ---
 
 Before reading a large corpus end-to-end, **consult its index / summary / map files first** — they exist precisely so you don't have to read everything. MEMORY.md (the memory index), a directory's `_SESSION-CONTEXT.md` / `_README.md` / `MASTER-BACKLOG.md` / `findings-merge-map.txt`, `E-MASTER-REFERENCE.md`, a `dependency-graph.md`, the doc-find recipes — each gives structure, location, counts, and disposition at a fraction of the bytes. Read the FULL file only for the specific detail the index can't answer.

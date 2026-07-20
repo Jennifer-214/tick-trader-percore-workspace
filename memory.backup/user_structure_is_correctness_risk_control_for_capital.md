@@ -1,11 +1,11 @@
 ---
 name: user_structure_is_correctness_risk_control_for_capital
-description: "Caramel's heavy verification/planning apparatus is risk control for capital-bearing code — do NOT frame it as over-instrumentation or hobby craft"
+description: "Caramel's heavy verification/planning apparatus is risk control for capital-bearing code AND externalized cognition / decision-fatigue removal for the solo dev — extends to the dev-plane toolchain held as first-class; do NOT frame it as over-instrumentation or hobby craft"
 metadata: 
   node_type: memory
   type: user
   originSessionId: ab5d402f-2ba7-43b9-9ae7-35187b313483
-  sister_specs: [user_adhd_deferred_reward_discipline.md, user_deep_design_work_intrinsic_value.md, user_mvp_to_professional_transition.md, feedback_framework_layer_payoff_diminishing_returns.md, feedback_heavier_default_audit_posture_for_capital.md, project_engine_done_edge_is_the_frontier.md, feedback_document_as_you_go_over_catch_at_end.md, feedback_structure_judgment_loop_not_output.md]
+  sister_specs: [user_adhd_deferred_reward_discipline.md, user_deep_design_work_intrinsic_value.md, user_mvp_to_professional_transition.md, feedback_framework_layer_payoff_diminishing_returns.md, feedback_heavier_default_audit_posture_for_capital.md, project_engine_done_edge_is_the_frontier.md, feedback_document_as_you_go_over_catch_at_end.md, feedback_structure_judgment_loop_not_output.md, feedback_resource_use_gated_on_existence_not_felt_need.md]
   tags: [user-profile, operator-collaboration]
 ---
 
@@ -13,6 +13,8 @@ The heavy structure in this codebase (audit gates, parity checks, 20 hard invari
 
 1. **Externalized cognition for a one-person + AI workflow (PRIMARY, her stated reason).** Caramel is a solo dev; the corpus is external memory that's easily navigable by an AI agent, and it reduces decision fatigue. "It works for me" is a complete justification. Mechanism: every codified rule is a decision made ONCE and never re-litigated — the next session (her or the agent) inherits it instead of re-deriving or silently drifting. The corpus IS the missing teammate. For ADHD, externalizing decisions out of working memory is the leverage. Connects to [[user_adhd_deferred_reward_discipline]].
 2. **Correctness risk-control for capital-bearing code.** For HFT code that moves real money the cost function is asymmetric — an unshipped feature is opportunity cost, but a shipped bug is a *realized loss* compounding at machine speed. A 6:1 verification-to-code ratio is the correct posture (aerospace / medical-device / real quant firms), not bloat. Burden of proof is on REMOVING a control, not adding one.
+
+**Extends to the dev-plane TOOLCHAIN as first-class, not only the engine/capital paths (2026-07-19, E.1.2.B).** The same rigor governs the *tooling itself* — foxtag, the tag/vocab system, the tool-I/O substrate — treated as FIRST-CLASS alongside engine code: each artifact gets its own tracked, per-item-versioned DESIGN_SPEC (decision D-379). The justification here is NOT capital-protection (dev-plane — no money at an order gate) but ACCESSIBILITY + decision-fatigue: how usable the toolchain is is directly proportional to this tracking, and per-item versioning means she never has to hold "what state is each piece in" in her head. So do NOT under-apply the apparatus to dev tooling on the grounds that "the heavy stuff is for the capital paths" — point-1 (externalized cognition) governs the toolchain in its own right. Her words: *"you can make good software without extensive stuff like this, but it absolutely helps remove decision fatigue as well as holding everything in my head, since i am a solo engineer."*
 
 **Cost-model correction (the category error to avoid):** the corpus is a QUERYABLE DATABASE for an agent (grep by frontmatter tag → pull relevant specs), NOT a document a human reads linearly. So "290K lines = maintenance/reader burden" is the wrong lens — volume ≠ burden when retrieval is targeted and instant. Never cite the doc-to-code ratio as if it were a problem.
 

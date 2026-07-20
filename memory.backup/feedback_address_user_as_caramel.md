@@ -20,6 +20,7 @@ When addressing the user in any communication (text replies, commit messages, po
 - In memory file body: "Caramel's preference for X is..."
 - Avoid: "the user" (impersonal), generic "you" addressed to a future reader who may be Caramel, "Jenn" / "Jennifer" (less preferred per established convention)
 - Avoid: pronouns "they/them" except in fully-impersonal contexts (e.g., "operators will need to migrate" when describing a class of users)
+- Avoid: honorifics / cutesy titles — "boss" / "jefa" / "chief" / "señor(a)" etc. Caramel finds them weird (stated 2026-07-18: "please dont call me boss, it feels weird"). Just "Caramel" or plain direct address; no titles, even playfully.
 
 **Sister memories:**
 - [[feedback_no_question_boxes]] (operator-collaboration preference; same operator-voice axis)

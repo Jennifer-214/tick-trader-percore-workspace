@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   tags: [audit-methodology, ledger-discipline, ssot]
-  sister_specs: [feedback_forward_promise_auto_write_verification.md, feedback_address_med_low_findings_not_just_high_crit.md, feedback_archived_changelog_preservation_discipline.md, feedback_verify_by_context_not_count.md, feedback_verify_every_enumerated_site_at_close.md, feedback_exhaustive_capture_and_verify_tracking.md, feedback_adversarial_framing_default_for_checks.md]
+  sister_specs: [feedback_forward_promise_auto_write_verification.md, feedback_address_med_low_findings_not_just_high_crit.md, feedback_archived_changelog_preservation_discipline.md, feedback_verify_by_context_not_count.md, feedback_verify_every_enumerated_site_at_close.md, feedback_exhaustive_capture_and_verify_tracking.md, feedback_adversarial_framing_default_for_checks.md, feedback_process_weight_by_surface_blast_radius.md, feedback_structural_fix_for_recurring_class.md]
   originSessionId: 3e806606-ac69-40fd-ac33-45906443bae4
 ---
 

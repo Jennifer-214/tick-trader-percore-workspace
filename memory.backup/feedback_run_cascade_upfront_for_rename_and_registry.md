@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: a9f02eea-b737-43be-9dda-4497b9a95922
+  sister_specs: [feedback_enumerate_consumers_before_registry_row_deletion.md, feedback_resource_use_gated_on_existence_not_felt_need.md, feedback_structural_enforcement_when_memory_insufficient.md]
+  tags: []
 ---
 
 Before renaming a token or changing a registry macro (rename / merge / delete / add-consumer), RUN the cascade tool FIRST to enumerate the full blast-radius — do NOT edit-then-grep-for-stragglers reactively.

@@ -5,6 +5,8 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 9f2efedc-135a-42ff-a6c6-e3c32c03b1af
+  sister_specs: [feedback_consult_on_audit_findings.md, feedback_delegate_on_total_oracle_handreview_on_partial.md, feedback_independence_for_judgment_not_mechanical.md]
+  tags: []
 ---
 
 Caramel repeatedly wishes for "a system to coordinate multiple agents" but doesn't want to build that framework + doesn't want to lose visibility ("I don't know what all is being done"). The resolution, by phase:

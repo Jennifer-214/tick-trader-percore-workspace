@@ -1,0 +1,95 @@
+{
+  "_comment": "CORPUS CONTRACT — WHICH FILES ARE THE TAG CORPUS. Single-sourced membership rules read by BOTH the Python checkers (tools/check_code_tag_blocks.py) AND the foxtag C++ core (tools/foxtag/foxtag.hpp), via the same two-reader model tools/lib/toolio_schemas.json already proves in-tree (D-380/D-382). DECLARATIVE DATA ONLY — extensions, path parts, extra roots, symlink policy, a line-prefix anchor, a sort rule. NO REGEXES: foxtag hand-parses char-by-char and contains zero std::regex, so regex semantics here would CREATE parity risk (C-392 / D-393 pt 4). .gitignore is NEVER an input to membership: distribution is not tooling (D-393 pt 2). E.1.2.B 0.2 / D-393 as amended by C-395 + C-396.",
+
+  "_encoding_law": "ALL SCALARS ARE STRINGS — including booleans and integers. NOT stylistic: the shared C++ reader (foxtag.hpp JVal) has Kind {STR, ARR, OBJ, OTHER} and NO bool/number kind, so a bare `true` / `150` parses as OTHER with an EMPTY string — a SILENT wrong-read, not an error. Measured 2026-07-19 with a compiled probe: bare booleans came back empty on the C++ side while Python read them fine, which would have made the symlink clause (the load-bearing one) invisible to exactly one of the two readers. tools/lib/toolio_schemas.json already obeys this law (zero bare scalars). Do NOT 'clean this up' to native JSON types — that silently breaks the C++ consumer.",
+
+  "contract_version": "1",
+
+  "roots": {
+    "engine": "$ENGINE",
+    "workspace": "$WORKSPACE",
+    "_note": "$ENGINE / $WORKSPACE are literal-token substitutions (plain string replace, NOT regex). Python: tools/foxroots.py ENGINE/WORKSPACE. C++: foxtag.hpp Roots.engine/.workspace."
+  },
+
+  "sort": {
+    "within_root": "bytewise-ascending-relative-path",
+    "root_order": ["engine", "extra_roots-in-declared-order"],
+    "_why": "NEVER a whole-list bytewise sort over ABSOLUTE paths. The corpus spans two absolute roots, and both tools honour FOXML_ENGINE / FOXML_WORKSPACE overrides, so a whole-list sort would make the interleave depend on CHECKOUT LAYOUT (measured: workspace at /home/caramel/... sorts engine-first; at /home/caramel/code/AAA-workspace it sorts golden-first). Today's stability comes from STRUCTURAL grouping, not lexicography. Sort within each root, then concatenate roots in declared order. (C-396 item 3.)",
+    "_enforcement": "CONVENTION, NOT GATED. Both parity legs sort before diffing (parity_check.sh:24-25,49), so no gate can verify the two implementations agree on order. Recorded honestly rather than claimed as enforced — an unverifiable clause presented as a guard is the T5 problem this contract exists to fix."
+  },
+
+  "symlinks": {
+    "_why": "Symlinks are the DOMINANT membership-divergence axis in this repo — larger than .gitignore (C-396 item 2). Three enumerators had three UNWRITTEN semantics: rg follows NEITHER without -L (sees 0 .hpp in DOCS/ where rglob sees 3); Python rglob yields FILE symlinks but does NOT descend DIR symlinks; foxtag mirrors Python. Topology: DOCS/{CODE_TAG_TEMPLATES,STRATEGY_TEMPLATE,STRATEGY_BANDIT_TEMPLATE}.hpp are FILE symlinks into the workspace; tools/, tests/, plans/ are DIR symlinks; DOCS/ is a real dir. This is also the ROOT CAUSE of TECH_DEBT-253 (check_schema_version sees zero .py because the 61 tool .py live under the tools/ DIR symlink).",
+    "_measured_do_not_flip_blindly": "follow_dir_symlinks=true was MEASURED and pulls in +29 files, not the +5 schema_golden — it drags in the whole test suite (tests/controller_test.cpp, the money_*_vectors.hpp set) and even a .cpp under plans/. It does NOT make extra_roots unnecessary. The VALUE of these fields is that behaviour is DECLARED rather than accidental, so a third implementation can be checked against a written rule — not that they replace the surgical extra_roots mechanism."
+  },
+
+  "profiles": {
+    "validate": {
+      "_use": "check_code_tag_blocks.py (full scan + parity-dump) · foxtag scan_files · rebuild_doc_indexes code-tag index. The BROAD population: everything that carries tag grammar, including illustrative copy-source.",
+      "extensions": [".hpp", ".cpp"],
+      "exclude_path_parts": ["vendor"],
+      "exclude_path_part_prefixes": ["build"],
+      "follow_file_symlinks": "true",
+      "follow_dir_symlinks": "false",
+      "extra_roots": ["schema_golden"],
+      "min_files": "150",
+      "_expected_at_contract_v1": "202 = 197 engine-walk (incl. the 3 file-symlinked DOCS templates) + 5 schema_golden"
+    },
+    "derived_facts": {
+      "_use": "check_cache_layout.py · check_register_fit.py · check_schema_version.py — COMPILED reality only. STRICT SUBSET of `validate`.",
+      "extensions": [".hpp", ".cpp"],
+      "exclude_path_parts": ["vendor", "schema_golden", "DOCS"],
+      "exclude_path_part_prefixes": ["build"],
+      "follow_file_symlinks": "true",
+      "follow_dir_symlinks": "false",
+      "extra_roots": [],
+      "min_files": "150",
+      "_expected_at_contract_v1": "194 = 197 engine-walk minus the 3 DOCS templates",
+      "_why_the_extra_exclusions_are_LOAD_BEARING": "NOT cosmetic. check_cache_layout.py:442-446 documents it in-source: DOCS/ and schema_golden hold ILLUSTRATIVE [STRUCT] [DERIVED] on non-compiled copy-source. Measured: flatten these into `validate` and the STANDING-CI cache-layout gate REDs immediately — [size-drift] ExecutionCore: [SIZE] says 192B but real sizeof = 68352B; CfgFieldDescriptor 128B vs 104B. The trap: the natural-looking fix is refreshing those tags, which writes 68352B into a COPY-PASTE TEMPLATE and propagates a wrong derived fact into every future conversion — Class-18 through the front door. This profile split is the guard. DO NOT collapse it as over-engineering. (C-396 item 1.)"
+    }
+  },
+
+  "extra_root_defs": {
+    "schema_golden": {
+      "root": "workspace",
+      "path": "tests/schema_golden",
+      "recursive": "false",
+      "_why": "The engine's tests/ is a whole-dir SYMLINK and follow_dir_symlinks is false, so these fixtures are unreachable from the engine walk and must be named explicitly. This is the surgical alternative to flipping follow_dir_symlinks (which would cost +29 files)."
+    }
+  },
+
+  "selectors": {
+    "converted": {
+      "_use": "check_conversion_completeness.py — the CONVERTED subset of a profile.",
+      "line_prefix": "// [SCHEMA]_[v1",
+      "anchor": "line-start",
+      "_why_anchored": "An UNANCHORED match also hits selftest STRING LITERALS and prose — it reported foxtag_main.cpp as converted when it is not, a FALSE FINDING during 0.1.5. Verified line-start-anchored and unanchored return the same 172 files today; the anchor is what keeps that true as fixtures grow.",
+      "_no_regex": "A line-start literal-prefix test. Deliberately expressible without a regex engine so the C++ hand-parser needs no new machinery."
+    }
+  },
+
+  "path_arguments": {
+    "_why": "THE BUILD-BLOCKER-1 SEAM. The vacuous-green does NOT live in the enumerator — the --paths branch bypasses it entirely (check_code_tag_blocks.py:598-601; foxtag_main.cpp:32). Every consumer must route explicit paths through the contract resolver, or the enumerator fix is cosmetic. (C-395 item 1.)",
+    "directory": "expand-by-profile",
+    "missing": "fail-rc-2",
+    "regular_file": "accept-verbatim",
+    "outside_roots": "accept-verbatim",
+    "_accept_verbatim_note": "accept-verbatim deliberately does NOT apply the extension filter: an explicit path is an operator assertion. outside_roots stays accept so ad-hoc probes keep working. It is the MISSING case that must be loud.",
+    "_rc2_is_free": "Verified: every CI invocation is path-argument-free (all 8 check_session_docs.sh call sites bare; parity_check.sh:20-21 bare; the plugin passes no path ever; .githooks/pre-commit --paths targets a DIFFERENT tool from a --diff-filter=ACM list, so a staged deletion cannot reach it). No caller legitimately passes a missing path.",
+    "_four_current_behaviours_being_unified": {
+      "foxtag validate": "rc=0 silent 'All tag-blocks valid'",
+      "check_code_tag_blocks.py --paths": "rc=0 silent",
+      "check_conversion_completeness.py --paths": "rc=1 via an UNCAUGHT FileNotFoundError traceback",
+      "check_cache_layout.py --paths": "rc=0 'gate inert'",
+      "_note": "FOUR behaviours, not the two D-393 claimed — a categorical claim made over an unenumerated set (M9/AR-1). Enumerated here so the migration is honest."
+    }
+  },
+
+  "deferred": {
+    "python_sources": {
+      "status": "TOMBSTONE — NOT closed",
+      "tracked_as": "TECH_DEBT-253",
+      "_why": "check_schema_version.py:72 claims to scan .py 'so a TOOL-fixture drift is caught too'. Measured: ENGINE.rglob('*.py') yields exactly 1 file (vendor/imgui/.../imgui_lldb.py), dropped by the vendor filter -> ZERO .py scanned, in a HARD-wired gate. The 61 real tool .py live under tools/, a DIR symlink. Naively adding tools/ as a root yields 12 non-locked matches across 4 files, nearly all FALSE POSITIVES from the checkers' own detection source (a checker matching its own format string). Needs the '#'-comment anchored selector (multi-comment-syntax, north-star V1) + self-exclusion. Recorded as a TOMBSTONE so the gate is never read as covering a population it does not scan."
+    }
+  }
+}

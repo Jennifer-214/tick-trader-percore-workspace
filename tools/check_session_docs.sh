@@ -128,6 +128,15 @@ run_hard "schema-version guard teeth (drifted [SCHEMA]_[v1] flagged; locked pass
 run_hard "tool-I/O envelope teeth (emit/read/validate incl. negative controls)" \
     bash "$REPO_ROOT/tools/toolio_selftest.sh"
 
+# Wired 2026-07-20 (C5). Both are NEW teeth for guards that were already HARD-wired here with no
+# non-vacuity proof of their own — the shape the block above exists to prevent, recurring.
+# citable_ids' --selftest was worse than absent: the flag was ACCEPTED AND IGNORED (no argparse),
+# so it and `--this-does-not-exist` both printed the index and exited 0.
+run_hard "citable-ID resolver teeth (by-definition / zero-pad / grandfathered suffix / block bounds / registry-fatal)" \
+    python3 "$REPO_ROOT/tools/citable_ids.py" --selftest
+run_hard "capture-audit teeth (Checks 13+14: findings construction, index floor, absent-golden = HARD)" \
+    python3 "$REPO_ROOT/tools/check_capture_audit.py" --selftest
+
 # Wired 2026-07-20 after CHECK 4 (invocation truth) proved DOCS/TOOLS.md CLAIMED these fired here
 # and they did not. Two teeth that existed, were enrolled, were advertised as gated -- and had
 # never run from any trigger. Fixing the WIRING rather than the row, because the teeth are real.

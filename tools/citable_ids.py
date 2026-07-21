@@ -517,7 +517,178 @@ def sequence_gaps(idx, ns):
     return [n for n in range(min(keys), max(keys) + 1) if n not in set(keys)]
 
 
-if __name__ == "__main__":
+def _selftest():
+    """Prove the resolver flags planted-bad AND passes known-good, per T5.
+
+    Until now `--selftest` was ACCEPTED AND IGNORED — no argparse existed, so the flag printed
+    the index and exited 0, and so did `--this-does-not-exist`. A vacuity flag that is itself
+    vacuous is the Class-51 joke writing itself, in the module whose whole job is membership.
+
+    Fixtures are SYNTHETIC and inline (D-362): a live broken file gets fixed and stops being
+    broken, so a corpus-derived tooth rots into a no-op. Specs come from the REGISTRY, never
+    hand-copied — re-encoding the grammar in the test is the D-405 locate-vs-derive defect
+    committed inside the check for it.
+
+    Every case is grounded in a defect this repo actually suffered. A case that could not have
+    caught a real failure is decoration.
+    """
+    reg = _registry()["namespaces"]
+    fails = []
+
+    def ck(name, got, want, why):
+        ok = got == want
+        if not ok:
+            fails.append(name)
+        print(f"  {'PASS' if ok else 'FAIL'}  {name:<34} got={got!r:<22} want={want!r:<18} — {why}")
+
+    # ── defining-form parsing (spec straight from the registry) ────────────────────────────
+    td, par, dec = reg["TECH_DEBT"], reg["PARITY"], reg["DECISION"]
+    ck("heading/plain", _match_defining("### TECH_DEBT-175 — x", td), "TECH_DEBT-175",
+       "the ordinary case; a resolver that fails HERE is broken, not strict")
+    ck("heading/zero-pad", _match_defining("### TECH_DEBT-016 — x", td), "TECH_DEBT-016",
+       "95 of 258 headings are padded; --close 16 errored while --close 016 WROTE (D-407)")
+    ck("heading/suffix", _match_defining("### TECH_DEBT-175a — x", td), "TECH_DEBT-175a",
+       "GRANDFATHERED split id — collapsing it onto -175 was F-1, a false defined-twice")
+    ck("heading/suffix-not-parent", _match_defining("### TECH_DEBT-175a — x", td) == "TECH_DEBT-175",
+       False, "-175a must never resolve AS -175; that collision is the whole defect")
+    ck("heading/uppercase-rejected", _match_defining("### TECH_DEBT-175A — x", td), "TECH_DEBT-175",
+       "only ASCII lowercase is a suffix; -175A is -175 followed by prose")
+    ck("heading/unicode-rejected", _match_defining("### TECH_DEBT-175α — x", td), "TECH_DEBT-175",
+       "str.islower() is Unicode-aware; a homoglyph suffix would mint an un-typeable slot")
+    ck("heading/wrong-level", _match_defining("## TECH_DEBT-175 — x", td), None,
+       "heading_level is part of the defining form, not decoration")
+    ck("heading/mention-rejected", _match_defining("see TECH_DEBT-999 for detail", td), None,
+       "BY DEFINITION never by mention — a set admitting what it has seen cannot go red")
+    ck("field/parity", _match_defining("id: PARITY-039", par), "id: PARITY-039",
+       "PARITY anchors on the FIELD; 9 of 41 entries carry no heading at all")
+    ck("field/parity-mention", _match_defining("cites PARITY-039 here", par), None,
+       "same by-definition rule on the field anchor")
+    # NO sentinel cases here, and the reason is a real finding: `_match_defining` handles
+    # table-row / heading / field ONLY — `html-sentinel` is parsed INLINE inside defining_index(),
+    # so the DECISION namespace has no unit-testable seam. Three cases written against
+    # `_match_defining` all returned None; two failed honestly and the third — an id_exact
+    # rejection case — PASSED VACUOUSLY, expecting None and getting None because the anchor was
+    # unhandled rather than because the junk was rejected. A vacuous tooth inside the tooth
+    # written to catch vacuity, caught only by its two honest siblings failing beside it.
+    # Sentinel coverage therefore runs against the LIVE index below, where it is real but coarser.
+    # Extracting the sentinel branch into `_match_defining` is the structural fix — deferred, and
+    # tracked, rather than faked here.
+
+    # ── normalization: ONE normalizer, both surfaces ───────────────────────────────────────
+    ck("norm/zero-pad-equal", _norm_int_id("TECH_DEBT-016"), 16, "-016 IS -16")
+    ck("norm/bare-equal", _norm_int_id("TECH_DEBT-16"), 16, "the other spelling of the same id")
+    ck("norm/suffix-distinct", _norm_int_id("TECH_DEBT-175a"), "175a",
+       "suffix makes a distinct STRING key so 175 and 175a can never collide")
+    ck("norm/padded-suffix", _norm_int_id("PARITY-039b"), "39b",
+       "pad-stripping and suffix-keeping compose")
+
+    # ── citation matching (the side that could not express a suffix at all) ────────────────
+    ck("cite/suffix-visible", citations_in("see TECH_DEBT-175a").get("TECH_DEBT"), {"175a": [1]},
+       "\\b cannot hold between 5 and a — every suffixed citation was invisible pre-C1")
+    ck("cite/plain", citations_in("see TECH_DEBT-175").get("TECH_DEBT"), {175: [1]},
+       "the unsuffixed form still matches via backtracking")
+
+    # ── block derivation (C3) — synthetic corpus, so the fixture cannot be 'fixed' away ────
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        f = Path(d) / "led.md"
+        f.write_text("### TECH_DEBT-900 — parent\nbody-900\n\n---\n\n"
+                     "### TECH_DEBT-900a — child\nbody-900a\n\n---\n\n"
+                     "### TECH_DEBT-901 — next\nbody-901\n")
+        idx = {"TECH_DEBT": {900: [(str(f), 1)], "900a": [(str(f), 6)], 901: [(str(f), 11)]}}
+        b900 = entry_blocks(idx, "TECH_DEBT", 900)[0][3]
+        ck("block/terminates-at-suffix", "body-900a" in b900, False,
+           "F-4: the incumbent's (\\d+)\\b cannot see -900a and over-runs 4295B into it")
+        ck("block/keeps-own-body", "body-900" in b900, True, "and it must still contain its own")
+        ck("block/trims-separator", b900.rstrip().endswith("body-900"), True,
+           "the --- and the next heading belong to the NEXT entry")
+        ck("block/suffixed-resolvable", entry_blocks(idx, "TECH_DEBT", "900a")[0][3].splitlines()[0],
+           "### TECH_DEBT-900a — child",
+           "F-5: _entry_block's int() RAISES here; this API keys off the index instead")
+        ck("block/multi-site", len(entry_blocks({"TECH_DEBT": {5: [(str(f), 1), (str(f), 6)]}},
+                                                "TECH_DEBT", 5)), 2,
+           "7 TECH_DEBT ids are 2-site; returning one block silently picks a winner")
+        # field-anchored: the id sits BELOW its heading + fence, so the walk must reach back
+        g = Path(d) / "par.md"
+        g.write_text("### PARITY-001 — title\n\n```yaml\nid: PARITY-001\nbody\n```\n\n"
+                     "### PARITY-002 — title2\n\n```yaml\nid: PARITY-002\nbody2\n```\n")
+        pidx = {"PARITY": {1: [(str(g), 4)], 2: [(str(g), 11)]}}
+        p1 = entry_blocks(pidx, "PARITY", 1)[0][3]
+        ck("block/backward-to-heading", p1.splitlines()[0], "### PARITY-001 — title",
+           "31 of 41 PARITY entries came back stripped of their own title without this")
+        ck("block/no-neighbour-annex", "PARITY-002" in p1, False,
+           "the backward walk must not cross into the entry above/below")
+
+    # ── registry integrity: FATAL, never a silent downgrade (C4 / F-3) ─────────────────────
+    global _REGISTRY_CACHE, NAMESPACE_REGISTRY
+    saved_cache, saved_path = _REGISTRY_CACHE, NAMESPACE_REGISTRY
+    try:
+        _REGISTRY_CACHE, NAMESPACE_REGISTRY = None, Path("/nonexistent/registry.json")
+        try:
+            verified_namespaces()
+            ck("registry/unreadable-fatal", "returned", "SystemExit",
+               "a bare except falling back to a hardcoded list is the Class-18 mirror T2 forbids")
+        except SystemExit:
+            ck("registry/unreadable-fatal", "SystemExit", "SystemExit",
+               "an unreadable registry must be FATAL, never a quiet downgrade")
+        ck("registry/no-poisoned-cache", _REGISTRY_CACHE, None,
+           "a failed read must not be memoized into a process-long lie")
+
+        # The case above only proves a broken PATH is fatal. It does NOT prove the accessors
+        # actually READ the registry — a hardcoded return would sail past it. Found the hard way:
+        # a planted regression restoring the old `except Exception -> hardcoded list` fallback was
+        # NOT caught, because SystemExit derives from BaseException and escapes `except Exception`,
+        # so the planted fallback was dead code. The tooth was weaker than the regression that
+        # exposed it. This pair points the module at a SYNTHETIC registry and demands the
+        # accessors track it — values a hardcoded list could not possibly return.
+        with tempfile.TemporaryDirectory() as rd:
+            fake = Path(rd) / "reg.json"
+            fake.write_text('{"namespaces": {"ZZTOP": {"citations_verifiable": "true"},'
+                            ' "NOPE": {"citations_verifiable": "false"}},'
+                            ' "frozen_record_paths": ["/synthetic-only/"]}')
+            _REGISTRY_CACHE, NAMESPACE_REGISTRY = None, fake
+            ck("registry/ns-derived", verified_namespaces(), ["ZZTOP"],
+               "must track a synthetic registry — a hardcoded namespace list cannot")
+            ck("registry/frozen-derived", frozen_record_paths(), ("/synthetic-only/",),
+               "same for frozen paths; the mirror this replaces had already drifted 4-vs-5")
+    finally:
+        _REGISTRY_CACHE, NAMESPACE_REGISTRY = saved_cache, saved_path
+
+    # ── fixture liveness: a selftest whose corpus moved would assert nothing ───────────────
+    if "/capture-audit-reports/" not in frozen_record_paths():
+        print("  FAIL  frozen_record_paths lost /capture-audit-reports/ — the C4 drift regressed")
+        fails.append("fixture/frozen-paths")
+    live = defining_index()
+    if not (live.get("TECH_DEBT", {}).get("175a")):
+        print("  FAIL  TECH_DEBT-175a no longer defined — the suffix cases assert nothing; "
+              "re-pin them or retire the grandfathered form per D-409")
+        fails.append("fixture/175a")
+
+    # BOTH DECISION sentinel forms must resolve. Coarser than the unit cases above (it reads the
+    # live corpus) because the sentinel branch has no seam — see the note in the parsing section.
+    # Still load-bearing: a long-form-only parser silently dropped D-372..D-379, and the corpus is
+    # 443 long / 19 short, so the short form is exactly the minority a regression would not notice.
+    dec_ids = live.get("DECISION", {})
+    for rid, form in (("D-400", "long <!-- D/C/F:"), ("D-372", "short <!-- D:")):
+        ok = bool(dec_ids.get(rid))
+        print(f"  {'PASS' if ok else 'FAIL'}  sentinel/{form.split()[0]:<26} "
+              f"{rid} resolves — {form} form")
+        if not ok:
+            fails.append(f"sentinel/{rid}")
+
+    print(f"[citable_ids selftest] {'ALL TEETH PASS' if not fails else f'{len(fails)} FAILURE(S): {fails}'}")
+    return 1 if fails else 0
+
+
+def _main():
+    import argparse
+    ap = argparse.ArgumentParser(description="citable-ID defining-form resolver.")
+    ap.add_argument("--selftest", action="store_true",
+                    help="prove the resolver flags planted-bad and passes known-good (T5)")
+    args = ap.parse_args()          # rejects unknown flags — until now ANY flag exited 0
+    if args.selftest:
+        sys.exit(_selftest())
+
     idx = defining_index()
     print("citable_ids — defining-form index (BY DEFINITION, never by mention):")
     total = 0
@@ -540,3 +711,6 @@ if __name__ == "__main__":
     print(f"  {'TOTAL':<12} {total:>4}")
     # non-vacuity: an index that resolves nothing is a broken resolver, not an empty corpus.
     sys.exit(0 if total > 50 else 2)
+
+if __name__ == "__main__":
+    _main()

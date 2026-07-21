@@ -29,7 +29,7 @@ USAGE
   python3 tools/check_capture_audit.py                 # default-all HARD checks (1/4/8/14)
   python3 tools/check_capture_audit.py --check 1|4|8|13 # one check (13 = advisory completeness)
   python3 tools/check_capture_audit.py --check 13 --since HEAD~8   # decision-completeness over a window
-  python3 tools/check_capture_audit.py --selftest      # unit-test Check 13 cross-ref logic, then exit
+  python3 tools/check_capture_audit.py --selftest      # teeth for Checks 13 + 14, then exit
   python3 tools/check_capture_audit.py --quiet          # only failures + summary
 """
 import argparse
@@ -282,14 +282,62 @@ def check_decision_completeness(quiet, workspace, since_ref):
 
 
 def _selftest():
+    """Teeth for Checks 13 AND 14. Until now this covered `_unreferenced` ONLY.
+
+    Check 14 — the citable-ID integrity guard — had zero coverage of `_citable_findings`,
+    the golden diff, or the index floor, despite being the check most of this ship rests on.
+    A guard whose selftest exercises a neighbouring function is the shape T5 exists to stop.
+    """
+    fails = []
+
+    def ck(name, got, want, why):
+        ok = got == want
+        if not ok:
+            fails.append(name)
+        print(f"  {'PASS' if ok else 'FAIL'}  {name:<30} got={got!r:<10} want={want!r:<10} — {why}")
+
+    # ── Check 13: cross-ref (the original tooth, preserved) ────────────────────────────────
     ref_with = "<!-- D/C/F: D-193 --> H22 scale-invariance / shard-independence invariant"
     ref_without = "<!-- D/C/F: D-190 --> Money_FillGross single-source"
-    ok = (_unreferenced(["H22"], ref_with) == []
-          and _unreferenced(["H22"], ref_without) == ["H22"]
-          and _unreferenced(["H22", "H21"], ref_with) == ["H21"])
-    print("  [selftest] PASS — cross-ref clears referenced ids + flags unreferenced ones"
-          if ok else "  [selftest] FAIL — cross-ref logic regression")
-    return 0 if ok else 1
+    ck("x-ref/clears-referenced", _unreferenced(["H22"], ref_with), [], "a cited id clears")
+    ck("x-ref/flags-unreferenced", _unreferenced(["H22"], ref_without), ["H22"], "an uncited id flags")
+    ck("x-ref/mixed", _unreferenced(["H22", "H21"], ref_with), ["H21"], "and it discriminates")
+
+    # ── Check 14: findings construction, on SYNTHETIC indexes (D-362) ──────────────────────
+    def msgs(fake_idx):
+        return {f"{f[0]}|{f[3]}" for f in _citable_findings(fake_idx)}
+
+    two_site = {"TECH_DEBT": {900: [("/x/open.md", 1), ("/x/closed.md", 2)]}}
+    one_site = {"TECH_DEBT": {900: [("/x/open.md", 1)]}}
+    ck("findings/double-defined-flags",
+       any("defined-twice" in m and "900" in m for m in msgs(two_site)), True,
+       "the split-brain shape: one id, two ledgers, divergent text")
+    ck("findings/single-site-clean",
+       any("defined-twice" in m and "900" in m for m in msgs(one_site)), False,
+       "the GOLDEN-COMPLETE half — a guard that flags everything is as useless as one that flags nothing")
+    ck("findings/sequence-gap-flags",
+       any("sequence-gap" in m and "`901`" in m for m in
+           msgs({"TECH_DEBT": {900: [("/x/o.md", 1)], 902: [("/x/o.md", 2)]}})), True,
+       "an empty reusable slot IS the H21 hazard (Knight-Capital)")
+
+    # ── Check 14: the index floor — a broken SSoT path must not read as a clean corpus ─────
+    tiny = {"TECH_DEBT": {n: [("/x/o.md", n)] for n in range(3)}}
+    ck("floor/tiny-index-is-not-clean", sum(len(v) for v in tiny.values()) < 50, True,
+       "under 50 ids means a broken resolver, not an empty corpus (citable_ids.py:__main__)")
+
+    # ── F-2: an ABSENT golden must FAIL, never silently skip removal-detection ─────────────
+    global CITABLE_GOLDEN
+    saved = CITABLE_GOLDEN
+    try:
+        CITABLE_GOLDEN = Path("/nonexistent/golden.txt")
+        rc = check_citable_ids(quiet=True, workspace=None)
+        ck("golden/absent-is-FAIL", rc, 1,
+           "F-2: `if GOLDEN.is_file():` with no else silently disabled the ONLY removed-id detector")
+    finally:
+        CITABLE_GOLDEN = saved
+
+    print(f"  [selftest] {'ALL TEETH PASS' if not fails else f'{len(fails)} FAILURE(S): {fails}'}")
+    return 1 if fails else 0
 
 
 
@@ -443,16 +491,25 @@ def check_citable_ids(quiet, workspace):
     # ID-SET GOLDEN (H21 on the doc plane): the citation scan only notices a REMOVED id if
     # something still cites it, so an id deleted together with its last citation would vanish
     # silently. The golden makes any disappearance a tracked diff.
-    if CITABLE_GOLDEN.is_file():
-        want = {l.strip() for l in CITABLE_GOLDEN.read_text().splitlines() if l.strip()}
-        got = {f"{ns}|{rid}" for ns, e in idx.items() for rid in e}
-        gone = sorted(want - got)
-        if gone:
-            print(f"  [Check 14] FAIL — {len(gone)} citable id(s) DISAPPEARED from the defining "
-                  f"index with no tombstone: {gone[:8]}")
-            print(f"             An id slot must be RETIRED deliberately, never dropped (H21). If "
-                  f"intentional, re-bless: python3 tools/bless.py (TTY-gated)")
-            return 1
+    # F-2: an ABSENT golden is MISSING, never "nothing to compare". This was
+    # `if CITABLE_GOLDEN.is_file():` with no else — so deleting the golden silently disabled the
+    # ONLY leg that detects a removed id, and Check 14 stayed green while its H21 guard was gone.
+    # Absence-passes-silently is Class-51 planted in the guard layer itself; `bless.py` already
+    # selftests the correct posture, and tools/CLAUDE.md states it as a general rule.
+    if not CITABLE_GOLDEN.is_file():
+        print(f"  [Check 14] FAIL — the ID-set golden is MISSING at {CITABLE_GOLDEN}. That file is "
+              f"the ONLY detector for a silently-removed id (H21); absent, this check cannot "
+              f"evaluate its own headline property. Re-bless: python3 tools/bless.py (TTY-gated)")
+        return 1
+    want = {l.strip() for l in CITABLE_GOLDEN.read_text().splitlines() if l.strip()}
+    got = {f"{ns}|{rid}" for ns, e in idx.items() for rid in e}
+    gone = sorted(want - got)
+    if gone:
+        print(f"  [Check 14] FAIL — {len(gone)} citable id(s) DISAPPEARED from the defining "
+              f"index with no tombstone: {gone[:8]}")
+        print(f"             An id slot must be RETIRED deliberately, never dropped (H21). If "
+              f"intentional, re-bless: python3 tools/bless.py (TTY-gated)")
+        return 1
 
     findings = _citable_findings(idx)
     base = set()
@@ -484,11 +541,11 @@ def main():
     ap.add_argument("--since", default="HEAD~8",
                     help="session window for Check 13 decision-completeness (default HEAD~8)")
     ap.add_argument("--selftest", action="store_true",
-                    help="unit-test Check 13 cross-ref logic, then exit")
+                    help="teeth for Checks 13 + 14 (cross-ref, findings, index floor, golden absence)")
     args = ap.parse_args()
 
     if args.selftest:
-        print("=== check_capture_audit.py — Check 13 selftest ===")
+        print("=== check_capture_audit.py — Checks 13 + 14 selftest ===")
         sys.exit(_selftest())
 
     engine = _resolve_engine()

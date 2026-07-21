@@ -73,6 +73,7 @@
     },
     "TECH_DEBT": {
       "_use": "TECH_DEBT-n entries across the split ledger.",
+      "_why_id_body_stays_digits": "`id_body: digits` is the FORWARD rule and stays that way. Exactly ONE grandfathered exception exists corpus-wide — TECH_DEBT-175a, minted by D-240 as a split of -175 — and the resolver accepts a single trailing ASCII lowercase letter so it resolves rather than silently collapsing onto its parent. D-409 CLOSED that form: a new split takes a fresh int id plus a `split_from:` field, because embedding the parent relationship INTO the identifier makes identity mutable, which is the same objection that killed the plane-qualified scheme (D-390). Do not read the suffix support as licence to mint -NNNb. The one instance cost four defects across two modules (a false defined-twice on -175, an unmatchable citation form, a 4295-byte block over-run, and an uncaught ValueError), which is the argument for the closure.",
       "sources": [
         "$WORKSPACE/DOCS/TECH_DEBT.md",
         "$WORKSPACE/DOCS/tech-debt/open.md",

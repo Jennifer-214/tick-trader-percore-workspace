@@ -522,46 +522,9 @@ related_specs: [DESIGN_SPECS/framework-patterns/per-bit-per-core-override-patter
 
 ---
 
-### TECH_DEBT-029 — Source file length reduction (large headers harm maintainability)
+### TECH_DEBT-029 — CLOSED 2026-05-27 (`.B.7` C1) → `DOCS/tech-debt/closed.md`
 
-```yaml
-id: TECH_DEBT-029
-title: Source file length reduction (large headers harm maintainability)
-severity: low
-surface_tags: [test-infrastructure, source-headers, file-size-discipline]
-trigger: n/a (closed)
-status: wontfix-per-ai-workflow
-opened: 2026-05-10
-partial_closed_at: v5.15.5.F.4d.1.B.6
-closed_at: v5.15.5.F.4d.1.B.7
-closure_rationale: AI-driven solo workflow (per operator C1 directive 2026-05-27); test 5K rule retained for test-reliability; subfolder pattern Stage 3 frozen at file-size-split-discipline.md v1.4
-last_amended: 2026-05-27
-related_specs: [DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md]
-```
-
-- **Created:** 2026-05-10 by Caramel musing during v5.14.10.0 PerCoreSnap layout work
-- **Severity:** LOW (cosmetic / maintainability; no behavior or perf impact)
-- **Status amendment 2026-05-27 (post-`.B.6` close + code-LOC methodology re-analysis):** OPEN → PARTIAL_CLOSURE. 1 of 6 split candidates structurally closed at `.B.6`; 6 files DROPPED from queue per code-LOC re-analysis (already under threshold by code-LOC methodology); remaining 4 candidates queued for `.B.7-.B.9`.
-- **CLOSED at .B.6 (1 candidate):**
-  - **`CoreFrameworks/EngineSharded.hpp`** (3,202 → 96-line INDEX SHIM + 4 subfolder sub-files) — `.B.6` first canonical of subfolder split + INDEX-shim pattern per `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md` v1.3. Sub-files: Boot.hpp (67/12 code) + SlowPath.hpp (188/78 code) + Async.hpp (905/460 code) + Run.hpp (2,436/1,406 code; under threshold per code-LOC counting).
-- **DROPPED from split queue 2026-05-27 (6 files; under threshold by code-LOC; previously listed in inventory based on total-lines miscount):** ControllerConfig.hpp / EngineTUI.hpp / ModelInference.hpp / StrategyParameters.hpp / SettingsPanel.cpp / OrderManager.hpp.
-- **Remaining split candidates (queued at .B.7-.B.9):**
-  - **`Backtest/BacktestPanels.hpp`** (`.B.7`)
-  - **`CoreFrameworks/ControllerEventLoop.hpp`** (`.B.8`)
-  - **`ML_Headers/CoreModelZoo.hpp`** (`.B.8`)
-  - **`Backtest/BacktestEngine.hpp`** (`.B.8`)
-  - **`GUI/DashboardPanels.hpp`** (`.B.9`)
-  - **`Backtest/PortfolioController.hpp`** (`.B.9`)
-- **Surface (pre-`.B.6` inventory snapshot 2026-05-10; refreshed 2026-05-13 post-v5.15.5.B umbrella; re-classified 2026-05-27 per code-LOC methodology):**
-  - `CoreFrameworks/ControllerEventLoop.hpp` — post-v5.15.5.B 3640 lines (queued for `.B.8`)
-  - `tests/controller_test.cpp` — ~16k lines (covered by CLAUDE.md test file size discipline section; PARTIAL_CLOSURE at `.B.5` via TECH_DEBT-114 PARTIAL_CLOSURE + TECH_DEBT-127 full split queued)
-- **Class:** Same maintenance-overhead class as the test file size discipline already in CLAUDE.md (test files > 5k lines must split BEFORE adding more tests). This entry surfaces the SOURCE-side analog for non-test files. Headers above 1500-2000 lines slow IDE navigation, increase merge-conflict surface, and discourage related-concern grouping (developers append to end-of-file rather than locating the relevant section).
-- **What's deferred (post-`.B.6` PARTIAL_CLOSURE):** Source-file-size discipline GENERALIZED at `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md` (now Stage 3 first canonical at v5.15.5.F.4d.1.B.6; subfolder + INDEX-shim pattern is the canonical mechanism). Remaining 4 candidate splits queued at `.B.7-.B.9` per `subplans/2026-05-25-v5.15.5.F.4d.1.B-file-size-maintenance.md` umbrella. Each future split uses code-LOC counting (per [[feedback_count_code_loc_not_total_lines]]) + INDEX-shim pattern (subfolder split when natural seam by concern) + cpp17-inline-variable migration if shared header globals surface (per [[feedback_cpp17_inline_variable_for_shared_state_across_tus]]).
-- **Why deferred (not effort-avoidance) — POST-`.B.6` framing:** Subfolder + INDEX-shim pattern + code-LOC counting + sister disciplines (cpp17-inline / SSoT / forward-decl-at-global / block-scope-statics enumeration) all codified at `.B.6` ship close as Stage 3 first canonical. Remaining splits at `.B.7-.B.9` apply established pattern to new candidates per file-size-maintenance umbrella plan; not novel work; mechanical extension of the canonical.
-- **Cost estimate:** ~2-4h per file split (audit consumers + plan boundary + edit + build verify + test). Remaining 4 candidates: ~8-16h focused work. Less than original ~10-20h estimate because subfolder-pattern + INDEX-shim is now established + sister disciplines reduce per-split rebuild cycles.
-- **Trigger:** Continue applying at `.B.7-.B.9` umbrella ships per `subplans/2026-05-25-v5.15.5.F.4d.1.B-file-size-maintenance.md` schedule.
-- **Status:** PARTIAL_CLOSURE (1 of 6 in active queue at `.B.6`; 6 DROPPED from queue per code-LOC re-analysis; 4 remaining queued at `.B.7-.B.9`)
-- **Cross-ref:** CLAUDE.md "Test file size discipline (added v5.11.35)" section (test-side analog; sister); v5.14.10.0 PerCoreSnap layout work (occasion for the original musing); `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md` v1.3 (Stage 3 first canonical at `.B.6`); `DESIGN_SPECS/data-disciplines/cpp17-inline-variable-for-header-shared-state.md` (sister discipline at same surface); `DESIGN_SPECS/meta-disciplines/single-source-of-truth-discipline.md` (sister discipline at same surface); RECURRING_BUG_PATTERNS Class 34 + Class 35 (sister anti-patterns surfaced at `.B.6` header-extract work); `subplans/2026-05-25-v5.15.5.F.4d.1.B-file-size-maintenance.md` umbrella plan; `subplans/2026-05-27-v5.15.5.F.4d.1.B.6-enginesharded-subfolder-split.md` first canonical worked instance.
+*(source file length reduction — closed `wontfix-per-ai-workflow` under the AI-workflow file-size reframe. Full entry moved to `closed.md` per this file's move-and-forward rule (line 22); a pointer is kept here because 41 live docs cite this id. Converted at `E.1.2.B` `0.2` (f) — it had been a FULL duplicate in both sub-files, so a bare cite resolved open-or-closed by coin flip.)*
 
 ---
 
@@ -2243,67 +2206,15 @@ related_specs: [DESIGN_SPECS/refactor-patterns/framework-driven-cli-binary-patte
 
 ---
 
-### TECH_DEBT-116 — TECH_DEBT.md split (file-size discipline application)
+### TECH_DEBT-116 — CLOSED 2026-05-27 (`.B.7` C1) → `DOCS/tech-debt/closed.md`
 
-```yaml
-id: TECH_DEBT-116
-title: TECH_DEBT.md split (file-size discipline application)
-severity: medium
-surface_tags: []
-trigger: n/a (closed)
-status: wontfix-per-ai-workflow
-opened: 2026-05-18
-closed_at: v5.15.5.F.4d.1.B.7
-closure_rationale: AI-driven solo workflow (per operator C1 directive 2026-05-27); ledger 2000-line threshold reviewed inline — ledger access is grep-driven not navigation-driven; AI handles large ledgers trivially
-related_specs: [DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md]
-```
-
-- **Created:** 2026-05-18 (codified at `.B.3` ship close after `feedback_file_size_split_discipline.md` codification)
-- **Severity:** MEDIUM (file currently navigable but at 2013 lines exceeds 2000-line hard threshold per `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md`)
-- **Surface:** `DOCS/TECH_DEBT.md` (currently 2013 lines, ~115 entries)
-- **What's deferred:** Split TECH_DEBT.md per file-size-split-discipline pattern:
-  - **Recommended split criteria:** by-status (most useful for retrieval workflow)
-    - `DOCS/tech-debt/open.md` — status: open (currently in-flight or queued)
-    - `DOCS/tech-debt/in-flight.md` — status: being addressed this sprint
-    - `DOCS/tech-debt/closed.md` — status: closed (archival; majority of entries)
-    - `DOCS/TECH_DEBT.md` — INDEX with `splits_into:` frontmatter + table of contents
-  - **Alternative criteria:** by-surface (cohort-aligned; `DOCS/tech-debt/registry-discipline/`, `DOCS/tech-debt/wire-format/`, etc.) — defer decision to ship-planning phase
-- **Why deferred (NOT effort-avoidance):** TECH_DEBT entries are heavily cross-referenced (>50 cross-refs to TECH_DEBT-NNN across DESIGN_SPECS / skills / CLAUDE.md / CLAUDE.local.md / memory rules). Split + sed-based cross-ref update warrants dedicated ship with rollback anchor + verification per batch. Same risk class as TECH_DEBT-113 (folder subdivision).
-- **Cost estimate:** ~2-3h focused (decide split criteria + extract entries + build INDEX + sed-sweep cross-refs + verify with `check_doc_metadata.py`)
-- **Trigger:** dedicated maintenance ship between sub-ships (alongside TECH_DEBT-113 folder subdivision OR independently)
-- **Status:** OPEN with explicit trigger (created 2026-05-18 at doc-layer refresh ship close)
-- **Cross-ref:** `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md` (the discipline); TECH_DEBT-113 (sister folder subdivision); `feedback_file_size_split_discipline.md` (going-forward rule).
+*(TECH_DEBT.md split (done incidentally) — closed `wontfix-per-ai-workflow` under the AI-workflow file-size reframe. Full entry moved to `closed.md` per this file's move-and-forward rule (line 22); a pointer is kept here because 12 live docs cite this id. Converted at `E.1.2.B` `0.2` (f) — it had been a FULL duplicate in both sub-files, so a bare cite resolved open-or-closed by coin flip.)*
 
 ---
 
-### TECH_DEBT-118 — /readiness SKILL.md split (file-size discipline application)
+### TECH_DEBT-118 — CLOSED 2026-05-27 (`.B.7` C1) → `DOCS/tech-debt/closed.md`
 
-```yaml
-id: TECH_DEBT-118
-title: /readiness SKILL.md split (file-size discipline application)
-severity: medium
-surface_tags: [ci-tooling]
-trigger: n/a (closed)
-status: wontfix-per-ai-workflow
-opened: 2026-05-18
-closed_at: v5.15.5.F.4d.1.B.7
-closure_rationale: AI-driven solo workflow (per operator C1 directive 2026-05-27); SKILL.md is loaded on skill invocation; AI handles large SKILL.md trivially; if SKILL.md becomes load-bearing concern in future, split is mechanical
-related_specs: [DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md]
-```
-
-- **Created:** 2026-05-18 (codified at `.B.3` ship close)
-- **Severity:** MEDIUM (1674 lines — exceeds 1500-line SKILL.md hard threshold)
-- **Surface:** `claude-skills/readiness/SKILL.md`
-- **What's deferred:** Split per file-size-split-discipline pattern:
-  - **Recommended split criteria:** per-check sidecar files
-    - `claude-skills/readiness/SKILL.md` (~300 lines) — invocation + check INDEX
-    - `claude-skills/readiness/checks/check-01-<topic>.md` through `check-NN-<topic>.md` (one file per check)
-  - Skill spec keeps the orchestration logic + invocation + index of checks; each check's detail body extracts to sidecar
-- **Why deferred (NOT effort-avoidance):** Check N references appear in plan body audits (`/readiness Check 25` etc.). Extraction + INDEX shape needs care to preserve cross-ref retrievability.
-- **Cost estimate:** ~2-3h focused (extract per-check bodies + build INDEX + verify Check N grep-retrievable)
-- **Trigger:** dedicated maintenance ship; can land independently of TECH_DEBT-116/-117 since SKILL is operationally separate from ledgers
-- **Status:** OPEN with explicit trigger
-- **Cross-ref:** `DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md`; sister TECH_DEBT-116/-117 (ledger splits at same discipline).
+*(/readiness SKILL.md split — closed `wontfix-per-ai-workflow` under the AI-workflow file-size reframe. Full entry moved to `closed.md` per this file's move-and-forward rule (line 22); a pointer is kept here because 11 live docs cite this id. Converted at `E.1.2.B` `0.2` (f) — it had been a FULL duplicate in both sub-files, so a bare cite resolved open-or-closed by coin flip.)*
 
 ---
 
@@ -2336,39 +2247,9 @@ related_specs: [DESIGN_SPECS/doc-disciplines/categorical-triggers-in-always-load
 
 ---
 
-### TECH_DEBT-114 — `tests/controller_test.cpp` test file split (domain-aligned sub-files)
+### TECH_DEBT-114 — CLOSED 2026-05-27 (`.B.7` C1) → `DOCS/tech-debt/closed.md`
 
-```yaml
-id: TECH_DEBT-114
-title: tests/controller_test.cpp test file split (domain-aligned sub-files)
-severity: medium
-surface_tags: [test-infrastructure]
-trigger: n/a (closed; test 5K rule retained for reliability; TECH_DEBT-127 absorbs any test-reliability follow-up if needed)
-status: wontfix-per-ai-workflow
-opened: 2026-05-18
-partial_closed_at: v5.15.5.F.4d.1.B.5 WIP-B1 (2026-05-27; shared infrastructure extract to tests/test_common.hpp landed; full domain split DEFERRED per operator directive "more concerned about actual code" — see TECH_DEBT-127 for follow-up)
-closed_at: v5.15.5.F.4d.1.B.7
-closure_rationale: AI-driven solo workflow (per operator C1 directive 2026-05-27); test 5K rule retained explicitly for test-reliability concern — TECH_DEBT-127 stays open as the test-reliability surface; this entry's full-domain-split intent is dropped
-related_specs: [DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md]
-```
-
-- **Created:** 2026-05-18 (codified at doc-layer refresh ship — moved out of CLAUDE.md Test file size discipline TODO sentence to proper TECH_DEBT entry per `feedback_claude_md_guidelines_not_stuff_to_do.md`)
-- **Severity:** MEDIUM (compile-time + test-navigation + merge-conflict surface area; 3118 tests at risk during any refactor)
-- **Surface:** `tests/controller_test.cpp` (~25k lines + 3118 tests); CLAUDE.md "Test file size discipline" rule (>5k lines OR >100 sections must split BEFORE adding more)
-- **Sister:** TECH_DEBT-029 (Source file length reduction — analog SOURCE-side discipline for header/non-test files; same maintenance-overhead class)
-- **What's deferred:** Split `controller_test.cpp` into domain-aligned sub-files:
-  - `controller_test_engine.cpp` (engine + sharded path)
-  - `controller_test_features.cpp` (cfg + feature + parser)
-  - `controller_test_stamps.cpp` (stamp body + parity)
-  - `controller_test_ml.cpp` (ML feature + inference + scaler)
-  - `controller_test_misc.cpp` (catch-all)
-  - Helpers extract to `tests/test_common.hpp`
-- **Why deferred (NOT effort-avoidance):** 3118 tests at risk warrants focused effort with rollback anchor. Multiple sessions have queued this; deferred each cycle because of in-flight sub-ship priority. The deferral is rational — test-split-without-rollback risks all-tests-broken at a critical sprint phase. Per `feedback_no_defer_for_effort.md` — this is the legitimate-defer category (effort-bounded by safety, not effort-avoidance).
-- **Cost estimate:** ~4-6h focused work (file splits + helper extraction + verify all tests still GREEN at each split + dedicated rollback anchor + ship close).
-- **Trigger:** Between-sub-ship maintenance window OR when next operator-flagged "must add tests but file too big" event surfaces.
-- **Status:** OPEN with explicit trigger (created 2026-05-18 at doc-layer refresh planning; moved from inline CLAUDE.md TODO sentence per doc-layer-separation discipline).
-- **Accountability mechanism:** CLAUDE.md Test file size discipline rule now points at TECH_DEBT-114 (this entry) as the trigger ledger for the queued split.
-- **Cross-ref:** TECH_DEBT-029 (source-file analog); CLAUDE.md "Test file size discipline" rule; `feedback_no_defer_for_effort.md` (legitimate-defer category); `feedback_claude_md_guidelines_not_stuff_to_do.md` (this entry is the proper home for the deferred work, not CLAUDE.md inline TODO).
+*(controller_test.cpp domain split — closed `wontfix-per-ai-workflow` under the AI-workflow file-size reframe. Full entry moved to `closed.md` per this file's move-and-forward rule (line 22); a pointer is kept here because 21 live docs cite this id. Converted at `E.1.2.B` `0.2` (f) — it had been a FULL duplicate in both sub-files, so a bare cite resolved open-or-closed by coin flip.)*
 
 ---
 

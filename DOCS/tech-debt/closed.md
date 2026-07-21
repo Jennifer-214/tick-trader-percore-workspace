@@ -1023,28 +1023,9 @@ related_specs: [DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-
 
 ---
 
-### TECH_DEBT-107 — 47-globals registry-default sweep (CLOSED at .B.3 v1.16 Phase K)
+### TECH_DEBT-107 — CLOSURE RETRACTED → `DOCS/tech-debt/open.md`
 
-```yaml
-id: TECH_DEBT-107
-title: 47-globals registry-default sweep (FOREACH_GLOBAL_CFG_FIELD registry-default vs manual default reconciliation)
-severity: low
-surface_tags: [cfg-flow, registry, framework-discipline]
-trigger: n/a (closed; opened+closed same ship)
-status: closed
-opened: 2026-05-19
-closed_at: v5.15.5.F.4d.1.B.3
-closure_rationale: Opened + closed same ship at .B.3 v1.16 Phase K (Steps 8.5 + 8.6) — 47-globals registry-default sweep audit performed; per-row registry-vs-manual default reconciled (delete redundant manuals OR update registry to match)
-related_specs: [DESIGN_SPECS/framework-patterns/universal-cfg-field-registry-pattern.md]
-```
-
-- **Created:** 2026-05-19 at `.B.3` v1.16 plan body (Phase K scope expansion per Caramel "lower future maintenance burden" directive)
-- **Severity:** LOW (registry-vs-manual default drift class; sister to universal-cfg-field-registry-pattern Registry default precedence v1.1 codification)
-- **Surface:** All 47 rows of `FOREACH_GLOBAL_CFG_FIELD` registry (audit registry-vs-manual default per row)
-- **Closure rationale:** Per `feedback_no_defer_for_effort` + Caramel "can we come to a solution where we dont need to defer anything" directive at `.B.3` v1.15 → v1.16 cycle: OPEN-AND-CLOSE same ship via Phase K Step 8.5 (extend `universal-cfg-field-registry-pattern.md` v1.0 → v1.1 with NEW § "Registry default precedence over manual defaults") + Phase K Step 8.6 (47-globals registry-default sweep — per-row decision: delete redundant manual OR update registry to match).
-- **Status:** **CLOSED 2026-05-19** at `v5.15.5.F.4d.1.B.3` via Phase K landing
-- **Retroactive ledger write:** Entry was claimed OPENED + CLOSED at `.B.3` v1.16 plan body Phase K but missed ledger write. Retroactively written at `.D` Phase D.3 after Check 11 dogfood detection.
-- **Cross-ref:** `plans/v5.15-live-readiness/subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md` v1.16 Phase K (Step 8.5 + 8.6); `DESIGN_SPECS/framework-patterns/universal-cfg-field-registry-pattern.md` v1.1 § "Registry default precedence over manual defaults"; CLAUDE.local.md going-forward rule "Registry default = single source of truth for cfg defaults" (2026-05-19).
+*(This entry claimed "opened+closed same ship" at `.B.3`. That framing was CORRECTED by the open.md entry's own Status bullet to PARTIAL CLOSED — 12 of 28 audit-targeted rows closed, DIFFER cases pending per-row operator decision — so the closure recorded here was premature and this copy was its superseded original. A full duplicate lived in BOTH sub-files with divergent content (47-globals/LOW here vs 49-globals/MED there), so a bare cite resolved open-or-closed by coin flip. Retracted at `E.1.2.B` `0.2` (f); the live entry is in `open.md`. The generalized anti-pattern is homed at TECH_DEBT-264.)*
 
 ---
 

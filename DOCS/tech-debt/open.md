@@ -3958,3 +3958,23 @@ opened: 2026-07-20
 - **④ REAL BUT SMALLER — invocation-path fragility.** Several tools resolve the engine root by walking up from `__file__` rather than through `foxroots` (`check_cfg_gate_caller_coverage.py:22-29` is the clearest: its own comment says *"the normal engine-path invocation"*, i.e. it assumes one call path). They work from the engine path and fail from the workspace path even though both name the same file through a symlink. `foxroots.py` exists precisely for this (its `:27` comment names Landmine 5). Not a dead guard — a robustness gap, and the direct cause of the three false findings above.
 - **Method note worth keeping:** the sweep that produced the false findings was itself the first-ever run of these selftests, so the invocation path had never been exercised either. **Both the true and the false findings came from the same act of finally running them.**
 - **Cross-ref:** D-411 / T13 (the posture this fell out of) · `toolchain-test-tier-model.md` · AR-16 (the error mode) · Class 51 (② is a dead tooth) · Landmine 5 (④'s root cause) · TECH_DEBT-250.
+
+---
+
+### TECH_DEBT-103 — Per-row inner locale-pin in `tt::cfg_emit_field<T>` is redundant when the outer thread pin is already active
+
+```yaml
+id: TECH_DEBT-103
+title: Skip the per-row inner locale-pin in cfg_emit_field<T> when an outer thread pin is active
+severity: low
+surface_tags: [wire-format, determinism, slow-path, h9]
+trigger: next ship touching CfgFieldDispatch.hpp emit, OR a stamp-emit latency investigation
+status: open
+opened: 2026-05-24
+```
+
+- **⚠️ RETROACTIVE LEDGER WRITE 2026-07-20.** This entry was declared at the `.B.3` ship close and **never written**. Root cause: `.B.3` declared a SIX-ID block (`-101 -102 -103 -104 -105 -106`) at close and wrote NONE of them. `-105`/`-106` were remediated retroactively at `.D` Phase D.1 (`closed.md:988` records it verbatim), `-101` was tombstoned 2026-07-16 — **`-102`/`-103`/`-104` are the un-swept remainder of that same block.** Found once, patched twice, never swept: the M7 signal, and the same meta-lesson the corpus already recorded about `-101`.
+- **Original defining text**, `subplans/2026-05-17-v5.15.5.F.4d.1.B.3-legacy-empty-out.md:739`: *"Optimize per-row inner locale-pin in `tt::cfg_emit_field<T>` to skip when outer thread pin already active. ~25 locale create/free cycles per stamp emit eliminated. Mechanism: add `cfg_emit_field_inner` variant that skips locale dance."*
+- **STILL LIVE — verified at HEAD 2026-07-20:** the per-row inner pin is intact at `CoreFrameworks/CfgFieldDispatch.hpp:284-286` (`newlocale`/`uselocale`), restored at `:333`, with a second emit path at `:521`. No `cfg_emit_field_inner` variant exists anywhere.
+- **⚠️ H9 CONSTRAINT — CARRY THIS INTO ANY CLOSURE. It exists nowhere else in the ledger and would have been LOST with the id.** Per `plan_checks/parity-check-2026-05-19-phase-l-v1.15-final.md:135`, the inner pin is the **load-bearing byte-equivalence guarantee** for stamp emit. Any optimization MUST preserve at least one pin in the emit chain. This is a latency nicety guarding a determinism invariant — the invariant wins.
+- **Cross-ref:** TECH_DEBT-102 / -104 (the sibling un-swept remainder of the same block) · D-401 (the search that recovered it) · H9.

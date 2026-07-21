@@ -1324,3 +1324,84 @@ surface_tags: [accounting, symbol-precision, fpn, order-validation]
 - **Disposition:** the entry was lost in the ledger split/renumber history. The DEBT ITSELF — delete `FOREACH_LEGACY_PREFIXED_KEY` once production v1 stamps are extinct — is real and was re-homed to **TECH_DEBT-238** (this file) on 2026-07-16. Live citations remain in `ML_Headers/ModelInference.hpp` and `CoreFrameworks/MetaRegistry.hpp` row 65; they resolve HERE and forward to -238.
 - **Why a tombstone and not a deletion (H21):** the id is cited from engine source. Dropping the slot would let a future entry reuse `101` and silently re-point those citations at unrelated content — the doc-plane form of the Knight Capital slot-reuse failure. The slot is RESERVED permanently.
 - **Cross-ref:** TECH_DEBT-238 (the live home) · TECH_DEBT-249 (the dangling-id sweep that found it).
+
+---
+
+### TECH_DEBT-047 — TOMBSTONE (RESERVED at the v5.15.5.E close, NEVER CREATED; slot retired, never reuse)
+
+- **id:** TECH_DEBT-047 · **severity:** LOW · **status:** tombstone · **surface_tags:** [ledger-hygiene, H21]
+- **What the slot was reserved for:** the RollingIC ≅ RollingRMSE **Class-18 mirror**. Recorded in the `v5.15.5.E` postmortem's disposition table (`plans/v5.15-live-readiness/postmortems/2026-05-13-v5.15.5-E-postmortem.md:53`) as *"Would have been created | **NEVER CREATED** — closed structurally in .E.C."*
+- **Why no entry exists, and why that is CORRECT:** it was pre-allocated for an *anticipated* deferral that never became one. The mirror was closed **structurally** at `.E.C` (`a05ab0b`) via the `RollingWindow<T, N>` template extraction — the work was DONE, not deferred, so there was nothing to defer. Consumed-but-unwritten in the same allocation event as `-048` (commit `1c833c8`, "v5.15.5.E umbrella close", 2026-05-13, which minted `-049`).
+- **⚠️ DO NOT record this slot as "never used".** It was used — as a reservation with a recorded disposition. A sweep that wrote "never used" here would put a falsehood into an append-only ledger, which is the failure D-401 exists to prevent. Found only because the D-401 search covers `plans/**` postmortems; a ledger-only search returns nothing.
+- **Cross-ref:** TECH_DEBT-048 (the sibling, same table row +1, same commit) · D-401 · TECH_DEBT-249.
+
+---
+
+### TECH_DEBT-048 — TOMBSTONE (RESERVED at the v5.15.5.E close, NEVER CREATED; slot retired, never reuse)
+
+- **id:** TECH_DEBT-048 · **severity:** LOW · **status:** tombstone · **surface_tags:** [ledger-hygiene, H21]
+- **What the slot was reserved for:** the **RollingRMSE running-sum** deferral. Same postmortem table, `:54` — *"Would have been created | **NEVER CREATED** — closed structurally in .E.D."*
+- **Why no entry exists:** identical shape to `-047`. Closed structurally at `.E.D` (`136f7dc`) as the 3rd canonical sliding-window application. Reserved and dispositioned in one event; never a real deferral.
+- **⚠️ Same caution as `-047`:** used-then-dispositioned, NOT never-used.
+- **Cross-ref:** TECH_DEBT-047 (the sibling) · D-401 · TECH_DEBT-249.
+
+---
+
+### TECH_DEBT-060 — TOMBSTONE (NEVER USED; slot retired, never reuse)
+
+- **id:** TECH_DEBT-060 · **severity:** LOW · **status:** tombstone · **surface_tags:** [ledger-hygiene, H21]
+- **Covers:** `TECH_DEBT-060`, `TECH_DEBT-061`, `TECH_DEBT-062` — one tombstone for the run, because the gap has one cause.
+- **Verified never used:** zero hits across both ledger sub-files and the index in BOTH padded and unpadded forms, all live workspace files including gitignored (`rg --no-ignore`), all live engine files, and the FULL git history of both repos via an all-commits blob grep. The negative has teeth: the same probe was run against known-present controls (`-047`/`-048`), which returned hits.
+- **Where the gap came from:** a numbering seam inside one dense same-day batch. `-050`..`-069` all carry `opened: 2026-05-14`; `-059` is *"Created 2026-05-14 by v5.15.5.F.4d planning"* (`open.md:1254`) while the `.F.4c` session's new entries are enumerated as starting at **-063** (`postmortems/2026-05-14-v5.15.5.F.4c-postmortem.md:140-146` — 063..069, no 060/061/062). The three slots sit exactly between the two runs.
+- **⚠️ WHAT IS NOT KNOWN, stated rather than invented:** the seam explains WHERE the gap is. **Nothing explains WHY three.** No document anywhere names what these slots were going to be. This tombstone asserts only what the evidence supports.
+- **Cross-ref:** D-401 (search-before-declaring-lost) · TECH_DEBT-249.
+
+---
+
+### TECH_DEBT-061 — TOMBSTONE (NEVER USED; slot retired, never reuse)
+
+- **id:** TECH_DEBT-061 · **severity:** LOW · **status:** tombstone · **surface_tags:** [ledger-hygiene, H21]
+- **Same cause, same evidence, same limits as TECH_DEBT-060** — the 2026-05-14 numbering seam between the `.F.4d`-planning run (ended `-059`) and the `.F.4c`-session run (began `-063`). Verified never used across both id forms, both repos, and full git history, control-validated. **Nothing explains why three slots were skipped;** this tombstone asserts only the verified absence.
+- **Carries its own heading deliberately:** a range tombstone (`-060 / -061 / -062` in one heading) leaves `-061` and `-062` UNRESOLVABLE — the resolver anchors on the defining heading, so a shared heading defines only the first id and the sequence-gap finding survives for the other two. One id, one anchor.
+- **Cross-ref:** TECH_DEBT-060 (the full rationale) · TECH_DEBT-062 · D-401.
+
+---
+
+### TECH_DEBT-062 — TOMBSTONE (NEVER USED; slot retired, never reuse)
+
+- **id:** TECH_DEBT-062 · **severity:** LOW · **status:** tombstone · **surface_tags:** [ledger-hygiene, H21]
+- **Same cause, same evidence, same limits as TECH_DEBT-060** — the 2026-05-14 numbering seam. Verified never used across both id forms, both repos, and full git history, control-validated. **Nothing explains why three slots were skipped;** this tombstone asserts only the verified absence.
+- **Cross-ref:** TECH_DEBT-060 (the full rationale) · TECH_DEBT-061 · D-401.
+
+---
+
+### TECH_DEBT-137 — TOMBSTONE (NEVER USED; slot retired, never reuse)
+
+- **id:** TECH_DEBT-137 · **severity:** LOW · **status:** tombstone · **surface_tags:** [ledger-hygiene, H21]
+- **Verified never used:** same full battery as `-060`..`-062` (both id forms · both repos · full history · control-validated). Zero hits in any form.
+- **Where the gap came from:** a lone skip inside the 2026-05-27 batch (`-130`..`-139`, all `opened: 2026-05-27`). That batch was largely RETROACTIVE — `-138` (`closed.md:883`) and `-136` (`open.md:2695`) both record *"Retroactive ledger write … during `/accept-handoff` Stage 4.5 forward-promise verification dogfood"*. The source report (`capture-audit-reports/2026-05-27-accept-handoff.md:35,64`) maps HIGH-1 → `-138` and HIGH-2 → `-139`; `-137` is never mentioned. Entries were being written into `open.md` and `closed.md` in the same session.
+- **⚠️ Writing across two files at once is a PLAUSIBLE mechanism for a skipped number, but that is inference, not evidence.** No document names a `-137`. Recorded as such.
+- **Cross-ref:** D-401 · TECH_DEBT-249.
+
+---
+
+### TECH_DEBT-128 — TOMBSTONE (NEVER ALLOCATED; both citations were conditional; slot retired, never reuse)
+
+- **id:** TECH_DEBT-128 · **severity:** LOW · **status:** tombstone · **surface_tags:** [ledger-hygiene, H21]
+- **Verified never allocated.** Exactly two sites exist workspace-wide and **neither is an allocation** — both are conditional reservations of "the next free number", made independently and unaware of each other:
+  - `handoffs/2026-05-26-v5.15.5.F.4d.1.B.4-v1.7.4-mid-cycle-handoff.md:263` — *"(TECH_DEBT-128 **candidate**) | Plan body LSP integration for typing-time fabrication detection (Option C) | … **rejected as marginal benefit vs B-Plus**; queue if recurrence persists"*.
+  - `subplans/2026-05-27-…B.6-enginesharded-subfolder-split.md:458` — *"NEW TECH_DEBT-128 (**if surfaces**) | Subfolder pattern follow-up **if** Phase D viability gate identifies amendment needed"*.
+- **Neither condition ever fired.** Site 1 was rejected on the spot. Site 2's trigger never occurred — `.B.7`–`.B.10` propagated without it (`-132`/`-134` closed at `.B.7`, `-138` at `.B.8`) and the per-class subfolder pattern was subsequently FROZEN per `file-size-split-discipline.md` v1.4, with the file-size cohort closed `wontfix-per-ai-workflow` at `.B.7` C1.
+- **⚠️ This tombstone says NEVER ALLOCATED, not "retired after use" — the distinction is the point.** A tombstone that implied prior occupancy would assert something false about an append-only ledger, which is the exact H21-class falsehood D-401 exists to prevent. The two citations are left AS-IS: they are already self-describing as conditional (*"candidate"*, *"if surfaces"*) and are not dangling claims about a real entry.
+- **Cross-ref:** D-401 · TECH_DEBT-249 · `file-size-split-discipline.md` v1.4 (why site 2's trigger is permanently moot).
+
+---
+
+### TECH_DEBT-104 — Surviving prefixed/unprefixed model-state struct-field mirror instances (CLOSED at .B.3 v1.6)
+
+- **id:** TECH_DEBT-104 · **severity:** low · **status:** closed · **closed_at:** v5.15.5.F.4d.1.B.3 v1.6 · **opened:** 2026-05-24 (retroactively) · **surface_tags:** [registry, framework-discipline, mirror-prevention]
+- **⚠️ RETROACTIVE LEDGER WRITE 2026-07-20**, and this one is the most load-bearing of the block: **`-104` is cited from TRACKED ENGINE SOURCE** — `Version.hpp:752`, *"~5 sibling instances at model-state cohort tracked via TECH_DEBT-104"*. It is the only one of the five cited from the public repo, which is exactly the property that earned `-101` a tombstone. Without a real row that public citation resolves to nothing.
+- **What it was:** the ~5 surviving model-state instances of the **prefixed/unprefixed struct-field mirror** shape. Declared closed at `.B.3` v1.6 via the Step 1.6.2 expansion + the Step 0.5d framework-walker extension. The `.B.3` plan is explicit at `:119` — *"After v1.6: FULL closure (no surviving instances); TECH_DEBT-104 NOT opened"* — i.e. the non-write was semi-deliberate, but the ship-close block `:1300` and `Version.hpp:752` both cite the number anyway, so it escaped into the global namespace regardless.
+- **Verified genuinely done at HEAD:** `ML_Headers/StampBoundModelConstRegistry.hpp:296` records the legacy-key dispatch layer as retired (TECH_DEBT-238, H21); the registry's column 2 is now `group`, not a legacy-prefix mirror. Residue already homed at `:297` (the dead `has_inference_cfg` group bit).
+- **⚠️ DESCRIBED BY NAME, NOT BY NUMBER — deliberately.** The `.B.3` plan called this "Class 32" and reserved "Class 31" for a sister shape. **Both numbers were renumbered out from under it.** At HEAD, `class-31-*` is hardcoded-refs-in-always-loaded-docs and `class-32-*` is mega-file-accumulation — both `established: 2026-05-19`, i.e. BEFORE the `.B.3` close of 2026-05-24 that wrote the stale reservation into `Version.hpp:750-752` anyway. The two originally-planned classes were never codified under ANY number (all 56 files in `DOCS/recurring-bug-patterns/` checked). **`Version.hpp:486` vs `:751` therefore carry two different meanings of "Class 32" in one public file — a live H21 instance, tracked separately.** Any future reference to this shape must name it, never number it.
+- **Cross-ref:** TECH_DEBT-102 / -103 (the sibling un-swept remainder) · TECH_DEBT-238 · D-401.

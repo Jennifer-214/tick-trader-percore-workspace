@@ -353,6 +353,31 @@ N + EPOCH)`), not just layout locks.
 
 ---
 
+### B16 — TOMBSTONE (NEVER USED as a pillar; slot retired, never reuse)
+
+**No B16 pillar was ever drafted, reserved, or deleted.** Verified 2026-07-20 against the FULL git
+history of both repos: `^### B16` has never appeared in any commit, while the same probe against a
+`^### B15` control returns hits — so the negative has teeth rather than being an empty search.
+
+**Cause:** the numbering jumped B15 → B17. B14+B15 were minted as a pair at `.B.4` v1.7.5 WIP-12;
+B17+B18 were minted as a pair at `.B.6` Phase E (`postmortems/2026-05-27-v5.15.5.F.4d.1.B.6-postmortem.md:15`
+reads `m4_pillars_added: B17 (fwd-decl shadow) + B18 (block-scope statics)`, with no B16 anywhere in
+that ship). A contributing factor worth noting but NOT proven: this file's headings are physically
+out of order (B13 precedes B12), so a visual "what is the last pillar" scan at mint time is
+unreliable.
+
+**⚠️ NOT related to the `B16` work-item id** in `plans/plan_checks/2026-05-14-v5.15.5.F.4c-fresh-audits-synthesis.md:244`
+("Migrate 12+ FOREACH_STAMP_BOUND_CFG consumer sites"). That is a DIFFERENT NAMESPACE — a per-report
+work-item id, not a pillar — and it is the documented scope-collision false-positive surface in
+AR-14. A `rg '\bB16\b'` finds it and it is not this.
+
+**Why a tombstone rather than silence:** the gap was re-discovered by every audit cycle *because the
+SSoT was silent*, and `DOCS/DESIGN_PHILOSOPHY.md` cited the contiguous range "B14-B19" — which
+includes a nonexistent id. An empty un-tombstoned slot is also the H21 reuse hazard: a future B16
+would silently re-point any surviving citation. Slot RESERVED permanently.
+
+---
+
 ### B17 — Forward-decl inside namespace shadows global type from `<chrono>` / standard headers (NEW v5.15.5.F.4d.1.B.6 Phase E; Stage 2 DRAFT — promotes to Stage 3 at 2nd canonical sister-application beyond Phase B.3 + Phase B.2)
 
 **Definition:** Monolithic-header decomposition / subfolder split work places forward declarations INSIDE the project namespace (`namespace tt { ... }`) for types that live at global scope OR in `std::`. C++ name resolution makes `tt::X` a DISTINCT type from `::X` even when X is otherwise undefined; the forward-decl-inside-namespace creates a NEW shadow type. Compile failure surfaces only when the sub-file is consumed by a TU that tries to call methods on the shadowed type ("no member named 'X' in scope" or "incomplete type 'tt::Y'").

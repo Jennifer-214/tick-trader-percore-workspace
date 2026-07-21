@@ -629,6 +629,16 @@ def verify_tech_debt_closed(match, source_file, source_line, promised_vs_landed)
                        'closed.md (currently in open.md)', 'open.md',
                        f'Move TECH_DEBT-{n} from open.md to closed.md OR re-classify claim',
                        promised_vs_landed)
+    # in-flight NARROWS THE DIAGNOSTIC, never the verdict. This verifier's contract is
+    # CLOSED-NESS, and in-flight.md:24 literally reads `status: in-flight` — so routing it into
+    # the CLEAN leg would make the check vacuous for exactly the ids it exists to flag. It only
+    # improves `actual_location` from "nowhere" to the sub-file the entry is really sitting in.
+    if _has_entry('TECH_DEBT', n, _read_safe(TECH_DEBT_INFLIGHT)):
+        return Finding('HIGH', f'TECH_DEBT-{n} NEW+CLOSED',
+                       source_file, source_line, (n,),
+                       'closed.md (currently in in-flight.md)', 'in-flight.md',
+                       f'Move TECH_DEBT-{n} from in-flight.md to closed.md OR re-classify claim',
+                       promised_vs_landed)
     return Finding('HIGH', f'TECH_DEBT-{n} NEW+CLOSED',
                    source_file, source_line, (n,),
                    'closed.md', None,
@@ -637,7 +647,7 @@ def verify_tech_debt_closed(match, source_file, source_line, promised_vs_landed)
 
 
 def verify_tech_debt_open_or_closed(match, source_file, source_line, promised_vs_landed):
-    """Verify TECH_DEBT-N exists in either open.md or closed.md."""
+    """Verify TECH_DEBT-N exists in ANY of the three ledger sub-files."""
     n = match.group(1)
     open_text = _read_safe(TECH_DEBT_OPEN)
     closed_text = _read_safe(TECH_DEBT_CLOSED)
@@ -645,9 +655,17 @@ def verify_tech_debt_open_or_closed(match, source_file, source_line, promised_vs
         return None
     if _has_entry('TECH_DEBT', n, closed_text):
         return None
+    # in-flight.md is a FULL ledger sub-file, not a staging area: its frontmatter declares
+    # `parent_index: DOCS/TECH_DEBT.md` + `covers: IN-FLIGHT-status TECH_DEBT entries`, and its
+    # body states "The ID is preserved across sub-files". This verifier's contract is EXISTENCE,
+    # which in-flight satisfies. Reading only 2 of the 3 sources produced two STANDING false
+    # HIGHs — TECH_DEBT-63 and -92, which happen to be the file's only two entries, so the
+    # omission was 100% wrong wherever it applied at all.
+    if _has_entry('TECH_DEBT', n, _read_safe(TECH_DEBT_INFLIGHT)):
+        return None
     return Finding('HIGH', f'TECH_DEBT-{n} NEW (no entry)',
                    source_file, source_line, (n,),
-                   'open.md OR closed.md', None,
+                   'open.md OR closed.md OR in-flight.md', None,
                    f'Write TECH_DEBT-{n} entry to ledger OR re-classify claim',
                    promised_vs_landed)
 
@@ -679,7 +697,13 @@ def verify_tech_debt_trigger_updated(match, source_file, source_line, promised_v
     open_text = _read_safe(TECH_DEBT_OPEN)
     entry_text = _entry_block('TECH_DEBT', n, open_text)
     if entry_text is None:
-        return None  # not in open.md; might be closed (verify_tech_debt_closed handles)
+        # in-flight entries carry `trigger:` too (in-flight.md:24, :49), and they are precisely
+        # the actively-worked ones whose trigger is most likely to have gone stale — TECH_DEBT-063
+        # names `trigger: sub-ship-.F.4e`, a ship that never existed. Checking them STRENGTHENS
+        # this verifier; it does not widen a clean path (an absent entry still returns None below).
+        entry_text = _entry_block('TECH_DEBT', n, _read_safe(TECH_DEBT_INFLIGHT))
+    if entry_text is None:
+        return None  # in none of the 3 sub-files; might be closed (verify_tech_debt_closed handles)
     if 'trigger:' not in entry_text:
         return Finding('MED', f'TECH_DEBT-{n} trigger updated',
                        source_file, source_line, (n,),
@@ -1239,6 +1263,15 @@ def selftest() -> int:
         (verify_parity_open,                '39',   False, 'cited bare, defined as PARITY-039'),
         (verify_parity_open,                '039',  False, 'padded spelling of the same id'),
         (verify_parity_open,                '9999', True,  'absent — must flag'),
+        # in-flight.md is the THIRD ledger sub-file; it was declared and never read, so these two
+        # ids (its only entries) were standing false HIGHs. The pair below is the whole point:
+        # in-flight satisfies EXISTENCE but must NEVER satisfy CLOSED-NESS.
+        (verify_tech_debt_open_or_closed,   '63',   False, 'in-flight IS an entry — the cured false HIGH'),
+        (verify_tech_debt_closed,           '63',   True,  'in-flight is NOT closed (status: in-flight) — routing it to CLEAN here would make this check vacuous for exactly the ids it exists to flag'),
+        (verify_tech_debt_trigger_updated,  '63',   False, 'in-flight entry carries trigger: — now reachable, was silently skipped'),
+        # NOT pinned deliberately: verify_tech_debt_trigger_updated on an ABSENT id. It returns
+        # CLEAN today (absence-passes-silently, F-6), and a case asserting that would ENSHRINE the
+        # defect as contract. Homed for the C5 teeth pass instead.
     ]
     failures = 0
     for fn, n, expect, why in cases:
@@ -1250,6 +1283,10 @@ def selftest() -> int:
     # A selftest whose corpus stopped containing its fixtures would silently assert nothing.
     if not _has_entry('TECH_DEBT', '186', _read_safe(TECH_DEBT_CLOSED)):
         print("  FAIL  fixture TECH_DEBT-186 no longer resolves — re-pin the selftest ids")
+        failures += 1
+    if not _has_entry('TECH_DEBT', '63', _read_safe(TECH_DEBT_INFLIGHT)):
+        print("  FAIL  fixture TECH_DEBT-63 no longer in in-flight.md — the 3 in-flight cases "
+              "above would assert nothing; re-pin them or retire the tier")
         failures += 1
     print(f"[forward-promise selftest] {'ALL TEETH PASS' if not failures else f'{failures} FAILURE(S)'}")
     return 1 if failures else 0

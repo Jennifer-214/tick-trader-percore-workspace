@@ -285,10 +285,54 @@ def active_sites(ns, sites):
     the opposite failure. Exemption is opt-in per namespace (`supersede_exempt`) so it can never
     silently widen to a namespace whose sources have no supersede lifecycle."""
     spec = _registry()["namespaces"].get(ns, {})
-    if spec.get("supersede_exempt") != "true" or len(sites) < 2:
+    if len(sites) < 2:
         return sites
-    live = [(s, l) for s, l in sites if not is_superseded(s)]
-    return live if live else sites
+    if spec.get("supersede_exempt") == "true":
+        live = [(s, l) for s, l in sites if not is_superseded(s)]
+        sites = live if live else sites
+    if spec.get("forwarding_tombstone_ok") == "true" and len(sites) > 1:
+        real = [(s, l) for s, l in sites if not _is_forwarding_tombstone(s, l)]
+        sites = real if real else sites
+    return sites
+
+
+def _is_forwarding_tombstone(path, lineno):
+    """A bare `### <ID> — CLOSED <date> → <file>` heading with NO BODY is a POINTER, not a
+    definition.
+
+    Sanctioned by the ledger's OWN rule (`DOCS/tech-debt/open.md:22` — "When status flips to
+    CLOSED, MOVE the entry to closed.md; leave a 1-line tombstone here ONLY if cross-refs benefit
+    from forwarding"). Counting it as a defining site made a CONFORMING entry look like a
+    split-brain collision: the guard fired on the very convention its own ledger prescribes, and
+    TECH_DEBT-164 — the ledger's single correct example — sat in the triage corpus as a defect.
+
+    The discriminator is the ENTRY FORMAT, and it needs BOTH halves:
+      * no `id:` field — every real entry declares one, in one of the ledger's three spellings;
+      * a body of at most 2 non-blank lines.
+    Neither alone is sufficient, and both failure modes were measured rather than imagined.
+    `id:`-absence alone misclassifies TECH_DEBT-107, which lacks the field (its own format
+    defect) but carries 32 body lines. "No body at all" — my first cut — misclassifies
+    TECH_DEBT-164 itself, whose pointer carries one italic line explaining where the entry went
+    (*"Full entry moved to closed.md per disposition-by-location. D-198."*). That line is
+    documentation of the move, not a definition.
+
+    Same posture as the supersede filter above: opt-in per namespace (`forwarding_tombstone_ok`),
+    and it can only ever REMOVE a site when a real one survives — never leaving an id homeless.
+    """
+    lines = _read(Path(path)).splitlines()
+    body = []
+    for line in lines[lineno:]:            # everything after the heading itself
+        if line.lstrip().startswith("#"):  # the next heading closes the block
+            break
+        if not line.strip():
+            continue
+        s = line.lstrip().lstrip("-").lstrip()
+        if s.startswith("id:") or s.startswith("**id:"):
+            return False                   # declares an id ⇒ a real entry
+        body.append(line)
+        if len(body) > 2:
+            return False                   # too much body to be a pointer
+    return True
 
 
 def defining_index():
@@ -618,6 +662,31 @@ def _selftest():
            "31 of 41 PARITY entries came back stripped of their own title without this")
         ck("block/no-neighbour-annex", "PARITY-002" in p1, False,
            "the backward walk must not cross into the entry above/below")
+
+    # ── forwarding tombstones are POINTERS, not definitions ────────────────────────────────
+    with tempfile.TemporaryDirectory() as d:
+        t = Path(d) / "led.md"
+        t.write_text(
+            "### TECH_DEBT-900 — CLOSED 2026-01-01 → `closed.md`\n\n"
+            "*(Full entry moved to closed.md per disposition-by-location.)*\n\n"
+            "### TECH_DEBT-901 — real entry\n\n```yaml\nid: TECH_DEBT-901\nstatus: open\n```\n\n"
+            "### TECH_DEBT-902 — no id field but a long body\n\n"
+            + "".join(f"- body line {i}\n" for i in range(9)) + "\n")
+        ck("tombstone/pointer", _is_forwarding_tombstone(str(t), 1), True,
+           "the ledger SANCTIONS this (open.md:22); counting it made TECH_DEBT-164 — its own "
+           "correct example — look like a split-brain collision")
+        ck("tombstone/real-entry", _is_forwarding_tombstone(str(t), 5), False,
+           "an `id:` field means a real definition, however short")
+        ck("tombstone/long-no-id", _is_forwarding_tombstone(str(t), 12), False,
+           "the TECH_DEBT-107 shape: no id: field (a format defect) but 32 body lines — "
+           "id-absence ALONE would misclassify it")
+        # both halves are load-bearing, so assert the filter END-TO-END too
+        ti = {"TECH_DEBT": {900: [(str(t), 1), (str(t), 5)]}}
+        ck("tombstone/filtered-from-sites", len(active_sites("TECH_DEBT", ti["TECH_DEBT"][900])), 1,
+           "a pointer + a real entry is ONE definition, not a collision")
+        ck("tombstone/never-homeless", len(active_sites("TECH_DEBT", [(str(t), 1)])), 1,
+           "a LONE pointer must still resolve — the filter may only ever remove a site when a "
+           "real one survives, same clause as the supersede filter")
 
     # ── registry integrity: FATAL, never a silent downgrade (C4 / F-3) ─────────────────────
     global _REGISTRY_CACHE, NAMESPACE_REGISTRY

@@ -88,7 +88,9 @@
       "_why_int": "Padding-insensitive: TECH_DEBT-005 and TECH_DEBT-5 are the SAME id, so normalising to int is what makes them resolve to one entry rather than two.",
       "_hardened_2026_07_20": "Was a by-MENTION scan (`TECH_DEBT-(\\d+)` over raw ledger text). Measured at the flip: by-mention 248 vs by-defining 247 — the single dropped id is TECH_DEBT-101, which has NO defining row anywhere and is cited from ZERO engine sources, so nothing newly REDs. It is one of D-389's 8 dangling citations, i.e. the flip immediately surfaces a real defect the old set was structurally incapable of reporting.",
       "citations_verifiable": "true",
-      "_why_citations_verifiable": "Distinctive multi-char prefix `TECH_DEBT-`; a bare mention cannot plausibly mean anything else."
+      "_why_citations_verifiable": "Distinctive multi-char prefix `TECH_DEBT-`; a bare mention cannot plausibly mean anything else.",
+      "forwarding_tombstone_ok": "true",
+      "_why_forwarding_tombstone_ok": "The ledger's own rule (DOCS/tech-debt/open.md:22) sanctions leaving a 1-line forwarding tombstone in open.md when an entry MOVES to closed.md and cross-refs benefit. Such a heading is a POINTER, not a second definition — counting it as a defining site made TECH_DEBT-164, the ledger's single CORRECT example, appear as a split-brain collision. Discriminator is the entry FORMAT (a real entry declares `id:`; a pointer has no body), never a string match on 'CLOSED' or an arrow. Opt-in here because only the split TECH_DEBT ledger has this move-and-forward lifecycle; PARITY is a single file with no sub-files to forward between."
     },
     "PARITY": {
       "_use": "PARITY-n ledger entries.",

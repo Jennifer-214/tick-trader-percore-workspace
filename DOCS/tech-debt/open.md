@@ -3924,3 +3924,26 @@ related_specs: [DESIGN_SPECS/framework-patterns/universal-cfg-field-registry-pat
 - **Class fit:** nearest is Class 43 (one value derived ≥2 ways without single-sourcing) at the config-default surface, adjacent to Class 47 (split-brain authority). Confirm or mint at codification rather than assuming.
 - **⚠️ PLANE SPLIT — do not let the second block the first:** the DETECTOR is dev-plane and belongs to the toolchain arc. The per-field ENGINE reconciliation it will enumerate is engine-plane and rides a later `.E` ship.
 - **Cross-ref:** TECH_DEBT-107 (the instance that exposed it — its two records disagree *precisely because* no mechanical check existed) · `universal-cfg-field-registry-pattern.md` § "Registry default precedence over manual defaults" · Class 43/47.
+
+---
+
+### TECH_DEBT-265 — FOUR guard selftests are RED, found on their first-ever run; two are capital/determinism surfaces
+
+```yaml
+id: TECH_DEBT-265
+title: Four *_selftest.sh are RED (money-gross toothless, determinism false-positive, h10-simd uncompilable, cfg-gate-coverage cwd-broken)
+severity: high
+surface_tags: [ci-tooling, capital-safety, determinism, class-51, m7]
+trigger: BEFORE the toolchain V1 close — a guard whose teeth are dead is worse than no guard, because it reports green
+status: open
+opened: 2026-07-20
+```
+
+- **How they were found:** wiring the unwired selftests at `E.1.2.B` `0.2`. Measured: **23 `*_selftest.sh` existed, 8 were invoked by anything.** Running the other 15 for the first time turned up 4 RED. They had never run in a gate, so nothing reported them — the teeth decayed silently while their guards kept reporting green.
+- **① `check_money_gross_single_source_selftest.sh` — rc=1, `"SELFTEST FAIL: injected 2-mul gross NOT caught (no teeth)"`. CAPITAL PATH.** The selftest plants the D-190 / Class-43 shape (a money gross derived by two multiplications instead of the single-sourced computation) and reports the guard does not flag it. **⚠️ NOT YET DIAGNOSED whether the GUARD is toothless or the INJECTION no longer lands** (the fixture may write somewhere the guard stopped scanning) — both are real defects, but they are different defects and the distinction decides the fix. Do not quote "the money guard has no teeth" until that is separated.
+- **② `check_determinism_selftest.sh` — rc=1, and the failure is the OPPOSITE shape.** The teeth WORK: both injected regressions were caught (`FP-golden corruption -> FP gate` RED ✅, `stray setlocale -> locale gate` RED ✅). What fails is the CLEAN-TREE control: `baseline FP gate`, `baseline locale gate`, and both `after restore` checks all report **RED on a clean tree** — false positives. So either the tree genuinely carries a determinism regression nobody has seen (the gate fires nowhere), or the gate has a false-positive bug. **Cannot be wired until resolved either way**, and a determinism gate that cries wolf is H9-adjacent.
+- **③ `check_h10_simd_determinism_selftest.sh` — rc=2, compilation terminated.** The H10 scalar-fallback-parity guard's teeth do not build.
+- **④ `check_cfg_gate_caller_coverage_selftest.sh` — rc=1, `"engine root (CoreFrameworks + main.cpp) not found from .../tools"`.** A cwd-resolution bug: it resolves the engine root relative to the invoking directory, and `tools/` is a SYMLINK into the workspace, so a path-walk lands in the workspace which has no `Version.hpp` marker. **This is Landmine 5 exactly** — the documented failure the `foxroots.py` marker-based resolver exists to prevent. Fix = route it through `foxroots`.
+- **Why this is HIGH and not MED:** each of these is a guard for an invariant the codebase treats as load-bearing (money single-sourcing, determinism, H10 SIMD parity, cfg-gate coverage). A dead guard is strictly worse than an absent one, because an absent guard is visible in the inventory while a dead one reports green — **Class-51, four instances, in the layer that exists to catch Class-51.**
+- **Not wired deliberately:** the other 11 selftests were wired into `check_session_docs.sh` in the same change; these four were held back. Wiring a known-RED gate trains the operator to ignore the gate, which is the exact credibility failure D-390's severity-flip argument turns on.
+- **Cross-ref:** D-411 (the toolchain test-posture decision this fell out of) · TECH_DEBT-250 (M8 close-out guard — sibling "advertised but never exercised") · `advertised-capability-never-exercised.md` · Class 51 · Landmine 5 (④'s root cause) · D-190 / Class 43 (①'s target shape).

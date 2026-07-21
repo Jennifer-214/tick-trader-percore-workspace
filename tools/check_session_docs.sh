@@ -137,6 +137,28 @@ run_hard "citable-ID resolver teeth (by-definition / zero-pad / grandfathered su
 run_hard "capture-audit teeth (Checks 13+14: findings construction, index floor, absent-golden = HARD)" \
     python3 "$REPO_ROOT/tools/check_capture_audit.py" --selftest
 
+# --- HARD: the ELEVEN further selftests that existed and fired NOWHERE (wired 2026-07-20) ---
+# Measured at wiring: 23 *_selftest.sh existed, 8 were invoked by anything. The other 15 were
+# advertised-capability-never-exercised at scale — and running them for the first time found FOUR
+# RED, two on capital/determinism surfaces (TECH_DEBT-265). A tooth nobody exercises does not
+# decay gracefully; it decays silently, and its guard keeps reporting green the whole time.
+# The four RED are deliberately NOT wired here — wiring a known-red gate trains the operator to
+# ignore the gate, which is the failure mode this whole block exists to prevent.
+# Cost ~14s, dominated by latency-path (8.5s) + struct-size-budget (3.9s). Acceptable for a
+# session-close gate; do NOT move these to pre-commit without re-timing.
+run_hard "capital-adversarial-audit teeth"        bash "$REPO_ROOT/tools/check_capital_adversarial_audit_selftest.sh"
+run_hard "cfg-key-prefix-drift teeth"             bash "$REPO_ROOT/tools/check_cfg_key_prefix_drift_selftest.sh"
+run_hard "close-out-completeness teeth"           bash "$REPO_ROOT/tools/check_close_out_completeness_selftest.sh"
+run_hard "code-tag-blocks teeth (wrapper)"        bash "$REPO_ROOT/tools/check_code_tag_blocks_selftest.sh"
+run_hard "conversion-completeness teeth (wrapper)" bash "$REPO_ROOT/tools/check_conversion_completeness_selftest.sh"
+run_hard "handoff-capture-completeness teeth"     bash "$REPO_ROOT/tools/check_handoff_capture_completeness_selftest.sh"
+run_hard "latency-path-conformance teeth (H8)"    bash "$REPO_ROOT/tools/check_latency_path_conformance_selftest.sh"
+run_hard "meta-registry teeth (H15)"              bash "$REPO_ROOT/tools/check_meta_registry_selftest.sh"
+run_hard "struct-size-budget teeth"               bash "$REPO_ROOT/tools/check_struct_size_budget_selftest.sh"
+run_hard "tech-debt writer teeth (--close TTY-gated + byte-identical)" \
+    bash "$REPO_ROOT/tools/check_tech_debt_selftest.sh"
+run_hard "sanitizer-suite teeth"                  bash "$REPO_ROOT/tools/run_sanitizer_suite_selftest.sh"
+
 # Wired 2026-07-20 after CHECK 4 (invocation truth) proved DOCS/TOOLS.md CLAIMED these fired here
 # and they did not. Two teeth that existed, were enrolled, were advertised as gated -- and had
 # never run from any trigger. Fixing the WIRING rather than the row, because the teeth are real.

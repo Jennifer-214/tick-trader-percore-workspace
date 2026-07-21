@@ -100,6 +100,43 @@ def _digits_at(s, i):
     return (s[i:j], j) if j > i else (None, i)
 
 
+def _suffix_at(s, i):
+    """ONE ASCII lowercase letter at i, or None — the GRANDFATHERED split-id form (D-409).
+
+    ASCII-explicit rather than `str.isalpha()`/`islower()`, which are Unicode-aware: a homoglyph
+    (`TECH_DEBT-175` + U+03B1) would otherwise resolve as a distinct id, minting a slot nobody can
+    type. Sister primitive to `_digits_at` — same startswith/scan shape, so `foxtag`'s hand-parser
+    can mirror it (T2 / `_why_NO_REGEXES`).
+
+    The FORM IS CLOSED going forward: a split takes a fresh int id + `split_from:` (D-409). This
+    exists so the one grandfathered instance (`TECH_DEBT-175a`, minted by D-240) RESOLVES instead of
+    silently collapsing onto its parent — the collapse that caused F-1 (false `defined-twice` on
+    `-175`), F-4 (`_entry_block` over-running 4295 bytes into `-175a`) and F-5 (uncaught ValueError).
+    """
+    if i < len(s) and "a" <= s[i] <= "z":
+        return (s[i], i + 1)
+    return (None, i)
+
+
+def _norm_int_id(raw):
+    """`TECH_DEBT-016` -> 16 · `TECH_DEBT-175a` -> `'175a'`. ONE normalizer, both id surfaces.
+
+    Shared by the DEFINING side (`_norm`) and the CITATION side (`_NORM`) deliberately: a defining
+    form and a citation form that normalise differently IS the two-meanings-for-one-id defect this
+    module exists to close, one layer in. They were two implementations until D-409; the citation
+    side could not even express `175a` (`\\bTECH_DEBT-(\\d+)\\b`), so an id could be defined,
+    golden-pinned, and structurally un-citable at the same time.
+
+    Zero-pad stripping is preserved (`-016` IS `-16`, ~37% of headings are padded). A suffix makes
+    the id a distinct STRING key, so `175` and `175a` can never collide.
+    """
+    digits = "".join(c for c in raw if c.isdigit())
+    if not digits:
+        return raw
+    sfx = raw[-1] if raw and "a" <= raw[-1] <= "z" else ""
+    return f"{int(digits)}{sfx}" if sfx else int(digits)
+
+
 def _match_defining(line, spec):
     """Return the id this line DEFINES per `spec`, else None. startswith/scan only — no regex."""
     anchor = spec.get("anchor")
@@ -136,24 +173,27 @@ def _match_defining(line, spec):
         rest = line[len(hashes):].lstrip()
         for pre in prefixes:
             if rest.startswith(pre):
-                num, _ = _digits_at(rest, len(pre))
+                num, k = _digits_at(rest, len(pre))
                 if num:
-                    return pre + num
+                    sfx, _ = _suffix_at(rest, k)
+                    return pre + num + (sfx or "")
         return None
 
     if anchor == "field":
         fp = spec["field_prefix"]
         if line.startswith(fp):
-            num, _ = _digits_at(line, len(fp))
-            return fp + num if num else None
+            num, k = _digits_at(line, len(fp))
+            if not num:
+                return None
+            sfx, _ = _suffix_at(line, k)
+            return fp + num + (sfx or "")
         return None
     return None
 
 
 def _norm(spec, raw):
     if spec.get("id_type") == "int":
-        d = "".join(c for c in raw if c.isdigit())
-        return int(d) if d else raw
+        return _norm_int_id(raw)
     return raw
 
 
@@ -275,11 +315,19 @@ _CITE = {
     "TOOLCHAIN":   re.compile(r"\b(T(?:1[0-9]|[1-9]))\b"),
     "ANTIPATTERN": re.compile(r"\b((?:AR|WH|PL|CP)-\d+)\b"),
     "BLINDSPOT":   re.compile(r"\b(B(?:1[0-9]|[1-9]))\b"),
-    "TECH_DEBT":   re.compile(r"\bTECH_DEBT-(\d+)\b"),
-    "PARITY":      re.compile(r"\bPARITY-(\d+)\b"),
+    # `[a-z]?` admits the GRANDFATHERED split suffix (D-409). Without it `\d+\b` cannot match
+    # `TECH_DEBT-175a` at all — `\b` fails between `5` and `a`, both word chars — so every citation
+    # of a suffixed id was invisible and could never be verified against its definition. That was
+    # the asymmetry, not a cosmetic gap: the DEFINING side over-accepted (collapsing `175a` onto
+    # `175`) while the CITATION side under-accepted (seeing neither). Backtracking handles the
+    # unsuffixed case: `[a-z]?` yields empty and `\b` holds after the digits.
+    "TECH_DEBT":   re.compile(r"\bTECH_DEBT-(\d+[a-z]?)\b"),
+    "PARITY":      re.compile(r"\bPARITY-(\d+[a-z]?)\b"),
     "CLASS":       re.compile(r"\bClass 0*(\d+)\b"),
 }
-_NORM = {"TECH_DEBT": int, "PARITY": int, "CLASS": int}
+# _norm_int_id, not int(): ONE normalizer across the defining + citation surfaces (D-409).
+# `int` here would raise on the suffixed form the widened patterns above now capture.
+_NORM = {"TECH_DEBT": _norm_int_id, "PARITY": _norm_int_id, "CLASS": _norm_int_id}
 
 
 def citations_in(text):

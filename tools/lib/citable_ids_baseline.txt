@@ -44,7 +44,7 @@ defined-twice|TECH_DEBT `114` defined at 2 sites — one id must mean exactly on
 defined-twice|TECH_DEBT `116` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
 defined-twice|TECH_DEBT `118` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
 defined-twice|TECH_DEBT `164` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
-defined-twice|TECH_DEBT `175` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
+cited-but-undefined|TECH_DEBT `34b` is CITED but has no defining row
 defined-twice|TECH_DEBT `29` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
 sequence-gap|BLINDSPOT slot `16` is MISSING with no tombstone/retirement note — an empty reusable slot is the H21 hazard
 sequence-gap|PARITY slot `39` is MISSING with no tombstone/retirement note — an empty reusable slot is the H21 hazard

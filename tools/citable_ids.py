@@ -306,6 +306,102 @@ def defining_index():
     return idx
 
 
+def _is_next_entry_preamble(line):
+    """Does this trailing line belong to the NEXT entry rather than the one being bounded?
+
+    Shape-based, not anchor-based, and that is the point: declaring an `entry_start` ANCHOR in
+    the registry would make PARITY's `### PARITY-NNN` headings a second defining form, and 32 of
+    its 41 entries carry BOTH a heading and an `id:` field — so all 32 would become 2-site and
+    fire `defined-twice`. Trimming by shape adds no defining form, so that failure is structurally
+    unreachable rather than merely avoided.
+    """
+    s = line.strip()
+    return (not s) or s == "---" or s.startswith("#") or s.startswith("```")
+
+
+def _is_entry_own_preamble(line):
+    """Does this line ABOVE the defining anchor belong to the SAME entry?
+
+    Only a fence opener or a heading — never a blank or a `---`, which are the separators BETWEEN
+    entries. Deliberately narrower than `_is_next_entry_preamble`: over-reaching backwards would
+    annex the previous entry's tail, and a block that quietly contains its neighbour is the exact
+    defect (F-4) this API exists to fix, mirrored.
+    """
+    s = line.strip()
+    return s.startswith("```") or s.startswith("#")
+
+
+def entry_blocks(idx, ns, rid):
+    """[(path, start_lineno, end_lineno, text)] — the body of EVERY defining site of `rid`.
+
+    DERIVED from the index this module already builds: the defining sites are known, so a block
+    is just [my line, the next site's line in the same file), with the next entry's preamble
+    trimmed back off. There is no second grammar to keep in sync with `_match_defining`, no regex,
+    and nothing a `foxtag` hand-parser could not mirror (T1/T2).
+
+    Why this exists — and why it is not a port of `check_forward_promise_audit._entry_block`:
+    that function terminates on `^<spelling>TECH_DEBT-(\\d+)\\b`, and `\\b` cannot hold between a
+    digit and a letter, so a SUFFIXED sibling heading is invisible to it as a terminator. Measured:
+    `_entry_block('TECH_DEBT', 175, open.md)` runs 4295 bytes past the end of `-175`, swallowing
+    the whole `TECH_DEBT-175a` entry. The derived block terminates correctly because `175a` is a
+    real site in the index (post-D-409). The incumbent is the buggy side; this is a fix wearing a
+    refactor's clothes, not the reverse.
+
+    Returns a LIST because a citable id may legitimately be defined at several sites (7 TECH_DEBT
+    ids are 2-site today: the open/closed split-brain cohort). `_entry_block` returns one block and
+    silently picks whichever the regex hit first — a cardinality difference callers must handle,
+    not a drop-in.
+    """
+    sites = (idx.get(ns) or {}).get(rid) or []
+    if not sites:
+        return []
+    # every defining lineno per file for THIS namespace — these are the block terminators
+    by_file = {}
+    for _rid, ss in (idx.get(ns) or {}).items():
+        for p, ln in ss:
+            by_file.setdefault(p, []).append(ln)
+    for p in by_file:
+        by_file[p].sort()
+
+    out = []
+    for path, ln in sites:
+        lines = _read(Path(path)).splitlines()
+        prev = max([x for x in by_file.get(path, []) if x < ln], default=0)
+        nxt = next((x for x in by_file.get(path, []) if x > ln), len(lines) + 1)
+        start, end = ln, nxt - 1          # 1-based, inclusive
+
+        # Walk BACK to the entry's real start. A namespace whose defining anchor is a FIELD
+        # (PARITY: `id: PARITY-NNN`) declares the id INSIDE the entry, below its heading and
+        # its ```yaml fence — so anchoring the block at the defining line alone would return
+        # each entry stripped of its own title. Measured: 31 of PARITY's 41 entries. Harmless
+        # for today's four needles (none live in a heading) but wrong for any consumer that
+        # RENDERS an entry, which the 0.4 doc-viewer will. Bounded by the previous defining
+        # site, so it can never walk into the entry above.
+        probe, best = start, start
+        while probe - 1 > prev:
+            above = lines[probe - 2].strip()
+            if above.startswith("```"):
+                probe -= 1
+                best = probe                     # the entry's own fence
+            elif above.startswith("#"):
+                probe -= 1
+                best = probe                     # the entry's own heading — the real start
+                break
+            elif not above:
+                probe -= 1                       # PROVISIONAL: a blank is only annexed if a
+                                                 # heading turns up above it. Committing blanks
+                                                 # eagerly would annex the gap between entries.
+            else:
+                break
+        start = best
+
+        # The last entry in a file legitimately runs to EOF — that is its body, not an over-run.
+        while end > start and _is_next_entry_preamble(lines[end - 1]):
+            end -= 1
+        out.append((path, start, end, "\n".join(lines[start - 1:end])))
+    return out
+
+
 # ── citation forms (how an ID is REFERENCED in prose/code, as opposed to defined) ─────────────
 # Deliberately looser than the defining forms: a citation is any mention. `\b` guards keep short
 # ids (H4, M8, T1) from matching inside longer tokens.

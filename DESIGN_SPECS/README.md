@@ -2,7 +2,7 @@
 
 **Auto-generated** by `tools/rebuild_doc_indexes.py`. Regenerate after adding/moving specs.
 
-Total: 192 specs across 14 types.
+Total: 193 specs across 14 types.
 
 Per-type catalog grouped by lifecycle stage. Cross-ref:
 - `doc-frontmatter-convention.md` (frontmatter schema)
@@ -198,7 +198,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/doc-disciplines/module-scoped-claude-md-pattern.md` | 2-draft | doc-discipline, framework-discipline, context-aware-loading | 2 |
 | `DESIGN_SPECS/doc-disciplines/toolchain-semantic-versioning.md` | 2-draft | doc-discipline, dev-plane, versioning, +1 | 0 |
 
-## meta-discipline (35 specs)
+## meta-discipline (36 specs)
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
@@ -236,6 +236,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/meta-disciplines/struct-change-cascade-impact-tooling.md` | 2-draft | data-oriented-design, ci-tooling, static-analysis, +4 | 2 |
 | `DESIGN_SPECS/meta-disciplines/structural-enforcement-when-memory-insufficient.md` | 3-first-canonical | meta-discipline, framework-discipline, structural-fix, +1 | 0 |
 | `DESIGN_SPECS/meta-disciplines/structural-fix-preferred-decision-framework.md` | 5-claude-md | meta-discipline, structural-fix, pattern-codification, +1 | 4 |
+| `DESIGN_SPECS/meta-disciplines/toolchain-test-tier-model.md` | 3-first-canonical | ci-tooling, audit-methodology, framework-discipline | 0 |
 | `DESIGN_SPECS/meta-disciplines/train-serve-execution-layer-parity.md` | 3-first-canonical | audit-methodology, meta-discipline, structural-fix | 0 |
 
 ## plan-template (4 specs)

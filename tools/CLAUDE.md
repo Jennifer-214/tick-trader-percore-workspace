@@ -36,7 +36,25 @@ in the source are the section after.)
 | **T10** | Tool-I/O = ONE envelope + a schema-as-DATA registry — read, never hardcoded | D-376/D-380 |
 | **T11** | A toolchain/tag-system change runs the armed I→A sweep BEFORE implementation | D-383 |
 | **T12** | Delegate implementation only where the acceptance oracle is TOTAL; PARTIAL ⇒ hand-review before commit | D-385 |
+| **T13** | A fact-PRODUCER ships UNIT TESTS, wired, alongside the change — a `--selftest` is a non-vacuity proof, not a correctness proof | D-411 |
 
+- **A fact-PRODUCER ships UNIT TESTS, alongside — not a selftest instead of them (T13, D-411).**
+  The three artifacts already in use are NOT interchangeable and conflating them is how this gap
+  survived: a **BASELINE** is an exception list (grandfathered known-bad, shrinking — it does not
+  pin output); a **GOLDEN** pins emitted output for a fixed input; a **SELFTEST** proves the guard
+  is non-vacuous (T5). **None of the three asks whether the tool is CORRECT across its inputs.**
+  A selftest answers *"can this guard fail?"*; a unit test answers *"is this guard right?"* —
+  and the evidence that the difference is load-bearing is `E.1.2.B` `0.2` itself: **every defect
+  it found lived in a tool that had a selftest and passed it** (a suffixed id collapsing onto its
+  parent; a 4295-byte block over-run under 8/8 green teeth; an absent golden silently disabling
+  removal-detection while Check 14 stayed green; a hardcoded registry mirror drifted 4-vs-5).
+  **Scope — producers, not everything.** The obligation attaches where a wrong fact FANS OUT
+  (`citable_ids` · `foxtag` · `check_cache_layout` · anything N consumers inherit), not to all 100
+  tools; blanket-testing leaf consumers is the proportionality error that gets suites abandoned.
+  **And "alongside" is the operative word** — "after" is what produced 100 tools with 2 unit-test
+  files. Wire them; an unwired test is `advertised-capability-never-exercised`, which cost four
+  silently-dead guards (TECH_DEBT-265), two of them on capital/determinism surfaces.
+  → `DESIGN_SPECS/meta-disciplines/toolchain-test-tier-model.md`.
 - **ONE parser, N consumers (D-337).** `foxtag` is the single tag-parser + fact-producer + query
   engine. A checker/plugin/skill that RE-implements block-parsing is a **Class-18 mirror**. A new
   capability = a foxtag producer/command consumed by all — not a private re-parse.

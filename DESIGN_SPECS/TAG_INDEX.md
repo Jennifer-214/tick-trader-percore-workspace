@@ -65,7 +65,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/concurrency-patterns/structured-audit-log-pattern.md`
 
-### audit-methodology (40 files)
+### audit-methodology (41 files)
 
 - `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md`
 - `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md`
@@ -87,6 +87,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/meta-disciplines/mechanical-verification-of-derived-code-facts.md`
 - `DESIGN_SPECS/meta-disciplines/meta-anti-pattern-index.md`
 - `DESIGN_SPECS/meta-disciplines/plan-decomposition-and-future-aware-agent-arming.md`
+- `DESIGN_SPECS/meta-disciplines/toolchain-test-tier-model.md`
 - `DESIGN_SPECS/meta-disciplines/train-serve-execution-layer-parity.md`
 - `claude-skills/anti-spaghetti/SKILL.md`
 - `claude-skills/blindspot-scan/SKILL.md`
@@ -205,12 +206,13 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/framework-patterns/hierarchical-config-with-per-node-folders.md`
 
-### ci-tooling (6 files)
+### ci-tooling (7 files)
 
 - `DESIGN_SPECS/framework-patterns/isolated-per-struct-layout-probe.md`
 - `DESIGN_SPECS/meta-disciplines/advertised-capability-never-exercised.md`
 - `DESIGN_SPECS/meta-disciplines/differential-to-absolute-gate-contract-widening.md`
 - `DESIGN_SPECS/meta-disciplines/struct-change-cascade-impact-tooling.md`
+- `DESIGN_SPECS/meta-disciplines/toolchain-test-tier-model.md`
 - `DESIGN_SPECS/refactor-patterns/rename-cascade-enumeration-tooling.md`
 - `DESIGN_SPECS/refactor-patterns/rename-ship-methodology.md`
 
@@ -556,7 +558,7 @@ This file is a snapshot for static browsing.
 - `claude-skills/accounting-audit/SKILL.md`
 - `claude-skills/patch-planner/SKILL.md`
 
-### framework-discipline (131 files)
+### framework-discipline (132 files)
 
 - `DESIGN_SPECS/audit-methodologies/adversarial-multi-agent-audit-methodology.md`
 - `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md`
@@ -652,6 +654,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/meta-disciplines/skill-knowledge-consultation-and-auto-routing.md`
 - `DESIGN_SPECS/meta-disciplines/structural-enforcement-when-memory-insufficient.md`
 - `DESIGN_SPECS/meta-disciplines/structural-fix-preferred-decision-framework.md`
+- `DESIGN_SPECS/meta-disciplines/toolchain-test-tier-model.md`
 - `DESIGN_SPECS/plan-templates/design-spec-template.md`
 - `DESIGN_SPECS/plan-templates/sprint-master-plan-template.md`
 - `DESIGN_SPECS/refactor-patterns/bitmap-overflow-protection-discipline.md`
@@ -1691,7 +1694,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/hierarchical-config-validation-pattern.md`
 - `DESIGN_SPECS/framework-patterns/kernel-vs-userspace-networking-cfg-pattern.md`
 
-### boot-time (11 files)
+### boot-time (12 files)
 
 - `DESIGN_SPECS/data-disciplines/cpp17-inline-variable-for-header-shared-state.md`
 - `DESIGN_SPECS/data-disciplines/locale-determinism-discipline.md`
@@ -1700,6 +1703,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/framework-patterns/single-authority-predicate-for-mode-gating.md`
 - `DESIGN_SPECS/meta-disciplines/dead-code-and-identifier-retirement-discipline.md`
 - `DESIGN_SPECS/meta-disciplines/mechanical-verification-of-derived-code-facts.md`
+- `DESIGN_SPECS/meta-disciplines/toolchain-test-tier-model.md`
 - `DESIGN_SPECS/meta-disciplines/train-serve-execution-layer-parity.md`
 - `DESIGN_SPECS/refactor-patterns/rename-cascade-enumeration-tooling.md`
 - `DESIGN_SPECS/refactor-patterns/rename-ship-methodology.md`
@@ -2252,7 +2256,7 @@ This file is a snapshot for static browsing.
 
 - `DESIGN_SPECS/meta-disciplines/backwards-compat-not-default-concern.md`
 
-### registry (67 files)
+### registry (68 files)
 
 - `DESIGN_SPECS/audit-methodologies/audit-driven-pre-coding-gate.md`
 - `DESIGN_SPECS/audit-methodologies/audit-scope-taxonomy.md`
@@ -2297,6 +2301,7 @@ This file is a snapshot for static browsing.
 - `DESIGN_SPECS/meta-disciplines/implementation-layer-blindspot-taxonomy.md`
 - `DESIGN_SPECS/meta-disciplines/pattern-codification-lifecycle.md`
 - `DESIGN_SPECS/meta-disciplines/skill-knowledge-consultation-and-auto-routing.md`
+- `DESIGN_SPECS/meta-disciplines/toolchain-test-tier-model.md`
 - `DESIGN_SPECS/refactor-patterns/bitmap-overflow-protection-discipline.md`
 - `DESIGN_SPECS/refactor-patterns/cross-walker-struct-field-uniqueness-discipline.md`
 - `DESIGN_SPECS/refactor-patterns/orchestration-helper-with-pod-args-pattern.md`

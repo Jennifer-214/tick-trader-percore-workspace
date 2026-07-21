@@ -3927,23 +3927,34 @@ related_specs: [DESIGN_SPECS/framework-patterns/universal-cfg-field-registry-pat
 
 ---
 
-### TECH_DEBT-265 — FOUR guard selftests are RED, found on their first-ever run; two are capital/determinism surfaces
+### TECH_DEBT-265 — the determinism selftest CORRUPTS its golden and cannot restore it; and pre-commit Check F has no teeth
 
 ```yaml
 id: TECH_DEBT-265
-title: Four *_selftest.sh are RED (money-gross toothless, determinism false-positive, h10-simd uncompilable, cfg-gate-coverage cwd-broken)
+title: check_determinism_selftest destroys tools/fp_determinism_golden.txt on every run (broken restore); pre-commit Check F passes a staged determinism drift
 severity: high
-surface_tags: [ci-tooling, capital-safety, determinism, class-51, m7]
-trigger: BEFORE the toolchain V1 close — a guard whose teeth are dead is worse than no guard, because it reports green
+surface_tags: [ci-tooling, determinism, class-51, h9]
+trigger: BEFORE the toolchain V1 close — one half damages state on every run, the other is a dead tooth on a commit gate
 status: open
 opened: 2026-07-20
 ```
 
-- **How they were found:** wiring the unwired selftests at `E.1.2.B` `0.2`. Measured: **23 `*_selftest.sh` existed, 8 were invoked by anything.** Running the other 15 for the first time turned up 4 RED. They had never run in a gate, so nothing reported them — the teeth decayed silently while their guards kept reporting green.
-- **① `check_money_gross_single_source_selftest.sh` — rc=1, `"SELFTEST FAIL: injected 2-mul gross NOT caught (no teeth)"`. CAPITAL PATH.** The selftest plants the D-190 / Class-43 shape (a money gross derived by two multiplications instead of the single-sourced computation) and reports the guard does not flag it. **⚠️ NOT YET DIAGNOSED whether the GUARD is toothless or the INJECTION no longer lands** (the fixture may write somewhere the guard stopped scanning) — both are real defects, but they are different defects and the distinction decides the fix. Do not quote "the money guard has no teeth" until that is separated.
-- **② `check_determinism_selftest.sh` — rc=1, and the failure is the OPPOSITE shape.** The teeth WORK: both injected regressions were caught (`FP-golden corruption -> FP gate` RED ✅, `stray setlocale -> locale gate` RED ✅). What fails is the CLEAN-TREE control: `baseline FP gate`, `baseline locale gate`, and both `after restore` checks all report **RED on a clean tree** — false positives. So either the tree genuinely carries a determinism regression nobody has seen (the gate fires nowhere), or the gate has a false-positive bug. **Cannot be wired until resolved either way**, and a determinism gate that cries wolf is H9-adjacent.
-- **③ `check_h10_simd_determinism_selftest.sh` — rc=2, compilation terminated.** The H10 scalar-fallback-parity guard's teeth do not build.
-- **④ `check_cfg_gate_caller_coverage_selftest.sh` — rc=1, `"engine root (CoreFrameworks + main.cpp) not found from .../tools"`.** A cwd-resolution bug: it resolves the engine root relative to the invoking directory, and `tools/` is a SYMLINK into the workspace, so a path-walk lands in the workspace which has no `Version.hpp` marker. **This is Landmine 5 exactly** — the documented failure the `foxroots.py` marker-based resolver exists to prevent. Fix = route it through `foxroots`.
-- **Why this is HIGH and not MED:** each of these is a guard for an invariant the codebase treats as load-bearing (money single-sourcing, determinism, H10 SIMD parity, cfg-gate coverage). A dead guard is strictly worse than an absent one, because an absent guard is visible in the inventory while a dead one reports green — **Class-51, four instances, in the layer that exists to catch Class-51.**
-- **Not wired deliberately:** the other 11 selftests were wired into `check_session_docs.sh` in the same change; these four were held back. Wiring a known-RED gate trains the operator to ignore the gate, which is the exact credibility failure D-390's severity-flip argument turns on.
-- **Cross-ref:** D-411 (the toolchain test-posture decision this fell out of) · TECH_DEBT-250 (M8 close-out guard — sibling "advertised but never exercised") · `advertised-capability-never-exercised.md` · Class 51 · Landmine 5 (④'s root cause) · D-190 / Class 43 (①'s target shape).
+> **⚠️ THIS ENTRY WAS REWRITTEN 2026-07-20, HOURS AFTER IT WAS OPENED. Its first version claimed FOUR
+> RED selftests including "the money guard has no teeth". THREE OF THE FOUR WERE MY OWN MEASUREMENT
+> ARTIFACT** — I ran the sweep invoking each selftest by its **workspace** path
+> (`/home/caramel/code/tick-trader-percore-workspace/tools/...`), while `check_session_docs.sh`
+> invokes by the **engine** path. Several tools resolve the engine root by walking up from
+> `__file__`, and `tools/` is a SYMLINK, so the workspace invocation lands in a repo with no
+> `CoreFrameworks/`. Re-run by engine path: `check_money_gross_single_source` **PASSES** (*"injected
+> 2-mul gross caught … guard has teeth"*), `check_h10_simd_determinism` **PASSES**,
+> `check_cfg_gate_caller_coverage` **PASSES**. The original claim is preserved here rather than
+> deleted because the error is the point: **a value I did not derive correctly, relayed as a
+> finding** — AR-16, the session's dominant failure shape, recurring inside the work that catalogued
+> it. The real findings are below and one of them I had not noticed at all.
+
+- **① REAL — the selftest DAMAGES STATE on every run and cannot undo it.** `check_determinism_selftest.sh:22` sets `GOLDEN="tools/fp_determinism_golden.txt"` and restores with `git checkout -- "$GOLDEN"` (`:28`, `:55`). It runs with cwd = ENGINE root, where **`tools/` is gitignored**, so git errors `pathspec ... did not match any file(s) known to git` and the restore silently no-ops. The golden is tracked in the WORKSPACE repo, not the engine's. **Consequence: every run appends `SELFTEST_CORRUPT_DO_NOT_COMMIT` to a determinism golden and leaves it there** — confirmed, two markers accumulated across two runs; restored by hand from the workspace repo, and verified never committed (`git show HEAD:` clean). The downstream `❌ (1) FP gate after restore — RED on a CLEAN tree` is not a gate defect; it is this corruption still present. **Fix: resolve the golden's repo explicitly (`git -C "$WORKSPACE" checkout`) or restore from a saved copy rather than from git.** A guard that damages the artifact it guards, every time it is exercised, is worse than an absent one.
+- **② REAL, INDEPENDENT, AND THE ONE I MISSED: `❌ (4b) pre-commit PASSED a staged determinism drift (Check F has no teeth)`.** The commit gate meant to block a determinism regression does not block it. This is H9-bearing, has nothing to do with the restore bug or the invocation path, and reproduces from the engine root on a clean golden. **Not yet diagnosed** whether Check F is mis-wired, mis-scoped, or its detection is broken — diagnose before fixing.
+- **③ VERIFIED WORKING (recorded so nobody re-opens them):** the FP gate and the locale gate both catch their injected regressions (`✅ (1)`, `✅ (2)`), both are GREEN on a clean tree, `✅ (4a)` confirms `core.hooksPath = .githooks`. `./tools/check_fp_determinism.sh` run directly is **rc=0 GREEN** across native_o3 / native_o0 / generic_o3. **There is no determinism regression in the tree.**
+- **④ REAL BUT SMALLER — invocation-path fragility.** Several tools resolve the engine root by walking up from `__file__` rather than through `foxroots` (`check_cfg_gate_caller_coverage.py:22-29` is the clearest: its own comment says *"the normal engine-path invocation"*, i.e. it assumes one call path). They work from the engine path and fail from the workspace path even though both name the same file through a symlink. `foxroots.py` exists precisely for this (its `:27` comment names Landmine 5). Not a dead guard — a robustness gap, and the direct cause of the three false findings above.
+- **Method note worth keeping:** the sweep that produced the false findings was itself the first-ever run of these selftests, so the invocation path had never been exercised either. **Both the true and the false findings came from the same act of finally running them.**
+- **Cross-ref:** D-411 / T13 (the posture this fell out of) · `toolchain-test-tier-model.md` · AR-16 (the error mode) · Class 51 (② is a dead tooth) · Landmine 5 (④'s root cause) · TECH_DEBT-250.

@@ -78,14 +78,67 @@ def _read(p):
 NAMESPACE_REGISTRY = Path(__file__).absolute().parent / "lib" / "citable_id_namespaces.json"
 
 
+_REGISTRY_CACHE = None
+
+
 def _registry():
+    """The namespace registry, parsed once per process. The ONLY memo in this module.
+
+    Safe to cache because the registry is a RULES artifact — "what ARE the rules", edited when
+    the rule changes — and NO tool writes it (swept across Python, C++ and Lua). Editing it
+    mid-run means restarting the tool, so a process-lifetime key is exactly right here.
+
+    `defining_index()` is deliberately NOT memoized, and that asymmetry is the whole point. Its
+    inputs are the CORPUS — ledgers, decision logs, specs — which four tools and every working
+    session actively mutate; `check_tech_debt --close` rewrites open.md and rebuild_doc_indexes
+    writes CLAUDE.md, both inside its read-set. A process-lifetime cache there would hand out
+    (path, lineno) pointing into a file that has since moved, and that wrong fact fans out to
+    every consumer. The fix for an N-calls-in-a-loop caller is to call ONCE and pass the value
+    (check_capture_audit.py:442 already does) — not to hide a cache inside a pure function, and
+    not an explicit invalidate(), whose correctness would depend on every future writer
+    remembering to call it, including writers in other languages and writers not yet written.
+
+    Recovered here: ~0.07 ms x 853 ids = ~59 ms via active_sites(), which is 2.5x
+    defining_index()'s own ~24 ms — the larger cost, and the one that is unambiguously safe.
+
+    Caches on SUCCESS ONLY: both failure paths raise before the assignment, so a broken registry
+    can never be memoized into a process-long lie.
+    """
+    global _REGISTRY_CACHE
+    if _REGISTRY_CACHE is not None:
+        return _REGISTRY_CACHE
     import json
     try:
-        return json.loads(NAMESPACE_REGISTRY.read_text(encoding="utf-8"))
+        _REGISTRY_CACHE = json.loads(NAMESPACE_REGISTRY.read_text(encoding="utf-8"))
     except (IOError, OSError) as e:
         raise SystemExit(f"FATAL: citable-id namespace registry unreadable at {NAMESPACE_REGISTRY}: {e}")
     except json.JSONDecodeError as e:
         raise SystemExit(f"FATAL: citable-id namespace registry is not valid JSON: {e}")
+    return _REGISTRY_CACHE
+
+
+def verified_namespaces():
+    """Namespaces whose CITATIONS are mechanically verifiable (registry `citations_verifiable`).
+
+    Exported so consumers read the registry through THIS module instead of re-opening the JSON.
+    A second reader is a Class-18 mirror, and the two that existed had both grown a bare
+    `except Exception` fallback to a HARDCODED list — a guard silently degrading to a
+    hand-written rule set is precisely what T2 forbids. A registry that cannot be read is FATAL
+    (SystemExit above), never a quiet downgrade.
+    """
+    return [ns for ns, s in _registry()["namespaces"].items()
+            if s.get("citations_verifiable") == "true"]
+
+
+def frozen_record_paths():
+    """Path segments whose citations are FROZEN RECORDS, not claims about the present (D-390).
+
+    Same single-reader rationale as `verified_namespaces()`. The mirror this replaces had ALREADY
+    DRIFTED: it listed four segments against the registry's five, omitting `/capture-audit-reports/`
+    — so on any read failure the guard would have stopped treating its own historical reports as
+    frozen and begun manufacturing findings over them. Measured, not hypothesised.
+    """
+    return tuple(_registry().get("frozen_record_paths", []))
 
 
 def _subst(s):

@@ -308,7 +308,8 @@ def _selftest():
 # speed while making a TOTAL oracle PARTIAL — complete solely if a four-case blast-radius
 # analysis is exhaustive, which is reasoning rather than a check. 14s once per commit, accepted.
 from citable_ids import (defining_index, citations_in, sequence_gaps,   # noqa: E402
-                         active_sites, _read, WORKSPACE)
+                         active_sites, _read, WORKSPACE,
+                         verified_namespaces, frozen_record_paths)
 CITABLE_BASELINE = Path(__file__).absolute().parent / "lib" / "citable_ids_baseline.txt"
 CITABLE_GOLDEN   = Path(__file__).absolute().parent / "goldens" / "citable-ids.txt"
 
@@ -330,17 +331,11 @@ CITATION_ROOTS = [
 # ids / forward-references, which AR-14's false-positive surface says must NOT be mechanized.
 # DEFINITION-side checks (double-definition, gaps, reservations) run for EVERY namespace — those
 # read the SSoT directly and carry no ambiguity.
-def _verified_namespaces():
-    try:
-        import json
-        reg = json.loads((Path(__file__).absolute().parent / "lib" /
-                          "citable_id_namespaces.json").read_text())["namespaces"]
-        return [ns for ns, s in reg.items() if s.get("citations_verifiable") == "true"]
-    except Exception:
-        return ["TECH_DEBT", "PARITY", "ANTIPATTERN"]      # the distinctive-prefix set
-
-
-VERIFIED_NS = _verified_namespaces()
+# Read through citable_ids, never by re-opening the JSON here. This was a local re-read with a
+# bare `except Exception` falling back to a hardcoded ["TECH_DEBT","PARITY","ANTIPATTERN"] — a
+# Class-18 mirror that would have silently substituted a hand-written rule set for the registry
+# the moment the read failed. An unreadable registry is FATAL in citable_ids, not a downgrade.
+VERIFIED_NS = verified_namespaces()
 
 TOMBSTONE_RE = re.compile(r"RESERVED|TOMBSTONE|RETIRED|DEPRECATED|withdrawn|WITHDRAWN|superseded|SUPERSEDED|MOOT|renumber", re.I)
 
@@ -367,12 +362,11 @@ def _citable_findings(idx):
     # is not a claim about the present — it is a truthful artifact of what was true when written.
     # Flagging it would rewrite history to satisfy a linter, which D-390 explicitly rejected:
     # "the guard's job is to stop the corpus getting WORSE, not to rewrite history."
-    try:
-        import json as _json
-        _frozen = tuple(_json.loads((Path(__file__).absolute().parent / "lib" /
-                        "citable_id_namespaces.json").read_text()).get("frozen_record_paths", []))
-    except Exception:
-        _frozen = ("/postmortems/", "/plan_checks/", "/handoffs/", "/archived/")
+    # Second mirror removed (see VERIFIED_NS above). This one had ALREADY DRIFTED: its hardcoded
+    # fallback listed 4 segments against the registry's 5, omitting `/capture-audit-reports/`, so a
+    # read failure would have un-frozen this guard's own historical reports and produced findings
+    # over them. The drift was silent because a fallback only runs when nobody is watching.
+    _frozen = frozen_record_paths()
     for p, _txt in docs:
         if any(seg in str(p) for seg in _frozen):
             continue

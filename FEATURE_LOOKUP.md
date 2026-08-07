@@ -1247,7 +1247,7 @@ defining row, and no id may silently disappear from the corpus.
 **Cfg flags** — none. Runs inside `check_capture_audit.py` (hook + `check_session_docs`).
 **Fallback** — `SKIP_DOC_FLOOR_CHECK=1` bypasses the whole doc-floor block.
 **Where to verify** — `python3 tools/check_capture_audit.py --check 14`.
-**Paper-test sanity** — ~14s, once per commit, green-on-new against a 51-key baseline.
+**Paper-test sanity** — ~14s, once per commit. Since (f) closed (2026-08-07) the baseline is **EMPTY**: any finding is NEW and **FAILS** — red-on-new at full strictness. (Historical: it ran green-on-new against a grandfathered baseline while the (f) triage shrank it 51 → 0.)
 **Gotchas** — citations are resolved ONLY for distinctively-prefixed namespaces. Short bare tokens
 (`H23`, `M8`, `T13`, `B16`, `Class 7`) are NOT verified because they collide with test ids, finding
 ids and forward-references — AR-14's false-positive surface says that must not be mechanized.

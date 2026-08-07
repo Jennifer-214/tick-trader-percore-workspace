@@ -50,8 +50,60 @@ as dated sections.
 - **Dive:** `0.5`, alongside the precondition work. Cross-ref inserted at the plan body's `0.5`
   line the same day this file was written.
 
+## 3. Auto-generated templates — strategies and beyond (generalizes `/strategy-template`)
+
+- **As given:** "ideas for auto generating templates for strategies, and other things similar".
+- **Canonical sister EXISTS:** the `/strategy-template` skill already scaffolds a strategy end-to-end
+  (5 lifecycle stages + `FOREACH_STRATEGY` row + enum + dispatch + tests + GUI hook). The idea
+  GENERALIZES it: the same declare-then-scaffold shape for the OTHER registry-backed cohorts —
+  cfg-field cohorts, gates, panels, tools. The H15 meta-registry (`FOREACH_REGISTRY`) is the natural
+  enumeration of "which cohorts can be templated"; candidates enumerate at dive, not here.
+- **Boundary:** generation stays REGISTRY-driven (declare the row → the scaffold flows), never a
+  parallel template store that drifts beside the registries (Class 21).
+
+## 4. Declarative code-gen from PRE-assigned tags (struct/function generation; plugin-surfaced)
+
+- **As given:** "struct and function generation based off of assigned tags that are set up before
+  actual coding, like declarative code gen tools, for the plugin as well".
+- **Reading — INVERT the tag system's direction.** Today: code → tag-blocks (`[STRUCT]`/`[FUNCTION]`
+  + `[DERIVED]` axes) → validators/cards. The idea: author the TAG-BLOCK FIRST as a declarative spec
+  (fields, hot/cold/cross-thread clustering, alignment, threading axes) and a tool GENERATES the
+  conforming skeleton — `alignas` from the declared alignment, field ORDER from the declared access
+  clusters (the DOD layout-by-access-pattern rule applied mechanically), `MBS_*`/`BITMAP_*` accessor
+  scaffolds from declared packed state. Design-by-declaration: the code-plane completion of D-372's
+  "the code becomes the IDE", and the tag-plane twin of the X-macro auto-flow (one row → N sites).
+- **Why it is tractable HERE and nowhere else:** the pieces half-exist. `foxtag grammar --json` is a
+  machine-readable declaration schema; `check_cache_layout --fix` already WRITES derived facts into
+  blocks (the reverse-direction writer, half-built); `in-code-documentation-schema.md` is a LOCKED
+  substrate (stable grammar to generate FROM); `/strategy-template` is the cohort-level cousin (§3).
+- **Constraints binding at dive:** generated code lands under the SAME gates as handwritten
+  (cache-layout, latency-path conformance, H14 no-bitfields, H6 alignas) — the generator CONSUMES
+  the graders, never bypasses them; idempotent-writer discipline (Class 56); the compiler stays the
+  totality oracle for code tokens (the cascade.py R1 lesson — no blind `--apply` over code).
+- **PLACEMENT OPEN:** not on the current `0.x` roadmap. Candidates: a new increment after `0.6`
+  (AST fact-producers give the parse fidelity codegen wants) or the `1.x` LSP arc. Operator places
+  it at the next planning touch; a pointer sits at the plan body's `0.4` line.
+
+## 5. Plane-partitioned index (STRATEGY / ENGINE / DOCUMENT / …)
+
+- **As given:** "a seperate index for like STRATEGY/ENGINE/DOCUMENT etc or something".
+- **Reading:** per-plane index VIEWS over the corpus (code units, docs, citable ids) keyed on the
+  plane `[TAG]` values that already exist (`[ENGINE]`/`[DEV_PLANE]`/…) — browsable in the plugin,
+  emitted as generated index files.
+- **Sisters:** `0.8` `FOREACH_PLANE` (plane-first-class registry — this index is its FIRST CONSUMER;
+  ~85% already spec'd at `doc-intelligence-toolchain-architecture.md` § plane-first-class) ·
+  `rebuild_doc_indexes.py` (the generator family it joins — derive-and-compare, never hand-kept) ·
+  `DOCS/CODE_TAG_INDEX.md` (existing generated index to EXTEND rather than sibling) · foxtag grammar
+  (the plane vocab source).
+- **BOUNDARY (recorded; must hold):** D-tool-385 REJECTED plane-in-the-IDENTIFIER — plane is
+  METADATA; embedding it makes identity mutable (H21 hazard, ~21.5k live citations). An index/filter
+  is the explicitly-blessed remainder ("a `plane:` frontmatter field is DECOUPLED … a filtering
+  convenience"). **Index YES, identity NO.**
+- **Dive:** `0.8` (the registry) + `0.4` (the plugin surface that consumes it).
+
 ## Pending
 
+- 2026-08-07 second transmission added §3–§5 (template autogen · declarative tag-driven codegen · plane index).
 - Operator has additional untransmitted ideas ("alot more"). Append here as they arrive — one dated
   section each, sister-linked at capture time (the create→capture gap is where compaction-loss
   lives; `feedback_document_as_you_go_over_catch_at_end`).

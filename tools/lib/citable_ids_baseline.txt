@@ -8,54 +8,6 @@
 #   - frozen records excluded: a postmortem or plan_check citing a then-real id is a TRUTHFUL
 #     artifact, not a defect (D-390: stop the corpus getting worse, do not rewrite history).
 # 18 raw dangling -> 8 real. Definition-side checks (double-definition, gaps) are unaffected.
-cited-but-undefined|PARITY `39` is CITED but has no defining row
-cited-but-undefined|TECH_DEBT `101` is CITED but has no defining row
-cited-but-undefined|TECH_DEBT `102` is CITED but has no defining row
-cited-but-undefined|TECH_DEBT `103` is CITED but has no defining row
-cited-but-undefined|TECH_DEBT `104` is CITED but has no defining row
-cited-but-undefined|TECH_DEBT `125` is CITED but has no defining row
-cited-but-undefined|TECH_DEBT `128` is CITED but has no defining row
-cited-but-undefined|TECH_DEBT `16` is CITED but has no defining row
-defined-twice|DECISION `C-1` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
-defined-twice|DECISION `C-2` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
-defined-twice|DECISION `C-3` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
-defined-twice|DECISION `C-4` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
-defined-twice|DECISION `D-10` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
-defined-twice|DECISION `D-11` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
-defined-twice|DECISION `D-12` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
-defined-twice|DECISION `D-13` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
-defined-twice|DECISION `D-1` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
-defined-twice|DECISION `D-2` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
-defined-twice|DECISION `D-3` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
-defined-twice|DECISION `D-4` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
-defined-twice|DECISION `D-5` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
-defined-twice|DECISION `D-6` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
-defined-twice|DECISION `D-7` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
-defined-twice|DECISION `D-8` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
-defined-twice|DECISION `D-9` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
-defined-twice|DECISION `F-1` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
-defined-twice|DECISION `F-2` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
-defined-twice|DECISION `F-3` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
-defined-twice|DECISION `F-4` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
-defined-twice|DECISION `F-5` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
-defined-twice|DECISION `F-6` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
-defined-twice|TECH_DEBT `107` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
-defined-twice|TECH_DEBT `114` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
-defined-twice|TECH_DEBT `116` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
-defined-twice|TECH_DEBT `118` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
-defined-twice|TECH_DEBT `164` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
-cited-but-undefined|TECH_DEBT `34b` is CITED but has no defining row
-defined-twice|TECH_DEBT `29` defined at 2 sites — one id must mean exactly one thing (H21 on the doc plane)
-sequence-gap|BLINDSPOT slot `16` is MISSING with no tombstone/retirement note — an empty reusable slot is the H21 hazard
-sequence-gap|PARITY slot `39` is MISSING with no tombstone/retirement note — an empty reusable slot is the H21 hazard
-sequence-gap|TECH_DEBT slot `102` is MISSING with no tombstone/retirement note — an empty reusable slot is the H21 hazard
-sequence-gap|TECH_DEBT slot `103` is MISSING with no tombstone/retirement note — an empty reusable slot is the H21 hazard
-sequence-gap|TECH_DEBT slot `104` is MISSING with no tombstone/retirement note — an empty reusable slot is the H21 hazard
-sequence-gap|TECH_DEBT slot `128` is MISSING with no tombstone/retirement note — an empty reusable slot is the H21 hazard
-sequence-gap|TECH_DEBT slot `137` is MISSING with no tombstone/retirement note — an empty reusable slot is the H21 hazard
-sequence-gap|TECH_DEBT slot `16` is MISSING with no tombstone/retirement note — an empty reusable slot is the H21 hazard
-sequence-gap|TECH_DEBT slot `47` is MISSING with no tombstone/retirement note — an empty reusable slot is the H21 hazard
-sequence-gap|TECH_DEBT slot `48` is MISSING with no tombstone/retirement note — an empty reusable slot is the H21 hazard
-sequence-gap|TECH_DEBT slot `60` is MISSING with no tombstone/retirement note — an empty reusable slot is the H21 hazard
-sequence-gap|TECH_DEBT slot `61` is MISSING with no tombstone/retirement note — an empty reusable slot is the H21 hazard
-sequence-gap|TECH_DEBT slot `62` is MISSING with no tombstone/retirement note — an empty reusable slot is the H21 hazard
+# EMPTIED 2026-08-07 — deliverable (f) COMPLETE: every id defined, tombstoned, or exempt by a
+# logged decision (D-400 supersede / D-409 split / the -102/-125/-268 triage). The guard is at
+# full strictness: ANY finding appearing now is NEW and FAILS. Do not re-add rows; fix the id.

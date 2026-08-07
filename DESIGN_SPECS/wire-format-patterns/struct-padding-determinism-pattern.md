@@ -87,7 +87,7 @@ struct FPN {
 
 ### Option C: Pack sign into w[N-1] high bit (deeper representation refactor)
 
-✓ Eliminates the sign field entirely. ✗ Multi-week refactor; touches every FPN math operation; rebaselines every PARITY contract. **Out of bug-fix scope; tracked as TECH_DEBT-034b.**
+✓ Eliminates the sign field entirely. ✗ Multi-week refactor; touches every FPN math operation; rebaselines every PARITY contract. **Out of bug-fix scope; tracked as TECH_DEBT-268** *(minted plan-locally as "034b" in `v5.14.11.B`, renumbered to a fresh int id at ledger promotion per D-409; since CLOSED-SUPERSEDED — Ship-A's `.v`-only two's-complement core eliminated the sign field by a different mechanism)*.
 
 ### Option D: Fix the FAILING TEST to compare field-by-field
 

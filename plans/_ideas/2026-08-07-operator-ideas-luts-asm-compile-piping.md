@@ -196,3 +196,30 @@ as dated sections.
   shape are candidates.
 - **Sisters:** north-star §6 Target UX (the spec this arc executes) · §8 (graph surfaces) ·
   `0.5` cards (where most rendering lands).
+
+## 10. Tag-scoped MASS OPS + foxtag as the sub-agent CONTEXT PACKER (2026-08-09)
+
+- **As given:** "since we have the TAG system actually implemented it should be easy to make a tool
+  to make mass updates at once, or spawn sub agents to assist, if we need to with anything right?
+  we just need to make sure they have the appropriate context".
+- **What already stands (confirm, don't rebuild):** mass-update machinery = `cascade.py rename`
+  (enumerate-only; R1: the COMPILER is the totality oracle for code tokens — no blind `--apply`),
+  the doc-rename executor, `check_cache_layout --fix` (the idempotent mass derived-fact writer),
+  and deliverable **(d)** — the D-374 update-orchestrator IS the "one tool, mass update" ask
+  (vocab → grammar → fix → writers → parity, verify-after). (g)'s new RENAMED status is a
+  mass-update INPUT feed (auto-repair payloads). Sub-agent context = the M8 armed-scout
+  discipline + `DOCS/SUBAGENT_ARMING.md` + the pre-armed i/a/v/c/d-class agents — "appropriate
+  context" is exactly the codified arming step; T12/M10/D-385 gate what a delegate may DO
+  (total-oracle delegation only; no blessing).
+- **The genuinely NEW composition:** TAG-SCOPED operations — "run X over every unit tagged
+  `[SLOW_PATH]`" — and **foxtag as the CONTEXT PACKER**: `foxtag unit/units --json` already emits
+  the precise unit, span, and tag set; add its `[REFERENCE]` edges (the (g) resolver) and the
+  gates that govern that plane, and you have an AUTO-GENERATED arming payload per unit — the
+  arming discipline made mechanical instead of hand-assembled. A cohort fan-out = one agent per
+  tagged unit, each armed with its packet, results gated by the same graders as handwritten work.
+- **Binding constraints at dive:** Class-36 (substitution corruption) + Class-56 (idempotent
+  writers) for any mass writer · R1 compiler-oracle for code · delegation only where the
+  acceptance oracle is TOTAL (T12/M10) — a tag-scoped sweep whose grader is partial earns
+  hand-review, exactly as today.
+- **Dive:** the (d) orchestrator dive (mass-update half) + a small `foxtag arm <unit>` packer
+  sketch alongside `0.4`/`0.6` (context half).

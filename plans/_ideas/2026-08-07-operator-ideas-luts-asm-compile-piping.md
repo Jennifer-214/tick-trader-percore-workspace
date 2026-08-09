@@ -141,8 +141,7 @@ as dated sections.
   the contract layer (a)/(d) IS the foundation it waits on. Nothing to build now; this section
   exists so the 0.x work keeps the seam clean (contracts stay language-neutral; no Python-only
   cleverness in interfaces that would block the flip).
-- **⚠️ GATE REFINED 2026-08-09 (operator pressure-tested her own post-1.0 gate; PROPOSED policy,
-  one-word confirm converts to a decision):** "the more we do this the more i wanna just make it
+- **⚠️ GATE REFINED 2026-08-09 — CONFIRMED, now D-412 (the decision log carries the binding form):** "the more we do this the more i wanna just make it
   mostly cpp… we could make generalized structs and pass them along… it may actually be better as
   this gets more complex… this is becoming like a feature complete custom IDE, that i may wana
   generalize to use always." **Recommendation: adopt C++-FIRST FOR NEW FACT-PRODUCERS immediately**

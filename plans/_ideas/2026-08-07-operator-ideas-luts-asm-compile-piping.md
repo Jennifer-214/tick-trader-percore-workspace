@@ -83,6 +83,15 @@ as dated sections.
 - **PLACEMENT OPEN:** not on the current `0.x` roadmap. Candidates: a new increment after `0.6`
   (AST fact-producers give the parse fidelity codegen wants) or the `1.x` LSP arc. Operator places
   it at the next planning touch; a pointer sits at the plan body's `0.4` line.
+- **⚠️ AMENDED 2026-08-09 (operator, recovering the original list — this was "the big thing"):**
+  the generator is **DETERMINISTIC and tag/grammar-driven — explicitly NOT LLM-codegen** ("without
+  using like AI codegen"). The declaration IS the spec; generation is a mechanical transform whose
+  output stands under the gates like handwritten code. An AI assist is AT MOST an optional later
+  layer "hooked into this locally" — and the operator already owns local-AI substrate
+  (Linux_Theme's `libfox-intel.a` + the `fox-ai-*` binaries) if that layer ever earns a dive;
+  building an inference engine is explicitly OUT ("thats alot to build"). Boundary: determinism-
+  first keeps generated code reviewable and gate-verifiable; any AI layer PROPOSES declarations,
+  never emits code past the graders.
 
 ## 5. Plane-partitioned index (STRATEGY / ENGINE / DOCUMENT / …)
 
@@ -104,6 +113,9 @@ as dated sections.
 ## Pending
 
 - 2026-08-07 second transmission added §3–§5 (template autogen · declarative tag-driven codegen · plane index).
+- PROVENANCE (2026-08-09): §1–§10 are the operator's recovered original list, transmitted in
+  fragments across 2026-08-07→09 — §4 declarative codegen was "the big thing", §3 the
+  templating/scaffolding companion. This file is the durable copy.
 - Operator has additional untransmitted ideas ("alot more"). Append here as they arrive — one dated
   section each, sister-linked at capture time (the create→capture gap is where compaction-loss
   lives; `feedback_document_as_you_go_over_catch_at_end`).

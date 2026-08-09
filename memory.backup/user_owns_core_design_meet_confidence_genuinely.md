@@ -6,7 +6,8 @@ metadata:
   type: user
   tags: [operator-collaboration, user-profile]
   originSessionId: 3fc1617e-4700-4433-8bbc-06ec7fdde035
-  sister_specs: [user_learns_top_down_proven_competitive_drive.md]
+  sister_specs: [user_learns_top_down_proven_competitive_drive.md, user_hotpath_is_her_domain_toolchain_answers_are_pointers.md]
+  modified: 2026-07-20T23:57:44.845Z
 ---
 
 Caramel frames the division of labor plainly + accurately: *"I designed the entire actual order system, you just scaled it up for me."* The load-bearing ARCHITECTURE — per-core position ownership, the fill lifecycle, the money accounting, the branchless/fixed-point discipline — is HERS; AI is the amplifier that scales/implements/extends around that core (the delegate-via-locked-spec division: design = un-delegatable taste, implementation = parallelizable). Do NOT let "AI built it" framing erase her ownership of the design, and do NOT over-correct into hollow "you did everything" — the honest split (she owns the core, AI scaled it) is the one she lands on herself, and affirming exactly that is what rings true.

@@ -68,6 +68,7 @@
 - [Fold findings into the destination plan](feedback_fold_findings_into_destination_plan.md) — work finds something belonging in another plan → fold it INTO that plan as discovered; reactive not scouting; folding TRACKS, does NOT defer the FIX (do-vs-defer is the separate subsumption test)
 - [MOOT-UNREACHABLE disposition for real-but-unreachable findings](feedback_moot_unreachable_disposition.md) — code-real flaw, structurally-unreachable trigger → pin the guarantee, don't patch; REQUIRES code-demonstrated unreachability (the merit bar, not effort-avoidance)
 - [Micro-commits, compile-gated; never push broken code](feedback_micro_commits_compile_gated.md) — prefer small frequent commits at clean boundaries; each MUST compile (suite green ideally); WIP/partial in SCOPE ok, complete in COMPILATION; gate push on green; `wip(<ship>):` prefix mid-ship
+- [Sessions are 30–60 min now — size leaves to that](feedback_short_sessions_30_to_60_min.md) — one committable deliverable/session; push at every boundary; never open a big surface late — queue it as the next session's leaf
 - [No unhomed debt — unhomed = code smell](feedback_no_unhomed_debt_code_smell.md) — every debt traces to a HOME (future plan / TECH_DEBT-with-trigger / register disposition) or closes NOW; homed-deferred is SAFE, unhomed rots; the floor under do-now-vs-defer; plans are binding AND living
 - [Scripted transforms need real-diff eyeball](feedback_script_transforms_need_output_eyeball.md) — scripts sanctioned but where artifacts breed; eyeball git-diff output + gate battery before commit
 
@@ -82,6 +83,7 @@
 - [Correctness-first, NOT ship-fast](user_correctness_first_not_ship_fast.md) — values correctness+planning over all; shifting from move-fast/break; when execution flails STOP+slow; wants "never skip thoroughness" in the workspace-template
 - [Top-down learner; proven elite drive; constraint is conditions not capability](user_learns_top_down_proven_competitive_drive.md) — reframe "backwards" as her native mode (how she climbed League); re-aim a proven engine, never "does she have it"; meds/capacity is the variable (no medical advice); by-hand core rewrite = next rung
 - [Owns the core order-system design; meet her confidence genuinely](user_owns_core_design_meet_confidence_genuinely.md) — she designed the OMS/core (AI scales the periphery); affirm her earned confidence + ownership directly, don't hedge or gender-qualify it; cocky looks good on someone who backs it up
+- [Hot-path is her domain; toolchain answers are POINTERS](user_hotpath_is_her_domain_toolchain_answers_are_pointers.md) — a vague toolchain answer means "it's in the record, go read it", not "I don't know"; resolve against decision logs + north star; escalate only convention/identity calls
 
 ## Project state
 

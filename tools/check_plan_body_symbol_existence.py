@@ -276,16 +276,34 @@ PLAN_CONTEXT_STOPWORDS = {
 
 
 def extract_line_anchors(plan_text):
-    """Yield (plan_line, citation, relpath, start_line, end_line, context_text) tuples
+    """Yield (plan_line, citation, relpath, start_line, end_line, context_text, marker) tuples
     for each <path>:<line> or <path>:<start>-<end> citation in plan body.
 
     Context: ±3 plan body lines around the citation, used to extract surrounding identifiers
     for fuzzy verification.
+
+    ANNOTATION MARKERS ((g) step 1, 2026-08-07) — append-only docs (decision logs) cannot
+    REWRITE a stale citation; they annotate it. The scanner honors two same-line markers so an
+    annotation is machine-recognized rather than decorative (Class-51 B′):
+
+      [NOW: `path:line` …]   — the stale cite was RESOLVED: anchors INSIDE the bracket are the
+                               fresh pointers and verify NORMALLY (a bad NOW-target still reds);
+                               anchors OUTSIDE it on the same line → marker 'superseded' (the
+                               annotated stale original — reported as annotated, never MISSING).
+                               The legacy `[PATH SUPERSEDED …]` spelling is honored identically.
+      [CITE-AS-EVIDENCE]     — whole line: citations here QUOTE dead/schematic paths as evidence
+                               or exemplar (D-390's own false-positive surface: "a dead target
+                               here is the POINT"); marker 'evidence', nothing verified.
+
+    marker is None for ordinary anchors (and for anchors inside a NOW bracket).
     """
     lines = plan_text.split('\n')
     # Pattern: optionally-backticked file:line or file:start-end (e.g., `EngineSharded.hpp:3044-3311`)
     pattern = re.compile(r'`?([A-Za-z_][\w/.-]*\.(?:hpp|cpp)):(\d+)(?:-(\d+))?`?')
+    now_span_re = re.compile(r'\[(?:NOW:|PATH SUPERSEDED)[^\]]*\]')
     for plan_idx, line in enumerate(lines, 1):
+        evidence = '[CITE-AS-EVIDENCE]' in line
+        now_spans = [m.span() for m in now_span_re.finditer(line)]
         for m in pattern.finditer(line):
             relpath, start_str, end_str = m.groups()
             start = int(start_str)
@@ -294,7 +312,13 @@ def extract_line_anchors(plan_text):
             ctx_start = max(0, plan_idx - 4)
             ctx_end = min(len(lines), plan_idx + 3)
             context = '\n'.join(lines[ctx_start:ctx_end])
-            yield (plan_idx, m.group(0), relpath, start, end, context)
+            if evidence:
+                marker = 'evidence'
+            elif now_spans and not any(s <= m.start() and m.end() <= e for (s, e) in now_spans):
+                marker = 'superseded'
+            else:
+                marker = None
+            yield (plan_idx, m.group(0), relpath, start, end, context, marker)
 
 
 def extract_context_identifiers(context_text):
@@ -593,6 +617,66 @@ def try_compile(code_str, label):
             pass
 
 
+def selftest():
+    """Non-vacuity teeth for the annotation-marker convention — BOTH directions.
+
+    An annotation the scanner does not recognize is decorative (Class-51 B′); a marker that
+    blanket-exempts would be a hole. So the teeth assert all four quadrants: unmarked stale
+    still flags; a NOW-bracket fresh pointer IS verified (a bad one still reds); the stale
+    original beside a NOW is 'superseded'; an evidence line verifies nothing. Fixture files
+    are created in a tempdir so the cases cannot rot with the corpus."""
+    import tempfile
+    ok = True
+
+    def check(label, cond):
+        nonlocal ok
+        print(f"  {'✅' if cond else '❌'} {label}")
+        ok &= bool(cond)
+
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "Real.hpp").write_text("int Distinctive_MarkerProbe = 1;\n// filler\n")
+        plan = "\n".join([
+            "the logic lives at `Gone.hpp:99` (`Distinctive_MarkerProbe`)",
+            "was `Gone.hpp:99` **[NOW: `Real.hpp:1` — moved (`Distinctive_MarkerProbe`)]**",
+            "`Gone.hpp:99` no longer exists, which is the bug **[CITE-AS-EVIDENCE]**",
+            "was `Gone.hpp:99` **[NOW: `Nope.hpp:1` — bad pointer (`Distinctive_MarkerProbe`)]**",
+            "legacy form `Gone.hpp:99` **[PATH SUPERSEDED — see `Real.hpp:1`]**",
+        ])
+        anchors = list(extract_line_anchors(plan))
+        by_line = {}
+        for a in anchors:
+            by_line.setdefault(a[0], []).append(a)
+
+        check("unmarked stale cite → marker None (still verifiable → still reds)",
+              [a[6] for a in by_line[1]] == [None])
+        l2 = sorted(by_line[2], key=lambda a: a[2])  # Gone, Real
+        check("NOW line: stale original → 'superseded'",
+              [a[6] for a in l2 if a[2] == "Gone.hpp"] == ["superseded"])
+        check("NOW line: in-bracket fresh pointer → None (verified normally)",
+              [a[6] for a in l2 if a[2] == "Real.hpp"] == [None])
+        check("evidence line: every anchor → 'evidence'",
+              all(a[6] == 'evidence' for a in by_line[3]))
+        l5 = by_line[5]
+        check("legacy [PATH SUPERSEDED] honored like NOW (outside → superseded, inside → None)",
+              [a[6] for a in l5 if a[2] == "Gone.hpp"] == ["superseded"]
+              and [a[6] for a in l5 if a[2] == "Real.hpp"] == [None])
+
+        # The tooth that keeps NOW from becoming a blanket exemption: its target is VERIFIED.
+        real = next(a for a in by_line[2] if a[2] == "Real.hpp")
+        st, _ = verify_line_anchor(real[0], real[1], real[2], real[3], real[4], real[5],
+                                   project_root=root, workspace_root=None)
+        check("good NOW target verifies (PASS)", st == "PASS")
+        bad = next(a for a in by_line[4] if a[2] == "Nope.hpp")
+        st2, _ = verify_line_anchor(bad[0], bad[1], bad[2], bad[3], bad[4], bad[5],
+                                    project_root=root, workspace_root=None)
+        check("bad NOW target still REDS (MISSING) — the marker is not a blanket exemption",
+              st2 == "MISSING")
+
+    print(f"[b-plus selftest] {'ALL TEETH PASS' if ok else 'FAILURE(S)'}")
+    return 0 if ok else 1
+
+
 def check_plan_body(plan_path, strict=False, verify_anchors=True):
     """Return dict with code-block + line-anchor verification results.
 
@@ -634,9 +718,16 @@ def check_plan_body(plan_path, strict=False, verify_anchors=True):
     n_oob = 0
     n_missing = 0
     n_notfound = 0
+    n_annotated = 0
     if verify_anchors:
-        for (plan_line, citation, relpath, start, end, context) in extract_line_anchors(text):
+        for (plan_line, citation, relpath, start, end, context, marker) in extract_line_anchors(text):
             n_anchors += 1
+            if marker is not None:
+                # Annotated stale cite ('superseded') or evidence/schematic quote ('evidence'):
+                # counted, never verified — the NOW-bracket fresh pointers arrive as separate
+                # anchors with marker None and verify normally.
+                n_annotated += 1
+                continue
             status, detail = verify_line_anchor(plan_line, citation, relpath, start, end, context,
                                                 project_root=ENGINE, workspace_root=WORKSPACE)
             if status == "PASS":
@@ -668,6 +759,7 @@ def check_plan_body(plan_path, strict=False, verify_anchors=True):
         "n_oob": n_oob,
         "n_missing": n_missing,
         "n_notfound": n_notfound,
+        "n_annotated": n_annotated,
         "anchor_findings": anchor_findings,
     }
 
@@ -900,6 +992,8 @@ def main():
     p.add_argument("paths", nargs="*", help="plan body .md files to check")
     p.add_argument("--all", action="store_true",
                    help="check all .md under plans/")
+    p.add_argument("--selftest", action="store_true",
+                   help="anchor-marker teeth ([NOW:]/[CITE-AS-EVIDENCE] recognized + unmarked still reds); fast, no compile probes")
     p.add_argument("--strict", action="store_true",
                    help="report HARNESS-ISSUE blocks too (default: only FABRICATION)")
     p.add_argument("--quiet", action="store_true",
@@ -928,6 +1022,9 @@ def main():
                         "(default: engine-only)")
     args = p.parse_args()
 
+    if args.selftest:
+        sys.exit(selftest())
+
     # v0.4 generator mode — standalone helper; no plan body needed
     if args.gen_deletion_cohort:
         roots = [ENGINE]
@@ -955,6 +1052,7 @@ def main():
     total_oob = 0
     total_missing = 0
     total_notfound = 0
+    total_annotated = 0
     any_fabrication = False
     any_anchor_error = False  # OOB + MISSING are blocking; DRIFT is warning
 
@@ -984,6 +1082,7 @@ def main():
         total_oob += n_oob
         total_missing += n_missing
         total_notfound += n_notfound
+        total_annotated += result.get("n_annotated", 0)
         if n_fab > 0:
             any_fabrication = True
         if n_oob > 0 or n_missing > 0:
@@ -1021,7 +1120,8 @@ def main():
     anchor_summary = ""
     if total_anchors > 0:
         anchor_summary = (f"; {total_anchors} line-anchors ({total_drift} drift + {total_oob} OOB"
-                          f" + {total_missing} missing + {total_notfound} notfound)")
+                          f" + {total_missing} missing + {total_notfound} notfound"
+                          f" + {total_annotated} annotated)")
     print(f"\n=== SUMMARY: {total_blocks} blocks checked across {len(paths)} files; {total_fab} FABRICATIONS + {total_harness} harness-issues{anchor_summary} ===", file=sys.stderr)
     if total_drift > 0 and not args.show_drift:
         print(f"  (line-anchor DRIFTs: {total_drift}; rerun with --show-drift to see details)", file=sys.stderr)

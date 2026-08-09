@@ -209,6 +209,10 @@ else
     RESULTS+=("  ⏭  HARD  conversion completeness (SKIP_COMPLETENESS_CHECK=1)")
 fi
 
+# --- HARD 1.9: B-Plus anchor-marker teeth ((g) step 1 — annotations must be RECOGNIZED, not decorative) ---
+run_hard "B-Plus anchor-marker teeth ([NOW:]/[CITE-AS-EVIDENCE] honored; unmarked stale still reds)" \
+    python3 "$REPO_ROOT/tools/check_plan_body_symbol_existence.py" --selftest
+
 # --- HARD 2: B-Plus plan-body symbol existence (the citation-error catcher) ---
 if [ "${SKIP_PLAN_BODY_CHECK:-0}" != "1" ]; then
     B_PLUS="$REPO_ROOT/tools/check_plan_body_symbol_existence.py"

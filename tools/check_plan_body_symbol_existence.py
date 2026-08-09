@@ -80,6 +80,44 @@ def _resolve_workspace_root():
 WORKSPACE = _resolve_workspace_root()
 PLANS_DIR = WORKSPACE / "plans"
 
+# ── (g) step 3 — SEVERITY SCOPING for line-anchors (D-390/D-406/D-408) ─────────────────────────
+# OOB/MISSING are BLOCKING only for LIVE docs; a FROZEN record (postmortem / plan_check /
+# superseded handoff / archived / capture-audit-report) citing a then-real path is a truthful
+# artifact, never a defect. The frozen set is DERIVED from the citable-id registry — the same
+# single source the citation scanner uses (D-408: exclusions are derived, not hand-listed).
+# Today's live-doc rot is GRANDFATHERED in tools/lib/citation_anchor_baseline.txt (an exception
+# list, shrink-only by convention: a live hard anchor NOT in it fails; nothing mechanically adds).
+try:
+    from citable_ids import frozen_record_paths as _frozen_record_paths   # noqa: E402
+except Exception:                                                          # registry unreadable →
+    def _frozen_record_paths():                                            # NOTHING is frozen (the
+        return ()                                                          # STRICTER direction)
+
+_ANCHOR_BASELINE_PATH = Path(__file__).absolute().parent / "lib" / "citation_anchor_baseline.txt"
+_ANCHOR_BASELINE = None
+
+
+def _anchor_baseline():
+    global _ANCHOR_BASELINE
+    if _ANCHOR_BASELINE is None:
+        try:
+            _ANCHOR_BASELINE = {ln.strip() for ln in _ANCHOR_BASELINE_PATH.read_text().splitlines()
+                                if ln.strip() and not ln.startswith("#")}
+        except OSError:
+            _ANCHOR_BASELINE = set()
+    return _ANCHOR_BASELINE
+
+
+def _plan_rel(plan_path):
+    """Stable baseline key for a plan file: workspace-relative where possible."""
+    p = Path(plan_path).absolute()
+    for root in (WORKSPACE, ENGINE):
+        try:
+            return str(p.relative_to(root))
+        except ValueError:
+            continue
+    return str(p)
+
 COMPILER = "g++"
 CXX_FLAGS = ["-std=c++20", f"-I{ENGINE}", "-DENGINE_VERSION=\"\""]
 
@@ -782,11 +820,40 @@ def selftest():
     check("a genuinely absent file still reports MISSING (the resolver never guesses)",
           st3 == "MISSING")
 
+    # ── (g) step 3 — SEVERITY-SCOPING teeth (frozen / baselined / live-hard / anchors-only) ──
+    with tempfile.TemporaryDirectory() as td3:
+        troot = Path(td3)
+        (troot / "handoffs").mkdir()
+        live = troot / "live_plan.md"
+        froz = troot / "handoffs" / "old_handoff.md"
+        body = "logic at `Gone_XYZQ.hpp:9` (`Distinctive_MarkerProbe`)\n"
+        live.write_text(body); froz.write_text(body)
+        r_live = check_plan_body(live, anchors_only=True)
+        check("LIVE doc with un-baselined MISSING → n_hard_live=1 (BLOCKING)",
+              r_live["n_hard_live"] == 1 and r_live["n_missing"] == 1)
+        r_froz = check_plan_body(froz, anchors_only=True)
+        check("FROZEN doc (path under /handoffs/) same cite → n_hard_live=0 (advisory)",
+              r_froz["n_hard_live"] == 0 and r_froz["n_missing"] == 1)
+        global _ANCHOR_BASELINE
+        saved = _ANCHOR_BASELINE
+        try:
+            _ANCHOR_BASELINE = {f"{_plan_rel(live)}|`Gone_XYZQ.hpp:9`"}
+            r_base = check_plan_body(live, anchors_only=True)
+            check("BASELINED live hard anchor → n_hard_live=0 (grandfathered, shrink-only)",
+                  r_base["n_hard_live"] == 0 and r_base["n_missing"] == 1)
+        finally:
+            _ANCHOR_BASELINE = saved
+        cb = troot / "with_block.md"
+        cb.write_text("```cpp\nint x = totally_fake_symbol_xyz();\n```\n")
+        r_ao = check_plan_body(cb, anchors_only=True)
+        check("--anchors-only skips compile probes entirely (n_blocks=0 on a cpp-block file)",
+              r_ao["n_blocks"] == 0)
+
     print(f"[b-plus selftest] {'ALL TEETH PASS' if ok else 'FAILURE(S)'}")
     return 0 if ok else 1
 
 
-def check_plan_body(plan_path, strict=False, verify_anchors=True):
+def check_plan_body(plan_path, strict=False, verify_anchors=True, anchors_only=False):
     """Return dict with code-block + line-anchor verification results.
 
     Keys:
@@ -796,7 +863,7 @@ def check_plan_body(plan_path, strict=False, verify_anchors=True):
     text = plan_path.read_text(encoding='utf-8', errors='replace')
 
     # === Pass 1: cpp code-block compilation (symbol existence — Class 14 closure) ===
-    blocks = list(extract_cpp_blocks(text))
+    blocks = [] if anchors_only else list(extract_cpp_blocks(text))
     code_findings = []
     n_fab = 0
     n_harness = 0
@@ -828,6 +895,9 @@ def check_plan_body(plan_path, strict=False, verify_anchors=True):
     n_missing = 0
     n_notfound = 0
     n_renamed = 0
+    n_hard_live = 0   # BLOCKING anchors: OOB/MISSING in a LIVE doc, not grandfathered
+    frozen = any(seg in str(plan_path) for seg in _frozen_record_paths())
+    rel = _plan_rel(plan_path)
     n_annotated = 0
     if verify_anchors:
         for (plan_line, citation, relpath, start, end, context, marker) in extract_line_anchors(text):
@@ -846,12 +916,24 @@ def check_plan_body(plan_path, strict=False, verify_anchors=True):
                 n_skip += 1
             elif status == "OOB":
                 n_oob += 1
+                if frozen:
+                    status = "OOB/frozen"
+                elif f"{rel}|{citation}" in _anchor_baseline():
+                    status = "OOB/baselined"
+                else:
+                    n_hard_live += 1
                 anchor_findings.append((plan_line, status, citation, detail))
             elif status in ("DRIFT", "DRIFT-FAR"):
                 n_drift += 1
                 anchor_findings.append((plan_line, status, citation, detail))
             elif status == "MISSING":
                 n_missing += 1
+                if frozen:
+                    status = "MISSING/frozen"
+                elif f"{rel}|{citation}" in _anchor_baseline():
+                    status = "MISSING/baselined"
+                else:
+                    n_hard_live += 1
                 anchor_findings.append((plan_line, status, citation, detail))
             elif status == "RENAMED":
                 n_renamed += 1
@@ -874,6 +956,7 @@ def check_plan_body(plan_path, strict=False, verify_anchors=True):
         "n_notfound": n_notfound,
         "n_renamed": n_renamed,
         "n_annotated": n_annotated,
+        "n_hard_live": n_hard_live,
         "anchor_findings": anchor_findings,
     }
 
@@ -1101,11 +1184,26 @@ def print_deletion_cohort(pattern: str, cohort: dict, csv_format: bool = False):
             print(f"    {m['content'][:120]}{'...' if len(m['content']) > 120 else ''}")
 
 
+def _collect_paths(args):
+    """ONE path-collection for the normal run + emit mode (no drifting inline twin)."""
+    if args.all:
+        return sorted(PLANS_DIR.rglob("*.md"))
+    paths = [Path(p) for p in args.paths]
+    if not paths:
+        print("usage: check_plan_body_symbol_existence.py <plan-body.md> [...] | --all", file=sys.stderr)
+        sys.exit(2)
+    return paths
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("paths", nargs="*", help="plan body .md files to check")
     p.add_argument("--all", action="store_true",
                    help="check all .md under plans/")
+    p.add_argument("--anchors-only", action="store_true",
+                   help="skip the compile-probe pass (fast corpus-wide anchor sweeps; baseline generation)")
+    p.add_argument("--emit-anchor-baseline", action="store_true",
+                   help="print baseline keys (<plan-rel>|<cite>) for every LIVE-doc hard anchor, then exit 0")
     p.add_argument("--selftest", action="store_true",
                    help="anchor-marker teeth ([NOW:]/[CITE-AS-EVIDENCE] recognized + unmarked still reds); fast, no compile probes")
     p.add_argument("--strict", action="store_true",
@@ -1139,6 +1237,22 @@ def main():
     if args.selftest:
         sys.exit(selftest())
 
+    if args.emit_anchor_baseline:
+        # Regenerate the FULL live-doc hard-anchor key set (frozen docs excluded; baselined
+        # entries INCLUDED so regeneration is idempotent). Redirect stdout into
+        # tools/lib/citation_anchor_baseline.txt; keep its header comments by hand.
+        paths = _collect_paths(args)
+        keys = set()
+        for path in paths:
+            res = check_plan_body(path, strict=False, verify_anchors=True, anchors_only=True)
+            rel = _plan_rel(path)
+            for (_ln, status, citation, _d) in res["anchor_findings"]:
+                if status.startswith(("OOB", "MISSING")) and "/frozen" not in status:
+                    keys.add(f"{rel}|{citation}")
+        for k in sorted(keys):
+            print(k)
+        sys.exit(0)
+
     # v0.4 generator mode — standalone helper; no plan body needed
     if args.gen_deletion_cohort:
         roots = [ENGINE]
@@ -1149,14 +1263,7 @@ def main():
         print_deletion_cohort(args.gen_deletion_cohort, cohort, csv_format=args.csv)
         sys.exit(0)
 
-    if args.all:
-        paths = sorted(PLANS_DIR.rglob("*.md"))
-    else:
-        paths = [Path(p) for p in args.paths]
-
-    if not paths:
-        print("usage: check_plan_body_symbol_existence.py <plan-body.md> [...] | --all", file=sys.stderr)
-        sys.exit(2)
+    paths = _collect_paths(args)
 
     total_blocks = 0
     total_fab = 0
@@ -1177,7 +1284,7 @@ def main():
             any_fabrication = True
             continue
         result = check_plan_body(path, strict=args.strict,
-                                  verify_anchors=not args.no_verify_anchors)
+                                  verify_anchors=not args.no_verify_anchors, anchors_only=args.anchors_only)
         n_blocks = result["n_blocks"]
         n_fab = result["n_fab"]
         n_harness = result["n_harness"]
@@ -1202,7 +1309,7 @@ def main():
         total_annotated += result.get("n_annotated", 0)
         if n_fab > 0:
             any_fabrication = True
-        if n_oob > 0 or n_missing > 0:
+        if result.get("n_hard_live", 0) > 0:
             any_anchor_error = True
 
         # === Code-block report (existing) ===
@@ -1222,7 +1329,8 @@ def main():
         if anchor_findings:
             show_drift = args.show_drift or args.strict
             blocking = [f for f in anchor_findings if f[1] in ("OOB", "MISSING", "RENAMED")]
-            drift = [f for f in anchor_findings if f[1] in ("DRIFT", "DRIFT-FAR", "NOTFOUND")]
+            drift = [f for f in anchor_findings
+                     if f[1] in ("DRIFT", "DRIFT-FAR", "NOTFOUND") or "/" in f[1]]
             if blocking or (show_drift and drift):
                 print(f"\n=== {path.name} line-anchor verification ===", file=sys.stderr)
                 for (plan_line, status, citation, detail) in anchor_findings:
@@ -1232,7 +1340,7 @@ def main():
                     elif status in ("OOB", "MISSING"):
                         print(f"  ❌ {status} at plan:line~{plan_line}  cite={citation}", file=sys.stderr)
                         print(f"     {detail}", file=sys.stderr)
-                    elif show_drift and status in ("DRIFT", "DRIFT-FAR", "NOTFOUND"):
+                    elif show_drift and (status in ("DRIFT", "DRIFT-FAR", "NOTFOUND") or "/" in status):
                         print(f"  ⚠️  {status} at plan:line~{plan_line}  cite={citation}", file=sys.stderr)
                         print(f"     {detail}", file=sys.stderr)
 

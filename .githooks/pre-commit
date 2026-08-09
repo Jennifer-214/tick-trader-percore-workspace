@@ -65,15 +65,22 @@ if [ "${SKIP_PLAN_BODY_CHECK:-0}" != "1" ]; then
                 if [ ! -f "$plan" ]; then
                     continue
                 fi
-                if ! python3 "$B_PLUS_TOOL" "$plan" 2>&1 | tee /tmp/plan_body_check_$$.log; then
+                # PIPESTATUS, not the pipeline exit: `python | tee` reports TEE's exit (always
+                # 0 without pipefail), which silently swallowed the tool's verdict — proven live
+                # 2026-08-09: a plan with hard anchor errors exited 1 directly and PASSED through
+                # this pipe. The gate was decorative for BOTH fabrications and anchors (Class-51
+                # B-prime, in the hook itself).
+                python3 "$B_PLUS_TOOL" "$plan" 2>&1 | tee /tmp/plan_body_check_$$.log
+                if [ "${PIPESTATUS[0]}" != "0" ]; then
                     ANY_FAB=1
                 fi
             done
             rm -f /tmp/plan_body_check_$$.log
             if [ "$ANY_FAB" = "1" ]; then
                 echo ""
-                echo "[pre-commit] B-Plus FAIL: fabrication(s) detected in plan body code samples (Class 14)."
-                echo "[pre-commit] Fix fabricated symbol citations OR bypass with SKIP_PLAN_BODY_CHECK=1"
+                echo "[pre-commit] B-Plus FAIL: fabrication (Class 14) OR a live-doc hard anchor (OOB/MISSING"
+                echo "[pre-commit]   not grandfathered in tools/lib/citation_anchor_baseline.txt; frozen records exempt)."
+                echo "[pre-commit] Fix the cite (the RENAMED status carries the auto-repair path) OR bypass with SKIP_PLAN_BODY_CHECK=1"
                 OVERALL_FAIL=1
             else
                 echo "[pre-commit] B-Plus PASS"

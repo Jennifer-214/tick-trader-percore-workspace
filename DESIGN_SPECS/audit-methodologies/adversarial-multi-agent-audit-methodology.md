@@ -88,6 +88,18 @@ A deterministic gate (the doc-CI sweep `check_session_docs.sh`, a compiler, a fr
 
 The trap (`.E.0.10`, the AR-8 mechanical-green sharpening): a codification's doc-CI sweep went SWEEP CLEAN, was reported as "verified," and a 3-agent panel then found 2 HIGH stale `file:line` cites the mechanical gate is structurally blind to (it checks a citation is *well-formed*, never that the line *exists* or *says what's claimed*). **"The mechanical check is green" verifies a different thing than "the content is correct" — run BOTH on a capital/correctness surface.**
 
+## Finding IDs inside reports — `F-` prefix, never bare (AR-14 shape-4 close; applied 2026-08-09)
+
+Report-local finding ids MUST carry the `F-` prefix (`F-M1`, `F-H2`, `F-1`) — never bare
+`M1`/`B12`/`T13`/`H2` shapes, which collide with the GLOBAL citable namespaces (meta-disciplines ·
+blindspot pillars · toolchain invariants · hard invariants). The collision is deliberately
+NOT mechanized — AR-14's false-positive surface rules that a checker cannot tell scopes apart, and
+forcing one produces the noise that gets guards ignored — so the fix lives at AUTHORING level: the
+prefix makes a report-local visibly non-global, and the citable-ID resolver never has to guess.
+Severity-word forms (`CRITICAL-1`, `HIGH-3`, `MED-6`) don't collide and stay legal; the rule bites
+exactly where a bare letter+digit would shadow a global id. This closes the last (f) residue item
+(TECH_DEBT-249 family); the AR-14 row records the application.
+
 ## Cross-references
 
 - **Trigger / preference (memory):** `feedback_adversarial_framing_default_for_checks` ("check/audit → adversarial by default").

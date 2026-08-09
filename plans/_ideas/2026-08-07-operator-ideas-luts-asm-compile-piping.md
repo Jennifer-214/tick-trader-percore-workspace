@@ -141,6 +141,22 @@ as dated sections.
   the contract layer (a)/(d) IS the foundation it waits on. Nothing to build now; this section
   exists so the 0.x work keeps the seam clean (contracts stay language-neutral; no Python-only
   cleverness in interfaces that would block the flip).
+- **⚠️ GATE REFINED 2026-08-09 (operator pressure-tested her own post-1.0 gate; PROPOSED policy,
+  one-word confirm converts to a decision):** "the more we do this the more i wanna just make it
+  mostly cpp… we could make generalized structs and pass them along… it may actually be better as
+  this gets more complex… this is becoming like a feature complete custom IDE, that i may wana
+  generalize to use always." **Recommendation: adopt C++-FIRST FOR NEW FACT-PRODUCERS immediately**
+  — a new capability lands as a foxtag producer/subcommand (which is T1's existing text taken
+  seriously), typed structs accrue inside the core from today, Python shims only where CI wiring
+  needs them. **EXISTING Python tools migrate per-producer, opportunistically when touched, behind
+  the parity gate with soak (T4/D-349 — the migration mechanism already designed), each surface
+  gated on its D-411 unit-test net.** **BIG-BANG REJECTED** — the rewrite-without-the-net hole is
+  exactly what the original "solid foundation" gate encoded, and marathon-shaped work violates the
+  session model. Why the direction is RIGHT on merit: one typed core structurally CANNOT have the
+  N-parsers-over-one-anchor disease ((f)/(g)'s whole pathology is a multi-parser artifact);
+  "generalize to use always" wants a portable core, not 100 scripts wired to a workspace; the 1.x
+  LSP is C++-by-necessity so every new Python producer is future migration surface. First test
+  case: (g) step 5's resolver lift — evaluate C++-side landing at its dive.
 
 ## 7. Tools directory structure + portability (parting transmission, 2026-08-09)
 

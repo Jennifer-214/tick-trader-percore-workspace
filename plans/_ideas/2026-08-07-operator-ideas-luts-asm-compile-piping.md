@@ -208,6 +208,13 @@ as dated sections.
   shape are candidates.
 - **Sisters:** north-star §6 Target UX (the spec this arc executes) · §8 (graph surfaces) ·
   `0.5` cards (where most rendering lands).
+- **THE METHOD (operator, 2026-08-09): derive surfaces from the EXISTING vocab + documentation
+  system — never invent per-feature.** "alot of stuff like this could be done based off the
+  exisitng vocab and documentation system." Worked instances the same day: the menu's ⚠/✎
+  write-tier icons DERIVE from T6's own vocabulary (comments-writer vs the sanctioned
+  code-writer); context-gating derives from unit TYPES + runtime state (§6's rule); §5's plane
+  views and §8's chain badges are the same shape. The vocab is the design system — a new
+  affordance should cite which vocab axis it renders, or it does not belong.
 
 ## 10. Tag-scoped MASS OPS + foxtag as the sub-agent CONTEXT PACKER (2026-08-09)
 

@@ -132,6 +132,7 @@ Harvested 2026-07-19 from E.1.2.B `0.1.5`/`0.3`, where **each of these cost a de
 a FALSE finding**. If you discover a tool behaviour that is not derivable from its `--help` or its
 docstring, write it here — that is the entire point of this section.
 
+- **Annotating a stale `file:line` cite in an APPEND-ONLY doc: use the two machine-recognized markers, same line as the stale cite.** `**[NOW: \`path:line\` — reason]**` = resolved; anchors INSIDE the bracket are the fresh pointers and are VERIFIED (a bad NOW-target still reds — proven by `--selftest`); the stale original on that line downgrades to `annotated`. `**[CITE-AS-EVIDENCE]**` (exact spelling, bare bracket — a suffixed form like `[CITE-AS-EVIDENCE — why]` is NOT recognized; put prose outside the bracket) = the line QUOTES dead/schematic paths as evidence (D-390's false-positive surface); nothing verified. Legacy `[PATH SUPERSEDED …]` is honored like NOW. Recognizer + teeth: `check_plan_body_symbol_existence.py` (`extract_line_anchors` + `--selftest`, wired HARD in `check_session_docs`). An annotation the scanner cannot see is decorative — Class-51 B′.
 - **Re-blessing the citable-ID golden: use the ONE-LINER, not a heredoc — and you can DEFER it.**
   Pasting a heredoc into interactive zsh drops you at a `heredoc>` continuation prompt. This runs
   as a single command from the engine root:

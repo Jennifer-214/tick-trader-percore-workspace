@@ -107,3 +107,25 @@ as dated sections.
 - Operator has additional untransmitted ideas ("alot more"). Append here as they arrive — one dated
   section each, sister-linked at capture time (the create→capture gap is where compaction-loss
   lives; `feedback_document_as_you_go_over_catch_at_end`).
+
+## 6. Toolchain → C++ core with Python bindings on top (directional; third transmission 2026-08-07)
+
+- **As given:** "i wanna eventually move the toolchain to be entirely cpp written, once we have a
+  solid foundation, or atleast the majority of it, and just using python bindings for the top level
+  stuff".
+- **Why the current architecture already points there:** `foxtag` is ALREADY the C++ half of the
+  fact-producer pair, with `parity_check.sh` proving byte-parity against the Python oracles — so
+  the migration path per producer is literally *flip which side is the oracle*: C++ becomes
+  authoritative, Python shrinks to a binding/orchestration shim, the parity gate keeps both honest
+  DURING the transition and then retires per surface. The one-resolver-N-consumers discipline
+  (D-337/D-399) is what makes this tractable — each producer migrates BEHIND its stable contract
+  (the toolio envelope / the JSON emissions), consumers never notice.
+- **Sequencing hooks (all already recorded):** TECH_DEBT-256 (AST fact-producers at `0.6` —
+  libclang work is naturally C++-side) · the custom LSP (`1.x` — C++ by necessity) · D-411 item 3
+  (unit tests for fact-producers land FIRST — the safety net any rewrite needs) · idea §2
+  (compile-command piping — same real-command substrate) · `run_toolchain_tests.sh` (D-411 item 2)
+  as the migration's regression floor.
+- **Gate ("once we have a solid foundation"):** post-`1.0.0` direction, not an `0.x` increment —
+  the contract layer (a)/(d) IS the foundation it waits on. Nothing to build now; this section
+  exists so the 0.x work keeps the seam clean (contracts stay language-neutral; no Python-only
+  cleverness in interfaces that would block the flip).

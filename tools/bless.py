@@ -254,13 +254,154 @@ def selftest(out=sys.stdout):
                   reached_prompt and rc_tty == 2)
         finally:
             globals()["_isatty"] = _real_isatty
+
+        # ── console teeth ──
+        # Coverage: every golden in tools/goldens/ MUST have a roster row — otherwise the console
+        # silently under-covers as records are added (the roster becoming a drifting derived fact
+        # is TD-262's exact class; this tooth is what lets the roster be hand-written safely).
+        rostered = {str(r["golden"].name) for r in BLESSABLES if "golden" in r}
+        on_disk = {p.name for p in (_HERE / "goldens").glob("*.txt")}
+        stray = on_disk - rostered
+        check(f"console roster covers every tools/goldens/*.txt (unrostered: {sorted(stray) or 'none'})",
+              not stray)
+        check("console() non-TTY => rc=2 REFUSED (the menu is not a batch surface)",
+              console() == 2)
     return ok
+
+
+# ═════════════════════════════════════════════════════════════════════════════════════════
+# THE BLESS CONSOLE (`--console`) — one operator entry point over EVERY blessable record.
+#
+# Operator ask (2026-08-09): "a universal bless thing, where i just enter a number … and it
+# pulls anything that needs reblessing". The console ENUMERATES the roster, shows per-row
+# drift status, and dispatches a number-pick to that record's OWN bless path — so every item
+# still runs the full D-394 contract (diff shown · typed confirmation · non-TTY refuses).
+# The console adds ZERO bypass surface: it is a menu over the existing gates, never a gate.
+#
+# ROSTER DISCIPLINE: rows live HERE because bless.py is already the ONE re-bless control —
+# a separate console script would be the drifting sibling (Class 21 / TD-262). The selftest
+# carries a COVERAGE tooth: any tools/goldens/*.txt without a roster row FAILS, so the
+# roster cannot silently under-cover the goldens dir as records are added.
+# ═════════════════════════════════════════════════════════════════════════════════════════
+
+_HERE = Path(__file__).absolute().parent
+
+
+def _resolve_citable_ids():
+    sys.path.insert(0, str(_HERE))
+    from citable_ids import defining_index
+    return sorted(f"{ns}|{r}" for ns, e in defining_index().items() for r in e)
+
+
+BLESSABLES = [
+    {"key": "citable-ids", "label": "citable-ID golden (Check 14 removal protection)",
+     "kind": "inproc", "golden": _HERE / "goldens" / "citable-ids.txt",
+     "resolve": _resolve_citable_ids},
+    {"key": "corpus--validate", "label": "corpus membership pin — validate profile (D-386)",
+     "kind": "dispatch", "golden": _HERE / "goldens" / "corpus--validate.txt",
+     "check": [sys.executable, str(_HERE / "check_corpus_membership.py"), "--profile", "validate"],
+     "bless": [sys.executable, str(_HERE / "check_corpus_membership.py"), "--profile", "validate", "--bless"]},
+    {"key": "corpus--derived_facts", "label": "corpus membership pin — derived_facts profile (D-386)",
+     "kind": "dispatch", "golden": _HERE / "goldens" / "corpus--derived_facts.txt",
+     "check": [sys.executable, str(_HERE / "check_corpus_membership.py"), "--profile", "derived_facts"],
+     "bless": [sys.executable, str(_HERE / "check_corpus_membership.py"), "--profile", "derived_facts", "--bless"]},
+    {"key": "identifier-ledger", "label": "H21 identifier ledger (Knight-Capital tombstone golden)",
+     "kind": "dispatch",
+     "check": [sys.executable, str(_HERE / "check_identifier_retirement.py")],
+     "bless": [sys.executable, str(_HERE / "check_identifier_retirement.py"), "--update"]},
+    {"key": "latency-ratchet", "label": "latency budgets ratchet (measured-counts sidecar)",
+     "kind": "dispatch", "slow": True,   # ~8.5s check — lazily checked, never at startup
+     "check": [sys.executable, str(_HERE / "check_latency_path_conformance.py")],
+     "bless": [sys.executable, str(_HERE / "check_latency_path_conformance.py"), "--update-budgets"]},
+]
+
+
+def _row_status(row):
+    """('CLEAN'|'DRIFTED'|'NO-GOLDEN'|'ERROR'|'LAZY', detail) — never raises, never mutates."""
+    import subprocess
+    if row.get("slow"):
+        return ("LAZY", "slow check — press its number to check-and-bless, or r<N> to check")
+    try:
+        if row["kind"] == "inproc":
+            status, diff = compare(row["golden"], row["resolve"]())
+            if status == MATCH:
+                return ("CLEAN", "")
+            if status == MISSING:
+                return ("NO-GOLDEN", "bless would CREATE it")
+            adds = sum(1 for d in diff if d.startswith("+") and not d.startswith("+++"))
+            dels = sum(1 for d in diff if d.startswith("-") and not d.startswith("---"))
+            return ("DRIFTED", f"+{adds} / -{dels}" + ("  ⚠️ REMOVALS" if dels else ""))
+        r = subprocess.run(row["check"], capture_output=True, text=True, timeout=120)
+        return ("CLEAN", "") if r.returncode == 0 else ("DRIFTED", f"check rc={r.returncode}")
+    except Exception as e:                                    # a broken owner tool is a ROW report,
+        return ("ERROR", str(e)[:80])                         # never a console crash
+    finally:
+        pass
+
+
+def console():
+    """Interactive roster: number-pick → that record's own gated bless. TTY-gated up front."""
+    import subprocess
+    if not _isatty():
+        print("[bless] REFUSED (rc=2): the console requires an interactive terminal (D-394 —\n"
+              "  every roster item's bless demands a typed confirmation; there is no batch mode).")
+        return 2
+    statuses = {}
+
+    def refresh(idx=None):
+        for i, row in enumerate(BLESSABLES):
+            if idx is not None and i != idx:
+                continue
+            if idx is None and row.get("slow"):
+                statuses[i] = ("LAZY", _row_status(row)[1])
+            else:
+                r = dict(row); r.pop("slow", None)            # explicit refresh checks slow rows too
+                statuses[i] = _row_status(r)
+
+    refresh()
+    while True:
+        print("\n═══ bless console — every blessable record, one menu (D-394 per item) ═══")
+        for i, row in enumerate(BLESSABLES, 1):
+            st, detail = statuses[i - 1]
+            mark = {"CLEAN": "✓", "DRIFTED": "✗", "NO-GOLDEN": "∅", "ERROR": "‼", "LAZY": "?"}[st]
+            print(f"  {i}. [{mark} {st:<9}] {row['label']}" + (f"  ({detail})" if detail else ""))
+        print("  → number = bless that record · r = recheck all (incl. slow) · r<N> = recheck one · q = quit")
+        try:
+            ans = input("  > ").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            print(); return 0
+        if ans == "q":
+            return 0
+        if ans == "r":
+            for i, row in enumerate(BLESSABLES):
+                r = dict(row); r.pop("slow", None)
+                statuses[i] = _row_status(r)
+            continue
+        if ans.startswith("r") and ans[1:].isdigit() and 1 <= int(ans[1:]) <= len(BLESSABLES):
+            i = int(ans[1:]) - 1
+            r = dict(BLESSABLES[i]); r.pop("slow", None)
+            statuses[i] = _row_status(r)
+            continue
+        if not (ans.isdigit() and 1 <= int(ans) <= len(BLESSABLES)):
+            print("  (unrecognized — a row number, r, r<N>, or q)")
+            continue
+        row = BLESSABLES[int(ans) - 1]
+        if row["kind"] == "inproc":
+            rc = bless(row["golden"], row["resolve"](), row["key"])
+        else:
+            # Interactive passthrough: the OWNER's own D-394 prompt runs on this same TTY.
+            rc = subprocess.run(row["bless"]).returncode
+        print(f"  [{row['key']}] exited rc={rc}")
+        refresh(int(ans) - 1)
 
 
 if __name__ == "__main__":
     if "--selftest" in sys.argv:
         print("bless --selftest (non-vacuity):")
         sys.exit(0 if selftest() else 2)
+    if "--console" in sys.argv:
+        sys.exit(console() or 0)
     print(__doc__.strip().splitlines()[0])
-    print("\nThis is a LIBRARY — import `compare`/`bless`. Run --selftest to prove the contract.")
+    print("\nLIBRARY (import `compare`/`bless`) + `--console` (the operator bless menu) "
+          "+ `--selftest` (prove the contract).")
     sys.exit(0)

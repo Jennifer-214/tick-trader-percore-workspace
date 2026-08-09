@@ -1277,3 +1277,22 @@ delegated agent must be structurally incapable of rewriting the record). Do not 
 Caramel to run it.
 **Related** — D-407 · D-394 (the contract) · TECH_DEBT-255 (closed over an un-enumerated set; this
 was the missed writer) · Landmine 15 · Class-51 mode F.
+
+### `bless --console` — the universal bless menu (v5.15.5.F.4d.1.E.1.2.B `0.2`+)
+
+**What** — `python3 tools/bless.py --console` lists every blessable record (citable-ID golden ·
+corpus pins ×2 · H21 identifier ledger · latency ratchet) with live drift status (`✓ CLEAN` /
+`✗ DRIFTED +a/−r` / `? LAZY` for the slow ratchet). Enter a row number → that record's OWN bless
+path runs — diff shown, typed confirmation demanded. `r` rechecks all (incl. slow), `r<N>` one
+row, `q` quits.
+**Cfg flags** — none.
+**Fallback** — each record's own CLI still works (`check_corpus_membership --profile X --bless`,
+`check_identifier_retirement --update`, the citable-ids one-liner in `tools/CLAUDE.md`).
+**Where to verify** — `python3 tools/bless.py --selftest` (13 teeth, incl. roster-coverage of
+`tools/goldens/*.txt` + the console's own non-TTY refusal).
+**Paper-test sanity** — startup status pass ~2s (the ratchet is lazy by design).
+**Gotchas** — the console is a MENU over the existing D-394 gates, never a gate itself: there is
+still no `--yes`, no batch mode, and a non-TTY invocation refuses rc=2 — an agent cannot drive it.
+The `⚠️ REMOVALS` flag on a drifted row is the only alarming state (H21: additions are legal).
+**Related** — D-394 · D-410 (bless authority declined; cadence is the friction fix) · TECH_DEBT-255
+· `tools/goldens/README.md` (the golden/baseline/ratchet taxonomy).

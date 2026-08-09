@@ -349,6 +349,91 @@ def _find_first_line(file_lines, identifier, lo=0, hi=None):
 
 _FILE_RESOLUTION_CACHE = {}  # (relpath_str, project_root_str) -> resolved Path or None
 
+# Shared skip-set for recursive searches (compiled artifacts / VCS internals) — ONE definition,
+# used by the bare-name rglob AND the rename probe below.
+_SKIP_DIRS = {"build", "build_gui", "build_suite", "build_tsan", "build_asan",
+              "build_lat", "build_latency", "build_gui_asan", ".git", "node_modules"}
+
+
+# ── (g) step 2 — the RENAME-MAP RESOLVER (D-406 order; consumes derived facts, never a table) ──
+# A cite that misses is not always fabricated: this corpus renamed Core*→Node* files and moved
+# whole dirs (EngineSharded/ → CoreFrameworks/EngineSharded/). Before declaring MISSING, resolve
+# via two DERIVED layers — no hand-maintained rename table to drift (the D-405 lesson applied to
+# the map itself):
+#   1. git's own rename records (`--diff-filter=R`), chain-resolved old→…→current, kept only
+#      where the final target exists at HEAD.
+#   2. a unique-basename move probe for PATHED cites (bare cites already rglob): if exactly ONE
+#      file with that basename exists outside _SKIP_DIRS, the move is unambiguous. Ambiguity
+#      stays MISSING — the resolver never guesses (the H21-adjacent caution).
+# A hit reports status RENAMED (advisory, non-blocking) carrying the new path — the auto-repair
+# payload an annotator or the (d) orchestrator consumes.
+
+_RENAME_MAP_CACHE = {}  # str(root) -> {old_rel: final_new_rel}
+
+
+def _chain_final(m, p):
+    """Follow old→new links to the FINAL name; cycle-safe. Pure."""
+    seen = set()
+    while p in m and p not in seen:
+        seen.add(p)
+        p = m[p]
+    return p
+
+
+def _git_rename_map(root):
+    key = str(root)
+    if key in _RENAME_MAP_CACHE:
+        return _RENAME_MAP_CACHE[key]
+    raw = {}
+    try:
+        out = subprocess.run(
+            ["git", "-C", str(root), "log", "--diff-filter=R", "--find-renames",
+             "--name-status", "--format="],
+            capture_output=True, text=True, timeout=30).stdout
+        for ln in out.splitlines():
+            if ln.startswith("R"):
+                parts = ln.split("\t")
+                if len(parts) == 3:
+                    raw.setdefault(parts[1], parts[2])  # newest-first: keep the LATEST record per old path
+    except Exception:
+        pass  # a non-git root simply contributes no map
+    resolved = {}
+    for old, new in raw.items():
+        fin = _chain_final(raw, new) if new in raw else new
+        if (Path(root) / fin).exists():
+            resolved[old] = fin
+    _RENAME_MAP_CACHE[key] = resolved
+    return resolved
+
+
+def _rename_probe(relpath, project_root, workspace_root=None):
+    """Return the current relpath a stale cite resolves to, or None if no UNAMBIGUOUS target."""
+    roots = [project_root] + ([workspace_root] if workspace_root else [])
+    base = Path(relpath).name
+    for root in roots:
+        m = _git_rename_map(root)
+        if relpath in m:
+            return m[relpath]
+        cands = {new for old, new in m.items() if Path(old).name == base}
+        if len(cands) == 1:
+            return next(iter(cands))
+    if "/" in relpath:  # pathed cite whose dir moved: unique-basename disk probe
+        for root in roots:
+            if not Path(root).exists():
+                continue
+            uniq = set()
+            for found in Path(root).rglob(base):
+                if not found.is_file():
+                    continue
+                if set(found.relative_to(root).parts) & _SKIP_DIRS:
+                    continue
+                uniq.add(str(found.relative_to(root)))
+                if len(uniq) > 1:
+                    break
+            if len(uniq) == 1:
+                return next(iter(uniq))
+    return None
+
 
 def _resolve_filepath(relpath, project_root, workspace_root=None):
     """Resolve a cited relpath to an actual Path; supports bare filenames via recursive search.
@@ -375,15 +460,13 @@ def _resolve_filepath(relpath, project_root, workspace_root=None):
     # Bare filename — recursive search (skip build dirs / .git / etc.)
     if '/' not in relpath:
         bare = Path(relpath).name
-        skip_dirs = {"build", "build_gui", "build_suite", "build_tsan", "build_asan",
-                     "build_lat", "build_latency", "build_gui_asan", ".git", "node_modules"}
         for root in (project_root,) + ((workspace_root,) if workspace_root else ()):
             if not root.exists():
                 continue
             for found in root.rglob(bare):
                 # Skip files inside build dirs (compiled artifacts) or .git
                 parts = set(found.relative_to(root).parts)
-                if parts & skip_dirs:
+                if parts & _SKIP_DIRS:
                     continue
                 _FILE_RESOLUTION_CACHE[cache_key] = found
                 return found
@@ -403,10 +486,16 @@ def verify_line_anchor(plan_line, citation, relpath, start, end, context, projec
       DRIFT      — identifiers found within fuzzy window but NOT in cited range
       DRIFT-FAR  — identifiers exist in file but >fuzzy_window lines from cited range
       MISSING    — file not found at project root or workspace root
+      RENAMED    — file gone at the cited path but resolves via git rename records /
+                   unique-basename move (advisory; detail carries the auto-repair target)
       NOTFOUND   — file exists but identifiers not found anywhere in it (possible fabrication or full rename)
     """
     filepath = _resolve_filepath(relpath, project_root, workspace_root)
     if filepath is None:
+        moved = _rename_probe(relpath, project_root, workspace_root)
+        if moved:
+            return ("RENAMED", f"target MOVED: {relpath} → {moved} — update the cite "
+                               f"(derived from git rename records / unique-basename; auto-repair payload)")
         return ("MISSING", f"file not found at engine root: {relpath}")
 
     try:
@@ -673,6 +762,26 @@ def selftest():
         check("bad NOW target still REDS (MISSING) — the marker is not a blanket exemption",
               st2 == "MISSING")
 
+    # ── (g) step 2 — RENAME-RESOLVER teeth (both directions + the live corpus) ──────────────
+    check("chain-resolve follows old→…→final and is cycle-safe",
+          _chain_final({"A": "B", "B": "C"}, "A") == "C"
+          and _chain_final({"A": "B", "B": "A"}, "A") in ("A", "B"))
+    # LIVE positive control — the real git map on the real repo must resolve the real rename.
+    st, det = verify_line_anchor(1, "x", "CoreLatencyStats.hpp", 248, 248,
+                                 "ctx `CoreLatencyStats_Enable`", ENGINE, WORKSPACE)
+    check("git-recorded rename resolves: CoreLatencyStats.hpp → RENAMED(NodeLatencyStats)",
+          st == "RENAMED" and "NodeLatencyStats" in det)
+    # Prefix-move (git did NOT record these): unique-basename probe on a PATHED cite.
+    st2, det2 = verify_line_anchor(1, "x", "EngineSharded/Run.hpp", 653, 653,
+                                   "ctx `EngineSharded_OrphanRecovery`", ENGINE, WORKSPACE)
+    check("un-recorded dir move resolves via unique basename: EngineSharded/Run.hpp → RENAMED",
+          st2 == "RENAMED" and "CoreFrameworks/EngineSharded/Run.hpp" in det2)
+    # Negative — the resolver must NOT rescue a genuinely absent file.
+    st3, _ = verify_line_anchor(1, "x", "Totally_Absent_XYZQ.hpp", 1, 1,
+                                "ctx `Totally_Absent_Probe`", ENGINE, WORKSPACE)
+    check("a genuinely absent file still reports MISSING (the resolver never guesses)",
+          st3 == "MISSING")
+
     print(f"[b-plus selftest] {'ALL TEETH PASS' if ok else 'FAILURE(S)'}")
     return 0 if ok else 1
 
@@ -718,6 +827,7 @@ def check_plan_body(plan_path, strict=False, verify_anchors=True):
     n_oob = 0
     n_missing = 0
     n_notfound = 0
+    n_renamed = 0
     n_annotated = 0
     if verify_anchors:
         for (plan_line, citation, relpath, start, end, context, marker) in extract_line_anchors(text):
@@ -743,6 +853,9 @@ def check_plan_body(plan_path, strict=False, verify_anchors=True):
             elif status == "MISSING":
                 n_missing += 1
                 anchor_findings.append((plan_line, status, citation, detail))
+            elif status == "RENAMED":
+                n_renamed += 1
+                anchor_findings.append((plan_line, status, citation, detail))
             elif status == "NOTFOUND":
                 n_notfound += 1
                 anchor_findings.append((plan_line, status, citation, detail))
@@ -759,6 +872,7 @@ def check_plan_body(plan_path, strict=False, verify_anchors=True):
         "n_oob": n_oob,
         "n_missing": n_missing,
         "n_notfound": n_notfound,
+        "n_renamed": n_renamed,
         "n_annotated": n_annotated,
         "anchor_findings": anchor_findings,
     }
@@ -1052,6 +1166,7 @@ def main():
     total_oob = 0
     total_missing = 0
     total_notfound = 0
+    total_renamed = 0
     total_annotated = 0
     any_fabrication = False
     any_anchor_error = False  # OOB + MISSING are blocking; DRIFT is warning
@@ -1072,6 +1187,7 @@ def main():
         n_oob = result["n_oob"]
         n_missing = result["n_missing"]
         n_notfound = result["n_notfound"]
+        n_renamed = result.get("n_renamed", 0)
         anchor_findings = result["anchor_findings"]
 
         total_blocks += n_blocks
@@ -1082,6 +1198,7 @@ def main():
         total_oob += n_oob
         total_missing += n_missing
         total_notfound += n_notfound
+        total_renamed += n_renamed
         total_annotated += result.get("n_annotated", 0)
         if n_fab > 0:
             any_fabrication = True
@@ -1104,12 +1221,15 @@ def main():
         # === Line-anchor report (NEW) ===
         if anchor_findings:
             show_drift = args.show_drift or args.strict
-            blocking = [f for f in anchor_findings if f[1] in ("OOB", "MISSING")]
+            blocking = [f for f in anchor_findings if f[1] in ("OOB", "MISSING", "RENAMED")]
             drift = [f for f in anchor_findings if f[1] in ("DRIFT", "DRIFT-FAR", "NOTFOUND")]
             if blocking or (show_drift and drift):
                 print(f"\n=== {path.name} line-anchor verification ===", file=sys.stderr)
                 for (plan_line, status, citation, detail) in anchor_findings:
-                    if status in ("OOB", "MISSING"):
+                    if status == "RENAMED":
+                        print(f"  ⚠️  RENAMED at plan:line~{plan_line}  cite={citation}", file=sys.stderr)
+                        print(f"     {detail}", file=sys.stderr)
+                    elif status in ("OOB", "MISSING"):
                         print(f"  ❌ {status} at plan:line~{plan_line}  cite={citation}", file=sys.stderr)
                         print(f"     {detail}", file=sys.stderr)
                     elif show_drift and status in ("DRIFT", "DRIFT-FAR", "NOTFOUND"):
@@ -1120,7 +1240,7 @@ def main():
     anchor_summary = ""
     if total_anchors > 0:
         anchor_summary = (f"; {total_anchors} line-anchors ({total_drift} drift + {total_oob} OOB"
-                          f" + {total_missing} missing + {total_notfound} notfound"
+                          f" + {total_missing} missing + {total_renamed} renamed + {total_notfound} notfound"
                           f" + {total_annotated} annotated)")
     print(f"\n=== SUMMARY: {total_blocks} blocks checked across {len(paths)} files; {total_fab} FABRICATIONS + {total_harness} harness-issues{anchor_summary} ===", file=sys.stderr)
     if total_drift > 0 and not args.show_drift:

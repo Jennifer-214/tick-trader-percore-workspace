@@ -129,3 +129,26 @@ as dated sections.
   the contract layer (a)/(d) IS the foundation it waits on. Nothing to build now; this section
   exists so the 0.x work keeps the seam clean (contracts stay language-neutral; no Python-only
   cleverness in interfaces that would block the flip).
+
+## 7. Tools directory structure + portability (parting transmission, 2026-08-09)
+
+- **As given:** "eventually well need to organize and update the tools to have a more defined
+  directory structure maybe, unless this works, it coul intheory be portable, anyways time ot go".
+- **Reading — two distinct threads:** (i) `tools/` is ~100 flat files; a defined structure
+  (producers / gates / lib / goldens / plugins already exist as partial seams) may be owed as the
+  count grows. (ii) PORTABILITY — the toolchain running from any clone/machine — is the deeper ask,
+  and it is FURTHER ALONG than the flat layout suggests: `foxroots` is the ONE machine-portable
+  root resolver (D-375; no `$HOME` hardcodes; the import-from-core lint holds the class closed),
+  goldens are git-tracked-only for fresh-clone identity (D-396), and `bless.py`'s roster +
+  `check_tools_inventory` enrollment make the tool SET itself enumerable.
+- **The "unless this works" hedge is load-bearing:** flat-with-disciplines may simply be correct —
+  the enrollment gate + `tools/lib/` (DATA) + `tools/goldens/` + `tools/foxtag/` + `tools/plugins/`
+  already partition by KIND. A restructure is a mass file-move = a citation-rename event (~100 tool
+  paths cited corpus-wide) — do NOT do it before (g)'s rename-resolver exists to absorb exactly that
+  class of move, and fold it into the C++-core migration (§6) if that lands, so the tree moves ONCE.
+- **Sisters:** TECH_DEBT-244 (tools/ de-sprawl — the tracked home for the structure half) ·
+  `foxroots.py` / the import-from-core lint (the portability substrate) · D-396 (tracked-only
+  goldens) · §6 (the C++-core migration this should ride with) · (g) rename-resolver (the
+  precondition for any mass path move).
+- **Dive:** with §6's migration planning, or at TECH_DEBT-244's trigger — whichever fires first.
+  Nothing to build now; captured so the threads converge instead of colliding.

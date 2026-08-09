@@ -148,7 +148,7 @@ The sharded hot/slow/global-thread architecture, the per-node strategy/model/ris
 | `ML_Headers/` | RollingStats, ROR_regressor, ConfidenceScore, ModelInference (XGBoost), FlowFeatures, StampBoundCfgRegistry, StampBoundModelConstRegistry |
 | `GUI/` | Dear ImGui native: FoxmlTheme, DashboardPanels, ChartPanel, CandleAccumulator, TradeReader, SettingsPanel, TradeHistoryPanel, LogViewerPanel, GuiThread |
 | `Backtest/` | `Backtest_Run` wrapper + `BacktestSharded_Run`, BacktestPanels, LabelFunctions, HeldOutSplit, ValidationSplit |
-| `tests/` | controller_test.cpp (3118 tests), parity_harness.cpp |
+| `tests/` | controller_test.cpp + `controller_test_<domain>.cpp` splits (count re-derives by running it; `parity_harness` RETIRED at `.E.1.1` — one-shot diagnostic, not a gate) |
 | `DOCS/` | CHANGELOG.md, changelogs/, CLAUDE_*.md (split-load reference docs), RECURRING_BUG_PATTERNS.md, STRATEGY_AND_CODING_RULES.md (private) |
 | `plans/` | gitignored (symlinked to workspace); working plans + plan_checks + handoffs + postmortems |
 | `Version.hpp`, `Limits.hpp` | single source of truth |

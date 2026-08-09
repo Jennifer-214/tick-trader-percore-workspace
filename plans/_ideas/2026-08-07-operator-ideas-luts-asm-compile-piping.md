@@ -152,3 +152,47 @@ as dated sections.
   precondition for any mass path move).
 - **Dive:** with §6's migration planning, or at TECH_DEBT-244's trigger — whichever fires first.
   Nothing to build now; captured so the threads converge instead of colliding.
+
+## 8. Chain-position labels (HEAD/TAIL/seq) as a [DERIVED] axis + a data-flow graph in nvim (2026-08-09)
+
+- **As given:** "like in the DAG labeling stuff as HEAD and TAIL and like the sequence number in a
+  chain may be nice for the TAG comments and stuff as well, or like a data flow graph, that is
+  shown in nvim or something idk, just a thought".
+- **Reading — two layers:** (i) a unit's POSITION IN A CHAIN as a derived tag axis —
+  `[DERIVED]_[CHAIN]_[<chain-id> #<seq> HEAD|MID|TAIL]` — for the engine's literal pipelines
+  (producer → SPSC ring → per-node hot/slow → OMS drainer is a REAL chain the architecture names);
+  (ii) a rendered DATA-FLOW GRAPH surface in nvim over those edges.
+- **Why it fits the existing substrate:** the DAG-labeling vocabulary she likes is already the
+  sprint nav-infra convention (`*-dependency-graph.md`); the `[DERIVED]` tier is DEFINED as
+  compiled/pipeline-reality axes (tools/CLAUDE.md: DEV_PLANE derived = pipeline-reality); the
+  plugin already renders call-hierarchy trees (`trace.lua` incoming + callees "Calls" tree +
+  neotree) — a graph view is those trees generalized; `check_cache_layout --fix` is the
+  writer-precedent for stamping derived facts INTO tag blocks.
+- **Design cautions at dive:** chain EDGES for data-flow (not just call-graph) need AST/dataflow
+  fidelity — post-`0.6` (TD-256) territory; the KNOWN engine pipelines could land earlier as
+  DECLARED chains verified against the call graph (declare-then-verify, the §4 codegen sibling
+  posture). Chain-id/seq must never enter IDENTITY (D-tool-385 boundary: derived metadata, not
+  identifiers — a re-sequenced chain must not rename anything).
+- **Sisters:** §4 (declarative codegen — same declare/derive seam) · §5 (plane index — sibling
+  derived view) · TD-256/`0.6` (edge fidelity) · `0.5` cards (where a chain badge renders) ·
+  north-star §6 trees (the render surface a graph view generalizes).
+- **Dive:** sketch at the `0.5` card dive (badge form), full graph at/after `0.6`.
+
+## 9. The IDE-HUMANIZATION arc (operator directive-by-observation, 2026-08-09, mid-dogfood)
+
+- **As given:** "theres alot that needs to be looked at because technically the tools work, but the
+  actual implementation within nvim to make it human useable and into a IDE type custom plugin,
+  there is alot of work like that."
+- **Reading:** the FACTS layer is proven (foxtag · gates · parity); the remaining `0.4`/`0.5` work
+  is USABILITY-hardening, not feature-adding — collisions, discoverability, readable surfaces,
+  "what does this key actually do" legibility. Treat UX reports from dogfood as first-class work
+  items on par with tool defects.
+- **First two instances (operator screenshot, same session):** (i) the inline size chip
+  (`◇ 42256 B · 661 cache lines`) COLLIDES with git-blame virtual text at eol — two plugins
+  competing for one space; (ii) straddle-diagnostics discoverability — unclear whether it points
+  at WHICH field straddles. Both actioned same-session (see plugin log).
+- **Positive signal recorded:** lock-layout (`<leader>da` static_assert insert) called out as
+  "neat" — the insert-a-guard-from-the-HUD shape works; more one-keypress guard-writers of that
+  shape are candidates.
+- **Sisters:** north-star §6 Target UX (the spec this arc executes) · §8 (graph surfaces) ·
+  `0.5` cards (where most rendering lands).

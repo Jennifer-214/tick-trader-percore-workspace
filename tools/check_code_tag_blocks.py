@@ -732,10 +732,114 @@ def run_selftest(categories, concern_vocab, surface_vocab):
     return ok
 
 
+# --- A2: written call-graph facts — the declared-PARTIAL gate (D-414 leaf-4) -------------------
+# The [UPSTREAM]/[CONSUMERS] axes were write-once-UNVERIFIED (I-2 census: 1 verified / 2 drifted /
+# 2 FABRICATED of 8 written lines — `StrategyParameters_Dispatch` never existed). This gate closes
+# the observed failure modes MECHANICALLY: (1) EXISTENCE — every written symbol must appear as a
+# CODE token somewhere in the corpus (a symbol living only in comments is a phantom); (2) file-
+# granularity REFERENCE — a CONSUMERS symbol must co-occur with its unit in ≥1 file's code.
+# DECLARED PARTIAL, structurally (M10): it prints its own non-coverage every run — MISSING
+# consumers are invisible here (that needs the real generator = the v1 foxtag call-graph axis).
+_CG_LINE_RE = re.compile(r"^\s*//\s*\[(UPSTREAM|CONSUMERS)\]_\[(.+)\]\s*$")
+_CG_UNIT_RE = re.compile(r"^\s*//\s*\[(?:STRUCT|FUNCTION|ENUM|REGISTRY)\]_\[([A-Za-z_][A-Za-z0-9_]*)")
+_CG_TOKEN_RE = re.compile(r"\[([^\[\]]+)\]")
+
+
+def _cg_code_texts(files):
+    """file -> its text with comment-only lines stripped (the CODE-token search space)."""
+    texts = {}
+    for f in files:
+        try:
+            raw = Path(f).read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        texts[str(f)] = "\n".join(l for l in raw.split("\n") if not l.lstrip().startswith("//"))
+    return texts
+
+
+def callgraph_check(files):
+    texts = _cg_code_texts(files)
+    findings, checked, skipped_prose = [], 0, 0
+    for f in files:
+        try:
+            raw = Path(f).read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        unit = None
+        for line in raw.split("\n"):
+            um = _CG_UNIT_RE.match(line)
+            if um:
+                unit = um.group(1)
+            m = _CG_LINE_RE.match(line)
+            if not m:
+                continue
+            kind, payload = m.groups()
+            for tok in _CG_TOKEN_RE.findall(payload):
+                base = re.split(r"[<\s(]", tok.strip())[0].rstrip(":")
+                if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", base):
+                    skipped_prose += 1          # prose-form token: outside the mechanical contract
+                    continue
+                checked += 1
+                pat = re.compile(rf"\b{re.escape(base)}\b")
+                hit_files = [fn for fn, t in texts.items() if pat.search(t)]
+                if not hit_files:
+                    findings.append((str(f), kind, base,
+                                     "PHANTOM — appears in NO code line corpus-wide (fabricated, or renamed-away)"))
+                elif kind == "CONSUMERS" and unit and not any(
+                        re.search(rf"\b{re.escape(unit)}\b", texts[fn]) for fn in hit_files):
+                    findings.append((str(f), kind, base,
+                                     f"STALE-REFERENCE — exists, but no file containing it references unit '{unit}' in code"))
+    print(f"[callgraph-A2] DECLARED-PARTIAL gate: {checked} written call-graph token(s) checked "
+          f"(existence + file-granularity co-occurrence; {skipped_prose} prose-form skipped). "
+          f"NON-COVERAGE (structural, M10): MISSING consumers are INVISIBLE here — needs the "
+          f"v1 foxtag call-graph generator.")
+    if findings:
+        print(f"[callgraph-A2] FAIL — {len(findings)} finding(s):")
+        for fn, kind, tok, why in findings:
+            print(f"    {fn} [{kind}] {tok}: {why}")
+        return 1
+    print("[callgraph-A2] GREEN — every written call-graph token exists + co-occurs with its unit.")
+    return 0
+
+
+def callgraph_selftest():
+    import tempfile
+    ok = True
+    with tempfile.TemporaryDirectory() as td:
+        a = Path(td) / "a.hpp"
+        a.write_text("// [SCHEMA]_[v1.0]\n// [STRUCT]_[RealUnit]\n"
+                     "// [CONSUMERS]_[[RealConsumer] [PhantomFn]]\n"
+                     "struct RealUnit {};\nvoid RealConsumer() { RealUnit u; (void)u; }\n",
+                     encoding="utf-8")
+        t1 = callgraph_check([a]) == 1
+        ok &= t1
+        print(f"  {'✅' if t1 else '❌'} A2 phantom consumer → RED")
+        b = Path(td) / "b.hpp"
+        b.write_text("// [SCHEMA]_[v1.0]\n// [STRUCT]_[UnitB]\n// [CONSUMERS]_[[UserB]]\n"
+                     "struct UnitB {};\nvoid UserB() { UnitB x; (void)x; }\n", encoding="utf-8")
+        t2 = callgraph_check([b]) == 0
+        ok &= t2
+        print(f"  {'✅' if t2 else '❌'} A2 clean existence + co-occurrence → GREEN")
+        c = Path(td) / "c.hpp"
+        c.write_text("// [SCHEMA]_[v1.0]\n// [STRUCT]_[UnitC]\n// [CONSUMERS]_[[LonerFn]]\n"
+                     "struct UnitC {};\n", encoding="utf-8")
+        d = Path(td) / "d.hpp"
+        d.write_text("void LonerFn() {}\n", encoding="utf-8")
+        t3 = callgraph_check([c, d]) == 1
+        ok &= t3
+        print(f"  {'✅' if t3 else '❌'} A2 stale-reference (no co-occurrence) → RED")
+    return ok
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--paths", nargs="*")
     ap.add_argument("--selftest", action="store_true", help="prove the checker catches each violation class")
+    ap.add_argument("--callgraph-check", action="store_true",
+                    help="A2 (D-414): verify written [UPSTREAM]/[CONSUMERS] symbols exist + "
+                         "co-occur with their unit (DECLARED-PARTIAL — prints its non-coverage)")
+    ap.add_argument("--callgraph-selftest", action="store_true",
+                    help="prove the A2 gate REDs on phantom + stale-reference (D-137 teeth)")
     args = ap.parse_args()
 
     concern_vocab, surface_vocab = load_vocabulary()
@@ -745,6 +849,19 @@ def main():
         print("ERROR: doc-tag-vocabulary or the spec's category-set / reference-subcats SSoT "
               "not loadable", file=sys.stderr)
         return 2
+
+    if args.callgraph_selftest:
+        print("check_code_tag_blocks --callgraph-selftest (A2 teeth; non-vacuity):")
+        return 0 if callgraph_selftest() else 2
+    if args.callgraph_check:
+        files = (resolve_paths(args.paths, profile="validate") if args.paths
+                 else engine_source_files())
+        # schema_golden = FROZEN fixtures (never edited; may carry era-frozen symbol forms).
+        # CODE_TAG_TEMPLATES stays IN corpus deliberately — a symbol-shaped placeholder leaked
+        # into real source once (the StrategyParameters_Dispatch phantom); keeping the template
+        # under the gate forces placeholders to stay angle-form (which A2 skips by design).
+        files = [f for f in files if "schema_golden" not in str(f)]
+        return callgraph_check(files)
 
     if args.selftest:
         print(f"check_code_tag_blocks --selftest ({len(categories)} categories from spec; non-vacuity):")

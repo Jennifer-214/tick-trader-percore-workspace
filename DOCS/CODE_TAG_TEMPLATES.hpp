@@ -104,7 +104,7 @@ inline int Regime_Classify(RegimeState<F>* state, const RegimeSignals<F>* sig,
 // [FLOAT]_[18 · H4-exempt feature-math]
 // [BRANCHES]_[0 data-dependent-warm]
 // [UPSTREAM]_[[RegimeSignals] [ControllerConfig]]
-// [CONSUMERS]_[[EventLoop_RebuildOneCore] [StrategyParameters_Dispatch]]
+// [CONSUMERS]_[[EventLoop_RebuildOneCore] [<your-consumer-fn>]]   <-- placeholders are ANGLE-FORM on purpose: a symbol-shaped placeholder LEAKED into real source once (the StrategyParameters_Dispatch phantom, D-414 I-2) — the A2 gate skips <angle> forms and REDs symbol-shaped phantoms
 //   body: 1x [LAT_EXEMPT] env-gated cold-debug fprintf
 //======================================================================
 // [END_FUNCTION]_[Regime_Classify]
@@ -261,7 +261,7 @@ static_assert(CfgFieldDescriptor::IS_BOOT_ONLY < (1u << 16), "widen metadata_fla
 //----------------------------------------------------------------------
 // [ROW_COUNT]_[47]
 // [ENROLLED]_[MetaRegistry.hpp]
-// [CONSUMERS]_[[ControllerConfig_Load] [PerCoreCfg] [SettingsPanel] [CfgFieldDispatch]]
+// [CONSUMERS]_[[ControllerConfig_Load] [<per-node-cfg-struct>] [SettingsPanel] [CfgFieldDispatch]]
 //======================================================================
 // [END_REGISTRY]_[FOREACH_GLOBAL_CFG_FIELD]
 //======================================================================
@@ -296,7 +296,7 @@ enum OrderState : uint8_t {
 //----------------------------------------------------------------------
 // [ROW_COUNT]_[9]
 // [SIZE]_[uint8]
-// [CONSUMERS]_[[Order.flags_packed] [OMS] [Reconcile]]
+// [CONSUMERS]_[[Order.flags_packed] [<oms-drain-fn>] [<reconcile-fn>]]
 //======================================================================
 // [END_ENUM]_[OrderState]
 //======================================================================

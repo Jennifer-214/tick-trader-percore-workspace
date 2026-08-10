@@ -165,6 +165,7 @@ run_hard "cfg-key-prefix-drift teeth"             bash "$REPO_ROOT/tools/check_c
 run_hard "close-out-completeness teeth"           bash "$REPO_ROOT/tools/check_close_out_completeness_selftest.sh"
 run_hard "code-tag-blocks teeth (wrapper)"        bash "$REPO_ROOT/tools/check_code_tag_blocks_selftest.sh"
 run_hard "cache-layout gate teeth (wrapper; D-137)" bash "$REPO_ROOT/tools/check_cache_layout_selftest.sh"
+run_hard "call-graph A2 teeth (phantom + stale-reference RED)" python3 "$REPO_ROOT/tools/check_code_tag_blocks.py" --callgraph-selftest
 run_hard "conversion-completeness teeth (wrapper)" bash "$REPO_ROOT/tools/check_conversion_completeness_selftest.sh"
 run_hard "handoff-capture-completeness teeth"     bash "$REPO_ROOT/tools/check_handoff_capture_completeness_selftest.sh"
 run_hard "latency-path-conformance teeth (H8)"    bash "$REPO_ROOT/tools/check_latency_path_conformance_selftest.sh"
@@ -415,6 +416,15 @@ if [ "${SKIP_CACHE_LAYOUT_CHECK:-0}" != "1" ]; then
         python3 "$REPO_ROOT/tools/check_cache_layout.py" --strict-new
     run_advisory "cache-layout gate (suite TU foxml_suite.cpp — O4b coverage)" \
         python3 "$REPO_ROOT/tools/check_cache_layout.py" --tu foxml_suite.cpp --strict-new
+fi
+
+# --- ADVISORY: call-graph facts A2 (D-414 leaf-4) — written [UPSTREAM]/[CONSUMERS] exist +
+# co-occur with their unit. DECLARED-PARTIAL (M10, printed every run): MISSING consumers are
+# invisible — that needs the v1 foxtag call-graph generator. Closes the observed fabrication
+# (a phantom symbol survived 5 weeks in committed source) + whole-file staleness modes.
+if [ "${SKIP_CALLGRAPH_A2_CHECK:-0}" != "1" ]; then
+    run_advisory "call-graph facts A2 (declared-PARTIAL: existence + co-occurrence)" \
+        python3 "$REPO_ROOT/tools/check_code_tag_blocks.py" --callgraph-check
 fi
 
 echo ""

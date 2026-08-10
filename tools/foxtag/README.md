@@ -159,10 +159,14 @@ validator itself; its cutover is the LAST one, after the others soak.
   -DCMAKE_EXPORT_COMPILE_COMMANDS=ON .` at the engine root) is main-TU-grained; the core's
   header→TU pick prefers the `main.cpp` entry for header lookups. Full per-header entries =
   a plugin-session concern.
-- **Drift-gate generalization:** sequenced, not skipped — it generalizes when the
-  corresponding axes start being WRITTEN (the P6 conversion writes layout; call-graph +
-  [BUILD]-pinned codegen come with the plugin/P6). Today only layout is written → the
-  cache-gate covers it.
+- **Drift-gate generalization:** sequenced, not skipped — it generalizes as each axis's
+  generator gate lands. **[STATE 2026-08-10, corrected — the earlier "today only layout is
+  written" premise had been FALSE since the pilot `d4812de`:** call-graph `[UPSTREAM]`/
+  `[CONSUMERS]` HAVE been written since 2026-07-06 and sat write-once-unverified — the D-414
+  I-2 census found 1 verified / 2 drifted / 2 FABRICATED among the 8 written lines. The A2
+  declared-PARTIAL gate (symbol-existence + reference-presence, D-414 leaf-4) now covers the
+  written lines; MISSING-consumer detection still needs the real generator = the v1 foxtag
+  call-graph axis.] The layout axes are covered by the strict-new cache-gate.
 - **Phase-5 seam (operator's session):** the plugin's `tagadapter.parse` via `foxtag unit`,
   `facts.lua` via `foxtag layout`/`codegen` — all subprocess+JSON, ready now.
 

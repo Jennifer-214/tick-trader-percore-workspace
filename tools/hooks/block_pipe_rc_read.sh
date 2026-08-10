@@ -8,7 +8,10 @@
 # $pipestatus[1] (zsh).
 cmd=$(cat | jq -r '.tool_input.command // empty' 2>/dev/null)
 [ -z "$cmd" ] && exit 0
-if echo "$cmd" | grep -qE '\|[[:space:]]*(tail|head|tee|grep|rg|sed|awk|cat|sort|uniq|wc)[^|;]*;[^|]*\$\?' \
+# Same-STATEMENT scope (refined 2026-08-10 after a live false positive): the $? must follow the
+# pipeline's own terminating `;` with NO further `;` between — a pipe in one statement plus an
+# honest `cmd > log; RC=$?` in a LATER statement is fine (the M3 false-positive surface).
+if echo "$cmd" | grep -qE '\|[[:space:]]*(tail|head|tee|grep|rg|sed|awk|cat|sort|uniq|wc)[^|;]*;[[:space:]]*[^;|]*\$\?' \
    && ! echo "$cmd" | grep -qiE 'PIPESTATUS|pipestatus'; then
   echo "BLOCKED: reading \$? after a pipeline reads the LAST stage's exit (tail/tee=0), not your tool's — the Class-57 pipe-swallow (3 bites this arc, one inside a gate). Capture rc directly: 'cmd > /tmp/x.log 2>&1; RC=\$?' — or \${PIPESTATUS[0]} (bash) / \$pipestatus[1] (zsh)." >&2
   exit 2

@@ -781,5 +781,163 @@ def _main():
     # non-vacuity: an index that resolves nothing is a broken resolver, not an empty corpus.
     sys.exit(0 if total > 50 else 2)
 
+
+
+# ══════════════════════════════════════════════════════════════════════════════════════════════
+# CITED-PATH RESOLUTION — the (g)-5 LIFT (D-416 remainder / D-417), moved VERBATIM-behavior from
+# check_plan_body_symbol_existence.py ((g)-2 built it; the lift makes it the ONE resolver).
+# Consumers: (1) B-Plus (re-adopted via aliases; its 15 teeth are the lift's acceptance oracle),
+# (2) the plugin 0.4 doc-viewer dead-link check (the convergence point), (3) the (d) update-
+# orchestrator (RENAMED payloads are its input). Python-side per D-415; the v1 foxtag core
+# absorbs this behind the re-armed parity gate.
+# ══════════════════════════════════════════════════════════════════════════════════════════════
+import subprocess
+
+_FILE_RESOLUTION_CACHE = {}  # (relpath_str, project_root_str) -> resolved Path or None
+
+# Shared skip-set for recursive searches (compiled artifacts / VCS internals) — ONE definition,
+# used by the bare-name rglob AND the rename probe below.
+SKIP_DIRS = {"build", "build_gui", "build_suite", "build_tsan", "build_asan",
+              "build_lat", "build_latency", "build_gui_asan", ".git", "node_modules"}
+
+
+# ── (g) step 2 — the RENAME-MAP RESOLVER (D-406 order; consumes derived facts, never a table) ──
+# A cite that misses is not always fabricated: this corpus renamed Core*→Node* files and moved
+# whole dirs (EngineSharded/ → CoreFrameworks/EngineSharded/). Before declaring MISSING, resolve
+# via two DERIVED layers — no hand-maintained rename table to drift (the D-405 lesson applied to
+# the map itself):
+#   1. git's own rename records (`--diff-filter=R`), chain-resolved old→…→current, kept only
+#      where the final target exists at HEAD.
+#   2. a unique-basename move probe for PATHED cites (bare cites already rglob): if exactly ONE
+#      file with that basename exists outside SKIP_DIRS, the move is unambiguous. Ambiguity
+#      stays MISSING — the resolver never guesses (the H21-adjacent caution).
+# A hit reports status RENAMED (advisory, non-blocking) carrying the new path — the auto-repair
+# payload an annotator or the (d) orchestrator consumes.
+
+_RENAME_MAP_CACHE = {}  # str(root) -> {old_rel: final_new_rel}
+
+
+def chain_final(m, p):
+    """Follow old→new links to the FINAL name; cycle-safe. Pure."""
+    seen = set()
+    while p in m and p not in seen:
+        seen.add(p)
+        p = m[p]
+    return p
+
+
+def git_rename_map(root):
+    key = str(root)
+    if key in _RENAME_MAP_CACHE:
+        return _RENAME_MAP_CACHE[key]
+    raw = {}
+    try:
+        out = subprocess.run(
+            ["git", "-C", str(root), "log", "--diff-filter=R", "--find-renames",
+             "--name-status", "--format="],
+            capture_output=True, text=True, timeout=30).stdout
+        for ln in out.splitlines():
+            if ln.startswith("R"):
+                parts = ln.split("\t")
+                if len(parts) == 3:
+                    raw.setdefault(parts[1], parts[2])  # newest-first: keep the LATEST record per old path
+    except Exception:
+        pass  # a non-git root simply contributes no map
+    resolved = {}
+    for old, new in raw.items():
+        fin = chain_final(raw, new) if new in raw else new
+        if (Path(root) / fin).exists():
+            resolved[old] = fin
+    _RENAME_MAP_CACHE[key] = resolved
+    return resolved
+
+
+def rename_probe(relpath, project_root, workspace_root=None):
+    """Return the current relpath a stale cite resolves to, or None if no UNAMBIGUOUS target."""
+    roots = [project_root] + ([workspace_root] if workspace_root else [])
+    base = Path(relpath).name
+    for root in roots:
+        m = git_rename_map(root)
+        if relpath in m:
+            return m[relpath]
+        cands = {new for old, new in m.items() if Path(old).name == base}
+        if len(cands) == 1:
+            return next(iter(cands))
+    if "/" in relpath:  # pathed cite whose dir moved: unique-basename disk probe
+        for root in roots:
+            if not Path(root).exists():
+                continue
+            uniq = set()
+            for found in Path(root).rglob(base):
+                if not found.is_file():
+                    continue
+                if set(found.relative_to(root).parts) & SKIP_DIRS:
+                    continue
+                uniq.add(str(found.relative_to(root)))
+                if len(uniq) > 1:
+                    break
+            if len(uniq) == 1:
+                return next(iter(uniq))
+    return None
+
+
+def resolve_filepath(relpath, project_root, workspace_root=None):
+    """Resolve a cited relpath to an actual Path; supports bare filenames via recursive search.
+
+    Plan body often cites bare filenames (e.g., `EngineSharded.hpp` not
+    `CoreFrameworks/EngineSharded.hpp`). Search recursively when path is bare.
+    Cached per project_root to avoid repeated rglob.
+    """
+    cache_key = (relpath, str(project_root))
+    if cache_key in _FILE_RESOLUTION_CACHE:
+        return _FILE_RESOLUTION_CACHE[cache_key]
+
+    # Try direct path first (engine root then workspace)
+    direct = project_root / relpath
+    if direct.exists():
+        _FILE_RESOLUTION_CACHE[cache_key] = direct
+        return direct
+    if workspace_root is not None:
+        ws_direct = workspace_root / relpath
+        if ws_direct.exists():
+            _FILE_RESOLUTION_CACHE[cache_key] = ws_direct
+            return ws_direct
+
+    # Bare filename — recursive search (skip build dirs / .git / etc.)
+    if '/' not in relpath:
+        bare = Path(relpath).name
+        for root in (project_root,) + ((workspace_root,) if workspace_root else ()):
+            if not root.exists():
+                continue
+            for found in root.rglob(bare):
+                # Skip files inside build dirs (compiled artifacts) or .git
+                parts = set(found.relative_to(root).parts)
+                if parts & SKIP_DIRS:
+                    continue
+                _FILE_RESOLUTION_CACHE[cache_key] = found
+                return found
+
+    _FILE_RESOLUTION_CACHE[cache_key] = None
+    return None
+
+
+def resolve_cited_path(relpath, project_root, workspace_root=None):
+    """THE consumer API for cited-path resolution — one call, tri-state honest (no flattening,
+    Class 57): returns (status, payload) where
+      ("RESOLVED", Path)    — the cite resolves at HEAD (direct, or bare-name rglob)
+      ("RENAMED",  str)     — gone at the cited path but resolves UNAMBIGUOUSLY via git rename
+                              records / unique-basename move; payload = the current relpath
+                              (the auto-repair target the (d) orchestrator consumes)
+      ("MISSING",  None)    — neither resolves nor renames; the resolver never guesses.
+    """
+    p = resolve_filepath(relpath, project_root, workspace_root)
+    if p is not None:
+        return ("RESOLVED", p)
+    moved = rename_probe(relpath, project_root, workspace_root)
+    if moved:
+        return ("RENAMED", moved)
+    return ("MISSING", None)
+
+
 if __name__ == "__main__":
     _main()

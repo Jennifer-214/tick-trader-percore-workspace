@@ -44,24 +44,32 @@ def _run(args, timeout=300):
 
 
 def layout(tu, names=()):
-    """LAYOUT facts: {record: {size, align, straddlers:[{name,off,size}]}} ({} on failure).
+    """LAYOUT facts: {record: {size, align, straddlers:[{name,off,size}]}} — or None on RUN
+    FAILURE (spawn error / rc != 0 / empty or undecodable output). None ≠ {}: a failed run is
+    NOT an empty layout — callers fall back or refuse, never flatten it into facts (D-413/F2
+    emit-boundary honesty; rc idiom mirrors codegen()).
     Same JSON shape as emit_record_layout.lua (parity-proven straddler-exact, D-350)."""
-    out, _ = _run(["layout", str(tu)] + list(names))
+    out, rc = _run(["layout", str(tu)] + list(names))
+    if rc is None or rc != 0 or not out.strip():
+        return None
     try:
-        return json.loads(out) if out.strip() else {}
+        return json.loads(out)
     except json.JSONDecodeError:
-        return {}
+        return None
 
 
 def fields(tu, names=()):
-    """Per-field layout facts: {record: {size, align, fields:[{name,type,off,size}]}} ({} on failure).
+    """Per-field layout facts: {record: {size, align, fields:[{name,type,off,size}]}} — or None
+    on RUN FAILURE (same rc-honest contract as layout(); D-413/F2 — a failed run is not facts).
     The RC-F (D-366) per-field register-fit producer — same clang dump as layout(), ALL fields exposed
     (via the shared field_size resolver), a SEPARATE command so layout()'s parity-gated shape is untouched."""
-    out, _ = _run(["fields", str(tu)] + list(names))
+    out, rc = _run(["fields", str(tu)] + list(names))
+    if rc is None or rc != 0 or not out.strip():
+        return None
     try:
-        return json.loads(out) if out.strip() else {}
+        return json.loads(out)
     except json.JSONDecodeError:
-        return {}
+        return None
 
 
 def codegen(headers, params, call, flags=None, prelude=None):
@@ -101,9 +109,12 @@ def inventory():
     tags=[(file, tag)] — decoded from the core's sorted parity-dump rows (identical to the
     Python collector's output; parity §2)."""
     out, rc = _run(["parity-dump"])
+    if rc is None or rc != 0:
+        # D-413/F2: a crashed/partial parity-dump must never parse as a SMALLER TRUE inventory
+        # (the HARD index --check would red on the shrunken regen and the natural "re-run the
+        # rebuild" would COMMIT the flattened index). None = refuse; callers fall back.
+        return None
     units, tags = [], []
-    if rc is None:
-        return units, tags
     for row in out.splitlines():
         parts = row.split("|")
         if len(parts) == 5 and parts[0] == "U":

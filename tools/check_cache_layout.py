@@ -85,19 +85,23 @@ def run_emitter_nvim(tu, names):
 
 
 def run_emitter(tu, names, backend="auto"):
-    """Layout facts via the chosen backend. `auto` (default) = the foxtag CORE when its binary
-    is built, else the Lua emitter — the PARITY-GATED cutover (D-352): foxtag became eligible
-    when tools/foxtag/parity_check.sh §4 passed straddler-exact on the 204-record census
-    (D-350); the Lua stays as the fallback so a foxtag-less checkout keeps the gate alive.
+    """Layout facts via the chosen backend. `auto` (default) = the LUA emitter — script-side
+    authority during the churn phase per D-415 (C++ conversion DEFERRED to v1; foxtag DEMOTED,
+    frozen-kept; the D-349/D-352 parity-gated cutover PARKS and re-arms at v1 as the acceptance
+    gate — this line is where `auto` flips back to foxtag-when-built at the v1 re-arm).
+    `foxtag` = explicit opt-in probe of the frozen core; a FAILED foxtag run returns None from
+    the client (D-413/F2 rc-honesty) → falls back to the Lua emitter, never flattens to {}.
     ONE Python↔core seam: the foxtag call routes through tools/foxtag_client.py."""
-    if backend != "nvim":
+    if backend == "foxtag":
         try:
-            from foxtag_client import layout as foxtag_layout, core_available
-            if backend == "foxtag" or core_available():
-                return foxtag_layout(tu, names)
+            from foxtag_client import layout as foxtag_layout
+            got = foxtag_layout(tu, names)
+            if got is not None:
+                return got
+            print("WARNING: foxtag layout run FAILED — falling back to the Lua emitter "
+                  "(D-413/F2: a failed run is not facts).", file=sys.stderr)
         except ImportError:
-            if backend == "foxtag":
-                return {}
+            pass
     return run_emitter_nvim(tu, names)
 
 
@@ -423,8 +427,10 @@ def main():
     ap.add_argument("--selftest", action="store_true", help="prove the gate decision fires (non-vacuity)")
     ap.add_argument("--tu", default="main.cpp", help="the TU to dump record layouts from")
     ap.add_argument("--backend", choices=["auto", "nvim", "foxtag"], default="auto",
-                    help="layout fact source: the foxtag core (parity-gated cutover, D-352) "
-                         "or the Lua emitter; auto = foxtag when built, else nvim")
+                    help="layout fact source — auto (default) = the LUA emitter (script-side "
+                         "authority during churn per D-415; the D-352 foxtag cutover PARKS and "
+                         "re-arms at v1 as the acceptance gate); foxtag = explicit opt-in probe "
+                         "of the frozen core (falls back to Lua on a failed run)")
     ap.add_argument("--paths", nargs="*")
     ap.add_argument("--fix", action="store_true",
                     help="REFRESH mode — write the real [SIZE]/[ALIGN]/[CACHE_LINES]/[STRADDLE] into the blocks "
@@ -489,8 +495,11 @@ def main():
         return 0
 
     viols = []
+    policed = 0
     for b in blocks:
-        viols.extend(gate_struct(b, match_layout(b["name"], layout)))
+        rec = match_layout(b["name"], layout)
+        policed += rec is not None
+        viols.extend(gate_struct(b, rec))
 
     if viols:
         print(f"\nCACHE-LAYOUT VIOLATIONS ({len(viols)}):")
@@ -499,7 +508,14 @@ def main():
         print("\n  (NEVER auto-aligned — reordering a serialized struct breaks wire/persist, H21/H12. "
               "Realign by hand + re-run.)")
         return 1
-    print(f"Checked {len(blocks)} converted [STRUCT] block(s) vs real layout — all clean.")
+    unpoliced = len(blocks) - policed
+    if unpoliced:
+        # F1/F3 honesty: never claim "checked N" for blocks whose record was absent from the
+        # dump — absent means UNPOLICED (un-instantiated / unlinked), not verified.
+        print(f"Checked {policed}/{len(blocks)} converted [STRUCT] block(s) vs real layout — all clean; "
+              f"⚠ {unpoliced} NOT IN THE DUMP (un-instantiated/unlinked — unpoliced, NOT verified).")
+    else:
+        print(f"Checked {len(blocks)} converted [STRUCT] block(s) vs real layout — all clean.")
     return 0
 
 

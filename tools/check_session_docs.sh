@@ -51,7 +51,16 @@ declare -a RESULTS
 run_hard() { # name, cmd...
     local name="$1"; shift
     if "$@" >/tmp/csd_$$.log 2>&1; then
-        RESULTS+=("  ✅ HARD  $name")
+        # D-413/F4 honesty: rc0 + a could-not-run marker = the gate did NOT fully run — never
+        # render that as an unqualified green. Markers deliberately NARROW (the vacuous-pass
+        # idiom family only, not generic warnings — keeps healthy advisories quiet).
+        if grep -qE 'could not run|produced nothing for|run FAILED' /tmp/csd_$$.log; then
+            RESULTS+=("  ⚠️  HARD  $name  (exit 0 but COULD-NOT-RUN marker — gate did not fully run)")
+            echo "----- $name could-not-run detail -----"
+            grep -E 'could not run|produced nothing for|run FAILED' /tmp/csd_$$.log | head -3
+        else
+            RESULTS+=("  ✅ HARD  $name")
+        fi
     else
         RESULTS+=("  ❌ HARD  $name  (exit $?) — see detail below")
         echo "----- $name detail -----"; cat /tmp/csd_$$.log
@@ -62,7 +71,12 @@ run_hard() { # name, cmd...
 run_advisory() { # name, cmd...
     local name="$1"; shift
     if "$@" >/tmp/csd_$$.log 2>&1; then
-        RESULTS+=("  ✅ ADV   $name")
+        if grep -qE 'could not run|produced nothing for|run FAILED' /tmp/csd_$$.log; then
+            # Same F4 honesty as run_hard: could-not-run is not ran-clean.
+            RESULTS+=("  ⚠️  ADV   $name  (exit 0 but COULD-NOT-RUN marker — did not fully run)")
+        else
+            RESULTS+=("  ✅ ADV   $name")
+        fi
     else
         RESULTS+=("  ⚠️  ADV   $name  (exit $?; advisory — not blocking)")
     fi
@@ -223,7 +237,12 @@ if [ "${SKIP_PLAN_BODY_CHECK:-0}" != "1" ]; then
         MODIFIED=$(git -C "$WORKSPACE_ROOT" diff --name-only HEAD -- 'plans/**/*.md' 2>/dev/null; \
                    git -C "$WORKSPACE_ROOT" ls-files --others --exclude-standard -- 'plans/**/*.md' 2>/dev/null)
         MODIFIED=$(echo "$MODIFIED" | grep -E 'subplans/.*\.md$|MASTER\.md$' | sort -u || true)
-        if [ -z "$MODIFIED" ]; then
+        if ! git -C "$WORKSPACE_ROOT" rev-parse --git-dir >/dev/null 2>&1; then
+            # D-413/F6 honesty: if the enumerator itself cannot run, "no modified bodies" is
+            # unknown, not true — silent-empty-input must not green a HARD row.
+            RESULTS+=("  ❌ HARD  B-Plus (session scope) — WORKSPACE_ROOT not a readable git repo; cannot enumerate")
+            HARD_FAIL=1
+        elif [ -z "$MODIFIED" ]; then
             RESULTS+=("  ✅ HARD  B-Plus (no session-modified plan bodies)")
         else
             FAB=0
@@ -359,8 +378,12 @@ run_advisory "meta-registry coverage" \
 # gitignored so this is a standing marker scan, not a diff gate. Advisory: existing unmarked = KNOWN
 # shrinking backlog; a NEW unmarked capital test bumps the count conspicuously at the gate.
 if [ "${SKIP_CAPITAL_ADV_CHECK:-0}" != "1" ]; then
-    CAP_OUT=$(python3 "$REPO_ROOT/tools/check_capital_adversarial_audit.py" 2>&1)
-    if echo "$CAP_OUT" | grep -q 'WARN'; then
+    CAP_OUT=$(python3 "$REPO_ROOT/tools/check_capital_adversarial_audit.py" 2>&1); CAP_RC=$?
+    if [ "$CAP_RC" -ne 0 ] && ! echo "$CAP_OUT" | grep -q 'WARN'; then
+        # D-413/F5 honesty: a crashed tool (traceback, no verdict) must never render as the
+        # positive coverage claim below. Advisory tier (non-blocking) but TRUTHFUL.
+        RESULTS+=("  ❌ ADV   capital-test adversarial markers — TOOL ERROR (exit $CAP_RC; no verdict)")
+    elif echo "$CAP_OUT" | grep -q 'WARN'; then
         CAP_N=$(echo "$CAP_OUT" | sed -n 's/.*WARN — \([0-9]*\) capital.*/\1/p')
         RESULTS+=("  ⚠️  ADV   capital-test adversarial markers — ${CAP_N:-?} unmarked block(s) (KNOWN backlog; NEW capital tests need // ADV-REFUTE or // ADV-SELF)")
     else

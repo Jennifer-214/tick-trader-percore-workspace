@@ -328,16 +328,24 @@ def collect_code_tags():
     except ImportError:
         use_core = False
     if use_core:
-        units, tags = inventory()
-        for (f, t, n, ln) in units:
-            if _skip(Path(f).parts):
-                continue
-            out.setdefault(_rel(f), ([], []))[0].append((t, n, ln))
-        for (f, tg) in tags:
-            if _skip(Path(f).parts):
-                continue
-            out.setdefault(_rel(f), ([], []))[1].append(tg)
-        return out
+        inv = inventory()
+        if inv is None:
+            # D-413/F2 emit-boundary honesty: a FAILED parity-dump run is not an empty corpus.
+            # Fall through to the Python collector, loudly — never regenerate the index from a
+            # broken core's partial rows.
+            print("WARNING: foxtag inventory run FAILED (binary present but unhealthy) — "
+                  "falling back to the Python collector; a failed run is NOT an empty corpus.")
+        else:
+            units, tags = inv
+            for (f, t, n, ln) in units:
+                if _skip(Path(f).parts):
+                    continue
+                out.setdefault(_rel(f), ([], []))[0].append((t, n, ln))
+            for (f, tg) in tags:
+                if _skip(Path(f).parts):
+                    continue
+                out.setdefault(_rel(f), ([], []))[1].append(tg)
+            return out
     from check_code_tag_blocks import engine_source_files, collect_file_tags
     for f in engine_source_files():
         if _skip(f.parts):

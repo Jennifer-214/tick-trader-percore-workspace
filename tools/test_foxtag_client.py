@@ -34,17 +34,20 @@ def main():
         ok = ok and cond
 
     with tempfile.TemporaryDirectory(dir=engine) as td:
-        # 1. missing binary → core_available False; every call degrades to empty/None (no crash)
+        # 1. missing binary → core_available False; every call degrades to a REFUSAL (None) —
+        #    never fabricated-empty facts (D-413/F2 rc-honesty: a failed run is not facts)
         foxtag_client.FOXTAG_BIN = Path(td) / "no_such_binary"
         check("missing binary → core_available() False", not foxtag_client.core_available())
-        check("missing binary → layout() == {}", foxtag_client.layout("main.cpp") == {})
-        check("missing binary → inventory() == ([], [])", foxtag_client.inventory() == ([], []))
+        check("missing binary → layout() is None (refusal, not empty facts)",
+              foxtag_client.layout("main.cpp") is None)
+        check("missing binary → inventory() is None (refusal, not empty corpus)",
+              foxtag_client.inventory() is None)
         check("missing binary → unit_at() is None", foxtag_client.unit_at("x.hpp", 1) is None)
 
         # 2. GARBAGE output → graceful empty/None, never a fabricated result (the RED tooth)
         foxtag_client.FOXTAG_BIN = _stub(td, "echo 'not json at all {['")
-        check("garbage JSON → layout() == {} (not a crash, not a dict)",
-              foxtag_client.layout("main.cpp") == {})
+        check("garbage JSON → layout() is None (not a crash, not fabricated facts)",
+              foxtag_client.layout("main.cpp") is None)
         check("garbage rows → inventory() skips them", foxtag_client.inventory() == ([], []))
         check("garbage → unit_at() is None", foxtag_client.unit_at("x.hpp", 1) is None)
 

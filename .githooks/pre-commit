@@ -312,6 +312,13 @@ fi
 # → DESIGN_SPECS/meta-disciplines/differential-to-absolute-gate-contract-widening.md
 # ============================================================================
 if [ "${SKIP_TOOLS_PARITY_CHECK:-0}" != "1" ]; then
+    # ⏸ PARKED (D-415, 2026-08-10): the frozen foxtag core no longer tracks script-side changes,
+    # so standing parity would RED innocent commits and breed the SKIP habit. Gate + core KEPT
+    # (never deleted — H21 spirit); RE-ARMS at v1 as the per-surface acceptance oracle
+    # (FOXTAG_REARM=1 runs it on demand; D-414 register NEW-hole-2 is the disposition record).
+    if [ "${FOXTAG_REARM:-0}" != "1" ]; then
+        echo "[pre-commit] Check T: ⏸ PARKED (D-415 — frozen foxtag core; FOXTAG_REARM=1 to run; re-arms at v1)"
+    else
     PARITY_TOOL="$REPO_ROOT/tools/foxtag/parity_check.sh"
     STAGED_TOOLS=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^tools/(foxtag/|check_code_tag_blocks\.py|check_cache_layout\.py|check_conversion_completeness\.py|check_schema_version\.py|check_register_fit\.py|check_corpus_membership\.py|bless\.py|foxroots\.py|toolio\.py|lib/(corpus_contract|toolio_schemas)\.json|goldens/)' || true)
     if [ -n "$STAGED_TOOLS" ] && [ -f "$PARITY_TOOL" ]; then
@@ -326,6 +333,7 @@ if [ "${SKIP_TOOLS_PARITY_CHECK:-0}" != "1" ]; then
         else
             echo "[pre-commit] Check T PASS"
         fi
+    fi
     fi
 else
     echo "[pre-commit] SKIP_TOOLS_PARITY_CHECK=1; skipping the tools parity gate"

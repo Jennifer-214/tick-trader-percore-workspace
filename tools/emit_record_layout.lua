@@ -46,6 +46,16 @@ vim.list_extend(argv, keep)
 argv[#argv + 1] = vim.fn.fnamemodify(tu, ":p")   -- ABSOLUTE — cwd is the compile dir (build_clangd), not the TU's dir
 
 local res = vim.system(argv, { cwd = dir, text = true }):wait()
+if res.code ~= 0 then
+  -- D-413/F3 RESOLUTION (empirically calibrated): clang rc!=0 is the STANDING condition on the
+  -- real TU (benign dialect noise under the stripped clang flag subset — D-321) while the dump
+  -- stays usable. A dumped record is COMPLETE-BY-CONSTRUCTION (clang only prints a layout it
+  -- finished); the only rc-failure casualty is records MISSING from the dump — and those are
+  -- POLICED downstream (check_cache_layout names them unpoliced, never counts them verified).
+  -- So: tolerate + NOTE, never refuse (a blanket refusal broke the whole pipeline on rc=1 noise).
+  io.stderr:write("note: clang rc=" .. tostring(res.code)
+    .. " (dialect noise tolerated; dumped records are complete — missing ones surface as unpoliced)\n")
+end
 local dump = (res.stdout or "") .. (res.stderr or "")
 local records = recordlayout.parse(dump)                     -- plugin parser (tested)
 if #records == 0 then
@@ -53,17 +63,20 @@ if #records == 0 then
   os.exit(2)
 end
 
--- plugin straddle detector (tested) → fields that cross a 64B line (false-sharing candidates).
+-- plugin straddle detector (tested) → straddlers + NAMED unverified fields (tri-state, D-413).
 local strad = recordlayout.straddlers(records)
-local strad_by = {}
-for _, r in ipairs(strad.report or {}) do strad_by[r.name] = r.fields end
+local strad_by, unv_by = {}, {}
+for _, r in ipairs(strad.report or {}) do strad_by[r.name] = r.fields; unv_by[r.name] = r.unverified end
 
 local out = {}
 for _, r in ipairs(records) do
   local base = (r.name:gsub("<.*", ""))                      -- tt::ExecutionCore<64> -> tt::ExecutionCore
   local nons = (base:gsub("^.*::", ""))                      -- -> ExecutionCore (namespace-stripped)
   if any or wanted[r.name] or wanted[base] or wanted[nons] then
-    out[r.name] = { size = r.size, align = r.align, straddlers = strad_by[r.name] or {} }
+    local rec = { size = r.size, align = r.align, straddlers = strad_by[r.name] or {} }
+    local unv = unv_by[r.name]
+    if unv and #unv > 0 then rec.partial = unv end   -- ADDITIVE key (D-413): named UNVERIFIED fields
+    out[r.name] = rec
   end
 end
 io.write(vim.json.encode(out))

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """check_cache_layout.py — the E.1.2.A cache-layout CI gate (D-320).
 
-DETECT the real struct layout (via `tools/emit_record_layout.lua` — the fox-symdeps parser +
-straddle detector, reused headless so the CI gate and the HUD compute from the SAME source; no
-Class-18 mirror) → GATE → TRACE. NEVER auto-aligns: reordering a serialized/persisted struct
+DETECT the real struct layout (via `tools/emit_record_layout.lua` — the fox-symdeps DUMP-core
+parser + straddle detector, reused headless). NOTE (D-413): the HUD byte-map/`<leader>dg` path
+is a SEPARATE clangd-hover fact core — convergence rides the 0.3 plugin-cutover at v1; until
+then this gate and the HUD may legitimately differ at the straddle axis. → GATE → TRACE. NEVER auto-aligns: reordering a serialized/persisted struct
 silently breaks wire + snapshot compat (H21/H12, Knight-adjacent) — detect + flag + SUGGEST, a
 human realigns.
 
@@ -60,11 +61,16 @@ def parse_struct_blocks(path):
             continue
         cat = toks[0]
         if cat == "STRUCT" and len(toks) > 1:
-            cur = {"name": toks[1], "cross_thread": False, "claimed_size": None, "line": lineno}
+            cur = {"name": toks[1], "cross_thread": False, "claimed_size": None, "line": lineno,
+                   "exempt": set()}
             blocks.append(cur)
         elif cur is not None:
             if cat == "THREAD":
                 cur["cross_thread"] = len(toks[1:]) >= 2   # ≥2 declared roles (writer+reader) = crosses threads
+            elif cat == "STRADDLE_EXEMPT" and len(toks) > 1:
+                # curated FIELD-level exemption (D-413 C2/C(a); never blanket-struct): silences the
+                # H6 gate VERDICT for that field — the FACT still gets written by --fix.
+                cur["exempt"].add(toks[1])
             elif cat == "SIZE" and len(toks) > 1:
                 mm = re.search(r"(\d+)", toks[1])
                 if mm:
@@ -131,7 +137,19 @@ def gate_struct(struct, layout_rec):
     if layout_rec is None:                                  # not in the dump (un-instantiated / unlinked)
         return viols
     if struct["cross_thread"]:
+        exempt = struct.get("exempt") or set()
+        for name in (layout_rec.get("partial") or []):
+            # D-413 tri-state: an UNVERIFIED field on an armed struct is a finding, not a pass —
+            # the straddle verdict is UNVERIFIABLE until the type resolves (or is exempted).
+            if name not in exempt:
+                viols.append({
+                    "kind": "straddle-unverified", "struct": struct["name"],
+                    "detail": f"field '{name}' size UNRESOLVED with a line-crossing extent bound — "
+                              f"straddle UNVERIFIABLE (resolve the type, or [STRADDLE_EXEMPT] it "
+                              f"with a reason)"})
         for s in (layout_rec.get("straddlers") or []):
+            if s["name"] in exempt:
+                continue
             viols.append({
                 "kind": "false-sharing", "struct": struct["name"],
                 "detail": f"field '{s['name']}' @off {s['off']} (size {s['size']}) straddles 64B line "
@@ -150,8 +168,15 @@ _LAYOUT_AXES = ("SIZE", "ALIGN", "CACHE_LINES", "STRADDLE")   # canonical order 
 _META_ORIGIN = "AUTO"                                         # provenance value the writer stamps (D-369)
 
 
-def _fmt_straddle(straddlers):
-    return "none" if not straddlers else " · ".join(f"{s['name']}@{s['off']}" for s in straddlers)
+def _fmt_straddle(rec):
+    """WRITTEN [STRADDLE] value — TRI-STATE honest (D-413): straddlers listed; unresolved
+    line-crossing-bound fields listed as `unverified:`; `none` is written ONLY when the record
+    is fully verified. A partial record can never again print as a definitive `none`."""
+    hits = " · ".join(f"{s['name']}@{s['off']}" for s in (rec.get("straddlers") or []))
+    unv = rec.get("partial") or []
+    unv_s = ("unverified: " + " ".join(unv)) if unv else ""
+    joined = " · ".join(x for x in (hits, unv_s) if x)
+    return joined or "none"
 
 
 def _axis_value(cat, rec):
@@ -161,7 +186,7 @@ def _axis_value(cat, rec):
         "SIZE": f"{rec['size']}B",
         "ALIGN": str(rec.get("align", "")),
         "CACHE_LINES": str(-(-rec["size"] // 64)),          # ceil(size / 64)
-        "STRADDLE": _fmt_straddle(rec.get("straddlers")),
+        "STRADDLE": _fmt_straddle(rec),
     }[cat]
 
 
@@ -273,6 +298,16 @@ _SELFTEST = [
      {"size": 64, "straddlers": []}, None),
     ("not in dump -> PASS (not policed here)",
      {"name": "V", "cross_thread": True, "claimed_size": 64}, None, None),
+    # D-413 tri-state gate cases
+    ("cross-thread PARTIAL (unverified field) -> FAIL straddle-unverified",
+     {"name": "P", "cross_thread": True, "claimed_size": None},
+     {"size": 128, "straddlers": [], "partial": ["cond"]}, "straddle-unverified"),
+    ("cross-thread PARTIAL but [STRADDLE_EXEMPT] field -> PASS",
+     {"name": "PX", "cross_thread": True, "claimed_size": None, "exempt": {"cond"}},
+     {"size": 128, "straddlers": [], "partial": ["cond"]}, None),
+    ("cross-thread straddler with [STRADDLE_EXEMPT] field -> PASS",
+     {"name": "SX", "cross_thread": True, "claimed_size": None, "exempt": {"f"}},
+     {"size": 64, "straddlers": [{"name": "f", "off": 56, "size": 16}]}, None),
 ]
 
 
@@ -338,7 +373,14 @@ def run_selftest():
     match_single = match_layout("CurrentOrder", {"CurrentOrder<64>": {"size": 48}})
     match_ok = (bool(match_exact) and match_exact.get("size") == 16
                 and match_multi is None and match_single is not None)
-    r_ok = ins_ok and idem_ok and rw_ok and stab_ok and prose_ok and cov_ok and rt_ok and match_ok
+    # (i) TRI-STATE WRITE (D-413) — a partial record REFUSES "none"; straddler + unverified compose
+    tri_mock = {"X": {"size": 128, "align": 64,
+                      "straddlers": [{"name": "a", "off": 60, "size": 8}], "partial": ["b"]}}
+    tri, n_tri = refresh_derived(empty_fx, tri_mock, today=TODAY)
+    tri_ok = ("[STRADDLE]_[a@60 · unverified: b]" in tri and "[STRADDLE]_[none]" not in tri)
+    print(f"  {'✅' if tri_ok else '❌'} refresh TRI-STATE: partial refuses none; straddler+unverified compose ({n_tri} written)")
+    r_ok = (ins_ok and idem_ok and rw_ok and stab_ok and prose_ok and cov_ok and rt_ok and match_ok
+            and tri_ok)
     print(f"  {'✅' if match_ok else '❌'} match_layout: exact-instantiation spacing + multi-instantiation refusal")
     print(f"  {'✅' if ins_ok else '❌'} refresh INSERT: empty [DERIVED] → ORIGIN+UPDATED+quartet ({n_ins} written)")
     print(f"  {'✅' if idem_ok else '❌'} refresh IDEMPOTENT: 2nd --fix no-op, UPDATED not restamped ({n_ins2} changed)")

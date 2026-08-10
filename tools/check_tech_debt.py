@@ -22,6 +22,18 @@ MODES
   --surface F [F...]  match an explicit file set (a ship's files-touched)
   --diff <ref>        match files changed since <ref> (e.g. the ship's pre-tag)
   --stale [MONTHS]    OPEN entries opened > MONTHS ago (default 6) → flag for re-cost/refresh
+                      (wall-clock — the superseded-in-spirit sister of --contract-stale, kept
+                      for operator use; D-408 forbids KEYING enforcement on it)
+  --contract-stale    (g)-4 / D-408: CONTRACT-violation-keyed staleness, never wall-clock —
+                      (i) FIRED-TRIGGER: `trigger:` names a SHIPPED tag while status hasn't
+                          moved (WARN); a trigger token absent from git tags AND Version.hpp
+                          → INFO (unresolvable — e.g. a ship that was never cut);
+                      (ii) CHURNING-STATIC: a flow-through file holding transitional-status
+                          entries with no commit across the last ~3 ship closes (WARN);
+                      (iii) EMPTY-TIER: a flow-through file with zero churn since its
+                          creation era (INFO).
+                      ADVISORY-first (exit 1 on WARN so the sweep row shows ⚠; never blocks).
+  --contract-stale-selftest   D-137 teeth: planted fixtures prove each detector fires
   --close N           move TECH_DEBT-N from open.md to closed.md (stamps `closed:`), verify the move
   --dry-run           with --close: print what would move, write nothing
   (default mode: --staged)
@@ -73,7 +85,10 @@ def _entries(path):
         tags_m = re.search(r'surface_tags:\s*\[([^\]]*)\]', body)
         tags = [t.strip() for t in tags_m.group(1).split(',') if t.strip()] if tags_m else []
         opened_m = re.search(r'opened:\s*([0-9]{4}-[0-9]{2}-[0-9]{2})', body)
-        status_m = re.search(r'status:\s*([^\n]+)', body)
+        # (?i) + \** — the ledger spells this THREE ways (`status:` / `**status:**` /
+        # capital `**Status:**`); a lowercase-only match silently read capital-form entries
+        # as status-less, reproducing the c-class undercount (2026-08-09).
+        status_m = re.search(r'(?i)status:\**\s*([^\n]+)', body)
         out.append({"id": tid, "title": title, "tags": tags,
                     "opened": opened_m.group(1) if opened_m else "",
                     "status": status_m.group(1).strip() if status_m else "", "body": body})
@@ -136,6 +151,153 @@ def stale(months, strict):
     for e, age in sorted(flagged, key=lambda x: -x[1]):
         print(f"  • {e['id']} ({age//30}mo) — {e['title']}")
     return 1 if strict else 0
+
+
+def _status_class(e):
+    """Normalized head token of the status field ('open' / 'closed' / 'in-progress' / …) —
+    tolerant of the bold-row form where the capture carries the rest of the row."""
+    return e["status"].split("·")[0].replace("*", "").strip().lower()
+
+
+_SHIP_TOKEN_RE = re.compile(r'\b(?:v5\.\d+(?:\.[\w-]+)*|sub-ship-[.\w-]+)\b|\.[A-F]\.\d+(?:\.\d+)*(?:\.[A-Z])?\b')
+_TRANSITIONAL_RE = re.compile(r'in.?progress|in.?flight|partial|transitional', re.I)
+
+
+def _wgit(args, cwd):
+    r = subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True)
+    return [l for l in r.stdout.splitlines() if l.strip()]
+
+
+def contract_stale(strict, d=None, tags_text=None, vh_text=None, ship_window_oldest=None):
+    """(g)-4 / D-408 — contract-violation-keyed staleness. Injection params exist for the
+    D-137 teeth (fully synthetic; live-value anchoring is the dead-tooth class)."""
+    d = d or _tech_debt_dir()
+    if tags_text is None:
+        tags_text = "\n".join(_git(["tag", "--list"]))
+    if vh_text is None:
+        try:
+            with open(os.path.join(REPO_ROOT, "Version.hpp")) as f:
+                vh_text = f.read()
+        except OSError:
+            vh_text = ""
+    if ship_window_oldest is None:
+        dates = _git(["for-each-ref", "--sort=-creatordate",
+                      "--format=%(creatordate:short)", "refs/tags"])[:3]
+        ship_window_oldest = dates[-1] if len(dates) == 3 else ""
+    warns, infos = [], []
+    for fname in ("open.md", "in-flight.md"):
+        path = os.path.join(d, fname)
+        if not os.path.exists(path):
+            continue
+        transitional = []
+        for e in _entries(path):
+            sc = _status_class(e)
+            if _TRANSITIONAL_RE.search(sc or ""):
+                transitional.append(e["id"])
+            if sc in ("closed", "resolved", "done"):
+                continue
+            trig_m = re.search(r'(?im)^[-\s]*\**trigger:\**\s*([^\n]+)', e["body"])
+            if not trig_m:
+                continue
+            for tok in {t for t in _SHIP_TOKEN_RE.findall(trig_m.group(1)) if t}:
+                # SHIPPED = git-tag membership ONLY, boundary-guarded: the token must appear in a
+                # tag NOT followed by a further version component — else the `.E.1` UMBRELLA
+                # false-fires against the `E.1.1` LEAF tag, and changelog PROSE naming a future
+                # ship ("deferred to v5.16") would read as shipped. Version.hpp is only the
+                # ABSENCE test (a token in neither space = unresolvable), per the decided design.
+                tagged = re.search(re.escape(tok) + r"(?!\.?\d)", tags_text) is not None
+                if tagged:
+                    # ERA-AMBIGUITY discriminator (partial, declared): a SHORT relative token
+                    # (`.E.1`) can terminally match an OLDER generation's tag (v5.15.5.E.1)
+                    # while the CURRENT era's arc of the same name is still pending. Mechanical
+                    # tell: a LONGER continuation of the token still named in Version.hpp
+                    # (`.E.1.2` …) ⇒ the era is ambiguous → INFO for human resolution, never a
+                    # standing false WARN.
+                    if re.search(re.escape(tok) + r"(\.?\d|\.[A-Z]\b)", vh_text):
+                        infos.append((e["id"], fname,
+                                      f"ERA-AMBIGUOUS trigger token '{tok}' — terminally matches an "
+                                      f"older tag, but a longer pending continuation exists in "
+                                      f"Version.hpp; resolve the intended era by hand"))
+                    else:
+                        warns.append((e["id"], fname,
+                                      f"FIRED-TRIGGER — trigger names SHIPPED '{tok}' but status is "
+                                      f"'{(sc or '?')[:60]}' (the contract fired; disposition owed)"))
+                elif tok not in vh_text:
+                    infos.append((e["id"], fname,
+                                  f"unresolvable trigger token '{tok}' — absent from git tags AND "
+                                  f"Version.hpp (a ship that was never cut; re-home the trigger)"))
+                # else: resolvable-but-PENDING (named in Version.hpp planning, not yet tagged) — silent
+        # (ii)/(iii) — file-granularity, flow-through tier only (open.md churns constantly by design)
+        if fname == "in-flight.md":
+            commits = _wgit(["log", "--format=%cs", "--", os.path.basename(path)], cwd=d)
+            last = commits[0] if commits else ""
+            if transitional and last and ship_window_oldest and last < ship_window_oldest:
+                warns.append(("(file)", fname,
+                              f"CHURNING-STATIC — holds transitional entries {transitional} with no "
+                              f"commit since {last}, across the last 3 ship closes (≥ {ship_window_oldest})"))
+            if len(commits) <= 2 and last and ship_window_oldest and last < ship_window_oldest:
+                infos.append(("(file)", fname,
+                              f"EMPTY-TIER — flow-through file: {len(commits)} commit(s) ever, "
+                              f"none since {last} (zero churn since the creation era)"))
+    print(f"[contract-stale] D-408 contract-keyed staleness (NEVER wall-clock): "
+          f"{len(warns)} WARN · {len(infos)} INFO")
+    for tid, fn, why in warns:
+        print(f"  ⚠ WARN {tid} ({fn}): {why}")
+    for tid, fn, why in infos:
+        print(f"  · INFO {tid} ({fn}): {why}")
+    if not warns and not infos:
+        print("  clean — no fired-trigger / churning-static / empty-tier contract violations.")
+    return 1 if warns else 0
+
+
+def contract_stale_selftest():
+    """D-137 teeth — fully SYNTHETIC (injected tags/dates; live-value anchoring = the dead-tooth class)."""
+    import tempfile
+    ok = True
+    with tempfile.TemporaryDirectory() as td:
+        with open(os.path.join(td, "open.md"), "w") as f:
+            f.write("### TECH_DEBT-901 — fired trigger case\n"
+                    "- **id:** TECH_DEBT-901 · **Status:** open\n"
+                    "- **Trigger:** lands at sub-ship-.T.9 (shipped)\n\n"
+                    "### TECH_DEBT-902 — unresolvable trigger case\n"
+                    "- **id:** TECH_DEBT-902 · **status:** open\n"
+                    "- **Trigger:** lands at sub-ship-.Z.99 (never cut)\n\n"
+                    "### TECH_DEBT-903 — clean (no ship token)\n"
+                    "- **id:** TECH_DEBT-903 · **status:** open\n"
+                    "- **Trigger:** next perf pass surfaces it\n")
+        with open(os.path.join(td, "in-flight.md"), "w") as f:
+            f.write("### TECH_DEBT-904 — parked transitional\n"
+                    "- **id:** TECH_DEBT-904 · **Status:** in-progress\n")
+        # not a git repo → (ii)/(iii) file legs see no commits and stay silent; the entry legs are
+        # the teeth here. Capital **Status:** used on 901/904 ON PURPOSE (the c-class undercount pin).
+        rc = contract_stale(False, d=td, tags_text="sub-ship-.T.9\n", vh_text="",
+                            ship_window_oldest="2026-01-01")
+        t1 = rc == 1
+        ok &= t1
+        print(f"  {'✅' if t1 else '❌'} fired-trigger (capital **Status:** parsed) → WARN, rc=1")
+        # BOUNDARY pin: the umbrella token must NOT fire against a LEAF tag (`.T.9` vs `x.T.9.1`),
+        # and a token named only in Version.hpp PROSE is pending, never fired.
+        rc2 = contract_stale(False, d=td, tags_text="tag-x.T.9.1\n", vh_text="planned: sub-ship-.T.9 someday",
+                             ship_window_oldest="2026-01-01")
+        t2 = rc2 == 0
+        ok &= t2
+        print(f"  {'✅' if t2 else '❌'} umbrella-vs-leaf boundary + prose-mention → pending (no WARN), rc=0")
+        # ERA-AMBIGUITY pin: token matches an OLD tag terminally BUT a longer continuation is
+        # still pending in Version.hpp → demoted to INFO (never a standing false WARN).
+        rc3 = contract_stale(False, d=td, tags_text="old-era.T.9\n",
+                             vh_text="pending leaves: sub-ship-.T.9.2 …",
+                             ship_window_oldest="2026-01-01")
+        t3 = rc3 == 0
+        ok &= t3
+        print(f"  {'✅' if t3 else '❌'} era-ambiguous (old tag + pending continuation) → INFO, rc=0")
+        # LETTER-form continuation pin (`.T.9.A` pending in Version.hpp) — same demotion
+        rc4 = contract_stale(False, d=td, tags_text="old-era.T.9\n",
+                             vh_text="deferred to sub-ship-.T.9.A later",
+                             ship_window_oldest="2026-01-01")
+        t4 = rc4 == 0
+        ok &= t4
+        print(f"  {'✅' if t4 else '❌'} era-ambiguous (letter-form continuation .T.9.A) → INFO, rc=0")
+    return ok
 
 
 def close(n, dry_run):
@@ -206,6 +368,11 @@ def main(argv):
     if "--diff" in argv:
         ref = argv[argv.index("--diff") + 1]
         return surface(_git(["diff", "--name-only", ref]))
+    if "--contract-stale-selftest" in argv:
+        print("check_tech_debt --contract-stale-selftest (D-408 detectors; non-vacuity):")
+        return 0 if contract_stale_selftest() else 2
+    if "--contract-stale" in argv:
+        return contract_stale(strict)
     if "--stale" in argv:
         i = argv.index("--stale")
         months = argv[i + 1] if i + 1 < len(argv) and argv[i + 1].isdigit() else "6"

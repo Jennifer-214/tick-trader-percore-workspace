@@ -268,13 +268,106 @@ def check_bidirectional_sisters(files_with_fm):
     return violations
 
 
+def check_reciprocal_supersession(files_with_fm):
+    """(g)-4 / D-408/D-416: every frontmatter `supersedes:` must be ANSWERED by its target —
+    a `superseded_by:` pointing back + a status that says superseded. One-way supersession is
+    how a replaced doc keeps being picked up as live (the addenda-pile class). Field-based
+    contract: prose-only supersession notes are outside scope (adopt the fields to opt in)."""
+    violations = []
+    by_name = {Path(p).name: (p, fm) for p, fm in files_with_fm}
+
+    def _norm(v):
+        v = re.sub(r"\(.*?\)", "", str(v)).split("#")[0].strip().strip('"\'')
+        parts = v.split()
+        return Path(parts[0]).name if parts else ""
+
+    for path, fm in files_with_fm:
+        sup = fm.get("supersedes")
+        if not sup:
+            continue
+        for target in (sup if isinstance(sup, list) else [sup]):
+            tname = _norm(target)
+            if not tname.endswith(".md"):
+                continue                      # prose label, not a file ref — outside the contract
+            if tname not in by_name:
+                violations.append(f"SUPERSEDE target missing from corpus: {Path(path).name} "
+                                  f"supersedes {tname} (no such doc found)")
+                continue
+            _, tfm = by_name[tname]
+            back = _norm(tfm.get("superseded_by", ""))
+            if back != Path(path).name:
+                violations.append(f"UNRECIPROCATED supersession: {Path(path).name} supersedes "
+                                  f"{tname}, but its superseded_by = '{back or '(absent)'}'")
+            tstatus = str(tfm.get("status", ""))
+            if "supersed" not in tstatus.lower():
+                violations.append(f"SUPERSEDED-status missing: {tname} is superseded by "
+                                  f"{Path(path).name} but its status reads '{tstatus[:60]}'")
+    return violations
+
+
+def reciprocal_selftest():
+    """D-137 teeth — planted one-way pair REDs on all three legs; reciprocated pair GREENs."""
+    import tempfile
+    ok = True
+    with tempfile.TemporaryDirectory() as td:
+        a = Path(td) / "a-v2.md"
+        b = Path(td) / "b-v1.md"
+        a.write_text("---\ntype: handoff\nsupersedes: b-v1.md\nstatus: active\n---\nx\n")
+        b.write_text("---\ntype: handoff\nstatus: active\n---\nx\n")
+        fms = [(str(p), parse_frontmatter(p)) for p in (a, b)]
+        v1 = check_reciprocal_supersession(fms)
+        t1 = len(v1) == 2      # no back-ref + status-not-superseded
+        ok &= t1
+        print(f"  {'✅' if t1 else '❌'} one-way supersession → 2 findings (no back-ref + live status)")
+        b.write_text("---\ntype: handoff\nsuperseded_by: a-v2.md\nstatus: superseded\n---\nx\n")
+        fms = [(str(p), parse_frontmatter(p)) for p in (a, b)]
+        t2 = not check_reciprocal_supersession(fms)
+        ok &= t2
+        print(f"  {'✅' if t2 else '❌'} reciprocated + status-superseded → clean")
+        a.write_text("---\ntype: handoff\nsupersedes: ghost.md\nstatus: active\n---\nx\n")
+        fms = [(str(a), parse_frontmatter(a))]
+        t3 = len(check_reciprocal_supersession(fms)) == 1
+        ok &= t3
+        print(f"  {'✅' if t3 else '❌'} missing target → 1 finding")
+    return ok
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--strict", action="store_true", help="enforce SHOULD-HAVE frontmatter on docs")
     parser.add_argument("--paths", nargs="*", help="specific files to check (default: all)")
     parser.add_argument("--bidirectional", action="store_true", help="verify sister_specs is bidirectional")
     parser.add_argument("--memories", action="store_true", help="scan ONLY the memory dir (cadence guard scope; D-89)")
+    parser.add_argument("--reciprocal-supersession", action="store_true",
+                        help="(g)-4/D-416: every supersedes: answered by superseded_by: + status "
+                             "(scans plans/ + DOCS/ for the join in addition to the default roots)")
+    parser.add_argument("--reciprocal-selftest", action="store_true",
+                        help="D-137 teeth for the reciprocal-supersession check")
     args = parser.parse_args()
+
+    if args.reciprocal_selftest:
+        print("check_doc_metadata --reciprocal-selftest ((g)-4 supersession contract; non-vacuity):")
+        return 0 if reciprocal_selftest() else 2
+
+    if args.reciprocal_supersession:
+        # STANDALONE mode: rc reflects ONLY the supersession contract (the default vocab
+        # validation carries standing advisory noise that would pollute this gate's verdict).
+        join = []
+        for root in (WORKSPACE / "DESIGN_SPECS", WORKSPACE / "claude-skills",
+                     WORKSPACE / "plans", WORKSPACE / "DOCS"):
+            if root.exists():
+                for p in root.rglob("*.md"):
+                    fm = parse_frontmatter(p)
+                    if fm:
+                        join.append((str(p), fm))
+        rs = check_reciprocal_supersession(join)
+        print(f"[reciprocal-supersession] {len(join)} frontmatter docs joined; "
+              f"{len(rs)} violation(s)")
+        for v in rs:
+            print(f"  {v}")
+        if not rs:
+            print("  clean — every supersedes: is answered (superseded_by + status).")
+        return 1 if rs else 0
 
     concern_vocab, surface_vocab = load_vocabulary()
     if concern_vocab is None or surface_vocab is None:
@@ -310,6 +403,7 @@ def main():
     if args.bidirectional:
         bidir_violations = check_bidirectional_sisters(files_with_fm)
         all_violations.extend(bidir_violations)
+
 
     print(f"Checked {files_checked} files; loaded {len(concern_vocab)} concern + {len(surface_vocab)} surface tags")
     if args.bidirectional:

@@ -166,6 +166,8 @@ run_hard "close-out-completeness teeth"           bash "$REPO_ROOT/tools/check_c
 run_hard "code-tag-blocks teeth (wrapper)"        bash "$REPO_ROOT/tools/check_code_tag_blocks_selftest.sh"
 run_hard "cache-layout gate teeth (wrapper; D-137)" bash "$REPO_ROOT/tools/check_cache_layout_selftest.sh"
 run_hard "call-graph A2 teeth (phantom + stale-reference RED)" python3 "$REPO_ROOT/tools/check_code_tag_blocks.py" --callgraph-selftest
+run_hard "reciprocal-supersession teeth ((g)-4)"   python3 "$REPO_ROOT/tools/check_doc_metadata.py" --reciprocal-selftest
+run_hard "contract-stale teeth (D-408 detectors)"  python3 "$REPO_ROOT/tools/check_tech_debt.py" --contract-stale-selftest
 run_hard "conversion-completeness teeth (wrapper)" bash "$REPO_ROOT/tools/check_conversion_completeness_selftest.sh"
 run_hard "handoff-capture-completeness teeth"     bash "$REPO_ROOT/tools/check_handoff_capture_completeness_selftest.sh"
 run_hard "latency-path-conformance teeth (H8)"    bash "$REPO_ROOT/tools/check_latency_path_conformance_selftest.sh"
@@ -425,6 +427,20 @@ fi
 if [ "${SKIP_CALLGRAPH_A2_CHECK:-0}" != "1" ]; then
     run_advisory "call-graph facts A2 (declared-PARTIAL: existence + co-occurrence)" \
         python3 "$REPO_ROOT/tools/check_code_tag_blocks.py" --callgraph-check
+fi
+
+# --- (g)-4 content-staleness pair (D-408/D-416) ---
+# Reciprocal-supersession: HARD — corpus repaired to zero at landing (4 back-refs + 1 status),
+# so a NEW one-way supersession reds immediately (the addenda-pile class). Contract-stale:
+# ADVISORY-first per the decided design — its WARN/INFO output is a TRIAGE QUEUE (fired-trigger
+# dispositions + trigger re-homes), not a block; consider HARD once the queue drains.
+if [ "${SKIP_SUPERSESSION_CHECK:-0}" != "1" ]; then
+    run_hard "reciprocal-supersession (every supersedes: answered — (g)-4/D-416)" \
+        python3 "$REPO_ROOT/tools/check_doc_metadata.py" --reciprocal-supersession
+fi
+if [ "${SKIP_CONTRACT_STALE_CHECK:-0}" != "1" ]; then
+    run_advisory "tech-debt contract-stale (D-408: fired-trigger / churning-static / empty-tier)" \
+        python3 "$REPO_ROOT/tools/check_tech_debt.py" --contract-stale
 fi
 
 echo ""

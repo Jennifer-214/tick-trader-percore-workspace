@@ -1,0 +1,15 @@
+# cache_layout_baseline — GRANDFATHERED findings (kind|struct|field), SHRINK-ONLY.
+# Every row is dispositioned in the D-414 register (homed E.1.2 / suite-plane). A NEW finding reds --strict-new.
+false-sharing|NodeContext|regime_state
+false-sharing|TUISharedState|kill_reset_per_node
+false-sharing|TUISharedState|manual_close_requested
+false-sharing|TUISharedState|swap_strategy_requested
+false-sharing|TrainingPanelState|mh_horizon_complete
+false-sharing|TrainingPanelState|run_name
+false-sharing|TrainingPanelState|tm_phase_msg
+false-sharing|TrainingPanelState|ui_horizon_list
+false-sharing|TrainingPanelState|ui_label_kind_csv
+false-sharing|TrainingPanelState|ui_label_kind_per_horizon
+false-sharing|TrainingPanelState|ui_sl_pct_csv
+false-sharing|TrainingPanelState|ui_sl_per_horizon
+false-sharing|TrainingPanelState|ui_tp_pct_csv

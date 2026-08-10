@@ -164,6 +164,7 @@ run_hard "capital-adversarial-audit teeth"        bash "$REPO_ROOT/tools/check_c
 run_hard "cfg-key-prefix-drift teeth"             bash "$REPO_ROOT/tools/check_cfg_key_prefix_drift_selftest.sh"
 run_hard "close-out-completeness teeth"           bash "$REPO_ROOT/tools/check_close_out_completeness_selftest.sh"
 run_hard "code-tag-blocks teeth (wrapper)"        bash "$REPO_ROOT/tools/check_code_tag_blocks_selftest.sh"
+run_hard "cache-layout gate teeth (wrapper; D-137)" bash "$REPO_ROOT/tools/check_cache_layout_selftest.sh"
 run_hard "conversion-completeness teeth (wrapper)" bash "$REPO_ROOT/tools/check_conversion_completeness_selftest.sh"
 run_hard "handoff-capture-completeness teeth"     bash "$REPO_ROOT/tools/check_handoff_capture_completeness_selftest.sh"
 run_hard "latency-path-conformance teeth (H8)"    bash "$REPO_ROOT/tools/check_latency_path_conformance_selftest.sh"
@@ -402,14 +403,18 @@ if [ "${SKIP_DECISION_COMPLETENESS_CHECK:-0}" != "1" ]; then
         python3 "$REPO_ROOT/tools/check_capture_audit.py" --check 13 --since "${DLOG_SINCE:-HEAD~8}"
 fi
 
-# --- ADVISORY: cache-layout gate (D-320 — cross-thread straddle = H6 false-sharing / [SIZE] drift) ---
-# INERT until structs are converted (mixed-state: no [STRUCT] block → early return, no clang). Layout
-# via clang -fdump-record-layouts reusing the fox-symdeps parser (nvim/clang-dependent) → ADVISORY: a
-# missing dep or a gate finding surfaces, never hard-blocks the doc sweep. Promote to HARD once
-# conversion lands + the run cadence is set (perf: one clang run when structs exist). Never auto-aligns.
+# --- cache-layout gate (D-320 / D-414 leaf-3) — STRICT-NEW HARD + suite-TU advisory ---
+# The ADV→HARD promotion EXECUTED via the grandfather baseline (tools/lib/cache_layout_baseline.txt,
+# SHRINK-ONLY — the Class-44-orphan sister pattern): the known finds are dispositioned in the D-414
+# register (TUISharedState/NodeContext → E.1.2 relayout; suite trio → the suite refactor); a NEW
+# cross-thread straddler or unverified-armed field REDs the sweep from today on. Layout facts via
+# the Lua emitter (D-415 script-side authority). NEVER auto-aligns. The suite-TU row = O4b coverage
+# (Backtest/GUI panels main.cpp can't see) — advisory (dep-tolerant + suite plane).
 if [ "${SKIP_CACHE_LAYOUT_CHECK:-0}" != "1" ]; then
-    run_advisory "cache-layout gate (converted [STRUCT] blocks: cross-thread straddle = H6 false-sharing / [SIZE] drift)" \
-        python3 "$REPO_ROOT/tools/check_cache_layout.py"
+    run_hard "cache-layout gate STRICT-NEW (main TU; grandfathered baseline, shrink-only)" \
+        python3 "$REPO_ROOT/tools/check_cache_layout.py" --strict-new
+    run_advisory "cache-layout gate (suite TU foxml_suite.cpp — O4b coverage)" \
+        python3 "$REPO_ROOT/tools/check_cache_layout.py" --tu foxml_suite.cpp --strict-new
 fi
 
 echo ""

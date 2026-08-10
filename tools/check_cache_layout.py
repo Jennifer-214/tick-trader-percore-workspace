@@ -51,7 +51,7 @@ def parse_struct_blocks(path):
         return []
     if "[SCHEMA]_[" not in text or "[SCHEMA]_[exempt" in text:
         return []
-    blocks, cur = [], None
+    blocks, cur, in_code = [], None, False
     for lineno, raw in enumerate(text.split("\n"), 1):
         m = TAG_LINE_RE.match(raw)
         if not m:
@@ -64,8 +64,15 @@ def parse_struct_blocks(path):
             cur = {"name": toks[1], "cross_thread": False, "claimed_size": None, "line": lineno,
                    "exempt": set()}
             blocks.append(cur)
+            in_code = False
         elif cur is not None:
-            if cat == "THREAD":
+            if cat == "CODE":
+                in_code = True
+            elif cat == "THREAD" and not in_code:
+                # ORIENT-TIER-ONLY arming (D-414 leaf-3): the block-level [THREAD] declaration is
+                # the contract; field-level [THREAD] tags inside [CODE] can neither arm nor DISARM
+                # (kills the old last-line-wins fragility — a late single-role field tag used to
+                # silently disarm a block). Enumerated 2026-08-10: zero armed-set delta at flip.
                 cur["cross_thread"] = len(toks[1:]) >= 2   # ≥2 declared roles (writer+reader) = crosses threads
             elif cat == "STRADDLE_EXEMPT" and len(toks) > 1:
                 # curated FIELD-level exemption (D-413 C2/C(a); never blanket-struct): silences the
@@ -143,7 +150,7 @@ def gate_struct(struct, layout_rec):
             # the straddle verdict is UNVERIFIABLE until the type resolves (or is exempted).
             if name not in exempt:
                 viols.append({
-                    "kind": "straddle-unverified", "struct": struct["name"],
+                    "kind": "straddle-unverified", "struct": struct["name"], "field": name,
                     "detail": f"field '{name}' size UNRESOLVED with a line-crossing extent bound — "
                               f"straddle UNVERIFIABLE (resolve the type, or [STRADDLE_EXEMPT] it "
                               f"with a reason)"})
@@ -151,7 +158,7 @@ def gate_struct(struct, layout_rec):
             if s["name"] in exempt:
                 continue
             viols.append({
-                "kind": "false-sharing", "struct": struct["name"],
+                "kind": "false-sharing", "struct": struct["name"], "field": s["name"],
                 "detail": f"field '{s['name']}' @off {s['off']} (size {s['size']}) straddles 64B line "
                           f"{s['off'] // 64}→{(s['off'] + s['size'] - 1) // 64} on a CROSS-THREAD "
                           f"([THREAD]) struct — H6 false-sharing; isolate the field to its own line"})
@@ -166,6 +173,11 @@ def gate_struct(struct, layout_rec):
 # --- REFRESH (the 4th verb — write the LAYOUT DERIVED tags from truth; the D-319 refresh-writer) ---
 _LAYOUT_AXES = ("SIZE", "ALIGN", "CACHE_LINES", "STRADDLE")   # canonical order (schema § STRUCT [DERIVED] axis-set)
 _META_ORIGIN = "AUTO"                                         # provenance value the writer stamps (D-369)
+
+
+def _viol_key(v):
+    """Stable baseline identity for a gate finding (kind|struct|field)."""
+    return f"{v['kind']}|{v['struct']}|{v.get('field', '?')}"
 
 
 def _fmt_straddle(rec):
@@ -373,6 +385,16 @@ def run_selftest():
     match_single = match_layout("CurrentOrder", {"CurrentOrder<64>": {"size": 48}})
     match_ok = (bool(match_exact) and match_exact.get("size") == 16
                 and match_multi is None and match_single is not None)
+    # (j) PARSER: ORIENT-TIER-ONLY arming (D-414 leaf-3) — a field-level [THREAD] inside [CODE]
+    #     neither arms (B) nor disarms (A); the block-level orient declaration is the contract
+    parser_fx = ("// [SCHEMA]_[v1.0]\n// [STRUCT]_[A]\n// [THREAD]_[[W] [R]]\n// [CODE]\n"
+                 "// [THREAD]_[[ONLY_ROLE]]\n// [END_CODE]\n// [END_STRUCT]_[A]\n"
+                 "// [STRUCT]_[B]\n// [CODE]\n// [THREAD]_[[W] [R]]\n// [END_CODE]\n// [END_STRUCT]_[B]\n")
+    fdp, pp = tempfile.mkstemp(suffix=".hpp"); os.write(fdp, parser_fx.encode()); os.close(fdp)
+    pblocks = {b["name"]: b for b in parse_struct_blocks(pp)}
+    os.unlink(pp)
+    parser_ok = (pblocks["A"]["cross_thread"] is True and pblocks["B"]["cross_thread"] is False)
+    print(f"  {'✅' if parser_ok else '❌'} parser ORIENT-ONLY arming: in-[CODE] [THREAD] neither arms nor disarms")
     # (i) TRI-STATE WRITE (D-413) — a partial record REFUSES "none"; straddler + unverified compose
     tri_mock = {"X": {"size": 128, "align": 64,
                       "straddlers": [{"name": "a", "off": 60, "size": 8}], "partial": ["b"]}}
@@ -380,7 +402,7 @@ def run_selftest():
     tri_ok = ("[STRADDLE]_[a@60 · unverified: b]" in tri and "[STRADDLE]_[none]" not in tri)
     print(f"  {'✅' if tri_ok else '❌'} refresh TRI-STATE: partial refuses none; straddler+unverified compose ({n_tri} written)")
     r_ok = (ins_ok and idem_ok and rw_ok and stab_ok and prose_ok and cov_ok and rt_ok and match_ok
-            and tri_ok)
+            and tri_ok and parser_ok)
     print(f"  {'✅' if match_ok else '❌'} match_layout: exact-instantiation spacing + multi-instantiation refusal")
     print(f"  {'✅' if ins_ok else '❌'} refresh INSERT: empty [DERIVED] → ORIGIN+UPDATED+quartet ({n_ins} written)")
     print(f"  {'✅' if idem_ok else '❌'} refresh IDEMPOTENT: 2nd --fix no-op, UPDATED not restamped ({n_ins2} changed)")
@@ -453,14 +475,24 @@ def isolate_layouts(files, backend="auto"):
         for b in parse_struct_blocks(f):
             b["is_template"] = _struct_is_template(f, b["name"])
             by_header.setdefault(rel, []).append(b)
-    merged, probe = {}, ENGINE / "_fox_isolate_probe.cpp"
+    merged, probe, failed = {}, ENGINE / "_fox_isolate_probe.cpp", []
     try:
         for rel_header, structs in sorted(by_header.items()):
             probe.write_text(_isolate_probe_source(rel_header, structs), encoding="utf-8")
-            merged.update(run_emitter(str(probe), [s["name"] for s in structs], backend=backend) or {})
+            got = run_emitter(str(probe), [s["name"] for s in structs], backend=backend) or {}
+            if not got:
+                failed.append(rel_header)
+            merged.update(got)
     finally:
         if probe.exists():
             probe.unlink()
+    if failed:
+        # D-414/F8: one failed header of N is no longer a silent coverage gap — named per header.
+        # (Deliberately NOT a could-not-run row-demotion marker: the 4 known probe-failed headers
+        # are register-tracked corpus facts; their structs already count as UNPOLICED downstream.)
+        print(f"WARNING: {len(failed)}/{len(by_header)} isolate probe(s) produced no layout "
+              f"({', '.join(failed[:6])}{' …' if len(failed) > 6 else ''}) — their structs are "
+              f"UNPOLICED, not verified (D-414/F8).", file=sys.stderr)
     return merged
 
 
@@ -480,6 +512,15 @@ def main():
     ap.add_argument("--isolate", action="store_true",
                     help="materialize EVERY converted [STRUCT] via per-header sizeof-forcing probes "
                          "(D-363 step-2: covers structs main.cpp under-instantiates), instead of --tu")
+    ap.add_argument("--baseline", default=str(Path(__file__).parent / "lib" / "cache_layout_baseline.txt"),
+                    help="grandfathered-findings file (kind|struct|field per line; SHRINK-ONLY — "
+                         "the Class-44-orphan sister pattern)")
+    ap.add_argument("--strict-new", action="store_true",
+                    help="HARD mode: a finding NOT in the baseline = rc 1; baselined findings pass "
+                         "with a count (known + homed — see the D-414 register). This is the "
+                         "ADV→HARD promotion (D-414 leaf-3) without known-finds blocking commits")
+    ap.add_argument("--emit-baseline", action="store_true",
+                    help="write the CURRENT finding set to --baseline and exit (bless at triage time)")
     args = ap.parse_args()
 
     if args.selftest:
@@ -542,6 +583,32 @@ def main():
         rec = match_layout(b["name"], layout)
         policed += rec is not None
         viols.extend(gate_struct(b, rec))
+
+    if args.emit_baseline or args.strict_new:
+        bl_path = Path(args.baseline)
+        keys = sorted({_viol_key(v) for v in viols})
+        if args.emit_baseline:
+            bl_path.parent.mkdir(parents=True, exist_ok=True)
+            bl_path.write_text("# cache_layout_baseline — GRANDFATHERED findings (kind|struct|field), "
+                               "SHRINK-ONLY.\n# Every row is dispositioned in the D-414 register "
+                               "(homed E.1.2 / suite-plane). A NEW finding reds --strict-new.\n"
+                               + "".join(f"{k}\n" for k in keys), encoding="utf-8")
+            print(f"baseline: wrote {len(keys)} grandfathered key(s) to {bl_path}")
+            return 0
+        known = set()
+        if bl_path.exists():
+            known = {l.strip() for l in bl_path.read_text(encoding="utf-8").splitlines()
+                     if l.strip() and not l.startswith("#")}
+        new = [v for v in viols if _viol_key(v) not in known]
+        if new:
+            print(f"\nCACHE-LAYOUT: {len(new)} NEW finding(s) beyond the baseline (STRICT):")
+            for x in new:
+                print(f"  ⚠ [{x['kind']}] {x['struct']}: {x['detail']}")
+            print("  (fix, [STRADDLE_EXEMPT] with a reason, or re-bless the baseline at a triage.)")
+            return 1
+        print(f"cache-layout strict-new: 0 NEW; {len(viols)} grandfathered finding(s) "
+              f"(baseline, shrink-only; dispositions in the D-414 register).")
+        return 0
 
     if viols:
         print(f"\nCACHE-LAYOUT VIOLATIONS ({len(viols)}):")

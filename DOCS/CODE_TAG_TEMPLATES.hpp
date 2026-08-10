@@ -117,6 +117,7 @@ inline int Regime_Classify(RegimeState<F>* state, const RegimeSignals<F>* sig,
 // [TAG]_[[HOT_PATH] [DATA_ORIENTED_DESIGN] [CONCURRENCY]]
 // [SCOPE]_[CORE]
 // [THREAD]_[[HOT_WRITER] [SLOW_READER]]
+// [STRADDLE_EXEMPT]_[<field>]_[<reason + decision-ref — CURATED, field-level ONLY (never blanket-struct); silences the H6 gate verdict for that field, the FACT still gets written by --fix>]   <-- optional; D-413/D-414
 // [SCHEMA]_[v1.0]
 // [OVERVIEW]_[per-node hot execution state — layout-by-access-pattern, H6]
 // [DIAGRAM]

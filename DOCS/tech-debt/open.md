@@ -3996,3 +3996,11 @@ opened: 2026-05-24
 - **What (verbatim from the origin):** DriftHistory's 256-sample ring → streaming-aggregate (EWMA) / offline-log split for O(1) runtime memory at scale — negligible at 16 nodes, ~17MB at 4096 nodes; a detector redesign = behavior change, deliberately OUT of `E.1.2`'s persistence scope.
 - **Trigger:** node-count scale-out past O(100s), OR the DriftHistory detector redesign ship — whichever first.
 - **Cross-ref:** TECH_DEBT-125 (tombstone; the collision record) · decision log D-297 (origin site, inline-annotated) · D-409 (the split convention) · H22 (scale-invariance context).
+
+### TECH_DEBT-269 — foxml_suite panel straddlers (9 grandfathered TrainingPanelState fields) — realign at the suite refactor
+
+- **id:** TECH_DEBT-269 · **severity:** low · **opened:** 2026-08-10 · **status:** open · **surface_tags:** [foxml-suite, gui, cache-layout, false-sharing]
+- **What:** the D-414 leaf-3 armed-corpus run surfaced 9 REAL worker↔GUI straddlers on `TrainingPanelState` (`run_name` / `tm_phase_msg` / `ui_horizon_list` / `ui_tp_pct_csv` / `ui_sl_pct_csv` / `ui_sl_per_horizon` / `mh_horizon_complete` / `ui_label_kind_csv` / `ui_label_kind_per_horizon` — offsets in `tools/lib/cache_layout_baseline.txt`). GRANDFATHERED in the strict-new baseline: suite plane — operator-UX tooling with no latency budget (`feedback_process_weight_by_surface_blast_radius`), so deferral is blast-radius-proportionate, not effort-avoidance.
+- **Fix shape:** realign the worker↔GUI flag/string cluster (isolate hot flags per line / group by writer) during the queued foxml_suite PRODUCER-side refactor (`project_foxml_suite_refactor_queued`); SHRINK the baseline rows as each closes (re-bless without the closed keys — the strict-new gate then guards the new layout).
+- **Trigger:** the foxml_suite refactor ship (fire `/ml-audit` scoped per the memory), or any suite-side perf complaint.
+- **Cross-ref:** `plans/v5.15-live-readiness/plan_checks/2026-08-10-D414-toolchain-sweep-finding-register.md` (leaf-3) · `tools/lib/cache_layout_baseline.txt` · Class 57.

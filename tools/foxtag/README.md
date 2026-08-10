@@ -135,7 +135,11 @@ spawns the binary directly) and gates on `core_available()` with its Python path
 a foxtag-less checkout keeps every gate alive. **pybind11 slots in BEHIND this same API** if
 in-process speed is ever needed; no consumer would change.
 
-Cut over (each parity-gated + soaked):
+Cut over (each parity-gated + soaked) — **⚠ PARKED 2026-08-10 (D-415): both cutovers REVERSED
+for the churn phase — script-side is authoritative again (layout `auto` = Lua; inventory =
+the Python collector; foxtag = explicit opt-in via `--backend foxtag` / `FOXTAG_INVENTORY=1`).
+The frozen core is KEPT (never deleted — H21 spirit); parity re-arms at v1 as the per-surface
+acceptance gate. Historical record of the original cutovers below:**
 - `check_cache_layout.py --backend auto` — layout facts from `foxtag layout` when built
   (verified backend-identical vs the Lua emitter; drops the headless-nvim dependency).
 - `rebuild_doc_indexes.py` code-tag inventory — from `foxtag parity-dump` via

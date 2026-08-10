@@ -513,7 +513,8 @@ def main():
         # F1/F3 honesty: never claim "checked N" for blocks whose record was absent from the
         # dump — absent means UNPOLICED (un-instantiated / unlinked), not verified.
         print(f"Checked {policed}/{len(blocks)} converted [STRUCT] block(s) vs real layout — all clean; "
-              f"⚠ {unpoliced} NOT IN THE DUMP (un-instantiated/unlinked — unpoliced, NOT verified).")
+              f"⚠ {unpoliced} NOT IN THE DUMP (un-instantiated / unlinked / failed per-header "
+              f"emit — unpoliced, NOT verified).")
     else:
         print(f"Checked {len(blocks)} converted [STRUCT] block(s) vs real layout — all clean.")
     return 0

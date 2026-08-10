@@ -109,7 +109,10 @@ def inventory():
     tags=[(file, tag)] — decoded from the core's sorted parity-dump rows (identical to the
     Python collector's output; parity §2)."""
     out, rc = _run(["parity-dump"])
-    if rc is None or rc != 0:
+    if rc is None or rc != 0 or not out.strip():
+        # rc0-EMPTY also refuses (A-class B1, 2026-08-10): cmd_parity_dump lacks the C++
+        # empty-corpus refusal cmd_validate has, so an unreadable corpus can reach here as
+        # rc0-empty — the flattened-empty-index hazard through the rc0 door.
         # D-413/F2: a crashed/partial parity-dump must never parse as a SMALLER TRUE inventory
         # (the HARD index --check would red on the shrunken regen and the natural "re-run the
         # rebuild" would COMMIT the flattened index). None = refuse; callers fall back.

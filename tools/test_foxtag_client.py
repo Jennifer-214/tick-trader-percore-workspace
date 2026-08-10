@@ -51,6 +51,12 @@ def main():
         check("garbage rows → inventory() skips them", foxtag_client.inventory() == ([], []))
         check("garbage → unit_at() is None", foxtag_client.unit_at("x.hpp", 1) is None)
 
+        # 2b. rc0 but EMPTY output → refusal (A-class B1: the rc0-empty door — cmd_parity_dump
+        #     lacks the C++ empty-corpus refusal, so an unreadable corpus reaches here rc0-empty)
+        foxtag_client.FOXTAG_BIN = _stub(td, "true")
+        check("rc0-EMPTY → layout() is None", foxtag_client.layout("main.cpp") is None)
+        check("rc0-EMPTY → inventory() is None", foxtag_client.inventory() is None)
+
         # 3. VALID output → decoded exactly (the GREEN tooth — proves 2 wasn't vacuous)
         foxtag_client.FOXTAG_BIN = _stub(
             td, "echo '{\"tt::X<64>\":{\"size\":64,\"align\":64,\"straddlers\":[]}}'")

@@ -19,6 +19,7 @@ Live disposition of the `.E.0` backlog (141 findings + 93 TECH_DEBT + 5 PARITY),
 - **single-owner-`disk_file` event-log** (TD-202 Reset race + `LoadFromDisk` integrity + FIX-2 TOCTOU) + the **fill real-handler** (A16/Class-46) + **A20** warm-tail + **A2/A4** venue-fill-parser → **E.1.4** (SPINE-1 fill).
 - **A21** venue-net qty leg + **A34** per-cluster concentration + **NEW-1** per-cluster relocation + **A22/A29** torn-read siblings → **E.1.5** (SPINE-3 purity; HARD-live-gate precondition 2).
 - the **§4d H7/H10/H14/H20+H8 HOLE cluster** → **E.1.0** (guards-first). **Core→Node rename** → **E.1.1**. **SoA/`Money` + snapshot bump** → **E.1.2**.
+- **cfg-reload PUBLICATION seam (NEW 2026-08-10, D-414 A-class find):** hot-reload's unsynchronized whole-`ControllerConfig` assignment on the PRODUCER (`EngineSharded/Async.hpp:321-352`) vs concurrent drainer/slow readers — NOT one of the 9 Money-torn sites above (distinct shape, same remedy family) → **E.1.3 candidate**; verify write/read cadence at the dive. Pre-live only (the D-77/F-2/D-168 blanket block gates it). Full record: `plan_checks/2026-08-10-D414-toolchain-sweep-finding-register.md`.
 Disposition flips at each leaf's ship. (TD-203 stays → v5.16.) Re-grounding corrections caught at scaffold-time are in the sub-master § "Re-grounding corrections."
 
 ## 📍 SESSION STATE + CLOSE-OUT PLAN (2026-06-10 — end of the big `.E.0.10` session)

@@ -258,16 +258,16 @@ if [ "${SKIP_PLAN_BODY_CHECK:-0}" != "1" ]; then
                     echo "  [B-Plus] deferred (bplus_scope: design-draft → pre-coding gate): $rel"
                     continue
                 fi
-                python3 "$B_PLUS" "$f" >/tmp/csd_bp_$$.log 2>&1 || FAB=1
+                python3 "$B_PLUS" "$f" >/tmp/csd_bp_$$.log 2>&1 || { FAB=1; cp /tmp/csd_bp_$$.log /tmp/csd_bp_fail_$$.log; }
             done
             if [ "$FAB" = "1" ]; then
                 RESULTS+=("  ❌ HARD  B-Plus (session plan bodies) — fabrication/missing citation")
-                echo "----- B-Plus detail (last) -----"; cat /tmp/csd_bp_$$.log
+                echo "----- B-Plus detail (last FAILING file) -----"; cat /tmp/csd_bp_fail_$$.log
                 HARD_FAIL=1
             else
                 RESULTS+=("  ✅ HARD  B-Plus (session plan bodies)")
             fi
-            rm -f /tmp/csd_bp_$$.log
+            rm -f /tmp/csd_bp_$$.log /tmp/csd_bp_fail_$$.log
         fi
     fi
 else
@@ -379,11 +379,13 @@ run_advisory "meta-registry coverage" \
 # shrinking backlog; a NEW unmarked capital test bumps the count conspicuously at the gate.
 if [ "${SKIP_CAPITAL_ADV_CHECK:-0}" != "1" ]; then
     CAP_OUT=$(python3 "$REPO_ROOT/tools/check_capital_adversarial_audit.py" 2>&1); CAP_RC=$?
-    if [ "$CAP_RC" -ne 0 ] && ! echo "$CAP_OUT" | grep -q 'WARN'; then
+    if [ "$CAP_RC" -ne 0 ] && ! echo "$CAP_OUT" | grep -qE 'WARN — [0-9]+ capital'; then
         # D-413/F5 honesty: a crashed tool (traceback, no verdict) must never render as the
         # positive coverage claim below. Advisory tier (non-blocking) but TRUTHFUL.
         RESULTS+=("  ❌ ADV   capital-test adversarial markers — TOOL ERROR (exit $CAP_RC; no verdict)")
-    elif echo "$CAP_OUT" | grep -q 'WARN'; then
+    elif echo "$CAP_OUT" | grep -qE 'WARN — [0-9]+ capital'; then
+        # (verdict regex ANCHORED per A-class B4: bare 'WARN' matched 'Warning' in tracebacks,
+        # mis-rendering a crash as the known-backlog row)
         CAP_N=$(echo "$CAP_OUT" | sed -n 's/.*WARN — \([0-9]*\) capital.*/\1/p')
         RESULTS+=("  ⚠️  ADV   capital-test adversarial markers — ${CAP_N:-?} unmarked block(s) (KNOWN backlog; NEW capital tests need // ADV-REFUTE or // ADV-SELF)")
     else
@@ -418,5 +420,12 @@ if [ "$HARD_FAIL" = "1" ]; then
     echo "❌ SWEEP FAILED — a HARD doc/plan check failed. Fix before declaring clean."
     exit 1
 fi
-echo "✅ SWEEP CLEAN — all HARD doc/plan checks pass (advisories may be non-zero; see above)."
+# A-class B4 (2026-08-10): the verdict line must not read unqualified over ⚠️-demoted rows —
+# an M10 partial-oracle presenting as total, in miniature.
+CNR=$(printf '%s\n' "${RESULTS[@]}" | grep -c 'COULD-NOT-RUN' || true)
+if [ "${CNR:-0}" -gt 0 ]; then
+    echo "✅ SWEEP CLEAN — all HARD doc/plan checks pass; ⚠ ${CNR} check(s) COULD-NOT-RUN (exit-0 but did not fully run — see rows above)."
+else
+    echo "✅ SWEEP CLEAN — all HARD doc/plan checks pass (advisories may be non-zero; see above)."
+fi
 exit 0

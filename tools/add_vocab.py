@@ -97,10 +97,12 @@ def _regen_and_verify(axis, name):
         pool = cv if axis == "concern" else sv
         if name not in (pool or set()):
             return f"`{name}` did not derive into the {axis} vocab after insert"
-    # currency: a second regen must be a no-op (indexes now stable)
+    # IDEMPOTENCY/DETERMINISM probe ONLY (A-class A10, 2026-08-10): a second regen must be a
+    # no-op — this REDs on a non-deterministic generator and proves NOTHING about derivation
+    # correctness (the independent cross-module derivation checks above are that proof).
     chk = subprocess.run([sys.executable, str(REBUILD), "--check"], capture_output=True, text=True)
     if chk.returncode != 0:
-        return "index-currency --check still red after regen (unexpected)"
+        return "post-regen --check red — the index regen is NON-IDEMPOTENT (generator nondeterminism)"
     return None
 
 

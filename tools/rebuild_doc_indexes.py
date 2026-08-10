@@ -21,6 +21,7 @@ Usage:
   python3 tools/rebuild_doc_indexes.py --target tag-index    # TAG_INDEX.md only
   python3 tools/rebuild_doc_indexes.py --dry-run             # print proposed output
 """
+import os
 import re
 import sys
 import argparse
@@ -322,11 +323,18 @@ def collect_code_tags():
             return str(f)
 
     out = {}
-    try:
-        from foxtag_client import core_available, inventory
-        use_core = core_available()
-    except ImportError:
-        use_core = False
+    # D-415 demotion completed (A-class A8 flip, 2026-08-10): script-side authority during
+    # churn. With the parity gate PARKED, a successful-but-divergent frozen core would
+    # regenerate a WRONG index with no standing detector — so foxtag inventory is OPT-IN
+    # (FOXTAG_INVENTORY=1; the v1 re-arm flips the default back). §2 parity was green at
+    # the flip ⇒ byte-identical output either way today.
+    use_core = False
+    if os.environ.get("FOXTAG_INVENTORY") == "1":
+        try:
+            from foxtag_client import core_available, inventory
+            use_core = core_available()
+        except ImportError:
+            use_core = False
     if use_core:
         inv = inventory()
         if inv is None:

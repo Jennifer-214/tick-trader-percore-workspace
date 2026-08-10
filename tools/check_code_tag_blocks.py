@@ -760,6 +760,12 @@ def main():
             return 2
     else:
         files = engine_source_files()   # drift-proof shared file-list (also feeds the code-tag index)
+    if not files:
+        # Class-51 mirror of the C++ twin's refusal (foxtag_main.cpp:36-44; A-class F10,
+        # 2026-08-10): an empty corpus must never scan-0-and-pass — the twins DISAGREED here.
+        print("ERROR: corpus resolved ZERO files — refusing the vacuous scan (Class-51).",
+              file=sys.stderr)
+        return 2
 
     ref_index = load_reference_index()          # frozen-path membership sets, loaded once
     vacuous = [k for k in REF_MUST_POPULATE if not ref_index.get(k)]

@@ -211,7 +211,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/meta-disciplines/body-content-enumeration-at-plan-time-discipline.md` | 3-first-canonical | meta-discipline, plan-template, framework-discipline, +1 | 0 |
 | `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md` | 4-cohort | audit-methodology, verification, structural-enforcement, +2 | 5 |
 | `DESIGN_SPECS/meta-disciplines/canonical-sister-extension-discipline.md` | 3-first-canonical | meta-discipline, framework-discipline, pattern-codification, +2 | 5 |
-| `DESIGN_SPECS/meta-disciplines/dead-code-and-identifier-retirement-discipline.md` | 5-claude-md | meta-discipline, structural-fix, framework-discipline, +1 | 4 |
+| `DESIGN_SPECS/meta-disciplines/dead-code-and-identifier-retirement-discipline.md` | 6-cadence-locked   # promoted 2026-08-10 at TD-254(c) closure ON EVIDENCE (the first stage-6 member, never vocab-filling): standing CI `tools/check_identifier_retirement.py` + pre-commit Check H + the golden retirement ledger + the H21 CLAUDE.md row — enforcement AND cadence both live | meta-discipline, structural-fix, framework-discipline, +1 | 4 |
 | `DESIGN_SPECS/meta-disciplines/definition-of-done-and-armed-scout-verification.md` | 3-first-canonical | audit-methodology, meta-discipline, session-continuity, +2 | 0 |
 | `DESIGN_SPECS/meta-disciplines/differential-to-absolute-gate-contract-widening.md` | 3-first-canonical | audit-methodology, verification, structural-enforcement, +2 | 4 |
 | `DESIGN_SPECS/meta-disciplines/doc-frontmatter-convention.md` | 3-first-canonical | doc-discipline, meta-discipline, framework-discipline | 3 |

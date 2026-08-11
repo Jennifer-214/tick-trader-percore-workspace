@@ -278,3 +278,50 @@ as dated sections.
   hand-review, exactly as today.
 - **Dive:** the (d) orchestrator dive (mass-update half) + a small `foxtag arm <unit>` packer
   sketch alongside `0.4`/`0.6` (context half).
+
+## 11. Docview dogfood transmissions — tag-value reflection · TAG ADD · recency-as-rule · parity expansion · float UX (2026-08-10)
+
+- **As given (mid-dogfood, several messages):** *"the floating docs thing has way less options than
+  this [the HUD Docs-mention tree], is the tag system actually useful? i like how it looks, but it
+  feels kinda overkill in retrospect, but its nice that the plugin can make use of it for options so
+  its easy to add things, maybe like a TAG ADD function, where you browse vocab or add new or
+  something, or like editable funcitons via scripting? … should we make the menus sort by date as
+  well for most up to date information? like should we make other things follow this rule? can we
+  expand the parity stuff to other things?"* + the float feedback: *"a little hard to read, and kind
+  of makes the code hard to see, also you can[not] navigate back to it once you ctrl hjkl off it …
+  it looks better on a full screen."*
+- **(i) The design question — mention-sweep vs curated refs (answered, recorded):** the HUD
+  "Docs mention X" tree (473 hits / 173 files for FixedPoint) is TEXT SEARCH — every doc that
+  MENTIONS the symbol, noise included, unranked. `[REFERENCE]` is GOVERNANCE — the ids that BIND
+  the unit (5 for FixedPoint<10,8>). Different questions: "where is this discussed" vs "what
+  governs this". The tag system's load-bearing value was never browsing — it is the VERIFIED-FACT
+  substrate (the whole D-413/D-414 arc: `[STRADDLE]` facts, H6 gate arming, A2 call-graph
+  verification, size gates are ALL tag-driven CI; a grep cannot be gated — a tag can be validated,
+  gated, and mined). Browsing consumers are the cheap dividend on top; where plain search serves as
+  well, build the search consumer and skip the tag — no tag for tag's sake. The miner
+  (`mine_reference_tags.py`, 550 ids from existing prose) makes the curated layer ~zero-maintenance,
+  which is what retires the "overkill" cost side.
+- **(ii) TAG ADD** (browse vocab → add to the unit; mint new vocab): §9-law-NATIVE — the picker
+  DERIVES from the grammar payload (categories / concern / surface vocab) + writes through the
+  sanctioned comment-writer tier (✎). New-vocab minting must route through the SSoT (schema fence /
+  `doc-tag-vocabulary.md`), never plugin-local. Sisters: `tagwriter.lua` (the write seam) · D-374
+  (explicit-invoke writers). → rides the task-#10 unified-registry work as ONE registry row + one
+  vocab-derived picker.
+- **(iii) Recency-as-rule:** chronological-ish lists (plans · changelog · decisions · choosers over
+  dated ids · the Docs-mention subtrees) sort NEWEST-FIRST as a RENDERER-level rule, not
+  per-surface code; semantic sets keep grouping. → the unified renderer (task #10; I-2's
+  conventions census slots it).
+- **(iv) "Editable functions via scripting" / mass ops:** reads as the §10 tag-scoped MASS-OPS +
+  §4 declarative code-gen family — scriptable operations addressed by tag scope. Placement
+  unchanged (§10/§4).
+- **(v) Float UX triad (I-2 / task-#10 input):** (a) the doc float overlays code — hard to read in
+  cramped windows, fine fullscreen → size must adapt to editor dims; below a width threshold open
+  the PIN split directly instead of a float; (b) **FLOAT FOCUS TRAP** — directional window-nav
+  (ctrl-hjkl) skips floats, so once focus leaves, hjkl cannot re-enter (orphaned lens) → fix =
+  close-on-focus-leave (transient-lens semantics; KEEPING it is what `p`-pin exists for — a split
+  IS hjkl-navigable); (c) both land with the I-1/I-2/I-3 unification synthesis, not as one-off
+  patches.
+- **(vi) Parity-expansion:** the plugin parity fleet (I-1/I-2/I-3, this session) is the METHOD
+  instance; standing expansions already homed — TD-270 (reference-membership two-cores) ·
+  `/parity-check` (train↔serve) · the toolio registry (producer surfaces, TD-258). Further
+  expansion = per-surface on evidence, not a blanket sweep.

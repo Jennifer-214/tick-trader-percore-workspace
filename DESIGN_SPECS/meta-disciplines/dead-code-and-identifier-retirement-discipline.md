@@ -1,6 +1,6 @@
 ---
 type: meta-discipline
-stage: 5-claude-md
+stage: 6-cadence-locked   # promoted 2026-08-10 at TD-254(c) closure ON EVIDENCE (the first stage-6 member, never vocab-filling): standing CI `tools/check_identifier_retirement.py` + pre-commit Check H + the golden retirement ledger + the H21 CLAUDE.md row — enforcement AND cadence both live
 version: 1.0
 established: 2026-06-02
 tags: [meta-discipline, structural-fix, framework-discipline, wire-format]

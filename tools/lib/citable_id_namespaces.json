@@ -146,7 +146,8 @@
     "/plan_checks/",
     "/handoffs/",
     "/archived/",
-    "/capture-audit-reports/"
+    "/capture-audit-reports/",
+    "/reports/"
   ],
   "_why_frozen_record_paths": "A citation inside a FROZEN RECORD is not a claim about the present — it is a truthful artifact of what was true when written. A postmortem citing a then-real TECH_DEBT id is CORRECT, and 'fixing' it would rewrite history to satisfy a linter. The operator settled this scoping at D-390: 'for historical data thats no longer current i guess its not extremely critical' and 'a frozen record citing a then-real path is a truthful artifact; the guard's job is to stop the corpus getting WORSE, not to rewrite history.' So citations are resolved ONLY on LIVE surfaces — the current MASTER, in-flight plan bodies, the open/in-flight ledgers, ROADMAPs, decision logs, CLAUDE.md, DESIGN_SPECS. Measured 2026-07-20: of 10 dangling ids, 7 were cited exclusively from frozen records (a prior sprint's MASTER, a postmortem, May plan_checks, a superseded handoff) and 3 were genuinely LIVE. Flagging all 10 would have made the triage corpus 70% history-rewriting."
 }

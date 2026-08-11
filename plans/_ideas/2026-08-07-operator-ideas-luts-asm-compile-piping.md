@@ -232,6 +232,13 @@ as dated sections.
   (`◇ 42256 B · 661 cache lines`) COLLIDES with git-blame virtual text at eol — two plugins
   competing for one space; (ii) straddle-diagnostics discoverability — unclear whether it points
   at WHICH field straddles. Both actioned same-session (see plugin log).
+- **(iii) NOTED 2026-08-10 (operator screenshots, note-only per operator call):** `<leader>dd → m`
+  (the HUD's menu key) and `<leader>dm` (the standalone palette) render DIFFERENT popups for the
+  same action set — the HUD path shows the ✎/⚠ write-tier icons + legend and docks to the HUD;
+  the `dm` path renders plain labels, no tier column. Same `menu.open` primitive, two invokers
+  passing different item shapes — the write-tier metadata should ride the ONE actions registry so
+  both renderings are identical by construction (the cd971ac tier work appears to have landed on
+  one invoker's item-build only). Fix rides the 0.4 plugin thread.
 - **Positive signal recorded:** lock-layout (`<leader>da` static_assert insert) called out as
   "neat" — the insert-a-guard-from-the-HUD shape works; more one-keypress guard-writers of that
   shape are candidates.

@@ -17,6 +17,12 @@
     }
   },
 
+  "defining_site/1": {
+    "tables": {
+      "sites": ["id", "status", "file", "line"]
+    }
+  },
+
   "findings/1": {
     "table": ["file", "line", "severity", "message", "kind"]
   }

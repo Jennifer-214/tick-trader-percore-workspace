@@ -763,6 +763,27 @@ def _selftest():
     if not env_ok:
         fails.append("resolve-envelope")
 
+    # --- (T7) the --where defining-site surface (the [REFERENCE] doc-viewer lookup) ---
+    # One id per key-shape class: string-keyed sentinel (D-400) · int-keyed zero-pad
+    # (TECH_DEBT-16 ≡ -016) · the CLASS space-form citation ("Class 51" → filename key) ·
+    # an honest MISSING.
+    wh_rows = _where_rows(["D-400", "TECH_DEBT-16", "Class 51", "ZZ-NOPE-99"])
+    by_id = {}
+    for r in wh_rows:
+        by_id.setdefault(r[0], []).append(r)
+    wh_env = toolio.emit("defining_site/1", {"sites": wh_rows},
+                         producer=_RESOLVE_PRODUCER, git_head="selftest", schema_version="1")
+    wt = toolio.read(wh_env)["sites"]
+    wh_ok = (by_id.get("D-400", [["", ""]])[0][1] == "FOUND"
+             and by_id["D-400"][0][2].endswith(".md") and by_id["D-400"][0][3] > 0
+             and by_id.get("TECH_DEBT-16", [["", ""]])[0][1] == "FOUND"
+             and by_id.get("Class 51", [["", ""]])[0][1] == "FOUND"
+             and by_id.get("ZZ-NOPE-99") == [["ZZ-NOPE-99", "MISSING", "", 0]]
+             and wt["schema"] == ["id", "status", "file", "line"])
+    print(f"  {'PASS' if wh_ok else 'FAIL'}  where-envelope             string/int/space key shapes + honest MISSING")
+    if not wh_ok:
+        fails.append("where-envelope")
+
     print(f"[citable_ids selftest] {'ALL TEETH PASS' if not fails else f'{len(fails)} FAILURE(S): {fails}'}")
     return 1 if fails else 0
 
@@ -776,11 +797,17 @@ def _main():
                     help="batch tri-state cited-path resolution (RESOLVED/RENAMED/MISSING per "
                          "input) as ONE toolio envelope on stdout — the 0.4 doc-viewer "
                          "dead-link seam (D-417)")
+    ap.add_argument("--where", nargs="+", metavar="ID",
+                    help="citable id(s) → DEFINING site(s) as ONE defining_site/1 envelope on "
+                         "stdout (FOUND file:line per active site / honest MISSING) — the "
+                         "[REFERENCE] doc-viewer lookup")
     args = ap.parse_args()          # rejects unknown flags — until now ANY flag exited 0
     if args.selftest:
         sys.exit(_selftest())
     if args.resolve:
         sys.exit(_emit_resolve(args.resolve))
+    if args.where:
+        sys.exit(_emit_where(args.where))
 
     idx = defining_index()
     print("citable_ids — defining-form index (BY DEFINITION, never by mention):")
@@ -977,6 +1004,73 @@ def _resolve_rows(relpaths, root, ws):
         status, payload = resolve_cited_path(rp, root, ws)
         rows.append([rp, status, str(payload) if payload is not None else ""])
     return rows
+
+
+def _citation_keys(q, spec, sample_key):
+    """CITATION-form query → candidate index keys for ONE namespace. Data-driven from the
+    namespace SPEC's own prefix field (never a hardcoded prefix table — the module's sermon),
+    with the two spec-vs-citation mismatches NAMED: PARITY's spec prefix is its FIELD form
+    (`id: PARITY-` → citation `PARITY-`) and CLASS's is its FILENAME form (`class-` →
+    citation `Class N`, space not dash). Int-keyed namespaces (CLASS/PARITY/TECH_DEBT) key on
+    the NUMBER — `_norm_int_id` handles zero-pad (`-016` ≡ `-16`) and the grandfathered
+    suffix form (`175a` stays a string key). Empty list = q is not this namespace's shape;
+    a wrong-namespace candidate dies harmlessly at the .get()."""
+    prefixes = (spec.get("prefix_any")
+                or ([spec["prefix"]] if spec.get("prefix") else None)
+                or ([spec["field_prefix"].rsplit(" ", 1)[-1]] if spec.get("field_prefix") else None)
+                or (["Class "] if str(spec.get("filename_prefix", "")).startswith("class") else None)
+                or [])
+    for pre in prefixes:
+        if q.startswith(pre) and len(q) > len(pre):
+            tail = q[len(pre):]
+            if isinstance(sample_key, int):
+                n = _norm_int_id(tail)
+                return [n] if n is not None else []
+            return [q]
+    return []
+
+
+def _where_rows(ids):
+    """PURE row-builder for `defining_site/1` — citable id → its DEFINING site(s); the ID-shaped
+    sibling of _resolve_rows' path shape (in-code `[REFERENCE]` tags carry IDS, not paths — the
+    0.4 doc-viewer floats the DEFINING doc). Every ACTIVE defining site is a row (multi-site
+    stays representable — the module's founding rule); an unknown id is an honest MISSING row."""
+    idx = defining_index()
+    reg = _registry()["namespaces"]
+    rows = []
+    for q in ids:
+        hits = []
+        for ns, entries in idx.items():
+            if not entries:
+                continue
+            for key in _citation_keys(q, reg.get(ns, {}), next(iter(entries))):
+                sites = entries.get(key)
+                if sites:
+                    hits.extend((p, l) for p, l in active_sites(ns, sites))
+                    break
+        if hits:
+            rows.extend([q, "FOUND", str(p), int(l)] for p, l in hits)
+        else:
+            rows.append([q, "MISSING", "", 0])
+    return rows
+
+
+def _emit_where(ids):
+    """`--where` CLI: id → defining site(s) as ONE `defining_site/1` envelope on STDOUT. Same
+    honesty contract as --resolve: rc 0 includes MISSING rows (a dead reference is a FACT the
+    doc-viewer refuses on, by name); rc != 0 = the resolver failed to run."""
+    import json as _json
+    import toolio
+    try:
+        head = subprocess.run(["git", "-C", str(ENGINE), "rev-parse", "--short", "HEAD"],
+                              capture_output=True, text=True, timeout=10).stdout.strip() or "unknown"
+    except (subprocess.SubprocessError, OSError):
+        head = "unknown"
+    env = toolio.emit("defining_site/1", {"sites": _where_rows(ids)},
+                      producer=dict(_RESOLVE_PRODUCER, command="where", args=list(ids)),
+                      git_head=head, schema_version="1")
+    print(_json.dumps(env))
+    return 0
 
 
 def _emit_resolve(relpaths):

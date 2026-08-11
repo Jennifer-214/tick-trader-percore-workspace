@@ -745,6 +745,24 @@ def _selftest():
         if not ok:
             fails.append(f"sentinel/{rid}")
 
+    # --- (T6) the --resolve envelope surface (0.4 dead-link seam; D-417/D-418) ---
+    import toolio
+    rt_rows = _resolve_rows(["tools/citable_ids.py",          # RESOLVED (this file)
+                             "EngineSharded/Async.hpp",       # RENAMED (the D-417 smoke case)
+                             "definitely/not/here.hpp"],      # MISSING
+                            ENGINE, WORKSPACE)
+    rt_env = toolio.emit("cited_path/1", {"resolutions": rt_rows},
+                         producer=_RESOLVE_PRODUCER, git_head="selftest", schema_version="1")
+    rt = toolio.read(rt_env)["resolutions"]
+    env_ok = ([r[1] for r in rt["rows"]] == ["RESOLVED", "RENAMED", "MISSING"]
+              and rt["schema"] == ["cited", "status", "current"]
+              and rt["rows"][0][2].endswith("citable_ids.py")   # RESOLVED = absolute path
+              and rt["rows"][1][2].endswith("Async.hpp")        # RENAMED  = current relpath
+              and rt["rows"][2][2] == "")                       # MISSING  = honest empty, never omitted
+    print(f"  {'PASS' if env_ok else 'FAIL'}  resolve-envelope           tri-state rows + registry-schema round-trip")
+    if not env_ok:
+        fails.append("resolve-envelope")
+
     print(f"[citable_ids selftest] {'ALL TEETH PASS' if not fails else f'{len(fails)} FAILURE(S): {fails}'}")
     return 1 if fails else 0
 
@@ -754,9 +772,15 @@ def _main():
     ap = argparse.ArgumentParser(description="citable-ID defining-form resolver.")
     ap.add_argument("--selftest", action="store_true",
                     help="prove the resolver flags planted-bad and passes known-good (T5)")
+    ap.add_argument("--resolve", nargs="+", metavar="RELPATH",
+                    help="batch tri-state cited-path resolution (RESOLVED/RENAMED/MISSING per "
+                         "input) as ONE toolio envelope on stdout — the 0.4 doc-viewer "
+                         "dead-link seam (D-417)")
     args = ap.parse_args()          # rejects unknown flags — until now ANY flag exited 0
     if args.selftest:
         sys.exit(_selftest())
+    if args.resolve:
+        sys.exit(_emit_resolve(args.resolve))
 
     idx = defining_index()
     print("citable_ids — defining-form index (BY DEFINITION, never by mention):")
@@ -937,6 +961,42 @@ def resolve_cited_path(relpath, project_root, workspace_root=None):
     if moved:
         return ("RENAMED", moved)
     return ("MISSING", None)
+
+
+# ── the --resolve ENVELOPE surface (0.4 doc-viewer dead-link seam; D-417/D-418 queued consumer) ──
+_RESOLVE_PRODUCER = {"tool": "citable_ids", "version": "1.0", "command": "resolve", "args": []}
+
+
+def _resolve_rows(relpaths, root, ws):
+    """PURE row-builder for the `cited_path/1` payload (one row per input, order-preserving).
+    Class 57 at this seam: MISSING is an HONEST row with an empty `current`, never an omitted
+    one — the CONSUMER decides what a dead link means (the 0.4 doc-viewer refuses to open it,
+    with the reason named)."""
+    rows = []
+    for rp in relpaths:
+        status, payload = resolve_cited_path(rp, root, ws)
+        rows.append([rp, status, str(payload) if payload is not None else ""])
+    return rows
+
+
+def _emit_resolve(relpaths):
+    """Batch tri-state cited-path resolution as ONE toolio envelope on STDOUT — one subprocess
+    resolves a whole doc's [REFERENCE] list. rc 0 INCLUDES MISSING rows (resolution RAN; a dead
+    link is a fact); rc != 0 means the resolver itself failed — a different fact. `current` =
+    absolute path when RESOLVED / the current relpath when RENAMED / empty when MISSING."""
+    import json as _json
+    import toolio
+    try:
+        head = subprocess.run(["git", "-C", str(ENGINE), "rev-parse", "--short", "HEAD"],
+                              capture_output=True, text=True, timeout=10).stdout.strip() or "unknown"
+    except (subprocess.SubprocessError, OSError):
+        head = "unknown"
+    env = toolio.emit("cited_path/1",
+                      {"resolutions": _resolve_rows(relpaths, ENGINE, WORKSPACE)},
+                      producer=dict(_RESOLVE_PRODUCER, args=list(relpaths)),
+                      git_head=head, schema_version="1")
+    print(_json.dumps(env))
+    return 0
 
 
 if __name__ == "__main__":

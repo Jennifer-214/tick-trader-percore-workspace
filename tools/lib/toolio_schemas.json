@@ -11,6 +11,12 @@
     }
   },
 
+  "cited_path/1": {
+    "tables": {
+      "resolutions": ["cited", "status", "current"]
+    }
+  },
+
   "findings/1": {
     "table": ["file", "line", "severity", "message", "kind"]
   }

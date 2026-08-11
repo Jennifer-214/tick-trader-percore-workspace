@@ -63,6 +63,12 @@ family — CONSUMES / EMITS / GUARANTEES / FAILURE MODES. Seeded from `tools/CLA
 - **Consumer semantics:** frozen records (`frozen_record_paths` SSoT) are truthful artifacts —
   their stale cites are never repaired; append-only docs (decision logs) are ANNOTATED
   (`[NOW:]`), never rewritten; `[CITE-AS-EVIDENCE]` cites are quoted staleness — untouchable.
+- **Envelope surface** (`citable_ids.py --resolve <relpath>…`, 2026-08-10): batch resolution as
+  ONE `cited_path/1` envelope — `resolutions: [cited, status, current]`, `current` = absolute
+  path when RESOLVED / the current relpath when RENAMED / empty when MISSING. rc 0 INCLUDES
+  MISSING rows (a dead link is a FACT the consumer acts on); rc ≠ 0 = the resolver failed to
+  run. The 0.4 doc-viewer consumes this: RESOLVED → float the doc · RENAMED → open current +
+  name the rename · MISSING → REFUSE with the reason (never a blank float).
 
 ## 3 · CALL-GRAPH facts (written `[UPSTREAM]` / `[CONSUMERS]`)
 

@@ -191,7 +191,12 @@ S-nowrap truncation vs wrap+grow-height honesty.
   is history-recoverable as a future menu row). HUD card editor-clamped (S3 worst case).
   Freshness note: docs_refs parses the LIVE buffer per render; docview resolves fresh per
   invocation (git-HEAD-stamped envelope) — "most up to date data" holds by construction.
-- REMAINING: phase 5 docs-derive (footer/help/README from rows; keymap registry K4) · phase 6
-  headless teeth (menu seams still untested — the cd971ac proofs) · ui.lua token EXTRACTION
-  (the clamp landed in menu.lua as the seed) · notify-voice sweep · checkhealth dep-chain ·
-  aspect-constant SSoT (S9, cosmetic); K2 parked.
+- **PHASES 5+6 → SHIPPED (plugin `f0b1149`):** keymap REGISTRY in init.lua — registration loop
+  + the help float's Open section DERIVE (K4; that section had drifted twice); add a map = one
+  row. `tests/test_actions.lua` = the menu-seam teeth (10 legs: type+when(ctx) gating ·
+  verbatim __index pass-through · layer-stack collapse vs keep_stack · shim honesty) — the
+  cd971ac never-committed proofs, permanent. Suite 40/40.
+- REMAINING (small tail, any session): README key-block derivation (the last hand-copy) ·
+  ui.lua token EXTRACTION (clamp lives in menu.lua as the seed) · notify-voice sweep ·
+  checkhealth dep-chain · aspect-constant SSoT (S9, cosmetic) · footer base-key line derive;
+  K2 parked. **The fleet's functional divergence set is FULLY CLOSED.**

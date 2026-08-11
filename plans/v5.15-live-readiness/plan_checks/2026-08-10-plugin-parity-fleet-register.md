@@ -204,6 +204,13 @@ S-nowrap truncation vs wrap+grow-height honesty.
   resolver-chain checks (python3 + citable_ids reachability) · README re-centered on the root
   menu, its key hand-copy REMOVED-not-generated (fewer moving parts) + doc_dirs retirement
   noted. Suite 40/40.
-- REMAINING (cosmetic-only): notify-voice helper sweep · footer base-key line derive; K2
-  parked. **The fleet's divergence set — functional AND structural — is CLOSED. The plugin
-  arc is DONE for this cycle; next cycle = the engine (E.1.2 SoA leaf).**
+- **NOTIFY VOICE → SHIPPED (plugin `f657dbb`):** all 71 sites route through `ui.notify_raw`
+  (prefix applied exactly once; sed sweep + diff eyeball + suite 40/40). **Footer base-key
+  line → RESOLVED-BY-ANALYSIS:** after the help rewrite it is the SINGLE copy of the base-key
+  list (help lists semantics, not the list) — nothing left to derive from/to.
+- **REGISTER CLOSED — ZERO tail.** Every fleet finding terminal; K2 (d-prefix exit) PARKED by
+  operator ("i can just hit u if i delete — not a huge concern right now"). Out-of-arc ROADMAP
+  features (TAG ADD row · 0.5 asm cards · register-pressure §11.5 · TD-258 producer surface ·
+  TD-252 plugin hooks) are homed in ideas/TECH_DEBT, not unfinished parity. **The plugin is
+  DONE for this cycle. Next cycle = the ENGINE (E.1.2 SoA leaf; c-class currency report in
+  reports/ arms the pickup).**

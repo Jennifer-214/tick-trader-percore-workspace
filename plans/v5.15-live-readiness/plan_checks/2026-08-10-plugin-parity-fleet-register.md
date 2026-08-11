@@ -164,5 +164,18 @@ S-nowrap truncation vs wrap+grow-height honesty.
   notify voice · checkhealth dep-chain); **#6 README screenshots DECLINED for now** — the
   plugin is private hobby code, "maybe later" (revisit at any public/workspace-template
   release).
-- REMAINING phases 2-6 per the synthesis (key registry + collision assert · one type space
-  [adapter half] · ui.lua tokens · docs-derive · headless teeth); K2 parked.
+- **PHASE 2 → SHIPPED (plugin `99e6824`, same evening):** RESERVED_KEYS collision guard in
+  `Hud:map_action` (base map + board L/H/x/s; shadowing lens binds REFUSED with a one-time
+  WARN pointing at the menu) — K1/D4/D5 closed: `m` = MENU everywhere, board-`s` = COMPARE.
+  who-writes + false-sharing migrated to registry rows (`keep_stack` — they render INTO the
+  invoking HUD; bodies exported from the lens modules). `Hud:reset` unbinds tracked lens keys
+  — P5/D9 stale-ctx closures die structurally. `actions.run` passes ctx to rows. Help text +
+  `_TEMPLATE` taken-list de-drifted (P6/D10 partial).
+- **11.5 register-pressure checker:** operator asked "we have that right?" — verified NOT
+  built + NOT previously captured; NOW captured at ideas §11.5 (0.5 family, HARD dep TD-257
+  real-flags; interim = eyeball spills in the 1:1 asm explorer). The greppable "spill" family
+  is the CACHE-residency lens set — a different axis.
+- REMAINING phases 3-6 per the synthesis (kind→tag adapter remainder for other `for_type`
+  consumers + decode the 4 unclaimed vocab tables · ui.lua tokens + greenlit polish
+  [curated-first Docs · resolving… chip · key-hint chips · one notify voice · checkhealth] ·
+  docs-derive · headless teeth); K2 parked.

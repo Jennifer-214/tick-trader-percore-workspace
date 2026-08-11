@@ -279,6 +279,25 @@ as dated sections.
 - **Dive:** the (d) orchestrator dive (mass-update half) + a small `foxtag arm <unit>` packer
   sketch alongside `0.4`/`0.6` (context half).
 
+## 11.5 REGISTER-PRESSURE checker (operator idea, re-raised + first captured 2026-08-10)
+
+- **As given:** *"we have the register pressure checker right? i think that was an idea i had to
+  identify if registers were running out or something."* Verified 2026-08-10: it does NOT exist
+  and was not previously captured (the greppable "spill" family is the CACHE-residency lens set —
+  ambient/status/dashboard "spills N cache lines" — a different axis; likely the memory's anchor).
+- **Reading:** a per-function REGISTER-pressure fact from the REAL build's disassembly — count
+  stack-spill traffic (store/reload pairs to `rsp`-relative slots inside the body, distinct
+  spill slots, max live span) and surface it as (a) a `[DERIVED]`-adjacent LIVE-PREVIEW fact on
+  the asm card (never written — codegen-volatile, the D-327 quartet's sibling), (b) a HUD chip
+  (`◇ 3 spills` with hot-path RED per H7/H8 — a spill on the per-tick path is real latency).
+- **Placement:** the `0.5` asm/compiled-reality family. **HARD dependency: TD-257**
+  (compile_commands 1:1) — a spill count under editor-supplied flags describes a TU nobody
+  builds (the D-397 fact-source argument verbatim; -O level changes allocation entirely).
+  Sisters: asmexplorer/asmview (the render seams) · `check_latency_path_conformance` (the
+  instruction/branch ratchet this would join as a third measured axis) · §2 compile-piping.
+- **Dive:** `0.5`, alongside TD-257 + the §2 rider. Until then: manually eyeball spills in the
+  1:1 asm explorer (`<leader>de`) — the surface already shows them, uncounted.
+
 ## 11. Docview dogfood transmissions — tag-value reflection · TAG ADD · recency-as-rule · parity expansion · float UX (2026-08-10)
 
 - **As given (mid-dogfood, several messages):** *"the floating docs thing has way less options than

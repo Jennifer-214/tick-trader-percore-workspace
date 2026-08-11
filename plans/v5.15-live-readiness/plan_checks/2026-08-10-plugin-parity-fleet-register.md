@@ -151,5 +151,18 @@ S-nowrap truncation vs wrap+grow-height honesty.
   persistence). **§11(iii) recency-sort → LANDED for the docview chooser**
   (`docview.sort_found`, prefix-grouped newest-first, toothed); generalizes to other lists at
   phase 4's renderer.
-- REMAINING phases 2-6 per the synthesis (key registry + collision assert · one type space ·
-  ui.lua tokens · docs-derive · headless teeth); K2 parked.
+- **P3 → CLOSED-phase-1b (same evening):** operator screenshot delivered the LIVE instance
+  (a struct's HUD menu titled `TYPE FixedPoint`, universal rows only — treesitter kind fed the
+  tag-keyed filter). Fix: `Hud:_menu` resolves the unit's TAG type from the SOURCE buffer via
+  `tagcontext.enclosing_block` exactly like the dm palette (tag block = authority; treesitter
+  kind = fallback for unconverted files); title unified to `TAGTYPE name` (D7 for this
+  invoker). Full kind→tag adapter at the resolver seam still rides phase 3 for the OTHER
+  `for_type` consumers.
+- **Operator dispositions (same evening):** docview dismiss-on-leave CONFIRMED right after
+  live use ("i guess i have to hit p to pin that, nvm — i like these"). Polish list #1-#5
+  GREENLIT (curated-first Docs section · resolving… latency chip · key-hint chips · one
+  notify voice · checkhealth dep-chain); **#6 README screenshots DECLINED for now** — the
+  plugin is private hobby code, "maybe later" (revisit at any public/workspace-template
+  release).
+- REMAINING phases 2-6 per the synthesis (key registry + collision assert · one type space
+  [adapter half] · ui.lua tokens · docs-derive · headless teeth); K2 parked.

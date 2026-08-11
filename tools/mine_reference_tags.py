@@ -35,12 +35,36 @@ MENTION_PATTERNS = [
     ("PARITY",    re.compile(r"\bPARITY-0*(\d{1,4})\b"),     lambda m: f"PARITY-{int(m.group(1))}"),
 ]
 
+# DOC-shaped subcats (DESIGN_SPEC / MEMORY / PLAN) — VALIDATION-AS-FILTER: the patterns are
+# deliberately loose (kebab `*.md` names / prefixed-snake memory names collide with prose and
+# identifiers like `project_root`), so membership decides AT MINE TIME and an unmatched hit is
+# silently ignored — a stray filename mention is not a reference CLAIM the way `D-999` is, so
+# it earns no dead-report. A kebab name claimed by BOTH the spec and plan sets is AMBIGUOUS →
+# refused + reported (never guessed).
+_KEBAB_MD = re.compile(r"\b([a-z0-9]+(?:-[a-z0-9]+){2,}\.md)\b")
+_MEMORY_NAME = re.compile(r"\b((?:feedback|user|project|reference)_[a-z0-9_]{4,})\b")
+
 _ID_NUM = re.compile(r"(\d+)")
 
 
 def _id_sort_key(rid):
     m = _ID_NUM.search(rid)
     return (rid[:m.start()] if m else rid, int(m.group(1)) if m else 0)
+
+
+def _norm_for_compare(subcat, rid):
+    """Same-id lens per subcat — mirrors _ref_resolves' normalization so an id already written
+    in ANY accepted spelling is never re-added (`x-pattern` ≡ `x-pattern.md` for doc-shaped
+    subcats — the pass-2 eyeball caught a bare+`.md` duplicate pair; `-016` ≡ `-16` for
+    int-keyed ones)."""
+    rid = rid.strip()
+    if subcat in ("DESIGN_SPEC", "MEMORY", "PLAN") and rid.endswith(".md"):
+        rid = rid[:-3]
+    if subcat in ("TECH_DEBT", "CLASS", "PARITY"):
+        m = _ID_NUM.search(rid)
+        if m:
+            return int(m.group(1))
+    return rid
 
 
 def _units(lines):
@@ -70,8 +94,14 @@ def _units(lines):
     return out
 
 
+def _indent_of(line):
+    return line[:len(line) - len(line.lstrip())]
+
+
 def _existing_ref_ids(lines, op, code_idx):
-    """{subcat: (line_idx, [ids-as-written])} for [REFERENCE] lines in the unit's banner."""
+    """{subcat: (line_idx, [ids-as-written], indent)} for [REFERENCE] lines in the unit's
+    banner. Indent is preserved on merge — nested/indented banners exist (the first --fix
+    eyeball caught an indented [H13] merge landing at column 0)."""
     out = {}
     for i in range(op, code_idx if code_idx is not None else op):
         m = TAG_LINE_RE.match(lines[i])
@@ -79,7 +109,7 @@ def _existing_ref_ids(lines, op, code_idx):
             continue
         toks = _line_tokens(m.group(1))
         if len(toks) >= 3 and toks[0] == "REFERENCE":
-            out[toks[1]] = (i, [t for t in toks[2:] if t])
+            out[toks[1]] = (i, [t for t in toks[2:] if t], _indent_of(lines[i]))
     return out
 
 
@@ -113,6 +143,22 @@ def mine_file(text, ref_index):
             for subcat, pat, canon in MENTION_PATTERNS:
                 for m in pat.finditer(lines[i]):
                     mined.setdefault(subcat, set()).add(canon(m))
+            mem = ref_index.get("MEMORY")
+            if mem:
+                for m in _MEMORY_NAME.finditer(lines[i]):
+                    if _ref_resolves("MEMORY", m.group(1), mem):
+                        mined.setdefault("MEMORY", set()).add(m.group(1))
+            specs, plans = ref_index.get("DESIGN_SPEC"), ref_index.get("PLAN")
+            for m in _KEBAB_MD.finditer(lines[i]):
+                rid = m.group(1)
+                in_spec = bool(specs) and _ref_resolves("DESIGN_SPEC", rid, specs)
+                in_plan = bool(plans) and _ref_resolves("PLAN", rid, plans)
+                if in_spec and in_plan:
+                    dead.append((f"{ty} {nm}", "DESIGN_SPEC|PLAN", rid + " (AMBIGUOUS — both sets)"))
+                elif in_spec:
+                    mined.setdefault("DESIGN_SPEC", set()).add(rid)
+                elif in_plan:
+                    mined.setdefault("PLAN", set()).add(rid)
         if not mined:
             continue
         existing = _existing_ref_ids(lines, op, code_idx)
@@ -128,20 +174,20 @@ def mine_file(text, ref_index):
                 if members is not None and not _ref_resolves(subcat, rid, members):
                     dead.append((unit_label, subcat, rid))
                     continue
-                # an id already written in ANY normalization (e.g. `05` vs `5`) counts as present
-                if members is not None and any(
-                        _ref_resolves(subcat, h, members) and _id_sort_key(h) == _id_sort_key(rid)
-                        for h in have):
+                # an id already written in ANY accepted spelling counts as present
+                # (`x-pattern` ≡ `x-pattern.md`; `-016` ≡ `-16`)
+                if any(_norm_for_compare(subcat, h) == _norm_for_compare(subcat, rid)
+                       for h in have):
                     continue
                 fresh.append(rid)
             if not fresh:
                 continue
             proposals.append((unit_label, subcat, fresh))
             if subcat in existing:
-                idx, as_written = existing[subcat]
+                idx, as_written, indent = existing[subcat]
                 merged = as_written + fresh
-                edits[idx] = "// [REFERENCE]_[%s]_[%s]" % (
-                    subcat, "[" + "] [".join(merged) + "]" if len(merged) > 1 else merged[0])
+                edits[idx] = "%s// [REFERENCE]_[%s]_[%s]" % (
+                    indent, subcat, "[" + "] [".join(merged) + "]" if len(merged) > 1 else merged[0])
             else:
                 if code_idx is None:
                     dead.append((unit_label, subcat, "(no [CODE] line — placement refused)"))
@@ -151,7 +197,8 @@ def mine_file(text, ref_index):
                 if at - 1 > op and set(lines[at - 1].replace("/", "").strip()) <= {"="}:
                     at = at - 1                      # insert above the //==== bar before [CODE]
                 val = "[" + "] [".join(fresh) + "]" if len(fresh) > 1 else fresh[0]
-                inserts.setdefault(at, []).append("// [REFERENCE]_[%s]_[%s]" % (subcat, val))
+                inserts.setdefault(at, []).append("%s// [REFERENCE]_[%s]_[%s]" % (
+                    _indent_of(lines[at]), subcat, val))
 
     if not edits and not inserts:
         return proposals, dead, text
@@ -172,6 +219,7 @@ def _selftest():
         "//======================================================================",
         "// [CODE]",
         "// guarded per D-901 and H91 (see Class 91)",
+        "// per branchless-mock-spec.md + feedback_mock_rule; project_root is code; ambig-name-mock.md",
         "// [ASSERT]_[D-902_LOCK]",
         "int x; // D-999 is dead",
         "// [FUNCTION]_[Inner_Fn]",
@@ -183,7 +231,10 @@ def _selftest():
         "// [END_STRUCT]_[Outer]",
     ])
     ref_index = {"DECISION": {"D-900", "D-901", "D-902"}, "INVARIANT": {"H91"},
-                 "CLASS": {91}, "TECH_DEBT": {91}, "PARITY": None}
+                 "CLASS": {91}, "TECH_DEBT": {91}, "PARITY": None,
+                 "DESIGN_SPEC": {"branchless-mock-spec", "ambig-name-mock"},
+                 "MEMORY": {"feedback_mock_rule"},
+                 "PLAN": {"ambig-name-mock"}}
     props, dead, out = mine_file(fx, ref_index)
     by = {(u, s): ids for u, s, ids in props}
     fails = []
@@ -210,9 +261,48 @@ def _selftest():
        and all(s != "TECH_DEBT" for (u, s, _) in props if u == "STRUCT Outer"))
     props2, _dead2, out2 = mine_file(out, ref_index)
     ck("IDEMPOTENT (2nd mine = zero new, 0-diff)", not props2 and out2 == out)
+    # indented banner (nested unit): merge + insert both preserve the original indentation
+    ifx = "\n".join([
+        "// [SCHEMA]_[v1.0]",
+        "    // [STRUCT]_[Nested]",
+        "    // [REFERENCE]_[DECISION]_[D-900]",
+        "    //==================================================================",
+        "    // [CODE]",
+        "    // per D-901 and H91",
+        "    // [END_CODE]",
+        "    // [END_STRUCT]_[Nested]",
+    ])
+    _pi, _di, iout = mine_file(ifx, ref_index)
+    ck("INDENT preserved on merge + insert (first --fix eyeball catch)",
+       "    // [REFERENCE]_[DECISION]_[[D-900] [D-901]]" in iout
+       and "    // [REFERENCE]_[INVARIANT]_[H91]" in iout
+       and "\n// [REFERENCE]" not in iout)
     fenced = load_ref_subcats() or set()
     ck("every written subcat is FENCED (vocab-legal)",
        all(s in fenced for (_, s, _) in props))
+    ck("DOC-shaped subcats mined (spec + memory, membership-filtered)",
+       by.get(("STRUCT Outer", "DESIGN_SPEC")) == ["branchless-mock-spec.md"]
+       and by.get(("STRUCT Outer", "MEMORY")) == ["feedback_mock_rule"])
+    ck("AMBIGUOUS doc name (both sets) refused + reported, never written",
+       any(r.startswith("ambig-name-mock.md") for (_u, s, r) in dead if s == "DESIGN_SPEC|PLAN")
+       and all("ambig-name-mock" not in l for l in out.split("\n") if "[REFERENCE]_" in l))
+    ck("unmatched loose hit (project_root) silently ignored — no proposal, no dead-report",
+       all("project_root" not in str(x) for x in props) and
+       all("project_root" not in str(x) for x in dead))
+    # bare-form existing + .md-form mined = the SAME id (the pass-2 eyeball catch)
+    bfx = "\n".join([
+        "// [SCHEMA]_[v1.0]",
+        "// [STRUCT]_[B]",
+        "// [REFERENCE]_[DESIGN_SPEC]_[branchless-mock-spec]",
+        "// [CODE]",
+        "// per branchless-mock-spec.md",
+        "// [END_CODE]",
+        "// [END_STRUCT]_[B]",
+    ])
+    bprops, _bd, bout = mine_file(bfx, ref_index)
+    ck("bare-form existing ≡ .md-form mined — never duplicated",
+       not any(s == "DESIGN_SPEC" for (_u, s, _i) in bprops)
+       and "[[branchless-mock-spec] [branchless-mock-spec.md]]" not in bout)
     grammar_ok = all(TAG_LINE_RE.match(l) for l in out.split("\n") if "[REFERENCE]_" in l)
     ck("written lines match the validator's own TAG_LINE_RE", grammar_ok)
     print(f"[mine_reference_tags selftest] {'ALL TEETH PASS' if not fails else f'{len(fails)} FAILURE(S): {fails}'}")

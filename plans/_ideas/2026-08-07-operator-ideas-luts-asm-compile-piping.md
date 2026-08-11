@@ -49,6 +49,20 @@ as dated sections.
   dive — do not pre-commit the transport).
 - **Dive:** `0.5`, alongside the precondition work. Cross-ref inserted at the plan body's `0.5`
   line the same day this file was written.
+- **⏩ OPERATOR UPDATE (2026-08-10, dogfood screenshot — logged at session stop):** the asm viewer's
+  `1:1 · this function` mode rendered empty (a bare `0`) on `Notify_Send` (`Notify.hpp`) — *"it will
+  need work but thats part of piping the compile command to the terminal and using that to view."*
+  Diagnosis-as-given: NOT a separate defect — it is THIS item's gap (the viewer compiles with
+  editor-supplied flags today, so its fact source can't be trusted 1:1 and its failures are opaque).
+  **NEW requirement folded in:** *"the build.sh script will probably need a 1:1 asm + binary output
+  ideally"* — the build itself emits asm ALONGSIDE the binary (same invocation, same flags), so the
+  viewer consumes the ACTUAL build's asm rather than re-compiling and hoping the commands match.
+  That is the strongest form of the D-397 fact-source argument: viewer-asm ≡ shipped-binary **by
+  construction**, not by parity-checking a second compile. Shape sketch for the `0.5` dive: a
+  `build.sh` flag/target (e.g. `asm` or `-DEMIT_ASM=ON`) driving per-TU `-S`/`--save-temps` (or
+  objdump-from-the-real-binary as the zero-divergence alternative) into a `build*/asm/` sidecar the
+  viewer + terminal both read. Rides TD-257 (compile_commands 1:1) — same precondition, one command
+  source, N consumers.
 
 ## 3. Auto-generated templates — strategies and beyond (generalizes `/strategy-template`)
 

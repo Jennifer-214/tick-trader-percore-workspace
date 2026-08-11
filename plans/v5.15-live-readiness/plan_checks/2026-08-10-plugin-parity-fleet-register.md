@@ -196,7 +196,14 @@ S-nowrap truncation vs wrap+grow-height honesty.
   row. `tests/test_actions.lua` = the menu-seam teeth (10 legs: type+when(ctx) gating ·
   verbatim __index pass-through · layer-stack collapse vs keep_stack · shim honesty) — the
   cd971ac never-committed proofs, permanent. Suite 40/40.
-- REMAINING (small tail, any session): README key-block derivation (the last hand-copy) ·
-  ui.lua token EXTRACTION (clamp lives in menu.lua as the seed) · notify-voice sweep ·
-  checkhealth dep-chain · aspect-constant SSoT (S9, cosmetic) · footer base-key line derive;
-  K2 parked. **The fleet's functional divergence set is FULLY CLOSED.**
+- **TAIL BATCH → SHIPPED (plugin `fb03f31`):** `ui.lua` policy layer (S4/S9 — resolve_placement
+  moved verbatim + card/reading-pane/pin tokens + aspect/compare/cockpit constants SSoT'd) ·
+  **MENU-AS-ROOT** (operator rule, same evening: "the menu is the bottom layer — it has EVERY
+  option"): global launchers DERIVE into every menu from keymap-registry `menu=` fields (one
+  derivation; unit rows stay §6-gated) · health.lua dead doc_dirs block → docview
+  resolver-chain checks (python3 + citable_ids reachability) · README re-centered on the root
+  menu, its key hand-copy REMOVED-not-generated (fewer moving parts) + doc_dirs retirement
+  noted. Suite 40/40.
+- REMAINING (cosmetic-only): notify-voice helper sweep · footer base-key line derive; K2
+  parked. **The fleet's divergence set — functional AND structural — is CLOSED. The plugin
+  arc is DONE for this cycle; next cycle = the engine (E.1.2 SoA leaf).**

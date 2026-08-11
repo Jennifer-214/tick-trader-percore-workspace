@@ -120,10 +120,36 @@ if intended, the fix is a key-space decision, not a bug) · type-vocab extension
 `when(ctx)` signature is the one breaking API (grep out-of-tree lens consumers first) ·
 S-nowrap truncation vs wrap+grow-height honesty.
 
-## OPERATOR QUESTIONS (taste calls, non-blocking for phase 1-except-P4)
+## OPERATOR QUESTIONS — ANSWERED 2026-08-10 (same evening)
 
-1. P4/D6: float+menu sequencing — suppress-close-while-child-open, or reopen-after?
-2. K1: is m=mutations on field HUDs intended? If yes, which key gets the menu there?
-3. S4/§6: ultrawide surplus → more panes (I-2's reading of the north-star) or wider panes?
-4. K2: the eventual non-d prefix (needs her config collision scan).
-5. dm anchor preference when board AND followcard are open (`init.lua:242` hard-orders panel).
+1. P4/D6 → **KEEP the HUD open under its child menu** (suppress-close-while-child-open).
+   Generalized by the operator into the **LAYER-STACK RULE**: *"the highest layer — opened item
+   > menu > HUD; when the top level item opens, it should close the other 2"* — each surface
+   keeps its PARENT alive while open; an action that opens a new top surface COLLAPSES its
+   ancestors. Implemented phase 1: menu buffers carry `b:fox_symdeps_menu`; the HUD float's
+   BufLeave guard skips departures INTO its own child menu (cancel returns to a live HUD);
+   `actions.run`'s `ctx.collapse` closes the ancestor chain when an item runs.
+2. K1 → operator has NO attachment to m=mutations ("not sure what this is") → treat as a
+   COLLISION BUG; structural fix stands (who-writes routes through the menu as a registry row,
+   `m` = menu universally). Phase 2.
+3. S4/§6 → operator neutral ("not sure what you mean") → DEFAULT to the north-star reading
+   (both I-2 and the orchestrator): readability caps stay; ultrawide surplus → MORE PANES.
+4. K2 → **PARKED by operator** ("we don't have to move this yet, i can just hit u if i
+   delete") — d-prefix stays; revisit on her call.
+5. dm anchor → subsumed by the layer-stack rule (#1): dock to the HIGHEST live layer.
+
+## PHASE-1 DISPOSITIONS (plugin commit this same evening)
+
+- **P1/K-item-shape → CLOSED-phase-1**: `actions.menu_rows` passes registry rows VERBATIM
+  (`__index` — `writes`/all future fields ride every invoker); `actions.run(row, ctx)` owns the
+  restore-source dance the HUD wrapper hand-rolled. Identical popups by construction.
+- **P2 → CLOSED-phase-1**: `for_type(t, ctx)` + `when(ctx)` explicit ctx; the Docs row gates
+  against the invoker-named SOURCE buffer (the HUD names its tracked buffer).
+- **P4 → CLOSED-phase-1** per answer #1 (guard + collapse).
+- **P6/S6 docview-palette half → CLOSED-phase-1** (chooser now family-styled).
+- **§11(v) float dismiss-on-leave → CLOSED-phase-1** (WinLeave dismiss; p-pin owns
+  persistence). **§11(iii) recency-sort → LANDED for the docview chooser**
+  (`docview.sort_found`, prefix-grouped newest-first, toothed); generalizes to other lists at
+  phase 4's renderer.
+- REMAINING phases 2-6 per the synthesis (key registry + collision assert · one type space ·
+  ui.lua tokens · docs-derive · headless teeth); K2 parked.

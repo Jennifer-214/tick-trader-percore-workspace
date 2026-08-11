@@ -641,7 +641,7 @@ adjacent to `Model_Predict` at `:507` — calls `Model_Predict` then
 applies the normalizer.
 
 **Ensemble blend site:** `Model_Predict_Ensemble_Weighted` (search
-`ML_Headers/CoreModelZoo.hpp` adjacent to bandit-weighted blend
+`ML_Headers/NodeModelZoo.hpp` adjacent to bandit-weighted blend
 logic; if not present, NEW function in CoreModelZoo). Replace
 `Model_Predict` call with `Model_Predict_Normalized` in the per-arm
 prediction loop.
@@ -1096,7 +1096,7 @@ opening that ship.
   (`ML_Headers/BanditLearning.hpp:51` confirms). Phase 2.A targets
   RollingStats residuals + FPN libs only — no Bandit re-work.
 - v5.11.62 primary-role indirection already shipped
-  (`ezoo->primary_handles` at `ML_Headers/CoreModelZoo.hpp:790`).
+  (`ezoo->primary_handles` at `ML_Headers/NodeModelZoo.hpp:790`).
   Phase 3.A/B compose ON TOP of primary-role infra — they extend
   `Model_Predict`'s composition layer, not the role layer.
 - `tests/controller_test.cpp` at 16553 LOC exceeds CLAUDE.md's 5k-line

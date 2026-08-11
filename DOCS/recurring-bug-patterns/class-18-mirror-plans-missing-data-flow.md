@@ -85,9 +85,9 @@ sed -n '<start>,<end>p' source.hpp | grep -oE '[a-z_]+(_)?->[a-z_]+'
   `RISK_CURVE_LABELS[]`, `BARRIER_BLEND_LABELS[]`, `ENGINE_ARCH_LABELS[]`
   for INT_ENUM cfg field dropdown rendering. **All four enums already
   had full X-macro registries with ToString/FromString:**
-  `Strategies/BanditAlgorithmRegistry.hpp:87` (3 entries — plan claimed 2,
+  `ML_Headers/BanditAlgorithmRegistry.hpp:87` (3 entries — plan claimed 2,
   drift); `ML_Headers/ConfidenceScore.hpp:714` FOREACH_DEGRADATION_CURVE;
-  `Strategies/BarrierBlendModeRegistry.hpp:82` (5 entries — plan's
+  `ML_Headers/BarrierBlendModeRegistry.hpp:82` (5 entries — plan's
   proposed labels `SHADOW_A`/`SHADOW_B` did NOT match actual
   `BOTH_BLEND_DRIVES`/`BOTH_DOMINANT_DRIVES`, would have rendered
   wrong labels in GUI). Mirror-incomplete shape at the **enum label

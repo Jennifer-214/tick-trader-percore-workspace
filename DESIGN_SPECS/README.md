@@ -88,7 +88,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/framework-patterns/multi-asset-class-symbol-pattern.md` | 2-draft | framework-discipline, multi-asset, symbol-normalization, +1 | 0 |
 | `DESIGN_SPECS/framework-patterns/multi-state-dispatch-with-per-state-update-metadata.md` | 3-first-canonical | framework-discipline, branchless-discipline, structural-fix | 3 |
 | `DESIGN_SPECS/framework-patterns/native-tui-via-mmap-readonly-pattern.md` | 3-first-canonical | framework-discipline, tui, notcurses, +3 | 0 |
-| `DESIGN_SPECS/framework-patterns/one-action-toolchain-update-orchestrator.md` | 2-draft | framework-pattern, dev-plane, ssot, +2 | 0 |
+| `DESIGN_SPECS/framework-patterns/one-action-toolchain-update-orchestrator.md` | 3-first-canonical | framework-pattern, dev-plane, ssot, +2 | 0 |
 | `DESIGN_SPECS/framework-patterns/per-bit-per-core-override-pattern.md` | 3-first-canonical | framework-discipline, branchless-discipline, data-oriented-design | 3 |
 | `DESIGN_SPECS/framework-patterns/per-cluster-producer-pattern.md` | 3-first-canonical | framework-discipline, per-cluster-producer, market-data-fan-out, +1 | 0 |
 | `DESIGN_SPECS/framework-patterns/per-cluster-shared-resource-pattern.md` | 3-first-canonical | framework-discipline, per-cluster-resources, thread-topology, +1 | 0 |

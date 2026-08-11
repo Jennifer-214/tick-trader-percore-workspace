@@ -77,7 +77,7 @@ for traceability.
   refused/missing model logs WARN to stderr but the live engine
   silently falls through to SimpleDip. Operator paper-soaks for
   hours not knowing ML never fired.
-- **File:line:** `ML_Headers/CoreModelZoo.hpp:113-137`.
+- **File:line:** `ML_Headers/NodeModelZoo.hpp:113-137`.
 - **Fix:** Per-core `model_load_failed` flag on EventLoopState +
   TUISnapshot field + new "ML Status" dashboard panel +
   CRITICAL health log on each ML→SimpleDip fall-through cycle

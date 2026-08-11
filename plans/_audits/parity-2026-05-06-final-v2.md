@@ -50,7 +50,7 @@ if (cfg.core_model_dir[i][0]) {
 ```
 
 **Args verified against function signature at
-`ML_Headers/CoreModelZoo.hpp:336-342`:**
+`ML_Headers/NodeModelZoo.hpp:336-342`:**
 ```cpp
 inline int CoreModelZoo_LoadFromDir(CoreModelZoo<F> *zoo, const char *dir, int backend,
                                      const char* held_out_stamp_secret = nullptr,
@@ -109,9 +109,9 @@ Zero new gaps surfaced in this re-audit.**
 ### Finding #1 — LABEL_REGISTRY_HASH plumb-through (v5.10.1.A)
 
 All 4 sites verified intact via `grep -n "LABEL_REGISTRY_HASH"`:
-- `ML_Headers/CoreModelZoo.hpp:38` — `#include
+- `ML_Headers/NodeModelZoo.hpp:38` — `#include
   "../Backtest/LabelFunctions.hpp"`
-- `ML_Headers/CoreModelZoo.hpp:140` — consume side (verify_model_stamp call)
+- `ML_Headers/NodeModelZoo.hpp:140` — consume side (verify_model_stamp call)
 - `Backtest/BacktestEngine.hpp:1166-1167` — emit (RFV path)
 - `Backtest/BacktestPanels.hpp:1295` — consume (UI Verify Stamp)
 - `Backtest/BacktestPanels.hpp:2682-2687` — emit (Train Model worker)
@@ -121,7 +121,7 @@ No regression. **CLOSED.**
 ### Finding #2 — grid_member_count consistency validator (v5.10.1.B)
 
 `EnsembleZoo_VerifyGridMemberConsistency<F>` exists at
-`ML_Headers/CoreModelZoo.hpp:1141` (matches v1 re-audit citation
+`ML_Headers/NodeModelZoo.hpp:1141` (matches v1 re-audit citation
 within +/- a few lines for header-only header growth). Caller at
 `EnsembleModelZoo_AutoDetectFromDir:1315` (line 1217 cited in task
 spec is roughly correct — the actual call lands at 1315 due to

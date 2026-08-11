@@ -86,7 +86,7 @@ related_specs: [meta-disciplines/single-source-of-truth-discipline.md]
 
 - **Created:** 2026-05-30 by v5.15.5.F.4d.1.E Session-4 ingest-architecture audit (D-102), confirmed by mechanical line-check.
 - **Severity:** LOW (latent — present in the binary core TODAY; does not corrupt within-epoch determinism because it is applied consistently, but it throws away parse precision every tick).
-- **Surface:** the producer parses `string→FPN` exactly at `DataStream/BinanceCrypto.hpp:744-745` (`FPN_FromString`), but then passes the cached **doubles** `ds.price_d`/`ds.volume_d` to fan_out (`CoreFrameworks/EngineSharded/Run.hpp:1374`), and `EngineSharded_Async_FanOut` **re-derives FPN via `FPN_FromDouble`** at `CoreFrameworks/EngineSharded/Async.hpp:179-180`. Net path to every per-node `Tick` ring = `FPN_FromDouble(FPN_ToDouble(FPN_FromString(string)))` — the exact parse is discarded through a 52-bit double, every tick, to every node.
+- **Surface:** the producer parses `string→FPN` exactly at `DataStream/BinanceCrypto.hpp:744-745` (`FPN_FromString`), but then passes the cached **doubles** `ds.price_d`/`ds.volume_d` to fan_out (`CoreFrameworks/CoreFrameworks/EngineSharded/Run.hpp:1374`), and `EngineSharded_Async_FanOut` **re-derives FPN via `FPN_FromDouble`** at `CoreFrameworks/EngineSharded/Async.hpp:179-180`. Net path to every per-node `Tick` ring = `FPN_FromDouble(FPN_ToDouble(FPN_FromString(string)))` — the exact parse is discarded through a 52-bit double, every tick, to every node.
 - **What's deferred:** carry the parsed value straight from the parse site into the `Tick` ring (`CoreFrameworks/Tick.hpp:31-43`) instead of re-deriving from `price_d` — kill the double detour. Pure SSoT/precision fix.
 - **Why deferred (not effort-avoidance):** the **fix-home is the numeric-foundation unification ship** (the decimal move makes "parse-once-at-source, carry-through" load-bearing — D-102/D-106 "convert once at source" is two actions: parse-to-decimal AND carry-through). Folding it there is structurally correct (same ingest surface, same ship) rather than a standalone patch. Pre-existing for binary; the decimal move is the forcing function.
 - **Cost estimate:** ~1-2h (thread the parsed value through `fan_out`'s signature instead of the doubles; verify the `Tick` ring payload); LOW risk (producer-side; determinism gate + replay test catch any regression).
@@ -951,7 +951,7 @@ related_specs: [DESIGN_SPECS/feature-patterns/runtime-toggleable-bench-gate-patt
   4. Histogram allocation site: either on OrderManagerState (COLD cluster sub-cluster) or as static thread_local globals per drainer thread
   5. TUI surface: snapshot publisher reads histograms + emits p50/p99/max line via `LatencyHistogram_Percentile` helper
 - **What's deferred:** All 5 items above (template propagation, boot dispatch, per-site brackets, histogram allocation, TUI surface).
-- **2026-07-17 currency note (E.1.2.A P6.102 rot-check):** items 1+2 and a COARSE version of 3 LANDED since this entry was written — `main.cpp:219` boot dispatch (`EngineSharded_Run<64, BENCH>` two-instantiation split on `cfg.oms_bench_enabled`) + `template <unsigned F, bool BENCH=false>` on `EngineSharded_Run` + ONE whole-drainer-cycle bracket (`EngineSharded/Run.hpp:1601` → `g_engine_drainer_cycle_hist`) + stderr p50/p99/max summary at shutdown. STILL OPEN: per-site wrappers (OrderManager_Tick / OMS_DrainSubmit / DrainPostFill granularity), the histogram-allocation-site decision, TUI/snapshot per-publish readout, AUTOPOPULATE N-site composition. `MemHeaders/LatencyHistogram.hpp` [FILE] header now states this landed/deferred split.
+- **2026-07-17 currency note (E.1.2.A P6.102 rot-check):** items 1+2 and a COARSE version of 3 LANDED since this entry was written — `main.cpp:219` boot dispatch (`EngineSharded_Run<64, BENCH>` two-instantiation split on `cfg.oms_bench_enabled`) + `template <unsigned F, bool BENCH=false>` on `EngineSharded_Run` + ONE whole-drainer-cycle bracket (`CoreFrameworks/EngineSharded/Run.hpp:1601` → `g_engine_drainer_cycle_hist`) + stderr p50/p99/max summary at shutdown. STILL OPEN: per-site wrappers (OrderManager_Tick / OMS_DrainSubmit / DrainPostFill granularity), the histogram-allocation-site decision, TUI/snapshot per-publish readout, AUTOPOPULATE N-site composition. `MemHeaders/LatencyHistogram.hpp` [FILE] header now states this landed/deferred split.
 - **Why deferred (not effort-avoidance):** v5.15.5.C.3 already covers 8 phases of substantial work (canonical OMS registry refactor + MULTI_BIT + per-strategy emit + per-trade regime + paper-reset archive + per-slot macro consolidation). Phase 7.B integration is mechanical wiring once substrate is in place; deferral lets Phase 7.A ship the foundation cleanly + lets Phase 7.B be a focused ~1-2h follow-up that's easy to audit. Compose-with patterns from the design spec (AUTOPOPULATE for N-site instrumentation, multi-bit bench mode encoding, per-core bench enable) become opt-in extensions during Phase 7.B design.
 - **Cost estimate:** ~1-2h (template propagation + 3 instrumented sites + TUI line + integration tests).
 - **Trigger:** (a) operator wants to flip `cfg.oms_bench_enabled=1` and see latencies (USER demand); (b) paper-test cadence tightens enough that visibility into slow-path latency matters; (c) specific latency regression investigation needs in-binary bench (avoids rebuild cycle); (d) maker-order ship (v6.0) where slow-path latency is operator-tunable.
@@ -1800,7 +1800,7 @@ related_specs: [DESIGN_SPECS/framework-patterns/metadata-bit-driven-derived-filt
   5. `FOREACH_DRIFT_OVERRIDE(X)` sparse sidecar registry indexed by parent FIELD_IDX (5 rows for XGBoost training-only WARN_ALWAYS + CROSS_BINARY + EPS_TIGHT semantics); 8-byte bit-packed `DriftOverride` struct (multi-bit-state-encoding INVARIANT canonical application #6) carries has_override + severity + category + compare_kind + eps_idx
   6. Bit-packed `RegistryRosterEntry` (meta-registry topology; canonical #7) + `ManualFieldInventoryEntry` (CI cross-check infra; canonical #8)
   7. CI Checks 9-12 candidates per `registry-coverage-ci-check-pattern.md` Shape A — Check 9 (STAMP_BOUND_CFG_DERIVED coverage at .F.4d.1) + Checks 10-12 (GUI-only derived filters at .F.4e)
-  8. `CFG_DRIFT_AUTOPOPULATE` companion macro + 12+ consumer migration sites (`ML_Headers/CoreModelZoo.hpp:225-247` inline drift loop replaces manual if-chain with single walker invocation; sister to STAMP_CFG_AUTOPOPULATE + INFERENCE_CFG_AUTOPOPULATE)
+  8. `CFG_DRIFT_AUTOPOPULATE` companion macro + 12+ consumer migration sites (`ML_Headers/NodeModelZoo.hpp:225-247` inline drift loop replaces manual if-chain with single walker invocation; sister to STAMP_CFG_AUTOPOPULATE + INFERENCE_CFG_AUTOPOPULATE)
   9. Layer 5b hash lock + round-trip HMAC test against `tests/fixtures/v5_14_stamp_canonical.bin` (synthetic populate fn + `LOCKED_STAMP_BOUND_DERIVED_HASH_V5_15_5_F4D_1` constant + fnv1a_64 canonical body hash + Layer 5b methodology validation)
   10. v5.14 stamp fixture regression test verifying pre-migration v5.14 stamps load cleanly on `.F.4d.1` engine (legacy stamp byte format preserved; HMAC chain integrity verified; round-trip parse + re-emit byte-equivalent)
 - **What's deferred:** All 10 items above. Foundation laid at v5.15.5.F.4d (H15-H20 codified + STAMP_BOUND_CFG_DERIVED bit reserved + 4 DESIGN_SPECs Stage 3 ACTIVE + FOREACH_BANDIT_SIDE first canonical) so future ship is mechanical: framework code lands → 24-row migration is structural → consumers convert → tests verify byte preservation.
@@ -2082,7 +2082,7 @@ related_specs: []
 
 - **Created:** 2026-05-17 (at `v5.15.5.F.4d.1.B.2` ship close per Caramel accountability pushback)
 - **Severity:** MED (drift-check semantics + operator-visible error message preservation)
-- **Surface:** `ML_Headers/CoreModelZoo.hpp:243` — custom drift walker over FOREACH_STAMP_BOUND_CFG sets `sr.inference_cfg_drift_count` + `sr.reason` (first drift produces operator-visible error message)
+- **Surface:** `ML_Headers/NodeModelZoo.hpp:243` — custom drift walker over FOREACH_STAMP_BOUND_CFG sets `sr.inference_cfg_drift_count` + `sr.reason` (first drift produces operator-visible error message)
 - **What's deferred:** Replace walker with `DRIFT_CHECK_FROM_DERIVED(...)` framework macro. Requires framework extension: add `char* reason_buf, size_t reason_cap` args to `cfg_derived::drift_check_from_derived` to preserve "first-drift sets reason" semantic. OR migration accepts behavior change (drift detected via failure_flags only; no human-readable reason; debug via post-fact mask inspection).
 - **Why deferred (not effort-avoidance):** Coding-time Discovery 10 at `.B.2`: framework's `DRIFT_CHECK_FROM_DERIVED` uses branchless mask-select (per H20); doesn't have reason buffer. Adding reason buffer changes framework signature + semantics. Decision belongs at `.B.3` framework-extension consideration.
 - **Cost estimate:** ~30-45 min (framework extension + walker migration + test).
@@ -2600,13 +2600,13 @@ sister_debt: TECH_DEBT-029 (file-size discipline; sister at same `.B.6` subfolde
 - **Created:** 2026-05-27 at v5.15.5.F.4d.1.B.6 Phase C audit gate (4-agent verdict GREEN with 2 YELLOW/cosmetic findings logged).
 - **Severity:** LOW (cosmetic; comments-only drift; no behavior or build impact).
 - **Surface:** 7 stale `EngineSharded.hpp:LINENO` comment references in sibling files. Each cites a specific line in the pre-`.B.6`-split monolithic `EngineSharded.hpp` (now 3,202 → 96 INDEX shim; sub-files at `EngineSharded/Boot.hpp` / `SlowPath.hpp` / `Async.hpp` / `Run.hpp` contain the actual referenced code). Sites:
-  - `ML_Headers/EnsembleHotSwap.hpp:86` — references monolithic line
+  - `CoreFrameworks/EnsembleHotSwap.hpp:86` — references monolithic line
   - `CoreFrameworks/EngineCommon.hpp:83` — references monolithic line
   - `CoreFrameworks/EngineCommon.hpp:150` — references monolithic line
   - `CoreFrameworks/EngineCommon.hpp:179` — references monolithic line
   - `CoreFrameworks/ShardedSnapshotPersist.hpp:502` — references monolithic line
-  - `ML_Headers/CoreModelZoo.hpp:2879` — references monolithic line
-  - `ML_Headers/CoreModelZoo.hpp:2896` — references monolithic line
+  - `ML_Headers/NodeModelZoo.hpp:2879` — references monolithic line
+  - `ML_Headers/NodeModelZoo.hpp:2896` — references monolithic line
   - `CoreFrameworks/ControllerEventLoop.hpp:3512` — references monolithic line
 - **Class:** Stale-comment drift class. Sister to Class 31 (hardcoded refs in always-loaded docs); same root cause (canonical-list duplication via inline reference vs registry/grep-driven retrieval), different surface (inline comments in sibling source files vs always-loaded docs).
 - **What's deferred:** Sweep + update each stale comment to point at correct sub-file:
@@ -2625,7 +2625,7 @@ Post-`.B.6` codebase-wide sweep (`/dust` + `/trace-deps`) surfaced ADDITIONAL st
 
 - `DOCS/KNOWN_ISSUES.md:143` — Lambda capture warning ref (was `EngineSharded.hpp:2085` → updated to `EngineSharded/Async.hpp` fan_out body)
 - `DOCS/KNOWN_ISSUES.md:319` — CumDelta ref (was `EngineSharded.hpp:2663` → updated to `EngineSharded/SlowPath.hpp` slow-path body)
-- `DOCS/PARITY_ISSUES.md:544` — PARITY-009 boot ref (was `EngineSharded.hpp:1075-1240` → updated to `EngineSharded/Run.hpp` boot section)
+- `DOCS/PARITY_ISSUES.md:544` — PARITY-009 boot ref (was `EngineSharded.hpp:1075-1240` → updated to `CoreFrameworks/EngineSharded/Run.hpp` boot section)
 - `DOCS/PARITY_ISSUES.md:553` — PARITY-009 boot ref (was `EngineSharded.hpp:1157-1240` → updated)
 - `DOCS/PARITY_ISSUES.md:610` — PARITY-010 InitExitBandits + LoadExitBanditState (was `:1180` + `:1200` → updated)
 - `DOCS/PARITY_ISSUES.md:655` — PARITY-011 VerifyExpected (was `:1108-1131` + `:1114` → updated)
@@ -2655,7 +2655,7 @@ related_specs: [DESIGN_SPECS/doc-disciplines/file-size-split-discipline.md]
 
 - **Created:** 2026-05-27 (surfaced at `.B.6` Phase B.4.1 revert with code-LOC methodology codification; deferral confirmed at `.B.7` C1 close-out)
 - **Severity:** LOW
-- **Surface:** `CoreFrameworks/EngineSharded/Run.hpp` `EngineSharded_Run` function — 2,050 raw lines / 1,406 code-LOC (under file-size threshold per `file-size-split-discipline.md` v1.4 code-LOC methodology, but per-fn body is far over typical-fn limits)
+- **Surface:** `CoreFrameworks/CoreFrameworks/EngineSharded/Run.hpp` `EngineSharded_Run` function — 2,050 raw lines / 1,406 code-LOC (under file-size threshold per `file-size-split-discipline.md` v1.4 code-LOC methodology, but per-fn body is far over typical-fn limits)
 - **Class:** Function-level code organization (sister to TECH_DEBT-029 file-level closure as `wontfix-per-ai-workflow` at `.B.7`)
 - **What's deferred:** Function-level split into separate boot + slow-path-orchestrator helpers. Per `feedback_count_code_loc_not_total_lines` discipline + AI-driven workflow scoping (Claude 1M context handles 6K-line files trivially), no urgent compile/cognitive load.
 - **Why deferred (not effort-avoidance):** Per-fn-LOC limits are typical-human-readable concern; AI workflow doesn't have same cognitive ceiling. Sister to TECH_DEBT-029 (file-size discipline closed `wontfix-per-ai-workflow` at `.B.7` C1 close-out).

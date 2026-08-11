@@ -58,13 +58,13 @@ that surfaced in the process.
   ```
 - **Emit site 2 (Train Model worker):** `Backtest/BacktestPanels.hpp:2682-2687`
   Same shape; both production stamp-emitters now populate the field.
-- **Consume site 1 (live load):** `ML_Headers/CoreModelZoo.hpp:135-140` —
+- **Consume site 1 (live load):** `ML_Headers/NodeModelZoo.hpp:135-140` —
   `verify_model_stamp` called with 6 args including
   `LABEL_REGISTRY_HASH()` (was 5 args, defaulting 6th to 0 → silently
   bypassed).
 - **Consume site 2 (UI Verify Stamp):** `Backtest/BacktestPanels.hpp:1289-1295` —
   same fix.
-- **Include added:** `ML_Headers/CoreModelZoo.hpp:38` — `#include
+- **Include added:** `ML_Headers/NodeModelZoo.hpp:38` — `#include
   "../Backtest/LabelFunctions.hpp"` (so `LABEL_REGISTRY_HASH()` resolves).
 - **Production round-trip test:** `tests/controller_test.cpp:13558-13628` —
   EXTENSIBILITY block "v5.10.1.A — LABEL_REGISTRY_HASH production-caller
@@ -78,11 +78,11 @@ shipped v5.10.0d's verifier without production wiring is now closed.
 
 **Verified (consume-side, Option C):**
 - **Helper:** `EnsembleZoo_VerifyGridMemberConsistency<F>` at
-  `ML_Headers/CoreModelZoo.hpp:1141-1208`. Templated, boundary-stable
+  `ML_Headers/NodeModelZoo.hpp:1141-1208`. Templated, boundary-stable
   (no `ModelHandle` struct cascade). Re-parses each loaded handle's
   stamp file via `verify_model_stamp` to extract `grid_member_count`.
 - **Caller:** `EnsembleModelZoo_AutoDetectFromDir` at
-  `ML_Headers/CoreModelZoo.hpp:1310-1322` — runs validator after
+  `ML_Headers/NodeModelZoo.hpp:1310-1322` — runs validator after
   `EnsembleModelZoo_LoadFromCfg` returns; on REFUSE (return 0), unwinds
   via `EnsembleModelZoo_Free` and returns 0 (no models loaded).
 - **Back-compat WARN log present:** lines 1199-1205 cite "TODO(v5.10.X):

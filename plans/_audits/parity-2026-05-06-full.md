@@ -38,7 +38,7 @@
 - Stamp inputs struct: `ML_Headers/ModelInference.hpp:1491-1492`
 - **GAP — production stamp emit (RFV)**: `Backtest/BacktestEngine.hpp:1104-1184` — `Backtest_RunFullValidation` populates ~25 fields of `inf` but does NOT set `has_label_registry_hash` / `label_registry_hash`.
 - **GAP — production stamp emit (Train Model worker)**: `Backtest/BacktestPanels.hpp:2641-2710` — same omission.
-- **GAP — production stamp consume (live load)**: `ML_Headers/CoreModelZoo.hpp:134-138` — `verify_model_stamp(found_path, secret, gap, MODEL_FORMAT_VERSION, FEATURE_REGISTRY_HASH())`. Misses 6th positional arg (`expected_label_registry_hash`); defaults to 0 → `if (expected_label_registry_hash != 0)` skips the entire check.
+- **GAP — production stamp consume (live load)**: `ML_Headers/NodeModelZoo.hpp:134-138` — `verify_model_stamp(found_path, secret, gap, MODEL_FORMAT_VERSION, FEATURE_REGISTRY_HASH())`. Misses 6th positional arg (`expected_label_registry_hash`); defaults to 0 → `if (expected_label_registry_hash != 0)` skips the entire check.
 - **GAP — production stamp consume (Verify Stamp UI)**: `Backtest/BacktestPanels.hpp:1289-1294` — same omission.
 - Tests-only coverage: `tests/controller_test.cpp:13331` (sets has_label_registry_hash=1), `:13343` (passes expected hash to verifier).
 
@@ -125,7 +125,7 @@ After a hot swap, the operator's intent is "use new model"; reality is "single-z
 **File:line citations**:
 - Hot swap touches single zoo only: `CoreFrameworks/EngineSharded.hpp:2456-2502`
 - Ensemble handle set at boot: `CoreFrameworks/EngineSharded.hpp:858`, `Backtest/BacktestSharded.hpp:339`
-- Ensemble zoo lifecycle (Free/Init): `ML_Headers/CoreModelZoo.hpp:986`, `:678`
+- Ensemble zoo lifecycle (Free/Init): `ML_Headers/NodeModelZoo.hpp:986`, `:678`
 - Dispatcher reads ensemble first: `Strategies/StrategyParameters.hpp:793`
 
 **Reproducer**:
@@ -185,7 +185,7 @@ In BacktestSharded, the `SharedBacktest_FromHistorical` conversion zeros `t.is_b
 **File:line citations**:
 - Live caller (drops args): `CoreFrameworks/EngineSharded.hpp:832-835`
 - Backtest caller (drops args): `Backtest/BacktestSharded.hpp:296-299`
-- Function signature: `ML_Headers/CoreModelZoo.hpp:1119-1127`
+- Function signature: `ML_Headers/NodeModelZoo.hpp:1119-1127`
 - Reference single-zoo caller (uses args correctly): `CoreFrameworks/EngineSharded.hpp:805-815`
 
 **Reproducer**:
@@ -215,8 +215,8 @@ When operator runs with ensemble active, the per-horizon models (ezoo arrays) ge
 
 **File:line citations**:
 - Drift block iterates single zoo only: `CoreFrameworks/EngineSharded.hpp:966-1050`
-- Ensemble parallel arrays: `ML_Headers/CoreModelZoo.hpp` EnsembleModelZoo struct
-- Per-horizon load populates handle fields: `ML_Headers/CoreModelZoo.hpp:225-247` (called from `EnsembleModelZoo_LoadFromCfg`)
+- Ensemble parallel arrays: `ML_Headers/NodeModelZoo.hpp` EnsembleModelZoo struct
+- Per-horizon load populates handle fields: `ML_Headers/NodeModelZoo.hpp:225-247` (called from `EnsembleModelZoo_LoadFromCfg`)
 
 **Reproducer**:
 1. Train ensemble at horizon_60 with `confidence_freshness_tau=0.5`; horizon_300 with `confidence_freshness_tau=0.1` (operator misconfig: both stamps inconsistent).

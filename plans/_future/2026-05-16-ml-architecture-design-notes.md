@@ -8,7 +8,7 @@
 
 ## Current architecture (at HEAD `7538ace` — pre-`.F.4d`)
 
-`EnsembleModelZoo<F>` at `ML_Headers/CoreModelZoo.hpp:953` defines 4 distinct model role arrays:
+`EnsembleModelZoo<F>` at `ML_Headers/NodeModelZoo.hpp:953` defines 4 distinct model role arrays:
 
 | Role array | Purpose | Bandit driver | Reward attribution |
 |---|---|---|---|
@@ -99,8 +99,8 @@ Suggested file location at promotion time: `DOCS/ML_ARCHITECTURE.md` (public eng
 
 ## Pointers (for future doc drafting)
 
-- `ML_Headers/CoreModelZoo.hpp:953` — EnsembleModelZoo<F> struct with 4 model role arrays
-- `ML_Headers/CoreModelZoo.hpp:1003-1012` — bandits[] + exit_bandits[] + thompson_bandits[] state
+- `ML_Headers/NodeModelZoo.hpp:953` — EnsembleModelZoo<F> struct with 4 model role arrays
+- `ML_Headers/NodeModelZoo.hpp:1003-1012` — bandits[] + exit_bandits[] + thompson_bandits[] state
 - `CoreFrameworks/ControllerConfig.hpp:788` — `exit_threshold` cfg field + hold-vs-exit semantics
 - `CoreFrameworks/ControllerConfig.hpp:970` — `confidence_ic_floor` cfg field (entry-side related)
 - `Strategies/StrategyInterface.hpp:181-196` — FOREACH_REGIME enumeration (5 regimes)
@@ -126,7 +126,7 @@ Cost: ~1-2ns indirect call (predicted to same target → no mispredict; same tar
 
 **Implementation:**
 - `ML_Headers/ThompsonBandit.hpp` — `noop_thompson_update` + `real_thompson_update` + `ThompsonUpdateFn` typedef
-- `ML_Headers/CoreModelZoo.hpp` — `thompson_update_fn` + `exit_thompson_update_fn` fields on `EnsembleModelZoo<F>`; default-init in `_Init`; boot-wire in `_InitThompsonBandits` / `_InitExitThompsonBandits`
+- `ML_Headers/NodeModelZoo.hpp` — `thompson_update_fn` + `exit_thompson_update_fn` fields on `EnsembleModelZoo<F>`; default-init in `_Init`; boot-wire in `_InitThompsonBandits` / `_InitExitThompsonBandits`
 
 **Pattern doc:** `DESIGN_SPECS/framework-patterns/sink-fn-pointer-for-optional-side-effect-pattern.md` (Pattern 5 of `branchless-dispatch-discipline.md`). `.F.4d` is the 5th canonical application.
 

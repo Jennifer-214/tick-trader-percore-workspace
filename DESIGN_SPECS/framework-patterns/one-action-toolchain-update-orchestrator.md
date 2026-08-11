@@ -1,7 +1,7 @@
 ---
 type: framework-pattern
-stage: 2-draft
-version: 1.0
+stage: 3-first-canonical
+version: 1.1
 established: 2026-07-19
 tags: [framework-pattern, dev-plane, ssot, structural-fix, doc-pipeline]
 surface: [ci-tooling, doc-pipeline]
@@ -41,4 +41,4 @@ The orchestrator **WRITES**; the CI **GATES stay VERIFY-ONLY** (red on drift). T
 - Sister (prose): `check_session_docs.sh` (the VERIFY-side sister) · `in-code-documentation-schema.md` § "DERIVED — WRITTEN vs LIVE-PREVIEW" · `doc-intelligence-toolchain-architecture.md`.
 - Applied at: E.1.2.B `0.2`.
 
-**End — Stage 2 DRAFT.** Reciprocal `sister_specs` links + index enrollment land at first-canonical (E.1.2.B `0.2`).
+**End — Stage 3 FIRST-CANONICAL (2026-08-10, D-418): `tools/update_toolchain.py`.** Landed with the D-415-era adjustments: the parity stage PARKS (the verify sweep is the verify-after); the call-graph stage is a DECLARED-SKIP until the v1 foxtag axis; a NEW cite-auto-repair stage consumes the (g) RENAMED payloads over rewritable live docs only (frozen = truthful artifacts; decision logs = annotate-only; evidence cites untouchable). First live run repaired 40 stale cites across 35 docs. Prose cross-refs above carry the sister links; the contract prose lives in `DOCS/TOOLCHAIN_CONTRACTS.md` §5.

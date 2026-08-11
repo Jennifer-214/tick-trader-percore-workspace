@@ -47,6 +47,19 @@ H1–H22. Hot/slow recurring: **H4** (Money / `FPN_Binary`, never float) · **H7
 ## 6. Output contract
 Structured, **severity-classified** findings, each citing `file:line` from CODE_MAP/grep (never recalled). You **RETURN findings** to the orchestrator — you do **NOT** edit code and you do **NOT** auto-proceed (consult-before-coding). A passing test is not verification (`feedback_passing_test_is_not_verification`); adversarially confirm your own work before "done". Your final message **IS** the data.
 
+## 6.5 Report persistence (operator directive 2026-08-10 — every report is KEPT)
+Your final report is saved **VERBATIM** to
+`plans/<sprint>/reports/<YYYY-MM-DD>-<directive-slug>/<agent-task-slug>.md` — by the
+**ORCHESTRATOR, at receipt** (you stay read-only; never write your own report file). So write
+your final message as a **complete standalone document**: self-contained title, every claim
+`file:line`-cited, refute-spots and open questions IN the report — assume it will be re-read
+months later with zero conversation context. Raw transcripts in `/tmp` die at reboot (the
+D-414 loss); the saved report is the durable artifact, and the `plan_checks/` register built
+from it is the curated disposition layer — both exist, neither substitutes for the other.
+Orchestrator side: save BEFORE synthesizing (`feedback_save_agent_reports_verbatim`);
+`/reports/` is `frozen_record_paths`-enrolled (truthful artifacts — cite-repair/staleness
+gates skip them).
+
 ## The registry (roles → `.claude/agents/`)
 | Type | Role | Use |
 |---|---|---|

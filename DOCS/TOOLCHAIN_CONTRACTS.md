@@ -35,9 +35,19 @@ family — CONSUMES / EMITS / GUARANTEES / FAILURE MODES. Seeded from `tools/CLA
   they honor this same contract. Written-fact refresh is stamp-on-change and idempotent
   (Class 56): a second run is a 0-diff.
 - **Gate semantics:** cross-thread arming comes ONLY from the block-level orient-tier `[THREAD]`
-  declaration (≥2 roles); `[STRADDLE_EXEMPT]_[field]_[reason]` silences the VERDICT per field —
-  the FACT still gets written. Enforcement is strict-new over a SHRINK-ONLY grandfather
-  baseline (`tools/lib/cache_layout_baseline.txt`).
+  declaration — ANY ≥2-role orient line arms, ORDER-INSENSITIVE (OR-fold; a single-role line can
+  neither arm nor disarm, and tag-line order is never load-bearing — AR-8 hole 7).
+  `[STRADDLE_EXEMPT]_[field]_[reason]` is orient-tier-only (same tier discipline) and silences the
+  VERDICT per field — the FACT still gets written; an exemption matching no current
+  straddler/unverified field is reported DORMANT (typo'd-with-baselined-real-finding is the silent
+  rot this catches). Enforcement is strict-new over a SHRINK-ONLY grandfather baseline
+  (`tools/lib/cache_layout_baseline.txt`) — shrink-only is ENFORCED: re-bless refuses growth
+  (rc 2, keys named), and orphan keys (fixed-but-still-grandfathered) are reported per run,
+  TU-scope-honestly (a struct unpoliced in this run's TU is UNKNOWN here, never "fixed").
+- **v1 contract item (field-existence validation):** the emitter does not yet carry the record's
+  FULL field list, so an exemption naming a never-existed field is only caught via the dormant
+  report. The v1 layout producer EMITS the full field-name set per record; the gate then
+  validates every `[STRADDLE_EXEMPT]` name against it (typo → RED, not advisory).
 
 ## 2 · CITED-PATH resolution (the D-417 resolver)
 

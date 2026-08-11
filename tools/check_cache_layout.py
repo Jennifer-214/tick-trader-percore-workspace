@@ -69,14 +69,19 @@ def parse_struct_blocks(path):
             if cat == "CODE":
                 in_code = True
             elif cat == "THREAD" and not in_code:
-                # ORIENT-TIER-ONLY arming (D-414 leaf-3): the block-level [THREAD] declaration is
-                # the contract; field-level [THREAD] tags inside [CODE] can neither arm nor DISARM
-                # (kills the old last-line-wins fragility — a late single-role field tag used to
-                # silently disarm a block). Enumerated 2026-08-10: zero armed-set delta at flip.
-                cur["cross_thread"] = len(toks[1:]) >= 2   # ≥2 declared roles (writer+reader) = crosses threads
-            elif cat == "STRADDLE_EXEMPT" and len(toks) > 1:
+                # ORIENT-TIER-ONLY arming (D-414 leaf-3) + OR-FOLD across orient lines (AR-8
+                # hole 7): a field-level [THREAD] inside [CODE] can neither arm nor DISARM, and
+                # WITHIN the orient tier arming is ORDER-INSENSITIVE — ANY ≥2-role line arms.
+                # Assignment here used to be last-line-wins: per-REGION [THREAD] styles
+                # (OrderManagerState, ExecutionCore) stayed armed only because their 2-role line
+                # happened to come last — a cosmetic reorder silently disarmed H6 policing.
+                # Do-not-arm stays expressible: write no ≥2-role line.
+                cur["cross_thread"] = cur["cross_thread"] or len(toks[1:]) >= 2
+            elif cat == "STRADDLE_EXEMPT" and not in_code and len(toks) > 1:
                 # curated FIELD-level exemption (D-413 C2/C(a); never blanket-struct): silences the
-                # H6 gate VERDICT for that field — the FACT still gets written by --fix.
+                # H6 gate VERDICT for that field — the FACT still gets written by --fix. ORIENT-tier
+                # only (AR-8 hole 10) — same tier discipline as [THREAD]: an exemption inside
+                # [CODE] is field-doc prose, not a gate contract.
                 cur["exempt"].add(toks[1])
             elif cat == "SIZE" and len(toks) > 1:
                 mm = re.search(r"(\d+)", toks[1])
@@ -178,6 +183,41 @@ _META_ORIGIN = "AUTO"                                         # provenance value
 def _viol_key(v):
     """Stable baseline identity for a gate finding (kind|struct|field)."""
     return f"{v['kind']}|{v['struct']}|{v.get('field', '?')}"
+
+
+def _baseline_growth(new_keys, old_keys):
+    """SHRINK-ONLY enforcement for --emit-baseline (AR-8 hole 8) — PURE. The newly emitted set
+    must be a SUBSET of the committed one: growth means a NEW finding is being blessed AROUND the
+    strict-new gate. Returns the offending keys (empty = shrink/equal, allowed)."""
+    return sorted(set(new_keys) - set(old_keys))
+
+
+def _baseline_orphans(current_keys, known_keys, policed_structs=None):
+    """The pawl on the ratchet (AR-8 hole 8) — PURE. Baseline keys with NO current finding: the
+    finding was FIXED but its key still grandfathers any future regression of the same field
+    forever. Reported at every --strict-new run; retire them by re-blessing (shrinking) at a
+    triage that updates the register. TU-SCOPE-HONEST (caught on the pawl's own first live run):
+    a key counts as orphan only when its struct IS policed in THIS run — an unpoliced struct's
+    keys are UNKNOWN here, not fixed (the suite-plane keys ride the suite row; flattening
+    "not visible in this TU" into "fixed" would be Class 57 in our own report)."""
+    orphans = set(known_keys) - set(current_keys)
+    if policed_structs is not None:
+        orphans = {k for k in orphans if k.split("|")[1] in policed_structs}
+    return sorted(orphans)
+
+
+def _unmatched_exempts(struct, layout_rec):
+    """Dormant/typo'd exemption visibility (AR-8 hole 10) — PURE. Exempt names matching NEITHER a
+    straddler NOR an unverified field of the record. A typo'd exemption mostly self-reveals (the
+    un-suppressed finding reds strict-new) — EXCEPT when the finding is also baselined, where it
+    rots silently; this report is that case's visibility. True field-existence validation needs
+    the emitter to carry the full field list (v1 contract item)."""
+    if layout_rec is None or not struct["cross_thread"]:
+        return []
+    exempt = struct.get("exempt") or set()
+    live = ({s["name"] for s in (layout_rec.get("straddlers") or [])}
+            | set(layout_rec.get("partial") or []))
+    return sorted(exempt - live)
 
 
 def _fmt_straddle(rec):
@@ -320,6 +360,9 @@ _SELFTEST = [
     ("cross-thread straddler with [STRADDLE_EXEMPT] field -> PASS",
      {"name": "SX", "cross_thread": True, "claimed_size": None, "exempt": {"f"}},
      {"size": 64, "straddlers": [{"name": "f", "off": 56, "size": 16}]}, None),
+    ("cross-thread PARTIAL + size drift -> BOTH fire (size-drift stays policed on partial records)",
+     {"name": "PD", "cross_thread": True, "claimed_size": 64},
+     {"size": 128, "straddlers": [], "partial": ["cond"]}, ("straddle-unverified", "size-drift")),
 ]
 
 
@@ -327,7 +370,12 @@ def run_selftest():
     ok = True
     for label, struct, layout, expect in _SELFTEST:
         v = gate_struct(struct, layout)
-        hit = (expect is None and not v) or (expect is not None and any(x["kind"] == expect for x in v))
+        if expect is None:
+            hit = not v
+        elif isinstance(expect, tuple):        # ALL named kinds must fire (AR-8 tooth-gap close)
+            hit = all(any(x["kind"] == e for x in v) for e in expect)
+        else:
+            hit = any(x["kind"] == expect for x in v)
         print(f"  {'✅' if hit else '❌'} {label}: {len(v)} violation(s)")
         ok = ok and hit
     # refresh (the 4th verb): calibration corpus — golden-broken → must change; golden-complete → must
@@ -386,15 +434,46 @@ def run_selftest():
     match_ok = (bool(match_exact) and match_exact.get("size") == 16
                 and match_multi is None and match_single is not None)
     # (j) PARSER: ORIENT-TIER-ONLY arming (D-414 leaf-3) — a field-level [THREAD] inside [CODE]
-    #     neither arms (B) nor disarms (A); the block-level orient declaration is the contract
+    #     neither arms (B) nor disarms (A); the block-level orient declaration is the contract.
+    #     + OR-FOLD (AR-8 hole 7): within the orient tier arming is ORDER-INSENSITIVE — C's
+    #     2-role line comes FIRST (the old last-line-wins would disarm it); D's single-role
+    #     lines never arm. + EXEMPT TIER (AR-8 hole 10): E's in-[CODE] exemption is inert;
+    #     F's orient-tier exemption parses.
     parser_fx = ("// [SCHEMA]_[v1.0]\n// [STRUCT]_[A]\n// [THREAD]_[[W] [R]]\n// [CODE]\n"
                  "// [THREAD]_[[ONLY_ROLE]]\n// [END_CODE]\n// [END_STRUCT]_[A]\n"
-                 "// [STRUCT]_[B]\n// [CODE]\n// [THREAD]_[[W] [R]]\n// [END_CODE]\n// [END_STRUCT]_[B]\n")
+                 "// [STRUCT]_[B]\n// [CODE]\n// [THREAD]_[[W] [R]]\n// [END_CODE]\n// [END_STRUCT]_[B]\n"
+                 "// [STRUCT]_[C]\n// [THREAD]_[[W] [R]]\n// [THREAD]_[[GUI]]\n// [END_STRUCT]_[C]\n"
+                 "// [STRUCT]_[D]\n// [THREAD]_[[W]]\n// [THREAD]_[[R2]]\n// [END_STRUCT]_[D]\n"
+                 "// [STRUCT]_[E]\n// [THREAD]_[[W] [R]]\n// [CODE]\n// [STRADDLE_EXEMPT]_[f]\n"
+                 "// [END_CODE]\n// [END_STRUCT]_[E]\n"
+                 "// [STRUCT]_[F]\n// [THREAD]_[[W] [R]]\n// [STRADDLE_EXEMPT]_[f]\n// [END_STRUCT]_[F]\n")
     fdp, pp = tempfile.mkstemp(suffix=".hpp"); os.write(fdp, parser_fx.encode()); os.close(fdp)
     pblocks = {b["name"]: b for b in parse_struct_blocks(pp)}
     os.unlink(pp)
-    parser_ok = (pblocks["A"]["cross_thread"] is True and pblocks["B"]["cross_thread"] is False)
-    print(f"  {'✅' if parser_ok else '❌'} parser ORIENT-ONLY arming: in-[CODE] [THREAD] neither arms nor disarms")
+    parser_ok = (pblocks["A"]["cross_thread"] is True and pblocks["B"]["cross_thread"] is False
+                 and pblocks["C"]["cross_thread"] is True    # OR-fold: 2-role line arms from ANY position
+                 and pblocks["D"]["cross_thread"] is False   # single-role orient lines never arm
+                 and pblocks["E"]["exempt"] == set()         # in-[CODE] exemption inert (tier symmetry)
+                 and pblocks["F"]["exempt"] == {"f"})        # orient-tier exemption parsed
+    print(f"  {'✅' if parser_ok else '❌'} parser ORIENT-ONLY + OR-FOLD arming + exempt tier symmetry")
+    # AR-8 hole 8/10 pure helpers: shrink guard · orphan pawl · dormant-exempt visibility
+    bg_ok = (_baseline_growth(["a", "b"], ["a"]) == ["b"]
+             and _baseline_growth(["a"], ["a", "b"]) == [])
+    bo_ok = (_baseline_orphans(["a"], ["a", "b"]) == ["b"]
+             and _baseline_orphans(["a", "b"], ["a", "b"]) == []
+             # TU-scope honesty: an unpoliced struct's key is UNKNOWN here, never "fixed"
+             and _baseline_orphans([], ["false-sharing|S|f"], policed_structs={"T"}) == []
+             and _baseline_orphans([], ["false-sharing|S|f"], policed_structs={"S"})
+                 == ["false-sharing|S|f"])
+    ux_ok = (_unmatched_exempts({"cross_thread": True, "exempt": {"cond", "typo"}},
+                                {"straddlers": [], "partial": ["cond"]}) == ["typo"]
+             and _unmatched_exempts({"cross_thread": True, "exempt": {"f"}},
+                                    {"straddlers": [{"name": "f", "off": 60, "size": 8}],
+                                     "partial": []}) == []
+             and _unmatched_exempts({"cross_thread": True, "exempt": {"x"}}, None) == [])
+    print(f"  {'✅' if bg_ok else '❌'} baseline SHRINK guard: growth keys named; shrink/equal allowed")
+    print(f"  {'✅' if bo_ok else '❌'} baseline ORPHAN pawl: fixed-but-grandfathered keys named")
+    print(f"  {'✅' if ux_ok else '❌'} dormant-exempt visibility: unmatched named; live/None skip")
     # (i) TRI-STATE WRITE (D-413) — a partial record REFUSES "none"; straddler + unverified compose
     tri_mock = {"X": {"size": 128, "align": 64,
                       "straddlers": [{"name": "a", "off": 60, "size": 8}], "partial": ["b"]}}
@@ -402,7 +481,7 @@ def run_selftest():
     tri_ok = ("[STRADDLE]_[a@60 · unverified: b]" in tri and "[STRADDLE]_[none]" not in tri)
     print(f"  {'✅' if tri_ok else '❌'} refresh TRI-STATE: partial refuses none; straddler+unverified compose ({n_tri} written)")
     r_ok = (ins_ok and idem_ok and rw_ok and stab_ok and prose_ok and cov_ok and rt_ok and match_ok
-            and tri_ok and parser_ok)
+            and tri_ok and parser_ok and bg_ok and bo_ok and ux_ok)
     print(f"  {'✅' if match_ok else '❌'} match_layout: exact-instantiation spacing + multi-instantiation refusal")
     print(f"  {'✅' if ins_ok else '❌'} refresh INSERT: empty [DERIVED] → ORIGIN+UPDATED+quartet ({n_ins} written)")
     print(f"  {'✅' if idem_ok else '❌'} refresh IDEMPOTENT: 2nd --fix no-op, UPDATED not restamped ({n_ins2} changed)")
@@ -579,15 +658,38 @@ def main():
 
     viols = []
     policed = 0
+    policed_names = set()
+    dormant = []
     for b in blocks:
         rec = match_layout(b["name"], layout)
         policed += rec is not None
+        if rec is not None:
+            policed_names.add(b["name"])
         viols.extend(gate_struct(b, rec))
+        dormant.extend(f"{b['name']}.{f}" for f in _unmatched_exempts(b, rec))
+    if dormant:
+        # AR-8 hole 10 visibility (advisory, never a finding): dormant = fixed-or-typo'd. The
+        # typo'd case with a BASELINED real finding is the one that rots silently without this.
+        print(f"note: {len(dormant)} [STRADDLE_EXEMPT] tag(s) match no current straddler/unverified "
+              f"field (dormant or typo'd — retire/correct at next triage): {' · '.join(dormant)}")
 
     if args.emit_baseline or args.strict_new:
         bl_path = Path(args.baseline)
         keys = sorted({_viol_key(v) for v in viols})
+        known = set()
+        if bl_path.exists():
+            known = {l.strip() for l in bl_path.read_text(encoding="utf-8").splitlines()
+                     if l.strip() and not l.startswith("#")}
         if args.emit_baseline:
+            grown = _baseline_growth(keys, known) if bl_path.exists() else []
+            if grown:
+                print(f"baseline: REFUSED — SHRINK-ONLY enforced (AR-8 hole 8): {len(grown)} key(s) "
+                      f"would GROW the committed baseline (a NEW finding blessed around strict-new):")
+                for k in grown:
+                    print(f"    + {k}")
+                print("  (fix or [STRADDLE_EXEMPT] the finding; a genuine grandfather addition is an "
+                      "operator-triage hand-edit with a register disposition.)")
+                return 2
             bl_path.parent.mkdir(parents=True, exist_ok=True)
             bl_path.write_text("# cache_layout_baseline — GRANDFATHERED findings (kind|struct|field), "
                                "SHRINK-ONLY.\n# Every row is dispositioned in the D-414 register "
@@ -595,10 +697,6 @@ def main():
                                + "".join(f"{k}\n" for k in keys), encoding="utf-8")
             print(f"baseline: wrote {len(keys)} grandfathered key(s) to {bl_path}")
             return 0
-        known = set()
-        if bl_path.exists():
-            known = {l.strip() for l in bl_path.read_text(encoding="utf-8").splitlines()
-                     if l.strip() and not l.startswith("#")}
         new = [v for v in viols if _viol_key(v) not in known]
         if new:
             print(f"\nCACHE-LAYOUT: {len(new)} NEW finding(s) beyond the baseline (STRICT):")
@@ -606,8 +704,12 @@ def main():
                 print(f"  ⚠ [{x['kind']}] {x['struct']}: {x['detail']}")
             print("  (fix, [STRADDLE_EXEMPT] with a reason, or re-bless the baseline at a triage.)")
             return 1
+        orphans = _baseline_orphans(keys, known, policed_structs=policed_names)
+        orphan_note = ("" if not orphans else
+                       f"; ⚠ {len(orphans)} ORPHAN baseline key(s) — fixed but still grandfathered, "
+                       f"re-bless to shrink: {' · '.join(orphans)}")
         print(f"cache-layout strict-new: 0 NEW; {len(viols)} grandfathered finding(s) "
-              f"(baseline, shrink-only; dispositions in the D-414 register).")
+              f"(baseline, shrink-only; dispositions in the D-414 register){orphan_note}.")
         return 0
 
     if viols:

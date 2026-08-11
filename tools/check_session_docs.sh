@@ -406,17 +406,20 @@ if [ "${SKIP_DECISION_COMPLETENESS_CHECK:-0}" != "1" ]; then
         python3 "$REPO_ROOT/tools/check_capture_audit.py" --check 13 --since "${DLOG_SINCE:-HEAD~8}"
 fi
 
-# --- cache-layout gate (D-320 / D-414 leaf-3) — STRICT-NEW HARD + suite-TU advisory ---
+# --- cache-layout gate (D-320 / D-414 leaf-3 / AR-8) — STRICT-NEW HARD on BOTH TUs ---
 # The ADV→HARD promotion EXECUTED via the grandfather baseline (tools/lib/cache_layout_baseline.txt,
-# SHRINK-ONLY — the Class-44-orphan sister pattern): the known finds are dispositioned in the D-414
-# register (TUISharedState/NodeContext → E.1.2 relayout; suite trio → the suite refactor); a NEW
-# cross-thread straddler or unverified-armed field REDs the sweep from today on. Layout facts via
-# the Lua emitter (D-415 script-side authority). NEVER auto-aligns. The suite-TU row = O4b coverage
-# (Backtest/GUI panels main.cpp can't see) — advisory (dep-tolerant + suite plane).
+# SHRINK-ONLY — ENFORCED since the AR-8 pass: --emit-baseline refuses growth, --strict-new reports
+# orphan keys TU-scope-honestly): the known finds are dispositioned in the D-414 register
+# (TUISharedState/NodeContext → E.1.2 relayout; suite trio → the suite refactor); a NEW cross-thread
+# straddler or unverified-armed field in EITHER policed TU REDs the sweep. Suite row promoted
+# ADV→HARD at the AR-8 hole-9 close (it polices 13/13 baselined structs vs main's 4/13; the tool is
+# dep-tolerant internally — missing nvim/clang = LOUD warning + rc 0, so HARD is deps-safe).
+# Residual non-coverage, stated: --isolate runs in NO standing row (register hole 9). Layout facts
+# via the Lua emitter (D-415 script-side authority). NEVER auto-aligns.
 if [ "${SKIP_CACHE_LAYOUT_CHECK:-0}" != "1" ]; then
     run_hard "cache-layout gate STRICT-NEW (main TU; grandfathered baseline, shrink-only)" \
         python3 "$REPO_ROOT/tools/check_cache_layout.py" --strict-new
-    run_advisory "cache-layout gate (suite TU foxml_suite.cpp — O4b coverage)" \
+    run_hard "cache-layout gate STRICT-NEW (suite TU foxml_suite.cpp — O4b coverage; AR-8 promotion)" \
         python3 "$REPO_ROOT/tools/check_cache_layout.py" --tu foxml_suite.cpp --strict-new
 fi
 

@@ -175,7 +175,23 @@ S-nowrap truncation vs wrap+grow-height honesty.
   built + NOT previously captured; NOW captured at ideas §11.5 (0.5 family, HARD dep TD-257
   real-flags; interim = eyeball spills in the 1:1 asm explorer). The greppable "spill" family
   is the CACHE-residency lens set — a different axis.
-- REMAINING phases 3-6 per the synthesis (kind→tag adapter remainder for other `for_type`
-  consumers + decode the 4 unclaimed vocab tables · ui.lua tokens + greenlit polish
-  [curated-first Docs · resolving… chip · key-hint chips · one notify voice · checkhealth] ·
-  docs-derive · headless teeth); K2 parked.
+- **PHASES 3+4 CUTS → SHIPPED (plugin `1a5c8a7`):** nodemodel decodes ALL FIVE grammar tables
+  (K3; vocab()/unit_types() accessors) · actions `types` keys validate against the real
+  unit-type set (unknown = one-time WARN) · docview.route skips unknown subcats NAMED ·
+  small-chooser sizing CLAMPED + nowrap + narrow-anchor cursor-fallback (S1/S2 closed
+  structurally) · help-float transient close (S5 orphan) · pin winfixwidth (S6) · resolving…
+  latency chip (polish #2) · **docs_refs lens** (polish #1 — curated governs-this-unit section,
+  zero-subprocess, live-buffer-fresh).
+- **dm-EQUAL + notes removal → SHIPPED (plugin `8100e8c`, operator design calls):** *"convert
+  to operating entirely off dm"* — the analysis rows drop the ctx.hud gate; dm's ctx enriches
+  with treesitter kind/symbol → who-writes/false-sharing gate IDENTICALLY from both invokers
+  (no-HUD invocation = verdict notifies + a named pointer at the jumpable tree — the shim says
+  what it can't render). *"remove the entire notes thing from the hud"* — the `n`
+  mention-sweep lens DELETED with its test (curated docs_refs + menu→Docs supersede; the sweep
+  is history-recoverable as a future menu row). HUD card editor-clamped (S3 worst case).
+  Freshness note: docs_refs parses the LIVE buffer per render; docview resolves fresh per
+  invocation (git-HEAD-stamped envelope) — "most up to date data" holds by construction.
+- REMAINING: phase 5 docs-derive (footer/help/README from rows; keymap registry K4) · phase 6
+  headless teeth (menu seams still untested — the cd971ac proofs) · ui.lua token EXTRACTION
+  (the clamp landed in menu.lua as the seed) · notify-voice sweep · checkhealth dep-chain ·
+  aspect-constant SSoT (S9, cosmetic); K2 parked.

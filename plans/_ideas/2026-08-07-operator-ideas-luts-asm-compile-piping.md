@@ -325,7 +325,10 @@ as dated sections.
   sanctioned comment-writer tier (✎). New-vocab minting must route through the SSoT (schema fence /
   `doc-tag-vocabulary.md`), never plugin-local. Sisters: `tagwriter.lua` (the write seam) · D-374
   (explicit-invoke writers). → rides the task-#10 unified-registry work as ONE registry row + one
-  vocab-derived picker.
+  vocab-derived picker. **→ SHIPPED same session (plugin `7da124e`, `tagadd.lua`):** menu row
+  (✎), concern+surface picker from the decoded payload, orient-tier merge (indent-preserving,
+  idempotent, tier-disciplined), MERGE-ONLY v1 (no [TAG] line = named refusal), mint-pointer at
+  `add_vocab.py`. Pure teeth 8/8.
 - **(iii) Recency-as-rule:** chronological-ish lists (plans · changelog · decisions · choosers over
   dated ids · the Docs-mention subtrees) sort NEWEST-FIRST as a RENDERER-level rule, not
   per-surface code; semantic sets keep grouping. → the unified renderer (task #10; I-2's

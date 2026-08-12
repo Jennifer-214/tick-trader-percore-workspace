@@ -1296,3 +1296,63 @@ still no `--yes`, no batch mode, and a non-TTY invocation refuses rc=2 — an ag
 The `⚠️ REMOVALS` flag on a drifted row is the only alarming state (H21: additions are legal).
 **Related** — D-394 · D-410 (bless authority declined; cadence is the friction fix) · TECH_DEBT-255
 · `tools/goldens/README.md` (the golden/baseline/ratchet taxonomy).
+
+### Docview — the `[REFERENCE]` doc-viewer: float · pin · chooser (v5.15.5.F.4d.1.E.1.2.B `0.4`+)
+
+**What** — inside any tagged unit (or its FILE header — macros/file-scope fall back), `m → Docs`
+resolves the unit's `[REFERENCE]` ids and opens the DEFINING doc beside the code: one hit floats
+immediately (real buffer, cursor on the defining line, `q` closes, **`p` promotes to a pinned
+rightmost split** — the docs+code layout); several hits open the recency-sorted chooser (newest
+ids first, prefix-grouped). All ELEVEN fenced subcats route: id-shaped (INVARIANT/DECISION/
+TECH_DEBT/CLASS/PARITY) via `citable_ids.py --where` (defining-site envelope), doc-shaped
+(DESIGN_SPEC/MEMORY/PLAN) via `--resolve` (bare-name probe), AUDIT/SOURCE/URL skipped BY NAME.
+**Cfg flags** — none (python3 + `tools/citable_ids.py` on the repo root; `:checkhealth
+fox-symdeps` verifies the chain).
+**Fallback** — tri-state honest at every seam: resolver-failed = named ERROR (never empty), dead
+id = named WARN (never a blank float), RENAMED = old→new notify. Float dismisses on focus-leave
+(transient lens); the pin owns persistence.
+**Where to verify** — `FixedPoint/FixedPointN.hpp:20` (`[[H4] [H9] [H12] [H21]]` + decisions) →
+`<leader>dm → Docs`.
+**Gotchas** — the doc float is `q`-only by design (a buffer-local `<Esc>` on a REAL doc buffer
+would leak into other windows showing it).
+**Related** — D-417 (the resolver lift) · `DOCS/TOOLCHAIN_CONTRACTS.md` §2 (consumer semantics) ·
+TD-270 (two-cores convergence) · the 682 mined ids below.
+
+### `mine_reference_tags.py` — the `[REFERENCE]` corpus miner (v5.15.5.F.4d.1.E.1.2.B `0.4`+)
+
+**What** — lifts EXISTING in-span id mentions (`per D-142` / `H4` / `Class 51` / doc names) into
+the unit's `[REFERENCE]` tags: additive merge (hand-written ids never removed/reordered), every
+id validated against the VALIDATOR's own membership index, innermost-unit attribution, indented
+banners preserved, `x-pattern` ≡ `x-pattern.md`. Maiden passes: 550 id-shaped + 132 doc-shaped
+across the corpus.
+**Cfg flags** — dry-run is the DEFAULT; `--fix` writes (D-374 flag-not-auto; the git diff is the
+review surface); `--paths` restricts.
+**Fallback** — MINE-NEVER-INVENT: unresolved mentions are excluded + reported; ambiguous
+both-set doc names refused; unmatched loose hits silently ignored (a filename mention is not a
+reference claim).
+**Where to verify** — `python3 tools/mine_reference_tags.py` (dry-run) then `--selftest` (14 teeth).
+**Gotchas** — comments-only by construction (prove with: every changed diff line starts `//`).
+**Related** — D-413/D-414 (the fabrication arc whose law this obeys) · Class 57 · the docview
+entry above (its data).
+
+### The unified action menu — menu-as-root · layer-stack · TAG ADD (v5.15.5.F.4d.1.E.1.2.B `0.4`+)
+
+**What** — `<leader>dm` (or `m` in any HUD) is THE root surface: unit-gated analyses (who-writes ·
+false-sharing · docs · derived-write ✎ · lock-layout ⚠ · straddle/ambient/asm per type) + the
+global launchers (browse · roam · dashboard · size chip · use-lens), identical items from every
+invoker (one registry, rows pass verbatim), ✎/⚠ write-tier icons + legend everywhere. The
+LAYER-STACK rule: `opened item > menu > HUD` — the HUD stays alive under its child menu; running
+an item collapses ancestors (analysis rows that render INTO the HUD keep it). **TAG ADD** (`m →
+Add [TAG]`, ✎): browse the REAL concern+surface vocab (derived from the grammar payload) and
+merge a token into the unit's orient `[TAG]` line — idempotent, indent-preserving; minting NEW
+vocab points at `tools/add_vocab.py` (the SSoT).
+**Cfg flags** — none new.
+**Fallback** — reserved keys refuse shadowing lens binds with a one-time warning; unknown unit
+types / subcats warn instead of silently gating; from `dm` with no HUD the analyses surface
+verdict notifies + a pointer at the jumpable tree.
+**Where to verify** — a struct unit: `<leader>dm` should title `STRUCT <name>` with ~14 rows +
+launchers; board `s` compares again; `m` opens the menu on EVERY hud kind.
+**Gotchas** — the `n` mention-sweep lens was REMOVED (operator call): curated `◆ Docs` + the
+mention machinery live in git history if ever wanted as a row. `opts.doc_dirs` retired with it.
+**Related** — the plugin-parity fleet register (`plan_checks/2026-08-10-plugin-parity-fleet-register.md`,
+CLOSED zero-tail) · ideas §11 · north-star §6.

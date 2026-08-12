@@ -1370,8 +1370,9 @@ from the REAL vocab → every unit carrying it → fzf-pick → jump to the unit
 in-[CODE] tags never attach; innermost unit wins).
 **Fallback** — degrades to the clangd scope name on unconverted files; vocab-unavailable →
 named refusal (§9: derive, never invent — no free-typed tags).
-**Where to verify** — HUD on `ControllerEventLoop.hpp`, expand Consumers, then `/ENGINE`;
-`<leader>dt` → `CAPITAL_BEARING`.
+**Where to verify** — HUD on `ControllerEventLoop.hpp`, expand Consumers, then `T` (the
+no-typing tag PICKER — lists only tags present in the tree; ✕ clear row when filtered) or
+`/ENGINE`; `<leader>dt` → `CAPITAL_BEARING`. Dashboard `g` toggles grouped ⇄ ranked top-25.
 **Gotchas** — enrichment reads the WRITTEN tags: an untagged unit shows plain clangd names
 (convert it or TAG-ADD it and the trees light up on the next render).
 **Related** — north-star §6 (R3 verbatim) · `unitindex.lua` · TAG ADD (the ✎ writer feeding

@@ -343,6 +343,12 @@ as dated sections.
   close-on-focus-leave (transient-lens semantics; KEEPING it is what `p`-pin exists for — a split
   IS hjkl-navigable); (c) both land with the I-1/I-2/I-3 unification synthesis, not as one-off
   patches.
+- **(v.5) `.toolbus/` first-consumer SHIFTED (recorded 2026-08-11):** the 0.4 plan line lands
+  `.toolbus/` "WITH its first genuine consumer — the VOLATILE `layout--<target>.json` (re-running
+  clang per call hurts)". That consumer was the dashboard census — which now reads the WRITTEN
+  tag corpus instead (one rg pass, no clang; the 2026-08-11 rewire). The next genuine volatile
+  consumer is the `0.5` asm/compiled-reality cards (TD-257-gated) → `.toolbus/` re-sequences to
+  land WITH 0.5, not before. Annotate the plan's 0.4 line at the next planning touch.
 - **(vi) Parity-expansion:** the plugin parity fleet (I-1/I-2/I-3, this session) is the METHOD
   instance; standing expansions already homed — TD-270 (reference-membership two-cores) ·
   `/parity-check` (train↔serve) · the toolio registry (producer surfaces, TD-258). Further

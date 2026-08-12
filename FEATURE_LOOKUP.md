@@ -1356,3 +1356,23 @@ launchers; board `s` compares again; `m` opens the menu on EVERY hud kind.
 mention machinery live in git history if ever wanted as a row. `opts.doc_dirs` retired with it.
 **Related** — the plugin-parity fleet register (`plan_checks/2026-08-10-plugin-parity-fleet-register.md`,
 CLOSED zero-tail) · ideas §11 · north-star §6.
+
+### Tag-native navigation — enriched trees · tag filter · browse-by-[TAG] (v5.15.5.F.4d.1.E.1.2.B `0.4`+)
+
+**What** — the north-star §6 R3 family, running on the written tag corpus. (1) Every HUD tree
+entry (Consumers · Called-by · Trace · Blast-radius) resolves to its ENCLOSING tagged unit and
+shows `[TYPE Name] + [TAG list]` — `PortfolioController_Init [ENGINE SLOW_PATH] :507` instead of
+a bare line. (2) The `/` filter matches that enrichment — `/SLOW_PATH` keeps only slow-path
+consumers, `/HOT` the hot structs. (3) `<leader>dt` (or `m → Browse units by [TAG]`): pick a tag
+from the REAL vocab → every unit carrying it → fzf-pick → jump to the unit opener.
+**Cfg flags** — none. Resolution = `unitindex.lua`, the disk-based sibling of the cursor-tracker
+(per-file mtime cache; openers derived from the grammar payload; orient-tier [TAG] attachment —
+in-[CODE] tags never attach; innermost unit wins).
+**Fallback** — degrades to the clangd scope name on unconverted files; vocab-unavailable →
+named refusal (§9: derive, never invent — no free-typed tags).
+**Where to verify** — HUD on `ControllerEventLoop.hpp`, expand Consumers, then `/ENGINE`;
+`<leader>dt` → `CAPITAL_BEARING`.
+**Gotchas** — enrichment reads the WRITTEN tags: an untagged unit shows plain clangd names
+(convert it or TAG-ADD it and the trees light up on the next render).
+**Related** — north-star §6 (R3 verbatim) · `unitindex.lua` · TAG ADD (the ✎ writer feeding
+this) · the dashboard's tag-corpus tiles (same one-producer philosophy).

@@ -168,6 +168,7 @@ run_hard "cache-layout gate teeth (wrapper; D-137)" bash "$REPO_ROOT/tools/check
 run_hard "call-graph A2 teeth (phantom + stale-reference RED)" python3 "$REPO_ROOT/tools/check_code_tag_blocks.py" --callgraph-selftest
 run_hard "reciprocal-supersession teeth ((g)-4)"   python3 "$REPO_ROOT/tools/check_doc_metadata.py" --reciprocal-selftest
 run_hard "contract-stale teeth (D-408 detectors)"  python3 "$REPO_ROOT/tools/check_tech_debt.py" --contract-stale-selftest
+run_hard "toolio-kind parity teeth (TD-258; D-137 wrapper)" bash "$REPO_ROOT/tools/check_toolio_kind_parity_selftest.sh"
 run_hard "conversion-completeness teeth (wrapper)" bash "$REPO_ROOT/tools/check_conversion_completeness_selftest.sh"
 run_hard "handoff-capture-completeness teeth"     bash "$REPO_ROOT/tools/check_handoff_capture_completeness_selftest.sh"
 run_hard "latency-path-conformance teeth (H8)"    bash "$REPO_ROOT/tools/check_latency_path_conformance_selftest.sh"
@@ -445,6 +446,10 @@ if [ "${SKIP_CONTRACT_STALE_CHECK:-0}" != "1" ]; then
     run_advisory "tech-debt contract-stale (D-408: fired-trigger / churning-static / empty-tier)" \
         python3 "$REPO_ROOT/tools/check_tech_debt.py" --contract-stale
 fi
+# TD-258 floor tooth (HARD: deterministic, tiny curated sets, exempt tier = the producer-first
+# escape hatch — a missing row is a one-line fix either way; corpus clean at wiring 2026-08-12).
+run_hard "toolio-kind parity (TD-258: every producer kind consumed-or-exempt)" \
+    python3 "$REPO_ROOT/tools/check_toolio_kind_parity.py"
 
 echo ""
 echo "=== SWEEP RESULTS ==="

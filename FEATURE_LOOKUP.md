@@ -1377,3 +1377,21 @@ no-typing tag PICKER — lists only tags present in the tree; ✕ clear row when
 (convert it or TAG-ADD it and the trees light up on the next render).
 **Related** — north-star §6 (R3 verbatim) · `unitindex.lua` · TAG ADD (the ✎ writer feeding
 this) · the dashboard's tag-corpus tiles (same one-producer philosophy).
+
+### Toolio kind parity — producer kinds ⇄ plugin surfaces, gated (v5.15.5.F.4d.1.E.1.2.B `0.4`+; TD-258 close)
+
+**What** — the set of toolio payload kinds (`tools/lib/toolio_schemas.json`) and the set the
+plugin can render (`toolio_kinds.lua` M.consumed/M.exempt) are now asserted equal at FOUR
+layers: runtime (`assert_consumed` at both decode seams — a wrong/unregistered kind is a named
+refusal, never a wrong decode), `:checkhealth fox-symdeps` (the parity section), the plugin
+suite (`test_toolio_kinds.lua`), and the repo floor (`check_toolio_kind_parity.py`, HARD in
+`check_session_docs.sh`). A new producer with no plugin surface REDs the floor the day it lands.
+**Cfg flags** — none; data-driven both sides.
+**Fallback** — producer-first development rides the `M.exempt` tier (kind → reason, e.g. "view
+rides 0.5"); exemptions are themselves parity-checked (stale ones flag).
+**Where to verify** — `python3 tools/check_toolio_kind_parity.py` (rc 0/1/2 = ok/drift/refusal);
+`:checkhealth fox-symdeps` → "toolio payload kinds" line.
+**Gotchas** — the floor tool parses the Lua blocks STRICTLY (one `["kind/N"]` key per line,
+closing `}` at column 0); reshaping the table is a named refusal, not a silent pass.
+**Related** — TD-258 (closed 2026-08-12) · D-380/D-384 (the schema registry) · Class 57
+(tri-state honesty) · docview / nodemodel (the two consumers).

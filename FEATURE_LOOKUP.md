@@ -1395,3 +1395,22 @@ rides 0.5"); exemptions are themselves parity-checked (stale ones flag).
 closing `}` at column 0); reshaping the table is a named refusal, not a silent pass.
 **Related** — TD-258 (closed 2026-08-12) · D-380/D-384 (the schema registry) · Class 57
 (tri-state honesty) · docview / nodemodel (the two consumers).
+
+### Compile-command piping — the exact build invocation, pasteable (v5.15.5.F.4d.1.E.1.2.B `0.5`-opener; ideas §2 / TD-257 substrate)
+
+**What** — `python3 tools/compile_command.py <file>…` prints the EXACT invocation(s) the compile
+database records for a TU as pasteable `(cd <dir> && <command>)` lines — one row PER db entry
+(a TU built into engine + engine_gui + suite shows all three flag sets, never a silent pick).
+`--json` emits ONE `compile_command/1` toolio envelope (the 0.5 asm/layout cards' feed). This is
+"custom compiler work eventually"'s substrate: alternate flags/passes consume THIS, never a
+second flag source.
+**Cfg flags** — `--db <path>` (default: the engine-root `compile_commands.json` symlink → today
+`build_clangd/`; the shipping-build db rides the build.sh 1:1-asm leaf).
+**Fallback** — a file with no db entry = a named MISSING row (headers: the enclosing-TU mapping
+is 0.5 design work); unreadable db = rc-2 refusal, never default flags.
+**Where to verify** — `python3 tools/compile_command.py main.cpp` (expect 2+ target variants);
+`--selftest` (7 teeth, also a floor row).
+**Gotchas** — today's db is clangd-parity flags, not the shipping build's; the envelope names
+which db answered so the provenance is visible.
+**Related** — TD-257 (open, progress-noted) · ideas §2 · D-337/D-397 · `compile_command/1` in
+`toolio_schemas.json` (exempt-tier'd in `toolio_kinds.lua` until the 0.5 card).

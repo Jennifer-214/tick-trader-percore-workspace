@@ -49,6 +49,15 @@ as dated sections.
   dive — do not pre-commit the transport).
 - **Dive:** `0.5`, alongside the precondition work. Cross-ref inserted at the plan body's `0.5`
   line the same day this file was written.
+- **⏩ SUBSTRATE LANDED (2026-08-12, the 0.5 opener):** `tools/compile_command.py` — the ONE
+  command source is real: `python3 tools/compile_command.py <file>` prints the pasteable
+  `(cd <dir> && <exact command>)` per db entry (multi-target TUs emit ONE ROW PER ENTRY — the
+  engine/engine_gui/suite flag sets never silently collapse); `--json` emits the NEW
+  `compile_command/1` envelope the 0.5 cards will consume. Resolves the engine-root
+  `compile_commands.json` symlink (today → `build_clangd/`); the SHIPPING-build db + the
+  build.sh 1:1 asm sidecar remain THE next leaf (`--db` makes that cutover a flag). 7-teeth
+  selftest on the floor. The terminal half of this idea is usable TODAY; the viewer-card half
+  rides the 0.5 dive proper.
 - **⏩ OPERATOR UPDATE (2026-08-10, dogfood screenshot — logged at session stop):** the asm viewer's
   `1:1 · this function` mode rendered empty (a bare `0`) on `Notify_Send` (`Notify.hpp`) — *"it will
   need work but thats part of piping the compile command to the terminal and using that to view."*

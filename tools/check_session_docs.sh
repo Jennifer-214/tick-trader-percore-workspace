@@ -169,6 +169,7 @@ run_hard "call-graph A2 teeth (phantom + stale-reference RED)" python3 "$REPO_RO
 run_hard "reciprocal-supersession teeth ((g)-4)"   python3 "$REPO_ROOT/tools/check_doc_metadata.py" --reciprocal-selftest
 run_hard "contract-stale teeth (D-408 detectors)"  python3 "$REPO_ROOT/tools/check_tech_debt.py" --contract-stale-selftest
 run_hard "toolio-kind parity teeth (TD-258; D-137 wrapper)" bash "$REPO_ROOT/tools/check_toolio_kind_parity_selftest.sh"
+run_hard "compile-command resolver teeth (TD-257 substrate)" python3 "$REPO_ROOT/tools/compile_command.py" --selftest
 run_hard "conversion-completeness teeth (wrapper)" bash "$REPO_ROOT/tools/check_conversion_completeness_selftest.sh"
 run_hard "handoff-capture-completeness teeth"     bash "$REPO_ROOT/tools/check_handoff_capture_completeness_selftest.sh"
 run_hard "latency-path-conformance teeth (H8)"    bash "$REPO_ROOT/tools/check_latency_path_conformance_selftest.sh"

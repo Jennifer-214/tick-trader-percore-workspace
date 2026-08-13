@@ -23,6 +23,12 @@
     }
   },
 
+  "compile_command/1": {
+    "tables": {
+      "commands": ["file", "status", "directory", "command"]
+    }
+  },
+
   "findings/1": {
     "table": ["file", "line", "severity", "message", "kind"]
   }

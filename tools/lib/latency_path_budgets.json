@@ -1,30 +1,48 @@
 {
   "ExecutionCore_Tick": {
-    "instructions": 2097,
+    "instructions": 2018,
     "data_dependent": 25
   },
   "RollingStats_Push": {
-    "instructions": 3598,
-    "data_dependent": 18
+    "instructions": 4389,
+    "data_dependent": 62
   },
   "Regime_Classify": {
-    "instructions": 489,
-    "data_dependent": 8
+    "instructions": 477,
+    "data_dependent": 9
   },
   "RidgeBlender_Compute": {
-    "instructions": 1097,
-    "data_dependent": 24
+    "instructions": 1190,
+    "data_dependent": 27
   },
   "ConfidenceScorer_Compute": {
-    "instructions": 64,
+    "instructions": 62,
     "data_dependent": 1
   },
   "ConfidenceScorer_ComputeComposite": {
-    "instructions": 98,
-    "data_dependent": 3
+    "instructions": 96,
+    "data_dependent": 4
   },
   "RidgeBlender_FinalizeCorrFromSums": {
-    "instructions": 815,
+    "instructions": 812,
     "data_dependent": 41
+  },
+  "_provenance": {
+    "db": "build/compile_commands.json",
+    "db_mtime": 1786667654,
+    "cxx": "/usr/bin/c++",
+    "flags": [
+      "-DLICENSE_BYPASS",
+      "-DMULTICORE_TUI",
+      "-DUSE_ANSI_TUI",
+      "-I/home/caramel/code/FoxML_Trader_v2/CoreFrameworks",
+      "-O3",
+      "-DNDEBUG",
+      "-std=gnu++17",
+      "-O3",
+      "-march=native",
+      "-funroll-loops",
+      "-I/home/caramel/code/FoxML_Trader_v2"
+    ]
   }
 }

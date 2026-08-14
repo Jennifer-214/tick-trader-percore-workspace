@@ -92,9 +92,46 @@ from foxroots import ENGINE as _FOXROOTS_ENGINE   # noqa: E402  (the ONE repo-ro
 # sibling recovery this lacked. The import-from-core lint did not catch it because its
 # pattern only matched the pathlib spelling, never the os.path one (now widened).
 ENGINE = str(_FOXROOTS_ENGINE)
-CXX = os.environ.get("CXX", "g++")
-# PRODUCTION build flags — pinned (counts shift with compiler/flags; re-baseline on intentional change).
-FLAGS = ["-std=c++20", "-O3", "-march=native", f"-I{ENGINE}"]
+CXX = os.environ.get("CXX", "g++")   # re-resolved in main() to the shipping db's compiler (env CXX wins)
+# TD-257: PRODUCTION flags are DERIVED from the shipping build's own compile_commands.json —
+# never a hand-pinned second flag source. The pinned list this replaces had drifted from the
+# shipped TU on four count-affecting axes (measured 2026-08-14: -std=c++20 vs the build's
+# gnu++17 · missing -funroll-loops · missing -DNDEBUG · missing the target defines) — every
+# prior count described a TU nobody ships. -flto is stripped for the standalone probe (a
+# slim-LTO .o carries GIMPLE, not disassemblable code; per-TU probe codegen is this gate's
+# measurement — the shipped-SIDECAR measurement is the rung-3 follow-up, ideas §12). LOUD
+# rc=2 when the db/entry is absent — a silent fallback to defaults is exactly how the
+# divergence stayed invisible (TD-257's own words).
+_PROBE_STRIP = {"-flto", "-c", "-g"}
+FLAGS = None  # set in main() from derive_production_flags(); no pinned default EXISTS
+
+
+def derive_production_flags():
+    """(flags, provenance) from the ENGINE target's main.cpp db entry — or (None, reason)."""
+    db = os.path.join(ENGINE, "build", "compile_commands.json")
+    if not os.path.exists(db):
+        return None, f"shipping db missing: {db} — run ./build.sh engine (flags are never guessed)"
+    with open(db) as f:
+        entries = json.load(f)
+    entry = next((e for e in entries
+                  if "CMakeFiles/engine.dir/main.cpp.o" in e.get("command", "")), None)
+    if entry is None:
+        return None, f"no engine-target main.cpp entry in {db} — reconfigure (./build.sh engine)"
+    toks = entry["command"].split()
+    flags, skip = [], False
+    for t in toks[1:]:                                   # toks[0] = the compiler itself
+        if skip:
+            skip = False
+        elif t == "-o":
+            skip = True
+        elif t in _PROBE_STRIP or t.endswith(".cpp"):
+            pass
+        elif t.startswith("-I") and not os.path.isabs(t[2:]):
+            flags.append("-I" + os.path.normpath(os.path.join(entry.get("directory", ENGINE), t[2:])))
+        elif t.startswith("-"):
+            flags.append(t)
+    flags.append(f"-I{ENGINE}")                          # probes #include engine-root-relative headers
+    return flags, {"db": db, "db_mtime": int(os.path.getmtime(db)), "cxx": toks[0], "flags": flags}
 BUDGETS_SIDECAR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib", "latency_path_budgets.json")
 NONVACUITY_FLOOR = 8  # a real inlined hot/slow body is far bigger; < this = optimized away / wrong symbol.
 MAX_FOLLOW_DEPTH = 5  # bounded transitive recursion into warm defined callees (cycle-guarded; closes A-1's "div behind a call")
@@ -576,12 +613,24 @@ def main(argv):
     show_asm = "--asm" in argv
     update = "--update-budgets" in argv
     selftest = "--selftest" in argv
+    global FLAGS, CXX
+    FLAGS, prov = derive_production_flags()
+    if FLAGS is None:
+        print(f"⚠️  FLAG-SOURCE FAIL — {prov}")
+        return 2
+    CXX = os.environ.get("CXX") or prov["cxx"]
     print("=" * 70)
     print(" check_latency_path_conformance.py — static latency-path analyzer")
     print(f"   PRODUCTION flags: {' '.join(FLAGS)}  (no LATENCY_PROFILING)")
+    print(f"   flag source: {os.path.relpath(prov['db'], ENGINE)} (engine target · db-mtime "
+          f"{prov['db_mtime']} · {CXX}) — TD-257: derived, never pinned")
     print("=" * 70)
 
     budgets = load_budgets()
+    _bp = budgets.get("_provenance") if isinstance(budgets, dict) else None
+    if budgets and (not _bp or _bp.get("flags") != FLAGS):
+        why = "were measured under DIFFERENT flags" if _bp else "predate flag-provenance (the pinned-flag era)"
+        print(f"  ℹ️  budgets {why} — counts may shift vs baseline; re-bless at a TTY via --update-budgets.")
     new_budgets = {}
     rc = 0
     for row in MANIFEST:
@@ -670,11 +719,15 @@ def main(argv):
         # invokes the VERIFY path, which is untouched.
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
         import bless as bless_mod
+        # TD-257: the baseline records WHICH flags measured it — a later run under different
+        # flags gets the shifted-counts advisory instead of a mystery ratchet RED.
+        new_budgets["_provenance"] = {"db": os.path.relpath(prov["db"], ENGINE),
+                                      "db_mtime": prov["db_mtime"], "cxx": CXX, "flags": FLAGS}
         lines = json.dumps(new_budgets, indent=2).splitlines()
         brc = bless_mod.bless(BUDGETS_SIDECAR, lines, "latency-budgets")
         if brc != 0:
             return max(rc, brc)
-        print(f"\n  ✅ budgets current ({len(new_budgets)}/{len(MANIFEST)} manifest rows) → {os.path.relpath(BUDGETS_SIDECAR, ENGINE)}")
+        print(f"\n  ✅ budgets current ({len(new_budgets) - 1}/{len(MANIFEST)} manifest rows) → {os.path.relpath(BUDGETS_SIDECAR, ENGINE)}")
         if missing:   # reviewer-caught: a skipped row was silently dropped from the ratchet
             print(f"  ⚠️  INCOMPLETE BASELINE — rows skipped (probe-fail / non-vacuity) with NO ratchet: "
                   f"{missing}. Fix them (e.g. the slow-path callee-symbol follow) before trusting the "
@@ -776,6 +829,26 @@ def main(argv):
             print(f"      {'✅' if ok else '❌'} {name}")
             all_ok = all_ok and ok
         os.remove(marked); os.remove(shifted)
+
+        # ── TD-257 non-vacuity: the FLAGS are LOAD-BEARING. The same probe under deliberately
+        # wrong flags (-O0: no inlining/unrolling) must measure a DIFFERENT stream — if the
+        # counts ever match, probes are not actually compiled under FLAGS and every number
+        # above is decorative (the wrong-flags tooth TD-257's entry demanded). ──
+        flag_probe = {"headers": ["cstdint"], "params": "long* a",
+                      "call": "for (int i = 0; i < 64; ++i) a[i] = a[i] * 3 + i"}
+        d_real, _e1 = compile_and_disasm(flag_probe)
+        a_real = _analyze_probe(d_real, flag_probe["call"])[0] if d_real else None
+        real_flags = FLAGS
+        FLAGS = [f for f in real_flags if not f.startswith("-O")] + ["-O0"]
+        d_wrong, _e2 = compile_and_disasm(flag_probe)
+        a_wrong = _analyze_probe(d_wrong, flag_probe["call"])[0] if d_wrong else None
+        FLAGS = real_flags
+        n_real = a_real["instructions"] if a_real else None
+        n_wrong = a_wrong["instructions"] if a_wrong else None
+        flags_ok = n_real is not None and n_wrong is not None and n_real != n_wrong
+        print(f"      {'✅' if flags_ok else '❌'} TD-257: wrong flags ⇒ different counts "
+              f"({n_real} vs {n_wrong} instructions under -O0)")
+        all_ok = all_ok and flags_ok
 
         print("  --selftest:", "✅ ALL teeth fire" if all_ok
               else "❌ a detector did NOT fire — under-enumeration risk (D-234 lesson 3)")

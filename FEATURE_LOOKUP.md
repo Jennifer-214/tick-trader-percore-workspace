@@ -1484,3 +1484,20 @@ suite 46/46 (127+ teeth) · follow/sync/pipeline smokes live-green.
 manual `./build.sh asm` or `r` is owed. The ratchet chip is probe-basis (named on the chip).
 **Related** — the §12 rungs record (ideas file) · D-419 · TD-257/TD-258 (both CLOSED) ·
 asmexplorer (`<leader>de`, the editor-flags source-sync companion).
+
+### Register-fit card · output log · in-editor bless (v5.15.5.F.4d.1.E.1.2.B `0.5` close batch)
+
+**What** — three surfaces the arc-close batch added beyond the shipped-asm browser:
+`<leader>dR` = the RC-F per-field access-cost card on a converted `[STRUCT]` (flagged-first:
+✗ unaligned · ⚠ multi-op · ? unresolved above dimmed single-mov; both-costs header; the H14
+footer on every card — never auto-unpacks, you decide per field; feeds off
+`check_register_fit --json`, the `register_fit/1` envelope). `<leader>dn` = the output log
+(every plugin notification, newest first, ✗/⚠/· icons — no :Noice digging). `<leader>dm` →
+**Bless rows** = the D-394 bless flows (latency budgets · goldens console) in an nvim
+`:terminal` — a real pty, so the diff + typed-confirmation control runs INTACT in-editor;
+the split closes itself when the process exits. Every card answers `?` with help DERIVED
+from its own keymap descs (SSoT — new keys self-document).
+**Where to verify** — `<leader>dR` on `TUISharedState`; `<leader>dn` after any action;
+`<leader>dm` → Bless — goldens (maiden run 2026-08-14: the operator blessed D-419 from it).
+**Related** — RC-F/D-366 · `check_register_fit.py` (TOOLS.md row) · D-394/D-410 (the bless
+control — anti-agent, not anti-convenience) · the shipped-asm browser entry above.

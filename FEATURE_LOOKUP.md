@@ -1414,3 +1414,24 @@ is 0.5 design work); unreadable db = rc-2 refusal, never default flags.
 which db answered so the provenance is visible.
 **Related** — TD-257 (open, progress-noted) · ideas §2 · D-337/D-397 · `compile_command/1` in
 `toolio_schemas.json` (exempt-tier'd in `toolio_kinds.lua` until the 0.5 card).
+
+### `./build.sh asm` — 1:1 asm sidecars from the shipped binaries (v5.15.5.F.4d.1.E.1.2.B `0.5`; engine `2654ad4`)
+
+**What** — objdumps every EXISTING binary (engine/engine_gui/foxml_suite/controller_test across
+build/, build_gui/, build_gui_lite/, build_suite/, build_lat/, build_pgo/) into
+`<dir>/asm/<binary>.asm` — no rebuild, idempotent. Under `-flto` the real codegen happens at
+LINK, so disassembling the shipped artifact is the ONLY honest per-function asm (compiler `-S`
+describes pre-LTO TUs nobody ships). Sanitizer/debug dirs deliberately excluded (instrumented ≠
+shipped shape). Sibling: `CMAKE_EXPORT_COMPILE_COMMANDS=ON` now emits each build dir's REAL
+`compile_commands.json` at configure.
+**Cfg flags** — none; `./build.sh asm` after any build.
+**Fallback** — no binaries found = named error (build something first).
+**Where to verify** — `head -3 build_gui/asm/engine_gui.asm` (provenance header: binary sha16 +
+mtime + git HEAD); `rg "<Symbol>" build_gui/asm/engine_gui.asm` for a function's shipped code —
+zero hits on an inline symbol = genuinely inlined everywhere (a FACT, not a failure).
+**Gotchas** — sidecars are big (7–80MB; gitignored build-dir content) and go stale when the
+binary rebuilds: the header's sha16 vs `sha256sum <binary> | cut -c1-16` is the stale test —
+re-run `./build.sh asm`. The 0.5 viewer card will refuse stale sidecars off this header.
+**Related** — TD-257 (build half landed; consumer cutover remains) · ideas §2 · D-397
+fact-source · `tools/compile_command.py` (the flag-source sibling) · the `-DNDEBUG`
+editor-vs-shipping db divergence (found live 2026-08-13).

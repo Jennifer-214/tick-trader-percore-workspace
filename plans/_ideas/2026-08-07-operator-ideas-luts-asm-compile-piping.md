@@ -58,6 +58,18 @@ as dated sections.
   build.sh 1:1 asm sidecar remain THE next leaf (`--db` makes that cutover a flag). 7-teeth
   selftest on the floor. The terminal half of this idea is usable TODAY; the viewer-card half
   rides the 0.5 dive proper.
+- **⏩ BUILD HALF LANDED (2026-08-13, engine `2654ad4`):** the "1:1 asm + binary output" ask is
+  real — `./build.sh asm` objdumps the EXISTING binaries into `build*/asm/<binary>.asm`
+  (provenance-stamped; no rebuild), and `CMAKE_EXPORT_COMPILE_COMMANDS=ON` gives every build
+  dir its REAL db. Chosen mechanism = objdump-from-the-shipped-binary (this file's own
+  "zero-divergence alternative"): the four main targets build `-flto`, so compiler `-S` asm is
+  pre-link code nobody ships — the sketch's option (a) is structurally out. Bonus evidence:
+  the shipping db carries `-DNDEBUG` the editor db lacks (live wrong-flags divergence, found
+  on first contact). The `Notify_Send` empty-render's true mechanism: compiling a HEADER as a
+  TU emits nothing for an uninstantiated inline fn — and the shipped binary shows ZERO
+  standalone copies (inlined everywhere), which the 0.5 card should say BY NAME. Remaining =
+  the viewer cutover (read the sidecar; honest inlined-away state; staleness refusal off the
+  provenance header).
 - **⏩ OPERATOR UPDATE (2026-08-10, dogfood screenshot — logged at session stop):** the asm viewer's
   `1:1 · this function` mode rendered empty (a bare `0`) on `Notify_Send` (`Notify.hpp`) — *"it will
   need work but thats part of piping the compile command to the terminal and using that to view."*

@@ -1435,3 +1435,24 @@ re-run `./build.sh asm`. The 0.5 viewer card will refuse stale sidecars off this
 **Related** — TD-257 (build half landed; consumer cutover remains) · ideas §2 · D-397
 fact-source · `tools/compile_command.py` (the flag-source sibling) · the `-DNDEBUG`
 editor-vs-shipping db divergence (found live 2026-08-13).
+
+### `<leader>ds` — SHIPPED asm card: the function's code in the ACTUAL binary (v5.15.5.F.4d.1.E.1.2.B `0.5`; TD-257 viewer half)
+
+**What** — reads the `./build.sh asm` sidecars (objdump of the LINKED artifact) and shows the
+enclosing function's SHIPPED instructions — never a recompile. Honest states, all named:
+FOUND (provenance winbar: binary · sha16 · emit HEAD; other binaries carrying it listed; every
+template-instantiation block shown) · INLINED-AWAY ("no standalone copy in any shipped binary —
+inlined at every call site", with cross-sidecar call-ref counts) · ⚠ STALE banner (recorded
+sha16 ≠ binary's current sha — old asm still shown, loudly, with "re-run ./build.sh asm") ·
+REFUSAL when no sidecars exist. Sweep order = newest-built binary first (recency-as-rule).
+`<leader>de` (the source↔asm explorer) relabeled honestly: it's the editor-flags APPROXIMATION
+(LTO stripped so per-TU asm exists; its value = the -g source↔asm sync the sidecar can't have).
+**Cfg flags** — none. Requires sidecars: `./build.sh asm` after a build.
+**Where to verify** — cursor on `Portfolio_Init` → `<leader>ds` (multi-instantiation blocks +
+call-ref counts); on `Notify_Send` in a GUI TU → found in the binaries that ship it standalone,
+absent-inlined in engine_gui (the old bare-`0` case, now legible either way).
+**Gotchas** — the card shows the NEWEST binary carrying the symbol; check the winbar's binary
+name when comparing across builds. No source-line sync (release binaries carry no -g) — that's
+`<leader>de`'s job, by design.
+**Related** — TD-257 (viewer half landed; probe cutover remains) · `./build.sh asm` (the
+sidecar producer) · ideas §2 · asmexplorer relabel · Class 57 (the named-states contract).

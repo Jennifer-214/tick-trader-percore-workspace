@@ -1501,3 +1501,30 @@ from its own keymap descs (SSoT — new keys self-document).
 `<leader>dm` → Bless — goldens (maiden run 2026-08-14: the operator blessed D-419 from it).
 **Related** — RC-F/D-366 · `check_register_fit.py` (TOOLS.md row) · D-394/D-410 (the bless
 control — anti-agent, not anti-convenience) · the shipped-asm browser entry above.
+
+### Per-Node Latency LTp99 columns (v5.15.5.F.4d.1.E.1.1+, 2026-08-14 — pre-E.1.2-ship)
+
+**What** — the Per-Node Latency panel's HOT and SLOW tables each gain an **LTp99** column:
+the lifetime p99 over ALL samples since boot (the v4.7.36 log₂-bucket histogram that
+`NodeLatencyStats` was already collecting but the GUI never rendered), so overnight tail
+drift is monitorable without the 256-window forgetting it. The histogram walk now
+interpolates linearly WITHIN the crossing bucket instead of reporting the raw 2^(b+1)
+upper bound — values step smoothly instead of in 2x jumps (still an estimate; the header
+label says so). The stale "(last 256 samples)" header now states each column's basis
+honestly (Samples/Min/Avg/Max were ALWAYS lifetime; p50/p95/p99 are the 256-window; LTp99
+is lifetime).
+**Cfg flags** — none; rides the existing latency-stats enable.
+**Fallback** — zero-sample nodes render "-" as before; disabled stats unchanged.
+**Where to verify** — engine_gui → Per-Node Latency: both tables show LTp99 between p99
+and Max; LTp99 ≈ window p99 early in a session, then holds the lifetime tail as the
+window forgets spikes. Shutdown/ANSI-TUI tables (Run.hpp) also benefit from the
+interpolation (same snapshot fn) though they don't show the new column.
+**Paper-test sanity** — after an overnight run, LTp99 ≥ window p99 whenever a historical
+spike aged out of the 256-window; Max ≥ LTp99 always.
+**Gotchas** — LTp99 is bucket-interpolated (uniform-within-bucket assumption), not
+sample-exact; for forensic precision use the window percentiles near the event. PerNodeSnap
+grew 16B (2 doubles, seqlock-bulk-copied — `[STRADDLE_EXEMPT]` extended to the shifted
+`sp_breakdown_p99_ns` sibling; strict-new gate 0 NEW).
+**Related** — `CoreFrameworks/NodeLatencyStats.hpp` (histogram + snapshot) ·
+`DataStream/EngineTUI.hpp` PerNodeSnap + populators · `GUI/DashboardPanels.hpp` tables ·
+H8 budgets (`check_latency_path_conformance` is the STATIC gate; this is the RUNTIME view).

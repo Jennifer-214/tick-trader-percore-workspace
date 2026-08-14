@@ -645,6 +645,106 @@ on engine via Decision F SOFT compat parser).
 
 ---
 
+## Eventual display-truth items — 2026-08-14 operator spot-check cohort (PLAN items, deliberately NOT TECH_DEBT per operator directive)
+
+> Operator live-dogfood findings during the E.1.2 pickup paper session, investigated by a 2-agent
+> I-class pass the same evening. **Verbatim evidence + full site maps:**
+> `plans/v5.15-live-readiness/reports/2026-08-14-ui-position-settings-mismatch/`
+> (`i-class-positions-legcount-attribution.md` + `i-class-settings-registry-display.md`).
+> Both items are display/monitoring-plane, E.1.2-persist-entanglement-verified CLEAN, and are
+> INSTANCES under existing patterns — no new spec owed. Homed HERE per the auto-write contract
+> (GUI ↔ runtime / TUISnapshot / cfg-ownership plane). These NEED to be addressed; a plan home
+> (not a ledger) is the point.
+
+### EV-1 — Pair/leg unit coherence + counter-family SSoT (the "2 legs shown as 2 positions" cohort)
+
+- **Mechanism (confirmed):** one paired entry bumps `entries_processed` twice (per-fill doctrine, correct);
+  `ShardedSnapshot.hpp:500-502` derives the per-node "open positions" display from `entries − exits` (→ 2)
+  while the header pair-collapses the bitmap `(bm|bm>>1)&0x5555` (→ 1). Two planes disagree by construction.
+  Full 16-site enumeration with per-site LOGICAL-PAIRS / SLOTS / MIXED verdicts in the report § 2.
+- **Also in the cohort:** Stats-bar zeros on warm-restart (global `total_entries/total_exits` heartbeats are
+  the ONE counter family neither persisted in v10 nor rebuilt by the replay reconstructor — report § 5;
+  cleanest fix = re-source the stats plane from the persisted per-node sums, no wire change) · backtest
+  `total_trades` double-count under partials (S14) · Stats `buys/2` truncation on half-pairs (S15) ·
+  TUI/Run mixed-unit labels (S7/S8) · replay-vs-live W/L pair-parity divergence (A6,
+  `ControllerEventLoop.hpp:1053-1055` per-leg vs `:1815-1847` per-pair) · **A8 live display bug:**
+  Positions-row strategy palette `sc[]` missing the AUTO entry → OOB read when an AUTO node holds a
+  position (`DashboardPanels.hpp:1401-1410`; the Header sibling was fixed at `:237-244`, Positions copy
+  missed — Class-18 mirror; QUICK-KILL eligible any session).
+- **Fix shape (locked by the I-pass option matrix; implement at the leaf):** O1 pair-aware geometry
+  helpers (`Sharded_LogicalOpenCount` + `Sharded_NodeAnyOpen` joining the `Sharded_LegSlot`/`Sharded_SlotNode`
+  family) + O4 unit-typed snapshot contract (PerNodeSnap carries `node_open_legs` AND `node_open_trades`;
+  viewers stay geometry-dumb — the decoupled-viewer shape). `// SLOT-COUNT-DELIBERATE` tags on the 5
+  legitimate slot-count sites (S3/S9/S10/S11/S12). O2 (new persisted counters) REJECTED — Class 43 + wire
+  entanglement.
+- **Spec sisters (instances-under-existing-patterns):** Class 2 (GUI-lie) · Class 43/45 SSoT family ·
+  `decision-time-data-binding-pattern.md` · `cross-thread-snapshot-publish-cluster-isolation.md` ·
+  `built-in-observability-pattern.md` · `per-node-position-ownership-model.md` (pair semantics; its future
+  sub-pool note is why the collapse must live in ONE helper — per-node partial-enable would flip it) ·
+  `DOCS/EXECUTION_DISPLAY_INVARIANTS.md` gains the unit rows at fix time.
+- **Attribution/other-stuff dispositions from the same session:** leg-B "higher buy price" =
+  EXPECTED (TP2 ratchet, `tp2_mult` default 2.0 — no code path gives leg B a different paper ENTRY;
+  report § 6) · "MR shown as MOM/EMA" = **REPRO ANSWERED (operator screenshot, same evening): the
+  CHART GATE-LINE TAGS** — other nodes' labeled gate lines (`C1 EMA`, `C3 MOM`) float at price levels
+  adjacent to node 0's position markers with no visual linkage between a marker and ITS node's line
+  (`ChartPanel.hpp:1226-1231`); the leaf's fix = link markers↔lines visually (match tint / draw the
+  pair, or tag markers with their own node id). Plus 3 genuine AUTO-mode display defects to fix at
+  the leaf: PerNodePnL bare resolved-now labels (`DashboardPanels.hpp:1690-1693`), node-0-only
+  headline strategy (`ShardedSnapshot.hpp:364-377`), TUI binary strategy collapse
+  (`EngineTUI.hpp:2234-2239`).
+- **NEW lane (operator, same evening): per-leg budget/Value presentation.** Observed: with a pair on,
+  each leg appeared to "consume $125" (the node's full allocation) rather than the ~50/50 split; the
+  positions screen itself looked right. **Submit-side sizing VERIFIED CLEAN at HEAD** (orchestrator
+  code-read: `Async.hpp:826-882` — the loop var is the NODE index, `intended_qty` node-indexed, split
+  applied legA=`full×pct` / legB=`full×(1−pct)`, zero-qty leg skipped by the `>0` gate at `:888`) —
+  so no capital double-spend path; this is a DISPLAY/budget-presentation lane. Candidates at the leaf:
+  the Value column basis, the per-node budget tooltip source (`node_open_notional` vs allocation),
+  and the half-pair shape (leg-B qty 0 via `partial_exit_pct` resolution → submit skipped → lone
+  full-size-looking #0.A). Pin the operator's cfg `partial_exit_pct` at repro.
+- **QUICK-KILLED same evening (2026-08-14, ahead of the leaf):** A8 Positions-row `sc[]` AUTO palette
+  entry + static_assert (mirrors the Header fix) · the EV-2 D-1 stale `confidence_freshness_tau`
+  per-node row DELETED from `per_node_fields[]` (stops NEW poison writes; operator's engine.cfg
+  verified CLEAN of the key; the parity GUARD tool + the rest of EV-2 remain owed) · **D-9 UPGRADED
+  latent→LIVE and fixed:** the operator's engine.cfg (16,962B) had crossed `cfg_write_field`'s 16KB
+  buffer — any settings edit would have silently truncate-rewritten the file tail, and the rewrite
+  path also carried a latent unbounded-suffix stack smash; now 64KB static buffers + loud REFUSE
+  (never truncate) + total-bounds check (`SettingsPanel.hpp` cfg_write_field).
+- **Mechanical stale-record corrections to sweep at the leaf:** `ShardedSnapshot.hpp:498-499` comment ·
+  `EngineTUI.hpp:1290` comment · D-295's "4 GUI sites" tally (now 9 shapes — name-members rule).
+
+### EV-2 — Settings per-node render completion (the .F.4c.3 Step-6 remainder) + the D-1 boot-brick guard
+
+- **Ground truth:** the engine registries are ALREADY split (H17; `FOREACH_PER_NODE_CFG_FIELD` 88 rows /
+  `FOREACH_GLOBAL_CFG_FIELD` 59 rows) and the per-node render TABLE already exists
+  (`SettingsPanel.hpp:265-300`) — but it renders into the GLOBAL tab writing FLAT keys (the .F.4c.3
+  Step-1 transitional state), while the per-core tabs still run the pre-registry manual
+  `per_node_fields[]` (43 float rows). The operator's "per-node settings should be a different registry"
+  is the UNSHIPPED REMAINDER of the locked `.F.4c.3` plan
+  (`subplans/2026-05-15-v5.15.5.F.4c.3-global-vs-per-core-registry-split.md` Step 6) — re-plan by
+  reference, not new architecture.
+- **⚠ URGENT sub-item (operator to route — capital-adjacent operational hazard, flagged same-evening):**
+  **D-1 boot-brick:** the per-core tab still renders the RETIRED `confidence_freshness_tau` row
+  (`SettingsPanel.hpp:777`, writer `:1933-1940`); one edit writes `node_N_confidence_freshness_tau=` into
+  engine.cfg → `CFG_FAULT_UNKNOWN_KEY` → **next boot HARD-REFUSED** until hand-deleted. TECH_DEBT-208's
+  claimed containment (parity tool + row deletion) NEVER LANDED at HEAD. The O-1 leaf = delete the row +
+  build `check_gui_engine_cfg_key_parity.py` (GUI-writer-keys ⊆ parser-keys, with teeth) — small,
+  independent, recommended NOW-tier rather than eventual.
+- **The eventual leaf proper (O-2):** per-core tabs walk `g_per_node_cfg_render_mask` bound per-node
+  (write `node_N_<name>` pre-WIP2f); per-node walk OUT of the Global tab (kills the D-2 silently-inert-edit
+  display-lie on override-carrying nodes); delete `per_node_fields[]` + the 8 D-3 double-rendered manual
+  twins; inherited-vs-override display per row (D-6 — the promised grey hint that never existed); section
+  contiguity (D-4 — "Trading" currently appears as 5 same-label CollapsingHeaders). Blast radius: GUI-only
+  + registry-comment reorder; no parser/wire change. Full defect table (D-1..D-10) in the report § 4.
+- **Sequencing guards:** the `[core N]`/`[section]` cfg parser stays homed E.1.6/E.2 (D-275/D-276) — the
+  leaf consumes it if it lands first, else ships `node_N_` writes; TECH_DEBT-191 flat-field deletion and
+  WIP2f/g stay where the A24 decision homed them. NOT `v5.15.6-master-cfg-surface-unification` (that is
+  cfg-FILES scope; cross-link only — its "operator never hand-edits cfg" goal DEPENDS on this leaf).
+- **Mechanical stale-record corrections to sweep:** `SettingsPanel.hpp:1348-1349` (section-grouped claim
+  FALSE) · `:1438-1439` (grey-hint claim FALSE) · TECH_DEBT-208 body (claims the guard+row-delete landed —
+  neither exists at HEAD) · `cfg-scope-discipline.md:253` ("ResolveForCore deleted at WIP2f" — never landed).
+
+---
+
 ## Pre-decoupling readiness checklist
 
 Updated after each ship's breadcrumb is added. When all checked, the

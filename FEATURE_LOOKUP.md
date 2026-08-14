@@ -1456,3 +1456,11 @@ name when comparing across builds. No source-line sync (release binaries carry n
 `<leader>de`'s job, by design.
 **Related** — TD-257 (viewer half landed; probe cutover remains) · `./build.sh asm` (the
 sidecar producer) · ideas §2 · asmexplorer relabel · Class 57 (the named-states contract).
+**⏩ SYNC LANDED (2026-08-13, plugin `730cee1` + engine `dc6affc`):** `-g` on the four LTO
+targets (zero codegen change) + sidecars AUTO-EMITTED by every build (always 1:1 with live) +
+`objdump -l` line interleave → the card is now CURSOR-SYNCED BOTH WAYS: move in source and the
+shipped instructions for that line highlight + scroll (and vice versa); dimmed `· file:line`
+markers; `· from <file>:N` shows code INLINED FROM other files attributed to its true origin
+lines (cross-TU visibility no editor-side compile can give); the header shows the function's
+SHIPPED instruction count (the budget number — H7/H8 join rides the probe-cutover leaf).
+Old no-line sidecars degrade to a named note. Roadmap: ideas §12 (the operator-confirmed rungs).

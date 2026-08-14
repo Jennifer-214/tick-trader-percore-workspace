@@ -374,3 +374,36 @@ as dated sections.
   instance; standing expansions already homed — TD-270 (reference-membership two-cores) ·
   `/parity-check` (train↔serve) · the toolio registry (producer surfaces, TD-258). Further
   expansion = per-surface on evidence, not a blanket sweep.
+
+## 12. The shipped-asm substrate roadmap (operator-confirmed 2026-08-13, mid-dogfood)
+
+- **As given:** *"i like the sound of all of these, as well as instruction counts per function,
+  etc, so i can see if hotpath and slow path are within instruction budget, etc, and this can
+  also be used to make the other features more informative i think, right? like the alignment
+  stuff, etc, opportunities for optimizations"* — confirming the five-rung ladder proposed the
+  same sitting, adding per-function budgets + cross-feature enrichment.
+- **The substrate (LANDED same day):** `-g` on the four main targets (zero codegen change —
+  GCC guarantee; debug sections strippable) + sidecars auto-emitted by EVERY build (`build.sh`
+  `emit_asm_for_dir` chained after each `cmake --build` — always 1:1 with live, the operator's
+  "compiled alongside" ask) + `objdump -l` line interleave + the card's bidirectional
+  source↔shipped-asm cursor sync (both panes highlight; `line_map`/`same_source` pure core).
+- **The rungs (each reads the SAME sidecars; ordered by dependency, dive per-rung):**
+  1. **Inline attribution** (`--inlines`): "Notify_Send's code lives inside these N callers at
+     these ranges" — DWARF inlined-subroutine records; the full answer to the bare-`0` case.
+  2. **Per-line shipped-cost chips**: the explorer's "→ N instr" measured on the LINKED binary
+     (post-LTO/inlining truth). `line_map.n_insn` per function already counts the total.
+  3. **Per-function instruction counts vs BUDGETS (operator ask):** hot/slow-path functions'
+     shipped counts joined with `check_latency_path_conformance` budgets + `[HOT_PATH]`/
+     `[SLOW_PATH]` tags — over-budget = RED chip (H7/H8 made visible at edit-time). Rides the
+     TD-257 probe-cutover leaf (the checker consumes the same real-build facts).
+  4. **Register-pressure chips** (§11.5): spill counting over the real block — now UNBLOCKED
+     (the sidecars are the real-build substrate §11.5 was gated on).
+  5. **Cross-binary function diff**: same function, engine vs engine_gui, via asmdiff.
+  6. **Ceiling: perf-annotate in the card** — sample counts per shipped instruction joined
+     with tags + budgets: source line → shipped instructions → measured ns, one keypress.
+- **Cross-feature enrichment (operator's "make the other features more informative"):** RC-F's
+  access-cost axis, the `[DERIVED]` SIMD/insn facts (`fn_metrics` currently re-compiles with
+  editor flags — cut standalone-fn metrics over to shipped blocks), and the dashboard's
+  compiled-reality tiles all read the same sidecars once the per-rung dives land.
+- **Boundary:** display/facts only — the tool never auto-reorders/unpacks (H14/H21 spirit; the
+  RC-F honest-tension rule generalizes: SHOW both costs, operator decides).

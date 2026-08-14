@@ -1464,3 +1464,23 @@ markers; `· from <file>:N` shows code INLINED FROM other files attributed to it
 lines (cross-TU visibility no editor-side compile can give); the header shows the function's
 SHIPPED instruction count (the budget number — H7/H8 join rides the probe-cutover leaf).
 Old no-line sidecars degrade to a named note. Roadmap: ideas §12 (the operator-confirmed rungs).
+
+### The shipped-asm BROWSER — complete feature set (v5.15.5.F.4d.1.E.1.2.B `0.5` close; plugin `..cca68d6`)
+
+**What** — `<leader>ds` is now a full browser of the SHIPPED binaries: the card follows the
+enclosing function across files; both panes cursor-sync (peach band, `sync`/`sync_alpha`
+dials); `⏎` jumps markers / opens callees (`call` lines) / opens callers (`→` rows); `b`
+back-stack; `I` = inline attribution ("where is this function melted into" — per binary,
+counted, navigable; auto-shown on INLINED-AWAY); `r` re-resolve; `?` = help DERIVED from the
+buffer's own keymap descs (SSoT — new keys self-register). Header chips: shipped instruction
+count · vector-reg ops · ▲ data-dep / cond / cmov (asmdiff's classifier on shipped code) ·
+the blessed ratchet (basis-named) with ⚠ OVER RATCHET in the winbar. ▲ data-dep virt-text on
+mispredict-risk jcc lines.
+**Where to verify** — `Position_Reset` in Portfolio.hpp: INLINED-AWAY in engine_gui but
+attribution lists `Portfolio_Init (3 regions)` in build/engine, ⏎ opens it, its `· from`
+markers are your function's melted body. Verification battery at arc close: load-all clean ·
+suite 46/46 (127+ teeth) · follow/sync/pipeline smokes live-green.
+**Gotchas** — sidecars regen automatically with every build; STALE banners tell you when a
+manual `./build.sh asm` or `r` is owed. The ratchet chip is probe-basis (named on the chip).
+**Related** — the §12 rungs record (ideas file) · D-419 · TD-257/TD-258 (both CLOSED) ·
+asmexplorer (`<leader>de`, the editor-flags source-sync companion).

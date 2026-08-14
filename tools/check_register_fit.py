@@ -113,16 +113,62 @@ def corpus_files():
     return engine_source_files(profile="derived_facts")
 
 
+def emit_envelope(recs, struct_filter=None):
+    """ONE `register_fit/1` toolio envelope (tables: structs · fields) — the plugin card's feed
+    (one producer, N consumers). A struct filter matches exact OR base-before-`<` (the card sends
+    the tag name; recs key by display name incl. template args)."""
+    import subprocess
+    import json as _json
+    import toolio
+    names = sorted(recs)
+    if struct_filter:
+        names = [n for n in names if n == struct_filter or n.startswith(struct_filter + "<")]
+    s_rows, f_rows = [], []
+    for n in names:
+        s_rows.append([n, recs[n].get("size", -1), recs[n].get("align", -1)])
+        for name, off, size, v, note in analyze(recs[n]):
+            f_rows.append([n, name, off, size if size is not None else -1, v, note or ""])
+    try:
+        head = subprocess.run(["git", "-C", str(ENGINE), "rev-parse", "--short", "HEAD"],
+                              capture_output=True, text=True, timeout=10).stdout.strip() or "unknown"
+    except (subprocess.SubprocessError, OSError):
+        head = "unknown"
+    env = toolio.emit("register_fit/1", {"structs": s_rows, "fields": f_rows},
+                      producer={"tool": "check_register_fit", "version": "1.0",
+                                "command": "json", "args": [struct_filter or "*"]},
+                      git_head=head, schema_version="1")
+    print(_json.dumps(env))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--paths", nargs="*")
     ap.add_argument("--flagged-only", action="store_true", help="show only fields that are NOT single-mov")
+    ap.add_argument("--json", action="store_true",
+                    help="emit ONE register_fit/1 toolio envelope (the plugin card's feed)")
+    ap.add_argument("--struct", help="scope to one struct (exact or base-before-<)")
     args = ap.parse_args()
 
     if args.selftest:
         print("check_register_fit --selftest (access-cost core; PURE):")
-        return 0 if run_selftest() else 2
+        core_ok = run_selftest()
+        # envelope leg: a synthetic rec round-trips through toolio (the card's consumption contract)
+        import toolio
+        recs = {"Fix<64>": {"size": 16, "align": 16, "fields": [{"name": "v", "off": 0, "size": 16}]}}
+        import io as _io
+        import contextlib
+        buf = _io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            emit_envelope(recs, "Fix")
+        import json as _json
+        env = _json.loads(buf.getvalue())
+        rt = toolio.read(env)
+        env_ok = (env["payload_schema_version"] == "register_fit/1"
+                  and rt["fields"]["rows"][0][4] == "single-mov"
+                  and rt["structs"]["rows"][0][0] == "Fix<64>")
+        print(f"  {'✅' if env_ok else '❌'} envelope: register_fit/1 round-trips (base-< struct filter + verdict row)")
+        return 0 if (core_ok and env_ok) else 2
 
     # Explicit paths route through the contract resolver — a missing path is rc=2, not a silent
     # empty scan (C-395 #1: this branch is where the vacuous-green lived, not the enumerator).
@@ -136,7 +182,17 @@ def main():
         files = corpus_files()
     recs = isolate_fields(files)
     if not recs:
+        if args.json:
+            # a REFUSAL, not an empty envelope: the fact SOURCE is unavailable (Class 57 —
+            # distinguishable from a struct that simply has no rows)
+            print("REFUSAL: no per-field facts (foxtag core unavailable, or no converted [STRUCT]s in scope)",
+                  file=sys.stderr)
+            return 2
         print("no per-field facts (foxtag core unavailable, or no converted [STRUCT]s in scope).")
+        return 0
+
+    if args.json:
+        emit_envelope(recs, args.struct)
         return 0
 
     tot = {"single-mov": 0, "unaligned": 0, "multi-op": 0, "unknown": 0}

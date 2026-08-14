@@ -29,6 +29,13 @@
     }
   },
 
+  "register_fit/1": {
+    "tables": {
+      "structs": ["name", "size", "align"],
+      "fields": ["struct", "field", "offset", "size", "verdict", "note"]
+    }
+  },
+
   "findings/1": {
     "table": ["file", "line", "severity", "message", "kind"]
   }

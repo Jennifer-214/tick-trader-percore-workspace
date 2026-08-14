@@ -36,6 +36,17 @@ _PRODUCER = {"tool": "compile_command", "version": "1.0", "command": "resolve", 
 DEFAULT_DB = ENGINE / "compile_commands.json"   # the root symlink — the discovery convention
 
 
+def default_db(root=None):
+    """SHIPPING-first db resolution (TD-257 / the best-of-both split, operator 2026-08-14):
+    build/compile_commands.json when it exists — regenerated at every configure, carries the
+    real shipped flags (-DNDEBUG, the target defines) — else the engine-root symlink (the
+    editor-liveness db). FACTS read shipped truth; the EDITOR keeps its liveness; `--db`
+    overrides both."""
+    root = Path(root) if root is not None else ENGINE
+    ship = root / "build" / "compile_commands.json"
+    return ship if ship.is_file() else root / "compile_commands.json"
+
+
 class Refusal(Exception):
     """The database itself could not be read — rc 2, never an empty-resolution pass."""
 
@@ -137,6 +148,18 @@ def selftest() -> int:
         tooth("engine-relative input resolves to the same absolute key",
               resolve_rows(["main.cpp"], load_db(db))[0][1] == "RESOLVED")
 
+        # SHIPPING-first default (TD-257): with build/compile_commands.json present it WINS;
+        # without it, the root symlink-convention path is the named fallback
+        root = Path(td) / "rootsel"
+        (root / "build").mkdir(parents=True)
+        (root / "build" / "compile_commands.json").write_text("[]")
+        (root / "compile_commands.json").write_text("[]")
+        tooth("default_db prefers the SHIPPING db when present",
+              default_db(root) == root / "build" / "compile_commands.json")
+        (root / "build" / "compile_commands.json").unlink()
+        tooth("default_db falls back to the root-symlink convention",
+              default_db(root) == root / "compile_commands.json")
+
         # multi-target TU: BOTH real invocations emitted — keeping one silently is the
         # flag-divergence this tool exists to kill
         db.write_text(json.dumps([
@@ -172,8 +195,9 @@ def selftest() -> int:
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("files", nargs="*", help="source file(s), absolute or engine-relative")
-    ap.add_argument("--db", type=Path, default=DEFAULT_DB,
-                    help="compile database (default: the engine-root compile_commands.json symlink)")
+    ap.add_argument("--db", type=Path, default=None,
+                    help="compile database (default: build/compile_commands.json — the SHIPPING db — "
+                         "when present, else the engine-root symlink)")
     ap.add_argument("--json", action="store_true", help="emit ONE compile_command/1 toolio envelope")
     ap.add_argument("--selftest", action="store_true", help="teeth: planted RESOLVED/MISSING + refusal legs")
     args = ap.parse_args()
@@ -182,7 +206,7 @@ def main():
     if not args.files:
         print("no files given (nothing to resolve; see --help)", file=sys.stderr)
         sys.exit(2)
-    sys.exit(run(args.files, args.db, args.json))
+    sys.exit(run(args.files, args.db or default_db(), args.json))
 
 
 if __name__ == "__main__":

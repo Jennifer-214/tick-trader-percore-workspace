@@ -6581,6 +6581,20 @@ int main() {
                 check("round-trip: IC head/count restored",
                       r2->state.nodes[c].confidence.ic.predictions.head == (5 + c) &&
                       r2->state.nodes[c].confidence.ic.predictions.count == (10 + c));
+                // E.1.2 D-421: the predictions/actuals LOCKSTEP must survive the load.
+                // Only ic.predictions.{count,head} are on the wire — actuals' cursor is
+                // restored by RollingIC_RestoreLockstep in the commit tail. This is a
+                // genuine positive control, not decoration: the fixture above deliberately
+                // plants DIVERGENT actuals cursors (6+c / 11+c vs predictions' 5+c / 10+c),
+                // so without the restore this assert fails. Pre-fix, that divergence
+                // survived the load and every later RollingIC_Push wrote the two rings a
+                // fixed offset apart forever — mismatched (prediction, actual) pairs feeding
+                // the IC that gates DriftHistory_CheckBreach -> KILL_TRIPPED.
+                check("round-trip D-421: IC actuals cursor restored to lockstep with predictions",
+                      r2->state.nodes[c].confidence.ic.actuals.head ==
+                          r2->state.nodes[c].confidence.ic.predictions.head &&
+                      r2->state.nodes[c].confidence.ic.actuals.count ==
+                          r2->state.nodes[c].confidence.ic.predictions.count);
                 check("round-trip: IC predictions[0] restored",
                       fabs(r2->state.nodes[c].confidence.ic.predictions.samples[0] - 0.1 * c) < 1e-9);
                 check("round-trip: IC actuals[1] restored",
@@ -8447,6 +8461,56 @@ e3_skip_load:;
         const Money neg_leg = Money_Sub(q_neg, Money_Mul(q_neg, MQ(1.5)));
         check("F-096: pct>1 yields a NEGATIVE leg B, which Money_Gt refuses to submit",
               !Money_IsZero(neg_leg) && !Money_Gt(neg_leg, Money_Zero()));
+    }
+
+    //==================================================================================================
+    // v5.15.5.F.4d.1.E.1.2 — D-421: the IC predictions/actuals lockstep survives a warm restart
+    //==================================================================================================
+    // RollingIC is TWO independent rings. The wire carries both sample arrays but only
+    // ic.predictions.{count,head} — the omission was justified by "predictions + actuals
+    // stay in lockstep via RollingIC_Push", which is true of Push and FALSE across the
+    // persist boundary, because the load is the one operation that moves one cursor
+    // without the other.
+    //
+    // Why it corrupts silently: RollingIC_Compute derives ONE index from predictions
+    // (ConfidenceScore.hpp:346-357) and reads BOTH arrays with it, so pairing is
+    // positional. Desynced rings therefore correlate a prediction against a DIFFERENT
+    // trade's actual — and the resulting IC feeds DriftHistory_CheckBreach -> KILL_TRIPPED.
+    // The value reads correct immediately post-load and only diverges on the first new
+    // push, which is why a load-then-assert test cannot see it.
+    {
+        const int W = 8;
+        RollingIC live;
+        RollingIC_Init(&live, W);
+        for (int i = 0; i < 20; i++) RollingIC_Push(&live, (double)i, (double)i);
+
+        // Model the wire exactly: everything it carries is correct; the two fields it
+        // does NOT carry sit at their post-Init zero.
+        RollingIC fixed = live, unfixed = live;
+        fixed.actuals.count = unfixed.actuals.count = 0;
+        fixed.actuals.head  = unfixed.actuals.head  = 0;
+        RollingIC_RestoreLockstep(&fixed);          // `unfixed` models pre-fix behaviour
+
+        check("D-421: the restore puts both rings back in lockstep",
+              fixed.actuals.head == fixed.predictions.head &&
+              fixed.actuals.count == fixed.predictions.count);
+
+        for (int i = 20; i < 26; i++) {             // 6 more perfectly-correlated trades
+            RollingIC_Push(&live,    (double)i, (double)i);
+            RollingIC_Push(&fixed,   (double)i, (double)i);
+            RollingIC_Push(&unfixed, (double)i, (double)i);
+        }
+        const double ic_live = RollingIC_Compute(&live);
+        const double ic_fix  = RollingIC_Compute(&fixed);
+        const double ic_bad  = RollingIC_Compute(&unfixed);
+
+        check("D-421: a perfectly-correlated predictor still measures the live IC after a "
+              "warm restart + 6 trades",
+              fabs(ic_fix - ic_live) < 1e-9 && ic_fix > 0.99);
+        // The control. Without this the two checks above would both pass on a no-op fix.
+        check("D-421 non-vacuity: WITHOUT the restore the same stream measures a DIFFERENT "
+              "(corrupted) IC — this is the bug, reproduced",
+              fabs(ic_bad - ic_live) > 0.01);
     }
 
     //==================================================================================================

@@ -166,6 +166,8 @@ run_hard "capture-audit teeth (Checks 13+14: findings construction, index floor,
 # session-close gate; do NOT move these to pre-commit without re-timing.
 run_hard "capital-adversarial-audit teeth"        bash "$REPO_ROOT/tools/check_capital_adversarial_audit_selftest.sh"
 run_hard "cfg-key-prefix-drift teeth"             bash "$REPO_ROOT/tools/check_cfg_key_prefix_drift_selftest.sh"
+run_hard "cfg-duplicate-keys teeth (wrapper; inline 7 + process-level RED-on-target)" \
+                                                  bash "$REPO_ROOT/tools/check_cfg_duplicate_keys_selftest.sh"
 run_hard "close-out-completeness teeth"           bash "$REPO_ROOT/tools/check_close_out_completeness_selftest.sh"
 run_hard "code-tag-blocks teeth (wrapper)"        bash "$REPO_ROOT/tools/check_code_tag_blocks_selftest.sh"
 run_hard "cache-layout gate teeth (wrapper; D-137)" bash "$REPO_ROOT/tools/check_cache_layout_selftest.sh"
@@ -315,6 +317,13 @@ if [ "${SKIP_DOC_BUDGET_CHECK:-0}" != "1" ]; then
 else
     RESULTS+=("  ⏭  HARD  always-loaded doc budget (SKIP_DOC_BUDGET_CHECK=1)")
 fi
+
+# --- HARD 5b: cfg duplicate keys (reader is last-wins, GUI writer is first-match →
+# a duplicated key makes an operator edit SILENTLY INERT; found live on
+# node_3_stop_loss_pct, a capital control). Working-tree scan: the cfgs are
+# gitignored-in-place, so there is no staged-diff surface for pre-commit to see. ---
+run_hard "cfg duplicate keys (engine/backtest/controller.cfg — at most one occurrence per key)" \
+    python3 "$REPO_ROOT/tools/check_cfg_duplicate_keys.py"
 
 # --- HARD 6: handoff-active singleton (≤1 `status: active` handoff — explicit-state resolution) ---
 if [ "${SKIP_HANDOFF_ACTIVE_CHECK:-0}" != "1" ]; then

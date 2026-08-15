@@ -366,3 +366,58 @@ not a permission problem to route around.**
 
 **Related:** D-407 · TECH_DEBT-255 (closed over an un-enumerated set — this was the missed writer) ·
 D-394 (the TTY contract) · Class-51.
+
+---
+
+## A background wrapper's exit code is not your build's (2026-08-15)
+
+**What happened.** A backgrounded `cmake --build … > log 2>&1; RC=$?; echo "build RC=$RC"; grep …`
+reported **exit code 0** in its completion notification — while the compile had *failed*. The
+wrapper's exit status is the **last command's** (the `echo`/`grep`), not the build's. I then ran the
+**stale** test binary and read its `3732 passed, 0 failed` as green. The only thing that caught it
+was that the count hadn't moved after adding 7 checks.
+
+**Why it is nasty.** Every individual signal looked healthy: the notification said 0, the suite said
+0 failed, the binary ran. It is Class-57 emit-boundary flattening produced by *my own wrapper*, and
+it manufactures a false green on the exact artifact you are about to trust.
+
+**How to avoid it.** Structure any backgrounded verification so the wrapper's exit *is* the result:
+
+    cmd > log 2>&1; RC=$?
+    if [ $RC -ne 0 ]; then echo "FAILED RC=$RC"; grep -E "error:" log | head; exit $RC; fi
+    ./binary > tlog 2>&1; TRC=$?
+    echo "suite RC=$TRC"; exit $TRC
+
+And treat a **test count that did not change** as a red flag in its own right — a passing suite that
+did not grow after you added assertions is a stale binary until proven otherwise.
+
+**Related:** Class 57 · `block_pipe_rc_read.sh` (the sister trap, `$?` after a pipeline) ·
+`feedback_passing_test_is_not_verification`.
+
+---
+
+## You cannot demonstrate UB in a test — assert the property instead (2026-08-15)
+
+**What happened.** Closing the `gate_state` indeterminate-read (a struct member with no initializer,
+read cross-thread), the obvious non-vacuity control was: construct the *pre-fix* shape over
+`0xAA`-poisoned storage and assert the poison survives. **It failed at -O2** — while the bug it
+models is entirely real and was independently probe-confirmed.
+
+**Why.** Reading an uninitialized object is undefined behaviour, so the compiler is entitled to
+fold, elide or invent the result. A control whose expected outcome depends on UB behaving
+consistently is not a control — it will flap by optimization level, compiler version, and
+surrounding code.
+
+**How to avoid it.** Assert the deterministic property that *distinguishes* the two cases. Here:
+`std::is_trivially_default_constructible` is `false` for a struct that initializes itself and `true`
+for one that doesn't — a compile-time fact, no UB in the observation path. (Also worth pinning what
+the fix does *not* cost: an NSDMI changes trivially-DEFAULT-CONSTRUCTIBLE, never
+trivially-COPYABLE, so wire/memcpy surfaces are untouched.)
+
+**Corollary:** to *observe* the real-world behaviour of an uninitialized read, you need a separate
+probe binary with a realistic frame shape — and even then the answer is "fresh stack reads 0, dirty
+stack keeps the poison", i.e. the defect is the **absence of a guarantee**, not an observable value.
+Say that, rather than over-claiming a garbage read that a reviewer can trivially fail to reproduce.
+
+**Related:** Class 51 (non-vacuity) · `feedback_passing_test_is_not_verification`.
+

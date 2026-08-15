@@ -128,6 +128,34 @@ in the source are the section after.)
 
 ## Tool invariants + gotchas (facts that live ONLY in the source — add new ones HERE)
 
+### E.1.2 / D-421 harvest (2026-08-15)
+
+- **`check_per_node_registry_integrity.py` must be invoked from the ENGINE root** (`tools/…`, via the
+  symlink). From the workspace it resolves `CoreFrameworks/` against the *workspace* and exits 2 with
+  "file not found". Not derivable from `--help`; it cost a false RED in a gate battery.
+- **`emit_record_layout.lua` record-name matching had a silent hole.** It matched the fully-qualified,
+  the template-stripped base, and the bare name — but NOT the namespace-stripped-template form, so
+  `NodeContext<64>` matched *nothing* and the emitter answered `[]` with **rc 0**. A complement
+  consumer trusting that would compute over zero members and pronounce a 49-field struct fully
+  covered. Fixed (the `tmpl` form) + `--require-all` makes a requested-but-absent record fatal.
+  **`--require-all` is OPT-IN on purpose**: `check_cache_layout.py` batches ~193 requests of which
+  ~77 are legitimately absent and reports them TU-scope-honestly; making absence fatal by default
+  converted that gate into "could not run" across all 193 — strictly worse than pass or fail.
+- **`node_persist_layout._args` is deliberately NOT quote/comma-aware.** Its exact-arity REFUSAL on a
+  comma-bearing row is a real tooth (a-class R1-c: "never silently eat the count token"). Do not
+  "fix" it — I tried, and the selftest correctly caught that it converts a loud correct stop into a
+  silent accept. A consumer needing prose columns supplies its own splitter (see
+  `check_node_ctx_partition._split_cols_quoted`).
+- **`_strip_comments_text` blanked `\`-continued block comments to bare newlines**, deleting the
+  continuations *inside* the comment span and truncating any registry whose body contains one —
+  `FOREACH_OMS_PER_SLOT_FIELD` parsed as **1 of its 5 rows**. Latent for all 5 H21 sources (verified,
+  not assumed); goes live the moment a tool parses all 68. Fixed + 2 positive-control teeth.
+- **`check_code_tag_blocks` DERIVES its CATEGORY set** from the ```category-set``` fence in the schema
+  spec — folding a category is ONE token in the doc and ZERO tool edits. Before inventing a category,
+  check whether the concept already exists one level down as a VALUE under an existing one (the RED
+  now tells you which).
+
+
 Harvested 2026-07-19 from E.1.2.B `0.1.5`/`0.3`, where **each of these cost a debug cycle or produced
 a FALSE finding**. If you discover a tool behaviour that is not derivable from its `--help` or its
 docstring, write it here — that is the entire point of this section.

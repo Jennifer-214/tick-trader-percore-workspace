@@ -16,7 +16,24 @@ That is not hypothetical. It has now happened in TWO CONSECUTIVE SESSIONS at thi
                              every one of which had an owed entry. The mechanical sweep was green
                              throughout, because none of those files is mechanically gated.
 
-Both times the trigger was OPERATOR PUSHBACK. A discipline whose only detector is the operator
+  E.1.2 / D-421 (2026-08-15)  a 20-commit session again hand-rolled the close — /close-session was
+                             never invoked. The mechanical sweep was GREEN while SIX reference-doc
+                             auto-writes were missing, including one the session had NAMED as owed
+                             mid-flight and then dropped. Found only when the operator asked "all
+                             reference docs updated?" — TWICE, the second time after the first
+                             answer had already been "yes, verified". The reference-doc rows in
+                             AUTO_WRITE_SURFACES below were added as a direct result.
+
+**The third instance sharpens the diagnosis: the SKILL is not the problem.** `/close-session` Stage
+5.5 item 7 already names CODE_MAP staleness by name, and Stage 7.5 already invokes this tool. It is
+well-built and it went UNFIRED. The failure mode is non-invocation, not inadequacy — which is why
+adding more to the skill would be treating the wrong surface (`feedback_resource_use_gated_on_
+existence_not_felt_need`: reach for the resource because it EXISTS, since felt-need is miscalibrated
+exactly where the resource is load-bearing). Candidate structural close: have `/close-session` STAMP
+the handoff frontmatter, so a handoff written without the stamp is mechanically detectable as a
+hand-rolled close. Tracked TECH_DEBT-278.
+
+Every time the trigger was OPERATOR PUSHBACK. A discipline whose only detector is the operator
 noticing is not enforced — it is remembered, and remembering is what M7 says to stop relying on
 once a class recurs DESPITE codification.
 
@@ -63,6 +80,33 @@ AUTO_WRITE_SURFACES = [
     ("DOCS/tech-debt/open.md",
      "deferral entry",
      "anything found-but-not-fixed, or fixed-but-with-residue"),
+    # ── REFERENCE-DOC surfaces (added 2026-08-15, E.1.2/D-421 close-out) ─────────────────────
+    # These carry auto-write contracts stated IN THEIR OWN TEXT, and none of them is otherwise
+    # gated. Measured, which is why they are here: at that close-out the mechanical sweep was
+    # fully GREEN while SIX reference-doc auto-writes were missing — a pattern spec's canonical-
+    # applications table (whose own "Gotcha 3" is literally *"Auto-write contract: keep canonical
+    # applications table updated"*), two bug-class known-instances, a stale teeth count, an
+    # un-regenerated CODE_MAP, and an invariants-map row. The session had even NAMED the first one
+    # as owed, mid-session, and then dropped it.
+    #
+    # Same shape as the D-421 finding that produced them: every guard pointed at what was written,
+    # none asked what was missing. These rows do not detect whether an entry is owed — they make
+    # the SKIP VISIBLE, which is this tool's whole design.
+    ("DESIGN_SPECS/",
+     "pattern-application / spec update",
+     "a pattern was APPLIED, EXTENDED or REFUTED — the spec's own canonical-applications table and "
+     "maturity line are its stated auto-write contract, and a spec that stops recording its "
+     "applications stops being able to justify its own Stage"),
+    ("DOCS/recurring-bug-patterns/",
+     "known-instance row",
+     "an instance of an existing Class was FOUND or FIXED — the catalog's own rule is 'when a new "
+     "instance is found, add it under Known instances with the fix commit'; an un-recorded instance "
+     "silently understates a class's recurrence_count, which is what gates its promotion"),
+    ("DOCS/CODE_MAP.md",
+     "regen (mechanical — `./tools/gen_code_map.sh`)",
+     "any function added, renamed or deleted; it is the anti-fabrication ground truth that "
+     "/readiness, /precoding-audit-gate and every armed agent grep against, so a stale map "
+     "silently weakens every downstream check that trusts it"),
 ]
 
 
@@ -418,6 +462,15 @@ def selftest():
     fake_untouched = [("nope/never.md", "x", "y")]
     chk("a surface with zero commits is classified as UNTOUCHED, not skipped",
         _touched("nope/never.md", "HEAD~1", WORKSPACE) == 0 and bool(fake_untouched))
+    # DIRECTORY-prefix surfaces (the 2026-08-15 reference-doc rows) must resolve as git pathspecs,
+    # not just as files — a row that silently never matches is a surface that can never be owed,
+    # which is the vacuously-green shape this whole tool exists to prevent.
+    _dirs = [p for p, _, _ in AUTO_WRITE_SURFACES if p.endswith("/")]
+    chk("directory-form surface rows are present (the reference-doc slice)", len(_dirs) >= 2)
+    chk("every directory-form row resolves to a real directory",
+        all((WORKSPACE / d).is_dir() for d in _dirs))
+    chk("a directory surface COUNTS commits under it (pathspec works, not just file paths)",
+        _touched("DESIGN_SPECS/", "HEAD~40", WORKSPACE) > 0)
     chk("--explain parsing accepts 'path=reason'",
         {"a.md": "r"} == {s.split("=", 1)[0]: s.split("=", 1)[1] for s in ["a.md=r"] if "=" in s})
 

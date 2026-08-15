@@ -3943,6 +3943,16 @@ opened: 2026-05-24
 - **Trigger:** per-row above; the set is re-read at the next `/post-ship-audit` for this ship.
 - **Cross-ref:** `plans/v5.15-live-readiness/reports/2026-08-15-nodectx-exemption-verification/` (P1 § 5, P2 § C, P3 § 5 — the frozen evidence for every row) · [[TECH_DEBT-276]] · Class 44 · `feedback_no_unhomed_debt_code_smell` · `feedback_spotcheck_findings_route_to_plan_homes_not_techdebt` (these are eventual items with mechanisms, not live hazards — the reason they are homed rather than quick-killed).
 
+### TECH_DEBT-278 — `/close-session` is well-built and keeps not being invoked; stamp the handoff so a hand-rolled close is detectable
+
+- **id:** TECH_DEBT-278 · **severity:** med · **opened:** 2026-08-15 · **status:** open · **surface_tags:** [ci-tooling, doc-system, meta-discipline, audit-methodology]
+- **What:** three times now (2026-07-19, 2026-07-20, 2026-08-15) a substantive session has closed WITHOUT `/close-session` being invoked, and each time the detector was **operator pushback**. The skill is not the weak part — its Stage 5.5 item 7 names CODE_MAP staleness explicitly, Stage 7 says "INVOKE THE SKILL; DO NOT HAND-ROLL" for sync, and Stage 7.5 fires the close-out guard as the final gate. Running it would have caught every gap all three times.
+- **Why more skill content will not fix it:** the failure is **non-invocation**, so adding checks to an unfired skill treats the wrong surface. And the felt-need signal is *inverted* here — the greener the mechanical sweep looks, the less need there seems to be for the judgment half, which is exactly the half the sweep cannot see (`feedback_resource_use_gated_on_existence_not_felt_need`, which now carries this as its worked instance).
+- **Fix shape:** have `/close-session` **stamp the active handoff's frontmatter** (e.g. `close_session_ran: <sha>` / ISO date) as its final act, and have `check_close_out_completeness.py` (or the doc sweep's handoff-quality half) flag a handoff whose content changed in the window without a matching stamp. That makes a hand-rolled close **mechanically visible** rather than dependent on someone asking. It is the M7 move applied to skill INVOCATION rather than to a code class — the same escalation `feedback_structural_enforcement_when_memory_insufficient` prescribes once a class recurs despite codification.
+- **Watch the vacuity:** a stamp is trivially forgeable and trivially set by a partial run. It must be written by the skill's LAST stage, after Stage 7.5's gate passes — a stamp that can be written by an aborted run is worse than none, because it converts "not closed" into "certified closed". Needs a positive control proving an aborted close does not stamp.
+- **Trigger:** the next `/close-session` increment, OR a 4th observed hand-rolled close — whichever fires first.
+- **Cross-ref:** `tools/check_close_out_completeness.py` docstring (its own recurrence ledger; the 3 instances) · `feedback_resource_use_gated_on_existence_not_felt_need` (worked instance) · `feedback_auto_route_input_to_matching_skill` · M7 · M8 · Class 51 (the stamp's own vacuity risk).
+
 ### TECH_DEBT-092 — X_GEN_* namespace collision CI check (FOREACH_METADATA_BIT vs FOREACH_LIVES_IN_STRUCT lname overlap protection)
 
 ```yaml

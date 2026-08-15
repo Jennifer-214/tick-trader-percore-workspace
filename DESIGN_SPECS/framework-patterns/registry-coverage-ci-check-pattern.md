@@ -66,7 +66,7 @@ The pattern manifests in two variants distinguished by the DIRECTION of the asse
 
 **Used when:** registry rows expand via AUTOPOPULATE (parser / save / GUI render / init walk / drift check / snapshot emit / etc.) and adding a row gives free behavior expansion. The risk is a struct field existing but not getting the expansion → silent drift.
 
-**Maturity:** Stage 3 ACTIVE (2 canonical applications: Check 2 + Check 8).
+**Maturity:** Stage 3 ACTIVE (3 canonical applications: Check 2 + Check 8 + the NodeContext partition guard — note Check 8's TOOL was specified but never built, see Application 3's correction; the partition guard is the second Shape-A application with a shipping tool).
 
 ### Shape B — Anti-pattern enforcement (struct → forbidden pattern)
 
@@ -288,6 +288,58 @@ Reuse-by-copy-paste over a tool template is fine; ONE monolithic tool that handl
 **Failure mode prevented:** AUTOPOPULATE expansions (init walk, post-fill reset, snapshot skip) silently skipping fields that physically exist as per-slot arrays
 **Canonical first-fix instance:** `OmsState::last_exit_fee[MAX_PORTFOLIO_POSITIONS]` (added at v5.15.5.F.4c.3 WIP2d-1.B.1 but never enrolled in `FOREACH_OMS_PER_SLOT_FIELD` — latent drift surfaced at .F.4c.4 verification pass; enrolled simultaneously with new `bandit_reward_bps[_i]` row)
 
+
+⚠ **CORRECTION 2026-08-15 (D-421):** `tools/check_oms_per_slot_registry_integrity.py` **does not
+exist** — it was never written. Nine sites across four documents (including this spec's Tool row,
+its copy-me-template list, its Stage-6 "three canonical CI tools exist" claim, and Class 30's
+frontmatter `closure_mechanism`) assert that it does. **Class 30 is therefore documented as
+structurally closed by nothing.** The class is not currently violated — `OmsState` has 6 per-slot
+arrays, 5 enrolled and 1 carrying the `OMS_META_CLEAR` exemption (verified, not assumed) — but by
+nobody-having-added-one, not by enforcement. Tracked `TECH_DEBT-274`; the real close is D-421's
+DOMAIN column, which generalises this check to all enrolled registries rather than adding a 9th
+bespoke guard. Application 3 is retained here as a DESIGN that was specified and not built.
+
+---
+
+### Application 4 — the NodeContext persist partition (Shape A) — NEW at E.1.2 / D-421
+
+**Shipping:** v5.15.5.F.4d.1.E.1.2
+**Target struct:** `NodeContext<F>` (`CoreFrameworks/ControllerEventLoop.hpp`) — 49 members, hand-declared
+**Registry:** `FOREACH_NODE_PERSIST_FIELD` (`MemHeaders/NodeCtxPersistRegistry.hpp`) — 29 wire rows
+**Field shape:** every struct member (clang `-fdump-record-layouts`, not a regex — see below)
+**Tool:** `tools/check_node_ctx_partition.py` (NEW; 17 teeth) — **the first application that actually ships a tool since Check 2/Check 7**
+**Closes:** the silent-field-drop class (`TECH_DEBT-196`; founding instance `node_gross_wins` added v4.7.25, never persisted, Stats read $0.00 after every restart until v5.4.3)
+**Exemption mechanism:** `FOREACH_NODE_CTX_PERSIST_EXEMPT(NAME, CATEGORY, "rationale")` — a **closed category set** with a mandatory prose rationale, plus an always-RED category (`UNESTABLISHED_UNTIL_FIRST_PASS`) that records a known-bad state without excusing it
+**Measured at landing:** 49 members, 27 covered, 22 exempt-pending
+
+**Three things this application adds to the pattern, each earned by a real failure:**
+
+1. **The field shape is COMPILER-DERIVED, not regex-derived.** Applications 1–3 identify members by
+   a name pattern (`\w+\[MAX_PORTFOLIO_POSITIONS\]`). That works only where the cohort is
+   textually distinctive. A *whole struct's* membership is not — so this one reads the real layout
+   from clang and subtracts the registry. Regex would have missed exactly the fields that matter
+   (a `void*`, a sub-struct, a plain `uint16_t`).
+2. **Three RED directions, not one.** Anti-pattern 2 says "coverage check without exemption
+   mechanism"; this adds that an exemption list is itself an input that can rot. **STALE-EXEMPT** (an
+   exemption naming a non-member) is the sharp one: it makes the partition read as fully accounted
+   while covering a ghost, and it is what catches the "silence the red by bulk-exempting" move —
+   one typo in the bulk list still REDs. **CONTRADICTION** (both persisted and exempt) refuses to
+   guess which declaration is the lie.
+3. **The category vocabulary must be FALSIFIABLE, and was corrected BY verification.** Anti-pattern 3
+   says "exemption without rationale categories". Not sufficient — the `ic.actuals` bug had a stated
+   reason, documented in the header, that was true of the push path and false across the persist
+   boundary. Verifying all 22 fields **refuted two of the four categories originally drafted**
+   (`WALL_CLOCK` — the field it obviously fits is safe for the *opposite* reason, and accepting it
+   would enshrine a false premise; `DISPLAY_ONLY` — the field it obviously fits fires a real
+   MARKET_SELL). Categories now phrase the evidence that would refute them, e.g. `DERIVED_EACH_PASS`
+   must answer *"what reads it before the FIRST derive?"* — the single question separating a safe
+   field from the one genuinely-broken one on that shard.
+
+**What the application produced beyond coverage:** three engine defects, found by *verifying* the
+exemption reasons rather than accepting them — a capital control that silently disarmed, an
+indeterminate cross-thread read, and an observability channel that had never worked. That is the
+argument for the pattern at large: the check is cheap, and the act of justifying each exemption is
+where the findings actually come from.
 ---
 
 ## How to add a new application

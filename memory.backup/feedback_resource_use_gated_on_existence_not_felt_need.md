@@ -22,3 +22,15 @@ The operating discipline for the whole apparatus, as one loop:
 **Proof (`.E.1.2` sweep, 2026-07-03):** every tool/armed-agent run gave ground truth or caught an error; both solo-reasoned conclusions (defer-serializer-to-E.1.3; born-struct-generate NodeState) were confidently wrong — and both were ALREADY answered by resources not consulted first (the cascade = 0 containers; decision log D-283/D-287 showed born-generation's flag already refuted; OMS was the canonical sibling). D-290 (tools-over-grep) had to be codified AND was still under-applied the same session → memory-tier alone insufficient (hence the M7 escalation + this always-loaded default).
 
 **Sisters — this GENERALIZES them from single-resource-types to the whole surface:** [[feedback_run_doc_ci_tools_first_never_hand_verify]] (tools), [[feedback_recheck_designspecs_on_pushback]] + [[feedback_audit_canonical_sister_before_new_infra]] (specs/anti-patterns), [[feedback_consult_indexes_before_full_reads]] (indexes), [[feedback_ground_design_in_real_code]] (code), + D-290. M7 = the escalation mechanism (§3); M8 = the arming (§2).
+
+**Worked instance (2026-08-15, E.1.2/D-421 close-out) — the third recurrence at the same surface.**
+I hand-rolled a 20-commit close instead of invoking `/close-session`. Every individual step I chose
+looked sufficient at the time; the skill's Stage 5.5 item 7 names CODE_MAP staleness *by name* and
+Stage 7.5 invokes the close-out guard, and I did neither because I did not FEEL I needed to — the
+mechanical sweep was green. It was green while six reference-doc auto-writes were missing, one of
+which I had named as owed mid-session and then dropped.
+
+The felt-need signal was not merely weak, it was **actively inverted**: the greener the mechanical
+sweep, the less need I felt for the judgment half — which is precisely the half the sweep cannot
+see. That is the calibration failure this memory names, and the reason the rule is EXISTENCE-gated
+rather than need-gated. Detector, all three times: the operator asking.

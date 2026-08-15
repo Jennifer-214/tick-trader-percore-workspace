@@ -38,6 +38,37 @@ A value computed by one stage is **unconditionally overwritten or ignored** by a
 
 **Detected (A24, HIGH — the cfg-mutation variant):** `EventLoop_RebuildOneCore` computes the D6 session / D10 losing-streak-brake / spike-relaxation adaptations into the FLAT `resolved_cfg.{volume_multiplier,entry_offset_pct,spacing_multiplier}` (`ControllerEventLoop.hpp:2337/2403/2410` + a local `spacing_cfg` copy), but the live consumer reads `resolved_cfg.cores[slot]` (the per-node slice) — the computed adaptation is discarded into a field no live consumer reads (`ControllerConfig_ResolveForCore` writes the flat fields, NEVER `cores[slot]`). Regression from the per-core migration `49649b8`. The default-ON D10 safety brake is silently inert for SimpleDip/EmaCross/ML. Fix (D-211 option (c)): single-source the per-node slice + tombstone the flat field; the un-reintroducible close is the `check_per_core_registry_integrity.py` Check-10 extension (a per-shard write to a flat-with-slice field). NB: reaches SimpleDip/EmaCross/ML only — MR/Momentum read a THIRD storage `state->live_*` (TECH_DEBT-189), itself a two-competing-adaptation-architectures smell.
 
+### Sub-shape B instance — `strategy_halt_reason`, overwritten 59 lines after its producer (2026-08-15, D-421)
+
+The purest Sub-shape B yet found, and the longest-lived. `EventLoop_RebuildOneCore` passes
+`&ctx.strategy_halt_reason` into `Strategy_BuildParameters`, which writes a `SHALT_*` code when a
+strategy zero-gates for an internal reason. **59 lines further down the same straight-line block**,
+`= SHALT_OK` executes unconditionally — same brace depth, no intervening `goto`/`return`/`break`,
+no loop spanning the interval. The dispatcher's output was discarded on every rebuild.
+
+**Of the 20 `FOREACH_SHALT` codes, only 2 could ever be observed** — `SHALT_RECOVERY` and
+`SHALT_EXIT_PREDICTED`, both written *after* the reset point. That is why the panel always showed
+*something* and the hole went unnoticed: the class hid behind its own partial success.
+
+**Born broken.** `git log -S` puts the pointer-arg and the reset in the SAME commit (`bc37c62`,
+2026-04-30) — the reset was placed after the producer on day one. The two later codes were added
+afterwards and happen to land below it.
+
+**What makes it Class 44 rather than a typo:** the value is correctly computed, correctly bound, and
+its consumer (the gate-health log, the ML panel, `summary.json`) is live and reads it — but an
+unconditional write between producer and consumer means the consumer can only ever observe the
+default. Not capital: the actual entry block rides `pending_params.flags |= GATE_FLAG_BUY_BLOCKED`,
+independent of this byte. It is the operator's "why is this node not trading?" channel, blind.
+
+**Detection heuristic worth generalizing (P-2's recommendation):** for any field whose contract is
+*"reset each pass"*, assert the reset line is **less than** every producer line in the same
+function. One comparison; it would have caught this on the day it shipped. Candidate for the
+partition guard's `DERIVED_EACH_PASS` rows.
+
+**Guard blindness:** `rg strategy_halt_reason tests/` returned **zero** hits pre-fix. The suite
+pinned the SHALT *constants* but never asserted a code survives a rebuild — the constants were
+correct and the plumbing was dead, which no constant-check can see.
+
 ## Recurring symptom
 
 - A struct field with write-site(s) but **zero live read-sites** (Sub-shape A) — esp. after a field migration where some consumers were wired and one was missed.

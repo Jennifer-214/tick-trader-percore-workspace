@@ -122,6 +122,24 @@ parsed from source — not a reimplemented oracle that could drift.
   bit-assignments + cfg-field name keys enroll next — add a row to `SOURCES` in the tool. The DISCIPLINE
   is complete; coverage grows. Per `feedback_close_the_class_vs_migrate_every_site` (close the class via the
   primitive + guard; pace the enrollment).
+- **⚠ Enrollment is necessary but NOT sufficient — an enrolled registry can still be PARTIALLY parsed
+  (E.1.2 D-421, the complement-blindness sweep).** `StrategyId` was enrolled from the start and the ledger
+  still carried only **4 of its 5** real codes for the whole of its life: `FOREACH_STRATEGY`'s fifth row
+  arrives through a nested `FOREACH_STRATEGY_EMACROSS(X)` invocation
+  (`Strategies/StrategyInterface.hpp:143`), and the row scanner matched only literal `X(`, so
+  `STRATEGY_EMA_CROSS` was outside the guard that exists to prevent exactly its reuse. **This is worse than
+  an un-enrolled registry**, because the category is present and the surface therefore READS as covered — the
+  audit trail terminates at a green check. Fixed by teaching the shared parser to expand nested invocations
+  (resolving `__has_include` guards the way the preprocessor does) and to anchor `X(` on a token boundary;
+  4 positive-control teeth in `node_persist_layout --selftest`, each verified to FAIL against the old parser.
+  **The generalized lesson: for a golden-master guard, "is the source enrolled?" and "does the parser see all
+  of the source?" are two different questions, and only the first one is ever asked.**
+- **Derived sentinels are guarded transitively, and that is deliberate — do not "fix" it.**
+  `STRATEGY_AUTO = NUM_STRATEGIES_REAL` (`StrategyInterface.hpp:178`) is a persisted code but is declared
+  OUTSIDE the X-macro, so it never enters the ledger. That is correct: it has no independently-assignable
+  value, so it cannot be renumbered on its own — it moves if and only if the real-strategy count moves, and
+  the count is now guarded. Adding it as a ledger row would freeze a value that is a *consequence*, and the
+  first legitimate strategy addition would then red the guard for no reason.
 - **Layout-coupling (the D-144 stale-state risk — "version must bump when the persisted struct changes"):**
   partially defended by the existing **R1 `sizeof`/offset `static_assert`s** on persisted structs — a layout
   change trips the assert → forces attention → bump the version + `--update` the ledger. **The predicted

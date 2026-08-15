@@ -147,19 +147,40 @@ def _parse_constexpr(text, name):
 # to node_persist_layout.py (the library tier) so the layout audit and this guard
 # share ONE implementation (single-source; one-direction dependency — that module
 # never imports this one).
-from node_persist_layout import _macro_body, _rows, _args  # noqa: E402
+from node_persist_layout import (_macro_body, _rows, _args,              # noqa: E402
+                                 _expand_nested, _strip_comments, _strip_comments_text)
 
 
-def _parse_foreach(text, macro, opts):
-    body = _macro_body(text, macro)
+def _parse_foreach(text, macro, opts, base_dir=None):
+    # E.1.2 complement-blindness sweep — THREE parse corrections, all of which were
+    # SILENT under-counts of an enrolled registry (worse than a missing registry: the
+    # ledger category exists, so the surface reads as covered):
+    #   1. comment-strip. This guard never stripped, while its sibling consumer of the
+    #      same library did — so a `/* ... X(...) ... */` doc block could fabricate a
+    #      phantom row, and a commented-out row could be counted as live.
+    #   2. _expand_nested. A row reaching the registry via a nested `FOREACH_<NAME>(X)`
+    #      was invisible: `FOREACH_STRATEGY`'s 5th row arrives that way
+    #      (`Strategies/StrategyInterface.hpp:143`), which is why the golden ledger has
+    #      carried FOUR StrategyId rows while the enum has five real strategies —
+    #      STRATEGY_EMA_CROSS was outside the reach of the H21 guard that exists to stop
+    #      persisted-ID reuse.
+    #   3. base_dir. The nested macro is `__has_include`-conditional, so resolving it
+    #      needs the including file's directory; without it we would take the populated
+    #      branch even in a tree where the header is absent.
+    # NOTE the pre-existing `^[A-Z0-9_]+$` filter below was the compensating skip for (2)
+    # — it discarded the nested invocation token rather than expanding it. With expansion
+    # in place it now only rejects genuine non-row tokens.
+    text = _strip_comments_text(text)
+    body = _macro_body(text, macro, base_dir)
     if body is None:
         return {}
+    body = _strip_comments(_expand_nested(text, body, base_dir))
     out, idx = {}, 0
     for inner in _rows(body):
         args = _args(inner)
         name0 = args[0] if args else ""
         if not re.match(r'^[A-Z0-9_]+$', name0):
-            continue  # skip nested macro invocations / non-row tokens
+            continue  # non-row token (nested invocations are expanded above, not skipped)
         full = opts["prefix"] + name0
         if opts.get("value") == "explicit":
             try:
@@ -183,7 +204,10 @@ def parse_current():
         elif kind == "constexpr":
             got = _parse_constexpr(text, name)
         elif kind == "foreach":
-            got = _parse_foreach(text, name, opts)
+            # base_dir = the registry file's own directory, so an `__has_include("p")`
+            # guard resolves against the same path the preprocessor would use.
+            got = _parse_foreach(text, name, opts,
+                                 os.path.dirname(os.path.join(REPO_ROOT, rel)))
         else:
             sys.exit(f"unknown source kind: {kind}")
         if not got:

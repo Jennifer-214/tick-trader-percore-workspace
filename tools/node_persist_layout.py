@@ -86,27 +86,112 @@ class LayoutRefusal(RuntimeError):
 # Macro-text parsing (the SSoT copies — check_identifier_retirement.py imports
 # these three; keep them dependency-free).
 # ---------------------------------------------------------------------------
-def _macro_body(text, macro):
-    """Return the backslash-continued body of `#define MACRO(X) ...`, or None."""
-    m = re.search(r'#\s*define\s+' + re.escape(macro) + r'\s*\(\s*X\s*\)', text)
-    if not m:
-        return None
+_HAS_INCLUDE_RE = re.compile(r'#\s*if\s+__has_include\s*\(\s*"([^"]+)"\s*\)')
+
+
+def _body_from(text, end):
+    """The backslash-continued body starting at offset `end`."""
     lines = []
-    for line in text[m.end():].splitlines():
+    for line in text[end:].splitlines():
         lines.append(line)
         if not line.rstrip().endswith('\\'):
             break
     return "\n".join(lines)
 
 
+def _macro_body_resolved(text, macro, base_dir=None):
+    """`#define MACRO(X)` body, picking the branch the PREPROCESSOR would pick.
+
+    WHY THIS EXISTS (E.1.2, the complement-blindness sweep): a registry macro may be
+    defined TWICE under an `__has_include` guard — `FOREACH_STRATEGY_EMACROSS` is
+    populated under `#if __has_include("private/EmaCross.hpp")` and EMPTY under the
+    `#else` (`Strategies/StrategyInterface.hpp:107-114`). A first-match `re.search`
+    silently takes the populated branch no matter whether the header exists, so the
+    ledger this tool reports is the one THIS tree produces only by accident. Resolving
+    the guard makes the parse build-accurate instead of accidentally-right.
+
+    `base_dir` = the including file's directory (quoted-include resolution, the only
+    form the registries use). Omit it and we fall back to first-match, which preserves
+    every pre-existing caller's behaviour exactly.
+    """
+    pat = re.compile(r'^[ \t]*#[ \t]*define[ \t]+' + re.escape(macro) + r'[ \t]*\([ \t]*X[ \t]*\)',
+                     re.M)
+    sites = list(pat.finditer(text))
+    if not sites:
+        return None
+    if len(sites) == 1 or base_dir is None:
+        return _body_from(text, sites[0].end())
+
+    # >1 definition: walk the file tracking #if/#else/#endif liveness and take the
+    # first definition that survives. `None` verdict = a conditional we cannot
+    # evaluate (not an __has_include) -> treat BOTH branches as live, which keeps
+    # the old first-match behaviour rather than silently dropping rows.
+    live, cond, off, chosen = [], [], 0, None
+    for line in text.splitlines(keepends=True):
+        s = line.lstrip()
+        if s.startswith('#if'):
+            m = _HAS_INCLUDE_RE.match(s)
+            verdict = os.path.exists(os.path.join(base_dir, m.group(1))) if m else None
+            cond.append(verdict)
+            live.append(True if verdict is None else verdict)
+        elif s.startswith('#else') and cond:
+            live[-1] = True if cond[-1] is None else (not cond[-1])
+        elif s.startswith('#endif') and cond:
+            cond.pop(); live.pop()
+        elif all(live) and chosen is None:
+            m = pat.match(line)
+            if m:
+                chosen = off + m.end()
+        off += len(line)
+    return _body_from(text, chosen) if chosen is not None else None
+
+
+def _macro_body(text, macro, base_dir=None):
+    """Back-compat alias. See _macro_body_resolved."""
+    return _macro_body_resolved(text, macro, base_dir)
+
+
+# A row is `X(`, but ONLY where `X` is a whole token — `body.find("X(")` also
+# matched the `X(` inside `MAX(`/`IDX(`, which would fabricate a phantom row from
+# any such token in a registry body. No enrolled registry trips it today (verified
+# E.1.2), so this closes a latent hole, not a live one.
+_X_CALL_RE = re.compile(r'(?<![A-Za-z0-9_])X[ \t]*\(')
+
+# A nested `FOREACH_<NAME>(X)` invocation inside a registry body — the rows it
+# contributes are INVISIBLE to a scan that only looks for literal `X(`.
+_NESTED_RE = re.compile(r'(?<![A-Za-z0-9_])(FOREACH_[A-Z0-9_]+)[ \t]*\([ \t]*X[ \t]*\)')
+
+
+def _expand_nested(text, body, base_dir=None, _depth=0):
+    """Splice in the body of every nested `FOREACH_<NAME>(X)` invocation.
+
+    WHY: `FOREACH_STRATEGY`'s 5th row arrives via `FOREACH_STRATEGY_EMACROSS(X)`
+    (`Strategies/StrategyInterface.hpp:143`), so a literal-`X(` scan sees 4 of 5
+    strategies. The H21 golden ledger has carried 4 StrategyId rows for exactly this
+    reason — `STRATEGY_EMA_CROSS` was invisible to the guard whose job is preventing
+    persisted-ID reuse. Expansion is what makes an enrolled registry actually covered
+    rather than partially covered while READING as covered.
+    """
+    if _depth > 4:
+        raise LayoutRefusal("nested FOREACH expansion exceeded depth 4 (cycle?)")
+
+    def _sub(m):
+        inner = _macro_body_resolved(text, m.group(1), base_dir)
+        if inner is None:
+            return " "                      # dead branch / undefined -> contributes nothing
+        return _expand_nested(text, inner, base_dir, _depth + 1)
+
+    return _NESTED_RE.sub(_sub, body)
+
+
 def _rows(body):
     """Split a macro body into the inner-text of each top-level `X( ... )` invocation."""
-    out, i = [], 0
-    while True:
-        j = body.find("X(", i)
-        if j < 0:
-            break
-        depth, k = 0, j + 1
+    out, consumed_to = [], 0
+    for m in _X_CALL_RE.finditer(body):
+        if m.start() < consumed_to:
+            continue                        # inside a row we already took
+        j = m.end() - 1                     # index of the '('
+        depth, k = 0, j
         while k < len(body):
             if body[k] == '(':
                 depth += 1
@@ -115,8 +200,8 @@ def _rows(body):
                 if depth == 0:
                     break
             k += 1
-        out.append(body[j + 2:k])
-        i = k + 1
+        out.append(body[j + 1:k])
+        consumed_to = k + 1
     return out
 
 
@@ -425,6 +510,40 @@ def _selftest():
                   "last_confidence", "confidence"])
     except LayoutRefusal as e:
         check(f"REAL registry parses ({e})", False)
+
+    # --- E.1.2 complement-blindness sweep: teeth for the three parse corrections ---
+    # These are POSITIVE controls on the parser itself. Each one FAILED before the fix,
+    # which is what makes them teeth rather than decoration (Class-51).
+
+    # (a) word-boundary: `MAX(` must not fabricate a row. The old `body.find("X(")`
+    #     matched the X( inside MAX(, so this returned 2 rows instead of 1.
+    check("parser: MAX( does NOT fabricate a phantom row",
+          [_args(r)[0] for r in _rows(r' X(REAL, 1) \ MAX(FAKE, 2)')] == ["REAL"])
+
+    # (b) nested expansion: a row arriving via `FOREACH_<NAME>(X)` must be SEEN.
+    #     This is the StrategyId/EMA_CROSS shape — 4-of-5 before the fix.
+    _nested_src = (
+        '#define FOREACH_INNER(X) \\\n    X(SECOND, 2)\n'
+        '#define FOREACH_OUTER(X) \\\n    X(FIRST, 1) \\\n    FOREACH_INNER(X)\n')
+    _outer = _expand_nested(_nested_src, _macro_body(_nested_src, "FOREACH_OUTER"))
+    check("parser: a row inside a nested FOREACH_<NAME>(X) is expanded, not skipped",
+          [_args(r)[0] for r in _rows(_outer)] == ["FIRST", "SECOND"])
+
+    # (c) __has_include resolution: with TWO definitions the branch chosen must match
+    #     what the preprocessor would do, not simply the first one in the file.
+    _cond_src = (
+        '#if __has_include("present.hpp")\n'
+        '#  define FOREACH_C(X) \\\n    X(WHEN_PRESENT, 1)\n'
+        '#else\n'
+        '#  define FOREACH_C(X) /* absent */\n'
+        '#endif\n')
+    _d = tempfile.mkdtemp(prefix="npl_hasinc_")
+    open(os.path.join(_d, "present.hpp"), "w").close()
+    check("parser: __has_include TRUE branch selected when the header exists",
+          [_args(r)[0] for r in _rows(_macro_body(_cond_src, "FOREACH_C", _d))] == ["WHEN_PRESENT"])
+    _d2 = tempfile.mkdtemp(prefix="npl_hasinc_absent_")   # header deliberately absent
+    check("parser: __has_include FALSE branch selected when the header is absent",
+          _rows(_macro_body(_cond_src, "FOREACH_C", _d2) or "") == [])
 
     print(f"node_persist_layout --selftest: {'ALL TEETH FIRE' if not fails else 'FAILURES: ' + ', '.join(fails)}")
     return 0 if not fails else 1

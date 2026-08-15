@@ -162,7 +162,43 @@ def struct_members(record=RECORD, tu=TU):
     raise PartitionRefusal(f"no record matched {record}")
 
 
-def _registry_rows(text, macro, base_dir, arity, what):
+def _split_cols_quoted(s):
+    """Top-level comma split that respects "quoted strings" as well as nesting.
+
+    The shared `_args` (node_persist_layout) is deliberately NOT quote-aware — and I am NOT
+    making it so: its exact-arity REFUSAL on a comma-bearing row is a real tooth (a-class R1-c,
+    'never silently eat the count token'), and widening it would convert a loud correct stop
+    into a silent accept. That tooth is right for the WIRE registries it parses.
+
+    The exemption registry has the opposite need: its third column is prose written for a human
+    reviewer, and prose has commas. So the quote-aware split lives HERE, scoped to this one
+    registry, rather than in the shared parser where it would weaken a guard.
+    """
+    out, depth, cur, in_str = [], 0, [], False
+    prev = ''
+    for ch in s:
+        if in_str:
+            cur.append(ch)
+            if ch == '"' and prev != '\\':
+                in_str = False
+        elif ch == '"':
+            in_str = True; cur.append(ch)
+        elif ch in '(<[':
+            depth += 1; cur.append(ch)
+        elif ch in ')>]':
+            depth -= 1; cur.append(ch)
+        elif ch == ',' and depth == 0:
+            out.append("".join(cur).strip()); cur = []
+        else:
+            cur.append(ch)
+        prev = ch
+    if in_str:
+        raise PartitionRefusal(f"unterminated string in registry row: {s.strip()!r}")
+    out.append("".join(cur).strip())
+    return out
+
+
+def _registry_rows(text, macro, base_dir, arity, what, splitter=None):
     body = _macro_body_resolved(_strip_comments_text(text), macro, base_dir=base_dir)
     if body is None:
         raise PartitionRefusal(
@@ -171,7 +207,7 @@ def _registry_rows(text, macro, base_dir, arity, what):
             f"unaccounted, or with the sets swapped, every member look fine).")
     out = []
     for inner in _rows(_strip_comments(body)):
-        cols = _args(inner)
+        cols = (splitter or _args)(inner)
         if len(cols) != arity:
             raise PartitionRefusal(
                 f"{macro} row has {len(cols)} columns, expected {arity}: {inner.strip()!r}")
@@ -233,7 +269,8 @@ def exempt_rows(root=None):
         text = open(path).read()
     except OSError as e:
         raise PartitionRefusal(f"cannot read {REGISTRY_REL}: {e}")
-    return validate_exempt(_registry_rows(text, EXEMPT_MACRO, os.path.dirname(path), 3, "exemption"))
+    return validate_exempt(_registry_rows(text, EXEMPT_MACRO, os.path.dirname(path), 3,
+                                          "exemption", splitter=_split_cols_quoted))
 
 
 # ---------------------------------------------------------------------------
@@ -377,6 +414,17 @@ def _selftest():
         _check("...and still REDs (recorded is not excused)", r == ["c"])
     except PartitionRefusal as e:
         _check(f"always-RED category recordable ({e})", False)
+
+    # 7e. the exemption registry's rationale column is PROSE and prose has commas — the
+    #     quote-aware splitter must keep it one column, and must REFUSE an unterminated string
+    #     rather than silently swallow the rest of the registry.
+    _check("quoted rationale with commas stays ONE column",
+           len(_split_cols_quoted('a, DISPLAY_SINK_ONLY, "read by x, y, and z"')) == 3)
+    try:
+        _split_cols_quoted('a, B, "unterminated')
+        _check("unterminated rationale REFUSES", False)
+    except PartitionRefusal:
+        _check("unterminated rationale REFUSES", True)
 
     # 8. REAL-TREE non-vacuity: the live struct must actually be readable, and the live
     #    registry must actually parse to rows. A tooth that only ever runs on fixtures cannot

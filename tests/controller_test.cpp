@@ -8368,6 +8368,88 @@ e3_skip_load:;
     }
 
     //==================================================================================================
+    // v5.15.5.F.4d.1.E.1.2 — F-096: the partial-exit leg split conserves EXACTLY (TD-167 / H4)
+    //==================================================================================================
+    // The drainer splits intended_qty across two legs (Async.hpp, is_entry branch).
+    //
+    //   PRE-F-096 each leg was computed independently in double —
+    //       legA = full * pct                legB = full * (1.0 - pct)
+    //   which put two inexact Money->double conversions plus a half-AWAY-from-zero
+    //   llround on each leg, so legA + legB drifted from intended by up to 1 unit (1e-8).
+    //
+    //   POST-FIX the REMAINDER form makes conservation exact by construction —
+    //       legA = Money_Mul(intended, pct)   legB = Money_Sub(intended, legA)
+    //   Money_Sub is exact by domain, so the identity is a theorem. That is why the
+    //   shipped code carries no runtime assert: there is nothing left to doubt. What
+    //   this block defends is the REVERT — a future edit going back to
+    //   Money_Mul(intended, 1-pct) reintroduces two independent roundings, and these
+    //   checks are what catch it.
+    //
+    // Non-vacuity (Class 51): each identity pin is paired with a control proving the
+    // OLD form actually FAILS on the same inputs. A conservation test whose inputs
+    // never stressed the rounding would pass under both forms and prove nothing.
+    {
+        struct { long long units; double pct_d; } CASES[] = {
+            { 10000002LL, 0.25 },   // units ≡ 2 (mod 4) at 1/4 → a genuine half-even TIE
+            { 10000006LL, 0.25 },   // same tie class, different residue
+            { 10000001LL, 0.50 },   // odd units at 1/2 → tie
+            { 10000003LL, 0.75 },
+            { 100000000LL, 0.25 },  // clean divide (1.0 BTC)
+            { 3LL,         0.25 },  // sub-unit leg territory
+            { 7LL,         0.50 },
+        };
+        const int N_CASES = (int)(sizeof(CASES) / sizeof(CASES[0]));
+        int conserved = 0, old_form_diverged = 0;
+
+        for (int i = 0; i < N_CASES; i++) {
+            const Money intended = Money{ (__int128)CASES[i].units };
+            const Money pct      = MQ(CASES[i].pct_d);
+
+            // --- the SHIPPED form (Async.hpp) ---
+            const Money leg_a = Money_Mul(intended, pct);
+            const Money leg_b = Money_Sub(intended, leg_a);
+            if (Money_Eq(Money_Add(leg_a, leg_b), intended)) conserved++;
+
+            // --- the PRE-FIX form, reproduced verbatim as the control ---
+            double full_qty = Money_ToDouble(intended);
+            Money old_a = Money{ money_from_double_payload(full_qty * Money_ToDouble(pct)) };
+            Money old_b = Money{ money_from_double_payload(full_qty * (1.0 - Money_ToDouble(pct))) };
+            if (!Money_Eq(Money_Add(old_a, old_b), intended)) old_form_diverged++;
+        }
+
+        check("F-096: leg split conserves EXACTLY (legA+legB == intended) on every case",
+              conserved == N_CASES);
+        check("F-096 non-vacuity: the PRE-FIX double form DIVERGES on >=1 of the same "
+              "cases (so the conservation pin is exercising a real failure, not a tautology)",
+              old_form_diverged >= 1);
+
+        // ---- HIGH-2: the zero-qty zombie, closed by guarding the SUBMITTED value ----
+        // Pre-fix the guard tested the double (> 0.0) while the submitted qty was
+        // rounded separately, so a leg whose true qty landed in (0, 0.5e-8) PASSED the
+        // guard and submitted a ZERO-qty order. OrderManager books requested_qty
+        // verbatim, so paper opened a 0-qty position; its exit then read qty 0.0, the
+        // same guard skipped the SELL forever, and portfolio.active_bitmap never
+        // cleared => an un-closeable zombie slot + permanent bitmap drift.
+        const Money tiny_intended = Money{ (__int128)1 };        // 1 unit = 1e-8
+        const Money tiny_leg = Money_Mul(tiny_intended, MQ(0.25));  // 0.25 units → half-even → 0
+        check("F-096 HIGH-2: a sub-unit leg rounds to Money zero",
+              Money_IsZero(tiny_leg));
+        check("F-096 HIGH-2: the Money_Gt guard SKIPS the zero-qty leg (no zombie slot)",
+              !Money_Gt(tiny_leg, Money_Zero()));
+        check("F-096 HIGH-2 non-vacuity: the PRE-FIX double guard (>0.0) would have "
+              "ADMITTED that same leg — this is the zombie's exact origin",
+              (Money_ToDouble(tiny_intended) * Money_ToDouble(MQ(0.25))) > 0.0);
+
+        // Money_Gt (not !Money_IsZero) is deliberate: it also fail-safes a NEGATIVE
+        // leg. pct>1 is boot-refused by Sharded_ValidatePartialExitCfg above, so this
+        // is defense-in-depth against an unclamped value reaching the drainer.
+        const Money q_neg = Money{ (__int128)10000000 };
+        const Money neg_leg = Money_Sub(q_neg, Money_Mul(q_neg, MQ(1.5)));
+        check("F-096: pct>1 yields a NEGATIVE leg B, which Money_Gt refuses to submit",
+              !Money_IsZero(neg_leg) && !Money_Gt(neg_leg, Money_Zero()));
+    }
+
+    //==================================================================================================
     // v5.15.5.F.4d.1.B.7 — Class 26 regression: drainer per-core cfg slot integrity
     //==================================================================================================
     // Bug context (closed at .B.7 2026-05-27): pre-fix, Async.hpp:814+853

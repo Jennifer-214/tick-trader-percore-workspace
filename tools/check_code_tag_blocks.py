@@ -131,6 +131,35 @@ def load_categories():
     return cats or None
 
 
+def _unknown_category_hint(tok):
+    """Teach the sanctioned fix AT the RED, because a gate that only says 'no' produces
+    workarounds — and a workaround here means meaning smuggled into free text, which is
+    precisely what no later check can verify.
+
+    Worked instance (E.1.2, 2026-08-15): retiring Portfolio_Save/_Load wanted a tombstone
+    marker. `[TOMBSTONE]` REDed with a bare "UNKNOWN category", so the author invented
+    `[COMMENT]_[TOMBSTONE — ...]` and moved on. The concept ALREADY EXISTED one level down as
+    a VALUE — `[ROW]_[TOMBSTONE]_[<retired-id>]`, `[VALUE]_[TOMBSTONE]_[<retired>]_[<code>]` —
+    and nothing pointed there. So: if the token appears in the spec as a value under some
+    other category, SAY WHERE. Otherwise name the one-token extension path.
+    """
+    try:
+        text = SCHEMA_PATH.read_text(encoding="utf-8")
+    except (IOError, OSError):
+        return ""
+    # Where does this token legitimately appear? `[SOMETHING]_[TOK]` = it's a VALUE, not a category.
+    carriers = sorted(set(re.findall(r"\[([A-Z][A-Z_]*)\]_\[" + re.escape(tok) + r"\]", text)))
+    if carriers:
+        forms = " · ".join(f"[{c}]_[{tok}]_[...]" for c in carriers)
+        return (f" — but {tok} IS a known VALUE under {forms}. Use that form; it is the"
+                f" grammar's existing way to say this, and it stays machine-checkable.")
+    return (f" — if {tok} is a genuinely NEW concept, the sanctioned path is ONE token added to"
+            f" the ```category-set``` fence in {SCHEMA_PATH.name} (the validator DERIVES the set"
+            f" from that fence — no tool edit needed). Do NOT encode the meaning in a free-text"
+            f" value to get past this check: a value the grammar does not know is a claim no"
+            f" check can ever verify.")
+
+
 def _upper_snake_to_vocab(tok):
     """Code renders tags UPPER_SNAKE ([SLOW_PATH]); the vocab stores lower-hyphen
     (slow-path). Deterministic map (D-306)."""
@@ -510,7 +539,8 @@ def validate_file(path, categories, concern_vocab, surface_vocab):
             # spaces. A multi-word bracket ([ENTRY OFFSET], [ROR REGRESSOR]) is a pre-existing
             # section comment / prose → skipped. Keeps the un/half-converted tree quiet (graceful).
             if re.fullmatch(r"[A-Z][A-Z_]+", cat):
-                violations.append(f"{path}:{lineno}  UNKNOWN category [{cat}]")
+                violations.append(
+                    f"{path}:{lineno}  UNKNOWN category [{cat}]{_unknown_category_hint(cat)}")
             continue
 
         # (1)+(4) one-category-per-line: no OTHER token may be a top-level CATEGORY.
@@ -672,6 +702,15 @@ struct Outer {
 // [END_STRUCT]_[Outer]
 """, None),
     ("unknown category", "// [FUNCTON]_[typo]\n", "UNKNOWN category"),
+    # The RED must TEACH the fix, not just refuse — a gate that only says "no" produces
+    # workarounds, and here a workaround means meaning smuggled into free text where no
+    # later check can see it. Two directions, because the right advice differs:
+    #   (a) the token already exists one level down as a VALUE -> point at that form
+    ("unknown category names an existing VALUE", "// [TOMBSTONE]_[Foo_Save]\n",
+     "IS a known VALUE under"),
+    #   (b) genuinely novel -> name the one-token extension path in the spec's SSoT fence
+    ("unknown category genuinely novel", "// [NOTACATEGORYATALL]_[x]\n",
+     "sanctioned path is ONE token"),
     ("two categories one line", "// [FUNCTION]_[X] [TAG]_[[HOT_PATH]]\n", "TWO categories"),
     ("missing closer", "// [FUNCTION]_[Orphan]\n", "no matching [END_FUNCTION]"),
     ("missing END_ENUM (variant opener enforced)", "// [ENUM]_[Orphan]\n", "no matching [END_ENUM]"),

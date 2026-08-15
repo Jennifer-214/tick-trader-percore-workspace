@@ -8514,6 +8514,123 @@ e3_skip_load:;
     }
 
     //==================================================================================================
+    // v5.15.5.F.4d.1.E.1.2 — D-421 step 2: the gate-state structs are established at construction
+    //==================================================================================================
+    // NodeContext lives in a bare `EventLoopState<F> state;` function-local (no `{}`, no memset
+    // anywhere in the tree) and NODE_CTX_INIT_AUTOPOPULATE's five layers never touched
+    // gate_state — so its flags word was INDETERMINATE until the owning slow thread's first
+    // rebuild, while the producer thread already read it. The fix is an NSDMI on the struct
+    // rather than a line in the init macro, so it holds at EVERY construction site.
+    //
+    // The reason this needs a test at all: `rg gate_state tests/` returned ONE comment before
+    // today. The field with no init also had no coverage, which is not a coincidence.
+    //==================================================================================================
+    printf("\n--- D-421 step 2: gate-state default-init (indeterminate-read closure) ---\n");
+    {
+        using namespace tt;
+
+        // Poison a buffer, then default-construct INTO it. This models the real frame shape:
+        // a dirtied stack where a previous callee's bytes survive. (On a FRESH stack the field
+        // reads 0 by accident — which is exactly why "it looks fine in practice" is not
+        // evidence, and why the test poisons deliberately instead of trusting the ambient.)
+        alignas(64) unsigned char buf[sizeof(SlowPathGateState)];
+        memset(buf, 0xAA, sizeof(buf));
+        SlowPathGateState *sg = new (buf) SlowPathGateState;
+        check("D-421: SlowPathGateState.flags is 0 over poisoned storage", sg->flags == 0);
+
+        alignas(64) unsigned char gbuf[sizeof(GlobalGateState)];
+        memset(gbuf, 0xAA, sizeof(gbuf));
+        GlobalGateState *gg = new (gbuf) GlobalGateState;
+        check("D-421: GlobalGateState.flags is 0 too (the byte-identical sibling — fixing one "
+              "of a matched pair is how the ic.actuals desync happened)", gg->flags == 0);
+
+        // The control — and note WHAT it is, because the obvious version does not work.
+        //
+        // The intuitive control is "construct the pre-fix shape over the same poison and watch
+        // it survive". That is UNRELIABLE BY CONSTRUCTION: reading an uninitialized object is
+        // UB, so the compiler may legally fold, elide or invent the result, and it does — the
+        // first version of this check FAILED at -O2 while the bug it models is entirely real.
+        // A control that depends on UB behaving consistently is not a control.
+        //
+        // So assert the property that actually distinguishes the two types, at compile time,
+        // deterministically: a struct that initializes itself is NOT trivially
+        // default-constructible; one that leaves its member indeterminate IS. This is exactly
+        // the difference the NSDMI makes, with no UB in the observation path.
+        struct NoInitGate { uint16_t flags; };
+        check("D-421 non-vacuity: the gate structs are NOT trivially default-constructible "
+              "(they initialize themselves) while the pre-fix shape IS (it does not) — the "
+              "property the NSDMI adds, asserted without reading uninitialized memory",
+              !std::is_trivially_default_constructible<SlowPathGateState>::value &&
+              !std::is_trivially_default_constructible<GlobalGateState>::value &&
+              std::is_trivially_default_constructible<NoInitGate>::value);
+        // Still trivially COPYABLE — the property the wire/memcpy surfaces care about is
+        // untouched by an NSDMI. Pinned so a future "simplify" cannot quietly trade one for
+        // the other.
+        check("D-421: the gate structs remain trivially COPYABLE (NSDMI costs no layout property)",
+              std::is_trivially_copyable<SlowPathGateState>::value &&
+              std::is_trivially_copyable<GlobalGateState>::value);
+    }
+
+    //==================================================================================================
+    // v5.15.5.F.4d.1.E.1.2 — D-421 step 2: paper reset re-arms the drift auto-kill
+    //==================================================================================================
+    // MASK_DRIFT_KILL_TRIPPED is the latch that stops the drain path tripping a node twice for
+    // one drift episode. Nothing cleared it but DriftHistory_Init — and drift_history is not a
+    // FOREACH_NODE_CTX_FIELD row, so the reset walk's Layer 1 could not reach it. A paper reset
+    // therefore resumed a node with its drift auto-kill DISARMED, permanently, while every
+    // other counter said "fresh session".
+    //
+    // Paper reset IS a new session, so the fix is a full DriftHistory_Init in Layer 2 — flags
+    // AND samples. (The operator's manual kill-reset deliberately does the opposite: clear only
+    // the latch, keep the history. That path lives behind the GUI ifdef in EngineSharded/Async.hpp.)
+    //==================================================================================================
+    printf("\n--- D-421 step 2: paper reset re-arms the drift auto-kill ---\n");
+    {
+        using namespace tt;
+        // `::` is load-bearing. TWO different constants share the name MASK_DRIFT_KILL_TRIPPED:
+        // the drift_state_flags bit (ConfidenceScore.hpp:1235, GLOBAL scope) and a PerNodeSnap
+        // state flag generated into tt:: by FOREACH_PER_NODE_STATE_FLAG. Different bitmaps,
+        // different bit positions, same spelling — `using namespace tt` makes the unqualified
+        // name ambiguous. Engine code reads the global one unqualified today and compiles only
+        // because no TU pulls both into one unqualified lookup. Live instance of TECH_DEBT-092.
+
+        OrderManagerState<64> oms;
+        ExchangeAdapter<64> empty_adapter{};
+        OrderManager_Init(&oms, empty_adapter, 0, /*partial_exit_enabled=*/0, MQ(10000.0));
+
+        EventLoopState<64> state;
+        EventLoopState_Init(&state, &oms);
+
+        // Drive node 0 into the post-drift-kill state the operator would be looking at.
+        for (int i = 0; i < 8; ++i)
+            DriftHistory_Push(&state.nodes[0].drift_history, -0.5, (uint64_t)(1000 + i));
+        BITMAP_SET(state.nodes[0].drift_history.drift_state_flags, ::MASK_DRIFT_BREACHED);
+        BITMAP_SET(state.nodes[0].drift_history.drift_state_flags, ::MASK_DRIFT_KILL_TRIPPED);
+        NODE_STATE_FLAG_SET(state.nodes[0], KILL_TRIPPED);
+
+        // Snapshot the pre-reset state so the control below is measured, not assumed.
+        const uint8_t pre_flags = state.nodes[0].drift_history.drift_state_flags;
+        const int     pre_count = state.nodes[0].drift_history.count;
+
+        NODE_CTX_RESET_AUTOPOPULATE(state, 0);
+
+        check("D-421: paper reset clears the drift KILL latch — the auto-kill is re-armed",
+              !BITMAP_IS_SET(state.nodes[0].drift_history.drift_state_flags,
+                             ::MASK_DRIFT_KILL_TRIPPED));
+        check("D-421: paper reset clears the drift BREACHED edge too",
+              !BITMAP_IS_SET(state.nodes[0].drift_history.drift_state_flags,
+                             ::MASK_DRIFT_BREACHED));
+        check("D-421: paper reset empties the IC ring (a new session starts with no history)",
+              state.nodes[0].drift_history.count == 0);
+
+        // Control. Without it, all three checks above would pass against a reset that had
+        // simply never been given anything to clear.
+        check("D-421 non-vacuity: the pre-reset node genuinely held a set latch and a "
+              "non-empty ring — the reset had something to do",
+              BITMAP_IS_SET(pre_flags, ::MASK_DRIFT_KILL_TRIPPED) && pre_count == 8);
+    }
+
+    //==================================================================================================
     // v5.15.5.F.4d.1.B.7 — Class 26 regression: drainer per-core cfg slot integrity
     //==================================================================================================
     // Bug context (closed at .B.7 2026-05-27): pre-fix, Async.hpp:814+853

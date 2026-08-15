@@ -78,18 +78,65 @@ EXEMPT_MACRO = "FOREACH_NODE_CTX_PERSIST_EXEMPT"
 # The exemption CATEGORIES. Each is phrased as a falsifiable claim so a reviewer knows what
 # evidence would refute it — the `ic.actuals` lesson made concrete. Adding a category is a
 # deliberate act: it widens what counts as an acceptable reason, so it belongs in review.
+#
+# THIS SET WAS CORRECTED BY VERIFICATION, not designed up front (2026-08-15, the P-1/P-2/P-3
+# pass over all 22 unpersisted members). Two of the categories I first wrote were REFUTED by the
+# code, which is worth recording because it is the same failure the guard exists to catch —
+# a reason that sounds right and is false:
+#
+#   WALL_CLOCK ("a host-clock stamp is meaningless across a restart") — DELETED. Exactly
+#   backwards here. `last_entry_wall_us` losing its value across a restart WAS a real bug (the
+#   Hold column read "0m" forever for restored positions), and v5.11.65 fixed it by PERSISTING A
+#   SIBLING, not by declaring the field transient. Shipping this category would enshrine a false
+#   premise and green-light the next wall-clock field that has no sibling.
+#
+#   DISPLAY_ONLY — RENAMED + tightened to DISPLAY_SINK_ONLY. `last_exit_prediction` looks like
+#   an ML observability field and fires a real MARKET_SELL (`EngineCommon.hpp:668-671`).
+#   "It's just for display" is the sentence that hides a live one.
 CATEGORIES = {
-    "RUNTIME_POINTER":      "a pointer/handle re-established at boot; persisting an address across processes is meaningless",
-    "REDERIVED_FROM_CFG":   "recomputed from resolved cfg on the first pass after load",
-    "DERIVED_EACH_PASS":    "unconditionally overwritten every slow pass BEFORE any read",
+    # --- pointer / handle family -------------------------------------------------------
+    "RUNTIME_POINTER":      "a pointer/handle re-established at boot — the rationale MUST cite the "
+                            "file:line where it is re-established. 'It is a pointer' is a property "
+                            "of the declaration, not evidence about the runtime",
+    "POINTEE_STATE_REDERIVED": "the pointer is re-established AND the state behind it is re-derived "
+                            "or safely reset — required whenever the pointee holds accumulators "
+                            "(a feeder / rolling / regressor / count+ring pair). RUNTIME_POINTER "
+                            "alone is silent about the pointee, which is how 720B of accumulated "
+                            "strategy adaptation hid behind a 'it's a pointer' reason",
+    # --- derived-each-pass family ------------------------------------------------------
+    "DERIVED_EACH_PASS":    "unconditionally overwritten every slow pass BEFORE any read — the "
+                            "rationale MUST answer 'what reads it before the FIRST derive?'. That "
+                            "one question is the whole difference between pending_params (a DIRTY "
+                            "gate structurally prevents pre-derive consumption) and gate_state (an "
+                            "unsynchronized cross-thread reader with no gate)",
+    "DERIVED_BEFORE_ARM":   "derived each pass, AND the consumer that could act on a pre-derivation "
+                            "value is blocked by an independent arming flag that cannot open before "
+                            "the first pass — name the flag, its init site, and its ONLY grant site",
     "RECOMPUTED_BEFORE_READ": "recomputed from a PERSISTED field within the same pass that reads it",
+    "REDERIVED_FROM_CFG":   "recomputed from resolved cfg on the first pass after load",
     "RESTORED_AT_COMMIT":   "explicitly reconstructed in the load-commit tail from persisted state "
                             "(the category RollingIC_RestoreLockstep created at D-421 step 1)",
+    # --- carried-elsewhere / deliberately-dropped family --------------------------------
+    "SUPERSEDED_BY_PERSISTED_SIBLING": "the semantic IS needed across a restart, but a DIFFERENT, "
+                            "persisted field carries it and this copy is a fallback — name the "
+                            "sibling, its wire row, and the fallback site",
     "TRANSIENT_INFLIGHT":   "in-flight intent that restoring would be WRONG, not merely unnecessary",
-    "WALL_CLOCK":           "a host-clock stamp with no meaning across a restart",
-    "DISPLAY_ONLY":         "read exclusively by TUI/GUI/log emit — never by an execution or risk path",
+    "DISPLAY_SINK_ONLY":    "write-only from the engine's perspective: EVERY reader is TUI/GUI/log "
+                            "emit. The rationale must ENUMERATE the readers, not assert the "
+                            "property — a set can rot loudly, a claim cannot",
     "ACCEPTED_RESET":       "an accumulator knowingly reset on restart; the operator has accepted the "
                             "behaviour change and the rationale says what degrades and for how long",
+}
+
+# Categories that are NEVER a valid exemption — declaring one is an admission, not a defence.
+# The guard REDs on them so the row can exist (recording what we know) without the field
+# counting as accounted. Without this, a true-but-incomplete reason waves the field through:
+# `gate_state`'s PERSIST rationale ("cfg-derived cache, repopulated every slow pass") is
+# CORRECT and completely silent about the first pass, which is the INIT partition's question.
+RED_CATEGORIES = {
+    "UNESTABLISHED_UNTIL_FIRST_PASS": "no init layer establishes this field, so its value before "
+                            "the first derive is whatever the stack held — an indeterminate read. "
+                            "Recorded, never excused.",
 }
 
 
@@ -163,11 +210,12 @@ def validate_exempt(rows):
     out = {}
     for name, cat, why in rows:
         cat = cat.strip()
-        if cat not in CATEGORIES:
+        if cat not in CATEGORIES and cat not in RED_CATEGORIES:
             raise PartitionRefusal(
                 f"{EXEMPT_MACRO} row {name!r} uses unknown category {cat!r}. Known: "
-                f"{', '.join(sorted(CATEGORIES))}. Adding a category is a review decision — "
-                f"declare it in CATEGORIES with the evidence that would refute it.")
+                f"{', '.join(sorted(CATEGORIES))}; always-RED: {', '.join(sorted(RED_CATEGORIES))}. "
+                f"Adding a category is a review decision — declare it in CATEGORIES with the "
+                f"evidence that would refute it.")
         why = why.strip().strip('"')
         if len(why) < 12:
             raise PartitionRefusal(
@@ -192,17 +240,18 @@ def exempt_rows(root=None):
 # The classification (pure — the selftest drives THIS, hermetically)
 # ---------------------------------------------------------------------------
 def classify(members, covered, exempt):
-    """-> (unaccounted, stale_exempt, contradiction). All three are RED; each fails differently."""
-    names = [m[0] for m in members]
-    nameset = set(names)
+    """-> (unaccounted, stale_exempt, contradiction, red_category). All four are RED; each
+    fails differently, which is why they are reported apart rather than as one count."""
+    nameset = {m[0] for m in members}
     unaccounted = [m for m in members if m[0] not in covered and m[0] not in exempt]
     stale_exempt = sorted(n for n in exempt if n not in nameset)
     contradiction = sorted(n for n in exempt if n in covered)
-    return unaccounted, stale_exempt, contradiction
+    red_category = sorted(n for n, (cat, _why) in exempt.items() if cat in RED_CATEGORIES)
+    return unaccounted, stale_exempt, contradiction, red_category
 
 
 def report(record, members, covered, notes, exempt, out=sys.stdout):
-    unacc, stale, contra = classify(members, covered, exempt)
+    unacc, stale, contra, redcat = classify(members, covered, exempt)
     w = out.write
     if notes:
         for n in notes:
@@ -228,7 +277,15 @@ def report(record, members, covered, notes, exempt, out=sys.stdout):
         w("  One of the two declarations is false and this tool cannot tell which. Resolve it by\n"
           "  hand: if the field is on the wire, drop the exemption; if the exemption is right,\n"
           "  removing the row is a WIRE CHANGE (bump + golden, same commit).\n")
-    if not (unacc or stale or contra):
+    if redcat:
+        w(f"\nRED-CATEGORY — {len(redcat)} row(s) declare a category that is never a valid "
+          f"exemption:\n")
+        for n in redcat:
+            cat = exempt[n][0]
+            w(f"    {n:<32s} {cat}\n      {RED_CATEGORIES[cat]}\n")
+        w("  The row is the right place to RECORD what we know — it is not a defence. Establish\n"
+          "  the field (or persist it) and the row goes away.\n")
+    if not (unacc or stale or contra or redcat):
         w(f"[node-ctx-partition] GREEN — all {len(members)} {record} members accounted: "
           f"{len(members) - len(exempt)} persisted, {len(exempt)} declared-exempt.\n")
         return 0
@@ -252,25 +309,28 @@ def _selftest():
 
     # 1. the happy path is reachable at all (guards the guard against always-red)
     _check("clean partition -> 0 findings",
-           classify(M, {"a", "b"}, {"c": ("DISPLAY_ONLY", "x" * 20)}) == ([], [], []))
+           classify(M, {"a", "b"}, {"c": ("DISPLAY_SINK_ONLY", "x" * 20)}) == ([], [], [], []))
 
     # 2. UNACCOUNTED fires — the founding class (a field added and never enrolled)
-    u, s, c = classify(M, {"a", "b"}, {})
-    _check("UNACCOUNTED fires on an unenrolled member", [x[0] for x in u] == ["c"] and not s and not c)
+    u, s, c, r = classify(M, {"a", "b"}, {})
+    _check("UNACCOUNTED fires on an unenrolled member",
+           [x[0] for x in u] == ["c"] and not s and not c and not r)
 
     # 3. STALE-EXEMPT fires — an exemption whose subject no longer exists
-    u, s, c = classify(M, {"a", "b", "c"}, {"ghost": ("WALL_CLOCK", "x" * 20)})
+    u, s, c, r = classify(M, {"a", "b", "c"}, {"ghost": ("WALL_CLOCK_GONE", "x" * 20)})
     _check("STALE-EXEMPT fires on an exemption naming a non-member", s == ["ghost"] and not u and not c)
 
     # 4. CONTRADICTION fires — both persisted and exempted
-    u, s, c = classify(M, {"a", "b", "c"}, {"c": ("DISPLAY_ONLY", "x" * 20)})
+    u, s, c, r = classify(M, {"a", "b", "c"}, {"c": ("DISPLAY_SINK_ONLY", "x" * 20)})
     _check("CONTRADICTION fires when a member is both persisted and exempt", c == ["c"] and not u)
 
     # 5. NON-VACUITY of the exempt set itself: exempting everything must NOT read as clean
     #    unless every name is real. This is the failure mode where somebody "fixes" a red by
     #    bulk-exempting — the stale check is what makes that visible.
-    u, s, c = classify(M, set(), {"a": ("DISPLAY_ONLY", "x" * 20), "b": ("DISPLAY_ONLY", "x" * 20),
-                                  "c": ("DISPLAY_ONLY", "x" * 20), "typo_d": ("DISPLAY_ONLY", "x" * 20)})
+    u, s, c, r = classify(M, set(), {"a": ("DISPLAY_SINK_ONLY", "x" * 20),
+                                     "b": ("DISPLAY_SINK_ONLY", "x" * 20),
+                                     "c": ("DISPLAY_SINK_ONLY", "x" * 20),
+                                     "typo_d": ("DISPLAY_SINK_ONLY", "x" * 20)})
     _check("bulk-exempt with one typo still REDs (stale catches the typo)", s == ["typo_d"])
 
     # 6. registry parse refusals — an absent/empty registry must REFUSE, never pass empty
@@ -291,7 +351,7 @@ def _selftest():
 
     # 7b. a rationale too short to be falsifiable must REFUSE. "transient" is not a reason.
     try:
-        validate_exempt([("a", "DISPLAY_ONLY", '"transient"')])
+        validate_exempt([("a", "DISPLAY_SINK_ONLY", '"transient"')])
         _check("stub rationale REFUSES", False)
     except PartitionRefusal:
         _check("stub rationale REFUSES", True)
@@ -299,11 +359,24 @@ def _selftest():
     # 7c. ...and a WELL-FORMED row must be accepted, or 7/7b would pass vacuously by refusing
     #     everything. The positive control on the negative controls.
     try:
-        ok = validate_exempt([("a", "DISPLAY_ONLY", '"read only by the TUI stats panel"')])
-        _check("well-formed exemption is ACCEPTED", ok == {"a": ("DISPLAY_ONLY",
+        ok = validate_exempt([("a", "DISPLAY_SINK_ONLY", '"read only by the TUI stats panel"')])
+        _check("well-formed exemption is ACCEPTED", ok == {"a": ("DISPLAY_SINK_ONLY",
                                                                 "read only by the TUI stats panel")})
     except PartitionRefusal as e:
         _check(f"well-formed exemption is ACCEPTED ({e})", False)
+
+    # 7d. an always-RED category PARSES (the row is allowed to exist — it records what we know)
+    #     but still REDs. Without both halves this is either a refusal (can't record it) or a
+    #     silent pass (recorded and excused) — and "excused" is how a true-but-incomplete reason
+    #     waves a field through.
+    try:
+        red = validate_exempt([("c", "UNESTABLISHED_UNTIL_FIRST_PASS",
+                                '"no init layer establishes this field"')])
+        _check("always-RED category is a VALID ROW (recordable)", "c" in red)
+        _, _, _, r = classify(M, {"a", "b"}, red)
+        _check("...and still REDs (recorded is not excused)", r == ["c"])
+    except PartitionRefusal as e:
+        _check(f"always-RED category recordable ({e})", False)
 
     # 8. REAL-TREE non-vacuity: the live struct must actually be readable, and the live
     #    registry must actually parse to rows. A tooth that only ever runs on fixtures cannot

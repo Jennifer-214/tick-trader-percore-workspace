@@ -18,7 +18,7 @@
 #include "money_add_vectors.hpp"      // Ship-B P1b D-100 frozen fixture (Money_Add closure clamp)
 #include "money_parse_vectors.hpp"    // Ship-B P1c D-100 frozen fixture (Money_FromString incl. reject set)
 #include "money_cast_vectors.hpp"     // Ship-B P1c D-100 frozen fixture (Money_ToBinary / Money_FromBinary)
-#include "sharded_snapshot_v10_golden.hpp"  // E.1.2 Step-2 (D-305) frozen v10 snapshot byte-golden
+#include "sharded_snapshot_v11_golden.hpp"  // E.1.2 (D-305/D-420) frozen v11 snapshot byte-golden
 
 //======================================================================================================
 // [TEST 1: CONFIG PARSER]
@@ -6278,7 +6278,7 @@ int main() {
                 n.node_losses        = (uint32_t)(61 + c);
                 n.node_open_notional = MQ(701.0 + 5.0 * c);
                 n.node_peak_balance  = MQ(2601.0 + 100.0 * c);
-                n.node_dd_pct        = MQ(3.03 + 0.03 * c);
+                n.partner_pending_pnl = MQ(87.87 + 0.13 * c);  // v11 row (AM-4/D-420); node_dd_pct left OFF the wire
                 n.allocated_balance  = MQ(2501.0 + 25.0 * c);
                 n.node_gross_wins    = MQ(1201.0 + 10.0 * c);
                 n.node_gross_losses  = MQ(401.0 + 5.0 * c);
@@ -6367,20 +6367,20 @@ int main() {
             for (int i = 12; i < 20 && i < (int)gn; ++i) gbuf[i] = 0;  // mask timestamp_us
 
 #ifdef REGEN_SNAPSHOT_GOLDEN
-            printf("\n// ===== REGEN sharded_snapshot_v10_golden.hpp (len=%zu) =====\n", gn);
-            printf("static const unsigned char SHARDED_SNAPSHOT_V10_GOLDEN[] = {\n");
+            printf("\n// ===== REGEN sharded_snapshot_v11_golden.hpp (len=%zu) =====\n", gn);
+            printf("static const unsigned char SHARDED_SNAPSHOT_V11_GOLDEN[] = {\n");
             for (size_t i = 0; i < gn; ++i) {
                 printf("0x%02x,", gbuf[i]);
                 if ((i & 15) == 15) printf("\n");
             }
-            printf("\n};\nstatic const unsigned long SHARDED_SNAPSHOT_V10_GOLDEN_LEN = %zuUL;\n", gn);
+            printf("\n};\nstatic const unsigned long SHARDED_SNAPSHOT_V11_GOLDEN_LEN = %zuUL;\n", gn);
             printf("// ===== END REGEN =====\n");
 #else
-            check("golden: byte length matches frozen v10",
-                  gn == SHARDED_SNAPSHOT_V10_GOLDEN_LEN);
-            check("golden: bytes byte-identical to frozen v10 (timestamp-masked)",
-                  gn == SHARDED_SNAPSHOT_V10_GOLDEN_LEN &&
-                  memcmp(gbuf, SHARDED_SNAPSHOT_V10_GOLDEN, gn) == 0);
+            check("golden: byte length matches frozen v11",
+                  gn == SHARDED_SNAPSHOT_V11_GOLDEN_LEN);
+            check("golden: bytes byte-identical to frozen v11 (timestamp-masked)",
+                  gn == SHARDED_SNAPSHOT_V11_GOLDEN_LEN &&
+                  memcmp(gbuf, SHARDED_SNAPSHOT_V11_GOLDEN, gn) == 0);
 #endif
             // Positive control: mutating one persisted+unmasked field MUST change the bytes.
             r->state.nodes[1].node_realized = MQ(424242.42);
@@ -6408,7 +6408,8 @@ int main() {
                 r->state.nodes[c].node_losses       = 2;
                 r->state.nodes[c].node_open_notional = MQ(100.0 + 50.0 * c);
                 r->state.nodes[c].node_peak_balance  = MQ(2600.0 + 100.0 * c);
-                r->state.nodes[c].node_dd_pct        = MQ(0.03 * c);
+                r->state.nodes[c].partner_pending_pnl = MQ(7.77 + 0.11 * c);   // v11 row (AM-4/D-420)
+                r->state.nodes[c].node_dd_pct        = MQ(0.5 + 0.03 * c);  // NOT on the v11 wire — negative-asserted below
                 // D-110 extend (adversarial-audit finding): the remaining persisted per-core money
                 // fields were SAVED but never asserted. Set distinct values + assert money-exact below.
                 r->state.nodes[c].allocated_balance  = MQ(2500.0 + 25.0 * c);
@@ -6563,8 +6564,10 @@ int main() {
                       Money_Eq(r2->state.nodes[c].last_entry_price, MQ(60000.0 + 100.0 * c)));
                 check("round-trip: node_peak_balance (money-exact, D-110)",
                       Money_Eq(r2->state.nodes[c].node_peak_balance, MQ(2600.0 + 100.0 * c)));
-                check("round-trip: node_dd_pct (money-exact, D-110)",
-                      Money_Eq(r2->state.nodes[c].node_dd_pct, MQ(0.03 * c)));
+                check("round-trip: partner_pending_pnl (money-exact, AM-4/D-420 v11 row)",
+                      Money_Eq(r2->state.nodes[c].partner_pending_pnl, MQ(7.77 + 0.11 * c)));
+                check("v11: node_dd_pct NOT on the wire — fresh-state zero survives load (recompute-on-eval)",
+                      Money_IsZero(r2->state.nodes[c].node_dd_pct));
                 check("round-trip: node_kill_tripped",
                       NODE_STATE_FLAG_IS_SET(r2->state.nodes[c], KILL_TRIPPED) == (c == 2));
                 check("round-trip: regime current",
@@ -6635,6 +6638,12 @@ int main() {
                   Money_Eq(r2->state.oms->portfolio.positions[0].original_tp, MQ(62100.0)));
             check("round-trip: Position original_sl (money-exact, D-110)",
                   Money_Eq(r2->state.oms->portfolio.positions[0].original_sl, MQ(60400.0)));
+            // v11 (AM-4/D-420 geometry-gate pin): this save/load ran with partials=0 —
+            // every slot is its own node, so the load-side slot-parity re-derive MUST
+            // leave the partner bitmap EMPTY (a lone active slot is NOT a mid-pair
+            // state without the partials geometry; the I3 H-3/H-4 gate).
+            check("v11: partials=0 load => partner_pending_bitmap == 0",
+                  r2->state.partner_pending_bitmap == 0);
         }
 
         // ---- Test 3: refuse legacy v11 magic cleanly ----
@@ -10030,6 +10039,76 @@ e3_skip_load:;
               check("F-018 W: leg-B 1-mul gross != 2-mul gross (TP2 leg exercises the D-190 split)", !Money_Eq(g1, g2)); }
             delete r;
         }
+
+        // ---- AM-4 (E.1.2 v11, D-420): mid-pair SAVE->LOAD — the parked state survives restart ----
+        // Machine-real parked state (CASE L's leg-A exit, leg B still riding) -> snapshot ->
+        // FRESH engine -> load: the persisted partner_pending_pnl commits via the registry
+        // walk, and partner_pending_bitmap RE-DERIVES from slot parity (exactly one of
+        // slots 0/1 active => bit 0). Leg B's exit then merges parked+net = ONE stat.
+        {
+            R* r = new R(); build(r);
+            const Money ENTRY = MQ(40308.41179447);
+            fill_leg(r, 0, ORDER_MARKET_BUY,  ENTRY, MQ(0.41050204));
+            fill_leg(r, 1, ORDER_MARKET_BUY,  ENTRY, MQ(0.44050204));
+            EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+            fill_leg(r, 0, ORDER_MARKET_SELL, MQ(41020.55671203), MQ(0.41050204));  // leg A exits; leg B rides
+            EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+            check("AM-4 pre: PARKED state live (bit 0 SET, pnl == +267.29766082 [A-1 ULP-verified], slot 1 active)",
+                  BITMAP_IS_SET(r->state.partner_pending_bitmap, BITMAP_BIT_U16(0)) &&
+                  Money_Eq(r->state.nodes[0].partner_pending_pnl, MQ(267.29766082)) &&
+                  (r->oms.portfolio.active_bitmap & 0x3) == 0x2);
+            const char* am4_path = "/tmp/ftv2_am4_midpair.dat";
+            check("AM-4: mid-pair save returns 1",
+                  tt::ShardedSnapshot_Save<64>(&r->state, am4_path, /*partials*/1) == 1);
+
+            R* r2 = new R(); build(r2);
+            check("AM-4: mid-pair load returns 1",
+                  tt::ShardedSnapshot_Load<64>(&r2->state, am4_path, /*partials*/1) == 1);
+            check("AM-4: partner_pending_pnl round-trips money-exact (the persisted park)",
+                  Money_Eq(r2->state.nodes[0].partner_pending_pnl, MQ(267.29766082)));
+            check("AM-4: partner_pending_bitmap RE-DERIVED bit 0 (slot parity: only leg B active)",
+                  BITMAP_IS_SET(r2->state.partner_pending_bitmap, BITMAP_BIT_U16(0)));
+
+            // Complete the pair in the RESTORED engine: leg B's SL exit merges parked+net
+            // (CASE L's goldens: pair net -517.17535106 => ONE loss, no phantom win).
+            fill_leg(r2, 1, ORDER_MARKET_SELL, MQ(38586.72189860), MQ(0.44050204));
+            EventLoop_DrainPostFill(&r2->state, &r2->oms, 0);
+            check("AM-4: restored pair completes as ONE loss (wins==0 / losses==1)",
+                  r2->state.nodes[0].node_wins == 0 && r2->state.nodes[0].node_losses == 1);
+            check("AM-4: bit CLEARED + pnl==0 after the restored merge",
+                  !BITMAP_IS_SET(r2->state.partner_pending_bitmap, BITMAP_BIT_U16(0)) &&
+                  Money_IsZero(r2->state.nodes[0].partner_pending_pnl));
+            delete r2; delete r;
+        }
+
+        // ---- AM-4 orphan-leg (D-420 graceful case): one leg active, NO parked pnl ----
+        // The rare by-design orphan (ring-full leg-B entry push, ExecutionCore.hpp): the
+        // restore re-derives bit=1 with pnl==0; the orphan's exit merges-with-zero =
+        // ONE correct W/L (strictly better than the runtime's own no-restart behavior).
+        {
+            R* r = new R(); build(r);
+            const Money ENTRY = MQ(40308.41179447);
+            fill_leg(r, 0, ORDER_MARKET_BUY, ENTRY, MQ(0.41050204));   // leg A alone (orphan)
+            EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+            const char* orph_path = "/tmp/ftv2_am4_orphan.dat";
+            check("AM-4 orphan: save returns 1",
+                  tt::ShardedSnapshot_Save<64>(&r->state, orph_path, /*partials*/1) == 1);
+            R* r2 = new R(); build(r2);
+            check("AM-4 orphan: load returns 1",
+                  tt::ShardedSnapshot_Load<64>(&r2->state, orph_path, /*partials*/1) == 1);
+            check("AM-4 orphan: bit re-derived 1 with pnl==0 (the graceful shape)",
+                  BITMAP_IS_SET(r2->state.partner_pending_bitmap, BITMAP_BIT_U16(0)) &&
+                  Money_IsZero(r2->state.nodes[0].partner_pending_pnl));
+            // The orphan's exit merges-with-zero -> classifies on the single leg (a WIN here).
+            fill_leg(r2, 0, ORDER_MARKET_SELL, MQ(41020.55671203), MQ(0.41050204));
+            EventLoop_DrainPostFill(&r2->state, &r2->oms, 0);
+            check("AM-4 orphan: exit records ONE stat via merge-with-zero (wins==1 / losses==0)",
+                  r2->state.nodes[0].node_wins == 1 && r2->state.nodes[0].node_losses == 0);
+            check("AM-4 orphan: bit CLEARED + pnl==0 after",
+                  !BITMAP_IS_SET(r2->state.partner_pending_bitmap, BITMAP_BIT_U16(0)) &&
+                  Money_IsZero(r2->state.nodes[0].partner_pending_pnl));
+            delete r2; delete r;
+        }
     }
 
     //======================================================================================================
@@ -11584,8 +11663,8 @@ e3_skip_load:;
         // SHARDED_SNAPSHOT_VERSION bumped from 3 to 4 for the CoreContext
         // strategy_state addition. Hardcoded check to catch accidental
         // reverts.
-        check("v5.15.5.C.3: SHARDED_SNAPSHOT_VERSION is 10 (…=8, Ship-A 16B=9, Ship-B DECIMAL epoch=10: money re-encoded 2^64->10^8)",
-              SHARDED_SNAPSHOT_VERSION == 10u);
+        check("E.1.2: SHARDED_SNAPSHOT_VERSION is 11 (…Ship-A 16B=9, Ship-B DECIMAL epoch=10, E.1.2 v11: node_dd_pct->partner_pending_pnl row swap)",
+              SHARDED_SNAPSHOT_VERSION == 11u);
     }
     {
         // Default state after EventLoopState_Init: strategy_state nullptr,
@@ -27010,7 +27089,7 @@ e3_skip_load:;
             // (b) version constants: the pre-epoch generation is structurally below current
             // (loaders compare equality — any v9/v13/v6/v2 artifact refuses on mismatch).
             check("Ship-B P4 epoch-reject: all four persisted versions sit ABOVE their binary-era tombstones",
-                  SHARDED_SNAPSHOT_VERSION == 10u && CONTROLLER_SNAPSHOT_VERSION == 14
+                  SHARDED_SNAPSHOT_VERSION == 11u && CONTROLLER_SNAPSHOT_VERSION == 14
                       && PORTFOLIO_SNAPSHOT_VERSION == 7 && STAMP_FORMAT_VERSION_CURRENT == 3);
             check("Ship-B P4 epoch-reject: stamp MAX_SUPPORTED == CURRENT (pre-epoch stamps [1,2] HARD-INVALID)",
                   MAX_SUPPORTED_STAMP_FORMAT_VERSION == 3);

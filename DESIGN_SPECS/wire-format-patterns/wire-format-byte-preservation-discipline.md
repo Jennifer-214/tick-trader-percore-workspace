@@ -1,9 +1,9 @@
 ---
 type: wire-format-pattern
 stage: 5-claude-md
-version: 1.1
+version: 1.2
 established: 2026-05-09
-last_amended: 2026-05-19
+last_amended: 2026-08-14   # Layer 5c — persist-layout listing golden + paired-bump (E.1.2 D-305/D-302)
 tags: [wire-format, framework-discipline, structural-fix, cross-tool-decoupling]
 surface: [wire-format, ml-inference, parser, cross-tool]
 sister_specs: [wire-format-canonical-body-invariants-helper.md, struct-padding-determinism-pattern.md, avx512-byte-determinism-pattern.md, framework-driven-cli-binary-pattern.md, autopopulate-pattern-for-production-caller-class.md, pre-post-cfg-registry-split-for-emit-order-preservation.md]
@@ -286,6 +286,37 @@ DERIVED_FILTER_DECLARE_WIRE_FORMAT_TWO_SOURCE(
 - **Path C — fixture file as lock:** eliminates magic number but still a registry-of-bytes accumulating per filter; per-cohort fixture regeneration (or tool-driven) still required. Rejected per "principle beats registry for ELIMINATING" rule.
 - **Path D — CMake-generated header with hash:** generated-files-in-git smell; CMake-specific; still a snapshot artifact. Rejected.
 - **Path E — comments-as-fixture inline:** source file growth; manual sync at comment level (Class 18 mirror at comment-vs-runtime); awkward for binary content. Rejected.
+
+### Layer 5c: Persist-layout listing golden + version paired-bump (registry-layout drift)
+
+**Established 2026-08-14 (E.1.2 D-305/D-302 — the triple-vacuity close).** When a persisted wire is
+SPECIFIED by an ordered registry (the `FOREACH_NODE_PERSIST_FIELD` shape: rows in wire order, with
+BIT/PAD/DELEGATE kinds and delegate sub-registries walked at their wire positions), three defenses are
+simultaneously blind to one delta class: a **size-neutral, count-neutral row swap** (drop one 16B row,
+add another — net 0 bytes, net 0 rows, and a byte-golden regenerated in the same commit matches by
+construction). The close is a FOURTH layer:
+
+1. **The flattened LISTING golden** — a committed, named-row listing of the full wire walk
+   (parent rows + delegate-internal rows; NAME-inclusive, order-sensitive, symbolic count tokens
+   verbatim). A LIST, never a digest: drift reports as `DROPPED node_dd_pct / ADDED partner_pending_pnl`,
+   not an opaque hash mismatch. Producer/differ: `tools/node_persist_layout.py`; golden under
+   `tools/goldens/`, re-blessed ONLY via the D-394 TTY flow.
+2. **The PAIRED-BUMP rule** — `check_identifier_retirement.py::paired_bump_check`: listing moved &&
+   the format VERSION unchanged vs the H21 ledger → RED (pre-commit Check H). Listing moved && version
+   bumped → info + re-bless obligation. Parse REFUSAL → violation, never a silent pass.
+3. **Width-constant enrollment** — symbolic array-width tokens stay verbatim in the listing, so their
+   VALUES enroll as immutable `wire-const` rows in the identifier ledger (a width change is
+   listing-invisible but ledger-red).
+
+Division of labor: the byte-golden (Layer 4/5-style fixtures) proves BYTES; the listing golden proves
+the SPEC'S SHAPE and forces the version bump; count-locks stay as in-build tripwires. Guard-building
+discipline: the tool shipped with 15 planted-mutation teeth + an AR-8 independent adversarial pass
+pre-commit (two latent parse-vacuity modes + a Class-51-C tooth found and closed before the guard's
+first commit — a guard's builder never declares it non-vacuous).
+
+First canonical: the E.1.2 per-node snapshot wire (SHARDED v10, 46 flattened rows). Apply when a
+second ordered persist registry ships (OMS's flat view is simpler and stays count-lock-guarded until
+its wire gains ordering/delegate complexity).
 
 ### Layer 6: Surface G discipline (back-compat for legacy stamps)
 

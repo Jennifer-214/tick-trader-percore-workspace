@@ -1,0 +1,53 @@
+# node_persist_layout.txt — the frozen per-node persist WIRE LISTING (node_persist_layout.py).
+# NAME-inclusive + ORDER-sensitive + delegate-internal (the D-302 net over the count/size/golden
+# triple-vacuity: a count-neutral row SWAP diffs HERE by name). A change REQUIRES a
+# SHARDED_SNAPSHOT_VERSION bump in the same commit (paired-bump rule,
+# check_identifier_retirement.py) — re-bless via node_persist_layout.py --bless (D-394 TTY flow).
+# format: index|path|type|kind|extra
+
+000|strategy_id|uint8_t|SCALAR:NO_COMMIT|
+001|resolved_strategy_id|uint8_t|SCALAR:COMMIT|
+002|strategy_state_kind|uint8_t|SCALAR:NO_COMMIT|
+003|_pad_ids|uint8_t|PAD:NO_COMMIT|1
+004|allocated_balance|Money|SCALAR:COMMIT|
+005|entries_processed|uint64_t|SCALAR:COMMIT|
+006|exits_processed|uint64_t|SCALAR:COMMIT|
+007|node_realized|Money|SCALAR:COMMIT|
+008|node_fees|Money|SCALAR:COMMIT|
+009|node_open_notional|Money|SCALAR:COMMIT|
+010|node_wins|uint32_t|SCALAR:COMMIT|
+011|node_losses|uint32_t|SCALAR:COMMIT|
+012|node_gross_wins|Money|SCALAR:COMMIT|
+013|node_gross_losses|Money|SCALAR:COMMIT|
+014|idle_cycles|uint32_t|SCALAR:COMMIT|
+015|last_entry_price|Money|SCALAR:COMMIT|
+016|last_entry_tick|uint64_t|SCALAR:COMMIT|
+017|sl_cooldown_remaining|uint32_t|SCALAR:COMMIT|
+018|node_peak_balance|Money|SCALAR:COMMIT|
+019|node_dd_pct|Money|SCALAR:COMMIT|
+020|node_kill_tripped|uint8_t|BIT:COMMIT|KILL_TRIPPED
+021|_pad_kill|uint8_t|PAD:NO_COMMIT|3
+022|node_ks_trips_total|uint32_t|SCALAR:COMMIT|
+023|regime_state|RegimeState<F>|DELEGATE:COMMIT|RegimeState
+024|regime_state/current_regime|int|SUB|1
+025|regime_state/proposed_regime|int|SUB|1
+026|regime_state/hysteresis_count|int|SUB|1
+027|regime_state/hysteresis_threshold|int|SUB|1
+028|regime_state/last_strategy_id|int|SUB|1
+029|regime_state/regime_start_tick|uint64_t|SUB|1
+030|regime_state/regime_start_time|time_t|SUB|1
+031|pnl_feeder|RegressionFeederX<F>|DELEGATE:COMMIT|RegressionFeederX
+032|pnl_feeder/price_samples|FPN_Binary<F>|SUB|MAX_WINDOW
+033|pnl_feeder/head|int|SUB|1
+034|pnl_feeder/count|int|SUB|1
+035|staged_prediction|double|SCALAR:COMMIT|
+036|active_prediction|double|SCALAR:COMMIT|
+037|last_confidence|double|SCALAR:COMMIT|
+038|confidence|ConfidenceScorer|DELEGATE:COMMIT|ConfidenceScorer
+039|confidence/ic.predictions.samples|double|SUB|ROLLING_IC_MAX_WINDOW
+040|confidence/ic.actuals.samples|double|SUB|ROLLING_IC_MAX_WINDOW
+041|confidence/ic.predictions.count|int|SUB|1
+042|confidence/ic.predictions.head|int|SUB|1
+043|confidence/rmse.window.samples|double|SUB|ROLLING_IC_MAX_WINDOW
+044|confidence/rmse.window.count|int|SUB|1
+045|confidence/rmse.window.head|int|SUB|1

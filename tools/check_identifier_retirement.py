@@ -104,6 +104,14 @@ SOURCES = [
     # the durable tracker + re-enrollment trigger; this comment is the code-side pointer to it.
     ("enum:NodeStateFlag", "MemHeaders/NodeStateFlagRegistry.hpp", "foreach", "FOREACH_NODE_STATE_FLAG",
         {"prefix": "NODE_STATE_FLAG_", "value": "positional"}),
+    # E.1.2 D-305 (a-class R3-b) — persist-wire WIDTH constants. The layout listing keeps
+    # the delegate arrays' count TOKENS verbatim (ROLLING_IC_MAX_WINDOW / MAX_WINDOW), so a
+    # WIDTH change is listing-invisible while it changes the wire by 3×8B×delta. Enrolling
+    # the VALUES here makes a width change a Check-H red (non-monotonic category ⇒ any change
+    # = RENUMBERED violation; a deliberate epoch accepts it via the TTY-gated --update) instead
+    # of waiting for the runtime byte-golden at ./build.sh test.
+    ("wire-const", "ML_Headers/ConfidenceScore.hpp",    "define", "ROLLING_IC_MAX_WINDOW", {}),
+    ("wire-const", "ML_Headers/LinearRegression3X.hpp", "define", "MAX_WINDOW",            {}),
 ]
 
 # Categories whose values are monotonic-non-decreasing (a DROP is also a violation).
@@ -125,54 +133,11 @@ def _parse_constexpr(text, name):
     return {name: int(m.group(1))} if m else {}
 
 
-def _macro_body(text, macro):
-    """Return the backslash-continued body of `#define MACRO(X) ...`, or None."""
-    m = re.search(r'#\s*define\s+' + re.escape(macro) + r'\s*\(\s*X\s*\)', text)
-    if not m:
-        return None
-    lines = []
-    for line in text[m.end():].splitlines():
-        lines.append(line)
-        if not line.rstrip().endswith('\\'):
-            break
-    return "\n".join(lines)
-
-
-def _rows(body):
-    """Split a macro body into the inner-text of each top-level `X( ... )` invocation."""
-    out, i = [], 0
-    while True:
-        j = body.find("X(", i)
-        if j < 0:
-            break
-        depth, k = 0, j + 1
-        while k < len(body):
-            if body[k] == '(':
-                depth += 1
-            elif body[k] == ')':
-                depth -= 1
-                if depth == 0:
-                    break
-            k += 1
-        out.append(body[j + 2:k])
-        i = k + 1
-    return out
-
-
-def _args(inner):
-    """Top-level comma split (respecting nested parens)."""
-    args, depth, cur = [], 0, []
-    for c in inner:
-        if c == '(':
-            depth += 1; cur.append(c)
-        elif c == ')':
-            depth -= 1; cur.append(c)
-        elif c == ',' and depth == 0:
-            args.append("".join(cur).strip()); cur = []
-        else:
-            cur.append(c)
-    args.append("".join(cur).strip())
-    return args
+# E.1.2 D-305 — the FOREACH-macro parse helpers (_macro_body / _rows / _args) moved
+# to node_persist_layout.py (the library tier) so the layout audit and this guard
+# share ONE implementation (single-source; one-direction dependency — that module
+# never imports this one).
+from node_persist_layout import _macro_body, _rows, _args  # noqa: E402
 
 
 def _parse_foreach(text, macro, opts):
@@ -300,6 +265,60 @@ def compare(frozen, current):
     return violations, additions, bumps
 
 
+def paired_bump_check(frozen, current, layout_cur=None, layout_gold=None):
+    """E.1.2 D-305 — the golden↔version PAIRED-BUMP rule (the D-208 M7 close).
+
+    The per-node persist LAYOUT (the flattened FOREACH_NODE_PERSIST_FIELD walk,
+    delegate-internal rows included) is frozen as a named-row golden
+    (tools/goldens/node_persist_layout.txt). If the layout moved and
+    SHARDED_SNAPSHOT_VERSION did NOT bump in the same tree, that is the exact
+    hole the count-locks + byte-golden are structurally blind to (a
+    size-neutral, count-neutral row swap — the triple-vacuity) → violation.
+    A layout delta WITH a version bump is the legitimate epoch path — surfaced
+    as info; the golden then re-blesses via node_persist_layout.py --bless
+    (D-394 TTY flow, same contract as this ledger's --update). A REFUSAL
+    (unparseable registry) is a violation, never a silent pass — a guard that
+    cannot see is not green.
+
+    layout_cur/layout_gold injectable for the positive-control teeth ONLY;
+    production callers pass neither and get the live parse + real golden.
+    """
+    import node_persist_layout as npl
+    violations, bumps = [], []
+    try:
+        if layout_cur is None:
+            # REPO_ROOT (not npl's default ENGINE) so a FOXML_REPO_ROOT override
+            # keeps version-parse and layout-parse on the SAME tree (a-class R5).
+            layout_cur = npl.listing_lines(npl.parse_layout(REPO_ROOT))
+        if layout_gold is None:
+            layout_gold = npl.load_golden()
+        if layout_gold is None:
+            violations.append(
+                "PERSIST-LAYOUT golden MISSING (tools/goldens/node_persist_layout.txt) — "
+                "establish via node_persist_layout.py --emit-initial.")
+            return violations, bumps
+        layout_diff = npl.diff_lines(layout_gold, layout_cur)
+        if layout_diff:
+            frozen_sv = frozen.get("version", {}).get("SHARDED_SNAPSHOT_VERSION")
+            cur_sv = current.get("version", {}).get("SHARDED_SNAPSHOT_VERSION")
+            if cur_sv == frozen_sv:
+                violations.append(
+                    "PERSIST-LAYOUT differs from its golden while SHARDED_SNAPSHOT_VERSION "
+                    f"is unchanged vs the ledger (both {cur_sv}) — the paired-bump rule "
+                    "(D-305/D-302): a wire-layout delta and its version bump ride the SAME "
+                    "commit. (If the bump already landed in an earlier commit, the layout "
+                    "golden is STALE — re-bless via node_persist_layout.py --bless.) Row delta:\n"
+                    + "\n".join(f"      {x}" for x in layout_diff))
+            else:
+                bumps.append(
+                    f"persist-layout :: {len(layout_diff)} row change(s) ride the SHARDED "
+                    f"bump {frozen_sv} -> {cur_sv} (re-bless the layout golden via "
+                    "node_persist_layout.py --bless + regen/RENAME the byte-golden)")
+    except npl.LayoutRefusal as e:
+        violations.append(f"PERSIST-LAYOUT audit REFUSED (cannot parse the registry): {e}")
+    return violations, bumps
+
+
 def main():
     arg = sys.argv[1] if len(sys.argv) > 1 else ""
     current = parse_current()
@@ -344,6 +363,10 @@ def main():
         return 1
 
     violations, additions, bumps = compare(frozen, current)
+    pb_violations, pb_bumps = paired_bump_check(frozen, current)
+    violations += pb_violations
+    bumps += pb_bumps
+
     for a in additions:
         print(f"[identifier-retirement] ADD (ok; run --update to record): {a}")
     for b in bumps:

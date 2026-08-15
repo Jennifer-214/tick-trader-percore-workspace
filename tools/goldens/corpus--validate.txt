@@ -140,6 +140,7 @@ MemHeaders/HmacSha256.hpp
 MemHeaders/InitArena.hpp
 MemHeaders/LatencyHistogram.hpp
 MemHeaders/NodeCtxInitRegistry.hpp
+MemHeaders/NodeCtxPersistRegistry.hpp
 MemHeaders/NodeCtxSummaryFieldRegistry.hpp
 MemHeaders/NodeStateFlagRegistry.hpp
 MemHeaders/OmsExitPredictorMetaRegistry.hpp

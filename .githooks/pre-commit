@@ -403,7 +403,7 @@ fi
 # ============================================================================
 if [ "${SKIP_IDENTIFIER_CHECK:-0}" != "1" ]; then
     ID_TOOL="${REPO_ROOT}/tools/check_identifier_retirement.py"
-    STAGED_ID=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^(CoreFrameworks/|ML_Headers/|Strategies/|MemHeaders/|tools/(identifier_ledger\.txt|check_identifier_retirement\.py))' || true)
+    STAGED_ID=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^(CoreFrameworks/|ML_Headers/|Strategies/|MemHeaders/|FixedPoint/|tools/(identifier_ledger\.txt|check_identifier_retirement\.py|node_persist_layout\.py|goldens/node_persist_layout\.txt))' || true)
     if [ -n "$STAGED_ID" ] && [ -f "$ID_TOOL" ]; then
         echo "[pre-commit] Check H: identifier-retirement (tombstone guard; staged registry/version change)"
         ID_OUT=$(python3 "$ID_TOOL" 2>&1); ID_RC=$?

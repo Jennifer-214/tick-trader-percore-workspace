@@ -15,7 +15,7 @@ so the snapshot stales when tags/units actually change, not on unrelated line dr
 `rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a
 conversion).
 
-Converted files: 164 · unit blocks: 1104
+Converted files: 165 · unit blocks: 1108
 
 ## [TAG] values → files
 
@@ -264,7 +264,7 @@ Converted files: 164 · unit blocks: 1104
 
 - `ML_Headers/ConfidenceScore.hpp`
 
-### DETERMINISM (34 files)
+### DETERMINISM (35 files)
 
 - `Backtest/BacktestEngine.hpp`
 - `Backtest/BacktestSharded.hpp`
@@ -298,10 +298,11 @@ Converted files: 164 · unit blocks: 1104
 - `ML_Headers/ThompsonBandit.hpp`
 - `MemHeaders/CfgGateRegistry.hpp`
 - `MemHeaders/HmacSha256.hpp`
+- `MemHeaders/NodeCtxPersistRegistry.hpp`
 - `MemHeaders/RunHistory.hpp`
 - `Version.hpp`
 
-### ENGINE (151 files)
+### ENGINE (152 files)
 
 - `Backtest/BacktestEngine.hpp`
 - `Backtest/BacktestSharded.hpp`
@@ -431,6 +432,7 @@ Converted files: 164 · unit blocks: 1104
 - `MemHeaders/InitArena.hpp`
 - `MemHeaders/LatencyHistogram.hpp`
 - `MemHeaders/NodeCtxInitRegistry.hpp`
+- `MemHeaders/NodeCtxPersistRegistry.hpp`
 - `MemHeaders/NodeCtxSummaryFieldRegistry.hpp`
 - `MemHeaders/NodeStateFlagRegistry.hpp`
 - `MemHeaders/OmsExitPredictorMetaRegistry.hpp`
@@ -470,7 +472,7 @@ Converted files: 164 · unit blocks: 1104
 - `CoreFrameworks/ShardedSnapshot.hpp`
 - `CoreFrameworks/ShardedTradeLog.hpp`
 
-### FRAMEWORK_DISCIPLINE (36 files)
+### FRAMEWORK_DISCIPLINE (37 files)
 
 - `Backtest/LabelFunctions.hpp`
 - `CoreFrameworks/CfgFieldDispatch.hpp`
@@ -498,6 +500,7 @@ Converted files: 164 · unit blocks: 1104
 - `MemHeaders/DisplayMetaRegistry.hpp`
 - `MemHeaders/FailureModeRegistry.hpp`
 - `MemHeaders/NodeCtxInitRegistry.hpp`
+- `MemHeaders/NodeCtxPersistRegistry.hpp`
 - `MemHeaders/NodeCtxSummaryFieldRegistry.hpp`
 - `MemHeaders/NodeStateFlagRegistry.hpp`
 - `MemHeaders/OmsExitPredictorMetaRegistry.hpp`
@@ -678,7 +681,7 @@ Converted files: 164 · unit blocks: 1104
 - `CoreFrameworks/ControllerConfig.hpp`
 - `CoreFrameworks/ParseFast.hpp`
 
-### PERSISTENCE (30 files)
+### PERSISTENCE (31 files)
 
 - `CoreFrameworks/CfgFieldDispatch.hpp`
 - `CoreFrameworks/ControllerEventLoop.hpp`
@@ -706,6 +709,7 @@ Converted files: 164 · unit blocks: 1104
 - `MemHeaders/CfgGateRegistry.hpp`
 - `MemHeaders/HealthLog.hpp`
 - `MemHeaders/HmacSha256.hpp`
+- `MemHeaders/NodeCtxPersistRegistry.hpp`
 - `MemHeaders/OmsFieldRegistry.hpp`
 - `MemHeaders/PositionFieldRegistry.hpp`
 - `MemHeaders/RunHistory.hpp`
@@ -780,7 +784,7 @@ Converted files: 164 · unit blocks: 1104
 
 ## Unit blocks by [TYPE]
 
-### ASSERT (39)
+### ASSERT (40)
 
 - `BITMAP_OVERFLOW` — `ML_Headers/NodeModelZoo.hpp`
 - `BITMAP_OVERFLOW` — `MemHeaders/FailureModeRegistry.hpp`
@@ -818,6 +822,7 @@ Converted files: 164 · unit blocks: 1104
 - `REGISTRY_COVERAGE` — `DataStream/CalibLogColRegistry.hpp`
 - `REGISTRY_COVERAGE` — `MemHeaders/DisplayMetaRegistry.hpp`
 - `REGISTRY_COVERAGE` — `MemHeaders/NodeCtxInitRegistry.hpp`
+- `REGISTRY_COVERAGE` — `MemHeaders/NodeCtxPersistRegistry.hpp`
 - `REGISTRY_COVERAGE` — `MemHeaders/NodeCtxSummaryFieldRegistry.hpp`
 - `REGISTRY_COVERAGE` — `MemHeaders/OmsFieldRegistry.hpp`
 - `REGISTRY_COVERAGE` — `Strategies/StrategyInterface.hpp`
@@ -833,7 +838,7 @@ Converted files: 164 · unit blocks: 1104
 - `OrderType` — `CoreFrameworks/Order.hpp`
 - `StrategyCategory` — `Strategies/StrategyCategories.hpp`
 
-### FILE (164)
+### FILE (165)
 
 - `Backtest/BacktestEngine.hpp` — `Backtest/BacktestEngine.hpp`
 - `Backtest/BacktestPanels.hpp` — `Backtest/BacktestPanels.hpp`
@@ -976,6 +981,7 @@ Converted files: 164 · unit blocks: 1104
 - `MemHeaders/InitArena.hpp` — `MemHeaders/InitArena.hpp`
 - `MemHeaders/LatencyHistogram.hpp` — `MemHeaders/LatencyHistogram.hpp`
 - `MemHeaders/NodeCtxInitRegistry.hpp` — `MemHeaders/NodeCtxInitRegistry.hpp`
+- `MemHeaders/NodeCtxPersistRegistry.hpp` — `MemHeaders/NodeCtxPersistRegistry.hpp`
 - `MemHeaders/NodeCtxSummaryFieldRegistry.hpp` — `MemHeaders/NodeCtxSummaryFieldRegistry.hpp`
 - `MemHeaders/NodeStateFlagRegistry.hpp` — `MemHeaders/NodeStateFlagRegistry.hpp`
 - `MemHeaders/OmsExitPredictorMetaRegistry.hpp` — `MemHeaders/OmsExitPredictorMetaRegistry.hpp`
@@ -1515,7 +1521,7 @@ Converted files: 164 · unit blocks: 1104
 - `walkforward_worker_fn` — `Backtest/BacktestPanels.hpp`
 - `ws_read_frame` — `DataStream/WebSocketUtil.hpp`
 
-### MACRO (19)
+### MACRO (20)
 
 - `*_FROM_DERIVED wrappers` — `MemHeaders/CfgGateRegistry.hpp`
 - `BITMAP_* (single-thread)` — `MemHeaders/BitmapMacros.hpp`
@@ -1527,6 +1533,7 @@ Converted files: 164 · unit blocks: 1104
 - `MBS_*` — `MemHeaders/BitmapMacros.hpp`
 - `NODE_CTX_*_AUTOPOPULATE` — `MemHeaders/NodeCtxInitRegistry.hpp`
 - `NODE_STATE_FLAG_*` — `MemHeaders/NodeStateFlagRegistry.hpp`
+- `NPF_PROJECT_SAVE` — `MemHeaders/NodeCtxPersistRegistry.hpp`
 - `OMS_*_AUTOPOPULATE` — `MemHeaders/OmsFieldRegistry.hpp`
 - `OMS_META_*` — `MemHeaders/OmsExitPredictorMetaRegistry.hpp`
 - `OMS_PROJECT_*` — `MemHeaders/OmsFieldRegistry.hpp`
@@ -1537,7 +1544,7 @@ Converted files: 164 · unit blocks: 1104
 - `STAMP_RESULT_DERIVED_FIELDS_AUTO_GEN` — `MemHeaders/CfgGateRegistry.hpp`
 - `STATE_FLAG_*` — `MemHeaders/PerNodeStateFlagsRegistry.hpp`
 
-### REGISTRY (62)
+### REGISTRY (63)
 
 - `FOREACH_ARCH_FIELD_DRIFT` — `MemHeaders/ArchFieldDriftRegistry.hpp`
 - `FOREACH_BACKTEST_METRIC` — `CoreFrameworks/MetricCompute.hpp`
@@ -1568,6 +1575,7 @@ Converted files: 164 · unit blocks: 1104
 - `FOREACH_ML_CFG_FLAG` — `ML_Headers/MlCfgFlagRegistry.hpp`
 - `FOREACH_NODE_CTX_FIELD` — `MemHeaders/NodeCtxInitRegistry.hpp`
 - `FOREACH_NODE_CTX_SUMMARY_FIELD` — `MemHeaders/NodeCtxSummaryFieldRegistry.hpp`
+- `FOREACH_NODE_PERSIST_FIELD` — `MemHeaders/NodeCtxPersistRegistry.hpp`
 - `FOREACH_NODE_STATE_FLAG` — `MemHeaders/NodeStateFlagRegistry.hpp`
 - `FOREACH_OMS_FIELD` — `MemHeaders/OmsFieldRegistry.hpp`
 - `FOREACH_OMS_META_SLOT` — `MemHeaders/OmsExitPredictorMetaRegistry.hpp`

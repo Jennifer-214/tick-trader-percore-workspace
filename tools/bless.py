@@ -42,10 +42,15 @@ THE D-394 CONTRACT, in full:
   4. A no-op does NOT write (D-369 stamp-on-change). Re-blessing an unchanged golden must leave
      the file byte-identical, or every "run the producer, expect 0-diff" currency check breaks.
 
-THE PROPERTY THIS BUYS: per D-385/M10 a delegated agent becomes structurally INCAPABLE of
-blessing a golden. That is what keeps a golden a TOTAL acceptance oracle — the moment an agent
-can re-bless on red, the golden matches by construction and proves nothing (Class-51, planted in
-the guard layer itself).
+THE PROPERTY THIS BUYS: per D-385/M10 a delegated agent cannot re-bless a golden THROUGH ANY
+TOOL PATH. Honest scope (a-class 2026-08-14): a raw shell redirect of a producer's output over
+the golden file remains physically possible — the file itself is not write-protected. What keeps
+a golden a TOTAL acceptance oracle in practice is the TRIAD: (1) every tool path is TTY-gated
+here, (2) a golden is a REVIEWED, committed artifact (a redirect surfaces as a golden diff at
+workspace commit), and (3) the guards red symmetrically when a golden is edited against an
+unchanged producer. The moment an agent can re-bless on red through a sanctioned path, the
+golden matches by construction and proves nothing (Class-51, planted in the guard layer itself)
+— which is why there is no --yes, no --force, and no non-TTY branch.
 """
 import os
 import sys
@@ -305,6 +310,10 @@ BLESSABLES = [
      "kind": "dispatch", "golden": _HERE / "goldens" / "corpus--derived_facts.txt",
      "check": [sys.executable, str(_HERE / "check_corpus_membership.py"), "--profile", "derived_facts"],
      "bless": [sys.executable, str(_HERE / "check_corpus_membership.py"), "--profile", "derived_facts", "--bless"]},
+    {"key": "node-persist-layout", "label": "per-node persist wire listing (E.1.2 D-305 paired-bump golden)",
+     "kind": "dispatch", "golden": _HERE / "goldens" / "node_persist_layout.txt",
+     "check": [sys.executable, str(_HERE / "node_persist_layout.py")],
+     "bless": [sys.executable, str(_HERE / "node_persist_layout.py"), "--bless"]},
     {"key": "identifier-ledger", "label": "H21 identifier ledger (Knight-Capital tombstone golden)",
      "kind": "dispatch",
      "check": [sys.executable, str(_HERE / "check_identifier_retirement.py")],

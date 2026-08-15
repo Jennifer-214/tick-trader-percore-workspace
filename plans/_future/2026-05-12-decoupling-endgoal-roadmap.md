@@ -701,6 +701,22 @@ on engine via Decision F SOFT compat parser).
   the Value column basis, the per-node budget tooltip source (`node_open_notional` vs allocation),
   and the half-pair shape (leg-B qty 0 via `partial_exit_pct` resolution → submit skipped → lone
   full-size-looking #0.A). Pin the operator's cfg `partial_exit_pct` at repro.
+- **NEW lane (operator, same evening, 2nd session): Trade History shows nothing while positions are open**
+  ("doesn't show entry and exits"). Code facts: the writer logs PER-EVENT rows — separate
+  `ShardedTradeLog_RecordEntry`/`_RecordExit` (`OrderManager.hpp:793/:810`, wired via the entry/exit
+  fill-emit hooks `:1473/:1577`) — while the panel's reader models COMPLETED ROUND-TRIPS
+  (`TradeHistoryPanel.hpp:230-247` computes `exit_price − entry_price` per row; empty ⇒ "no completed
+  trades yet" `:272`). Second candidate mechanism: a FILENAME split — `ShardedTradeLog.hpp:36-37` says
+  sharded writes `SYMBOL_sharded_order_history.csv` DISTINCT from single-core's
+  `SYMBOL_order_history.csv`, while `:75` says the aggregate `SYMBOL_order_history.csv` is what
+  "GUI/TradeReader reads" — if the panel Init points at the un-written name in sharded mode the panel
+  is dead entirely (empty even after exits). DISCRIMINATOR at repro: does the panel populate after a
+  position CLOSES? If yes → semantics gap (operator wants live entry rows too — add an OPEN/entry-row
+  view); if no → the filename-split bug. Fix rides the EV-1 leaf either way.
+  **Positive evidence from the same screenshot:** the pairs render correctly with the qty split
+  visible (`#0.A/#0.B` at $1250/$1250 from a $2500 alloc; `#1.A/#1.B` $500/$500 from $1000) — the
+  earlier "each leg consumes the full budget" observation is NOT the positions-table Value column,
+  narrowing that lane to the per-node budget tooltip / an earlier-session state.
 - **QUICK-KILLED same evening (2026-08-14, ahead of the leaf):** A8 Positions-row `sc[]` AUTO palette
   entry + static_assert (mirrors the Header fix) · the EV-2 D-1 stale `confidence_freshness_tau`
   per-node row DELETED from `per_node_fields[]` (stops NEW poison writes; operator's engine.cfg

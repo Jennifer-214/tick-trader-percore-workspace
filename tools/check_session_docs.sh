@@ -137,6 +137,10 @@ run_hard "corpus-membership guard teeth (ADD/DELETE/RENAME/REORDER flagged; abse
     bash "$REPO_ROOT/tools/check_corpus_membership_selftest.sh"
 run_hard "import-from-core lint teeth (planted rollers in BOTH spellings flagged; own-dir passes)" \
     bash "$REPO_ROOT/tools/check_import_from_core_selftest.sh"
+run_hard "node-persist-layout --selftest (E.1.2 D-305 teeth: planted drop/add/name-swap/reorder/delegate-drop fire; refusals rc2; real-tree non-vacuity)" \
+    bash "$REPO_ROOT/tools/node_persist_layout_selftest.sh"
+run_hard "bless roster + flows --selftest (every tools/goldens/*.txt rostered; D-394 refusal teeth — the a-class-found unwired tooth)" \
+    python3 "$REPO_ROOT/tools/bless.py" --selftest
 run_hard "schema-version guard teeth (drifted [SCHEMA]_[v1] flagged; locked passes; exempt opts out)" \
     bash "$REPO_ROOT/tools/check_schema_version_selftest.sh"
 run_hard "tool-I/O envelope teeth (emit/read/validate incl. negative controls)" \

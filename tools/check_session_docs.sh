@@ -139,6 +139,10 @@ run_hard "import-from-core lint teeth (planted rollers in BOTH spellings flagged
     bash "$REPO_ROOT/tools/check_import_from_core_selftest.sh"
 run_hard "node-persist-layout --selftest (E.1.2 D-305 teeth: planted drop/add/name-swap/reorder/delegate-drop fire; refusals rc2; real-tree non-vacuity)" \
     bash "$REPO_ROOT/tools/node_persist_layout_selftest.sh"
+run_hard "reset-before-producer teeth (planted producer-before-reset fires; correct order passes; vanished site REFUSES rc2; both live rules resolve)" \
+    bash "$REPO_ROOT/tools/check_reset_before_producer_selftest.sh"
+run_hard "reset-before-producer (D-421: a per-pass reset must sit on the correct side of its producers — Class 44 sub-B)" \
+    python3 "$REPO_ROOT/tools/check_reset_before_producer.py"
 run_hard "bless roster + flows --selftest (every tools/goldens/*.txt rostered; D-394 refusal teeth — the a-class-found unwired tooth)" \
     python3 "$REPO_ROOT/tools/bless.py" --selftest
 run_hard "schema-version guard teeth (drifted [SCHEMA]_[v1] flagged; locked passes; exempt opts out)" \

@@ -411,7 +411,7 @@ Static_assert at `OmsFieldRegistry.hpp:377-381` bumps from `>= 3` to `>= 5` with
 Class 30 (per `DOCS/RECURRING_BUG_PATTERNS.md`) is structurally closed at `.F.4c.4` via three-barrier shape per `registry-coverage-ci-check-pattern.md` Shape A canonical:
 
 - **Barrier 1**: enroll `last_exit_fee` + `bandit_reward_bps` in `FOREACH_OMS_PER_SLOT_FIELD` (direct fix at canonical instance site)
-- **Barrier 2**: NEW `tools/check_oms_per_slot_registry_integrity.py` CI Check 8 — scans `OmsState` for `\w+[MAX_PORTFOLIO_POSITIONS]` arrays + verifies enrollment OR explicit exemption (structural enforcement)
+- **Barrier 2**: NEW `tools/check_oms_per_slot_registry_integrity.py **[NEVER BUILT — TD-274]**` CI Check 8 — scans `OmsState` for `\w+[MAX_PORTFOLIO_POSITIONS]` arrays + verifies enrollment OR explicit exemption (structural enforcement)
 - **Barrier 3**: Class 30 codification in RBP + this spec's amendment + cross-ref from `registry-coverage-ci-check-pattern.md` § Canonical Application 3 (pattern visibility for future contributors)
 
 Future per-slot sibling additions on `OmsState` either enroll OR add to Check 8 exemption list with rationale category + migration trigger. The class cannot recur without explicit bypass at multiple structural points.

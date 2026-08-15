@@ -254,6 +254,28 @@ A "trade" under partials = leg A + leg B together (one logical position). W/L co
 
 Implementation in `EventLoop_DrainPostFillOneCore` (lines ~888-905). `core_gross_wins` / `core_gross_losses` accumulate the **pair net** into the matching bucket — single classification site.
 
+## Capital-Control Latch Re-Arm (v5.15.5.F.4d.1.E.1.2 / D-421)
+
+**Every latch that gates a capital control must be cleared by EVERY path that resumes the node.**
+
+A latch exists to stop a control firing twice for one episode. That makes it, by construction, a
+thing that *disables* the control — so any resume path which clears the node's visible halt state
+but not the latch returns the node to trading with the control silently disarmed.
+
+Worked instance: `MASK_DRIFT_KILL_TRIPPED` (`DriftHistory.drift_state_flags`) was set when drift
+auto-kill fired and cleared by **nothing** except `DriftHistory_Init`. Neither resume path reached
+it — the operator's manual kill-reset clears the node flag, peak and drawdown only; paper reset
+walks `FOREACH_NODE_CTX_FIELD`, which `drift_history` is not a row of. So clearing a drift kill from
+the GUI resumed that node with its drift auto-kill dead for the process lifetime. Being *unpersisted*
+was the only thing re-arming it across restarts, which is why it never surfaced — and which inverted
+the then-open decision to persist it.
+
+**The invariant's teeth:** for each resume path, enumerate the latches the node carries and clear
+each, or state why one legitimately survives. Note the two paths can want DIFFERENT answers and
+usually do: a *session* reset (paper reset) wants a full re-init including history; a *resume THIS
+node* reset wants the latch released and the history kept. Copying one clear to the other is the
+error the enumeration is there to prevent.
+
 ## Train-Serve Handoff Verification (v5.9.2a+)
 
 Any artifact traveling from training to serving — model file, stamp body, scaler sidecar (v5.9.3), and any future analogous artifact (ensemble weights, feature config, calibration curves) — MUST satisfy ALL FIVE:

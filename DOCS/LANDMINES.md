@@ -369,7 +369,7 @@ D-394 (the TTY contract) · Class-51.
 
 ---
 
-## A background wrapper's exit code is not your build's (2026-08-15)
+## Landmine 16: A background wrapper's exit code is not your build's (2026-08-15)
 
 **What happened.** A backgrounded `cmake --build … > log 2>&1; RC=$?; echo "build RC=$RC"; grep …`
 reported **exit code 0** in its completion notification — while the compile had *failed*. The
@@ -396,7 +396,7 @@ did not grow after you added assertions is a stale binary until proven otherwise
 
 ---
 
-## You cannot demonstrate UB in a test — assert the property instead (2026-08-15)
+## Landmine 17: You cannot demonstrate UB in a test — assert the property instead (2026-08-15)
 
 **What happened.** Closing the `gate_state` indeterminate-read (a struct member with no initializer,
 read cross-thread), the obvious non-vacuity control was: construct the *pre-fix* shape over

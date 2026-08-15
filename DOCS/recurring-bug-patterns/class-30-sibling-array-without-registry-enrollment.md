@@ -8,7 +8,7 @@ surface_tags: [registry, oms-drainer, ci-tooling]
 severity: medium
 recurrence_count: 1
 first_instance: v5.15.5.F.4d
-closure_mechanism: 3-barrier closure (Barrier 1 enroll last_exit_fee[_i] + bandit_reward_bps[_i] in FOREACH_OMS_PER_SLOT_FIELD; Barrier 2 tools/check_oms_per_slot_registry_integrity.py Check 8 CI scan + exemption registry; Barrier 3 registry-coverage-ci-check-pattern.md codification) + /dod-audit codebase-wide FOREACH_<X>_PER_SLOT_FIELD coverage scan + /registry-fit-audit
+closure_mechanism: ⚠ INCOMPLETE — Barrier 2's tool WAS NEVER WRITTEN (TD-274); the class is NOT structurally closed, only clean-by-nobody-adding-a-field. 3-barrier closure AS DESIGNED (Barrier 1 enroll last_exit_fee[_i] + bandit_reward_bps[_i] in FOREACH_OMS_PER_SLOT_FIELD; Barrier 2 tools/check_oms_per_slot_registry_integrity.py **[NEVER BUILT — TD-274]** Check 8 CI scan + exemption registry; Barrier 3 registry-coverage-ci-check-pattern.md codification) + /dod-audit codebase-wide FOREACH_<X>_PER_SLOT_FIELD coverage scan + /registry-fit-audit
 sister_classes: [14, 18, 21, 27, 28, 29]
 ---
 
@@ -55,10 +55,10 @@ Three-barrier closure landing at `v5.15.5.F.4c.4`:
 
 (NEW `bandit_reward_bps[_i]` row also added at `.F.4c.4` for bandit reward attribution per slot — see ship plan § N.2.)
 
-**Barrier 2: Structural fix — `tools/check_oms_per_slot_registry_integrity.py` (NEW Check 8).** Python CI script that scans OmsState for `[MAX_PORTFOLIO_POSITIONS]` arrays + verifies all enrolled in `FOREACH_OMS_PER_SLOT_FIELD`, with explicit-exempt list for arrays with special handling. Sister tool to `tools/check_per_core_registry_integrity.py` (Check 2 + Check 7).
+**Barrier 2: Structural fix — `tools/check_oms_per_slot_registry_integrity.py **[NEVER BUILT — TD-274]**` (NEW Check 8).** Python CI script that scans OmsState for `[MAX_PORTFOLIO_POSITIONS]` arrays + verifies all enrolled in `FOREACH_OMS_PER_SLOT_FIELD`, with explicit-exempt list for arrays with special handling. Sister tool to `tools/check_per_core_registry_integrity.py` (Check 2 + Check 7).
 
 ```python
-# tools/check_oms_per_slot_registry_integrity.py — Check 8
+# tools/check_oms_per_slot_registry_integrity.py **[NEVER BUILT — TD-274]** — Check 8
 # Scans OmsState for per-slot sibling arrays + verifies registry coverage
 # Failure mode: struct has [MAX_PORTFOLIO_POSITIONS] array not in FOREACH_OMS_PER_SLOT_FIELD
 # Exemption list: last_exit_predicted_meta (SPECIAL_CLEAR_HELPER — uses OMS_META_CLEAR)
@@ -80,7 +80,7 @@ Codified as a sister rule to Class 27 prevention. Triggers when adding a new sib
 Audit skill enforcement:
 - `/dod-audit` — scans for `FOREACH_<X>_PER_SLOT_FIELD` registries codebase-wide; for each, compares struct sibling-array fields to registry rows; flags coverage gaps as candidate-Class-30 instances.
 - `/registry-fit-audit` — surfaces subsystems that have per-slot sibling arrays but no canonical registry → candidate for new Shape A application of `registry-coverage-ci-check-pattern.md`.
-- CI Check 8 (NEW at `.F.4c.4`) — `tools/check_oms_per_slot_registry_integrity.py` enforces OmsState specifically.
+- CI Check 8 (NEW at `.F.4c.4`) — `tools/check_oms_per_slot_registry_integrity.py **[NEVER BUILT — TD-274]**` enforces OmsState specifically.
 
 Anti-pattern grep signatures (for `/dod-audit` + `/registry-fit-audit` integration):
 
@@ -112,5 +112,5 @@ Exemption mechanism (per `manual-fields-inventory-pattern.md`):
 - `DESIGN_SPECS/refactor-patterns/decision-time-data-binding-pattern.md` — sibling-array variant; OmsState per-slot arrays are Pattern 4 sibling-array carrier mechanism
 - `MemHeaders/OmsFieldRegistry.hpp:321` (post-`v5.15.5.F.4c.4`) — `FOREACH_OMS_PER_SLOT_FIELD` extended to 5 rows
 - `CoreFrameworks/OrderManager.hpp:411` (post-`v5.15.5.F.4c.3` WIP2d-1.B.1) — `last_exit_fee[16]` declaration (canonical first instance of Class 30)
-- `tools/check_oms_per_slot_registry_integrity.py` (NEW at `.F.4c.4`) — Check 8 enforcement
+- `tools/check_oms_per_slot_registry_integrity.py **[NEVER BUILT — TD-274]**` (NEW at `.F.4c.4`) — Check 8 enforcement
 - CLAUDE.md item 31 (framework discipline meta-principle)

@@ -282,14 +282,14 @@ Reuse-by-copy-paste over a tool template is fine; ONE monolithic tool that handl
 **Target struct:** `OmsState` (per-slot sibling arrays specifically)
 **Registry:** `FOREACH_OMS_PER_SLOT_FIELD` (at `MemHeaders/OmsFieldRegistry.hpp:321`)
 **Field shape:** `\w+\[MAX_PORTFOLIO_POSITIONS\]` arrays in OmsState
-**Tool:** `tools/check_oms_per_slot_registry_integrity.py` (NEW at .F.4c.4)
+**Tool:** `tools/check_oms_per_slot_registry_integrity.py **[NEVER BUILT — TD-274]**` (NEW at .F.4c.4)
 **Closes:** Class 30 (sibling array without registry enrollment)
 **Exemption mechanism:** explicit-exempt list within the tool — rationale categories (currently: SPECIAL_CLEAR_HELPER for `last_exit_predicted_meta[16]` which uses dedicated `OMS_META_CLEAR` helper)
 **Failure mode prevented:** AUTOPOPULATE expansions (init walk, post-fill reset, snapshot skip) silently skipping fields that physically exist as per-slot arrays
 **Canonical first-fix instance:** `OmsState::last_exit_fee[MAX_PORTFOLIO_POSITIONS]` (added at v5.15.5.F.4c.3 WIP2d-1.B.1 but never enrolled in `FOREACH_OMS_PER_SLOT_FIELD` — latent drift surfaced at .F.4c.4 verification pass; enrolled simultaneously with new `bandit_reward_bps[_i]` row)
 
 
-⚠ **CORRECTION 2026-08-15 (D-421):** `tools/check_oms_per_slot_registry_integrity.py` **does not
+⚠ **CORRECTION 2026-08-15 (D-421):** `tools/check_oms_per_slot_registry_integrity.py **[NEVER BUILT — TD-274]**` **does not
 exist** — it was never written. Nine sites across four documents (including this spec's Tool row,
 its copy-me-template list, its Stage-6 "three canonical CI tools exist" claim, and Class 30's
 frontmatter `closure_mechanism`) assert that it does. **Class 30 is therefore documented as
@@ -347,7 +347,7 @@ where the findings actually come from.
 1. **Verify trigger criteria** — all 4 conditions hold (registry exists, AUTOPOPULATE-bearing, regex-identifiable field shape, bug class with ≥1 instance OR forward-risk).
 2. **Determine variant** — Shape A (positive coverage) OR Shape B (anti-pattern enforcement).
 3. **Author the canonical registry** if Shape A and not already present; OR identify the anti-pattern shape if Shape B.
-4. **Write the CI check Python script** — copy nearest sister tool as template (`check_per_core_registry_integrity.py` for Shape A + Shape B; `check_oms_per_slot_registry_integrity.py` for per-slot Shape A); adjust:
+4. **Write the CI check Python script** — copy nearest sister tool as template (`check_per_core_registry_integrity.py` for Shape A + Shape B; `check_oms_per_slot_registry_integrity.py **[NEVER BUILT — TD-274]**` for per-slot Shape A); adjust:
    - File glob (which sources to scan)
    - Field-shape regex (the predicate)
    - Registry-content regex (Shape A only)
@@ -370,7 +370,7 @@ where the findings actually come from.
 - **Stage 3 (ACTIVE)** — extracted at v5.15.5.F.4c.4 from 3 canonical apps (Check 2 + Check 7 + Check 8); ACTIVE for Shape A; DRAFT for Shape B (per-variant Stage tracking inside spec body)
 - **Stage 4 (subsequent applications)** — projected: Shape A extensions (STAMP_BOUND drift-row coverage, AUTOPOPULATE parser↔GUI parity, ML FeatureRegistry stamp emission, Strategy enum/dispatcher coverage); Shape B extensions (scalar cfg-mirror to ConfidenceScorer/PortfolioController, H14 bitfield enforcement, H13 reinterpret_cast forbidden, H4 FPN_Binary-on-accounting enforcement, PerCoreOverrides<F> FORBIDDEN check)
 - **Stage 5 (CLAUDE.md cross-link + invariant promotion)** — candidate H21 invariant: "Every framework-eligible field is enrolled in its canonical registry, OR explicit-exempt with rationale category + migration trigger." Promotion criteria: 2+ subsystems with Shape A CI check OR Shape B's 2nd canonical lands. Deferred for now.
-- **Stage 6 (tooling enforcement)** — three canonical CI tools exist at extraction time (`check_per_core_registry_integrity.py`, `scan_class_27_full.py`, `check_oms_per_slot_registry_integrity.py`); future apps add per-subsystem scripts
+- **Stage 6 (tooling enforcement)** — three canonical CI tools exist at extraction time (`check_per_core_registry_integrity.py`, `scan_class_27_full.py`, `check_oms_per_slot_registry_integrity.py **[NEVER BUILT — TD-274]**`); future apps add per-subsystem scripts
 - **Stage 7 (wider audit + cohort migration)** — `/dod-audit` baseline scan picks up "FOREACH_*" registries codebase-wide and surfaces enrollment gaps as cohort-audit candidates
 
 ---
@@ -474,7 +474,7 @@ Without exemption mechanism, the CI check becomes rigid → gets disabled when f
 
 Each canonical application follows the three-barrier shape (per Class 23 prevention precedent):
 - **Barrier 1: direct fix** at the canonical instance site (e.g., enroll `last_exit_fee` in `FOREACH_OMS_PER_SLOT_FIELD`)
-- **Barrier 2: structural fix** via CI check (e.g., new `tools/check_oms_per_slot_registry_integrity.py`)
+- **Barrier 2: structural fix** via CI check (e.g., new `tools/check_oms_per_slot_registry_integrity.py **[NEVER BUILT — TD-274]**`)
 - **Barrier 3: pattern codification** via bug class entry + spec amendment (e.g., Class 30 in RBP + this spec)
 
 The three-barrier shape ensures the class cannot recur without explicit suppression at multiple points.
@@ -485,7 +485,7 @@ Pattern lifecycle says 2+ canonical apps before spec extraction. THIS spec quali
 
 ### Gotcha 2 — Tool template drift between sister apps
 
-When copying a sister tool as template (e.g., `check_per_core_registry_integrity.py` → `check_oms_per_slot_registry_integrity.py`), the templates can drift over time as one gets updated and the other doesn't. Mitigation: keep the template-shared logic in a shared module (`tools/_ci_check_shared.py`) if drift becomes an issue. Currently acceptable at 2 tools; reconsider at 4+.
+When copying a sister tool as template (e.g., `check_per_core_registry_integrity.py` → `check_oms_per_slot_registry_integrity.py **[NEVER BUILT — TD-274]**`), the templates can drift over time as one gets updated and the other doesn't. Mitigation: keep the template-shared logic in a shared module (`tools/_ci_check_shared.py`) if drift becomes an issue. Currently acceptable at 2 tools; reconsider at 4+.
 
 ### Gotcha 3 — Auto-write contract: keep canonical applications table updated
 

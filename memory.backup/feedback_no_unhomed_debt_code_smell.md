@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: ce648e23-8658-4181-885c-5400b8e672bb
-  sister_specs: [feedback_close_out_now_over_defer_when_small.md, feedback_deferral_reasons_merit_not_effort_or_context.md, feedback_fold_findings_into_destination_plan.md, feedback_no_defer_for_effort.md, feedback_opportunistic_tech_debt_closure.md, feedback_fix_toward_future_trajectory_not_static_state.md, feedback_process_weight_by_surface_blast_radius.md]
+  sister_specs: [feedback_close_out_now_over_defer_when_small.md, feedback_deferral_reasons_merit_not_effort_or_context.md, feedback_fold_findings_into_destination_plan.md, feedback_no_defer_for_effort.md, feedback_opportunistic_tech_debt_closure.md, feedback_fix_toward_future_trajectory_not_static_state.md, feedback_process_weight_by_surface_blast_radius.md, feedback_spotcheck_findings_route_to_plan_homes_not_techdebt.md]
   tags: []
 ---
 

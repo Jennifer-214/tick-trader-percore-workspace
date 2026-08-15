@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: phase-e-ship-close-v5.15.5.F.4d.1.B.6
-  sister_specs: [feedback_structural_fix_for_recurring_class.md, feedback_audit_canonical_sister_before_new_infra.md, feedback_no_defer_for_effort.md, feedback_cpp17_inline_variable_for_shared_state_across_tus.md, feedback_terminology_evolution_bridge_not_history_rewrite.md, feedback_machine_portable_resolver_for_committed_tool_paths.md, feedback_defer_to_source_authority_for_external_semantics.md, feedback_single_source_the_computation_not_just_the_mode.md, feedback_opportunistic_tech_debt_closure.md, feedback_structural_fix_over_belt_and_suspenders.md]
+  sister_specs: [feedback_structural_fix_for_recurring_class.md, feedback_audit_canonical_sister_before_new_infra.md, feedback_no_defer_for_effort.md, feedback_cpp17_inline_variable_for_shared_state_across_tus.md, feedback_terminology_evolution_bridge_not_history_rewrite.md, feedback_machine_portable_resolver_for_committed_tool_paths.md, feedback_defer_to_source_authority_for_external_semantics.md, feedback_single_source_the_computation_not_just_the_mode.md, feedback_opportunistic_tech_debt_closure.md, feedback_structural_fix_over_belt_and_suspenders.md, feedback_comments_point_in_time_verify_against_code.md]
   tags: [ssot, structural-fix]
 ---
 

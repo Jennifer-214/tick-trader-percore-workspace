@@ -4,7 +4,6 @@
 
 ## Deep-technical / implementation-specific (Tier-2)
 
-- [Comments are point-in-time — verify the code not the comment](feedback_comments_point_in_time_verify_against_code.md) — stale codegen/perf/size comments aren't truth; verify the compiled code (disasm/tool), flag+suggest the fix on mismatch (the CMOV-vs-je miss); armed into SUBAGENT_ARMING §2.5
 - [Pessimistic-by-default sim is the trustworthy signal](project_pessimistic_sim_is_trustworthy.md) — make the backtest FAIL (overestimate costs on every axis: cost/fill/timing/liquidity), never flatter it; conservative non-zero defaults (pessimistic-by-default, never optimistic-by-omission); survives-failure > highest-average-return (D-203; A9 first canonical)
 - [Avoid substring replace_all on member-access patterns](feedback_avoid_substring_replace_all_on_member_access.md) — `config.X` mangles `ctrl->config.X`; inventory variations OR per-prefix targeted edits
 - [Prefer action-parameterized walker over per-consumer bodies](feedback_prefer_action_parameterized_walker_over_per_consumer_walker_bodies.md) — `FOREACH_<COHORT>_COHORT(BASE_X)` meta-walker prevents drift across consumers

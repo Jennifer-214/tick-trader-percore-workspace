@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 5a3e2327-0ab0-43ac-b92b-9fc591f00b51
-  sister_specs: [user_correctness_first_not_ship_fast.md, project_workspace_remote_gone_commit_only.md]
+  sister_specs: [user_correctness_first_not_ship_fast.md, project_workspace_remote_gone_commit_only.md, feedback_keep_operator_scratch_files_as_history.md]
   tags: []
 ---
 

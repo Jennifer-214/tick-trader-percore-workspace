@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: e3c00d2a-ea76-43ce-8b3b-530a4fb5a40d
-  sister_specs: [feedback_consult_indexes_before_full_reads.md, feedback_ground_design_in_real_code.md, feedback_operator_pushback_as_audit_signal.md, feedback_passing_test_is_not_verification.md]
+  sister_specs: [feedback_consult_indexes_before_full_reads.md, feedback_ground_design_in_real_code.md, feedback_operator_pushback_as_audit_signal.md, feedback_passing_test_is_not_verification.md, feedback_comments_point_in_time_verify_against_code.md]
   tags: []
 ---
 

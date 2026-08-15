@@ -64,6 +64,7 @@
 - [Enumerate the set before a categorical risk-dismissal](feedback_enumerate_set_before_categorical_claim.md) — before dismissing a risk via a property over a SET ("the rest are safe"), enumerate + verify each + name any non-conformer (Class-33)
 - [Don't generalize a substrate before its full input space is known](feedback_dont_generalize_substrate_before_input_space_known.md) — proven over CURRENT consumers ≠ general; enumerate PLANNED consumers' inputs before declaring universal (premature generalization locks out the future)
 - [Ground design claims in real code](feedback_ground_design_in_real_code.md) — design talk: Read+cite file:line for EXISTING-code claims (don't reconstruct from memory); show framing+reuse for NEW code
+- [Comments are point-in-time — verify CHECKABLE claims](feedback_comments_point_in_time_verify_against_code.md) — a checkable claim (reader-set / quantifier / default / guard-exists / file:line / ordering) is a HYPOTHESIS; verify when load-bearing, fix same commit; extend the grammar rather than work around a gate
 - [Match anomaly to the decision log before escalating](feedback_match_anomaly_to_decision_log_before_escalating.md) — a code surprise is usually a logged decision (D-nums in the file header); consult the log, don't alarm-first; don't over-claim in the ledger before the disproving test
 - [Fold findings into the destination plan](feedback_fold_findings_into_destination_plan.md) — work finds something belonging in another plan → fold it INTO that plan as discovered; reactive not scouting; folding TRACKS, does NOT defer the FIX (do-vs-defer is the separate subsumption test)
 - [MOOT-UNREACHABLE disposition for real-but-unreachable findings](feedback_moot_unreachable_disposition.md) — code-real flaw, structurally-unreachable trigger → pin the guarantee, don't patch; REQUIRES code-demonstrated unreachability (the merit bar, not effort-avoidance)
@@ -71,6 +72,8 @@
 - [Sessions are 30–60 min now — size leaves to that](feedback_short_sessions_30_to_60_min.md) — one committable deliverable/session; push at every boundary; never open a big surface late — queue it as the next session's leaf
 - [No unhomed debt — unhomed = code smell](feedback_no_unhomed_debt_code_smell.md) — every debt traces to a HOME (future plan / TECH_DEBT-with-trigger / register disposition) or closes NOW; homed-deferred is SAFE, unhomed rots; the floor under do-now-vs-defer; plans are binding AND living
 - [Scripted transforms need real-diff eyeball](feedback_script_transforms_need_output_eyeball.md) — scripts sanctioned but where artifacts breed; eyeball git-diff output + gate battery before commit
+- [Keep operator scratch files as history](feedback_keep_operator_scratch_files_as_history.md) — never clean untracked operator files (visible-untracked is a feature); record-valuable ones get a FROZEN copy homed in plan_checks; regenerable build trees → gitignore
+- [Save agent reports verbatim at receipt](feedback_save_agent_reports_verbatim.md) — plans/<sprint>/reports/<date>-<directive>/<task>.md; orchestrator writes (agents stay read-only); /tmp dies at reboot; registers stay the curated layer
 
 ## User profile
 
@@ -96,3 +99,4 @@
 - [Repo went ALL-PRIVATE 2026-07-06; the code-only public boundary is now historical](project_public_repo_is_code_only.md) — public snapshot = code-only (past state); current dev is PRIVATE (diverged) → the public/private split no longer gates going-forward work; freely diverge / exotic OK
 - [Both remotes ALIVE again (Jennifer-214) — sync/close DO push](project_workspace_remote_gone_commit_only.md) — CORRECTED 2026-07-19; the old "never push" rule left 77 workspace commits unbacked-up; verify with `git ls-remote`, never assume
 - [Linux_Theme plans/docs are symlinks into linux-theme-workspace](project_linux_theme_workspace_symlinks.md) — plans commit+push to the workspace repo (main), never the public theme repo; same convention as the trader
+- [Spot-check findings route to plan homes, not TECH_DEBT](feedback_spotcheck_findings_route_to_plan_homes_not_techdebt.md) — eventual items in the OWNING plan w/ mechanism; quick-kill only live hazards; her explicit disposition

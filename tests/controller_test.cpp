@@ -27019,14 +27019,15 @@ e3_skip_load:;
         // Ship-B P2 markers (S-4/D-174 #14): the floors DERIVE from MONEY_ENCODING_EPOCH — the
         // decimal flip auto-raises them to 14/10/7 (red build until the bumps ride the same
         // commit). The 16B->16B re-encoding is layout-invisible; the ENCODING keys the guard.
-        static_assert(CONTROLLER_SNAPSHOT_VERSION >= 13 + MONEY_ENCODING_EPOCH
-                          && SHARDED_SNAPSHOT_VERSION >= 9u + MONEY_ENCODING_EPOCH
+        // E.1.2/D-289: the CONTROLLER clause DELETED with its macro (format retired,
+        // serializers gone — a floor with no loader asserts nothing). PORTFOLIO's
+        // clause survives while its live-tombstone #define stands (BLK-2/T1).
+        static_assert(SHARDED_SNAPSHOT_VERSION >= 9u + MONEY_ENCODING_EPOCH
                           && PORTFOLIO_SNAPSHOT_VERSION >= 6 + MONEY_ENCODING_EPOCH,
-                      "Ship-A D-144 / Ship-B S-4: snapshot versions must be >= 13/9/6 + the money "
+                      "Ship-A D-144 / Ship-B S-4: snapshot versions must be >= 9/6 + the money "
                       "encoding epoch (the decimal flip auto-raises the floor; bump in the SAME commit)");
-        check("Ship-A D-144: snapshot versions >= 13/9/6 + MONEY_ENCODING_EPOCH (auto-raising floor)",
-              CONTROLLER_SNAPSHOT_VERSION >= 13 + MONEY_ENCODING_EPOCH
-                  && SHARDED_SNAPSHOT_VERSION >= 9u + MONEY_ENCODING_EPOCH
+        check("Ship-A D-144: snapshot versions >= 9/6 + MONEY_ENCODING_EPOCH (auto-raising floor)",
+              SHARDED_SNAPSHOT_VERSION >= 9u + MONEY_ENCODING_EPOCH
                   && PORTFOLIO_SNAPSHOT_VERSION >= 6 + MONEY_ENCODING_EPOCH);
         check("Ship-B P2b: MONEY_ENCODING_EPOCH == 1 POST-flip (EngineMoneyT is DECIMAL Money)",
               MONEY_ENCODING_EPOCH == 1u && is_fp_decimal_v<EngineMoneyT>);
@@ -27088,8 +27089,9 @@ e3_skip_load:;
             remove(oel_path);
             // (b) version constants: the pre-epoch generation is structurally below current
             // (loaders compare equality — any v9/v13/v6/v2 artifact refuses on mismatch).
-            check("Ship-B P4 epoch-reject: all four persisted versions sit ABOVE their binary-era tombstones",
-                  SHARDED_SNAPSHOT_VERSION == 11u && CONTROLLER_SNAPSHOT_VERSION == 14
+            // E.1.2/D-289: CONTROLLER term deleted with its macro (format retired).
+            check("Ship-B P4 epoch-reject: the persisted versions sit ABOVE their binary-era tombstones",
+                  SHARDED_SNAPSHOT_VERSION == 11u
                       && PORTFOLIO_SNAPSHOT_VERSION == 7 && STAMP_FORMAT_VERSION_CURRENT == 3);
             check("Ship-B P4 epoch-reject: stamp MAX_SUPPORTED == CURRENT (pre-epoch stamps [1,2] HARD-INVALID)",
                   MAX_SUPPORTED_STAMP_FORMAT_VERSION == 3);

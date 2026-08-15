@@ -15,7 +15,7 @@ so the snapshot stales when tags/units actually change, not on unrelated line dr
 `rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a
 conversion).
 
-Converted files: 165 · unit blocks: 1108
+Converted files: 165 · unit blocks: 1101
 
 ## [TAG] values → files
 
@@ -259,10 +259,6 @@ Converted files: 165 · unit blocks: 1108
 - `CoreFrameworks/Tick.hpp`
 - `FixedPoint/FixedPointN.hpp`
 - `MemHeaders/PoolAllocator.hpp`
-
-### DEPRECATED (1 files)
-
-- `ML_Headers/ConfidenceScore.hpp`
 
 ### DETERMINISM (35 files)
 
@@ -681,7 +677,7 @@ Converted files: 165 · unit blocks: 1108
 - `CoreFrameworks/ControllerConfig.hpp`
 - `CoreFrameworks/ParseFast.hpp`
 
-### PERSISTENCE (31 files)
+### PERSISTENCE (30 files)
 
 - `CoreFrameworks/CfgFieldDispatch.hpp`
 - `CoreFrameworks/ControllerEventLoop.hpp`
@@ -689,7 +685,6 @@ Converted files: 165 · unit blocks: 1108
 - `CoreFrameworks/OrderEventLog.hpp`
 - `CoreFrameworks/PaperResetArchive.hpp`
 - `CoreFrameworks/Portfolio.hpp`
-- `CoreFrameworks/PortfolioController.hpp`
 - `CoreFrameworks/ShardedSnapshotPersist.hpp`
 - `CoreFrameworks/ShardedTradeLog.hpp`
 - `DataStream/CalibLogColRegistry.hpp`
@@ -1006,7 +1001,7 @@ Converted files: 165 · unit blocks: 1108
 - `Strategies/private/EmaCross.hpp` — `Strategies/private/EmaCross.hpp`
 - `Version.hpp` — `Version.hpp`
 
-### FUNCTION (512)
+### FUNCTION (510)
 
 - `ANSI_Layout_Render` — `DataStream/TUIAnsi.hpp`
 - `ANSI_Section_Header` — `DataStream/TUIAnsi.hpp`
@@ -1066,7 +1061,6 @@ Converted files: 165 · unit blocks: 1108
 - `Comparison_SaveRun` — `Backtest/BacktestPanels.hpp`
 - `ConfidenceScorer_Compute` — `ML_Headers/ConfidenceScore.hpp`
 - `ConfidenceScorer_ComputeComposite` — `ML_Headers/ConfidenceScore.hpp`
-- `ConfidenceScorer_ShadowLoadLegacyV1` — `ML_Headers/ConfidenceScore.hpp`
 - `Confidence_Compute` — `ML_Headers/ConfidenceScore.hpp`
 - `ConfigField_Set` — `Backtest/BacktestEngine.hpp`
 - `ControllerConfig_CapitalRangeSweep` — `CoreFrameworks/ControllerConfig.hpp`
@@ -1317,7 +1311,6 @@ Converted files: 165 · unit blocks: 1108
 - `PnlColor` — `GUI/DashboardPanels.hpp`
 - `PortfolioController_DrainExits` — `CoreFrameworks/PortfolioController.hpp`
 - `PortfolioController_Init` — `CoreFrameworks/PortfolioController.hpp`
-- `PortfolioController_SaveSnapshot` — `CoreFrameworks/PortfolioController.hpp`
 - `PortfolioController_StrategyBuySignal` — `CoreFrameworks/PortfolioController.hpp`
 - `PortfolioController_Tick` — `CoreFrameworks/PortfolioController.hpp`
 - `PortfolioController_Unpause` — `CoreFrameworks/PortfolioController.hpp`
@@ -1610,7 +1603,7 @@ Converted files: 165 · unit blocks: 1108
 - `FOREACH_TRADE_LOG_COL` — `CoreFrameworks/TradeLogColRegistry.hpp`
 - `PER_NODE_OVERRIDE_FIELDS` — `CoreFrameworks/ControllerConfig.hpp`
 
-### STRUCT (198)
+### STRUCT (193)
 
 - `AnsiBuf` — `DataStream/TUIAnsi.hpp`
 - `BacktestResults` — `Backtest/BacktestEngine.hpp`
@@ -1641,7 +1634,6 @@ Converted files: 165 · unit blocks: 1108
 - `Command` — `CoreFrameworks/OrderManager.hpp`
 - `ComparisonState` — `Backtest/BacktestPanels.hpp`
 - `ConfidenceScorer` — `ML_Headers/ConfidenceScore.hpp`
-- `ConfidenceScorerLegacyV1` — `ML_Headers/ConfidenceScore.hpp`
 - `ControllerConfig` — `CoreFrameworks/ControllerConfig.hpp`
 - `CumDeltaState` — `Strategies/RegimeDetector.hpp`
 - `CurrentOrder` — `MemHeaders/PoolAllocator.hpp`
@@ -1757,13 +1749,9 @@ Converted files: 165 · unit blocks: 1108
 - `RewardTracker` — `ML_Headers/RewardTracker.hpp`
 - `RidgeWeights` — `ML_Headers/RidgeBlender.hpp`
 - `RollingCapacity` — `ML_Headers/ConfidenceScore.hpp`
-- `RollingCapacity_LegacyV1` — `ML_Headers/ConfidenceScore.hpp`
 - `RollingFreshness` — `ML_Headers/ConfidenceScore.hpp`
-- `RollingFreshness_LegacyV1` — `ML_Headers/ConfidenceScore.hpp`
 - `RollingIC` — `ML_Headers/ConfidenceScore.hpp`
-- `RollingIC_LegacyV1` — `ML_Headers/ConfidenceScore.hpp`
 - `RollingRMSE` — `ML_Headers/ConfidenceScore.hpp`
-- `RollingRMSE_LegacyV1` — `ML_Headers/ConfidenceScore.hpp`
 - `RollingStats` — `ML_Headers/RollingStats.hpp`
 - `RollingTurnover` — `ML_Headers/RollingTurnover.hpp`
 - `RollingWindow` — `ML_Headers/ConfidenceScore.hpp`

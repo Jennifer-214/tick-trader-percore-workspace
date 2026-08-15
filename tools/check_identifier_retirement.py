@@ -79,9 +79,19 @@ LEDGER = os.environ.get("IDENTIFIER_LEDGER") or os.path.join(
 #       "constexpr" -> static constexpr <type> NAME = <int>
 #       "foreach"   -> #define MACRO(X) X(name, ...) X(name, ...) ...
 #                       opts: prefix, value="explicit"|"positional", value_col (explicit only)
+# H21 name-tombstones: identifiers whose LEDGER rows were removed at format
+# retirement. The regenerated ledger has no memory of removed names — without
+# this set, a re-introduced #define of a burned name would classify as a fresh
+# "ADD (ok)" instead of the Knight-Capital-shaped violation it is.
+RETIRED_NAMES = {
+    "CONTROLLER_SNAPSHOT_VERSION",   # E.1.2/D-289 — controller snapshot format retired (was version=14)
+}
+
 SOURCES = [
     ("version", "CoreFrameworks/ShardedSnapshotPersist.hpp", "define",    "SHARDED_SNAPSHOT_VERSION",    {}),
-    ("version", "CoreFrameworks/PortfolioController.hpp",     "define",    "CONTROLLER_SNAPSHOT_VERSION", {}),
+    # CONTROLLER_SNAPSHOT_VERSION row REMOVED at E.1.2/D-289 (format retired, macro
+    # deleted). The NAME is burned — see RETIRED_NAMES above (H21: a deleted wire
+    # identifier must never silently reappear as a fresh "ADD (ok)").
     ("version", "CoreFrameworks/Portfolio.hpp",              "define",    "PORTFOLIO_SNAPSHOT_VERSION",  {}),
     ("version", "ML_Headers/ModelInference.hpp",             "define",    "MODEL_FORMAT_VERSION",        {}),
     ("version", "ML_Headers/BanditLearning.hpp",             "define",    "BANDIT_STATE_FORMAT_VERSION", {}),
@@ -265,6 +275,49 @@ def compare(frozen, current):
     return violations, additions, bumps
 
 
+# The dirs a resurrected wire identifier could plausibly land in — the same
+# surface set as the pre-commit Check H trigger.
+RETIRED_SCAN_DIRS = ("CoreFrameworks", "ML_Headers", "MemHeaders",
+                     "Strategies", "FixedPoint", "DataStream")
+
+
+def retired_name_check():
+    """H21 name-tombstone sweep — SOURCES-independent BY NECESSITY.
+
+    A retired name has no SOURCES row, so parse_current() never looks for it: a
+    resurrected `#define CONTROLLER_SNAPSHOT_VERSION 1` would be INVISIBLE to
+    compare() entirely (not even an ADD). Witnessed vacuity of the naive
+    additions-loop placement, 2026-08-14 planted-control run — hence this
+    dedicated tree sweep. Line-anchored `#define` match only; a commented
+    tombstone mention ("CONTROLLER_SNAPSHOT_VERSION=14" in prose) is the
+    DESIRED way to keep the number and never matches."""
+    if not RETIRED_NAMES:
+        return []
+    violations = []
+    pats = {n: re.compile(r"^\s*#\s*define\s+" + re.escape(n) + r"\b")
+            for n in RETIRED_NAMES}
+    for d in RETIRED_SCAN_DIRS:
+        root = os.path.join(REPO_ROOT, d)
+        for dirpath, _dirnames, filenames in os.walk(root):
+            for fn in filenames:
+                if not fn.endswith((".hpp", ".h", ".cpp")):
+                    continue
+                fp = os.path.join(dirpath, fn)
+                try:
+                    with open(fp, encoding="utf-8", errors="replace") as fh:
+                        for i, line in enumerate(fh, 1):
+                            for n, pat in pats.items():
+                                if pat.match(line):
+                                    rel = os.path.relpath(fp, REPO_ROOT)
+                                    violations.append(
+                                        f"RETIRED-NAME-REUSE :: #define {n} at {rel}:{i} — this "
+                                        f"identifier was retired WITH its format (ledger row removed); "
+                                        f"the NAME is burned per H21. A new meaning needs a NEW identifier.")
+                except OSError:
+                    pass
+    return violations
+
+
 def paired_bump_check(frozen, current, layout_cur=None, layout_gold=None):
     """E.1.2 D-305 — the golden↔version PAIRED-BUMP rule (the D-208 M7 close).
 
@@ -366,6 +419,7 @@ def main():
     pb_violations, pb_bumps = paired_bump_check(frozen, current)
     violations += pb_violations
     bumps += pb_bumps
+    violations += retired_name_check()
 
     for a in additions:
         print(f"[identifier-retirement] ADD (ok; run --update to record): {a}")

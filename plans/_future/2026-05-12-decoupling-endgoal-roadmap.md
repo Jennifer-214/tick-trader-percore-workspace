@@ -759,6 +759,53 @@ on engine via Decision F SOFT compat parser).
   FALSE) · `:1438-1439` (grey-hint claim FALSE) · TECH_DEBT-208 body (claims the guard+row-delete landed —
   neither exists at HEAD) · `cfg-scope-discipline.md:253` ("ResolveForCore deleted at WIP2f" — never landed).
 
+### EV-3 — Viewer information architecture: what the REPLACEMENT viewer must carry (operator-decided 2026-08-15)
+
+**Origin:** the operator asked to retire `Latency` / `Per-Node P&L` / `Live P&L` / `Equity Curve` and roll
+`Stats` somewhere sensible. Three i-class reports (`plans/v5.15-live-readiness/reports/2026-08-15-ui-consolidation/`)
+mapped it and surfaced the reframe. **Operator decision, same session: do NOT do the ImGui consolidation** —
+D-26 hard-deprecates `engine_gui` at `.E.2` (`decision-logs/…E-architecture-v2.md:118-120`, `STATUS: landed`),
+so every hour of ImGui *layout* work is written off. **The surviving deliverable is a CONTENT SPEC for the
+replacement viewer, not a panel merge.**
+
+- **THE GAP THIS LEAF EXISTS TO CLOSE.** The drafted fox-tui layout
+  (`subplans/2026-05-28-v5.15.5.F.4d.1.E.2-headless-configs-docs.md:567-595`) carries global/per-cluster/per-node
+  P&L, drawdown, kill state, latency and an event tail — and **NO session-outcome block at all**: no W/L, no
+  win-rate, no profit factor, no expectancy, no avg win/loss. The entire `Stats` plane silently vanishes in the
+  rewrite unless the spec says otherwise. A viewer that drops numbers the operator built is a regression wearing
+  a rewrite's clothes.
+- **NEW operator requirement (2026-08-15, does not exist anywhere today): a DAILY TOTAL, comparable across
+  days.** Her words: *"just a daily total to compare days would be nice."* Nothing produces this — `summary.json`
+  is per-paper-reset-SESSION (`PaperResetArchive.hpp:166-245`), not per-day, and no surface aggregates by
+  calendar day. The trade CSV carries `timestamp_us`, so a daily roll-up is derivable. **This is the Grafana
+  half of D-26** ("replaced by fox-tui + fox-cli + Grafana") — cross-day comparison is a time-series-store
+  question, not a TUI-panel question. Route it there and the fox-tui/fox-cli stay session-scoped.
+- **Operator-CONFIRMED defect (converts a code-read finding to observed):** *"those aren't really working
+  anyways {the pnl}"*. This is the empirical refutation the I-2 report asked for on its own RANK-4/§9.1 claim —
+  `GUI/TradeReader.hpp` parses the LEGACY trade-log schema (`"BUY"`/`"SELL"` in column 1) while the sharded
+  writer emits `node_id` there, so `equity_count`/`marker_count` are structurally 0 and `Equity Curve` has been
+  permanently blank since the sharded log format landed. Do NOT port the ImGui equity chart forward — port the
+  *requirement*.
+- **The transferable lesson, and the one thing worth codifying:** three separate `Stats`/`Latency` fields were
+  DECLARED, DISPLAYED, and never PRODUCED — `avg_loss_market` (prints `(mkt: $0.00)` on every loss, asserting
+  100% of the average loss was fees — a live Class-2 money lie, `DashboardPanels.hpp:1792`), `fee_ratio` (row
+  never rendered), and the whole 18-field `TUISnapshot` latency block (`EngineTUI.hpp:998-1014`, zero producers
+  repo-wide — which is why the `Latency` panel is structurally empty in EVERY build, not just during warmup).
+  **Spec rule for the replacement viewer: every displayed field names its producer, or it does not ship.** That
+  is the fox-tui-side sister of EV-1's counter-family SSoT.
+- **Explicitly NOT doing (operator decision):** the ImGui panel retirements, the `Stats`→`Account` merge, the
+  `Gui_SetupDefaultLayout` correction. All die at `.E.2` anyway, and her live layout is `foxml_gui.ini`-owned,
+  so dock-builder edits are invisible to her regardless. The per-node P&L *trajectory* is confirmed not-read
+  (*"i dont really read those"*), so it carries no forward requirement.
+- **Homed-but-deferred (not dropped):** the dead `GUI_Panel_Config` (zero callers), the `TUISnapshot`/`EngineTUI`
+  latency-block deletion (⚠ collides with E.1.2.A's `TUISharedState` realign at `7778c66` — needs its own leaf
+  with the cache-layout gate re-run), and the `Trade History` 256-cap that keeps the OLDEST exits. All are
+  ImGui-plane; if the GUI is archived un-fixed they die with it, which is an acceptable close — recorded so the
+  disposition is deliberate rather than forgotten.
+- **CLOSED by this session, not owed here:** the `engine.cfg` duplicate-key hazard (parser last-wins vs GUI
+  writer first-match ⇒ silently-inert edits, live on `node_3_stop_loss_pct`) — deduped + closed as a class by
+  `tools/check_cfg_duplicate_keys.py` (workspace `b5da6a2`).
+
 ---
 
 ## Pre-decoupling readiness checklist

@@ -92,13 +92,47 @@ def parse_struct_blocks(path):
     return blocks
 
 
-def run_emitter_nvim(tu, names):
-    """The original Lua layout emitter (headless nvim) → {record: {size, align, straddlers}}."""
-    argv = ["nvim", "--headless", "--clean", "-u", "NONE", "-l", str(EMITTER), tu] + list(names)
+class EmitterUnavailable(RuntimeError):
+    """The layout emitter could not produce facts. Raised ONLY in strict mode — callers
+    that cannot distinguish 'no facts' from 'no findings' must fail loud, never clean."""
+
+
+def run_emitter_nvim(tu, names, strict=False):
+    """The original Lua layout emitter (headless nvim) → {record: {size, align, straddlers,
+    [partial], [members]}}.
+
+    Two failure contracts, because two kinds of caller need opposite things (D-421 step 2):
+
+    - **tolerant (default)** — swallow every error to `{}`. Correct for THIS gate: it batches
+      ~193 record requests of which ~77 are legitimately absent from the TU, and it reports
+      those as "unpoliced, NOT verified" rather than pretending they passed. Absence is an
+      expected, honestly-reported state here.
+
+    - **strict** — pass `--require-all` and RAISE on any failure. Required by COMPLEMENT
+      consumers, which subtract a coverage registry from a member list: for them an empty
+      result is not "nothing to report", it is "the struct has no members", and every member
+      of a 49-field struct silently reads as covered. That is a vacuously-green guard of
+      exactly the Class-51 shape, on a tool whose entire job is catching unaccounted fields.
+      A guard that cannot see its subject must say so.
+    """
+    argv = ["nvim", "--headless", "--clean", "-u", "NONE", "-l", str(EMITTER), tu]
+    if strict:
+        argv.append("--require-all")
+    argv += list(names)
     try:
         r = subprocess.run(argv, cwd=str(ENGINE), capture_output=True, text=True, timeout=300)
-        return json.loads(r.stdout or "{}") if r.stdout.strip() else {}
-    except (subprocess.SubprocessError, json.JSONDecodeError, OSError, ValueError):
+        if strict and r.returncode != 0:
+            raise EmitterUnavailable(
+                f"layout emitter rc={r.returncode} for {tu} {list(names)}\n{(r.stderr or '').strip()}")
+        out = json.loads(r.stdout or "{}") if r.stdout.strip() else {}
+        if strict and not out:
+            raise EmitterUnavailable(
+                f"layout emitter produced NO records for {tu} {list(names)} — refusing to "
+                f"report an empty layout as a clean one.")
+        return out
+    except (subprocess.SubprocessError, json.JSONDecodeError, OSError, ValueError) as e:
+        if strict:
+            raise EmitterUnavailable(f"layout emitter failed for {tu} {list(names)}: {e}") from e
         return {}
 
 

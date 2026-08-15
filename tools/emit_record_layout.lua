@@ -19,8 +19,19 @@ local recordlayout = require("fox-symdeps.recordlayout")
 
 local tu = arg[1]
 if not tu or tu == "" then io.stderr:write("usage: emit_record_layout.lua <tu.cpp> [Struct ...]\n"); os.exit(2) end
-local wanted, any = {}, true
-for i = 2, #arg do wanted[arg[i]] = true; any = false end
+-- `--require-all`: a requested record that matched nothing becomes FATAL (see the check at the
+-- tail). OPT-IN, deliberately. check_cache_layout.py batches ~193 record requests of which ~77
+-- are legitimately absent from the TU (un-instantiated / unlinked) and it reports those as
+-- "unpoliced, NOT verified" — that TU-scope honesty is the correct behaviour for a straddle gate
+-- and making absence fatal by default silently converted it into "gate could not run", which is
+-- strictly worse than either passing or failing. A COMPLEMENT consumer has the opposite need:
+-- it subtracts a registry from a member list, so a missing record yields an empty member list
+-- and a vacuously-clean verdict. Both are right for their caller; the caller chooses.
+local wanted, any, require_all = {}, true, false
+for i = 2, #arg do
+  if arg[i] == "--require-all" then require_all = true
+  else wanted[arg[i]] = true; any = false end
+end
 
 -- Reuse the plugin's compile-flag extraction (the SAME flags the HUD's size-probe uses).
 local flags, dir = sizeprobe._flags_for(tu)
@@ -68,16 +79,54 @@ local strad = recordlayout.straddlers(records)
 local strad_by, unv_by = {}, {}
 for _, r in ipairs(strad.report or {}) do strad_by[r.name] = r.fields; unv_by[r.name] = r.unverified end
 
-local out = {}
+local out, matched = {}, {}
 for _, r in ipairs(records) do
   local base = (r.name:gsub("<.*", ""))                      -- tt::ExecutionCore<64> -> tt::ExecutionCore
   local nons = (base:gsub("^.*::", ""))                      -- -> ExecutionCore (namespace-stripped)
-  if any or wanted[r.name] or wanted[base] or wanted[nons] then
+  local tmpl = (r.name:gsub("^.*::", ""))                    -- -> ExecutionCore<64> (ns-stripped, TEMPLATE KEPT)
+  local hit = wanted[r.name] or wanted[base] or wanted[nons] or wanted[tmpl]
+  if any or hit then
     local rec = { size = r.size, align = r.align, straddlers = strad_by[r.name] or {} }
     local unv = unv_by[r.name]
     if unv and #unv > 0 then rec.partial = unv end   -- ADDITIVE key (D-413): named UNVERIFIED fields
+    -- ADDITIVE key (E.1.2 D-421 step 2): the FULL member list, for COMPLEMENT consumers.
+    -- The straddle gate asks "which fields cross a line" — a partition guard asks the opposite
+    -- question, "which fields exist AT ALL", so it can subtract a coverage registry from the
+    -- struct and demand the remainder be empty-or-declared. recordlayout.parse already carries
+    -- r.fields; this only stops projecting it away. Emitted ONLY for explicitly-requested
+    -- records: on a whole-TU dump (199 records here) it would be mostly noise for every
+    -- existing consumer, and asking for a record by name is the signal that you want its detail.
+    if hit then
+      local mem = {}
+      for _, f in ipairs(r.fields or {}) do
+        mem[#mem + 1] = { name = f.name, type = f.type, off = f.off }
+      end
+      rec.members = mem
+    end
     out[r.name] = rec
+    for k in pairs(wanted) do
+      if k == r.name or k == base or k == nons or k == tmpl then matched[k] = true end
+    end
   end
 end
+
+-- Under `--require-all`, a REQUESTED record that matched nothing is an ERROR, never a silent
+-- empty result (D-421 step 2). Found by walking into it: `NodeContext<64>` matched none of the
+-- three then-supported forms (base strips `<64>`, so only the bare or fully-qualified spellings
+-- worked) and the emitter answered `[]` with rc=0 — a consumer that trusted that would have
+-- computed a complement over zero members and reported the struct fully covered. The `tmpl` form
+-- above removes that particular trap; this makes any FUTURE spelling miss fatal for the consumers
+-- that cannot survive one, while leaving the tolerant batch consumers alone.
+local missing = {}
+for k in pairs(wanted) do if not matched[k] then missing[#missing + 1] = k end end
+if require_all and #missing > 0 then
+  table.sort(missing)
+  io.stderr:write("requested record(s) not found in dump: " .. table.concat(missing, ", ")
+    .. "\n  (a record absent from the dump is NOT an empty record — refusing to emit a"
+    .. " result that would read as 'no members'. Check the spelling against a full dump:"
+    .. " run with no record args and look at the JSON keys.)\n")
+  os.exit(2)
+end
+
 io.write(vim.json.encode(out))
 io.write("\n")

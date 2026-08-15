@@ -15,11 +15,19 @@ Content is now in per-status sub-files; this doc serves as the INDEX + cross-ref
 
 ## Sub-files
 
-| Sub-file | Coverage | Entry count |
-|---|---|---|
-| `DOCS/tech-debt/open.md` | Status: OPEN — actively deferred work with explicit triggers (also DEFERRED-INDEFINITE / OPEN — partially addressed / PARTIAL CLOSED with active scope / PHASE-N applied with subsequent phases OPEN) | 83 |
-| `DOCS/tech-debt/in-flight.md` | Status: IN-FLIGHT — being addressed in an active sub-ship | 2 |
-| `DOCS/tech-debt/closed.md` | Status: CLOSED — archival (includes NOT-A-BUG rationale-preservation entries and APPLIED at ship close) | 25 |
+| Sub-file | Coverage |
+|---|---|
+| `DOCS/tech-debt/open.md` | Status: OPEN — actively deferred work with explicit triggers (also DEFERRED-INDEFINITE / OPEN — partially addressed / PARTIAL CLOSED with active scope / PHASE-N applied with subsequent phases OPEN) |
+| `DOCS/tech-debt/in-flight.md` | Status: IN-FLIGHT — being addressed in an active sub-ship |
+| `DOCS/tech-debt/closed.md` | Status: CLOSED — archival (includes NOT-A-BUG rationale-preservation entries and APPLIED at ship close) |
+
+**Entry counts are NOT written here — re-derive them.** The column that used to sit in that table read `83 / 2 / 25`; the real values on 2026-08-15 were `202 / 0 / 76`. A hand-written tally in a lasting doc is stale on the very commit that writes it and fails **silently** — nothing reads it, so nothing catches it — which is exactly why counts belong in a re-derive fence and never in prose (`feedback_name_members_never_tallies_in_docs`):
+
+```bash
+for f in open in-flight closed; do
+  printf "%-10s %s\n" "$f" "$(grep -c '^### TECH_DEBT-' DOCS/tech-debt/$f.md)"
+done
+```
 
 ## Cross-reference shape
 
@@ -28,7 +36,7 @@ External cross-refs use canonical ID format `TECH_DEBT-NNN`. The ID is preserved
 Example:
 - `rg "TECH_DEBT-115" DOCS/tech-debt/` — finds the entry in `open.md`
 - `rg "TECH_DEBT-005" DOCS/tech-debt/` — finds the entry in `closed.md`
-- `rg "TECH_DEBT-063" DOCS/tech-debt/` — finds the entry in `in-flight.md`
+- `rg "TECH_DEBT-063" DOCS/tech-debt/` — finds the entry in `open.md` (an entry MOVES between sub-files as its status changes, which is exactly why you grep for the ID instead of hardcoding the file)
 
 ## Established 2026-05-09 (v5.14.2.E.3). Workspace-private (symlinked into engine repo as `DOCS/TECH_DEBT.md`).
 
@@ -147,7 +155,7 @@ A finding that exists only in a transient audit report or chat memory gets re-di
 | TECH_DEBT-057 | OPEN | `DOCS/tech-debt/open.md` |
 | TECH_DEBT-058 | OPEN | `DOCS/tech-debt/open.md` |
 | TECH_DEBT-059 | OPEN (blocked on .F.4d) | `DOCS/tech-debt/open.md` |
-| TECH_DEBT-063 | IN PROGRESS | `DOCS/tech-debt/in-flight.md` |
+| TECH_DEBT-063 | OPEN (in progress) | `DOCS/tech-debt/open.md` |
 | TECH_DEBT-064 | OPEN | `DOCS/tech-debt/open.md` |
 | TECH_DEBT-065 | OPEN | `DOCS/tech-debt/open.md` |
 | TECH_DEBT-066 | OPEN | `DOCS/tech-debt/open.md` |
@@ -176,7 +184,7 @@ A finding that exists only in a transient audit report or chat memory gets re-di
 | TECH_DEBT-089 | OPEN | `DOCS/tech-debt/open.md` |
 | TECH_DEBT-090 | OPEN — REFRAMED 2026-05-17 | `DOCS/tech-debt/open.md` |
 | TECH_DEBT-091 | OPEN | `DOCS/tech-debt/open.md` |
-| TECH_DEBT-092 | IN-FLIGHT at .F.4d.1.A | `DOCS/tech-debt/in-flight.md` |
+| TECH_DEBT-092 | OPEN | `DOCS/tech-debt/open.md` |
 | TECH_DEBT-093 | OPEN | `DOCS/tech-debt/open.md` |
 | TECH_DEBT-094 | OPEN | `DOCS/tech-debt/open.md` |
 | TECH_DEBT-095 | OPEN | `DOCS/tech-debt/open.md` |

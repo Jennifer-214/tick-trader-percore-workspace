@@ -1528,3 +1528,42 @@ grew 16B (2 doubles, seqlock-bulk-copied — `[STRADDLE_EXEMPT]` extended to the
 **Related** — `CoreFrameworks/NodeLatencyStats.hpp` (histogram + snapshot) ·
 `DataStream/EngineTUI.hpp` PerNodeSnap + populators · `GUI/DashboardPanels.hpp` tables ·
 H8 budgets (`check_latency_path_conformance` is the STATIC gate; this is the RUNTIME view).
+
+### SHALT codes actually reach the operator (v5.15.5.F.4d.1.E.1.2, 2026-08-15)
+
+**What** — the per-node "why is this node not trading?" channel now reports the reason the
+strategy dispatcher actually emitted. `strategy_halt_reason`'s `= SHALT_OK` reset sat 59 lines
+*below* the `Strategy_BuildParameters` call that writes it — unconditionally, same straight-line
+block — so the dispatcher's code was overwritten on every rebuild. Only `SHALT_RECOVERY` and
+`SHALT_EXIT_PREDICTED` (written after the old reset point) ever survived. The reset is now above
+the dispatch block, per the placement `StrategyInterface.hpp` had specified all along.
+
+**Operator-visible effect** — codes you have never seen before will start appearing in the gate
+health log (`halt=… shalt=…`), the ML status panel, and `summary.json` at paper reset:
+`SHALT_FEE_FLOOR`, `SHALT_COST_GATE`, `SHALT_NO_SIGNAL`, `SHALT_LOW_CONFIDENCE`,
+`SHALT_ML_BELOW_THR`, `SHALT_ML_NO_PRED`, `SHALT_MOM_TP_TOO_TIGHT`, `SHALT_MOM_NO_FLOW`,
+`SHALT_MOM_LOW_R2`, `SHALT_BAD_PCT`, `SHALT_MODEL_CORRUPT` and the rest of `FOREACH_SHALT`.
+**This is not new behaviour — it is behaviour you could not previously see.** A node that looks
+newly "chatty" was already halting for these reasons; the channel was blind.
+
+**Cfg flags** — none. No gating change: the actual entry block always rode
+`pending_params.flags |= GATE_FLAG_BUY_BLOCKED`, which is independent of this byte.
+
+**Fallback** — `SHALT_OK` (0) when no strategy-internal veto fires, unchanged.
+
+**Where to verify** — `ControllerEventLoop.hpp`, the reset now immediately precedes
+`Strategy_AdaptPerCore`; the gate health log reads it after the rebuild. Both reset lines carry
+comments explaining why `halt_reason`'s reset stays *below* — they have opposite correct
+placements and must not be re-merged.
+
+**Paper-test sanity** — run a paper session and watch the gate-health log for a node that is not
+entering. Pre-fix it could only ever print `shalt=0`, `shalt=RECOVERY` or `shalt=EXIT_PREDICTED`.
+Any other code appearing is the fix working.
+
+**Gotchas** — two SHALT codes are corruption detectors (`SHALT_BAD_PCT` for corrupt tp/sl_pct,
+`SHALT_MODEL_CORRUPT`). If either starts appearing, that is a real signal that was previously
+being swallowed — investigate rather than tuning it away.
+
+**Related** — D-421 step 2 · engine `49244a4` · born broken in `bc37c62` (2026-04-30) ·
+`reports/2026-08-15-nodectx-exemption-verification/P2-eval-transient-display.md` § C F-1.
+

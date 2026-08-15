@@ -228,14 +228,46 @@ def _strip_comments(body):
     return re.sub(r'//[^\n]*', ' ', body)
 
 
+def _blank_block_comment(m):
+    """Replace a `/*...*/` span with blank lines that KEEP its continuation structure.
+
+    Preserving the newline COUNT is not enough: a block comment sitting inside a macro
+    body has its own `\\` line-continuations, and those backslashes live INSIDE the
+    comment span. Blanking the span to bare newlines deletes them, so the very next
+    `_body_from` walk — which reads until a line does not end in `\\` — stops at the
+    first comment line and silently truncates the registry.
+
+    MEASURED (E.1.2, D-421 step 2): `FOREACH_OMS_PER_SLOT_FIELD`
+    (`MemHeaders/OmsFieldRegistry.hpp:372`) has 5 rows and parsed as **1** through the
+    pre-stripped path — its first row is followed by a 4-line `\\`-continued comment.
+    Every one of the H21 ledger's own 5 source registries is UNAFFECTED (verified, not
+    assumed: raw-vs-stripped row counts identical for all 5), so this is LATENT for the
+    guards that exist today. It stops being latent at the DOMAIN-column step, which
+    parses all 68 enrolled registries — a truncated parse there reports a registry's
+    complement against a fraction of its rows and calls the remainder unaccounted, or
+    with the sets swapped, calls everything fine.
+
+    So: per newline in the span, re-emit the `\\` if and only if the ORIGINAL line
+    carried one. Faithful rather than clever — never ADD a continuation where the source
+    had none (this runs over the whole file, and a stray `\\` outside a macro body would
+    corrupt an unrelated parse).
+    """
+    out = []
+    lines = m.group(0).split("\n")
+    for line in lines[:-1]:                      # every line but the last ends in a newline
+        out.append("\\\n" if line.rstrip().endswith("\\") else "\n")
+    return "".join(out)
+
+
 def _strip_comments_text(text):
     """Comment-strip the WHOLE FILE text before the `#define` search, PRESERVING
-    newline count (backslash-continuation structure must survive). Closes the
-    a-class R1-a comment-hijack vacuity: a doc block quoting a stale
-    `#define FOREACH_...` ABOVE the real one would otherwise be parsed INSTEAD
-    of the live registry — and every later registry edit would diff GREEN
-    forever (Class-51-B″, wrong-region scan)."""
-    text = re.sub(r'/\*.*?\*/', lambda m: "\n" * m.group(0).count("\n"), text, flags=re.S)
+    newline count AND backslash-continuation structure (see `_blank_block_comment` —
+    preserving only the newline count silently truncates any registry whose body
+    contains a `\\`-continued block comment). Closes the a-class R1-a comment-hijack
+    vacuity: a doc block quoting a stale `#define FOREACH_...` ABOVE the real one would
+    otherwise be parsed INSTEAD of the live registry — and every later registry edit
+    would diff GREEN forever (Class-51-B″, wrong-region scan)."""
+    text = re.sub(r'/\*.*?\*/', _blank_block_comment, text, flags=re.S)
     return re.sub(r'//[^\n]*', '', text)
 
 
@@ -544,6 +576,38 @@ def _selftest():
     _d2 = tempfile.mkdtemp(prefix="npl_hasinc_absent_")   # header deliberately absent
     check("parser: __has_include FALSE branch selected when the header is absent",
           _rows(_macro_body(_cond_src, "FOREACH_C", _d2) or "") == [])
+
+    # (d) block-comment blanking must PRESERVE `\` continuations. A `\`-continued comment
+    #     between two rows sits INSIDE the comment span, so blanking to bare newlines
+    #     deletes the continuation and `_body_from` stops at the comment — silently
+    #     truncating the registry to the rows BEFORE it. Shape taken from the real
+    #     FOREACH_OMS_PER_SLOT_FIELD, which parsed as 1 of its 5 rows before this fix.
+    _cmt_src = (
+        '#define FOREACH_CMT(X) \\\n'
+        '    X(BEFORE, 1) \\\n'
+        '    /* a continued note                                          \\\n'
+        '     * spanning several lines                                    \\\n'
+        '     */ \\\n'
+        '    X(AFTER, 2)\n')
+    _cmt_rows = [_args(r)[0] for r in _rows(_strip_comments(
+        _macro_body(_strip_comments_text(_cmt_src), "FOREACH_CMT") or ""))]
+    check("parser: a `\\`-continued block comment does not truncate the registry",
+          _cmt_rows == ["BEFORE", "AFTER"])
+
+    # (d2) ...and the fix must NOT invent continuations the source never had. A comment
+    #      whose lines do NOT end in `\` must still terminate the body exactly where it
+    #      did before, or the walk would run past the macro and swallow whatever follows.
+    _plain_src = (
+        '#define FOREACH_PLAIN(X) \\\n'
+        '    X(ONLY, 1)\n'
+        '/* an ordinary comment\n'
+        ' * after the macro\n'
+        ' */\n'
+        '#define FOREACH_OTHER(X) \\\n    X(NOT_MINE, 9)\n')
+    _plain_rows = [_args(r)[0] for r in _rows(_strip_comments(
+        _macro_body(_strip_comments_text(_plain_src), "FOREACH_PLAIN") or ""))]
+    check("parser: an uncontinued comment still ENDS the body (no invented continuation)",
+          _plain_rows == ["ONLY"])
 
     print(f"node_persist_layout --selftest: {'ALL TEETH FIRE' if not fails else 'FAILURES: ' + ', '.join(fails)}")
     return 0 if not fails else 1

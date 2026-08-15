@@ -15,7 +15,7 @@ so the snapshot stales when tags/units actually change, not on unrelated line dr
 `rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a
 conversion).
 
-Converted files: 165 · unit blocks: 1101
+Converted files: 165 · unit blocks: 1099
 
 ## [TAG] values → files
 
@@ -80,7 +80,7 @@ Converted files: 165 · unit blocks: 1101
 - `Strategies/OpModeCategories.hpp`
 - `Strategies/StrategyCategories.hpp`
 
-### BOOT_TIME (37 files)
+### BOOT_TIME (36 files)
 
 - `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/ControllerConfig.hpp`
@@ -96,7 +96,6 @@ Converted files: 165 · unit blocks: 1101
 - `CoreFrameworks/OrderEventLog.hpp`
 - `CoreFrameworks/OrderManager.hpp`
 - `CoreFrameworks/ParameterSlot.hpp`
-- `CoreFrameworks/Portfolio.hpp`
 - `CoreFrameworks/PortfolioController.hpp`
 - `CoreFrameworks/Reconcile.hpp`
 - `CoreFrameworks/ReconciliationLoop.hpp`
@@ -714,7 +713,7 @@ Converted files: 165 · unit blocks: 1101
 
 - `CoreFrameworks/EngineSharded/Async.hpp`
 
-### SLOW_PATH (47 files)
+### SLOW_PATH (46 files)
 
 - `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/ControllerConfig.hpp`
@@ -728,7 +727,6 @@ Converted files: 165 · unit blocks: 1101
 - `CoreFrameworks/NodeLatencyStats.hpp`
 - `CoreFrameworks/OrderManager.hpp`
 - `CoreFrameworks/ParameterSlot.hpp`
-- `CoreFrameworks/Portfolio.hpp`
 - `CoreFrameworks/ShardedSnapshot.hpp`
 - `CoreFrameworks/ShardedSnapshotPersist.hpp`
 - `CoreFrameworks/ShardedTradeLog.hpp`
@@ -1001,7 +999,7 @@ Converted files: 165 · unit blocks: 1101
 - `Strategies/private/EmaCross.hpp` — `Strategies/private/EmaCross.hpp`
 - `Version.hpp` — `Version.hpp`
 
-### FUNCTION (510)
+### FUNCTION (508)
 
 - `ANSI_Layout_Render` — `DataStream/TUIAnsi.hpp`
 - `ANSI_Section_Header` — `DataStream/TUIAnsi.hpp`
@@ -1318,9 +1316,7 @@ Converted files: 165 · unit blocks: 1101
 - `Portfolio_CloseSlot` — `CoreFrameworks/Portfolio.hpp`
 - `Portfolio_ComputePnL` — `CoreFrameworks/Portfolio.hpp`
 - `Portfolio_FromEventLog` — `CoreFrameworks/OrderEventLog.hpp`
-- `Portfolio_Load` — `CoreFrameworks/Portfolio.hpp`
 - `Portfolio_OpenSlot` — `CoreFrameworks/Portfolio.hpp`
-- `Portfolio_Save` — `CoreFrameworks/Portfolio.hpp`
 - `PositionExitGate` — `CoreFrameworks/Portfolio.hpp`
 - `Position_Reset` — `CoreFrameworks/Portfolio.hpp`
 - `PurgeGap_Compute` — `Backtest/ValidationSplit.hpp`

@@ -27020,15 +27020,18 @@ e3_skip_load:;
         // decimal flip auto-raises them to 14/10/7 (red build until the bumps ride the same
         // commit). The 16B->16B re-encoding is layout-invisible; the ENCODING keys the guard.
         // E.1.2/D-289: the CONTROLLER clause DELETED with its macro (format retired,
-        // serializers gone — a floor with no loader asserts nothing). PORTFOLIO's
-        // clause survives while its live-tombstone #define stands (BLK-2/T1).
-        static_assert(SHARDED_SNAPSHOT_VERSION >= 9u + MONEY_ENCODING_EPOCH
-                          && PORTFOLIO_SNAPSHOT_VERSION >= 6 + MONEY_ENCODING_EPOCH,
-                      "Ship-A D-144 / Ship-B S-4: snapshot versions must be >= 9/6 + the money "
-                      "encoding epoch (the decimal flip auto-raises the floor; bump in the SAME commit)");
-        check("Ship-A D-144: snapshot versions >= 9/6 + MONEY_ENCODING_EPOCH (auto-raising floor)",
-              SHARDED_SNAPSHOT_VERSION >= 9u + MONEY_ENCODING_EPOCH
-                  && PORTFOLIO_SNAPSHOT_VERSION >= 6 + MONEY_ENCODING_EPOCH);
+        // serializers gone — a floor with no loader asserts nothing). The PORTFOLIO
+        // clause is STRIPPED here too (OQ-4): its format retired at D-289, so this
+        // auto-raising floor no longer guards a load path, and the one guarantee that
+        // DOES survive — the burned-version floor on its live tombstone #define — is
+        // asserted at its SSoT, the epoch tripwire in Portfolio.hpp. Duplicating it
+        // here would be a redundant layer, not a second guard. SHARDED is the only
+        // format still read, so it is the only term left.
+        static_assert(SHARDED_SNAPSHOT_VERSION >= 9u + MONEY_ENCODING_EPOCH,
+                      "Ship-A D-144 / Ship-B S-4: the sharded snapshot version must be >= 9 + the "
+                      "money encoding epoch (the decimal flip auto-raises the floor; bump in the SAME commit)");
+        check("Ship-A D-144: SHARDED_SNAPSHOT_VERSION >= 9 + MONEY_ENCODING_EPOCH (auto-raising floor)",
+              SHARDED_SNAPSHOT_VERSION >= 9u + MONEY_ENCODING_EPOCH);
         check("Ship-B P2b: MONEY_ENCODING_EPOCH == 1 POST-flip (EngineMoneyT is DECIMAL Money)",
               MONEY_ENCODING_EPOCH == 1u && is_fp_decimal_v<EngineMoneyT>);
 
@@ -27090,7 +27093,10 @@ e3_skip_load:;
             // (b) version constants: the pre-epoch generation is structurally below current
             // (loaders compare equality — any v9/v13/v6/v2 artifact refuses on mismatch).
             // E.1.2/D-289: CONTROLLER term deleted with its macro (format retired).
-            check("Ship-B P4 epoch-reject: the persisted versions sit ABOVE their binary-era tombstones",
+            // The PORTFOLIO term is KEPT deliberately — unlike the floor above, this is an
+            // EXACT pin on a RETIRED format's live tombstone. Versions 1-7 are burned (H21);
+            // a retired format must never bump, and this equality is what reds if one tries.
+            check("Ship-B P4 epoch-reject: SHARDED sits above its binary-era tombstone; PORTFOLIO's retired version is pinned at its burned high-water mark",
                   SHARDED_SNAPSHOT_VERSION == 11u
                       && PORTFOLIO_SNAPSHOT_VERSION == 7 && STAMP_FORMAT_VERSION_CURRENT == 3);
             check("Ship-B P4 epoch-reject: stamp MAX_SUPPORTED == CURRENT (pre-epoch stamps [1,2] HARD-INVALID)",

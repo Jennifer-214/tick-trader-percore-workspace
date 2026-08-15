@@ -36,9 +36,19 @@ import re
 import sys
 from pathlib import Path
 
-# Repo paths relative to script location
-SCRIPT_DIR = Path(__file__).absolute().parent  # .absolute() not .resolve(): keep the engine path, don't follow the workspace symlink (machine-portable)
-REPO_ROOT  = SCRIPT_DIR.parent
+# Repo paths — via the ONE canonical engine-root resolver (D-372/D-375: "no tool rolls its own").
+# WAS: `SCRIPT_DIR = Path(__file__).absolute().parent; REPO_ROOT = SCRIPT_DIR.parent`, which made the
+# engine root a function of THE PATH YOU TYPED rather than of the repo. Because `tools/` is a symlink
+# and `.absolute()` deliberately does not resolve it, invoking this script by its WORKSPACE path made
+# REPO_ROOT the workspace — where `CoreFrameworks/` does not exist — and it exited 2 with
+# "file not found". Invoking the same script by its ENGINE path worked. Probed both directions at
+# E.1.2/D-421: the determinant is the SCRIPT path, never the cwd, which is exactly the kind of
+# invariant nobody can hold in their head at a gate battery (I misdiagnosed it as cwd-dependence and
+# nearly shipped that wrong ritual into a handoff — the a-class review falsified it in both
+# directions). ~20 sibling tools already import the shared resolver; this was the one-off.
+# Structural fix over a documented ritual: the handoff expires, the tool does not.
+from check_doc_metadata import ENGINE   # noqa: E402  (the ONE engine-root SSoT)
+REPO_ROOT  = ENGINE
 CFG_REG    = REPO_ROOT / "CoreFrameworks/CfgFieldRegistry.hpp"
 CTRL_CFG   = REPO_ROOT / "CoreFrameworks/ControllerConfig.hpp"
 INVENTORY  = REPO_ROOT / "DOCS/MANUAL_FIELDS_INVENTORY.md"

@@ -130,9 +130,17 @@ in the source are the section after.)
 
 ### E.1.2 / D-421 harvest (2026-08-15)
 
-- **`check_per_node_registry_integrity.py` must be invoked from the ENGINE root** (`tools/…`, via the
-  symlink). From the workspace it resolves `CoreFrameworks/` against the *workspace* and exits 2 with
-  "file not found". Not derivable from `--help`; it cost a false RED in a gate battery.
+- **`check_per_node_registry_integrity.py` — FIXED, and the first diagnosis was wrong.** It exited 2
+  with "file not found: <workspace>/CoreFrameworks/…" in a gate battery, and I recorded that as
+  *"must be invoked from the ENGINE root"* — a **cwd** diagnosis. The a-class review falsified it in
+  both directions by probe: cwd=engine + script=workspace-path → rc 2; cwd=workspace +
+  script=engine-path → rc 0. **The determinant was the SCRIPT path, never the cwd** — it rolled its
+  own `REPO_ROOT = Path(__file__).absolute().parent.parent`, and `.absolute()` deliberately does not
+  resolve the `tools/` symlink, so the engine root became a function of the path you typed. Now
+  imports the shared `check_doc_metadata.ENGINE` like its ~20 siblings (D-372 "no tool rolls its
+  own"); all three invocation forms return 0. **The lesson is the one worth keeping: a per-invocation
+  ritual in a handoff expires, the tool does not** — prefer deleting the landmine to documenting it
+  (`feedback_structural_fix_over_belt_and_suspenders`).
 - **`emit_record_layout.lua` record-name matching had a silent hole.** It matched the fully-qualified,
   the template-stripped base, and the bare name — but NOT the namespace-stripped-template form, so
   `NodeContext<64>` matched *nothing* and the emitter answered `[]` with **rc 0**. A complement

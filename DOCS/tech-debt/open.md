@@ -3964,6 +3964,17 @@ opened: 2026-05-24
 - **Trigger:** the next `/sync-workspace` or doc-system increment; or immediately if any agent reports a symbol "not in CODE_MAP" that demonstrably exists.
 - **Cross-ref:** `claude-skills/sync-workspace/SKILL.md` (the false "(symlinked)" row) · `/close-session` Stage 5.5 item 7 (the currency check that would mislead) · Class 21 (parallel mirror) · `feedback_single_source_of_truth_discipline` · TECH_DEBT-272 (same shape, ledger layer).
 
+### TECH_DEBT-280 — `check_handoff_capture_completeness.py` is existence-only, so it passed on a two-session-stale ledger
+
+- **id:** TECH_DEBT-280 · **severity:** med · **opened:** 2026-08-15 · **status:** open · **surface_tags:** [ci-tooling, doc-system, audit-methodology, false-green]
+- **What:** the guard asserts the active handoff "carries a substantive Capture-completeness section". It is **existence-only and session-blind**. At the E.1.2 close it returned PASS by matching the **2026-08-14** capture table — an all-green nine-✅ ledger describing a *different* session, three of whose rows were false of the current one (three TECH_DEBT were opened; capture was NOT complete; the reference-doc sweep found six gaps 18 minutes after the handoff was written).
+- **Why it matters:** this is the precise mechanism by which the hand-rolled close stayed invisible. The mechanical half read green — including *this* check, whose entire job is to notice a missing capture ledger — while the judgment half was never asked. **Class 51 at the surface built to prevent Class 51**, and a textbook instance of the inverted-felt-need signal AR-8 now carries: the greener the mechanical half, the less need is felt for the judgment half.
+- **Found by:** the Stage 6.5.4 a-class adversarial review (MED-9), not by any gate — which is the finding restated.
+- **Fix shape:** key the check on the ledger being **current to the session**, not merely present. Cheapest honest signal: require the section to carry an anchor the tool can compare against the commit window (a SHA range, or the `Check N` ledger form Stage 6.5.2 mandates), and RED when the newest capture ledger predates the window's first commit. **Non-vacuity requirement:** a positive control that plants a stale-but-substantive ledger and proves RED — without it this fix is the same bug wearing a newer date.
+- **Adjacent, same root:** the handoff now contains TWO identically-formatted capture ledgers (the superseded 08-14 table and the 08-15 `Check N` ledger). A session-blind matcher will keep finding whichever it hits first. Consider requiring exactly one ACTIVE ledger, with superseded ones explicitly headed — the 08-14 table was headed by hand this session, which a guard should not depend on.
+- **Trigger:** the next handoff-guard increment, OR the next close where the capture ledger is questioned — whichever fires first.
+- **Cross-ref:** Class 51 (vacuously-green guard) · AR-8 in `meta-anti-pattern-index.md` (the inverted-signal bump) · [[TECH_DEBT-278]] (the sibling: stamp the handoff so a hand-rolled close is detectable) · `reports/2026-08-15-close-reviews/a-class-handoff-adversarial.md` § MED-9.
+
 ### TECH_DEBT-092 — X_GEN_* namespace collision CI check (FOREACH_METADATA_BIT vs FOREACH_LIVES_IN_STRUCT lname overlap protection)
 
 ```yaml

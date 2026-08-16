@@ -106,6 +106,74 @@ Level 2 (ROOT_META):    FOREACH_REGISTRY (the registry-of-registries; this file)
     /* ... migrate via TECH_DEBT-057 as time allows ...                  */
 ```
 
+### ⚠ AS-BUILT schema (the section above is a never-built design — TECH_DEBT-172)
+
+The 8-field `RegistryRoster.hpp` tuple above was **designed and never built**. The registry that
+actually exists is `CoreFrameworks/MetaRegistry.hpp`, and as of D-421 step 5 its tuple is:
+
+```cpp
+X(registry_name, LEVEL, PARENT_NAME, "domain", "description")
+```
+
+Read the block above as design history, not as the schema. (Reconciling the two is TECH_DEBT-172,
+which also covers the inverted LEVEL numbering; not attempted here.) The `domain` column and its
+vocabulary — below — are as-built and CI-enforced.
+
+### The `domain` vocabulary (D-421 step 5) — SSoT fence
+
+`domain` answers **"what are these rows the COMPLETE SET OF?"**, so a checker can ask whether the
+rows are *all* the rows. H15's Check 1 already asks the complement question at the codebase level
+("is every `FOREACH_` macro enrolled?"); `domain` asks it *inside* each registry, which is where the
+silent-drop class lives (`node_gross_wins` never persisted / TECH_DEBT-196; `ic.actuals` unpersisted
+while its sibling was / D-421 step 1).
+
+**The rule that carries the value is not the taxonomy — it is that declaring NOTHING fails.** That
+single property would have caught `FOREACH_HALT_REASON`, `FOREACH_BACKTEST_METRIC` and
+`FOREACH_LIVES_IN_STRUCT` at introduction.
+
+`check_meta_registry.py` **DERIVES** this set from the fence below — same discipline as
+`check_code_tag_blocks.py` deriving its category set from the schema spec's ` ```category-set ` fence.
+Folding a new domain kind is **one token here and zero tool edits**. A trailing `:` marks a form that
+REQUIRES an argument; a bare token takes none.
+
+```registry-domain-vocab
+# BARE — no argument
+SSOT              the registry IS the source of truth; no external set exists to diff against.
+                  # Legitimate and common, but it must be CLAIMED rather than defaulted into.
+                  # NOTE most "enum registries" here are SSOT, not ENUM: — they GENERATE their enum
+                  # via X_GEN_ENUM, so there is nothing external to compare. ENUM: is the rarer
+                  # MIRROR case. Guessing "enum-ish -> ENUM:" mis-declares a whole cohort as checked.
+# PREFIXED — argument REQUIRED after the colon (a bare prefix is a claim no checker can act on)
+ENUM:             rows must cover every enumerator of the named enum (MIRROR case only).
+STRUCT:           rows must cover every member of the named type.
+                  # Proven shape: tools/check_node_ctx_partition.py IS this check, hand-built for
+                  # FOREACH_NODE_PERSIST_FIELD + FOREACH_NODE_CTX_PERSIST_EXEMPT.
+COUNT:            row count must equal the named macro.
+RANGE:            rows must cover the integer range. Quoted in the tuple because it contains a comma.
+FORMAT:           rows must match the named frozen golden listing.
+CHECK:            the domain IS computable and a NAMED CHECK already computes it — argument is the
+                  # tool path (optionally `::<check-id>`). The guard VERIFIES THE FILE EXISTS, which
+                  # is what keeps this from degrading into a rubber stamp: an unverified "some check
+                  # covers it" is the phantom-guard shape (TECH_DEBT-274 — nine sites across four
+                  # docs claiming a Barrier-2 tool that was never written). Distinct from SSOT (there
+                  # IS an external set) and from PROSE (that set is not computable).
+PROSE:            the domain is NOT computable, and the argument says why.
+                  # LOAD-BEARING, NOT AN ESCAPE HATCH — see the rule above.
+```
+
+**`UNCLASSIFIED` is deliberately NOT in the fence.** It is a migration marker, not a domain kind, and
+it lives in the tool as mechanism: permitted only for names in
+`tools/lib/meta_registry_domain_baseline.txt`, which shrinks to empty. A NEW row carrying it REDs, and
+a baselined name that no longer carries it REDs as stale. Keeping it out of the vocabulary is the
+point — an untriaged registry must stay COUNTABLE rather than masquerade as a stated reason.
+
+**Why a quoted string column and not a C++ enum.** Nothing in C++ expands `FOREACH_REGISTRY` (zero
+invocation sites — verified at D-421 step 5), so an enum would be a token no compiler path reads,
+and adding a kind would need two edits with the C++ half a pure mirror (Class 18). The string plus
+this derived fence gives the same single-source property without the second home. It is also a
+COLUMN rather than an H18 sidecar, because H18's sidecar pattern is for SPARSE custom semantics and a
+sidecar would make "declared nothing" the silent default — the exact case that must fail.
+
 ### Per-row data struct (bit-packed per `multi-bit-state-encoding-pattern.md`)
 
 ```cpp

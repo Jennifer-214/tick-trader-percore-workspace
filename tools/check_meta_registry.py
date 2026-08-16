@@ -41,6 +41,7 @@ from pathlib import Path
 # engine-scanning tool (check_code_tag_blocks / check_schema_version / check_cache_layout all import ENGINE).
 sys.path.insert(0, str(Path(__file__).absolute().parent))
 from check_doc_metadata import ENGINE               # noqa: E402  (the one engine-root SSoT)
+from foxroots import WORKSPACE                      # noqa: E402  (D-375 root resolver; the spec fence lives workspace-side)
 REPO_ROOT = ENGINE
 META_REG  = REPO_ROOT / "CoreFrameworks/MetaRegistry.hpp"
 
@@ -138,13 +139,45 @@ def parse_foreach_registry() -> dict:
 
 
 # --- DOMAIN vocabulary (D-421 step 5) -----------------------------------------------------------
-# Prefixed forms take an argument after the colon; bare forms take none.
-DOMAIN_PREFIXES = ("ENUM:", "STRUCT:", "COUNT:", "RANGE:", "FORMAT:", "PROSE:")
-DOMAIN_BARE = ("SSOT",)
-# Permitted ONLY for names in the shrinking baseline. Deliberately its own token rather than
-# PROSE:"TODO" so an untriaged registry stays COUNTABLE instead of masquerading as a stated reason.
+# DERIVED from the spec's ```registry-domain-vocab``` fence, never mirrored here — the same
+# discipline check_code_tag_blocks.py uses for its category set. Folding a new domain kind is ONE
+# token in the spec and ZERO edits to this file. A hardcoded copy would be a second home for the
+# vocabulary, which is the Class-18 mirror shape this whole tool exists to police.
+DOMAIN_SPEC = (WORKSPACE / "DESIGN_SPECS" / "framework-patterns"
+               / "meta-registry-pattern-for-codebase-registry-discipline.md")
+# Permitted ONLY for names in the shrinking baseline. Deliberately NOT in the fence: it is a
+# migration MECHANISM, not a domain kind, and keeping it out means an untriaged registry stays
+# COUNTABLE instead of masquerading as a stated reason.
 DOMAIN_MIGRATION = "UNCLASSIFIED"
 DOMAIN_BASELINE = Path(__file__).resolve().parent / "lib" / "meta_registry_domain_baseline.txt"
+
+
+def load_domain_vocab():
+    """DERIVE (bare_forms, prefixed_forms) from the spec fence. A trailing ':' marks a form that
+    REQUIRES an argument. Returns None if the fence cannot be read — callers REFUSE rather than
+    falling back to a built-in set, because a silent fallback would let the spec and the gate drift
+    apart while both look healthy (Class 57: 'couldn't read the grammar' must never render as
+    'the grammar is empty')."""
+    try:
+        text = DOMAIN_SPEC.read_text(encoding="utf-8")
+    except (IOError, OSError):
+        return None
+    m = re.search(r"```registry-domain-vocab\n(.*?)```", text, re.DOTALL)
+    if not m:
+        return None
+    bare, pref = set(), set()
+    for row in m.group(1).split("\n"):
+        head = row.split("#")[0].strip()
+        if not head:
+            continue
+        tok = head.split()[0]
+        if re.fullmatch(r"[A-Z][A-Z_]*:", tok):
+            pref.add(tok)
+        elif re.fullmatch(r"[A-Z][A-Z_]*", tok):
+            bare.add(tok)
+    if not bare and not pref:
+        return None
+    return bare, pref
 
 
 def _load_domain_baseline() -> set:
@@ -154,7 +187,8 @@ def _load_domain_baseline() -> set:
             if ln.strip() and not ln.lstrip().startswith("#")}
 
 
-def evaluate_registry(codebase_macros: set, registry_entries: dict, domain_baseline: set = None):
+def evaluate_registry(codebase_macros: set, registry_entries: dict, domain_baseline: set = None,
+                      vocab=None):
     """Pure Check 1/2/3 comparison — the testable CORE that both `main()` and `--selftest` call (SSoT; no
     duplicated logic). Returns (failures, passes): lists of message strings; empty `failures` == clean.
 
@@ -196,7 +230,19 @@ def evaluate_registry(codebase_macros: set, registry_entries: dict, domain_basel
     # each to name the set it is supposed to exhaust. Declaring NOTHING is the failure — that is the
     # whole rule, and it is what would have caught FOREACH_HALT_REASON / FOREACH_BACKTEST_METRIC /
     # FOREACH_LIVES_IN_STRUCT at introduction.
-    bad, stale_baseline, unclassified = [], [], []
+    if vocab is None:
+        vocab = load_domain_vocab()
+    if vocab is None:
+        # REFUSE, never fall back to a built-in set: a silent fallback lets the spec fence and the
+        # gate drift apart while both look healthy, which is the exact false-green this check polices.
+        failures.append(f"Check 4 REFUSAL: could not read the ```registry-domain-vocab``` fence in "
+                        f"{DOMAIN_SPEC.name}. The vocabulary is DERIVED from the spec (SSoT); a "
+                        f"missing fence is an unreadable grammar, not an empty one.")
+        return failures, passes
+    bare_forms, prefixed_forms = vocab
+    valid_list = " / ".join(sorted(bare_forms) + sorted(prefixed_forms))
+
+    bad, unclassified = [], []
     for name, (_level, _parent, domain) in sorted(registry_entries.items()):
         if domain == DOMAIN_MIGRATION:
             if name in domain_baseline:
@@ -204,24 +250,39 @@ def evaluate_registry(codebase_macros: set, registry_entries: dict, domain_basel
             else:
                 bad.append(f"  {name}: DOMAIN=UNCLASSIFIED but NOT in the migration baseline "
                            f"({DOMAIN_BASELINE.name}). A NEW registry must declare a real domain — "
-                           f"SSOT / ENUM: / STRUCT: / COUNT: / RANGE: / FORMAT: / PROSE:<why-not>. "
-                           f"Adding the name to the baseline to silence this is the one move that "
-                           f"defeats the check; classify it instead.")
-        elif domain in DOMAIN_BARE:
+                           f"{valid_list}. Adding the name to the baseline to silence this is the "
+                           f"one move that defeats the check; classify it instead.")
+        elif domain in bare_forms:
             pass
-        elif any(domain.startswith(p) for p in DOMAIN_PREFIXES):
-            if not domain.split(":", 1)[1].strip():
-                bad.append(f"  {name}: DOMAIN='{domain}' has an EMPTY argument — "
-                           f"'{domain.split(':', 1)[0]}:' must name the thing to diff against "
-                           f"(a bare prefix is a claim no checker can act on).")
+        elif any(domain.startswith(p) for p in prefixed_forms):
+            prefix, _, arg = domain.partition(":")
+            arg = arg.strip()
+            if not arg:
+                bad.append(f"  {name}: DOMAIN='{domain}' has an EMPTY argument — '{prefix}:' must "
+                           f"name the thing to diff against (a bare prefix is a claim no checker "
+                           f"can act on).")
+            elif prefix == "CHECK":
+                # The anti-rubber-stamp leg. CHECK: asserts "a named check already computes this
+                # domain" — an assertion that is worthless unless the named thing EXISTS. An
+                # unverified one is the phantom-guard shape (TECH_DEBT-274: nine sites across four
+                # docs claiming a Barrier-2 tool nobody ever wrote), and per the checkable-claim
+                # taxonomy a guard-existence claim is the highest-severity kind, because it does not
+                # merely misinform — it manufactures confidence and stops anyone looking.
+                tool_rel = arg.split("::", 1)[0].strip()
+                if not (WORKSPACE / tool_rel).exists() and not (ENGINE / tool_rel).exists():
+                    bad.append(f"  {name}: DOMAIN='{domain}' names a checker that DOES NOT EXIST "
+                               f"({tool_rel}). CHECK: is only meaningful if the named check is real "
+                               f"— an unverifiable 'some check covers this' is a phantom guard "
+                               f"(TECH_DEBT-274), which is worse than declaring nothing.")
         elif not domain:
             bad.append(f"  {name}: DOMAIN is EMPTY. Declaring nothing is the failure this check "
                        f"exists for; use PROSE:<reason> if the domain genuinely is not computable.")
         else:
-            bad.append(f"  {name}: DOMAIN='{domain}' is not a known form. Valid: "
-                       f"{', '.join(DOMAIN_BARE)} / {' / '.join(DOMAIN_PREFIXES)} "
-                       f"(+ UNCLASSIFIED for baselined migration rows only). Widening this "
-                       f"vocabulary is a review decision, not a local edit.")
+            bad.append(f"  {name}: DOMAIN='{domain}' is not a known form. Valid: {valid_list} "
+                       f"(+ UNCLASSIFIED for baselined migration rows only). Widen the vocabulary by "
+                       f"folding ONE token into the ```registry-domain-vocab``` fence in "
+                       f"{DOMAIN_SPEC.name} — that is a review decision, not a local edit, and it "
+                       f"needs zero changes to this tool.")
     # A baseline naming a registry that no longer carries UNCLASSIFIED is STALE — it silently
     # re-permits the marker if that registry ever regresses. Same shape as the partition guard's
     # STALE-EXEMPT leg: the guard's own INPUT must not be allowed to rot.
@@ -263,6 +324,7 @@ def _selftest() -> int:
     """D-137 discoverable negative self-test (teeth): each Check flags its own violation + a clean set
     passes, AND the canonical ENGINE resolver LOCATES the real registry — the regression guard for the
     2026-07-19 canonical-resolver fix (the straggler that false-`exit 2`'d from the workspace path)."""
+    global DOMAIN_SPEC   # the unreadable-fence tooth below monkeypatches it, then restores
     NB = set()  # no baselined names — every fixture below declares its own domain explicitly
     clean = {"FOREACH_ROOT":  (0, "ROOT_NONE",     "SSOT"),
              "FOREACH_CHILD": (1, "FOREACH_ROOT",  "STRUCT:Foo")}
@@ -303,6 +365,51 @@ def _selftest() -> int:
     f, _ = evaluate_registry({"FOREACH_ROOT", "FOREACH_CHILD"}, clean, {"FOREACH_ROOT"})
     assert any("stale" in m.lower() or "no longer carry" in m for m in f), \
         "Check 4 teeth: a STALE baseline entry was not flagged"
+
+    # --- CHECK: anti-rubber-stamp teeth -------------------------------------------------------
+    # CHECK: claims "a named check already computes this domain". Unverified, that is the
+    # phantom-guard shape (TECH_DEBT-274). A checker that does not exist must RED...
+    # NB the fixture path is deliberately NOT under `tools/`: check_tools_inventory.py scans every
+    # tool for `tools/<name>.py` references and flags ones that do not exist, so a realistic-looking
+    # fixture here makes THAT guard red on THIS file. Its own header records the same self-reference
+    # bite. Keeping the fixture outside the pattern preserves both guards at full strictness rather
+    # than buying this tooth by widening an exclusion list somewhere else.
+    VOC = ({"SSOT"}, {"ENUM:", "STRUCT:", "COUNT:", "RANGE:", "FORMAT:", "PROSE:", "CHECK:"})
+    f, _ = evaluate_registry({"FOREACH_X"},
+                             {"FOREACH_X": (0, "ROOT_NONE", "CHECK:__nonexistent__/no_such_checker.py")}, NB, VOC)
+    assert any("DOES NOT EXIST" in m for m in f), \
+        "CHECK: teeth: a non-existent checker was not flagged — the token is a rubber stamp"
+    # ...and a REAL one must pass, including the ::<check-id> suffix form.
+    f, _ = evaluate_registry({"FOREACH_X"},
+                             {"FOREACH_X": (0, "ROOT_NONE", "CHECK:tools/check_meta_registry.py::Check 1")}, NB, VOC)
+    assert not f, f"CHECK: pointing at a REAL checker should PASS but flagged: {f}"
+
+    # --- derived-vocabulary teeth -------------------------------------------------------------
+    # The vocabulary is DERIVED from the spec fence, so two things must hold: the fence actually
+    # parses at HEAD, and an UNREADABLE fence REFUSES rather than silently falling back to a
+    # built-in set (a fallback would let spec and gate drift while both look healthy — Class 57).
+    live_vocab = load_domain_vocab()
+    assert live_vocab is not None, \
+        f"derived-vocab non-vacuity: the registry-domain-vocab fence did not parse in {DOMAIN_SPEC.name}"
+    lb, lp = live_vocab
+    assert "SSOT" in lb, f"derived-vocab: expected SSOT among bare forms, got {sorted(lb)}"
+    assert {"STRUCT:", "PROSE:", "CHECK:"} <= lp, \
+        f"derived-vocab: expected STRUCT:/PROSE:/CHECK: among prefixed forms, got {sorted(lp)}"
+    # An UNREADABLE fence must REFUSE, not fall back. Exercise the real path by pointing the loader
+    # at a nonexistent spec — asserting the docstring instead would be a trivially-true label proxy
+    # (Class 51 sub-shape C), which is the failure mode this file is supposed to model, not commit.
+    _saved_spec = DOMAIN_SPEC
+    try:
+        DOMAIN_SPEC = _saved_spec.parent / "__no_such_spec_xyz__.md"
+        assert load_domain_vocab() is None, "derived-vocab: an unreadable fence did not return None"
+        f, _ = evaluate_registry({"FOREACH_X"}, {"FOREACH_X": (0, "ROOT_NONE", "SSOT")}, NB, vocab=None)
+        assert any("REFUSAL" in m for m in f), \
+            "derived-vocab teeth: an unreadable fence did not REFUSE — it fell back silently, which " \
+            "lets the spec and the gate drift apart while both look healthy (Class 57)"
+    finally:
+        DOMAIN_SPEC = _saved_spec
+    # ...and the real fence still works after restore (guards against a leaked monkeypatch).
+    assert load_domain_vocab() is not None, "derived-vocab: DOMAIN_SPEC was not restored"
 
     assert META_REG.exists(), f"ENGINE path-resolution regression: registry not found at {META_REG} (ENGINE={ENGINE}) — the 2026-07-19 canonical-resolver fix must keep locating it"
     # Non-vacuity against the REAL tree: the live regex must still parse rows, and the live baseline

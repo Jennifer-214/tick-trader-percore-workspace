@@ -16,7 +16,6 @@
 # the RED, and a name here that no longer carries UNCLASSIFIED is itself a FAIL (stale-baseline).
 #
 # One registry name per line; # comments + blank lines ignored.
-FOREACH_REGISTRY
 FOREACH_GLOBAL_CFG_FIELD
 FOREACH_PER_NODE_CFG_FIELD
 FOREACH_MANUAL_PER_NODE_FIELD

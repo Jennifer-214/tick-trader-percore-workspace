@@ -66,6 +66,44 @@ by design, and pinning the next live entry would just re-arm the same trap one e
 `check_session_docs.sh` row or a pre-commit check), not merely exist. An unwired tooth is
 indistinguishable from a passing one.
 
+### Recurrence 2026-08-16 (second, same day) — a SYNTHETIC fixture is not enough when the unit reads live state on a SECOND path
+
+`check_close_out_completeness_selftest.sh` went RED at a session close, reporting *"`--explain` did
+not suppress an untouched surface."* `--explain` was fine. The tool's `run()` evaluates **two
+halves** — the auto-write surface table AND the live active handoff's quality/sync findings — and a
+single HIGH from the second half returns 1 no matter what the first concluded. The probe planted a
+synthetic surface and explained it away, then inherited a HIGH from a real handoff it never meant to
+involve.
+
+The file's own header comment specifically claims it avoided live-value-anchoring by probing a
+synthetic path. **That claim was true about the fixture and false about the verdict.** Anchoring
+walked back in through a code path the fixture had no authority over.
+
+The sharper half, and the reason this is a spec-level lesson rather than a one-off fix: the
+**UNTOUCHED tooth could pass for the WRONG REASON.** It asserted `rc == 1` — but `hq_hi` alone
+produces `rc == 1`, so untouched-detection could have been **wholly broken** while the tooth read
+green. A vacuously-green tooth inside the guard built to catch vacuously-green guards, with a
+passing status the whole time.
+
+**Rule added — isolate the unit you are asserting, not just its input.** A synthetic fixture
+controls what goes IN. It says nothing about other live state the unit consults on the way to its
+verdict. When the unit-under-test evaluates more than one half, **stub the halves you are not
+asserting**, so each tooth can only fail for its own reason. Concretely: assert on a
+*distinguishing* signal, not a shared exit code — an `rc` reachable by two independent paths is not
+evidence for either.
+
+**And the stub must not become a permanent blindfold.** Stubbing a half hides its ABSENCE as
+effectively as its noise: a later refactor deleting that half leaves every stubbed tooth green. So a
+stubbed half owes a **counterpart tooth that plants a finding IN it** and asserts the verdict still
+flips — proving the half is reached and load-bearing. This selftest now carries all three (untouched
+→ RED · `--explain` → suppresses · planted handoff-quality HIGH → RED), each observed firing.
+
+**Corollary for the writer:** the same RED was also a TRUE POSITIVE against the session's handoff (an
+unqualified *"verified absent"* with no named search space). A guard failing for a bad reason can
+still be pointing at something real — triage BOTH; fixing only the tooling would have shipped the
+unqualified absence claim. Running the search to fix it also **corrected** it: the `rg` was not
+empty, it returned the tombstone comment itself, so "empty" would have been wrong.
+
 ## The corpus GROWS with the discovered error taxonomy
 
 Each new error class the operator or an audit surfaces -> a new synthetic BROKEN fixture + a tool check that flags it + a `--selftest` row that asserts it. This is how the guards stay calibrated to catch OTHER errors, not just the already-known ones — the corpus is the institutional memory of "every way this has been seen to break." A guard is only as trustworthy as the breadth of broken fixtures it has proven it flags.

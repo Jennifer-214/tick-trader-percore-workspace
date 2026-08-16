@@ -4,7 +4,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-08-15 (commit 49244a4)
+**Last regenerated**: 2026-08-16 (commit f2a6321)
 
 ## CoreFrameworks/
 
@@ -22,62 +22,62 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### ControllerConfig.hpp
 
-- `ControllerConfig_CapitalRangeSweep` — line 1522
-- `Fee_Compute` — line 1651
-- `ControllerConfig_ResolveForCore` — line 1704
-- `ControllerConfig_PopulateCoresFromFlat` — line 1769
-- `ControllerConfig_NormalizeForMode` — line 2362
-- `ControllerConfig_IsLiveCapital` — line 2396
-- `ControllerConfig_Load` — line 2442
+- `ControllerConfig_CapitalRangeSweep` — line 1524
+- `Fee_Compute` — line 1653
+- `ControllerConfig_ResolveForCore` — line 1706
+- `ControllerConfig_PopulateCoresFromFlat` — line 1771
+- `ControllerConfig_NormalizeForMode` — line 2372
+- `ControllerConfig_IsLiveCapital` — line 2406
+- `ControllerConfig_Load` — line 2452
 
 ### ControllerEventLoop.hpp
 
 - `NodeSlowState_Init` — line 184
-- `NodeContextDisplayMeta_Init` — line 801
-- `Sharded_SlotNode` — line 1001 — early consumer precedes the definition (same tt namespace). (D-294)
-- `EventLoopState_ReconstructPerCoreFromEventLog` — line 1004
-- `EventLoopState_Init` — line 1117
-- `EventLoopState_InitLegacy` — line 1174
-- `EventLoopState_Free` — line 1207
-- `EventLoopState_RegisterCore` — line 1268
-- `Sharded_LegSlot` — line 1344 — All slow-path / boot-time. Trivially inlined.
-- `Sharded_SlotNode` — line 1381 — and ShardedSnapshot.hpp. GUI sites grandfathered for the E-series decouple. (D-294/D-295)
-- `Sharded_ValidatePartialExitCfg` — line 1394
-- `EventLoopState_SetCoreStrategy` — line 1446
-- `EventLoopState_AttachTradeLog` — line 1493
-- `EventLoopState_AttachOms` — line 1510
-- `EventLoopState_Balance` — line 1528
-- `EventLoopState_RealizedPnl` — line 1533
-- `EventLoopState_Portfolio` — line 1544
-- `EventLoopState_PortfolioMut` — line 1549
-- `EventLoopState_KsMinBalance` — line 1554
-- `EventLoopState_KsMaxDrawdownPct` — line 1559
-- `EventLoopState_KsPeakBalance` — line 1564
-- `EventLoopState_TradeLog` — line 1580
-- `EventLoopState_SetIntendedParams` — line 1595
-- `EventLoop_DrainPostFillOneCore` — line 1617
-- `EventLoop_DrainPostFill` — line 2046
-- `EventLoop_OnEvent` — line 2137
-- `EventLoop_DrainEvents` — line 2321
-- `EventLoop_QueueParameters` — line 2364
-- `EventLoop_RebuildAllParameters` — line 2402
-- `EventLoop_UpdateRollingStateOneCore` — line 2510
-- `EventLoop_UpdateEmaPriceAllCores` — line 2553
-- `EventLoop_RebuildOneCore` — line 2604
-- `EventLoop_PushParameters` — line 3565
-- `EventLoopState_ConfigureKillSwitch` — line 3627
-- `EventLoop_ClearAllPermissions` — line 3637
-- `EventLoop_KillSwitchTrip` — line 3648
-- `EventLoop_KillSwitchEvaluate` — line 3677
-- `EventLoop_TimeExitOneCore` — line 3744
-- `EventLoop_FlattenAll` — line 3848
-- `EventLoop_CheckWsStaleness` — line 3930
-- `EventLoop_TryClearRecovery` — line 4009
-- `EventLoop_TrailingSLRatchetOneCore` — line 4076
-- `EventLoop_BreakevenOnProfitOneCore` — line 4176
-- `EventLoop_Unpause` — line 4250
-- `EventLoop_SlowPath` — line 4274
-- `EventLoop_RunController` — line 4299
+- `NodeContextDisplayMeta_Init` — line 811
+- `Sharded_SlotNode` — line 1011 — early consumer precedes the definition (same tt namespace). (D-294)
+- `EventLoopState_ReconstructPerCoreFromEventLog` — line 1014
+- `EventLoopState_Init` — line 1127
+- `EventLoopState_InitLegacy` — line 1184
+- `EventLoopState_Free` — line 1217
+- `EventLoopState_RegisterCore` — line 1278
+- `Sharded_LegSlot` — line 1354 — All slow-path / boot-time. Trivially inlined.
+- `Sharded_SlotNode` — line 1391 — and ShardedSnapshot.hpp. GUI sites grandfathered for the E-series decouple. (D-294/D-295)
+- `Sharded_ValidatePartialExitCfg` — line 1404
+- `EventLoopState_SetCoreStrategy` — line 1456
+- `EventLoopState_AttachTradeLog` — line 1503
+- `EventLoopState_AttachOms` — line 1520
+- `EventLoopState_Balance` — line 1538
+- `EventLoopState_RealizedPnl` — line 1543
+- `EventLoopState_Portfolio` — line 1554
+- `EventLoopState_PortfolioMut` — line 1559
+- `EventLoopState_KsMinBalance` — line 1564
+- `EventLoopState_KsMaxDrawdownPct` — line 1569
+- `EventLoopState_KsPeakBalance` — line 1574
+- `EventLoopState_TradeLog` — line 1590
+- `EventLoopState_SetIntendedParams` — line 1605
+- `EventLoop_DrainPostFillOneCore` — line 1627
+- `EventLoop_DrainPostFill` — line 2056
+- `EventLoop_OnEvent` — line 2147
+- `EventLoop_DrainEvents` — line 2331
+- `EventLoop_QueueParameters` — line 2374
+- `EventLoop_RebuildAllParameters` — line 2412
+- `EventLoop_UpdateRollingStateOneCore` — line 2520
+- `EventLoop_UpdateEmaPriceAllCores` — line 2563
+- `EventLoop_RebuildOneCore` — line 2614
+- `EventLoop_PushParameters` — line 3582
+- `EventLoopState_ConfigureKillSwitch` — line 3644
+- `EventLoop_ClearAllPermissions` — line 3654
+- `EventLoop_KillSwitchTrip` — line 3665
+- `EventLoop_KillSwitchEvaluate` — line 3694
+- `EventLoop_TimeExitOneCore` — line 3761
+- `EventLoop_FlattenAll` — line 3865
+- `EventLoop_CheckWsStaleness` — line 3947
+- `EventLoop_TryClearRecovery` — line 4026
+- `EventLoop_TrailingSLRatchetOneCore` — line 4093
+- `EventLoop_BreakevenOnProfitOneCore` — line 4193
+- `EventLoop_Unpause` — line 4267
+- `EventLoop_SlowPath` — line 4291
+- `EventLoop_RunController` — line 4316
 
 ### EngineCommon.hpp
 
@@ -97,11 +97,11 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### ExecutionCore.hpp
 
-- `ExecutionCore_Init` — line 276
-- `ExecutionCore_SetParameters` — line 335
-- `ExecutionCore_SetPermission` — line 370
-- `ExecutionCore_Tick_Impl` — line 408
-- `ExecutionCore_Tick` — line 793
+- `ExecutionCore_Init` — line 281
+- `ExecutionCore_SetParameters` — line 340
+- `ExecutionCore_SetPermission` — line 375
+- `ExecutionCore_Tick_Impl` — line 413
+- `ExecutionCore_Tick` — line 809
 
 ### GateParameters.hpp
 
@@ -398,7 +398,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `Momentum_BuildParameters` — line 608
 - `EmaCross_BuildParameters` — line 740
 - `ML_BuildParameters` — line 858
-- `Strategy_BuildParameters` — line 1798
+- `Strategy_BuildParameters` — line 1904
 
 ## Strategies/private/
 
@@ -860,43 +860,43 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 - `NodeModelZoo_Init` — line 159
 - `NodeModelZoo_TryLoadRole` — line 189
-- `NodeModelZoo_LoadFromDir` — line 667
-- `NodeModelZoo_LoadLegacy` — line 776
-- `NodeModelZoo_Free` — line 786
-- `NodeModelZoo_HasAny` — line 795
-- `NodeModelZoo_VerifyExpected` — line 833 — features in the pack, model crashes or produces garbage.
-- `EnsembleZoo_FinalizeCorrupt` — line 1372
-- `EnsembleModelZoo_Init` — line 1413
-- `EnsembleModelZoo_EnsurePrimary` — line 1506
-- `EnsembleModelZoo_RecordPrediction` — line 1563
-- `EnsembleModelZoo_UpdateDrift` — line 1592
-- `EnsembleModelZoo_TickRewardsFromLookback` — line 1645
-- `EnsembleModelZoo_TradeCloseReward` — line 1729
-- `EnsembleModelZoo_InitBandits` — line 1801
-- `EnsembleModelZoo_InitExitBandits` — line 1849
-- `EnsembleModelZoo_InitBuyThompsonBandits` — line 1904
-- `EnsembleModelZoo_InitExitThompsonBandits` — line 1956
-- `EnsembleModelZoo_SetDisabledHorizons` — line 2019
-- `EnsembleModelZoo_Free` — line 2047
-- `EnsembleModelZoo_LoadFromCfg` — line 2092
-- `EnsembleZoo_VerifyGridMemberConsistency` — line 2380
-- `EnsembleModelZoo_AutoDetectFromDir` — line 2450
-- `EnsembleModelZoo_ComputeBundleId` — line 2607
-- `EnsembleModelZoo_SaveBanditState` — line 2632
-- `EnsembleModelZoo_SaveExitBanditState` — line 2654
-- `EnsembleModelZoo_LoadBanditState` — line 2678
-- `EnsembleModelZoo_LoadExitBanditState` — line 2709
-- `EnsembleModelZoo_SaveThompsonState` — line 2767
-- `EnsembleModelZoo_SaveExitThompsonState` — line 2855
-- `EnsembleModelZoo_LoadThompsonState` — line 2938
-- `EnsembleModelZoo_LoadExitThompsonState` — line 3071
-- `EnsembleModelZoo_LoadBanditStateFromPath` — line 3214
-- `EnsembleModelZoo_SetBanditSaveInterval` — line 3241
-- `EnsembleModelZoo_MaybeSaveBanditPeriodic` — line 3259
-- `EnsembleModelZoo_PostLoadSetup` — line 3396
-- `EnsembleModelZoo_IsReadyForInference` — line 3415
-- `NodeModelZoo_PostLoadSetup` — line 3468
-- `NodeModelZoo_CheckStaleModel` — line 3503
+- `NodeModelZoo_LoadFromDir` — line 663
+- `NodeModelZoo_LoadLegacy` — line 772
+- `NodeModelZoo_Free` — line 782
+- `NodeModelZoo_HasAny` — line 791
+- `NodeModelZoo_VerifyExpected` — line 829 — features in the pack, model crashes or produces garbage.
+- `EnsembleZoo_FinalizeCorrupt` — line 1368
+- `EnsembleModelZoo_Init` — line 1409
+- `EnsembleModelZoo_EnsurePrimary` — line 1502
+- `EnsembleModelZoo_RecordPrediction` — line 1559
+- `EnsembleModelZoo_UpdateDrift` — line 1588
+- `EnsembleModelZoo_TickRewardsFromLookback` — line 1641
+- `EnsembleModelZoo_TradeCloseReward` — line 1725
+- `EnsembleModelZoo_InitBandits` — line 1797
+- `EnsembleModelZoo_InitExitBandits` — line 1856
+- `EnsembleModelZoo_InitBuyThompsonBandits` — line 1911
+- `EnsembleModelZoo_InitExitThompsonBandits` — line 1963
+- `EnsembleModelZoo_SetDisabledHorizons` — line 2026
+- `EnsembleModelZoo_Free` — line 2054
+- `EnsembleModelZoo_LoadFromCfg` — line 2099
+- `EnsembleZoo_VerifyGridMemberConsistency` — line 2387
+- `EnsembleModelZoo_AutoDetectFromDir` — line 2457
+- `EnsembleModelZoo_ComputeBundleId` — line 2614
+- `EnsembleModelZoo_SaveBanditState` — line 2639
+- `EnsembleModelZoo_SaveExitBanditState` — line 2661
+- `EnsembleModelZoo_LoadBanditState` — line 2685
+- `EnsembleModelZoo_LoadExitBanditState` — line 2716
+- `EnsembleModelZoo_SaveThompsonState` — line 2774
+- `EnsembleModelZoo_SaveExitThompsonState` — line 2862
+- `EnsembleModelZoo_LoadThompsonState` — line 2945
+- `EnsembleModelZoo_LoadExitThompsonState` — line 3078
+- `EnsembleModelZoo_LoadBanditStateFromPath` — line 3221
+- `EnsembleModelZoo_SetBanditSaveInterval` — line 3248
+- `EnsembleModelZoo_MaybeSaveBanditPeriodic` — line 3266
+- `EnsembleModelZoo_PostLoadSetup` — line 3431
+- `EnsembleModelZoo_IsReadyForInference` — line 3450
+- `NodeModelZoo_PostLoadSetup` — line 3503
+- `NodeModelZoo_CheckStaleModel` — line 3538
 
 ### PerArmFlagRegistry.hpp
 

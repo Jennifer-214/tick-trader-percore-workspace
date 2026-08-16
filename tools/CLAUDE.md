@@ -448,8 +448,13 @@ Four behaviours discovered by being bitten, none derivable from `--help` or a do
   dead-function sweep. Use `\bFN\s*(<[^;()]*>)?\s*\(`. Sister trap: **macro-pasted names** —
   `MASK_NODE_STATE_MODEL_CORRUPT` exists nowhere as a literal because the setter is
   `NODE_STATE_FLAG_SET(node, MODEL_CORRUPT)`.
-- **`check_close_out_completeness.py` SKIPS silently below `--min-commits` (default 8).** A real
-  session that split its work across two repos can land 4 workspace commits and get
-  `SKIP — a small session legitimately owes nothing`, which reads exactly like a pass. It found four
-  genuinely-owed surfaces the moment `--min-commits 1` was passed. Pair the `--since` (which resolves
-  in the WORKSPACE repo — an engine SHA silently checks nothing) with an explicit `--min-commits`.
+- **`check_close_out_completeness.py` declines to run below `--min-commits` (default 8) — it now
+  says so in a signal you cannot mistake for a pass (FIXED 2026-08-16, AR-18).** It used to print
+  `SKIP — a small session legitimately owes nothing` and **exit 0**, so a caller rendering exit-0 as
+  ✅ showed a green row for a check that had evaluated nothing. A session splitting work across two
+  repos lands few WORKSPACE commits and trips this easily; it read as a pass twice in one close while
+  **four** auto-write surfaces were genuinely owed, surfaced the moment `--min-commits 1` was passed.
+  It now prints `DID NOT RUN` and **exits 3** on both the below-threshold and empty-window paths, with
+  two selftest teeth pinning it. Still pair the `--since` (which resolves in the **WORKSPACE** repo —
+  an engine SHA silently checks nothing) with an explicit `--min-commits` at close.
+  **Treat exit 3 as "unknown", never "clean".**

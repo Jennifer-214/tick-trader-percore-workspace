@@ -377,17 +377,27 @@ def check_sync_owed(live=None, backup=None, ws=None):
     return findings
 
 
+# Exit code for "the surfaces were never evaluated". DELIBERATELY not 0 (AR-18, 2026-08-16): this
+# tool used to return 0 when it skipped, so a caller rendering exit-0 as ✅ showed a green row for a
+# check that had not run. It read as a pass twice in one close while FOUR auto-write surfaces were
+# genuinely owed — found only by re-running with the threshold defeated. A skip and a pass must not
+# share a signal; "did not evaluate" is its own answer.
+EXIT_DID_NOT_RUN = 3
+
+
 def run(since, min_commits, explain, quiet):
     repo = WORKSPACE
     n = _commit_count(since, repo)
     if n == 0:
-        print(f"[close-out] no commits in {since}..HEAD — nothing to check")
-        return 0
+        print(f"[close-out] DID NOT RUN — no commits in {since}..HEAD, so no surface was evaluated. "
+              f"This is not a pass; widen --since if you expected work in this window.")
+        return EXIT_DID_NOT_RUN
     print(f"[close-out] window {since}..HEAD — {n} commit(s)")
     if n < min_commits:
-        print(f"[close-out] SKIP — below --min-commits={min_commits}; a small session legitimately "
-              f"owes nothing to the auto-write ledgers")
-        return 0
+        print(f"[close-out] DID NOT RUN — {n} commit(s) is below --min-commits={min_commits}, so no "
+              f"surface was evaluated. A small session often owes nothing, but this run did not "
+              f"CHECK that. Re-run with --min-commits 1 to actually evaluate the window.")
+        return EXIT_DID_NOT_RUN
 
     skipped = {s.split("=", 1)[0]: s.split("=", 1)[1] for s in explain if "=" in s}
     untouched = []

@@ -143,6 +143,16 @@ run_hard "reset-before-producer teeth (planted producer-before-reset fires; corr
     bash "$REPO_ROOT/tools/check_reset_before_producer_selftest.sh"
 run_hard "reset-before-producer (D-421: a per-pass reset must sit on the correct side of its producers — Class 44 sub-B)" \
     python3 "$REPO_ROOT/tools/check_reset_before_producer.py"
+# Wired at D-421 step 2 close, the moment its precondition was met: the tool REFUSED rc 2 until
+# FOREACH_NODE_CTX_PERSIST_EXEMPT existed, and wiring a known-refusing gate trains the operator to
+# ignore gates (the block below says exactly this about the four known-RED it deliberately leaves
+# unwired). The rows landed, so the condition is discharged and the gate goes standing in the same
+# breath — not "later", because a built-but-uninvoked tool IS the rot class DOCS/TOOLS.md exists to
+# close, and this one would have been the guard that proves the complement question is answerable.
+run_hard "node-ctx-partition teeth (UNACCOUNTED/STALE-EXEMPT/CONTRADICTION fire; absent-registry + unknown-category REFUSE rc2; real-tree sets overlap)" \
+    bash "$REPO_ROOT/tools/check_node_ctx_partition_selftest.sh"
+run_hard "node-ctx-partition (D-421: every NodeContext<F> member is persisted OR declared-exempt — the COMPLEMENT of the wire registry)" \
+    python3 "$REPO_ROOT/tools/check_node_ctx_partition.py"
 run_hard "bless roster + flows --selftest (every tools/goldens/*.txt rostered; D-394 refusal teeth — the a-class-found unwired tooth)" \
     python3 "$REPO_ROOT/tools/bless.py" --selftest
 run_hard "schema-version guard teeth (drifted [SCHEMA]_[v1] flagged; locked passes; exempt opts out)" \

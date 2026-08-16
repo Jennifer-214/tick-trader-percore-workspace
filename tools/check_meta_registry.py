@@ -296,9 +296,18 @@ def evaluate_registry(codebase_macros: set, registry_entries: dict, domain_basel
                         f"UNCLASSIFIED — delete the line(s), the migration is done for them: "
                         f"{stale_baseline}")
     if not bad and not stale_baseline:
-        classified = len(registry_entries) - len(unclassified)
-        passes.append(f"Check 4 PASS: DOMAIN valid across {len(registry_entries)} rows "
-                      f"({classified} classified, {len(unclassified)} baselined-pending)")
+        declared = len(registry_entries) - len(unclassified)
+        # DECLARED, not "checked" — and the wording is load-bearing. Check 4 validates that each row
+        # NAMES a domain in the closed vocabulary; it does NOT verify that the rows actually exhaust
+        # that domain. Only a per-shape checker does (today: check_node_ctx_partition.py for the two
+        # STRUCT:NodeContext<64> registries). Reporting these as "classified" invites reading a
+        # declaration as coverage, which would make this column the very Class-51/58 vacuity it was
+        # built to close — a registry reading as checked when nothing checks it.
+        passes.append(f"Check 4 PASS: DOMAIN declared + well-formed across {len(registry_entries)} "
+                      f"rows ({declared} declared, {len(unclassified)} baselined-pending). "
+                      f"NOTE: this validates the DECLARATION, not domain COVERAGE — per-shape "
+                      f"coverage checkers enforce that separately (STRUCT: → "
+                      f"check_node_ctx_partition.py; the generic STRUCT: checker is TECH_DEBT-274).")
     return failures, passes
 
 

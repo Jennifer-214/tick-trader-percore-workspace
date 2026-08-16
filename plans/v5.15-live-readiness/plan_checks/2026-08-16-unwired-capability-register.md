@@ -48,6 +48,25 @@ function-pointer tables or X-macro dispatch are invisible to a textual scan. `ge
 `--callers` documentation states the rule: **"Never trust '0 callers'."** The categories below exist
 because ~25% of the list is exactly that false positive, and it is confirmed, not assumed.
 
+### ⚠ SWEEP CORRECTED 2026-08-16 — 44 → 42, and a NEW false-positive mode
+
+The first pass matched `Fn\s*\(`. That is blind to **explicit template arguments**: a call written
+`EnsembleZoo_FinalizeCorrupt<F>(ezoo, ratio)` puts `<F>` between the name and the paren, so every
+templated call site with explicit args was invisible. Caught by reading `EngineCommon.hpp:386` after
+the sweep flagged a function that is plainly called there — i.e. by disbelieving the tool, which is
+the posture the whole register is about.
+
+Corrected pattern (now in the re-derive block above): `\bFN\s*(<[^;()]*>)?\s*\(`.
+Re-run rescued **2** — `EnsembleZoo_FinalizeCorrupt` (genuinely called at boot; capital-adjacent
+corrupt-arm finalize, so a good one to have not deleted) and `EnsembleModelZoo_SaveThompsonState`
+(rescued only because it was wired earlier the same day). **Net pre-existing correction: one.**
+
+A third mode worth recording though it did not change the count: **macro-pasted names.**
+`MASK_NODE_STATE_MODEL_CORRUPT` appears nowhere as a literal because the setter is
+`NODE_STATE_FLAG_SET(node, MODEL_CORRUPT)` — the macro pastes the prefix. Any future mechanization
+must model all three modes (registry dispatch · explicit template args · macro paste) or it reports
+correct code as dead.
+
 ## Triage
 
 ### A — CONFIRMED unwired, real capability (work these)
@@ -61,8 +80,9 @@ because ~25% of the list is exactly that false positive, and it is confirmed, no
 | `EnsembleModelZoo_SaveThompsonState` | 1 | Learning-state PERSIST. If never called, learned state resets every restart — which disables long-horizon learning even if the rest of the loop closes. |
 | `MBS_OrderSetBanditContext` | 1 | bandit↔order attribution |
 | `Model_LoadAOT` / `Model_Predict_AOT` | 1 / 1 | AOT compile was recorded as *speculative / deferred* at v5.11.8. Likely honest never-built rather than rot — verify then retire or mark. |
-| `EnsembleModelZoo_IsReadyForInference` | 4 | readiness predicate with no production reader |
-| `EnsembleZoo_FinalizeCorrupt` | 4 | corrupt-arm finalize — capital-adjacent, verify first |
+| ~~`EnsembleModelZoo_IsReadyForInference`~~ | 4 | **RESOLVED — deliberate, not a gap.** Its own comment: *"Used by tests to assert: pre-PostLoadSetup → false; post-PostLoadSetup → true."* A symmetry checker whose purpose IS to be called from tests. Category B. |
+| ~~`EnsembleZoo_FinalizeCorrupt`~~ | 4 | **RESOLVED — FALSE POSITIVE.** Called at `CoreFrameworks/EngineCommon.hpp:386` as `EnsembleZoo_FinalizeCorrupt<F>(...)`; the explicit template arg defeated the first sweep pattern. Capital-adjacent corrupt-arm finalize, and it works. |
+| **`MBS_OrderSetBanditContext`** | 1 | **CONFIRMED REAL — telemetry reads an unpopulated field.** The GETTER `MBS_OrderBanditRegime` IS read in production (`CoreFrameworks/OrderManager.hpp:839`) to select which regime's per-arm Exp3 probabilities to log; the SETTER is never called, so `bandit_regime` is always 0 and `regime_clamped` (`:860`) always resolves to regime 0. **Every calibration-log row attributes per-arm probabilities to regime 0 regardless of the actual regime.** The header comment at `Order.hpp:150` asserts *"bandit context flows with Order through trade lifecycle"* — it does not. Not capital-affecting (telemetry only), but it silently corrupts the data an operator would use to judge whether the bandit is learning per-regime — which matters more now that both loops are live (D-423). |
 | `ConfidenceScorer_InitComposite` | 4 | composite scorer init |
 | `RollingCapacity_UpdateADV` | 4 | ADV capacity tracking |
 | `HeldOutSplit_TestAccessAllowed` | 3 | held-out leak guard — a guard with no production caller is the sharpest sub-case |
@@ -96,6 +116,41 @@ Registry-dispatched via X-macro rows, so the textual scan cannot see the call. *
 forever and gets ignored — the M3 failure (a detector that cries wolf costs more than the class it
 catches). That is the argument for working the list before building the tool: the exempt tier's shape
 should be derived from the real false positives, not guessed.
+
+## ✅ RISK CLOSED 2026-08-16 — the register downgrades from audit to cleanup backlog
+
+The reason this register was urgent was never the count. It was that an unwired capability whose
+comment CLAIMS a live consumer is indistinguishable from a working one — that shape produced every
+capital-path defect found this session (`training_timestamp_us`, the `BANDITS_READY` uninitialized
+read, the exit bandit, `bandit_enabled`, H16).
+
+**So the register was swept for exactly that shape**, mechanically: for every remaining flagged
+function, scan the 8 lines above its definition for a consumer claim (`used by …` / `called from …` /
+`consumed by …`).
+
+**Result: ONE hit, and it is truthful** — `EnsembleModelZoo_IsReadyForInference`'s *"Used by tests to
+assert…"*, which is precisely what it is. **No remaining item asserts a consumer it does not have.**
+
+That changes what this list IS. The remaining ~41 are **unadopted helpers**, not lies: a named
+predicate nobody routed through, a convenience wrapper tests use and production doesn't, a scaffold
+whose feature was never turned on. They cost tidiness, not correctness. The dangerous half of the
+class is fully accounted for by the items already fixed.
+
+**Consequence for sequencing:** the D-422 deferral of the E-plan section was predicated on *"wire what
+exists before extending it, so it actually functions as expected."* That condition is now MET for the
+capability-correctness half — nothing left on this list is silently pretending to work. The residual
+is cleanup, which does not need to block the E plan and can be worked opportunistically as ships touch
+those surfaces (`feedback_opportunistic_tech_debt_closure`: subsumption, not adjacency).
+
+**Worked resolutions from the triage pass** (beyond the table above):
+
+- **`Order_IsTerminal`** — unadopted predicate, and its comment (*"Used by OrderManager_Tick to decide
+  whether to free the slot"*) is aspirational. No leak: `OrderManager_ProcessFillCommand` frees the
+  slot **structurally** at `:1776` because that handler is only reached on a terminal event, for both
+  fills and rejections. The design outgrew the predicate. Disposition: correct the comment or delete;
+  low severity either way.
+- **`MBS_OrderSetBanditContext`** — the one real find of the tier (see table). Telemetry-grade, not
+  capital, but it corrupts the per-regime data an operator would use to judge the now-live bandit loops.
 
 ## Disposition
 

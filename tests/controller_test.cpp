@@ -25403,10 +25403,34 @@ e3_skip_load:;
               MASK_ML_CFG_LAZY_REBUILD_ENABLED == 0x0040);
     }
     {
-        // Default cfg: all 7 flags off (backward compat)
+        // Default cfg. 2026-08-16: was `== 0` (all flags OFF). bandit_enabled is now
+        // ON by default, and the change is deliberate rather than a drift to absorb:
+        // the flag previously had NO behavioural reader, so the sharded ensemble
+        // bandit ran regardless of it. Now that it gates the buy-side select, a
+        // 0-default would have SILENTLY DISABLED a working, learning bandit on every
+        // existing config. Defaulting ON preserves the pre-existing behaviour exactly
+        // while making the flag a real operator control for the first time.
+        //
+        // Asserted PER-BIT rather than as a bitmap total. A `== <number>` pin fails on
+        // any future flag-add with no indication of which bit moved or whether the
+        // change was intended -- and the previous `== 0` form is exactly why this
+        // assertion had to be edited rather than simply passing. Naming the bits keeps
+        // the test meaningful when the set grows (feedback_name_members_never_tallies).
+        //
+        // NOTE ml_cfg_flags is no longer wholly non-stamp-bound, but bandit_enabled
+        // specifically carries metadata column 0 (NOT STAMP_BOUND_CFG_DERIVED), so this
+        // default change touches NO wire bytes and no replay determinism.
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
-        check("v5.14.9.F.2: default ml_cfg_flags == 0 (all 7 flags OFF)",
-              cfg.ml_cfg_flags == 0);
+        check("v5.15.5.E.1.2: default bandit_enabled is ON (gates buy-side select; "
+              "was inert before it had a reader)",
+              BITMAP_IS_SET(cfg.ml_cfg_flags, MASK_ML_CFG_BANDIT_ENABLED));
+        check("v5.15.5.E.1.2: every OTHER ml_cfg flag still defaults OFF",
+              !BITMAP_IS_SET(cfg.ml_cfg_flags, MASK_ML_CFG_CONFIDENCE_ENABLED) &&
+              !BITMAP_IS_SET(cfg.ml_cfg_flags, MASK_ML_CFG_CONFIDENCE_COMPOSITE_ENABLED) &&
+              !BITMAP_IS_SET(cfg.ml_cfg_flags, MASK_ML_CFG_EXIT_BANDIT_ENABLED) &&
+              !BITMAP_IS_SET(cfg.ml_cfg_flags, MASK_ML_CFG_USE_EXIT_MODEL) &&
+              !BITMAP_IS_SET(cfg.ml_cfg_flags, MASK_ML_CFG_FOXML_VOL_SCALING_ENABLED) &&
+              !BITMAP_IS_SET(cfg.ml_cfg_flags, MASK_ML_CFG_LAZY_REBUILD_ENABLED));
     }
     {
         // Parser back-compat: legacy keys still set the right bits

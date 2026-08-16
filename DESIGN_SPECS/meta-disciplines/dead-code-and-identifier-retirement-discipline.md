@@ -50,6 +50,48 @@ Leaving it is ingredient 1.
   native). Inline-helper deadness is **tool-driven** (`/dead-code-trace` at ship), not compiler-caught.
 - Sister: `feedback_design_once_maintain_forever` (no dead code left behind is part of "good"); `feedback_no_defer_for_effort` (don't punt a proven-dead removal "to the flip").
 
+#### Rule 1a — a row retired from its PRODUCER but left in its EMITTER does not go dead, it goes LYING (added 2026-08-16)
+
+Rule 1 assumes the thing you left behind is **inert**: dead code does nothing, so the cost is
+confusion and binary size. There is a sharper sub-shape where leaving it is not inert — **the row
+keeps emitting, and emits its DEFAULT as though it were a measurement.**
+
+**Worked instance (E.1.2, 2026-08-16).** The `.B.3` prefix migration moved fee rates onto the
+cfg-derived emit half — `fee_rate_maker` / `fee_rate_taker` carry `STAMP_BOUND_CFG_DERIVED`
+(`CoreFrameworks/CfgFieldRegistry.hpp:788-789`) and emit the true configured values. The **old
+model-const rows were left in place** (`ML_Headers/StampBoundModelConstRegistry.hpp:305`/`:307`).
+Their producer went away with the migration; nothing writes `inf.inference_cfg_fee_rate_*`, and
+`StampInferenceCfgInputs inf = {}` zero-inits. But the emit walk is **gated per-GROUP, not per-row**,
+so the moment the `fees` group bit is set (`ML_Headers/StampHelper.hpp:253`, whenever the cost gate
+is enabled) both rows print `inf->name` unconditionally.
+
+Net result: **one HMAC-signed model-identity document carrying two contradictory fee claims** — the
+canonical keys with the true rates, and the prefixed keys with `0`. It then propagates to the handle
+(`ML_Headers/NodeModelZoo.hpp:474-480`) and is displayed to the operator as the model's training-time
+fees (`Backtest/BacktestPanels.hpp:2314-2316`).
+
+**Why the existing rules do not catch it.** Rule 1's "prove-then-remove" is about code with no
+callers; this row HAS a caller — the emit walk — it just has no *producer*. Rule 2 protects the
+identifier SLOT from reuse; nothing was reused. Rule 3 covers a dead capital PATH that could
+reactivate; this path never deactivated. The gap is a fourth axis: **producer removed, consumer
+retained.**
+
+**The rule.** When a migration moves a field's source, the OLD row must be deleted or tombstoned **in
+the same commit** as the new producer lands. A row whose producer is gone is not tech debt to sweep
+later — from the instant of the migration it is emitting a fabricated value into whatever artifact it
+feeds. Where that artifact is signed, persisted, or operator-visible, treat it at the severity of the
+artifact, not the severity of "leftover code."
+
+**Detection.** The general question is Class 58 sub-shape B one level down: not *"does this bit have a
+producer"* but *"does this ROW have a producer."* Per-bit granularity is structurally blind here —
+the `fees` bit HAS a producer (`StampHelper.hpp:253` sets it), so any bit-scoped completeness check
+grades this GREEN while two of its rows emit zeros. **A coverage check over an emitted format must be
+keyed on the WIRE KEY, not on the group that gates it.**
+
+**Sister:** Class 58 (registry complement blindness) · `advertised-capability-never-exercised.md`
+(the inverse — a capability with no *consumer*; this is a row with no *producer*) · H9 wire-byte
+preservation (why the artifact's severity governs).
+
 ### Rule 2 — Tombstone retired identifiers; NEVER repurpose (the Power Peg rule) — H21
 
 **Scope: persistence/wire-visible identifiers** — the ones where an old persisted file, an old wire/HMAC

@@ -91,6 +91,19 @@ rg -n "static_assert\(.*_COUNT == [0-9]+" --type-add 'h:*.hpp' -th
 # B — gate-reachability: a consumer gated on a bit/flag whose PRODUCER no longer exists.
 #     Find the set-side and the read-side of every gate bit and diff them.
 rg -n "STAMP_SET\(|BITMAP_SET\(" ; rg -n "STAMP_HAS\(|BITMAP_IS_SET\("
+#
+# B, THE SHARP VARIANT — **the only PRODUCER is a TEST FIXTURE.** Partition the producer
+# set by tests/ vs production. If every non-test setter is dead, quarantined, or circular
+# while a fixture hand-sets the value, the chain LOOKS exercised end-to-end and the gate
+# stays green for years. This is the single highest-yield check of the sub-shape, and it
+# is why the D-421 instance survived a whole release train.
+rg -n "STAMP_SET\(.*<bit>" tests/ ; rg -n "STAMP_SET\(.*<bit>" --glob '!tests/'
+#
+# B, the formulation to PREFER — do not try to prove "no writer exists tree-wide". That is
+# an unbounded negative over the tree PLUS any external persisted format the parser reads,
+# it cannot be mechanized, and at D-421 it produced three errors in one paragraph. Instead
+# enumerate, per gate bit: the PRODUCER set reachable from the production emit call sites,
+# vs the CONSUMER set. Both are closed and checkable.
 
 # C — consumer-side: a literal where a registry symbol belongs (the hand-copied row).
 rg -n "= *[0-9]+ *;.*//.*(enum|registry|STRATEGY_|SHALT_)"

@@ -15566,8 +15566,24 @@ e3_skip_load:;
 
                 int label_type = LABEL_PEAK_VALLEY_STABLE;  // 3-class
 
-                // ↓ This block IS the v5.9.5b wiring (mirrors
-                //   Backtest_RunFullValidation):
+                // ⚠ CORRECTED at E.1.2/D-421 (2026-08-15). This said "This block IS the
+                //   v5.9.5b wiring (mirrors Backtest_RunFullValidation)". It NO LONGER
+                //   mirrors production, and the difference is load-bearing:
+                //   `STAMP_SET(inf, inference_cfg)` below hand-sets the GROUP bit, and NO
+                //   production emit path does. Production goes BacktestEngine.hpp /
+                //   BacktestPanels.hpp -> tt::Stamp_AssembleAndEmit, whose explicit
+                //   STAMP_SET(inf, ...) calls never include the bare group bit — the only
+                //   emit-side producer is quarantined behind static_assert(false) in
+                //   StampBoundModelConstRegistry.hpp (PARITY-022).
+                //
+                //   THIS FIXTURE IS WHY THE VACUITY SURVIVED. Because it manufactures the
+                //   precondition, the emit->parse->gate chain looks exercised, so a drift
+                //   gate that can never fire in production stayed green here for a whole
+                //   release train (Class 51 x Class 12; Class 58 sub-shape B).
+                //
+                //   ⚠ MUST-TOUCH at the D-421 step-6 fix: anyone who repairs the gate and
+                //   asks "does drift fire now?" against THIS test gets a green for the
+                //   wrong reason. Verify against a production emit path, not this block.
                 StampInferenceCfgInputs inf = {};
                 STAMP_SET(inf, inference_cfg);
                 // v5.15.5.F.4d.1.B.3 Phase F — inf fields now FPN_Binary<64> via cfg-derived auto-gen;

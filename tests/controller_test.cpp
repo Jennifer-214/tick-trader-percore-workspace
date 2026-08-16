@@ -15905,6 +15905,40 @@ e3_skip_load:;
         EnsembleModelZoo_InitBandits(&ezoo, 0.1, 100);
         check("v5.10.0a.G.7: InitBandits sets initialized_bandits=1",
               BITMAP_IS_SET(ezoo.init_flags, MASK_EZOO_BANDITS_READY) == 1);
+
+        // 2026-08-16 — the SINGLE-ARM TRAP. MASK_EZOO_BANDITS_READY means "the init pass ran",
+        // NOT "the bandits are usable": InitBandits returns early WITHOUT Bandit_Init when
+        // primary_count < 2, leaving a zeroed BanditState (n_arms == 0) behind a SET flag.
+        // Bandit_GetProbabilities then writes NOTHING (both its loops are `i < n_arms`), so a
+        // consumer gating on the flag alone read UNINITIALIZED STACK into tp_pct / sl_pct.
+        //
+        // Per LANDMINE 17 this asserts the PROPERTY, not the UB: we pin the two facts whose
+        // COMBINATION was the defect — (a) the trap state is real and reachable, and (b) the
+        // output buffer is genuinely left untouched. The fix is that the select path also
+        // requires primary_count >= 2 (StrategyParameters.hpp), making the READ condition
+        // identical to the WRITE condition. If someone re-widens either side, (a)+(b) below
+        // still hold and the guard is the only thing standing between them and the same bug.
+        {
+            EnsembleModelZoo<FP> ez1;
+            EnsembleModelZoo_Init(&ez1);
+            ez1.buy_signal_count = 1;           // single-arm ensemble
+            ez1.primary_count    = 1;
+            EnsembleModelZoo_InitBandits(&ez1, 0.1, 100);
+            check("v5.15.5.E.1.2: single-arm InitBandits STILL sets BANDITS_READY (the trap)",
+                  BITMAP_IS_SET(ez1.init_flags, MASK_EZOO_BANDITS_READY) == 1);
+            check("v5.15.5.E.1.2: ...while leaving the BanditState UNINITIALIZED (n_arms == 0)",
+                  ez1.bandits[0].n_arms == 0);
+            // (b) the producer writes nothing — sentinel survives untouched
+            double sentinel[8];
+            for (int i = 0; i < 8; ++i) sentinel[i] = -12345.0;
+            Bandit_GetProbabilities(&ez1.bandits[0], sentinel);
+            check("v5.15.5.E.1.2: Bandit_GetProbabilities writes NOTHING at n_arms==0 "
+                  "(so a flag-only guard reads uninitialized memory)",
+                  sentinel[0] == -12345.0 && sentinel[1] == -12345.0);
+            // the fix's own condition: read-guard must match the init-guard
+            check("v5.15.5.E.1.2: primary_count>=2 is the shared read/init precondition",
+                  (ez1.primary_count >= 2) == (ez1.bandits[0].n_arms > 0));
+        }
         // Each regime's bandit has n_arms = 3
         for (int r = 0; r < NUM_REGIMES; ++r) {
             char msg[64];
@@ -26438,6 +26472,154 @@ e3_skip_load:;
         }
     }
 
+    // ─── Test C.3b: EXIT-side thompson round-trip (2026-08-16) ───
+    // Mirror of C.3 for the exit side, which had NO coverage at all:
+    // EnsembleModelZoo_SaveExitThompsonState had ZERO references anywhere in the
+    // tree — not one production caller and not one test — while its LOADER ran on
+    // every boot (FOREACH_ENSEMBLE_POST_LOAD). So the engine looked for
+    // exit_thompson_state.json that nothing had ever written, and the exit
+    // posteriors were discarded at every restart.
+    //
+    // Written BEFORE wiring the save into shutdown: a function that has never
+    // executed does not go straight into the shutdown path on the strength of
+    // looking correct. This runs it once, against its own loader.
+    {
+        EnsembleModelZoo<64> ezoo;
+        EnsembleModelZoo_Init(&ezoo);
+        ezoo.exit_predictor_count = 3;
+        EnsembleModelZoo_InitExitThompsonBandits(&ezoo, 0.0, 1.0, 1.0, 7ULL);
+        check("v5.15.5.E.1.2: InitExitThompsonBandits sets EXIT_THOMPSON_READY",
+              BITMAP_IS_SET(ezoo.init_flags, MASK_EZOO_EXIT_THOMPSON_READY) == 1);
+
+        Thompson_Update(&ezoo.exit_thompson_bandits[0], 0, 4.0);
+        Thompson_Update(&ezoo.exit_thompson_bandits[0], 1, -2.0);
+        Thompson_Update(&ezoo.exit_thompson_bandits[2], 2, 1.5);
+        Thompson_Sample(&ezoo.exit_thompson_bandits[1]);
+
+        double pre_mu[NUM_REGIMES][BANDIT_MAX_ARMS];
+        uint32_t pre_pulls[NUM_REGIMES][BANDIT_MAX_ARMS];
+        uint64_t pre_rng[NUM_REGIMES];
+        for (int r = 0; r < NUM_REGIMES; ++r) {
+            for (int a = 0; a < BANDIT_MAX_ARMS; ++a) {
+                pre_mu[r][a]    = ezoo.exit_thompson_bandits[r].mu_post[a];
+                pre_pulls[r][a] = ezoo.exit_thompson_bandits[r].total_pulls[a];
+            }
+            pre_rng[r] = ezoo.exit_thompson_bandits[r].rng_state;
+        }
+
+        char tmp_dir2[] = "/tmp/foxml_exit_thompson_XXXXXX";
+        char* dir2 = mkdtemp(tmp_dir2);
+        check("v5.15.5.E.1.2: mkdtemp for exit_thompson_state.json", dir2 != nullptr);
+        if (dir2) {
+            const char* regime_names[] = {"R0", "R1", "R2", "R3", "R4"};
+            int saved = EnsembleModelZoo_SaveExitThompsonState(&ezoo, dir2, regime_names);
+            check("v5.15.5.E.1.2: SaveExitThompsonState returns 1 — its FIRST EVER execution",
+                  saved == 1);
+
+            for (int r = 0; r < NUM_REGIMES; ++r) {
+                for (int a = 0; a < BANDIT_MAX_ARMS; ++a) {
+                    ezoo.exit_thompson_bandits[r].mu_post[a]    = 999.0;
+                    ezoo.exit_thompson_bandits[r].total_pulls[a] = 999;
+                }
+                ezoo.exit_thompson_bandits[r].rng_state = 0xDEADBEEFULL;
+            }
+            int loaded = EnsembleModelZoo_LoadExitThompsonState(&ezoo, dir2);
+            check("v5.15.5.E.1.2: LoadExitThompsonState returns 1", loaded == 1);
+
+            bool mu_ok = true, pulls_ok = true, rng_ok = true;
+            for (int r = 0; r < NUM_REGIMES; ++r) {
+                int active = ezoo.exit_thompson_bandits[r].n_arms;
+                for (int a = 0; a < active; ++a) {
+                    if (ezoo.exit_thompson_bandits[r].mu_post[a] != pre_mu[r][a]) mu_ok = false;
+                    if (ezoo.exit_thompson_bandits[r].total_pulls[a] != pre_pulls[r][a]) pulls_ok = false;
+                }
+                if (ezoo.exit_thompson_bandits[r].rng_state != pre_rng[r]) rng_ok = false;
+            }
+            check("v5.15.5.E.1.2: exit round-trip preserves mu_post", mu_ok);
+            check("v5.15.5.E.1.2: exit round-trip preserves total_pulls", pulls_ok);
+            check("v5.15.5.E.1.2: exit round-trip preserves rng_state", rng_ok);
+
+            char p2[600];
+            snprintf(p2, sizeof(p2), "%s/exit_thompson_state.json", dir2);
+            unlink(p2);
+            rmdir(dir2);
+        }
+    }
+
+    // ─── Test C.3c: EXIT-SIDE LEARNING LOOP CLOSES (2026-08-16) ───
+    //
+    // The operator's actual question, and the one a call-graph cannot answer: does the exit
+    // bandit UPDATE from outcomes and does that update CHANGE WHAT IT SELECTS? Until today the
+    // answer was no — not because the math was wrong, but because nothing read the result. The
+    // exit pool was initialized, rewarded on every qualifying fill, persisted and reloaded,
+    // while every exit decision used uniform weights. It learned into a void.
+    //
+    // This asserts the closed loop through the PRODUCTION paths, not hand-rolled equivalents:
+    //   UPDATE — tt::g_exit_reward_dispatch<F>[algo](ezoo, regime, arm, reward_bps)
+    //            (the exact call ControllerEventLoop.hpp makes at exit-fill attribution)
+    //   SELECT — BanditAlgorithm_Apply(...) over ezoo->exit_bandits[regime]
+    //            (the exact call StrategyParameters.hpp now makes at the exit weight fork)
+    // If either half regresses, or the wiring between them is removed, this goes red.
+    {
+        EnsembleModelZoo<64> ezoo;
+        EnsembleModelZoo_Init(&ezoo);
+        ezoo.exit_predictor_count = 3;
+        EnsembleModelZoo_InitExitBandits(&ezoo, /*exit_eta=*/0.1, /*min_warmup=*/0);
+        check("v5.15.5.E.1.2 LOOP: InitExitBandits sets EXIT_BANDITS_READY",
+              BITMAP_IS_SET(ezoo.init_flags, MASK_EZOO_EXIT_BANDITS_READY) == 1);
+
+        const int regime = 0;
+        const int algo   = 0;  // EXP3
+
+        // SELECT #1 — before any learning. Uniform by construction.
+        double w_before[ENSEMBLE_HORIZON_MAX] = {0};
+        int arm_before = -1;
+        BanditAlgorithm_Apply(algo, &ezoo.exit_bandits[regime], nullptr,
+                              ezoo.exit_predictor_count, 0.5, w_before, &arm_before);
+        check("v5.15.5.E.1.2 LOOP: pre-learning exit weights are uniform",
+              fabs(w_before[0] - w_before[1]) < 1e-9 &&
+              fabs(w_before[1] - w_before[2]) < 1e-9);
+
+        // UPDATE — arm 0 earns money, arm 1 loses it. reward_bps is the real unit: net PnL
+        // in basis points, minus the hold-to-TP counterfactual (ControllerEventLoop.hpp).
+        for (int i = 0; i < 40; ++i) {
+            g_exit_reward_dispatch<64>[algo](&ezoo, regime, /*arm=*/0, /*reward_bps=*/ +25.0);
+            g_exit_reward_dispatch<64>[algo](&ezoo, regime, /*arm=*/1, /*reward_bps=*/ -25.0);
+        }
+
+        // SELECT #2 — the same production call, after learning.
+        double w_after[ENSEMBLE_HORIZON_MAX] = {0};
+        int arm_after = -1;
+        BanditAlgorithm_Apply(algo, &ezoo.exit_bandits[regime], nullptr,
+                              ezoo.exit_predictor_count, 0.5, w_after, &arm_after);
+
+        check("v5.15.5.E.1.2 LOOP: reward CHANGED the exit weights (update is live)",
+              fabs(w_after[0] - w_before[0]) > 1e-6);
+        check("v5.15.5.E.1.2 LOOP: the PROFITABLE arm gained weight over the losing arm",
+              w_after[0] > w_after[1]);
+        check("v5.15.5.E.1.2 LOOP: weights remain a valid distribution after learning",
+              w_after[0] > 0.0 && w_after[1] > 0.0 && w_after[2] > 0.0);
+
+        // MEASURED, not assumed. A first draft asserted the un-rewarded arm would rank BETWEEN
+        // the winner and the loser. It does not, and the measurement is the interesting part:
+        //   before: 0.333333 0.333333 0.333333
+        //   after : 0.966667 0.016667 0.016667   (raw weights 34.6, 1e-10, 1e-10)
+        // Under Exp3-IX the winner's weight grows until everything else normalizes onto the
+        // gamma exploration floor, so the punished arm and the merely-unvisited arm converge to
+        // the SAME probability. Ordering between non-winners carries no information here.
+        //
+        // The floor itself is the property worth pinning, and it is the one that matters for a
+        // trading bandit: gamma/K = 0.05/3 = 0.016667, strictly positive. NO ARM IS EVER
+        // PERMANENTLY LOCKED OUT — an exit model that performs badly in one regime can still be
+        // sampled and recover when conditions change. A bandit that could drive an arm to zero
+        // would be unable to notice it had become good again.
+        const double gamma_floor = BANDIT_GAMMA_DEFAULT / (double)ezoo.exit_predictor_count;
+        check("v5.15.5.E.1.2 LOOP: non-winning arms rest on the gamma exploration floor",
+              fabs(w_after[1] - gamma_floor) < 1e-6 && fabs(w_after[2] - gamma_floor) < 1e-6);
+        check("v5.15.5.E.1.2 LOOP: the floor is NON-ZERO — a losing arm can still recover",
+              gamma_floor > 0.0 && w_after[1] > 0.0);
+    }
+
     // ─── Test C.4: Load with missing file returns 0 (forward-compat-by-absence) ───
     {
         EnsembleModelZoo<64> ezoo;
@@ -28307,6 +28489,33 @@ e3_skip_load:;
                 /*expected_format_version=*/MODEL_FORMAT_VERSION);
             check("v5.15.3.A.1: verifier accepts helper-emitted stamp",
                   vr.valid == 1);
+
+            // 2026-08-16 — training_timestamp_us round-trip. Regression net for a LIVE-READINESS
+            // boot gate that was vacuously green: nothing ever emitted this key, so the age-warn
+            // block (NodeModelZoo.hpp:623-635) never ran, FAILURE_MASK_model_age_warn never set,
+            // and LiveReadiness::check_model_max_age_set returned TRUE for a model of ANY age.
+            //
+            // Asserting PRESENCE alone would be too weak — the bit could be set while the field
+            // stayed 0, which is the exact shape of the sibling fee-rate defect found the same day
+            // (group bit set, fields never populated, zeros emitted into a signed body). So the
+            // VALUE is asserted too: non-zero, and a plausible epoch time rather than a monotonic
+            // counter. A monotonic source compiles and round-trips identically while producing
+            // garbage ages across reboots — the failure this test exists to catch.
+            check("v5.15.5.E.1.2: helper-emitted stamp CARRIES training_timestamp_us",
+                  STAMP_HAS(vr, training_timestamp_us) == 1);
+            {
+                struct timespec ts_now;
+                clock_gettime(CLOCK_REALTIME, &ts_now);
+                uint64_t now_us = (uint64_t)ts_now.tv_sec * 1000000ULL
+                                + (uint64_t)ts_now.tv_nsec / 1000ULL;
+                // epoch-domain sanity: after 2020-01-01 and not in the future.
+                check("v5.15.5.E.1.2: training_timestamp_us is a REAL epoch value, not 0/monotonic",
+                      vr.training_timestamp_us > 1577836800000000ULL &&
+                      vr.training_timestamp_us <= now_us);
+                // the consumer's own arithmetic must yield a fresh verdict on a just-written stamp
+                check("v5.15.5.E.1.2: a freshly-emitted stamp reads as age 0h (staleness math works)",
+                      (now_us - vr.training_timestamp_us) / (3600ULL * 1000000ULL) == 0);
+            }
 
             unlink(tmp_model);
             unlink(tmp_stamp);

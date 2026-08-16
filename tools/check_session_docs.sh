@@ -214,6 +214,27 @@ run_hard "register-fit teeth (finding-register shape guarded)" \
 run_advisory "close-out completeness (auto-write ledgers touched across the session window)" \
     python3 "$REPO_ROOT/tools/check_close_out_completeness.py" --since HEAD~20 --min-commits 8
 
+# --- HARD: CP-1 amendment-cascade TEETH (D-137 negative self-test) ---
+bash "$REPO_ROOT/tools/check_amendment_cascade_selftest.sh"
+
+# --- HARD: forward-promise TEETH (D-137) ---
+# Wired 2026-08-16. Its --selftest existed but ran NOWHERE, so when D-416 legitimately emptied
+# in-flight.md the tier's 3 teeth silently asserted nothing for six days. The live gate below
+# (--since) stayed green throughout — it proves the corpus is clean, never that the verifier
+# can still SEE. Teeth and gate answer different questions; both must run.
+run_hard "forward-promise teeth (verifiers can go BOTH green and red)" \
+    python3 "$REPO_ROOT/tools/check_forward_promise_audit.py" --selftest
+
+# --- ADV: CP-1 amendment cascade (TECH_DEBT-148) — retired phrasings still live elsewhere ---
+# ADVISORY for the same reason as close-out completeness: it fires on a WINDOW.
+# ALSO advisory because it is PARTIAL by construction and its LOW tier is genuinely
+# noisy — measured, not assumed: `first-order` (noise) and `gate-reachability` (the real
+# 2026-08-16 cascade) both live in ~5-6 live files, so corpus rarity cannot separate them.
+# It is a triage queue, not a verdict. HARD-wiring a detector whose LOW tier is mostly
+# English would train everyone to ignore the row — the exact M3 failure the CP-1 spec warns of.
+run_advisory "amendment cascade (CP-1: an untouched live doc repeats a phrasing this window retired)" \
+    python3 "$REPO_ROOT/tools/check_amendment_cascade.py" --since HEAD~20
+
 # --- HARD 1c-1: H21 identifier-retirement guard TEETH (D-137 negative self-test) ---
 # The guard itself runs at pre-commit Check H, but its negative self-test ran NOWHERE — and its
 # version-decrease tooth sat broken for an unknown period, hardcoding SHARDED_SNAPSHOT_VERSION|8

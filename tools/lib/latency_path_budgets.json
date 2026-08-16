@@ -29,7 +29,7 @@
   },
   "_provenance": {
     "db": "build/compile_commands.json",
-    "db_mtime": 1786745006,
+    "db_mtime": 1786907488,
     "cxx": "/usr/bin/c++",
     "flags": [
       "-DLICENSE_BYPASS",

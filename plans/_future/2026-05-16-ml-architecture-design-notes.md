@@ -19,6 +19,62 @@
 
 Per-side independence: 4 distinct ML pipelines, 2 distinct bandit pools, separate cfg thresholds (`confidence_hard_block_threshold` for entry, `exit_threshold` for hold-vs-exit decision at `ControllerConfig.hpp:788`).
 
+### ⚠ AS-BUILT CORRECTION 2026-08-16 — the exit pool's SELECT half did not exist until this date
+
+The table above describes the INTENDED architecture and is correct as a design. It was **not** what
+the code did. The `exit_bandits[NUM_REGIMES]` column read as a working driver for months while the
+exit pool was **write-only**: it initialized, received reward on every qualifying fill, persisted at
+shutdown and reloaded at boot — and **no decision anywhere read its weights.** Every exit blend used
+uniform `1.0/n_loaded` unless Ridge overrode it. The pool learned into a void.
+
+Worse, the reward was attributed to `last_exit_dominant_horizon`, which was argmax of the RAW
+per-handle prediction — so the bandit was scored on an arm it had not chosen. A learner scored on
+someone else's decision cannot converge, so even the update half was not doing what it appeared to.
+
+**Wired 2026-08-16** (`Strategies/StrategyParameters.hpp`, the exit weight fork, placed before the
+Ridge override to mirror buy-side ordering):
+
+1. **SELECT** — `BanditAlgorithm_Apply(...)` over `exit_bandits[regime]` / `exit_thompson_bandits[regime]`.
+   One call covers all five algorithms, so Exp3 **and** Thompson both got exit-side selection; it also
+   inherits `Bandit_GetProbabilities`' AVX-512 kernel + bytewise-identical scalar fallback (H10) for
+   free, because it routes through the shared function rather than an open-coded parallel path.
+2. **ATTRIBUTION** — `dominant` is re-pointed at the arm the bandit actually acted on (Thompson's
+   explicit `chosen_arm` where present, else argmax of the learned weights), so reward now scores the
+   decision the bandit made.
+3. **Gated on `MASK_ML_CFG_EXIT_BANDIT_ENABLED`** — the SAME flag that already gated the reward
+   UPDATE. Wiring select behind the update's own flag is what makes that flag coherent; previously it
+   enabled learning that could never be acted upon. Default 0, so the default path is unchanged.
+4. **`exit_predictor_count >= 2` is load-bearing**, not defensive: `InitExitBandits` has an
+   `n_arms < 2` early return that sets READY without calling `Bandit_Init`, and the identical trap on
+   the BUY side had uninitialized stack reaching `tp_pct`/`sl_pct` (found + fixed the same day).
+
+**Thompson persistence was also broken and is fixed:** `SaveThompsonState` had zero production callers
+and `SaveExitThompsonState` had zero references *anywhere, including tests* — while both LOADERS ran
+every boot, looking for files nothing wrote. Posteriors learned all session and were discarded at every
+restart. Both shutdown saves wired at `CoreFrameworks/EngineSharded/Run.hpp`; the exit saver was given a
+round-trip test and executed for the first time in its existence before being wired.
+
+**Verified, not asserted** — `tests/controller_test.cpp` Test C.3c drives the loop through the
+PRODUCTION calls on both halves (`g_exit_reward_dispatch[algo]` for update, `BanditAlgorithm_Apply` for
+select). Measured uniform → learned:
+
+```
+before: 0.333333  0.333333  0.333333
+after : 0.966667  0.016667  0.016667
+```
+
+Note the non-winners converge to the SAME value — `gamma/K = 0.05/3` — because under Exp3-IX the
+winner's weight grows until everything else normalizes onto the exploration floor. The punished arm and
+the merely-unvisited arm are indistinguishable, so ordering between non-winners carries no information.
+**The floor being strictly positive is the property that matters for trading:** no arm is ever
+permanently locked out, so an exit model that does badly in one regime can be re-sampled and recover.
+
+**Still open (not wired):** periodic Thompson save (the periodic saver stores a FILE path, not a base
+dir, so it needs a struct field rather than a one-liner — a hard kill still loses the session's
+posteriors); backtest-side Thompson save; and empirical validation that exit-bandit selection *improves*
+exit PnL versus the uniform baseline, which needs a backtest comparison, not a unit test. The loop
+CLOSING is proven; the loop being PROFITABLE is not.
+
 ---
 
 ## Caramel's brainstorm (2026-05-16 during `.F.4d` Step 1 coding)
@@ -119,7 +175,9 @@ The following structural pattern decisions were made + shipped during `.F.4d` Ph
 **What:** `EnsembleModelZoo<F>` gained two fn-pointer fields (`thompson_update_fn` + `exit_thompson_update_fn`) of type `ThompsonUpdateFn = void(*)(ThompsonBanditState*, int arm, double reward)`. Default value at struct construction = `&noop_thompson_update` (compile-time-defined empty fn). Boot wiring at `_InitThompsonBandits` (buy) + `_InitExitThompsonBandits` (exit) sets to `&real_thompson_update` (delegates to `Thompson_Update`) when subsystem actually initializes.
 
 **Why:** pre-.F.4d reward-attribution dispatch sites had per-call branches like `if (cfg.bandit_algorithm == THOMPSON || ...) { Thompson_Update(...); }`. Data-dependent control-flow per H20; predictor-warmup cost on cfg-flip; leaves callsite-by-callsite drift risk when adding new bandit modes (each new mode → every dispatch site needs updating = Class 18 mirror risk). The sink-fn-pointer pattern eliminates the branch entirely at every consumer site:
-```cpp
+```text
+// SCHEMATIC (not a compilable sample — `thompson_bandits` was later renamed
+// `buy_thompson_bandits` when the exit-side mirror landed):
 ezoo->thompson_update_fn(&ezoo->thompson_bandits[regime], arm, reward);  // always-called; branchless
 ```
 Cost: ~1-2ns indirect call (predicted to same target → no mispredict; same target until boot reconfigures). Closes Class 24 sister + Class 28 instances structurally for the dispatch family.
@@ -257,7 +315,11 @@ Fuzzy phrasings like "negligible" or "doesn't meaningfully contribute" elided th
 ### Comparison vs pre-.F.4d behavior
 
 Pre-.F.4d reward-attribution dispatch had per-call branches like:
-```cpp
+```text
+// SCHEMATIC — quotes the PRE-.F.4d shape as evidence of what was replaced.
+// THOMPSON/BOTH are conceptual labels, not real enumerators, and
+// `thompson_bandits` predates the buy_/exit_ split. Deliberately not ```cpp:
+// it is a historical illustration, never an executable spec.
 if (cfg.bandit_algorithm == THOMPSON || cfg.bandit_algorithm == BOTH) {
     Thompson_Update(&ezoo->thompson_bandits[r], arm, reward);
 }

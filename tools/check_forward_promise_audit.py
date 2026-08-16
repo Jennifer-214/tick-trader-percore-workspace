@@ -52,6 +52,7 @@ import sys
 import json
 import argparse
 import subprocess
+import tempfile
 from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Optional, Callable, List, Tuple
@@ -1253,6 +1254,29 @@ def selftest() -> int:
     direction is how the original blindness survived every green run it ever had.
     """
     fake = lambda n: re.match(r'(\d+)', n)
+
+    # SYNTHETIC in-flight fixture (2026-08-16). The in-flight tier's three cases used to pin
+    # TECH_DEBT-63, a LIVE entry — and D-416 legitimately re-homed it and emptied in-flight.md,
+    # so the fixture-liveness assert below started failing and the three teeth asserted nothing.
+    # Nothing caught it for six days because this --selftest was never wired into the doc sweep.
+    #
+    # Re-pinning to another live entry is (a) impossible — in-flight.md has ZERO entries by design
+    # now — and (b) the same defect again, one entry later. So the tier gets a SYNTHETIC ledger,
+    # which is the discipline the sister guard already documents inline: anchoring teeth to a live
+    # ledger makes them pass or fail on whether that ledger happened to be touched recently. That
+    # is the live-value anchoring that left the H21 version-decrease tooth dead for an unknown
+    # period. The real in-flight.md stays UNREAD by the teeth; the live gate still reads it.
+    global TECH_DEBT_INFLIGHT
+    _real_inflight = TECH_DEBT_INFLIGHT
+    _tmp = tempfile.NamedTemporaryFile("w", suffix=".md", delete=False, encoding="utf-8")
+    _tmp.write(
+        "---\ntype: ledger-template\n---\n\n"
+        "### TECH_DEBT-63 — SYNTHETIC selftest fixture, not a real entry\n\n"
+        "- **id:** TECH_DEBT-63 · **status:** in-flight · **trigger:** synthetic-fixture\n"
+    )
+    _tmp.close()
+    TECH_DEBT_INFLIGHT = Path(_tmp.name)
+
     cases = [
         # (fn,                              id,     expect_finding, why this id is pinned here)
         (verify_tech_debt_closed,           '186',  False, 'bold `- **id:**` spelling, IS closed — the live false HIGH'),
@@ -1284,10 +1308,19 @@ def selftest() -> int:
     if not _has_entry('TECH_DEBT', '186', _read_safe(TECH_DEBT_CLOSED)):
         print("  FAIL  fixture TECH_DEBT-186 no longer resolves — re-pin the selftest ids")
         failures += 1
+    # The in-flight fixture is SYNTHETIC, so this assert now proves the temp ledger was actually
+    # installed and read — not that some live entry happens to still sit where we left it.
     if not _has_entry('TECH_DEBT', '63', _read_safe(TECH_DEBT_INFLIGHT)):
-        print("  FAIL  fixture TECH_DEBT-63 no longer in in-flight.md — the 3 in-flight cases "
-              "above would assert nothing; re-pin them or retire the tier")
+        print("  FAIL  synthetic in-flight fixture did not resolve — the 3 in-flight cases "
+              "above would assert nothing")
         failures += 1
+    # restore the real ledger path + drop the temp file: a selftest that leaves a global
+    # repointed would silently change what a later in-process call reads.
+    TECH_DEBT_INFLIGHT = _real_inflight
+    try:
+        os.unlink(_tmp.name)
+    except OSError:
+        pass
     print(f"[forward-promise selftest] {'ALL TEETH PASS' if not failures else f'{failures} FAILURE(S)'}")
     return 1 if failures else 0
 

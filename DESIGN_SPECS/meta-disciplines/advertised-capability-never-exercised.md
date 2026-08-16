@@ -13,6 +13,8 @@ applications:
   - 'stage: 6-cadence-locked — a documented vocab value advertised as a grep recipe in CLAUDE.md with ZERO users corpus-wide (TECH_DEBT-254 (c))'
   - 'registry_id: — documented in doc-frontmatter-convention.md with ZERO consumers; inert convention nothing read (TECH_DEBT-249)'
   - 'check_corpus_membership_selftest.sh / check_import_from_core_selftest.sh / check_schema_version_selftest.sh / toolio_selftest.sh — all four listed STANDING-CI in DOCS/TOOLS.md as running "via the tool''s --selftest"; NO call-site existed anywhere. Found by sweeping the inventory against this spec one commit after writing it — and one of the four had been created, and its false claim written, by the author earlier the same session (E.1.2.B 0.2)'
+  - 'ENGINE-CODE surface (operator-raised 2026-08-16): NodeModelZoo_CheckStaleModel (ML_Headers/NodeModelZoo.hpp:3494) is a complete staleness gate whose ONLY callers are tests/controller_test.cpp:24265-24290. Not dead code (referenced), not a failing test (it passes), not a migration orphan (calls_graph_diff is scoped legacy-vs-sharded). Its own comment claims "Both paths fire independently" of the sibling age-warn block; only the sibling has a production caller. Class 58 sub-shape B one unit up: bits there, FUNCTIONS here'
+  - 'check_forward_promise_audit.py --selftest — the teeth EXISTED and were invoked by nothing; check_session_docs ran only the live --since gate. When D-416 emptied in-flight.md the 3 in-flight cases silently asserted nothing for six days while every run stayed green. Wired HARD 2026-08-16 (see calibration-corpus-non-vacuity-discipline.md § Recurrence 2026-08-16)'
 ---
 
 # Advertised capability, never exercised
@@ -48,6 +50,45 @@ Concrete signatures:
 - a mode whose runtime makes it **practically unusable** — nominally available, never affordable.
 
 That last one is the subtle case and worth stating plainly: *a capability too slow to run is not a capability.* `--all` did not fail; it was simply never affordable, which is the same outcome reached by a different road.
+
+### The ENGINE-CODE surface — a function with no PRODUCTION caller (added 2026-08-16, operator-raised)
+
+Every application above is tooling: a flag, a vocab value, a docstring. The same shape lives in the
+**engine**, and it is harder to see there. Operator framing: *"the function exists, but is never
+called… there are a lot of 'broken' features that we need to actually confirm get wired up properly,
+similar to the first iteration of implementing a bandit for models — it was made, but never actually
+used."*
+
+**The signature: a function whose ONLY callers are under `tests/`.**
+
+This is not dead code and the usual detectors are blind to it, in three independent ways:
+
+- **It is referenced**, so `-Wunused`, linkers, and unreferenced-symbol sweeps see a live symbol.
+- **Its tests PASS**, so the suite reports it as working. It *is* working — nothing is broken about
+  the function. What is missing is the call.
+- **Migration-scoped orphan tools do not cover it.** `calls_graph_diff.sh` asks "called in legacy but
+  not in sharded" — a function never called from *either* was never orphaned by a migration and does
+  not appear.
+
+**This is Class 58 sub-shape B's sharp variant, one unit up.** That catalog entry says: *"the only
+PRODUCER is a TEST FIXTURE… the chain LOOKS exercised end-to-end and the gate stays green for
+years."* Identical mechanism, different unit — bits there, **functions** here. Worth stating because
+the D-421 arc built a detector for the bit case and the function case went unexamined beside it.
+
+**Confirmed instance (2026-08-16):** `NodeModelZoo_CheckStaleModel` (`ML_Headers/NodeModelZoo.hpp:3494`)
+— a complete, correct staleness gate with a rate-limited CRITICAL log path. Every caller is in
+`tests/controller_test.cpp` (`:24265`-`:24290`). Its in-code comment even says *"Both paths fire
+independently"* of the sibling age-warn block, and only the sibling has a production caller. So the
+function is not merely uncalled, it is documented as one of two live paths when it is one of one.
+
+**Detection, and its honest limit.** Enumerate function definitions, enumerate call sites, partition
+by path (`tests/` vs production roots). **This must be ADVISORY, never a hard gate:** call sites
+reached through function-pointer tables or X-macro dispatch are invisible to a textual scan —
+`gen_code_map.sh`'s own `--callers` doc states the rule outright, *"Never trust '0 callers'."* The
+output is a review queue. Note the asymmetry that makes it tractable anyway: a function with
+**test-only** callers is a stronger signal than one with **zero** callers, because zero-callers is
+dominated by dispatch-table false positives while test-only means someone deliberately exercised it
+and nothing else ever did.
 
 ## The fix
 

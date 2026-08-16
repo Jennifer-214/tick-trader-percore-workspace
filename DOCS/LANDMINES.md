@@ -453,3 +453,69 @@ builds race on the same artifacts.
 it is that a *build race* surfaces as a *permissions error*, so the whole investigation points away
 from the cause. Sister to Landmine 16 (a background wrapper's exit code is not your build's): both
 are "the signal you get is not about the thing that broke".
+
+## Landmine 19: `rg <pat> .` from the engine root is BLIND to `tests/`, `tools/`, `plans/` — and no flag rescues it (2026-08-16)
+
+**The trap.** Every enumeration that recurses from the engine root silently excludes three of the
+most-searched directories. `tests/`, `tools/`, `plans/` are simultaneously listed in the engine
+`.gitignore` (`:140`, `:141`, `:22`) **and** directory symlinks into the workspace. Measured at
+HEAD, `STAMP_SET` in `tests/controller_test.cpp` — 80 real hits when the path is named:
+
+| invocation | controller_test files found |
+|---|---|
+| `rg -l STAMP_SET .` | **0** |
+| `rg --no-ignore -l STAMP_SET .` | **0** |
+| `rg --follow -l STAMP_SET .` | **0** |
+| `rg --no-ignore --follow -l STAMP_SET .` | **0** |
+| `rg -l STAMP_SET tests/` | 1 (80 hits) |
+
+**I could not isolate a single mechanism, and that is the point.** Gitignore alone does not explain
+it (`--no-ignore` doesn't rescue), symlink-non-descent alone does not explain it (`--follow` doesn't
+rescue), and the two together still return zero. The durable statement is therefore the MEASURED
+behaviour, not a mechanism story: **no flag combination makes `.` cover those trees; only naming the
+path does.** Stated this way deliberately — a mechanism I cannot demonstrate would be exactly the
+plausible-but-unverified claim this arc keeps catching.
+
+**What it costs.** A false NEGATIVE that reads identically to a clean result. This is not
+hypothetical: it bit during D-421 step 6 arming on 2026-08-16. Enumerating the `inference_cfg`
+group-bit PRODUCER set (`STAMP_SET(…, inference_cfg)`):
+
+| method | real setter sites found |
+|---|---|
+| `rg … .` + `STAMP_SET\([^)]*inference_cfg\)` | **2** — `StampBoundModelConstRegistry.hpp:747`, `NodeModelZoo.hpp:459` |
+| explicit roots + paren-safe match | **7** |
+
+The 5 missed: `StampBoundModelConstRegistry.hpp:715` (paren trap — the site D-421 calls *"the single
+site whose reachability decides the whole loop"*) and all four in `tests/` (symlink trap):
+`controller_test.cpp:15588`, `:15662`, `:24017`, `:27783`. Class 58's own detection block names
+*"the only PRODUCER is a test fixture"* as the highest-yield check of sub-shape B — and that is the
+one check `.`-recursion is structurally guaranteed to fail.
+
+**A third silent-zero in the same sitting, worth its own line:** this shell is **zsh**, which does
+NOT word-split an unquoted `$VAR`. `R="dirA dirB"; rg pat $R` passes ONE bogus path named
+`"dirA dirB"` → rg errors to stderr and the pipeline prints nothing. Suppressed with `2>/dev/null`
+it is indistinguishable from a clean no-match. Use a literal path list, an array, or `${=R}`.
+
+**Also note the counts here are SETTER SITES, not "fixtures that hide a bug".** Of the four in
+`tests/`, only `:15588` and `:15662` drive `stamp_write_for_model → verify_model_stamp` (the
+chain-exercising fixtures that make a dead gate look live); `:24017` and `:27783` are macro-semantics
+unit tests over synthetic local structs (`struct StampTest { uint64_t has_flags = 0; }`) and are
+entirely legitimate. Any tool partitioning producers by production-vs-test needs that THIRD category
+or it will report the legitimate two as findings.
+
+**How to avoid it.** Name roots explicitly and REPORT which you covered:
+`rg <pat> CoreFrameworks/ Strategies/ ML_Headers/ MemHeaders/ DataStream/ FixedPoint/ Backtest/ GUI/ tests/ tools/`
+A tool doing this enumeration must resolve the symlinks or take an explicit root list — and any
+finding of the form "no producer exists" is unsound until the search boundary is stated.
+
+**Second trap found in the same breath (different family, same paragraph of damage).** The regex
+`STAMP_SET\([^)]*inference_cfg\)` misses `STAMP_SET((inf), inference_cfg)` — `[^)]*` cannot cross the
+nested paren. That miss drops `ML_Headers/StampBoundModelConstRegistry.hpp:715`, which D-421 records
+as *"the single site whose reachability decides the whole loop"*. Match with paren-depth awareness,
+never a negated-char-class. This is the same defect class as the `fox-symdeps` `header_base` bug
+fixed the same day (a pattern blind to `<>` nesting returned a template argument where a function
+name belonged) — **nesting-blind patterns are their own recurring shape, on angles and parens alike.**
+
+**Related:** Landmine 13 (rg vs gitignore rule KIND — same blindness family, different mechanism, and
+its fix does not fix this) · the symlink-topology family Landmines 5 / 7 / 9 / 10 · Class 58 sub-shape
+B · D-421 step 6 · `DOCS/SUBAGENT_ARMING.md` § 3.1 (where the standing rule now lives).

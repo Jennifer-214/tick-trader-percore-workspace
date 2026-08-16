@@ -100,7 +100,7 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 | `DESIGN_SPECS/framework-patterns/persisted-struct-with-ephemeral-field-coexistence-pattern.md` | 3-first-canonical | framework-discipline, structural-fix, wire-format | 3 |
 | `DESIGN_SPECS/framework-patterns/portfolio-soa-vectorization-pattern.md` | 2-draft | data-layout, soa, avx-512, +2 | 0 |
 | `DESIGN_SPECS/framework-patterns/postloadsetup-registry-pattern.md` | 3-first-canonical | framework-discipline, structural-fix | 3 |
-| `DESIGN_SPECS/framework-patterns/registry-coverage-ci-check-pattern.md` | 3-first-canonical | framework-discipline, structural-fix, pattern-codification | 4 |
+| `DESIGN_SPECS/framework-patterns/registry-coverage-ci-check-pattern.md` | 4-cohort | framework-discipline, structural-fix, pattern-codification | 4 |
 | `DESIGN_SPECS/framework-patterns/registry-tuple-as-single-source-of-truth.md` | 5-claude-md | framework-discipline, structural-fix, pattern-codification | 4 |
 | `DESIGN_SPECS/framework-patterns/runtime-mutable-vs-boot-time-config-pattern.md` | 3-first-canonical | framework-discipline, cfg-mutability, hot-reload, +1 | 0 |
 | `DESIGN_SPECS/framework-patterns/sidecar-override-pattern-for-registry-auto-flows.md` | 5-claude-md | framework-discipline, structural-fix, pattern-codification | 6 |

@@ -49,6 +49,24 @@ The codebase is converting to a structured `[TAG]_` comment scheme — grammar S
 - **`tools/check_session_docs.sh`** — one-shot doc/plan CI aggregator (every doc/plan check in one run).
 - (`DOCS/TOOLS.md` is the full inventory; the above are the load-bearing + the NEW ones.)
 
+### 3.1 When you DO grep: `.` does not mean the tree (Landmine 19)
+`rg <pat> .` from the engine root **silently returns ZERO hits** from `tests/`, `tools/`, and
+`plans/` — they are gitignored *and* directory symlinks into the workspace, and **no flag
+combination rescues it** (`--no-ignore`, `--follow`, and both together were each measured at 0).
+Naming the path (`rg <pat> tests/`) works normally. So an unqualified `rg … .` quietly answers a
+*different question* than the one asked, and reports it with the same confidence.
+
+**Always name your roots explicitly** — `rg <pat> CoreFrameworks/ Strategies/ ML_Headers/
+MemHeaders/ DataStream/ FixedPoint/ Backtest/ GUI/ tests/ tools/` — or search the workspace copy.
+Then state in your report WHICH roots you covered, so a reader can see the boundary of your claim
+instead of inferring "the tree".
+
+**Why this is load-bearing and not pedantry:** Class 58's highest-yield check is *"the only
+PRODUCER is a test fixture"* — a shape that lives, by definition, in `tests/`. An agent grepping
+from `.` finds no fixture, concludes the producer set is empty, and returns a confident
+false negative on precisely the check that matters most. Sister: Landmine 13 (rg vs gitignore rule
+KIND) — same blindness family, different mechanism, and 13's fix does not fix this one.
+
 ## 4. Honor the cited decisions — don't re-litigate
 Honor the decisions the orchestrator cites (the decision log). Don't re-open a **settled fork** (tombstone re-litigation wastes the pass — `feedback_arm_subagents_plan_and_future_aware`). If the supplied shape/seam is **materially wrong**, FLAG it loudly (the re-cascade signal, `feedback_recascade_audit_on_corrected_shape`) — never silently build on an invalidated frame.
 

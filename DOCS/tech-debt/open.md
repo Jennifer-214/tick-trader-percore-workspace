@@ -2764,31 +2764,6 @@ _(TECH_DEBT-139 moved to closed.md at v5.15.5.F.4d.1.D — Check 11 Python detec
 
 ---
 
-### TECH_DEBT-148 — Broad-cascade detection tool (`check_amendment_cascade.py`) unbuilt; memory-corpus slice already fully mechanical
-
-```yaml
-id: TECH_DEBT-148
-title: Broad-cascade detection (check_amendment_cascade.py) semi-mechanical; memory slice fully mechanical
-severity: low
-surface_tags: [meta-error-tracking, audit-methodology, ci-tooling]
-trigger: .E.1-guard-matrix-review-OR-CP-1-recurrence-outside-memory-corpus
-status: open
-opened: 2026-05-30
-related_specs: [meta-disciplines/meta-anti-pattern-index.md]
-```
-
-- **Created:** 2026-05-30 by v5.15.5.F.4d.1.E.0.5 (meta-error subsystem close-G; surfaced at functional verification of Piece 2 / Piece 4)
-- **Severity:** LOW (the recurring pain — memory sister-link asymmetry — is FULLY mechanical / red build, proven `tools/test_memory_guard.py` 5/5; only the GENERAL broad-cascade case is semi-mechanical)
-- **Surface:** `tools/check_amendment_cascade.py` (unbuilt); referenced "until built" in `/capture-audit` Check 12 + `/precoding-audit-gate` Stage-2.5
-- **What's deferred:** CP-1 (cascade-not-propagated) is mechanical for the MEMORY corpus (`check_doc_metadata --bidirectional --memories` = red build on a one-way sister). The GENERAL case — a decision/spec/term amended in one plan with stale siblings across plans/handoffs/decision-logs — still uses the manual Check-12 procedure (grep the amended term + review). The dedicated tool (diff-detect the changed block → extract key terms → grep the corpus → flag un-amended refs, with the CP-1 false-positive surface from the index) is not built.
-- **Why deferred (not effort-avoidance):** per the `.E.0.2` plan R2 — "start semi-mechanical → mechanize incrementally; even semi-mechanical beats memory-only." **Specifically NOT needed before `.E.1`:** the Core→Node rename's cascade is trivially greppable because the amended term is KNOWN (`Core`/`core_*`→`Node`/`node_*`), so the manual procedure fully covers it; the tool's marginal value is the *unknown-amended-term* general case, which `.E.1` is not.
-- **Cost estimate:** ~3-5h (block-diff detection + term extraction + corpus grep + false-positive surface); LOW risk (additive CI tooling; no engine code).
-- **Trigger:** the `.E.1` guard-matrix review (apparatus-complete DoD item 5 — confirm semi-mechanical suffices for the rename surface, which it should) OR a CP-1 recurrence OUTSIDE the memory corpus that the manual procedure misses (an M7 signal to mechanize).
-- **Status:** OPEN
-- **Cross-ref:** `meta-anti-pattern-index.md` CP-1 row; `/capture-audit` Check 12; `/precoding-audit-gate` Stage-2.5; `feedback_sister_cohort_amendment_completeness`; `feedback_structural_enforcement_when_memory_insufficient` (M7).
-
----
-
 ### TECH_DEBT-151 — .E.0.6 deferred follow-ups: 3 CI-guard builds + codify tail (post-determinism-net)
 
 ```yaml
@@ -4048,3 +4023,16 @@ related_specs: [DESIGN_SPECS/framework-patterns/universal-registry-bitmap-dispat
 - **Acceptance:** `ring_push_failures` reaches the operator by the same three-site path its sibling uses — a `PerNodeSnap` field + a `TUI_CopySnapshotSharded` populator line + the `Async.hpp` first-non-zero health-log line — with the `PerNodeSnap` field-init discipline (`EngineTUI.hpp:1070-1094`) honored and the sentinel test extended. **Zero-wire:** `PerNodeSnap` is display-plane only (no `fwrite`/HMAC/`memcmp` path over it — the same property independently re-verified for `drift_history` option (d) at D-421), so no H21 version bump is owed. Then this entry closes and the `ExecutionCore.hpp:709+` comment's "NO READER" paragraph is replaced by the real seam.
 - **Sister finding (same read, separate disposition):** `ExecutionCore<F>::entry_price` / `entry_price_b` are **also** write-only (`:283`/`:290` init, `:667`/`:694` write, zero reads tree-wide) — but that one is a candidate for DELETION, not wiring, since the controller already learns the entry price from the `TradeEvent` it drains (`ExecutionCore.hpp:186-188`). NOT actioned here: removing a field moves `ExecutionCore` layout, which the `[SIZE]_[68352B]` derived tag, the `offsetof` LAYOUT_LOCK static_asserts (`:250-264`) and `check_cache_layout.py` all pin. Homed as its own decision, not smuggled into a comment fix.
 - **Cross-ref:** `DOCS/recurring-bug-patterns/class-58-registry-complement-blindness.md` (consumer-side sub-shape) · TECH_DEBT-282 (its non-registry-recurrence trigger, now fired) · D-421 (the complement-blindness arc + the sibling-asymmetry discriminator) · `feedback_comments_point_in_time_verify_against_code` (how it was found) · `plans/_cross-cutting/2026-05-06-latency-path-discipline.md` Rule 2 (why the counter is a counter and not an fprintf).
+
+### TECH_DEBT-284 — H16 is a Hard Invariant whose registry AND whose CI check were never built
+
+- **id:** TECH_DEBT-284 · **severity:** med · **opened:** 2026-08-16 · **status:** open · **surface_tags:** [registry, ci-tooling, doc-system, false-green, framework-discipline]
+- **Title:** `CLAUDE.md` H16 mandated that every `CfgFieldDescriptor::MetadataFlag` bit carry a row in **`FOREACH_DERIVED_FILTER`**, "enforced" by CI Check **`test_metadata_bit_to_derived_filter_coverage`**. Measured at HEAD across all ten roots: **the registry does not exist** (sole tree-wide mention is a *"FUTURE ADD: at .F.4d …"* comment at `CoreFrameworks/MetaRegistry.hpp:165`) and **the check does not exist** (0 hits). The invariant was unsatisfiable as written from the day it was codified.
+- **Created:** 2026-08-16, found by a breadth sweep during D-421 step 6 and confirmed by orchestrator read. H19's cited check (`test_meta_registry_topology`) was phantom too and was correctable — the real enforcement is `tools/check_meta_registry.py` Check 3 — but H16 has no real referent to repoint at, which is why it needs an entry and H19 did not.
+- **Why it is real and not bookkeeping:** this is the highest-leverage form of the class this whole arc is about. A phantom guard in a **normal doc** misleads a reader; a phantom guard in an **always-loaded** doc misleads *every session, silently, forever* — and it is self-sealing, because the citation is exactly what stops anyone from checking. H16 sits in the Hard Invariants table, the most-trusted block in the codebase, next to H15/H17/H19 whose checks are real. Nothing distinguished it. Sister evidence from the same sweep: 5 `FOREACH_METADATA_BIT` bits (`restart_required`, `safety_critical`, `is_secret`, `affects_stamp_parity`, `log_value_forbidden`) generate mask arrays that **nothing reads** — the consumer-side hole H16 was presumably written to prevent, still open, precisely because the guard never existed.
+- **What exists instead:** `FOREACH_METADATA_BIT` (`CoreFrameworks/CfgFieldRegistry.hpp:1429`), enrolled in the meta-registry at `MetaRegistry.hpp:74` with domain `UNCLASSIFIED` — so it is H15-tracked but its DOMAIN is un-declared, which is the D-421 step-5 baseline the domain classification pass will reach anyway.
+- **Disposition options (operator's call, not the agent's):** (a) **BUILD** the derived-filter registry + a real coverage check, honoring the original intent; (b) **REWRITE** H16 to state the invariant that is actually enforceable today over `FOREACH_METADATA_BIT`; (c) **RETIRE** H16 and re-home the intent as a DESIGN_SPEC rather than a Hard Invariant. Note (c) is not a demotion of the idea — an invariant nothing can check is weaker than a documented discipline that admits it is convention-only.
+- **Interim (LANDED this entry):** the H16 row is marked ⚠️ UNENFORCED in `CLAUDE.md` with the measured facts inline, so no future session reads it as a live guard. H19's cite was corrected to `check_meta_registry.py` Check 3 in the same edit.
+- **Trigger:** the D-421 step-5 domain-classification pass (it will touch `FOREACH_METADATA_BIT`'s UNCLASSIFIED row anyway — subsumption ≈ 0 marginal cost), OR any ship adding a `MetadataFlag` bit.
+- **Acceptance:** H16 states an invariant that a named, existing, teeth-proven mechanism enforces — or it is retired and its intent re-homed. Either way `CLAUDE.md` stops asserting a guard that is not there.
+- **Cross-ref:** D-304 (the H15 name-drift precedent — `test_meta_registry_coverage` was likewise cited-but-nonexistent) · WH-5 (cited-but-nonexistent tool/spec) · Class 51 (vacuously-green guard — this is the degenerate case: a guard that never ran at all) · Class 58 (the consumer-side hole the 5 unread metadata bits represent) · `feedback_comments_point_in_time_verify_against_code`.

@@ -6,9 +6,10 @@ parent_index: DOCS/RECURRING_BUG_PATTERNS.md
 established: 2026-08-15
 surface_tags: [registry, wire-format, persistence, cfg-flow, ci-tooling, false-green, capital-safety]
 severity: high
-recurrence_count: 8
+recurrence_count: 11
+last_amended: 2026-08-16
 first_instance: v4.7.25 (node_gross_wins / node_losses / idle_cycles — TECH_DEBT-196)
-closure_mechanism: the DOMAIN column on FOREACH_REGISTRY (D-421 step 5) — every registry declares what its rows are the COMPLETE SET OF, and declaring nothing FAILS; per-registry complement guards (check_node_ctx_partition.py) for the STRUCT: shape
+closure_mechanism: the DOMAIN column on FOREACH_REGISTRY (D-421 step 5) — every registry declares what its rows are the COMPLETE SET OF, and declaring nothing FAILS; per-registry complement guards (check_node_ctx_partition.py) for the STRUCT: shape. For the GATE-BIT (sub-shape B) surface the mechanization is EMIT-SIDE group coverage against the registry's own group COLUMN — never per-bit producer/consumer set arithmetic, which was prototyped at D-421 step 6 and came back INVERTED on both headline cases (see § Detection signatures, the 2026-08-16 correction)
 sister_classes: [4, 30, 51, 12, 44]
 ---
 
@@ -101,9 +102,35 @@ rg -n "STAMP_SET\(.*<bit>" tests/ ; rg -n "STAMP_SET\(.*<bit>" --glob '!tests/'
 #
 # B, the formulation to PREFER — do not try to prove "no writer exists tree-wide". That is
 # an unbounded negative over the tree PLUS any external persisted format the parser reads,
-# it cannot be mechanized, and at D-421 it produced three errors in one paragraph. Instead
-# enumerate, per gate bit: the PRODUCER set reachable from the production emit call sites,
-# vs the CONSUMER set. Both are closed and checkable.
+# it cannot be mechanized, and at D-421 it produced three errors in one paragraph.
+#
+# ⚠ CORRECTED 2026-08-16 — the FIRST replacement offered here was ALSO wrong, and was killed
+# by a prototype rather than by argument. This block used to say: "enumerate, per gate bit,
+# the PRODUCER set reachable from the production emit call sites vs the CONSUMER set; both are
+# closed and checkable." An a-class pass implemented exactly that at D-421 step 6 and ran it:
+#   inference_cfg  -> GREEN  (it is the founding CRITICAL — a false NEGATIVE)
+#   feature_mask   -> RED    (a LIVE parity-critical REFUSE gate — a false POSITIVE that reads
+#                             as an instruction to delete a working capital control)
+# Both headline verdicts inverted. WHY per-bit set arithmetic cannot work here:
+#   - a gate is not a BIT, it is a (struct-instance, bit) PAIR crossing a process/time boundary
+#     (inf -> wire file -> r -> handle); three structs share one MASK_ namespace;
+#   - the "circular producer" heuristic is SYNTACTICALLY IDENTICAL to seven CORRECT propagations
+#     (NodeModelZoo.hpp :383/:409/:417/:444/:448/:474/:481) — the discriminating fact is not in
+#     the SET/HAS relation at all;
+#   - producers have >=5 syntactic forms (STAMP_SET / BITMAP_SET / STATE_FLAG_SET / raw |= MASK_
+#     / BITMAP_ATOMIC_*) and 12 mask families are token-paste fragments no text tool resolves;
+#   - a bit whose only producer is a registry-driven PARSER walk over an on-disk format has no
+#     in-tree setter at all and is perfectly live (feature_mask).
+#
+# THE FORMULATION THAT ACTUALLY HOLDS — check the EMIT side against the registry's OWN column,
+# never the reachability graph. For each distinct group/domain value G in the registry's group
+# column, require >=1 literal setter of G reachable from the single production emit funnel:
+#   "no production path sets G, therefore rows gated by G never leave THIS BUILD"
+# That claim stays true under every input, including a hand-authored or foreign-branch file,
+# because the undecidable question ("can this gate EVER fire?") is never asked. Both sides are
+# closed and LOCAL: a registry column, and one funnel. Run at HEAD it found 2 vacuous groups
+# with 0 false positives. The general rule: when a relation spans a process boundary, retreat to
+# the narrower claim you can actually close over — do not widen the search to compensate.
 
 # C — consumer-side: a literal where a registry symbol belongs (the hand-copied row).
 rg -n "= *[0-9]+ *;.*//.*(enum|registry|STRATEGY_|SHALT_)"
@@ -194,6 +221,20 @@ sub-shape B at the test surface.
 **Also prevented, not found:** the `[CLASS]_[58]` tag on the exemption registry itself RED-ed at
 `check_code_tag_blocks` because Class 58 did not yet exist — a phantom reference caught in the very
 registry built to make phantom references impossible.
+
+### Later instances (found AFTER the founding census)
+
+| # | Sub-shape | Severity | Instance |
+|---|---|---|---|
+| 9 | B | MED | **`environment_meta` is a second vacuous group**, structurally identical to #3 and missed by the five-shard sweep. 5 registry rows (`StampBoundModelConstRegistry.hpp:437-450`) gate on `inf->has_environment_meta`; the bit (`:545`) and mask (`:601`) exist; the **only** two `STAMP_SET(…, environment_meta)` sites are `#define` BODIES — `:722` (the AUTOPOPULATE family, quarantined behind `static_assert(false)` at `:677-682`, PARITY-022) and `:753` (the parser, which sets only what it already read). MED not CRITICAL: the rows are self-described *"operator audit; informational; no enforcement"*, so unlike #3 no capital control rides them. Found 2026-08-16 at D-421 step 6 by the emit-side census. |
+| 10 | A | MED | **The GROUPS registry is itself complement-blind** — `FOREACH_STAMP_BOUND_MODEL_CONST_GROUPS` (`:241-247`) declares **6** groups while the `group` column uses **7** (`environment_meta` absent). Sub-shape A at one remove: any tool deriving its universe from that list inherits the gap. The prototype that did so scanned **13 of 23** bits and reported clean. *This is why the corrected detection signature above derives from the USE SITE (the column) and never from the GROUPS list.* |
+| 11 | — | MED | **A phantom guard, adjacent to the class rather than an instance of it.** `StampBoundModelConstRegistry.hpp:522-523` states *"build-time test asserts STAMP_BIT_COUNT matches FOREACH_STAMP_BOUND_MODEL_CONST_GROUP_COUNT + standalone count."* No equality assert exists anywhere — only `<= 64` (capacity) and one-sided `>=` lower bounds (`tests/controller_test.cpp:23888`, `:23894`, `:23980`), which stay green when rows are DELETED (Class 51 mode C). The adjacent arithmetic at `:520-521` (*"groups first (6 bits), then standalones (7 bits) = 13 total"*) is stale against an actual 7 + 17. Recorded here because the comment is *why nobody looked*: it told every later reader the completeness question was already answered. |
+
+**What #9-#11 add to the class.** The founding census established that complement blindness is
+found by asking the unasked question. These three establish the follow-on: **the first mechanization
+you reach for is itself a candidate instance.** A guard deriving its universe from a registry that
+is complement-blind (#10), described by a comment promising a guard that does not exist (#11), will
+report the surface clean — and #9 was sitting in that unscanned remainder the whole time.
 
 ## Meta
 

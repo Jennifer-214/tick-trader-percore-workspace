@@ -37,6 +37,35 @@ Every tag-tool's `--selftest` asserts against BOTH halves: passes every known-co
 
 A **live** broken file gets FIXED and stops being broken — so a selftest anchored to it silently goes vacuous the moment the file is cleaned. Not hypothetical: the completeness `--selftest` originally flagged the real `GateControlNetwork.hpp` half-conversion; when Phase-C CONVERTED GCN, that anchor would have gone green-for-the-wrong-reason, so it was swapped for a SYNTHETIC `DemoLumped6` (a 6-field struct lumped in a `[FUNCTION]` block — corpus-independent by construction). **Rule: the standing calibration fixtures are synthetic/frozen copies, never live corpus files.** The live half-conversions are calibration INPUTS during a cleanup (they exist, broken, now) but never the standing corpus.
 
+### Recurrence 2026-08-16 — the rule held, the tool didn't, and a WIRING gap hid it
+
+`check_forward_promise_audit.py` is enrolled above as an application of this very discipline, and its
+in-flight tier still pinned **`TECH_DEBT-63`, a LIVE ledger entry**. D-416 legitimately re-homed that
+entry and emptied `in-flight.md` — correct ledger hygiene — and the tier's three teeth silently began
+asserting nothing. Repaired by installing a **synthetic** in-flight ledger over the module path for
+the duration of the selftest (re-pinning was impossible anyway: `in-flight.md` now has zero entries
+by design, and pinning the next live entry would just re-arm the same trap one entry later).
+
+**Two lessons, and the second is new to this spec:**
+
+1. **Enrollment as an application is not compliance.** The rule was codified 2026-07-17 and this tool
+   was listed under it in the same arc, while carrying live anchors throughout its case table (not
+   only the in-flight tier — `186`, `016`, `PARITY-39` are all live-ledger ids). Being *cited* as an
+   application is not the same as *satisfying* the rule. When adding an `applications:` row, verify
+   the fixture tier, don't infer it from the tool having a `--selftest`.
+2. **A fixture-liveness assert is necessary but NOT sufficient — the teeth must be WIRED.** This tool
+   already had the right guard: an explicit *"a selftest whose corpus stopped containing its fixtures
+   would silently assert nothing"* check. **It fired correctly and nobody saw it for six days**,
+   because `--selftest` was invoked by nothing — `check_session_docs.sh` ran only the live
+   `--since HEAD~5` gate. **A gate and its teeth answer different questions:** the live run proves the
+   corpus is clean, never that the verifier can still SEE. Green on the gate is fully compatible with
+   dead teeth. Both must run on a standing cadence, or the non-vacuity guard is itself vacuous —
+   Class 51 at one remove, in the discipline written to prevent Class 51. Now wired HARD.
+
+**Rule added:** every `--selftest` this spec governs must have a **standing invoker** (a
+`check_session_docs.sh` row or a pre-commit check), not merely exist. An unwired tooth is
+indistinguishable from a passing one.
+
 ## The corpus GROWS with the discovered error taxonomy
 
 Each new error class the operator or an audit surfaces -> a new synthetic BROKEN fixture + a tool check that flags it + a `--selftest` row that asserts it. This is how the guards stay calibrated to catch OTHER errors, not just the already-known ones — the corpus is the institutional memory of "every way this has been seen to break." A guard is only as trustworthy as the breadth of broken fixtures it has proven it flags.

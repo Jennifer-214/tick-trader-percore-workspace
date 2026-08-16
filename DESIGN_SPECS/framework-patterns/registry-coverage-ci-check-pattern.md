@@ -1,8 +1,9 @@
 ---
 type: framework-pattern
-stage: 3-first-canonical
-version: 1.0
+stage: 4-cohort
+version: 1.1
 established: 2026-05-16
+last_amended: 2026-08-16
 tags: [framework-discipline, structural-fix, pattern-codification]
 surface: [registry, ci-tooling, test-infrastructure]
 sister_specs: [meta-registry-pattern-for-codebase-registry-discipline.md, manual-fields-inventory-pattern.md, cross-walker-struct-field-uniqueness-discipline.md, bitmap-overflow-protection-discipline.md]
@@ -12,7 +13,7 @@ applies_at_skills: []
 # Registry coverage CI check pattern
 
 **Established:** 2026-05-16 (v5.15.5.F.4c.4 — retroactive extraction from 3 canonical applications)
-**Status:** Stage 3 ACTIVE (3 canonical apps at extraction time: Check 2 + Check 7 + Check 8)
+**Status:** Stage 4 COHORT (2026-08-16). **The bump rests on the LANDED applications only** — Check 2 (App 1), Check 7 (App 2) and the NodeContext persist partition (App 4, tool shipped + wired at pre-commit Check Q). App 3's tool was never built (TD-274) and **App 5 is DESIGNED-NOT-LANDED**, so neither is part of the basis; the stage was already stale at 3 before this amendment (the lifecycle rule is ≥2 applications). Recorded explicitly because promoting a pattern on the strength of an unbuilt application is the exact over-read this spec's own Gotcha 1 warns about.
 **Tags:** structural-fix, framework, ci-tooling, registry-discipline; closes Class 18/19/21/27/30; serves H15 (sister discipline)
 **Cross-references:**
 - `structural-fix-preferred-decision-framework.md` — parent family (this is a structural-fix mechanism via CI tooling)
@@ -340,6 +341,63 @@ exemption reasons rather than accepting them — a capital control that silently
 indeterminate cross-thread read, and an observability channel that had never worked. That is the
 argument for the pattern at large: the check is cheap, and the act of justifying each exemption is
 where the findings actually come from.
+
+### Application 5 — stamp emit-producer coverage (Shape A, **compile-time variant**) — DESIGNED at E.1.2 / D-421 step 6
+
+> ⚠ **STATUS: DESIGNED, NOT LANDED (2026-08-16).** Gated on an in-flight adversarial pass and on a
+> fix/delete pass that must precede it. **This block is written in the DESIGN tense on purpose** —
+> Application 4 above cites a sister tool marked `[NEVER BUILT — TD-274]`, and this spec has already
+> paid once for describing a mechanism as though it existed. Nothing here may be cited as shipped
+> until the `static_assert`s are in the tree. Gotcha 1 ("don't extract too early") applies to the
+> *claim*, not the design: the design is recorded now because the next session needs the reasoning,
+> not because the work is done.
+
+**Target domain:** `enum StampHasFlagBit` (`ML_Headers/StampBoundModelConstRegistry.hpp:537-573`) — 24 bits
+**Registry:** `FOREACH_STAMP_BOUND_MODEL_CONST` rows (48) → bits via the `group` column + standalone names
+**Producer root:** `tt::Stamp_AssembleAndEmit` (`ML_Headers/StampHelper.hpp:179`) — the single production emit funnel
+**Mechanism:** compile-time `static_assert` (this spec's own § "Mechanism choice decision matrix" resolves it: *enumerable via `FOREACH_*` → compile-time preferred*)
+**Closes:** the group/standalone bit with no emit-side producer — measured **8 of 24** unreachable at HEAD, incl. `feature_mask`, whose parity-critical `r.valid = 0` REFUSE (`ML_Headers/ModelInference.hpp:1880-1893`) has never fired (0 of 16 on-disk stamps carry the key; control `label_registry_hash` is 16/16)
+
+**Three things this application adds to the pattern, each earned by a real failure:**
+
+1. **The marker must BE the code, not point at it.** The obvious design — require a
+   `STAMP_EMIT_PRODUCER_<G>` marker per group — is a **Class-18 mirror**: a marker row and the
+   population code are two places, so a row can claim a producer that does not exist and stay green
+   forever. The working shape puts the *population statements themselves* in the sidecar row
+   (`X(BIT, GATE_EXPR, ...statements...)`, variadic so commas in `memcpy(a,b,n)` survive) and expands
+   it AS the assembler body. **Deleting the row deletes the code**, so a row cannot lie. Generalizes
+   beyond stamps: *a coverage registry over BEHAVIOUR must own the behaviour, not assert about it.*
+2. **Verify the guard does not ALREADY exist — the first sketch was a no-op.** The proposed
+   "adding a group without a producer must not compile" is **already true at HEAD**: the emit walk
+   token-pastes `STAMP_EMIT_CHECK_HAS_##group` (`ML_Headers/ModelInference.hpp:2259`), so an
+   undefined dispatcher is an undeclared identifier. Verified by construction — group values used in
+   rows are *exactly* the set of `STAMP_EMIT_CHECK_HAS_*` defines, and the build is green. The real
+   gap is one level down and is **not preprocessor-visible**: whether the hand-written assembler
+   body ever calls `STAMP_SET`. **Before adding a coverage guard, establish what the existing
+   dispatch already enforces** — otherwise the new guard is ceremony over a closed hole.
+3. **Derive the domain from the ENUM / use-site, never from a coverage list that is itself
+   uncovered.** Both `FOREACH_..._GROUPS` (`:241-247`, 6 rows for 7 group bits) and
+   `FOREACH_..._STANDALONE` (`:260-267`, 6 real of 17, plus a phantom `bandit` row with no
+   `MASK_bandit` anywhere) are **decorative** — their only consumers are two vacuous `>=` test
+   bounds. A guard deriving its universe from them scans **13 of 23** bits and reports clean. That is
+   Class 58 sub-shape A sitting *inside* the fix for sub-shape B. Delete them rather than repair
+   them; a repaired-but-decorative list reintroduces the mirror.
+
+**A fourth lesson, about the ORACLE rather than the registry — structural beats corpus.** An
+empirical count over emitted artifacts said 10 bits were unproduced; the structural count says **8**.
+The 2 extra (`fees`, `inference_cfg_bandit_blend_ratio`) have *legitimate conditional* producers
+(`StampHelper.hpp:249-254`, gated on `MASK_ML_CFG_BANDIT_ENABLED` / `MASK_GATE_CFG_COST_GATE_ENABLED`)
+and are absent from the corpus only because those cfg flags were off when the corpus was written.
+**A corpus-derived guard REDs on correct code; the compile-time guard greens it.** Generalizes:
+*when a guard can be built on either the code or its output, the code is the sounder oracle — output
+is a sample of one configuration.* (Sister caution: the corpus here is also 3 months stale, so it
+could not testify about HEAD in either direction.)
+
+**Why this is a compile-time application and not a Python tool.** Every text-based approach to this
+surface was tried and failed: producers take ≥5 syntactic forms, 12 mask families are token-paste
+fragments, and the decisive `STAMP_SET((inf), bit)` form defeats a `[^)]*` argument match. The
+preprocessor resolves all of it for free. This is the decision matrix's *"enumerable via `FOREACH_*`"*
+row arriving with evidence.
 ---
 
 ## How to add a new application

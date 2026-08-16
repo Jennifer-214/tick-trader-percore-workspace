@@ -1629,3 +1629,29 @@ related_specs: []
 - **CLOSED 2026-08-15 — landed at engine `7240f3d` (E.1.2 item E); code re-verified at pickup, not taken from the ship note.** The split is `Money` end-to-end at `CoreFrameworks/EngineSharded/Async.hpp:921/:925`, closing the H4 violation. Leg non-conservation — the half of this entry that was the actual bug rather than the type smell — is closed STRONGER than the entry asked: it requested `assert legA.qty+legB.qty == intended_qty`, and the shipped form makes the assert unnecessary by construction (`leg_a = Money_Mul(intended, pct)`, `leg_b = Money_Sub(intended, leg_a)` — `Money_Sub` is exact by domain, so the identity is a THEOREM and no runtime check can fail). The reasoning is commented in place at `Async.hpp:910-915`, with a ⚠ NEVER-rewrite warning at `:917` against the two-independent-roundings form, pinned by a test so the revert is caught rather than merely discouraged.
 - **Disposition note:** the ship note referenced this id but never claimed closure, so no forward-promise was broken — the row simply went un-flipped. Found by the `/accept-handoff` Stage-4.5 predecessor-artifact pass at the 2026-08-15 pickup.
 - **Closed:** 2026-08-15 (moved open → closed via check_tech_debt.py --close)
+
+### TECH_DEBT-148 — Broad-cascade detection tool (`check_amendment_cascade.py`) unbuilt; memory-corpus slice already fully mechanical
+
+```yaml
+id: TECH_DEBT-148
+title: Broad-cascade detection (check_amendment_cascade.py) semi-mechanical; memory slice fully mechanical
+severity: low
+surface_tags: [meta-error-tracking, audit-methodology, ci-tooling]
+trigger: .E.1-guard-matrix-review-OR-CP-1-recurrence-outside-memory-corpus
+status: closed
+opened: 2026-05-30
+related_specs: [meta-disciplines/meta-anti-pattern-index.md]
+```
+
+- **Created:** 2026-05-30 by v5.15.5.F.4d.1.E.0.5 (meta-error subsystem close-G; surfaced at functional verification of Piece 2 / Piece 4)
+- **Severity:** LOW (the recurring pain — memory sister-link asymmetry — is FULLY mechanical / red build, proven `tools/test_memory_guard.py` 5/5; only the GENERAL broad-cascade case is semi-mechanical)
+- **Surface:** `tools/check_amendment_cascade.py` (unbuilt); referenced "until built" in `/capture-audit` Check 12 + `/precoding-audit-gate` Stage-2.5
+- **What's deferred:** CP-1 (cascade-not-propagated) is mechanical for the MEMORY corpus (`check_doc_metadata --bidirectional --memories` = red build on a one-way sister). The GENERAL case — a decision/spec/term amended in one plan with stale siblings across plans/handoffs/decision-logs — still uses the manual Check-12 procedure (grep the amended term + review). The dedicated tool (diff-detect the changed block → extract key terms → grep the corpus → flag un-amended refs, with the CP-1 false-positive surface from the index) is not built.
+- **Why deferred (not effort-avoidance):** per the `.E.0.2` plan R2 — "start semi-mechanical → mechanize incrementally; even semi-mechanical beats memory-only." **Specifically NOT needed before `.E.1`:** the Core→Node rename's cascade is trivially greppable because the amended term is KNOWN (`Core`/`core_*`→`Node`/`node_*`), so the manual procedure fully covers it; the tool's marginal value is the *unknown-amended-term* general case, which `.E.1` is not.
+- **Cost estimate:** ~3-5h (block-diff detection + term extraction + corpus grep + false-positive surface); LOW risk (additive CI tooling; no engine code).
+- **Trigger:** the `.E.1` guard-matrix review (apparatus-complete DoD item 5 — confirm semi-mechanical suffices for the rename surface, which it should) OR a CP-1 recurrence OUTSIDE the memory corpus that the manual procedure misses (an M7 signal to mechanize).
+- **Status:** OPEN
+- **Cross-ref:** `meta-anti-pattern-index.md` CP-1 row; `/capture-audit` Check 12; `/precoding-audit-gate` Stage-2.5; `feedback_sister_cohort_amendment_completeness`; `feedback_structural_enforcement_when_memory_insufficient` (M7).
+
+---
+- **Closed:** 2026-08-16 (moved open → closed via check_tech_debt.py --close)

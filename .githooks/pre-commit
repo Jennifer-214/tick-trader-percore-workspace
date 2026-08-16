@@ -265,6 +265,27 @@ if [ "${SKIP_HOT_PATH_INVARIANTS_CHECK:-0}" != "1" ]; then
             echo "[pre-commit] Check M PASS"
         fi
     fi
+
+    # Check M2: reset-before-producer ordering (D-421 / Class 44 sub-B). Fires on the ONE file
+    # whose rules live in the tool. Wired at COMMIT time rather than left to the doc sweep because
+    # the failure it guards is a two-line reordering that compiles, passes 3740 tests, and silently
+    # discards a producer's output — the doc sweep would catch it eventually, the hook catches it
+    # before it lands.
+    RBP_TOOL="$REPO_ROOT/tools/check_reset_before_producer.py"
+    STAGED_RBP=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^CoreFrameworks/ControllerEventLoop\.hpp$' || true)
+    if [ -n "$STAGED_RBP" ] && [ -f "$RBP_TOOL" ]; then
+        echo "[pre-commit] Check M2: reset-before-producer ordering (staged ControllerEventLoop.hpp)"
+        RBP_OUT=$(python3 "$RBP_TOOL" 2>&1); RBP_RC=$?
+        echo "$RBP_OUT" | tail -20
+        if [ "$RBP_RC" -ne 0 ]; then
+            echo "[pre-commit] Check M2 FAIL: a per-pass reset is on the wrong side of its producer,"
+            echo "[pre-commit]   or a rule's subject vanished (rc 2 = the rule can no longer fail)."
+            echo "[pre-commit] Fix it — or bypass with SKIP_HOT_PATH_INVARIANTS_CHECK=1"
+            OVERALL_FAIL=1
+        else
+            echo "[pre-commit] Check M2 PASS"
+        fi
+    fi
 else
     echo "[pre-commit] SKIP_HOT_PATH_INVARIANTS_CHECK=1; skipping hot-path invariants grep-CI"
 fi

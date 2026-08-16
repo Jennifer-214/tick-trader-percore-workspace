@@ -130,6 +130,17 @@ in the source are the section after.)
 
 ### E.1.2 / D-421 harvest (2026-08-15)
 
+- **`check_reset_before_producer.py` — finding a C++ function by name is a trap in THIS tree.** The
+  first draft located the definition with "first line mentioning the name", which here is a
+  `// - [FUNCTION]_[Name]` tag-block comment ~3000 lines above the real body. It brace-matched an
+  unrelated region, found neither the reset nor the producer, and **REFUSED** — and that refusal is
+  the only reason the mistake surfaced instead of silently passing over an empty body. Correct
+  predicate: skip comment lines, then require the arg list to be followed by `{` (a call and a
+  declaration both end in `;`; only a definition opens a body). **Generalizable:** any tool that
+  scans "inside function F" in this codebase must survive the tag-block grammar, and must treat
+  scan-found-nothing as FATAL — a wrong-region scan is indistinguishable from a clean one otherwise
+  (Class 51 / Class 57).
+
 - **`check_per_node_registry_integrity.py` — FIXED, and the first diagnosis was wrong.** It exited 2
   with "file not found: <workspace>/CoreFrameworks/…" in a gate battery, and I recorded that as
   *"must be invoked from the ENGINE root"* — a **cwd** diagnosis. The a-class review falsified it in

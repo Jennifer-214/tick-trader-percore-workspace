@@ -62,8 +62,10 @@ independent of this byte. It is the operator's "why is this node not trading?" c
 
 **Detection heuristic worth generalizing (P-2's recommendation):** for any field whose contract is
 *"reset each pass"*, assert the reset line is **less than** every producer line in the same
-function. One comparison; it would have caught this on the day it shipped. Candidate for the
-partition guard's `DERIVED_EACH_PASS` rows.
+function. One comparison; it would have caught this on the day it shipped. **LANDED as `tools/check_reset_before_producer.py`** (D-421 close) — pre-commit Check M2 on a
+staged `ControllerEventLoop.hpp` + a HARD row in the doc sweep. (An earlier draft of this note
+homed it to the partition guard's `DERIVED_EACH_PASS` rows; wrong tool — that guard answers set
+membership, not ordering.)
 
 **Guard blindness:** `rg strategy_halt_reason tests/` returned **zero** hits pre-fix. The suite
 pinned the SHALT *constants* but never asserted a code survives a rebuild — the constants were

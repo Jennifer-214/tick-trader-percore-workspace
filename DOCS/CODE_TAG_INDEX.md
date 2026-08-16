@@ -15,7 +15,7 @@ so the snapshot stales when tags/units actually change, not on unrelated line dr
 `rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a
 conversion).
 
-Converted files: 165 · unit blocks: 1099
+Converted files: 165 · unit blocks: 1101
 
 ## [TAG] values → files
 
@@ -1533,7 +1533,7 @@ Converted files: 165 · unit blocks: 1099
 - `STAMP_RESULT_DERIVED_FIELDS_AUTO_GEN` — `MemHeaders/CfgGateRegistry.hpp`
 - `STATE_FLAG_*` — `MemHeaders/PerNodeStateFlagsRegistry.hpp`
 
-### REGISTRY (63)
+### REGISTRY (64)
 
 - `FOREACH_ARCH_FIELD_DRIFT` — `MemHeaders/ArchFieldDriftRegistry.hpp`
 - `FOREACH_BACKTEST_METRIC` — `CoreFrameworks/MetricCompute.hpp`
@@ -1563,6 +1563,7 @@ Converted files: 165 · unit blocks: 1099
 - `FOREACH_METADATA_BIT` — `CoreFrameworks/CfgFieldRegistry.hpp`
 - `FOREACH_ML_CFG_FLAG` — `ML_Headers/MlCfgFlagRegistry.hpp`
 - `FOREACH_NODE_CTX_FIELD` — `MemHeaders/NodeCtxInitRegistry.hpp`
+- `FOREACH_NODE_CTX_PERSIST_EXEMPT` — `MemHeaders/NodeCtxPersistRegistry.hpp`
 - `FOREACH_NODE_CTX_SUMMARY_FIELD` — `MemHeaders/NodeCtxSummaryFieldRegistry.hpp`
 - `FOREACH_NODE_PERSIST_FIELD` — `MemHeaders/NodeCtxPersistRegistry.hpp`
 - `FOREACH_NODE_STATE_FLAG` — `MemHeaders/NodeStateFlagRegistry.hpp`

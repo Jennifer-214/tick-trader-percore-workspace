@@ -429,3 +429,27 @@ file AND cross-link it here.
   contract) is codified at `DESIGN_SPECS/framework-patterns/doc-intelligence-toolchain-architecture.md`;
   the every-guard-asserts-non-vacuity discipline at
   `DESIGN_SPECS/meta-disciplines/calibration-corpus-non-vacuity-discipline.md`.
+
+## Toolchain gotchas — 2026-08-16 (E.1.2 D-422/D-423)
+
+Four behaviours discovered by being bitten, none derivable from `--help` or a docstring.
+
+- **`rg <pat> .` from the engine root is BLIND to `tests/`, `tools/`, `plans/`, and NO flag rescues
+  it.** They are gitignored *and* directory symlinks; `--no-ignore`, `--follow` and both together
+  were each measured at **0** hits while the explicit path returns 80. Cost: enumerating a producer
+  set returned 2 sites when the truth was 7, and the 5 missed included the test fixtures that were
+  the whole point of the check. **Name roots explicitly and state which you covered.** Full detail:
+  LANDMINES 19.
+- **This shell is zsh, which does NOT word-split an unquoted `$VAR`.** `R="dirA dirB"; rg pat $R`
+  passes ONE bogus path named `"dirA dirB"`; rg errors to stderr and, suppressed with `2>/dev/null`,
+  it is indistinguishable from a clean no-match. Use a literal list, an array, or `${=R}`.
+- **`Fn\s*\(` misses explicit template arguments.** `EnsembleZoo_FinalizeCorrupt<F>(...)` puts `<F>`
+  between the name and the paren, so a live capital-adjacent call read as uncalled in a
+  dead-function sweep. Use `\bFN\s*(<[^;()]*>)?\s*\(`. Sister trap: **macro-pasted names** —
+  `MASK_NODE_STATE_MODEL_CORRUPT` exists nowhere as a literal because the setter is
+  `NODE_STATE_FLAG_SET(node, MODEL_CORRUPT)`.
+- **`check_close_out_completeness.py` SKIPS silently below `--min-commits` (default 8).** A real
+  session that split its work across two repos can land 4 workspace commits and get
+  `SKIP — a small session legitimately owes nothing`, which reads exactly like a pass. It found four
+  genuinely-owed surfaces the moment `--min-commits 1` was passed. Pair the `--since` (which resolves
+  in the WORKSPACE repo — an engine SHA silently checks nothing) with an explicit `--min-commits`.

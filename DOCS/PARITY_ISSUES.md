@@ -1646,3 +1646,26 @@ agreement on an artifact that is order-SENSITIVE.
 
 **Related:** D-393 / C-396 item 3 (the sort clause) · `differential-to-absolute-gate-contract-widening.md`
 · TECH_DEBT-245.
+
+### PARITY note 2026-08-16 — feature_mask train↔serve gate was vacuous; now emits
+
+- **status:** closed · **surface:** stamp body / train↔serve binding · **ship:** v5.15.5.F.4d.1.E.1.2
+- **Finding.** The per-node feature-subset parity gate (`ML_Headers/ModelInference.hpp:1880-1893`,
+  documented as closing "a CRITICAL gap from /parity-check 2026-05-07") had **never fired**. No
+  producer ever set `feature_mask`, so no stamp carried the key, so `STAMP_HAS` was always false and
+  the engine always took the WARN arm — whose text blames "pre-v5.11.18a" stamps, pointing every
+  reader at stamp age rather than at the missing emit.
+- **Fix.** `tt::Stamp_AssembleAndEmit` now stamps the all-features sentinel. That is the truthful
+  value: the stamp is a MODEL document and the trainer has no feature-subset concept at all
+  (`rg feature_mask Backtest/` is empty — it always trains on the full registered set). Reading it as
+  "which node's mask?" is a category error; that is the RUNTIME half, supplied by the loading node as
+  `expected_feature_mask`.
+- **Blast radius at landing: ZERO.** No cfg on disk sets a mask, and an unmasked node resolves
+  `expected_feature_mask` to 0, which skips the consumer entirely. It matters the first time a node
+  IS masked: stamp(all) vs expected(subset) now REFUSES, correctly — the registry pins input shape,
+  so a masked feed is drift rather than a smaller model.
+- **Sister finding, same ship.** The `fees` stamp group was DELETED: its two rows lost their producer
+  at the `.B.3` migration while the emit walk kept printing their zero defaults, so a signed body
+  carried both the true `fee_rate_maker` (cfg-derived half) and `inference_cfg_fee_rate_maker=0`.
+  Codified as H21 spec **Rule 1a** — a row retired from its PRODUCER but left in its EMITTER does not
+  go dead, it goes lying.

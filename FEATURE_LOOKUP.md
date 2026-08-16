@@ -1567,3 +1567,37 @@ being swallowed — investigate rather than tuning it away.
 **Related** — D-421 step 2 · engine `49244a4` · born broken in `bc37c62` (2026-04-30) ·
 `reports/2026-08-15-nodectx-exemption-verification/P2-eval-transient-display.md` § C F-1.
 
+
+### bandit_enabled becomes a real operator control (v5.15.5.F.4d.1.E.1.2+)
+
+**What** — `bandit_enabled` now gates the BUY-side ensemble bandit's arm-weight selection. It
+previously gated **nothing**: the sharded bandit ran regardless, so setting the flag changed no
+behaviour in either direction while its GUI tooltip claimed it "controls bandit selection wiring".
+
+**Cfg flags** — `bandit_enabled` (**default flipped 0 → 1**). The flip is load-bearing: gating on a
+0-default would have silently disabled a working, learning bandit on every existing config.
+Exit side keeps its own flag, `exit_bandit_enabled` (default 0), which now gates exit-side SELECT as
+well as the reward update it already gated.
+
+**Fallback** — with `bandit_enabled=0` the blend falls back to whatever it was before the bandit
+weighed in (uniform, or Ridge if `ridge_within_horizon` is on). Importantly it gates SELECT only,
+**not** the reward UPDATE: the pools keep learning from real outcomes but stop driving decisions, so
+turning the flag back on resumes from WARM posteriors rather than uniform.
+
+**Where to verify** — `Strategies/StrategyParameters.hpp` (the buy-side select gate) ·
+`CoreFrameworks/ControllerConfig.hpp` (the default) · `ML_Headers/MlCfgFlagRegistry.hpp` (the tooltip
+text, corrected).
+
+**Paper-test sanity** — set `bandit_enabled=0` on one node and 1 on another with ≥2 ensemble arms:
+the disabled node's blend weights should stay flat while its bandit state still advances (check the
+per-regime weights in the ML Status panel). Flip it back on and the weights should resume from the
+learned distribution, not from uniform.
+
+**Gotchas** — `exit_bandit_enabled=1` is what makes the exit bandit actually influence exits; before
+2026-08-16 the exit pool learned and persisted but **nothing read it**, so enabling it changed only
+what was recorded. Also: `ridge_within_horizon` SUPERSEDES bandit weights when on — an operator
+enabling Ridge silently removes the bandit's influence.
+
+**Related** — D-423 (the exit-side loop closure) · `plans/_future/2026-05-16-ml-architecture-design-notes.md`
+§ AS-BUILT CORRECTION · Thompson posteriors now persist at shutdown AND periodically (they were
+discarded at every restart).

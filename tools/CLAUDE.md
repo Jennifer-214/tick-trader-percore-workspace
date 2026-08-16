@@ -128,6 +128,39 @@ in the source are the section after.)
 
 ## Tool invariants + gotchas (facts that live ONLY in the source — add new ones HERE)
 
+### E.1.2 / D-421 steps 2+4+5 harvest (2026-08-15, session 2)
+
+- **`bless.py::_isatty()` requires stdin AND stdout to BOTH be TTYs — so Claude Code's `!` prefix
+  does NOT satisfy it.** Every D-394-gated mutation routes through this (`check_tech_debt.py
+  --close`, golden re-bless, `--console`). The agent path refuses, as designed — but so does the
+  operator running `! python3 tools/check_tech_debt.py --close 196`, because the `!` prefix CAPTURES
+  stdout to show it in the transcript, which makes `sys.stdout.isatty()` false. Both refusals print
+  the identical message, so it reads like a permission problem escalating correctly when it is
+  actually the same gate twice. **It needs a real terminal outside the harness.** Do not read the
+  second refusal as the gate malfunctioning, and do NOT reach for a `--yes` — there deliberately
+  isn't one, and the refusal IS the control (its own message says so).
+- **`check_close_out_completeness.py --since <sha>` resolves the window in the WORKSPACE repo.** Hand
+  it an ENGINE sha and it prints `no commits in <sha>..HEAD — nothing to check` and exits **0**. That
+  is a clean-looking pass that checked nothing — the auto-write ledgers it guards live workspace-side,
+  so the window must be a workspace anchor. Observed live at this close: the engine pickup SHA
+  produced a green, the workspace SHA produced **5 owed surfaces and rc 1**. Sister shape to Class 57
+  (an unrunnable check rendering as a clean result); the tool is not wrong, the SHA namespace is
+  ambiguous and the failure is silent.
+- **`check_tools_inventory.py` scans every tool's BODY for `tools/<name>.{py,sh}` references and REDs
+  on ones that do not exist** (`REF_RE = tools/([A-Za-z0-9_]+\.(?:sh|py))`). So a negative-test
+  FIXTURE that names a realistic-looking tool path makes the inventory guard red on the file holding
+  the fixture. Its own header records being bitten by exactly this. The fix is to put the fixture
+  path OUTSIDE the pattern (`__nonexistent__/no_such_checker.py`), not to widen the exclusion list —
+  the whole-file `test_` prefix exemption is the only built-in escape and it does not apply to a
+  non-test tool. Keeps both guards at full strictness.
+- **`gen_code_map.sh` is stamp-on-change (D-369), so its `Last regenerated: commit X` header records
+  the last CONTENT change and NOT the last run** — it will legitimately sit behind HEAD after any
+  commit that touched no `Pattern_FunctionName` definition (e.g. an X-macro registry or comment-only
+  change). `/close-session` Stage 5.5 dimension #7 says the header "must == HEAD"; that is in tension
+  with D-369 and should be read as *the CONTENT must be current*, verified by running the regen and
+  seeing `already current — no write`. Churning the file to advance the stamp would defeat the
+  stamp-on-change property.
+
 ### E.1.2 / D-421 harvest (2026-08-15)
 
 - **`check_reset_before_producer.py` — finding a C++ function by name is a trap in THIS tree.** The

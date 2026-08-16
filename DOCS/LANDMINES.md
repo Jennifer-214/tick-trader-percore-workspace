@@ -421,3 +421,35 @@ Say that, rather than over-claiming a garbage read that a reviewer can trivially
 
 **Related:** Class 51 (non-vacuity) · `feedback_passing_test_is_not_verification`.
 
+
+## Landmine 18: two concurrent `./build.sh test` runs truncate the test binary — and it reports as "Permission denied" (2026-08-15)
+
+**Symptom.** `./build/controller_test` fails with `Permission denied` (rc **126**). That code and
+message read as a sandbox/permissions problem, and the obvious next move — re-run with the sandbox
+disabled — fails *identically*, which appears to confirm the wrong diagnosis.
+
+**Actual cause.** A second `./build.sh test` was still running. Mid-link the binary exists at **0
+bytes with mode `-rw-r--r--`** (no exec bit yet — the linker has created but not finished it). Exec
+on a non-executable file is exactly `EACCES` → 126. Nothing about permissions is wrong; the file is
+simply not a program yet.
+
+**How it happened here.** A foreground build hit the 120 s tool timeout and was moved to background;
+not realising it was still alive, a second build was started. The FIRST build then completed far
+enough to run the suite and reported `./build.sh: line 270: ./build/controller_test: Permission
+denied` — because the SECOND build had truncated the binary out from under it.
+
+**Diagnostic that settles it in one line** (distinguishes truncation from a real mount/mode issue):
+```bash
+ls -la build/controller_test          # 0 bytes + no `x` in the mode  => a build is mid-link
+findmnt -no OPTIONS -T build/         # look for `noexec` => a genuinely different problem
+```
+
+**Rule.** Never start a second build while one is in flight — including one the harness backgrounded
+after a timeout. Wait on the running task (`TaskOutput` with `block: true`) rather than re-issuing.
+The engine's `build/` is a single shared output dir with no per-invocation locking, so concurrent
+builds race on the same artifacts.
+
+**Why it belongs here rather than in a tool doc:** the misleading part is not any tool's behaviour —
+it is that a *build race* surfaces as a *permissions error*, so the whole investigation points away
+from the cause. Sister to Landmine 16 (a background wrapper's exit code is not your build's): both
+are "the signal you get is not about the thing that broke".

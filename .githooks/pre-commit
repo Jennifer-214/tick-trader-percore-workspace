@@ -506,6 +506,38 @@ if [ "${SKIP_SLOT_DERIVE_CHECK:-0}" != "1" ]; then
     fi
 fi
 
+# Check Q: NodeContext persist-partition complement guard (D-421 step 2). [ENGINE-repo check —
+# staged-scoped, inert in the workspace repo; this hook is the single canonical source symlinked
+# into BOTH (D-300).]
+# WHY A DEDICATED TRIGGER rather than leaving it to the aggregator: the guard rides
+# check_session_docs.sh, but Check P fires that aggregator only on staged handoff/MASTER commits.
+# The failure this guard exists to catch — a field added to NodeContext<F> and never enrolled in
+# FOREACH_NODE_PERSIST_FIELD — arrives in an ORDINARY CODE commit, which Check P never sees. Wiring
+# it to the aggregator alone would leave the guard technically standing and practically absent at
+# the exact moment it matters, which is the shape of every finding in this arc.
+# The trigger keys on the STRUCT's home (ControllerEventLoop.hpp) as well as the registry, because
+# the dangerous edit is the one that touches the struct and NOT the registry. Keying on the
+# registry alone would only catch the commits that already remembered.
+# rc 2 (REFUSAL — cannot read the struct/registry) is a FAIL here, never a pass: an audit that
+# could not run must not read as an audit that found nothing (Class 57 / Class 51).
+# Tool: tools/check_node_ctx_partition.py.
+# ============================================================================
+if [ "${SKIP_NODE_CTX_PARTITION_CHECK:-0}" != "1" ]; then
+    NP_TOOL="${REPO_ROOT}/tools/check_node_ctx_partition.py"
+    STAGED_NP=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^(CoreFrameworks/ControllerEventLoop\.hpp|MemHeaders/NodeCtxPersistRegistry\.hpp|MemHeaders/NodeCtxInitRegistry\.hpp)$' || true)
+    if [ -n "$STAGED_NP" ] && [ -f "$NP_TOOL" ]; then
+        echo "[pre-commit] Check Q: NodeContext persist-partition (staged NodeContext struct or persist registry)"
+        NP_OUT=$(python3 "$NP_TOOL" 2>&1); NP_RC=$?
+        echo "$NP_OUT" | tail -8
+        if [ "$NP_RC" -ne 0 ]; then
+            echo "[pre-commit] Check Q FAIL (rc=$NP_RC): every NodeContext<F> member must be either persisted (FOREACH_NODE_PERSIST_FIELD) or declared-exempt (FOREACH_NODE_CTX_PERSIST_EXEMPT) — add the row, do not leave it unaccounted. rc 2 = the audit could not RUN (unreadable struct/registry), which is a failure, not a pass — OR bypass with SKIP_NODE_CTX_PARTITION_CHECK=1"
+            OVERALL_FAIL=1
+        else
+            echo "[pre-commit] Check Q PASS"
+        fi
+    fi
+fi
+
 # ============================================================================
 # CHECK P: full doc/plan floor on handoff/MASTER commits (check_session_docs.sh aggregator).
 # STRUCTURAL close of the recurring "operator catches a handoff/MASTER completeness gap the

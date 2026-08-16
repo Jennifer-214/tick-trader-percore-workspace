@@ -1,19 +1,44 @@
 ---
 name: project_remote_push_needs_operator_password
-description: "Pushing to GitHub: RUN it with dangerouslyDisableSandbox (the default Bash sandbox isolates the ssh/gpg agent so a sandboxed push hangs), Caramel signs the GPG pinentry live; commits are free non-interactively. Do not defer pushes — just run them."
-metadata: 
+description: "Pushing to GitHub: just RUN it. Push is SSH TRANSPORT ONLY and does not sign — already-signed commits need no GPG at push time. Verified 2026-08-15: plain sandboxed push, no flag, no prompt, rc 0. Commits are free. Do not defer pushes or ask permission for them."
+metadata:
   node_type: memory
   type: project
   originSessionId: 38ff0058-1602-47c0-af7c-627a3a4357a4
-  sister_specs: [feedback_micro_commits_compile_gated.md]
+  sister_specs: [feedback_micro_commits_compile_gated.md, feedback_comments_point_in_time_verify_against_code.md]
   tags: []
+  modified: 2026-08-16T01:47:40.121Z
 ---
 
-Pushing to the GitHub remotes (engine `FoxML_Trader_v2` + the private `tick-trader-percore-workspace`) is a thing you DO, not defer — Caramel 2026-07-04: *"you do know you can push and commit right. you just have to let me sign off on it for the gpg sig."* Two things must line up; once they do, it completes non-interactively:
+Pushing to the GitHub remotes (engine `FoxML_Trader_v2` + the private
+`tick-trader-percore-workspace`) is a thing you DO, not defer — Caramel 2026-07-04:
+*"you do know you can push and commit right."*
 
-1. **`dangerouslyDisableSandbox: true` on the Bash call.** The DEFAULT Bash sandbox ISOLATES the ssh/gpg agent, so a sandboxed `git push` can't reach it and HANGS (the 2-min timeout — earlier mis-attributed to "no pinentry the tool can fill"; the real first-order blocker is the sandbox network/agent isolation, NOT the auth). With the sandbox off, the push reaches her live agent. (Observed 2026-07-04: the SAME push hung in-sandbox, then EXIT=0 with `dangerouslyDisableSandbox` — engine `b10e778..84d73e0` + workspace pushes all landed this way.)
-2. **Caramel's GPG sign-off.** The push's commit-signing pops a **pinentry on HER screen**; she enters the passphrase → it completes (3× EXIT=0 this session). Warm gpg-agent cache → she signs instantly; expired cache → the push hangs again → she re-signs, or runs `! git -C <repo> push` herself (the `!` prefix runs it in her session so the prompt reaches her).
+**THE CORRECTION (2026-08-15) — `git push` does NOT sign anything.** COMMITS carry the GPG
+signature; push is pure SSH transport of objects that were already signed when they were made. The
+earlier version of this memory said *"the push's commit-signing pops a pinentry on HER screen"* —
+that conflated two different mechanisms, and it is why a whole session's worth of pushes got
+deferred behind an imagined gate. If the commits already exist, a push needs **SSH only**.
 
-**COMMITS are free** — they sign off the warm gpg-agent cache and succeed non-interactively even in-sandbox. Commit at clean boundaries autonomously (per [[feedback_micro_commits_compile_gated]]).
+**Verified 2026-08-15, directly:** `git push origin feat/v5.15-live-readiness` run from the DEFAULT
+Bash sandbox, with NO `dangerouslyDisableSandbox`, no pinentry, no hang — `0a15f07..49df9d2`, rc 0,
+immediate. `ssh-add -l` reported *"Error connecting to agent: No such file or directory"* at the
+same moment, and `git ls-remote` on the private repo authenticated fine — so the key is reachable
+without an agent in this environment.
 
-**Workflow:** commit freely → when ready to push, RUN it with `dangerouslyDisableSandbox: true` + tell her it's coming (the pinentry pops, she signs). Do NOT treat a push as blocked-pending-a-separate-ask — just run it; the only gate is her live sign-off. Fall back to asking her to `! git push` only if it hangs (she's away / cache expired).
+**Workflow: commit at clean boundaries, then just push.** Do not ask permission for the push itself
+and do not treat it as blocked-pending-a-separate-ask. Escalate only on an ACTUAL failure, in this
+order: (1) plain push — the normal case; (2) retry with `dangerouslyDisableSandbox: true` if it
+hangs (the 2026-07-04 observation that a sandboxed push can be agent-isolated may still hold on
+other machine states); (3) ask her to run `! git -C <repo> push` so any prompt reaches her terminal.
+
+**COMMITS are free** — they sign off the warm gpg-agent cache and succeed non-interactively. Commit
+autonomously at clean boundaries (per [[feedback_micro_commits_compile_gated]]).
+
+**The meta-lesson, which is why this memory now carries a sister to
+[[feedback_comments_point_in_time_verify_against_code]]:** this entry was cited to the operator as
+*"push needs your terminal"* — which the memory did not even say — and the underlying mechanism
+claim was wrong on top of that. A memory is a point-in-time observation about a MECHANISM; when it
+is load-bearing for an action you are about to refuse to take, verify it (`ssh-add -l`,
+`git ls-remote`, or simply try the thing) before quoting it as a constraint. Refusing to act on a
+stale memory costs more than the memory saves.

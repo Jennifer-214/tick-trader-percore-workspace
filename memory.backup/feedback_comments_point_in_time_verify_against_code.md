@@ -6,7 +6,8 @@ metadata:
   type: feedback
   tags: [audit-methodology]
   originSessionId: 8b9ef1cd-6e14-438a-8cb3-86f7d4bdbead
-  sister_specs: [feedback_ground_design_in_real_code.md, feedback_guards_compound_enforcement_is_leverage.md, feedback_match_anomaly_to_decision_log_before_escalating.md, feedback_resource_use_gated_on_existence_not_felt_need.md, feedback_single_source_of_truth_discipline.md, feedback_compaction_degrades_treat_handoffs_as_hints.md]
+  sister_specs: [feedback_ground_design_in_real_code.md, feedback_guards_compound_enforcement_is_leverage.md, feedback_match_anomaly_to_decision_log_before_escalating.md, feedback_resource_use_gated_on_existence_not_felt_need.md, feedback_single_source_of_truth_discipline.md, feedback_compaction_degrades_treat_handoffs_as_hints.md, project_remote_push_needs_operator_password.md]
+  modified: 2026-08-16T01:49:14.842Z
 ---
 
 A code comment is **point-in-time-accurate** — true when written — but code, and especially CODEGEN, drifts, so a comment is **NOT ground truth** for a behavior fact.

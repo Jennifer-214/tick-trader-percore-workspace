@@ -14872,8 +14872,6 @@ e3_skip_load:;
                     "test-secret-v592b", 0.10, 5, 0xABCD1234U);
                 check("v5.9.2b: legacy-shape stamp → has_inference_cfg=0",
                       STAMP_HAS(v3, inference_cfg) == 0);
-                check("v5.9.2b: legacy-shape stamp → has_inference_cfg_fees=0",
-                      STAMP_HAS(v3, fees) == 0);
                 check("v5.9.2b: legacy-shape stamp → has_training_poll_interval=0",
                       STAMP_HAS(v3, training_poll_interval) == 0);
 
@@ -15598,11 +15596,11 @@ e3_skip_load:;
                     inf.inference_cfg_bandit_blend_ratio =
                         FPN_ToDouble(cfg.bandit_blend_ratio);
                 }
-                if (BITMAP_IS_SET(cfg.gate_cfg_flags, MASK_GATE_CFG_COST_GATE_ENABLED)) {
-                    STAMP_SET(inf, fees);
-                    inf.inference_cfg_fee_rate_maker = Money_ToDouble(cfg.fee_rate_maker);
-                    inf.inference_cfg_fee_rate_taker = Money_ToDouble(cfg.fee_rate_taker);
-                }
+                // 2026-08-16 — the fees block was REMOVED with the group. Note what it was:
+                // the fixture hand-populated inf.inference_cfg_fee_rate_* which PRODUCTION
+                // never did, so the emit->parse->assert chain passed here while shipping
+                // zeros in the real signed body. Class 58 sub-shape B, three lines from the
+                // D-421 comment that names that exact pattern for the sibling bit.
                 STAMP_SET(inf, training_poll_interval);
                 inf.training_poll_interval     = cfg.poll_interval;
                 {
@@ -15637,10 +15635,6 @@ e3_skip_load:;
                       STAMP_HAS(v, inference_cfg_bandit_blend_ratio) == 1);
                 check("v5.9.5b: bandit_blend_ratio round-trips (0.40)",
                       fabs(v.inference_cfg_bandit_blend_ratio - 0.40) < 1e-9);
-                check("v5.9.5b: has_fees set (cfg.cost_gate_enabled=1)",
-                      STAMP_HAS(v, fees) == 1);
-                check("v5.9.5b: fee_rate_maker round-trips (0.00060)",
-                      fabs(v.inference_cfg_fee_rate_maker - 0.00060) < 1e-9);
                 check("v5.9.5b: training_poll_interval round-trips (200)",
                       STAMP_HAS(v, training_poll_interval) == 1 &&
                       v.training_poll_interval == 200u);
@@ -15678,8 +15672,6 @@ e3_skip_load:;
                     "test-secret-v595b", 0.10, 5, 0xCAFE5599u);
                 check("v5.9.5b: gated-off bandit → has_inference_cfg_bandit=0",
                       STAMP_HAS(v_min, inference_cfg_bandit_blend_ratio) == 0);
-                check("v5.9.5b: gated-off fees → has_inference_cfg_fees=0",
-                      STAMP_HAS(v_min, fees) == 0);
 
                 unlink(stamp_path);
                 unlink(model_path);
@@ -15871,8 +15863,6 @@ e3_skip_load:;
               h.barrier_gate_enabled == 0);
         check("v5.9.5i: Model_Init clears inference_cfg_bandit_blend_ratio bit",
               !STAMP_HAS(h, inference_cfg_bandit_blend_ratio));
-        check("v5.9.5i: Model_Init clears fees bit",
-              !STAMP_HAS(h, fees));
 
         // === Test 2: ack flag default off via ops_cfg_flags bitmap (v5.15.5.A.7 migration) ===
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
@@ -23922,10 +23912,18 @@ e3_skip_load:;
         check("v5.14.8.A.0.b: FOREACH_STAMP_BOUND_MODEL_CONST has >= 25 entries",
               FOREACH_STAMP_BOUND_MODEL_CONST_COUNT >= 25);
 
-        // Group count: 6 today (inference_cfg, scaler, fees, xgb_hyperparams,
-        // grid_member_count_group, label_params).
-        check("v5.14.8.A.0.b: FOREACH_STAMP_BOUND_MODEL_CONST_GROUPS has >= 6 entries",
-              FOREACH_STAMP_BOUND_MODEL_CONST_GROUP_COUNT >= 6);
+        // Group count: 5 DECLARED today (inference_cfg, scaler, xgb_hyperparams,
+        // grid_member_count_group, label_params) after `fees` was removed 2026-08-16.
+        //
+        // ⚠ This asserts the DECLARED list, which is KNOWN to under-count the group bits
+        // actually in use: `environment_meta` has a bit, a mask and three dispatchers but
+        // no row in the GROUPS list, so the real group-bit count is 6. The registry is not
+        // the SSoT — `enum StampHasFlagBit` is. Left as `>=` deliberately rather than
+        // "corrected" to an equality, because an equality here would PIN a relationship
+        // that is already wrong and make the discrepancy look intentional.
+        // The gap is tracked; do not silence it by tightening this bound.
+        check("v5.14.8.A.0.b: FOREACH_STAMP_BOUND_MODEL_CONST_GROUPS has >= 5 entries",
+              FOREACH_STAMP_BOUND_MODEL_CONST_GROUP_COUNT >= 5);
 
         // Standalone count: 7 today (bandit, training_poll_interval,
         // model_num_outputs, build_flags_hash, label_registry_hash,
@@ -24019,26 +24017,32 @@ e3_skip_load:;
         // MASK constants are distinct (catch bit-position collisions):
         static_assert(MASK_inference_cfg != MASK_scaler,
                       "v5.14.8.A.merged.1: group mask collision");
-        static_assert(MASK_scaler != MASK_fees,
+        static_assert(MASK_scaler != MASK_xgb_hyperparams,
                       "v5.14.8.A.merged.1: group mask collision");
         static_assert(MASK_inference_cfg != MASK_inference_cfg_bandit_blend_ratio,
                       "v5.14.8.A.merged.1: group vs standalone mask collision");
-        // OR of all 6 group masks should equal sum (no overlap):
+        // OR of the group masks should equal sum (no overlap). 2026-08-16: `fees` was
+        // REMOVED with its group (its two rows had no producer and emitted zeros into the
+        // signed body), so this is 5 where it was 6.
         constexpr uint64_t ALL_GROUP_MASKS =
-            MASK_inference_cfg | MASK_scaler | MASK_fees |
+            MASK_inference_cfg | MASK_scaler |
             MASK_xgb_hyperparams | MASK_grid_member | MASK_label_params;
-        check("v5.14.8.A.merged.1: 6 group masks have no overlap",
-              __builtin_popcountll(ALL_GROUP_MASKS) == 6);
+        check("v5.14.8.A.merged.1: 5 group masks have no overlap",
+              __builtin_popcountll(ALL_GROUP_MASKS) == 5);
 
         // OR of all 13 masks today; bit-popcount should match:
         constexpr uint64_t ALL_MASKS =
-            MASK_inference_cfg | MASK_scaler | MASK_fees |
+            MASK_inference_cfg | MASK_scaler |
             MASK_xgb_hyperparams | MASK_grid_member | MASK_label_params |
             MASK_inference_cfg_bandit_blend_ratio | MASK_training_poll_interval |
             MASK_model_num_outputs | MASK_build_flags_hash |
             MASK_label_registry_hash | MASK_feature_mask | MASK_xgb_train_nthread;
-        check("v5.14.8.A.merged.1: 13 distinct mask bits (6 groups + 7 standalone)",
-              __builtin_popcountll(ALL_MASKS) == 13);
+        // 12 after `fees` removal (was 13). This one IS an equality and should stay one:
+        // it ORs a NAMED member list, so a popcount mismatch means a bit collided or a
+        // name vanished -- both real defects. That is the difference from the >= bound
+        // above, which pins a count with no member list behind it.
+        check("v5.14.8.A.merged.1: 12 distinct mask bits (5 groups + 7 standalone)",
+              __builtin_popcountll(ALL_MASKS) == 12);
     }
     {
         // STAMP_HAS / SET / CLR / ANY semantic test on synthetic struct
@@ -24099,9 +24103,6 @@ e3_skip_load:;
         // v5.14.9.D — DELETED inf.inference_cfg_freshness_tau (TECH_DEBT-004 close).
         STAMP_SET(inf, inference_cfg_bandit_blend_ratio);
         inf.inference_cfg_bandit_blend_ratio = 0.42;
-        STAMP_SET(inf, fees);
-        inf.inference_cfg_fee_rate_maker = 0.00015;
-        inf.inference_cfg_fee_rate_taker = 0.00100;
         STAMP_SET(inf, training_poll_interval);
         inf.training_poll_interval = 100u;
         STAMP_SET(inf, scaler);
@@ -24175,7 +24176,6 @@ e3_skip_load:;
         check("v5.14.8.A.7: has_confidence_threshold_scale (cfg-derived per-field)",
               vr.has_confidence_threshold_scale == 1);
         check("v5.14.8.A.7: has_scaler",          STAMP_HAS(vr, scaler));
-        check("v5.14.8.A.7: has_fees",            STAMP_HAS(vr, fees));
         check("v5.14.8.A.7: has_xgb_hyperparams", STAMP_HAS(vr, xgb_hyperparams));
         check("v5.14.8.A.7: has_grid_member",     STAMP_HAS(vr, grid_member));
         check("v5.14.8.A.7: has_label_params",    STAMP_HAS(vr, label_params));
@@ -28031,9 +28031,6 @@ e3_skip_load:;
             strncpy(inf.scaler_sha256,
                     "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
                     sizeof(inf.scaler_sha256) - 1);
-            STAMP_SET(inf, fees);
-            inf.inference_cfg_fee_rate_maker = 0.0001;
-            inf.inference_cfg_fee_rate_taker = 0.0005;
             STAMP_SET(inf, xgb_hyperparams);
             inf.xgb_max_depth = 6;
             inf.xgb_learning_rate = 0.1;
@@ -28076,8 +28073,6 @@ e3_skip_load:;
                   vr.has_confidence_threshold_scale == 1);
             check("v5.15.0.C: scaler bit round-trips",
                   STAMP_HAS(vr, scaler));
-            check("v5.15.0.C: fees bit round-trips",
-                  STAMP_HAS(vr, fees));
             check("v5.15.0.C: xgb_hyperparams bit round-trips",
                   STAMP_HAS(vr, xgb_hyperparams));
             check("v5.15.0.C: label_params bit round-trips",

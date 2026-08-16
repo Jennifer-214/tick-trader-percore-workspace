@@ -9,7 +9,7 @@ severity: high
 recurrence_count: 2
 first_instance: v5.4.3
 closure_mechanism: SHARDED_SNAPSHOT_VERSION bump per CoreContext-field-add + /readiness "should this be persisted?" explicit answer requirement
-sister_classes: [6]
+sister_classes: [6, 58]
 ---
 
 ## Class 4 — Snapshot save/load asymmetry

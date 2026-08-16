@@ -9,7 +9,7 @@ severity: high
 recurrence_count: 6
 first_instance: v5.4.x
 closure_mechanism: snapshot tests (v5.9.2a) catching function-body changes that preserve X-macro structure + 3-tier strict-mode (v5.9.3a refuse/warn-with-surface/silent-forbidden) + distinct PerCoreSnap fields per failure mode + /readiness Check 14 X-macro variant selection audit + /ml-audit pipeline walk
-sister_classes: [1, 18, 24]
+sister_classes: [1, 18, 24, 58]
 ---
 
 ## Class 12 — Wired-but-unexercised ML paths (v5.9 sprint)

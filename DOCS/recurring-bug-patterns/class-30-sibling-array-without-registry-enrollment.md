@@ -9,7 +9,7 @@ severity: medium
 recurrence_count: 1
 first_instance: v5.15.5.F.4d
 closure_mechanism: ⚠ INCOMPLETE — Barrier 2's tool WAS NEVER WRITTEN (TD-274); the class is NOT structurally closed, only clean-by-nobody-adding-a-field. 3-barrier closure AS DESIGNED (Barrier 1 enroll last_exit_fee[_i] + bandit_reward_bps[_i] in FOREACH_OMS_PER_SLOT_FIELD; Barrier 2 tools/check_oms_per_slot_registry_integrity.py **[NEVER BUILT — TD-274]** Check 8 CI scan + exemption registry; Barrier 3 registry-coverage-ci-check-pattern.md codification) + /dod-audit codebase-wide FOREACH_<X>_PER_SLOT_FIELD coverage scan + /registry-fit-audit
-sister_classes: [14, 18, 21, 27, 28, 29]
+sister_classes: [14, 18, 21, 27, 28, 29, 58]
 ---
 
 ## Class 30 — Sibling array on subsystem state created without registry enrollment

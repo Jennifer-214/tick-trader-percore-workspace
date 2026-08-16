@@ -78,3 +78,15 @@ The **BUILDER of a guard is MODEL-BOUNDED** — they cannot write a non-vacuity 
 - **A genuinely-satisfied guard is NOT vacuous** — the property holds AND the check exercised the target on non-empty input. Green-because-correct ≠ green-because-vacuous; the discriminator is whether the check EXERCISED its target.
 - **A forward-looking guard, green because no instance exists YET, is NOT vacuous** — *if* it would go red when one appears (a correct empty-set pass). The flag fires only when green does not entail the property EVEN WITH a violation present.
 - **A narrow mechanical/consistency gate** (well-formed-citation, sister-symmetry) is not vacuous for ITS scope — it is just narrow (the AR-8 mechanical-green sub-shape: a green consistency gate ≠ content-verified, but it is not vacuous about the consistency it actually checks). Run the content pass too; don't mistake **narrow** for **vacuous**.
+
+## Sister: Class 58 (registry complement blindness) — cause vs effect
+
+**Class 58 is a leading CAUSE of vacuous green; Class 51 is what the green then means.** A coverage
+registry with no external enumeration of its domain makes every forward-facing guard around it —
+count-lock, layout golden, byte golden, paired-bump — report green *correctly*, while none of them
+is capable of detecting a member that was never enrolled. Each guard is individually non-vacuous
+about the rows it HAS; the vacuity is at the set level, and it is invisible from inside any single
+check. When triaging a suspiciously-durable green over a coverage registry, ask the Class-58
+question — *what set are these rows supposed to exhaust, and who computes it independently?* —
+before concluding the guards are fine. Codified 2026-08-15 at D-421; see
+`class-58-registry-complement-blindness.md`.

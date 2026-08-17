@@ -88,7 +88,7 @@ RETIRED_NAMES = {
     # E.1.2/D-421 step 6 Tier 0 (2026-08-16) — the `fees` stamp group was DELETED, not tombstoned in
     # code: two of its rows emitted zeros into an HMAC-signed body. Every H21 condition was checked
     # against a named search space and no live referent survives (one hit tree-wide, the tombstone
-    # comment at StampBoundModelConstRegistry.hpp:553). Burning the names here is what makes that
+    # comment at StampBoundModelConstRegistry.hpp:608). Burning the names here is what makes that
     # deletion ENFORCED rather than narrated — without these entries a re-introduced `STAMP_BIT_fees`
     # classifies as a fresh "ADD (ok)" instead of the Knight-Capital-shaped reuse it would be.
     #

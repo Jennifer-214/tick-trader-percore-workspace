@@ -482,10 +482,17 @@ group-bit PRODUCER set (`STAMP_SET(…, inference_cfg)`):
 
 | method | real setter sites found |
 |---|---|
-| `rg … .` + `STAMP_SET\([^)]*inference_cfg\)` | **2** — `StampBoundModelConstRegistry.hpp:747`, `NodeModelZoo.hpp:459` |
+| `rg … .` + `STAMP_SET\([^)]*inference_cfg\)` | **2** — `StampBoundModelConstRegistry.hpp:856`, `NodeModelZoo.hpp:459` |
 | explicit roots + paren-safe match | **7** |
 
-The 5 missed: `StampBoundModelConstRegistry.hpp:715` (paren trap — the site D-421 calls *"the single
+> ⚠️ **Line anchors into `StampBoundModelConstRegistry.hpp` re-derived 2026-08-17** — a +90-line
+> insert (D-426 `STAMP_PUT`) silently shifted every cite in this section, and `:715` landed
+> *inside* an unrelated new comment rather than obviously nowhere, which is worse than dangling.
+> B-Plus's anchor leg is scoped to PLAN BODIES, so `DOCS/`, `tools/` and source comments are
+> ungated and nothing reds on this class. **Re-derive by SYMBOL, not by line:**
+> `grep -n 'STAMP_AUTOPOPULATE_SET_HAS_inference_cfg\|STAMP_PARSER_SET_HAS_inference_cfg'`.
+
+The 5 missed: `StampBoundModelConstRegistry.hpp:826` (paren trap — the site D-421 calls *"the single
 site whose reachability decides the whole loop"*) and all four in `tests/` (symlink trap):
 `controller_test.cpp:15588`, `:15662`, `:24017`, `:27783`. Class 58's own detection block names
 *"the only PRODUCER is a test fixture"* as the highest-yield check of sub-shape B — and that is the
@@ -510,7 +517,7 @@ finding of the form "no producer exists" is unsound until the search boundary is
 
 **Second trap found in the same breath (different family, same paragraph of damage).** The regex
 `STAMP_SET\([^)]*inference_cfg\)` misses `STAMP_SET((inf), inference_cfg)` — `[^)]*` cannot cross the
-nested paren. That miss drops `ML_Headers/StampBoundModelConstRegistry.hpp:715`, which D-421 records
+nested paren. That miss drops `ML_Headers/StampBoundModelConstRegistry.hpp:826`, which D-421 records
 as *"the single site whose reachability decides the whole loop"*. Match with paren-depth awareness,
 never a negated-char-class. This is the same defect class as the `fox-symdeps` `header_base` bug
 fixed the same day (a pattern blind to `<>` nesting returned a template argument where a function

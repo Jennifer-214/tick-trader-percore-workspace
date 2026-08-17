@@ -92,10 +92,13 @@ RETIRED_NAMES = {
     # deletion ENFORCED rather than narrated — without these entries a re-introduced `STAMP_BIT_fees`
     # classifies as a fresh "ADD (ok)" instead of the Knight-Capital-shaped reuse it would be.
     #
-    # ⚠️ These burns are NOT a substitute for coverage. This guard has NO `SOURCES` row for
-    # `FOREACH_STAMP_BOUND_MODEL_CONST`, so it never inspected the registry these names came from —
-    # a GREEN here says nothing about the stamp wire body. See TECH_DEBT (stamp-registry enrollment)
-    # and D-425; enrolling it is a prerequisite to the Tier-2 emit-side deletion, not a follow-up.
+    # COVERAGE CLOSED 2026-08-17 (D-425 #10). These burns were NEVER a substitute for coverage, and
+    # for one day they were all this guard had: there was no `SOURCES` row for
+    # `FOREACH_STAMP_BOUND_MODEL_CONST`, so a GREEN here said nothing whatever about the stamp wire
+    # body — it would have printed the identical GREEN if the entire registry had been deleted
+    # (Class 51, caught by independent review). The `stamp-key` row below now enrolls all 46 wire
+    # keys, so the retired names AND the live surface they came from are both covered. Enrolling it
+    # was a PREREQUISITE to the Tier-2 emit-side deletion, which lands on this same signed body.
     "STAMP_BIT_fees",
     "inference_cfg_fee_rate_maker",
     "inference_cfg_fee_rate_taker",
@@ -121,9 +124,11 @@ SOURCES = [
     ("enum:ShaltCode",  "Strategies/StrategyInterface.hpp", "foreach", "FOREACH_SHALT",
         {"prefix": "SHALT_", "value": "positional"}),
     # NodeContext state-flag bit positions (NODE_STATE_FLAG_<name>); append-only per H21.
-    # NOTE: FOREACH_FAILURE_MODE's lowercase row-names (ml_model_load_failed) are skipped by the
-    # _parse_foreach ^[A-Z0-9_]+$ filter → it enrolls in the paced bit-assignment pass once the
-    # parser handles lowercase; meanwhile protected by static_assert(FAILURE_BIT_COUNT<=16) + append-only.
+    # NOTE: FOREACH_FAILURE_MODE's lowercase row-names (ml_model_load_failed) USED to be skipped by
+    # the _parse_foreach ^[A-Z0-9_]+$ filter. That filter was widened at D-425 #10, so the parser
+    # blocker is GONE and this is now an un-enrolled row by CHOICE, not by capability — it awaits the
+    # paced bit-assignment pass. Meanwhile protected by static_assert(FAILURE_BIT_COUNT<=16) +
+    # append-only. Do not read the absence of a row as "the parser can't"; it can, since 2026-08-17.
     # HOMED: TECH_DEBT-152 (paced identifier-guard enrollment; "Known un-enrolled instance" bullet) —
     # the durable tracker + re-enrollment trigger; this comment is the code-side pointer to it.
     ("enum:NodeStateFlag", "MemHeaders/NodeStateFlagRegistry.hpp", "foreach", "FOREACH_NODE_STATE_FLAG",
@@ -136,6 +141,21 @@ SOURCES = [
     # of waiting for the runtime byte-golden at ./build.sh test.
     ("wire-const", "ML_Headers/ConfidenceScore.hpp",    "define", "ROLLING_IC_MAX_WINDOW", {}),
     ("wire-const", "ML_Headers/LinearRegression3X.hpp", "define", "MAX_WINDOW",            {}),
+    # E.1.2 D-425 #10 (2026-08-17) — the STAMP WIRE KEYS. H21 names "cfg-field name keys" as a
+    # tracked identifier class, and these are exactly that: the `key=value` tokens of an
+    # HMAC-signed model stamp. Their emit ORDER is the canonical body order (the registry's own
+    # PRE_CFG/POST_CFG split exists to preserve it around the sister cfg registry), so `positional`
+    # is the correct value semantics and strictly stronger than name-set membership: a REORDER
+    # perturbs the signed bytes and lands as RENUMBERED, a dropped key as REMOVED. Verified against
+    # a real artifact (models/**/barrier.json.stamp) — parsed order matches the emitted key order.
+    #
+    # NOT enrolled, deliberately: the `STAMP_BIT_*` / `MASK_*` group+standalone bit POSITIONS. They
+    # are a hand-written enum, not registry-derived, and `has_flags` is never persisted, hashed or
+    # memcmp'd — no artifact encodes a bit position (the :553 tombstone states this and independent
+    # review confirmed it by byte-context read, not by trusting the comment). Renumbering them is
+    # H21-safe; only the retired NAMES need protecting, and those live in RETIRED_NAMES above.
+    ("stamp-key", "ML_Headers/StampBoundModelConstRegistry.hpp", "foreach",
+        "FOREACH_STAMP_BOUND_MODEL_CONST", {"prefix": "", "value": "positional"}),
 ]
 
 # Categories whose values are monotonic-non-decreasing (a DROP is also a violation).
@@ -184,6 +204,16 @@ def _parse_foreach(text, macro, opts, base_dir=None):
     # NOTE the pre-existing `^[A-Z0-9_]+$` filter below was the compensating skip for (2)
     # — it discarded the nested invocation token rather than expanding it. With expansion
     # in place it now only rejects genuine non-row tokens.
+    #
+    # 4. case. WIDENED to `^[A-Za-z0-9_]+$` at D-425 #10 (2026-08-17). The uppercase-only
+    #    form silently excluded every registry whose rows are lowercase — which is every
+    #    WIRE-KEY registry, as opposed to the ENUM-CODE registries enrolled up to that
+    #    point. A `SOURCES` row for one of them did not under-count, it parsed to ZERO and
+    #    tripped the PARSE ERROR refusal, so the class was un-enrollable rather than
+    #    silently uncovered (the refusal is why this was never a false green). Widening was
+    #    MEASURED non-perturbing before it was made: re-parsing the enrolled set under both
+    #    filters yields identical output, 48 -> 48, every category byte-for-byte the same.
+    #    This also retires the compensating note on FOREACH_FAILURE_MODE below.
     text = _strip_comments_text(text)
     body = _macro_body(text, macro, base_dir)
     if body is None:
@@ -193,7 +223,7 @@ def _parse_foreach(text, macro, opts, base_dir=None):
     for inner in _rows(body):
         args = _args(inner)
         name0 = args[0] if args else ""
-        if not re.match(r'^[A-Z0-9_]+$', name0):
+        if not re.match(r'^[A-Za-z0-9_]+$', name0):
             continue  # non-row token (nested invocations are expanded above, not skipped)
         full = opts["prefix"] + name0
         if opts.get("value") == "explicit":

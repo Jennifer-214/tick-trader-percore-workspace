@@ -79,6 +79,63 @@ if assert_planted "silent removal"; then
     else echo "  ok: silent-removal -> RED"; fi
 fi
 
+# --- stamp-key category (D-425 #10, 2026-08-17) -------------------------------
+# The stamp WIRE KEYS. These two cases are deliberately anchored on the CODE side, not on the
+# ledger's blessed state: they plant a ledger row for a key the registry ALREADY defines, so they
+# prove teeth identically before and after the operator's `--update`. Anchoring them on a blessed
+# ledger row would have made them vacuous for exactly the window in which the enrollment is new and
+# least trusted — the live-value anchoring trap case (2) fell into.
+
+# (4) RENUMBER a stamp wire key -> must be RED. A reorder perturbs an HMAC-signed body (H9/H21).
+cp "$BAK" "$LEDGER"
+if grep -q '^stamp-key|feature_mask|' "$LEDGER"; then
+    sed -i 's/^stamp-key|feature_mask|.*$/stamp-key|feature_mask|9999/' "$LEDGER"
+else
+    printf 'stamp-key|feature_mask|9999\n' >> "$LEDGER"
+fi
+if assert_planted "stamp-key renumber"; then
+    out=$(python3 "$TOOL" 2>&1)
+    if printf '%s' "$out" | grep -q 'RENUMBERED stamp-key :: feature_mask'; then
+        echo "  ok: stamp-key renumber -> RED (wire-key reorder caught)"
+    else
+        echo "SELFTEST FAIL: stamp-key renumber should be RED naming feature_mask."
+        echo "               If feature_mask was legitimately retired, RE-POINT this case at another"
+        echo "               live wire key — do not delete it; the category would lose its teeth."
+        fail=1
+    fi
+fi
+
+# (5) SILENT REMOVAL of a stamp wire key -> must be RED. This is the shape the Tier-2 emit-side
+# deletion lands on, which is why enrolling the category was its prerequisite.
+cp "$BAK" "$LEDGER"
+printf 'stamp-key|inference_cfg_ghost_retired_key|9998\n' >> "$LEDGER"
+if assert_planted "stamp-key removal"; then
+    out=$(python3 "$TOOL" 2>&1)
+    if printf '%s' "$out" | grep -q 'REMOVED  stamp-key :: inference_cfg_ghost_retired_key'; then
+        echo "  ok: stamp-key silent-removal -> RED (dropped wire key caught)"
+    else
+        echo "SELFTEST FAIL: stamp-key silent-removal should be RED"; fail=1
+    fi
+fi
+
+# (6) NON-VACUITY — the category must actually RESOLVE against the live registry. A SOURCES row whose
+# macro was renamed parses to nothing; without this leg that is indistinguishable from a clean tree.
+cp "$BAK" "$LEDGER"
+n_keys=$(python3 - <<'PY'
+import importlib.util, os, sys
+spec = importlib.util.spec_from_file_location("cir", "tools/check_identifier_retirement.py")
+m = importlib.util.module_from_spec(spec); sys.modules["cir"] = m; spec.loader.exec_module(m)
+print(len(m.parse_current().get("stamp-key", {})))
+PY
+)
+if [ "${n_keys:-0}" -ge 2 ]; then
+    echo "  ok: stamp-key non-vacuity -> ${n_keys} wire keys resolved from the live registry"
+else
+    echo "SELFTEST FAIL: stamp-key resolved ${n_keys:-0} keys — the SOURCES row matches nothing."
+    echo "               A category that cannot fail is worse than one that is missing."
+    fail=1
+fi
+
 # restore + GREEN again
 restore
 python3 "$TOOL" >/dev/null 2>&1 || { echo "SELFTEST FAIL: restored ledger should be GREEN"; fail=1; }

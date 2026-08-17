@@ -458,3 +458,32 @@ Four behaviours discovered by being bitten, none derivable from `--help` or a do
   two selftest teeth pinning it. Still pair the `--since` (which resolves in the **WORKSPACE** repo —
   an engine SHA silently checks nothing) with an explicit `--min-commits` at close.
   **Treat exit 3 as "unknown", never "clean".**
+
+## Toolchain gotchas — 2026-08-17 (E.1.2 D-426)
+
+Three behaviours discovered by being bitten, none derivable from `--help` or a docstring.
+
+- **B-Plus (`check_plan_body_symbol_existence.py`) COMPILES every ` ```cpp ` fence, and its
+  FABRICATION leg is NOT scoped by `frozen_record_paths()` even though its ANCHOR leg is.** The
+  contract it enforces is "a ` ```cpp ` fence in a plan body is proposed code, so it must compile."
+  An EVIDENCE doc quoting three verbatim lines of production source is not making that claim, but
+  the tool cannot tell the difference — both fail to compile. `/reports/` is already in
+  `frozen_record_paths()`, which is why the RENAMED cite warnings on those same files were advisory
+  while the fabrication errors were BLOCKING. Cost: a blocked close-out commit and a near-reach for
+  `SKIP_PLAN_BODY_CHECK=1`. **Fix the FENCE, not the gate** — tag verbatim excerpts anything other
+  than `cpp` (the extractor matches `startswith('```cpp')` exactly, so ` ```c++ ` is skipped and
+  still highlights). Whether the fabrication leg should inherit the frozen scoping is open —
+  TECH_DEBT entry filed; agent reports are a doc type that postdates the tool.
+- **`check_close_out_completeness.py` silently EVALUATES NOTHING below `--min-commits` (default 8),
+  and exits 3 — which is not 0, but is easy to read as "fine, small session."** Its own message is
+  honest about this ("this run did not CHECK that"), and that honesty is the only thing standing
+  between you and treating a non-evaluation as a pass. On a 3-commit close it must be re-run with
+  `--min-commits 1` to actually assess the window. Cost: nearly closed a session on an unevaluated
+  gate — the exact vacuity shape the session spent the day cataloguing.
+- **`bless.py --console` offers EVERY drifted blessable record, so "I blessed it" and "the record
+  you meant got blessed" are different claims.** Three consecutive rounds reported the identifier
+  ledger as blessed while the diffs landed on `tools/goldens/citable-ids.txt` and the latency
+  ratchet's `_provenance` — because the identifier ledger showed **no drift to bless** until its
+  `SOURCES` row existed, so it was never offered. **Verify the target, not the act:** `grep -c
+  '^<category>|' tools/identifier_ledger.txt` and confirm the guard reports no pending `ADD (ok`
+  lines. A bless that had nothing to write is indistinguishable from one that was never run.

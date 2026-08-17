@@ -1669,3 +1669,40 @@ agreement on an artifact that is order-SENSITIVE.
   carried both the true `fee_rate_maker` (cfg-derived half) and `inference_cfg_fee_rate_maker=0`.
   Codified as H21 spec **Rule 1a** — a row retired from its PRODUCER but left in its EMITTER does not
   go dead, it goes lying.
+
+---
+
+### PARITY-042 — the ENTIRE stamp↔cfg drift gate layer is vacuous in production (the train→serve cfg-parity apparatus never compares)
+
+```yaml
+id: PARITY-042
+title: MASK_inference_cfg has no production producer, so every cfg-derived drift row and 4 FOREACH_CFG_DRIFT_CHECK rows (3 REFUSE_STRICT) silently skip — train→serve cfg parity is unverified for the whole cohort
+surface_tags: [train-serve-parity, stamp-wire, cfg-derived, drift-gate, false-green, ml-inference, boot-time]
+severity: high
+parity_axis: train↔serve (the gate that exists to detect divergence cannot fire)
+status: open
+detected_at: v5.15.5.F.4d.1.E.1.2 (2026-08-17, D-426 i-class; discharges the 9 verifications MASTER UPDATE at 2026-08-16 recorded as PENDING)
+related_specs:
+  - DESIGN_SPECS/meta-disciplines/advertised-capability-never-exercised.md (the class; this is its THIRD unit — bits, then functions, now registry rows / wire keys)
+  - DESIGN_SPECS/meta-disciplines/train-serve-execution-layer-parity.md (M5 — this is the gate M5 exists to protect)
+  - DESIGN_SPECS/wire-format-patterns/wire-format-byte-preservation-discipline.md (H9)
+```
+
+- **Found:** 2026-08-17, D-426 adversarial pass (i-class), independently corroborated by an a-class on the same surface. Both were armed to REFUTE, not confirm.
+- **Severity:** HIGH — a model trained under one `ml_tp_pct` / `thompson_*` / `barrier_blend_mode` and served under different values loads **clean**, with no WARN and no REFUSE, **in every mode including `held_out_gate_strict=1`**. Serving-time barrier distances, bandit posteriors, ridge blending and fee-aware gating can all diverge silently from the calibration the model was fit to. This is precisely the failure `FAILURE_MASK_cfg_binding_drift` and the `acknowledge_inference_cfg_drift` operator ack exist to make impossible to hit by accident.
+- **Class:** Class 58 sub-shape B (gate-reachability — the rows are correct and the gate reading them is unreachable) sitting under Class 51 (vacuously-green guard). The distinguishing feature, and why a value-oriented trace misses it: **nothing reads the 9 keys' VALUES.** The consumer is the *presence bit* their emission would set. Trace values and you conclude "no consumer" and stop.
+- **Site(s) / the chain, every link measured:**
+  - Producer of the bit: the PARSE walk only — `ML_Headers/ModelInference.hpp:1757-1763` → `STAMP_PARSER_SET_HAS_inference_cfg` (`StampBoundModelConstRegistry.hpp:759`). No stamp key ⇒ bit never set. `ModelStampResult r{}` zero-inits.
+  - No emit-side producer exists: the 9 `inference_cfg_*` rows have no value producer either, so the whole group never emits.
+  - Gate A — `MemHeaders/CfgGateRegistry.hpp:814` passes `STAMP_HAS((sr), inference_cfg)` into `lookup_drift` (`:186-208`), where **every** branch returns `stamp_has_inference_cfg && (expr)`; the ML/gate-flag walkers (`:568`, `:588`) use it as a bare conjunct. `sr.inference_cfg_drift_count` therefore stays 0 and `NodeModelZoo.hpp:305-307`'s REFUSE never fires.
+  - Gate B — 4 rows of `FOREACH_CFG_DRIFT_CHECK` gated on `STAMP_HAS(*h, inference_cfg)` (`ML_Headers/CfgDriftCheckRegistry.hpp:257, :261, :266, :332`), **three of them `REFUSE_STRICT`**.
+  - The same guard also gates the sr→handle VALUE copy (`NodeModelZoo.hpp:458-468`), so even a forced-true gate would compare `0` against cfg.
+- **Symptom:** none visible. `NodeContextDisplayMeta.cfg_drift_tier1_count` / `tier2_count` read 0 — not because there is no drift, but because nothing was compared. `NODE_STATE_FLAG_CLR(CFG_DRIFT_STRICT_REFUSED)` issues a clean bill of health that was never earned. That silence is the defect.
+- **Root cause:** the `.B.3` prefix migration moved the cfg-derived cohort onto framework walkers for **emit** and **parse** and left the group-bit producer behind — the same migration-tail shape as the `fees` group and `inference_cfg_bandit_blend_ratio` (D-426). Class 58 sub-shape C.
+- **⚠️ DO NOT "just add the producer".** Setting `STAMP_SET(inf, inference_cfg)` in the emit path would emit **nine zeros into an HMAC-signed body**, because those rows have no value producer either. That is bit-for-bit the `fees` failure, whose own retirement comment states the rule: *a row retired from its PRODUCER but left in its EMITTER does not go dead, it goes LYING.* Refuted explicitly as option O2 in the i-class report.
+- **Fix path (i-class recommendation, operator's call):** delete the 9 orphan rows on the `fees` precedent and re-key the drift gates onto a signal the cfg-derived parse actually produces — the per-row `r.has_<name>` presence, so each drift row gates on **its own** field rather than a group bit. Strictly more precise than the group bit and preserves per-field forward-compat. Removes the last consumer of `MASK_inference_cfg`, so the group bit and its three dispatchers go with it.
+- **Related but SEPARATE (do not conflate):** the `.B.3` migration also has **no parse→handle leg**, so ~30 cfg-derived `ModelHandle` fields are never written and two `REFUSE_STRICT` rows compare `0` against a cfg default of `1.0` behind a **cfg-only** gate — those rows ARE reachable and DO fire. Measured by compiled probe (`plans/v5.15-live-readiness/reports/2026-08-17-stamp-emit-gate-audit/orchestrator-drift-probe.md`). Same root cause, opposite symptom: this entry is the gate that *cannot* fire; that one is the gate that *always* fires falsely.
+- **Target ship:** `v5.15.5.F.4d.1.E.1.2` (queued; see D-426's reordered queue — this is item 1)
+- **Status:** OPEN
+- **Verification (owed):** a test asserting `STAMP_HAS(vr, inference_cfg) == 1` for at least one production-path emit — currently expected to FAIL, which is the point: it pins the vacuity and prevents any future gate change from freezing it permanently dead. Plus the generalized form: for every row whose gate is set on the default path, set a **distinctive non-default** value and assert the round-trip carries *that* value. A row with no path from any input to a distinctive output is a row with no producer.
+- **Evidence:** `plans/v5.15-live-readiness/reports/2026-08-17-stamp-emit-gate-audit/i-class-18-key-consumer-trace.md` (full chain, every link cited) · `a-class-refute-byte-identical.md` § 3 (independent corroboration) · the fixture that hid it: `tests/controller_test.cpp:15566-15584`, which hand-sets the group bit and whose own comment already says *"THIS FIXTURE IS WHY THE VACUITY SURVIVED."*

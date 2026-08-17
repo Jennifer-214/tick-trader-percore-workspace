@@ -285,7 +285,41 @@ def check_handoff_quality(handoff: Path, quiet=False):
             f"tool-backed by NOTHING, and have twice been skipped silently. Record each one's "
             f"verdict in the handoff so a skip is visible rather than invisible"))
 
-    if not re.search(r"adversarial|independent review|a-class", raw, re.I):
+    # AR-8 + AR-18 (2026-08-16). Two distinct failures, and the SECOND one is the common one:
+    #   (a) no review section at all              -> MED, the original tooth
+    #   (b) a section that says the review DID NOT RUN -> HIGH
+    # (b) used to pass silently, because the old test was `search(r"...independent review...")` over
+    # the raw text — so writing "Independent review: **NOT RUN**" SATISFIED the check. The handoff was
+    # being honest and the guard read that honesty as compliance. When the review was finally run it
+    # refuted three of the handoff's load-bearing claims (a vacuous H21 green, a conditional loop
+    # closure, a missed uninit sibling), so this is the highest-value check in the file and it was the
+    # one that could not fail. A declared skip must be LOUDER than a missing section, never quieter.
+    _ran = re.search(r"adversarial|independent review|a-class", raw, re.I)
+    # POSITIVE DECLARATION discharges the skip-detector. Needed because a handoff that DID run the
+    # review naturally narrates the history ("it was skipped once, then run") and keyword-proximity
+    # cannot tell narration from status — the M3 false-positive surface, hit immediately on the first
+    # handoff to satisfy the check. An explicit assertion beats keyword-absence: `Status: RUN <date>`.
+    # This is a declaration, not proof — but a false one is a lie in the artifact rather than a guard
+    # that quietly could not tell, and the review's own findings are right below it for the reader.
+    _declared_run = re.search(r"status:\s*\**\s*(RUN|COMPLETE|DONE)\b", raw, re.I)
+    # The window must span NEWLINES: the real-world shape is a `## Independent review` heading with
+    # the "NOT RUN" verdict on the line below it, so a line-anchored `[^\n]` window misses exactly the
+    # case this exists to catch (it did, on the first cut). Bounded at 200 chars so a review mentioned
+    # in one section and an unrelated "skipped" far below do not pair up into a false positive.
+    _skipped = re.search(
+        r"(adversarial|independent review|a-class|stage\s*6\.5\.4)[\s\S]{0,200}?"
+        r"\b(not\s+run|did\s+not\s+run|was\s+not\s+run|skipped|unreviewed|no\s+review)\b"
+        r"|\b(not\s+run|did\s+not\s+run|skipped|unreviewed)\b[\s\S]{0,200}?"
+        r"(adversarial|independent review|a-class|stage\s*6\.5\.4)",
+        raw, re.I)
+    if _skipped and not _declared_run:
+        findings.append(("HIGH",
+            "INDEPENDENT REVIEW is recorded as NOT RUN — the handoff is self-attested. Stating the "
+            "gap is right and does not close it: when this review was actually run it REFUTED three "
+            "load-bearing claims (a guard cited as proof that never covered the change, a loop "
+            "closure that held only in one config, an unpatched sibling of a bug called closed). "
+            "Run it, or hand the next session a document whose successes are unverified"))
+    elif not _ran:
         findings.append(("MED",
             "no INDEPENDENT REVIEW recorded — per AR-8 the maker does not grade their own artifact, "
             "and self-checking this handoff failed four consecutive times before an independent "
@@ -504,6 +538,28 @@ def selftest():
             any(s == "HIGH" and "JUDGMENT-CHECK" in m for s, m in f))
         chk("missing INDEPENDENT REVIEW is flagged",
             any("INDEPENDENT REVIEW" in m for _, m in f))
+        # AR-18: the DECLARED-SKIP case. This is the one that shipped green for a whole session —
+        # an honest "NOT RUN" satisfied the old presence-regex. Both plantings must go HIGH, and the
+        # negative control below must stay silent, or the fix has just moved the vacuity.
+        for _txt in ("## Independent review (Stage 6.5.4)\n\n⚠️ **NOT RUN — context budget exhausted.**",
+                     "Independent review: skipped this session.",
+                     "The a-class adversarial pass did not run."):
+            _b = Path(td) / "skip.md"; _b.write_text("# h\n\n" + _txt + "\n")
+            chk(f"a DECLARED-SKIP independent review is HIGH, not silent ({_txt[:34]!r})",
+                any(s == "HIGH" and "NOT RUN" in m for s, m in check_handoff_quality(_b)))
+        _ok = Path(td) / "reviewed.md"
+        _ok.write_text("# h\n\nIndependent review: a-class ran, verdict recorded, 3 claims refuted.\n")
+        chk("a handoff whose review DID run is NOT flagged as skipped (negative control)",
+            not any("NOT RUN" in m for _, m in check_handoff_quality(_ok)))
+        # M3 false-positive control: a handoff that RAN the review will NARRATE the history
+        # ("skipped once, then run"). Keyword-proximity cannot tell narration from status, so an
+        # explicit `Status: RUN` must discharge it. Without this the guard punishes the exact
+        # handoff that complied — which is how a guard earns being ignored.
+        _nar = Path(td) / "narrated.md"
+        _nar.write_text("# h\n\n## Independent review\n\n**Status: RUN 2026-08-16** (a-class). "
+                        "It was skipped once for context budget, then run.\n")
+        chk("a RUN review that narrates having once been skipped is NOT flagged (M3 control)",
+            not any("NOT RUN" in m for _, m in check_handoff_quality(_nar)))
 
         # NEGATIVE CONTROL — a conforming handoff must produce NOTHING. Without this the checks
         # could be firing unconditionally, which reads identical to working.

@@ -1,0 +1,26 @@
+# ThreadSanitizer suppressions — every entry needs a REASON, and the reason must be a design
+# property, never "it was noisy". A suppression narrows detection; an undocumented one is
+# indistinguishable from a hidden bug.
+#
+# ── seqlock payload copy (TUISnapshot) ──────────────────────────────────────────────────────
+# `TUISnapshot_ReadInto` (DataStream/EngineTUI.hpp:1626-1638) is a seqlock reader. It reads the
+# payload OPTIMISTICALLY — a plain struct copy that genuinely can race the writer — and then
+# re-reads the sequence counter; if it moved, the read is discarded and retried. The racy copy is
+# the mechanism, not a defect: correctness comes from the `s1 == s2` check, not from excluding the
+# writer. TSan has no model for that idiom and reports the payload access as a data race.
+#
+# The invariant is asserted directly rather than assumed: the v5.11.3.B test drives a writer thread
+# through thousands of publishes and requires `tear_count == 0` — i.e. every torn read WAS caught and
+# discarded. That test is the real guard here; this suppression only silences the detector that
+# cannot express it.
+#
+# COST, stated plainly: this hides a genuine race inside these two functions too. Accepted because
+# the seqlock is ~12 lines, is on the DISPLAY path (no capital state), and carries the tear-count
+# test. If the seqlock ever grows or moves onto a money path, delete this and annotate properly.
+#
+# THE REAL FIX, when it is worth doing: annotate with `__tsan_acquire`/`__tsan_release` around the
+# payload copy, or make the payload an atomic load with relaxed ordering, so TSan can model the
+# handoff and the suppression can be deleted outright. Preferred over suppressing forever — a
+# suppression file is a place bugs go to hide, so it should shrink over time, never grow quietly.
+race:TUISnapshot_ReadInto
+race:TUISnapshot_Publish_End

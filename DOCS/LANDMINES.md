@@ -519,3 +519,47 @@ name belonged) — **nesting-blind patterns are their own recurring shape, on an
 **Related:** Landmine 13 (rg vs gitignore rule KIND — same blindness family, different mechanism, and
 its fix does not fix this) · the symlink-topology family Landmines 5 / 7 / 9 / 10 · Class 58 sub-shape
 B · D-421 step 6 · `DOCS/SUBAGENT_ARMING.md` § 3.1 (where the standing rule now lives).
+
+## Landmine 20: the sanitizer builds could not run at all — and the failure mimics a truncated test suite (2026-08-16)
+
+**Symptom.** `./build.sh asan` prints `--- asan: ok ---`, then `./build_asan/controller_test` dies
+instantly with `AddressSanitizer: stack-overflow ... in main` without running a single test.
+
+**Cause 1 — stack.** H1 keeps the engine off the heap, so the char-test fixtures are stack objects
+and `main`'s frame is already large. ASan wraps every stack object in redzones; the frame measured
+**~72MB** (`bp-sp` at the abort) against the usual **8MB** `ulimit -s`. The plain `-O3` build fits;
+the instrumented one cannot. Raising to 64MB is still not enough — use 256MB.
+
+**Cause 2 — leaks, and this is the one that wastes an hour.** Boot-time node arenas are allocated
+once and never freed (correct for a process meant to run for weeks; tests build many controllers
+without tearing them down). LeakSanitizer therefore reports **~187MB across ~1100 allocations** from
+`PortfolioController_Init` / `EventLoopState_Init` / `_alloc_and_init_slow_state` on *every* run.
+
+**Why cause 2 is a trap rather than noise.** LSan runs at exit and takes the process down **before
+stdout is flushed**. So the last visible line is truncated mid-word, the final `RESULTS:` never
+prints, and the last surviving summary is an **intermediate** section tally — `RESULTS: 1109 passed,
+0 failed`. Against the plain build's 3755 that reads exactly like *"ASan only covers 30% of the
+suite"*. It does not. Every test ran and passed; you are looking at a buffering artifact.
+
+**The fix — use the runner, not the raw binary:**
+
+```bash
+tools/run_sanitizer_tests.sh asan     # or ubsan / tsan
+LEAKS=1 tools/run_sanitizer_tests.sh asan   # opt in when auditing allocation lifetime
+```
+
+All three are GREEN as of 2026-08-16: **3755 passed / 0 failed / 0 diagnostics / rc=0** each.
+
+**TSan corollary.** TSan reports 2-3 data races in `TUISnapshot_ReadInto` / `Publish_End`. That is a
+**seqlock**: the payload copy races by design and correctness comes from the `s1 == s2` re-check,
+which TSan has no model for. The real guard is the v5.11.3.B `tear_count == 0` test. Suppressed with
+a stated reason + cost in `tools/tsan_suppressions.txt`; the proper fix is `__tsan_acquire`/
+`__tsan_release` annotation, after which the entry should be deleted.
+
+**And the meta-lesson, which cost the most time here.** The first cut of `run_sanitizer_tests.sh`
+grepped only for `ERROR: ...Sanitizer` — but TSan says `WARNING:`. It printed **PASS** on a run with
+`rc=66` and 3 live races. A green built by a detector that cannot see the failure mode is AR-18 all
+over again, committed inside the tool written to make sanitizers trustworthy. The runner now gates on
+three independent signals: a final `RESULTS` line exists (an early death is not a pass) · zero
+diagnostics (both `ERROR` and `WARNING` spellings, plus TSan's own tally) · `rc == 0`, with an
+explicit message when the suite is green but the runtime disagrees.

@@ -428,7 +428,19 @@ if [ "${SKIP_IDENTIFIER_CHECK:-0}" != "1" ]; then
     if [ -n "$STAGED_ID" ] && [ -f "$ID_TOOL" ]; then
         echo "[pre-commit] Check H: identifier-retirement (tombstone guard; staged registry/version change)"
         ID_OUT=$(python3 "$ID_TOOL" 2>&1); ID_RC=$?
-        echo "$ID_OUT" | tail -12
+        # Print the LEADING lines, not the trailing ones. `tail -12` was actively harmful here:
+        # on this guard the CAUSE prints first and the consequences follow, so a REMOVED row that
+        # shifts 45 wire keys produced 46 lines of which tail showed the last 12 — all shifts, zero
+        # REMOVED (MEASURED 2026-08-17, D-426: `grep -c REMOVED` on the truncated output = 0).
+        # The operator then sees only consequences and none of the cause, on a Knight-Capital guard.
+        # This was very nearly misdiagnosed as a ledger-SEMANTICS problem and "fixed" by weakening
+        # the comparison; the defect was always here, in the display. Head-anchored + an explicit
+        # elision notice, so truncation can never again hide the line that matters.
+        ID_LINES=$(printf '%s\n' "$ID_OUT" | wc -l)
+        printf '%s\n' "$ID_OUT" | head -20
+        if [ "$ID_LINES" -gt 20 ]; then
+            echo "[pre-commit]   … $((ID_LINES - 20)) more line(s) elided — run: python3 tools/check_identifier_retirement.py"
+        fi
         if [ "$ID_RC" -ne 0 ]; then
             echo "[pre-commit] Check H FAIL: a persisted/wire identifier was renumbered/reused/dropped (Knight-Capital reuse)."
             echo "[pre-commit] Tombstone the slot (never reassign the number) — or, if this is an intentional ADD/version-bump,"

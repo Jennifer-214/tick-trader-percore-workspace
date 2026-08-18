@@ -1,0 +1,659 @@
+--- per-core cfg integrity check (WIP2d-0) ---
+[per-node-cfg-CI] WARN: Check 6 INFO: anti-pattern 1 consumer shape detected (cfg.X + cfg.node_overrides[c].X same X) in ControllerConfig.hpp for fields: ['fee_floor_mult', 'partial_exit_pct', 'tp2_mult']
+[per-node-cfg-CI] WARN:   → cfg-scope-discipline.md § Anti-pattern 1 (global-default-with-override) FORBIDDEN
+[per-node-cfg-CI] WARN:   → WIP2f deletion of node_overrides[16] makes the shape UNEXPRESSIBLE; refactor before WIP2g for safety-critical sites
+[per-node-cfg-CI] running per-node cfg registry integrity check...
+[per-node-cfg-CI] Check 1 PASS: 88 per-node cfg fields parsed with TYPE column (single registry; auxiliary retired)
+[per-node-cfg-CI] Check 2 PASS: PerNodeCfg<F> body contains ONLY FOREACH_PER_NODE_CFG_FIELD + FOREACH_PER_NODE_DOMAIN_BITMAP invocations (no manual fields)
+[per-node-cfg-CI] Check 3 PASS: 12 parallel arrays declared exclusively via FOREACH_MANUAL_PER_NODE_FIELD X-macro
+[per-node-cfg-CI] Check 4 PASS: 12 Section A entries in sync between X-macro + inventory
+[per-node-cfg-CI] Check 5 PASS: no name duplication between registries
+[per-node-cfg-CI] Check 7 PASS: 1 subsystem state type(s) scanned; no Class 27 violations (0 Section C exemption(s) on file)
+[per-node-cfg-CI] Check 8 PENDING: cfg field categorization integrity (M7 4th canonical) — scaffold landed at v1.7.6 Cx-G; mechanical detection patterns at sister ship implementation. Decision tree + 5-step migration discipline ENFORCED at /readiness Check 44 (plan-time); CI mechanical enforcement at sister ship.
+[per-node-cfg-CI] Check 9 PASS: 9 file(s) scanned; no Class 26 paired-access mismatches (proximity=5)
+[per-node-cfg-CI] Check 10 PASS: 16 file(s) scanned; no Class 26 sub-shape B UNINDEXED-GLOBAL violations (Section D = in-code KEEP-AS-GLOBAL markers; rg the token for the inventory)
+[per-node-cfg-CI] Check 11 PASS: 1 file(s) scanned; no A24/H22 per-shard flat-write violations (88 per-node fields tracked)
+[per-node-cfg-CI] all structural checks PASS — per-node cfg discipline intact (Check 6 informational; Check 7 Class 27 prevention; Check 8 pending mechanical impl per cfg-field-categorization-discipline.md Stage 3 sister ship; Check 9 Class 26 sub-shape A paired-access mismatch detection; Check 10 Class 26 sub-shape B UNINDEXED-GLOBAL detection; Check 11 A24/H22 Class-44 cfg-mutation per-shard flat-write detection)
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/caramel/code/FoxML_Trader_v2/build
+[  9%] Built target depth_recorder_test
+[ 19%] Built target compare_scalers
+[ 23%] Building CXX object CMakeFiles/controller_test.dir/tests/controller_test.cpp.o
+[ 28%] Building CXX object CMakeFiles/engine.dir/main.cpp.o
+[ 71%] Built target imgui_lib
+[ 76%] Building CXX object CMakeFiles/engine_gui.dir/main.cpp.o
+[ 80%] Building CXX object CMakeFiles/foxml_suite.dir/foxml_suite.cpp.o
+In file included from /home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded.hpp:102,
+                 from /home/caramel/code/FoxML_Trader_v2/main.cpp:27:
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/SlowPath.hpp: In function ‘void tt::EngineSharded_SlowPath_DrainManualCloses(EventLoopState<F>&, OrderManagerState<F>&, const ControllerConfig<F>&, std::atomic<double>&, TUISharedState*)’:
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/SlowPath.hpp:125:24: warning: invalid use of incomplete type ‘struct TUISharedState’
+  125 |         if (!shared_ptr->manual_close_requested[slot]) continue;
+      |                        ^~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/SlowPath.hpp:49:8: note: forward declaration of ‘struct TUISharedState’
+   49 | struct TUISharedState;
+      |        ^~~~~~~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/SlowPath.hpp:126:19: warning: invalid use of incomplete type ‘struct TUISharedState’
+  126 |         shared_ptr->manual_close_requested[slot] = 0;
+      |                   ^~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/SlowPath.hpp:49:8: note: forward declaration of ‘struct TUISharedState’
+   49 | struct TUISharedState;
+      |        ^~~~~~~~~~~~~~
+In file included from /home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded.hpp:104,
+                 from /home/caramel/code/FoxML_Trader_v2/main.cpp:27:
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/Run.hpp: In function ‘void tt::EngineSharded_Run(ControllerConfig<F>&, const BinanceConfig&)’:
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/Run.hpp:1712:64: warning: capture of variable ‘nodes’ with non-automatic storage duration
+ 1712 |             slow_paths.emplace_back([c, sp_cpu, &state, &oms, &nodes, &cfg,
+      |                                                                ^~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/Run.hpp:948:29: note: ‘tt::ExecutionCore<F> nodes [16]’ declared here
+  948 |     static ExecutionCore<F> nodes[MAX_EXECUTION_NODES];
+      |                             ^~~~~
+In file included from /home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded.hpp:104:
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/Run.hpp: In function ‘void tt::EngineSharded_Run(ControllerConfig<F>&, const BinanceConfig&)’:
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/Run.hpp:1712:64: warning: capture of variable ‘nodes’ with non-automatic storage duration
+ 1712 |             slow_paths.emplace_back([c, sp_cpu, &state, &oms, &nodes, &cfg,
+      |                                                                ^~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/Run.hpp:948:29: note: ‘tt::ExecutionCore<F> nodes [16]’ declared here
+  948 |     static ExecutionCore<F> nodes[MAX_EXECUTION_NODES];
+      |                             ^~~~~
+In file included from /home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/ModelInference.hpp:47,
+                 from /home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/MLStrategy.hpp:30,
+                 from /home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/PortfolioController.hpp:55,
+                 from /home/caramel/code/FoxML_Trader_v2/tests/test_common.hpp:58,
+                 from /home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:15:
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp: In function ‘int main()’:
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:14793:17: note: in expansion of macro ‘STAMP_SET’
+14793 |                 STAMP_SET(inf, training_poll_interval);
+      |                 ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:15457:17: note: in expansion of macro ‘STAMP_SET’
+15457 |                 STAMP_SET(inf, model_num_outputs);
+      |                 ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:15595:21: note: in expansion of macro ‘STAMP_SET’
+15595 |                     STAMP_SET(inf, inference_cfg_bandit_blend_ratio);
+      |                     ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:15604:17: note: in expansion of macro ‘STAMP_SET’
+15604 |                 STAMP_SET(inf, training_poll_interval);
+      |                 ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:15608:21: note: in expansion of macro ‘STAMP_SET’
+15608 |                     STAMP_SET(inf, model_num_outputs);
+      |                     ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:15662:17: note: in expansion of macro ‘STAMP_SET’
+15662 |                 STAMP_SET(inf2, training_poll_interval);
+      |                 ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:15664:17: note: in expansion of macro ‘STAMP_SET’
+15664 |                 STAMP_SET(inf2, model_num_outputs);
+      |                 ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:17147:9: note: in expansion of macro ‘STAMP_SET’
+17147 |         STAMP_SET(inf, label_registry_hash);
+      |         ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:18846:9: note: in expansion of macro ‘STAMP_SET’
+18846 |         STAMP_SET(inf_wrong, label_registry_hash);
+      |         ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:18871:9: note: in expansion of macro ‘STAMP_SET’
+18871 |         STAMP_SET(inf_right, label_registry_hash);
+      |         ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:19859:17: note: in expansion of macro ‘STAMP_SET’
+19859 |                 STAMP_SET(inf, feature_mask);
+      |                 ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:20248:17: note: in expansion of macro ‘STAMP_SET’
+20248 |                 STAMP_SET(inf, xgb_train_nthread);
+      |                 ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:20289:17: note: in expansion of macro ‘STAMP_SET’
+20289 |                 STAMP_SET(inf, xgb_train_nthread);
+      |                 ^~~~~~~~~
+In file included from /home/caramel/code/FoxML_Trader_v2/DataStream/../CoreFrameworks/../Strategies/../ML_Headers/ModelInference.hpp:47,
+                 from /home/caramel/code/FoxML_Trader_v2/DataStream/../CoreFrameworks/../Strategies/MLStrategy.hpp:30,
+                 from /home/caramel/code/FoxML_Trader_v2/DataStream/../CoreFrameworks/PortfolioController.hpp:55,
+                 from /home/caramel/code/FoxML_Trader_v2/DataStream/EngineTUI.hpp:50,
+                 from /home/caramel/code/FoxML_Trader_v2/foxml_suite.cpp:25:
+/home/caramel/code/FoxML_Trader_v2/Backtest/../ML_Headers/StampHelper.hpp: In instantiation of ‘StampWriteResult tt::Stamp_AssembleAndEmit(const char*, const char*, const ControllerConfig<F>&, const StampArgs<F>&) [with unsigned int F = 64]’:
+/home/caramel/code/FoxML_Trader_v2/Backtest/BacktestEngine.hpp:1440:69:   required from here
+ 1440 |         StampWriteResult sr = tt::Stamp_AssembleAndEmit<BACKTEST_FP>(
+      |                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+ 1441 |             out->auto_stamp_path,
+      |             ~~~~~~~~~~~~~~~~~~~~~                                    
+ 1442 |             out->auto_stamp_secret,
+      |             ~~~~~~~~~~~~~~~~~~~~~~~                                  
+ 1443 |             data->config_used,
+      |             ~~~~~~~~~~~~~~~~~~                                       
+ 1444 |             args);
+      |             ~~~~~                                                    
+/home/caramel/code/FoxML_Trader_v2/DataStream/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/Backtest/../ML_Headers/StampHelper.hpp:250:9: note: in expansion of macro ‘STAMP_SET’
+  250 |         STAMP_SET(inf, inference_cfg_bandit_blend_ratio);
+      |         ^~~~~~~~~
+  • ‘((!(bool)tt::is_stamp_emit_inputs_v<StampInferenceCfgInputs>) || (! tt::is_valid<StampInferenceCfgInputs&, Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:61&&)> >(<lambda closure object>tt::Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:61&&)>())))’ evaluates to false
+  • in expansion of macro ‘STAMP_SET’
+      250 |         STAMP_SET(inf, inference_cfg_bandit_blend_ratio);
+          |         ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/DataStream/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/Backtest/../ML_Headers/StampHelper.hpp:268:5: note: in expansion of macro ‘STAMP_SET’
+  268 |     STAMP_SET(inf, training_poll_interval);
+      |     ^~~~~~~~~
+  • ‘((!(bool)tt::is_stamp_emit_inputs_v<StampInferenceCfgInputs>) || (! tt::is_valid<StampInferenceCfgInputs&, Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:62&&)> >(<lambda closure object>tt::Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:62&&)>())))’ evaluates to false
+  • in expansion of macro ‘STAMP_SET’
+      268 |     STAMP_SET(inf, training_poll_interval);
+          |     ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/DataStream/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/Backtest/../ML_Headers/StampHelper.hpp:295:5: note: in expansion of macro ‘STAMP_SET’
+  295 |     STAMP_SET(inf, feature_mask);
+      |     ^~~~~~~~~
+  • ‘((!(bool)tt::is_stamp_emit_inputs_v<StampInferenceCfgInputs>) || (! tt::is_valid<StampInferenceCfgInputs&, Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:63&&)> >(<lambda closure object>tt::Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:63&&)>())))’ evaluates to false
+  • in expansion of macro ‘STAMP_SET’
+      295 |     STAMP_SET(inf, feature_mask);
+          |     ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/DataStream/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/Backtest/../ML_Headers/StampHelper.hpp:320:9: note: in expansion of macro ‘STAMP_SET’
+  320 |         STAMP_SET(inf, training_timestamp_us);
+      |         ^~~~~~~~~
+  • ‘((!(bool)tt::is_stamp_emit_inputs_v<StampInferenceCfgInputs>) || (! tt::is_valid<StampInferenceCfgInputs&, Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:64&&)> >(<lambda closure object>tt::Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:64&&)>())))’ evaluates to false
+  • in expansion of macro ‘STAMP_SET’
+      320 |         STAMP_SET(inf, training_timestamp_us);
+          |         ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/DataStream/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/Backtest/../ML_Headers/StampHelper.hpp:325:9: note: in expansion of macro ‘STAMP_SET’
+  325 |         STAMP_SET(inf, model_num_outputs);
+      |         ^~~~~~~~~
+  • ‘((!(bool)tt::is_stamp_emit_inputs_v<StampInferenceCfgInputs>) || (! tt::is_valid<StampInferenceCfgInputs&, Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:65&&)> >(<lambda closure object>tt::Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:65&&)>())))’ evaluates to false
+  • in expansion of macro ‘STAMP_SET’
+      325 |         STAMP_SET(inf, model_num_outputs);
+          |         ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/DataStream/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/Backtest/../ML_Headers/StampHelper.hpp:350:5: note: in expansion of macro ‘STAMP_SET’
+  350 |     STAMP_SET(inf, xgb_train_nthread);
+      |     ^~~~~~~~~
+  • ‘((!(bool)tt::is_stamp_emit_inputs_v<StampInferenceCfgInputs>) || (! tt::is_valid<StampInferenceCfgInputs&, Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:67&&)> >(<lambda closure object>tt::Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:67&&)>())))’ evaluates to false
+  • in expansion of macro ‘STAMP_SET’
+      350 |     STAMP_SET(inf, xgb_train_nthread);
+          |     ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/DataStream/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/Backtest/../ML_Headers/StampHelper.hpp:354:5: note: in expansion of macro ‘STAMP_SET’
+  354 |     STAMP_SET(inf, build_flags_hash);
+      |     ^~~~~~~~~
+  • ‘((!(bool)tt::is_stamp_emit_inputs_v<StampInferenceCfgInputs>) || (! tt::is_valid<StampInferenceCfgInputs&, Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:68&&)> >(<lambda closure object>tt::Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:68&&)>())))’ evaluates to false
+  • in expansion of macro ‘STAMP_SET’
+      354 |     STAMP_SET(inf, build_flags_hash);
+          |     ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/DataStream/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/Backtest/../ML_Headers/StampHelper.hpp:356:5: note: in expansion of macro ‘STAMP_SET’
+  356 |     STAMP_SET(inf, label_registry_hash);
+      |     ^~~~~~~~~
+  • ‘((!(bool)tt::is_stamp_emit_inputs_v<StampInferenceCfgInputs>) || (! tt::is_valid<StampInferenceCfgInputs&, Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:69&&)> >(<lambda closure object>tt::Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:69&&)>())))’ evaluates to false
+  • in expansion of macro ‘STAMP_SET’
+      356 |     STAMP_SET(inf, label_registry_hash);
+          |     ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/DataStream/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/Backtest/../ML_Headers/StampHelper.hpp:401:9: note: in expansion of macro ‘STAMP_SET’
+  401 |         STAMP_SET(inf, run_name);
+      |         ^~~~~~~~~
+  • ‘((!(bool)tt::is_stamp_emit_inputs_v<StampInferenceCfgInputs>) || (! tt::is_valid<StampInferenceCfgInputs&, Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:73&&)> >(<lambda closure object>tt::Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:73&&)>())))’ evaluates to false
+  • in expansion of macro ‘STAMP_SET’
+      401 |         STAMP_SET(inf, run_name);
+          |         ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/DataStream/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/Backtest/../ML_Headers/StampHelper.hpp:409:9: note: in expansion of macro ‘STAMP_SET’
+  409 |         STAMP_SET(inf, expected_num_classes);
+      |         ^~~~~~~~~
+  • ‘((!(bool)tt::is_stamp_emit_inputs_v<StampInferenceCfgInputs>) || (! tt::is_valid<StampInferenceCfgInputs&, Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:74&&)> >(<lambda closure object>tt::Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:74&&)>())))’ evaluates to false
+  • in expansion of macro ‘STAMP_SET’
+      409 |         STAMP_SET(inf, expected_num_classes);
+          |         ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/DataStream/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/Backtest/../ML_Headers/StampHelper.hpp:413:9: note: in expansion of macro ‘STAMP_SET’
+  413 |         STAMP_SET(inf, expected_role);
+      |         ^~~~~~~~~
+  • ‘((!(bool)tt::is_stamp_emit_inputs_v<StampInferenceCfgInputs>) || (! tt::is_valid<StampInferenceCfgInputs&, Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:75&&)> >(<lambda closure object>tt::Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:75&&)>())))’ evaluates to false
+  • in expansion of macro ‘STAMP_SET’
+      413 |         STAMP_SET(inf, expected_role);
+          |         ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/DataStream/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/Backtest/../ML_Headers/StampHelper.hpp:419:5: note: in expansion of macro ‘STAMP_SET’
+  419 |     STAMP_SET(inf, expected_num_features);
+      |     ^~~~~~~~~
+  • ‘((!(bool)tt::is_stamp_emit_inputs_v<StampInferenceCfgInputs>) || (! tt::is_valid<StampInferenceCfgInputs&, Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:76&&)> >(<lambda closure object>tt::Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:76&&)>())))’ evaluates to false
+  • in expansion of macro ‘STAMP_SET’
+      419 |     STAMP_SET(inf, expected_num_features);
+          |     ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/DataStream/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/Backtest/../ML_Headers/StampHelper.hpp:421:5: note: in expansion of macro ‘STAMP_SET’
+  421 |     STAMP_SET(inf, expected_feature_format_version);
+      |     ^~~~~~~~~
+  • ‘((!(bool)tt::is_stamp_emit_inputs_v<StampInferenceCfgInputs>) || (! tt::is_valid<StampInferenceCfgInputs&, Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:77&&)> >(<lambda closure object>tt::Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:77&&)>())))’ evaluates to false
+  • in expansion of macro ‘STAMP_SET’
+      421 |     STAMP_SET(inf, expected_feature_format_version);
+          |     ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:23204:13: note: in expansion of macro ‘STAMP_SET’
+23204 |             STAMP_SET(inf, overlay_hash);
+      |             ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:23207:13: note: in expansion of macro ‘STAMP_SET’
+23207 |             STAMP_SET(inf, effective_hash);
+      |             ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:23458:13: note: in expansion of macro ‘STAMP_SET’
+23458 |             STAMP_SET(inf, expected_num_classes);
+      |             ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:23460:13: note: in expansion of macro ‘STAMP_SET’
+23460 |             STAMP_SET(inf, expected_role);
+      |             ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:23462:13: note: in expansion of macro ‘STAMP_SET’
+23462 |             STAMP_SET(inf, expected_num_features);
+      |             ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:23464:13: note: in expansion of macro ‘STAMP_SET’
+23464 |             STAMP_SET(inf, expected_feature_format_version);
+      |             ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:24104:9: note: in expansion of macro ‘STAMP_SET’
+24104 |         STAMP_SET(inf, inference_cfg_bandit_blend_ratio);
+      |         ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:24106:9: note: in expansion of macro ‘STAMP_SET’
+24106 |         STAMP_SET(inf, training_poll_interval);
+      |         ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:24113:9: note: in expansion of macro ‘STAMP_SET’
+24113 |         STAMP_SET(inf, model_num_outputs);
+      |         ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:24125:9: note: in expansion of macro ‘STAMP_SET’
+24125 |         STAMP_SET(inf, build_flags_hash);
+      |         ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:24130:9: note: in expansion of macro ‘STAMP_SET’
+24130 |         STAMP_SET(inf, label_registry_hash);
+      |         ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:24132:9: note: in expansion of macro ‘STAMP_SET’
+24132 |         STAMP_SET(inf, feature_mask);
+      |         ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:24138:9: note: in expansion of macro ‘STAMP_SET’
+24138 |         STAMP_SET(inf, xgb_train_nthread);
+      |         ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:24142:9: note: in expansion of macro ‘STAMP_SET’
+24142 |         STAMP_SET(inf, expected_num_classes);
+      |         ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:24144:9: note: in expansion of macro ‘STAMP_SET’
+24144 |         STAMP_SET(inf, expected_role);
+      |         ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:24147:9: note: in expansion of macro ‘STAMP_SET’
+24147 |         STAMP_SET(inf, expected_num_features);
+      |         ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:24149:9: note: in expansion of macro ‘STAMP_SET’
+24149 |         STAMP_SET(inf, expected_feature_format_version);
+      |         ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:24151:9: note: in expansion of macro ‘STAMP_SET’
+24151 |         STAMP_SET(inf, overlay_hash);
+      |         ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:24155:9: note: in expansion of macro ‘STAMP_SET’
+24155 |         STAMP_SET(inf, effective_hash);
+      |         ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:28042:13: note: in expansion of macro ‘STAMP_SET’
+28042 |             STAMP_SET(inf, training_poll_interval);
+      |             ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:28044:13: note: in expansion of macro ‘STAMP_SET’
+28044 |             STAMP_SET(inf, build_flags_hash);
+      |             ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:28046:13: note: in expansion of macro ‘STAMP_SET’
+28046 |             STAMP_SET(inf, run_name);
+      |             ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/tests/controller_test.cpp:28049:13: note: in expansion of macro ‘STAMP_SET’
+28049 |             STAMP_SET(inf, training_timestamp_us);
+      |             ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../Backtest/../ML_Headers/StampHelper.hpp: In instantiation of ‘StampWriteResult tt::Stamp_AssembleAndEmit(const char*, const char*, const ControllerConfig<F>&, const StampArgs<F>&) [with unsigned int F = 64]’:
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../Backtest/BacktestEngine.hpp:1440:69:   required from here
+ 1440 |         StampWriteResult sr = tt::Stamp_AssembleAndEmit<BACKTEST_FP>(
+      |                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+ 1441 |             out->auto_stamp_path,
+      |             ~~~~~~~~~~~~~~~~~~~~~                                    
+ 1442 |             out->auto_stamp_secret,
+      |             ~~~~~~~~~~~~~~~~~~~~~~~                                  
+ 1443 |             data->config_used,
+      |             ~~~~~~~~~~~~~~~~~~                                       
+ 1444 |             args);
+      |             ~~~~~                                                    
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../Backtest/../ML_Headers/StampHelper.hpp:250:9: note: in expansion of macro ‘STAMP_SET’
+  250 |         STAMP_SET(inf, inference_cfg_bandit_blend_ratio);
+      |         ^~~~~~~~~
+  • ‘((!(bool)tt::is_stamp_emit_inputs_v<StampInferenceCfgInputs>) || (! tt::is_valid<StampInferenceCfgInputs&, Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:61&&)> >(<lambda closure object>tt::Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:61&&)>())))’ evaluates to false
+  • in expansion of macro ‘STAMP_SET’
+      250 |         STAMP_SET(inf, inference_cfg_bandit_blend_ratio);
+          |         ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../Backtest/../ML_Headers/StampHelper.hpp:268:5: note: in expansion of macro ‘STAMP_SET’
+  268 |     STAMP_SET(inf, training_poll_interval);
+      |     ^~~~~~~~~
+  • ‘((!(bool)tt::is_stamp_emit_inputs_v<StampInferenceCfgInputs>) || (! tt::is_valid<StampInferenceCfgInputs&, Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:62&&)> >(<lambda closure object>tt::Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:62&&)>())))’ evaluates to false
+  • in expansion of macro ‘STAMP_SET’
+      268 |     STAMP_SET(inf, training_poll_interval);
+          |     ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../Backtest/../ML_Headers/StampHelper.hpp:295:5: note: in expansion of macro ‘STAMP_SET’
+  295 |     STAMP_SET(inf, feature_mask);
+      |     ^~~~~~~~~
+  • ‘((!(bool)tt::is_stamp_emit_inputs_v<StampInferenceCfgInputs>) || (! tt::is_valid<StampInferenceCfgInputs&, Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:63&&)> >(<lambda closure object>tt::Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:63&&)>())))’ evaluates to false
+  • in expansion of macro ‘STAMP_SET’
+      295 |     STAMP_SET(inf, feature_mask);
+          |     ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../Backtest/../ML_Headers/StampHelper.hpp:320:9: note: in expansion of macro ‘STAMP_SET’
+  320 |         STAMP_SET(inf, training_timestamp_us);
+      |         ^~~~~~~~~
+  • ‘((!(bool)tt::is_stamp_emit_inputs_v<StampInferenceCfgInputs>) || (! tt::is_valid<StampInferenceCfgInputs&, Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:64&&)> >(<lambda closure object>tt::Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:64&&)>())))’ evaluates to false
+  • in expansion of macro ‘STAMP_SET’
+      320 |         STAMP_SET(inf, training_timestamp_us);
+          |         ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../Backtest/../ML_Headers/StampHelper.hpp:325:9: note: in expansion of macro ‘STAMP_SET’
+  325 |         STAMP_SET(inf, model_num_outputs);
+      |         ^~~~~~~~~
+  • ‘((!(bool)tt::is_stamp_emit_inputs_v<StampInferenceCfgInputs>) || (! tt::is_valid<StampInferenceCfgInputs&, Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:65&&)> >(<lambda closure object>tt::Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:65&&)>())))’ evaluates to false
+  • in expansion of macro ‘STAMP_SET’
+      325 |         STAMP_SET(inf, model_num_outputs);
+          |         ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../Backtest/../ML_Headers/StampHelper.hpp:350:5: note: in expansion of macro ‘STAMP_SET’
+  350 |     STAMP_SET(inf, xgb_train_nthread);
+      |     ^~~~~~~~~
+  • ‘((!(bool)tt::is_stamp_emit_inputs_v<StampInferenceCfgInputs>) || (! tt::is_valid<StampInferenceCfgInputs&, Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:67&&)> >(<lambda closure object>tt::Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:67&&)>())))’ evaluates to false
+  • in expansion of macro ‘STAMP_SET’
+      350 |     STAMP_SET(inf, xgb_train_nthread);
+          |     ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../Backtest/../ML_Headers/StampHelper.hpp:354:5: note: in expansion of macro ‘STAMP_SET’
+  354 |     STAMP_SET(inf, build_flags_hash);
+      |     ^~~~~~~~~
+  • ‘((!(bool)tt::is_stamp_emit_inputs_v<StampInferenceCfgInputs>) || (! tt::is_valid<StampInferenceCfgInputs&, Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:68&&)> >(<lambda closure object>tt::Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:68&&)>())))’ evaluates to false
+  • in expansion of macro ‘STAMP_SET’
+      354 |     STAMP_SET(inf, build_flags_hash);
+          |     ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../Backtest/../ML_Headers/StampHelper.hpp:356:5: note: in expansion of macro ‘STAMP_SET’
+  356 |     STAMP_SET(inf, label_registry_hash);
+      |     ^~~~~~~~~
+  • ‘((!(bool)tt::is_stamp_emit_inputs_v<StampInferenceCfgInputs>) || (! tt::is_valid<StampInferenceCfgInputs&, Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:69&&)> >(<lambda closure object>tt::Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:69&&)>())))’ evaluates to false
+  • in expansion of macro ‘STAMP_SET’
+      356 |     STAMP_SET(inf, label_registry_hash);
+          |     ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../Backtest/../ML_Headers/StampHelper.hpp:401:9: note: in expansion of macro ‘STAMP_SET’
+  401 |         STAMP_SET(inf, run_name);
+      |         ^~~~~~~~~
+  • ‘((!(bool)tt::is_stamp_emit_inputs_v<StampInferenceCfgInputs>) || (! tt::is_valid<StampInferenceCfgInputs&, Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:73&&)> >(<lambda closure object>tt::Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:73&&)>())))’ evaluates to false
+  • in expansion of macro ‘STAMP_SET’
+      401 |         STAMP_SET(inf, run_name);
+          |         ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../Backtest/../ML_Headers/StampHelper.hpp:409:9: note: in expansion of macro ‘STAMP_SET’
+  409 |         STAMP_SET(inf, expected_num_classes);
+      |         ^~~~~~~~~
+  • ‘((!(bool)tt::is_stamp_emit_inputs_v<StampInferenceCfgInputs>) || (! tt::is_valid<StampInferenceCfgInputs&, Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:74&&)> >(<lambda closure object>tt::Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:74&&)>())))’ evaluates to false
+  • in expansion of macro ‘STAMP_SET’
+      409 |         STAMP_SET(inf, expected_num_classes);
+          |         ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../Backtest/../ML_Headers/StampHelper.hpp:413:9: note: in expansion of macro ‘STAMP_SET’
+  413 |         STAMP_SET(inf, expected_role);
+      |         ^~~~~~~~~
+  • ‘((!(bool)tt::is_stamp_emit_inputs_v<StampInferenceCfgInputs>) || (! tt::is_valid<StampInferenceCfgInputs&, Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:75&&)> >(<lambda closure object>tt::Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:75&&)>())))’ evaluates to false
+  • in expansion of macro ‘STAMP_SET’
+      413 |         STAMP_SET(inf, expected_role);
+          |         ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../Backtest/../ML_Headers/StampHelper.hpp:419:5: note: in expansion of macro ‘STAMP_SET’
+  419 |     STAMP_SET(inf, expected_num_features);
+      |     ^~~~~~~~~
+  • ‘((!(bool)tt::is_stamp_emit_inputs_v<StampInferenceCfgInputs>) || (! tt::is_valid<StampInferenceCfgInputs&, Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:76&&)> >(<lambda closure object>tt::Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:76&&)>())))’ evaluates to false
+  • in expansion of macro ‘STAMP_SET’
+      419 |     STAMP_SET(inf, expected_num_features);
+          |     ^~~~~~~~~
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../CoreFrameworks/../Strategies/../ML_Headers/StampBoundModelConstRegistry.hpp:784:27: error: static assertion failed: STAMP_SET sets a presence bit for a field WITHOUT its value — the bit claims the value is present and it is not, so a zero-initialised default lands in the HMAC-signed body. Use STAMP_PUT(s, name, value).
+  784 |                           || !TT_HAS_MEMBER(s, name),                             \
+      |                           ^
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/../Backtest/../ML_Headers/StampHelper.hpp:421:5: note: in expansion of macro ‘STAMP_SET’
+  421 |     STAMP_SET(inf, expected_feature_format_version);
+      |     ^~~~~~~~~
+  • ‘((!(bool)tt::is_stamp_emit_inputs_v<StampInferenceCfgInputs>) || (! tt::is_valid<StampInferenceCfgInputs&, Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:77&&)> >(<lambda closure object>tt::Stamp_AssembleAndEmit<64>(const char*, const char*, const ControllerConfig<64>&, const StampArgs<64>&)::<lambda(auto:77&&)>())))’ evaluates to false
+  • in expansion of macro ‘STAMP_SET’
+      421 |     STAMP_SET(inf, expected_feature_format_version);
+          |     ^~~~~~~~~
+make[2]: *** [CMakeFiles/foxml_suite.dir/build.make:79: CMakeFiles/foxml_suite.dir/foxml_suite.cpp.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:201: CMakeFiles/foxml_suite.dir/all] Error 2
+make[1]: *** Waiting for unfinished jobs....
+make[2]: *** [CMakeFiles/controller_test.dir/build.make:79: CMakeFiles/controller_test.dir/tests/controller_test.cpp.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:233: CMakeFiles/controller_test.dir/all] Error 2
+[ 85%] Linking CXX executable engine
+In function ‘SPSCRing_TryPush’,
+    inlined from ‘BinanceAdapter_SubmitMarketBuy’ at /home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/../BinanceAdapter.hpp:446:26:
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/../SPSCRing.hpp:199:5: warning: writing 1 byte into a region of size 0 [-Wstringop-overflow=]
+  199 |     r->slots[head & SPSCRing<T, N>::MASK] = item;
+      |     ^
+/usr/include/c++/16/bits/atomic_base.h: In function ‘BinanceAdapter_SubmitMarketBuy’:
+/usr/include/c++/16/bits/atomic_base.h:366:40: note: at offset [136, 10336] into destination object ‘_M_i’ of size 8
+  366 |       alignas(_S_alignment) __int_type _M_i _GLIBCXX20_INIT(0);
+      |                                        ^
+In function ‘SPSCRing_TryPush’,
+    inlined from ‘BinanceAdapter_SubmitMarketSell’ at /home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/../BinanceAdapter.hpp:489:26:
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/../SPSCRing.hpp:199:5: warning: writing 1 byte into a region of size 0 [-Wstringop-overflow=]
+  199 |     r->slots[head & SPSCRing<T, N>::MASK] = item;
+      |     ^
+/usr/include/c++/16/bits/atomic_base.h: In function ‘BinanceAdapter_SubmitMarketSell’:
+/usr/include/c++/16/bits/atomic_base.h:366:40: note: at offset [136, 10336] into destination object ‘_M_i’ of size 8
+  366 |       alignas(_S_alignment) __int_type _M_i _GLIBCXX20_INIT(0);
+      |                                        ^
+In function ‘SPSCRing_TryPush’,
+    inlined from ‘BinanceAdapter_SubmitMarketSell’ at /home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/../BinanceAdapter.hpp:489:26,
+    inlined from ‘OrderManager_Submit’ at /home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/../OrderManager.hpp:1208:24,
+    inlined from ‘OMS_DrainSubmit.isra’ at /home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/../OrderManager.hpp:1327:32:
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/../SPSCRing.hpp:199:5: warning: writing 1 byte into a region of size 0 [-Wstringop-overflow=]
+  199 |     r->slots[head & SPSCRing<T, N>::MASK] = item;
+      |     ^
+/usr/include/c++/16/bits/atomic_base.h: In function ‘OMS_DrainSubmit.isra’:
+/usr/include/c++/16/bits/atomic_base.h:366:40: note: at offset [136, 10336] into destination object ‘_M_i’ of size 8
+  366 |       alignas(_S_alignment) __int_type _M_i _GLIBCXX20_INIT(0);
+      |                                        ^
+In function ‘SPSCRing_TryPush’,
+    inlined from ‘BinanceAdapter_SubmitMarketBuy’ at /home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/../BinanceAdapter.hpp:446:26,
+    inlined from ‘OrderManager_Submit’ at /home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/../OrderManager.hpp:1205:24,
+    inlined from ‘OMS_DrainSubmit.isra’ at /home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/../OrderManager.hpp:1327:32:
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/../SPSCRing.hpp:199:5: warning: writing 1 byte into a region of size 0 [-Wstringop-overflow=]
+  199 |     r->slots[head & SPSCRing<T, N>::MASK] = item;
+      |     ^
+/usr/include/c++/16/bits/atomic_base.h: In function ‘OMS_DrainSubmit.isra’:
+/usr/include/c++/16/bits/atomic_base.h:366:40: note: at offset [136, 10336] into destination object ‘_M_i’ of size 8
+  366 |       alignas(_S_alignment) __int_type _M_i _GLIBCXX20_INIT(0);
+      |                                        ^
+[ 90%] Linking CXX executable engine_gui
+In function ‘SPSCRing_TryPush’,
+    inlined from ‘BinanceAdapter_SubmitMarketBuy’ at /home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/../BinanceAdapter.hpp:446:26:
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/../SPSCRing.hpp:199:5: warning: writing 1 byte into a region of size 0 [-Wstringop-overflow=]
+  199 |     r->slots[head & SPSCRing<T, N>::MASK] = item;
+      |     ^
+/usr/include/c++/16/bits/atomic_base.h: In function ‘BinanceAdapter_SubmitMarketBuy’:
+/usr/include/c++/16/bits/atomic_base.h:366:40: note: at offset [136, 10336] into destination object ‘_M_i’ of size 8
+  366 |       alignas(_S_alignment) __int_type _M_i _GLIBCXX20_INIT(0);
+      |                                        ^
+In function ‘SPSCRing_TryPush’,
+    inlined from ‘BinanceAdapter_SubmitMarketSell’ at /home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/../BinanceAdapter.hpp:489:26:
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/../SPSCRing.hpp:199:5: warning: writing 1 byte into a region of size 0 [-Wstringop-overflow=]
+  199 |     r->slots[head & SPSCRing<T, N>::MASK] = item;
+      |     ^
+/usr/include/c++/16/bits/atomic_base.h: In function ‘BinanceAdapter_SubmitMarketSell’:
+/usr/include/c++/16/bits/atomic_base.h:366:40: note: at offset [136, 10336] into destination object ‘_M_i’ of size 8
+  366 |       alignas(_S_alignment) __int_type _M_i _GLIBCXX20_INIT(0);
+      |                                        ^
+In function ‘SPSCRing_TryPush’,
+    inlined from ‘BinanceAdapter_SubmitMarketSell’ at /home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/../BinanceAdapter.hpp:489:26,
+    inlined from ‘OrderManager_Submit’ at /home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/../OrderManager.hpp:1208:24,
+    inlined from ‘OMS_DrainSubmit.isra’ at /home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/../OrderManager.hpp:1327:32:
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/../SPSCRing.hpp:199:5: warning: writing 1 byte into a region of size 0 [-Wstringop-overflow=]
+  199 |     r->slots[head & SPSCRing<T, N>::MASK] = item;
+      |     ^
+/usr/include/c++/16/bits/atomic_base.h: In function ‘OMS_DrainSubmit.isra’:
+/usr/include/c++/16/bits/atomic_base.h:366:40: note: at offset [136, 10336] into destination object ‘_M_i’ of size 8
+  366 |       alignas(_S_alignment) __int_type _M_i _GLIBCXX20_INIT(0);
+      |                                        ^
+In function ‘SPSCRing_TryPush’,
+    inlined from ‘BinanceAdapter_SubmitMarketBuy’ at /home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/../BinanceAdapter.hpp:446:26,
+    inlined from ‘OrderManager_Submit’ at /home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/../OrderManager.hpp:1205:24,
+    inlined from ‘OMS_DrainSubmit.isra’ at /home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/../OrderManager.hpp:1327:32:
+/home/caramel/code/FoxML_Trader_v2/CoreFrameworks/EngineSharded/../SPSCRing.hpp:199:5: warning: writing 1 byte into a region of size 0 [-Wstringop-overflow=]
+  199 |     r->slots[head & SPSCRing<T, N>::MASK] = item;
+      |     ^
+/usr/include/c++/16/bits/atomic_base.h: In function ‘OMS_DrainSubmit.isra’:
+/usr/include/c++/16/bits/atomic_base.h:366:40: note: at offset [136, 10336] into destination object ‘_M_i’ of size 8
+  366 |       alignas(_S_alignment) __int_type _M_i _GLIBCXX20_INIT(0);
+      |                                        ^
+[ 90%] Built target engine
+[ 90%] Built target engine_gui
+make: *** [Makefile:101: all] Error 2

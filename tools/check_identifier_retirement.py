@@ -92,6 +92,18 @@ RETIRED_NAMES = {
     # deletion ENFORCED rather than narrated — without these entries a re-introduced `STAMP_BIT_fees`
     # classifies as a fresh "ADD (ok)" instead of the Knight-Capital-shaped reuse it would be.
     #
+    # ⚠ THE PARAGRAPH ABOVE WAS FALSE FOR ~24 HOURS AND IS KEPT AS A CORRECTION, NOT DELETED.
+    # It asserted enforcement that `retired_name_check()` could not deliver: that sweep matched
+    # `#define` ONLY, and NONE of the three names below can come back as a `#define`
+    # (`STAMP_BIT_fees` is an enum member; the two fee-rate keys are `X(…)` registry rows).
+    # MEASURED 2026-08-17 by two independent agents, each with its own positive control: the
+    # fee-rate keys resurrected as `ADD (ok)` — the precise outcome this comment claimed was
+    # prevented — and `STAMP_BIT_fees` resurrected producing no output at all. The claim was
+    # therefore self-refuting on its own example. FIXED the same session (whole-word match over
+    # comment-stripped code; see `retired_name_check`'s docstring). Kept visible because a
+    # confident false claim about a guard is worse than no claim — it stops the next reader
+    # looking, which is exactly how the `fees` sibling survived its own sweep.
+    #
     # COVERAGE CLOSED 2026-08-17 (D-425 #10). These burns were NEVER a substitute for coverage, and
     # for one day they were all this guard had: there was no `SOURCES` row for
     # `FOREACH_STAMP_BOUND_MODEL_CONST`, so a GREEN here said nothing whatever about the stamp wire
@@ -160,6 +172,25 @@ SOURCES = [
 
 # Categories whose values are monotonic-non-decreasing (a DROP is also a violation).
 MONOTONIC = {"version"}
+
+# Categories whose IDENTITY is the NAME and whose stored int is a derived EMIT POSITION
+# rather than a persisted code. The distinction is not cosmetic — it inverts the remedy:
+#
+#   enum CODE (StrategyId / ShaltCode / NodeStateFlag / RegimeId): the NUMBER is what old
+#     snapshots and trade logs carry, so H21 says KEEP THE NUMBER — tombstone the slot,
+#     never drop the row, and allocate a NEW code for a new meaning.
+#   wire KEY (stamp-key): the NAME is what the signed body carries (`key=value`), and the
+#     ordinal is only where that key currently sits in the emit walk. H21 Rule 1a FORBIDS
+#     keeping a retired emitting row — a row whose producer is gone does not go dead, it
+#     goes LYING (it emits its zero-init default into an HMAC-signed document; `fees` and
+#     `inference_cfg_bandit_blend_ratio` both shipped exactly that). So the remedy inverts:
+#     you MUST drop the row, and the burn goes into RETIRED_NAMES.
+#
+# Added 2026-08-17 (D-426): the messages were enum-shaped for every category, so on the
+# stamp wire they prescribed the OPPOSITE of the correct action — "do not drop the row" on
+# a row you are required to drop. A guard that prescribes an impossible remedy trains the
+# operator to discount it, which is the cry-wolf mechanism that actually matters here.
+NAME_KEYED = {"stamp-key"}
 
 
 def _read(rel):
@@ -317,7 +348,12 @@ def compare(frozen, current):
             if name not in cur:
                 violations.append(
                     f"REMOVED  {cat} :: {name} (was {val}) — a persisted/wire identifier vanished. "
-                    f"Old state/messages still reference {val}; TOMBSTONE the slot (RESERVED/LEGACY_), do not drop the row.")
+                    + (f"For a wire KEY the NAME is the identifier: dropping the row is CORRECT per H21 "
+                       f"Rule 1a (a row whose producer is gone emits its zero-init default into the signed "
+                       f"body), but the name must be BURNED — add '{name}' to RETIRED_NAMES in this file, "
+                       f"then re-bless. Do NOT keep the row."
+                       if cat in NAME_KEYED else
+                       f"Old state/messages still reference {val}; TOMBSTONE the slot (RESERVED/LEGACY_), do not drop the row."))
             elif monotonic:
                 if cur[name] < val:
                     violations.append(
@@ -328,8 +364,14 @@ def compare(frozen, current):
                 # equal -> unchanged, fine
             elif cur[name] != val:
                 violations.append(
-                    f"RENUMBERED {cat} :: {name} {val} -> {cur[name]} — a persisted enum code is immutable "
-                    f"(Knight-Capital reuse). Allocate a NEW identifier for the new meaning; never re-stamp an old one.")
+                    f"RENUMBERED {cat} :: {name} {val} -> {cur[name]} — "
+                    + (f"this key's position in the canonical emit walk moved, which changes the bytes of "
+                       f"every newly-signed stamp body. If UNINTENDED, restore the row order (new keys APPEND "
+                       f"at the end of their section). If DELIBERATE, it is a wire-format change: bump "
+                       f"STAMP_FORMAT_VERSION and re-bless in the same commit."
+                       if cat in NAME_KEYED else
+                       f"a persisted enum code is immutable (Knight-Capital reuse). Allocate a NEW identifier "
+                       f"for the new meaning; never re-stamp an old one."))
             else:
                 # name held its value; check nobody ELSE grabbed that value (reuse via drop+re-add)
                 holders = [n for n in cur_by_val.get(val, []) if n != name]
@@ -356,14 +398,43 @@ def retired_name_check():
     resurrected `#define CONTROLLER_SNAPSHOT_VERSION 1` would be INVISIBLE to
     compare() entirely (not even an ADD). Witnessed vacuity of the naive
     additions-loop placement, 2026-08-14 planted-control run — hence this
-    dedicated tree sweep. Line-anchored `#define` match only; a commented
-    tombstone mention ("CONTROLLER_SNAPSHOT_VERSION=14" in prose) is the
-    DESIRED way to keep the number and never matches."""
+    dedicated tree sweep.
+
+    ⚠ SHAPE BLINDNESS FIXED 2026-08-17 (D-426; found by BOTH halves of an
+    independent /decision-check, each measuring it with its own positive control).
+    This sweep matched `^\\s*#\\s*define\\s+NAME\\b` and nothing else, so it could
+    only ever see ONE of the shapes a burned name comes back in — and three of the
+    four names in RETIRED_NAMES can never take that shape:
+
+      * `inference_cfg_fee_rate_maker` / `_taker` return as `X(name, …)` REGISTRY
+        ROWS. MEASURED before the fix: both resurrected clean, reported as
+        `ADD (ok; run --update to record)`, whole tool rc=0 GREEN.
+      * `STAMP_BIT_fees` is an ENUM MEMBER (StampBoundModelConstRegistry.hpp
+        :604-640); there is no `#define STAMP_BIT_` anywhere in the tree.
+        MEASURED before the fix: resurrected clean and produced NOTHING AT ALL —
+        not even an ADD.
+
+    That falsified this module's own claim (see the RETIRED_NAMES comment) that
+    burning a name is what makes a deletion "ENFORCED rather than narrated": for
+    every name burned so far EXCEPT the `#define` one, it was narration. Class 51
+    mode A — a guard green because it never exercised its target.
+
+    THE RULE NOW: a burned name is burned in CODE, in ANY shape. Match it as a
+    whole word over COMMENT-STRIPPED text. Enumerating shapes (`#define` + `X(` +
+    enum member + …) is the same Class-58 complement blindness one level up — it
+    can only catch the shapes someone thought of, and the two that bit us are
+    exactly the two nobody did.
+
+    Comment-stripping is what preserves the ORIGINAL design intent stated here
+    before: a tombstone MENTION in prose ("STAMP_BIT_fees REMOVED 2026-08-16 …",
+    the DESIRED way to keep the record) must never match. `_strip_comments_text`
+    blanks comments while preserving newline count, so `:{i}` cites stay true.
+    VERIFIED at the fix: all four burned names return ZERO hits tree-wide over
+    comment-stripped code, i.e. the live tombstone comments do not trip it."""
     if not RETIRED_NAMES:
         return []
     violations = []
-    pats = {n: re.compile(r"^\s*#\s*define\s+" + re.escape(n) + r"\b")
-            for n in RETIRED_NAMES}
+    pats = {n: re.compile(r"\b" + re.escape(n) + r"\b") for n in RETIRED_NAMES}
     for d in RETIRED_SCAN_DIRS:
         root = os.path.join(REPO_ROOT, d)
         for dirpath, _dirnames, filenames in os.walk(root):
@@ -373,16 +444,18 @@ def retired_name_check():
                 fp = os.path.join(dirpath, fn)
                 try:
                     with open(fp, encoding="utf-8", errors="replace") as fh:
-                        for i, line in enumerate(fh, 1):
-                            for n, pat in pats.items():
-                                if pat.match(line):
-                                    rel = os.path.relpath(fp, REPO_ROOT)
-                                    violations.append(
-                                        f"RETIRED-NAME-REUSE :: #define {n} at {rel}:{i} — this "
-                                        f"identifier was retired WITH its format (ledger row removed); "
-                                        f"the NAME is burned per H21. A new meaning needs a NEW identifier.")
+                        stripped = _strip_comments_text(fh.read())
                 except OSError:
-                    pass
+                    continue
+                for i, line in enumerate(stripped.split("\n"), 1):
+                    for n, pat in pats.items():
+                        if pat.search(line):
+                            rel = os.path.relpath(fp, REPO_ROOT)
+                            violations.append(
+                                f"RETIRED-NAME-REUSE :: {n} at {rel}:{i} — this "
+                                f"identifier was retired WITH its format (ledger row removed); "
+                                f"the NAME is burned per H21. A new meaning needs a NEW identifier. "
+                                f"(If this is a tombstone RECORD, it belongs in a comment, not in code.)")
     return violations
 
 

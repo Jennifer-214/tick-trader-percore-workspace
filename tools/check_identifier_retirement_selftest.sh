@@ -136,6 +136,63 @@ else
     fail=1
 fi
 
+# --- retired-NAME burn sweep (D-426, 2026-08-17) ------------------------------
+# WHY THESE EXIST: `retired_name_check()` matched `#define NAME` and nothing else, so it could only
+# see ONE of the shapes a burned name returns in — and 3 of the 4 names in RETIRED_NAMES can never
+# take that shape (two are `X(…)` registry rows, one is an enum member). MEASURED before the fix:
+# the two fee-rate keys resurrected as "ADD (ok)" and STAMP_BIT_fees resurrected producing NOTHING,
+# tool rc=0 GREEN both times. The burn was narration, not enforcement, for every name but one.
+#
+# These legs plant into a MINIMAL SCRATCH TREE via FOXML_REPO_ROOT (the sweep walks REPO_ROOT, and
+# the tracked source must never be mutated — same reason the ledger legs use a copy). They call
+# retired_name_check() DIRECTLY, so they are independent of the ledger state entirely.
+#
+# (8) is the leg that makes (7) meaningful: the ORIGINAL `#define`-only design existed to keep a
+# tombstone COMMENT from matching, and that property must survive the widening. A positive control
+# without its negative twin would let "match everything" pass as a fix.
+
+burn_probe(){   # burn_probe <file-content> -> prints violation count
+    _d=$(mktemp -d); mkdir -p "$_d/ML_Headers"
+    printf '%s\n' "$1" > "$_d/ML_Headers/probe_burn.hpp"
+    FOXML_REPO_ROOT="$_d" python3 - <<'PY'
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location("cir_b", "tools/check_identifier_retirement.py")
+m = importlib.util.module_from_spec(spec); sys.modules["cir_b"] = m; spec.loader.exec_module(m)
+print(len(m.retired_name_check()))
+PY
+    rm -rf "$_d"
+}
+
+# (7) POSITIVE CONTROL — each resurrection SHAPE must RED, not just the `#define` one.
+for shape_label in "define:#define CONTROLLER_SNAPSHOT_VERSION 1" \
+                   "registry-row:    X(inference_cfg_fee_rate_maker, _, INCLUDE, double, \"%g\", 0.0, x, y, z) \\\\" \
+                   "enum-member:    STAMP_BIT_fees," ; do
+    lbl="${shape_label%%:*}"; body="${shape_label#*:}"
+    n=$(burn_probe "$body")
+    if [ "${n:-0}" -ge 1 ]; then
+        echo "  ok: retired-name burn / ${lbl} shape -> RED (${n} violation)"
+    else
+        echo "SELFTEST FAIL: a burned name resurrected as a ${lbl} was NOT caught (got ${n:-0} violations)."
+        echo "               This is the exact vacuity D-426 fixed — the burn would be narration again."
+        fail=1
+    fi
+done
+
+# (8) NEGATIVE CONTROL — a tombstone RECORD in a comment must stay silent. This is the property the
+# original `#define`-only match was protecting, and widening the match must not cost it.
+n=$(burn_probe "/* STAMP_BIT_fees REMOVED 2026-08-16 — the fees group is gone.
+   Retired keys: inference_cfg_fee_rate_maker / inference_cfg_fee_rate_taker.
+   CONTROLLER_SNAPSHOT_VERSION was 14 — kept as a record, never reassigned. */
+// inference_cfg_fee_rate_taker also mentioned in a line comment.
+int unrelated_probe_symbol = 0;")
+if [ "${n:-1}" -eq 0 ]; then
+    echo "  ok: retired-name burn / tombstone COMMENTS -> silent (record-keeping preserved)"
+else
+    echo "SELFTEST FAIL: tombstone comments produced ${n} violation(s) — the burn sweep now reds on the"
+    echo "               DESIRED way to keep a retired identifier's record. Comment-stripping regressed."
+    fail=1
+fi
+
 # restore + GREEN again
 restore
 python3 "$TOOL" >/dev/null 2>&1 || { echo "SELFTEST FAIL: restored ledger should be GREEN"; fail=1; }

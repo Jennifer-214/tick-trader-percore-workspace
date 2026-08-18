@@ -130,6 +130,17 @@ The gate/risk/lifecycle cfg-flag bitmaps are runtime-only (verified `.E.0.10`: t
 
 **Caveats (the freeze still applies):** (1) a STAMP_BOUND flag's bit, or a genuinely snapshot-persisted raw bit, IS wire-visible → it freezes (reuse only at a deliberate epoch; this project's no-live-models makes epochs cheap). (2) Before reclaiming a SPECIFIC bit, verify it is not carried in a whole-byte cfg-fingerprint / train-serve-parity hash (if the parity hash digests the raw `gate_cfg_flags` byte rather than the named STAMP_BOUND fields, a reused bit can pass the hash with a different meaning — check, don't assume).
 
+**Worked refinement — for a WIRE KEY the remedy INVERTS: drop the row, burn the name (added 2026-08-17, D-426).** Rule 2's headline — *"tombstone the slot, never drop the row"* — is written for an enum **CODE**, where the NUMBER is the persisted thing. On a name-keyed wire body (`key=value` lines in an HMAC-signed model stamp) the identifier is the **NAME**, and the row's ordinal is merely where that key currently sits in the emit walk. There, keeping the row is the *dangerous* option, because Rule 1a applies: a row retired from its producer but left in its emitter does not go dead, it goes **LYING** — it emits its zero-initialised default into the signed document (`fees`, and `inference_cfg_bandit_blend_ratio` three lines below it, both shipped exactly that). So:
+
+| Identifier class | The persisted thing | Retirement remedy |
+|---|---|---|
+| enum CODE / snapshot VERSION / persisted bit | the **number** | keep the number — tombstone the slot in place, never reassign |
+| **wire KEY** (name-keyed body) | the **name** | **DROP the row** (Rule 1a), and **BURN the name** in the guard's retired-name set |
+
+Getting this backwards is not a style question — following the enum-shaped remedy on a wire key leaves a lying row in a signed body, which is the defect the rule exists to prevent. Guard messages must therefore be **category-aware**; a guard that prescribes an impossible remedy ("do not drop the row" on a row you are required to drop) trains the operator to discount it, which is the cry-wolf mechanism that actually costs you.
+
+**Mechanization corollary — a name-burn must match in EVERY code shape, or it is narration.** Burning a name only helps if the guard can see the name come back. Enumerating the shapes it might return in (`#define` … and what else?) is the Class-58 complement blindness one level up: it catches only the shapes someone thought of. **MEASURED 2026-08-17:** the burn sweep matched `^\s*#\s*define\s+NAME\b` and nothing else, while **three of its four burned names could never take that shape** — two return as `X(…)` registry rows, one is an enum member. Both resurrections passed GREEN (one produced no output at all), while the tool's own comment claimed the burn made deletion *"ENFORCED rather than narrated."* For every name but one, it was narration. The correct rule is **whole-word over comment-stripped code**: a burned name is burned in code, in any shape, while a tombstone RECORD in a comment — the desired way to keep the number — stays silent. Both directions need teeth (a positive control per shape **and** a negative control proving comments don't trip it); a widened match that reds on tombstone comments has traded one defect for another.
+
 ### Rule 3 — No reactivatable dead capital-path
 
 The dangerous subclass of Rule 1: a dead **strategy / order-gate / OMS / kill-switch / fill** path that

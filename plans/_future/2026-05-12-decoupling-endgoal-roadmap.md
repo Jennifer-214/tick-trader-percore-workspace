@@ -36,6 +36,31 @@ This roadmap's vision lands at the **`.E.2`** ship. Canonical references:
 
 ---
 
+## ⚠️ 2026-08-17 OPERATOR DECISION (D-427) — THE VIEWER IS DEAR IMGUI. `fox-tui` IS DROPPED. READ BEFORE ANY VIEWER-SIDE PLANNING.
+
+**This supersedes D-7 + D-26 on the renderer question, and it changes the premise of several sections below that still read as if ImGui were being retired.**
+
+- **Dear ImGui is KEPT** and decoupled into a **monitoring plane**. It is not archived to `legacy/`; `engine_gui` is not removed from the build.
+- **`fox-tui` is DROPPED** — no notcurses viewer is being built. The canonical binary set becomes `fox-engine` / `fox-cli` / `foxml-train` **+ the ImGui viewer**; drop `fox-tui` wherever it appears.
+- **The ML/training half stays ImGui too**, on the same shape: every training op cmdline-invocable (the `FOREACH_CLI_MODE` foundation), panel drives `execv` children + tails per-run dirs. Operator flagged this half as *"will need work"* — it is the producer-side framework treatment already queued at `project_foxml_suite_refactor_queued`.
+
+**Everything that is actually the decoupling survives untouched** — headless engine that does not depend on a viewer · read-only viewer + command-sender · `fox-cli` control · multi-viewer · mmap/versioned state-exposure · lifecycle independence. **The decoupling-axes table below is unaffected; only "who renders" changed.** No decoupling work already landed is invalidated.
+
+**⚠️ THE DISTINCTION THAT MAKES "SCRAP THE TUI" SAFE.** `EngineTUI.hpp` is TWO things and only one dies:
+
+| Half | Disposition |
+|---|---|
+| the RENDER half (legacy single-core `PortfolioController` render path) + the planned notcurses `fox-tui` | **DIES** |
+| **`TUISnapshot` / `PerNodeSnap` — the seqlock double-buffered engine→display DATA CONTRACT** | **SURVIVES + is PROMOTED** |
+
+The contract is the foundation this whole roadmap rests on — this document already says so twice: it is the ONE site that reads money SAFELY (vs the 9 cross-thread torn-read sites), and it is the *"State exposure protocol: TUISnapshot in-process double-buffer → mmap'd region"* row of the axes table. **The contract IS the monitoring plane; the renderer was only ever one consumer of it.** Deleting it wholesale would delete the monitoring plane instead of building it.
+
+**Homed consequence — a NAMING debt, not a functional one.** With no TUI, the `TUI` prefix on `TUISnapshot` / `TUISharedState` names a thing that no longer exists. Rename is mechanical but NOT free: `PerNodeSnap` is pinned in `tools/lib/cache_layout_baseline.txt` and these structs carry `alignas(64)` cluster discipline, so it wants **its own leaf with the cache-layout re-bless** — do not rename opportunistically mid-ship. (H21 does not bite: in-process struct names, not persisted/wire identifiers.)
+
+**Sections below that still carry the retired premise and need a re-ground pass:** the endgoal architecture diagram (annotated inline) · the "Viewer process" open question (now answered inline) · **EV-3** (its "what the REPLACEMENT viewer must carry" content survives — only its premise changes, from *replacing* ImGui to *decoupling* it) · the `.E.2` plan body · the canonical binary-name list in the Status section above.
+
+---
+
 ## `.E.0.10` breadcrumb (2026-06-10) — the published-snapshot pattern is the SHARED FOUNDATION (operator insight)
 
 **Caramel surfaced this at the `.E.0.10` cross-thread torn-read investigation:** the torn-read fix, the decoupled monitor, and headless/SSH viewing are **ONE pattern, not three problems.**
@@ -73,7 +98,7 @@ Operator design Q — the **backtest-tool** complement to the publish + control 
         │  ./engine               │         │  ./bin/engine_viewer    │
         │  (headless runtime)     │ ◄──────►│  (Grafana-style viewer) │
         │                         │ mmap/ws │                         │
-        │  • Per-core hot path   │         │  • ImGui or TUI render  │
+        │  • Per-core hot path   │         │  • ImGui render (D-427) │
         │  • Slow path           │ ─────►  │  • Multiple instances   │
         │  • OMS / drainer       │ logs    │  • Reconnect-tolerant   │
         │  • Publishes snapshot  │ →       │  • Read-only view       │
@@ -887,8 +912,11 @@ before or during the decoupling sprint.
 - Pidfile / port lock / mmap region path conventions?
 
 ### Viewer process
-- Pure ImGui? TUI? Both? (Lean: keep both shapes; same backend, just
-  different render paths)
+- ~~Pure ImGui? TUI? Both? (Lean: keep both shapes; same backend, just
+  different render paths)~~ **ANSWERED 2026-08-17 (D-427): Dear ImGui ONLY.**
+  `fox-tui` is dropped; the ImGui viewer is the monitoring plane. The
+  `TUISnapshot`/`PerNodeSnap` publish contract survives as the backend
+  (it is this table's "state exposure protocol", not a render path).
 - Discovery — how does viewer find engine's mmap region? (Lean: well-
   known path under /var/run/foxml/<instance_name>/snapshot.mmap)
 - Reconnect semantics — keep last-known state on disconnect, retry?

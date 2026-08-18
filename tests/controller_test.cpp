@@ -14790,8 +14790,7 @@ e3_skip_load:;
                 cfg.fee_rate_maker = MQ(0.00075);
                 cfg.fee_rate_taker = MQ(0.00100);
                 // MC inf-side fields (training_poll_interval is standalone PRE_CFG)
-                STAMP_SET(inf, training_poll_interval);
-                inf.training_poll_interval = 100;
+                STAMP_PUT(inf, training_poll_interval, 100);
 
                 StampWriteResult sw = stamp_write_for_model<64>(
                     model_path, "test-secret-v592b", 5, "2026-05-02",
@@ -15454,8 +15453,7 @@ e3_skip_load:;
 
                 // Test 1: write stamp WITH model_num_outputs=3, verify round-trip
                 StampInferenceCfgInputs inf = {};
-                STAMP_SET(inf, model_num_outputs);
-                inf.model_num_outputs = 3;
+                STAMP_PUT(inf, model_num_outputs, 3);
                 StampWriteResult sw = stamp_write_for_model(
                     model_path, "test-secret-v594a", 5, "2026-05-02",
                     0.65, 0.62, 0.05, 0,
@@ -15519,8 +15517,7 @@ e3_skip_load:;
               !STAMP_HAS(h, model_num_outputs));
 
         // Direct field assignability (sanity for boot-time WARN logic)
-        STAMP_SET(h, training_poll_interval);
-        h.training_poll_interval = 250;
+        STAMP_PUT(h, training_poll_interval, 250);
         check("v5.9.4a: ModelHandle.training_poll_interval assignable",
               STAMP_HAS(h, training_poll_interval) && h.training_poll_interval == 250u);
     }
@@ -15602,12 +15599,10 @@ e3_skip_load:;
                 // never did, so the emit->parse->assert chain passed here while shipping
                 // zeros in the real signed body. Class 58 sub-shape B, three lines from the
                 // D-421 comment that names that exact pattern for the sibling bit.
-                STAMP_SET(inf, training_poll_interval);
-                inf.training_poll_interval     = cfg.poll_interval;
+                STAMP_PUT(inf, training_poll_interval, cfg.poll_interval);
                 {
                     int K = LabelType_NumClasses(label_type);
-                    STAMP_SET(inf, model_num_outputs);
-                    inf.model_num_outputs = (K >= 2) ? K : 1;
+                    STAMP_PUT(inf, model_num_outputs, (K >= 2) ? K : 1);
                 }
 
                 // v5.15.5.F.4d.1.B.3 Phase F — pass &cfg as cfg_ptr; cfg-derived emit via framework.
@@ -15658,8 +15653,7 @@ e3_skip_load:;
                 // v5.14.9.D — DELETED inf2.inference_cfg_freshness_tau (TECH_DEBT-004 close).
                 // bandit_enabled=0 → has_bandit stays 0
                 // cost_gate_enabled=0 → has_fees stays 0
-                STAMP_SET(inf2, training_poll_interval);
-                inf2.training_poll_interval     = 100;
+                STAMP_PUT(inf2, training_poll_interval, 100);
                 STAMP_SET(inf2, model_num_outputs);
                 inf2.model_num_outputs          = 1;  // binary
                 StampWriteResult sw_min = stamp_write_for_model(
@@ -17141,8 +17135,7 @@ e3_skip_load:;
         FILE* mf = fopen(tmp_model, "wb"); fwrite("test", 1, 4, mf); fclose(mf);
 
         StampInferenceCfgInputs inf = {};
-        STAMP_SET(inf, label_registry_hash);
-        inf.label_registry_hash = h;
+        STAMP_PUT(inf, label_registry_hash, h);
         StampWriteResult sw = stamp_write_for_model(
             tmp_model, "test-secret", MODEL_FORMAT_VERSION,
             "2026-05-06", 0.6, 0.55, 0.05, 0.10,
@@ -18840,8 +18833,7 @@ e3_skip_load:;
         // Emit stamp with WRONG label_registry_hash (engine's actual XOR'd).
         uint64_t wrong_hash = LABEL_REGISTRY_HASH() ^ 0xDEADBEEFULL;
         StampInferenceCfgInputs inf_wrong = {};
-        STAMP_SET(inf_wrong, label_registry_hash);
-        inf_wrong.label_registry_hash     = wrong_hash;
+        STAMP_PUT(inf_wrong, label_registry_hash, wrong_hash);
         StampWriteResult sw = stamp_write_for_model(
             tmp_model, "v5.10.1.A-test", MODEL_FORMAT_VERSION,
             "2026-05-06", 0.6, 0.55, 0.05, 0.10,
@@ -18865,8 +18857,7 @@ e3_skip_load:;
         // Sanity: a CORRECT label_registry_hash loads via the same production-path
         // call shape.
         StampInferenceCfgInputs inf_right = {};
-        STAMP_SET(inf_right, label_registry_hash);
-        inf_right.label_registry_hash     = LABEL_REGISTRY_HASH();
+        STAMP_PUT(inf_right, label_registry_hash, LABEL_REGISTRY_HASH());
         StampWriteResult sw2 = stamp_write_for_model(
             tmp_model, "v5.10.1.A-test", MODEL_FORMAT_VERSION,
             "2026-05-06", 0.6, 0.55, 0.05, 0.10,
@@ -19853,8 +19844,7 @@ e3_skip_load:;
                 snprintf(tmp_stamp, sizeof(tmp_stamp), "%s.stamp", tmp_model);
 
                 StampInferenceCfgInputs inf{};
-                STAMP_SET(inf, feature_mask);
-                inf.feature_mask = 0xDEADBEEFCAFEBABEULL;
+                STAMP_PUT(inf, feature_mask, 0xDEADBEEFCAFEBABEULL);
 
                 StampWriteResult wr = stamp_write_for_model(
                     tmp_model, "", MODEL_FORMAT_VERSION,
@@ -20090,8 +20080,7 @@ e3_skip_load:;
               mh.xgb_train_nthread == 0);
 
         // Simulate post-load population (mirrors CoreModelZoo path)
-        STAMP_SET(mh, xgb_train_nthread);
-        mh.xgb_train_nthread = 1;
+        STAMP_PUT(mh, xgb_train_nthread, 1);
         check("v5.11.42 D.1: handle field assignable to 1 (parallel mode)",
               STAMP_HAS(mh, xgb_train_nthread) && mh.xgb_train_nthread == 1);
     }
@@ -20242,8 +20231,7 @@ e3_skip_load:;
                 snprintf(tmp_stamp, sizeof(tmp_stamp), "%s.stamp", tmp_model);
 
                 StampInferenceCfgInputs inf{};
-                STAMP_SET(inf, xgb_train_nthread);
-                inf.xgb_train_nthread = 4;
+                STAMP_PUT(inf, xgb_train_nthread, 4);
 
                 StampWriteResult wr = stamp_write_for_model(
                     tmp_model, "", MODEL_FORMAT_VERSION,
@@ -23452,14 +23440,11 @@ e3_skip_load:;
             if (mf) { fputs("placeholder model", mf); fclose(mf); }
 
             StampInferenceCfgInputs inf = {};
-            STAMP_SET(inf, expected_num_classes);
-            inf.expected_num_classes = 3;
+            STAMP_PUT(inf, expected_num_classes, 3);
             STAMP_SET(inf, expected_role);
             strncpy(inf.expected_role, "barrier", sizeof(inf.expected_role) - 1);
-            STAMP_SET(inf, expected_num_features);
-            inf.expected_num_features = 42;
-            STAMP_SET(inf, expected_feature_format_version);
-            inf.expected_feature_format_version = 7;
+            STAMP_PUT(inf, expected_num_features, 42);
+            STAMP_PUT(inf, expected_feature_format_version, 7);
 
             StampWriteResult sw = stamp_write_for_model(
                 tmp_model, /*secret=*/"test_secret_v5_14_2_e2b",
@@ -24103,15 +24088,13 @@ e3_skip_load:;
         cfg.held_out_fraction                = FPN_FromDouble<64>(0.20);
         // v5.14.9.D — DELETED inf.inference_cfg_freshness_tau (TECH_DEBT-004 close).
         // 2026-08-17 (D-426) — bandit_blend_ratio fixture removed with the row.
-        STAMP_SET(inf, training_poll_interval);
-        inf.training_poll_interval = 100u;
+        STAMP_PUT(inf, training_poll_interval, 100u);
         STAMP_SET(inf, scaler);
         inf.feature_scaler_present = 1;
         strncpy(inf.scaler_sha256,
                 "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789", 64);
         inf.scaler_sha256[64] = '\0';
-        STAMP_SET(inf, model_num_outputs);
-        inf.model_num_outputs = 3;
+        STAMP_PUT(inf, model_num_outputs, 3);
         STAMP_SET(inf, xgb_hyperparams);
         inf.xgb_max_depth         = 6;
         inf.xgb_learning_rate     = 0.05;
@@ -24122,32 +24105,25 @@ e3_skip_load:;
         inf.xgb_seed              = 42;
         strncpy(inf.xgb_tree_method, "hist", 15);
         inf.xgb_tree_method[15] = '\0';
-        STAMP_SET(inf, build_flags_hash);
-        inf.build_flags_hash = 0xDEADBEEFCAFEBABEULL;
+        STAMP_PUT(inf, build_flags_hash, 0xDEADBEEFCAFEBABEULL);
         STAMP_SET(inf, grid_member);
         inf.grid_member_count = 5;
         inf.grid_member_idx   = 2;
-        STAMP_SET(inf, label_registry_hash);
-        inf.label_registry_hash = 0x0123456789ABCDEFULL;
-        STAMP_SET(inf, feature_mask);
-        inf.feature_mask = 0xFFFFFFFFFFFFFFFFULL;
+        STAMP_PUT(inf, label_registry_hash, 0x0123456789ABCDEFULL);
+        STAMP_PUT(inf, feature_mask, 0xFFFFFFFFFFFFFFFFULL);
         STAMP_SET(inf, label_params);
         inf.label_lookahead_ticks = 100;
         inf.label_tp_pct          = 0.05;
         inf.label_sl_pct          = 0.02;
-        STAMP_SET(inf, xgb_train_nthread);
-        inf.xgb_train_nthread = 1;
+        STAMP_PUT(inf, xgb_train_nthread, 1);
 
         // POST_CFG section (6 fields):
-        STAMP_SET(inf, expected_num_classes);
-        inf.expected_num_classes = 3;
+        STAMP_PUT(inf, expected_num_classes, 3);
         STAMP_SET(inf, expected_role);
         strncpy(inf.expected_role, "barrier", 15);
         inf.expected_role[15] = '\0';
-        STAMP_SET(inf, expected_num_features);
-        inf.expected_num_features = 42;
-        STAMP_SET(inf, expected_feature_format_version);
-        inf.expected_feature_format_version = 5;
+        STAMP_PUT(inf, expected_num_features, 42);
+        STAMP_PUT(inf, expected_feature_format_version, 5);
         STAMP_SET(inf, overlay_hash);
         strncpy(inf.overlay_hash,
                 "1111222233334444555566667777888899990000aaaabbbbccccdddd00001111", 64);
@@ -24303,8 +24279,7 @@ e3_skip_load:;
               NodeModelZoo_CheckStaleModel(&m, now_us, 24, 1) == 0);
 
         // Sentinel (training_timestamp_us=0): returns 0
-        STAMP_SET(m, training_timestamp_us);
-        m.training_timestamp_us = 0;
+        STAMP_PUT(m, training_timestamp_us, 0);
         check("v5.14.8.E: sentinel timestamp 0 returns 0 (skip)",
               NodeModelZoo_CheckStaleModel(&m, now_us, 24, 1) == 0);
 
@@ -28038,15 +28013,12 @@ e3_skip_load:;
             inf.label_tp_pct = 0.05;
             inf.label_sl_pct = 0.05;
             // Standalone bits (subset; check all 4 categories propagate).
-            STAMP_SET(inf, training_poll_interval);
-            inf.training_poll_interval = 250;
-            STAMP_SET(inf, build_flags_hash);
-            inf.build_flags_hash = 0xABCDEF0123456789ULL;
+            STAMP_PUT(inf, training_poll_interval, 250);
+            STAMP_PUT(inf, build_flags_hash, 0xABCDEF0123456789ULL);
             STAMP_SET(inf, run_name);
             strncpy(inf.run_name, "v5_15_0_roundtrip_test",
                     sizeof(inf.run_name) - 1);
-            STAMP_SET(inf, training_timestamp_us);
-            inf.training_timestamp_us = 1715472000000000ULL;
+            STAMP_PUT(inf, training_timestamp_us, 1715472000000000ULL);
 
             StampWriteResult wr = stamp_write_for_model<64>(
                 model_path, "v515-roundtrip-secret",

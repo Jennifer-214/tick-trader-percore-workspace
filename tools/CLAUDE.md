@@ -487,3 +487,20 @@ Three behaviours discovered by being bitten, none derivable from `--help` or a d
   `SOURCES` row existed, so it was never offered. **Verify the target, not the act:** `grep -c
   '^<category>|' tools/identifier_ledger.txt` and confirm the guard reports no pending `ADD (ok`
   lines. A bless that had nothing to write is indistinguishable from one that was never run.
+
+### Addendum — 2026-08-17 close (same D-426 arc, found while running the close itself)
+
+- **`check_close_out_completeness.py --since` resolves its SHA against the WORKSPACE repo, not the
+  engine.** Passing the engine's session-start SHA gets *"DID NOT RUN — no commits in <sha>..HEAD"*
+  (rc=3), which reads like "nothing to evaluate" and is really "your anchor does not exist here."
+  Two of the three gotchas already in this section are the same shape — **an honest refusal that is
+  easy to read as a pass** — and this one is the sharpest, because the message names a real-looking
+  empty window rather than an unknown ref. Anchor it to the workspace: `git -C
+  ../tick-trader-percore-workspace log --oneline | head`, or just use the previous handoff's
+  workspace HEAD. Cost: two wasted runs before the anchor was suspected.
+- **The three gotchas above were already written down, and were hit anyway** — the close ran into
+  the B-Plus fence rule and the `--min-commits` refusal, both documented in this very section hours
+  earlier, because nothing consults this file at the moment of use. That is the honest limit of a
+  gotcha registry: it is a *recall* aid, not a guard. Where a gotcha is mechanizable, prefer the
+  guard (the `$?`-after-pipeline hook is the model — it BLOCKS rather than reminds); where it is
+  not, expect to pay it once more per session and keep the entry short enough to scan.

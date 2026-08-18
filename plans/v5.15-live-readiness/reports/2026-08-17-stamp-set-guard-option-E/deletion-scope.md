@@ -1,4 +1,19 @@
-# Deletion scope — `inference_cfg_bandit_blend_ratio` (queue item 2 / TaskList #3)
+# Deletion scope — `inference_cfg_bandit_blend_ratio` (queue item 2 / TaskList #3) — **EXECUTED**
+
+> **STATUS 2026-08-17, later the same session: DONE.** Engine `4dcbbb8`; ledger blessed 94 → 93.
+> This document was written as a pre-scope with a section arguing why it should NOT be done that
+> evening; the operator decided to proceed and it was executed. Two corrections the execution
+> produced, kept because they are the useful part of this record:
+>
+> 1. **The 8-site scope below was WRONG — the real count was 10.** It was derived from a grep
+>    capped at `head -20`, and the conclusion was drawn from the truncated list. The two hidden
+>    sites were `MASK_inference_cfg_bandit_blend_ratio` and — the one that mattered —
+>    `ML_Headers/NodeModelZoo.hpp:469`, a PRODUCTION sr→handle copy. Catalogued as the
+>    truncate-and-conclude sharpening of **AR-1** in the meta-anti-pattern index.
+> 2. **The burn fired on its first live use**, flagging `CfgFieldRegistry.hpp:669` — an
+>    operator-facing TOOLTIP that spelled the retired key. Resolved by moving the archaeology into
+>    a comment rather than teaching the sweep to skip string literals, since a string literal is
+>    exactly where a real resurrection (a parser accepting the old key by name) would hide.
 
 Scoped 2026-08-17 at engine `cddd8f6`+. **Re-derive every line number by symbol before editing.**
 Prerequisite (the H21 name-burn) is now LANDED and teethed at workspace `a0beae3`.
@@ -44,7 +59,7 @@ truthful half (emits `bandit_blend_ratio` unprefixed). It is the reason deleting
 nothing: the real value is still stamped, by the half that actually reads cfg. Same argument the
 `fees` deletion rested on.
 
-## Why this was NOT done at the end of the 2026-08-17 session
+## Why it was argued NOT to be done that evening (overruled by the operator; kept as the reasoning record)
 
 Not effort-avoidance — three merit reasons:
 

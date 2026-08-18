@@ -1601,3 +1601,41 @@ enabling Ridge silently removes the bandit's influence.
 **Related** — D-423 (the exit-side loop closure) · `plans/_future/2026-05-16-ml-architecture-design-notes.md`
 § AS-BUILT CORRECTION · Thompson posteriors now persist at shutdown AND periodically (they were
 discarded at every restart).
+
+### The model-stamp `bandit_blend_ratio` line + panel row are GONE (v5.15.5.F.4d.1.E.1.2, 2026-08-17 — D-426)
+
+**What:** a REMOVAL, catalogued because it is operator-visible in two places at once. Model stamps
+no longer carry an `inference_cfg_bandit_blend_ratio=` line, and the backtest Model-Health panel no
+longer renders a `bandit_blend_ratio:` row sourced from the stamp. Nothing was lost: that line and
+that row both reported a **permanently zero** value. The `.B.3` migration moved the producer to the
+cfg-derived half and left the presence-bit set behind, so any model stamped with `bandit_enabled=1`
+carried `inference_cfg_bandit_blend_ratio=0` in its HMAC-signed body — beside the TRUE cfg-derived
+`bandit_blend_ratio=` line emitted by the half that actually reads cfg. One model-identity document
+making two contradictory claims about one quantity. The truthful line and the operator's real
+control are untouched.
+
+**Cfg flags:** none added or removed. `bandit_blend_ratio` remains an operator control and is still
+stamped, via the cfg-derived emit half. `bandit_enabled` is unchanged (its 0→1 default flip earlier
+this sprint is what ARMED the defect — it was dormant before).
+
+**Fallback:** n/a (removal). Old stamps that contain the retired key still PARSE — the verifier
+rebuilds its HMAC body from the file's own lines, so nothing on disk breaks. But every on-disk stamp
+in `models/` is `stamp_format_version=1` and already refused at the epoch floor, so this is moot in
+practice.
+
+**Where to verify:** emit a fresh stamp and `grep inference_cfg_bandit_blend_ratio <stamp>` → no
+hits, while `grep '^bandit_blend_ratio=' <stamp>` → the real configured value. In the GUI: the
+backtest Model-Health stamp block no longer lists a `bandit_blend_ratio` row.
+
+**Paper-test sanity:** train or re-stamp any model with `bandit_enabled=1`; confirm the stamp shows
+exactly ONE bandit-ratio line and that it matches `engine.cfg`. Previously it showed two, disagreeing.
+
+**Gotchas:** the wire body changed deliberately — a re-stamp is required for any model you want to
+compare byte-wise against a pre-2026-08-17 stamp. The key name is BURNED in `RETIRED_NAMES`
+(`tools/check_identifier_retirement.py`), so re-introducing it in any code shape is now a red build,
+including as a registry row or enum member. Do not "restore" it; a new meaning needs a new identifier.
+
+**Related:** the identical `fees` removal one day earlier (same cause, three lines away) · D-426 ·
+`tools/identifier_ledger.txt` (blessed) · PARITY-042 (the wider cfg-derived drift-gate vacuity, still
+open) · `feature-lookup` sister entry *"bandit_enabled becomes a real operator control"* above, which
+is the control this line was falsely reporting.

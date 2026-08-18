@@ -1,4 +1,14 @@
-# D-426 — the STAMP_SET member-existence guard, option E (BUILT + MEASURED, NOT COMMITTED)
+# D-426 — the STAMP_SET member-existence guard, option E (BUILT + MEASURED → **LANDED**)
+
+> **STATUS UPDATE 2026-08-17, later the same session — this document's original framing is SUPERSEDED.**
+> It was written while the guard was proven-but-unlandable (one emit site had no value to pair). That
+> blocker was removed by deleting the offending row, the emit sites were converted, and **the guard is
+> now ARMED and committed** (engine `76e4b8e`). `guard-option-E.patch` here is therefore a HISTORICAL
+> record of the measurement, not a patch awaiting application — do not re-apply it.
+>
+> The completeness claim the sequencing was designed for held: armed against the fully-converted tree,
+> the guard produced **ZERO** refusals, which is the total-oracle proof that every site was converted.
+> Read the sections below as the EVIDENCE TRAIL for why option E was chosen, not as pending work.
 
 **Date:** 2026-08-17 · **Engine HEAD at measurement:** `cddd8f6` · **Decision:** D-426 (second AMENDED block)
 
@@ -38,7 +48,7 @@ either is **blind to the other's fields** and would silently ALLOW the exact def
 to catch — **Class 58-A rebuilt inside the guard**, blind over the ~30 cfg-derived fields that are
 queue item 1. The compiler sees the assembled struct; a registry list cannot.
 
-## Why it is NOT committed
+## Why it was not committed AT THE TIME (resolved later the same session — see the status update above)
 
 Arming the guard makes the emit-site conversion **mandatory** (the intended design). One of the 62
 sites — `StampHelper.hpp:250`, the live `inference_cfg_bandit_blend_ratio` bit-without-value — **has

@@ -268,6 +268,59 @@ This separation is what makes the 3-barrier design sustainable: a future maintai
 - Type families covered: `is_fp_binary_v` (NEW trait; ~38 of the 40 .F.4b entries are FPN_Binary<F>) + `std::is_floating_point_v` + `std::is_array_v` + `std::is_integral_v`
 - Drives the 3-barrier structural fix that closes Class 23
 
+### Landed application: v5.15.5.F.4d.1.E.1.2 (D-426) — `tt::is_valid` + the `STAMP_SET` member-existence guard
+
+The pattern's first use for **detection** rather than dispatch, and the first where the question
+is about a MEMBER NAME rather than a type.
+
+**Problem.** `STAMP_SET(s, name)` sets a presence bit on an HMAC-signed stamp struct. Setting the
+bit without writing the value is a category error C++ cannot see — the two halves were separate
+statements, so deleting one orphaned the other and the field's zero-initialised default shipped
+into a signed model-identity document. It shipped **twice** (`fees`; `inference_cfg_bandit_blend_ratio`).
+`STAMP_PUT(s, name, value)` makes the pair one expression, but availability is convention; the
+enforcing half must make the old spelling *stop compiling* — and only where a same-named MEMBER
+exists, since a GROUP bit (`xgb_hyperparams`) legitimately has no field of its own.
+
+**The C++17 mechanic.** C++20 spells this `requires { (s).name; }`. Under C++17 a lambda may not
+appear in an unevaluated operand, so the lambda is passed as an **argument** (an evaluated
+context) and only its TYPE is used:
+
+```cpp
+namespace tt {
+    template <typename F, typename... Args>
+    constexpr auto is_valid_impl(int) -> decltype(std::declval<F>()(std::declval<Args>()...), bool{}) { return true; }
+    template <typename F, typename... Args>
+    constexpr bool is_valid_impl(...) { return false; }
+    template <typename... Args, typename F>
+    constexpr bool is_valid(F&&) { return is_valid_impl<F, Args...>(0); }
+}
+#define TT_HAS_MEMBER(s, name) \
+    (tt::is_valid<decltype((s))>([](auto&& _x) -> decltype(void(_x.name)) {}))
+```
+
+Expression form (not type form) so it mirrors the macro's own `(s)` argument, which may be `inf`,
+`r`, or `*handle`. Gated on an opt-in trait (`is_stamp_emit_inputs_v`) so only the emit struct is
+guarded — the parse and handle-copy sides legitimately set a bit whose value arrives from another
+statement in the same macro expansion.
+
+**Why not generate a trait per name from the registry (the obvious alternative).** The emit struct
+draws its members from **TWO independent generators** — the main registry *and* a second
+cfg-derived struct-gen macro expanding a different meta-registry. A trait list built from either
+is blind to the other's fields and would silently ALLOW exactly the defect the guard exists to
+catch: **Class 58-A rebuilt inside the guard**, blind precisely over the cohort that was already
+a known defect surface. Asking the compiler sees the assembled struct, whichever generator
+contributed the member — and it carries no currency story, because there is no list to drift.
+
+**Measured, armed against the real tree** (not a fixture): 58 refusals across the production emit
+path and the test suite, and **ZERO group bits refused** — the discrimination that a first,
+too-broad version of this assert got wrong and was reverted for. After converting every refused
+site to `STAMP_PUT`, arming the guard produced **zero** refusals, which is the completeness proof
+for the conversion: the guard doubles as a TOTAL oracle for "did we get them all."
+
+**Generalisable lesson.** `tt::` dispatch answers *"what TYPE is this field?"*; this answers
+*"does this member exist?"*. Both replace a hand-maintained list with a compiler question — which
+is the same structural move as choosing `tt::` over a Kind-enum + offsetof pun, one level up.
+
 ### Future application candidates
 
 - **`tt::feature_compute_field<T>`** (FOREACH_FEATURE) — when feature compute fns gain heterogeneous output types
@@ -349,6 +402,20 @@ External metaprogramming libraries can express the dispatch elegantly. Rejected 
 - FoxLIB has zero core dependencies; macros + standard type traits stay in-tree
 - The if-constexpr chain is direct + readable; no template-metaprogramming opacity
 - Plain C++17 is sufficient for the use case
+
+> **⚠ SCOPE OF THIS REJECTION, clarified 2026-08-17 (D-426) — it rejects the DEPENDENCY, not
+> every idiom the library happens to contain.** A later application (`tt::is_valid`, below)
+> uses the ~10-line Hana-*style* `is_valid` detection idiom in-tree. That is not a reversal:
+> checking the three reasons individually, only one is even about the idiom, and it does not
+> reach the case. **(1) "zero core dependencies"** — satisfied; nothing is added to the build.
+> **(3) "plain C++17 is sufficient"** — satisfied; it *is* plain C++17. **(2) "the if-constexpr
+> chain is direct + readable"** — this is a *comparative* claim, true wherever a chain can
+> express the question. A chain dispatches on a type you already name; it structurally cannot
+> ask **"does a member spelled `name` exist on this struct?"** There is no simpler alternative
+> being passed over, so the preference has nothing to prefer. **The test to apply here is not
+> "does this resemble a rejected library?" but "is a direct if-constexpr chain available and
+> being skipped?"** When the answer is no, reach for the idiom; when it is yes, the rejection
+> stands and the chain wins.
 
 ### Reflection (C++26+)
 

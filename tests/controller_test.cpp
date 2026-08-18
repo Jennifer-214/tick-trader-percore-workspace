@@ -15654,8 +15654,7 @@ e3_skip_load:;
                 // bandit_enabled=0 → has_bandit stays 0
                 // cost_gate_enabled=0 → has_fees stays 0
                 STAMP_PUT(inf2, training_poll_interval, 100);
-                STAMP_SET(inf2, model_num_outputs);
-                inf2.model_num_outputs          = 1;  // binary
+                STAMP_PUT(inf2, model_num_outputs, 1);  // binary
                 StampWriteResult sw_min = stamp_write_for_model(
                     model_path, "test-secret-v595b", 5, "2026-05-02",
                     0.55, 0.52, 0.05, 0, 0xCAFE5599u, "5.9.5b", &inf2);
@@ -20271,8 +20270,7 @@ e3_skip_load:;
                 inf.label_lookahead_ticks = 15000;
                 inf.label_tp_pct = 0.07;
                 inf.label_sl_pct = 0.07;
-                STAMP_SET(inf, xgb_train_nthread);
-                inf.xgb_train_nthread = 1;  // parallel-mode pinned
+                STAMP_PUT(inf, xgb_train_nthread, 1);  // parallel-mode pinned
 
                 StampWriteResult wr = stamp_write_for_model(
                     tmp_model, "", MODEL_FORMAT_VERSION,
@@ -23186,12 +23184,8 @@ e3_skip_load:;
             if (mf) { fputs("placeholder model", mf); fclose(mf); }
 
             StampInferenceCfgInputs inf = {};
-            STAMP_SET(inf, overlay_hash);
-            strncpy(inf.overlay_hash, "abcd1234567890abcd1234567890abcd1234567890abcd1234567890abcd1234",
-                    sizeof(inf.overlay_hash) - 1);
-            STAMP_SET(inf, effective_hash);
-            strncpy(inf.effective_hash, "ffff1234567890ffff1234567890ffff1234567890ffff1234567890ffff1234",
-                    sizeof(inf.effective_hash) - 1);
+            STAMP_PUT(inf, overlay_hash,   "abcd1234567890abcd1234567890abcd1234567890abcd1234567890abcd1234");
+            STAMP_PUT(inf, effective_hash, "ffff1234567890ffff1234567890ffff1234567890ffff1234567890ffff1234");
 
             StampWriteResult sw = stamp_write_for_model(
                 tmp_model, "test_secret_overlay",
@@ -23441,8 +23435,7 @@ e3_skip_load:;
 
             StampInferenceCfgInputs inf = {};
             STAMP_PUT(inf, expected_num_classes, 3);
-            STAMP_SET(inf, expected_role);
-            strncpy(inf.expected_role, "barrier", sizeof(inf.expected_role) - 1);
+            STAMP_PUT(inf, expected_role, "barrier");
             STAMP_PUT(inf, expected_num_features, 42);
             STAMP_PUT(inf, expected_feature_format_version, 7);
 
@@ -24119,19 +24112,13 @@ e3_skip_load:;
 
         // POST_CFG section (6 fields):
         STAMP_PUT(inf, expected_num_classes, 3);
-        STAMP_SET(inf, expected_role);
-        strncpy(inf.expected_role, "barrier", 15);
-        inf.expected_role[15] = '\0';
+        STAMP_PUT(inf, expected_role, "barrier");
         STAMP_PUT(inf, expected_num_features, 42);
         STAMP_PUT(inf, expected_feature_format_version, 5);
-        STAMP_SET(inf, overlay_hash);
-        strncpy(inf.overlay_hash,
-                "1111222233334444555566667777888899990000aaaabbbbccccdddd00001111", 64);
-        inf.overlay_hash[64] = '\0';
-        STAMP_SET(inf, effective_hash);
-        strncpy(inf.effective_hash,
-                "ffffeeee0123456789abcdef0123456789abcdef0123456789abcdef00001111", 64);
-        inf.effective_hash[64] = '\0';
+        STAMP_PUT(inf, overlay_hash,
+                  "1111222233334444555566667777888899990000aaaabbbbccccdddd00001111");
+        STAMP_PUT(inf, effective_hash,
+                  "ffffeeee0123456789abcdef0123456789abcdef0123456789abcdef00001111");
 
         // Emit + verify HMAC round-trip:
         StampWriteResult sw = stamp_write_for_model<64>(
@@ -28015,9 +28002,7 @@ e3_skip_load:;
             // Standalone bits (subset; check all 4 categories propagate).
             STAMP_PUT(inf, training_poll_interval, 250);
             STAMP_PUT(inf, build_flags_hash, 0xABCDEF0123456789ULL);
-            STAMP_SET(inf, run_name);
-            strncpy(inf.run_name, "v5_15_0_roundtrip_test",
-                    sizeof(inf.run_name) - 1);
+            STAMP_PUT(inf, run_name, "v5_15_0_roundtrip_test");
             STAMP_PUT(inf, training_timestamp_us, 1715472000000000ULL);
 
             StampWriteResult wr = stamp_write_for_model<64>(

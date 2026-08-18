@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 23677810-15af-419a-bb0f-e89d723c198b
-  sister_specs: []
+  sister_specs: [project_viewer_is_imgui_decoupled_not_tui.md]
   tags: [project-state, refactor-discipline]
 ---
 

@@ -114,6 +114,16 @@ RETIRED_NAMES = {
     "STAMP_BIT_fees",
     "inference_cfg_fee_rate_maker",
     "inference_cfg_fee_rate_taker",
+    # E.1.2/D-426 (2026-08-17) — the `fees` twin, deleted for the identical cause three lines
+    # from where `fees` was. The `.B.3` migration moved the producer to the cfg-derived half and
+    # left the bit-set behind, so the signed body carried `inference_cfg_bandit_blend_ratio=0`
+    # beside the truthful `bandit_blend_ratio`. Per H21 Rule 1a the row is DELETED, not
+    # tombstoned in place — a retired EMITTING row does not go dead, it goes LYING — so these
+    # two names are the whole protection. This is the FIRST burn that is actually enforced:
+    # until the same-session `retired_name_check()` fix, the sweep matched `#define` only and
+    # would have caught NEITHER of these shapes (a registry row and an enum member).
+    "inference_cfg_bandit_blend_ratio",
+    "STAMP_BIT_inference_cfg_bandit_blend_ratio",
 }
 
 SOURCES = [

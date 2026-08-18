@@ -15591,11 +15591,12 @@ e3_skip_load:;
                 inf.confidence_hard_block_threshold = cfg.confidence_hard_block_threshold;
                 inf.held_out_fraction = cfg.held_out_fraction;
                 // v5.14.9.D — DELETED inf.inference_cfg_freshness_tau (TECH_DEBT-004 close).
-                if (BITMAP_IS_SET(cfg.ml_cfg_flags, MASK_ML_CFG_BANDIT_ENABLED)) {
-                    STAMP_SET(inf, inference_cfg_bandit_blend_ratio);
-                    inf.inference_cfg_bandit_blend_ratio =
-                        FPN_ToDouble(cfg.bandit_blend_ratio);
-                }
+                // 2026-08-17 (D-426) — the bandit block was REMOVED with the row, and note what it
+                // was: the fixture hand-populated `inf.inference_cfg_bandit_blend_ratio` from cfg,
+                // which PRODUCTION never did (StampHelper set the bit and assigned nothing). So
+                // this test asserted a round-trip that only ever held for the fixture — it proved
+                // the value survived emit→verify given a value, while production shipped a zero.
+                // Same shape as the `fees` fixture removed below it.
                 // 2026-08-16 — the fees block was REMOVED with the group. Note what it was:
                 // the fixture hand-populated inf.inference_cfg_fee_rate_* which PRODUCTION
                 // never did, so the emit->parse->assert chain passed here while shipping
@@ -15631,10 +15632,8 @@ e3_skip_load:;
                 check("v5.9.5b: held_out_fraction round-trips (0.25)",
                       fabs(FPN_ToDouble(v.held_out_fraction) - 0.25) < 1e-9);
                 // v5.14.9.D — DELETED freshness_tau round-trip check (TECH_DEBT-004 close).
-                check("v5.9.5b: has_bandit set (bandit_enabled=1)",
-                      STAMP_HAS(v, inference_cfg_bandit_blend_ratio) == 1);
-                check("v5.9.5b: bandit_blend_ratio round-trips (0.40)",
-                      fabs(v.inference_cfg_bandit_blend_ratio - 0.40) < 1e-9);
+                // 2026-08-17 (D-426) — the two bandit round-trip checks died with the row.
+                // They were fixture-only assertions (see the populate block above).
                 check("v5.9.5b: training_poll_interval round-trips (200)",
                       STAMP_HAS(v, training_poll_interval) == 1 &&
                       v.training_poll_interval == 200u);
@@ -15670,8 +15669,7 @@ e3_skip_load:;
                       sw_min.ok == 1);
                 ModelStampResult v_min = verify_model_stamp(model_path,
                     "test-secret-v595b", 0.10, 5, 0xCAFE5599u);
-                check("v5.9.5b: gated-off bandit → has_inference_cfg_bandit=0",
-                      STAMP_HAS(v_min, inference_cfg_bandit_blend_ratio) == 0);
+                // 2026-08-17 (D-426) — the gated-off bandit check died with the row.
 
                 unlink(stamp_path);
                 unlink(model_path);
@@ -15861,8 +15859,7 @@ e3_skip_load:;
               FPN_ToDouble(h.confidence_threshold_scale) == 0.0);
         check("v5.9.5i: Model_Init zeros barrier_gate_enabled",
               h.barrier_gate_enabled == 0);
-        check("v5.9.5i: Model_Init clears inference_cfg_bandit_blend_ratio bit",
-              !STAMP_HAS(h, inference_cfg_bandit_blend_ratio));
+        // 2026-08-17 (D-426) — the bandit_blend_ratio clear-check died with the row.
 
         // === Test 2: ack flag default off via ops_cfg_flags bitmap (v5.15.5.A.7 migration) ===
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
@@ -23925,15 +23922,15 @@ e3_skip_load:;
         check("v5.14.8.A.0.b: FOREACH_STAMP_BOUND_MODEL_CONST_GROUPS has >= 5 entries",
               FOREACH_STAMP_BOUND_MODEL_CONST_GROUP_COUNT >= 5);
 
-        // Standalone count: 7 today (bandit, training_poll_interval,
-        // model_num_outputs, build_flags_hash, label_registry_hash,
-        // feature_mask, xgb_train_nthread).
+        // Standalone count: 6 today (training_poll_interval, model_num_outputs,
+        // build_flags_hash, label_registry_hash, feature_mask, xgb_train_nthread).
+        // `bandit` was REMOVED 2026-08-17 (D-426) with its wire key.
         int standalone_count = 0;
         #define X(name, doc) standalone_count++;
         FOREACH_STAMP_BOUND_MODEL_CONST_STANDALONE(X)
         #undef X
-        check("v5.14.8.A.0.b: FOREACH_STAMP_BOUND_MODEL_CONST_STANDALONE has >= 7 entries",
-              standalone_count >= 7);
+        check("v5.14.8.A.0.b: FOREACH_STAMP_BOUND_MODEL_CONST_STANDALONE has >= 6 entries",
+              standalone_count >= 6);
     }
     {
         // Token-paste dispatch shape verification: STAMP_HANDLE_GEN_INCLUDE
@@ -24019,7 +24016,10 @@ e3_skip_load:;
                       "v5.14.8.A.merged.1: group mask collision");
         static_assert(MASK_scaler != MASK_xgb_hyperparams,
                       "v5.14.8.A.merged.1: group mask collision");
-        static_assert(MASK_inference_cfg != MASK_inference_cfg_bandit_blend_ratio,
+        // 2026-08-17 (D-426): re-pointed off `inference_cfg_bandit_blend_ratio`, whose row was
+        // deleted with its bit. The group-vs-standalone collision property still needs a witness,
+        // so this now uses a live standalone bit rather than dropping the assertion.
+        static_assert(MASK_inference_cfg != MASK_training_poll_interval,
                       "v5.14.8.A.merged.1: group vs standalone mask collision");
         // OR of the group masks should equal sum (no overlap). 2026-08-16: `fees` was
         // REMOVED with its group (its two rows had no producer and emitted zeros into the
@@ -24030,19 +24030,20 @@ e3_skip_load:;
         check("v5.14.8.A.merged.1: 5 group masks have no overlap",
               __builtin_popcountll(ALL_GROUP_MASKS) == 5);
 
-        // OR of all 13 masks today; bit-popcount should match:
+        // OR of all masks today; bit-popcount should match:
         constexpr uint64_t ALL_MASKS =
             MASK_inference_cfg | MASK_scaler |
             MASK_xgb_hyperparams | MASK_grid_member | MASK_label_params |
-            MASK_inference_cfg_bandit_blend_ratio | MASK_training_poll_interval |
+            MASK_training_poll_interval |
             MASK_model_num_outputs | MASK_build_flags_hash |
             MASK_label_registry_hash | MASK_feature_mask | MASK_xgb_train_nthread;
-        // 12 after `fees` removal (was 13). This one IS an equality and should stay one:
-        // it ORs a NAMED member list, so a popcount mismatch means a bit collided or a
-        // name vanished -- both real defects. That is the difference from the >= bound
-        // above, which pins a count with no member list behind it.
-        check("v5.14.8.A.merged.1: 12 distinct mask bits (5 groups + 7 standalone)",
-              __builtin_popcountll(ALL_MASKS) == 12);
+        // 11 after the D-426 `inference_cfg_bandit_blend_ratio` removal (12 after `fees`,
+        // 13 originally). This one IS an equality and should stay one: it ORs a NAMED
+        // member list, so a popcount mismatch means a bit collided or a name vanished --
+        // both real defects. That is the difference from the >= bound above, which pins a
+        // count with no member list behind it.
+        check("v5.14.8.A.merged.1: 11 distinct mask bits (5 groups + 6 standalone)",
+              __builtin_popcountll(ALL_MASKS) == 11);
     }
     {
         // STAMP_HAS / SET / CLR / ANY semantic test on synthetic struct
@@ -24101,8 +24102,7 @@ e3_skip_load:;
         cfg.confidence_hard_block_threshold  = FPN_FromDouble<64>(0.0567);
         cfg.held_out_fraction                = FPN_FromDouble<64>(0.20);
         // v5.14.9.D — DELETED inf.inference_cfg_freshness_tau (TECH_DEBT-004 close).
-        STAMP_SET(inf, inference_cfg_bandit_blend_ratio);
-        inf.inference_cfg_bandit_blend_ratio = 0.42;
+        // 2026-08-17 (D-426) — bandit_blend_ratio fixture removed with the row.
         STAMP_SET(inf, training_poll_interval);
         inf.training_poll_interval = 100u;
         STAMP_SET(inf, scaler);
@@ -24179,8 +24179,7 @@ e3_skip_load:;
         check("v5.14.8.A.7: has_xgb_hyperparams", STAMP_HAS(vr, xgb_hyperparams));
         check("v5.14.8.A.7: has_grid_member",     STAMP_HAS(vr, grid_member));
         check("v5.14.8.A.7: has_label_params",    STAMP_HAS(vr, label_params));
-        check("v5.14.8.A.7: has_inference_cfg_bandit_blend_ratio",
-              STAMP_HAS(vr, inference_cfg_bandit_blend_ratio));
+        // 2026-08-17 (D-426) — has_inference_cfg_bandit_blend_ratio died with the row.
         check("v5.14.8.A.7: has_training_poll_interval",
               STAMP_HAS(vr, training_poll_interval));
         check("v5.14.8.A.7: has_model_num_outputs", STAMP_HAS(vr, model_num_outputs));

@@ -424,7 +424,12 @@ fi
 # ============================================================================
 if [ "${SKIP_IDENTIFIER_CHECK:-0}" != "1" ]; then
     ID_TOOL="${REPO_ROOT}/tools/check_identifier_retirement.py"
-    STAGED_ID=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^(CoreFrameworks/|ML_Headers/|Strategies/|MemHeaders/|FixedPoint/|tools/(identifier_ledger\.txt|check_identifier_retirement\.py|node_persist_layout\.py|goldens/node_persist_layout\.txt))' || true)
+    # ⚠ WIDENED 2026-08-17 (D-426 close): `Backtest/`, `GUI/` and `DataStream/` were absent,
+    # so a commit touching ONLY a wire-key consumer never fired this guard — and
+    # Backtest/BacktestPanels.hpp was one of the four sites deleted that session. Keep this
+    # in step with RETIRED_SCAN_DIRS in check_identifier_retirement.py (the trigger decides
+    # WHEN to run; that decides WHERE to look, and it must be the wider of the two).
+    STAGED_ID=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^(CoreFrameworks/|ML_Headers/|Strategies/|MemHeaders/|FixedPoint/|DataStream/|Backtest/|GUI/|tools/(identifier_ledger\.txt|check_identifier_retirement\.py|node_persist_layout\.py|goldens/node_persist_layout\.txt))' || true)
     if [ -n "$STAGED_ID" ] && [ -f "$ID_TOOL" ]; then
         echo "[pre-commit] Check H: identifier-retirement (tombstone guard; staged registry/version change)"
         ID_OUT=$(python3 "$ID_TOOL" 2>&1); ID_RC=$?

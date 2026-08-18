@@ -778,6 +778,20 @@ def check_plan_body(plan_path, strict=False, verify_anchors=True, anchors_only=F
     n_renamed = 0
     n_hard_live = 0   # BLOCKING anchors: OOB/MISSING in a LIVE doc, not grandfathered
     frozen = any(seg in str(plan_path) for seg in _frozen_record_paths())
+    # ⚠ D-426 close (2026-08-17): the path-segment freeze is RIGHT for a superseded handoff (a
+    # historical doc citing a then-real path is truthful) and EXACTLY WRONG for the singleton
+    # `status: active` one, which is a forward instruction set a cold session is told to follow
+    # literally. Measured that session: the active handoff carried an un-failable `rg` probe, a
+    # pin that does not exist, and a symbol (`NPF_PROJECT_POISON`) absent from the tree for >=5
+    # handoff generations — all riding a CLEAN sweep, because nothing hard-gated the one live doc.
+    # Scope the carve-out by STATUS, not by path.
+    if frozen and "/handoffs/" in str(plan_path):
+        try:
+            _head = plan_path.read_text(encoding="utf-8", errors="replace")[:2000]
+            if re.search(r"^status:\s*active\b", _head, re.M):
+                frozen = False   # the LIVE handoff is gated like a plan body
+        except OSError:
+            pass
     rel = _plan_rel(plan_path)
     n_annotated = 0
     if verify_anchors:

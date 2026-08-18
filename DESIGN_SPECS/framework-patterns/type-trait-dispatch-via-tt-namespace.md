@@ -311,8 +311,13 @@ catch: **Class 58-A rebuilt inside the guard**, blind precisely over the cohort 
 a known defect surface. Asking the compiler sees the assembled struct, whichever generator
 contributed the member — and it carries no currency story, because there is no list to drift.
 
-**Measured, armed against the real tree** (not a fixture): 58 refusals across the production emit
-path and the test suite, and **ZERO group bits refused** — the discrimination that a first,
+**Measured, armed against the real tree** (not a fixture) at TWO points, which is why a single
+number would mislead: armed BEFORE the `inference_cfg_bandit_blend_ratio` deletion the guard refused
+every emit-side field bit including that row's sites; armed again AFTER the deletion the count was
+correspondingly lower. Both runs are saved at
+`plans/v5.15-live-readiness/reports/2026-08-17-stamp-set-guard-option-E/armed-build-evidence.log`
+(the pre-deletion one) — re-derive rather than quoting a figure. The invariant across both, and the
+number that actually matters, is **ZERO group bits refused** — the discrimination that a first,
 too-broad version of this assert got wrong and was reverted for. After converting every refused
 site to `STAMP_PUT`, arming the guard produced **zero** refusals, which is the completeness proof
 for the conversion: the guard doubles as a TOTAL oracle for "did we get them all."

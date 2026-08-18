@@ -15642,7 +15642,9 @@ e3_skip_load:;
                 unlink(model_path);
 
                 // Test: gating — when bandit_enabled=0 + cost_gate_enabled=0,
-                // has_bandit + has_fees stay 0 (don't emit those lines)
+                // 2026-08-17 (D-426): this line used to say "has_bandit + has_fees stay 0".
+                // NEITHER symbol exists — `fees` was deleted 2026-08-16 and `has_bandit` never
+                // existed at all (its STANDALONE row declared nothing; see that macro's comment).
                 FILE* mf2 = fopen(model_path, "w");
                 fwrite("d2", 1, 2, mf2);
                 fclose(mf2);
@@ -15651,8 +15653,9 @@ e3_skip_load:;
                 inf2.confidence_threshold_scale = FPN_FromDouble<64>(1.0);
                 inf2.held_out_fraction          = FPN_FromDouble<64>(0.20);
                 // v5.14.9.D — DELETED inf2.inference_cfg_freshness_tau (TECH_DEBT-004 close).
-                // bandit_enabled=0 → has_bandit stays 0
-                // cost_gate_enabled=0 → has_fees stays 0
+                // This fixture sets ONLY training_poll_interval + model_num_outputs, so every
+                // OTHER presence bit must stay 0 in the verified stamp — that unset-stays-unset
+                // property is what this block exists to pin.
                 STAMP_PUT(inf2, training_poll_interval, 100);
                 STAMP_PUT(inf2, model_num_outputs, 1);  // binary
                 StampWriteResult sw_min = stamp_write_for_model(
@@ -15662,7 +15665,19 @@ e3_skip_load:;
                       sw_min.ok == 1);
                 ModelStampResult v_min = verify_model_stamp(model_path,
                     "test-secret-v595b", 0.10, 5, 0xCAFE5599u);
-                // 2026-08-17 (D-426) — the gated-off bandit check died with the row.
+                // 2026-08-17 (D-426) — the gated-off bandit assertion died with its row, and
+                // deleting it left `v_min` computed-but-never-read: a dead fixture, and the
+                // unset-stays-unset property with ZERO witnesses. RE-POINTED at live group bits
+                // rather than dropped — the property was never about `bandit` specifically, and
+                // a deletion should not silently cost a test its subject (flagged by the close's
+                // independent review; `feedback_passing_test_is_not_verification`).
+                check("v5.9.5b: unset group bits stay 0 in the verified stamp",
+                      STAMP_HAS(v_min, scaler) == 0 &&
+                      STAMP_HAS(v_min, label_params) == 0 &&
+                      STAMP_HAS(v_min, grid_member) == 0);
+                check("v5.9.5b: the bits the fixture DID set survive the round-trip",
+                      STAMP_HAS(v_min, training_poll_interval) == 1 &&
+                      STAMP_HAS(v_min, model_num_outputs) == 1);
 
                 unlink(stamp_path);
                 unlink(model_path);
@@ -23984,7 +23999,7 @@ e3_skip_load:;
         //   - At least 13 bits used today (6 groups + 7 standalone)
         static_assert(tt::STAMP_BIT_COUNT <= 64,
                       "v5.14.8.A.merged.1: STAMP_BIT_COUNT must fit uint64_t");
-        check("v5.14.8.A.merged.1: STAMP_BIT_COUNT >= 13 (6 groups + 7 standalone)",
+        check("v5.14.8.A.merged.1: STAMP_BIT_COUNT >= 13 (floor, not an inventory — re-derive membership from enum StampHasFlagBit)",
               tt::STAMP_BIT_COUNT >= 13);
         check("v5.14.8.A.merged.1: STAMP_BIT_COUNT <= 64",
               tt::STAMP_BIT_COUNT <= 64);

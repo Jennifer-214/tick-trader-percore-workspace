@@ -283,7 +283,12 @@ if [ "${SKIP_PLAN_BODY_CHECK:-0}" != "1" ]; then
         # session-modified workspace plan/doc .md (precise scope; the close surface)
         MODIFIED=$(git -C "$WORKSPACE_ROOT" diff --name-only HEAD -- 'plans/**/*.md' 2>/dev/null; \
                    git -C "$WORKSPACE_ROOT" ls-files --others --exclude-standard -- 'plans/**/*.md' 2>/dev/null)
-        MODIFIED=$(echo "$MODIFIED" | grep -E 'subplans/.*\.md$|MASTER\.md$' | sort -u || true)
+        # D-426 close: `handoffs/` added. The comment above says "the close surface", and the close
+        # surface INCLUDES the handoff — it is the document the next session is told to follow
+        # literally. Excluding it here is why a session whose principal new artifact was a handoff
+        # printed "no session-modified plan bodies". B-Plus itself only hard-gates the `status:
+        # active` one (superseded handoffs stay frozen records).
+        MODIFIED=$(echo "$MODIFIED" | grep -E 'subplans/.*\.md$|MASTER\.md$|handoffs/.*\.md$' | sort -u || true)
         if ! git -C "$WORKSPACE_ROOT" rev-parse --git-dir >/dev/null 2>&1; then
             # D-413/F6 honesty: if the enumerator itself cannot run, "no modified bodies" is
             # unknown, not true — silent-empty-input must not green a HARD row.

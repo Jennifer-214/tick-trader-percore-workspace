@@ -88,13 +88,13 @@ RETIRED_NAMES = {
     # E.1.2/D-421 step 6 Tier 0 (2026-08-16) — the `fees` stamp group was DELETED, not tombstoned in
     # code: two of its rows emitted zeros into an HMAC-signed body. Every H21 condition was checked
     # against a named search space and no live referent survives (one hit tree-wide, the tombstone
-    # comment at StampBoundModelConstRegistry.hpp:608). Burning the names here is what makes that
+    # comment in the PRE_CFG registry body — re-derive by grepping the name, the line moves). Burning the names here is what makes that
     # deletion ENFORCED rather than narrated — without these entries a re-introduced `STAMP_BIT_fees`
     # classifies as a fresh "ADD (ok)" instead of the Knight-Capital-shaped reuse it would be.
     #
     # ⚠ THE PARAGRAPH ABOVE WAS FALSE FOR ~24 HOURS AND IS KEPT AS A CORRECTION, NOT DELETED.
     # It asserted enforcement that `retired_name_check()` could not deliver: that sweep matched
-    # `#define` ONLY, and NONE of the three names below can come back as a `#define`
+    # `#define` ONLY, and none of the non-`#define` names below can come back as one
     # (`STAMP_BIT_fees` is an enum member; the two fee-rate keys are `X(…)` registry rows).
     # MEASURED 2026-08-17 by two independent agents, each with its own positive control: the
     # fee-rate keys resurrected as `ADD (ok)` — the precise outcome this comment claimed was
@@ -108,7 +108,7 @@ RETIRED_NAMES = {
     # for one day they were all this guard had: there was no `SOURCES` row for
     # `FOREACH_STAMP_BOUND_MODEL_CONST`, so a GREEN here said nothing whatever about the stamp wire
     # body — it would have printed the identical GREEN if the entire registry had been deleted
-    # (Class 51, caught by independent review). The `stamp-key` row below now enrolls all 46 wire
+    # (Class 51, caught by independent review). The `stamp-key` row below enrolls the wire
     # keys, so the retired names AND the live surface they came from are both covered. Enrolling it
     # was a PREREQUISITE to the Tier-2 emit-side deletion, which lands on this same signed body.
     "STAMP_BIT_fees",
@@ -395,10 +395,23 @@ def compare(frozen, current):
     return violations, additions, bumps
 
 
-# The dirs a resurrected wire identifier could plausibly land in — the same
-# surface set as the pre-commit Check H trigger.
+# The dirs a resurrected wire identifier could plausibly land in.
+#
+# ⚠ WIDENED 2026-08-17 (D-426 close, found by the independent v-class with a positive
+# control): this set omitted `Backtest/` and `GUI/`, so a burned name resurrected there
+# returned ZERO violations while the identical content under `ML_Headers/` returned one.
+# That is not hypothetical — `Backtest/BacktestPanels.hpp` was one of the four sites
+# DELETED in that very session, so the sweep was blind on a proven-live consumer surface.
+#
+# The old comment also claimed this was "the same surface set as the pre-commit Check H
+# trigger". It was false in BOTH directions: the trigger omits `DataStream/` (which this
+# set has) and both omit `Backtest/`/`GUI/`. The two sets are related but NOT equal — the
+# trigger decides WHEN to run, this decides WHERE to look, and the second must be the
+# wider of the two. Consumers live wherever a wire key is read, which is more places than
+# the registries that define it.
 RETIRED_SCAN_DIRS = ("CoreFrameworks", "ML_Headers", "MemHeaders",
-                     "Strategies", "FixedPoint", "DataStream")
+                     "Strategies", "FixedPoint", "DataStream",
+                     "Backtest", "GUI")
 
 
 def retired_name_check():
@@ -413,14 +426,16 @@ def retired_name_check():
     ⚠ SHAPE BLINDNESS FIXED 2026-08-17 (D-426; found by BOTH halves of an
     independent /decision-check, each measuring it with its own positive control).
     This sweep matched `^\\s*#\\s*define\\s+NAME\\b` and nothing else, so it could
-    only ever see ONE of the shapes a burned name comes back in — and three of the
-    four names in RETIRED_NAMES can never take that shape:
+    only ever see ONE of the shapes a burned name comes back in — and most of the
+    names in RETIRED_NAMES can never take that shape (re-derive the set from
+    RETIRED_NAMES itself; it grows, and an absolute tally here rots):
 
       * `inference_cfg_fee_rate_maker` / `_taker` return as `X(name, …)` REGISTRY
         ROWS. MEASURED before the fix: both resurrected clean, reported as
         `ADD (ok; run --update to record)`, whole tool rc=0 GREEN.
-      * `STAMP_BIT_fees` is an ENUM MEMBER (StampBoundModelConstRegistry.hpp
-        :604-640); there is no `#define STAMP_BIT_` anywhere in the tree.
+      * `STAMP_BIT_fees` is an ENUM MEMBER (in `enum StampHasFlagBit`,
+        StampBoundModelConstRegistry.hpp — re-derive by symbol, the line moves); there is
+        no `#define STAMP_BIT_` anywhere in the tree.
         MEASURED before the fix: resurrected clean and produced NOTHING AT ALL —
         not even an ADD.
 
@@ -439,7 +454,7 @@ def retired_name_check():
     before: a tombstone MENTION in prose ("STAMP_BIT_fees REMOVED 2026-08-16 …",
     the DESIRED way to keep the record) must never match. `_strip_comments_text`
     blanks comments while preserving newline count, so `:{i}` cites stay true.
-    VERIFIED at the fix: all four burned names return ZERO hits tree-wide over
+    VERIFIED at the fix: every burned name returns ZERO hits tree-wide over
     comment-stripped code, i.e. the live tombstone comments do not trip it."""
     if not RETIRED_NAMES:
         return []

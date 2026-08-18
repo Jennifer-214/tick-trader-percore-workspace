@@ -1672,6 +1672,30 @@ agreement on an artifact that is order-SENSITIVE.
 
 ---
 
+### PARITY-043 — the `.B.3` migration has no parse→handle leg, so two REFUSE_STRICT drift rows compare a permanent 0 against a live cfg default
+
+```yaml
+id: PARITY-043
+title: cfg-derived ModelHandle fields are declared and read but written by NOTHING; the reachable REFUSE_STRICT rows therefore always fire
+surface_tags: [train-serve-parity, cfg-derived, drift-gate, ml-inference, capital-safety, boot-time]
+severity: high
+parity_axis: train↔serve (the gate fires FALSELY — the inverse of PARITY-042, where it cannot fire at all)
+status: open
+detected_at: v5.15.5.F.4d.1.E.1.2 (2026-08-17, D-426 i-class; discharged by compiled probe, not by reading)
+related_specs:
+  - DESIGN_SPECS/meta-disciplines/train-serve-execution-layer-parity.md
+```
+
+- **MINTED 2026-08-17** at the D-426 close, on the adversarial review's finding that this leg was **unhomed** — it existed only as prose inside PARITY-042, while the outbound handoff tagged it "PARITY-042". Two findings under one ID on a capital safety-control surface is exactly `feedback_no_unhomed_debt_code_smell`.
+- **⚠️ NOT the same as PARITY-042 — the inverse symptom, same root.** PARITY-042 = the gate **cannot fire** (`MASK_inference_cfg` has no production producer, so the whole cfg-derived drift walk is skipped). PARITY-043 = the gate **always fires falsely** (these rows sit behind a **cfg-only** cohort gate, not `STAMP_HAS`, so they ARE reachable and DO compare). Closing one does not close the other.
+- **Site(s):** `ML_Headers/CfgDriftCheckRegistry.hpp` — `thompson_precision_prior` + `thompson_precision_obs` rows, both `REFUSE_STRICT`, both `COHORT_GATE_BANDIT_ENABLED`. Handle-side reads are spelled `h->`, NOT `handle->` (a probe using the latter returns EMPTY for reads as well as writes and cannot fail — Class 51; see the handoff's replacement write-side probe).
+- **Severity shape — NOT "the engine won't boot"** (a compiled probe corrected that prediction). At the shipped default it returns 0. **OFF:** every load emits guaranteed-false drift lines that saturate a capital safety channel, so real drift is indistinguishable from noise. **ON** (`held_out_gate_strict=1`, the live-readiness posture): every model refuses, so the rational operator response is to disable the gate. **A safety control that pressures you into switching it off is the Knight shape.**
+- **Evidence:** `plans/v5.15-live-readiness/reports/2026-08-17-stamp-emit-gate-audit/orchestrator-drift-probe.md` (committed; prefer it over the machine-local `~/.cache/foxml_probe/`).
+- **Fix path:** write the parse→handle leg so the cfg-derived fields are populated, OR re-scope the gate so unpopulated rows cannot compare. Enumerate the cohort from the registry (`STAMP_BOUND_CFG_DERIVED` rows) rather than trusting a carried "~30".
+- **⚠️ Apply AR-19 when working it:** trace each field to every reader; do not scope the sweep by the last fix's blast radius. That mistake hid two consumers during the D-426 deletion.
+- **Status:** OPEN · **Target:** next leaf after D-426 (handoff item 1).
+
+---
 ### PARITY-042 — the ENTIRE stamp↔cfg drift gate layer is vacuous in production (the train→serve cfg-parity apparatus never compares)
 
 ```yaml
@@ -1689,7 +1713,7 @@ related_specs:
 ```
 
 - **Found:** 2026-08-17, D-426 adversarial pass (i-class), independently corroborated by an a-class on the same surface. Both were armed to REFUTE, not confirm.
-- **⏩ SURFACE UPDATE 2026-08-17 (D-426 close) — one LYING row removed from this cohort; the vacuity itself is UNCHANGED and still open.** `inference_cfg_bandit_blend_ratio` was deleted outright (row + bit + MASK + STANDALONE entry + the emit-side bit-set + BOTH consumers), and its name burned in `RETIRED_NAMES`. It sat on this exact surface and was the sharpest instance of the shape: the emit half set its presence bit and assigned nothing, so it shipped a zero into the signed body while the cfg-derived half emitted the truthful value beside it. **What this does NOT fix:** `MASK_inference_cfg` still has no production producer, the 9 remaining `inference_cfg_*` rows still have no value producer, and the 4 `FOREACH_CFG_DRIFT_CHECK` rows (3 `REFUSE_STRICT`) still skip. **Do NOT read the deletion as progress on this entry** — it removed a lie from the surface, not the blindness. The parse→handle leg (the ~30 cfg-derived `ModelHandle` fields written by NOTHING) is the actual fix and is the NEXT queued action. ⚠️ Also note for whoever works it: two of this cohort's consumers (a panel display and an sr→handle copy) were found only while SCOPING the deletion, not by the sweep that removed the sibling defect a day earlier — catalogued as **AR-19** in the meta-anti-pattern index. Trace each field to every reader; do not scope by the last fix's blast radius.
+- **⏩ SURFACE UPDATE 2026-08-17 (D-426 close) — one LYING row removed from this cohort; the vacuity itself is UNCHANGED and still open.** `inference_cfg_bandit_blend_ratio` was deleted outright (row + bit + MASK + STANDALONE entry + the emit-side bit-set + BOTH consumers), and its name burned in `RETIRED_NAMES`. It sat on this exact surface and was the sharpest instance of the shape: the emit half set its presence bit and assigned nothing, so it shipped a zero into the signed body while the cfg-derived half emitted the truthful value beside it. **What this does NOT fix:** `MASK_inference_cfg` still has no production producer, the 9 remaining `inference_cfg_*` rows still have no value producer, and the 4 `FOREACH_CFG_DRIFT_CHECK` rows (3 `REFUSE_STRICT`) still skip. **Do NOT read the deletion as progress on this entry** — it removed a lie from the surface, not the blindness. The parse→handle leg is **PARITY-043**, a SEPARATE finding — this entry's own "Related but SEPARATE (do not conflate)" bullet says so, and an earlier version of THIS line called it "the actual fix" for PARITY-042, which contradicted that bullet inside one entry. Corrected: **PARITY-042's fix path is its own** (delete the orphan rows on the `fees` precedent + re-key the drift gates onto per-row `r.has_<name>` presence). Closing PARITY-043 does NOT close this. ⚠️ Also note for whoever works it: two of this cohort's consumers (a panel display and an sr→handle copy) were found only while SCOPING the deletion, not by the sweep that removed the sibling defect a day earlier — catalogued as **AR-19** in the meta-anti-pattern index. Trace each field to every reader; do not scope by the last fix's blast radius.
 - **Severity:** HIGH — a model trained under one `ml_tp_pct` / `thompson_*` / `barrier_blend_mode` and served under different values loads **clean**, with no WARN and no REFUSE, **in every mode including `held_out_gate_strict=1`**. Serving-time barrier distances, bandit posteriors, ridge blending and fee-aware gating can all diverge silently from the calibration the model was fit to. This is precisely the failure `FAILURE_MASK_cfg_binding_drift` and the `acknowledge_inference_cfg_drift` operator ack exist to make impossible to hit by accident.
 - **Class:** Class 58 sub-shape B (gate-reachability — the rows are correct and the gate reading them is unreachable) sitting under Class 51 (vacuously-green guard). The distinguishing feature, and why a value-oriented trace misses it: **nothing reads the 9 keys' VALUES.** The consumer is the *presence bit* their emission would set. Trace values and you conclude "no consumer" and stop.
 - **Site(s) / the chain, every link measured:**

@@ -23,12 +23,31 @@ dont work"* + *"search bar → fzf pop up."*
   bless_term; `:checktime` at TermClose). Closes census-A rank-3 — the D-372
   "refresh DERIVED in place" layout leg.
 
+## Batch 2, same evening (plugin `f0b530c`; workspace ledger edits; suite 47/47)
+
+- **`f0b530c` ambient + diagnostics** — the census A row-17 residues: unresolved templates get
+  a dim honest `<T>` chip (was SILENT; `template_note` pure + toothed), the chip swap happens
+  in ONE paint (the clear-then-async-repaint blink is gone), and straddle diagnostics
+  populate ONE-STEP from the enclosing unit at toggle (was "inspect a struct to populate").
+- **Ledger hygiene (census C list-2 #5/#6 + list-1 #7):** TD-254's id-line in closed.md
+  flipped open→closed (greppable-status drift inside the closed ledger); TD-256's TD-257
+  dependency annotated **SATISFIED 2026-08-14 / UNBLOCKED**.
+- **⚠ NEEDS OPERATOR TTY — TD-247 close:** the fix landed 2026-08-10 (self-deriving line
+  anchors) and the suite has re-run green tonight (47/47, multiple runs). The move is staged
+  and dry-run-verified; `--close` rides the D-394 typed-confirm control (closing stays
+  human): `python3 tools/check_tech_debt.py --close 247`
+- **[DEFERRED] work-queue picker (A rank 5) → MOOT TODAY, measured:** zero `[DEFERRED]`
+  instances across all 8 engine source roots (rg 2026-08-18) — deferral prose lives in the
+  TECH_DEBT ledgers, not in-code tags yet. A picker over an empty set is a vacuous surface;
+  re-arm the item when the first in-code `[DEFERRED]` is written.
+
 ## Queued (the finish-list, from the three reports — re-derive there, not here)
 
 - **Plugin lane (A §2):** HUD graph-walk drill-in (rank 1) · per-entry compare/open-beside
-  key (rank 2) · compare connective tissue (rank 4) · [DEFERRED] work-queue picker ·
-  orphan tile · tag-query composer · diagnostics one-step + ambient `<T>` chip + flicker ·
-  REGISTRY card facet (**blocked upstream** on [ROW]/[COLUMN] render — B rank 5).
+  key (rank 2 — panel.add wants an explicit-ctx seam first; rides best WITH rank 1, same
+  tree-entry plumbing) · compare connective tissue (rank 4) · orphan tile · tag-query
+  composer · REGISTRY card facet (**blocked upstream** on [ROW]/[COLUMN] render — B rank 5).
+  ([DEFERRED] picker → MOOT, and the polish trio → DONE; both recorded in batch 2 above.)
   Menu-as-fzf (filter-as-you-type on the root menu) — operator floated it via screenshot;
   interaction with number-run/key-suffixes is a design call, ASK before building.
 - **Toolchain lane (B §2):** v1 call-graph generator (rank 1) · pre-push gate 0.7 (rank 2)

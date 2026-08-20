@@ -105,3 +105,13 @@ plan-body Status v1.6 · D-372/413/414/415 sentinels) · `9373bd7` = TD-247 bles
 **Still queued:** compare connective tissue (next feature leaf; wants operator taste on the join
 pane) · tag-query composer · orphan tile · REGISTRY card (upstream-blocked) · MEMORY.md
 compaction (operator-reviewed) · toolchain lane per report B.
+
+## Batch 6 (2026-08-19, post-merge on main; plugin `0504f8b`; suite 51/51) — the tissue
+
+**Census rank 4 / §6's compare value CLOSED**, shaped to the operator's easiest-to-use call: no
+third pane — the `⋈ Between` section on the COMPANION card, expanded (only section that
+defaults open; it is the point of comparing). Embedding from the parent's own fields (@offset ·
+which PARENT 64B lines · "▲ straddles inside A" — the H6 read) + co-includers (alias-proof
+coupling, sync). `tissue.lua` pure+toothed, live board→compare leg (`test_tissue.lua`, 15).
+Plugin-lane queue now: tag-query composer · orphan tile · REGISTRY card (upstream-blocked) ·
+per-entry "compare with →" hook (partially subsumed — L/open-beside + tissue cover the flow).

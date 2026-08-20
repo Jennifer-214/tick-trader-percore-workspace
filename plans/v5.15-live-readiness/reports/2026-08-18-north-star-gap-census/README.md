@@ -93,3 +93,15 @@ dont work"* + *"search bar → fzf pop up."*
   STATUS sentinels · TD-247 flip-to-closed · TD-254 id-line drift · TD-256 "unblocked"
   annotation · TD-231 verify-then-flip · TOOLCHAIN_VERSION bump-or-record · fleet-register
   register row for `77ab06e` (convention check).
+
+## Batch 5 (2026-08-19, session close) — README · browse-first · re-ground · walk polish · MERGED
+
+Plugin `72fe098` (README re-ground) · `bc2967b` (pickers browse-first — j/k immediately, typing
+optional; resolves menu-as-fzf as NO-CHANGE to the menu) · `bf78479` (walk tooltip in the footer
++ the three menu rows via `actions._live_card`; menu-as-root debt paid) · **merged
+`feat/hud-robustness` → `main` at `efb462f`**, suite 50/50 re-verified ON main, both pushed.
+Workspace `52ff06c` = the census-C doc re-ground executed (north-star §3/§4/§5/§6/§7.5/§8/§10 ·
+plan-body Status v1.6 · D-372/413/414/415 sentinels) · `9373bd7` = TD-247 blessed move committed.
+**Still queued:** compare connective tissue (next feature leaf; wants operator taste on the join
+pane) · tag-query composer · orphan tile · REGISTRY card (upstream-blocked) · MEMORY.md
+compaction (operator-reviewed) · toolchain lane per report B.

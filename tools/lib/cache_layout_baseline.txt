@@ -5,7 +5,6 @@ false-sharing|TrainingPanelState|run_name
 false-sharing|TrainingPanelState|tm_phase_msg
 false-sharing|TrainingPanelState|ui_horizon_list
 false-sharing|TrainingPanelState|ui_label_kind_csv
-false-sharing|TrainingPanelState|ui_label_kind_per_horizon
 false-sharing|TrainingPanelState|ui_sl_pct_csv
 false-sharing|TrainingPanelState|ui_sl_per_horizon
 false-sharing|TrainingPanelState|ui_tp_pct_csv

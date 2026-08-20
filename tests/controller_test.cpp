@@ -12822,7 +12822,7 @@ e3_skip_load:;
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
         cfg.fee_rate_taker = MQ(0.0005);
         cfg.fee_rate       = MQ(0.0005);
-        GateParameters<64> out;
+        tt::GateParameters<64> out;
         GateParameters_Init(&out);
         uint8_t shalt = SHALT_OK;
         Strategy_BuildParameters(STRATEGY_NONE, &rolling, &cfg.nodes[0],
@@ -14647,7 +14647,7 @@ e3_skip_load:;
             cfg.stop_loss_pct   = MQ(0.0025);
             ControllerConfig_PopulateCoresFromFlat(&cfg);  // v5.15.5.F.4c.3 WIP2c.2 — sync flat→cores[0]
 
-            GateParameters<64> out = {};
+            tt::GateParameters<64> out = {};
             SimpleDip_BuildParameters<64, 128>(
                 &rolling, &cfg.nodes[0], MQ(1000.0), &out);
 
@@ -26817,6 +26817,58 @@ e3_skip_load:;
         check("v5.15.5.E.1.2.C P043: post-copy Tier 2 clean too (blend_ratio/algorithm compare true values)",
               meta_post.cfg_drift_tier2_count == 0);
         delete zoo; delete ctx; delete h; delete r;
+    }
+
+    // ─── Test C.3f: R1 — an ENSEMBLE-ONLY deployment reaches the ML path
+    //     (E.1.2.C leg 3 dispatch fix, 2026-08-20) ───
+    //
+    // From G.5 until this fix, ML_BuildParameters' fall-through gate consulted
+    // ONLY the single-zoo handle: a NULL model_handle SimpleDipped even with a
+    // verified, ACTIVE ensemble attached — and the pure `<base>_horizon_*`
+    // layout (the ONLY layout the trainer produces) is exactly that state, so
+    // every real multi-horizon deployment silently traded SimpleDip. Compiled-
+    // probe-proven at the R1 refute (reports/2026-08-20-ml-verification-program/
+    // a-class-R1-reachability-verdict.md); this member is the standing pin.
+    // Oracle: last_predicted_horizon_idx is written ONLY inside the ensemble
+    // dispatch block — a sentinel value survives iff the block never ran.
+    {
+        ControllerConfig<64> cfg = ControllerConfig_Default<64>();
+        auto* rolling      = new RollingStats<64, 128>();
+        auto* rolling_long = new RollingStats<64, 512>();
+        *rolling      = RollingStats_Init<64, 128>();
+        *rolling_long = RollingStats_Init<64, 512>();
+
+        auto* ezoo = new EnsembleModelZoo<64>();
+        EnsembleModelZoo_Init(ezoo);
+        ezoo->buy_signal_count = 1;                    // synthesized state —
+        EnsembleModelZoo_EnsurePrimary(ezoo);          // the documented test backfill
+        BITMAP_SET(ezoo->init_flags, MASK_EZOO_ACTIVE);
+        ezoo->last_predicted_horizon_idx = -77;        // the sentinel
+
+        tt::MLBuildContext m = {};
+        m.ensemble_zoo = ezoo;                          // ensemble PRESENT
+        m.model_handle = nullptr;                       // single zoo ABSENT (R1 state)
+        tt::GateParameters<64> out = {};
+        tt::ML_BuildParameters<64>(rolling, rolling_long, &cfg.nodes[0],
+                                MQ(1000.0), &out, &m);
+        check("v5.15.5.E.1.2.C R1: NULL single-zoo + ACTIVE ensemble ENTERS the ensemble dispatch (sentinel overwritten)",
+              ezoo->last_predicted_horizon_idx != -77);
+
+        // Control: no ensemble AND no zoo → SimpleDip fall-through, ensemble
+        // state untouched (proves the sentinel assert is non-vacuous).
+        auto* ezoo2 = new EnsembleModelZoo<64>();
+        EnsembleModelZoo_Init(ezoo2);
+        ezoo2->last_predicted_horizon_idx = -77;
+        tt::MLBuildContext m2 = {};
+        m2.ensemble_zoo = nullptr;
+        m2.model_handle = nullptr;
+        tt::GateParameters<64> out2 = {};
+        tt::ML_BuildParameters<64>(rolling, rolling_long, &cfg.nodes[0],
+                                MQ(1000.0), &out2, &m2);
+        check("v5.15.5.E.1.2.C R1 control: no ensemble + no zoo → SimpleDip fallback, sentinel untouched",
+              ezoo2->last_predicted_horizon_idx == -77 && out2.strategy_id == STRATEGY_ML);
+
+        delete ezoo; delete ezoo2; delete rolling; delete rolling_long;
     }
 
     // ─── Test C.4: Load with missing file returns 0 (forward-compat-by-absence) ───

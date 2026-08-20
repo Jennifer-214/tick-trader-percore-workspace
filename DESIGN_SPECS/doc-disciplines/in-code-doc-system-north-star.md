@@ -1,8 +1,9 @@
 ---
 type: north-star
-status: draft-v0.1
+status: living — re-grounded 2026-08-19 against the three-agent census (evidence: plans/v5.15-live-readiness/reports/2026-08-18-north-star-gap-census/)
 stage: 3-first-canonical   # the tag system it describes SHIPPED (E.1.2.A schema lock + full corpus conversion); §6/§7.5/§8.5/§8.6 are cited as the governing target UX by the live E.1.2.B plan body
 established: 2026-07-06
+updated: 2026-08-19
 tags: [in-code-documentation, tag-system, tooling, custom-ide, doc-discipline]
 sister_specs:
   - in-code-documentation-schema.md
@@ -56,13 +57,20 @@ never has to be re-standardized across a career of projects.
    [ CI GATE ]   [ PLUGIN ]              [ DOC-VIEWER ]
    auto-rederive  nvim surface            [REFERENCE] resolves →
    + drift-gate   (HUD/panel/overlays)    floats the doc beside code
-   (:FoxTagUpdate) (edits + displays)
+   (update_toolchain.py) (edits + displays)
 ```
 
 **The linchpin:** all consumers read the **one** producer + the **one** tag substrate.
 Complete the producer once, correctly → CI gate + plugin + doc-viewer inherit it
 simultaneously. Integration is *structural* (guaranteed by the single core), not
 maintained by hand-aligning copies. This is the anti-Class-18 discipline paying off.
+
+> **Authority caveat (D-415, 2026-08-10):** one core in DESIGN, two-lane in runtime authority
+> until the v1 re-arm — layout/inventory authority deliberately re-inverted to the script side
+> (Lua emitter / Python collector; frozen foxtag is the parity-gated opt-in via `--backend
+> foxtag`), while `fields`/`codegen` stay foxtag-native. The batch verb is
+> `tools/update_toolchain.py` (D-374/D-418; explicit-invoke only, hooks forbidden) — nothing
+> named `:FoxTagUpdate` exists or is needed (§10).
 
 ## 4. Layer 1 — The format (the substrate)
 
@@ -74,20 +82,26 @@ Code-local comments STAY verbatim in `[CODE]` (D-326); only unit-level WHY reloc
 `[CODE]…[END_CODE]` · `[COMMENT]` · `[SUPPORTING_DOCS]` · `[DERIVED]` · `[SECTION]`
 within-fn markers (`----` bars).
 
-**Known gaps (→ schema completion; the survey will make this exhaustive):**
-- No tag for **annotated include blocks** (each `#include` + what-it-provides + phased notes).
-- No tag for **constexpr/const rationale** or **downstream-dep declarations**.
-- No **helper-declarations** section within a function region.
-- File-header **multi-section discipline blocks** (PURPOSE / LIFECYCLE / DISCIPLINE /
-  exemption rationale) have no structured home — only the flat `[COMMENT]`.
-- The **complete per-type `[DERIVED]` set** is unspecified + unenforced (a struct should
-  autopopulate SIZE·ALIGN·CACHE_LINES·STRADDLE·UPSTREAM·CONSUMERS·BLAST_RADIUS — today even
-  the "good" cases emit a partial slice).
-- `[SWAR]` axis — **OPEN DECISION** (source-idiom detection vs manual tag).
+**Gap dispositions (survey landed D-333; schema LOCKED `[SCHEMA]_[v1.0]` 2026-07-14, D-345/D-346
+— all 14 surveyed shapes verified covered; re-grounded 2026-08-19):**
+- Annotated include blocks → **PARTIAL**: the `[INCLUDES]` name-list axis exists; the
+  per-include *what-it-provides* annotation is the taxonomy's own named loss (synthesis-13).
+- constexpr/const rationale → **RESOLVED-BY-SURVEY as a non-shape** (zero occurrences; absorbed
+  by labeled `[COMMENT]` WHY-blocks).
+- Helper-declarations section → **RESOLVED**: `[REGION]` + generalized `[SECTION]` + the tier-2
+  member model.
+- File-header multi-section blocks → **RESOLVED**: labeled `[COMMENT]_[<LABEL>]` partitions
+  (canonical landed in `tests/schema_golden/golden_file_header.hpp`).
+- Complete per-type `[DERIVED]` set → **SPECIFIED** (the D-339 declarative axes table +
+  `N/A_FOLDED`/`[LAT_EXEMPT]`); enforcement is deliberately per-axis — struct layout quartet
+  HARD-gated; function codegen axes live-preview-only by the T6 authorship split; completeness
+  remainder tracked at TECH_DEBT-243/-236.
+- `[SWAR]` axis → **DECIDED** as the `[BIT_PACKED]_[SWAR]` sub-tag (D-fmt-5, auto-detect
+  direction); the source-idiom **detector itself is still unbuilt**.
 
-> **Format input-space taxonomy: PENDING the comment-shape survey** (3 agents, 2026-07-06).
-> This section becomes exhaustive when it lands. Do NOT freeze the schema before then —
-> *don't generalize the substrate before its input space is known.*
+> The 2026-07-06 comment-shape survey COMPLETED → `format-input-space-taxonomy.md` (3 surveys +
+> the 14-item synthesis + the 8 locked format decisions). The don't-freeze-early guard did its
+> job and is retired with the lock.
 
 ## 5. Layer 2 — The toolchain (fact-producer + CI)
 
@@ -97,7 +111,19 @@ one unit interactively AND every file at CI; a **generalized drift-gate** (the c
 D-320 extended from layout to all written axes: layout always, call-graph always, codegen
 pinned to `[BUILD]`/`[INSTANTIATION]` per D-327).
 
-**Current gaps (from the 2026-07-06 asm + overlay audits — RC-A…E):**
+**RC dispositions (re-grounded 2026-08-19 — the catalog below is the NAMED RECORD; read state here first):**
+
+| RC | State | How |
+|---|---|---|
+| RC-A | **SUPERSEDED-IN-APPROACH** | instantiation anchors landed in `foxtag codegen` (D-351); the honest asm now comes from the D-419 per-build objdump SIDECARS (real instantiations, `-flto` truth) + `--isolate` probe-TUs + `template_args` |
+| RC-B | **CLOSED** (different mechanism) | TD-257: `CMAKE_EXPORT_COMPILE_COMMANDS=ON` every build dir · `compile_command.py` the ONE source · probes read the SHIPPING db · sidecars ride the build. Residual: per-header db entries + general header→TU map (parked design work) |
+| RC-C | **CLOSED** | D-351 real width-class incl. scalar-xmm; SIMD chips on the shipped card |
+| RC-D | **CLOSED** (flags half) | shipping-first `flags_for`; layout=clang / codegen=g++ per D-321/D-350 |
+| RC-D′ | **CLOSED** | real per-function distinct-64B-line density (plugin `writers.lua`); the per-field half subsumed by RC-F(a) as predicted |
+| RC-E | **CLOSED, all layers** | producer vacuity floor (D-351) · card honesty states · the last overlay residue (branchtag greening on empty parse) closed 2026-08-18 — shipped-sidecar basis + `nocode` verdicts, live-tested |
+| RC-F | **SHIPPED end-to-end** | `foxtag fields` → `check_register_fit.py` (`register_fit/1`, ADVISORY-never-gate, H14 both-costs) → the `<leader>dR` card (render-only — the linchpin held) |
+
+**The catalog (definitions as named 2026-07-06 — historical record, kept because the RC names are cited tree-wide):**
 - **RC-A (spine):** header/template TUs emit nothing → 0 instr / no record layout /
   clangd omits Size. `ctx.is_template` populated but never read. Fix = inject a concrete
   instantiation anchor. Resurrects ~7 features at once.
@@ -180,8 +206,19 @@ endgame (§8.5 / §8.6 / D-330) made the PRIMARY plugin goal — and it is what 
 - **Better module grouping** — organize the ~40 modules by concern (producers / overlays /
   UI / adapters).
 
-**Current gaps:** the overlay-audit findings (branchtag false-green, diagnostics 2-step,
-ambient/status blank-on-templates + flicker) + all the UX targets above are unbuilt.
+**State (re-grounded 2026-08-19 — the bullets above are the SPEC; most are BUILT):** the 0.4
+tag-native wave + parity fleet + 0.5 asm arc (2026-08-09..16) + the 2026-08-18/19 sessions
+landed cursor-tracking, the three-surface HUD/follow/board model, collapsed-by-default,
+context-gated actions + menu-as-root, output log + doc-viewer(+pin), tag-enriched/filterable
+trees, compare v1, browse-first fuzzy pickers, the shipped-asm card family, the branch-taxonomy
+overlay, and the **graph-walk** (drill `f` / trail-back `<C-t>` / open-beside `L`). The overlay-
+audit findings (branchtag false-green · diagnostics 2-step · ambient template-silence + flicker)
+are ALL closed. **Still open here:** the REGISTRY `[ROW]`/`[COLUMN]` card facet (render side) ·
+compare CONNECTIVE TISSUE (the §-stated value of the pair view) · module grouping · per-entry
+"compare with →" hooks. **Operator redefinitions that bind future work:** auto-follow lives in
+the FOLLOW CARD (float stays point-at); "fill available space" = MORE PANES, never wider
+(readability caps stay); d-prefix keybind move PARKED by operator; layer-stack + menu-as-root
+laws apply to every new surface.
 
 ## 7. Layer 4 — Process
 
@@ -198,59 +235,66 @@ ambient/status blank-on-templates + flicker) + all the UX targets above are unbu
 The IDE = the tag substrate + FOUR tool roles over it (AUTHOR / SEE / NAVIGATE / VERIFY) + an emerging fifth.
 Every ⬜ is a *view over the one tagged graph*, NOT separate machinery — which is why it's finishable.
 
-**AUTHOR (write + maintain the tags):** schema validator ✅ · cache-layout gate ✅ · scaffold generator 🟡
-(golden fixture done, generator pending) · derived-write `:FoxSymdepsDerived` 🟡 (no struct size, partial
-DERIVED) · **`:FoxTagUpdate`** (whole-codebase autopopulate + fix) ⬜ · **the complete schema** ⬜ (blocked on the 7 decisions).
+**AUTHOR (write + maintain the tags):** schema validator ✅ · cache-layout gate ✅ (+ `--fix` writer,
+in-editor menu row) · scaffold generator 🟡 (golden fixture done, generator pending — ideas §4's
+substrate) · derived-write ✅ (`:FoxSymdepsDerived!` writes the stable call-graph facts; layout
+quartet is the cache-gate's by the T6 authorship split — "no struct size" was re-scoped as the
+DESIGN, not a gap) · whole-codebase batch ✅ as `update_toolchain.py` (D-374/D-418; the
+`:FoxTagUpdate` one-command shape was OVERTURNED by write-vs-verify) · **the complete schema** ✅
+LOCKED `[SCHEMA]_[v1.0]` (all format decisions resolved) · TAG ADD ✅ (vocab-derived merge).
 
-**SEE (compiled reality):** HUD ✅ · panel ✅ · byte-map ✅ · compiled-reality probes (asm/size/branches/simd)
-🟡 (RC-A templates break them) · overlays (branchtag/lens/ambient/status) 🟡 (false-green, blank-on-template) ·
-**the unit CARD** (universal collapsed/expanded renderer, polymorphic over `[TYPE]`) ⬜.
+**SEE (compiled reality):** HUD ✅ · follow card ✅ · board ✅ · byte-map ✅ · compiled-reality probes ✅
+(sidecar-basis + `template_args`; RC-A superseded) · overlays ✅ (trust-fixed; branch taxonomy
+▲/△/✓/feeder, shipped basis) · shipped-asm card family ✅ · register-fit card ✅ · **the unit CARD**
+🟡 (one renderer reused across float/board/follow/compare, kind-dispatched — but polymorphic over
+treesitter kind, not the full `[TYPE]` set; REGISTRY/FILE render generic).
 
-**NAVIGATE (browse the tag graph):** clangd relationships (callers/callees/consumers/blast-radius) ✅ · action
-menu 🟡 (all-hotkeys-shown, m/M conflict) · **tag-enriched + filterable trees** ⬜ · **graph-browser** (re-root
-on edge-follow + back/forward history) ⬜ · **dual-panel compare** ⬜ · **doc-viewer** (`[REFERENCE]` float) ⬜ ·
-**tag-query** ("all `SLOW_PATH` fns > 500 instr"; "every `WIRE_FORMAT` struct > 128B") ⬜.
+**NAVIGATE (browse the tag graph):** clangd relationships ✅ · action menu ✅ (context-gated,
+write-tiers, keys derived, menu-as-root) · tag-enriched + filterable trees ✅ (`/` + `T`) ·
+**graph-browser** ✅ (drill `f` re-roots on any tree entry + breadcrumb + `<C-t>` trail; landed
+2026-08-19) · dual-panel compare ✅ v1 (**connective tissue still owed** — the §6-stated value) ·
+doc-viewer ✅ (`[REFERENCE]` float + pin) · browse-first pickers ✅ (structs / by-[TAG] / roam /
+vocab) · **tag-query** ⬜ ("all `SLOW_PATH` fns > 500 instr" — browse/filter landed; the
+fact-predicate composer didn't).
 
-**VERIFY (CI keeps it honest):** cache-layout gate ✅ · grammar/schema CI ✅ · **generalized drift-gate**
-(all axes: layout + call-graph + codegen-pinned) ⬜ · **the code-tag index** (#14 unified fact-grammar) ⬜.
+**VERIFY (CI keeps it honest):** cache-layout gate ✅ (HARD strict-new, both TUs) · grammar/schema
+CI ✅ · drift-gate ✅-in-substance PER-AXIS (layout HARD · call-graph A2 ADVISORY, declared-PARTIAL
+until the v1 generator · codegen shipping-basis via Check N + sidecars; never unified as ONE gate
+— deliberate) · the code-tag index ✅ (+ index-currency HARD) · plugin live-path tests ✅ (the
+2026-08-18 rule: every subprocess/async/window seam ships a `test_*_live` member).
 
-**FIFTH ROLE — tools the graph makes possible but we haven't built (the "missing" you sense):** registry/row
-browser (the registries are a huge chunk) · orphan/dead-unit detector (units with zero consumers) ·
-version-timeline per unit (the 899× inline version-tags → a history view) · `[SEAM]`/parity view (train↔serve
-seams) · `[DEFERRED]` work-queue (prose deferrals → a tracked backlog) · `[REFERENCE]` resolver (jump to
-PARITY / finding / spec / `[[memory]]`).
+**FIFTH ROLE — views the graph makes possible:** `[REFERENCE]` resolver ✅ (= the doc-viewer) ·
+registry/row browser ⬜ (blocked on the `[ROW]`/`[COLUMN]` card render; grammar landed) ·
+orphan/dead-unit detector ⬜ · version-timeline per unit ⬜ · `[SEAM]`/parity view ⬜ ·
+`[DEFERRED]` work-queue **MOOT TODAY** (measured 2026-08-18: zero in-code `[DEFERRED]` across
+all 8 source roots — re-arm at the first written tag).
 
 **The card is the NAVIGATOR's renderer; the tags are the substrate all five roles read.** Build the substrate
 + the card + the graph-walk once, and the ⬜ tools become *configurations* of them, not new engines.
 
 ## 8. The gap-to-current + the phased path
 
-We are at (updated 2026-07-15, D-348): format LOCKED `[SCHEMA]_[v1.0]` (D-346); propagation
-landed — validator caught up to the locked contract + per-type template corpus
-(`DOCS/CODE_TAG_TEMPLATES.hpp`) + code-tag index + skills/CLAUDE.md alignment (D-347);
-dogfood corpus LANDED + PROVEN LOSSLESS — 4 real units (rich file-header / hot struct /
-registry slice / wire parser) converted in `tests/schema_golden/`, mechanical
-comment-stripped code diff clean (D-348). Phase 4 OPENED: the D-337 central core
-increment 1 LANDED — `tools/foxtag/` C++ parser + scanner + query engine, PARITY-PROVEN
-byte-identical to the Python validator on the full tree (the migration gate
-`foxtag/parity_check.sh`; ~19ms vs ~147ms); the `foxtag unit <file> <line>` JSON query
-fills the plugin's `tagadapter.parse` keystone via subprocess (D-349). Increment 2a LANDED:
-`foxtag layout` — the LAYOUT fact-producer consolidated into the core, parity-proven
-straddler-exact vs `emit_record_layout.lua` on the 204-record census (D-350; the cache-gate's
-headless-nvim dependency becomes swappable behind the gate). Increment 2b LANDED: `foxtag
-codegen` — the g++ probe producer with **RC-A (instantiation anchor) / RC-C (real SIMD
-width-class incl. scalar-xmm) / RC-E (never-green-on-vacuous) built in**, EXACT-match vs the
-conformance analyzer's ratchet baseline on real kernels (Regime_Classify 489 instr / 8
-data-dep; D-351). Tool docs: `tools/foxtag/README.md`. Remaining increment 2c = `foxtag
-update` (the D-327 STRUCT writer) + the RC-B compile-DB story + the generalized drift-gate —
-then the P6 CONVERSION's hard toolchain dependencies are met. Plugin major-features work,
-overlays/asm half-broken (phase 5, operator's session).
+We are at (re-grounded **2026-08-19**; the 2026-07-15 paragraph this replaces lives in git):
+format LOCKED `[SCHEMA]_[v1.0]` (D-346) · corpus CONVERTED 100% (P6, 2026-07-18) · the
+`0.2` contract+gate layer COMPLETE (D-418: `TOOLCHAIN_CONTRACTS.md` + `update_toolchain.py` +
+the import-from-core lint + cite-repair) · the D-413/D-414/D-415 derived-facts-integrity arc
+CLOSED all four leaves, and D-415 **PARKED the foxtag core** (frozen-kept, parity gate off,
+script-side authority for layout/inventory; re-arms at the v1 conversion program) · the
+plugin's V1 cycle CLOSED 2026-08-14 at feature-complete `0.5` (the 0.4 tag-native wave, the
+parity fleet, the shipped-asm card family, regfit) · post-close sessions (2026-08-18/19)
+landed the branch-taxonomy overlay on the SHIPPED basis, browse-first pickers, the graph-walk,
+and the live-path test rule. **The old "remaining increment 2c" sentence is DEAD on all three
+legs:** the STRUCT writer landed Python-side (`check_cache_layout --fix`), RC-B closed via
+TD-257's shipping-db + sidecars, and the drift-gate landed per-axis (§7.5 VERIFY) — P6 never
+waited for any of them. What actually remains: the v1 foxtag call-graph GENERATOR (the A2
+missing-consumer half) · the `0.6` AST producers (TD-256, now UNBLOCKED) · `0.7` pre-push gate ·
+`0.8` planes/self-hosting · the registry card + tissue + tag-query on the plugin side (§7.5).
 
 **Phased path (each phase gates the next):**
 1. Complete the **schema** against the survey's input-space taxonomy.
 2. Stand up the **dogfood corpus**; prove the format lossless on it.
 3. Fix the **toolchain** (RC-A…E) + build `:FoxTagUpdate` + generalize the drift-gate.
-4. **Rework the plugin** UX (cursor-track / drawer / collapsed / context-gate / popout) — **scope-increased (D-372) to the plugin as a NON-CLI application of the whole toolchain** (§6 / §8.6); now the plugin-FIRST priority in the sequencing.
+4. **Rework the plugin** UX (cursor-track / drawer / collapsed / context-gate / popout) — **scope-increased (D-372) to the plugin as a NON-CLI application of the whole toolchain** (§6 / §8.6); now the plugin-FIRST priority in the sequencing. *(V1 cycle DONE 2026-08-14 at feature-complete `0.5`; post-close sessions continue additively.)*
 5. **Convert** the codebase (mechanical, byte-identical) — *only now* is it truly mechanical. *(DONE 2026-07-18 — corpus 100% green; the phased path above predates the D-372 V1 redefinition, which §8.6 governs.)*
 
 ## 8.5 · Planes are first-class + the toolchain self-hosts (D-367, 2026-07-18)
@@ -304,12 +348,16 @@ feature-set, the lint) → decision log **D-372**.
 - **Does not touch capital code** — comments-only, byte-identical, always.
 - **Not** frozen — this is a living target; refine as the survey + dogfooding teach us.
 
-## 10. Open decisions (resolve before the phase that needs them)
+## 10. Open decisions (dispositions re-grounded 2026-08-19)
 
-- **D-SWAR:** `[SWAR]` representation — auto-detect mask idioms (`-(uint64_t)mask`,
-  `BITMAP_*`/`MBS_*`, word-level mask-select) from source, or a manual tag? *(gates RC-C.)*
-- **Complete `[DERIVED]` set per unit type** — the exact axis list for struct / function /
-  registry / file. *(gates the fact-producer completion.)*
-- **`:FoxTagUpdate` naming + surface** — one command, both interactive + CI? *(likely yes.)*
-- **Doc home for the growing tag-system docs** — co-locate under `doc-disciplines/` or a
-  new `tag-system/` DESIGN_SPECS subdir?
+- **D-SWAR** → **DECIDED**: `[BIT_PACKED]_[SWAR]` sub-tag, auto-detect direction (schema lock).
+  Open remainder = building the idiom DETECTOR (small-medium, unscheduled).
+- **Complete `[DERIVED]` set per unit type** → **DECIDED** spec-side (D-339 axes table);
+  enforcement remainder lives at TECH_DEBT-243/-236, per-axis by design.
+- **`:FoxTagUpdate` naming + surface** → **SUPERSEDED** — the "one command, both interactive +
+  CI (likely yes)" was overturned by D-374's write-vs-verify law: batch = `update_toolchain.py`
+  (human-invoked, hooks forbidden), interactive = `:FoxSymdepsDerived!` + per-card `r`-refresh +
+  the `--fix` menu row. Nothing needs the old name.
+- **Doc home for the tag-system docs** → the only genuinely-open row, and cosmetic: co-location
+  under `doc-disciplines/` won by inertia (no `tag-system/` subdir exists). Decide-or-close at
+  the next doc-system sweep.

@@ -9098,7 +9098,7 @@ e3_skip_load:;
         check("mode 1 pre-drain: oms.last_opened_mask has slots 0+1",
               (r->oms.last_opened_mask & 0x3) == 0x3);
 
-        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0, 4.0, 0.0, 86400u, 0, 0, nullptr);
 
         // Post-drain: open_notional sums to $1200 ($600 per leg × 2 legs),
         // both legs accumulated into core 0's CoreContext. The 200% bug
@@ -9145,7 +9145,7 @@ e3_skip_load:;
         submit_and_fill_exit(0, 0.01, 61200.0);  // leg A profit
         submit_and_fill_exit(1, 0.01, 61200.0);  // leg B profit
 
-        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0, 4.0, 0.0, 86400u, 0, 0, nullptr);
 
         // Both legs profited → core_realized accumulates net P&L of both,
         // open_notional decrements back to ~0. v4.7.4: W/L counts logical
@@ -9248,7 +9248,7 @@ e3_skip_load:;
                 break;
             }
         }
-        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0, 4.0, 0.0, 86400u, 0, 0, nullptr);
 
         // Notional = 0.02 × 60000 = $1200 (full qty).
         check("mode 1 partials-off: core 0 open_notional == $1200 single leg",
@@ -9540,7 +9540,7 @@ e3_skip_load:;
                 break;
             }
         }
-        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0, 4.0, 0.0, 86400u, 0, 0, nullptr);
 
         check("v4.7.19 (b): entry bump happens via DrainPostFill — total_entries == 1",
               r->state.total_entries == 1);
@@ -9566,7 +9566,7 @@ e3_skip_load:;
                 break;
             }
         }
-        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0, 4.0, 0.0, 86400u, 0, 0, nullptr);
 
         check("v4.7.19 (b): exit bump via DrainPostFill — total_exits == 1",
               r->state.total_exits == 1);
@@ -9594,7 +9594,7 @@ e3_skip_load:;
         dup_sell.intended_sl   = Money_Zero();
         tt::OrderManager_HandleFill(&r->oms, &dup_sell,
             MQ(60600.0), MQ(0.02));
-        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0, 4.0, 0.0, 86400u, 0, 0, nullptr);
 
         check("v4.7.19 (a): duplicate SELL on closed slot — balance unchanged",
               fabs(Money_ToDouble(r->oms.balance) - balance_before_dup) < 0.01);
@@ -9674,7 +9674,7 @@ e3_skip_load:;
                 break;
             }
         }
-        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0, 4.0, 0.0, 86400u, 0, 0, nullptr);
 
         check("oms-ts-1: total_fees after entry == 1.20 (1200 × 0.001, exact)",
               Money_Eq(r->oms.total_fees, MQ(1.20)));
@@ -9695,7 +9695,7 @@ e3_skip_load:;
                 break;
             }
         }
-        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0, 4.0, 0.0, 86400u, 0, 0, nullptr);
 
         // EXACT fee→P&L→balance characterization (frozen byte-exact, not windowed):
         check("oms-ts-1: total_fees == 2.412 (entry 1.20 + exit 1.212, exact)",
@@ -9777,7 +9777,7 @@ e3_skip_load:;
                 break;
             }
         }
-        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0, 4.0, 0.0, 86400u, 0, 0, nullptr);
 
         // ---- Close slot 0 @ 60000 (a LOSS) ----
         tt::SubmitCommand<64> sell_cmd(0, tt::ORDER_MARKET_SELL, MQ(0.02), (uint8_t)0, /*node_cfg*/nullptr);
@@ -9795,7 +9795,7 @@ e3_skip_load:;
                 break;
             }
         }
-        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0, 4.0, 0.0, 86400u, 0, 0, nullptr);
 
         // EXACT loss characterization — the SIGN path the winner cannot reach:
         check("oms-ts-1b: realized_pnl == -14.412 (gross -12.00 - fees 2.412, exact)",
@@ -9891,7 +9891,7 @@ e3_skip_load:;
                 break;
             }
         }
-        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0, 4.0, 0.0, 86400u, 0, 0, nullptr);
 
         // --- SELL (close) core 0 @ a WIN ---
         tt::SubmitCommand<64> sell(0, tt::ORDER_MARKET_SELL, QTY, (uint8_t)0, /*node_cfg*/nullptr);
@@ -9908,7 +9908,7 @@ e3_skip_load:;
                 break;
             }
         }
-        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0, 4.0, 0.0, 86400u, 0, 0, nullptr);
 
         // ---- The per-core EXIT write-set (the gap oms-ts-1 leaves unfrozen), money-EXACT (not windowed) ----
         // ADV-REFUTE: 2026-06-14 — cascade A-1 independently re-derived every per-core golden below to the ULP (see block header).
@@ -10005,7 +10005,7 @@ e3_skip_load:;
                 break;
             }
         }
-        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0, 4.0, 0.0, 86400u, 0, 0, nullptr);
 
         // --- SELL (close) @ a LOSS ---
         tt::SubmitCommand<64> sell(0, tt::ORDER_MARKET_SELL, QTY, (uint8_t)0, /*node_cfg*/nullptr);
@@ -10022,7 +10022,7 @@ e3_skip_load:;
                 break;
             }
         }
-        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0, 4.0, 0.0, 86400u, 0, 0, nullptr);
 
         check("oms-ts-1d: nodes[0].node_realized == -784.47301188 (net loss, exact)",
               Money_Eq(r->state.nodes[0].node_realized, MQ(-784.47301188)));
@@ -10102,7 +10102,7 @@ e3_skip_load:;
         buy.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP; buy.event_price = MQ(60000.0);
         tt::OrderManager_Submit(&r->oms, buy);
         tt::OrderManager_Tick(&r->oms);                       // Tick drives the fill — NOT a manual HandleFill
-        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0, 4.0, 0.0, 86400u, 0, 0, nullptr);
         // WITNESS the fill actually happened via Tick (guards trap (1) — a dedup no-op would leave no position):
         check("oms-ts-1e: BUY booked VIA Tick — position open (not a dedup no-op)",
               (r->oms.portfolio.active_bitmap & (uint16_t)1u) != 0);
@@ -10112,7 +10112,7 @@ e3_skip_load:;
         sell.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP; sell.event_price = MQ(61000.0);
         tt::OrderManager_Submit(&r->oms, sell);
         tt::OrderManager_Tick(&r->oms);
-        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+        tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0, 4.0, 0.0, 86400u, 0, 0, nullptr);
         check("oms-ts-1e: SELL booked VIA Tick — position closed",
               (r->oms.portfolio.active_bitmap & (uint16_t)1u) == 0);
 
@@ -10215,10 +10215,10 @@ e3_skip_load:;
             // pair net = -517.17535106 (<= 0) -> core_losses++ ONLY.
             fill_leg(r, 0, ORDER_MARKET_BUY,  ENTRY,             MQ(0.41050204));   // leg A open -> slot 0 (core_id 0)
             fill_leg(r, 1, ORDER_MARKET_BUY,  ENTRY,             MQ(0.44050204));   // leg B open -> slot 1 (core_id 1) [FIX-3]
-            EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+            EventLoop_DrainPostFill(&r->state, &r->oms, 0, 4.0, 0.0, 86400u, 0, 0, nullptr);
             fill_leg(r, 0, ORDER_MARKET_SELL, MQ(41020.55671203), MQ(0.41050204));  // leg A exit TP1 (win)
             fill_leg(r, 1, ORDER_MARKET_SELL, MQ(38586.72189860), MQ(0.44050204));  // leg B exit SL  (loss)
-            EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+            EventLoop_DrainPostFill(&r->state, &r->oms, 0, 4.0, 0.0, 86400u, 0, 0, nullptr);
 
             check("F-018 L: node_wins==0 / node_losses==1 (paired net-NEGATIVE = ONE loss, NOT 1W+1L)",
                   r->state.nodes[0].node_wins == 0 && r->state.nodes[0].node_losses == 1);
@@ -10264,10 +10264,10 @@ e3_skip_load:;
             // pair net = +22695.66519128 (> 0) -> core_wins++ ONLY.
             fill_leg(r, 0, ORDER_MARKET_BUY,  ENTRY,             MQ(3.21570000));
             fill_leg(r, 1, ORDER_MARKET_BUY,  ENTRY,             MQ(3.67813318));   // [FIX-3: slot 1]
-            EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+            EventLoop_DrainPostFill(&r->state, &r->oms, 0, 4.0, 0.0, 86400u, 0, 0, nullptr);
             fill_leg(r, 0, ORDER_MARKET_SELL, MQ(38044.86126179), MQ(3.21570000));  // leg A exit TP1
             fill_leg(r, 1, ORDER_MARKET_SELL, MQ(40044.86126179), MQ(3.67813318));  // leg B exit TP2
-            EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+            EventLoop_DrainPostFill(&r->state, &r->oms, 0, 4.0, 0.0, 86400u, 0, 0, nullptr);
 
             check("F-018 W: node_wins==1 / node_losses==0 (paired net-positive = ONE win)",
                   r->state.nodes[0].node_wins == 1 && r->state.nodes[0].node_losses == 0);
@@ -10313,9 +10313,9 @@ e3_skip_load:;
             const Money ENTRY = MQ(40308.41179447);
             fill_leg(r, 0, ORDER_MARKET_BUY,  ENTRY, MQ(0.41050204));
             fill_leg(r, 1, ORDER_MARKET_BUY,  ENTRY, MQ(0.44050204));
-            EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+            EventLoop_DrainPostFill(&r->state, &r->oms, 0, 4.0, 0.0, 86400u, 0, 0, nullptr);
             fill_leg(r, 0, ORDER_MARKET_SELL, MQ(41020.55671203), MQ(0.41050204));  // leg A exits; leg B rides
-            EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+            EventLoop_DrainPostFill(&r->state, &r->oms, 0, 4.0, 0.0, 86400u, 0, 0, nullptr);
             check("AM-4 pre: PARKED state live (bit 0 SET, pnl == +267.29766082 [A-1 ULP-verified], slot 1 active)",
                   BITMAP_IS_SET(r->state.partner_pending_bitmap, BITMAP_BIT_U16(0)) &&
                   Money_Eq(r->state.nodes[0].partner_pending_pnl, MQ(267.29766082)) &&
@@ -10335,7 +10335,7 @@ e3_skip_load:;
             // Complete the pair in the RESTORED engine: leg B's SL exit merges parked+net
             // (CASE L's goldens: pair net -517.17535106 => ONE loss, no phantom win).
             fill_leg(r2, 1, ORDER_MARKET_SELL, MQ(38586.72189860), MQ(0.44050204));
-            EventLoop_DrainPostFill(&r2->state, &r2->oms, 0);
+            EventLoop_DrainPostFill(&r2->state, &r2->oms, 0, 4.0, 0.0, 86400u, 0, 0, nullptr);
             check("AM-4: restored pair completes as ONE loss (wins==0 / losses==1)",
                   r2->state.nodes[0].node_wins == 0 && r2->state.nodes[0].node_losses == 1);
             check("AM-4: bit CLEARED + pnl==0 after the restored merge",
@@ -10352,7 +10352,7 @@ e3_skip_load:;
             R* r = new R(); build(r);
             const Money ENTRY = MQ(40308.41179447);
             fill_leg(r, 0, ORDER_MARKET_BUY, ENTRY, MQ(0.41050204));   // leg A alone (orphan)
-            EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+            EventLoop_DrainPostFill(&r->state, &r->oms, 0, 4.0, 0.0, 86400u, 0, 0, nullptr);
             const char* orph_path = "/tmp/ftv2_am4_orphan.dat";
             check("AM-4 orphan: save returns 1",
                   tt::ShardedSnapshot_Save<64>(&r->state, orph_path, /*partials*/1) == 1);
@@ -10364,7 +10364,7 @@ e3_skip_load:;
                   Money_IsZero(r2->state.nodes[0].partner_pending_pnl));
             // The orphan's exit merges-with-zero -> classifies on the single leg (a WIN here).
             fill_leg(r2, 0, ORDER_MARKET_SELL, MQ(41020.55671203), MQ(0.41050204));
-            EventLoop_DrainPostFill(&r2->state, &r2->oms, 0);
+            EventLoop_DrainPostFill(&r2->state, &r2->oms, 0, 4.0, 0.0, 86400u, 0, 0, nullptr);
             check("AM-4 orphan: exit records ONE stat via merge-with-zero (wins==1 / losses==0)",
                   r2->state.nodes[0].node_wins == 1 && r2->state.nodes[0].node_losses == 0);
             check("AM-4 orphan: bit CLEARED + pnl==0 after",
@@ -10444,7 +10444,7 @@ e3_skip_load:;
                 STRATEGY_SIMPLE_DIP, MQ(1500.0));
 
             seed_paired_exit(r, +5.0, +10.0);  // TP1 + TP2
-            tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+            tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0, 4.0, 0.0, 86400u, 0, 0, nullptr);
 
             check("v4.7.21 (1): TP+TP paired → node_wins == 1",
                   r->state.nodes[0].node_wins == 1);
@@ -10476,7 +10476,7 @@ e3_skip_load:;
                 STRATEGY_SIMPLE_DIP, MQ(1500.0));
 
             seed_paired_exit(r, +3.0, -8.0);  // TP1 small win + SL larger loss = net -5
-            tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+            tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0, 4.0, 0.0, 86400u, 0, 0, nullptr);
 
             check("v4.7.21 (2): TP+SL paired (net negative) → node_wins == 0",
                   r->state.nodes[0].node_wins == 0);
@@ -10516,7 +10516,7 @@ e3_skip_load:;
             BITMAP_CLR(r->oms.last_is_maker_bitmap, BITMAP_BIT_U16(0));
             BITMAP_SET(r->oms.last_was_win_bitmap, BITMAP_BIT_U16(0));
             r->oms.last_closed_mask = (uint16_t)0x1;
-            tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0);
+            tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0, 4.0, 0.0, 86400u, 0, 0, nullptr);
 
             check("v4.7.21 (3): partials off → single win bumps node_wins == 1",
                   r->state.nodes[0].node_wins == 1);
@@ -10732,10 +10732,10 @@ e3_skip_load:;
         }
 
         // Path A: wrapper — single call iterates all cores internally
-        tt::EventLoop_DrainPostFill(&r1->state, &r1->oms, 0);
+        tt::EventLoop_DrainPostFill(&r1->state, &r1->oms, 0, 4.0, 0.0, 86400u, 0, 0, nullptr);
         // Path B: explicit per-core OneCore calls
         for (int c = 0; c < 4; ++c) {
-            tt::EventLoop_DrainPostFillOneCore(&r2->state, &r2->oms, 0, c);
+            tt::EventLoop_DrainPostFillOneCore(&r2->state, &r2->oms, 0, c, 4.0, 0.0, 86400u, 0, 0, nullptr);
         }
 
         // Compare key per-core fields (CoreContext is non-copyable due to
@@ -10774,9 +10774,9 @@ e3_skip_load:;
                 rp->state.nodes[c].exits_processed = (uint32_t)(c + 2);
             }
         }
-        tt::EventLoop_DrainPostFill(&r1->state, &r1->oms, 0);
+        tt::EventLoop_DrainPostFill(&r1->state, &r1->oms, 0, 4.0, 0.0, 86400u, 0, 0, nullptr);
         for (int c = 0; c < 4; ++c) {
-            tt::EventLoop_DrainPostFillOneCore(&r2->state, &r2->oms, 0, c);
+            tt::EventLoop_DrainPostFillOneCore(&r2->state, &r2->oms, 0, c, 4.0, 0.0, 86400u, 0, 0, nullptr);
         }
         bool counters_match2 = true;
         for (int c = 0; c < 4; ++c) {
@@ -10831,7 +10831,7 @@ e3_skip_load:;
         }
 
         // Call OneCore for c=2 ONLY
-        tt::EventLoop_DrainPostFillOneCore(&r->state, &r->oms, 0, 2);
+        tt::EventLoop_DrainPostFillOneCore(&r->state, &r->oms, 0, 2, 4.0, 0.0, 86400u, 0, 0, nullptr);
 
         // Sibling cores must be untouched
         for (int sibling : {0, 1, 3}) {
@@ -17152,7 +17152,7 @@ e3_skip_load:;
         STAMP_PUT(inf, label_registry_hash, h);
         StampWriteResult sw = stamp_write_for_model(
             tmp_model, "test-secret", MODEL_FORMAT_VERSION,
-            "2026-05-06", 0.6, 0.55, 0.05, 0.10,
+            "2026-05-06", 0.6, 0.55, 0.05, /*force=*/0,
             FEATURE_REGISTRY_HASH(),
             ENGINE_VERSION_STRING, &inf);
         check("v5.10.0d: stamp_write_for_model emits hash field successfully",
@@ -17184,7 +17184,7 @@ e3_skip_load:;
         // has_label_registry_hash = 0 → field NOT emitted
         StampWriteResult sw_legacy = stamp_write_for_model(
             tmp_model, "test-secret", MODEL_FORMAT_VERSION,
-            "2026-05-06", 0.6, 0.55, 0.05, 0.10,
+            "2026-05-06", 0.6, 0.55, 0.05, /*force=*/0,
             FEATURE_REGISTRY_HASH(),
             ENGINE_VERSION_STRING, &inf_legacy);
         check("v5.10.0d: legacy stamp (no label hash) emits successfully",
@@ -18850,7 +18850,7 @@ e3_skip_load:;
         STAMP_PUT(inf_wrong, label_registry_hash, wrong_hash);
         StampWriteResult sw = stamp_write_for_model(
             tmp_model, "v5.10.1.A-test", MODEL_FORMAT_VERSION,
-            "2026-05-06", 0.6, 0.55, 0.05, 0.10,
+            "2026-05-06", 0.6, 0.55, 0.05, /*force=*/0,
             FEATURE_REGISTRY_HASH(),
             ENGINE_VERSION_STRING, &inf_wrong);
         check("v5.10.1.A: stamp emit with wrong label hash succeeds (test setup)",
@@ -18874,7 +18874,7 @@ e3_skip_load:;
         STAMP_PUT(inf_right, label_registry_hash, LABEL_REGISTRY_HASH());
         StampWriteResult sw2 = stamp_write_for_model(
             tmp_model, "v5.10.1.A-test", MODEL_FORMAT_VERSION,
-            "2026-05-06", 0.6, 0.55, 0.05, 0.10,
+            "2026-05-06", 0.6, 0.55, 0.05, /*force=*/0,
             FEATURE_REGISTRY_HASH(),
             ENGINE_VERSION_STRING, &inf_right);
         check("v5.10.1.A: stamp emit with correct label hash succeeds",
@@ -26618,6 +26618,123 @@ e3_skip_load:;
               fabs(w_after[1] - gamma_floor) < 1e-6 && fabs(w_after[2] - gamma_floor) < 1e-6);
         check("v5.15.5.E.1.2 LOOP: the floor is NON-ZERO — a losing arm can still recover",
               gamma_floor > 0.0 && w_after[1] > 0.0);
+    }
+
+    // ─── Test C.3d: EXIT-BANDIT SEAM — the reward reaches the gate THROUGH THE
+    //     PRODUCTION WRAPPER (E.1.2.C leg 0, 2026-08-20) ───
+    //
+    // C.3c above proves the LEAF halves (dispatch table + Apply) work when called
+    // directly — and that is exactly the blind spot that let the fan-shift defect
+    // live from v5.14.1.F to E.1.2.C: the fan passed 10 positional args into
+    // OneCore's 12-param signature, the enable flag landed in the IC-variant slot,
+    // and the reward UPDATE was unreachable on every production path while C.3c
+    // stayed green. This test drives tt::EventLoop_DrainPostFill — the wrapper ALL
+    // production paths route through — with a REAL cfg + REAL entry/exit fills, and
+    // asserts the per-node cfg facts arrive at their points of use:
+    //   (a) flag OFF in node cfg  → no exit-bandit update           (control)
+    //   (b) flag ON               → pulls moved through the wrapper (the seam)
+    //   (c) drain-time fee change → cum_reward shifts by EXACTLY 2·Δfee·1e4 bps
+    //       (proves the counterfactual fee is read from node_cfg AT DRAIN TIME —
+    //        actual fills identical across both rigs, so the delta isolates it)
+    //   (d) bandit_algorithm=1    → Thompson posterior precision grew
+    //       (proves node_cfg reached the reward dispatch, not a default)
+    // The de-defaulted signatures make positional drift a compile error; this test
+    // pins the SEMANTIC binding the compiler cannot see.
+    {
+        struct SeamObs { int pulls; double cum; double thom_precision; };
+        auto run_exit_drain = [&](int flag_on, double drain_fee, int algo) -> SeamObs {
+            struct R {
+                tt::OrderManagerState<64> oms;
+                tt::EventLoopState<64> state;
+                tt::SPSCRing<tt::Tick<64>, tt::EXECUTION_NODE_TICK_RING_SIZE> ring;
+                tt::ExecutionCore<64> node0;
+                ControllerConfig<64> cfg;
+            };
+            R* r = new R();
+            tt::EventLoopState_InitLegacy(&r->state, &r->oms, MQ(10000.0));
+            MBS_SET_U8(r->oms.oms_state_flags, tt::MASK_OMS_STATE_EVENT_LOG_MODE,
+                       tt::SHIFT_OMS_STATE_EVENT_LOG_MODE, 1);  // mode 1; partials OFF → slot0 == node0
+            tt::SPSCRing_Init(&r->ring);
+            tt::ExecutionCore_Init(&r->node0, 0, &r->ring);
+            tt::EventLoopState_RegisterCore(&r->state, &r->node0,
+                MQ(60500.0), MQ(59500.0), MQ(0.01));
+            tt::EventLoopState_SetCoreStrategy(&r->state, 0,
+                STRATEGY_SIMPLE_DIP, MQ(1500.0));
+
+            // Synthetic ensemble: 2 exit arms, bandits READY (+ Thompson for (d)).
+            auto* ezoo = new EnsembleModelZoo<64>();
+            EnsembleModelZoo_Init(ezoo);
+            ezoo->exit_predictor_count = 2;
+            EnsembleModelZoo_InitExitBandits(ezoo, /*exit_eta=*/0.1, /*min_warmup=*/0);
+            EnsembleModelZoo_InitExitThompsonBandits(ezoo, /*mu_prior=*/0.0,
+                /*precision_prior=*/1.0, /*precision_obs=*/1.0, /*seed=*/42ULL);
+            r->state.nodes[0].ensemble_handle = ezoo;
+
+            // Per-node cfg — the facts under test travel ONLY through here now.
+            if (flag_on) BITMAP_SET(r->cfg.nodes[0].ml_cfg_flags, MASK_ML_CFG_EXIT_BANDIT_ENABLED);
+            r->cfg.nodes[0].bandit_algorithm = algo;
+            r->cfg.nodes[0].fee_rate_taker = MQ(0.001);  // BIND-time fee (identical across rigs)
+            r->cfg.nodes[0].fee_rate_maker = MQ(0.001);
+
+            auto submit_and_fill = [&](tt::OrderType order_kind, double qty, double price) {
+                tt::SubmitCommand<64> cmd((int16_t)0, order_kind, MQ(qty),
+                                           /*leg*/(uint8_t)0, /*node_cfg*/&r->cfg.nodes[0]);
+                cmd.intended_tp = MQ(60500.0);
+                cmd.intended_sl = MQ(59500.0);
+                cmd.strategy_id = (uint8_t)STRATEGY_SIMPLE_DIP;
+                cmd.event_price = MQ(price);
+                (void)tt::OrderManager_Submit(&r->oms, cmd);
+                for (int i = 0; i < MAX_INFLIGHT_ORDERS; ++i) {
+                    if ((r->oms.order_bitmap & (uint16_t)(1u << i)) == 0) continue;
+                    tt::Order<64>* o = &r->oms.orders[i];
+                    if (o->node_id == 0 && tt::Order_GetState(o) != tt::ORDER_FILLED) {
+                        tt::OrderManager_HandleFill(&r->oms, o, MQ(price), MQ(qty));
+                        tt::Order_SetState(o, tt::ORDER_FILLED);
+                        r->oms.order_bitmap &= ~(uint16_t)(1u << i);
+                        break;
+                    }
+                }
+            };
+
+            submit_and_fill(tt::ORDER_MARKET_BUY, 0.01, 60000.0);
+            // Mark the exit as bandit-predicted (what the EngineCommon submit seam
+            // does at fire time): bitmap bit + packed (arm=1, regime=0) meta.
+            BITMAP_SET(r->oms.last_exit_predicted_bitmap, BITMAP_BIT_U16(0));
+            r->oms.last_exit_predicted_meta[0] = OMS_META_PACK(/*arm=*/1, /*regime=*/0);
+            submit_and_fill(tt::ORDER_MARKET_SELL, 0.01, 60300.0);
+
+            // Drain-time fee — set AFTER the fills so actual P&L is fee-identical
+            // across rigs and only the counterfactual read can differ.
+            r->cfg.nodes[0].fee_rate_taker = MQ(drain_fee);
+
+            tt::EventLoop_DrainPostFill(&r->state, &r->oms, 0, 4.0, 0.0, 86400u, 0, 0,
+                                          &r->cfg);  // ← THE SEAM: cfg threads per-node facts
+
+            SeamObs obs;
+            obs.pulls          = ezoo->exit_bandits[0].pulls[1];
+            obs.cum            = ezoo->exit_bandits[0].cum_reward[1];
+            obs.thom_precision = ezoo->exit_thompson_bandits[0].precision_post[1];
+            delete ezoo; delete r;
+            return obs;
+        };
+
+        SeamObs off  = run_exit_drain(/*flag_on=*/0, /*drain_fee=*/0.001, /*algo=*/0);
+        check("v5.15.5.E.1.2.C SEAM (a): flag OFF in node cfg → no exit-bandit update",
+              off.pulls == 0 && fabs(off.cum) < 1e-12);
+
+        SeamObs on   = run_exit_drain(/*flag_on=*/1, /*drain_fee=*/0.001, /*algo=*/0);
+        check("v5.15.5.E.1.2.C SEAM (b): flag ON → reward reached the bandit THROUGH the wrapper",
+              on.pulls == 1 && fabs(on.cum) > 1e-12);
+
+        SeamObs onF  = run_exit_drain(/*flag_on=*/1, /*drain_fee=*/0.003, /*algo=*/0);
+        // reward = actual − (tp_pct − 2·fee)·1e4  ⇒  Δcum = +2·Δfee·1e4 = 40.0 bps
+        check("v5.15.5.E.1.2.C SEAM (c): counterfactual fee is the NODE's, read at drain time",
+              fabs((onF.cum - on.cum) - 2.0 * (0.003 - 0.001) * 10000.0) < 1e-6);
+
+        SeamObs thom = run_exit_drain(/*flag_on=*/1, /*drain_fee=*/0.001, /*algo=*/1);
+        // One Thompson observation: precision_post = prior(1.0) + obs(1.0) = 2.0.
+        check("v5.15.5.E.1.2.C SEAM (d): bandit_algorithm=1 via node_cfg → Thompson posterior updated",
+              fabs(thom.thom_precision - 2.0) < 1e-9);
     }
 
     // ─── Test C.4: Load with missing file returns 0 (forward-compat-by-absence) ───

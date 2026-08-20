@@ -19,6 +19,7 @@
 #include "money_parse_vectors.hpp"    // Ship-B P1c D-100 frozen fixture (Money_FromString incl. reject set)
 #include "money_cast_vectors.hpp"     // Ship-B P1c D-100 frozen fixture (Money_ToBinary / Money_FromBinary)
 #include "sharded_snapshot_v11_golden.hpp"  // E.1.2 (D-305/D-420) frozen v11 snapshot byte-golden
+#include "../GUI/SettingsSectionIndex.hpp"  // E.1.2.C 3G-i — Settings section-layout builder (ImGui-free on purpose so THIS TU pins it)
 
 //======================================================================================================
 // [TEST 1: CONFIG PARSER]
@@ -26983,6 +26984,96 @@ e3_skip_load:;
                      dname[cells[i].expect]);
             check(cname, got == cells[i].expect);
         }
+    }
+
+    // ─── Test 3G-i: SectionLayout — grouped Settings render layout
+    //     (E.1.2.C; the duplicate-CollapsingHeader class) ───
+    //
+    // The builder + curated lists + canonical pass + the two REGISTRY source
+    // adapters are ImGui-free (GUI/SettingsSectionIndex.hpp) precisely so
+    // this TU drives the REAL production wiring: sources 1+2 of the Global
+    // tab ARE these adapters over these descriptors with the render masks
+    // baked. (Source 0, field_defs[], lives in the ImGui TU — its builder
+    // path is the same code exercised synthetically below.)
+    {
+        // (a) Synthetic: interleaved sections group; original order preserved
+        // within a section; curated order wins; unknown appends after.
+        static const char* const syn_secs[] = { "A", "B", "A", "C", "B", "A" };
+        struct Local {
+            static const char* sec_of(int row, const void* ctx) {
+                return ((const char* const*)ctx)[row];
+            }
+            static const char* sec_null_odd(int row, const void* ctx) {
+                if (row & 1) return NULL;   // exclusion path (render-mask analogue)
+                return ((const char* const*)ctx)[row];
+            }
+        };
+        SectionLayout lay;
+        const SectionSource syn_src[1] = { { 6, Local::sec_of, (const void*)syn_secs } };
+        static const char* const syn_curated[] = { "C", "A" };
+        int n = SectionLayout_Build(&lay, syn_src, 1, syn_curated, 2);
+        check("v5.15.5.E.1.2.C 3G-i: synthetic interleave builds 3 sections", n == 3);
+        check("v5.15.5.E.1.2.C 3G-i: curated order wins (C, A), unknown B appends after",
+              n == 3 && strcmp(lay.names[0], "C") == 0 &&
+              strcmp(lay.names[1], "A") == 0 && strcmp(lay.names[2], "B") == 0);
+        check("v5.15.5.E.1.2.C 3G-i: section A groups rows {0,2,5} in original order",
+              lay.span_count[0][1] == 3 &&
+              lay.perm[0][lay.span_start[0][1] + 0] == 0 &&
+              lay.perm[0][lay.span_start[0][1] + 1] == 2 &&
+              lay.perm[0][lay.span_start[0][1] + 2] == 5);
+        check("v5.15.5.E.1.2.C 3G-i: synthetic row conservation (1+3+2 == 6)",
+              lay.span_count[0][0] + lay.span_count[0][1] + lay.span_count[0][2] == 6);
+        SectionLayout lay2;
+        const SectionSource syn_src2[1] = { { 6, Local::sec_null_odd, (const void*)syn_secs } };
+        int n2 = SectionLayout_Build(&lay2, syn_src2, 1, NULL, 0);
+        check("v5.15.5.E.1.2.C 3G-i: NULL sec_of excludes rows (mask analogue): 2 sections, 3 rows",
+              n2 == 2 && lay2.span_count[0][0] + lay2.span_count[0][1] == 3);
+
+        // (b) Canonical vocabulary pins (the dedupe pass)
+        check("v5.15.5.E.1.2.C 3G-i: canonical(Time-Based Exit) == Time Exit",
+              strcmp(Settings_CanonicalSection("Time-Based Exit"), "Time Exit") == 0);
+        check("v5.15.5.E.1.2.C 3G-i: canonical(Operational Monitoring) == Operational",
+              strcmp(Settings_CanonicalSection("Operational Monitoring"), "Operational") == 0);
+        check("v5.15.5.E.1.2.C 3G-i: canonical is identity for ordinary names",
+              strcmp(Settings_CanonicalSection("Trading"), "Trading") == 0);
+
+        // (c) REAL registry wiring: both registry adapters + the global
+        // curated order — the exact sources 1+2 the Global tab builds with.
+        SectionLayout real;
+        const SectionSource real_srcs[2] = {
+            { FIELD_IDX_GLOBAL_END,   SettingsSection_GlobalRegistrySectionOf,  NULL },
+            { FIELD_IDX_PER_NODE_END, SettingsSection_PerNodeRegistrySectionOf, NULL },
+        };
+        int rn = SectionLayout_Build(&real, real_srcs, 2,
+                                     SETTINGS_GLOBAL_SECTION_ORDER,
+                                     SETTINGS_GLOBAL_SECTION_ORDER_COUNT);
+        check("v5.15.5.E.1.2.C 3G-i: real-registry build succeeds (no cap overflow)", rn > 0);
+        // Every merged section name UNIQUE — one header per section, the
+        // whole point. (A per-source concat would duplicate "Trading" etc.;
+        // this cell is the non-vacuous control against that shape.)
+        int uniq = 1;
+        for (int a = 0; a < real.n_sections && uniq; ++a)
+            for (int b = a + 1; b < real.n_sections; ++b)
+                if (strcmp(real.names[a], real.names[b]) == 0) { uniq = 0; break; }
+        check("v5.15.5.E.1.2.C 3G-i: every merged section name is UNIQUE (duplicate headers dead)",
+              uniq == 1);
+        // Row conservation vs the constexpr render masks (no row lost/duped).
+        int pop_g = 0, pop_pn = 0;
+        for (size_t w = 0; w < sizeof(g_global_cfg_render_mask.words) / sizeof(uint64_t); ++w)
+            pop_g += __builtin_popcountll(g_global_cfg_render_mask.words[w]);
+        for (size_t w = 0; w < sizeof(g_per_node_cfg_render_mask.words) / sizeof(uint64_t); ++w)
+            pop_pn += __builtin_popcountll(g_per_node_cfg_render_mask.words[w]);
+        int rows_g = 0, rows_pn = 0;
+        for (int k = 0; k < real.n_sections; ++k) {
+            rows_g  += real.span_count[0][k];
+            rows_pn += real.span_count[1][k];
+        }
+        check("v5.15.5.E.1.2.C 3G-i: global-registry rows == render-mask popcount",
+              rows_g == pop_g);
+        check("v5.15.5.E.1.2.C 3G-i: per-node-registry rows == render-mask popcount",
+              rows_pn == pop_pn);
+        check("v5.15.5.E.1.2.C 3G-i: curated order puts Trading first",
+              real.n_sections > 0 && strcmp(real.names[0], "Trading") == 0);
     }
 
     // ─── Test C.4: Load with missing file returns 0 (forward-compat-by-absence) ───

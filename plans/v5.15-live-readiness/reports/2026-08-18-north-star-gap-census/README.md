@@ -41,6 +41,30 @@ dont work"* + *"search bar → fzf pop up."*
   TECH_DEBT ledgers, not in-code tags yet. A picker over an empty set is a vacuous surface;
   re-arm the item when the first in-code `[DEFERRED]` is written.
 
+## Batch 3, same evening (plugin `4d52a15`; suite 49/49) — the break, the rule, the taxonomy
+
+- **The branchtag rework SHIPPED DEAD and the suite never knew:** the awk program string
+  carried Lua-interpreted newlines → awk exit 1 → nothing painted, while the pure suite sat
+  47/47 green (even a bash probe of the same awk program passed — the Lua→subprocess seam was
+  the one thing nothing crossed). Operator caught it live. Fixed + reproduced-first.
+- **Operator rule MINTED (verbatim): "any future work on the plugin we need to verify it
+  actually works before we say its done."** Codified three places: memory
+  `feedback_plugin_livepath_verification_before_done` (+ MEMORY.md index) · plugin
+  `DOCS/DECISIONS.md` § live-path rule · enforced by two NEW permanent suite members —
+  `test_branchtag_live.lua` (fixture tree → sidecar → awk → parse → extmarks;
+  never-green-on-uncovered) and `test_fuzzy_live.lua` (12 legs via `fuzzy_pick`'s new
+  programmatic handle, since headless -l can't drive insert typeahead).
+- **Overlay grew the full branch taxonomy (operator asks):** ▲ data-dependent · △ reg/loop ·
+  ✓ branchless (cmov) · feeder marks ("· data source for ▲ @N") flagging the LOAD's own line;
+  green fn verdicts carry their cmov count; basis-staleness now WARNs on source-newer-than-
+  binary transitions (measured: operator edits flipped two verdicts with zero code change).
+  Live-verified on ExecutionCore.hpp: 16 ▲ + 1 ✓cmov @518 + 4 feeders; verdicts
+  byte-identical across repeated runs.
+- **Homed follow-ups:** compact `~/.claude/.../memory/MEMORY.md` under ~17KB (harness read-
+  limit warning 2026-08-18; one-line hooks, detail into bodies — operator-reviewed pass, not
+  a mechanical sweep) · graph-walk drill-in + open-beside key still the queued rank-1 leaf
+  (untouched this batch — the session pivoted to verification on the operator's call).
+
 ## Queued (the finish-list, from the three reports — re-derive there, not here)
 
 - **Plugin lane (A §2):** HUD graph-walk drill-in (rank 1) · per-entry compare/open-beside

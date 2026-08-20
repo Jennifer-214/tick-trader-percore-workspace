@@ -26737,6 +26737,88 @@ e3_skip_load:;
               fabs(thom.thom_precision - 2.0) < 1e-9);
     }
 
+    // ─── Test C.3e: PARITY-043 — the sr→handle COPY WALKER round-trips through
+    //     the PRODUCTION emit + parse, and the false REFUSE_STRICT drift dies
+    //     (E.1.2.C leg 2, 2026-08-20) ───
+    //
+    // The cfg-derived walker family had 4 of its 5 legs; the sr→handle copy was
+    // never built, so every cfg-derived value a stamp carried died in the local
+    // sr and NodeModelZoo_ValidateAgainstCfg compared handle-side ZEROS against
+    // live cfg — with bandit_enabled defaulting ON, two REFUSE_STRICT rows
+    // (thompson_precision_prior/_obs) false-fired on EVERY model load at a
+    // default cfg. Per the :15582 fixture's own MUST-TOUCH banner, this test
+    // uses the PRODUCTION emit (STAMP_CFG_POPULATE_FROM_DERIVED) + PRODUCTION
+    // parse (PARSE_STAMP_CFG_TO_DERIVED) — never a hand-set group bit.
+    {
+        ControllerConfig<64> cfg = ControllerConfig_Default<64>();
+        cfg.bandit_algorithm = 1;  // opens the BANDIT_THOMPSON emit gate → thompson rows emitted
+        // Distinctive (non-default) value so equality-post-copy is a real signal:
+        cfg.thompson_precision_prior = FPN_FromDouble<64>(2.5);
+
+        // PRODUCTION EMIT — the exact bytes stamp_write_for_model signs.
+        char body[8192];
+        size_t n = STAMP_CFG_POPULATE_FROM_DERIVED(body, sizeof(body), cfg);
+        check("v5.15.5.E.1.2.C P043: production emit produced a non-empty cfg-derived body", n > 0);
+
+        // PRODUCTION PARSE — line-split key=value\n through the derived dispatcher.
+        auto* r = new ModelStampResult();
+        int parsed = 0;
+        for (size_t pos = 0; pos < n; ) {
+            size_t eq = pos; while (eq < n && body[eq] != '=') eq++;
+            size_t nl = eq; while (nl < n && body[nl] != '\n') nl++;
+            if (eq < n && nl <= n && eq > pos && nl > eq) {
+                char key[128] = {0}, val[256] = {0};
+                size_t klen = eq - pos;     if (klen >= sizeof(key)) klen = sizeof(key) - 1;
+                size_t vlen = nl - (eq + 1); if (vlen >= sizeof(val)) vlen = sizeof(val) - 1;
+                memcpy(key, body + pos, klen);
+                memcpy(val, body + eq + 1, vlen);
+                if (PARSE_STAMP_CFG_TO_DERIVED(*r, key, val)) parsed++;
+            }
+            pos = nl + 1;
+        }
+        check("v5.15.5.E.1.2.C P043: production parse matched the emitted cohort keys", parsed > 0);
+
+        // THE FIFTH WALKER — sr → handle.
+        auto* h = new ModelHandle<64>();
+        Model_Init(h);
+        check("v5.15.5.E.1.2.C P043: pre-copy the handle cohort fields are unwritten (the bug)",
+              h->has_thompson_precision_prior == 0);
+        COPY_RESULT_TO_HANDLE_FROM_DERIVED(*h, *r);
+        check("v5.15.5.E.1.2.C P043: copy sets the per-field presence flag",
+              h->has_thompson_precision_prior == 1 && h->has_thompson_precision_obs == 1);
+        check("v5.15.5.E.1.2.C P043: the copied value round-trips the emitted cfg value",
+              fabs(FPN_ToDouble(h->thompson_precision_prior) - 2.5) < 1e-9);
+
+        // BEFORE/AFTER at the REAL consumer — NodeModelZoo_ValidateAgainstCfg.
+        // Pre-copy zoo (4 zeroed handles) = every load before this fix.
+        auto* zoo = new NodeModelZoo<64>();
+        NodeModelZoo_Init(zoo);
+        auto* ctx = new tt::NodeContext<64>();
+        tt::NodeContextDisplayMeta<64> meta_pre = {};
+        tt::NodeContextDisplayMeta<64> meta_post = {};
+        (void)NodeModelZoo_ValidateAgainstCfg(zoo, /*ezoo=*/(EnsembleModelZoo<64>*)nullptr, cfg,
+            /*node_id=*/0, /*strict=*/0, /*ack_inf=*/0, /*ack_xbin=*/0, &meta_pre, ctx);
+        // This single measurement is BOTH halves of the contract: (a) the false
+        // fire the missing walker caused, and (b) the INTENDED trained-without-
+        // feature catch — an absent key must still drift when the cfg cohort is
+        // on (CfgDriftCheckRegistry :273 decision; do not re-gate the rows).
+        check("v5.15.5.E.1.2.C P043: unwritten handles + cohort-on cfg DO drift (Tier 1 > 0 — the false fire / the intended absent-key catch)",
+              meta_pre.cfg_drift_tier1_count > 0);
+
+        // Copy the parsed stamp into all four role handles, revalidate.
+        COPY_RESULT_TO_HANDLE_FROM_DERIVED(zoo->barrier,    *r);
+        COPY_RESULT_TO_HANDLE_FROM_DERIVED(zoo->regime,     *r);
+        COPY_RESULT_TO_HANDLE_FROM_DERIVED(zoo->exit,       *r);
+        COPY_RESULT_TO_HANDLE_FROM_DERIVED(zoo->buy_signal, *r);
+        (void)NodeModelZoo_ValidateAgainstCfg(zoo, /*ezoo=*/(EnsembleModelZoo<64>*)nullptr, cfg,
+            /*node_id=*/0, /*strict=*/0, /*ack_inf=*/0, /*ack_xbin=*/0, &meta_post, ctx);
+        check("v5.15.5.E.1.2.C P043: post-copy the SAME cfg drifts ZERO Tier 1 (REFUSE_STRICT false-fire is dead)",
+              meta_post.cfg_drift_tier1_count == 0);
+        check("v5.15.5.E.1.2.C P043: post-copy Tier 2 clean too (blend_ratio/algorithm compare true values)",
+              meta_post.cfg_drift_tier2_count == 0);
+        delete zoo; delete ctx; delete h; delete r;
+    }
+
     // ─── Test C.4: Load with missing file returns 0 (forward-compat-by-absence) ───
     {
         EnsembleModelZoo<64> ezoo;

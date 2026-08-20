@@ -28405,8 +28405,8 @@ e3_skip_load:;
         // +1 = 14 post-v5.15.5.A.7 (cfg_cross_binary_drift BIT_FLAG added for ArchField
         // ↔ CfgDrift bitmap asymmetry closure; cfg_binding_drift bit reused for
         // INFERENCE_CFG category — already counted in v5.15.1's +7).
-        check("A6 (D-221): FOREACH_FAILURE_MODE_COUNT == 15 (was 14; +1 ml_model_corrupt)",
-              FOREACH_FAILURE_MODE_COUNT == 15);
+        check("A6 (D-221): FOREACH_FAILURE_MODE_COUNT == 16 (E.1.2.C: +1 ml_role_mismatch)",
+              FOREACH_FAILURE_MODE_COUNT == 16);
         check("v5.15.1.A.1: FAILURE_BIT_COUNT fits uint16_t (≤16)",
               (int)tt::FAILURE_BIT_COUNT <= 16);
 

@@ -85,6 +85,12 @@ LEDGER = os.environ.get("IDENTIFIER_LEDGER") or os.path.join(
 # "ADD (ok)" instead of the Knight-Capital-shaped violation it is.
 RETIRED_NAMES = {
     "CONTROLLER_SNAPSHOT_VERSION",   # E.1.2/D-289 — controller snapshot format retired (was version=14)
+    # E.1.2.C 3-retire (2026-08-20) — cfg NAME KEY retired at PARITY-044: parsed-never-read since
+    # v5.13.0 (its only consumers were its own parser, two round-trip tests, and five tooltips
+    # advertising it). NOTE: this is the FIRST proactively-burned never-ledger-enrolled name — cfg
+    # name keys have no SOURCES row yet (paced enrollment); the burn is the only mechanized
+    # never-reuse available, and the whole-word scan is name-agnostic so the set tolerates it.
+    "exit_signal_model_dir",
     # E.1.2/D-421 step 6 Tier 0 (2026-08-16) — the `fees` stamp group was DELETED, not tombstoned in
     # code: two of its rows emitted zeros into an HMAC-signed body. Every H21 condition was checked
     # against a named search space and no live referent survives (one hit tree-wide, the tombstone

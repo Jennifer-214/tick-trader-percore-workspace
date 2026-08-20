@@ -21455,8 +21455,7 @@ e3_skip_load:;
         check("v5.13.0.A: cfg.exit_threshold defaults to 0.6",
               FPN_ToDouble(cfg.exit_threshold) > 0.59 &&
               FPN_ToDouble(cfg.exit_threshold) < 0.61);
-        check("v5.13.0.A: cfg.exit_signal_model_dir defaults to empty",
-              cfg.exit_signal_model_dir[0] == '\0');
+        // (v5.13.0.A exit_signal_model_dir default pin DELETED with the field — E.1.2.C 3-retire.)
         check("v5.13.0.B: cfg.calibration_log_path defaults to empty",
               cfg.calibration_log_path[0] == '\0');
 
@@ -21618,9 +21617,11 @@ e3_skip_load:;
             check("v5.13.0.B: parsed exit_threshold ~= 0.75",
                   FPN_ToDouble(parsed_cfg.exit_threshold) > 0.74 &&
                   FPN_ToDouble(parsed_cfg.exit_threshold) < 0.76);
-            check("v5.13.0.B: parsed exit_signal_model_dir matches",
-                  strcmp(parsed_cfg.exit_signal_model_dir,
-                         "/path/to/exit_models") == 0);
+            // E.1.2.C 3-retire — exit_signal_model_dir RETIRED (PARITY-044).
+            // The fixture line above DELIBERATELY still carries the retired
+            // key: the H21-valuable pin is that an old cfg containing it
+            // still parses + boots (global-unknown keys are ignored), which
+            // the surviving field checks below prove by loading cleanly.
             check("v5.13.0.B: parsed calibration_log_path matches",
                   strcmp(parsed_cfg.calibration_log_path,
                          "/tmp/calib_out.csv") == 0);
@@ -21930,32 +21931,12 @@ e3_skip_load:;
         }
     }
 
-    printf("\n--- v5.13.5: side selector path routing logic ---\n");
-    {
-        // Verify the side_prefix logic that mh_run_one_horizon_fv uses.
-        // We can't actually call mh_run_one_horizon_fv here (would require
-        // a full XGBoost training cycle), but we verify the path-derivation
-        // behavior matches what side_prefix produces.
-        const char* side_prefix_buy = (0 == 1) ? "exit/" : "";
-        const char* side_prefix_exit = (1 == 1) ? "exit/" : "";
-        check("v5.13.5: side=0 (buy) → empty side_prefix",
-              strcmp(side_prefix_buy, "") == 0);
-        check("v5.13.5: side=1 (exit) → 'exit/' side_prefix",
-              strcmp(side_prefix_exit, "exit/") == 0);
-
-        // Compose actual paths
-        char buy_path[320], exit_path[320];
-        snprintf(buy_path, sizeof(buy_path),
-                 "models/%s%s/%s_horizon_%d",
-                 side_prefix_buy, "classification", "myrun", 5000);
-        snprintf(exit_path, sizeof(exit_path),
-                 "models/%s%s/%s_horizon_%d",
-                 side_prefix_exit, "classification", "myrun", 5000);
-        check("v5.13.5: side=0 path == 'models/classification/myrun_horizon_5000'",
-              strcmp(buy_path, "models/classification/myrun_horizon_5000") == 0);
-        check("v5.13.5: side=1 path == 'models/exit/classification/myrun_horizon_5000'",
-              strcmp(exit_path, "models/exit/classification/myrun_horizon_5000") == 0);
-    }
+    // E.1.2.C 3-retire — the v5.13.5 "side selector path routing" block is
+    // DELETED with justification: it was a REPLICA oracle (literally tested
+    // (0==1)/(1==1) on locally re-derived strings — it could never fail when
+    // production changed) pinning the RETIRED models/exit/ convention. The
+    // replacement pins land with the role-arm commit via an extracted pure
+    // helper (side flips the ROLE FILE, not the path).
 
     printf("\n--- v5.13.5: alignment check for label_kind CSV ---\n");
     {

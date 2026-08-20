@@ -26852,6 +26852,139 @@ e3_skip_load:;
         delete ezoo; delete ezoo2; delete rolling; delete rolling_long;
     }
 
+    // ─── Test C.3g: Training_ResolveRole — the 3-role table, exhaustive over
+    //     FOREACH_TARGET × side (E.1.2.C deferred pure-fn tables, 2026-08-20) ───
+    //
+    // The fn is the ONE role-file derivation (Backtest/LabelFunctions.hpp —
+    // moved there from the ImGui-only BacktestPanels.hpp so this ANSI TU
+    // drives the REAL fn; an inline replica here would be the Class-51 shape
+    // the E.1.2.C plan's OUT-list replica died of). Oracle = hand-pinned
+    // expected strings, never re-derived from the fn's own rule.
+    // Note the naming crossover this table makes visible: the BARRIER *label*
+    // trains the buy_signal *role*; the barrier ROLE file is produced by the
+    // PEAK_VALLEY_STABLE label. side=1 forces "exit" for EVERY label kind.
+    {
+        struct RoleCell { const char* label_name; int label_type; int side; const char* expect; };
+        static const RoleCell cells[] = {
+            // side=0 — the label kind picks among the buy roles
+            { "WIN_LOSS",              LABEL_WIN_LOSS,              0, "buy_signal" },
+            { "BARRIER",               LABEL_BARRIER,               0, "buy_signal" },
+            { "FORWARD_PNL",           LABEL_FORWARD_PNL,           0, "buy_signal" },
+            { "REGIME",                LABEL_REGIME,                0, "regime"     },
+            { "VOL_BARRIER",           LABEL_VOL_BARRIER,           0, "buy_signal" },
+            { "WILL_PEAK",             LABEL_WILL_PEAK,             0, "buy_signal" },
+            { "WILL_VALLEY",           LABEL_WILL_VALLEY,           0, "buy_signal" },
+            { "PEAK_VALLEY_STABLE",    LABEL_PEAK_VALLEY_STABLE,    0, "barrier"    },
+            { "CS_PERCENTILE_RANK",    LABEL_CS_PERCENTILE_RANK,    0, "buy_signal" },
+            { "CS_ZSCORE_ROBUST",      LABEL_CS_ZSCORE_ROBUST,      0, "buy_signal" },
+            { "CS_VOLSCALED_DEMEANED", LABEL_CS_VOLSCALED_DEMEANED, 0, "buy_signal" },
+            // side=1 — side selects the ROLE: co-located "exit", every label kind
+            { "WIN_LOSS",              LABEL_WIN_LOSS,              1, "exit" },
+            { "BARRIER",               LABEL_BARRIER,               1, "exit" },
+            { "FORWARD_PNL",           LABEL_FORWARD_PNL,           1, "exit" },
+            { "REGIME",                LABEL_REGIME,                1, "exit" },
+            { "VOL_BARRIER",           LABEL_VOL_BARRIER,           1, "exit" },
+            { "WILL_PEAK",             LABEL_WILL_PEAK,             1, "exit" },
+            { "WILL_VALLEY",           LABEL_WILL_VALLEY,           1, "exit" },
+            { "PEAK_VALLEY_STABLE",    LABEL_PEAK_VALLEY_STABLE,    1, "exit" },
+            { "CS_PERCENTILE_RANK",    LABEL_CS_PERCENTILE_RANK,    1, "exit" },
+            { "CS_ZSCORE_ROBUST",      LABEL_CS_ZSCORE_ROBUST,      1, "exit" },
+            { "CS_VOLSCALED_DEMEANED", LABEL_CS_VOLSCALED_DEMEANED, 1, "exit" },
+        };
+        const int n_cells = (int)(sizeof(cells) / sizeof(cells[0]));
+        char cname[160];
+        for (int i = 0; i < n_cells; ++i) {
+            const char* got = Training_ResolveRole(cells[i].label_type, cells[i].side);
+            snprintf(cname, sizeof(cname),
+                     "v5.15.5.E.1.2.C C.3g: ResolveRole(%s, side=%d) == \"%s\"",
+                     cells[i].label_name, cells[i].side, cells[i].expect);
+            check(cname, strcmp(got, cells[i].expect) == 0);
+        }
+        // Completeness pin: appending a FOREACH_TARGET row must FORCE a
+        // conscious side=0 + side=1 role classification here (the count-pin
+        // idiom; sister of the FOREACH_FAILURE_MODE_COUNT 15→16 pin).
+        check("v5.15.5.E.1.2.C C.3g: table covers every FOREACH_TARGET row x both sides",
+              n_cells == 2 * LABEL_COUNT_AUTO);
+    }
+
+    // ─── Test C.3h: Model_RoleCheckDecide — the D2 verdict's pinned decision
+    //     table (E.1.2.C deferred pure-fn tables; oracle = reports/2026-08-20-
+    //     ml-verification-program/a-class-D2-guard-fork-verdict.md § Required
+    //     output 3, transcribed cell-by-cell — never re-derived) ───
+    //
+    // Slot semantics: EXIT slot ⟺ slot_role=="exit"; the three buy slots keep
+    // legacy (keyless) tolerance; exit slots have ZERO legacy population, so a
+    // keyless stamp there REFUSES in strict. strict==-1 never parses a stamp
+    // (callers never reach the fn with it) — pinned PASS for totality, matching
+    // the fn's own contract comment.
+    {
+        struct DecideCell { const char* slot; const char* stamp; int has; int strict; int expect; };
+        static const DecideCell cells[] = {
+            // ── BUY slot "barrier" × {match, cross-family mismatch, absent} × strict {1,0,-1}
+            { "barrier",    "barrier",    1,  1, ROLE_CHECK_PASS   },
+            { "barrier",    "barrier",    1,  0, ROLE_CHECK_PASS   },
+            { "barrier",    "barrier",    1, -1, ROLE_CHECK_PASS   },
+            { "barrier",    "exit",       1,  1, ROLE_CHECK_REFUSE },
+            { "barrier",    "exit",       1,  0, ROLE_CHECK_WARN   },
+            { "barrier",    "exit",       1, -1, ROLE_CHECK_PASS   },
+            { "barrier",    "",           0,  1, ROLE_CHECK_PASS   },  // legacy keyless tolerance
+            { "barrier",    "",           0,  0, ROLE_CHECK_PASS   },
+            { "barrier",    "",           0, -1, ROLE_CHECK_PASS   },
+            // ── BUY slot "regime"
+            { "regime",     "regime",     1,  1, ROLE_CHECK_PASS   },
+            { "regime",     "regime",     1,  0, ROLE_CHECK_PASS   },
+            { "regime",     "regime",     1, -1, ROLE_CHECK_PASS   },
+            { "regime",     "exit",       1,  1, ROLE_CHECK_REFUSE },
+            { "regime",     "exit",       1,  0, ROLE_CHECK_WARN   },
+            { "regime",     "exit",       1, -1, ROLE_CHECK_PASS   },
+            { "regime",     "",           0,  1, ROLE_CHECK_PASS   },
+            { "regime",     "",           0,  0, ROLE_CHECK_PASS   },
+            { "regime",     "",           0, -1, ROLE_CHECK_PASS   },
+            // ── BUY slot "buy_signal"
+            { "buy_signal", "buy_signal", 1,  1, ROLE_CHECK_PASS   },
+            { "buy_signal", "buy_signal", 1,  0, ROLE_CHECK_PASS   },
+            { "buy_signal", "buy_signal", 1, -1, ROLE_CHECK_PASS   },
+            { "buy_signal", "exit",       1,  1, ROLE_CHECK_REFUSE },
+            { "buy_signal", "exit",       1,  0, ROLE_CHECK_WARN   },
+            { "buy_signal", "exit",       1, -1, ROLE_CHECK_PASS   },
+            { "buy_signal", "",           0,  1, ROLE_CHECK_PASS   },
+            { "buy_signal", "",           0,  0, ROLE_CHECK_PASS   },
+            { "buy_signal", "",           0, -1, ROLE_CHECK_PASS   },
+            // ── EXIT slot: buy-stamped model in the exit slot is the
+            //    silently-trading-INVERTED case — REFUSE in strict.
+            { "exit",       "exit",       1,  1, ROLE_CHECK_PASS   },
+            { "exit",       "exit",       1,  0, ROLE_CHECK_PASS   },
+            { "exit",       "exit",       1, -1, ROLE_CHECK_PASS   },
+            { "exit",       "buy_signal", 1,  1, ROLE_CHECK_REFUSE },
+            { "exit",       "buy_signal", 1,  0, ROLE_CHECK_WARN   },
+            { "exit",       "buy_signal", 1, -1, ROLE_CHECK_PASS   },
+            { "exit",       "",           0,  1, ROLE_CHECK_REFUSE },  // zero legacy exit population
+            { "exit",       "",           0,  0, ROLE_CHECK_WARN   },
+            { "exit",       "",           0, -1, ROLE_CHECK_PASS   },
+            // ── Adversarial extras beyond the 36 base cells:
+            // has_role is the GATE, not the string — a coincidentally-"exit"
+            // stamp string with the key ABSENT is still absent semantics.
+            { "exit",       "exit",       0,  1, ROLE_CHECK_REFUSE },
+            { "exit",       "exit",       0,  0, ROLE_CHECK_WARN   },
+            // Within-buy-family mismatches REFUSE/WARN too (present ∧ ≠ slot).
+            { "barrier",    "regime",     1,  1, ROLE_CHECK_REFUSE },
+            { "barrier",    "regime",     1,  0, ROLE_CHECK_WARN   },
+            { "buy_signal", "barrier",    1,  1, ROLE_CHECK_REFUSE },
+        };
+        static const char* const dname[] = { "PASS", "WARN", "REFUSE" };
+        const int n_cells = (int)(sizeof(cells) / sizeof(cells[0]));
+        char cname[176];
+        for (int i = 0; i < n_cells; ++i) {
+            const int got = Model_RoleCheckDecide(cells[i].slot, cells[i].stamp,
+                                                  cells[i].has, cells[i].strict);
+            snprintf(cname, sizeof(cname),
+                     "v5.15.5.E.1.2.C C.3h: Decide(slot=%s, stamp=\"%s\", has=%d, strict=%d) == %s",
+                     cells[i].slot, cells[i].stamp, cells[i].has, cells[i].strict,
+                     dname[cells[i].expect]);
+            check(cname, got == cells[i].expect);
+        }
+    }
+
     // ─── Test C.4: Load with missing file returns 0 (forward-compat-by-absence) ───
     {
         EnsembleModelZoo<64> ezoo;

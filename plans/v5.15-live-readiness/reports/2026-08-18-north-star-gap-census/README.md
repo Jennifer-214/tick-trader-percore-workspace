@@ -115,3 +115,19 @@ which PARENT 64B lines · "▲ straddles inside A" — the H6 read) + co-include
 coupling, sync). `tissue.lua` pure+toothed, live board→compare leg (`test_tissue.lua`, 15).
 Plugin-lane queue now: tag-query composer · orphan tile · REGISTRY card (upstream-blocked) ·
 per-entry "compare with →" hook (partially subsumed — L/open-beside + tissue cover the flow).
+
+## Batch 7 (2026-08-19, the smalls pass; plugin `dcebcbe` · workspace this commit)
+
+- **Orphan/dead-unit tile (A rank 6) → MOOT TODAY, measured:** 6 written `[CONSUMERS]` lines vs
+  ~1,180 unit openers (0.5% coverage) — "absent = orphan" flags the whole corpus. Re-arm when
+  the v1 call-graph GENERATOR (toolchain rank 1) writes the axis corpus-wide. Second
+  measure-before-build save of the census (after `[DEFERRED]`).
+- **Closed:** foxtag README `fields` line · taxonomy frontmatter caught up (status complete,
+  stage 3-first-canonical) + indexes rebuilt · `TOOLCHAIN_VERSION` 0.1.0 → 0.5.0 (D-373; no
+  gate pins a value — verified) · cascade.py F9 skip-warn (the register's last unclosed code
+  item; sibling sites stay homed to the tree-wide F9 cohort, gold-plating tier) · plugin README
+  gains the ⋈ Between line.
+- **TD-231 VERIFIED closable — needs the operator TTY:** the close condition ("one flag
+  producer for HUD + CI") is met and stronger — `emit_record_layout.lua:37` (the CI gate's
+  emitter) consumes the plugin's own `sizeprobe._flags_for`, which post-TD-257 is
+  shipping-db-first. Run: `python3 tools/check_tech_debt.py --close 231`

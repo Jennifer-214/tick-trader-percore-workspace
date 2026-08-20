@@ -65,6 +65,17 @@ dont work"* + *"search bar → fzf pop up."*
   a mechanical sweep) · graph-walk drill-in + open-beside key still the queued rank-1 leaf
   (untouched this batch — the session pivoted to verification on the operator's call).
 
+## Batch 4 (2026-08-19 night; plugin `1328fff`; suite 50/50) — the graph-walk lands
+
+- **Census rank 1 + rank 2 CLOSED in one leaf** (shared plumbing, as predicted): `f`/`<C-]>`
+  drill re-roots the card on the selected tree entry's unit with a breadcrumb title +
+  `<C-t>`/`<BS>` trail-back (vim tag-stack idiom; `b` was avoided — it's the break-check lens
+  key, collision caught at design); panel-mode drill ACCUMULATES a card (board law); `L`
+  (float) = the §6 open-beside key via the new `panel.add_ctx(ctx)` explicit-ctx seam; target
+  resolution excursions restore buffer+view exactly. Live-tested (`test_hud_drill_live.lua`,
+  12 legs incl. excursion-restore + focus-return) per the batch-3 rule.
+- §7.5 NAVIGATE "graph-browser (re-root + history)" → **BUILT** (was PARTIAL/asm-only).
+
 ## Queued (the finish-list, from the three reports — re-derive there, not here)
 
 - **Plugin lane (A §2):** HUD graph-walk drill-in (rank 1) · per-entry compare/open-beside

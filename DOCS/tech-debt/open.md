@@ -3503,14 +3503,6 @@ sister_debt: TECH_DEBT-154 (the maker-fee guard, which uses the __builtin_expect
   - **Recommended shape when it is picked up:** (1) settle the proportionality policy FIRST, with the operator; (2) implement detection against that policy with a planted-function tooth (a planted un-blocked NON-trivial function must RED, else the extension is itself vacuous — Class-51); (3) decide explicitly whether the corpus gets converted (keeping HARD-zero) or baselined (accepting the regression), because that choice is the ship, not a detail of it.
   - **NOT started.** Sized and left open deliberately rather than half-landed — a partial extension that flags 400 things nobody triages would train the operator to ignore the gate, which is worse than the current honest gap.
 
-### TECH_DEBT-247 — the plugin suite's ONE red is normalized + untracked (`test_byte_layout_cascade`, engine line-number drift)
-
-- **id:** TECH_DEBT-247 · **severity:** low · **opened:** 2026-07-19 · **status:** open · **surface_tags:** [plugin, test-integrity, drift, signal-erosion]
-- **What:** `tools/plugins/fox-symdeps.nvim/tests/test_byte_layout_cascade.lua` fails **5 assertions** (`direct embedder resolved line: got 174 want 130` · `transitive embedder: got 226 want 144` · `BookImbalanceHistory line: got 71 want 72`). **Proven PRE-EXISTING** during the E.1.2.B `0.3` verification — stashing the cutover reproduces it identically on the clean tree — and unrelated to tags: it asserts **hardcoded ENGINE line numbers** that drifted as the corpus evolved. It is the suite's ONLY failure (38 passed / 1 failed) and was **untracked**, so the red is *normalized* — which erodes the signal: a genuinely NEW failure is easy to wave off as "just the usual one." That is the real cost, not the assertion itself.
-- **Fix shape:** re-anchor the assertions to a **stable locator** (symbol name / tag block) instead of a raw line number — a plugin test asserting live engine line numbers is a drift generator of exactly the class the tag system exists to kill; OR pin them against a frozen golden fixture (D-386) rather than live engine source. Prefer re-anchoring. Either way the suite must return to a **clean green** so red means red.
-- **Trigger:** the next plugin-suite touch (`0.4`/`0.5` are plugin increments), or the moment the red masks a real failure.
-- **Cross-ref:** D-386 (goldens/fixtures — the alternative fix) · D-385 (green-is-not-done; a normalized red is its mirror image) · Class-51 (signal that cannot fail meaningfully).
-
 ### TECH_DEBT-248 — M9 (enumerate-set) is a PARTIAL codification: promoted to the §11.5 table with no spec / skill / readiness check
 
 - **id:** TECH_DEBT-248 · **severity:** low-med (a meta-discipline that exists only as a memory does not fire structurally — it is exactly the M7 failure mode it neighbours) · **opened:** 2026-07-19 · **status:** open · **surface_tags:** [meta-discipline, codification-residual, audit-methodology, m7, m9, ar-1]

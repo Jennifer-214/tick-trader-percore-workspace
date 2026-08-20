@@ -1655,3 +1655,12 @@ related_specs: [meta-disciplines/meta-anti-pattern-index.md]
 
 ---
 - **Closed:** 2026-08-16 (moved open → closed via check_tech_debt.py --close)
+
+### TECH_DEBT-247 — the plugin suite's ONE red is normalized + untracked (`test_byte_layout_cascade`, engine line-number drift)
+
+- **id:** TECH_DEBT-247 · **severity:** low · **opened:** 2026-07-19 · **status:** closed · **surface_tags:** [plugin, test-integrity, drift, signal-erosion]
+- **What:** `tools/plugins/fox-symdeps.nvim/tests/test_byte_layout_cascade.lua` fails **5 assertions** (`direct embedder resolved line: got 174 want 130` · `transitive embedder: got 226 want 144` · `BookImbalanceHistory line: got 71 want 72`). **Proven PRE-EXISTING** during the E.1.2.B `0.3` verification — stashing the cutover reproduces it identically on the clean tree — and unrelated to tags: it asserts **hardcoded ENGINE line numbers** that drifted as the corpus evolved. It is the suite's ONLY failure (38 passed / 1 failed) and was **untracked**, so the red is *normalized* — which erodes the signal: a genuinely NEW failure is easy to wave off as "just the usual one." That is the real cost, not the assertion itself.
+- **Fix shape:** re-anchor the assertions to a **stable locator** (symbol name / tag block) instead of a raw line number — a plugin test asserting live engine line numbers is a drift generator of exactly the class the tag system exists to kill; OR pin them against a frozen golden fixture (D-386) rather than live engine source. Prefer re-anchoring. Either way the suite must return to a **clean green** so red means red.
+- **Trigger:** the next plugin-suite touch (`0.4`/`0.5` are plugin increments), or the moment the red masks a real failure.
+- **Cross-ref:** D-386 (goldens/fixtures — the alternative fix) · D-385 (green-is-not-done; a normalized red is its mirror image) · Class-51 (signal that cannot fail meaningfully).
+- **Closed:** 2026-08-18 (moved open → closed via check_tech_debt.py --close)

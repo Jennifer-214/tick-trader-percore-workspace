@@ -1,7 +1,7 @@
 ---
 type: input-space-taxonomy
-status: accumulating (1 of 3 surveys landed)
-stage: 2-draft   # explicitly self-describes as accumulating (1 of 3 surveys landed), so it has not earned a first-canonical claim
+status: complete — all 3 surveys + the 14-item synthesis landed; the schema locked v1.0 against it (D-345/D-346)
+stage: 3-first-canonical   # the schema lock IS the canonical application (the frontmatter had lagged the body since 2026-07-14 — census 2026-08-18 micro-fix)
 established: 2026-07-06
 tags: [in-code-documentation, tag-system, schema-completion, doc-discipline]
 sister_specs:

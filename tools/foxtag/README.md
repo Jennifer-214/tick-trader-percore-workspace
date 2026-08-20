@@ -59,6 +59,12 @@ foxtag layout <tu.cpp> [Struct ...]
                                 #   foxtag layout main.cpp ExecutionCore
                                 #   → {"tt::ExecutionCore<64>":{"size":68352,"align":64,"straddlers":[]}}
 
+foxtag fields <tu.cpp> [Struct ...]
+                                # PER-FIELD facts (name/offset/size per struct) — the RC-F
+                                # producer feeding check_register_fit.py (register_fit/1) and
+                                # the plugin's <leader>dR card. Same clang record-layout basis
+                                # as `layout`. (Was missing from this list — census 2026-08-18.)
+
 foxtag codegen --header <h> [--header <h2>...] --params 'SIG' --call 'EXPR' \
                [--flags 'F1 F2 ...'] [--prelude 'CODE']
                                 # CODEGEN facts via a g++ NOINLINE PROBE + objdump (D-321:

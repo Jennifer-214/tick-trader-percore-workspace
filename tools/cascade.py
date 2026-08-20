@@ -158,6 +158,7 @@ def iter_files(include_docs: bool):
 def find_hits(include_docs: bool):
     """Return (worklist, preserved_n, excluded_n) where worklist = {bucket: {relpath: [(line_no, ident)]}}."""
     worklist, preserved_n, excluded_n = {}, 0, 0
+    read_failed = []  # F9 (D-414 register): skipped-silently is a lie in a rename SWEEP
     for f in iter_files(include_docs):
         try:
             rel = str(f.relative_to(ENGINE))
@@ -169,6 +170,7 @@ def find_hits(include_docs: bool):
         try:
             lines = f.read_text(errors="replace").splitlines()
         except Exception:
+            read_failed.append(rel)
             continue
         for i, raw in enumerate(lines, 1):
             line = raw   # do NOT strip comments — a token in a // or # comment IS a rename site
@@ -192,6 +194,12 @@ def find_hits(include_docs: bool):
                     preserved_n += 1
                     continue
                 worklist.setdefault(_bucket(rel), {}).setdefault(rel, []).append((i, ident))
+    if read_failed:
+        # a sweep that silently skips unreadable files reports "no sites" where it means
+        # "never looked" — the M-of-N skip is said OUT LOUD (F9; advisory, never blocks)
+        sys.stderr.write("cascade: WARNING — %d file(s) unreadable and SKIPPED: %s%s\n" % (
+            len(read_failed), ", ".join(read_failed[:5]),
+            " …" if len(read_failed) > 5 else ""))
     return worklist, preserved_n, excluded_n
 
 

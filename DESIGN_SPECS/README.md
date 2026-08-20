@@ -270,4 +270,4 @@ Per-type catalog grouped by lifecycle stage. Cross-ref:
 
 | Spec | Stage | Tags | Sister count |
 |---|---|---|---|
-| `DESIGN_SPECS/doc-disciplines/format-input-space-taxonomy.md` | 2-draft   # explicitly self-describes as accumulating (1 of 3 surveys landed), so it has not earned a first-canonical claim | in-code-documentation, tag-system, schema-completion, +1 | 0 |
+| `DESIGN_SPECS/doc-disciplines/format-input-space-taxonomy.md` | 3-first-canonical   # the schema lock IS the canonical application (the frontmatter had lagged the body since 2026-07-14 — census 2026-08-18 micro-fix) | in-code-documentation, tag-system, schema-completion, +1 | 0 |

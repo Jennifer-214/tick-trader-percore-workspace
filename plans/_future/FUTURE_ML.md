@@ -480,3 +480,66 @@ When deciding to permanently kill an item (vision didn't pan out):
 - Move to a `KILLED` section at the bottom with the reason. Don't
   delete — the analysis is reusable next time a similar idea comes
   up.
+
+---
+
+## Entry-aware exit policy — and the MoE reading of the exit stack (2026-08-20)
+
+**Origin:** E.1.2.C ML-verification program design session. Caramel's framing mid-discussion:
+*"this feels like designing a primitive MOE"* — recorded because it is the correct lens and it
+sharpens where future intelligence should enter the system.
+
+**The MoE mapping (what we already have):**
+
+| MoE component | This engine |
+|---|---|
+| Experts | Per-horizon XGBoost predictors (`buy_signal[]` / `exit_predictor[]` arms; frozen, stamped, offline-trained) |
+| Gate, level 1 | Regime classifier (RANGING/TRENDING/VOLATILE/MILD_TREND) — routes to per-regime state |
+| Gate, level 2 | Per-regime bandit (EXP3/Thompson) over expert arms; Ridge blender = the dense-gate variant |
+| Sparse gating | Bandit SELECT (top-1 arm) |
+| Dense gating | Uniform / Ridge-weighted blend |
+| Gate training signal | Realized P&L attribution (online) — decision-aligned, not prediction-aligned |
+
+The differences from transformer-style MoE are deliberate, not primitive-by-accident: experts are
+FROZEN artifacts (the stamp/HMAC/determinism apparatus depends on experts not moving at serve
+time); the ONLY online-learning surface is the gate — bounded, persisted, observable. Jointly
+trained gate+experts (true MoE backprop) would dissolve the train-serve boundary the engine is
+built on. Closest literature: prediction-with-expert-advice (Hedge/EXP3) + Thompson over
+committees, regime-conditioned.
+
+**The design lens this buys:** "should the system know X?" now routes cleanly —
+market state → EXPERT features (the shared, parity-guarded vector); decision context (position
+state, regime, symbol) → GATE context, which needs NO new parity surface. **Experts see markets;
+gates see context.** Keep it that way.
+
+**Alpha hypothesis (the private kernel — entry-aware exits):** an exit policy conditioned on the
+position (unrealized P&L %, time-in-trade, drawdown-since-peak-since-entry, entry-regime vs
+current-regime) should beat a position-blind peak detector in trend regimes where depth-in-profit
+changes the optimal patience. Three rungs, cheapest first:
+
+1. **Position-aware exit THRESHOLD (cfg knob):** require higher blended P(peak) to early-exit
+   when deep ITM (threshold schedule over unrealized-P&L buckets). Deterministic, cfg-driven,
+   zero new ML surface. Cheap A/B in backtest.
+2. **Position-context GATING (contextual bandit):** cross the exit bandit's regime context with a
+   coarse position bucket ({ITM-deep, ITM-shallow, ATM, OTM-near-SL}) → per-(regime×bucket) arms.
+   Entry-awareness enters at the GATE; reuses the entire existing bandit/persistence/display
+   infra; no new features, no label changes, no parity growth. **Recommended first real rung.**
+3. **Entry-aware EXPERTS (the research project):** counterfactual entry-conditioned labels
+   ("exit now vs hold to barrier, given entry at t0"), a second position-relative feature pipeline
+   existing only at serve time, doubled parity surface, label-simulation cost (per-(sample,entry)
+   forward scans, or realized-trades-only with heavy selection bias). RL-adjacent. Do NOT start here.
+
+**Engineering shape:** rung 1 = one cfg row + a threshold schedule in the exit gate
+(StrategyParameters exit block). Rung 2 = bandit context widening (arms = regime×bucket) +
+persistence key growth (H21 append-only) + display widening. Rung 3 = new trainer mode + label
+functions + feature pipeline + scaler — a phase of its own.
+
+**Deferral status:** PARKED behind E.1.2.C legs 3-4 (position-blind exit stack wired + empirically
+measured). **Revisit triggers:** (a) the leg-4 empirical backtest shows systematic winner-truncation
+by early exits (signature: exit-attributed P&L negative vs no-exit baseline while the bandit
+converges toward never-exit arms); (b) the multi-symbol phase lands (per-symbol experts create the
+context-widening moment anyway); (c) live/paper shows barrier-only exits bleeding in regime
+transitions.
+
+**Privacy:** alpha-adjacent — stays HERE (gitignored, workspace-private); exclude from any future
+workspace-template sanitization pass.

@@ -1639,3 +1639,34 @@ including as a registry row or enum member. Do not "restore" it; a new meaning n
 `tools/identifier_ledger.txt` (blessed) · PARITY-042 (the wider cfg-derived drift-gate vacuity, still
 open) · `feature-lookup` sister entry *"bandit_enabled becomes a real operator control"* above, which
 is the control this line was falsely reporting.
+
+### foxml_suite anchors its cwd to the repo root at boot (v5.15.5.F.4d.1.E.1.2+, 2026-08-20)
+
+**What:** at `main()` entry (before any file I/O) the suite chdirs to the repo root, derived from
+`/proc/self/exe` → parent of the build dir (all build dirs sit one level below the root; the `bin/`
+symlink resolves through). Every relative path — `data/`, `models/`, `logging/`, `backtest.cfg`,
+`foxml_suite.ini`, `data/foxml_gui_state.txt` — now resolves correctly from ANY launch directory
+(desktop entry, keybind, foreign terminal cwd). Previously a non-root launch found no data, disabled
+Collect Features ("Select data files first"), and wrote its log into the launch cwd — which read as
+"the suite doesn't train models" from the operator seat (2026-08-20 report). The Data panel
+empty-state also now prints the resolved cwd for relative paths, so this class self-diagnoses.
+
+**Cfg flags:** none. Env override: `FOXML_ROOT=<dir>` forces the anchor target (relocated installs,
+or deliberately running against a different working set).
+
+**Fallback:** if `readlink(/proc/self/exe)` fails AND `FOXML_ROOT` is unset, behavior is unchanged
+(launch-cwd-relative, silent). If the chdir itself fails, a `[suite] WARN` line names the target and
+the suite continues launch-cwd-relative.
+
+**Where to verify:** launch `bin/foxml_suite` from any directory that is not the repo root →
+`logging/foxml_suite.log` (repo-side) is freshly rotated+written, nothing is created at the launch
+dir, and the Data panel lists `data/` CSVs with the default path.
+
+**Paper-test sanity:** Scan in the Data panel → files list → select → Collect Features enables.
+
+**Gotchas:** a previously typed absolute Directory path (e.g. `/data/BTCUSDT` at fs root) is not
+persisted — next boot returns to the `data/` default, which now just works. The May-2026 pre-fix
+logs were preserved before the first post-fix rotation ate them.
+
+**Related:** `scripts/download_data.sh` / `sync_archives.sh` cwd-anchoring (same class, shell side) ·
+TECH_DEBT-287 (engine_gui + engine sister surfaces, deferred with trigger).

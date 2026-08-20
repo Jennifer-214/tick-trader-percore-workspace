@@ -15,7 +15,7 @@ so the snapshot stales when tags/units actually change, not on unrelated line dr
 `rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a
 conversion).
 
-Converted files: 165 · unit blocks: 1101
+Converted files: 165 · unit blocks: 1103
 
 ## [TAG] values → files
 
@@ -119,11 +119,12 @@ Converted files: 165 · unit blocks: 1101
 - `MemHeaders/OmsFieldRegistry.hpp`
 - `Strategies/StrategyLifecycle.hpp`
 
-### CAPITAL_BEARING (29 files)
+### CAPITAL_BEARING (30 files)
 
 - `CoreFrameworks/CfgFieldRegistry.hpp`
 - `CoreFrameworks/ControllerConfig.hpp`
 - `CoreFrameworks/ControllerEventLoop.hpp`
+- `CoreFrameworks/EngineCommon.hpp`
 - `CoreFrameworks/EngineSharded/Async.hpp`
 - `CoreFrameworks/EngineSharded/Run.hpp`
 - `CoreFrameworks/EngineSharded/SlowPath.hpp`
@@ -654,10 +655,11 @@ Converted files: 165 · unit blocks: 1101
 - `MemHeaders/PerNodeStateFlagsRegistry.hpp`
 - `Strategies/StrategyInterface.hpp`
 
-### OMS_DRAINER (14 files)
+### OMS_DRAINER (15 files)
 
 - `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/ControllerEventLoop.hpp`
+- `CoreFrameworks/EngineCommon.hpp`
 - `CoreFrameworks/EngineSharded/Async.hpp`
 - `CoreFrameworks/EngineSharded/SlowPath.hpp`
 - `CoreFrameworks/Order.hpp`
@@ -999,7 +1001,7 @@ Converted files: 165 · unit blocks: 1101
 - `Strategies/private/EmaCross.hpp` — `Strategies/private/EmaCross.hpp`
 - `Version.hpp` — `Version.hpp`
 
-### FUNCTION (508)
+### FUNCTION (510)
 
 - `ANSI_Layout_Render` — `DataStream/TUIAnsi.hpp`
 - `ANSI_Section_Header` — `DataStream/TUIAnsi.hpp`
@@ -1082,6 +1084,7 @@ Converted files: 165 · unit blocks: 1101
 - `EngineCommon_ApplyBnbDiscount` — `CoreFrameworks/EngineCommon.hpp`
 - `EngineCommon_BootGlobal` — `CoreFrameworks/EngineCommon.hpp`
 - `EngineCommon_BootPerCore` — `CoreFrameworks/EngineCommon.hpp`
+- `EngineCommon_DrainPostFill` — `CoreFrameworks/EngineCommon.hpp`
 - `EngineCommon_SlowPathCycleAllCores` — `CoreFrameworks/EngineCommon.hpp`
 - `EngineCommon_SlowPathCycleOneCore` — `CoreFrameworks/EngineCommon.hpp`
 - `EngineHeader_Render` — `GUI/EngineHeaderPanel.hpp`
@@ -1096,7 +1099,6 @@ Converted files: 165 · unit blocks: 1101
 - `EngineSharded_Run` — `CoreFrameworks/EngineSharded/Run.hpp`
 - `EngineSharded_SignalHandler` — `CoreFrameworks/EngineSharded/Boot.hpp`
 - `EngineSharded_SlowPath_DrainManualCloses` — `CoreFrameworks/EngineSharded/SlowPath.hpp`
-- `EngineSharded_SlowPath_DrainPostFill` — `CoreFrameworks/EngineSharded/SlowPath.hpp`
 - `EngineSharded_SmartSlowPathPins` — `CoreFrameworks/EngineSharded/Run.hpp`
 - `EnsembleModelZoo_AutoDetectFromDir` — `ML_Headers/NodeModelZoo.hpp`
 - `EnsembleModelZoo_Init` — `ML_Headers/NodeModelZoo.hpp`
@@ -1420,6 +1422,7 @@ Converted files: 165 · unit blocks: 1101
 - `TradeLogBuffer_PushBuy` — `DataStream/TradeLog.hpp`
 - `TradeLog_Init` — `DataStream/TradeLog.hpp`
 - `TrainingPanel_Init` — `Backtest/BacktestPanels.hpp`
+- `Training_ResolveRole` — `Backtest/BacktestPanels.hpp`
 - `ValidationSplit_Generate` — `Backtest/ValidationSplit.hpp`
 - `VolScaler_Size` — `ML_Headers/VolScaler.hpp`
 - `WalkForward_ComputeAccuracy` — `Backtest/BacktestEngine.hpp`
@@ -1453,6 +1456,7 @@ Converted files: 165 · unit blocks: 1101
 - `cfg_write_field` — `GUI/SettingsPanel.hpp`
 - `check_live_capital_gated_until_e` — `CoreFrameworks/LiveReadiness.hpp`
 - `collect_multi_horizon_worker_fn` — `Backtest/BacktestPanels.hpp`
+- `copy_stamp_result_to_handle` — `MemHeaders/CfgGateRegistry.hpp`
 - `csv_field` — `GUI/TradeReader.hpp`
 - `depth_parse_json` — `DataStream/BinanceDepth.hpp`
 - `depth_thread_fn` — `DataStream/BinanceDepth.hpp`

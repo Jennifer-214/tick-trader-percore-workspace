@@ -1672,6 +1672,34 @@ agreement on an artifact that is order-SENSITIVE.
 
 ---
 
+### PARITY-044 — exit-side training and exit-side serving were built to different conventions and never joined; nothing records or checks a model's side
+
+```yaml
+id: PARITY-044
+title: the trainer's exit tree is unloadable by the live loader, exit_signal_model_dir is parsed-never-read, labels are side-blind, and no stamp key records the side — so entry/exit models are mechanically interchangeable while semantically opposite
+surface_tags: [train-serve-parity, ml-inference, exit-side, cfg-orphan, class-44, class-24, capital-safety]
+severity: high
+parity_axis: train↔serve (the exit half of the Path 3 architecture — producer and consumer disagree on layout, filename, and label semantics; no gate can detect a cross-side load)
+status: open
+detected_at: 2026-08-20 (operator question "does training train pairs for entry and exit side, or will they work interchangeably?" — answered by tracing at engine HEAD 417e524; every claim below is file:line-grounded, side-blindness legs by uncapped all-roots grep)
+related_specs:
+  - DESIGN_SPECS/meta-disciplines/train-serve-execution-layer-parity.md
+  - DESIGN_SPECS/meta-disciplines/advertised-capability-never-exercised.md
+```
+
+- **The four measured facts:**
+  1. **Trainer half** (`Backtest/BacktestPanels.hpp`): `training_side` has exactly TWO consumption sites in the tree (:4303, :4309), both directory routing — `models/exit/<subdir>/<run>_horizon_<H>/`. The role FILENAME stays label-type-derived (`buy_signal`/`barrier`/`regime`, :4291-4293; save at :4337). **No code path ever writes `exit.json`.**
+  2. **Labels are side-blind:** `training_side` appears nowhere in `BacktestEngine.hpp` / `LabelFunctions.hpp` / `BacktestSharded.hpp`, and `FOREACH_TARGET` carries no mirrored/sell label kind. An exit-side run with the default `WIN_LOSS` trains an ENTRY-goodness model into the exit tree. (`WILL_PEAK` / `PEAK_VALLEY_STABLE`'s peak class are the closest exit-appropriate kinds, operator-hand-picked only.)
+  3. **Serve half:** the live discovery is `EnsembleModelZoo_LoadFromCfg` (production callers `CoreFrameworks/HotSwap.hpp:128` + `CoreFrameworks/EnsembleHotSwap.hpp:77`) walking `<base>_horizon_<H>/` for a role file **`exit.json` CO-LOCATED with the buy roles** (`ML_Headers/NodeModelZoo.hpp:2148`; the zoo's own header comment labels `exit.json` "(future)" at :49). **`cfg.exit_signal_model_dir` (`ControllerConfig.hpp:856`) is declared, defaulted, parsed — and read by NOTHING**: its only other mentions are two parse-round-trip tests and FIVE trainer-side comments/tooltips instructing the operator to point it at the exit tree (`BacktestPanels.hpp:3115, 4300, 4988, 4998, 5977`). Advertised, unconsumable.
+  4. **No side marker anywhere:** no `training_side`/role key in the stamp registries (`StampHelper.hpp` + `StampBoundModelConstRegistry.hpp` + `StampBoundCfgRegistry.hpp`: zero hits); features and scaler are shared across roles by design. A buy model placed in an exit slot (or vice versa) loads CLEAN and no gate can ever notice.
+- **Why it's capital:** the exit consumer (`Strategies/StrategyParameters.hpp:1425-1499`; `exit_threshold` row `CfgFieldRegistry.hpp:787`) fires an early market-exit when blended P > `exit_threshold` (default 0.6). For an entry-trained model that rule is INVERTED — it exits precisely when the position looks best. Mechanically interchangeable + semantically opposite + zero detection = silent-wrongness by construction the day someone joins the seam by hand-renaming files.
+- **Interlock:** `MASK_ML_CFG_USE_EXIT_MODEL` gates a real read path (live once models exist). The D-423 exit-bandit SELECT sits downstream of `exit_predictor_count >= 2` — so the exit-learning loop currently has **no production model source** either; its proven loop-closure runs on hand-placed fixtures only.
+- **Fix path (design decision needed — consult, options fork):** (a) pick ONE layout+filename convention — smallest is the trainer emitting role name `exit` when `training_side=1` into the co-located per-horizon dirs; wiring `exit_signal_model_dir` as a loader base is the bigger alternative; (b) give the side a SEMANTIC leg — an exit-appropriate label kind default or an explicit label mirror, not just routing; (c) stamp a `training_side`/role key + load-time side check so cross-use REFUSES (the guard leg; H21 append-only new key; epoch-free per `project_no_live_models_dev_test_only`); (d) or retire the exit-side trainer routing + tooltips until (a)-(c) land — the D-422 three end-states: wire it, retire it, or mark it explicitly unproven.
+- **Cross-ref:** PARITY-042/-043 (same drift-gate neighborhood; the side key lands beside the `.B.3` parse→handle leg) · TECH_DEBT-094 (surviving slice = the ML exit-barrier params) · TECH_DEBT-034 (CLI/batch training) · the D-422 unwired-capability register · D-423 (exit-bandit, downstream consumer) · Classes 44 / 24 / 12.
+- **Status:** OPEN · **Target:** the foxml-suite training-fix leg (2026-08-20 session, queued behind the operator's convention/semantics decision).
+
+---
+
 ### PARITY-043 — the `.B.3` migration has no parse→handle leg, so two REFUSE_STRICT drift rows compare a permanent 0 against a live cfg default
 
 ```yaml

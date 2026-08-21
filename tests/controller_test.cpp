@@ -23667,78 +23667,16 @@ e3_skip_load:;
               rc_failure == 0);
     }
 
-    // ----- v5.14.2: Ensemble hot-swap helper ---------------------------------------------------------
-    // Tests EngineSharded_HotSwapEnsemble failure paths + .D Free
-    // completeness. Success paths (real model load + bandit overlay)
-    // require XGBoost model fixtures and are exercised by integration
-    // / paper testing.
-    printf("\n--- v5.14.2: ensemble hot-swap helper ---\n");
-    {
-        // Test 1 — Null zoo → returns 0 (failure path)
-        ControllerConfig<64> cfg = ControllerConfig_Default<64>();
-        int rc = tt::EngineSharded_HotSwapEnsemble<64>(
-            nullptr, cfg, /*node_id=*/0,
-            /*new_base_dir=*/"models/some_dir",
-            /*swap_backend=*/MODEL_BACKEND_XGBOOST);
-        check("v5.14.2: HotSwap null ezoo → returns 0", rc == 0);
-    }
-    {
-        // Test 2 — Empty path → returns 0
-        EnsembleModelZoo<64> ezoo;
-        EnsembleModelZoo_Init(&ezoo);
-        ControllerConfig<64> cfg = ControllerConfig_Default<64>();
-        int rc = tt::EngineSharded_HotSwapEnsemble<64>(
-            &ezoo, cfg, /*node_id=*/0,
-            /*new_base_dir=*/"",
-            /*swap_backend=*/MODEL_BACKEND_XGBOOST);
-        check("v5.14.2: HotSwap empty new_base_dir → returns 0", rc == 0);
-    }
-    {
-        // Test 3 — Null path → returns 0
-        EnsembleModelZoo<64> ezoo;
-        EnsembleModelZoo_Init(&ezoo);
-        ControllerConfig<64> cfg = ControllerConfig_Default<64>();
-        int rc = tt::EngineSharded_HotSwapEnsemble<64>(
-            &ezoo, cfg, /*node_id=*/0,
-            /*new_base_dir=*/nullptr,
-            /*swap_backend=*/MODEL_BACKEND_XGBOOST);
-        check("v5.14.2: HotSwap null new_base_dir → returns 0", rc == 0);
-    }
-    {
-        // Test 4 — Fresh zoo (no cached horizons) → returns 0
-        // EnsembleModelZoo_Init zeros horizon_ticks_at_idx[]; Helper
-        // walks it and finds nothing to load → safe-fail.
-        EnsembleModelZoo<64> ezoo;
-        EnsembleModelZoo_Init(&ezoo);
-        ControllerConfig<64> cfg = ControllerConfig_Default<64>();
-        int rc = tt::EngineSharded_HotSwapEnsemble<64>(
-            &ezoo, cfg, /*node_id=*/0,
-            /*new_base_dir=*/"/tmp/v5_14_2_nonexistent",
-            /*swap_backend=*/MODEL_BACKEND_XGBOOST);
-        check("v5.14.2: HotSwap with no cached horizons → returns 0", rc == 0);
-    }
-    {
-        // Test 5 — Cached horizons but invalid dir → LoadFromCfg
-        // returns 0 → helper returns 0; ezoo left in post-Free + post-Init
-        // (empty) state.
-        EnsembleModelZoo<64> ezoo;
-        EnsembleModelZoo_Init(&ezoo);
-        // Simulate a prior boot that loaded horizons {100, 500, 1000}
-        ezoo.horizon_ticks_at_idx[0] = 100;
-        ezoo.horizon_ticks_at_idx[1] = 500;
-        ezoo.horizon_ticks_at_idx[2] = 1000;
-        ezoo.barrier_count = 3;  // simulate post-load state
-        BITMAP_SET(ezoo.init_flags, MASK_EZOO_ACTIVE);
-
-        ControllerConfig<64> cfg = ControllerConfig_Default<64>();
-        int rc = tt::EngineSharded_HotSwapEnsemble<64>(
-            &ezoo, cfg, /*node_id=*/0,
-            /*new_base_dir=*/"/tmp/v5_14_2_definitely_nonexistent_dir_xyz",
-            /*swap_backend=*/MODEL_BACKEND_XGBOOST);
-        check("v5.14.2: HotSwap valid horizons + invalid dir → returns 0", rc == 0);
-        check("v5.14.2: HotSwap on failure leaves ezoo in empty post-Init state",
-              ezoo.barrier_count == 0 && BITMAP_IS_SET(ezoo.init_flags, MASK_EZOO_ACTIVE) == 0);
-    }
+    // ----- v5.14.2.D: EnsembleModelZoo_Free completeness ---------------------------------------------
+    // E.1.2.C — tests 1-5 of the old "ensemble hot-swap helper" block are
+    // DELETED WITH THEIR SUBJECT: the legacy in-place
+    // EngineSharded_HotSwapEnsemble (EnsembleHotSwap.hpp) had ZERO
+    // production callers at HEAD — superseded v5.15.4 by
+    // HotSwap_ShadowLoad_*, whose failure paths carry their own members
+    // (the shadow-load block below). Five cells asserting failure paths of
+    // a fn nothing ships would be Class-51 decoration. Test 6 SURVIVES
+    // unchanged — it drives the very-alive EnsembleModelZoo_Free directly.
+    printf("\n--- v5.14.2.D: EnsembleModelZoo_Free completeness ---\n");
     {
         // Test 6 — .D Free completeness: Free() must zero v5.14.1.E
         // fields (exit_ridge_state / exit_reward_ring / head /

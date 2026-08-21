@@ -69,7 +69,8 @@ static inline Money MQ(double d) { return Money{ (__int128)llround(d * 1e8) }; }
 #include "../ML_Headers/NodeModelZoo.hpp"                    // Track E.2 tests
 #include "../ML_Headers/ThompsonBandit.hpp"                  // v5.14.10.A — Bayesian Thompson sampling bandit
 #include "../ML_Headers/BanditAlgorithmRegistry.hpp"         // v5.14.10.A — FOREACH_BANDIT_ALGORITHM dispatch registry
-#include "../CoreFrameworks/EnsembleHotSwap.hpp"              // v5.14.2 — EngineSharded_HotSwapEnsemble template
+// (E.1.2.C — EnsembleHotSwap.hpp include DELETED with its header: the legacy
+//  in-place swap helper had zero production callers; HotSwap.hpp is the path.)
 #include "../ML_Headers/FeatureRegistry.hpp"                  // v5.8.1a tests
 #include "../Backtest/PhaseTimers.hpp"                        // v5.10.0 Item A — phase timer tests
 #include "../MemHeaders/BuddyAllocator.hpp"                   // v5.11.13 — typo fix + O(1) order lookup tests

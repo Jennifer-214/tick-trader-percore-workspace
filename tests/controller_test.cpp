@@ -20,6 +20,7 @@
 #include "money_cast_vectors.hpp"     // Ship-B P1c D-100 frozen fixture (Money_ToBinary / Money_FromBinary)
 #include "sharded_snapshot_v11_golden.hpp"  // E.1.2 (D-305/D-420) frozen v11 snapshot byte-golden
 #include "../GUI/SettingsSectionIndex.hpp"  // E.1.2.C 3G-i — Settings section-layout builder (ImGui-free on purpose so THIS TU pins it)
+#include "../GUI/ModelBundleScan.hpp"       // E.1.2.C 3G-ii — bundle-picker scanner (families via the loader's own matcher)
 
 //======================================================================================================
 // [TEST 1: CONFIG PARSER]
@@ -27074,6 +27075,122 @@ e3_skip_load:;
               rows_pn == pop_pn);
         check("v5.15.5.E.1.2.C 3G-i: curated order puts Trading first",
               real.n_sections > 0 && strcmp(real.names[0], "Trading") == 0);
+    }
+
+    // ─── Test 3G-ii: ModelBundleScan — families via the LOADER's matcher +
+    //     singles + the resolution preview (E.1.2.C bundle picker) ───
+    //
+    // The scanner + preview are ImGui-free (GUI/ModelBundleScan.hpp) and the
+    // family rule is Model_ParseHorizonSibling — the SAME fn boot auto-detect
+    // runs (extracted this ship), so picker grouping and loader resolution
+    // cannot drift. Disk fixture; idempotent create (version-suffixed root).
+    {
+        // (a) the shared matcher — loader-rule cells ("run_horizon_" = 12)
+        check("v5.15.5.E.1.2.C 3G-ii: matcher accepts run_horizon_1000",
+              Model_ParseHorizonSibling("run_horizon_1000", "run_horizon_", 12) == 1000);
+        check("v5.15.5.E.1.2.C 3G-ii: matcher accepts the 1000000 bound",
+              Model_ParseHorizonSibling("run_horizon_1000000", "run_horizon_", 12) == 1000000);
+        check("v5.15.5.E.1.2.C 3G-ii: matcher rejects non-numeric suffix",
+              Model_ParseHorizonSibling("run_horizon_abc", "run_horizon_", 12) == -1);
+        check("v5.15.5.E.1.2.C 3G-ii: matcher rejects trailing junk",
+              Model_ParseHorizonSibling("run_horizon_1000x", "run_horizon_", 12) == -1);
+        check("v5.15.5.E.1.2.C 3G-ii: matcher rejects h=0",
+              Model_ParseHorizonSibling("run_horizon_0", "run_horizon_", 12) == -1);
+        check("v5.15.5.E.1.2.C 3G-ii: matcher rejects out-of-bounds h",
+              Model_ParseHorizonSibling("run_horizon_1000001", "run_horizon_", 12) == -1);
+        check("v5.15.5.E.1.2.C 3G-ii: matcher rejects a wrong prefix",
+              Model_ParseHorizonSibling("other_horizon_1000", "run_horizon_", 12) == -1);
+
+        // (b) fixture tree: 2 families (one at depth 2) + 1 single + decoys
+        const char* R = "/tmp/v5_15_e12c_mbscan_a";
+        auto mk = [](const char* p) { mkdir(p, 0755); };
+        auto touch = [](const char* p) {
+            FILE* f = fopen(p, "w"); if (f) { fputs("{}", f); fclose(f); }
+        };
+        char pb[512];
+        mk(R);
+        snprintf(pb, sizeof(pb), "%s/fam_horizon_1000", R); mk(pb);
+        snprintf(pb, sizeof(pb), "%s/fam_horizon_1000/buy_signal.json", R); touch(pb);
+        snprintf(pb, sizeof(pb), "%s/fam_horizon_1000/exit.json", R); touch(pb);
+        snprintf(pb, sizeof(pb), "%s/fam_horizon_5000", R); mk(pb);
+        snprintf(pb, sizeof(pb), "%s/fam_horizon_5000/buy_signal.json", R); touch(pb);
+        snprintf(pb, sizeof(pb), "%s/classification", R); mk(pb);
+        snprintf(pb, sizeof(pb), "%s/classification/deep_horizon_300", R); mk(pb);
+        snprintf(pb, sizeof(pb), "%s/classification/deep_horizon_300/exit.json", R); touch(pb);
+        snprintf(pb, sizeof(pb), "%s/single_old", R); mk(pb);
+        snprintf(pb, sizeof(pb), "%s/single_old/barrier.json", R); touch(pb);
+        snprintf(pb, sizeof(pb), "%s/fam_horizon_abc", R); mk(pb);   // decoy: bad suffix, no roles
+        snprintf(pb, sizeof(pb), "%s/fam_horizon_0", R); mk(pb);     // decoy sibling-name, h=0 invalid
+        snprintf(pb, sizeof(pb), "%s/fam_horizon_0/buy_signal.json", R); touch(pb);
+
+        auto* ms = new ModelBundleScanState();
+        ModelBundleScan_Run(ms, R);
+        check("v5.15.5.E.1.2.C 3G-ii: fixture scan finds 4 entries (2 families + 2 singles)",
+              ms->count == 4);
+        auto find_exact = [&](const char* full) -> const ModelBundleEntry* {
+            for (int i = 0; i < ms->count; ++i)
+                if (strcmp(ms->entries[i].cfg_path, full) == 0) return &ms->entries[i];
+            return nullptr;
+        };
+        char e1[560]; snprintf(e1, sizeof(e1), "%s/fam", R);
+        char e2[560]; snprintf(e2, sizeof(e2), "%s/classification/deep", R);
+        char e3[560]; snprintf(e3, sizeof(e3), "%s/single_old", R);
+        char e4[560]; snprintf(e4, sizeof(e4), "%s/fam_horizon_0", R);
+        const ModelBundleEntry* fam  = find_exact(e1);
+        const ModelBundleEntry* deep = find_exact(e2);
+        const ModelBundleEntry* so   = find_exact(e3);
+        const ModelBundleEntry* fz   = find_exact(e4);
+        check("v5.15.5.E.1.2.C 3G-ii: family 'fam' — is_family, horizons {1000,5000} sorted",
+              fam && fam->is_family && fam->horizon_count == 2 &&
+              fam->horizons[0] == 1000 && fam->horizons[1] == 5000);
+        check("v5.15.5.E.1.2.C 3G-ii: fam roles h1000=buy+exit, h5000=buy; exit_count 1",
+              fam && fam->roles[0] == (MB_ROLE_BUY_SIGNAL | MB_ROLE_EXIT) &&
+              fam->roles[1] == MB_ROLE_BUY_SIGNAL && fam->exit_count == 1);
+        check("v5.15.5.E.1.2.C 3G-ii: fam label carries [ensemble - 2h - buy+exit]",
+              fam && strstr(fam->label, "[ensemble") != nullptr &&
+              strstr(fam->label, "2h") != nullptr &&
+              strstr(fam->label, "buy+exit") != nullptr);
+        check("v5.15.5.E.1.2.C 3G-ii: depth-2 family under classification/ found (exit-only)",
+              deep && deep->is_family && deep->horizon_count == 1 &&
+              deep->horizons[0] == 300 && deep->exit_count == 1 &&
+              deep->roles[0] == MB_ROLE_EXIT);
+        check("v5.15.5.E.1.2.C 3G-ii: single_old lists as single-zoo with the barrier role",
+              so && !so->is_family && so->roles[0] == MB_ROLE_BARRIER);
+        check("v5.15.5.E.1.2.C 3G-ii: invalid-h sibling name (h=0) lists as a SINGLE (loader-consistent)",
+              fz && !fz->is_family && (fz->roles[0] & MB_ROLE_BUY_SIGNAL) != 0);
+        auto* ms2 = new ModelBundleScanState();
+        ModelBundleScan_Run(ms2, R);
+        bool same = (ms2->count == ms->count);
+        for (int i = 0; same && i < ms->count; ++i)
+            if (strcmp(ms->entries[i].label, ms2->entries[i].label) != 0) same = false;
+        check("v5.15.5.E.1.2.C 3G-ii: rescan is deterministic (label-sorted order identical)",
+              same);
+
+        // (c) resolution-preview formatter cells
+        if (fam && deep && so) {
+            char pv[1408];
+            ModelBundle_FormatPreview(fam, pv, sizeof(pv));
+            check("v5.15.5.E.1.2.C 3G-ii: fam preview — Shape A, 2 horizons, 1 exit predictor, primary=buy_signal",
+                  strstr(pv, "Shape A") != nullptr && strstr(pv, "2 horizons") != nullptr &&
+                  strstr(pv, "1 exit predictor") != nullptr &&
+                  strstr(pv, "primary=buy_signal") != nullptr);
+            ModelBundle_FormatPreview(deep, pv, sizeof(pv));
+            check("v5.15.5.E.1.2.C 3G-ii: exit-only family preview WARNs buy side empty",
+                  strstr(pv, "no buy-side roles") != nullptr);
+            ModelBundleEntry empty_e; memset(&empty_e, 0, sizeof(empty_e));
+            empty_e.is_family = 1; empty_e.horizon_count = 1; empty_e.horizons[0] = 42;
+            snprintf(empty_e.cfg_path, sizeof(empty_e.cfg_path), "synthetic/none");
+            ModelBundle_FormatPreview(&empty_e, pv, sizeof(pv));
+            check("v5.15.5.E.1.2.C 3G-ii: nothing-loadable preview names the SimpleDip fallback",
+                  strstr(pv, "NOTHING LOADABLE") != nullptr && strstr(pv, "SimpleDip") != nullptr);
+            ModelBundle_FormatPreview(so, pv, sizeof(pv));
+            check("v5.15.5.E.1.2.C 3G-ii: single preview — Shape B + the skips-HMAC note",
+                  strstr(pv, "Shape B") != nullptr && strstr(pv, "HMAC") != nullptr);
+        } else {
+            check("v5.15.5.E.1.2.C 3G-ii: preview cells skipped — fixture entries missing",
+                  false);
+        }
+        delete ms; delete ms2;
     }
 
     // ─── Test C.4: Load with missing file returns 0 (forward-compat-by-absence) ───

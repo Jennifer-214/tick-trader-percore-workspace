@@ -96,14 +96,21 @@ NaN-free feature pack, Confidence scoring, Ridge blender.
 
 ## Sell-side ML inference (exit predictor)
 
+> **⏩ UPDATED 2026-08-20 (E.1.2.C):** `exit_signal_model_dir` is RETIRED + name-BURNED and the
+> `models/exit/` tree is GONE — exit models are CO-LOCATED (`exit.json` beside the buy roles in each
+> `_horizon_<H>/` dir, auto-discovered under `node_N_model_dir`; NO cfg step). The
+> `exit_signal_model_dir` bullet + paper-test steps 2/6 below describe the PRE-retirement flow and
+> are kept as history — the current flow is the 2026-08-20 entry "Exit-side training is REAL". The
+> side is also no longer label-blind: side=Exit defaults WILL_PEAK and a side×label gate refuses
+> entry-semantics kinds; the stamp's `expected_role` is ENFORCED at load (cross-side REFUSES strict).
+
 **What.** Path 3 architecture (v5.13.0+). Independent ML models for
 exit decisions. Predicts probability of "exit now" per slow-path
 cycle; when above threshold, fires `MARKET_SELL` via OMS.
 
 **Cfg flags:**
 - `use_exit_model=1` (master toggle; default 0)
-- `exit_signal_model_dir=<dir>` → engine auto-detects exit
-  `<dir>_horizon_<N>/` siblings into `exit_predictor[]`
+- ~~`exit_signal_model_dir=<dir>`~~ RETIRED 2026-08-20 (was parsed-never-read; co-location replaced it)
 - `exit_threshold` (default 0.6) — fire-or-skip cutoff
 - `exit_blender_mode` — uniform (0) vs ridge (1)
 
@@ -620,16 +627,19 @@ Operator types `Horizons CSV` + optional per-horizon
   positional
 - `Label Kind CSV` — broadcast or positional integer LABEL_*
   codes (tooltip iterates label_table[] live)
-- `Training Side` combo — Buy / Exit (routes output to
-  `models/<run>/` or `models/exit/<run>/`)
+- `Training Side` combo — Buy / Exit (E.1.2.C: side selects the ROLE
+  FILE — Exit emits `exit.json` CO-LOCATED in the same per-horizon
+  dirs; the old `models/exit/` second tree is retired)
 - `Multi-horizon max threads` — default 1 (libgomp landmine; see
   CLAUDE.local.md "Known landmine: XGBoost + libgomp")
 
 **Where to verify:**
 - foxml_suite Training panel results table per-horizon
 - Output dirs `models/<run_subdir>/<run>_horizon_<N>/role.json`
-  (or `models/exit/...` for exit side)
-- Each horizon gets `.model + .scaler + .stamp` triplet
+  (exit side co-locates `exit.json` in the SAME dirs — E.1.2.C)
+- Each horizon gets model + `.stamp` (NOTE 2026-08-20: no `.scaler` is
+  produced on the reachable path — the only scaler emitter is the dead
+  legacy worker; restore-vs-retire is the open D6 fork)
 
 **Paper-test sanity:**
 1. Type Horizons CSV `1000,5000,10000`

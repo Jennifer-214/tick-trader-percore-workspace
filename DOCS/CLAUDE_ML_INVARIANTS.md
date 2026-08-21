@@ -475,10 +475,10 @@ addition must update BOTH sides in the same ship.
 
 | Surface | Trainer side | Live side |
 |---|---|---|
-| Role file name | `BacktestPanels.hpp:~5122` `label_kind` switch picks role_name (`barrier`/`buy_signal`/`regime`) | `CoreModelZoo.hpp` `LoadFromDir` calls `TryLoadRole(..., "<role_name>", ...)` for each known role |
+| Role file name | `Training_ResolveRole` (`Backtest/LabelFunctions.hpp`, E.1.2.C) — side=1 ⇒ `exit`; else label kind picks among the buy roles (`barrier`/`regime`/`buy_signal`); exhaustively table-pinned (C.3g) | `ML_Headers/NodeModelZoo.hpp` — both loaders `TryLoadRole(..., "<role_name>", ...)` for each known role incl. `exit`; the stamp's `expected_role` is ENFORCED at the chokepoint (`Model_RoleCheckDecide`, C.3h) |
 | Stamp body | `stamp_write_for_model` writes registry hashes + cfg + label params | `verify_model_stamp` parses + checks against runtime build |
-| Scaler sidecar | `FeatureStandardizer_Save` to `<role>.json.scaler` | `FeatureStandardizer_Load` post-`Model_Load`; stamp records `scaler_sha256` |
-| Multi-horizon dir | Trainer writes to `<base>_horizon_<H>/` per horizon | `EnsembleModelZoo_AutoDetectFromDir` scans siblings + parses `_horizon_<H>` suffix |
+| Scaler sidecar | ⚠ DEAD PATH at HEAD (2026-08-20): the only `FeatureStandardizer_Save` producer is the dead legacy worker — the reachable MH path emits NO `.scaler`; restore-vs-retire is the open D6 fork | `FeatureStandardizer_Load` post-`Model_Load` (skips when the stamp carries no scaler binding — the current state for every HEAD-trained model); stamp records `scaler_sha256` when bound |
+| Multi-horizon dir | Trainer writes to `<base>_horizon_<H>/` per horizon | `EnsembleModelZoo_AutoDetectFromDir` scans siblings via `Model_ParseHorizonSibling` (the ONE matcher — shared with the Settings bundle picker, E.1.2.C 3G-ii) |
 | Class-extraction (`buy_class_idx`) | Implicit in label_kind semantics (PEAK_VALLEY_STABLE → class 1 = peak) | Loader's primary-role selector sets per-handle `buy_class_idx` based on `num_outputs` |
 | Priority chain | n/a (trainer doesn't know which is "primary") | Loader picks priority: `buy_signal > barrier > regime > <future>` |
 

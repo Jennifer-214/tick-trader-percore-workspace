@@ -23414,8 +23414,12 @@ e3_skip_load:;
     }
 
     // ----- v5.14.2.E.2.B: model-architectural stamp body fields (forensic) ---------------------------
-    // 4 new stamp body fields (expected_num_classes, expected_role,
-    // expected_num_features, expected_feature_format_version). Forensic
+    // 3 new stamp body fields (expected_role, expected_num_features,
+    // expected_feature_format_version). Forensic
+    // (E.1.2.C — was 4: `expected_num_classes` retired as a dead duplicate of
+    //  `model_num_outputs`; its cells died with the row, per D-426 precedent.
+    //  Those cells were the ONLY thing exercising that key's round-trip — a
+    //  green test over a key production never wrote.)
     // record of training-time model context. Round-trip: write stamp →
     // read back → verify field values + has_* flags.
     printf("\n--- v5.14.2.E.2.B: model-architectural stamp body fields ---\n");
@@ -23432,7 +23436,6 @@ e3_skip_load:;
             if (mf) { fputs("placeholder model", mf); fclose(mf); }
 
             StampInferenceCfgInputs inf = {};
-            STAMP_PUT(inf, expected_num_classes, 3);
             STAMP_PUT(inf, expected_role, "barrier");
             STAMP_PUT(inf, expected_num_features, 42);
             STAMP_PUT(inf, expected_feature_format_version, 7);
@@ -23450,8 +23453,6 @@ e3_skip_load:;
             ModelStampResult r = verify_model_stamp(tmp_model,
                 /*secret=*/"test_secret_v5_14_2_e2b",
                 /*gap_threshold=*/0.05, /*expected_format_version=*/6);
-            check("v5.14.2.E.2.B parse: has_expected_num_classes set", STAMP_HAS(r, expected_num_classes) == 1);
-            check("v5.14.2.E.2.B parse: expected_num_classes = 3", r.expected_num_classes == 3);
             check("v5.14.2.E.2.B parse: has_expected_role set", STAMP_HAS(r, expected_role) == 1);
             check("v5.14.2.E.2.B parse: expected_role = barrier",
                   strcmp(r.expected_role, "barrier") == 0);
@@ -23494,8 +23495,6 @@ e3_skip_load:;
             ModelStampResult r = verify_model_stamp(tmp_model,
                 /*secret=*/"test_secret_legacy",
                 /*gap_threshold=*/0.05, /*expected_format_version=*/6);
-            check("v5.14.2.E.2.B legacy: has_expected_num_classes = 0 (Surface G forward-compat)",
-                  STAMP_HAS(r, expected_num_classes) == 0);
             check("v5.14.2.E.2.B legacy: has_expected_role = 0",
                   STAMP_HAS(r, expected_role) == 0);
             check("v5.14.2.E.2.B legacy: has_expected_num_features = 0",
@@ -24047,7 +24046,6 @@ e3_skip_load:;
         STAMP_PUT(inf, xgb_train_nthread, 1);
 
         // POST_CFG section (6 fields):
-        STAMP_PUT(inf, expected_num_classes, 3);
         STAMP_PUT(inf, expected_role, "barrier");
         STAMP_PUT(inf, expected_num_features, 42);
         STAMP_PUT(inf, expected_feature_format_version, 5);
@@ -24088,8 +24086,6 @@ e3_skip_load:;
         check("v5.14.8.A.7: has_feature_mask",     STAMP_HAS(vr, feature_mask));
         check("v5.14.8.A.7: has_xgb_train_nthread",
               STAMP_HAS(vr, xgb_train_nthread));
-        check("v5.14.8.A.7: has_expected_num_classes",
-              STAMP_HAS(vr, expected_num_classes));
         check("v5.14.8.A.7: has_expected_role", STAMP_HAS(vr, expected_role));
         check("v5.14.8.A.7: has_expected_num_features",
               STAMP_HAS(vr, expected_num_features));
@@ -24114,8 +24110,6 @@ e3_skip_load:;
         check("v5.14.8.A.7: round-trip char[65] PRE_CFG (scaler_sha256)",
               strncmp(vr.scaler_sha256,
                       "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789", 64) == 0);
-        check("v5.14.8.A.7: round-trip POST_CFG int (expected_num_classes)",
-              vr.expected_num_classes == 3);
         check("v5.14.8.A.7: round-trip POST_CFG char[16] (expected_role)",
               strncmp(vr.expected_role, "barrier", 7) == 0);
         check("v5.14.8.A.7: round-trip POST_CFG char[65] (overlay_hash)",

@@ -85,6 +85,27 @@ LEDGER = os.environ.get("IDENTIFIER_LEDGER") or os.path.join(
 # "ADD (ok)" instead of the Knight-Capital-shaped violation it is.
 RETIRED_NAMES = {
     "CONTROLLER_SNAPSHOT_VERSION",   # E.1.2/D-289 — controller snapshot format retired (was version=14)
+    # E.1.2.C (2026-08-21) — stamp wire key retired, and THE FIRST NAMESPACE-SCOPED BURN.
+    # A bare burn was impossible: `expected_num_classes` names TWO independent formats — this dead
+    # stamp key, and the LIVE `expected.cfg` SIDECAR key written across Backtest/BacktestPanels.hpp
+    # and genuinely enforced at ML_Headers/NodeModelZoo.hpp:1025-1029. A global burn reported 7
+    # RETIRED-NAME-REUSE hits against working code, which left only "leave a dead row on a signed
+    # body" or "delete without the burn" — and the second is the narrated-not-enforced failure the
+    # `fees` correction above already documents once. Scoping is the third option, and it is the
+    # general fix: this collision class recurs as cfg-name-key enrollment proceeds (see the bare
+    # `exit_signal_model_dir` burn below, which is one same-spelling live key away from the same
+    # bind). Scope = the namespace's DEFINING surface and that suffices: a stamp key cannot exist
+    # without its registry row (the emit macro references a field the row generates), so any
+    # re-introduction elsewhere fails to COMPILE before it can reach a signed body.
+    #
+    # WHY THIS KEY IS RETIRABLE AT ALL: it was a DEAD DUPLICATE on both ends, not a zero-emit. Its
+    # only producer `req_num_outputs` had no writer anywhere in the tree, and the parsed field had
+    # no reader either (SKIP_HANDLE row; no `sr.expected_num_classes` access existed).
+    # `model_num_outputs` already carries the identical documented quantity — emitted
+    # UNCONDITIONALLY and REFUSING on mismatch at NodeModelZoo.hpp:505-508 — so wiring it would
+    # have stood a second mechanism up beside a working one (Class 21). Row + STAMP_BIT_ + MASK_ +
+    # emit block deleted, and `req_num_outputs` went with it since it existed only to feed this key.
+    "stamp-key:expected_num_classes",
     # E.1.2.C 3-retire (2026-08-20) — cfg NAME KEY retired at PARITY-044: parsed-never-read since
     # v5.13.0 (its only consumers were its own parser, two round-trip tests, and five tooltips
     # advertising it). NOTE: this is the FIRST proactively-burned never-ledger-enrolled name — cfg
@@ -465,7 +486,49 @@ def retired_name_check():
     if not RETIRED_NAMES:
         return []
     violations = []
-    pats = {n: re.compile(r"\b" + re.escape(n) + r"\b") for n in RETIRED_NAMES}
+
+    # NAMESPACED BURNS (E.1.2.C 2026-08-21). An entry is either a bare NAME —
+    # burned tree-wide, the original semantics, unchanged — or `namespace:NAME`,
+    # burned only within the SOURCES surface that namespace owns.
+    #
+    # WHY: RETIRED_NAMES was name-GLOBAL while the codebase has per-FORMAT
+    # namespaces, so a name shared between a retired wire key and a LIVE
+    # different-format key was unburnable. Measured instance: retiring the dead
+    # `expected_num_classes` stamp row is blocked by the live `expected.cfg`
+    # SIDECAR key of the same name (written across Backtest/BacktestPanels.hpp,
+    # enforced at ML_Headers/NodeModelZoo.hpp) — two independent formats, one
+    # spelling. Without scoping the only options were "leave a dead row on a
+    # signed body" or "delete without the burn", and the second is the
+    # narrated-not-enforced failure this module already documents once above.
+    #
+    # SCOPE = the namespace's DEFINING surface, not every file that mentions the
+    # name, and that is sufficient rather than a compromise: a stamp key cannot
+    # exist without its registry row (the emit macro references a field the row
+    # generates), so re-introduction anywhere else fails to COMPILE before it can
+    # reach a signed body. The registry file is the chokepoint.
+    ns_files = {}
+    for _ns, _rel, _kind, _nm, _opts in SOURCES:
+        ns_files.setdefault(_ns, set()).add(os.path.normpath(_rel))
+
+    scoped = []   # (display_entry, bare_name, compiled_pat, allowed_files_or_None)
+    for entry in RETIRED_NAMES:
+        ns, bare = (entry.split(":", 1) + [None])[:2] if ":" in entry else (None, entry)
+        if ns is not None and ns not in ns_files:
+            # A scoped burn naming a namespace with no SOURCES row would scan
+            # NOTHING and report a serene GREEN — the exact Class-51 vacuity this
+            # module has already been bitten by twice. Fail loudly instead.
+            violations.append(
+                f"RETIRED-NAMESPACE-UNKNOWN :: '{entry}' names namespace '{ns}', which has "
+                f"no SOURCES row. A scoped burn whose namespace does not exist matches nothing "
+                f"and would report GREEN vacuously (Class 51). Fix the namespace spelling, add "
+                f"the SOURCES row, or make the burn global by dropping the prefix.")
+            continue
+        scoped.append((entry, bare,
+                       re.compile(r"\b" + re.escape(bare) + r"\b"),
+                       ns_files[ns] if ns is not None else None))
+    if not scoped:
+        return violations
+
     for d in RETIRED_SCAN_DIRS:
         root = os.path.join(REPO_ROOT, d)
         for dirpath, _dirnames, filenames in os.walk(root):
@@ -473,19 +536,26 @@ def retired_name_check():
                 if not fn.endswith((".hpp", ".h", ".cpp")):
                     continue
                 fp = os.path.join(dirpath, fn)
+                rel = os.path.relpath(fp, REPO_ROOT)
+                relnorm = os.path.normpath(rel)
+                active = [t for t in scoped if t[3] is None or relnorm in t[3]]
+                if not active:
+                    continue
                 try:
                     with open(fp, encoding="utf-8", errors="replace") as fh:
                         stripped = _strip_comments_text(fh.read())
                 except OSError:
                     continue
                 for i, line in enumerate(stripped.split("\n"), 1):
-                    for n, pat in pats.items():
+                    for entry, bare, pat, allowed in active:
                         if pat.search(line):
-                            rel = os.path.relpath(fp, REPO_ROOT)
+                            where = ("burned tree-wide" if allowed is None
+                                     else f"burned within namespace '{entry.split(':', 1)[0]}' "
+                                          f"(its defining surface)")
                             violations.append(
-                                f"RETIRED-NAME-REUSE :: {n} at {rel}:{i} — this "
+                                f"RETIRED-NAME-REUSE :: {bare} at {rel}:{i} — this "
                                 f"identifier was retired WITH its format (ledger row removed); "
-                                f"the NAME is burned per H21. A new meaning needs a NEW identifier. "
+                                f"the NAME is {where} per H21. A new meaning needs a NEW identifier. "
                                 f"(If this is a tombstone RECORD, it belongs in a comment, not in code.)")
     return violations
 

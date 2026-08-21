@@ -87,6 +87,7 @@ GUI/GuiThread.hpp
 GUI/LogViewerPanel.hpp
 GUI/MLStatusPanel.hpp
 GUI/SettingsPanel.hpp
+GUI/SettingsSectionIndex.hpp
 GUI/StrategyQualityPanel.hpp
 GUI/TradeHistoryPanel.hpp
 GUI/TradeReader.hpp

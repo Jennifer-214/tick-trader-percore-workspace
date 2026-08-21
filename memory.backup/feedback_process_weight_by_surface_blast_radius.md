@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   tags: [audit-methodology, meta-discipline, operator-collaboration]
-  sister_specs: [feedback_auto_route_input_to_matching_skill.md, feedback_heavier_default_audit_posture_for_capital.md, feedback_never_skip_thoroughness_unless_explicit.md, feedback_tiered_audit_discipline_per_plan_scope.md, feedback_guards_compound_enforcement_is_leverage.md, feedback_no_unhomed_debt_code_smell.md, feedback_tag_disposition_at_fix_time.md]
+  sister_specs: [feedback_auto_route_input_to_matching_skill.md, feedback_heavier_default_audit_posture_for_capital.md, feedback_never_skip_thoroughness_unless_explicit.md, feedback_tiered_audit_discipline_per_plan_scope.md, feedback_guards_compound_enforcement_is_leverage.md, feedback_no_unhomed_debt_code_smell.md, feedback_tag_disposition_at_fix_time.md, feedback_plugin_livepath_verification_before_done.md]
   originSessionId: 730312a8-1185-4682-b01f-544206cbcd6d
   modified: 2026-07-20T02:16:42.180Z
 ---

@@ -602,3 +602,12 @@ this ad hoc now lives here.
 
 **Related:** Landmine 19 (search-side blindness of the same topology) · `feedback: engine CLAUDE.md
 is a symlink` memory (edit workspace-side) · E.1.2.C plan register #14 · a-class plan verdict A-10.
+
+**Landmine 21 addendum (2026-08-20, same close):** engine `DOCS/` has exactly ONE regular file among
+its 61 per-file symlinks — `DOCS/CODE_MAP.md`. The regen (`gen_code_map.sh`) writes it ENGINE-LOCALLY
+(gitignored); the version-controlled copy is the workspace-TRACKED mirror, which must be re-SYNCED at
+close (`cp` engine→workspace, the `1a4ec47`-precedent step) or the committed ground-truth map goes
+stale while the live one looks current. Measured this close: the mirror was two sessions stale and
+still listed a deleted function until the Stage-5.5 reviewer caught it. Corollary to the mitigation
+rule above: "use workspace absolute paths for workspace-owned trees" EXCEPT CODE_MAP, where the
+engine-side file is the fresh one and the workspace copy is the committed one.

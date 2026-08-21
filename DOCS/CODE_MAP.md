@@ -4,7 +4,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-08-16 (commit f2a6321)
+**Last regenerated**: 2026-08-20 (commit f4bbafe)
 
 ## CoreFrameworks/
 
@@ -22,74 +22,71 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### ControllerConfig.hpp
 
-- `ControllerConfig_CapitalRangeSweep` — line 1524
-- `Fee_Compute` — line 1653
-- `ControllerConfig_ResolveForCore` — line 1706
-- `ControllerConfig_PopulateCoresFromFlat` — line 1771
-- `ControllerConfig_NormalizeForMode` — line 2372
-- `ControllerConfig_IsLiveCapital` — line 2406
-- `ControllerConfig_Load` — line 2452
+- `ControllerConfig_CapitalRangeSweep` — line 1529
+- `Fee_Compute` — line 1658
+- `ControllerConfig_ResolveForCore` — line 1711
+- `ControllerConfig_PopulateCoresFromFlat` — line 1776
+- `ControllerConfig_NormalizeForMode` — line 2376
+- `ControllerConfig_IsLiveCapital` — line 2410
+- `ControllerConfig_Load` — line 2456
 
 ### ControllerEventLoop.hpp
 
-- `NodeSlowState_Init` — line 184
-- `NodeContextDisplayMeta_Init` — line 811
-- `Sharded_SlotNode` — line 1011 — early consumer precedes the definition (same tt namespace). (D-294)
-- `EventLoopState_ReconstructPerCoreFromEventLog` — line 1014
-- `EventLoopState_Init` — line 1127
-- `EventLoopState_InitLegacy` — line 1184
-- `EventLoopState_Free` — line 1217
-- `EventLoopState_RegisterCore` — line 1278
-- `Sharded_LegSlot` — line 1354 — All slow-path / boot-time. Trivially inlined.
-- `Sharded_SlotNode` — line 1391 — and ShardedSnapshot.hpp. GUI sites grandfathered for the E-series decouple. (D-294/D-295)
-- `Sharded_ValidatePartialExitCfg` — line 1404
-- `EventLoopState_SetCoreStrategy` — line 1456
-- `EventLoopState_AttachTradeLog` — line 1503
-- `EventLoopState_AttachOms` — line 1520
-- `EventLoopState_Balance` — line 1538
-- `EventLoopState_RealizedPnl` — line 1543
-- `EventLoopState_Portfolio` — line 1554
-- `EventLoopState_PortfolioMut` — line 1559
-- `EventLoopState_KsMinBalance` — line 1564
-- `EventLoopState_KsMaxDrawdownPct` — line 1569
-- `EventLoopState_KsPeakBalance` — line 1574
-- `EventLoopState_TradeLog` — line 1590
-- `EventLoopState_SetIntendedParams` — line 1605
-- `EventLoop_DrainPostFillOneCore` — line 1627
-- `EventLoop_DrainPostFill` — line 2056
-- `EventLoop_OnEvent` — line 2147
-- `EventLoop_DrainEvents` — line 2331
-- `EventLoop_QueueParameters` — line 2374
-- `EventLoop_RebuildAllParameters` — line 2412
-- `EventLoop_UpdateRollingStateOneCore` — line 2520
-- `EventLoop_UpdateEmaPriceAllCores` — line 2563
-- `EventLoop_RebuildOneCore` — line 2614
-- `EventLoop_PushParameters` — line 3582
-- `EventLoopState_ConfigureKillSwitch` — line 3644
-- `EventLoop_ClearAllPermissions` — line 3654
-- `EventLoop_KillSwitchTrip` — line 3665
-- `EventLoop_KillSwitchEvaluate` — line 3694
-- `EventLoop_TimeExitOneCore` — line 3761
-- `EventLoop_FlattenAll` — line 3865
-- `EventLoop_CheckWsStaleness` — line 3947
-- `EventLoop_TryClearRecovery` — line 4026
-- `EventLoop_TrailingSLRatchetOneCore` — line 4093
-- `EventLoop_BreakevenOnProfitOneCore` — line 4193
-- `EventLoop_Unpause` — line 4267
-- `EventLoop_SlowPath` — line 4291
-- `EventLoop_RunController` — line 4316
+- `NodeSlowState_Init` — line 185
+- `NodeContextDisplayMeta_Init` — line 812
+- `Sharded_SlotNode` — line 1012 — early consumer precedes the definition (same tt namespace). (D-294)
+- `EventLoopState_ReconstructPerCoreFromEventLog` — line 1015
+- `EventLoopState_Init` — line 1128
+- `EventLoopState_InitLegacy` — line 1185
+- `EventLoopState_Free` — line 1218
+- `EventLoopState_RegisterCore` — line 1279
+- `Sharded_LegSlot` — line 1355 — All slow-path / boot-time. Trivially inlined.
+- `Sharded_SlotNode` — line 1392 — and ShardedSnapshot.hpp. GUI sites grandfathered for the E-series decouple. (D-294/D-295)
+- `Sharded_ValidatePartialExitCfg` — line 1405
+- `EventLoopState_SetCoreStrategy` — line 1457
+- `EventLoopState_AttachTradeLog` — line 1504
+- `EventLoopState_AttachOms` — line 1521
+- `EventLoopState_Balance` — line 1539
+- `EventLoopState_RealizedPnl` — line 1544
+- `EventLoopState_Portfolio` — line 1555
+- `EventLoopState_PortfolioMut` — line 1560
+- `EventLoopState_KsMinBalance` — line 1565
+- `EventLoopState_KsMaxDrawdownPct` — line 1570
+- `EventLoopState_KsPeakBalance` — line 1575
+- `EventLoopState_TradeLog` — line 1591
+- `EventLoopState_SetIntendedParams` — line 1606
+- `EventLoop_DrainPostFillOneCore` — line 1641
+- `EventLoop_DrainPostFill` — line 2090
+- `EventLoop_OnEvent` — line 2176
+- `EventLoop_DrainEvents` — line 2360
+- `EventLoop_QueueParameters` — line 2403
+- `EventLoop_RebuildAllParameters` — line 2441
+- `EventLoop_UpdateRollingStateOneCore` — line 2549
+- `EventLoop_UpdateEmaPriceAllCores` — line 2592
+- `EventLoop_RebuildOneCore` — line 2643
+- `EventLoop_PushParameters` — line 3611
+- `EventLoopState_ConfigureKillSwitch` — line 3673
+- `EventLoop_ClearAllPermissions` — line 3683
+- `EventLoop_KillSwitchTrip` — line 3694
+- `EventLoop_KillSwitchEvaluate` — line 3723
+- `EventLoop_TimeExitOneCore` — line 3790
+- `EventLoop_FlattenAll` — line 3894
+- `EventLoop_CheckWsStaleness` — line 3976
+- `EventLoop_TryClearRecovery` — line 4055
+- `EventLoop_TrailingSLRatchetOneCore` — line 4122
+- `EventLoop_BreakevenOnProfitOneCore` — line 4222
+- `EventLoop_Unpause` — line 4296
+- `EventLoop_SlowPath` — line 4320
+- `EventLoop_RunController` — line 4345
 
 ### EngineCommon.hpp
 
 - `EngineCommon_ApplyBnbDiscount` — line 164
 - `EngineCommon_BootGlobal` — line 210
 - `EngineCommon_BootPerCore` — line 267
-- `EngineCommon_SlowPathCycleOneCore` — line 527
-- `EngineCommon_SlowPathCycleAllCores` — line 912
-
-### EnsembleHotSwap.hpp
-
-- `EngineSharded_HotSwapEnsemble` — line 35
+- `EngineCommon_SlowPathCycleOneCore` — line 532
+- `EngineCommon_SlowPathCycleAllCores` — line 917
+- `EngineCommon_DrainPostFill` — line 970
 
 ### EventLoopAggregates.hpp
 
@@ -111,12 +108,12 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### HotSwap.hpp
 
-- `HotSwap_ShadowLoad_Ensemble` — line 68
-- `HotSwap_ShadowLoad_SingleZoo` — line 230
+- `HotSwap_ShadowLoad_Ensemble` — line 67
+- `HotSwap_ShadowLoad_SingleZoo` — line 229
 
 ### LiveReadiness.hpp
 
-- `LiveReadiness_Verify` — line 307
+- `LiveReadiness_Verify` — line 352
 
 ### MetricCompute.hpp
 
@@ -130,7 +127,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### ModelValidation.hpp
 
-- `NodeModelZoo_ValidateAgainstCfg` — line 148
+- `NodeModelZoo_ValidateAgainstCfg` — line 149
 
 ### NodeLatencyStats.hpp
 
@@ -271,7 +268,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 - `ShardedBacktestDriver_Init` — line 176
 - `ShardedBacktest_RunTick` — line 237
-- `ShardedBacktest_Run` — line 457
+- `ShardedBacktest_Run` — line 458
 
 ### ShardedLiveSafety.hpp
 
@@ -389,16 +386,16 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### StrategyParameters.hpp
 
-- `Strategy_SpacingOk` — line 272
-- `Strategy_TpFloor` — line 291
-- `GateEgress_MaxPct` — line 315 — FinalizeEmit's range-validate AND the leg-B tp_pct_b clamp below (the A-class leg-B leak fix).
-- `GateParameters_FinalizeEmit` — line 318
-- `SimpleDip_BuildParameters` — line 432
-- `MeanReversion_BuildParameters` — line 515
-- `Momentum_BuildParameters` — line 608
-- `EmaCross_BuildParameters` — line 740
-- `ML_BuildParameters` — line 858
-- `Strategy_BuildParameters` — line 1904
+- `Strategy_SpacingOk` — line 277
+- `Strategy_TpFloor` — line 296
+- `GateEgress_MaxPct` — line 320 — FinalizeEmit's range-validate AND the leg-B tp_pct_b clamp below (the A-class leg-B leak fix).
+- `GateParameters_FinalizeEmit` — line 323
+- `SimpleDip_BuildParameters` — line 437
+- `MeanReversion_BuildParameters` — line 520
+- `Momentum_BuildParameters` — line 613
+- `EmaCross_BuildParameters` — line 745
+- `ML_BuildParameters` — line 863
+- `Strategy_BuildParameters` — line 1939
 
 ## Strategies/private/
 
@@ -842,61 +839,63 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 - `FeatureLookback_Max` — line 286
 - `FeatureLookback_CountEnabled` — line 296 — count enabled features (for validation)
-- `Model_Init` — line 527
-- `Model_Load` — line 575
-- `Model_Predict_Normalized` — line 710
-- `Model_Predict_AtClass` — line 773
-- `Model_LoadAOT` — line 836
-- `Model_Predict_AOT` — line 850
-- `Model_Predict` — line 894
-- `Model_Predict_Ensemble` — line 980
-- `Model_Predict_Ensemble_Weighted` — line 1068
-- `Model_PredictMulti` — line 1213
-- `Model_Free` — line 1289
-- `Model_IsLoaded` — line 1309
-- `ModelFeatures_Pack` — line 1333
+- `Model_Init` — line 530
+- `Model_Load` — line 578
+- `Model_Predict_Normalized` — line 713
+- `Model_Predict_AtClass` — line 776
+- `Model_LoadAOT` — line 839
+- `Model_Predict_AOT` — line 853
+- `Model_Predict` — line 897
+- `Model_Predict_Ensemble` — line 983
+- `Model_Predict_Ensemble_Weighted` — line 1071
+- `Model_PredictMulti` — line 1216
+- `Model_Free` — line 1292
+- `Model_IsLoaded` — line 1312
+- `ModelFeatures_Pack` — line 1336
 
 ### NodeModelZoo.hpp
 
 - `NodeModelZoo_Init` — line 159
-- `NodeModelZoo_TryLoadRole` — line 189
-- `NodeModelZoo_LoadFromDir` — line 663
-- `NodeModelZoo_LoadLegacy` — line 772
-- `NodeModelZoo_Free` — line 782
-- `NodeModelZoo_HasAny` — line 791
-- `NodeModelZoo_VerifyExpected` — line 829 — features in the pack, model crashes or produces garbage.
-- `EnsembleZoo_FinalizeCorrupt` — line 1368
-- `EnsembleModelZoo_Init` — line 1409
-- `EnsembleModelZoo_EnsurePrimary` — line 1502
-- `EnsembleModelZoo_RecordPrediction` — line 1559
-- `EnsembleModelZoo_UpdateDrift` — line 1588
-- `EnsembleModelZoo_TickRewardsFromLookback` — line 1641
-- `EnsembleModelZoo_TradeCloseReward` — line 1725
-- `EnsembleModelZoo_InitBandits` — line 1797
-- `EnsembleModelZoo_InitExitBandits` — line 1856
-- `EnsembleModelZoo_InitBuyThompsonBandits` — line 1911
-- `EnsembleModelZoo_InitExitThompsonBandits` — line 1963
-- `EnsembleModelZoo_SetDisabledHorizons` — line 2026
-- `EnsembleModelZoo_Free` — line 2054
-- `EnsembleModelZoo_LoadFromCfg` — line 2099
-- `EnsembleZoo_VerifyGridMemberConsistency` — line 2387
-- `EnsembleModelZoo_AutoDetectFromDir` — line 2457
-- `EnsembleModelZoo_ComputeBundleId` — line 2614
-- `EnsembleModelZoo_SaveBanditState` — line 2639
-- `EnsembleModelZoo_SaveExitBanditState` — line 2661
-- `EnsembleModelZoo_LoadBanditState` — line 2685
-- `EnsembleModelZoo_LoadExitBanditState` — line 2716
-- `EnsembleModelZoo_SaveThompsonState` — line 2774
-- `EnsembleModelZoo_SaveExitThompsonState` — line 2862
-- `EnsembleModelZoo_LoadThompsonState` — line 2945
-- `EnsembleModelZoo_LoadExitThompsonState` — line 3078
-- `EnsembleModelZoo_LoadBanditStateFromPath` — line 3221
-- `EnsembleModelZoo_SetBanditSaveInterval` — line 3248
-- `EnsembleModelZoo_MaybeSaveBanditPeriodic` — line 3266
-- `EnsembleModelZoo_PostLoadSetup` — line 3431
-- `EnsembleModelZoo_IsReadyForInference` — line 3450
-- `NodeModelZoo_PostLoadSetup` — line 3503
-- `NodeModelZoo_CheckStaleModel` — line 3538
+- `Model_RoleCheckDecide` — line 195
+- `NodeModelZoo_TryLoadRole` — line 208
+- `NodeModelZoo_LoadFromDir` — line 726
+- `NodeModelZoo_LoadLegacy` — line 835
+- `NodeModelZoo_Free` — line 845
+- `NodeModelZoo_HasAny` — line 854
+- `NodeModelZoo_VerifyExpected` — line 892 — features in the pack, model crashes or produces garbage.
+- `EnsembleZoo_FinalizeCorrupt` — line 1431
+- `EnsembleModelZoo_Init` — line 1472
+- `EnsembleModelZoo_EnsurePrimary` — line 1565
+- `EnsembleModelZoo_RecordPrediction` — line 1622
+- `EnsembleModelZoo_UpdateDrift` — line 1651
+- `EnsembleModelZoo_TickRewardsFromLookback` — line 1704
+- `EnsembleModelZoo_TradeCloseReward` — line 1788
+- `EnsembleModelZoo_InitBandits` — line 1860
+- `EnsembleModelZoo_InitExitBandits` — line 1919
+- `EnsembleModelZoo_InitBuyThompsonBandits` — line 1974
+- `EnsembleModelZoo_InitExitThompsonBandits` — line 2026
+- `EnsembleModelZoo_SetDisabledHorizons` — line 2089
+- `EnsembleModelZoo_Free` — line 2117
+- `EnsembleModelZoo_LoadFromCfg` — line 2162
+- `Model_ParseHorizonSibling` — line 2401 — BITMAP_IS_SET(ezoo->init_flags, MASK_EZOO_ACTIVE)=1 if any role got at least one horizon loaded.
+- `EnsembleZoo_VerifyGridMemberConsistency` — line 2478
+- `EnsembleModelZoo_AutoDetectFromDir` — line 2548
+- `EnsembleModelZoo_ComputeBundleId` — line 2701
+- `EnsembleModelZoo_SaveBanditState` — line 2726
+- `EnsembleModelZoo_SaveExitBanditState` — line 2748
+- `EnsembleModelZoo_LoadBanditState` — line 2772
+- `EnsembleModelZoo_LoadExitBanditState` — line 2803
+- `EnsembleModelZoo_SaveThompsonState` — line 2861
+- `EnsembleModelZoo_SaveExitThompsonState` — line 2949
+- `EnsembleModelZoo_LoadThompsonState` — line 3032
+- `EnsembleModelZoo_LoadExitThompsonState` — line 3165
+- `EnsembleModelZoo_LoadBanditStateFromPath` — line 3308
+- `EnsembleModelZoo_SetBanditSaveInterval` — line 3335
+- `EnsembleModelZoo_MaybeSaveBanditPeriodic` — line 3353
+- `EnsembleModelZoo_PostLoadSetup` — line 3518
+- `EnsembleModelZoo_IsReadyForInference` — line 3537
+- `NodeModelZoo_PostLoadSetup` — line 3590
+- `NodeModelZoo_CheckStaleModel` — line 3625
 
 ### PerArmFlagRegistry.hpp
 
@@ -1030,14 +1029,31 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 - `MLStatus_Render` — line 37 — nullptr; the row is rendered only when a swap is actually pending.
 
+### ModelBundleScan.hpp
+
+- `ModelBundle_ScanParent` — line 132
+- `ModelBundleScan_Run` — line 256
+- `ModelBundle_FormatPreview` — line 288
+
 ### SettingsPanel.hpp
 
-- `Settings_RescanModels` — line 973 — stays free of opendir/stat (per /readiness check 17 hardening).
-- `Settings_Init` — line 1061 — so Settings_Load knows where to read.
-- `Settings_Load` — line 1086
-- `Settings_RenderGlobalTab` — line 1276
-- `Settings_RenderPerCoreTab` — line 1548
-- `GUI_Panel_Settings` — line 1994 — running cores, not cfg-only intent — engine doesn't add/remove cores live.
+- `Settings_RescanModels` — line 979
+- `Settings_VerifyBundleStamps` — line 1001
+- `Settings_Init` — line 1101 — so Settings_Load knows where to read.
+- `Settings_Load` — line 1126
+- `Settings_RenderFieldDefRow` — line 1315
+- `Settings_BuildGlobalTabLayout` — line 1407
+- `Settings_BuildPerNodeTabLayout` — line 1419
+- `Settings_RenderGlobalTab` — line 1439
+- `Settings_RenderPerCoreTab` — line 1585
+- `GUI_Panel_Settings` — line 2063 — running cores, not cfg-only intent — engine doesn't add/remove cores live.
+
+### SettingsSectionIndex.hpp
+
+- `Settings_CanonicalSection` — line 27 — keep THIS header self-contained for any include site.
+- `SectionLayout_Build` — line 145
+- `SettingsSection_GlobalRegistrySectionOf` — line 253
+- `SettingsSection_PerNodeRegistrySectionOf` — line 258
 
 ### StrategyQualityPanel.hpp
 
@@ -1093,28 +1109,28 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 - `DataPanel_Init` — line 87
 - `DataPanel_Scan` — line 107
-- `RunControl_Init` — line 258 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
-- `SamplesSnapshot_Compute` — line 284 — only when running==0, giving a safe happens-before relationship.
-- `RunControl_Start` — line 511
-- `GUI_Panel_DataBrowser` — line 563
-- `GUI_Panel_RunControl` — line 674
-- `GUI_Panel_Results` — line 750
-- `PastRuns_Init` — line 1041
-- `PastRuns_LoadOne` — line 1111 — scan one run directory's metadata files
-- `PastRuns_DeleteDir` — line 1243
-- `PastRun_ParseHorizon` — line 1269 — out_horizon_ticks = 0).
-- `PastRuns_ScanOneDir` — line 1323
-- `PastRuns_Scan` — line 1360
-- `PastRun_MetricLabel` — line 1445 — label-type-aware metric label
-- `GUI_Panel_PastRuns` — line 1471 — Pass NULL to keep pre-v5.11.57 behavior (devmode-only).
-- `Comparison_Init` — line 2359
-- `Comparison_Free` — line 2378
-- `Comparison_SaveRun` — line 2400
-- `GUI_Panel_Comparison` — line 2453
-- `OptimizerPanel_Init` — line 2634
-- `GUI_Panel_Optimizer` — line 2699
-- `TrainingPanel_Init` — line 3145
-- `GUI_Panel_Training` — line 4958
+- `RunControl_Init` — line 264
+- `SamplesSnapshot_Compute` — line 290 — only when running==0, giving a safe happens-before relationship.
+- `RunControl_Start` — line 531
+- `GUI_Panel_DataBrowser` — line 583
+- `GUI_Panel_RunControl` — line 701
+- `GUI_Panel_Results` — line 777
+- `PastRuns_Init` — line 1068
+- `PastRuns_LoadOne` — line 1138 — scan one run directory's metadata files
+- `PastRuns_DeleteDir` — line 1270
+- `PastRun_ParseHorizon` — line 1296 — out_horizon_ticks = 0).
+- `PastRuns_ScanOneDir` — line 1350
+- `PastRuns_Scan` — line 1387
+- `PastRun_MetricLabel` — line 1472 — label-type-aware metric label
+- `GUI_Panel_PastRuns` — line 1498 — Pass NULL to keep pre-v5.11.57 behavior (devmode-only).
+- `Comparison_Init` — line 2391
+- `Comparison_Free` — line 2410
+- `Comparison_SaveRun` — line 2432
+- `GUI_Panel_Comparison` — line 2485
+- `OptimizerPanel_Init` — line 2672
+- `GUI_Panel_Optimizer` — line 2737
+- `TrainingPanel_Init` — line 3190
+- `GUI_Panel_Training` — line 5012
 
 ### BacktestSharded.hpp
 
@@ -1150,10 +1166,11 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `Label_ForwardPnl` — line 156 — useful for regression (predict magnitude, not just direction).
 - `Label_Regime` — line 177 — MILD_TREND (4) exceeds num_class=4; tracked as TECH_DEBT-241.
 - `Label_VolBarrier` — line 201 — source: ~/FoxML/private/DATA_PROCESSING/targets/barrier.py
-- `LabelType_NumClasses` — line 498 — ≥2 = multiclass softmax       (label values 0..K-1 as floats)
-- `LabelType_IsBinary` — line 503
-- `LabelType_IsRegression` — line 507
-- `LabelType_IsMulticlass` — line 511
+- `LabelType_NumClasses` — line 499 — ≥2 = multiclass softmax       (label values 0..K-1 as floats)
+- `LabelType_IsBinary` — line 504
+- `LabelType_IsRegression` — line 508
+- `LabelType_IsMulticlass` — line 512
+- `Training_ResolveRole` — line 560
 
 ### OverfitDetection.hpp
 

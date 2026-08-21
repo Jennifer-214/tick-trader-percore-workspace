@@ -159,6 +159,8 @@ Rules 1-3 are REACTIVE — what to do when you encounter dead code or a retired 
 
 This COMPOSES with Rule 2, it does not weaken it: Rule 2 still governs the irreducible external surface absolutely (Knight Capital). The complement just shrinks how much surface that is. → memory `feedback_prefer_deletable_cascade_over_tombstone`; decision log D-278.
 
+**Application (2026-08-20, E.1.2.C tail — Rule 1 clean-delete on an internal capital-adjacent path; D-429 (4)):** `CoreFrameworks/EnsembleHotSwap.hpp` (the v5.14.2 legacy in-place ensemble swap) DELETED whole after an explicit-roots trace proved zero production callers (superseded v5.15.4 by `HotSwap_ShadowLoad_*`; only callers = 5 test cells, deleted with it). NO tombstone owed — `EngineSharded_HotSwapEnsemble` is an in-process fn name, not a persisted/wire identifier (the H21 guard stayed GREEN at 93 through the deletion, which is itself the Rule-2 boundary check passing). The trap that made the trace necessary: two FALSE comments kept the dead header looking alive (Class 58 A′ instance, recorded in that catalog). Engine `753fbed` + ws `19b89a3`.
+
 ## Mechanization — the golden identifier-ledger guard (H21 enforcement)
 
 `tools/check_identifier_retirement.py` + `tools/identifier_ledger.txt`. Golden-master pattern

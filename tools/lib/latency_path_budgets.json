@@ -29,7 +29,7 @@
   },
   "_provenance": {
     "db": "build/compile_commands.json",
-    "db_mtime": 1786996788,
+    "db_mtime": 1787270082,
     "cxx": "/usr/bin/c++",
     "flags": [
       "-DLICENSE_BYPASS",
@@ -42,6 +42,7 @@
       "-O3",
       "-march=native",
       "-funroll-loops",
+      "-Werror=float-conversion",
       "-I/home/caramel/code/FoxML_Trader_v2"
     ]
   }

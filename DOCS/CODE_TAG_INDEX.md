@@ -15,7 +15,7 @@ so the snapshot stales when tags/units actually change, not on unrelated line dr
 `rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a
 conversion).
 
-Converted files: 165 · unit blocks: 1103
+Converted files: 166 · unit blocks: 1111
 
 ## [TAG] values → files
 
@@ -512,9 +512,10 @@ Converted files: 165 · unit blocks: 1103
 
 - `CoreFrameworks/StampBoundDerivedFilter.hpp`
 
-### GUI (14 files)
+### GUI (16 files)
 
 - `Backtest/BacktestPanels.hpp`
+- `Backtest/LabelFunctions.hpp`
 - `CoreFrameworks/EngineSharded/SlowPath.hpp`
 - `GUI/CandleAccumulator.hpp`
 - `GUI/ChartPanel.hpp`
@@ -525,6 +526,7 @@ Converted files: 165 · unit blocks: 1103
 - `GUI/LogViewerPanel.hpp`
 - `GUI/MLStatusPanel.hpp`
 - `GUI/SettingsPanel.hpp`
+- `GUI/SettingsSectionIndex.hpp`
 - `GUI/StrategyQualityPanel.hpp`
 - `GUI/TradeHistoryPanel.hpp`
 - `GUI/TradeReader.hpp`
@@ -833,7 +835,7 @@ Converted files: 165 · unit blocks: 1103
 - `OrderType` — `CoreFrameworks/Order.hpp`
 - `StrategyCategory` — `Strategies/StrategyCategories.hpp`
 
-### FILE (165)
+### FILE (166)
 
 - `Backtest/BacktestEngine.hpp` — `Backtest/BacktestEngine.hpp`
 - `Backtest/BacktestPanels.hpp` — `Backtest/BacktestPanels.hpp`
@@ -989,6 +991,7 @@ Converted files: 165 · unit blocks: 1103
 - `MemHeaders/PositionFieldRegistry.hpp` — `MemHeaders/PositionFieldRegistry.hpp`
 - `MemHeaders/RunHistory.hpp` — `MemHeaders/RunHistory.hpp`
 - `RegimeDetector.hpp` — `Strategies/RegimeDetector.hpp`
+- `SettingsSectionIndex.hpp` — `GUI/SettingsSectionIndex.hpp`
 - `Strategies/MLStrategy.hpp` — `Strategies/MLStrategy.hpp`
 - `Strategies/MeanReversion.hpp` — `Strategies/MeanReversion.hpp`
 - `Strategies/Momentum.hpp` — `Strategies/Momentum.hpp`
@@ -1001,7 +1004,7 @@ Converted files: 165 · unit blocks: 1103
 - `Strategies/private/EmaCross.hpp` — `Strategies/private/EmaCross.hpp`
 - `Version.hpp` — `Version.hpp`
 
-### FUNCTION (510)
+### FUNCTION (515)
 
 - `ANSI_Layout_Render` — `DataStream/TUIAnsi.hpp`
 - `ANSI_Section_Header` — `DataStream/TUIAnsi.hpp`
@@ -1367,9 +1370,13 @@ Converted files: 165 · unit blocks: 1103
 - `STAMP_BOUND_CFG_emit_canonical_body` — `CoreFrameworks/StampBoundDerivedFilter.hpp`
 - `SamplesSnapshot_Compute` — `Backtest/BacktestPanels.hpp`
 - `SectionHeader` — `GUI/DashboardPanels.hpp`
+- `SectionLayout_Build` — `GUI/SettingsSectionIndex.hpp`
 - `SellGate` — `CoreFrameworks/OrderGates.hpp`
+- `SettingsSection_GlobalRegistrySectionOf` — `GUI/SettingsSectionIndex.hpp`
+- `Settings_CanonicalSection` — `GUI/SettingsSectionIndex.hpp`
 - `Settings_Init` — `GUI/SettingsPanel.hpp`
 - `Settings_Load` — `GUI/SettingsPanel.hpp`
+- `Settings_RenderFieldDefRow` — `GUI/SettingsPanel.hpp`
 - `Settings_RenderGlobalTab` — `GUI/SettingsPanel.hpp`
 - `Settings_RenderPerCoreTab` — `GUI/SettingsPanel.hpp`
 - `Settings_RescanModels` — `GUI/SettingsPanel.hpp`
@@ -1422,7 +1429,7 @@ Converted files: 165 · unit blocks: 1103
 - `TradeLogBuffer_PushBuy` — `DataStream/TradeLog.hpp`
 - `TradeLog_Init` — `DataStream/TradeLog.hpp`
 - `TrainingPanel_Init` — `Backtest/BacktestPanels.hpp`
-- `Training_ResolveRole` — `Backtest/BacktestPanels.hpp`
+- `Training_ResolveRole` — `Backtest/LabelFunctions.hpp`
 - `ValidationSplit_Generate` — `Backtest/ValidationSplit.hpp`
 - `VolScaler_Size` — `ML_Headers/VolScaler.hpp`
 - `WalkForward_ComputeAccuracy` — `Backtest/BacktestEngine.hpp`
@@ -1448,6 +1455,7 @@ Converted files: 165 · unit blocks: 1103
 - `cfg_drift_compare` — `CoreFrameworks/CfgFieldDispatch.hpp`
 - `cfg_drift_format_reason` — `CoreFrameworks/CfgFieldDispatch.hpp`
 - `cfg_emit_field` — `CoreFrameworks/CfgFieldDispatch.hpp`
+- `cfg_field_mask_test` — `GUI/SettingsSectionIndex.hpp`
 - `cfg_parse_field` — `CoreFrameworks/CfgFieldDispatch.hpp`
 - `cfg_populate_inf_field` — `CoreFrameworks/CfgFieldDispatch.hpp`
 - `cfg_render_and_persist` — `GUI/SettingsPanel.hpp`
@@ -1604,7 +1612,7 @@ Converted files: 165 · unit blocks: 1103
 - `FOREACH_TRADE_LOG_COL` — `CoreFrameworks/TradeLogColRegistry.hpp`
 - `PER_NODE_OVERRIDE_FIELDS` — `CoreFrameworks/ControllerConfig.hpp`
 
-### STRUCT (193)
+### STRUCT (195)
 
 - `AnsiBuf` — `DataStream/TUIAnsi.hpp`
 - `BacktestResults` — `Backtest/BacktestEngine.hpp`
@@ -1761,6 +1769,8 @@ Converted files: 165 · unit blocks: 1103
 - `SHA256_State` — `Backtest/Fingerprint.hpp`
 - `SPSCRing` — `CoreFrameworks/SPSCRing.hpp`
 - `SamplesSnapshot` — `Backtest/BacktestPanels.hpp`
+- `SectionLayout` — `GUI/SettingsSectionIndex.hpp`
+- `SectionSource` — `GUI/SettingsSectionIndex.hpp`
 - `SettingsState` — `GUI/SettingsPanel.hpp`
 - `ShardedBacktestDriver` — `CoreFrameworks/ShardedBacktestDriver.hpp`
 - `ShardedOrderLatency` — `CoreFrameworks/ShardedOrderLatency.hpp`

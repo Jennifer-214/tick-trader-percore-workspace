@@ -1670,3 +1670,100 @@ logs were preserved before the first post-fix rotation ate them.
 
 **Related:** `scripts/download_data.sh` / `sync_archives.sh` cwd-anchoring (same class, shell side) ·
 TECH_DEBT-287 (engine_gui + engine sister surfaces, deferred with trigger).
+
+### Exit-side training is REAL — side=Exit emits co-located exit.json the engine auto-discovers (v5.15.5.F.4d.1.E.1.2.C, 2026-08-20)
+
+**What:** the Training panel's Training Side combo now WORKS end-to-end: side=Exit routes each
+horizon's model to role file `exit.json` CO-LOCATED beside the buy roles in the SAME
+`models/<class>/<run>_horizon_<H>/` dir (`Training_ResolveRole` in `Backtest/LabelFunctions.hpp`
+is the ONE derivation — side selects the role; label kind picks among buy roles otherwise), and the
+engine's ensemble loader picks it up into `exit_predictor[]` with NO cfg step. Flipping to Exit
+auto-defaults the label kind to WILL_PEAK (binary P(peak), the `exit_threshold` consumer's
+semantics); a trainer-side gate refuses entry-semantics label kinds on the exit side. The stamp's
+`expected_role` key is now ENFORCED at load: a buy model in an exit slot (or any cross-role
+placement) REFUSES in strict / WARNs + raises the NEW `ml_role_mismatch` failure flag in non-strict.
+
+**Cfg flags:** train side = GUI combo (no cfg key). Serve: `node_N_model_dir=<base>` (Shape A) +
+`use_exit_model=1` (+ `exit_bandit_enabled=1` for the learning loop).
+
+**Fallback:** side=Buy behavior unchanged. Dirs without `exit.json` serve buy-only exactly as before
+(`exit_predictor_count=0`).
+
+**Where to verify:** boot log `[sharded] node N: ensemble active (primary=…, H horizons; M total
+models, K exit predictors)` — K is the Stage-1 oracle (≥2 for the bandit loop). Suite pins: C.3g
+(role table, exhaustive over FOREACH_TARGET × side) + C.3h (the D2 role-check decision table).
+
+**Paper-test sanity:** train buy then exit with the SAME run_name + horizons → both files co-located
+per horizon → boot shows K=horizons → `SHALT_EXIT_PREDICTED` can fire once warm.
+
+**Gotchas:** co-location REQUIRES the same run_name (that's the design, not a constraint to work
+around); the exit run overwrites the dir's `summary.txt` (open fork D4). Keyless stamps in EXIT
+slots refuse in strict (exit slots have zero legacy population — deliberate asymmetry vs buy slots'
+legacy tolerance).
+
+**Related:** PARITY-044 (closed by this) · R1 dispatch fix (below) · `exit_signal_model_dir`
+retirement (below) · exit-bandit loop (D-423; leg 4 empirical).
+
+### Ensemble-only deployments actually SERVE — the ML dispatch gate is ensemble-aware (v5.15.5.F.4d.1.E.1.2.C, 2026-08-20)
+
+**What:** from G.5 until this fix, `ML_BuildParameters`' fall-through gate consulted ONLY the
+single-zoo handle — a pure `<base>_horizon_*` layout (the ONLY layout the trainer produces) left the
+handle NULL and every real multi-horizon deployment silently traded SimpleDip in paper/backtest
+(loud REFUSE in live). The gate now takes the ACTIVE ensemble; three same-class blind sisters fixed
+in the same commit (strategy-swap refusal · live-readiness model check via `node_has_serving_model` ·
+drift aggregation via `aggregate_ezoo_drift`), plus the R2 scaler seam for ensemble-only cycles.
+
+**Cfg flags:** none — `node_N_model_dir=<base>` deployments just work now.
+
+**Fallback:** no ensemble AND no single zoo → SimpleDip fall-through, unchanged.
+
+**Where to verify:** ML Status shows `model: ensemble (N horizons)` + live `pred:` values once warm
+(the e2e protocol's Shape-A expectations are achievable since this fix). Suite pin: C.3f (sentinel
+proves the ensemble dispatch block runs on a NULL single-zoo).
+
+**Paper-test sanity:** deploy a base dir with only `_horizon_*` siblings → node trades ML, not
+SimpleDip.
+
+**Gotchas:** if a node USED to "work" on such a deployment, it was SimpleDip — expect behavior to
+CHANGE to real model predictions. The old copy-to-base stopgap is unnecessary now.
+
+**Related:** a-class-R1-reachability-verdict.md (the compiled proof) · PARITY-044 resolution.
+
+### `exit_signal_model_dir` is GONE — retired and name-burned (v5.15.5.F.4d.1.E.1.2.C, 2026-08-20)
+
+**What:** the cfg key was parsed-never-read (its tree `models/exit/` was unloadable by the live
+loader); both are DELETED and the NAME is burned in `RETIRED_NAMES` — any reintroduction REDs the
+identifier guard (H21; first proactively-burned cfg name key). Exit models are co-located per the
+entry above, never a second tree.
+
+**Cfg flags:** REMOVE the key from old cfgs if present (it was never consumed; the parser no longer
+recognizes it).
+
+**Where to verify:** `python3 tools/check_identifier_retirement.py` GREEN includes the burn.
+
+**Gotchas:** any old `models/exit/` tree on disk is orphaned — its models are buy-role-named and
+were never loadable; retrain with side=Exit instead of moving files by hand.
+
+**Related:** PARITY-044 (leg d) · H21 dead-code-and-identifier-retirement discipline.
+
+### Settings sections are GROUPED — one header per category, curated order (v5.15.5.F.4d.1.E.1.2.C 3G-i, 2026-08-20)
+
+**What:** the Global tab previously emitted a CollapsingHeader on every section CHANGE while walking
+three sources in row order — 72 headers for ~40 sections ("Trading" ×5, "ML" ×6 …), and duplicate
+labels also shared ImGui collapse state. Now a one-time index groups all sources per CANONICAL
+section under ONE header, in a curated reading order (Trading first); "Time-Based Exit" merged into
+"Time Exit", "Operational Monitoring" into "Operational". Per-node tabs route through the same
+mechanism. Registry row order is untouched (wire-load-bearing).
+
+**Cfg flags:** none — pure GUI restructure; every field renders exactly once, same widgets.
+
+**Where to verify:** engine_gui Settings → Global tab: each section name appears ONCE; collapsing a
+header collapses all its fields (including registry rows that used to sit under a duplicate header
+elsewhere). Suite pins: the 3G-i block (real-registry uniqueness + row conservation).
+
+**Gotchas:** fields moved VISUALLY (grouped under their section's single header + curated order) —
+nothing changed semantically; if a field seems missing, its section may be collapsed or
+strategy-filtered (unchanged v4.7.23 rules).
+
+**Related:** SettingsSectionIndex.hpp (the ImGui-free layer) · plan § AMENDED 3G-i · 3G-ii model
+picker (queued, post-R1).

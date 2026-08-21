@@ -26925,6 +26925,73 @@ e3_skip_load:;
         }
     }
 
+    // ─── Test C.3i: the peak/valley class-index rules — buy vs exit
+    //     (E.1.2.C; the barrier-primary entry inversion) ───
+    //
+    // Model_PrimaryBuyClassIdx and Model_ExitClassIdx read the SAME input
+    // (num_outputs) and MUST return different answers on a 3-class model:
+    // you enter at a valley (class 2) and you exit at a peak (class 1).
+    // Before E.1.2.C all three hand-copies of this rule carried the PEAK
+    // constant, so a barrier-primary ensemble handed the buy threshold
+    // P(peak) = P(bad entry) while BarrierGate got 1-P(peak) and was least
+    // likely to block exactly when a peak was most likely. Latent until
+    // leg 3 gave the ensemble branch precedence over the (correct)
+    // single-zoo 3-class path. Every model the trainer emits for a buy
+    // side is barrier.json (PVS), so this was the only ensemble shape.
+    {
+        // (a) buy side — class 2 = valley = good entry (LabelFunctions:305-306)
+        check("E.1.2.C C.3i: PrimaryBuyClassIdx(3) == 2 (valley = good entry)",
+              Model_PrimaryBuyClassIdx(3) == 2);
+        check("E.1.2.C C.3i: PrimaryBuyClassIdx(1) == 0 (binary raw is already P(good))",
+              Model_PrimaryBuyClassIdx(1) == 0);
+        check("E.1.2.C C.3i: PrimaryBuyClassIdx(0) == 0 (unset/binary)",
+              Model_PrimaryBuyClassIdx(0) == 0);
+
+        // (b) exit side — class 1 = peak = good exit; the asymmetry is the point
+        check("E.1.2.C C.3i: ExitClassIdx(3) == 1 (peak = good exit)",
+              Model_ExitClassIdx(3) == 1);
+        check("E.1.2.C C.3i: ExitClassIdx(1) == 0 (binary WILL_PEAK raw)",
+              Model_ExitClassIdx(1) == 0);
+
+        // (c) THE INVARIANT. If these two ever agree on a multiclass model,
+        // one side is reading the other's class — which is exactly the bug.
+        int agree_multiclass = 0;
+        for (int k = 2; k <= 8; ++k) {
+            if (Model_PrimaryBuyClassIdx(k) == Model_ExitClassIdx(k))
+                agree_multiclass = 1;
+        }
+        check("E.1.2.C C.3i: buy and exit class rules DIFFER for every k >= 2",
+              agree_multiclass == 0);
+
+        // (d) ...and agree only where there is a single output to read
+        check("E.1.2.C C.3i: buy == exit == 0 on a single-output model",
+              Model_PrimaryBuyClassIdx(1) == 0 && Model_ExitClassIdx(1) == 0);
+
+        // (e) REAL production wiring, not a replica: EnsurePrimary was one of
+        // the three former hand-copies. Drive it (Class-51 discipline).
+        EnsembleModelZoo<64> ezoo_cls;
+        EnsembleModelZoo_Init(&ezoo_cls);
+        ezoo_cls.barrier_count = 2;
+        ezoo_cls.barrier[0].num_outputs = 3;   // PEAK_VALLEY_STABLE
+        ezoo_cls.barrier[1].num_outputs = 3;
+        EnsembleModelZoo_EnsurePrimary(&ezoo_cls);
+        check("E.1.2.C C.3i: EnsurePrimary barrier-primary target class == 2",
+              ezoo_cls.primary_target_class == 2);
+        check("E.1.2.C C.3i: EnsurePrimary aliases EVERY barrier handle to valley",
+              ezoo_cls.barrier[0].buy_class_idx == 2 &&
+              ezoo_cls.barrier[1].buy_class_idx == 2);
+
+        // (f) a binary barrier ensemble still reads its single raw output
+        EnsembleModelZoo<64> ezoo_bin;
+        EnsembleModelZoo_Init(&ezoo_bin);
+        ezoo_bin.barrier_count = 1;
+        ezoo_bin.barrier[0].num_outputs = 1;
+        EnsembleModelZoo_EnsurePrimary(&ezoo_bin);
+        check("E.1.2.C C.3i: binary barrier-primary keeps class 0",
+              ezoo_bin.primary_target_class == 0 &&
+              ezoo_bin.barrier[0].buy_class_idx == 0);
+    }
+
     // ─── Test 3G-i: SectionLayout — grouped Settings render layout
     //     (E.1.2.C; the duplicate-CollapsingHeader class) ───
     //

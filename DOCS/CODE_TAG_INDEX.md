@@ -15,7 +15,7 @@ so the snapshot stales when tags/units actually change, not on unrelated line dr
 `rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a
 conversion).
 
-Converted files: 166 · unit blocks: 1118
+Converted files: 166 · unit blocks: 1120
 
 ## [TAG] values → files
 
@@ -1004,7 +1004,7 @@ Converted files: 166 · unit blocks: 1118
 - `Strategies/private/EmaCross.hpp` — `Strategies/private/EmaCross.hpp`
 - `Version.hpp` — `Version.hpp`
 
-### FUNCTION (520)
+### FUNCTION (522)
 
 - `ANSI_Layout_Render` — `DataStream/TUIAnsi.hpp`
 - `ANSI_Section_Header` — `DataStream/TUIAnsi.hpp`
@@ -1224,6 +1224,7 @@ Converted files: 166 · unit blocks: 1118
 - `ModelBundle_ScanParent` — `GUI/ModelBundleScan.hpp`
 - `ModelBundle_ScanRoles` — `GUI/ModelBundleScan.hpp`
 - `ModelFeatures_Pack` — `ML_Headers/ModelInference.hpp`
+- `Model_ExitClassIdx` — `ML_Headers/ModelInference.hpp`
 - `Model_Free` — `ML_Headers/ModelInference.hpp`
 - `Model_Init` — `ML_Headers/ModelInference.hpp`
 - `Model_Load` — `ML_Headers/ModelInference.hpp`
@@ -1235,6 +1236,7 @@ Converted files: 166 · unit blocks: 1118
 - `Model_Predict_Ensemble` — `ML_Headers/ModelInference.hpp`
 - `Model_Predict_Ensemble_Weighted` — `ML_Headers/ModelInference.hpp`
 - `Model_Predict_Normalized` — `ML_Headers/ModelInference.hpp`
+- `Model_PrimaryBuyClassIdx` — `ML_Headers/ModelInference.hpp`
 - `Momentum_Adapt` — `Strategies/Momentum.hpp`
 - `Momentum_BuildParameters` — `Strategies/StrategyParameters.hpp`
 - `Momentum_BuySignal` — `Strategies/Momentum.hpp`

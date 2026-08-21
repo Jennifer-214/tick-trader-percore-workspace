@@ -570,3 +570,35 @@ over again, committed inside the tool written to make sanitizers trustworthy. Th
 three independent signals: a final `RESULTS` line exists (an early death is not a pass) · zero
 diagnostics (both `ERROR` and `WARNING` spellings, plus TSan's own tally) · `rc == 0`, with an
 explicit message when the suite is green but the runtime disagrees.
+
+## Landmine 21: the engine↔workspace symlink topology breaks tools that RESOLVE it — compile-outside-build-dir and engine-side subpaths both fail (2026-08-20)
+
+**Two measured instances, one family** (the symlink-topology family of Landmines 5/7/9/10/19,
+but a different mechanism than 19's search blindness — these are tools that FOLLOW the link and
+then trip on what they find):
+
+1. **The tests TU is uncompilable outside the build dir.** `g++ -fsyntax-only tests/controller_test.cpp`
+   from the engine root fails: g++ **realpath-resolves** the `tests/` DIRECTORY symlink to
+   `~/code/tick-trader-percore-workspace/tests/`, after which the TU's relative includes
+   (`../FixedPoint/...`) resolve against the WORKSPACE root and miss — the engine's sibling dirs
+   are not there. Measured at the E.1.2.C a-class pass (plan-level verdict A-10). The build-dir
+   compile works because CMake passes absolute include dirs; ad-hoc syntax probes, clangd without a
+   compile-commands entry, and any "quick `g++ -fsyntax-only`" sanity check all hit this. **Probe
+   from the build system's flags or not at all.**
+
+2. **Engine-side subpaths under a per-FILE-symlinked dir do not exist.** Engine `DOCS/` is a REAL
+   dir containing per-file symlinks (e.g. `DOCS/TECH_DEBT.md -> ../../tick-trader-percore-workspace/...`),
+   NOT a dir symlink — so workspace-side SUBDIRS (`DOCS/tech-debt/open.md`) have no engine-side
+   path at all. Measured 2026-08-20: `rg ... DOCS/tech-debt/open.md` from the engine root → exit 2
+   file-not-found, which reads as "no matches" if the rc is swallowed (Class-57 adjacency). Same
+   session, the reverse trap: `tests/`/`tools/`/`plans/` ARE dir symlinks, so those engine-side
+   subpaths DO work. The topology is MIXED by design (privacy boundary) — never infer one rule
+   from the other.
+
+**Mitigation / rule:** for workspace-owned trees, name the WORKSPACE ABSOLUTE path in tools,
+greps, and editors (`~/code/tick-trader-percore-workspace/DOCS/...`); compile probes on the tests
+TU go through `build/` (or replicate CMake's `-I` set). The handoff "WILL BITE" line that carried
+this ad hoc now lives here.
+
+**Related:** Landmine 19 (search-side blindness of the same topology) · `feedback: engine CLAUDE.md
+is a symlink` memory (edit workspace-side) · E.1.2.C plan register #14 · a-class plan verdict A-10.

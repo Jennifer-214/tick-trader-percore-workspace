@@ -1765,5 +1765,39 @@ elsewhere). Suite pins: the 3G-i block (real-registry uniqueness + row conservat
 nothing changed semantically; if a field seems missing, its section may be collapsed or
 strategy-filtered (unchanged v4.7.23 rules).
 
-**Related:** SettingsSectionIndex.hpp (the ImGui-free layer) · plan § AMENDED 3G-i · 3G-ii model
-picker (queued, post-R1).
+**Related:** SettingsSectionIndex.hpp (the ImGui-free layer) · plan § AMENDED 3G-i · the 3G-ii model
+bundle picker (below — shipped same day).
+
+### Model Dir is a BUNDLE PICKER — families select as one entry, with a resolution preview (v5.15.5.F.4d.1.E.1.2.C 3G-ii, 2026-08-20)
+
+**What:** the per-node Model Dir dropdown now lists what's actually on disk: every `_horizon_`
+sibling FAMILY as ONE `[ensemble · Nh · buy+exit]` entry (selecting it writes the BASE path — the
+Shape-A form the boot auto-detect wants) and every role-bearing dir as a `[single]` entry. The old
+scan saw only `models/<dir-with-role-files>`, so the trainer's `models/<class>/<run>_horizon_<H>`
+layout was completely invisible. Family grouping runs the LOADER's own sibling matcher
+(`Model_ParseHorizonSibling`, extracted from the boot auto-detect), so the picker can never group a
+family differently than the engine resolves it. Selecting an entry renders a **resolution preview**:
+shape, per-horizon roles, exit-predictor count, primary role, and warnings (nothing-loadable →
+SimpleDip fallback; buy-side empty; partial exit coverage). A **Verify stamps** button runs
+`verify_model_stamp` per role file against THIS build's registry hashes + `held_out_stamp_secret`.
+
+**Cfg flags:** none — writes the same `node_N_model_dir` key; manual typed paths still work
+(InputText fallback when the scan finds nothing; a typed path shows as-is in the combo preview).
+
+**Fallback:** everything the old dropdown did still works; `(none)` clears the field.
+
+**Where to verify:** engine_gui Settings → node tab → Model Dir: a trained 2-horizon buy+exit run
+shows one `<run>  [ensemble · 2h · buy+exit]` entry; selecting it shows the preview with
+`2 horizons · 2 exit predictors · primary=buy_signal` and writes the base path.
+
+**Paper-test sanity:** pick the family → boot → the `ensemble active (..., K exit predictors)` line
+matches the preview's count.
+
+**Gotchas:** hot-swap ("Apply (live)") reuses the horizon grid cached at BOOT — swapping to a family
+with a DIFFERENT horizon set needs a restart; the tooltip now says so instead of letting the swap
+fail mysteriously. Stamp verify with an empty `held_out_stamp_secret` is devmode (contents checked,
+signature not). Scan is refresh-driven — click ↻ after training new models.
+
+**Related:** ModelBundleScan.hpp (ImGui-free scanner + preview) · `Model_ParseHorizonSibling`
+(shared matcher, NodeModelZoo.hpp) · register #17 hot-swap triple (this closes its (c);
+(a) bundle-id/exit-state coupling and (b) remain open) · "Exit-side training is REAL" entry above.

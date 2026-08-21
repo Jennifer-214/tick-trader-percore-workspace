@@ -1709,7 +1709,10 @@ per horizon → boot shows K=horizons → `SHALT_EXIT_PREDICTED` can fire once w
 **Gotchas:** co-location REQUIRES the same run_name (that's the design, not a constraint to work
 around); the exit run overwrites the dir's `summary.txt` (open fork D4). Keyless stamps in EXIT
 slots refuse in strict (exit slots have zero legacy population — deliberate asymmetry vs buy slots'
-legacy tolerance).
+legacy tolerance). **No re-Collect when flipping sides:** the train-time label pass
+(`Backtest_ComputeLabelsFromSamples`) recomputes from the collected sample set already in memory,
+re-streaming the CSVs itself for forward windows — Collect once, train buy, flip to Exit, train
+again. Re-Collect only if the DATA selection changes (operator-asked 2026-08-20, code-verified).
 
 **Related:** PARITY-044 (closed by this) · R1 dispatch fix (below) · `exit_signal_model_dir`
 retirement (below) · exit-bandit loop (D-423; leg 4 empirical).

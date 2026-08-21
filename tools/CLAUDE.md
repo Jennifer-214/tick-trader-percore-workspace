@@ -504,3 +504,25 @@ Three behaviours discovered by being bitten, none derivable from `--help` or a d
   gotcha registry: it is a *recall* aid, not a guard. Where a gotcha is mechanizable, prefer the
   guard (the `$?`-after-pipeline hook is the model — it BLOCKS rather than reminds); where it is
   not, expect to pay it once more per session and keep the entry short enough to scan.
+
+## Toolchain gotchas — 2026-08-20 (E.1.2.C tail close)
+
+- **`check_cache_layout.py --fix` REFRESHES existing `[DERIVED]` markers; it does not ADD them.**
+  A new `[STRUCT]` block with no `// [DERIVED]` line gets "Refreshed 0 tags" (reads like a pass)
+  while the conversion-completeness check simultaneously reds C3 no-DERIVED on the same block. Seed
+  the bare `// [DERIVED]` marker by hand ONCE between `[END_CODE]` and `[END_STRUCT]`; `--fix` then
+  owns it forever (it populated 26 tags across the 3G files the moment the markers existed).
+- **The `--since`-anchor trap RE-HIT, exactly as predicted.** The 2026-08-17 addendum above said
+  "expect to pay it once more per session" — paid, same shape, this close (engine SHA → rc=3
+  "DID NOT RUN", two runs wasted before the workspace anchor was suspected). The prediction is now
+  measured behavior, which strengthens its own conclusion: mechanize where possible, and treat any
+  close-out run whose verdict is "no commits" as a WRONG-ANCHOR alarm, never a pass.
+- **A handoff supersede is a TWO-KEY mutation — `status: superseded` AND `superseded_by:` — and
+  half-flipping it reds a HARD gate later, not at write time.** The back-pointer as a comment
+  satisfies a human reader and fails `reciprocal-supersession ((g)-4)`. Pair rule: write both keys
+  in ONE edit, and run the FULL sweep (not the narrow singleton check) as the LAST act before the
+  close commit — the narrow-green-standing-in-for-the-broad-check is the Class-51-adjacent shape
+  the AR-8 reviewer caught this close.
+- **CP-1 amendment-cascade advisory on ARCHIVED sprint plans is noise by design:** historical
+  records (v5.10-era MASTERs etc.) legitimately keep retired phrasings; do not rewrite archives to
+  quiet it. Its signal is for LIVE docs only.

@@ -15,7 +15,7 @@ so the snapshot stales when tags/units actually change, not on unrelated line dr
 `rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a
 conversion).
 
-Converted files: 166 · unit blocks: 1111
+Converted files: 166 · unit blocks: 1118
 
 ## [TAG] values → files
 
@@ -200,10 +200,9 @@ Converted files: 166 · unit blocks: 1111
 - `MemHeaders/LatencyHistogram.hpp`
 - `MemHeaders/OmsPhasedDrain.hpp`
 
-### CRITICAL (11 files)
+### CRITICAL (10 files)
 
 - `CoreFrameworks/EngineSharded/Async.hpp`
-- `CoreFrameworks/EnsembleHotSwap.hpp`
 - `CoreFrameworks/HotSwap.hpp`
 - `CoreFrameworks/LiveReadiness.hpp`
 - `CoreFrameworks/ModelValidation.hpp`
@@ -298,7 +297,7 @@ Converted files: 166 · unit blocks: 1111
 - `MemHeaders/RunHistory.hpp`
 - `Version.hpp`
 
-### ENGINE (152 files)
+### ENGINE (151 files)
 
 - `Backtest/BacktestEngine.hpp`
 - `Backtest/BacktestSharded.hpp`
@@ -321,7 +320,6 @@ Converted files: 166 · unit blocks: 1111
 - `CoreFrameworks/EngineSharded/Boot.hpp`
 - `CoreFrameworks/EngineSharded/Run.hpp`
 - `CoreFrameworks/EngineSharded/SlowPath.hpp`
-- `CoreFrameworks/EnsembleHotSwap.hpp`
 - `CoreFrameworks/EventLoopAggregates.hpp`
 - `CoreFrameworks/ExchangeAdapter.hpp`
 - `CoreFrameworks/ExecutionCore.hpp`
@@ -512,7 +510,7 @@ Converted files: 166 · unit blocks: 1111
 
 - `CoreFrameworks/StampBoundDerivedFilter.hpp`
 
-### GUI (16 files)
+### GUI (18 files)
 
 - `Backtest/BacktestPanels.hpp`
 - `Backtest/LabelFunctions.hpp`
@@ -525,11 +523,13 @@ Converted files: 166 · unit blocks: 1111
 - `GUI/GuiThread.hpp`
 - `GUI/LogViewerPanel.hpp`
 - `GUI/MLStatusPanel.hpp`
+- `GUI/ModelBundleScan.hpp`
 - `GUI/SettingsPanel.hpp`
 - `GUI/SettingsSectionIndex.hpp`
 - `GUI/StrategyQualityPanel.hpp`
 - `GUI/TradeHistoryPanel.hpp`
 - `GUI/TradeReader.hpp`
+- `ML_Headers/NodeModelZoo.hpp`
 
 ### HELPER (3 files)
 
@@ -570,7 +570,7 @@ Converted files: 166 · unit blocks: 1111
 - `DataStream/BinanceUserData.hpp`
 - `DataStream/WebSocketUtil.hpp`
 
-### ML (13 files)
+### ML (14 files)
 
 - `Backtest/BacktestEngine.hpp`
 - `Backtest/BacktestPanels.hpp`
@@ -579,11 +579,12 @@ Converted files: 166 · unit blocks: 1111
 - `Backtest/OverfitDetection.hpp`
 - `Backtest/ValidationSplit.hpp`
 - `Backtest/XGBHyperparams.hpp`
-- `CoreFrameworks/EnsembleHotSwap.hpp`
 - `CoreFrameworks/HotSwap.hpp`
 - `CoreFrameworks/LiveReadiness.hpp`
 - `CoreFrameworks/ModelValidation.hpp`
 - `CoreFrameworks/OrderManager.hpp`
+- `GUI/ModelBundleScan.hpp`
+- `GUI/SettingsPanel.hpp`
 - `Strategies/RegimeDetector.hpp`
 
 ### ML_INFERENCE (37 files)
@@ -717,13 +718,12 @@ Converted files: 166 · unit blocks: 1111
 
 - `CoreFrameworks/EngineSharded/Async.hpp`
 
-### SLOW_PATH (46 files)
+### SLOW_PATH (45 files)
 
 - `CoreFrameworks/BinanceAdapter.hpp`
 - `CoreFrameworks/ControllerConfig.hpp`
 - `CoreFrameworks/ControllerEventLoop.hpp`
 - `CoreFrameworks/EngineCommon.hpp`
-- `CoreFrameworks/EnsembleHotSwap.hpp`
 - `CoreFrameworks/EventLoopAggregates.hpp`
 - `CoreFrameworks/ExecutionCore.hpp`
 - `CoreFrameworks/HotSwap.hpp`
@@ -859,7 +859,6 @@ Converted files: 166 · unit blocks: 1111
 - `CoreFrameworks/EngineSharded/Boot.hpp` — `CoreFrameworks/EngineSharded/Boot.hpp`
 - `CoreFrameworks/EngineSharded/Run.hpp` — `CoreFrameworks/EngineSharded/Run.hpp`
 - `CoreFrameworks/EngineSharded/SlowPath.hpp` — `CoreFrameworks/EngineSharded/SlowPath.hpp`
-- `CoreFrameworks/EnsembleHotSwap.hpp` — `CoreFrameworks/EnsembleHotSwap.hpp`
 - `CoreFrameworks/EventLoopAggregates.hpp` — `CoreFrameworks/EventLoopAggregates.hpp`
 - `CoreFrameworks/ExchangeAdapter.hpp` — `CoreFrameworks/ExchangeAdapter.hpp`
 - `CoreFrameworks/ExecutionCore.hpp` — `CoreFrameworks/ExecutionCore.hpp`
@@ -990,6 +989,7 @@ Converted files: 166 · unit blocks: 1111
 - `MemHeaders/PoolAllocator.hpp` — `MemHeaders/PoolAllocator.hpp`
 - `MemHeaders/PositionFieldRegistry.hpp` — `MemHeaders/PositionFieldRegistry.hpp`
 - `MemHeaders/RunHistory.hpp` — `MemHeaders/RunHistory.hpp`
+- `ModelBundleScan.hpp` — `GUI/ModelBundleScan.hpp`
 - `RegimeDetector.hpp` — `Strategies/RegimeDetector.hpp`
 - `SettingsSectionIndex.hpp` — `GUI/SettingsSectionIndex.hpp`
 - `Strategies/MLStrategy.hpp` — `Strategies/MLStrategy.hpp`
@@ -1004,7 +1004,7 @@ Converted files: 166 · unit blocks: 1111
 - `Strategies/private/EmaCross.hpp` — `Strategies/private/EmaCross.hpp`
 - `Version.hpp` — `Version.hpp`
 
-### FUNCTION (515)
+### FUNCTION (520)
 
 - `ANSI_Layout_Render` — `DataStream/TUIAnsi.hpp`
 - `ANSI_Section_Header` — `DataStream/TUIAnsi.hpp`
@@ -1096,7 +1096,6 @@ Converted files: 166 · unit blocks: 1111
 - `EngineSharded_CalibrateTscGhz` — `CoreFrameworks/EngineSharded/Run.hpp`
 - `EngineSharded_DumpLatency` — `CoreFrameworks/EngineSharded/Run.hpp`
 - `EngineSharded_ForceCloseOnShutdown` — `CoreFrameworks/ShardedLiveSafety.hpp`
-- `EngineSharded_HotSwapEnsemble` — `CoreFrameworks/EnsembleHotSwap.hpp`
 - `EngineSharded_OrphanRecovery` — `CoreFrameworks/ShardedLiveSafety.hpp`
 - `EngineSharded_PinThread` — `CoreFrameworks/EngineSharded/Run.hpp`
 - `EngineSharded_Run` — `CoreFrameworks/EngineSharded/Run.hpp`
@@ -1220,11 +1219,16 @@ Converted files: 166 · unit blocks: 1111
 - `MetricsLog_SlowPath` — `DataStream/MetricsLog.hpp`
 - `MockGenerator_NextTick` — `DataStream/MockGenerator.hpp`
 - `MockRNG_Next` — `DataStream/MockGenerator.hpp`
+- `ModelBundleScan_Run` — `GUI/ModelBundleScan.hpp`
+- `ModelBundle_FormatPreview` — `GUI/ModelBundleScan.hpp`
+- `ModelBundle_ScanParent` — `GUI/ModelBundleScan.hpp`
+- `ModelBundle_ScanRoles` — `GUI/ModelBundleScan.hpp`
 - `ModelFeatures_Pack` — `ML_Headers/ModelInference.hpp`
 - `Model_Free` — `ML_Headers/ModelInference.hpp`
 - `Model_Init` — `ML_Headers/ModelInference.hpp`
 - `Model_Load` — `ML_Headers/ModelInference.hpp`
 - `Model_LoadAOT` — `ML_Headers/ModelInference.hpp`
+- `Model_ParseHorizonSibling` — `ML_Headers/NodeModelZoo.hpp`
 - `Model_Predict` — `ML_Headers/ModelInference.hpp`
 - `Model_PredictMulti` — `ML_Headers/ModelInference.hpp`
 - `Model_Predict_AtClass` — `ML_Headers/ModelInference.hpp`
@@ -1380,6 +1384,7 @@ Converted files: 166 · unit blocks: 1111
 - `Settings_RenderGlobalTab` — `GUI/SettingsPanel.hpp`
 - `Settings_RenderPerCoreTab` — `GUI/SettingsPanel.hpp`
 - `Settings_RescanModels` — `GUI/SettingsPanel.hpp`
+- `Settings_VerifyBundleStamps` — `GUI/SettingsPanel.hpp`
 - `ShardedBacktestDriver_Init` — `CoreFrameworks/ShardedBacktestDriver.hpp`
 - `ShardedBacktest_Run` — `CoreFrameworks/ShardedBacktestDriver.hpp`
 - `ShardedBacktest_RunTick` — `CoreFrameworks/ShardedBacktestDriver.hpp`
@@ -1612,7 +1617,7 @@ Converted files: 166 · unit blocks: 1111
 - `FOREACH_TRADE_LOG_COL` — `CoreFrameworks/TradeLogColRegistry.hpp`
 - `PER_NODE_OVERRIDE_FIELDS` — `CoreFrameworks/ControllerConfig.hpp`
 
-### STRUCT (195)
+### STRUCT (197)
 
 - `AnsiBuf` — `DataStream/TUIAnsi.hpp`
 - `BacktestResults` — `Backtest/BacktestEngine.hpp`
@@ -1699,6 +1704,8 @@ Converted files: 166 · unit blocks: 1111
 - `MetricsLog` — `DataStream/MetricsLog.hpp`
 - `MockGenerator` — `DataStream/MockGenerator.hpp`
 - `MockGeneratorConfig` — `DataStream/MockGenerator.hpp`
+- `ModelBundleEntry` — `GUI/ModelBundleScan.hpp`
+- `ModelBundleScanState` — `GUI/ModelBundleScan.hpp`
 - `ModelHandle` — `ML_Headers/ModelInference.hpp`
 - `ModelStampResult` — `ML_Headers/ModelInference.hpp`
 - `MomentumState` — `Strategies/Momentum.hpp`

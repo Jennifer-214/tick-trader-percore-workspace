@@ -26841,6 +26841,76 @@ e3_skip_load:;
               n_cells == 2 * LABEL_COUNT_AUTO);
     }
 
+    // ─── Test C.3j: Training_SideLabelGate — the F3 side x label tier table
+    //     (E.1.2.C; the leg of D2 that never got a pin) ───
+    //
+    // This gate is the ONLY enforcement point that can see label semantics:
+    // no wire key identifies the target row (the stamp carries label_params,
+    // label_registry_hash and model_num_outputs, none of which distinguishes
+    // WILL_PEAK from WIN_LOSS), so a WIN_LOSS model trained at side=1 stamps
+    // role="exit" honestly and PASSES the load-side check in C.3h. It lived as
+    // a lambda in the ImGui-only TU and was therefore unpinnable until it was
+    // extracted beside Training_ResolveRole. Oracle = hand-pinned tiers from
+    // the D2 verdict, never re-derived from the fn's own switch.
+    //
+    // TIERS ARE DELIBERATE, including the asymmetry: VOL_BARRIER sits at WARN
+    // while its structural twin BARRIER (same first-passage contract, differing
+    // only in barrier width) sits at REFUSE via the default arm. A
+    // /decision-check surfaced that and the operator has NOT triaged it, so the
+    // table pins CURRENT truth rather than a guess. Changing a tier must break
+    // this test on purpose.
+    {
+        struct GateCell { const char* label_name; int label_type; int side; int expect; };
+        static const GateCell cells[] = {
+            // side=0 — the gate is inert; every label is OK for buy-side training
+            { "WIN_LOSS",              LABEL_WIN_LOSS,              0, 2 },
+            { "BARRIER",               LABEL_BARRIER,               0, 2 },
+            { "FORWARD_PNL",           LABEL_FORWARD_PNL,           0, 2 },
+            { "REGIME",                LABEL_REGIME,                0, 2 },
+            { "VOL_BARRIER",           LABEL_VOL_BARRIER,           0, 2 },
+            { "WILL_PEAK",             LABEL_WILL_PEAK,             0, 2 },
+            { "WILL_VALLEY",           LABEL_WILL_VALLEY,           0, 2 },
+            { "PEAK_VALLEY_STABLE",    LABEL_PEAK_VALLEY_STABLE,    0, 2 },
+            { "CS_PERCENTILE_RANK",    LABEL_CS_PERCENTILE_RANK,    0, 2 },
+            { "CS_ZSCORE_ROBUST",      LABEL_CS_ZSCORE_ROBUST,      0, 2 },
+            { "CS_VOLSCALED_DEMEANED", LABEL_CS_VOLSCALED_DEMEANED, 0, 2 },
+            // side=1 — OK only for the two peak-bearing labels
+            { "WIN_LOSS",              LABEL_WIN_LOSS,              1, 0 },
+            { "BARRIER",               LABEL_BARRIER,               1, 0 },
+            { "FORWARD_PNL",           LABEL_FORWARD_PNL,           1, 0 },
+            { "REGIME",                LABEL_REGIME,                1, 0 },
+            { "VOL_BARRIER",           LABEL_VOL_BARRIER,           1, 1 },
+            { "WILL_PEAK",             LABEL_WILL_PEAK,             1, 2 },
+            { "WILL_VALLEY",           LABEL_WILL_VALLEY,           1, 1 },
+            { "PEAK_VALLEY_STABLE",    LABEL_PEAK_VALLEY_STABLE,    1, 2 },
+            { "CS_PERCENTILE_RANK",    LABEL_CS_PERCENTILE_RANK,    1, 0 },
+            { "CS_ZSCORE_ROBUST",      LABEL_CS_ZSCORE_ROBUST,      1, 0 },
+            { "CS_VOLSCALED_DEMEANED", LABEL_CS_VOLSCALED_DEMEANED, 1, 0 },
+        };
+        const int n_gate_cells = (int)(sizeof(cells) / sizeof(cells[0]));
+        char gname[160];
+        for (int i = 0; i < n_gate_cells; ++i) {
+            const int got = Training_SideLabelGate(cells[i].label_type, cells[i].side);
+            snprintf(gname, sizeof(gname),
+                     "v5.15.5.E.1.2.C C.3j: SideLabelGate(%s, side=%d) == %d",
+                     cells[i].label_name, cells[i].side, cells[i].expect);
+            check(gname, got == cells[i].expect);
+        }
+        // Completeness pin — appending a FOREACH_TARGET row must FORCE a
+        // conscious exit-side tier here instead of silently inheriting REFUSE
+        // from the default arm. Fail-closed is the right VALUE; silence is the
+        // defect. Sister of C.3g's pin.
+        check("v5.15.5.E.1.2.C C.3j: table covers every FOREACH_TARGET row x both sides",
+              n_gate_cells == 2 * LABEL_COUNT_AUTO);
+        // The property the caller's aggregation depends on: a REFUSE tier must
+        // be numerically LOWEST, since the per-horizon walk keeps the minimum.
+        check("v5.15.5.E.1.2.C C.3j: REFUSE < WARN < OK (worst-tier-wins ordering)",
+              Training_SideLabelGate(LABEL_WIN_LOSS, 1)
+                  < Training_SideLabelGate(LABEL_WILL_VALLEY, 1) &&
+              Training_SideLabelGate(LABEL_WILL_VALLEY, 1)
+                  < Training_SideLabelGate(LABEL_WILL_PEAK, 1));
+    }
+
     // ─── Test C.3h: Model_RoleCheckDecide — the D2 verdict's pinned decision
     //     table (E.1.2.C deferred pure-fn tables; oracle = reports/2026-08-20-
     //     ml-verification-program/a-class-D2-guard-fork-verdict.md § Required

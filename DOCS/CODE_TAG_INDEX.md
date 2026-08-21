@@ -15,7 +15,7 @@ so the snapshot stales when tags/units actually change, not on unrelated line dr
 `rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a
 conversion).
 
-Converted files: 166 · unit blocks: 1120
+Converted files: 166 · unit blocks: 1121
 
 ## [TAG] values → files
 
@@ -1004,7 +1004,7 @@ Converted files: 166 · unit blocks: 1120
 - `Strategies/private/EmaCross.hpp` — `Strategies/private/EmaCross.hpp`
 - `Version.hpp` — `Version.hpp`
 
-### FUNCTION (522)
+### FUNCTION (523)
 
 - `ANSI_Layout_Render` — `DataStream/TUIAnsi.hpp`
 - `ANSI_Section_Header` — `DataStream/TUIAnsi.hpp`
@@ -1437,6 +1437,7 @@ Converted files: 166 · unit blocks: 1120
 - `TradeLog_Init` — `DataStream/TradeLog.hpp`
 - `TrainingPanel_Init` — `Backtest/BacktestPanels.hpp`
 - `Training_ResolveRole` — `Backtest/LabelFunctions.hpp`
+- `Training_SideLabelGate` — `Backtest/LabelFunctions.hpp`
 - `ValidationSplit_Generate` — `Backtest/ValidationSplit.hpp`
 - `VolScaler_Size` — `ML_Headers/VolScaler.hpp`
 - `WalkForward_ComputeAccuracy` — `Backtest/BacktestEngine.hpp`

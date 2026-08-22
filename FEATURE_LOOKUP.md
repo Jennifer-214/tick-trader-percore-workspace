@@ -1839,3 +1839,21 @@ model carrying an honest-looking stamp.
 Label-Kind CSV blocks the whole multi-horizon train.
 
 **Related** — D2 verdict F3 · D-430 (3) · E.1.2.D decision D-b.
+
+### Nested model layout (v5.15.5.F.4d.1.E.1.2.D+, D-431)
+**What:** `models/<class>/<family>/horizon_<N>/<role>.json` — one filesystem node per bundle; state files live at the family node. **Cfg flags:** `node_N_model_dir` = the FAMILY dir. **Fallback:** an un-migrated flat family triggers the LOUD detector (exact `mv` commands in the engine log) — never silent invisibility; `tools/migrate_model_layout.sh` automates. **Where to verify:** boot log `[ensemble] auto-detected N horizons under '<family>'`; the Settings picker lists `[ensemble · Nh · roles]`. **Paper-test sanity:** bandit/Thompson state files appear at the family node after a session. **Gotchas:** the picker's ↻ rescans after training; family names containing `_horizon_<digits>` are pathological. **Related:** ModelPathSchema.hpp (grammar SSoT), Class 59.
+
+### Side-suffixed training summaries (same ship, D-e)
+**What:** entry runs write `summary_entry.txt`, exit runs `summary_exit.txt` — the exit run can no longer destroy the buy record. Past Runs shows `[exit·+entry]`/`[+exit]` tags and a ROLE-AWARE [stamped] badge. **Fallback:** legacy `summary.txt` keeps listing (preference entry > legacy > exit). **Where to verify:** train both sides into one family → both records visible. **Gotchas:** old dirs' summaries stay legacy-named until re-trained.
+
+### Launch-cwd consolidation (same ship, B-9)
+**What:** `data/`, `logging/`, `models/`, `backtest.cfg`, `engine.cfg`, GUI `.ini` all symlinked into every build dir — launch directory no longer forks snapshots/settings/logs. **Where to verify:** `ls -la build_gui/` shows the links; one `data/sharded_snapshot.dat` world. **Gotchas:** `*.pre-consolidation`/`*.bak` copies preserved from the fork era.
+
+### expected.cfg live producer (same ship, D-d)
+**What:** the multi-horizon trainer emits `expected.cfg` per horizon dir (role, label type/classes, cadence, feature format, click-time hyperparams) — the engine's load-side VerifyExpected + label-direction check are REAL now. **Fallback:** absent file = silent pass (old runs). **Where to verify:** train → the file exists beside the model; engine load compares vs engine.cfg. **Related:** `model_verify_strict=1` upgrades warnings to refusals.
+
+### Batched multi-target label pass + honest validation (leaves 5 + NEW-1)
+**What:** ONE corpus walk labels every horizon (was one per horizon per side; 2.65× at scale), and WF/held-out train the OPERATOR'S n_estimators (was a hardcoded 200 — metrics described models nobody shipped). **Where to verify:** `[backtest] label_compute: streaming 2-file window` appears once per run; stamps carry your real hyperparams. **Paper-test sanity:** gap/accuracy numbers move when you change n_estimators.
+
+### All-roles Verify Stamp + zero-tree/husk + horizon-dir deploy warnings (leaves 11 + guards)
+**What:** Past-Runs Verify checks EVERY role (`OK n/n roles` / `<role> FAIL — reason`); a model loading with zero trees WARNs (cancelled-train husk); a horizon-dir `node_model_dir` WARNs (single-zoo-without-ensemble trap); trains cancelled at round 0 no longer overwrite the real model. **Where to verify:** the run_1 exit slots correctly FAIL verify while unstamped.

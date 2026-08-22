@@ -112,6 +112,13 @@ RETIRED_NAMES = {
     # name keys have no SOURCES row yet (paced enrollment); the burn is the only mechanized
     # never-reuse available, and the whole-word scan is name-agnostic so the set tolerates it.
     "exit_signal_model_dir",
+    # E.1.2.D leaf 12 (2026-08-22, operator-decided) — cfg NAME KEY retired: an advertised knob
+    # whose ONLY consumer was a stub printing "worth wiring?" (Class 12+24). Scan-3's measurements
+    # answered the stub's own question: parallel CSV ingest is superseded by O5's binary sidecar,
+    # and leaf 5 killed the re-read multiplier. Registry row + stub + test cells deleted; the
+    # fingerprint shift is free per project_no_live_models. Same proactively-burned
+    # never-ledger-enrolled shape as exit_signal_model_dir above.
+    "csv_load_workers",
     # E.1.2/D-421 step 6 Tier 0 (2026-08-16) — the `fees` stamp group was DELETED, not tombstoned in
     # code: two of its rows emitted zeros into an HMAC-signed body. Every H21 condition was checked
     # against a named search space and no live referent survives (one hit tree-wide, the tombstone

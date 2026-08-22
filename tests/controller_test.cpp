@@ -19350,8 +19350,8 @@ e3_skip_load:;
               cfg.xgb_train_nthread == 4);
         check("v5.10.0D: xgb_eval_nthread default = 1 (WF/HeldOut determinism)",
               cfg.xgb_eval_nthread == 1);
-        check("v5.10.0D: csv_load_workers default = 1 (serial CSV; pre-v5.10)",
-              cfg.csv_load_workers == 1);
+        // (csv_load_workers default cell DELETED at E.1.2.D leaf 12 — the cfg
+        //  row is retired + name-burned; the field no longer exists.)
         check("v5.10.0D: feature_collect_max_gb default = 12",
               cfg.feature_collect_max_gb == 12);
         check("v5.10.0D: wf_split_max_gb default = 8",
@@ -19367,7 +19367,6 @@ e3_skip_load:;
             dprintf(fd,
                     "xgb_train_nthread=8\n"
                     "xgb_eval_nthread=2\n"
-                    "csv_load_workers=4\n"
                     "feature_collect_max_gb=24\n"
                     "wf_split_max_gb=16\n"
                     "held_out_max_gb=8\n");
@@ -19377,8 +19376,7 @@ e3_skip_load:;
                   parsed.xgb_train_nthread == 8);
             check("v5.10.0D: parses xgb_eval_nthread=2",
                   parsed.xgb_eval_nthread == 2);
-            check("v5.10.0D: parses csv_load_workers=4",
-                  parsed.csv_load_workers == 4);
+            // (csv_load_workers parse cell DELETED at E.1.2.D leaf 12 — field retired.)
             check("v5.10.0D: parses feature_collect_max_gb=24",
                   parsed.feature_collect_max_gb == 24);
             check("v5.10.0D: parses wf_split_max_gb=16",
@@ -20292,11 +20290,14 @@ e3_skip_load:;
         // multi_horizon_max_threads. Default 0 = auto (computed at runtime
         // as min(8, ncores/2)). 1 = forced serial. >1 = parallel cap.
         ControllerConfig<64> cfg = ControllerConfig_Default<64>();
-        // v5.11.45 — default changed from 0 (auto) to 1 (forced serial) after
-        // segfault reports under XGBoost+libgomp+pthread interaction. Parallel
-        // mode is opt-in only.
-        check("v5.11.45: default multi_horizon_max_threads = 1 (forced serial post-segfault)",
-              cfg.multi_horizon_max_threads == 1);
+        // v5.11.45 pinned forced-serial (=1) after XGBoost+libgomp+pthread
+        // segfaults. E.1.2.D (2026-08-22) RE-PINS to the registry default 4:
+        // the segfault class was CLOSED at v5.15.3.C (process-entry
+        // setenv("OMP_NUM_THREADS","1") before any libgomp init; per-pthread
+        // omp_set retained as belt), leaving the manual=1 override a stale
+        // safety clamp that silently kept every multi-horizon train serial.
+        check("E.1.2.D: default multi_horizon_max_threads = 4 (parallel; v5.11.45 reason closed at v5.15.3.C)",
+              cfg.multi_horizon_max_threads == 4);
 
         // Verify the cfg field type is int (assignment + read-back)
         cfg.multi_horizon_max_threads = 4;

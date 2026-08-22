@@ -27366,6 +27366,44 @@ e3_skip_load:;
               ModelPath_ParseOldFlatSibling("fam_horizon_400", "fam", 3) == 400 &&
               ModelPath_ParseOldFlatSibling("fam_horizon_0400", "fam", 3) == -1);
 
+        // ─── E.1.2.D leaf 14: the ONE panel→XGBHyperparams value-mapper ───
+        // TOTAL oracle: the mapping is pure — memcmp the mapper's product
+        // against a hand-built struct using the exact semantics BOTH former
+        // hand-copies implemented (Defaults base, 7 overwrites, tree-method
+        // index clamped through the shared table), over a value grid
+        // including both clamp edges.
+        {
+            struct { int d; float lr; int n; float ss, cs; int mcw, seed, tmi; } g[] = {
+                { 2, 0.05f, 350, 0.9f, 0.7f, 3, 7,   0 },
+                { 6, 0.10f, 200, 0.8f, 0.8f, 5, 42,  2 },
+                { 9, 0.30f,  50, 0.5f, 1.0f, 1, 999, 3 },
+                { 3, 0.01f, 800, 1.0f, 0.5f, 50, 0, -1 },  // clamp low  → hist
+                { 4, 0.20f, 100, 0.6f, 0.6f, 2, 13,  4 },  // clamp high → hist
+            };
+            int all_match = 1;
+            for (int i = 0; i < (int)(sizeof(g)/sizeof(g[0])); ++i) {
+                tt::XGBHyperparams got = tt::XGBHyperparams_FromRaw(
+                    g[i].d, g[i].lr, g[i].n, g[i].ss, g[i].cs,
+                    g[i].mcw, g[i].seed, g[i].tmi);
+                tt::XGBHyperparams want = tt::XGBHyperparams_Defaults();
+                want.max_depth = g[i].d;         want.learning_rate = g[i].lr;
+                want.n_estimators = g[i].n;      want.subsample = g[i].ss;
+                want.colsample_bytree = g[i].cs; want.min_child_weight = g[i].mcw;
+                want.seed = g[i].seed;
+                int ti = (g[i].tmi < 0 || g[i].tmi >= 4) ? 0 : g[i].tmi;
+                strncpy(want.tree_method, tt::XGB_TREE_METHOD_NAMES[ti],
+                        sizeof(want.tree_method) - 1);
+                want.tree_method[sizeof(want.tree_method) - 1] = '\0';
+                if (memcmp(&got, &want, sizeof(got)) != 0) all_match = 0;
+            }
+            check("E.1.2.D L14: XGBHyperparams_FromRaw memcmp-identical to the hand-copy semantics over the grid (clamp edges included)",
+                  all_match);
+            check("E.1.2.D L14: the shared tree-method table is the combo's table (4 canonical names)",
+                  strcmp(tt::XGB_TREE_METHOD_NAMES[0], "hist") == 0 &&
+                  strcmp(tt::XGB_TREE_METHOD_NAMES[3], "auto") == 0 &&
+                  tt::XGB_TREE_METHOD_COUNT == 4);
+        }
+
         // (b) fixture tree (D-431 NESTED shape — root bumped from the
         // _e12c_ flat fixture so stale /tmp state cannot mix shapes):
         // 2 families (one at depth 2) + 1 single + decoys + one RETIRED

@@ -155,6 +155,16 @@ RETIRED_NAMES = {
 
 SOURCES = [
     ("version", "CoreFrameworks/ShardedSnapshotPersist.hpp", "define",    "SHARDED_SNAPSHOT_VERSION",    {}),
+    # E.1.2.D D-f (D-431 nested layout) — PATH FORMS enrolled: the artifact tree is a
+    # persistence-visible interface (Class 59), so its grammar constants are H21 identifiers.
+    # The RETIRED flat form (`<family>_horizon_<N>`) is tombstoned by the LOUD walker/picker
+    # detectors (its enforcement surface), not by a ledger row — it was never a named constant.
+    # Role filenames (MODEL_BUNDLE_ROLE_NAMES array) await paced enrollment per TECH_DEBT-152.
+    ("path-form", "ML_Headers/ModelPathSchema.hpp", "string-const", "MODEL_HORIZON_PREFIX",        {}),
+    ("path-form", "ML_Headers/ModelPathSchema.hpp", "string-const", "MODEL_STATE_FILE_BANDIT",     {}),
+    ("path-form", "ML_Headers/ModelPathSchema.hpp", "string-const", "MODEL_STATE_FILE_EXIT_BANDIT",{}),
+    ("path-form", "ML_Headers/ModelPathSchema.hpp", "string-const", "MODEL_STATE_FILE_BUY_THOMPSON", {}),
+    ("path-form", "ML_Headers/ModelPathSchema.hpp", "string-const", "MODEL_STATE_FILE_EXIT_THOMPSON", {}),
     # CONTROLLER_SNAPSHOT_VERSION row REMOVED at E.1.2/D-289 (format retired, macro
     # deleted). The NAME is burned — see RETIRED_NAMES above (H21: a deleted wire
     # identifier must never silently reappear as a fresh "ADD (ok)").
@@ -240,6 +250,17 @@ def _parse_define(text, name):
     return {name: int(m.group(1))} if m else {}
 
 
+def _parse_string_const(text, name):
+    # E.1.2.D D-f (2026-08-22) — H21 SOURCES extension to PATH FORMS: grammar
+    # constants are persistence-visible identifiers whose VALUE is a string
+    # (`static const char NAME[] = "value";`). Append-only + IMMUTABLE: the
+    # default any-change-is-a-violation rule applies (a path-form change is a
+    # retirement + new identifier, per the D-431 detector discipline —
+    # never a silent re-spelling).
+    m = re.search(r"char\s+%s\[\]\s*=\s*\"([^\"]*)\"" % re.escape(name), text)
+    return {name: m.group(1)} if m else {}
+
+
 def _parse_constexpr(text, name):
     m = re.search(r'constexpr\s+\w+\s+' + re.escape(name) + r'\s*=\s*(\d+)', text)
     return {name: int(m.group(1))} if m else {}
@@ -315,6 +336,8 @@ def parse_current():
             got = _parse_define(text, name)
         elif kind == "constexpr":
             got = _parse_constexpr(text, name)
+        elif kind == "string-const":
+            got = _parse_string_const(text, name)
         elif kind == "foreach":
             # base_dir = the registry file's own directory, so an `__has_include("p")`
             # guard resolves against the same path the preprocessor would use.
@@ -339,7 +362,11 @@ def load_ledger():
             if not line:
                 continue
             cat, name, val = line.split("|")
-            frozen.setdefault(cat, {})[name] = int(val)
+            try:
+                frozen.setdefault(cat, {})[name] = int(val)
+            except ValueError:
+                # path-form/string-const rows carry STRING values (D-f)
+                frozen.setdefault(cat, {})[name] = val
     return frozen
 
 

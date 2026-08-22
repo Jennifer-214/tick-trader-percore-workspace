@@ -29059,6 +29059,42 @@ e3_skip_load:;
               !BITMAP_IS_SET(cfg.lifecycle_cfg_flags, MASK_LIFECYCLE_CFG_BREAKEVEN_ON_PROFIT));
     }
 
+    // ─── Test C.3k: XGBHyperparams_Defaults is the SHARED fallback of three
+    //     training paths — pin it (E.1.2.C) ───
+    //
+    // Three sites fall back to these values when no click-time snapshot is
+    // supplied: the stamp assembly in Backtest_RunFullValidation, the
+    // walk-forward fold trainer, and HeldOutSplit_TrainEval. Until E.1.2.C the
+    // held-out path used them UNCONDITIONALLY and the other two used them for
+    // max_depth / learning_rate / n_estimators regardless of operator input —
+    // so every stamp this suite ever wrote claimed 6 / 0.1 / 200 while the
+    // shipped model trained at the panel's values. A silent change to these
+    // numbers now moves the fallback under all three at once.
+    //
+    // NOT a substitute for verifying the fix: the plumbing that carries the
+    // operator's snapshot into those three sites needs XGBoost and real data to
+    // exercise, so it is dogfood-verified (train, then grep the stamp for the
+    // operator's values), not pinned here. Stated rather than implied.
+    {
+        tt::XGBHyperparams d = tt::XGBHyperparams_Defaults();
+        check("E.1.2.C C.3k: default max_depth == 6",        d.max_depth == 6);
+        check("E.1.2.C C.3k: default learning_rate == 0.1f", d.learning_rate == 0.1f);
+        check("E.1.2.C C.3k: default n_estimators == 200",   d.n_estimators == 200);
+        check("E.1.2.C C.3k: default subsample == 0.8f",     d.subsample == 0.8f);
+        check("E.1.2.C C.3k: default colsample_bytree == 0.8f",
+              d.colsample_bytree == 0.8f);
+        check("E.1.2.C C.3k: default min_child_weight == 5", d.min_child_weight == 5);
+        check("E.1.2.C C.3k: default seed == 42",            d.seed == 42);
+        check("E.1.2.C C.3k: default tree_method == hist",
+              strcmp(d.tree_method, "hist") == 0);
+        // The property that made the bug invisible: the defaults are a PLAUSIBLE
+        // config, so a stamp carrying them looks like a real training run rather
+        // than an obviously-unset one. Recorded so the next reader knows why
+        // nothing on disk contradicted the stamp for months.
+        check("E.1.2.C C.3k: defaults are non-zero (i.e. indistinguishable from a real config)",
+              d.max_depth > 0 && d.n_estimators > 0 && d.learning_rate > 0.0f);
+    }
+
     printf("\n--- v5.15.3: Stamp_AssembleAndEmit canonical helper ---\n");
     // ==================================================================
     // v5.15.3.A.1 — StampArgs<F> POD struct default values.

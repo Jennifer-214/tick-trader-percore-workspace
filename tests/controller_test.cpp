@@ -19081,11 +19081,12 @@ e3_skip_load:;
         check("v5.10.0a.G.5: AutoDetect no siblings returns 0", n == 0);
         check("v5.10.0a.G.5: AutoDetect no siblings leaves active=0", BITMAP_IS_SET(ezoo.init_flags, MASK_EZOO_ACTIVE) == 0);
 
-        // === Test G.5.4: AutoDetectFromDir creates synthetic siblings, finds them ===
-        // Make 3 empty horizon dirs; AutoDetect scans + counts them.
-        // Won't actually load (no model files inside), so total=0; but the
-        // discovery should fire (caller would see "[ensemble] auto-detected 3 horizons" log).
-        // For test purposes: just verify the dir-scan doesn't crash with real dirs.
+        // === Test G.5.4 (D-431 NESTED): AutoDetect finds horizon_* CHILDREN ===
+        // Make 3 empty horizon CHILD dirs under the family node; AutoDetect
+        // scans + counts them. Won't actually load (no model files inside),
+        // so total=0; discovery still fires. Also pins the RETIRED-flat
+        // detector: a flat sibling set discovers NOTHING nested (return 0)
+        // while printing the migration commands.
         char tmp_base[] = "/tmp/v5100aG5_sibs_XXXXXX";
         char* td = mkdtemp(tmp_base);
         check("v5.10.0a.G.5: tmpdir created", td != nullptr);
@@ -19093,13 +19094,13 @@ e3_skip_load:;
             char run_dir[256];
             snprintf(run_dir, sizeof(run_dir), "%s/run", td);
             mkdir(run_dir, 0755);
-            // Create 3 horizon sibling dirs (no model files inside; loader returns 0)
+            // NESTED children (no model files inside; loader returns 0)
             char hdir[300];
-            snprintf(hdir, sizeof(hdir), "%s/run_horizon_100", td); mkdir(hdir, 0755);
-            snprintf(hdir, sizeof(hdir), "%s/run_horizon_500", td); mkdir(hdir, 0755);
-            snprintf(hdir, sizeof(hdir), "%s/run_horizon_1000", td); mkdir(hdir, 0755);
+            snprintf(hdir, sizeof(hdir), "%s/run/horizon_100", td); mkdir(hdir, 0755);
+            snprintf(hdir, sizeof(hdir), "%s/run/horizon_500", td); mkdir(hdir, 0755);
+            snprintf(hdir, sizeof(hdir), "%s/run/horizon_1000", td); mkdir(hdir, 0755);
 
-            // AutoDetect: discovers 3 siblings via filesystem; LoadFromCfg
+            // AutoDetect: discovers 3 children via filesystem; LoadFromCfg
             // returns 0 (no model files). ezoo->active stays 0.
             n = EnsembleModelZoo_AutoDetectFromDir(&ezoo, run_dir,
                                                      MODEL_BACKEND_XGBOOST);
@@ -19107,6 +19108,17 @@ e3_skip_load:;
                   n == 0);
             check("v5.10.0a.G.5: AutoDetect with no model files leaves active=0",
                   BITMAP_IS_SET(ezoo.init_flags, MASK_EZOO_ACTIVE) == 0);
+
+            // RETIRED-flat detector pin: a family with ONLY old-form flat
+            // siblings yields 0 nested horizons (the loud stderr block is
+            // the operator surface; the RETURN is what must stay honest).
+            char old_dir[256];
+            snprintf(old_dir, sizeof(old_dir), "%s/oldrun", td);
+            snprintf(hdir, sizeof(hdir), "%s/oldrun_horizon_100", td); mkdir(hdir, 0755);
+            n = EnsembleModelZoo_AutoDetectFromDir(&ezoo, old_dir,
+                                                     MODEL_BACKEND_XGBOOST);
+            check("E.1.2.D nested: un-migrated FLAT family discovers 0 (detector fires, never silently loads)",
+                  n == 0 && BITMAP_IS_SET(ezoo.init_flags, MASK_EZOO_ACTIVE) == 0);
 
             // Cleanup
             char rmcmd[400];
@@ -26977,12 +26989,13 @@ e3_skip_load:;
     // extracted beside Training_ResolveRole. Oracle = hand-pinned tiers from
     // the D2 verdict, never re-derived from the fn's own switch.
     //
-    // TIERS ARE DELIBERATE, including the asymmetry: VOL_BARRIER sits at WARN
-    // while its structural twin BARRIER (same first-passage contract, differing
-    // only in barrier width) sits at REFUSE via the default arm. A
-    // /decision-check surfaced that and the operator has NOT triaged it, so the
-    // table pins CURRENT truth rather than a guess. Changing a tier must break
-    // this test on purpose.
+    // TIERS ARE DELIBERATE. D-b (2026-08-22, operator-decided) unified the
+    // asymmetry a /decision-check had surfaced: WILL_VALLEY + VOL_BARRIER
+    // moved WARN -> REFUSE, so every ENTRY-DIRECTION label now refuses
+    // exit-side training (an exit model trained on one is semantically
+    // INVERTED — it fires at valleys). WARN(1) is deliberately uninhabited;
+    // the tier value survives for worst-tier-wins math + future ambiguous
+    // labels. Changing a tier must break this test on purpose.
     {
         struct GateCell { const char* label_name; int label_type; int side; int expect; };
         static const GateCell cells[] = {
@@ -27003,9 +27016,9 @@ e3_skip_load:;
             { "BARRIER",               LABEL_BARRIER,               1, 0 },
             { "FORWARD_PNL",           LABEL_FORWARD_PNL,           1, 0 },
             { "REGIME",                LABEL_REGIME,                1, 0 },
-            { "VOL_BARRIER",           LABEL_VOL_BARRIER,           1, 1 },
+            { "VOL_BARRIER",           LABEL_VOL_BARRIER,           1, 0 },  // D-b: entry-direction → REFUSE
             { "WILL_PEAK",             LABEL_WILL_PEAK,             1, 2 },
-            { "WILL_VALLEY",           LABEL_WILL_VALLEY,           1, 1 },
+            { "WILL_VALLEY",           LABEL_WILL_VALLEY,           1, 0 },  // D-b: entry-direction → REFUSE
             { "PEAK_VALLEY_STABLE",    LABEL_PEAK_VALLEY_STABLE,    1, 2 },
             { "CS_PERCENTILE_RANK",    LABEL_CS_PERCENTILE_RANK,    1, 0 },
             { "CS_ZSCORE_ROBUST",      LABEL_CS_ZSCORE_ROBUST,      1, 0 },
@@ -27028,11 +27041,14 @@ e3_skip_load:;
               n_gate_cells == 2 * LABEL_COUNT_AUTO);
         // The property the caller's aggregation depends on: a REFUSE tier must
         // be numerically LOWEST, since the per-horizon walk keeps the minimum.
-        check("v5.15.5.E.1.2.C C.3j: REFUSE < WARN < OK (worst-tier-wins ordering)",
+        // Post-D-b the WARN(1) tier is uninhabited, so the pin is the two
+        // LIVE tiers by label plus the numeric contract for the reserved
+        // middle value.
+        check("v5.15.5.E.1.2.C C.3j: REFUSE < OK across live tiers + WARN reserved between",
               Training_SideLabelGate(LABEL_WIN_LOSS, 1)
-                  < Training_SideLabelGate(LABEL_WILL_VALLEY, 1) &&
-              Training_SideLabelGate(LABEL_WILL_VALLEY, 1)
-                  < Training_SideLabelGate(LABEL_WILL_PEAK, 1));
+                  < Training_SideLabelGate(LABEL_WILL_PEAK, 1) &&
+              Training_SideLabelGate(LABEL_WIN_LOSS, 1) < 1 &&
+              1 < Training_SideLabelGate(LABEL_WILL_PEAK, 1));
     }
 
     // ─── Test C.3h: Model_RoleCheckDecide — the D2 verdict's pinned decision
@@ -27333,31 +27349,57 @@ e3_skip_load:;
         check("E.1.2.D L8: canonical _7500 still accepted",
               Model_ParseHorizonSibling("run_horizon_7500", "run_horizon_", 12) == 7500);
 
-        // (b) fixture tree: 2 families (one at depth 2) + 1 single + decoys
-        const char* R = "/tmp/v5_15_e12c_mbscan_a";
+        // (a″) D-431 NESTED — the child-grammar matcher cells (the constant-
+        // prefix specialization every nested walker uses; aliases must
+        // reject through the SAME leaf-8 round-trip).
+        check("E.1.2.D nested: ParseHorizonChild accepts horizon_7500",
+              ModelPath_ParseHorizonChild("horizon_7500") == 7500);
+        check("E.1.2.D nested: ParseHorizonChild rejects leading-zero alias",
+              ModelPath_ParseHorizonChild("horizon_07500") == -1);
+        check("E.1.2.D nested: ParseHorizonChild rejects '+' alias",
+              ModelPath_ParseHorizonChild("horizon_+7500") == -1);
+        check("E.1.2.D nested: ParseHorizonChild rejects h=0 and junk",
+              ModelPath_ParseHorizonChild("horizon_0") == -1 &&
+              ModelPath_ParseHorizonChild("horizon_abc") == -1 &&
+              ModelPath_ParseHorizonChild("horizons_100") == -1);
+        check("E.1.2.D nested: old-flat helper still parses <fam>_horizon_<N> (the detector's grammar)",
+              ModelPath_ParseOldFlatSibling("fam_horizon_400", "fam", 3) == 400 &&
+              ModelPath_ParseOldFlatSibling("fam_horizon_0400", "fam", 3) == -1);
+
+        // (b) fixture tree (D-431 NESTED shape — root bumped from the
+        // _e12c_ flat fixture so stale /tmp state cannot mix shapes):
+        // 2 families (one at depth 2) + 1 single + decoys + one RETIRED
+        // flat-form dir that must surface the migrate marker.
+        const char* R = "/tmp/v5_15_e12d_mbscan_nested_a";
         auto mk = [](const char* p) { mkdir(p, 0755); };
         auto touch = [](const char* p) {
             FILE* f = fopen(p, "w"); if (f) { fputs("{}", f); fclose(f); }
         };
         char pb[512];
         mk(R);
-        snprintf(pb, sizeof(pb), "%s/fam_horizon_1000", R); mk(pb);
-        snprintf(pb, sizeof(pb), "%s/fam_horizon_1000/buy_signal.json", R); touch(pb);
-        snprintf(pb, sizeof(pb), "%s/fam_horizon_1000/exit.json", R); touch(pb);
-        snprintf(pb, sizeof(pb), "%s/fam_horizon_5000", R); mk(pb);
-        snprintf(pb, sizeof(pb), "%s/fam_horizon_5000/buy_signal.json", R); touch(pb);
+        snprintf(pb, sizeof(pb), "%s/fam", R); mk(pb);
+        snprintf(pb, sizeof(pb), "%s/fam/horizon_1000", R); mk(pb);
+        snprintf(pb, sizeof(pb), "%s/fam/horizon_1000/buy_signal.json", R); touch(pb);
+        snprintf(pb, sizeof(pb), "%s/fam/horizon_1000/exit.json", R); touch(pb);
+        snprintf(pb, sizeof(pb), "%s/fam/horizon_5000", R); mk(pb);
+        snprintf(pb, sizeof(pb), "%s/fam/horizon_5000/buy_signal.json", R); touch(pb);
+        snprintf(pb, sizeof(pb), "%s/fam/horizon_abc", R); mk(pb);   // decoy child: bad suffix — ignored
+        snprintf(pb, sizeof(pb), "%s/fam/horizon_0", R); mk(pb);     // decoy child: h=0 invalid — ignored
+        snprintf(pb, sizeof(pb), "%s/fam/horizon_0/buy_signal.json", R); touch(pb);
         snprintf(pb, sizeof(pb), "%s/classification", R); mk(pb);
-        snprintf(pb, sizeof(pb), "%s/classification/deep_horizon_300", R); mk(pb);
-        snprintf(pb, sizeof(pb), "%s/classification/deep_horizon_300/exit.json", R); touch(pb);
+        snprintf(pb, sizeof(pb), "%s/classification/deep", R); mk(pb);
+        snprintf(pb, sizeof(pb), "%s/classification/deep/horizon_300", R); mk(pb);
+        snprintf(pb, sizeof(pb), "%s/classification/deep/horizon_300/exit.json", R); touch(pb);
         snprintf(pb, sizeof(pb), "%s/single_old", R); mk(pb);
         snprintf(pb, sizeof(pb), "%s/single_old/barrier.json", R); touch(pb);
-        snprintf(pb, sizeof(pb), "%s/fam_horizon_abc", R); mk(pb);   // decoy: bad suffix, no roles
-        snprintf(pb, sizeof(pb), "%s/fam_horizon_0", R); mk(pb);     // decoy sibling-name, h=0 invalid
-        snprintf(pb, sizeof(pb), "%s/fam_horizon_0/buy_signal.json", R); touch(pb);
+        // RETIRED flat form: an un-migrated horizon dir with role files —
+        // must list as a single WITH the migrate marker, never silently.
+        snprintf(pb, sizeof(pb), "%s/oldfam_horizon_400", R); mk(pb);
+        snprintf(pb, sizeof(pb), "%s/oldfam_horizon_400/barrier.json", R); touch(pb);
 
         auto* ms = new ModelBundleScanState();
         ModelBundleScan_Run(ms, R);
-        check("v5.15.5.E.1.2.C 3G-ii: fixture scan finds 4 entries (2 families + 2 singles)",
+        check("E.1.2.D nested 3G-ii: fixture scan finds 4 entries (2 families + 2 singles)",
               ms->count == 4);
         auto find_exact = [&](const char* full) -> const ModelBundleEntry* {
             for (int i = 0; i < ms->count; ++i)
@@ -27367,29 +27409,30 @@ e3_skip_load:;
         char e1[560]; snprintf(e1, sizeof(e1), "%s/fam", R);
         char e2[560]; snprintf(e2, sizeof(e2), "%s/classification/deep", R);
         char e3[560]; snprintf(e3, sizeof(e3), "%s/single_old", R);
-        char e4[560]; snprintf(e4, sizeof(e4), "%s/fam_horizon_0", R);
+        char e4[560]; snprintf(e4, sizeof(e4), "%s/oldfam_horizon_400", R);
         const ModelBundleEntry* fam  = find_exact(e1);
         const ModelBundleEntry* deep = find_exact(e2);
         const ModelBundleEntry* so   = find_exact(e3);
-        const ModelBundleEntry* fz   = find_exact(e4);
-        check("v5.15.5.E.1.2.C 3G-ii: family 'fam' — is_family, horizons {1000,5000} sorted",
+        const ModelBundleEntry* ofl  = find_exact(e4);
+        check("E.1.2.D nested 3G-ii: family 'fam' — is_family, horizons {1000,5000} sorted (decoy children ignored)",
               fam && fam->is_family && fam->horizon_count == 2 &&
               fam->horizons[0] == 1000 && fam->horizons[1] == 5000);
-        check("v5.15.5.E.1.2.C 3G-ii: fam roles h1000=buy+exit, h5000=buy; exit_count 1",
+        check("E.1.2.D nested 3G-ii: fam roles h1000=buy+exit, h5000=buy; exit_count 1",
               fam && fam->roles[0] == (MB_ROLE_BUY_SIGNAL | MB_ROLE_EXIT) &&
               fam->roles[1] == MB_ROLE_BUY_SIGNAL && fam->exit_count == 1);
-        check("v5.15.5.E.1.2.C 3G-ii: fam label carries [ensemble - 2h - buy+exit]",
+        check("E.1.2.D nested 3G-ii: fam label carries [ensemble - 2h - buy+exit]",
               fam && strstr(fam->label, "[ensemble") != nullptr &&
               strstr(fam->label, "2h") != nullptr &&
               strstr(fam->label, "buy+exit") != nullptr);
-        check("v5.15.5.E.1.2.C 3G-ii: depth-2 family under classification/ found (exit-only)",
+        check("E.1.2.D nested 3G-ii: depth-2 family under classification/ found (exit-only)",
               deep && deep->is_family && deep->horizon_count == 1 &&
               deep->horizons[0] == 300 && deep->exit_count == 1 &&
               deep->roles[0] == MB_ROLE_EXIT);
-        check("v5.15.5.E.1.2.C 3G-ii: single_old lists as single-zoo with the barrier role",
+        check("E.1.2.D nested 3G-ii: single_old lists as single-zoo with the barrier role",
               so && !so->is_family && so->roles[0] == MB_ROLE_BARRIER);
-        check("v5.15.5.E.1.2.C 3G-ii: invalid-h sibling name (h=0) lists as a SINGLE (loader-consistent)",
-              fz && !fz->is_family && (fz->roles[0] & MB_ROLE_BUY_SIGNAL) != 0);
+        check("E.1.2.D nested 3G-ii: RETIRED flat-form dir lists as a single WITH the migrate marker",
+              ofl && !ofl->is_family && (ofl->roles[0] & MB_ROLE_BARRIER) != 0 &&
+              strstr(ofl->label, "FLAT-FORM: migrate") != nullptr);
         auto* ms2 = new ModelBundleScanState();
         ModelBundleScan_Run(ms2, R);
         bool same = (ms2->count == ms->count);

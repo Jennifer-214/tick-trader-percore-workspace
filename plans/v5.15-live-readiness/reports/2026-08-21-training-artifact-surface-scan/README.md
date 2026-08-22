@@ -125,3 +125,14 @@ so the discipline works when remembered and fails silently when not.
 one-line close-out check — *every `reports_dir` named in a plan's frontmatter contains more than its
 own README, and every report filename cited inside that README resolves.* This is a producer-side
 gap in the report-persistence discipline itself, not a one-off slip.
+
+---
+
+## ✅ 2026-08-22 — scans 1 + 2 RE-DERIVED at HEAD
+
+Replacement reports (persisted verbatim at receipt this time) live at
+`../2026-08-22-ml-findings-rederivation/` — S2-F9 recovered with a measured parser matrix (D-a
+evidence re-grounded), S2-F10/F12 + S1-F11 + S3-F11 best-evidence candidates, per-row verdict flips
+at HEAD (S2-F3 + S1-F1/F2/F3/F6 FIXED; S2-F1 partially re-opened → fixed same day), and 15 NEW
+findings with same-day dispositions in that dir's README. **Cite the re-derivation for S2 content;
+this digest stays the authority on what the LOST ids originally said.**

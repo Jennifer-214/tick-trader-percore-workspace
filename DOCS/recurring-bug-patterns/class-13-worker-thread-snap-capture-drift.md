@@ -138,3 +138,31 @@ unpopulated by the suite caller). Worth retroactively running
   here. Reads `RECURRING_BUG_PATTERNS.md` + walks `Backtest/` for
   `free(args)` sites + diffs `args->field` reads pre/post-free +
   reports mismatches. Lower friction than the manual grep.
+
+---
+
+## Sub-shape C (2026-08-22, E.1.2.D re-derivation): snap complete, snap THREADED, consumer substitutes a CONSTANT
+
+One step deeper than sub-shape B ("snap block complete, consumer bypasses it", 2026-08-21): the
+snapshot is captured at click, threaded through the whole call chain (`hp_override` reached both
+validation trainers), the STAMP records the snapped value — and the consumer's inner loop ignores
+the delivered field for a hardcoded literal. Canonical: `Backtest_RunWalkForward` +
+`HeldOutSplit_TrainEval` looped `int n_rounds = 200;` while `hp.n_estimators` (snapped, threaded,
+stamped) sat in scope unread (scan-1 NEW-1 / S1-F11 candidate; fixed engine `10b8ba7`).
+
+**Why it survives every existing detector:** the caller-enumeration proxy (AR-20) proves every
+caller PASSES the argument — it cannot see a callee that receives and ignores it. The
+fallback-constant pin (C.3k shape) stays green because the hardcode EQUALS the default
+(`Defaults().n_estimators == 200`), so the defect is bytewise invisible at defaults and materializes
+only when the operator moves the knob — exactly when the metrics matter.
+
+**Detection:** for every field of a threaded parameter struct, grep the callee BODY for a read of
+that field; a field passed-but-never-read inside the consumer is this shape (the consumer-side
+clause of AR-20). Watch for literals equal to a `Defaults()` member near the unread field — the
+equality is the camouflage, and a comment documenting the coupling ("matches hardcoded n_rounds")
+is the tell, not the excuse.
+
+**False-positive surface (M3):** a callee legitimately consuming only a SLICE of a passed struct
+(e.g. the sweep's deliberate `hp_override = nullptr` + per-cell `cfg_override`) is NOT an instance
+when the unused remainder is documented at the call site as by-design; the instance requires an
+artifact (stamp/summary/metric) CLAIMING the unread value was used.

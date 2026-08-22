@@ -4,7 +4,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-08-21 (commit 6b1a9dd)
+**Last regenerated**: 2026-08-22 (commit f317c2d)
 
 ## CoreFrameworks/
 
@@ -842,18 +842,18 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `Model_Init` — line 530
 - `Model_Load` — line 578
 - `Model_Predict_Normalized` — line 713
-- `Model_Predict_AtClass` — line 776
-- `Model_PrimaryBuyClassIdx` — line 838 — Model_Predict_AtClass(m, features, n, m->buy_class_idx).
-- `Model_ExitClassIdx` — line 870 — unspottable by reading either site alone.
-- `Model_LoadAOT` — line 900
-- `Model_Predict_AOT` — line 914
-- `Model_Predict` — line 958
-- `Model_Predict_Ensemble` — line 1044
-- `Model_Predict_Ensemble_Weighted` — line 1132
-- `Model_PredictMulti` — line 1277
-- `Model_Free` — line 1353
-- `Model_IsLoaded` — line 1373
-- `ModelFeatures_Pack` — line 1397
+- `Model_Predict_AtClass` — line 785
+- `Model_PrimaryBuyClassIdx` — line 847 — Model_Predict_AtClass(m, features, n, m->buy_class_idx).
+- `Model_ExitClassIdx` — line 881 — unspottable by reading either site alone.
+- `Model_LoadAOT` — line 911
+- `Model_Predict_AOT` — line 925
+- `Model_Predict` — line 969
+- `Model_Predict_Ensemble` — line 1063
+- `Model_Predict_Ensemble_Weighted` — line 1151
+- `Model_PredictMulti` — line 1296
+- `Model_Free` — line 1372
+- `Model_IsLoaded` — line 1392
+- `ModelFeatures_Pack` — line 1416
 
 ### NodeModelZoo.hpp
 
@@ -1092,20 +1092,21 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `BacktestStats_Compute` — line 575 — (0.0 = negative, 1.0 = positive, 0.5 = neutral and already filtered).
 - `BacktestStats_ComputeFromEquity` — line 619
 - `BacktestSharded_Run` — line 662
-- `Backtest_ComputeLabelsFromSamples` — line 717 — through samples; no per-file O(N) sample scans.
-- `Backtest_Run` — line 988 — equity curve).
-- `HeldOutSplit_TrainEval` — line 1176 — operator set. That metric is the one gating deployment.
-- `Backtest_RunWalkForward` — line 1282 — behavior bytewise.
-- `Backtest_RunFullValidation` — line 1302
-- `WalkForward_ComputeAccuracy` — line 1540 — uses > 0.5f for truth so neutral (0.5) labels are never counted as positive
-- `WalkForward_ComputeMulticlassAccuracy` — line 1587 — argmax over each row, compare to integer truth (rounded from label float).
-- `WalkForward_ComputeMSE` — line 1606 — regression: mean squared error. Lower = better. Sensitive to outliers.
-- `WalkForward_ComputeCorrelation` — line 1622 — gets low MSE on small-magnitude targets while having zero predictive power).
-- `Backtest_RunWalkForward` — line 1660
-- `HeldOutSplit_TrainEval` — line 2304 — functions it uses (WalkForward_Compute*, XGBoost_Compute*) are visible.
-- `ConfigField_Set` — line 2565 — handles both FPN_Binary and PCT fields (PCT keys are stored as decimal, value comes in as %).
-- `Backtest_RunSweep` — line 2718 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
-- `Backtest_RunHyperparamTrainSweep` — line 2837 — mean_val_correlation (regression). Stored as positive number; higher = better.
+- `Backtest_ComputeLabelsBatch` — line 779 — printed nothing on abort; the 1-target wrapper preserves that exactly.
+- `Backtest_ComputeLabelsFromSamples` — line 1072 — legacy body printed nothing and returned — mirrored below.
+- `Backtest_Run` — line 1151 — equity curve).
+- `HeldOutSplit_TrainEval` — line 1339 — operator set. That metric is the one gating deployment.
+- `Backtest_RunWalkForward` — line 1445 — behavior bytewise.
+- `Backtest_RunFullValidation` — line 1465
+- `WalkForward_ComputeAccuracy` — line 1703 — uses > 0.5f for truth so neutral (0.5) labels are never counted as positive
+- `WalkForward_ComputeMulticlassAccuracy` — line 1750 — argmax over each row, compare to integer truth (rounded from label float).
+- `WalkForward_ComputeMSE` — line 1769 — regression: mean squared error. Lower = better. Sensitive to outliers.
+- `WalkForward_ComputeCorrelation` — line 1785 — gets low MSE on small-magnitude targets while having zero predictive power).
+- `Backtest_RunWalkForward` — line 1823
+- `HeldOutSplit_TrainEval` — line 2467 — functions it uses (WalkForward_Compute*, XGBoost_Compute*) are visible.
+- `ConfigField_Set` — line 2728 — handles both FPN_Binary and PCT fields (PCT keys are stored as decimal, value comes in as %).
+- `Backtest_RunSweep` — line 2881 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `Backtest_RunHyperparamTrainSweep` — line 3000 — mean_val_correlation (regression). Stored as positive number; higher = better.
 
 ### BacktestPanels.hpp
 
@@ -1113,27 +1114,28 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `DataPanel_Scan` — line 107
 - `RunControl_Init` — line 264
 - `SamplesSnapshot_Compute` — line 290 — only when running==0, giving a safe happens-before relationship.
-- `RunControl_Start` — line 531
-- `GUI_Panel_DataBrowser` — line 583
-- `GUI_Panel_RunControl` — line 701
-- `GUI_Panel_Results` — line 777
-- `PastRuns_Init` — line 1068
-- `PastRuns_LoadOne` — line 1138 — scan one run directory's metadata files
-- `PastRuns_DeleteDir` — line 1270
-- `PastRun_ParseHorizon` — line 1296 — out_horizon_ticks = 0).
-- `PastRuns_ScanOneDir` — line 1350
-- `PastRuns_Scan` — line 1387
-- `PastRun_MetricLabel` — line 1472 — label-type-aware metric label
-- `GUI_Panel_PastRuns` — line 1498 — Pass NULL to keep pre-v5.11.57 behavior (devmode-only).
-- `Comparison_Init` — line 2391
-- `Comparison_Free` — line 2410
-- `Comparison_SaveRun` — line 2432
-- `GUI_Panel_Comparison` — line 2485
-- `OptimizerPanel_Init` — line 2672
-- `GUI_Panel_Optimizer` — line 2737
-- `Training_AnyWorkerRunning` — line 3189
-- `TrainingPanel_Init` — line 3223 — different answer — the same reason Training_ResolveRole was extracted.
-- `GUI_Panel_Training` — line 5132
+- `RunControl_Start` — line 574
+- `GUI_Panel_DataBrowser` — line 626
+- `GUI_Panel_RunControl` — line 744
+- `GUI_Panel_Results` — line 820
+- `PastRuns_Init` — line 1111
+- `PastRuns_LoadOne` — line 1181 — scan one run directory's metadata files
+- `PastRuns_DeleteDir` — line 1313
+- `PastRun_ParseHorizon` — line 1339 — out_horizon_ticks = 0).
+- `PastRuns_ScanOneDir` — line 1393
+- `PastRuns_Scan` — line 1430
+- `PastRun_MetricLabel` — line 1515 — label-type-aware metric label
+- `GUI_Panel_PastRuns` — line 1541 — Pass NULL to keep pre-v5.11.57 behavior (devmode-only).
+- `Comparison_Init` — line 2434
+- `Comparison_Free` — line 2453
+- `Comparison_SaveRun` — line 2475
+- `GUI_Panel_Comparison` — line 2528
+- `OptimizerPanel_Init` — line 2715
+- `GUI_Panel_Optimizer` — line 2780
+- `Training_AnyWorkerRunning` — line 3232
+- `Training_SnapshotHyperparams` — line 3265 — different answer — the same reason Training_ResolveRole was extracted.
+- `TrainingPanel_Init` — line 3316 — with the `tree_method` stamp split-brain (M1) that shares this surface.
+- `GUI_Panel_Training` — line 5378
 
 ### BacktestSharded.hpp
 

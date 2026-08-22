@@ -19540,6 +19540,130 @@ e3_skip_load:;
             check("v5.10.0B: empty config → no-op (no crash)", true);
             BacktestResults_Free(&r);
         }
+
+        // Test scenario D (E.1.2.D leaf 5): batch-vs-sequential TOTAL oracle.
+        // K=4 mixed targets (binary + 3-class + regression + regime-extra)
+        // computed by ONE Backtest_ComputeLabelsBatch walk MUST be bytewise
+        // identical (memcmp) to four dedicated single-target walks over the
+        // same 3-file corpus — the byte-identity contract the batched
+        // multi-horizon label paths rely on. Also pins the per-target NaN
+        // counters against the sequential stats DELTAS, the labeled-count
+        // return, and the NAN-prefill honest-refusal contract on a gone
+        // corpus. Scenarios A/B above pin wrapper == hand-derived truth, so
+        // together: batch(K) == K× the pre-batch behavior.
+        {
+            char p0[] = "/tmp/E12D_L5_batch_b0_XXXXXX";
+            char p1[] = "/tmp/E12D_L5_batch_b1_XXXXXX";
+            char p2[] = "/tmp/E12D_L5_batch_b2_XXXXXX";
+            int fd0 = mkstemp(p0); int fd1 = mkstemp(p1); int fd2 = mkstemp(p2);
+            check("E.1.2.D L5: tmpfiles created", fd0 >= 0 && fd1 >= 0 && fd2 >= 0);
+            if (fd0 >= 0) close(fd0);
+            if (fd1 >= 0) close(fd1);
+            if (fd2 >= 0) close(fd2);
+            auto pfn = +[](int g) -> double {
+                if (g < 100) return 100.0;
+                if (g < 200) return 100.7;
+                return 99.0;
+            };
+            check("E.1.2.D L5: write 3-file fixture",
+                  write_csv(p0, 100, 0,   pfn) &&
+                  write_csv(p1, 100, 100, pfn) &&
+                  write_csv(p2, 100, 200, pfn));
+
+            BacktestResults r;
+            BacktestResults_Init(&r);
+            r.sample_count = 3;
+            r.sample_tick_indices[0] = 20;
+            r.sample_tick_indices[1] = 110;
+            r.sample_tick_indices[2] = 250;
+            r.sample_prices[0] = 100.0;
+            r.sample_prices[1] = 100.7;
+            r.sample_prices[2] = 99.0;
+            r.sample_regimes[0] = 0;   // REGIME target reads these as `extra`
+            r.sample_regimes[1] = 1;
+            r.sample_regimes[2] = 2;
+
+            BacktestRunConfig run_cfg{};
+            run_cfg.collect_features = 1;
+            run_cfg.num_data_files = 3;
+            strncpy(run_cfg.data_paths[0], p0, 255);
+            strncpy(run_cfg.data_paths[1], p1, 255);
+            strncpy(run_cfg.data_paths[2], p2, 255);
+
+            // K=4 mixed targets — per-target fn/defaults, all three NaN
+            // policies, and the REGIME per-sample `extra` routing in one batch.
+            struct { int type; double tp, sl; int fwd; } tspec[4] = {
+                { LABEL_WIN_LOSS,           0.5, 0.5, 0  },  // binary (fwd unused)
+                { LABEL_PEAK_VALLEY_STABLE, 0.5, 0.5, 50 },  // 3-class
+                { LABEL_FORWARD_PNL,        0.0, 0.0, 30 },  // regression, default tp/sl
+                { LABEL_REGIME,             0.5, 0.5, 40 },  // extra = sample_regimes[s]
+            };
+
+            // Sequential reference: four dedicated single-target walks through
+            // the legacy wrapper; labels snapshotted per target, NaN-counter
+            // DELTAS captured out of the accumulate-stats.
+            float ref[4][3];
+            uint32_t ref_nan_total[4], ref_nan_dropped[4];
+            for (int t = 0; t < 4; t++) {
+                run_cfg.label_type          = tspec[t].type;
+                run_cfg.label_tp_pct        = tspec[t].tp;
+                run_cfg.label_sl_pct        = tspec[t].sl;
+                run_cfg.label_forward_ticks = tspec[t].fwd;
+                uint32_t nt0 = r.stats.nan_labels_total;
+                uint32_t nd0 = r.stats.nan_labels_dropped;
+                Backtest_ComputeLabelsFromSamples(&r, &run_cfg);
+                ref_nan_total[t]   = r.stats.nan_labels_total   - nt0;
+                ref_nan_dropped[t] = r.stats.nan_labels_dropped - nd0;
+                memcpy(ref[t], r.labels, sizeof(ref[t]));
+            }
+
+            // One batched walk, four caller-owned output vectors.
+            float out[4][3];
+            LabelBatchTarget bt[4];
+            for (int t = 0; t < 4; t++) {
+                bt[t] = LabelBatchTarget{};
+                bt[t].label_type    = tspec[t].type;
+                bt[t].tp_pct        = tspec[t].tp;
+                bt[t].sl_pct        = tspec[t].sl;
+                bt[t].forward_ticks = tspec[t].fwd;
+                bt[t].out_labels    = out[t];
+            }
+            int labeled = Backtest_ComputeLabelsBatch(&r, &run_cfg, bt, 4);
+            check("E.1.2.D L5: batch labeled every sample", labeled == 3);
+            check("E.1.2.D L5: WIN_LOSS vector bytewise == sequential",
+                  memcmp(ref[0], out[0], sizeof(ref[0])) == 0);
+            check("E.1.2.D L5: PVS 3-class vector bytewise == sequential",
+                  memcmp(ref[1], out[1], sizeof(ref[1])) == 0);
+            check("E.1.2.D L5: FORWARD_PNL regression vector bytewise == sequential",
+                  memcmp(ref[2], out[2], sizeof(ref[2])) == 0);
+            check("E.1.2.D L5: REGIME per-sample-extra vector bytewise == sequential",
+                  memcmp(ref[3], out[3], sizeof(ref[3])) == 0);
+            int counters_match = 1;
+            for (int t = 0; t < 4; t++) {
+                if (bt[t].nan_total   != ref_nan_total[t])   counters_match = 0;
+                if (bt[t].nan_dropped != ref_nan_dropped[t]) counters_match = 0;
+            }
+            check("E.1.2.D L5: per-target NaN counters == sequential deltas",
+                  counters_match);
+
+            // NAN-prefill honest-refusal pin: with the corpus gone the batch
+            // labels nothing and every output slot must read invalid (NAN),
+            // never stale/poison bytes — the contract that makes the
+            // multi-horizon fallback refuse loudly instead of training on
+            // garbage.
+            unlink(p0); unlink(p1); unlink(p2);
+            for (int t = 0; t < 4; t++)
+                for (int s = 0; s < 3; s++) out[t][s] = 7.0f;   // poison
+            int labeled2 = Backtest_ComputeLabelsBatch(&r, &run_cfg, bt, 4);
+            int all_nan = 1;
+            for (int t = 0; t < 4; t++)
+                for (int s = 0; s < 3; s++)
+                    if (!isnan(out[t][s])) all_nan = 0;
+            check("E.1.2.D L5: gone-corpus batch labels nothing, leaves NAN prefill",
+                  labeled2 == 0 && all_nan);
+
+            BacktestResults_Free(&r);
+        }
     }
 
     printf("\n--- EXTENSIBILITY: v5.10.0 Item A — per-phase backtest timers ---\n");

@@ -27017,15 +27017,37 @@ e3_skip_load:;
         check("E.1.2.C C.3i: ExitClassIdx(1) == 0 (binary WILL_PEAK raw)",
               Model_ExitClassIdx(1) == 0);
 
-        // (c) THE INVARIANT. If these two ever agree on a multiclass model,
-        // one side is reading the other's class — which is exactly the bug.
+        // (c) THE INVARIANT — narrowed to k >= 3 at the Stage-6.5.4 review's
+        // finding. The asymmetry exists only where there IS a third class to
+        // disagree about: PVS is 0=stable / 1=peak / 2=valley, so buy reads 2
+        // and exit reads 1. At k == 2 there is no valley slot and BOTH sides
+        // correctly read the positive class (1) — the original `k >= 2` form
+        // passed there vacuously while `Model_PrimaryBuyClassIdx(2)` returned
+        // an OUT-OF-RANGE index 2, which both consumers silently clamp to 0,
+        // i.e. the buy side would have read class 0. Same failure SHAPE as the
+        // bug this pin exists to prevent, introduced by the fix for it, and
+        // green because the one untested value was the only broken one.
         int agree_multiclass = 0;
-        for (int k = 2; k <= 8; ++k) {
+        for (int k = 3; k <= 8; ++k) {
             if (Model_PrimaryBuyClassIdx(k) == Model_ExitClassIdx(k))
                 agree_multiclass = 1;
         }
-        check("E.1.2.C C.3i: buy and exit class rules DIFFER for every k >= 2",
+        check("E.1.2.C C.3i: buy and exit class rules DIFFER for every k >= 3",
               agree_multiclass == 0);
+
+        // (c2) k == 2 — the value the invariant above deliberately excludes, so
+        // it must be pinned explicitly rather than left to the gap. Both rules
+        // return the positive class, and CRUCIALLY both are IN RANGE for a
+        // 2-output model.
+        check("E.1.2.C C.3i: k==2 buy index is IN RANGE (< num_outputs)",
+              Model_PrimaryBuyClassIdx(2) < 2);
+        check("E.1.2.C C.3i: k==2 exit index is IN RANGE (< num_outputs)",
+              Model_ExitClassIdx(2) < 2);
+        check("E.1.2.C C.3i: k==2 both read the positive class (no third class to split)",
+              Model_PrimaryBuyClassIdx(2) == 1 && Model_ExitClassIdx(2) == 1);
+        // and the 3-class case stays in range too, guarding the other direction
+        check("E.1.2.C C.3i: k==3 buy index is IN RANGE",
+              Model_PrimaryBuyClassIdx(3) < 3);
 
         // (d) ...and agree only where there is a single output to read
         check("E.1.2.C C.3i: buy == exit == 0 on a single-output model",

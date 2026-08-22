@@ -15,7 +15,7 @@ so the snapshot stales when tags/units actually change, not on unrelated line dr
 `rg` gives exact locations. The DOCS/ template corpus is excluded (copy-source, not a
 conversion).
 
-Converted files: 166 · unit blocks: 1122
+Converted files: 166 · unit blocks: 1124
 
 ## [TAG] values → files
 
@@ -1004,7 +1004,7 @@ Converted files: 166 · unit blocks: 1122
 - `Strategies/private/EmaCross.hpp` — `Strategies/private/EmaCross.hpp`
 - `Version.hpp` — `Version.hpp`
 
-### FUNCTION (524)
+### FUNCTION (525)
 
 - `ANSI_Layout_Render` — `DataStream/TUIAnsi.hpp`
 - `ANSI_Section_Header` — `DataStream/TUIAnsi.hpp`
@@ -1439,6 +1439,7 @@ Converted files: 166 · unit blocks: 1122
 - `Training_AnyWorkerRunning` — `Backtest/BacktestPanels.hpp`
 - `Training_ResolveRole` — `Backtest/LabelFunctions.hpp`
 - `Training_SideLabelGate` — `Backtest/LabelFunctions.hpp`
+- `Training_SnapshotHyperparams` — `Backtest/BacktestPanels.hpp`
 - `ValidationSplit_Generate` — `Backtest/ValidationSplit.hpp`
 - `VolScaler_Size` — `ML_Headers/VolScaler.hpp`
 - `WalkForward_ComputeAccuracy` — `Backtest/BacktestEngine.hpp`
@@ -1621,7 +1622,7 @@ Converted files: 166 · unit blocks: 1122
 - `FOREACH_TRADE_LOG_COL` — `CoreFrameworks/TradeLogColRegistry.hpp`
 - `PER_NODE_OVERRIDE_FIELDS` — `CoreFrameworks/ControllerConfig.hpp`
 
-### STRUCT (197)
+### STRUCT (198)
 
 - `AnsiBuf` — `DataStream/TUIAnsi.hpp`
 - `BacktestResults` — `Backtest/BacktestEngine.hpp`
@@ -1817,6 +1818,7 @@ Converted files: 166 · unit blocks: 1122
 - `TrainingPanelState` — `Backtest/BacktestPanels.hpp`
 - `WalkForwardFoldResult` — `Backtest/BacktestEngine.hpp`
 - `WalkForwardResults` — `Backtest/BacktestEngine.hpp`
+- `WalkForwardWorkerArgs` — `Backtest/BacktestPanels.hpp`
 - `WelfordTracker` — `ML_Headers/WelfordStats.hpp`
 - `WsHeartbeatTelemetry` — `CoreFrameworks/ControllerEventLoop.hpp`
 - `XGBHyperparams` — `Backtest/XGBHyperparams.hpp`

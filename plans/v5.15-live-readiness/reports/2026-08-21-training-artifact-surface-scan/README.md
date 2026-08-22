@@ -16,8 +16,8 @@ artifact-layout surface she flagged from her own `models/` tree.
 
 | # | Report | Scope |
 |---|---|---|
-| 1 | `i-class-1-snapshot-vs-live.md` | every `TrainingPanelState` field a worker consumes, classified SNAPPED vs LIVE; Class-13 snap-block completeness; `ui_training_side` full consumer trace |
-| 2 | `i-class-2-artifact-layout-collisions.md` | every writer under `models/`; the collision matrix; flat-naming prefix surface measured against the REAL tree; nested-layout design assessment; backup safety |
+| 1 | ⚠️ **NOT PERSISTED** (was to be `i-class-1-snapshot-vs-live.md`) | every `TrainingPanelState` field a worker consumes, classified SNAPPED vs LIVE; Class-13 snap-block completeness; `ui_training_side` full consumer trace |
+| 2 | ⚠️ **NOT PERSISTED** (was to be `i-class-2-artifact-layout-collisions.md`) | every writer under `models/`; the collision matrix; flat-naming prefix surface measured against the REAL tree; nested-layout design assessment; backup safety |
 | 3 | *(pending at time of writing)* | single-pass buy+exit feasibility + label-recompute cost |
 
 ## Orchestrator-verified findings (I re-read the code myself; not taken on report)
@@ -98,3 +98,30 @@ no path form and no role filename (S2-F11).
 a spec and a guard stacked on it; this one has none. Codification candidate (a Class + a
 `data-disciplines/` spec), now backed by a ~30-instance census across three scans rather than one
 anecdote, which is the bar `pattern-codification-lifecycle.md` sets.
+
+
+---
+
+## ⚠️ CORRECTION 2026-08-22 — the three source reports were NEVER SAVED
+
+Found by the Stage-6.5.4 adversarial review. **This digest is the only surviving record of the three
+i-class scans.** The orchestrator wrote the digest by hand but never persisted the agents' verbatim
+reports, which is a direct miss of `DOCS/SUBAGENT_ARMING.md` § 6.5 and of
+`feedback_save_agent_reports_verbatim` — the raw transcripts lived in `/tmp` and are gone. The same
+day's `reports/2026-08-21-f3-tier-flip-decision-check/` DID save both of its agent reports verbatim,
+so the discipline works when remembered and fails silently when not.
+
+**Consequences, stated so nobody re-derives them the hard way:**
+
+- Five ids in the E.1.2.D plan's `owning_findings` **do not resolve to any row**: `S1-F11`,
+  `S2-F9`, `S2-F10`, `S2-F12`, `S3-F11`.
+- **`S2-F9` is cited as evidence inside decision D-a** (the model-layout fork, the biggest of the
+  six) — *"leaves the aliasing (S2-F5), the three parsers (S2-F9), …"*. The claim about three
+  divergent `_horizon_` parsers is almost certainly re-derivable from the code, but it is currently
+  unsourced. **Re-derive it before D-a is decided on that basis.**
+- Cite the digest's own rows, never a bare `Sn-Fm` id, until the gap is closed.
+
+**Structural close (M7 candidate, per `feedback_guards_compound_enforcement_is_leverage`):** a
+one-line close-out check — *every `reports_dir` named in a plan's frontmatter contains more than its
+own README, and every report filename cited inside that README resolves.* This is a producer-side
+gap in the report-persistence discipline itself, not a one-off slip.

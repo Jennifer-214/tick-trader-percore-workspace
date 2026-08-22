@@ -1814,3 +1814,28 @@ signature not). Scan is refresh-driven — click ↻ after training new models.
 **Related:** ModelBundleScan.hpp (ImGui-free scanner + preview) · `Model_ParseHorizonSibling`
 (shared matcher, NodeModelZoo.hpp) · register #17 hot-swap triple (this closes its (c);
 (a) bundle-id/exit-state coupling and (b) remain open) · "Exit-side training is REAL" entry above.
+
+### Exit-side training gate now blocks the Train buttons (v5.15.5.F.4d.1.E.1.2.C+)
+
+**What** — with `Training Side = Exit`, selecting an entry-goodness label (WIN_LOSS, BARRIER,
+FORWARD_PNL, REGIME, CS_*) now GREYS OUT `Train Model` and `Train Multi-Horizon`, not just the
+Collect buttons. Flipping the side also CLEARS the per-horizon Label-Kind CSV, so the combo's
+`Will Peak` default actually reaches training.
+
+**Cfg flags** — none; it is a producer-side UI gate (`Training_SideLabelGate`, `LabelFunctions.hpp`).
+
+**Fallback** — Will Peak (the automatic default on a side flip) and Peak/Valley/Stable both stay
+allowed. WILL_VALLEY and VOL_BARRIER remain WARN-tier (allowed with a yellow hint) pending operator
+triage — see E.1.2.D decision D-b.
+
+**Where to verify** — `C.3j` in the char-test suite pins the whole tier table exhaustively over
+`FOREACH_TARGET × both sides`, with a count-pin so a new label row forces a conscious classification.
+
+**Paper-test sanity** — if a Train button is unexpectedly dead during exit-side training, this is
+why, and it is telling the truth: what it previously permitted was a semantically inverted exit
+model carrying an honest-looking stamp.
+
+**Gotchas** — the gate aggregates over the EFFECTIVE label set, so one REFUSE-tier horizon in a
+Label-Kind CSV blocks the whole multi-horizon train.
+
+**Related** — D2 verdict F3 · D-430 (3) · E.1.2.D decision D-b.

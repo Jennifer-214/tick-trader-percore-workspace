@@ -61,6 +61,28 @@ A `/bug-check` skill (queued for v5.14) reads this class definition
 
 **Known instances:**
 
+- **2026-08-21 · `E.1.2.D` · a NEW SUB-SHAPE: *snap block complete, consumer bypasses it*.**
+  `MultiHorizonWorkerArgs` (`Backtest/BacktestPanels.hpp`) has carried click-time snapshots of all
+  EIGHT XGBoost hyperparameters since v5.11.41 — populated at both click handlers, and read by
+  **nothing**. `mh_run_one_horizon_fv` read `state->max_depth` etc. LIVE off the worker thread
+  instead, and read three of them a SECOND time at `summary.txt`-write time, minutes later. So an
+  operator edit during the label pass silently changed the saved model, `summary.txt` could disagree
+  with the model beside it, and in parallel mode N threads read non-atomic ints while ImGui wrote
+  them. The extraction of `mh_run_one_horizon_fv` from the parent worker (v5.11.41) is what
+  converted eight snapped reads into eight live ones; the now-orphan snaps are the fossil that
+  proves it. **This is the inverse of both previously-documented flavors** — the snap block is not
+  missing and not stale, it is complete, correct, and unwired. Fixed engine `f99e102` (the same
+  snapshot now also feeds the validation trainers and the stamp, so all four agree). Detection that
+  works: for each `*WorkerArgs` field, grep its name — a snap with exactly ONE hit (its own
+  population) is an unwired snap.
+- **2026-08-21 · `E.1.2.D` · same class, `FullValidationWorkerArgs`.** The struct carried a snapshot
+  block whose own comment describes this bug class verbatim (*"Capture-at-click eliminates the
+  race"*), and `label_type` / the `wf_*` quartet / `gap_threshold` / `held_out_fraction` were simply
+  never added to it — all read live from the worker. The `label_type` one needed no race at all:
+  changing the combo between the Collect click and the Run-Full-Validation click made the worker
+  train on one objective and stamp another. Fixed engine `6b1a9dd`; `label_type` is now sourced from
+  `run_control->run_config`, i.e. the field that actually produced the labels.
+
 - **v5.13.5 use-after-free in `train_multi_horizon_worker_fn`**
   (`Backtest/BacktestPanels.hpp:~3814` fix; tag `v5.13.5.B`,
   commit `6f3296c`). v5.13.5 added

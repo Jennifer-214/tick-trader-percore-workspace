@@ -1765,3 +1765,42 @@ related_specs:
 - **Status:** OPEN
 - **Verification (owed):** a test asserting `STAMP_HAS(vr, inference_cfg) == 1` for at least one production-path emit — currently expected to FAIL, which is the point: it pins the vacuity and prevents any future gate change from freezing it permanently dead. Plus the generalized form: for every row whose gate is set on the default path, set a **distinctive non-default** value and assert the round-trip carries *that* value. A row with no path from any input to a distinctive output is a row with no producer.
 - **Evidence:** `plans/v5.15-live-readiness/reports/2026-08-17-stamp-emit-gate-audit/i-class-18-key-consumer-trace.md` (full chain, every link cited) · `a-class-refute-byte-identical.md` § 3 (independent corroboration) · the fixture that hid it: `tests/controller_test.cpp:15566-15584`, which hand-sets the group bit and whose own comment already says *"THIS FIXTURE IS WHY THE VACUITY SURVIVED."*
+
+
+### PARITY-045 — the validation harness trained a different ARCHITECTURE than the shipped model, and the stamp recorded a third story
+
+```yaml
+id: PARITY-045
+status: closed
+opened: 2026-08-21
+closed: 2026-08-21
+severity: high
+surface_tags: [train-serve, ml-inference, stamp-body, validation]
+found_by: i-class training-surface scan (S1-F3) + orchestrator verification
+closed_by: engine f99e102
+```
+
+**The divergence.** One training run produced FOUR descriptions of itself:
+
+| consumer | architecture used | source |
+|---|---|---|
+| the SHIPPED model | the operator's panel values (measured: `2 / 0.050 / 350`) | eight LIVE `state->` reads |
+| the walk-forward folds | `6 / 0.1 / 200` + four cfg overrides | `XGBHyperparams_Defaults()` + `eff_cfg` |
+| the held-out model | pure `6 / 0.1 / 200 / 0.8 / 0.8 / 5 / 42` | `XGBHyperparams_Defaults()`, **no overrides at all** |
+| the STAMP | `6 / 0.1 / 200` | the same hardcoded defaults |
+
+**Why it is a parity issue and not merely a bug.** `held_out_metric` is the figure that gates
+deployment, and it described a model that was never trained and never shipped. The operator's
+hyperparameter tuning could not appear in the numbers used to judge it — a closed loop that was
+open. It survived because **no artifact on disk could contradict the stamp**: the stamp drew from
+the same hardcoded defaults the validation did, so the two agreed with each other and with nothing
+real.
+
+**Mechanism of the fix.** One `const tt::XGBHyperparams *hp_override` (default `nullptr` =
+prior behaviour bytewise) threaded `Backtest_RunFullValidation` → `Backtest_RunWalkForward` +
+`HeldOutSplit_TrainEval`, built once by the worker from the click-time snaps. NOT via
+`ControllerConfig` — see Landmine 22.
+
+**Residual (not part of this closure):** the plumbing needs XGBoost + real data to exercise, so the
+acceptance oracle is PARTIAL — `C.3k` pins only the shared `XGBHyperparams_Defaults()` fallback.
+Dogfood verification is owed: train one horizon, then grep the stamp for the operator's values.

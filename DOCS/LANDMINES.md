@@ -611,3 +611,34 @@ stale while the live one looks current. Measured this close: the mirror was two 
 still listed a deleted function until the Stage-5.5 reviewer caught it. Corollary to the mitigation
 rule above: "use workspace absolute paths for workspace-owned trees" EXCEPT CODE_MAP, where the
 engine-side file is the fresh one and the workspace copy is the committed one.
+
+
+---
+
+## Landmine 22 — `ControllerConfig<F>` is RAW-FINGERPRINTED; adding a field to it breaks every model stamp
+
+**Cost:** one build cycle + a full revert of a nearly-finished change (2026-08-21, E.1.2.D).
+
+**What happened.** Fixing the hyperparameter split-brain needed three values (`max_depth`,
+`learning_rate`, `n_estimators`) to reach the validation trainers. The obvious route — and the one
+its four already-plumbed siblings use — is to add them to `ControllerConfig`, since both trainers
+read `data->config_used`. That builds cleanly right up until:
+
+```
+ControllerConfig.hpp:1476: static assertion failed: ControllerConfig<F> layout changed ->
+the RAW model-fingerprint shifts. Bump N to the new sizeof AND regen the backtest golden. (D-254)
+```
+
+**Why it bites.** The struct is memcmp'd/hashed RAW into the model fingerprint (H9/H12), so its
+`sizeof` is wire-visible. A field added for a purely *training-time* convenience invalidates the
+cfg fingerprint on every existing stamp. The guard is a `static_assert`, so it is loud and
+immediate — but only AFTER you have written the field, its default, and its consumers.
+
+**The rule:** before adding ANY field to `ControllerConfig`, ask whether the value is engine
+CONFIGURATION or merely transport. If it is transport (a click-time snapshot, a per-run parameter),
+thread it as a function parameter instead — `Backtest_RunFullValidation`'s
+`const tt::XGBHyperparams *hp_override` (default `nullptr` = prior behaviour bytewise) is the
+worked example. Perturbing a fingerprinted struct for a training-time convenience is the wrong
+trade even when it compiles.
+
+**Related:** D-254 (the size-pin) · H9/H12 · D-430 (5) · the E.1.2.D plan leaf 4.

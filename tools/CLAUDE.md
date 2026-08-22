@@ -526,3 +526,21 @@ Three behaviours discovered by being bitten, none derivable from `--help` or a d
 - **CP-1 amendment-cascade advisory on ARCHIVED sprint plans is noise by design:** historical
   records (v5.10-era MASTERs etc.) legitimately keep retired phrasings; do not rewrite archives to
   quiet it. Its signal is for LIVE docs only.
+- **`check_close_out_completeness.py --since` takes the WORKSPACE sha, not the engine one.** Passing
+  the engine session-anchor makes it print `DID NOT RUN — no commits in <sha>..HEAD` and exit 3.
+  That message is honest ("this is not a pass") but easy to misread as a tooling error rather than a
+  wrong-repo argument, because the engine sha *resolves* — it just has no commits in the workspace
+  history. Pass the workspace-side anchor. (2026-08-21, E.1.2.D close.)
+- **It evaluates COMMITTED work in the window, not the working tree.** Writing the owed
+  auto-write entries and immediately re-running still reports them ❌ — the entries have to be
+  COMMITTED before the check sees them. Sequence it as: write → commit → re-run → `--explain` only
+  what is genuinely not owed. Discovering this by re-running twice is the normal path; it is not a
+  false positive. (2026-08-21.)
+- **Pre-commit `Check F` (determinism net) is FILE-SET TRIGGERED.** It fires on "staged FP/parse/
+  locale change detected", so a raw `atof/strtod/atoi` added to a file in
+  `locale_determinism_known_pending.txt` can commit CLEAN if that commit's staged set does not arm
+  the trigger — and then sits until an unrelated later commit happens to stage a triggering file.
+  Measured: a raw `atoi` added at `cd9c2c7` surfaced only two commits later. When touching a parser,
+  run `./tools/check_locale_determinism.sh` directly rather than trusting the hook to have looked.
+  (2026-08-21, SC-1 in the E.1.2.D plan; M7 candidate — fire Check F on any staged file present in
+  the manifest.)

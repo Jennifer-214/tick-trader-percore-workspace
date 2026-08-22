@@ -4,7 +4,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 **Re-generate**: `./tools/gen_code_map.sh`
 
-**Last regenerated**: 2026-08-20 (commit f4bbafe)
+**Last regenerated**: 2026-08-21 (commit 6b1a9dd)
 
 ## CoreFrameworks/
 
@@ -395,7 +395,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `Momentum_BuildParameters` — line 613
 - `EmaCross_BuildParameters` — line 745
 - `ML_BuildParameters` — line 863
-- `Strategy_BuildParameters` — line 1939
+- `Strategy_BuildParameters` — line 1953
 
 ## Strategies/private/
 
@@ -843,15 +843,17 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `Model_Load` — line 578
 - `Model_Predict_Normalized` — line 713
 - `Model_Predict_AtClass` — line 776
-- `Model_LoadAOT` — line 839
-- `Model_Predict_AOT` — line 853
-- `Model_Predict` — line 897
-- `Model_Predict_Ensemble` — line 983
-- `Model_Predict_Ensemble_Weighted` — line 1071
-- `Model_PredictMulti` — line 1216
-- `Model_Free` — line 1292
-- `Model_IsLoaded` — line 1312
-- `ModelFeatures_Pack` — line 1336
+- `Model_PrimaryBuyClassIdx` — line 838 — Model_Predict_AtClass(m, features, n, m->buy_class_idx).
+- `Model_ExitClassIdx` — line 870 — unspottable by reading either site alone.
+- `Model_LoadAOT` — line 900
+- `Model_Predict_AOT` — line 914
+- `Model_Predict` — line 958
+- `Model_Predict_Ensemble` — line 1044
+- `Model_Predict_Ensemble_Weighted` — line 1132
+- `Model_PredictMulti` — line 1277
+- `Model_Free` — line 1353
+- `Model_IsLoaded` — line 1373
+- `ModelFeatures_Pack` — line 1397
 
 ### NodeModelZoo.hpp
 
@@ -859,43 +861,43 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `Model_RoleCheckDecide` — line 195
 - `NodeModelZoo_TryLoadRole` — line 208
 - `NodeModelZoo_LoadFromDir` — line 726
-- `NodeModelZoo_LoadLegacy` — line 835
-- `NodeModelZoo_Free` — line 845
-- `NodeModelZoo_HasAny` — line 854
-- `NodeModelZoo_VerifyExpected` — line 892 — features in the pack, model crashes or produces garbage.
-- `EnsembleZoo_FinalizeCorrupt` — line 1431
-- `EnsembleModelZoo_Init` — line 1472
-- `EnsembleModelZoo_EnsurePrimary` — line 1565
-- `EnsembleModelZoo_RecordPrediction` — line 1622
-- `EnsembleModelZoo_UpdateDrift` — line 1651
-- `EnsembleModelZoo_TickRewardsFromLookback` — line 1704
-- `EnsembleModelZoo_TradeCloseReward` — line 1788
-- `EnsembleModelZoo_InitBandits` — line 1860
-- `EnsembleModelZoo_InitExitBandits` — line 1919
-- `EnsembleModelZoo_InitBuyThompsonBandits` — line 1974
-- `EnsembleModelZoo_InitExitThompsonBandits` — line 2026
-- `EnsembleModelZoo_SetDisabledHorizons` — line 2089
-- `EnsembleModelZoo_Free` — line 2117
-- `EnsembleModelZoo_LoadFromCfg` — line 2162
-- `Model_ParseHorizonSibling` — line 2401 — BITMAP_IS_SET(ezoo->init_flags, MASK_EZOO_ACTIVE)=1 if any role got at least one horizon loaded.
-- `EnsembleZoo_VerifyGridMemberConsistency` — line 2478
-- `EnsembleModelZoo_AutoDetectFromDir` — line 2548
-- `EnsembleModelZoo_ComputeBundleId` — line 2701
-- `EnsembleModelZoo_SaveBanditState` — line 2726
-- `EnsembleModelZoo_SaveExitBanditState` — line 2748
-- `EnsembleModelZoo_LoadBanditState` — line 2772
-- `EnsembleModelZoo_LoadExitBanditState` — line 2803
-- `EnsembleModelZoo_SaveThompsonState` — line 2861
-- `EnsembleModelZoo_SaveExitThompsonState` — line 2949
-- `EnsembleModelZoo_LoadThompsonState` — line 3032
-- `EnsembleModelZoo_LoadExitThompsonState` — line 3165
-- `EnsembleModelZoo_LoadBanditStateFromPath` — line 3308
-- `EnsembleModelZoo_SetBanditSaveInterval` — line 3335
-- `EnsembleModelZoo_MaybeSaveBanditPeriodic` — line 3353
-- `EnsembleModelZoo_PostLoadSetup` — line 3518
-- `EnsembleModelZoo_IsReadyForInference` — line 3537
-- `NodeModelZoo_PostLoadSetup` — line 3590
-- `NodeModelZoo_CheckStaleModel` — line 3625
+- `NodeModelZoo_LoadLegacy` — line 844
+- `NodeModelZoo_Free` — line 854
+- `NodeModelZoo_HasAny` — line 863
+- `NodeModelZoo_VerifyExpected` — line 901 — features in the pack, model crashes or produces garbage.
+- `EnsembleZoo_FinalizeCorrupt` — line 1478
+- `EnsembleModelZoo_Init` — line 1519
+- `EnsembleModelZoo_EnsurePrimary` — line 1612
+- `EnsembleModelZoo_RecordPrediction` — line 1672
+- `EnsembleModelZoo_UpdateDrift` — line 1701
+- `EnsembleModelZoo_TickRewardsFromLookback` — line 1754
+- `EnsembleModelZoo_TradeCloseReward` — line 1838
+- `EnsembleModelZoo_InitBandits` — line 1910
+- `EnsembleModelZoo_InitExitBandits` — line 1969
+- `EnsembleModelZoo_InitBuyThompsonBandits` — line 2024
+- `EnsembleModelZoo_InitExitThompsonBandits` — line 2076
+- `EnsembleModelZoo_SetDisabledHorizons` — line 2139
+- `EnsembleModelZoo_Free` — line 2167
+- `EnsembleModelZoo_LoadFromCfg` — line 2212
+- `Model_ParseHorizonSibling` — line 2462 — BITMAP_IS_SET(ezoo->init_flags, MASK_EZOO_ACTIVE)=1 if any role got at least one horizon loaded.
+- `EnsembleZoo_VerifyGridMemberConsistency` — line 2539
+- `EnsembleModelZoo_AutoDetectFromDir` — line 2609
+- `EnsembleModelZoo_ComputeBundleId` — line 2762
+- `EnsembleModelZoo_SaveBanditState` — line 2787
+- `EnsembleModelZoo_SaveExitBanditState` — line 2809
+- `EnsembleModelZoo_LoadBanditState` — line 2833
+- `EnsembleModelZoo_LoadExitBanditState` — line 2864
+- `EnsembleModelZoo_SaveThompsonState` — line 2922
+- `EnsembleModelZoo_SaveExitThompsonState` — line 3010
+- `EnsembleModelZoo_LoadThompsonState` — line 3093
+- `EnsembleModelZoo_LoadExitThompsonState` — line 3226
+- `EnsembleModelZoo_LoadBanditStateFromPath` — line 3369
+- `EnsembleModelZoo_SetBanditSaveInterval` — line 3396
+- `EnsembleModelZoo_MaybeSaveBanditPeriodic` — line 3414
+- `EnsembleModelZoo_PostLoadSetup` — line 3579
+- `EnsembleModelZoo_IsReadyForInference` — line 3598
+- `NodeModelZoo_PostLoadSetup` — line 3651
+- `NodeModelZoo_CheckStaleModel` — line 3686
 
 ### PerArmFlagRegistry.hpp
 
@@ -938,7 +940,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 
 ### StampHelper.hpp
 
-- `Stamp_AssembleAndEmit` — line 179
+- `Stamp_AssembleAndEmit` — line 178
 
 ### ThompsonBandit.hpp
 
@@ -1092,18 +1094,18 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `BacktestSharded_Run` — line 662
 - `Backtest_ComputeLabelsFromSamples` — line 717 — through samples; no per-file O(N) sample scans.
 - `Backtest_Run` — line 988 — equity curve).
-- `HeldOutSplit_TrainEval` — line 1169 — helper has visibility into WalkForward_Compute* and XGBoost_Compute* funcs.
-- `Backtest_RunWalkForward` — line 1275 — behavior bytewise.
-- `Backtest_RunFullValidation` — line 1294
-- `WalkForward_ComputeAccuracy` — line 1517 — uses > 0.5f for truth so neutral (0.5) labels are never counted as positive
-- `WalkForward_ComputeMulticlassAccuracy` — line 1564 — argmax over each row, compare to integer truth (rounded from label float).
-- `WalkForward_ComputeMSE` — line 1583 — regression: mean squared error. Lower = better. Sensitive to outliers.
-- `WalkForward_ComputeCorrelation` — line 1599 — gets low MSE on small-magnitude targets while having zero predictive power).
-- `Backtest_RunWalkForward` — line 1637
-- `HeldOutSplit_TrainEval` — line 2271 — functions it uses (WalkForward_Compute*, XGBoost_Compute*) are visible.
-- `ConfigField_Set` — line 2527 — handles both FPN_Binary and PCT fields (PCT keys are stored as decimal, value comes in as %).
-- `Backtest_RunSweep` — line 2680 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
-- `Backtest_RunHyperparamTrainSweep` — line 2799 — mean_val_correlation (regression). Stored as positive number; higher = better.
+- `HeldOutSplit_TrainEval` — line 1176 — operator set. That metric is the one gating deployment.
+- `Backtest_RunWalkForward` — line 1282 — behavior bytewise.
+- `Backtest_RunFullValidation` — line 1302
+- `WalkForward_ComputeAccuracy` — line 1540 — uses > 0.5f for truth so neutral (0.5) labels are never counted as positive
+- `WalkForward_ComputeMulticlassAccuracy` — line 1587 — argmax over each row, compare to integer truth (rounded from label float).
+- `WalkForward_ComputeMSE` — line 1606 — regression: mean squared error. Lower = better. Sensitive to outliers.
+- `WalkForward_ComputeCorrelation` — line 1622 — gets low MSE on small-magnitude targets while having zero predictive power).
+- `Backtest_RunWalkForward` — line 1660
+- `HeldOutSplit_TrainEval` — line 2304 — functions it uses (WalkForward_Compute*, XGBoost_Compute*) are visible.
+- `ConfigField_Set` — line 2565 — handles both FPN_Binary and PCT fields (PCT keys are stored as decimal, value comes in as %).
+- `Backtest_RunSweep` — line 2718 — [DERIVED]   (tool-refreshed — layout emitter cannot probe this block yet; quartet lands when the emitter covers it, D...
+- `Backtest_RunHyperparamTrainSweep` — line 2837 — mean_val_correlation (regression). Stored as positive number; higher = better.
 
 ### BacktestPanels.hpp
 
@@ -1129,8 +1131,9 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `GUI_Panel_Comparison` — line 2485
 - `OptimizerPanel_Init` — line 2672
 - `GUI_Panel_Optimizer` — line 2737
-- `TrainingPanel_Init` — line 3190
-- `GUI_Panel_Training` — line 5012
+- `Training_AnyWorkerRunning` — line 3189
+- `TrainingPanel_Init` — line 3223 — different answer — the same reason Training_ResolveRole was extracted.
+- `GUI_Panel_Training` — line 5132
 
 ### BacktestSharded.hpp
 
@@ -1171,6 +1174,7 @@ Auto-generated function index. Walks .hpp files in each subsystem and extracts `
 - `LabelType_IsRegression` — line 508
 - `LabelType_IsMulticlass` — line 512
 - `Training_ResolveRole` — line 560
+- `Training_SideLabelGate` — line 583
 
 ### OverfitDetection.hpp
 

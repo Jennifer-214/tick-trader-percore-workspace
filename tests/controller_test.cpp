@@ -27316,6 +27316,23 @@ e3_skip_load:;
         check("v5.15.5.E.1.2.C 3G-ii: matcher rejects a wrong prefix",
               Model_ParseHorizonSibling("other_horizon_1000", "run_horizon_", 12) == -1);
 
+        // (a′) E.1.2.D leaf 8 (S2-F5) — the aliasing table. strtol parses all
+        // four spellings below as a valid int, and the loader rebuilds the
+        // path FROM the int — so pre-fix, each alias loaded the canonical dir
+        // a SECOND time as a second ensemble arm. The canonical round-trip
+        // strcmp must REJECT every alias and keep accepting the one spelling
+        // the path builders emit.
+        check("E.1.2.D L8: matcher rejects leading-zero alias _07500",
+              Model_ParseHorizonSibling("run_horizon_07500", "run_horizon_", 12) == -1);
+        check("E.1.2.D L8: matcher rejects sign alias _+7500",
+              Model_ParseHorizonSibling("run_horizon_+7500", "run_horizon_", 12) == -1);
+        check("E.1.2.D L8: matcher rejects whitespace alias '_ 7500'",
+              Model_ParseHorizonSibling("run_horizon_ 7500", "run_horizon_", 12) == -1);
+        check("E.1.2.D L8: matcher rejects zero-padded alias _00000007500",
+              Model_ParseHorizonSibling("run_horizon_00000007500", "run_horizon_", 12) == -1);
+        check("E.1.2.D L8: canonical _7500 still accepted",
+              Model_ParseHorizonSibling("run_horizon_7500", "run_horizon_", 12) == 7500);
+
         // (b) fixture tree: 2 families (one at depth 2) + 1 single + decoys
         const char* R = "/tmp/v5_15_e12c_mbscan_a";
         auto mk = [](const char* p) { mkdir(p, 0755); };

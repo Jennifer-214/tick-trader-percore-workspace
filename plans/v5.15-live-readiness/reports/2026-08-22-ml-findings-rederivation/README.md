@@ -15,7 +15,7 @@ uncertainties were resolved same-day.
 
 | Finding | Sev | Disposition |
 |---|---|---|
-| scan-2 NEW-1 (cancelled train saves zero-tree husk over real model) | HIGH | **FIXED** `87a8d61` (save gated on `it_completed > 0`); load-side zero-tree refusal remains a queued back-stop |
+| scan-2 NEW-1 (cancelled train saves zero-tree husk over real model) | HIGH | **FIXED** `87a8d61` (save gated on `it_completed > 0`); load-side back-stop WARN landed same-day (`XGBoosterBoostedRounds == 0` → loud husk warning; REFUSE-under-strict = operator call) |
 | scan-2 NEW-2 (run_1/prod_0 have no family base dir — bandit state unwritable) | HIGH | **STOPGAP DONE** — `mkdir models/classification/{run_1,prod_0}` 2026-08-22 (same inert-dir class as twins); structural close = D-a |
 | scan-1 NEW-1 / S1-F11 (WF+HeldOut hardcode n_rounds=200, ignore snapped n_estimators) | HIGH | **FIXED** same-day (both `n_rounds = hp.n_estimators`; `XGBHyperparams.hpp` coupling comment updated) — restores leaf 4's decided contract |
 | scan-1 NEW-5 (train-during-collect UAF direction unguarded) | MED-HIGH | **FIXED** same-day (`&& !run_control->running` on can_train/can_wf/can_hp/can_fv; mh inherits) — completes leaf 6's decided mechanism |
@@ -24,8 +24,8 @@ uncertainties were resolved same-day.
 | S3-F11 candidate (mid-walk abort leaves stale labels; trainer trains on them) | — | **SUBSUMED by leaf 5** `f317c2d` — the wrapper routes through the batch body (NaN-prefill + rc) |
 | scan-1 NEW-2 (neutral-filter divergence: shipped model keeps 0.5s WF/HO drop; also no class weights in mh trainer) | MED-HIGH (↑HIGH if compound reading holds) | **OPERATOR-OWED** — changes shipped-model training composition for BARRIER/VOL_BARRIER kinds (PVS/WIN_LOSS unaffected → current families safe); a-class refute-spot #2 before deciding |
 | scan-1 NEW-3 / scan-2 NEW-4 (dead `train_model_worker_fn` ~470 lines; holds the ONLY `.scaler` producer; keeps `model_trained`/S1-F8 semantics alive) | MED-LOW | **couples to D-d** — delete-or-revive as one motion |
-| scan-1 NEW-7 (sweep silently no-ops on typo'd key) | LOW-MED | queued (2-site return check + pre-validate) |
-| scan-2 NEW-3 (duplicate `node_model_dir` across nodes silently clobbers state — H22-adjacent) | MED | queued (boot-time WARN) — fold into D-a design space |
+| scan-1 NEW-7 (sweep silently no-ops on typo'd key) | LOW-MED | **FIXED** same-day — upfront key probes REFUSE in both sweeps |
+| scan-2 NEW-3 (duplicate `node_model_dir` across nodes silently clobbers state — H22-adjacent) | MED | **WARN landed** same-day in `EngineCommon_BootGlobal`; structural close = D-a |
 | scan-2 NEW-5/6/7/8, NEW-10/NEW-12, S1-F4 residual, S1-F7, S1-F8, S1-F9, S1-F10 | LOW–MED | homed in the E.1.2.D plan punch list / D-a & D-d inputs |
 
 Consumer-side AR-20 clause (scan-1 § 4): *for a threaded parameter, also grep the callee body for
